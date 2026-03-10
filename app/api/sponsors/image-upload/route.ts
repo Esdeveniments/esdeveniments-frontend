@@ -7,63 +7,16 @@ import {
   updatePaymentIntentMetadata,
 } from "@lib/stripe";
 import { activateSponsorImage } from "@lib/db/sponsors";
-import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "@utils/constants";
+import {
+  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+  MAX_SPONSOR_IMAGE_BYTES,
+  FORMDATA_PARSE_ERROR_SUBSTRING,
+} from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
+import { isValidImageContent } from "@utils/image-validation";
 
 // 10 uploads per minute per IP — prevents abuse of the public image upload
 const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
-
-// Image magic bytes for server-side content validation
-// Client-provided MIME types can be spoofed, so we verify actual file content
-const IMAGE_MAGIC_BYTES: { type: string; bytes: number[] }[] = [
-  { type: "image/jpeg", bytes: [0xff, 0xd8, 0xff] },
-  {
-    type: "image/png",
-    bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
-  },
-  { type: "image/gif", bytes: [0x47, 0x49, 0x46, 0x38] }, // GIF8
-  // WebP handled separately below (RIFF header is shared with WAV, AVI, etc.)
-];
-
-/**
- * Validate file content by checking magic bytes.
- * Returns true if the file starts with known image magic bytes.
- */
-async function isValidImageContent(file: File): Promise<boolean> {
-  try {
-    // Read first 12 bytes (enough for all magic byte patterns)
-    const buffer = await file.slice(0, 12).arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-
-    for (const { bytes: magicBytes } of IMAGE_MAGIC_BYTES) {
-      if (magicBytes.every((byte, index) => bytes[index] === byte)) {
-        return true;
-      }
-    }
-
-    // Special case for WebP: check for "WEBP" at offset 8 after RIFF
-    if (
-      bytes[0] === 0x52 &&
-      bytes[1] === 0x49 &&
-      bytes[2] === 0x46 &&
-      bytes[3] === 0x46
-    ) {
-      // Check if bytes 8-11 are "WEBP"
-      if (
-        bytes[8] === 0x57 &&
-        bytes[9] === 0x45 &&
-        bytes[10] === 0x42 &&
-        bytes[11] === 0x50
-      ) {
-        return true;
-      }
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -99,6 +52,17 @@ export async function POST(request: Request) {
   if (blocked) return blocked;
 
   try {
+    const contentType = request.headers.get("content-type") ?? "";
+    if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
+      return NextResponse.json(
+        {
+          errorCode: "invalid_content_type",
+          error: "Content-Type must be multipart/form-data.",
+        },
+        { status: 400 },
+      );
+    }
+
     const formData = await request.formData();
     const sessionIdRaw = formData.get("sessionId");
     const imageFile = formData.get("imageFile");
@@ -172,7 +136,10 @@ export async function POST(request: Request) {
     // Get payment intent ID to update its metadata too
     const paymentIntentId = getPaymentIntentId(session);
 
-    const { url, publicId } = await uploadEventImage(imageFile);
+    const { url, publicId } = await uploadEventImage(
+      imageFile,
+      MAX_SPONSOR_IMAGE_BYTES,
+    );
 
     const imageMetadata = {
       sponsor_image_url: url,
@@ -264,7 +231,10 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Upload failed";
 
-    if (message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
+    if (
+      message === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR ||
+      message.toLowerCase().includes(FORMDATA_PARSE_ERROR_SUBSTRING)
+    ) {
       return NextResponse.json(
         {
           errorCode: "image_too_large",

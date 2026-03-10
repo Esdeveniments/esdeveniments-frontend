@@ -1,7 +1,7 @@
 export interface LatestNewsSectionProps {
   placeSlug: string;
   placeLabel: string;
-  placeType: "region" | "town";
+  placeType: Exclude<PlaceType, "">;
   newsHref: string;
 }
 
@@ -765,6 +765,7 @@ export interface PlacePageExploreNavProps {
 export interface CategoryQuicklinksProps {
   place: string;
   date?: string;
+  currentCategory?: string;
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
 }
