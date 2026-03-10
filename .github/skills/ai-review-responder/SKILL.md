@@ -22,7 +22,7 @@ Trigger phrases:
 ### Step 1: Identify the PR
 
 - If the user specifies a PR number, use it
-- Otherwise, detect from the current branch: `gh pr list --head $(git branch --show-current) --json number --jq '.[0].number'`
+- Otherwise, detect from the current branch: `gh pr list --head "$(git branch --show-current)" --json number --jq '.[0].number'`
 - Get repo owner/name: `gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'`
 
 ### Step 2: Fetch Unresolved Threads

@@ -141,6 +141,11 @@ def ga_report(dimensions, metrics, start=START_90, end=END, limit=25, dim_filter
     ]
 
 
+def sanitize_md(text):
+    """Escape Markdown special characters that could break tables."""
+    return str(text).replace("|", "\\|").replace("`", "\\`")
+
+
 def safe_float(val, default=0.0):
     try:
         return float(val)
@@ -673,26 +678,19 @@ def collect_ga4_data():
     )
     organic_sessions = safe_int(organic_rows[0]["metrics"][0]) if organic_rows else 0
 
-    # AI sessions — use substring matching consistent with breakdown logic
-    ai_sessions = 0
-    for s in data["traffic_sources"]:
-        for platform in AI_PLATFORMS:
-            if platform in s["source"].lower():
-                ai_sessions += s["sessions"]
-                break
-    # Supplement from a wider query if traffic_sources was truncated
-    if ai_sessions == 0:
-        ai_rows = ga_report(
-            ["sessionSource"], ["sessions"],
-            dim_filter=FilterExpression(
-                filter=Filter(
-                    field_name="sessionSource",
-                    in_list_filter=Filter.InListFilter(values=AI_PLATFORMS),
-                )
+    # AI sessions — use OR'd CONTAINS filters for accuracy
+    ai_filter = FilterExpression(or_group=FilterExpression.ExpressionList(expressions=[
+        FilterExpression(filter=Filter(
+            field_name="sessionSource",
+            string_filter=Filter.StringFilter(
+                match_type=Filter.StringFilter.MatchType.CONTAINS,
+                value=p,
+                case_sensitive=False,
             ),
-            limit=len(AI_PLATFORMS),
-        )
-        ai_sessions = sum(safe_int(r["metrics"][0]) for r in ai_rows)
+        )) for p in AI_PLATFORMS
+    ]))
+    ai_rows = ga_report(["sessionSource"], ["sessions"], dim_filter=ai_filter, limit=100)
+    ai_sessions = sum(safe_int(r["metrics"][0]) for r in ai_rows)
     data["kpis"]["organic_sessions"] = organic_sessions
     data["kpis"]["ai_sessions"] = ai_sessions
 
@@ -863,7 +861,7 @@ def generate_markdown(data, previous=None):
         lines.append("| Page | Clicks | Impressions | CTR | Position |")
         lines.append("|------|--------|-------------|-----|----------|")
         for r in data["gsc"]["quick_wins"][:10]:
-            path = r["page"].replace(SITE, "/")
+            path = sanitize_md(r["page"].replace(SITE, "/"))
             lines.append(f"| `{path}` | {r['clicks']} | {r['impressions']:,} | {r['ctr']:.1%} | {r['position']:.1f} |")
     else:
         lines.append("No quick wins identified (all pages with 100+ impressions have CTR ≥ 3%).")
@@ -876,8 +874,8 @@ def generate_markdown(data, previous=None):
         lines.append("| Query | Position | Impressions | Clicks | Page |")
         lines.append("|-------|----------|-------------|--------|------|")
         for r in data["gsc"]["striking_distance"][:10]:
-            path = r["page"].replace(SITE, "/")
-            lines.append(f"| \"{r['query']}\" | {r['position']:.1f} | {r['impressions']:,} | {r['clicks']} | `{path}` |")
+            path = sanitize_md(r["page"].replace(SITE, "/"))
+            lines.append(f"| \"{sanitize_md(r['query'])}\" | {r['position']:.1f} | {r['impressions']:,} | {r['clicks']} | `{path}` |")
     else:
         lines.append("No striking distance queries found.")
     lines.append("")
@@ -887,9 +885,9 @@ def generate_markdown(data, previous=None):
     lines.append("")
     if data["gsc"]["cannibalization"]:
         for item in data["gsc"]["cannibalization"][:5]:
-            lines.append(f"**\"{item['query']}\"** ({item['total_impressions']:,} total impr)")
+            lines.append(f"**\"{sanitize_md(item['query'])}\"** ({item['total_impressions']:,} total impr)")
             for p in sorted(item["pages"], key=lambda x: x["position"]):
-                path = p["page"].replace(SITE, "/")
+                path = sanitize_md(p["page"].replace(SITE, "/"))
                 lines.append(f"- Pos {p['position']:.1f} | {p['clicks']} clicks | {p['impressions']:,} impr | `{path}`")
             lines.append("")
     else:
@@ -920,7 +918,7 @@ def generate_markdown(data, previous=None):
     lines.append("| Source / Medium | Sessions | Engaged | Bounce |")
     lines.append("|-----------------|----------|---------|--------|")
     for s in data["ga4"]["traffic_sources"][:10]:
-        lines.append(f"| {s['source']} / {s['medium']} | {s['sessions']:,} | {s['engaged']:,} | {s['bounce_rate']:.0%} |")
+        lines.append(f"| {sanitize_md(s['source'])} / {sanitize_md(s['medium'])} | {s['sessions']:,} | {s['engaged']:,} | {s['bounce_rate']:.0%} |")
     lines.append("")
 
     # ── Custom Events ──
@@ -983,7 +981,7 @@ def generate_markdown(data, previous=None):
         lines.append("| Page | Impressions | Clicks | Position |")
         lines.append("|------|-------------|--------|----------|")
         for r in three_seg[:10]:
-            path = r["page"].replace(SITE, "/")
+            path = sanitize_md(r["page"].replace(SITE, "/"))
             lines.append(f"| `{path}` | {r['impressions']:,} | {r['clicks']} | {r['position']:.1f} |")
         lines.append("")
 
@@ -997,7 +995,7 @@ def generate_markdown(data, previous=None):
         lines.append("| Page | Impressions | Position |")
         lines.append("|------|-------------|----------|")
         for r in dead[:10]:
-            path = r["page"].replace(SITE, "/")
+            path = sanitize_md(r["page"].replace(SITE, "/"))
             lines.append(f"| `{path}` | {r['impressions']:,} | {r['position']:.1f} |")
         lines.append("")
 
@@ -1061,7 +1059,7 @@ def generate_markdown(data, previous=None):
         lines.append("| Query | Position | Impressions |")
         lines.append("|-------|----------|-------------|")
         for r in ai_suspects[:10]:
-            lines.append(f"| \"{r['query']}\" | {r['position']:.1f} | {r['impressions']:,} |")
+            lines.append(f"| \"{sanitize_md(r['query'])}\" | {r['position']:.1f} | {r['impressions']:,} |")
         lines.append("")
 
     # ── AI Traffic Breakdown ──
@@ -1072,7 +1070,7 @@ def generate_markdown(data, previous=None):
         lines.append("| Platform | Medium | Sessions | Engaged | Bounce |")
         lines.append("|----------|--------|----------|---------|--------|")
         for a in ai_breakdown:
-            lines.append(f"| {a['platform']} | {a['medium']} | {a['sessions']:,} | {a['engaged']:,} | {a['bounce_rate']:.0%} |")
+            lines.append(f"| {sanitize_md(a['platform'])} | {sanitize_md(a['medium'])} | {a['sessions']:,} | {a['engaged']:,} | {a['bounce_rate']:.0%} |")
         total_ai = sum(a["sessions"] for a in ai_breakdown)
         total_sessions = data["ga4"]["kpis"].get("sessions", 0) or 1
         lines.append(f"\n**Total AI traffic: {total_ai:,} sessions ({total_ai/total_sessions:.1%} of all traffic)**")
@@ -1088,7 +1086,7 @@ def generate_markdown(data, previous=None):
         lines.append("| Page | Event Date | Impressions | Clicks | Position |")
         lines.append("|------|------------|-------------|--------|----------|")
         for r in expired[:10]:
-            path = r["page"].replace(SITE, "/")
+            path = sanitize_md(r["page"].replace(SITE, "/"))
             lines.append(f"| `{path[:60]}...` | {r['event_date']} | {r['impressions']:,} | {r['clicks']} | {r['position']:.1f} |")
         lines.append("")
 
