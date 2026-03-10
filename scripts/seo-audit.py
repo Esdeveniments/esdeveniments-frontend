@@ -1328,12 +1328,15 @@ def generate_actions(data, previous=None):
     # Trend-based actions
     if previous:
         changes = compare_kpis(data, previous)
+        # Metrics where higher is worse (bounce rate, position)
+        inverse_metrics = {"GA4 Bounce Rate", "GSC Avg Position"}
         for c in changes:
             if c["emoji"] == "🔴" and c["previous"] > 0:
+                verb = "rose" if c["name"] in inverse_metrics else "dropped"
                 actions.append({
                     "priority": "P1",
                     "title": f"Declining: {c['name']} ({c['change']})",
-                    "description": f"{c['name']} dropped from {format_kpi_value(c['name'], c['previous'])} to {format_kpi_value(c['name'], c['current'])}. Investigate potential causes.",
+                    "description": f"{c['name']} {verb} from {format_kpi_value(c['name'], c['previous'])} to {format_kpi_value(c['name'], c['current'])}. Investigate potential causes.",
                 })
 
     if not actions:
