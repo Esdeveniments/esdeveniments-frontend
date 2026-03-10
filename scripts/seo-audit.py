@@ -988,8 +988,8 @@ def generate_markdown(data, previous=None):
         higher = "Desktop" if desk_b > mob_b else "Mobile"
         lines.append("## 📱 Mobile vs Desktop Bounce Divergence")
         lines.append("")
-        lines.append(f"| Device | Bounce Rate |")
-        lines.append(f"|--------|-------------|")
+        lines.append("| Device | Bounce Rate |")
+        lines.append("|--------|-------------|")
         lines.append(f"| Mobile | {mob_b:.0%} |")
         lines.append(f"| Desktop | {desk_b:.0%} |")
         lines.append(f"| **Gap** | **{bounce_div:.0%}** |")
