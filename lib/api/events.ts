@@ -43,23 +43,23 @@ import { isE2ETestMode } from "@utils/env";
 const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
 
 const e2eEventsStore = isE2ETestMode
-  ? getE2EGlobal().__E2E_EVENTS__ ??
-    (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
+  ? (getE2EGlobal().__E2E_EVENTS__ ??
+    (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>()))
   : null;
 
-const ensureImageWithinLimit = (imageFile: File) => {
-  if (imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYTES) => {
+  if (imageFile.size > maxBytes) {
     console.warn(
       `uploadEventImage: image ${formatMegabytes(
-        imageFile.size
-      )}MB exceeds limit ${formatMegabytes(MAX_TOTAL_UPLOAD_BYTES)}MB`
+        imageFile.size,
+      )}MB exceeds limit ${formatMegabytes(maxBytes)}MB`,
     );
     throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
   }
 };
 
 async function fetchEventsInternal(
-  params: FetchEventsParams
+  params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
     content: [],
@@ -124,7 +124,7 @@ async function fetchEventsInternal(
         .text()
         .catch(() => "Unable to read error response");
       console.error(
-        `fetchEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
+        `fetchEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`,
       );
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -154,7 +154,7 @@ async function fetchEventsInternal(
         {
           tags: { section: "events-fetch", fallback: "external-also-failed" },
           extra: { params },
-        }
+        },
       );
     }
     return externalResult ?? fallbackResponse;
@@ -164,7 +164,7 @@ async function fetchEventsInternal(
 export const fetchEvents = cache(fetchEventsInternal);
 
 export async function fetchEventBySlug(
-  fullSlug: string
+  fullSlug: string,
 ): Promise<EventDetailResponseDTO | null> {
   if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
     return e2eEventsStore.get(fullSlug) ?? null;
@@ -181,14 +181,14 @@ export async function fetchEventBySlug(
 
     if (res.status === 404) {
       console.warn(
-        `fetchEventBySlug: Event not found (404) for slug: ${fullSlug}`
+        `fetchEventBySlug: Event not found (404) for slug: ${fullSlug}`,
       );
       return null;
     }
     if (!res.ok) {
       const errorText = await res.text().catch(() => "No error text");
       console.error(
-        `fetchEventBySlug: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`
+        `fetchEventBySlug: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`,
       );
       throw new Error(`HTTP error! status: ${res.status}`);
     }
@@ -197,7 +197,7 @@ export async function fetchEventBySlug(
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
-      errorMessage
+      errorMessage,
     );
     return null;
   }
@@ -221,7 +221,7 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
 
     if (res.status === 404) {
       console.warn(
-        `fetchEventBySlugWithStatus: Event not found (404) for slug: ${fullSlug}`
+        `fetchEventBySlugWithStatus: Event not found (404) for slug: ${fullSlug}`,
       );
       return { event: null, notFound: true };
     }
@@ -229,7 +229,7 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
     if (!res.ok) {
       const errorText = await res.text().catch(() => "No error text");
       console.error(
-        `fetchEventBySlugWithStatus: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`
+        `fetchEventBySlugWithStatus: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`,
       );
       return { event: null, notFound: false };
     }
@@ -239,7 +239,7 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
-      errorMessage
+      errorMessage,
     );
     return { event: null, notFound: false };
   }
@@ -251,7 +251,7 @@ export const getEventBySlug = cache(fetchEventBySlug);
 
 export async function updateEventById(
   uuid: string,
-  data: EventUpdateRequestDTO
+  data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
   const response = await fetchWithHmac(
     `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`,
@@ -262,13 +262,13 @@ export async function updateEventById(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
-    }
+    },
   );
   if (!response.ok) {
     const errorText = await response.text();
     console.error("updateEventById: error response:", errorText);
     throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
   return response.json();
@@ -276,7 +276,7 @@ export async function updateEventById(
 
 export async function createEvent(
   data: EventCreateRequestDTO,
-  e2eExtras?: E2EEventExtras
+  e2eExtras?: E2EEventExtras,
 ): Promise<EventDetailResponseDTO> {
   if (isE2ETestMode && e2eEventsStore) {
     return createE2EEvent(data, e2eExtras);
@@ -301,19 +301,20 @@ export async function createEvent(
     const errorText = await response.text();
     console.error("createEvent: error response:", errorText);
     throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
   return response.json();
 }
 
 export async function uploadEventImage(
-  imageFile: File
+  imageFile: File,
+  maxBytes?: number,
 ): Promise<UploadImageResponse> {
   if (!imageFile) {
     throw new Error("uploadEventImage: imageFile is required");
   }
-  ensureImageWithinLimit(imageFile);
+  ensureImageWithinLimit(imageFile, maxBytes);
 
   if (isE2ETestMode) {
     return {
@@ -343,13 +344,13 @@ export async function uploadEventImage(
       .text()
       .catch(() => "Unable to read error response");
     console.error(
-      `uploadEventImage: HTTP error! status: ${response.status}, body: ${errorText}`
+      `uploadEventImage: HTTP error! status: ${response.status}, body: ${errorText}`,
     );
     if (response.status === 413) {
       throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
     }
     throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
 
@@ -367,7 +368,7 @@ export async function uploadEventImage(
     typeof (payload as { publicId?: unknown }).publicId !== "string"
   ) {
     throw new Error(
-      "uploadEventImage: backend response missing url/publicId fields"
+      "uploadEventImage: backend response missing url/publicId fields",
     );
   }
 
@@ -377,7 +378,7 @@ export async function uploadEventImage(
 
 function createE2EEvent(
   data: EventCreateRequestDTO,
-  extras?: E2EEventExtras
+  extras?: E2EEventExtras,
 ): EventDetailResponseDTO {
   const slug = `e2e-event-${Date.now()}`;
   const safeCityId = data.cityId || 1;
@@ -450,7 +451,7 @@ function createE2EEvent(
  * At runtime (ISR/SSR), uses internal API proxy for better caching and security.
  */
 export async function fetchCategorizedEvents(
-  maxEventsPerCategory?: number
+  maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -458,7 +459,7 @@ export async function fetchCategorizedEvents(
       return buildE2EFallbackCategorizedEvents();
     }
     console.warn(
-      "fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object"
+      "fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object",
     );
     return {};
   }
@@ -477,7 +478,7 @@ export async function fetchCategorizedEvents(
     } catch (e) {
       console.error(
         "fetchCategorizedEvents: Build phase external fetch failed:",
-        e
+        e,
       );
       return {};
     }
@@ -506,7 +507,7 @@ export async function fetchCategorizedEvents(
         .text()
         .catch(() => "Unable to read error response");
       console.error(
-        `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
+        `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`,
       );
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -531,7 +532,7 @@ export async function fetchCategorizedEvents(
       const errorMessage = getSanitizedErrorMessage(fallbackError);
       console.error(
         "fetchCategorizedEvents: Both direct and external API failed:",
-        errorMessage
+        errorMessage,
       );
       return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
     }
@@ -592,7 +593,7 @@ function buildE2EFallbackCategorizedEvents(): CategorizedEvents {
  * Delegates to the shared filterActiveEvents helper to keep logic aligned.
  */
 export function filterPastEvents(
-  events: EventSummaryResponseDTO[]
+  events: EventSummaryResponseDTO[],
 ): EventSummaryResponseDTO[] {
   return filterActiveEvents(events);
 }
@@ -602,7 +603,7 @@ function insertAdsRandomly(
   ads: AdEvent[],
   minDistance = 4,
   maxDistance = 6,
-  startFrom = 3
+  startFrom = 3,
 ): ListEvent[] {
   const result: ListEvent[] = [...events];
 
@@ -642,7 +643,7 @@ function insertAdsRandomly(
 
 export function insertAds(
   events: EventSummaryResponseDTO[],
-  adFrequencyRatio = 4 // 1 ad per 4 events, matching old behavior
+  adFrequencyRatio = 4, // 1 ad per 4 events, matching old behavior
 ): ListEvent[] {
   if (!events.length) {
     return [];
@@ -659,7 +660,7 @@ export function insertAds(
         images: [],
         location: "",
         slug: "",
-      } as AdEvent)
+      }) as AdEvent,
   );
 
   return insertAdsRandomly(events, ads);
