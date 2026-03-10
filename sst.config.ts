@@ -29,6 +29,13 @@ export default $config({
     };
   },
   async run() {
+    const isProduction = $app.stage === "production";
+
+    // Helper: require env var in production, allow optional in non-production (ephemeral staging)
+    function requireEnvIfProd(name: string): string | undefined {
+      return isProduction ? requireEnv(name) : process.env[name];
+    }
+
     // Set Node.js 22.x runtime for ALL Lambda functions globally
     // This applies to server, image optimizer, warmer, and revalidation functions
     // Upgraded from nodejs20.x (deprecated April 2026)
@@ -100,31 +107,40 @@ export default $config({
       }
     }
 
-    // Fetch certificate ARN from SSM Parameter Store
-    // Falls back to environment variable if SSM parameter is not found
-    const certArn =
-      process.env.ACM_CERTIFICATE_ARN ||
-      (await getSsmParameter(
-        "/esdeveniments-frontend/acm-certificate-arn",
-      ).catch(() => process.env.ACM_CERTIFICATE_ARN || ""));
+    // Fetch certificate ARN from SSM Parameter Store (production only)
+    // Non-production stages use CloudFront's auto-generated URL (no custom domain)
+    let certArn = "";
+    if (isProduction) {
+      certArn =
+        process.env.ACM_CERTIFICATE_ARN ||
+        (await getSsmParameter(
+          "/esdeveniments-frontend/acm-certificate-arn",
+        ).catch(() => ""));
 
-    if (!certArn) {
-      throw new Error(
-        "ACM_CERTIFICATE_ARN must be set either as environment variable or SSM parameter at /esdeveniments-frontend/acm-certificate-arn",
-      );
+      if (!certArn) {
+        throw new Error(
+          "ACM_CERTIFICATE_ARN must be set either as environment variable or SSM parameter at /esdeveniments-frontend/acm-certificate-arn",
+        );
+      }
     }
 
-    const alarmsTopic = new sst.aws.SnsTopic("SiteAlarms");
+    // Alarms only for production — ephemeral stages don't need monitoring
+    const alarmsTopic = isProduction
+      ? new sst.aws.SnsTopic("SiteAlarms")
+      : undefined;
 
-    // Alarm email endpoint - configurable per environment
-    const alarmEmail =
-      process.env.ALARM_EMAIL || "esdeveniments.catalunya.cat@gmail.com";
+    // Alarm email endpoint - configurable per environment (production only)
+    // alarmsTopic is only defined when isProduction, so checking it alone is sufficient
+    if (alarmsTopic) {
+      const alarmEmail =
+        process.env.ALARM_EMAIL || "esdeveniments.catalunya.cat@gmail.com";
 
-    new aws.sns.TopicSubscription("SiteAlarmsEmail", {
-      topic: alarmsTopic.arn,
-      protocol: "email",
-      endpoint: alarmEmail,
-    });
+      new aws.sns.TopicSubscription("SiteAlarmsEmail", {
+        topic: alarmsTopic.arn,
+        protocol: "email",
+        endpoint: alarmEmail,
+      });
+    }
 
     // Alarm for the OpenNext image optimizer Lambda (Next.js /_next/image).
     // SST doesn't currently expose this function under `site.nodes`, so we detect it
@@ -155,33 +171,38 @@ export default $config({
           "0";
       }
 
-      new aws.cloudwatch.MetricAlarm(
-        `${name}ImageOptimizerErrorAlarm`,
-        {
-          comparisonOperator: "GreaterThanThreshold",
-          evaluationPeriods: 1,
-          metricName: "Errors",
-          namespace: "AWS/Lambda",
-          period: 60,
-          statistic: "Sum",
-          threshold: 5,
-          treatMissingData: "notBreaching",
-          dimensions: {
-            FunctionName: args.name,
+      if (alarmsTopic) {
+        new aws.cloudwatch.MetricAlarm(
+          `${name}ImageOptimizerErrorAlarm`,
+          {
+            comparisonOperator: "GreaterThanThreshold",
+            evaluationPeriods: 1,
+            metricName: "Errors",
+            namespace: "AWS/Lambda",
+            period: 60,
+            statistic: "Sum",
+            threshold: 5,
+            treatMissingData: "notBreaching",
+            dimensions: {
+              FunctionName: args.name!,
+            },
+            alarmActions: [alarmsTopic!.arn],
           },
-          alarmActions: [alarmsTopic.arn],
-        },
-        { parent: alarmsTopic },
-      );
+          { parent: alarmsTopic! },
+        );
+      }
     });
 
     const site = new sst.aws.Nextjs("site", {
-      domain: {
-        name: "esdeveniments.cat",
-        aliases: ["www.esdeveniments.cat"],
-        dns: false, // DNS managed externally via Cloudflare instead of Route53
-        cert: certArn,
-      },
+      // Custom domain only for production; ephemeral stages use CloudFront auto-URL
+      ...(isProduction && {
+        domain: {
+          name: "esdeveniments.cat",
+          aliases: ["www.esdeveniments.cat"],
+          dns: false, // DNS managed externally via Cloudflare instead of Route53
+          cert: certArn,
+        },
+      }),
       environment: {
         NEXT_PUBLIC_API_URL: requireEnv("NEXT_PUBLIC_API_URL"),
         // Public site URL for SEO, metadata, canonical URLs
@@ -191,7 +212,8 @@ export default $config({
         // which isn't available during resource creation. The code will fall back
         // to NEXT_PUBLIC_SITE_URL if INTERNAL_SITE_URL is not set.
         HMAC_SECRET: requireEnv("HMAC_SECRET"),
-        REVALIDATE_SECRET: requireEnv("REVALIDATE_SECRET"),
+        // Cache revalidation secret for /api/revalidate endpoint
+        REVALIDATE_SECRET: requireEnvIfProd("REVALIDATE_SECRET"),
         DEEPL_API_KEY: requireEnv("DEEPL_API_KEY"),
         // Optional: Pipedream webhook URL for new event email notifications
         // If not set, email notifications will be silently skipped
@@ -205,9 +227,8 @@ export default $config({
           CLOUDFRONT_DISTRIBUTION_ID: process.env.CLOUDFRONT_DISTRIBUTION_ID,
         }),
         // Stripe integration for sponsor payments
-        // Required for /patrocina checkout and webhook processing
-        STRIPE_SECRET_KEY: requireEnv("STRIPE_SECRET_KEY"),
-        STRIPE_WEBHOOK_SECRET: requireEnv("STRIPE_WEBHOOK_SECRET"),
+        STRIPE_SECRET_KEY: requireEnvIfProd("STRIPE_SECRET_KEY"),
+        STRIPE_WEBHOOK_SECRET: requireEnvIfProd("STRIPE_WEBHOOK_SECRET"),
         // Optional Stripe config - defaults are fine for most cases
         ...(process.env.STRIPE_TAX_MODE && {
           STRIPE_TAX_MODE: process.env.STRIPE_TAX_MODE,
@@ -218,10 +239,9 @@ export default $config({
         ...(process.env.STRIPE_MANUAL_TAX_RATE_IDS && {
           STRIPE_MANUAL_TAX_RATE_IDS: process.env.STRIPE_MANUAL_TAX_RATE_IDS,
         }),
-        // Turso database for sponsor persistence (replaces static config)
-        // Required for sponsor banner display and Stripe webhook automation
-        TURSO_DATABASE_URL: requireEnv("TURSO_DATABASE_URL"),
-        TURSO_AUTH_TOKEN: requireEnv("TURSO_AUTH_TOKEN"),
+        // Turso database for sponsor persistence
+        TURSO_DATABASE_URL: requireEnvIfProd("TURSO_DATABASE_URL"),
+        TURSO_AUTH_TOKEN: requireEnvIfProd("TURSO_AUTH_TOKEN"),
       },
       warm: 1, // Reduced from 3 to minimize warm invocations + GB-seconds. Cold starts ~2s, rare with CloudFront cache.
       server: {
@@ -311,203 +331,209 @@ export default $config({
     // The __fetch/ prefix accumulates objects from every build (81K+ objects, 1.4 GB).
     // These are ephemeral Next.js fetch cache entries that become stale quickly.
     // Lifecycle rules handle cleanup automatically without needing the cleanup Lambda.
-    new aws.s3.BucketLifecycleConfigurationV2("FetchCacheLifecycle", {
-      bucket: site.nodes.assets.name,
-      rules: [
-        {
-          id: "expire-fetch-cache",
-          filter: { prefix: "_cache/__fetch/" },
-          expiration: { days: 7 },
-          status: "Enabled",
-        },
-      ],
-    });
+    if (site.nodes.assets) {
+      new aws.s3.BucketLifecycleConfigurationV2("FetchCacheLifecycle", {
+        bucket: site.nodes.assets.name,
+        rules: [
+          {
+            id: "expire-fetch-cache",
+            filter: { prefix: "_cache/__fetch/" },
+            expiration: { days: 7 },
+            status: "Enabled",
+          },
+        ],
+      });
+    }
 
     // Validate that server node exists before creating alarms
     if (!site.nodes.server) {
       throw new Error("Server node is not available for alarm configuration");
     }
 
-    // Create an alarm for 5xx Errors (Server Faults)
-    new aws.cloudwatch.MetricAlarm("ServerErrorAlarm", {
-      comparisonOperator: "GreaterThanThreshold",
-      evaluationPeriods: 1,
-      metricName: "Errors",
-      namespace: "AWS/Lambda",
-      period: 60,
-      statistic: "Sum",
-      threshold: 10,
-      dimensions: {
-        FunctionName: site.nodes.server.name,
-      },
-      alarmActions: [alarmsTopic.arn],
-    });
-
-    // Create an alarm for Throttling (Too many requests or concurrency limit)
-    new aws.cloudwatch.MetricAlarm("ThrottlingAlarm", {
-      comparisonOperator: "GreaterThanThreshold",
-      evaluationPeriods: 1,
-      metricName: "Throttles",
-      namespace: "AWS/Lambda",
-      period: 60,
-      statistic: "Sum",
-      threshold: 5,
-      dimensions: {
-        FunctionName: site.nodes.server.name,
-      },
-      alarmActions: [alarmsTopic.arn],
-    });
-
-    // CRITICAL: DynamoDB Write Spike Alarm
-    // This catches issues like the Dec 28, 2025 incident ($282 cost spike)
-    // where searchParams usage caused 200M writes in 16 hours.
-    // Threshold: 100,000 writes/hour (baseline is ~1,500/hour)
-    // Note: Without dimensions, this monitors ALL DynamoDB tables in the account.
-    // Since we only have one table (siteRevalidationTable), this is fine.
-    // If more tables are added, we should add dimensions with the specific table name.
-    new aws.cloudwatch.MetricAlarm("DynamoDBWriteSpikeAlarm", {
-      comparisonOperator: "GreaterThanThreshold",
-      evaluationPeriods: 1,
-      metricName: "ConsumedWriteCapacityUnits",
-      namespace: "AWS/DynamoDB",
-      period: 3600, // 1 hour
-      statistic: "Sum",
-      threshold: 100000, // 100K writes/hour (incident had 22M/hour at peak)
-      treatMissingData: "notBreaching",
-      alarmDescription:
-        "DynamoDB writes exceeded 100K/hour. Check for searchParams usage in listing pages!",
-      alarmActions: [alarmsTopic.arn],
-      // Note: okActions removed to reduce email noise. You'll only get alerts when threshold is breached.
-    });
-
-    // DynamoDB Read Spike Alarm (secondary indicator of cache issues)
-    new aws.cloudwatch.MetricAlarm("DynamoDBReadSpikeAlarm", {
-      comparisonOperator: "GreaterThanThreshold",
-      evaluationPeriods: 1,
-      metricName: "ConsumedReadCapacityUnits",
-      namespace: "AWS/DynamoDB",
-      period: 3600, // 1 hour
-      statistic: "Sum",
-      threshold: 500000, // 500K reads/hour
-      treatMissingData: "notBreaching",
-      alarmDescription:
-        "DynamoDB reads exceeded 500K/hour. Possible cache thrashing.",
-      alarmActions: [alarmsTopic.arn],
-    });
-
-    // =========================================================================
-    // ADDITIONAL COST MONITORING ALARMS
-    // Baselines established Dec 30, 2025:
-    //   - Lambda: ~66K invocations/day (~2,750/hour)
-    //   - Monthly cost: ~$2-4/month healthy
-    // =========================================================================
-
-    // --- LAMBDA COST ALARMS ---
-
-    // Lambda Invocation Spike (baseline: ~2,750/hour = 66K/day)
-    // High invocations = high Lambda cost
-    new aws.cloudwatch.MetricAlarm("LambdaInvocationSpikeAlarm", {
-      comparisonOperator: "GreaterThanThreshold",
-      evaluationPeriods: 1,
-      metricName: "Invocations",
-      namespace: "AWS/Lambda",
-      period: 3600, // 1 hour
-      statistic: "Sum",
-      threshold: 50000, // 50K invocations/hour (~18x baseline)
-      treatMissingData: "notBreaching",
-      dimensions: {
-        FunctionName: site.nodes.server.name,
-      },
-      alarmDescription:
-        "Lambda invocations exceeded 50K/hour. Check for traffic spike or infinite loops.",
-      alarmActions: [alarmsTopic.arn],
-    });
-
-    // Lambda Duration Spike (baseline: ~625K ms/hour)
-    // High duration = slow code or external API issues
-    new aws.cloudwatch.MetricAlarm("LambdaDurationSpikeAlarm", {
-      comparisonOperator: "GreaterThanThreshold",
-      evaluationPeriods: 1,
-      metricName: "Duration",
-      namespace: "AWS/Lambda",
-      period: 3600, // 1 hour
-      statistic: "Sum",
-      threshold: 10000000, // 10M ms/hour (~16x baseline)
-      treatMissingData: "notBreaching",
-      dimensions: {
-        FunctionName: site.nodes.server.name,
-      },
-      alarmDescription:
-        "Lambda total duration exceeded 10M ms/hour. Check for slow external APIs or code issues.",
-      alarmActions: [alarmsTopic.arn],
-    });
-
-    // Lambda Concurrent Executions (can trigger throttling and cost)
-    new aws.cloudwatch.MetricAlarm("LambdaConcurrencyAlarm", {
-      comparisonOperator: "GreaterThanThreshold",
-      evaluationPeriods: 1,
-      metricName: "ConcurrentExecutions",
-      namespace: "AWS/Lambda",
-      period: 60,
-      statistic: "Maximum",
-      threshold: 100, // High concurrency threshold
-      treatMissingData: "notBreaching",
-      dimensions: {
-        FunctionName: site.nodes.server.name,
-      },
-      alarmDescription:
-        "Lambda concurrent executions exceeded 100. High traffic or slow responses.",
-      alarmActions: [alarmsTopic.arn],
-    });
-
-    // --- CLOUDFRONT ALARMS ---
-    // Note: CloudFront metrics require DistributionId dimension.
-    // SST's Nextjs component exposes site.nodes.cdn (the Cdn component),
-    // which in turn exposes site.nodes.cdn.nodes.distribution (the Pulumi AWS Distribution).
-    // We need to guard against undefined since nodes.cdn might not exist in some configurations.
-
-    // Get CloudFront distribution ID from SST (only if cdn node exists)
-    if (site.nodes.cdn) {
-      const distributionId = site.nodes.cdn.nodes.distribution.id;
-
-      // CloudFront 5xx Error Rate (indicates origin issues)
-      new aws.cloudwatch.MetricAlarm("CloudFront5xxErrorAlarm", {
-        comparisonOperator: "GreaterThanThreshold",
-        evaluationPeriods: 2,
-        metricName: "5xxErrorRate",
-        namespace: "AWS/CloudFront",
-        period: 300, // 5 minutes
-        statistic: "Average",
-        threshold: 5, // 5% error rate
-        treatMissingData: "notBreaching",
-        dimensions: {
-          DistributionId: distributionId,
-          Region: "Global", // CloudFront metrics are always Global
-        },
-        alarmDescription:
-          "CloudFront 5xx error rate exceeded 5%. Check Lambda errors and origin health.",
-        alarmActions: [alarmsTopic.arn],
-      });
-
-      // CloudFront Request Spike (traffic anomaly detection)
-      new aws.cloudwatch.MetricAlarm("CloudFrontRequestSpikeAlarm", {
+    // Alarms only for production — ephemeral stages don't need monitoring
+    // alarmsTopic is only defined when isProduction, so checking it alone is sufficient
+    if (alarmsTopic) {
+      // Create an alarm for 5xx Errors (Server Faults)
+      new aws.cloudwatch.MetricAlarm("ServerErrorAlarm", {
         comparisonOperator: "GreaterThanThreshold",
         evaluationPeriods: 1,
-        metricName: "Requests",
-        namespace: "AWS/CloudFront",
-        period: 3600, // 1 hour
+        metricName: "Errors",
+        namespace: "AWS/Lambda",
+        period: 60,
         statistic: "Sum",
-        threshold: 1000000, // 1M requests/hour
-        treatMissingData: "notBreaching",
+        threshold: 10,
         dimensions: {
-          DistributionId: distributionId,
-          Region: "Global",
+          FunctionName: site.nodes.server.name,
         },
-        alarmDescription:
-          "CloudFront requests exceeded 1M/hour. Check for bot traffic or DDoS.",
         alarmActions: [alarmsTopic.arn],
       });
-    }
+
+      // Create an alarm for Throttling (Too many requests or concurrency limit)
+      new aws.cloudwatch.MetricAlarm("ThrottlingAlarm", {
+        comparisonOperator: "GreaterThanThreshold",
+        evaluationPeriods: 1,
+        metricName: "Throttles",
+        namespace: "AWS/Lambda",
+        period: 60,
+        statistic: "Sum",
+        threshold: 5,
+        dimensions: {
+          FunctionName: site.nodes.server.name,
+        },
+        alarmActions: [alarmsTopic.arn],
+      });
+
+      // CRITICAL: DynamoDB Write Spike Alarm
+      // This catches issues like the Dec 28, 2025 incident ($282 cost spike)
+      // where searchParams usage caused 200M writes in 16 hours.
+      // Threshold: 100,000 writes/hour (baseline is ~1,500/hour)
+      // Note: Without dimensions, this monitors ALL DynamoDB tables in the account.
+      // Since we only have one table (siteRevalidationTable), this is fine.
+      // If more tables are added, we should add dimensions with the specific table name.
+      new aws.cloudwatch.MetricAlarm("DynamoDBWriteSpikeAlarm", {
+        comparisonOperator: "GreaterThanThreshold",
+        evaluationPeriods: 1,
+        metricName: "ConsumedWriteCapacityUnits",
+        namespace: "AWS/DynamoDB",
+        period: 3600, // 1 hour
+        statistic: "Sum",
+        threshold: 100000, // 100K writes/hour (incident had 22M/hour at peak)
+        treatMissingData: "notBreaching",
+        alarmDescription:
+          "DynamoDB writes exceeded 100K/hour. Check for searchParams usage in listing pages!",
+        alarmActions: [alarmsTopic.arn],
+        // Note: okActions removed to reduce email noise. You'll only get alerts when threshold is breached.
+      });
+
+      // DynamoDB Read Spike Alarm (secondary indicator of cache issues)
+      new aws.cloudwatch.MetricAlarm("DynamoDBReadSpikeAlarm", {
+        comparisonOperator: "GreaterThanThreshold",
+        evaluationPeriods: 1,
+        metricName: "ConsumedReadCapacityUnits",
+        namespace: "AWS/DynamoDB",
+        period: 3600, // 1 hour
+        statistic: "Sum",
+        threshold: 500000, // 500K reads/hour
+        treatMissingData: "notBreaching",
+        alarmDescription:
+          "DynamoDB reads exceeded 500K/hour. Possible cache thrashing.",
+        alarmActions: [alarmsTopic.arn],
+      });
+
+      // =========================================================================
+      // ADDITIONAL COST MONITORING ALARMS
+      // Baselines established Dec 30, 2025:
+      //   - Lambda: ~66K invocations/day (~2,750/hour)
+      //   - Monthly cost: ~$2-4/month healthy
+      // =========================================================================
+
+      // --- LAMBDA COST ALARMS ---
+
+      // Lambda Invocation Spike (baseline: ~2,750/hour = 66K/day)
+      // High invocations = high Lambda cost
+      new aws.cloudwatch.MetricAlarm("LambdaInvocationSpikeAlarm", {
+        comparisonOperator: "GreaterThanThreshold",
+        evaluationPeriods: 1,
+        metricName: "Invocations",
+        namespace: "AWS/Lambda",
+        period: 3600, // 1 hour
+        statistic: "Sum",
+        threshold: 50000, // 50K invocations/hour (~18x baseline)
+        treatMissingData: "notBreaching",
+        dimensions: {
+          FunctionName: site.nodes.server.name,
+        },
+        alarmDescription:
+          "Lambda invocations exceeded 50K/hour. Check for traffic spike or infinite loops.",
+        alarmActions: [alarmsTopic.arn],
+      });
+
+      // Lambda Duration Spike (baseline: ~625K ms/hour)
+      // High duration = slow code or external API issues
+      new aws.cloudwatch.MetricAlarm("LambdaDurationSpikeAlarm", {
+        comparisonOperator: "GreaterThanThreshold",
+        evaluationPeriods: 1,
+        metricName: "Duration",
+        namespace: "AWS/Lambda",
+        period: 3600, // 1 hour
+        statistic: "Sum",
+        threshold: 10000000, // 10M ms/hour (~16x baseline)
+        treatMissingData: "notBreaching",
+        dimensions: {
+          FunctionName: site.nodes.server.name,
+        },
+        alarmDescription:
+          "Lambda total duration exceeded 10M ms/hour. Check for slow external APIs or code issues.",
+        alarmActions: [alarmsTopic.arn],
+      });
+
+      // Lambda Concurrent Executions (can trigger throttling and cost)
+      new aws.cloudwatch.MetricAlarm("LambdaConcurrencyAlarm", {
+        comparisonOperator: "GreaterThanThreshold",
+        evaluationPeriods: 1,
+        metricName: "ConcurrentExecutions",
+        namespace: "AWS/Lambda",
+        period: 60,
+        statistic: "Maximum",
+        threshold: 100, // High concurrency threshold
+        treatMissingData: "notBreaching",
+        dimensions: {
+          FunctionName: site.nodes.server.name,
+        },
+        alarmDescription:
+          "Lambda concurrent executions exceeded 100. High traffic or slow responses.",
+        alarmActions: [alarmsTopic.arn],
+      });
+
+      // --- CLOUDFRONT ALARMS ---
+      // Note: CloudFront metrics require DistributionId dimension.
+      // SST's Nextjs component exposes site.nodes.cdn (the Cdn component),
+      // which in turn exposes site.nodes.cdn.nodes.distribution (the Pulumi AWS Distribution).
+      // We need to guard against undefined since nodes.cdn might not exist in some configurations.
+
+      // Get CloudFront distribution ID from SST (only if cdn node exists)
+      if (site.nodes.cdn) {
+        const distributionId = site.nodes.cdn.nodes.distribution.id;
+
+        // CloudFront 5xx Error Rate (indicates origin issues)
+        new aws.cloudwatch.MetricAlarm("CloudFront5xxErrorAlarm", {
+          comparisonOperator: "GreaterThanThreshold",
+          evaluationPeriods: 2,
+          metricName: "5xxErrorRate",
+          namespace: "AWS/CloudFront",
+          period: 300, // 5 minutes
+          statistic: "Average",
+          threshold: 5, // 5% error rate
+          treatMissingData: "notBreaching",
+          dimensions: {
+            DistributionId: distributionId,
+            Region: "Global", // CloudFront metrics are always Global
+          },
+          alarmDescription:
+            "CloudFront 5xx error rate exceeded 5%. Check Lambda errors and origin health.",
+          alarmActions: [alarmsTopic.arn],
+        });
+
+        // CloudFront Request Spike (traffic anomaly detection)
+        new aws.cloudwatch.MetricAlarm("CloudFrontRequestSpikeAlarm", {
+          comparisonOperator: "GreaterThanThreshold",
+          evaluationPeriods: 1,
+          metricName: "Requests",
+          namespace: "AWS/CloudFront",
+          period: 3600, // 1 hour
+          statistic: "Sum",
+          threshold: 1000000, // 1M requests/hour
+          treatMissingData: "notBreaching",
+          dimensions: {
+            DistributionId: distributionId,
+            Region: "Global",
+          },
+          alarmDescription:
+            "CloudFront requests exceeded 1M/hour. Check for bot traffic or DDoS.",
+          alarmActions: [alarmsTopic.arn],
+        });
+      }
+    } // end alarmsTopic (production-only)
 
     // Note: S3 request metrics require enabling request metrics on the bucket,
     // which adds ~$0.01/1000 requests. Not enabled by default.
@@ -515,75 +541,78 @@ export default $config({
     // If you want S3 monitoring, enable request metrics in the S3 console first.
 
     // =========================================================================
-    // CACHE CLEANUP LAMBDA
+    // CACHE CLEANUP LAMBDA (production only)
     // Cleans up stale cache entries from old deployments:
     // 1. DynamoDB: Removes orphaned ISR cache entries from old build IDs
     // 2. S3: Removes stale __fetch/ cache objects that accumulate over time
     // Runs weekly to keep storage costs manageable.
     // =========================================================================
 
-    // WORKAROUND for SST v3 Nextjs component bug:
-    // site.nodes.revalidationTable returns undefined because the Nextjs class
-    // declares `private revalidationTable?: Output<Table | undefined>` as a
-    // class field. In JavaScript, class fields are initialized AFTER super()
-    // returns, overwriting any value set during super()'s call to buildPlan()
-    // (which does this.revalidationTable = ret.revalidationTable). This is a
-    // known JS class field initialization ordering issue (TC39 §15.7.14).
-    //
-    // Workaround: Capture the table name via the server function's environment
-    // variable CACHE_DYNAMO_TABLE, which SST sets correctly inside buildPlan().
-    // site.nodes.server IS correct (defined in SsrSite base class, not overwritten).
-    // site.nodes.assets IS correct (same — defined in SsrSite base class).
-    const serverFunction = site.nodes.server;
-    const assetsBucket = site.nodes.assets;
+    if (isProduction) {
+      // WORKAROUND for SST v3 Nextjs component bug:
+      // site.nodes.revalidationTable returns undefined because the Nextjs class
+      // declares `private revalidationTable?: Output<Table | undefined>` as a
+      // class field. In JavaScript, class fields are initialized AFTER super()
+      // returns, overwriting any value set during super()'s call to buildPlan()
+      // (which does this.revalidationTable = ret.revalidationTable). This is a
+      // known JS class field initialization ordering issue (TC39 §15.7.14).
+      //
+      // Workaround: Capture the table name via the server function's environment
+      // variable CACHE_DYNAMO_TABLE, which SST sets correctly inside buildPlan().
+      // site.nodes.server IS correct (defined in SsrSite base class, not overwritten).
+      // site.nodes.assets IS correct (same — defined in SsrSite base class).
+      const serverFunction = site.nodes.server;
+      const assetsBucket = site.nodes.assets;
 
-    if (serverFunction && assetsBucket) {
-      // Extract the DynamoDB table name from the server function's env vars.
-      // SST sets CACHE_DYNAMO_TABLE inside buildPlan() on the server Lambda.
-      // Pulumi's lifted property access chains Output values automatically.
-      const tableName = serverFunction.nodes.function.environment.apply(
-        (env) => env?.variables?.CACHE_DYNAMO_TABLE ?? "",
-      );
+      if (serverFunction && assetsBucket) {
+        // Extract the DynamoDB table name from the server function's env vars.
+        // SST sets CACHE_DYNAMO_TABLE inside buildPlan() on the server Lambda.
+        // Pulumi's lifted property access chains Output values automatically.
+        const tableName = serverFunction.nodes.function.environment.apply(
+          (env) => env?.variables?.CACHE_DYNAMO_TABLE ?? "",
+        );
 
-      // Construct the table ARN from AWS context + table name
-      const accountId = aws.getCallerIdentityOutput({}).accountId;
-      const region = aws.getRegionOutput({}).name;
-      const tableArn = $interpolate`arn:aws:dynamodb:${region}:${accountId}:table/${tableName}`;
+        // Construct the table ARN from AWS context + table name
+        const accountId = aws.getCallerIdentityOutput({}).accountId;
+        const region = aws.getRegionOutput({}).name;
+        const tableArn = $interpolate`arn:aws:dynamodb:${region}:${accountId}:table/${tableName}`;
 
-      // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
-      // IMPORTANT: Cron.job accepts string | FunctionArgs | FunctionArn — NOT
-      // a Function instance. Passing a Function instance causes functionBuilder
-      // to throw because Function class has no .handler property.
-      new sst.aws.Cron("CacheCleanupCron", {
-        schedule: "cron(0 3 ? * SUN *)",
-        job: {
-          handler: "scripts/cleanup-dynamo-cache.handler",
-          runtime: "nodejs22.x",
-          timeout: "15 minutes",
-          memory: "256 MB",
-          environment: {
-            CACHE_DYNAMO_TABLE: tableName,
-            CACHE_S3_BUCKET: assetsBucket.name,
-            BUILDS_TO_KEEP: "3",
-            DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
-            CACHE_CLEANUP_ENABLED: process.env.CACHE_CLEANUP_ENABLED ?? "true",
+        // Schedule: Run every Sunday at 3 AM UTC (low traffic time)
+        // IMPORTANT: Cron.job accepts string | FunctionArgs | FunctionArn — NOT
+        // a Function instance. Passing a Function instance causes functionBuilder
+        // to throw because Function class has no .handler property.
+        new sst.aws.Cron("CacheCleanupCron", {
+          schedule: "cron(0 3 ? * SUN *)",
+          job: {
+            handler: "scripts/cleanup-dynamo-cache.handler",
+            runtime: "nodejs22.x",
+            timeout: "15 minutes",
+            memory: "256 MB",
+            environment: {
+              CACHE_DYNAMO_TABLE: tableName,
+              CACHE_S3_BUCKET: assetsBucket.name,
+              BUILDS_TO_KEEP: "3",
+              DRY_RUN: process.env.CACHE_CLEANUP_DRY_RUN ?? "false",
+              CACHE_CLEANUP_ENABLED:
+                process.env.CACHE_CLEANUP_ENABLED ?? "true",
+            },
+            permissions: [
+              {
+                actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
+                resources: [tableArn],
+              },
+              {
+                actions: ["s3:ListBucket", "s3:DeleteObject"],
+                resources: [
+                  assetsBucket.arn,
+                  $interpolate`${assetsBucket.arn}/*`,
+                ],
+              },
+            ],
           },
-          permissions: [
-            {
-              actions: ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
-              resources: [tableArn],
-            },
-            {
-              actions: ["s3:ListBucket", "s3:DeleteObject"],
-              resources: [
-                assetsBucket.arn,
-                $interpolate`${assetsBucket.arn}/*`,
-              ],
-            },
-          ],
-        },
-      });
-    }
+        });
+      }
+    } // end isProduction (cache cleanup cron)
 
     return {
       SiteUrl: site.url,
