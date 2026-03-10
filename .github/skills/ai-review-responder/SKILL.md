@@ -114,12 +114,13 @@ Resolve ALL threads (both fixed and declined) using GraphQL mutation:
 
 ```bash
 for TID in "THREAD_ID_1" "THREAD_ID_2"; do
-  gh api graphql -f query="
-    mutation {
-      resolveReviewThread(input: {threadId: \"$TID\"}) {
+  gh api graphql \
+    -F tid="$TID" \
+    -f query='mutation($tid: ID!) {
+      resolveReviewThread(input: {threadId: $tid}) {
         thread { isResolved }
       }
-    }" --jq '.data.resolveReviewThread.thread.isResolved'
+    }' --jq '.data.resolveReviewThread.thread.isResolved'
 done
 ```
 
@@ -128,11 +129,14 @@ done
 Post a summary comment and trigger review bots:
 
 ```bash
-gh pr comment PR_NUMBER --body "Round N: [summary of fixes]. Declined: [summary with rationale].
+cat <<'EOF' > /tmp/review-comment.md
+Round N: [summary of fixes]. Declined: [summary with rationale].
 
 @coderabbitai review
 @gemini review
-@cubic-dev-ai review"
+@cubic-dev-ai review
+EOF
+gh pr comment PR_NUMBER --body-file /tmp/review-comment.md
 ```
 
 **Bot trigger commands**:
