@@ -19,7 +19,7 @@ import json
 import os
 import re
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 import google.auth
@@ -81,7 +81,7 @@ CWV_THRESHOLDS = {
 I18N_EVENT_PREFIXES = [("/es/e/", "es"), ("/en/e/", "en"), ("/e/", "ca")]
 LOCALE_PATH_PREFIXES = ["/es/", "/en/"]
 
-TODAY = datetime.utcnow()
+TODAY = datetime.now(timezone.utc)
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
 START_90 = (TODAY - timedelta(days=93)).strftime("%Y-%m-%d")
 START_30 = (TODAY - timedelta(days=33)).strftime("%Y-%m-%d")
@@ -495,7 +495,7 @@ def collect_gsc_data():
             month_num = CATALAN_MONTHS.get(month_name)
             if month_num:
                 try:
-                    event_date = datetime(int(year), month_num, int(day))
+                    event_date = datetime(int(year), month_num, int(day), tzinfo=timezone.utc)
                     if event_date < TODAY - timedelta(days=30):
                         expired_events.append({
                             "page": url,
