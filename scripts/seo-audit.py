@@ -1087,7 +1087,8 @@ def generate_markdown(data, previous=None):
         lines.append("|------|------------|-------------|--------|----------|")
         for r in expired[:10]:
             path = sanitize_md(r["page"].replace(SITE, "/"))
-            lines.append(f"| `{path[:60]}...` | {r['event_date']} | {r['impressions']:,} | {r['clicks']} | {r['position']:.1f} |")
+            path_display = f"{path[:60]}..." if len(path) > 60 else path
+            lines.append(f"| `{path_display}` | {r['event_date']} | {r['impressions']:,} | {r['clicks']} | {r['position']:.1f} |")
         lines.append("")
 
     # ── New vs Returning Users ──
