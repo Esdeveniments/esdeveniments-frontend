@@ -28,7 +28,7 @@ from googleapiclient.discovery import build
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
     RunReportRequest, DateRange, Dimension, Metric, OrderBy,
-    FilterExpression, Filter,
+    FilterExpression, FilterExpressionList, Filter,
 )
 
 # ─── CONFIGURATION ───
@@ -679,7 +679,7 @@ def collect_ga4_data():
     organic_sessions = safe_int(organic_rows[0]["metrics"][0]) if organic_rows else 0
 
     # AI sessions — use OR'd CONTAINS filters for accuracy
-    ai_filter = FilterExpression(or_group=FilterExpression.ExpressionList(expressions=[
+    ai_filter = FilterExpression(or_group=FilterExpressionList(expressions=[
         FilterExpression(filter=Filter(
             field_name="sessionSource",
             string_filter=Filter.StringFilter(
