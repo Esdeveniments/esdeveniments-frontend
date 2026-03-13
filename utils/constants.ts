@@ -28,7 +28,9 @@ export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
 export const SITEMAP_PLACES_PER_CHUNK = 100;
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
   "event_image_upload_too_large";
-export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads
+export const FORMDATA_PARSE_ERROR_SUBSTRING = "failed to parse body as formdata";
+export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads (compression handles the rest)
+export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024; // Sponsor images are uploaded raw (no compression) — must stay under Lambda's 6MB limit
 
 export const formatMegabytesLabel = (bytes: number): string => {
   const value = bytes / (1024 * 1024);
