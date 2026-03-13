@@ -225,11 +225,16 @@ export default $config({
       },
       warm: 1, // Reduced from 3 to minimize warm invocations + GB-seconds. Cold starts ~2s, rare with CloudFront cache.
       server: {
-        // Sharp is installed by open-next.config.ts (the PRIMARY mechanism),
-        // which handles cross-arch installation via its `arch` field.
-        // SST v3's server.install cannot cross-install arm64 packages on x64 CI
-        // (see incident Feb 18-22, 2026), so we don't include Sharp here.
-        // open-next.config.ts installs Sharp@0.34.5 with arch: "arm64".
+        // Install Sharp with x64 binaries for the server Lambda.
+        // open-next.config.ts is the PRIMARY installer, but server.install
+        // provides a safety net. Both must use x86_64/x64.
+        // ⚠️ Do NOT switch to arm64 — SST v3 cannot cross-install on x64 CI.
+        // Verified broken: Feb 18-22 + Mar 2026 (PR #236).
+        install: [
+          "sharp",
+          "@img/sharp-linux-x64",
+          "@img/sharp-libvips-linux-x64",
+        ],
       },
       transform: {
         server: (args) => {
@@ -238,15 +243,12 @@ export default $config({
           args.runtime = "nodejs22.x"; // Upgraded from nodejs20.x (deprecated April 2026)
           args.memory = "512 MB"; // Actual peak: 436 MB (15% headroom). Was 768 MB → saves ~33% GB-seconds
           args.timeout = "20 seconds";
-          // arm64 (Graviton2): ~20% cheaper per GB-second vs x86_64.
-          // Sharp arm64 binaries are installed via open-next.config.ts (arch: "arm64"),
-          // which handles cross-arch installation correctly on x64 CI.
-          // See: incident Feb 18-22, 2026 (Sharp arch mismatch).
-          args.architecture = "arm64";
+          // ⚠️ MUST be x86_64 — SST v3 cannot cross-install arm64 Sharp on x64 CI.
+          // Verified broken: Feb 18-22, 2026 + Mar 2026 (PR #236 attempted arm64).
+          // Do NOT switch to arm64 until SST/OpenNext proves cross-arch install works.
+          args.architecture = "x86_64";
           // Sentry layer ARN - configurable per environment/region
           // Defaults to eu-west-3 version 283 if not specified
-          // Note: Sentry removed the native Relay binary from Node.js layers in mid-2023,
-          // so the layer is now pure JS and compatible with both x86_64 and arm64.
           args.layers = process.env.SENTRY_LAYER_ARN
             ? [process.env.SENTRY_LAYER_ARN]
             : [

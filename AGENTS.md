@@ -103,13 +103,11 @@
 Before writing ANY new code, ALWAYS search first:
 
 1. **Search for existing patterns** using `grep_search` or `semantic_search`:
-
    - The concept name (e.g., "slug validation", "price formatting")
    - Function name patterns (`isValid*`, `format*`, `build*`, `use*`)
    - The literal value (regex pattern, constant)
 
 2. **Check canonical locations** based on what you're creating:
-
    - Type/interface → search `types/`
    - Validation function → search `utils/` for `isValid*`, `validate*`
    - Helper/utility → search `utils/`, `lib/`
@@ -118,7 +116,6 @@ Before writing ANY new code, ALWAYS search first:
    - Hook → search `components/hooks/`
 
 3. **Report findings** before proposing implementation:
-
    - "Found `isValidCategorySlugFormat` in `utils/category-mapping.ts` - will reuse"
    - "No existing pattern found - will create new utility in `utils/`"
 
@@ -130,7 +127,7 @@ Before writing ANY new code, ALWAYS search first:
 
 - Prefer surgical diffs; keep file moves/renames minimal and scoped.
 - Do not edit generated or build output (`public/sw.js`, `.next/**`, `tsconfig.tsbuildinfo`, `server-place-sitemap.xml`). Edit `public/sw-template.js` and run prebuild instead.
-- **⚠️ NEVER delete `open-next.config.ts`** — it's the primary and sole mechanism that installs Sharp into the Lambda bundle. SST's `server.install` is NOT used for Sharp (it cannot cross-install arm64 packages on x64 CI). The `arch` in `open-next.config.ts` MUST match `args.architecture` in `sst.config.ts` (currently both arm64). See: `docs/incidents/2026-02-18-sharp-architecture-mismatch.md`.
+- **⚠️ NEVER delete `open-next.config.ts`** — it's the primary mechanism that installs Sharp into the Lambda bundle. `server.install` in `sst.config.ts` provides a safety net. Both must use x86_64/x64. The `arch` in `open-next.config.ts` MUST match `args.architecture` in `sst.config.ts` (currently both x86_64/x64). Do NOT switch to arm64 — SST v3 + OpenNext cannot cross-install (verified broken Feb + Mar 2026). See: `docs/incidents/2026-02-18-sharp-architecture-mismatch.md`.
 - Types live only in `types/`; avoid redefining `NavigationItem`, `SocialLinks`, `EventProps`, `CitySummaryResponseDTO` (see `types/common.ts`, `types/api/city.ts`).
 - Any reusable/derived props types (e.g., Picks of an existing props interface) must be declared in `types/` (typically `types/props.ts`) rather than inline within components.
 - Before introducing a new type/interface, search `types/` (and related feature folders) for existing candidates to reuse/extend, and place additions in the most appropriate shared file (e.g., `types/props.ts` for UI props, `types/api/*` for DTOs).
@@ -220,13 +217,13 @@ This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL 
 
 ### Running services
 
-| Command | Purpose | Notes |
-|---|---|---|
-| `yarn dev` | Next.js dev server (port 3000) | Auto-runs prebuild (service worker generation). Uses Turbopack. |
-| `yarn lint` | ESLint | 0 errors expected; warnings are pre-existing and acceptable. |
-| `yarn typecheck` | `tsc --noEmit` | Must pass cleanly. |
-| `yarn test` | Vitest unit/integration tests | All 100 test files / 1401 tests should pass with no external dependencies. |
-| `yarn test:e2e` | Playwright E2E | Requires a running app and valid API credentials. |
+| Command          | Purpose                        | Notes                                                                      |
+| ---------------- | ------------------------------ | -------------------------------------------------------------------------- |
+| `yarn dev`       | Next.js dev server (port 3000) | Auto-runs prebuild (service worker generation). Uses Turbopack.            |
+| `yarn lint`      | ESLint                         | 0 errors expected; warnings are pre-existing and acceptable.               |
+| `yarn typecheck` | `tsc --noEmit`                 | Must pass cleanly.                                                         |
+| `yarn test`      | Vitest unit/integration tests  | All 100 test files / 1401 tests should pass with no external dependencies. |
+| `yarn test:e2e`  | Playwright E2E                 | Requires a running app and valid API credentials.                          |
 
 ### Gotchas
 

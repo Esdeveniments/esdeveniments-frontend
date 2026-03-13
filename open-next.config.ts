@@ -13,9 +13,9 @@
  * - For x86_64 Lambda, use "x64"
  * - For arm64 Lambda, use "arm64"
  *
- * Using arm64 (Graviton2) for ~20% cost savings per GB-second.
- * OpenNext handles cross-arch installation correctly via this `arch` field,
- * unlike SST v3's server.install which cannot cross-install on x64 CI.
+ * ⚠️ Using x86_64: SST v3 + OpenNext cannot cross-install arm64 Sharp on x64 CI.
+ * Verified broken again on Mar 2026 (PR #236 attempted arm64, same failure as Feb incident).
+ * Do NOT switch to arm64 until SST/OpenNext proves cross-arch npm install works.
  *
  * See: incident Feb 18-22, 2026 (Sharp arch mismatch).
  */
@@ -24,8 +24,8 @@ const config = {
     install: {
       // Install Sharp with the correct architecture for Lambda
       packages: ["sharp@0.34.5"],
-      // Must match Lambda architecture in sst.config.ts (arm64 Graviton2)
-      arch: "arm64",
+      // Must match Lambda architecture in sst.config.ts (x86_64)
+      arch: "x64",
     },
   },
 };
