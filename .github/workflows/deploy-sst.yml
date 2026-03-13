@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Pin: b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@v6 # Pin: b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4 # Pin: 39370e3970a6d050c480ffad4ff0ed4d3fdee5af
