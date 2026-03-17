@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "@i18n/routing";
+import { useRouter } from "@i18n/routing";
 import useSWR from "swr";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { HeartIcon as HeartIconOutline } from "@heroicons/react/24/outline";
@@ -39,7 +39,6 @@ export default function FavoriteButton({
   const [isPending, startTransition] = useTransition();
   const isMutatingRef = useRef(false);
   const router = useRouter();
-  const pathname = usePathname();
   const t = useTranslations("Components.FavoriteButton");
 
   const { data: favoritesData, mutate: mutateFavorites } = useSWR<
@@ -148,7 +147,7 @@ export default function FavoriteButton({
 
               // Preserve existing /preferits UX: reflect removals immediately.
               // Avoid refreshing other pages to keep the toggle lightweight.
-              if (pathname.endsWith("/preferits")) {
+              if (window.location.pathname.endsWith("/preferits")) {
                 router.refresh();
               }
             } catch (error: unknown) {
