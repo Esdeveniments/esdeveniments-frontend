@@ -207,7 +207,7 @@ Adding a new filter:
 - **Swallowing stack traces**: Pass original error to `captureException(error)`, not `new Error(error.message)`.
 - **URL parsing in catch blocks**: Use try/catch when parsing URLs (e.g., `new URL(url).hostname`) to avoid exceptions in error handlers.
 - **⚠️ CRITICAL - Barrel file imports leaking `"use client"` modules**: NEVER create or import from local barrel files (`index.ts`) that re-export `"use client"` components from different route contexts. In Next.js RSC, every `"use client"` module re-exported from a barrel is registered in the `client-reference-manifest` of **every route** that imports from that barrel — even if the imported route only uses one export. This caused a 24 KB manifest bloat on `/[place]` when `CheckoutButton`, `PlaceSelector`, and `PricingSectionClient` (only used on `/patrocina`) leaked via `components/ui/sponsor/index.ts`. Fix: always use direct file imports (e.g., `from "./SponsorBannerSlot"` not `from "@components/ui/sponsor"`).
-- **⚠️ CRITICAL - Deleting or modifying `open-next.config.ts`**: This file is the **primary and sole** mechanism that installs Sharp into the Lambda bundle via OpenNext's `install.packages` + `arch` config. Deleting it removes Sharp entirely (Lambda ZIP drops from 28 MB to 20 MB), causing `/api/image-proxy` to silently serve unoptimized images. SST's `server.install` is NOT used for Sharp (it cannot cross-install arm64 packages on x64 CI). The `arch` in `open-next.config.ts` MUST match `args.architecture` in `sst.config.ts` (currently both arm64). See: `docs/incidents/2026-02-18-sharp-architecture-mismatch.md`.
+- **⚠️ CRITICAL - Deleting or modifying `open-next.config.ts`**: This file is the **primary** mechanism that installs Sharp into the Lambda bundle via OpenNext's `install.packages` + `arch` config. Deleting it removes Sharp entirely (Lambda ZIP drops from 28 MB to 20 MB), causing `/api/image-proxy` to silently serve unoptimized images. `server.install` in `sst.config.ts` provides a safety net. Both must use x86_64/x64. The `arch` in `open-next.config.ts` MUST match `args.architecture` in `sst.config.ts` (currently both x86_64/x64). Do NOT switch to arm64 — SST v3 + OpenNext cannot cross-install (verified broken Feb + Mar 2026). See: `docs/incidents/2026-02-18-sharp-architecture-mismatch.md`.
 
 ## 16. Quick Examples
 
@@ -271,47 +271,40 @@ Adding a new filter:
 ### Mandatory Rules
 
 1. **Typography**: ALWAYS use semantic classes, NEVER arbitrary text-\* utilities
-
    - Headings: `.heading-1`, `.heading-2`, `.heading-3`, `.heading-4`
    - Body: `.body-large`, `.body-normal`, `.body-small`
    - Labels: `.label`
    - Example: `<h1 className="heading-1">` NOT `<h1 className="text-3xl font-bold">`
 
 2. **Colors**: ALWAYS use semantic tokens, NEVER generic Tailwind grays
-
    - ✅ Use: `text-foreground`, `text-foreground-strong`, `text-foreground/80`, `bg-background`, `bg-muted`, `border-border`, `primary-foreground`
    - ❌ Forbidden: `text-gray-*`, `bg-gray-*`, `border-gray-*`
    - Opacity: Use `/80`, `/70`, `/60` suffixes (e.g., `text-foreground/80`)
    - Reference: Brand colors defined in `tailwind.config.js`
 
 3. **Buttons**: Transitional policy → use semantic classes now; component available after Week 4
-
    - Component (after Week 4): `<Button variant="primary|neutral|outline|muted">`
    - Classes: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`
    - NO manual button styling with inline utilities
 
 4. **Cards**: Use semantic card classes
-
    - `.card-bordered` (border + subtle shadow)
    - `.card-elevated` (stronger shadow, no border)
    - `.card-body`, `.card-header`, `.card-footer` (spacing)
    - Example: `<div className="card-bordered"><div className="card-body">...</div></div>`
 
 5. **Badges**: Transitional policy → use semantic badge classes now; component available after Week 4
-
    - `.badge-primary` (red background)
    - `.badge-default` (gray background)
    - Component (after Week 4): `<Badge>`
 
 6. **Layout Utilities**: Replace repetitive flex patterns
-
    - `.flex-center` replaces `flex justify-center items-center`
    - `.flex-between` replaces `flex justify-between items-center`
    - `.flex-start` replaces `flex justify-start items-center`
    - `.stack` replaces `flex flex-col gap-element-gap`
 
 7. **Spacing**: Use semantic tokens for consistency
-
    - `py-section-y`, `px-section-x` for section spacing
    - `p-card-padding` for card inner padding
    - `gap-element-gap` for default gaps
