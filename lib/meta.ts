@@ -20,6 +20,15 @@ import { parseDateFromIso } from "@utils/schema-helpers";
 // Days after event end date before we noindex it to save crawl budget
 const EXPIRED_EVENT_NOINDEX_DAYS = 60;
 
+// --- Default robots policy for indexable pages ---
+export const DEFAULT_ROBOTS_POLICY = {
+  index: true,
+  follow: true,
+  "max-image-preview": "large" as const,
+  "max-snippet": -1,
+  "max-video-preview": -1,
+};
+
 // --- Sanitization/Truncation helpers ---
 function sanitizeInput(str: string = ""): string {
   return str.replace(/<[^>]*>/g, "").trim();
