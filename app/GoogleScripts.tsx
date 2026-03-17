@@ -282,45 +282,7 @@ export default function GoogleScripts() {
             />
           )}
 
-          {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
-          <Script id="ai-referrer-analytics" strategy="lazyOnload">
-            {`
-              (function() {
-                try {
-                  const referrer = document.referrer;
-                  if (!referrer) return;
-                  
-                  const aiDomains = [
-                    'chat.openai.com',
-                    'perplexity.ai',
-                    'gemini.google.com',
-                    'bard.google.com',
-                    'claude.ai'
-                  ];
-                  
-                  const isAiReferrer = aiDomains.some(domain => referrer.includes(domain));
-                  if (!isAiReferrer) return;
-                  
-                  const domain = aiDomains.find(d => referrer.includes(d));
-                  const sessionKey = 'ai_referrer_tracked_' + domain;
-                  
-                  if (sessionStorage.getItem(sessionKey)) return;
-                  
-                  // Robustness fix: Push directly to dataLayer instead of relying on global gtag function
-                  window.dataLayer = window.dataLayer || [];
-                  window.dataLayer.push({
-                    event: 'ai_referrer',
-                    referrer_domain: domain,
-                    referrer_url: referrer
-                  });
-                  
-                  sessionStorage.setItem(sessionKey, 'true');
-                } catch (error) {
-                  console.warn('AI referrer analytics error:', error);
-                }
-              })();
-            `}
-          </Script>
+
         </>
       )}
 

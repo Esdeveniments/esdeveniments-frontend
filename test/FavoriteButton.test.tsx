@@ -19,7 +19,6 @@ const sendGoogleEventMock = vi.fn<
 
 vi.mock("@i18n/routing", () => ({
   useRouter: () => ({ refresh: refreshMock }),
-  usePathname: () => "/preferits",
 }));
 
 vi.mock("@utils/analytics", () => ({
@@ -42,6 +41,11 @@ describe("FavoriteButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (globalThis as unknown as { fetch?: unknown }).fetch = fetchMock;
+    // Simulate being on the /preferits page so router.refresh() is triggered
+    Object.defineProperty(window, "location", {
+      value: { pathname: "/preferits" },
+      writable: true,
+    });
   });
 
   it("renders with correct aria state and toggles on click", async () => {
