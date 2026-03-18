@@ -510,7 +510,7 @@ export async function ServerEventsCategorizedContent({
     <>
       {/* Popular Now Section — derived from existing data, zero extra API calls */}
       {popularEvents.length > 0 && (
-        <div className="container">
+        <div className="container content-auto-section">
           <section className="py-section-y border-b">
             <SectionHeading
               title={tCta("popularTitle")}

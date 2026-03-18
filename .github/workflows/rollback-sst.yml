@@ -209,27 +209,40 @@ jobs:
             FAIL=1
           fi
 
-          # Sharp on arm64
-          SHARP_RESPONSE=$(curl -sI --max-time 15 \
-            "https://www.esdeveniments.cat/api/image-proxy?url=$(python3 -c 'import urllib.parse; print(urllib.parse.quote("https://picsum.photos/800/600.jpg"))')&w=400&q=50" \
-            -H "Accept: image/webp,image/*" 2>/dev/null || echo "CURL_FAILED")
+          # Sharp on x86_64 Lambda — image optimization check
+          TEST_IMAGE="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png"
+          ENCODED_URL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${TEST_IMAGE}'))")
+          PROXY_URL="https://www.esdeveniments.cat/api/image-proxy?url=${ENCODED_URL}&w=400&q=50"
 
-          if echo "$SHARP_RESPONSE" | grep -qi "CURL_FAILED"; then
-            echo "::error::Image proxy unreachable"
-            FAIL=1
-          else
+          SHARP_OK=false
+          for ATTEMPT in 1 2 3; do
+            echo "  Sharp attempt ${ATTEMPT}/3..."
+            SHARP_RESPONSE=$(curl -sI --max-time 25 "${PROXY_URL}" \
+              -H "Accept: image/webp,image/*" 2>/dev/null || echo "CURL_FAILED")
+
+            if echo "$SHARP_RESPONSE" | grep -qi "CURL_FAILED"; then
+              sleep 5; continue
+            fi
+
             OPTIMIZED=$(echo "$SHARP_RESPONSE" | grep -i "x-image-proxy-optimized" | tr -d '\r' | awk -F': ' '{print $2}')
             SHARP_STATUS=$(echo "$SHARP_RESPONSE" | head -1 | grep -oE '[0-9]{3}' | head -1)
-            if [ "$SHARP_STATUS" = "502" ]; then
-              echo "::warning::Test image service unavailable — skipping Sharp check"
+
+            if [ "$SHARP_STATUS" = "502" ] || [ "$SHARP_STATUS" = "504" ]; then
+              sleep 5; continue
             elif [ "$OPTIMIZED" = "fallback-sharp-error" ]; then
               echo "::error::Sharp BROKEN after rollback!"
-              FAIL=1
+              FAIL=1; break
             elif echo "$OPTIMIZED" | grep -qE "^(true|skipped-small|skipped-animated)$"; then
               echo "✅ Sharp working (optimized: ${OPTIMIZED})"
+              SHARP_OK=true; break
             else
-              echo "::warning::Sharp status unclear (optimized: ${OPTIMIZED:-empty})"
+              sleep 5; continue
             fi
+          done
+
+          if [ "$SHARP_OK" != "true" ] && [ "$FAIL" = "0" ]; then
+            echo "::error::Sharp check failed after 3 attempts"
+            FAIL=1
           fi
 
           # Health endpoint — validate cache infrastructure (matches deploy workflow)
