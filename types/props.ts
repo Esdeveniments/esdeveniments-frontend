@@ -765,6 +765,7 @@ export interface PlacePageExploreNavProps {
 export interface CategoryQuicklinksProps {
   place: string;
   date?: string;
+  currentCategory?: string;
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
 }

@@ -43,9 +43,11 @@ export default async function PlacePageExploreNav({
   const hasCategory = !!category && category !== DEFAULT_FILTER_VALUE;
 
   const showDateBadges = !hasDate;
-  const showCategoryLinks = !hasCategory && categories.length > 0;
+  const showCategoryLinks = hasCategory
+    ? categories.some((c) => c.slug !== category)
+    : categories.length > 0;
 
-  // Don't render anything if both filters are already applied
+  // Don't render if no links to show
   if (!showDateBadges && !showCategoryLinks) {
     return null;
   }
@@ -80,6 +82,7 @@ export default async function PlacePageExploreNav({
         <CategoryQuicklinks
           place={place}
           date={hasDate ? date : undefined}
+          currentCategory={hasCategory ? category : undefined}
           categories={categories}
           placeLabel={placeLabel}
         />

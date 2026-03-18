@@ -45,6 +45,20 @@
 - Extras: `yarn analyze` bundle analysis; `yarn scan` run react‑scan on `localhost:3000`.
 - CI: Amplify builds use Node 20 + Yarn 4; prebuild generates `public/sw.js` and postbuild runs sitemap.
 
+## Rollback Procedure
+
+If a production deploy causes issues (broken pages, Sharp failure, performance regression):
+
+1. **Quick rollback** (recommended): Go to **GitHub Actions → "Rollback (SST)" → Run workflow** → leave `commit_sha` empty → click **Run**. This deploys the last commit that passed all post-deploy checks (~15 min).
+2. **Rollback to specific commit**: Same workflow, but enter the commit SHA in the `commit_sha` field.
+3. **CLI alternative**: `gh workflow run rollback-sst.yml` or `gh workflow run rollback-sst.yml -f commit_sha=abc123`.
+
+**How it works**: Every successful deploy tags the commit as `last-successful-deploy`. The rollback workflow checks out that tag (or the provided SHA), builds, deploys directly to production (no staging — speed matters), and verifies with smoke tests.
+
+**Prerequisite**: The `last-successful-deploy` tag must exist (created automatically after the first green deploy with this workflow).
+
+**What it does NOT do**: It does not revert database migrations or external API changes. It only redeploys the frontend Lambda + CloudFront.
+
 ## Coding Style & Naming Conventions
 
 - TypeScript strict; prefer server components by default. Add `"use client"` only when needed.
