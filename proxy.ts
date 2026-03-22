@@ -475,6 +475,14 @@ export default async function proxy(request: NextRequest) {
 
   if (shouldPersistLocaleFromPath && localeFromPath) {
     persistLocaleCookie(response, localeFromPath);
+  } else if (
+    !localeFromPath &&
+    localeFromCookie !== null &&
+    localeFromCookie !== DEFAULT_LOCALE
+  ) {
+    // Clear stale non-default locale cookie when user visits unprefixed path
+    // (which resolves to DEFAULT_LOCALE), so subsequent / visits don't redirect
+    persistLocaleCookie(response, DEFAULT_LOCALE);
   }
 
   // visitor_id cookie is set for /api/sponsors/checkout if missing.

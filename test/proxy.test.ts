@@ -127,7 +127,9 @@ describe("proxy", () => {
       const result = await proxy(mockRequest);
 
       // With [locale] segment, default-locale paths are rewritten to include /ca/
-      expect(NextResponse.rewrite).toHaveBeenCalled();
+      expect(NextResponse.rewrite).toHaveBeenCalledTimes(1);
+      const [rewriteUrl] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(rewriteUrl.pathname).toBe("/ca/home");
       expect(result).toBeDefined();
     });
 
