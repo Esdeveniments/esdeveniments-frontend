@@ -3,7 +3,7 @@ import { createCache, createKeyedCache } from "lib/api/cache";
 
 describe("createCache", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["performance"] });
   });
 
   it("calls fetcher on first invocation", async () => {
@@ -69,7 +69,7 @@ describe("createCache", () => {
 
 describe("createKeyedCache", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["performance"] });
   });
 
   it("caches values by key independently", async () => {

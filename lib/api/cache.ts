@@ -11,12 +11,11 @@ export function createCache<T>(ttlMs: number): {
   let cacheEntry: CacheEntry<T> | null = null;
 
   const cache: CacheFn<T> = async (fetcher) => {
-    const now = Date.now();
-    if (cacheEntry && now - cacheEntry.timestamp < ttlMs) {
+    if (cacheEntry && performance.now() - cacheEntry.timestamp < ttlMs) {
       return cacheEntry.data;
     }
     const data = await fetcher();
-    cacheEntry = { data, timestamp: now };
+    cacheEntry = { data, timestamp: performance.now() };
     return data;
   };
 
@@ -38,13 +37,12 @@ export function createKeyedCache<T>(ttlMs: number): {
   const cacheMap = new Map<string | number, { data: T; timestamp: number }>();
 
   const cache: KeyedCacheFn<T> = async (key, fetcher) => {
-    const now = Date.now();
     const entry = cacheMap.get(key);
-    if (entry && now - entry.timestamp < ttlMs) {
+    if (entry && performance.now() - entry.timestamp < ttlMs) {
       return entry.data;
     }
     const data = await fetcher(key);
-    cacheMap.set(key, { data, timestamp: now });
+    cacheMap.set(key, { data, timestamp: performance.now() });
     return data;
   };
 
