@@ -1,9 +1,12 @@
 import { generateHmac } from "@utils/hmac";
+import { connection } from "next/server";
 
 export async function fetchWithHmac(
   url: string,
   options: RequestInit & { skipBodySigning?: boolean; timeout?: number } = {}
 ): Promise<Response> {
+  // Signal dynamic rendering before accessing current time (required by cacheComponents)
+  await connection();
   const timestamp = Date.now();
   let bodyToSign = "";
   let normalizedBody: BodyInit | null | undefined = options.body;

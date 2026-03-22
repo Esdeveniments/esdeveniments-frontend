@@ -20,11 +20,9 @@ import { siteUrl } from "@config/index";
  *
  * The host is dynamically determined for multi-domain support.
  *
- * IMPORTANT: This route is marked as dynamic to prevent Next.js from caching it.
- * Without this, Next.js may serve a cached version even after deployment.
+ * Route handlers using NextRequest are dynamic by default.
+ * Cache behavior is controlled via Cache-Control headers (getCacheControlHeader).
  */
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const robotsConfig: MetadataRoute.Robots = {

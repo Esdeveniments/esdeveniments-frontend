@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fetchEvents, insertAds, uploadEventImage } from "../lib/api/events";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
+
+vi.mock("next/server", () => ({
+  connection: vi.fn().mockResolvedValue(undefined),
+}));
 import {
   PagedResponseDTO,
   EventSummaryResponseDTO,
