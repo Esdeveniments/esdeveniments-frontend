@@ -1,21 +1,24 @@
-import "../styles/globals.css";
+import "../../styles/globals.css";
 import { Suspense, type ReactNode } from "react";
-import { NextIntlClientProvider } from "next-intl";
+import { locale as rootLocale } from "next/root-params";
+import { NextIntlClientProvider, hasLocale } from "next-intl";
 import {
   getMessages,
   setRequestLocale,
   getTranslations,
 } from "next-intl/server";
+import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { getLocaleSafely } from "../utils/i18n-seo";
-import GoogleScripts from "./GoogleScripts";
-import { AdProvider } from "../lib/context/AdContext";
+import { routing } from "@i18n/routing";
+import GoogleScripts from "../GoogleScripts";
+import { AdProvider } from "@lib/context/AdContext";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
+import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({
     locale,
     namespace: "Components.Layout",
@@ -43,12 +46,21 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
-export default async function RootLayout({
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function LocaleLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
+
+  // Validate that the incoming locale is supported
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
 
   // Distribute the locale to all server components in this request
   setRequestLocale(locale);

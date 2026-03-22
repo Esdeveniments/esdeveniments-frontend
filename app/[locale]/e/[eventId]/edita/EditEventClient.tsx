@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "../../../../i18n/routing";
+import { useRouter } from "@i18n/routing";
 import { useState, useMemo, useTransition } from "react";
 import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";

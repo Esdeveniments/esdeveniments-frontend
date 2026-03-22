@@ -106,7 +106,7 @@ vi.mock("@utils/place-alias-or-invalid-redirect", () => {
   };
 });
 
-import Page from "app/[place]/page";
+import Page from "app/[locale]/[place]/page";
 import { redirect } from "next/navigation";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
 

@@ -4,7 +4,7 @@ import { getEventBySlug } from "@lib/api/events";
 import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
-import { generateEventMetadata } from "../../../lib/meta";
+import { generateEventMetadata } from "@lib/meta";
 import { redirect, notFound } from "next/navigation";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";

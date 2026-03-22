@@ -36,10 +36,15 @@ const nextConfig = {
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
 
+  // cacheComponents requires comprehensive audit of all components
+  // (no new Date(), no dynamic data outside Suspense, no route segment configs).
+  // Enabled once all components are updated. The [locale] segment + rootParams
+  // foundation is in place — flip this to true when ready.
   cacheComponents: false,
 
   // --- Experimental Features ---
   experimental: {
+    rootParams: true,
     scrollRestoration: true,
     inlineCss: true,
     // Tree-shake heavy libraries to reduce Lambda bundle size
