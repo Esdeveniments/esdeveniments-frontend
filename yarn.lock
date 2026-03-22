@@ -13881,7 +13881,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next@npm:^16.2.1":
+"next@npm:16.2.1":
   version: 16.2.1
   resolution: "next@npm:16.2.1"
   dependencies:
@@ -15327,7 +15327,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^19.2.4":
+"react-dom@npm:19.2.4":
   version: 19.2.4
   resolution: "react-dom@npm:19.2.4"
   dependencies:
@@ -15426,7 +15426,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:^19.2.4":
+"react@npm:19.2.4":
   version: 19.2.4
   resolution: "react@npm:19.2.4"
   checksum: 10c0/cd2c9ff67a720799cc3b38a516009986f7fc4cb8d3e15716c6211cf098d1357ee3e348ab05ad0600042bbb0fd888530ba92e329198c92eafa0994f5213396596
@@ -15976,13 +15976,13 @@ __metadata:
     husky: "npm:^9.1.7"
     jsdom: "npm:^26.1.0"
     lint-staged: "npm:^16.2.7"
-    next: "npm:^16.2.1"
+    next: "npm:16.2.1"
     next-intl: "npm:^4.6.1"
     next-sitemap: "npm:^4.2.3"
     postcss: "npm:^8.5.1"
-    react: "npm:^19.2.4"
+    react: "npm:19.2.4"
     react-day-picker: "npm:^9.14.0"
-    react-dom: "npm:^19.2.4"
+    react-dom: "npm:19.2.4"
     react-select: "npm:^5.7.0"
     react-share: "npm:^5.0.3"
     react-tooltip: "npm:^5.26.0"
