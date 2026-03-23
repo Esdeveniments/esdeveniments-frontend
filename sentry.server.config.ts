@@ -22,6 +22,10 @@ if (process.env.NODE_ENV === "production") {
       undefined,
     // Errors-only: disable performance tracing.
     tracesSampleRate: 0,
+    // Skip OpenTelemetry setup: OTel's trace context propagation calls crypto.randomUUID()
+    // during server render, which is incompatible with Next.js 16 cacheComponents.
+    // Since tracesSampleRate is 0, we don't need OTel. Error capture still works without it.
+    skipOpenTelemetrySetup: true,
     // Privacy: explicitly disable sending PII by default
     sendDefaultPii: false,
     debug: false,
