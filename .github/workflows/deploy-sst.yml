@@ -386,12 +386,54 @@ jobs:
               break
             fi
             echo "⏳ Attempt $i/$MAX_ATTEMPTS - HTTP $HTTP_STATUS, waiting 10s..."
+            # On first few 500 errors, capture response body for diagnostics
+            if [ "$HTTP_STATUS" = "500" ] && [ "$i" -le 3 ]; then
+              echo "--- Response body (attempt $i) ---"
+              curl -s --max-time 10 "$STAGING_URL" 2>/dev/null | head -c 2000 || true
+              echo ""
+              echo "--- End response body ---"
+            fi
             sleep 10
           done
           if [ "$READY" != "true" ]; then
-            echo "::error::Staging CloudFront did not become ready after 5 minutes"
+            echo "::error::Staging CloudFront did not become ready after 5 minutes (last HTTP $HTTP_STATUS)"
+            # Final diagnostic: capture full response and headers
+            echo "--- Final diagnostic request ---"
+            curl -sv --max-time 10 "$STAGING_URL" 2>&1 | head -c 5000 || true
+            echo ""
+            echo "--- End diagnostic ---"
             exit 1
           fi
+
+      - name: Fetch staging Lambda logs (on failure)
+        if: failure()
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+        run: |
+          echo "📋 Fetching recent Lambda logs for staging-ci..."
+          # Find the server function log group
+          LOG_GROUP=$(aws logs describe-log-groups \
+            --log-group-name-prefix "/aws/lambda/esdeveniments-frontend-staging-ci" \
+            --query "logGroups[?contains(logGroupName, 'Server') || contains(logGroupName, 'server') || contains(logGroupName, 'default')].logGroupName" \
+            --output text 2>/dev/null | head -1)
+
+          if [ -z "$LOG_GROUP" ]; then
+            # Fallback: list all log groups for this stage
+            echo "Could not find server log group. Available groups:"
+            aws logs describe-log-groups \
+              --log-group-name-prefix "/aws/lambda/esdeveniments-frontend-staging-ci" \
+              --query "logGroups[].logGroupName" --output text 2>/dev/null || echo "None found"
+            exit 0
+          fi
+
+          echo "Log group: $LOG_GROUP"
+          # Get last 5 minutes of logs
+          aws logs filter-log-events \
+            --log-group-name "$LOG_GROUP" \
+            --start-time $(( $(date +%s) * 1000 - 300000 )) \
+            --limit 100 \
+            --query "events[].message" \
+            --output text 2>/dev/null | tail -200 || echo "Could not fetch logs"
 
       - name: Staging smoke test (Sharp image optimization)
         if: success()
