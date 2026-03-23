@@ -20,22 +20,23 @@ test.describe("Place Page Explore Navigation", () => {
     await page.goto("/barcelona/avui");
 
     // Date badges should be hidden (already filtered by date)
-    await expect(page.getByText("Cerca per data")).not.toBeVisible();
+    await expect(page.getByText("Cerca per data").first()).not.toBeVisible();
 
     // Category links should still be visible
-    await expect(page.getByText("Explora categories")).toBeVisible();
+    await expect(page.getByText("Explora categories").first()).toBeVisible();
   });
 
   test("shows other categories when category is selected", async ({ page }) => {
     await page.goto("/barcelona/musica");
 
     // Date badges should still be visible
-    await expect(page.getByText("Cerca per data")).toBeVisible();
+    // Use .first() because PPR streaming may briefly render duplicate elements
+    await expect(page.getByText("Cerca per data").first()).toBeVisible();
 
     // "Explora categories" heading replaced by "Altres categories a Barcelona"
-    await expect(page.getByText("Explora categories")).not.toBeVisible();
+    await expect(page.getByText("Explora categories").first()).not.toBeVisible();
     await expect(
-      page.getByText(/Altres categories a Barcelona/i)
+      page.getByText(/Altres categories a Barcelona/i).first()
     ).toBeVisible();
 
     // The selected category (musica) should NOT appear in the links
@@ -48,12 +49,12 @@ test.describe("Place Page Explore Navigation", () => {
     await page.goto("/barcelona/avui/musica");
 
     // Date badges hidden (already filtered by date)
-    await expect(page.getByText("Cerca per data")).not.toBeVisible();
+    await expect(page.getByText("Cerca per data").first()).not.toBeVisible();
 
     // Other categories still shown for cross-linking
-    await expect(page.getByText("Explora categories")).not.toBeVisible();
+    await expect(page.getByText("Explora categories").first()).not.toBeVisible();
     await expect(
-      page.getByText(/Altres categories a Barcelona/i)
+      page.getByText(/Altres categories a Barcelona/i).first()
     ).toBeVisible();
   });
 
