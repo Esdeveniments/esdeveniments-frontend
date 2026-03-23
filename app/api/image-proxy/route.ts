@@ -307,7 +307,12 @@ export async function GET(request: Request) {
   for (const candidate of candidates) {
     try {
       const response = await fetchWithTimeout(candidate);
-      if (!response.ok) continue;
+      if (!response.ok) {
+        console.error(
+          `[image-proxy] Upstream returned ${response.status} for ${candidate.slice(0, 200)}`,
+        );
+        continue;
+      }
 
       const contentLength = Number(response.headers.get("content-length"));
       if (!Number.isNaN(contentLength) && contentLength > MAX_BYTES) {
@@ -493,6 +498,8 @@ export async function GET(request: Request) {
         });
       }
     } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`[image-proxy] Fetch/process failed for ${candidate}:`, msg);
       if (process.env.NODE_ENV === "production") {
         Sentry.captureException(error, {
           tags: { route: "/api/image-proxy", candidate },
@@ -501,5 +508,8 @@ export async function GET(request: Request) {
     }
   }
 
+  console.error(
+    `[image-proxy] All candidates exhausted for: ${rawTarget.slice(0, 200)}`,
+  );
   return buildPlaceholder();
 }

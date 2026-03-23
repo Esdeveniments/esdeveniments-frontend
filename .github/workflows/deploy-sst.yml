@@ -411,13 +411,14 @@ jobs:
           STAGING_URL="${{ steps.staging.outputs.staging_url }}"
           echo "🔍 Testing Sharp on x86_64 Lambda at staging..."
 
-          # Use a stable, redirect-free test image (Wikipedia static assets don't redirect)
-          TEST_IMAGE="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png"
+          # Use Google's static logo — always available, no rate-limiting, no redirects.
+          # Wikipedia was rate-limiting us (HTTP 429), causing consistent CI failures.
+          TEST_IMAGE="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
           ENCODED_URL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${TEST_IMAGE}'))")
           PROXY_URL="${STAGING_URL}/api/image-proxy?url=${ENCODED_URL}&w=400&q=50"
 
           # Retry up to 5 times with longer waits — staging Lambda is always cold
-          # and needs to: cold start + download image from Wikipedia + Sharp processing
+          # and needs to: cold start + download image + Sharp processing
           SHARP_OK=false
           for ATTEMPT in 1 2 3 4 5; do
             echo "  Attempt ${ATTEMPT}/5..."
@@ -494,18 +495,19 @@ jobs:
           AWS_REGION: ${{ env.AWS_REGION }}
         run: |
           echo "📋 Fetching recent Lambda logs for staging-ci..."
-          # Find the server function log group
+          # Find the server function log group.
+          # SST truncates the app name, so use a broad prefix and filter for stage + Server.
           LOG_GROUP=$(aws logs describe-log-groups \
-            --log-group-name-prefix "/aws/lambda/esdeveniments-frontend-staging-ci" \
-            --query "logGroups[?contains(logGroupName, 'Server') || contains(logGroupName, 'server') || contains(logGroupName, 'default')].logGroupName" \
+            --log-group-name-prefix "/aws/lambda/esdeveniments" \
+            --query "logGroups[?contains(logGroupName, 'staging-ci') && (contains(logGroupName, 'Server') || contains(logGroupName, 'server'))].logGroupName" \
             --output text 2>/dev/null | head -1)
 
           if [ -z "$LOG_GROUP" ]; then
             # Fallback: list all log groups for this stage
             echo "Could not find server log group. Available groups:"
             aws logs describe-log-groups \
-              --log-group-name-prefix "/aws/lambda/esdeveniments-frontend-staging-ci" \
-              --query "logGroups[].logGroupName" --output text 2>/dev/null || echo "None found"
+              --log-group-name-prefix "/aws/lambda/esdeveniments" \
+              --query "logGroups[?contains(logGroupName, 'staging-ci')].logGroupName" --output text 2>/dev/null || echo "None found"
             exit 0
           fi
 
