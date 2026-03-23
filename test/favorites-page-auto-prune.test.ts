@@ -66,7 +66,7 @@ vi.mock("@components/partials/seo-meta", () => ({
   buildPageMeta: vi.fn(() => ({})),
 }));
 
-vi.mock("./../app/preferits/FavoritesAutoPrune", () => ({
+vi.mock("./../app/[locale]/preferits/FavoritesAutoPrune", () => ({
   default: function FavoritesAutoPruneMock(props: { slugsToRemove: string[] }) {
     autoPruneProps.push({ slugsToRemove: props.slugsToRemove });
     return null;
@@ -154,7 +154,7 @@ describe("Favorites page auto-prune", () => {
       }
     );
 
-    const { default: PreferitsPage } = await import("@app/preferits/page");
+    const { default: PreferitsPage } = await import("@app/[locale]/preferits/page");
     const element = await PreferitsPage();
     renderToStaticMarkup(element);
 
@@ -190,7 +190,7 @@ describe("Favorites page auto-prune", () => {
         events as EventSummaryResponseDTO[]
     );
 
-    const { default: PreferitsPage } = await import("@app/preferits/page");
+    const { default: PreferitsPage } = await import("@app/[locale]/preferits/page");
     const element = await PreferitsPage();
     renderToStaticMarkup(element);
 

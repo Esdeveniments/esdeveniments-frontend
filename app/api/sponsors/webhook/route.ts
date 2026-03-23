@@ -34,13 +34,7 @@ import { MS_PER_DAY } from "@utils/constants";
  * @see https://stripe.com/docs/payments/checkout/fulfill-orders#delayed-notification
  */
 
-/**
- * Route segment config for Lambda/Edge compatibility
- * - runtime: nodejs for crypto module compatibility
- * - maxDuration: 30s to allow time for Stripe API calls
- */
-export const runtime = "nodejs";
-export const maxDuration = 30;
+// Runtime defaults to nodejs; Lambda timeout is configured in sst.config.ts
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 

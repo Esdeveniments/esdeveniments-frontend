@@ -3,6 +3,7 @@ import { JSX } from "react";
 import ActiveLink from "@components/ui/common/link";
 import Social from "@components/ui/common/social";
 import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClient";
+import CopyrightNotice from "./CopyrightYear";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 import { contactEmail, socialLinks } from "@config/index";
 
@@ -152,9 +153,7 @@ export default async function Footer(): Promise<JSX.Element> {
 
         {/* Copyright Section */}
         <div className="w-full flex flex-col items-center gap-element-gap-sm px-section-x">
-          <span className="body-small text-muted-foreground text-center">
-            {t("copyright", { year: new Date().getFullYear() })}
-          </span>
+          <CopyrightNotice />
           <span className="text-xs text-muted-foreground text-center">
             {t("tagline")}
           </span>

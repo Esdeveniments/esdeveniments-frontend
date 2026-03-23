@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { JSX } from "react";
+import { locale as rootLocale } from "next/root-params";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
 import { getCategorizedEvents } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -26,7 +26,7 @@ export async function generateMetadata() {
     place: "",
     byDate: "",
   });
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
@@ -36,7 +36,7 @@ export async function generateMetadata() {
 }
 
 export default async function Page(): Promise<JSX.Element> {
-  const locale: AppLocale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const categorizedEventsPromise = getCategorizedEvents(5);
   const categoriesPromise = fetchCategories();
 

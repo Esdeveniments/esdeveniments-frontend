@@ -178,7 +178,6 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
     // Always navigate (even with empty search to clear the param)
     const url = buildHeroUrl(place, date, value);
-
     startNavigationFeedback();
     router.push(url);
   }, [searchTerm, place, date, router]);

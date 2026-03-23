@@ -36,10 +36,11 @@ const nextConfig = {
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
 
-  cacheComponents: false,
+  cacheComponents: true,
 
   // --- Experimental Features ---
   experimental: {
+    rootParams: true,
     scrollRestoration: true,
     inlineCss: true,
     // Tree-shake heavy libraries to reduce Lambda bundle size

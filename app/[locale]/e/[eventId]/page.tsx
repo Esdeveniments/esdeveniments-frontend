@@ -4,7 +4,7 @@ import { getEventBySlug } from "@lib/api/events";
 import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
-import { generateEventMetadata } from "../../../lib/meta";
+import { generateEventMetadata } from "@lib/meta";
 import { redirect, notFound } from "next/navigation";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
@@ -31,7 +31,8 @@ import ClientEventClient from "./components/ClientEventClient";
 import EventLocation from "./components/EventLocation";
 import EventWeather from "./components/EventWeather";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely, withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import { withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
@@ -50,7 +51,7 @@ export async function generateMetadata(props: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const event = await getEventBySlug(slug);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
@@ -67,7 +68,7 @@ export default async function EventPage({
 }) {
   const slug = (await params).eventId;
 
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
 
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;

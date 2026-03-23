@@ -44,6 +44,13 @@ vi.mock("next/server", () => {
     redirect: vi.fn((_: unknown, status?: number) =>
       MockNextResponseFn("redirect", { status }),
     ),
+    rewrite: vi.fn((_: unknown, options?: { request?: { headers?: Headers } }) => {
+      const response = MockNextResponseFn("", {});
+      if (options?.request) {
+        (response as any).request = options.request;
+      }
+      return response;
+    }),
     json: vi.fn((data: unknown, options?: { status?: number }) =>
       MockNextResponseFn(JSON.stringify(data), options),
     ),
@@ -83,47 +90,62 @@ describe("proxy", () => {
       randomUUID: vi.fn().mockReturnValue("test-uuid"),
     });
 
-    // Reset NextResponse.next and redirect mocks
+    // Reset NextResponse.next, redirect, and rewrite mocks
     (NextResponse.next as any).mockReset();
     (NextResponse.redirect as any).mockReset();
+    (NextResponse.rewrite as any).mockReset();
   });
 
   afterEach(() => {
     process.env = originalEnv;
   });
 
+  /** Create a mock nextUrl that supports clone() for proxy rewriting */
+  function mockNextUrl(overrides: { pathname: string; search?: string; searchParams?: URLSearchParams }) {
+    const search = overrides.search ?? "";
+    const searchParams = overrides.searchParams ?? new URLSearchParams(search);
+    const obj = { pathname: overrides.pathname, search, searchParams, clone() { return { ...obj, searchParams: new URLSearchParams(search) }; } };
+    return obj;
+  }
+
   describe("non-API routes", () => {
-    it("passes through non-API routes", async () => {
+    it("rewrites non-API routes to add default locale prefix", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/home",
           search: "",
           searchParams: new URLSearchParams(),
-        },
+        }),
         headers: new Headers(),
         clone: vi.fn().mockReturnThis(),
         method: "GET",
       } as unknown as NextRequest;
 
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
       const result = await proxy(mockRequest);
 
-      expect(NextResponse.next).toHaveBeenCalled();
+      // With [locale] segment, default-locale paths are rewritten to include /ca/
+      expect(NextResponse.rewrite).toHaveBeenCalledTimes(1);
+      const [rewriteUrl] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(rewriteUrl.pathname).toBe("/ca/home");
       expect(result).toBeDefined();
     });
 
     it("sets short CDN cache headers for public pages to avoid day-stale HTML", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/catalunya",
           search: "",
           searchParams: new URLSearchParams(),
-        },
+        }),
         headers: new Headers({ accept: "text/html" }),
         method: "GET",
       } as unknown as NextRequest;
 
       const mockResponse = { headers: new Headers() };
-      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
 
       const result = await proxy(mockRequest);
 
@@ -134,11 +156,11 @@ describe("proxy", () => {
 
     it("handles /sw.js route with cache headers", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/sw.js",
           search: "",
           searchParams: new URLSearchParams(),
-        },
+        }),
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
@@ -159,11 +181,11 @@ describe("proxy", () => {
 
     it("redirects legacy /tots/ routes", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/barcelona/tots/events",
           search: "?search=rock",
           searchParams: new URLSearchParams("?search=rock"),
-        },
+        }),
         url: "https://example.com/barcelona/tots/events?search=rock",
         headers: new Headers(),
         method: "GET",
@@ -182,11 +204,11 @@ describe("proxy", () => {
 
     it("redirects query params to canonical path (/barcelona?category=teatre&date=tots → /barcelona/teatre)", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/barcelona",
           search: "?category=teatre&date=tots",
           searchParams: new URLSearchParams("?category=teatre&date=tots"),
-        },
+        }),
         url: "https://example.com/barcelona?category=teatre&date=tots",
         headers: new Headers(),
         method: "GET",
@@ -205,13 +227,13 @@ describe("proxy", () => {
 
     it("preserves other query params on redirect (e.g., search)", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/barcelona",
           search: "?category=teatre&date=tots&search=castellers",
           searchParams: new URLSearchParams(
             "?category=teatre&date=tots&search=castellers",
           ),
-        },
+        }),
         url: "https://example.com/barcelona?category=teatre&date=tots&search=castellers",
         headers: new Headers(),
         method: "GET",
@@ -230,28 +252,32 @@ describe("proxy", () => {
 
     it("does not redirect non-place routes with query params", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/noticies",
           search: "?category=teatre&date=avui",
           searchParams: new URLSearchParams("?category=teatre&date=avui"),
-        },
+        }),
         url: "https://example.com/noticies?category=teatre&date=avui",
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
 
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
       await proxy(mockRequest);
 
-      expect(NextResponse.next).toHaveBeenCalled();
+      // Should rewrite (add default locale) rather than redirect
+      expect(NextResponse.rewrite).toHaveBeenCalled();
     });
 
     it("removes invalid date query by redirecting to /place (no extra segment)", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/barcelona",
           search: "?date=invalid",
           searchParams: new URLSearchParams("?date=invalid"),
-        },
+        }),
         url: "https://example.com/barcelona?date=invalid",
         headers: new Headers(),
         method: "GET",
@@ -654,11 +680,11 @@ describe("proxy", () => {
   describe("CSP and security headers", () => {
     it("adds security headers to non-API routes", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/home",
           search: "",
           searchParams: new URLSearchParams(),
-        },
+        }),
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
@@ -666,7 +692,7 @@ describe("proxy", () => {
       const mockResponse = {
         headers: new Headers(),
       };
-      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
 
       await proxy(mockRequest);
 
@@ -694,11 +720,11 @@ describe("proxy", () => {
 
     it("CSP includes unsafe-inline for ISR compatibility", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/home",
           search: "",
           searchParams: new URLSearchParams(),
-        },
+        }),
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
@@ -706,7 +732,7 @@ describe("proxy", () => {
       const mockResponse = {
         headers: new Headers(),
       };
-      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
 
       await proxy(mockRequest);
 
@@ -718,11 +744,11 @@ describe("proxy", () => {
 
     it("sets pathname in request headers", async () => {
       const mockRequest = {
-        nextUrl: {
+        nextUrl: mockNextUrl({
           pathname: "/home",
           search: "",
           searchParams: new URLSearchParams(),
-        },
+        }),
         headers: new Headers(),
         method: "GET",
       } as unknown as NextRequest;
@@ -730,14 +756,16 @@ describe("proxy", () => {
       const mockResponse = {
         headers: new Headers(),
       };
-      (NextResponse.next as Mock).mockReturnValue(mockResponse);
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
 
       await proxy(mockRequest);
 
-      const nextResponseCall = (NextResponse.next as Mock).mock.calls[0][0];
-      expect(nextResponseCall.request.headers.get("x-pathname")).toBe("/home");
+      // With [locale] segment, default-locale paths go through rewrite
+      const rewriteCall = (NextResponse.rewrite as Mock).mock.calls[0];
+      const rewriteOptions = rewriteCall[1];
+      expect(rewriteOptions.request.headers.get("x-pathname")).toBe("/home");
       // No nonce header with relaxed CSP
-      expect(nextResponseCall.request.headers.get("x-nonce")).toBeNull();
+      expect(rewriteOptions.request.headers.get("x-nonce")).toBeNull();
     });
   });
 });

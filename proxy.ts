@@ -408,6 +408,7 @@ export default async function proxy(request: NextRequest) {
     stripLocalePrefix(pathname);
   const localeFromCookie = getLocaleFromCookie(request);
 
+  // Redirect explicit default locale prefix to canonical form (e.g., /ca/foo → /foo)
   if (localeFromPath === DEFAULT_LOCALE) {
     const redirectUrl = new URL(
       `${pathnameWithoutLocale}${search || ""}`,
@@ -418,6 +419,7 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  // Auto-redirect to preferred non-default locale on root path
   if (!localeFromPath && pathname === "/") {
     const preferredLocale =
       localeFromCookie ||
@@ -458,23 +460,29 @@ export default async function proxy(request: NextRequest) {
     },
   };
 
-  // When a locale prefix exists (e.g., /es/...), rewrite to the locale-stripped
-  // pathname for routing while preserving the original URL in the browser.
-  // This keeps locale-prefixed URLs indexable and allows us to reuse the
-  // existing route tree without duplicating files.
+  // With [locale] route segment, all page routes live under app/[locale]/.
+  // - Paths without locale prefix (default locale, e.g., /barcelona) → rewrite
+  //   to /ca/barcelona so it matches app/[locale=ca]/[place=barcelona]/page.tsx
+  // - Paths with locale prefix (e.g., /es/barcelona) → pass through, already
+  //   matches app/[locale=es]/[place=barcelona]/page.tsx
   const response = localeFromPath
-    ? (() => {
+    ? NextResponse.next(baseResponseInit)
+    : (() => {
         const rewriteUrl = request.nextUrl.clone();
-        rewriteUrl.pathname = pathnameWithoutLocale || "/";
-        // Avoid RSC/data cache collisions between locales by making the rewritten
-        // request URL vary per locale while keeping the visible URL unchanged.
-        rewriteUrl.searchParams.set("__locale", resolvedLocale);
+        rewriteUrl.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
         return NextResponse.rewrite(rewriteUrl, baseResponseInit);
-      })()
-    : NextResponse.next(baseResponseInit);
+      })();
 
   if (shouldPersistLocaleFromPath && localeFromPath) {
     persistLocaleCookie(response, localeFromPath);
+  } else if (
+    !localeFromPath &&
+    localeFromCookie !== null &&
+    localeFromCookie !== DEFAULT_LOCALE
+  ) {
+    // Clear stale non-default locale cookie when user visits unprefixed path
+    // (which resolves to DEFAULT_LOCALE), so subsequent / visits don't redirect
+    persistLocaleCookie(response, DEFAULT_LOCALE);
   }
 
   // visitor_id cookie is set for /api/sponsors/checkout if missing.
@@ -561,6 +569,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
   ],
 };
