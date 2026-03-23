@@ -450,7 +450,9 @@ jobs:
           SHARP_OK=false
           for ATTEMPT in 1 2 3; do
             echo "  Attempt ${ATTEMPT}/3..."
-            SHARP_RESPONSE=$(curl -sI --max-time 25 "${PROXY_URL}" \
+            # Use GET (-D - dumps headers, -o /dev/null discards body)
+            # Do NOT use -I (HEAD) — HMAC middleware only allows GET for image-proxy
+            SHARP_RESPONSE=$(curl -s -D - -o /dev/null --max-time 25 "${PROXY_URL}" \
               -H "Accept: image/webp,image/*" 2>/dev/null || echo "CURL_FAILED")
 
             if echo "$SHARP_RESPONSE" | grep -qi "CURL_FAILED"; then
@@ -590,7 +592,9 @@ jobs:
           SHARP_OK=false
           for ATTEMPT in 1 2 3; do
             echo "  Attempt ${ATTEMPT}/3..."
-            SHARP_RESPONSE=$(curl -sI --max-time 25 "${PROXY_URL}" \
+            # Use GET (-D - dumps headers, -o /dev/null discards body)
+            # Do NOT use -I (HEAD) — HMAC middleware only allows GET for image-proxy
+            SHARP_RESPONSE=$(curl -s -D - -o /dev/null --max-time 25 "${PROXY_URL}" \
               -H "Accept: image/webp,image/*" 2>/dev/null || echo "CURL_FAILED")
 
             if echo "$SHARP_RESPONSE" | grep -qi "CURL_FAILED"; then
