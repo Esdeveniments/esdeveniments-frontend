@@ -405,36 +405,6 @@ jobs:
             exit 1
           fi
 
-      - name: Fetch staging Lambda logs (on failure)
-        if: failure()
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-        run: |
-          echo "📋 Fetching recent Lambda logs for staging-ci..."
-          # Find the server function log group
-          LOG_GROUP=$(aws logs describe-log-groups \
-            --log-group-name-prefix "/aws/lambda/esdeveniments-frontend-staging-ci" \
-            --query "logGroups[?contains(logGroupName, 'Server') || contains(logGroupName, 'server') || contains(logGroupName, 'default')].logGroupName" \
-            --output text 2>/dev/null | head -1)
-
-          if [ -z "$LOG_GROUP" ]; then
-            # Fallback: list all log groups for this stage
-            echo "Could not find server log group. Available groups:"
-            aws logs describe-log-groups \
-              --log-group-name-prefix "/aws/lambda/esdeveniments-frontend-staging-ci" \
-              --query "logGroups[].logGroupName" --output text 2>/dev/null || echo "None found"
-            exit 0
-          fi
-
-          echo "Log group: $LOG_GROUP"
-          # Get last 5 minutes of logs
-          aws logs filter-log-events \
-            --log-group-name "$LOG_GROUP" \
-            --start-time $(( $(date +%s) * 1000 - 300000 )) \
-            --limit 100 \
-            --query "events[].message" \
-            --output text 2>/dev/null | tail -200 || echo "Could not fetch logs"
-
       - name: Staging smoke test (Sharp image optimization)
         if: success()
         run: |
@@ -466,7 +436,13 @@ jobs:
             SHARP_STATUS=$(echo "$SHARP_RESPONSE" | head -1 | grep -oE '[0-9]{3}' | head -1)
 
             if [ "$SHARP_STATUS" = "502" ] || [ "$SHARP_STATUS" = "504" ]; then
-              echo "  ⏳ Got HTTP ${SHARP_STATUS} (cold start or timeout), retrying in 15s..."
+              echo "  ⚠️ Got HTTP ${SHARP_STATUS} — capturing response body for diagnostics..."
+              BODY_RESPONSE=$(curl -s --max-time 30 "${PROXY_URL}" -H "Accept: image/webp,image/*" 2>/dev/null || echo "EMPTY")
+              echo "--- Response body (attempt ${ATTEMPT}) ---"
+              echo "$BODY_RESPONSE" | head -c 3000
+              echo ""
+              echo "--- End response body ---"
+              echo "  Retrying in 15s..."
               sleep 15
               continue
             elif [ "$OPTIMIZED" = "fallback-sharp-error" ]; then
@@ -511,6 +487,36 @@ jobs:
           path: playwright-report/
           retention-days: 7
           if-no-files-found: ignore
+
+      - name: Fetch staging Lambda logs (on failure)
+        if: failure() && steps.staging.outcome == 'success'
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+        run: |
+          echo "📋 Fetching recent Lambda logs for staging-ci..."
+          # Find the server function log group
+          LOG_GROUP=$(aws logs describe-log-groups \
+            --log-group-name-prefix "/aws/lambda/esdeveniments-frontend-staging-ci" \
+            --query "logGroups[?contains(logGroupName, 'Server') || contains(logGroupName, 'server') || contains(logGroupName, 'default')].logGroupName" \
+            --output text 2>/dev/null | head -1)
+
+          if [ -z "$LOG_GROUP" ]; then
+            # Fallback: list all log groups for this stage
+            echo "Could not find server log group. Available groups:"
+            aws logs describe-log-groups \
+              --log-group-name-prefix "/aws/lambda/esdeveniments-frontend-staging-ci" \
+              --query "logGroups[].logGroupName" --output text 2>/dev/null || echo "None found"
+            exit 0
+          fi
+
+          echo "Log group: $LOG_GROUP"
+          # Get last 10 minutes of logs (covers CloudFront wait + smoke tests)
+          aws logs filter-log-events \
+            --log-group-name "$LOG_GROUP" \
+            --start-time $(( $(date +%s) * 1000 - 600000 )) \
+            --limit 200 \
+            --query "events[].message" \
+            --output text 2>/dev/null | tail -300 || echo "Could not fetch logs"
 
       - name: Tear down ephemeral staging
         if: always() && steps.staging.outcome != 'skipped'
