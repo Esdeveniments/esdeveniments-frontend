@@ -376,18 +376,20 @@ jobs:
           echo "⏳ Waiting for staging CloudFront to be ready..."
           STAGING_URL="${{ steps.staging.outputs.staging_url }}"
           READY=false
-          # Retry up to 12 times (2 min) waiting for CloudFront to serve
-          for i in $(seq 1 12); do
-            if curl -sf --max-time 10 "$STAGING_URL" > /dev/null 2>&1; then
-              echo "✅ Staging is responding (attempt $i)"
+          MAX_ATTEMPTS=30
+          # Retry up to 30 times (5 min) waiting for CloudFront to serve
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            HTTP_STATUS=$(curl -so /dev/null -w '%{http_code}' --max-time 10 "$STAGING_URL" 2>/dev/null || echo "000")
+            if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+              echo "✅ Staging is responding with HTTP $HTTP_STATUS (attempt $i)"
               READY=true
               break
             fi
-            echo "⏳ Attempt $i/12 - waiting 10s..."
+            echo "⏳ Attempt $i/$MAX_ATTEMPTS - HTTP $HTTP_STATUS, waiting 10s..."
             sleep 10
           done
           if [ "$READY" != "true" ]; then
-            echo "::error::Staging CloudFront did not become ready after 2 minutes"
+            echo "::error::Staging CloudFront did not become ready after 5 minutes"
             exit 1
           fi
 
