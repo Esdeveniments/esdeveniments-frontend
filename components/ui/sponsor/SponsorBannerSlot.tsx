@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { getActiveSponsorForPlace, getHouseAdForSlot } from "@config/sponsors";
 import type { SponsorBannerSlotProps } from "types/sponsor";
 import SponsorBanner from "./SponsorBanner";
@@ -19,6 +20,10 @@ async function SponsorBannerSlotContent({
   place,
   fallbackPlaces,
 }: SponsorBannerSlotProps) {
+  // Signal dynamic rendering before Math.random() in getHouseAdForSlot().
+  // This component is wrapped in <Suspense>, so only this subtree streams dynamically.
+  await connection();
+
   const result = await getActiveSponsorForPlace(place, fallbackPlaces);
 
   if (result) {
