@@ -598,43 +598,24 @@ export function filterPastEvents(
   return filterActiveEvents(events);
 }
 
-function insertAdsRandomly(
+/**
+ * Insert ads at deterministic positions in the event list.
+ * Uses fixed spacing instead of Math.random() to ensure the component tree
+ * is identical across renders — required for cacheComponents (RSC resumption).
+ */
+function insertAdsDeterministic(
   events: EventSummaryResponseDTO[],
   ads: AdEvent[],
-  minDistance = 4,
-  maxDistance = 6,
+  spacing = 5,
   startFrom = 3,
 ): ListEvent[] {
   const result: ListEvent[] = [...events];
 
-  // Shuffle the ads for random distribution
-  const shuffledAds = [...ads].sort(() => Math.random() - 0.5);
-
-  // Track inserted positions to avoid conflicts
-  const insertedIndexes: number[] = [];
-
-  // Insert ads at calculated positions
-  shuffledAds.forEach((ad, i) => {
-    // Calculate the index for the ad based on the min and max distance
-    let index =
-      startFrom +
-      i * minDistance +
-      Math.floor(Math.random() * (maxDistance - minDistance + 1));
-
-    // Adjust index to account for previously inserted ads
-    insertedIndexes.forEach((insertedIndex) => {
-      if (index >= insertedIndex) {
-        index++;
-      }
-    });
-
-    // Check if the index is valid
+  ads.forEach((ad, i) => {
+    // Fixed position: startFrom + i * spacing, adjusted for prior insertions
+    const index = startFrom + i * (spacing + 1);
     if (index <= result.length) {
-      // Insert the ad at the calculated index
       result.splice(index, 0, ad);
-      // Add the index to the insertedIndexes array
-      insertedIndexes.push(index);
-      insertedIndexes.sort((a, b) => a - b); // Keep sorted for next iteration
     }
   });
 
@@ -663,7 +644,7 @@ export function insertAds(
       }) as AdEvent,
   );
 
-  return insertAdsRandomly(events, ads);
+  return insertAdsDeterministic(events, ads);
 }
 
 // Re-export for backward compatibility

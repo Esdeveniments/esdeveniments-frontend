@@ -72,14 +72,15 @@ const houseAds: HouseAdConfig[] = [
   },
 ];
 
-const HOUSE_AD_SHOW_PROBABILITY = 0.7;
-
 function getAllHouseAds(): HouseAdConfig[] {
   return houseAds;
 }
 
 /**
- * Get a house ad for the slot, or null to show the empty state CTA.
+ * Get a house ad for the slot deterministically.
+ * Uses the current hour as a seed so the ad rotates over time but is
+ * consistent within the same cache window — required for cacheComponents
+ * (RSC resumption expects identical tree structure across renders).
  */
 export function getHouseAdForSlot(): HouseAdResult | null {
   const allAds = getAllHouseAds();
@@ -88,11 +89,9 @@ export function getHouseAdForSlot(): HouseAdResult | null {
     return null;
   }
 
-  if (Math.random() > HOUSE_AD_SHOW_PROBABILITY) {
-    return null;
-  }
-
-  const index = Math.floor(Math.random() * allAds.length);
+  // Rotate ads by hour — deterministic within each cache window
+  const hourSeed = new Date().getHours();
+  const index = hourSeed % allAds.length;
   const houseAd = allAds[index];
   if (!houseAd) {
     return null;

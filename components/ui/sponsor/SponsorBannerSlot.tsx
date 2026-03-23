@@ -20,7 +20,7 @@ async function SponsorBannerSlotContent({
   place,
   fallbackPlaces,
 }: SponsorBannerSlotProps) {
-  // Signal dynamic rendering before Math.random() in getHouseAdForSlot().
+  // Signal dynamic rendering for DB call (getActiveSponsorForPlace).
   // This component is wrapped in <Suspense>, so only this subtree streams dynamically.
   await connection();
 
