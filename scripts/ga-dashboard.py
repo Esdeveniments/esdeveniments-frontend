@@ -30,7 +30,10 @@ BASE_URL = f"https://analyticsdata.googleapis.com/v1beta/properties/{PROPERTY_ID
 
 
 def get_token():
-    """Get access token from service account (CI) or gcloud ADC (local)."""
+    """Get access token from service account (CI) or gcloud ADC (local).
+
+    Returns (token, is_service_account) tuple.
+    """
     # Service account via google-auth library (CI/CD)
     sa_key = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
     if sa_key and os.path.exists(sa_key):
@@ -41,31 +44,36 @@ def get_token():
                 scopes=["https://www.googleapis.com/auth/analytics.readonly"]
             )
             credentials.refresh(google.auth.transport.requests.Request())
-            return credentials.token
+            return credentials.token, True
         except ImportError:
             pass  # Fall through to gcloud CLI
         except Exception as e:
             print(f"  ⚠️ SA auth failed ({e}), falling back to gcloud CLI")
 
     # gcloud ADC (local development)
-    return subprocess.check_output(
+    token = subprocess.check_output(
         ["gcloud", "auth", "application-default", "print-access-token"],
         text=True,
         stderr=subprocess.DEVNULL,
     ).strip()
+    return token, False
 
 
 def api_call(endpoint, body):
-    token = get_token()
+    token, is_sa = get_token()
     data = json.dumps(body).encode()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    # Only set quota project for ADC (local); SA derives it automatically.
+    # SA without serviceusage.serviceUsageConsumer role fails if header is set.
+    if not is_sa:
+        headers["x-goog-user-project"] = QUOTA_PROJECT
     req = urllib.request.Request(
         f"{BASE_URL}:{endpoint}",
         data=data,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "x-goog-user-project": QUOTA_PROJECT,
-            "Content-Type": "application/json",
-        },
+        headers=headers,
     )
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
