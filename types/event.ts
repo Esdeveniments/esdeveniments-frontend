@@ -281,6 +281,8 @@ export interface EventNotificationsProps {
 
 export interface EventMapsProps {
   location: string;
+  cityName: string;
+  regionName: string;
 }
 
 export interface EventWeatherProps {
