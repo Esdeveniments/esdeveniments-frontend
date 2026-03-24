@@ -50,9 +50,20 @@ LOW_USAGE_THRESHOLD = 50
 
 # Custom GA4 events to track
 TRACKED_CUSTOM_EVENTS = [
-    "filter_change", "search", "share", "add_to_calendar", "load_more",
-    "outbound_click", "view_event_page", "hero_cta_click", "sponsor_click",
-    "select_category", "home_chip_click", "ai_referrer",
+    "filter_change", "search", "share", "share_error", "add_to_calendar",
+    "add_to_calendar_view", "load_more", "outbound_click", "view_event_page",
+    "hero_cta_click", "sponsor_click", "select_category", "home_chip_click",
+    "ai_referrer", "select_event", "search_results_loaded", "filters_open",
+    "filter_chip_click", "filter_remove", "restaurant_section_view",
+    "restaurant_promote_click", "location_selected", "hero_date_filter_toggle",
+    "favorite_add", "favorite_remove", "favorites_limit_reached",
+    "publica_form_start", "publica_field_interact", "publica_form_abandon",
+    "publish_submit_attempt", "publish_submit_blocked", "publish_error",
+    "publish_success", "publish_image_upload_start", "publish_image_upload_success",
+    "publish_image_upload_error", "publish_image_upload_abort",
+    "publish_preview_open", "publish_test_url_click",
+    "sticky_cta_click", "related_event_click", "explore_more_click",
+    "category_quicklink_click",
 ]
 
 # AI referrer platforms (shared between traffic computation and breakdown)
@@ -730,6 +741,97 @@ def collect_ga4_data():
         u["sessions"] for u in data["new_vs_returning"] if u["type"] == "returning"
     )
 
+    # Publish funnel analysis
+    publish_events = [
+        "publica_form_start", "publica_field_interact", "publish_submit_attempt",
+        "publish_submit_blocked", "publish_error", "publish_success",
+        "publish_image_upload_start", "publish_image_upload_success",
+        "publish_image_upload_error", "publish_image_upload_abort",
+    ]
+    publish_rows = ga_report(
+        ["eventName"], ["eventCount", "totalUsers"],
+        dim_filter=FilterExpression(
+            filter=Filter(
+                field_name="eventName",
+                in_list_filter=Filter.InListFilter(values=publish_events),
+            )
+        ),
+        limit=len(publish_events),
+    )
+    data["publish_funnel"] = {
+        r["dims"][0]: {"count": safe_int(r["metrics"][0]), "users": safe_int(r["metrics"][1])}
+        for r in publish_rows
+    }
+
+    # Event drill-downs using custom dimensions
+    data["event_drilldowns"] = {}
+
+    # Publish errors by reason
+    reason_rows = ga_report(
+        ["eventName", "customEvent:reason"], ["eventCount"],
+        dim_filter=FilterExpression(or_group=FilterExpressionList(expressions=[
+            FilterExpression(filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value=ev)))
+            for ev in ["publish_error", "publish_submit_blocked", "publish_image_upload_error"]
+        ])),
+        limit=20,
+    )
+    data["event_drilldowns"]["publish_errors_by_reason"] = [
+        {"event": r["dims"][0], "reason": r["dims"][1], "count": safe_int(r["metrics"][0])}
+        for r in reason_rows
+    ]
+
+    # Search terms
+    search_rows = ga_report(
+        ["customEvent:search_term"], ["eventCount"],
+        dim_filter=FilterExpression(
+            filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value="search"))
+        ),
+        limit=20,
+    )
+    data["event_drilldowns"]["top_search_terms"] = [
+        {"term": r["dims"][0], "count": safe_int(r["metrics"][0])}
+        for r in search_rows
+    ]
+
+    # Filter usage by place/date/category
+    filter_rows = ga_report(
+        ["customEvent:filter_place", "customEvent:filter_date", "customEvent:filter_category"], ["eventCount"],
+        dim_filter=FilterExpression(
+            filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value="filter_change"))
+        ),
+        limit=25,
+    )
+    data["event_drilldowns"]["filter_usage"] = [
+        {"place": r["dims"][0], "date": r["dims"][1], "category": r["dims"][2], "count": safe_int(r["metrics"][0])}
+        for r in filter_rows
+    ]
+
+    # Outbound clicks by link type
+    outbound_rows = ga_report(
+        ["customEvent:link_type"], ["eventCount", "totalUsers"],
+        dim_filter=FilterExpression(
+            filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value="outbound_click"))
+        ),
+        limit=10,
+    )
+    data["event_drilldowns"]["outbound_by_type"] = [
+        {"link_type": r["dims"][0], "count": safe_int(r["metrics"][0]), "users": safe_int(r["metrics"][1])}
+        for r in outbound_rows
+    ]
+
+    # Share by method
+    share_rows = ga_report(
+        ["customEvent:method"], ["eventCount"],
+        dim_filter=FilterExpression(
+            filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value="share"))
+        ),
+        limit=10,
+    )
+    data["event_drilldowns"]["share_by_method"] = [
+        {"method": r["dims"][0], "count": safe_int(r["metrics"][0])}
+        for r in share_rows
+    ]
+
     # Mobile vs desktop bounce divergence
     mobile = next((d for d in data["devices"] if d["device"] == "mobile"), None)
     desktop = next((d for d in data["devices"] if d["device"] == "desktop"), None)
@@ -741,6 +843,112 @@ def collect_ga4_data():
         data["kpis"]["mobile_bounce"] = 0
         data["kpis"]["desktop_bounce"] = 0
         data["kpis"]["bounce_divergence"] = 0
+
+    # ── Behavior Insights (computed from event data) ──
+    # These transform raw events into decision-making metrics using funnel analysis.
+    #
+    # Mental models applied:
+    #   - North Star Metric: "Event Actions" = users who take action on an event
+    #   - AARRR funnel: Acquisition → Activation → Retention → Revenue → Referral
+    #   - Theory of Constraints: identify the biggest bottleneck in user journey
+    #   - Jobs to Be Done: users "hire" this app to find events worth attending
+    #
+    # The core user journey we measure:
+    #   Landing → Browse → Select Event → View Detail → Take Action
+    #   where "Action" = outbound_click | add_to_calendar | share | favorite_add
+
+    total_users = data["kpis"].get("users", 0) or 1
+    total_sessions = data["kpis"].get("sessions", 0) or 1
+    ce = data["custom_events"]
+
+    # Journey stage event counts (from custom events + core GA4)
+    viewers = ce.get("view_event_page", {}).get("users", 0)  # Users who opened event detail
+    selectors = ce.get("select_event", {}).get("users", 0)  # Users who clicked a card
+    searchers = ce.get("search", {}).get("users", 0)
+    filterers = ce.get("filter_change", {}).get("users", 0)
+
+    # Action events (the "North Star" — user found value)
+    action_events = ["outbound_click", "add_to_calendar", "share", "favorite_add"]
+    action_users = sum(ce.get(ev, {}).get("users", 0) for ev in action_events)
+    action_count = sum(ce.get(ev, {}).get("count", 0) for ev in action_events)
+
+    # Engagement depth events
+    scrollers = ce.get("scroll", {}).get("users", 0) if "scroll" in ce else 0
+    load_more_users = ce.get("load_more", {}).get("users", 0)
+
+    # Compute funnel rates
+    data["behavior"] = {
+        # ── Core Journey Funnel ──
+        "funnel": {
+            "total_users": total_users,
+            "event_viewers": viewers,
+            "event_viewers_rate": round(viewers / total_users, 3),
+            "action_takers": action_users,
+            "action_rate": round(action_users / total_users, 4),  # North Star
+            "view_to_action_rate": round(action_users / viewers, 3) if viewers else 0,
+        },
+        # ── Feature Adoption ──
+        "feature_adoption": {
+            "search_rate": round(searchers / total_users, 3),
+            "filter_rate": round(filterers / total_users, 3),
+            "load_more_rate": round(load_more_users / total_users, 3),
+            "scroll_rate": round(scrollers / total_users, 3),
+            "share_rate": round(ce.get("share", {}).get("users", 0) / total_users, 4),
+            "calendar_rate": round(ce.get("add_to_calendar", {}).get("users", 0) / total_users, 4),
+            "favorite_rate": round(ce.get("favorite_add", {}).get("users", 0) / total_users, 4),
+            "outbound_rate": round(ce.get("outbound_click", {}).get("users", 0) / total_users, 3),
+        },
+        # ── Search Effectiveness ──
+        "search": {
+            "searches": ce.get("search", {}).get("count", 0),
+            "results_loaded": ce.get("search_results_loaded", {}).get("count", 0),
+            "searcher_users": searchers,
+        },
+        # ── Publish Effectiveness ──
+        "publish": {
+            "form_starts": ce.get("publica_form_start", {}).get("count", 0),
+            "submit_attempts": ce.get("publish_submit_attempt", {}).get("count", 0),
+            "successes": ce.get("publish_success", {}).get("count", 0),
+            "errors": ce.get("publish_error", {}).get("count", 0),
+            "blocked": ce.get("publish_submit_blocked", {}).get("count", 0),
+            "conversion_rate": round(
+                ce.get("publish_success", {}).get("count", 0) /
+                max(ce.get("publica_form_start", {}).get("count", 0), 1), 2
+            ),
+        },
+        # ── Content Engagement ──
+        "content": {
+            "actions_per_session": round(action_count / total_sessions, 2),
+            "events_per_session": round(
+                ce.get("view_event_page", {}).get("count", 0) / total_sessions, 2
+            ),
+            "pages_with_outbound": ce.get("outbound_click", {}).get("count", 0),
+            "restaurant_views": ce.get("restaurant_section_view", {}).get("count", 0),
+            "restaurant_view_rate": round(
+                ce.get("restaurant_section_view", {}).get("users", 0) / total_users, 3
+            ),
+        },
+    }
+
+    # Zero-result searches (results_count = 0)
+    zero_result_rows = ga_report(
+        ["customEvent:search_term"], ["eventCount"],
+        dim_filter=FilterExpression(and_group=FilterExpressionList(expressions=[
+            FilterExpression(filter=Filter(
+                field_name="eventName",
+                string_filter=Filter.StringFilter(value="search_results_loaded"),
+            )),
+            FilterExpression(filter=Filter(
+                field_name="customEvent:results_count",
+                string_filter=Filter.StringFilter(value="0"),
+            )),
+        ])),
+        limit=15,
+    )
+    data["behavior"]["zero_result_searches"] = [
+        {"term": r["dims"][0], "count": safe_int(r["metrics"][0])}
+        for r in zero_result_rows if r["dims"][0] != "(not set)"
+    ]
 
     return data
 
@@ -931,6 +1139,90 @@ def generate_markdown(data, previous=None):
         lines.append(f"| {emoji} {ev} | {vals['count']:,} | {vals['users']:,} |")
     lines.append("")
 
+    # ── Publish Funnel ──
+    funnel = data["ga4"].get("publish_funnel", {})
+    if funnel:
+        lines.append("### 📝 Publish Funnel")
+        lines.append("")
+        lines.append("| Step | Count | Users |")
+        lines.append("|------|-------|-------|")
+        funnel_order = [
+            "publica_form_start", "publica_field_interact", "publish_submit_attempt",
+            "publish_submit_blocked", "publish_image_upload_start", "publish_image_upload_success",
+            "publish_image_upload_error", "publish_image_upload_abort",
+            "publish_error", "publish_success",
+        ]
+        for step in funnel_order:
+            vals = funnel.get(step)
+            if vals:
+                lines.append(f"| {step} | {vals['count']:,} | {vals['users']:,} |")
+        lines.append("")
+
+    # ── Event Drill-downs ──
+    drilldowns = data["ga4"].get("event_drilldowns", {})
+
+    # Publish errors by reason
+    errors_by_reason = drilldowns.get("publish_errors_by_reason", [])
+    if errors_by_reason:
+        lines.append("### 🔴 Publish Errors by Reason")
+        lines.append("")
+        lines.append("| Event | Reason | Count |")
+        lines.append("|-------|--------|-------|")
+        for r in errors_by_reason:
+            reason = r["reason"] if r["reason"] != "(not set)" else "unknown"
+            lines.append(f"| {r['event']} | {reason} | {r['count']:,} |")
+        lines.append("")
+
+    # Top search terms
+    search_terms = drilldowns.get("top_search_terms", [])
+    if search_terms:
+        lines.append("### 🔍 Top Search Terms")
+        lines.append("")
+        lines.append("| Term | Count |")
+        lines.append("|------|-------|")
+        for r in search_terms[:15]:
+            term = sanitize_md(r["term"]) if r["term"] != "(not set)" else "—"
+            lines.append(f"| {term} | {r['count']:,} |")
+        lines.append("")
+
+    # Filter usage
+    filter_usage = drilldowns.get("filter_usage", [])
+    if filter_usage:
+        lines.append("### 🔧 Filter Usage (Place / Date / Category)")
+        lines.append("")
+        lines.append("| Place | Date | Category | Count |")
+        lines.append("|-------|------|----------|-------|")
+        for r in filter_usage[:15]:
+            p = r["place"] if r["place"] != "(not set)" else "—"
+            d = r["date"] if r["date"] != "(not set)" else "—"
+            c = r["category"] if r["category"] != "(not set)" else "—"
+            lines.append(f"| {p} | {d} | {c} | {r['count']:,} |")
+        lines.append("")
+
+    # Outbound clicks by type
+    outbound = drilldowns.get("outbound_by_type", [])
+    if outbound:
+        lines.append("### 🔗 Outbound Clicks by Type")
+        lines.append("")
+        lines.append("| Link Type | Count | Users |")
+        lines.append("|-----------|-------|-------|")
+        for r in outbound:
+            lt = r["link_type"] if r["link_type"] != "(not set)" else "general"
+            lines.append(f"| {lt} | {r['count']:,} | {r['users']:,} |")
+        lines.append("")
+
+    # Share by method
+    shares = drilldowns.get("share_by_method", [])
+    if shares:
+        lines.append("### 📤 Share by Method")
+        lines.append("")
+        lines.append("| Method | Count |")
+        lines.append("|--------|-------|")
+        for r in shares:
+            m = r["method"] if r["method"] != "(not set)" else "—"
+            lines.append(f"| {m} | {r['count']:,} |")
+        lines.append("")
+
     # ── High Bounce Pages ──
     if data["ga4"]["high_bounce_pages"]:
         lines.append("## ⚠️ High Bounce Pages (>70%, 20+ sessions)")
@@ -1107,6 +1399,109 @@ def generate_markdown(data, previous=None):
             lines.append(f"\n**New:Returning ratio: {ratio:.1f}:1**")
             if ratio > 10:
                 lines.append("⚠️ Very few returning users. Consider email newsletters, push notifications, or save-for-later features.")
+        lines.append("")
+
+    # ══════════════════════════════════════════════════════════
+    # BEHAVIOR INSIGHTS — Computed metrics for decision-making
+    # ══════════════════════════════════════════════════════════
+    behavior = data["ga4"].get("behavior", {})
+    if behavior:
+        lines.append("## 🧠 User Behavior Insights")
+        lines.append("")
+        lines.append("> *Derived metrics that answer: are users finding value? Where do they drop off? What should we improve?*")
+        lines.append("")
+
+        # ── Core Journey Funnel ──
+        f = behavior.get("funnel", {})
+        lines.append("### User Journey Funnel")
+        lines.append("")
+        lines.append("```")
+        lines.append(f"Landing ({f.get('total_users', 0):,} users)")
+        lines.append(f"  └─ Viewed event detail: {f.get('event_viewers', 0):,} ({f.get('event_viewers_rate', 0):.0%})")
+        lines.append(f"       └─ Took action: {f.get('action_takers', 0):,} ({f.get('view_to_action_rate', 0):.0%} of viewers)")
+        lines.append(f"")
+        lines.append(f"⭐ Action Rate (North Star): {f.get('action_rate', 0):.1%} of all users take action")
+        lines.append(f"   Actions = outbound_click + add_to_calendar + share + favorite_add")
+        lines.append("```")
+        lines.append("")
+
+        # Bottleneck analysis
+        vr = f.get("event_viewers_rate", 0)
+        vta = f.get("view_to_action_rate", 0)
+        if vr < 0.05:
+            lines.append("🔴 **Bottleneck: Discovery → Detail** — Less than 5% of users open an event page. "
+                         "Improve card design, headlines, or event imagery to drive more clicks.")
+        elif vr < 0.10:
+            lines.append("🟡 **Bottleneck: Discovery → Detail** — Only {:.0%} of users open an event page. ".format(vr) +
+                         "Consider testing card layouts, adding event previews, or better categorization.")
+        if vta < 0.15:
+            lines.append("🔴 **Bottleneck: Detail → Action** — Less than 15% of event viewers take action. "
+                         "Improve CTA visibility, add sticky action bar, or make outbound links more prominent.")
+        elif vta < 0.30:
+            lines.append("🟡 **Bottleneck: Detail → Action** — {:.0%} of viewers take action. ".format(vta) +
+                         "Room to improve event page CTAs and action buttons.")
+        lines.append("")
+
+        # ── Feature Adoption Table ──
+        fa = behavior.get("feature_adoption", {})
+        lines.append("### Feature Adoption Rates")
+        lines.append("")
+        lines.append("| Feature | % of Users | Status |")
+        lines.append("|---------|-----------|--------|")
+        adoption_items = [
+            ("Search", fa.get("search_rate", 0), 0.05, 0.02),
+            ("Filters", fa.get("filter_rate", 0), 0.03, 0.01),
+            ("Load More", fa.get("load_more_rate", 0), 0.03, 0.01),
+            ("Outbound Click", fa.get("outbound_rate", 0), 0.05, 0.02),
+            ("Share", fa.get("share_rate", 0), 0.01, 0.003),
+            ("Add to Calendar", fa.get("calendar_rate", 0), 0.01, 0.003),
+            ("Favorite", fa.get("favorite_rate", 0), 0.01, 0.003),
+        ]
+        for name, rate, good_threshold, warn_threshold in adoption_items:
+            if rate >= good_threshold:
+                status = "🟢 Good"
+            elif rate >= warn_threshold:
+                status = "🟡 Low"
+            else:
+                status = "🔴 Very low"
+            lines.append(f"| {name} | {rate:.1%} | {status} |")
+        lines.append("")
+
+        # ── Zero-Result Searches ──
+        zrs = behavior.get("zero_result_searches", [])
+        if zrs:
+            lines.append("### 🔍 Failed Searches (0 results)")
+            lines.append("")
+            lines.append("Users searched for these but found nothing — content gaps or search issues:")
+            lines.append("")
+            lines.append("| Search Term | Times |")
+            lines.append("|------------|-------|")
+            for r in zrs:
+                lines.append(f"| {sanitize_md(r['term'])} | {r['count']:,} |")
+            lines.append("")
+
+        # ── Publish Funnel Health ──
+        pub = behavior.get("publish", {})
+        if pub.get("form_starts", 0) > 0:
+            lines.append("### 📝 Publish Funnel Health")
+            lines.append("")
+            lines.append(f"- Form starts: **{pub['form_starts']}** → Successes: **{pub['successes']}** "
+                         f"(conversion: **{pub['conversion_rate']:.0%}**)")
+            if pub["errors"] > 0:
+                lines.append(f"- ⚠️ {pub['errors']} errors, {pub['blocked']} blocked submissions")
+            if pub["conversion_rate"] < 0.3:
+                lines.append(f"- 🔴 Low conversion. Investigate form UX, image upload issues, or validation friction.")
+            lines.append("")
+
+        # ── Content Engagement Depth ──
+        content = behavior.get("content", {})
+        lines.append("### 📊 Engagement Depth")
+        lines.append("")
+        lines.append(f"- **Actions per session**: {content.get('actions_per_session', 0):.2f}")
+        lines.append(f"- **Event pages per session**: {content.get('events_per_session', 0):.2f}")
+        if content.get("restaurant_views", 0) > 0:
+            lines.append(f"- **Restaurant section views**: {content['restaurant_views']:,} "
+                         f"({content.get('restaurant_view_rate', 0):.1%} of users)")
         lines.append("")
 
     # ── Actionable Items ──
@@ -1323,6 +1718,75 @@ def generate_actions(data, previous=None):
             "title": f"Very low returning users ({ret_sessions:,} returning vs {new_sessions:,} new)",
             "description": "Most users don't come back. Consider push notifications, email digest, save/favorite features, or 'events near me' alerts.",
         })
+
+    # ── Behavior-based recommendations ──
+    behavior = data.get("ga4", {}).get("behavior", {})
+    if behavior:
+        f = behavior.get("funnel", {})
+        fa = behavior.get("feature_adoption", {})
+        pub = behavior.get("publish", {})
+        zrs = behavior.get("zero_result_searches", [])
+
+        # Low action rate (North Star)
+        ar = f.get("action_rate", 0)
+        if ar > 0 and ar < 0.02:
+            actions.append({
+                "priority": "P1",
+                "title": f"Very low action rate: {ar:.1%} of users take action",
+                "description": "Users browse but rarely click outbound, share, or save. Improve event page CTAs: larger buttons, sticky action bar, clearer 'Buy tickets' link.",
+            })
+        elif ar > 0 and ar < 0.05:
+            actions.append({
+                "priority": "P2",
+                "title": f"Action rate below 5%: {ar:.1%}",
+                "description": "Opportunity to increase event page engagement. Test prominent CTAs, 'Add to Calendar' placement, and share buttons.",
+            })
+
+        # Discovery bottleneck
+        vr = f.get("event_viewers_rate", 0)
+        if vr > 0 and vr < 0.05:
+            actions.append({
+                "priority": "P1",
+                "title": f"Only {vr:.1%} of users open an event page",
+                "description": "Most users leave from listing pages. Improve event card design: compelling images, clear dates, better titles. Consider adding event previews on hover.",
+            })
+
+        # Zero-result searches (content gaps)
+        if len(zrs) >= 3:
+            terms = ", ".join(r["term"] for r in zrs[:5])
+            total = sum(r["count"] for r in zrs)
+            actions.append({
+                "priority": "P1",
+                "title": f"{len(zrs)} search terms return 0 results ({total} searches lost)",
+                "description": f"Content gaps for: {terms}. Consider adding events/categories for these searches or improving search fuzzy matching.",
+            })
+
+        # Low search adoption
+        sr = fa.get("search_rate", 0)
+        if sr > 0 and sr < 0.02:
+            actions.append({
+                "priority": "P2",
+                "title": f"Search underused: only {sr:.1%} of users search",
+                "description": "Make search more prominent in the header. Consider adding search suggestions or popular search terms.",
+            })
+
+        # Publish funnel friction
+        if pub.get("form_starts", 0) > 5 and pub.get("conversion_rate", 1) < 0.3:
+            actions.append({
+                "priority": "P1",
+                "title": f"Publish conversion only {pub['conversion_rate']:.0%} ({pub['errors']} errors, {pub['blocked']} blocked)",
+                "description": "Most organizers who start publishing fail to complete. Investigate form validation errors, image upload issues, and simplify required fields.",
+            })
+
+        # Low share/calendar adoption
+        share_r = fa.get("share_rate", 0)
+        cal_r = fa.get("calendar_rate", 0)
+        if share_r > 0 and share_r < 0.003 and cal_r > 0 and cal_r < 0.003:
+            actions.append({
+                "priority": "P2",
+                "title": "Share and Calendar features nearly unused",
+                "description": "Both share and add-to-calendar have <0.3% adoption. Make these CTAs more visible on event pages — consider sticky bottom bar or inline placement.",
+            })
 
     # Trend-based actions
     if previous:
