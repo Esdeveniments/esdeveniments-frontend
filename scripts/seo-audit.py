@@ -114,6 +114,9 @@ except Exception as e:
     print("Set GOOGLE_APPLICATION_CREDENTIALS or configure ADC.")
     raise SystemExit(1)
 
+# Country filter for GA4 (set via --country arg, applied to all GA reports)
+GA_COUNTRY_FILTER = None  # set in main()
+
 
 # ─── HELPERS ───
 def gsc_query(dims, start, end, limit=500, filters=None):
@@ -136,8 +139,19 @@ def ga_report(dimensions, metrics, start=START_90, end=END, limit=25, dim_filter
         order_bys=[OrderBy(metric=OrderBy.MetricOrderBy(metric_name=metrics[0]), desc=True)],
         limit=limit,
     )
-    if dim_filter:
-        req.dimension_filter = dim_filter
+    # Merge country filter with any existing dimension filter
+    combined = dim_filter
+    if GA_COUNTRY_FILTER:
+        if combined:
+            combined = FilterExpression(
+                and_group=FilterExpressionList(
+                    expressions=[GA_COUNTRY_FILTER, combined]
+                )
+            )
+        else:
+            combined = GA_COUNTRY_FILTER
+    if combined:
+        req.dimension_filter = combined
     try:
         resp = ga.run_report(req)
     except Exception as e:
@@ -1817,9 +1831,20 @@ def generate_actions(data, previous=None):
 # ═══════════════════════════════════════════════════════════════
 
 def main():
+    global GA_COUNTRY_FILTER
     parser = argparse.ArgumentParser(description="SEO Audit: GSC + GA4")
     parser.add_argument("--previous", help="Path to previous audit JSON for trend comparison")
+    parser.add_argument("--country", help="Filter GA4 data to a specific country (e.g. Spain)")
     args = parser.parse_args()
+
+    if args.country:
+        GA_COUNTRY_FILTER = FilterExpression(
+            filter=Filter(
+                field_name="country",
+                string_filter=Filter.StringFilter(value=args.country),
+            )
+        )
+        print(f"🌍 GA4 country filter: {args.country}")
 
     # Collect data
     gsc_data = collect_gsc_data()
@@ -1834,6 +1859,7 @@ def main():
             "comparison_period": {"start": START_PREV, "end": END_PREV},
             "site": SITE,
             "ga4_property": GA_PROPERTY,
+            "ga4_country_filter": args.country,
         },
         "gsc": gsc_data,
         "ga4": ga4_data,

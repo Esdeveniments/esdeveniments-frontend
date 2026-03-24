@@ -10,6 +10,7 @@ Usage:
     python3 scripts/ga-dashboard.py --all        # Full dashboard (terminal)
     python3 scripts/ga-dashboard.py --md         # Full Markdown (for CI/GH Issues)
     python3 scripts/ga-dashboard.py --days 30    # Change period
+    python3 scripts/ga-dashboard.py --country Spain  # Filter to one country (removes bots)
     python3 scripts/ga-dashboard.py --realtime   # Real-time only
     python3 scripts/ga-dashboard.py --events     # Custom events deep-dive
     python3 scripts/ga-dashboard.py --publish    # Publish funnel analysis
@@ -154,13 +155,37 @@ def health(rate, good, warn):
     return "🔴"
 
 
+def with_country_filter(existing_filter, country):
+    """Wrap an existing dimensionFilter with an AND(country=X, existing).
+
+    If country is None, returns the existing filter unchanged.
+    If there's no existing filter, returns just the country filter.
+    If there IS an existing filter, wraps both in an andGroup.
+    """
+    if not country:
+        return existing_filter
+    country_expr = {"filter": {
+        "fieldName": "country",
+        "stringFilter": {"value": country},
+    }}
+    if not existing_filter:
+        return country_expr
+    # Wrap both in andGroup
+    return {"andGroup": {"expressions": [country_expr, existing_filter]}}
+
+
 # ═══════════════════════════════════════════════════════════════
 # DATA COLLECTION (single pass — all API calls happen here)
 # ═══════════════════════════════════════════════════════════════
 
-def collect_data(days, sections):
-    """Fetch all needed GA4 data into a structured dict."""
+def collect_data(days, sections, country=None):
+    """Fetch all needed GA4 data into a structured dict.
+
+    If country is set (e.g. 'Spain'), all runReport calls are filtered
+    to that country. Realtime reports are unfiltered (API limitation).
+    """
     d = {}
+    d["country_filter"] = country
     rng = [{"startDate": f"{days}daysAgo", "endDate": "today"}]
 
     # ── Realtime ──
@@ -182,6 +207,7 @@ def collect_data(days, sections):
                 {"name": "screenPageViews"}, {"name": "bounceRate"},
                 {"name": "averageSessionDuration"},
             ],
+            "dimensionFilter": with_country_filter(None, country),
             "orderBys": [{"dimension": {"dimensionName": "date"}}],
         }))
 
@@ -194,6 +220,7 @@ def collect_data(days, sections):
                 {"name": "sessions"}, {"name": "activeUsers"},
                 {"name": "screenPageViews"}, {"name": "bounceRate"},
             ],
+            "dimensionFilter": with_country_filter(None, country),
             "orderBys": [{"metric": {"metricName": "sessions"}, "desc": True}],
         }))
 
@@ -206,6 +233,7 @@ def collect_data(days, sections):
                 {"name": "screenPageViews"}, {"name": "activeUsers"},
                 {"name": "averageSessionDuration"},
             ],
+            "dimensionFilter": with_country_filter(None, country),
             "orderBys": [{"metric": {"metricName": "screenPageViews"}, "desc": True}],
             "limit": 20,
         }))
@@ -217,8 +245,10 @@ def collect_data(days, sections):
             "dimensions": [{"name": "deviceCategory"}],
             "metrics": [{"name": "sessions"}, {"name": "activeUsers"},
                         {"name": "screenPageViews"}],
+            "dimensionFilter": with_country_filter(None, country),
             "orderBys": [{"metric": {"metricName": "sessions"}, "desc": True}],
         }))
+        # Country breakdown — always unfiltered (shows where users come from)
         d["countries"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "country"}],
@@ -233,47 +263,51 @@ def collect_data(days, sections):
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
+            "dimensionFilter": with_country_filter(None, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 50,
         }))
 
     # ── Publish funnel ──
     if "publish" in sections:
+        publish_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"matchType": "CONTAINS", "value": "publish"},
+        }}
         d["publish"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"matchType": "CONTAINS", "value": "publish"},
-            }},
+            "dimensionFilter": with_country_filter(publish_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
         }))
+        errors_filter = {"orGroup": {"expressions": [
+            {"filter": {"fieldName": "eventName",
+                        "stringFilter": {"value": "publish_error"}}},
+            {"filter": {"fieldName": "eventName",
+                        "stringFilter": {"value": "publish_submit_blocked"}}},
+            {"filter": {"fieldName": "eventName",
+                        "stringFilter": {"value": "publish_image_upload_error"}}},
+        ]}}
         d["publish_errors"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}, {"name": "customEvent:reason"}],
             "metrics": [{"name": "eventCount"}],
-            "dimensionFilter": {"orGroup": {"expressions": [
-                {"filter": {"fieldName": "eventName",
-                            "stringFilter": {"value": "publish_error"}}},
-                {"filter": {"fieldName": "eventName",
-                            "stringFilter": {"value": "publish_submit_blocked"}}},
-                {"filter": {"fieldName": "eventName",
-                            "stringFilter": {"value": "publish_image_upload_error"}}},
-            ]}},
+            "dimensionFilter": with_country_filter(errors_filter, country),
             "limit": 20,
         }))
 
     # ── Search & filters ──
     if "search" in sections:
+        search_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "search"},
+        }}
         d["search_terms"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "customEvent:search_term"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"value": "search"},
-            }},
+            "dimensionFilter": with_country_filter(search_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 15,
         }))
@@ -282,103 +316,108 @@ def collect_data(days, sections):
             "dimensions": [{"name": "customEvent:search_term"},
                            {"name": "customEvent:results_count"}],
             "metrics": [{"name": "eventCount"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"value": "search"},
-            }},
+            "dimensionFilter": with_country_filter(search_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 30,
         }))
+        filter_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"matchType": "CONTAINS", "value": "filter"},
+        }}
         d["filters"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "customEvent:filter_key"},
                            {"name": "customEvent:filter_value"}],
             "metrics": [{"name": "eventCount"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"matchType": "CONTAINS", "value": "filter"},
-            }},
+            "dimensionFilter": with_country_filter(filter_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 20,
         }))
+        share_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"matchType": "CONTAINS", "value": "share"},
+        }}
         d["shares"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}, {"name": "customEvent:method"}],
             "metrics": [{"name": "eventCount"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"matchType": "CONTAINS", "value": "share"},
-            }},
+            "dimensionFilter": with_country_filter(share_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 10,
         }))
 
     # ── Engagement detail ──
     if "engagement" in sections:
+        outbound_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "outbound_click"},
+        }}
         d["outbound"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"},
                            {"name": "customEvent:link_type"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"value": "outbound_click"},
-            }},
+            "dimensionFilter": with_country_filter(outbound_filter, country),
             "limit": 10,
         }))
+        restaurant_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"matchType": "CONTAINS", "value": "restaurant"},
+        }}
         d["restaurant"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"matchType": "CONTAINS", "value": "restaurant"},
-            }},
+            "dimensionFilter": with_country_filter(restaurant_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
         }))
+        calendar_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"matchType": "CONTAINS", "value": "calendar"},
+        }}
         d["calendar"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}, {"name": "customEvent:method"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"matchType": "CONTAINS", "value": "calendar"},
-            }},
+            "dimensionFilter": with_country_filter(calendar_filter, country),
             "limit": 10,
         }))
+        fav_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"matchType": "CONTAINS", "value": "favorite"},
+        }}
         d["favorites"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"matchType": "CONTAINS", "value": "favorite"},
-            }},
+            "dimensionFilter": with_country_filter(fav_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
         }))
 
     # ── Pareto: outbound clicks by page (which pages convert?) ──
     if "behavior" in sections:
+        outbound_page_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "outbound_click"},
+        }}
         d["outbound_by_page"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "pagePath"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "eventName",
-                "stringFilter": {"value": "outbound_click"},
-            }},
+            "dimensionFilter": with_country_filter(outbound_page_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 20,
         }))
         # Page views per page (to compute conversion rate)
+        event_page_filter = {"filter": {
+            "fieldName": "pagePath",
+            "stringFilter": {"matchType": "BEGINS_WITH", "value": "/e/"},
+        }}
         d["views_by_page"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "pagePath"}],
             "metrics": [{"name": "screenPageViews"}],
-            "dimensionFilter": {"filter": {
-                "fieldName": "pagePath",
-                "stringFilter": {"matchType": "BEGINS_WITH", "value": "/e/"},
-            }},
+            "dimensionFilter": with_country_filter(event_page_filter, country),
             "orderBys": [{"metric": {"metricName": "screenPageViews"}, "desc": True}],
             "limit": 50,
         }))
@@ -1009,7 +1048,9 @@ def render_markdown(d, days):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     L.append(f"# 📊 Esdeveniments.cat — Weekly Dashboard")
-    L.append(f"> Property `{PROPERTY_ID}` · Period: **last {days} days** · Generated: {now}")
+    country = d.get("country_filter")
+    filter_note = f" · Country: **{country}**" if country else ""
+    L.append(f"> Property `{PROPERTY_ID}` · Period: **last {days} days**{filter_note} · Generated: {now}")
     L.append("")
 
     # ── Health Check ──
@@ -1348,14 +1389,22 @@ def render_markdown(d, days):
 def main():
     args = set(sys.argv[1:])
     days = 7
+    country = None
     if "--days" in args:
         idx = sys.argv.index("--days")
         if idx + 1 < len(sys.argv):
             days = int(sys.argv[idx + 1])
+    if "--country" in args:
+        idx = sys.argv.index("--country")
+        if idx + 1 < len(sys.argv):
+            country = sys.argv[idx + 1]
 
     is_md = "--md" in args
     show_all = "--all" in args or is_md
-    no_flags = not (args - {"--days", str(days)})
+    skip_args = {"--days", str(days), "--country"}
+    if country:
+        skip_args.add(country)
+    no_flags = not (args - skip_args)
 
     # Determine which sections to collect
     sections = set()
@@ -1385,12 +1434,13 @@ def main():
         sections.add("search")  # needed for zero-result searches
 
     # Collect all data in one pass
+    country_label = f" | Country: {country}" if country else ""
     if not is_md:
         print(f"\n  📊 Esdeveniments.cat — GA4 Dashboard")
         print(f"  Property: {PROPERTY_ID} | Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        print(f"  Period: last {days} days")
+        print(f"  Period: last {days} days{country_label}")
 
-    d = collect_data(days, sections)
+    d = collect_data(days, sections, country=country)
 
     if is_md:
         print(render_markdown(d, days))
