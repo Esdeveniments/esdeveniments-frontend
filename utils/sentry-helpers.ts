@@ -20,6 +20,9 @@ export const SENTRY_IGNORE_ERRORS: Array<string | RegExp> = [
   /advertisement/i,
   // Next.js rolling deployment mismatch — old client hits new server. Not actionable.
   "Failed to find Server Action",
+  // React PPR resumption mismatch — happens during deployment transitions when
+  // OpenNext serves stale postponed metadata. Not a code bug.
+  "Couldn't find all resumable slots",
 ];
 
 /**

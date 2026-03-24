@@ -500,11 +500,10 @@ export async function GET(request: Request) {
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error(`[image-proxy] Fetch/process failed for ${candidate}:`, msg);
-      if (process.env.NODE_ENV === "production") {
-        Sentry.captureException(error, {
-          tags: { route: "/api/image-proxy", candidate },
-        });
-      }
+      // Don't report to Sentry — these are external broken images (404, timeout,
+      // DNS failure, TLS errors), not bugs in our code. The console.error above
+      // is sufficient for debugging. Sharp processing failures are reported
+      // separately in the inner catch block.
     }
   }
 
