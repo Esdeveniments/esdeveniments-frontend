@@ -303,8 +303,42 @@ jobs:
           echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/server-static-sitemap.xml" > /dev/null
           echo "✅ robots.txt looks correct"
 
-      - name: Run E2E tests
-        run: yarn test:e2e -c playwright.remote.config.ts --workers=2
+      - name: Run E2E tests (code-only gate)
+        # Fast regression gate: run only code-logic tests against localhost.
+        # Infra-sensitive tests (cache headers, image proxy, sitemaps, locale caching,
+        # canonical redirects, service worker, PPR streaming) are skipped here because
+        # localhost doesn't use OpenNext/CloudFront/DynamoDB — those run against real
+        # AWS infrastructure in the staging E2E step below.
+        run: |
+          yarn test:e2e -c playwright.remote.config.ts \
+            --workers=2 \
+            --ignore-snapshots \
+            e2e/about-page.spec.ts \
+            e2e/add-to-calendar.spec.ts \
+            e2e/ads-hybrid-rendering.spec.ts \
+            e2e/archive-pages.spec.ts \
+            e2e/event.flow.spec.ts \
+            e2e/events-around.spec.ts \
+            e2e/favorites.flow.spec.ts \
+            e2e/filters-client-fetch.spec.ts \
+            e2e/filters-distance-geolocation.spec.ts \
+            e2e/filters-interactions.spec.ts \
+            e2e/filters-modal-interaction.spec.ts \
+            e2e/filters.flow.spec.ts \
+            e2e/home.flow.spec.ts \
+            e2e/load_more_with_filters.spec.ts \
+            e2e/location-widget.spec.ts \
+            e2e/no-events-fallback.spec.ts \
+            e2e/offline_and_error.flow.spec.ts \
+            e2e/place-page-explore-nav.spec.ts \
+            e2e/publish-no-autosubmit.spec.ts \
+            e2e/publish-preview.spec.ts \
+            e2e/publish-wizard.spec.ts \
+            e2e/publish.flow.spec.ts \
+            e2e/search-component.spec.ts \
+            e2e/search-results.spec.ts \
+            e2e/smoke.spec.ts \
+            e2e/sponsor-patrocina.spec.ts
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
@@ -467,15 +501,16 @@ jobs:
           fi
 
       - name: Staging E2E tests (real AWS infrastructure)
+        # Full E2E suite against real CloudFront → Lambda → DynamoDB.
+        # This is the authoritative validation — catches OpenNext/PPR, Sharp,
+        # cache headers, middleware redirects, and other infra-specific issues
+        # that localhost cannot detect.
         if: success()
         run: |
           yarn test:e2e -c playwright.remote.config.ts \
             --workers=2 \
             --grep-invert "@slow" \
-            e2e/smoke.spec.ts \
-            e2e/image-proxy.spec.ts \
-            e2e/canonical-urls.spec.ts \
-            e2e/home.flow.spec.ts
+            --retries=1
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ steps.staging.outputs.staging_url }}

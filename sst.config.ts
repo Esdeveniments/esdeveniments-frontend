@@ -194,6 +194,10 @@ export default $config({
     });
 
     const site = new sst.aws.Nextjs("site", {
+      // Upgrade from default 3.6.6 to 3.9.16 for PPR (cacheComponents) support.
+      // 3.6.6 drops the `postponed` metadata causing "resumable slots" errors.
+      // 3.9.16 stores/retrieves postponed state and supports Next.js ^16.1.5.
+      openNextVersion: "3.9.16",
       // Custom domain only for production; ephemeral stages use CloudFront auto-URL
       ...(isProduction && {
         domain: {
