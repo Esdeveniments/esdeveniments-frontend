@@ -54,13 +54,13 @@ jobs:
         id: dashboard
         run: |
           DAYS="${{ github.event.inputs.days || '7' }}"
-          python3 scripts/ga-dashboard.py --all --days "$DAYS" | tee /tmp/dashboard-output.txt
+          python3 scripts/ga-dashboard.py --md --days "$DAYS" > /tmp/dashboard-output.md
 
       - name: Create GitHub Issue
         uses: peter-evans/create-issue-from-file@v5
         with:
           title: "📊 Weekly GA4 Dashboard — ${{ github.event.inputs.days || '7' }}d"
-          content-filepath: /tmp/dashboard-output.txt
+          content-filepath: /tmp/dashboard-output.md
           labels: analytics,automated-dashboard
           assignees: albertolive
 
