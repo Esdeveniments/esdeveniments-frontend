@@ -273,98 +273,10 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
         run: yarn prebuild
 
-      - name: Build Next.js application
-        run: yarn build
-        env:
-          NODE_ENV: production
-
-      - name: Start Next.js server (background)
-        run: |
-          yarn start &
-          echo $! > .next-server.pid
-          echo "Started Next.js server with PID $(cat .next-server.pid)"
-        env:
-          NODE_ENV: production
-          PORT: 3000
-          E2E_TEST_MODE: "1"
-          NEXT_PUBLIC_E2E_TEST_MODE: "1"
-
-      - name: Wait for server to be ready
-        run: npx wait-on http://localhost:3000 --timeout 60000
-
-      - name: Sanity check robots.txt
-        run: |
-          set -euo pipefail
-          robots="$(curl -fsS http://localhost:3000/robots.txt)"
-          echo "$robots" | grep -F -i "allow: /" > /dev/null
-          echo "$robots" | grep -F -i "disallow: /_next/" > /dev/null
-          echo "$robots" | grep -F -i "disallow: /api/" > /dev/null
-          echo "$robots" | grep -F -i "user-agent: gptbot" > /dev/null
-          echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/server-static-sitemap.xml" > /dev/null
-          echo "✅ robots.txt looks correct"
-
-      - name: Run E2E tests (code-only gate)
-        # Fast regression gate: run only code-logic tests against localhost.
-        # Infra-sensitive tests (cache headers, image proxy, sitemaps, locale caching,
-        # canonical redirects, service worker, PPR streaming) are skipped here because
-        # localhost doesn't use OpenNext/CloudFront/DynamoDB — those run against real
-        # AWS infrastructure in the staging E2E step below.
-        run: |
-          yarn test:e2e -c playwright.remote.config.ts \
-            --workers=2 \
-            --ignore-snapshots \
-            e2e/about-page.spec.ts \
-            e2e/add-to-calendar.spec.ts \
-            e2e/ads-hybrid-rendering.spec.ts \
-            e2e/archive-pages.spec.ts \
-            e2e/event.flow.spec.ts \
-            e2e/events-around.spec.ts \
-            e2e/favorites.flow.spec.ts \
-            e2e/filters-client-fetch.spec.ts \
-            e2e/filters-distance-geolocation.spec.ts \
-            e2e/filters-interactions.spec.ts \
-            e2e/filters-modal-interaction.spec.ts \
-            e2e/filters.flow.spec.ts \
-            e2e/home.flow.spec.ts \
-            e2e/load_more_with_filters.spec.ts \
-            e2e/location-widget.spec.ts \
-            e2e/no-events-fallback.spec.ts \
-            e2e/offline_and_error.flow.spec.ts \
-            e2e/place-page-explore-nav.spec.ts \
-            e2e/publish-no-autosubmit.spec.ts \
-            e2e/publish-preview.spec.ts \
-            e2e/publish-wizard.spec.ts \
-            e2e/publish.flow.spec.ts \
-            e2e/search-component.spec.ts \
-            e2e/search-results.spec.ts \
-            e2e/smoke.spec.ts \
-            e2e/sponsor-patrocina.spec.ts
-        env:
-          CI: true
-          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
-
-      - name: Stop Next.js server
-        if: always()
-        run: |
-          if [ -f .next-server.pid ]; then
-            kill $(cat .next-server.pid) || true
-            rm .next-server.pid
-          fi
-          pkill -f "yarn start" || true
-
-      - name: Upload Playwright report (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4 # Pin: 6f51ac03b9356f520e9adb1b1b7802705f340c2b
-        with:
-          name: playwright-report-deploy
-          path: playwright-report/
-          retention-days: 7
-          if-no-files-found: ignore
-
       - name: Log SST and OpenNext versions
         run: |
           echo "📦 SST version: $(cat node_modules/sst/package.json | jq -r '.version')"
-          echo "📦 OpenNext version: $(cat node_modules/open-next/package.json | jq -r '.version')"
+          echo "📦 OpenNext version: $(cat node_modules/open-next/package.json | jq -r '.version' 2>/dev/null || echo 'N/A')"
 
       # =========================================================================
       # EPHEMERAL STAGING: Deploy to a temporary AWS stack, run E2E against real
