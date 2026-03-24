@@ -627,8 +627,9 @@ jobs:
           # See: docs/incidents/2026-02-18-sharp-architecture-mismatch.md
           echo "🔍 Checking Sharp on x86_64 Lambda..."
 
-          # Use a stable, redirect-free test image (Wikipedia static assets)
-          TEST_IMAGE="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png"
+          # Use Google's static logo — always available, no rate-limiting, no redirects.
+          # Wikipedia was rate-limiting us (HTTP 429), causing consistent CI failures.
+          TEST_IMAGE="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
           ENCODED_URL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${TEST_IMAGE}'))")
           PROXY_URL="https://www.esdeveniments.cat/api/image-proxy?url=${ENCODED_URL}&w=400&q=50"
 
