@@ -39,6 +39,9 @@ AUTO_EVENTS = {"session_start", "first_visit", "user_engagement", "page_view",
                "scroll", "click", "form_start", "form_submit", "file_download",
                "video_start", "video_progress", "video_complete", "view_search_results"}
 
+# Day names for temporal analysis
+DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
 
 # ═══════════════════════════════════════════════════════════════
 # AUTH & API
@@ -354,20 +357,51 @@ def collect_data(days, sections):
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
         }))
 
+    # ── Pareto: outbound clicks by page (which pages convert?) ──
+    if "behavior" in sections:
+        d["outbound_by_page"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [{"name": "pagePath"}],
+            "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
+            "dimensionFilter": {"filter": {
+                "fieldName": "eventName",
+                "stringFilter": {"value": "outbound_click"},
+            }},
+            "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
+            "limit": 20,
+        }))
+        # Page views per page (to compute conversion rate)
+        d["views_by_page"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [{"name": "pagePath"}],
+            "metrics": [{"name": "screenPageViews"}],
+            "dimensionFilter": {"filter": {
+                "fieldName": "pagePath",
+                "stringFilter": {"matchType": "BEGINS_WITH", "value": "/e/"},
+            }},
+            "orderBys": [{"metric": {"metricName": "screenPageViews"}, "desc": True}],
+            "limit": 50,
+        }))
+
     # ── Compute behavior metrics ──
     if "behavior" in sections:
-        d["behavior"] = compute_behavior(d)
+        d["behavior"] = compute_behavior(d, days)
 
     return d
 
 
-def compute_behavior(d):
+def compute_behavior(d, days):
     """Derive behavior metrics from raw event data.
 
     Mental models applied:
     - AARRR: maps events to Acquisition → Activation → Retention → Revenue → Referral
     - North Star: "Action Rate" = % of users who outbound_click/calendar/share/favorite
     - Theory of Constraints: identifies the biggest drop-off in the funnel
+    - Pareto (80/20): which pages drive most outbound clicks?
+    - Temporal patterns: which days drive engagement?
+    - Content-Market Fit: search demand vs content supply
+    - Fogg Behavior Model: categorizes triggers strength
+    - Opportunity Sizing: estimates impact of improvements
     """
     events_map = {}  # event_name → {count, users}
     for dims, mets in d.get("events", []):
@@ -468,27 +502,216 @@ def compute_behavior(d):
         b["bottleneck_label"] = "None identified"
         b["bottleneck_msg"] = "Funnel is healthy."
 
+    # ── Temporal patterns (day-of-week from daily data) ──
+    dow_data = {}  # day_index → {users, sessions, views}
+    for dims, mets in d.get("daily", []):
+        dd = dims[0]
+        try:
+            dt = datetime(int(dd[:4]), int(dd[4:6]), int(dd[6:8]))
+            day_idx = dt.weekday()  # 0=Mon, 6=Sun
+            if day_idx not in dow_data:
+                dow_data[day_idx] = {"users": 0, "sessions": 0, "views": 0,
+                                     "count": 0}
+            dow_data[day_idx]["users"] += safe_int(mets[0])
+            dow_data[day_idx]["sessions"] += safe_int(mets[1])
+            dow_data[day_idx]["views"] += safe_int(mets[2])
+            dow_data[day_idx]["count"] += 1
+        except (ValueError, IndexError):
+            pass
+
+    # Average per day-of-week
+    temporal = []
+    for idx in range(7):
+        dd = dow_data.get(idx)
+        if dd and dd["count"] > 0:
+            temporal.append({
+                "day": DAY_NAMES[idx],
+                "day_idx": idx,
+                "avg_users": round(dd["users"] / dd["count"]),
+                "avg_sessions": round(dd["sessions"] / dd["count"]),
+                "avg_views": round(dd["views"] / dd["count"]),
+                "total_users": dd["users"],
+            })
+    b["temporal"] = temporal
+
+    # Peak discovery day
+    if temporal:
+        peak = max(temporal, key=lambda x: x["avg_users"])
+        valley = min(temporal, key=lambda x: x["avg_users"])
+        b["peak_day"] = peak["day"]
+        b["peak_users"] = peak["avg_users"]
+        b["valley_day"] = valley["day"]
+        b["valley_users"] = valley["avg_users"]
+        # Weekend vs weekday ratio
+        wkday = [t for t in temporal if t["day_idx"] < 5]
+        wkend = [t for t in temporal if t["day_idx"] >= 5]
+        avg_wkday = (sum(t["avg_users"] for t in wkday) / len(wkday)) if wkday else 0
+        avg_wkend = (sum(t["avg_users"] for t in wkend) / len(wkend)) if wkend else 0
+        b["weekday_avg"] = round(avg_wkday)
+        b["weekend_avg"] = round(avg_wkend)
+
+    # ── Pareto analysis (which pages drive outbound clicks?) ──
+    views_map = {}  # pagePath → views
+    for dims, mets in d.get("views_by_page", []):
+        views_map[dims[0]] = safe_int(mets[0])
+
+    pareto_pages = []
+    total_outbound = 0
+    for dims, mets in d.get("outbound_by_page", []):
+        page = dims[0]
+        clicks = safe_int(mets[0])
+        users = safe_int(mets[1])
+        total_outbound += clicks
+        page_views = views_map.get(page, 0)
+        pareto_pages.append({
+            "page": page,
+            "clicks": clicks,
+            "users": users,
+            "views": page_views,
+            "conversion": (clicks / page_views) if page_views > 0 else 0,
+        })
+
+    # Calculate cumulative % for Pareto
+    running_total = 0
+    for p in pareto_pages:
+        running_total += p["clicks"]
+        p["cum_pct"] = (running_total / total_outbound) if total_outbound else 0
+
+    b["pareto"] = pareto_pages[:15]
+    b["total_outbound_clicks"] = total_outbound
+    # How many pages drive 80% of outbound clicks?
+    pages_for_80 = sum(1 for p in pareto_pages if p["cum_pct"] <= 0.80) + 1
+    b["pareto_80_pages"] = min(pages_for_80, len(pareto_pages))
+
+    # ── Content-Market Fit (search demand vs results) ──
+    search_demand = []
+    for dims, mets in d.get("search_results", []):
+        term = dims[0]
+        results_str = dims[1] if len(dims) > 1 else ""
+        if term == "(not set)":
+            continue
+        results = safe_int(results_str)
+        count = safe_int(mets[0])
+        search_demand.append({"term": term, "results": results,
+                              "searches": count})
+
+    # Aggregate by term (may have multiple result counts)
+    term_demand = {}
+    for s in search_demand:
+        t = s["term"]
+        if t not in term_demand:
+            term_demand[t] = {"term": t, "total_searches": 0,
+                              "max_results": 0, "min_results": 999999}
+        term_demand[t]["total_searches"] += s["searches"]
+        term_demand[t]["max_results"] = max(term_demand[t]["max_results"],
+                                            s["results"])
+        term_demand[t]["min_results"] = min(term_demand[t]["min_results"],
+                                            s["results"])
+
+    # Classify: High demand + low results = content gap
+    content_fit = []
+    for t, info in sorted(term_demand.items(),
+                          key=lambda x: x[1]["total_searches"], reverse=True):
+        if info["max_results"] == 0:
+            fit = "🔴 GAP"
+        elif info["max_results"] < 5:
+            fit = "🟡 THIN"
+        else:
+            fit = "🟢 OK"
+        content_fit.append({
+            "term": t,
+            "searches": info["total_searches"],
+            "results": info["max_results"],
+            "fit": fit,
+        })
+    b["content_fit"] = content_fit[:15]
+
+    # ── Opportunity sizing (Fogg: Trigger strength analysis) ──
+    # How many users saw a trigger vs acted on it?
+    triggers = {}
+    # Sticky CTA = trigger on event page
+    sticky_views = events_map.get("view_event_page", {}).get("users", 0)
+    sticky_clicks = events_map.get("sticky_cta_click", {}).get("users", 0)
+    if sticky_views > 0:
+        triggers["Sticky CTA"] = {
+            "exposed": sticky_views,
+            "acted": sticky_clicks,
+            "rate": sticky_clicks / sticky_views,
+        }
+    # Calendar view trigger
+    cal_views = events_map.get("add_to_calendar_view", {}).get("users", 0)
+    cal_clicks = events_map.get("add_to_calendar", {}).get("users", 0)
+    if cal_views > 0:
+        triggers["Calendar popup"] = {
+            "exposed": cal_views,
+            "acted": cal_clicks,
+            "rate": cal_clicks / cal_views,
+        }
+    # Restaurant section as trigger for maps/website clicks
+    rest_views = events_map.get("restaurant_section_view", {}).get("users", 0)
+    maps_clicks = events_map.get("outbound_click", {}).get("users", 0)
+    # Approximate: restaurant is one source of outbound
+    if rest_views > 0:
+        triggers["Restaurant section"] = {
+            "exposed": rest_views,
+            "acted": maps_clicks,
+            "rate": maps_clicks / rest_views if rest_views > 0 else 0,
+        }
+    b["triggers"] = triggers
+
+    # ── Opportunity sizing (estimated impact) ──
+    # If we improve discovery rate from current to target, how many more actions?
+    current_viewer_rate = b["event_viewers_rate"]
+    current_action_rate_on_viewers = b["view_to_action_rate"]
+    target_viewer_rate = max(current_viewer_rate, 0.10)  # target: 10% minimum
+    target_action_rate = max(current_action_rate_on_viewers, 0.20)  # 20% of viewers
+
+    daily_users = total_users / max(days, 1)
+    current_daily_actions = daily_users * current_viewer_rate * current_action_rate_on_viewers
+    improved_discovery_actions = daily_users * target_viewer_rate * current_action_rate_on_viewers
+    improved_both_actions = daily_users * target_viewer_rate * target_action_rate
+
+    b["opportunity"] = {
+        "daily_users": round(daily_users),
+        "current_daily_actions": round(current_daily_actions, 1),
+        "if_improve_discovery": round(improved_discovery_actions, 1),
+        "if_improve_both": round(improved_both_actions, 1),
+        "discovery_gain_monthly": round((improved_discovery_actions - current_daily_actions) * 30),
+        "both_gain_monthly": round((improved_both_actions - current_daily_actions) * 30),
+    }
+
     return b
 
 
 def generate_actions(d):
-    """Auto-generate prioritized actions from behavioral thresholds."""
+    """Auto-generate prioritized actions from behavioral thresholds.
+
+    Includes opportunity sizing (estimated monthly impact) where possible.
+    """
     actions = []
     b = d.get("behavior", {})
     if not b:
         return actions
 
+    opp = b.get("opportunity", {})
+
     ar = b["action_rate"]
     if ar > 0 and ar < 0.02:
+        gain = opp.get("both_gain_monthly", 0)
         actions.append(("P1", "Very low action rate",
-                        f"Only {ar:.1%} take action. Improve event page CTAs."))
+                        f"Only {ar:.1%} take action. Improve event page CTAs. "
+                        f"Potential: +{gain} actions/month if fixed."))
     elif ar > 0 and ar < 0.05:
+        gain = opp.get("discovery_gain_monthly", 0)
         actions.append(("P2", f"Action rate {ar:.1%} — room to grow",
-                        "Test sticky CTA bar, larger buttons, better copy."))
+                        f"Test sticky CTA bar, larger buttons. "
+                        f"Potential: +{gain} actions/month."))
 
     if b.get("bottleneck") == "discovery":
+        gain = opp.get("discovery_gain_monthly", 0)
         actions.append(("P1", "Discovery bottleneck",
-                        b["bottleneck_msg"]))
+                        f"{b['bottleneck_msg']} "
+                        f"Fixing this → +{gain} actions/month."))
 
     zrs = b.get("zero_result_searches", [])
     if len(zrs) >= 3:
@@ -503,13 +726,38 @@ def generate_actions(d):
 
     if adopt.get("search", 0) < 0.02 and adopt.get("search", 0) > 0:
         actions.append(("P2", "Search underused",
-                        f"Only {adopt['search']:.1%} use search. Make it more prominent."))
+                        f"Only {adopt['search']:.1%} use search. "
+                        "Make it more prominent."))
 
     pub = b.get("publish", {})
     if pub.get("starts", 0) > 3 and pub.get("conversion", 1) < 0.3:
         actions.append(("P1", "Publish funnel broken",
                         f"Only {pub['conversion']:.0%} conversion. "
                         f"{pub['errors']} errors."))
+
+    # Content-market fit gaps with high demand
+    gaps = [c for c in b.get("content_fit", [])
+            if c["fit"].startswith("🔴") and c["searches"] >= 3]
+    if gaps:
+        terms = ", ".join(g["term"] for g in gaps[:3])
+        actions.append(("P2", f"{len(gaps)} high-demand content gaps",
+                        f"Users search for {terms} but find 0 results. "
+                        "Add events or improve search."))
+
+    # Temporal: suggest best days for social pushing
+    if b.get("peak_day") and b.get("valley_day"):
+        if b["peak_users"] > b["valley_users"] * 1.5:
+            actions.append(("INFO", f"Best day: {b['peak_day']} "
+                           f"({b['peak_users']} users avg)",
+                           f"Worst: {b['valley_day']} ({b['valley_users']}). "
+                           "Time social posts and email digests for peak days."))
+
+    # Pareto insight
+    if b.get("pareto_80_pages", 0) > 0 and b.get("total_outbound_clicks", 0) > 5:
+        n = b["pareto_80_pages"]
+        total = len(b.get("pareto", []))
+        actions.append(("INFO", f"Pareto: {n} of {total} pages drive 80% of outbound",
+                        "Focus CTA optimization on these high-converting pages first."))
 
     if not actions:
         actions.append(("INFO", "All metrics healthy",
@@ -676,6 +924,71 @@ def render_text(d, days, sections):
             for r in zrs[:5]:
                 print(f"    {r['count']:>4}x  {r['term']}")
 
+        # ── Temporal Patterns ──
+        temporal = b.get("temporal", [])
+        if temporal:
+            print(f"\n  📅 Day-of-Week Patterns:")
+            print(f"    {'Day':>5}  {'Avg Users':>10}  {'Avg Views':>10}")
+            print(f"    {'─'*5}  {'─'*10}  {'─'*10}")
+            for t in temporal:
+                print(f"    {t['day']:>5}  {t['avg_users']:>10.0f}  {t['avg_views']:>10.0f}")
+            if b.get("peak_day"):
+                print(f"\n    Peak: {b['peak_day']} ({b['peak_users']:.0f} avg users)")
+                print(f"    Valley: {b['valley_day']} ({b['valley_users']:.0f} avg users)")
+            we = b.get("weekend_avg", 0)
+            wd = b.get("weekday_avg", 0)
+            if wd:
+                ratio = we / wd
+                lbl = "more" if ratio >= 1 else "fewer"
+                print(f"    Weekend vs weekday: {ratio:.1f}x ({lbl} on weekends)")
+
+        # ── Pareto Analysis ──
+        pareto = b.get("pareto", [])
+        if pareto:
+            print(f"\n  📊 Pareto: Page Conversion (outbound clicks / views)")
+            print(f"    {'Clicks':>6}  {'Views':>6}  {'Conv%':>6}  {'Cum%':>5}  Page")
+            print(f"    {'─'*6}  {'─'*6}  {'─'*6}  {'─'*5}  {'─'*40}")
+            for p in pareto[:10]:
+                print(f"    {p['clicks']:>6}  {p['views']:>6}  "
+                      f"{p['conversion']:.1%}  {p['cum_pct']*100:.0f}%  {p['page'][:50]}")
+            n80 = b.get("pareto_80_pages", 0)
+            total_click = b.get("total_outbound_clicks", 0)
+            if n80:
+                print(f"\n    → {n80} pages drive 80% of outbound "
+                      f"({total_click} total clicks)")
+
+        # ── Content-Market Fit ──
+        fits = b.get("content_fit", [])
+        if fits:
+            print(f"\n  🎯 Content-Market Fit (search demand vs results)")
+            print(f"    {'Searches':>8}  {'Results':>8}  {'Fit':>6}  Term")
+            print(f"    {'─'*8}  {'─'*8}  {'─'*6}  {'─'*30}")
+            for f in fits[:10]:
+                print(f"    {f['searches']:>8}  {f['results']:>8}  "
+                      f"{f['fit']:>6}  {f['term']}")
+
+        # ── Fogg Trigger Analysis ──
+        triggers = b.get("triggers", {})
+        if triggers:
+            print(f"\n  🔔 Trigger Effectiveness (Fogg Model)")
+            print(f"    {'Exposed':>8}  {'Acted':>8}  {'Rate':>7}  Trigger")
+            print(f"    {'─'*8}  {'─'*8}  {'─'*7}  {'─'*30}")
+            for name, t in triggers.items():
+                print(f"    {t['exposed']:>8}  {t['acted']:>8}  "
+                      f"{t['rate']:.1%}  {name}")
+
+        # ── Opportunity Sizing ──
+        opp = b.get("opportunity", {})
+        if opp and opp.get("daily_users", 0) > 0:
+            print(f"\n  💰 Opportunity Sizing (estimated monthly impact)")
+            print(f"    Current: ~{opp['current_daily_actions']:.0f} actions/day")
+            if opp.get("discovery_gain_monthly", 0) > 0:
+                print(f"    If discovery rate → 10%: "
+                      f"+{opp['discovery_gain_monthly']} actions/month")
+            if opp.get("both_gain_monthly", 0) > 0:
+                print(f"    If both discovery+action improve: "
+                      f"+{opp['both_gain_monthly']} actions/month")
+
     # ── Auto-generated actions ──
     actions = generate_actions(d)
     if actions:
@@ -786,6 +1099,89 @@ def render_markdown(d, days):
             L.append("|------|-------:|")
             for r in zrs[:8]:
                 L.append(f"| {r['term']} | {r['count']} |")
+            L.append("")
+
+        # ── Temporal Patterns ──
+        temporal = b.get("temporal", [])
+        if temporal:
+            L.append("### 📅 Day-of-Week Patterns")
+            L.append("")
+            L.append("| Day | Avg Users | Avg Views |")
+            L.append("|-----|----------:|----------:|")
+            for t in temporal:
+                L.append(f"| {t['day']} | {t['avg_users']:.0f} | {t['avg_views']:.0f} |")
+            L.append("")
+            if b.get("peak_day"):
+                we = b.get("weekend_avg", 0)
+                wd = b.get("weekday_avg", 0)
+                ratio_str = ""
+                if wd:
+                    ratio = we / wd
+                    lbl = "more" if ratio >= 1 else "fewer"
+                    ratio_str = f" Weekend is {ratio:.1f}x ({lbl} than weekday)."
+                L.append(f"> 📈 **Peak**: {b['peak_day']} "
+                         f"({b['peak_users']:.0f} avg users) · "
+                         f"**Valley**: {b['valley_day']} "
+                         f"({b['valley_users']:.0f} avg users).{ratio_str}")
+                L.append("")
+
+        # ── Pareto Analysis ──
+        pareto = b.get("pareto", [])
+        if pareto:
+            n80 = b.get("pareto_80_pages", 0)
+            total_click = b.get("total_outbound_clicks", 0)
+            L.append("### 📊 Pareto: Page Conversion")
+            L.append("")
+            if n80:
+                L.append(f"> **{n80} pages** drive 80% of outbound clicks "
+                         f"({total_click} total).")
+                L.append("")
+            L.append("| Clicks | Views | Conv % | Cum % | Page |")
+            L.append("|-------:|------:|-------:|------:|------|")
+            for p in pareto[:10]:
+                L.append(f"| {p['clicks']} | {p['views']} | "
+                         f"{p['conversion']:.1%} | {p['cum_pct']*100:.0f}% | "
+                         f"`{p['page'][:50]}` |")
+            L.append("")
+
+        # ── Content-Market Fit ──
+        fits = b.get("content_fit", [])
+        if fits:
+            L.append("### 🎯 Content-Market Fit")
+            L.append("")
+            L.append("| Term | Searches | Results | Fit |")
+            L.append("|------|--------:|--------:|-----|")
+            for f in fits[:10]:
+                L.append(f"| {f['term']} | {f['searches']} | "
+                         f"{f['results']} | {f['fit']} |")
+            L.append("")
+
+        # ── Trigger Effectiveness ──
+        triggers = b.get("triggers", {})
+        if triggers:
+            L.append("### 🔔 Trigger Effectiveness (Fogg Model)")
+            L.append("")
+            L.append("| Trigger | Exposed | Acted | Rate |")
+            L.append("|---------|--------:|------:|-----:|")
+            for name, t in triggers.items():
+                L.append(f"| {name} | {t['exposed']} | "
+                         f"{t['acted']} | {t['rate']:.1%} |")
+            L.append("")
+
+        # ── Opportunity Sizing ──
+        opp = b.get("opportunity", {})
+        if opp and opp.get("daily_users", 0) > 0:
+            L.append("### 💰 Opportunity Sizing")
+            L.append("")
+            L.append(f"| Scenario | Estimated Monthly Gain |")
+            L.append(f"|----------|----------------------:|")
+            L.append(f"| Current baseline | ~{opp['current_daily_actions']:.0f} actions/day |")
+            if opp.get("discovery_gain_monthly", 0) > 0:
+                L.append(f"| Discovery 3%→10% | "
+                         f"+{opp['discovery_gain_monthly']} actions/month |")
+            if opp.get("both_gain_monthly", 0) > 0:
+                L.append(f"| Discovery + action improve | "
+                         f"+{opp['both_gain_monthly']} actions/month |")
             L.append("")
 
     # ── Daily Overview ──
