@@ -270,12 +270,10 @@ def collect_data(days, sections, country=None):
 
     # ── Publish funnel ──
     if "publish" in sections:
-        publish_filter = {"orGroup": {"expressions": [
-            {"filter": {"fieldName": "eventName",
-                        "stringFilter": {"matchType": "CONTAINS", "value": "publish"}}},
-            {"filter": {"fieldName": "eventName",
-                        "stringFilter": {"matchType": "CONTAINS", "value": "publica"}}},
-        ]}}
+        publish_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"matchType": "CONTAINS", "value": "publish"},
+        }}
         d["publish"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}],
@@ -510,7 +508,7 @@ def compute_behavior(d, days):
         return events_map.get(event_name, {}).get("users", 0) / total_users
 
     # Publish funnel
-    pub_starts = events_map.get("publica_form_start", {}).get("count", 0)
+    pub_starts = events_map.get("publish_form_start", {}).get("count", 0)
     pub_success = events_map.get("publish_success", {}).get("count", 0)
     pub_errors = events_map.get("publish_error", {}).get("count", 0)
 
