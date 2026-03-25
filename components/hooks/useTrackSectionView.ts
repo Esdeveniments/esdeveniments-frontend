@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, RefObject } from "react";
 import useOnScreen from "./useOnScreen";
 import { sendGoogleEvent } from "@utils/analytics";
@@ -8,7 +10,8 @@ import { sendGoogleEvent } from "@utils/analytics";
  *
  * @param sectionName - The section identifier (e.g. "description", "location")
  * @param context - Where the section lives (e.g. "event_detail", "listing")
- * @param extraParams - Additional params to attach to the event
+ * @param extraParams - Additional params to attach to the event. Stable reference
+ *   recommended (useMemo/useRef) to avoid unnecessary effect re-runs.
  * @param enabled - Only track when true (e.g. wait for data to load)
  */
 export default function useTrackSectionView(

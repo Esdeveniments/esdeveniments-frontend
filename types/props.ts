@@ -36,6 +36,8 @@ export interface ClientImageInnerProps {
   date?: string;
 }
 
+import { ChangeEvent, MouseEvent, ReactNode } from "react";
+
 // Detail page section tracker
 export interface DetailSectionTrackerProps {
   section: string;
@@ -43,8 +45,6 @@ export interface DetailSectionTrackerProps {
   children: ReactNode;
   className?: string;
 }
-
-import { ChangeEvent, MouseEvent, ReactNode } from "react";
 import {
   Option,
   GroupedOption,
