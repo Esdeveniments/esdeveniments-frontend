@@ -145,7 +145,7 @@ const Publica = () => {
       if (abandonFiredRef.current) return;
       if (formStartedRef.current && !submittedRef.current) {
         abandonFiredRef.current = true;
-        sendGoogleEvent("publica_form_abandon", {
+        sendGoogleEvent("publish_form_abandon", {
           fields_touched: Array.from(fieldsInteractedRef.current).join(","),
           fields_count: fieldsInteractedRef.current.size,
           source: "publica",
@@ -189,11 +189,11 @@ const Publica = () => {
   const trackFieldInteraction = (fieldName: string) => {
     if (!formStartedRef.current) {
       formStartedRef.current = true;
-      sendGoogleEvent("publica_form_start", { source: "publica" });
+      sendGoogleEvent("publish_form_start", { source: "publica" });
     }
     if (!fieldsInteractedRef.current.has(fieldName)) {
       fieldsInteractedRef.current.add(fieldName);
-      sendGoogleEvent("publica_field_interact", {
+      sendGoogleEvent("publish_field_interact", {
         field_name: fieldName,
         fields_count: fieldsInteractedRef.current.size,
         source: "publica",

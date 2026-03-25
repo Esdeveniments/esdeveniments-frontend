@@ -321,5 +321,26 @@ export default function GoogleScriptsHeavy({
     };
   }, []);
 
+  // PWA install tracking
+  useEffect(() => {
+    if (isE2ETestMode) return;
+    const win = ensureGtag();
+    if (!win) return;
+
+    const handleInstallPrompt = () => {
+      win.gtag("event", "pwa_install_prompt", {});
+    };
+    const handleInstalled = () => {
+      win.gtag("event", "pwa_installed", {});
+    };
+
+    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, []);
+
   return null;
 }

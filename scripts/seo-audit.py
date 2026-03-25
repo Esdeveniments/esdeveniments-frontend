@@ -57,13 +57,17 @@ TRACKED_CUSTOM_EVENTS = [
     "filter_chip_click", "filter_remove", "restaurant_section_view",
     "restaurant_promote_click", "location_selected", "hero_date_filter_toggle",
     "favorite_add", "favorite_remove", "favorites_limit_reached",
-    "publica_form_start", "publica_field_interact", "publica_form_abandon",
+    "publish_form_start", "publish_field_interact", "publish_form_abandon",
     "publish_submit_attempt", "publish_submit_blocked", "publish_error",
     "publish_success", "publish_image_upload_start", "publish_image_upload_success",
     "publish_image_upload_error", "publish_image_upload_abort",
     "publish_preview_open", "publish_test_url_click",
     "sticky_cta_click", "related_event_click", "explore_more_click",
     "category_quicklink_click",
+    "section_view", "card_impression_batch", "listing_scroll_depth",
+    "zero_results", "favorites_page_view", "pwa_install_prompt", "pwa_installed",
+    "date_filter_click", "explore_nearby_click", "house_ad_click",
+    "ad_impression", "ad_click",
 ]
 
 # AI referrer platforms (shared between traffic computation and breakdown)
@@ -114,6 +118,9 @@ except Exception as e:
     print("Set GOOGLE_APPLICATION_CREDENTIALS or configure ADC.")
     raise SystemExit(1)
 
+# Country filter for GA4 (set via --country arg, applied to all GA reports)
+GA_COUNTRY_FILTER = None  # set in main()
+
 
 # ─── HELPERS ───
 def gsc_query(dims, start, end, limit=500, filters=None):
@@ -136,8 +143,19 @@ def ga_report(dimensions, metrics, start=START_90, end=END, limit=25, dim_filter
         order_bys=[OrderBy(metric=OrderBy.MetricOrderBy(metric_name=metrics[0]), desc=True)],
         limit=limit,
     )
-    if dim_filter:
-        req.dimension_filter = dim_filter
+    # Merge country filter with any existing dimension filter
+    combined = dim_filter
+    if GA_COUNTRY_FILTER:
+        if combined:
+            combined = FilterExpression(
+                and_group=FilterExpressionList(
+                    expressions=[GA_COUNTRY_FILTER, combined]
+                )
+            )
+        else:
+            combined = GA_COUNTRY_FILTER
+    if combined:
+        req.dimension_filter = combined
     try:
         resp = ga.run_report(req)
     except Exception as e:
@@ -743,7 +761,7 @@ def collect_ga4_data():
 
     # Publish funnel analysis
     publish_events = [
-        "publica_form_start", "publica_field_interact", "publish_submit_attempt",
+        "publish_form_start", "publish_field_interact", "publish_submit_attempt",
         "publish_submit_blocked", "publish_error", "publish_success",
         "publish_image_upload_start", "publish_image_upload_success",
         "publish_image_upload_error", "publish_image_upload_abort",
@@ -906,14 +924,14 @@ def collect_ga4_data():
         },
         # ── Publish Effectiveness ──
         "publish": {
-            "form_starts": ce.get("publica_form_start", {}).get("count", 0),
+            "form_starts": ce.get("publish_form_start", {}).get("count", 0),
             "submit_attempts": ce.get("publish_submit_attempt", {}).get("count", 0),
             "successes": ce.get("publish_success", {}).get("count", 0),
             "errors": ce.get("publish_error", {}).get("count", 0),
             "blocked": ce.get("publish_submit_blocked", {}).get("count", 0),
             "conversion_rate": round(
                 ce.get("publish_success", {}).get("count", 0) /
-                max(ce.get("publica_form_start", {}).get("count", 0), 1), 2
+                max(ce.get("publish_form_start", {}).get("count", 0), 1), 2
             ),
         },
         # ── Content Engagement ──
@@ -1147,7 +1165,7 @@ def generate_markdown(data, previous=None):
         lines.append("| Step | Count | Users |")
         lines.append("|------|-------|-------|")
         funnel_order = [
-            "publica_form_start", "publica_field_interact", "publish_submit_attempt",
+            "publish_form_start", "publish_field_interact", "publish_submit_attempt",
             "publish_submit_blocked", "publish_image_upload_start", "publish_image_upload_success",
             "publish_image_upload_error", "publish_image_upload_abort",
             "publish_error", "publish_success",
@@ -1817,9 +1835,20 @@ def generate_actions(data, previous=None):
 # ═══════════════════════════════════════════════════════════════
 
 def main():
+    global GA_COUNTRY_FILTER
     parser = argparse.ArgumentParser(description="SEO Audit: GSC + GA4")
     parser.add_argument("--previous", help="Path to previous audit JSON for trend comparison")
+    parser.add_argument("--country", help="Filter GA4 data to a specific country (e.g. Spain)")
     args = parser.parse_args()
+
+    if args.country:
+        GA_COUNTRY_FILTER = FilterExpression(
+            filter=Filter(
+                field_name="country",
+                string_filter=Filter.StringFilter(value=args.country),
+            )
+        )
+        print(f"🌍 GA4 country filter: {args.country}")
 
     # Collect data
     gsc_data = collect_gsc_data()
@@ -1834,6 +1863,7 @@ def main():
             "comparison_period": {"start": START_PREV, "end": END_PREV},
             "site": SITE,
             "ga4_property": GA_PROPERTY,
+            "ga4_country_filter": args.country,
         },
         "gsc": gsc_data,
         "ga4": ga4_data,

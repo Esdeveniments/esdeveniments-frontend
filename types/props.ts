@@ -37,6 +37,14 @@ export interface ClientImageInnerProps {
 }
 
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
+
+// Detail page section tracker
+export interface DetailSectionTrackerProps {
+  section: string;
+  context?: string;
+  children: ReactNode;
+  className?: string;
+}
 import {
   Option,
   GroupedOption,

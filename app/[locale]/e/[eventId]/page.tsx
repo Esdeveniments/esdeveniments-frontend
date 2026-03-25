@@ -44,6 +44,7 @@ import EventSidebar from "./components/EventSidebar";
 import SocialProofCounter from "./components/SocialProofCounter";
 import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
+import DetailSectionTracker from "./components/DetailSectionTracker";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -375,22 +376,26 @@ export default async function EventPage({
                 </div>
 
                 {/* Calendar — mobile only (between title and description) */}
-                <div className="lg:hidden" data-calendar-section>
-                  <EventCalendar event={event} compact />
-                </div>
+                <DetailSectionTracker section="calendar" className="lg:hidden">
+                  <div data-calendar-section>
+                    <EventCalendar event={event} compact />
+                  </div>
+                </DetailSectionTracker>
 
                 {/* Description with collapsible on mobile */}
-                <CollapsibleDescription>
-                  <EventDescription
-                    description={event.description}
-                    introText={introText}
-                    locale={locale as AppLocale}
-                    showTranslate={temporalStatus.state !== "past"}
-                  />
-                </CollapsibleDescription>
+                <DetailSectionTracker section="description">
+                  <CollapsibleDescription>
+                    <EventDescription
+                      description={event.description}
+                      introText={introText}
+                      locale={locale as AppLocale}
+                      showTranslate={temporalStatus.state !== "past"}
+                    />
+                  </CollapsibleDescription>
+                </DetailSectionTracker>
 
                 {/* Location — mobile only */}
-                <div className="lg:hidden">
+                <DetailSectionTracker section="location" className="lg:hidden">
                   <EventLocation
                     location={event.location}
                     cityName={cityName}
@@ -398,7 +403,7 @@ export default async function EventPage({
                     citySlug={event.city?.slug}
                     regionSlug={event.region?.slug}
                   />
-                </div>
+                </DetailSectionTracker>
 
                 {/* Weather — mobile only (desktop shows in sidebar) */}
                 {temporalStatus.state !== "past" && (
@@ -429,17 +434,19 @@ export default async function EventPage({
 
                 {/* Related Events */}
                 {event.relatedEvents && event.relatedEvents.length > 0 && (
-                  <div
-                    data-analytics-container="true"
-                    data-analytics-context="related_events"
-                    data-analytics-source-event-id={event.id ? String(event.id) : ""}
-                    data-analytics-source-event-slug={event.slug || ""}
-                  >
-                    <EventsAroundSection
-                      events={event.relatedEvents}
-                      title={tEventsAround("relatedEvents")}
-                    />
-                  </div>
+                  <DetailSectionTracker section="related_events">
+                    <div
+                      data-analytics-container="true"
+                      data-analytics-context="related_events"
+                      data-analytics-source-event-id={event.id ? String(event.id) : ""}
+                      data-analytics-source-event-slug={event.slug || ""}
+                    >
+                      <EventsAroundSection
+                        events={event.relatedEvents}
+                        title={tEventsAround("relatedEvents")}
+                      />
+                    </div>
+                  </DetailSectionTracker>
                 )}
 
                 {/* Explore more plans — after related events, before categories */}
@@ -450,7 +457,9 @@ export default async function EventPage({
                 />
 
                 {/* Event Categories */}
-                <EventCategories categories={event.categories} place={primaryPlaceSlug} />
+                <DetailSectionTracker section="categories">
+                  <EventCategories categories={event.categories} place={primaryPlaceSlug} />
+                </DetailSectionTracker>
 
                 {/* Restaurant Promotion */}
                 <Suspense fallback={null}>

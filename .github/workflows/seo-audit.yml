@@ -83,7 +83,7 @@ jobs:
           fi
 
           SEO_AUDIT_OUTPUT_DIR=data/seo-audits \
-            python scripts/seo-audit.py "${PREV_ARGS[@]}"
+            python scripts/seo-audit.py --country Spain "${PREV_ARGS[@]}"
 
           # Rename output files with date
           mv data/seo-audits/seo-audit-data.json "data/seo-audits/${RUN_DATE}.json"
