@@ -8,6 +8,7 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 });
 
 const withNextIntl = createNextIntlPlugin();
+const redisCacheEnabled = Boolean(process.env.REDIS_URL || process.env.REDIS_HOST);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -29,8 +30,11 @@ const nextConfig = {
     "@img/sharp-linux-x64",
     "@img/sharp-libvips-linux-x64",
   ],
-  // Disable incremental cache while SST/OpenNext lacks __fetch bucket
-  cacheHandler: undefined,
+  // Use Redis cache handler when configured (Coolify multi-instance support);
+  // falls back to undefined (in-memory/SST default) when Redis is not configured.
+  cacheHandler: redisCacheEnabled
+    ? require.resolve("./cache-handler.js")
+    : undefined,
   cacheMaxMemorySize: 0,
 
   // --- React Compiler (Next 16: moved to top-level) ---
@@ -98,6 +102,9 @@ const nextConfig = {
         pathname: "/static/**",
       },
     ],
+    // Signal to Next.js that a custom cache handler is active so image optimisation
+    // skips its own in-process cache and defers to the shared Redis handler.
+    customCacheHandler: redisCacheEnabled,
   },
 
   // The `headers` block has been removed.
