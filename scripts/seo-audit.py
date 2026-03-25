@@ -64,6 +64,10 @@ TRACKED_CUSTOM_EVENTS = [
     "publish_preview_open", "publish_test_url_click",
     "sticky_cta_click", "related_event_click", "explore_more_click",
     "category_quicklink_click",
+    "section_view", "card_impression_batch", "listing_scroll_depth",
+    "zero_results", "favorites_page_view", "pwa_install_prompt", "pwa_installed",
+    "date_filter_click", "explore_nearby_click", "house_ad_click",
+    "ad_impression", "ad_click",
 ]
 
 # AI referrer platforms (shared between traffic computation and breakdown)

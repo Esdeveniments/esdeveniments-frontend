@@ -15,6 +15,7 @@ import { getFavoritesFromCookies } from "@utils/favorites";
 import { getTranslations } from "next-intl/server";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import FavoritesAutoPrune from "./FavoritesAutoPrune";
+import FavoritesPageTracker from "./FavoritesPageTracker";
 
 const FETCH_CONCURRENCY = 5;
 
@@ -119,6 +120,7 @@ export default async function PreferitsPage() {
     return (
       <div className="container py-section-y flex-col justify-center items-center" data-testid="favorites-page-empty">
         <FavoritesAutoPrune slugsToRemove={slugsToRemove} />
+        <FavoritesPageTracker favoritesCount={uniqueFavoritesCount} activeCount={0} />
         <NoEventsFound title={t("emptyTitle")} description={t("emptyDescription")} />
       </div>
     );
@@ -127,6 +129,7 @@ export default async function PreferitsPage() {
   return (
     <div className="container py-section-y flex-col justify-center items-center" data-testid="favorites-page">
       <FavoritesAutoPrune slugsToRemove={slugsToRemove} />
+      <FavoritesPageTracker favoritesCount={uniqueFavoritesCount} activeCount={activeEvents.length} />
       <div className="w-full">
         <HeadingLayout
           title={t("heading")}

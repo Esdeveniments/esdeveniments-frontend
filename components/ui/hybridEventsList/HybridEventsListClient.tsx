@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, ReactElement, useMemo, Suspense, useEffect, useRef } from "react";
+import { memo, ReactElement, useMemo, Suspense, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
@@ -14,6 +14,7 @@ import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
 import { hasActiveClientFilters } from "@utils/url-filters";
 import { useTranslations, useLocale } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
+import useListingAnalytics from "@components/hooks/useListingAnalytics";
 import type { AppLocale } from "types/i18n";
 
 function EventsGridSkeleton() {
@@ -48,6 +49,8 @@ function HybridEventsListClientContent({
   const t = useTranslations("Components.HybridEventsListClient");
   const locale = useLocale() as AppLocale;
   const searchResultsTrackedRef = useRef(false);
+  const zeroResultsTrackedRef = useRef(false);
+  const [listingContainer, setListingContainer] = useState<HTMLDivElement | null>(null);
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
@@ -127,6 +130,37 @@ function HybridEventsListClientContent({
     }
   }, [search, isLoading, hasClientFilters, displayedEvents.length, place, category, date]);
 
+  // Track zero results when filters are active and loading is complete
+  useEffect(() => {
+    zeroResultsTrackedRef.current = false;
+  }, [search, distance, price]);
+
+  useEffect(() => {
+    if (
+      hasClientFilters &&
+      !isLoading &&
+      displayedEvents.length === 0 &&
+      !error &&
+      !zeroResultsTrackedRef.current
+    ) {
+      zeroResultsTrackedRef.current = true;
+      sendGoogleEvent("zero_results", {
+        search_term: search || undefined,
+        place: place || undefined,
+        category: category || undefined,
+        date: date || undefined,
+        distance: distance || undefined,
+      });
+    }
+  }, [hasClientFilters, isLoading, displayedEvents.length, error, search, place, category, date, distance]);
+
+  // Track card impressions and scroll depth on the listing grid
+  useListingAnalytics(listingContainer, displayedEvents.length, {
+    place: place || undefined,
+    category: category || undefined,
+    date: date || undefined,
+  });
+
   // Log errors for debugging
   if (error) {
     console.error("Events loading error:", error);
@@ -185,7 +219,9 @@ function HybridEventsListClientContent({
       ) : (
         <>
           {displayedEvents.length > 0 ? (
-            <ClientCardsList events={displayedEvents} />
+            <div ref={setListingContainer}>
+              <ClientCardsList events={displayedEvents} />
+            </div>
           ) : null}
           <LoadMoreButton
             onLoadMore={async () => {
