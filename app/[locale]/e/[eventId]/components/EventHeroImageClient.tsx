@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
+import type { ResponsivePictureSourceUrls } from "types/common";
+import { getOptimalImageSizes } from "@utils/image-quality";
 
 /**
  * Minimal client component for the event hero image error fallback.
@@ -13,12 +15,12 @@ export default function EventHeroImageClient({
   safeTitle,
   title,
 }: {
-  sources: { avif: string; webp: string; fallback: string };
+  sources: ResponsivePictureSourceUrls;
   safeTitle: string;
   title: string;
 }) {
   const [hasFailed, setHasFailed] = useState(false);
-  const sizes = "(max-width: 768px) 80vw, (max-width: 1280px) 70vw, 1200px";
+  const sizes = getOptimalImageSizes("detail");
 
   if (hasFailed) {
     return (
@@ -30,8 +32,8 @@ export default function EventHeroImageClient({
 
   return (
     <picture>
-      <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
-      <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+      <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
+      <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
       <img
         src={sources.fallback}
         alt={safeTitle}

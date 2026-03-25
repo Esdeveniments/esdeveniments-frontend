@@ -5,14 +5,16 @@ import ImgDefault from "@components/ui/imgDefault";
 import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { useImageRetry } from "@components/hooks/useImageRetry";
 import { ImageComponentProps } from "types/common";
+import type { ImageSizeContext } from "types/common";
 import type { ClientImageInnerProps } from "types/props";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
   getServerImageQuality,
-  getOptimalImageWidth,
+  getResponsiveWidths,
 } from "@utils/image-quality";
-import { buildPictureSourceUrls } from "@utils/image-cache";
+import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
+import type { ResponsivePictureSourceUrls } from "types/common";
 
 /**
  * ClientImage with modern format support (WebP > AVIF > JPEG)
@@ -34,7 +36,7 @@ function ClientImage({
   location,
   region,
   date,
-}: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
+}: ImageComponentProps & { context?: ImageSizeContext }) {
   const networkQualityString = useNetworkSpeed();
 
   const imageQuality = getOptimalImageQuality({
@@ -44,13 +46,12 @@ function ClientImage({
     customQuality,
   });
 
-  const imageWidth = getOptimalImageWidth(context);
+  const responsiveWidths = getResponsiveWidths(context);
 
-  // Generate AVIF, WebP, and JPEG URLs for <picture> element
-  const sources = buildPictureSourceUrls(image, cacheKey, {
-    width: imageWidth,
+  // Generate responsive AVIF, WebP, and JPEG URLs for <picture> element
+  const sources = buildResponsivePictureSourceUrls(image, cacheKey, {
     quality: imageQuality,
-  });
+  }, responsiveWidths);
 
   // If URL normalization failed (e.g., overly long URL), treat as error to show fallback
   if (!sources.fallback) {
@@ -104,7 +105,7 @@ function ClientImageInner({
   region,
   date,
 }: Omit<ClientImageInnerProps, "finalImageSrc" | "imageQuality"> & {
-  sources: { avif: string; webp: string; fallback: string };
+  sources: ResponsivePictureSourceUrls;
 }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(true);
@@ -176,8 +177,8 @@ function ClientImageInner({
         </div>
       )}
       <picture key={imageKey}>
-        <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
-        <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+        <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
+        <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
         <img
           ref={imgCallbackRef}
           className="object-cover w-full h-full absolute inset-0"

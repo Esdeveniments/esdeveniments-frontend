@@ -8,9 +8,9 @@ import { useImageRetry } from "@components/hooks/useImageRetry";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
-  getOptimalImageWidth,
+  getResponsiveWidths,
 } from "@utils/image-quality";
-import { buildPictureSourceUrls } from "@utils/image-cache";
+import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 
 /**
  * Client component that renders the sponsor banner with image error handling.
@@ -40,12 +40,12 @@ export default function SponsorBanner({
     isPriority: false,
     isExternal: true,
   });
-  const imageWidth = getOptimalImageWidth("hero");
+  const responsiveWidths = getResponsiveWidths("hero");
+  const imageWidth = responsiveWidths.length > 0 ? Math.max(...responsiveWidths) : 1200;
   const sizes = getOptimalImageSizes("hero");
-  const sources = buildPictureSourceUrls(sponsor.imageUrl, undefined, {
-    width: imageWidth,
+  const sources = buildResponsivePictureSourceUrls(sponsor.imageUrl, undefined, {
     quality: imageQuality,
-  });
+  }, responsiveWidths);
 
   const handleImageLoad = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -88,8 +88,8 @@ export default function SponsorBanner({
           <div className="absolute inset-0 bg-muted animate-fast-pulse" />
         )}
         <picture key={getImageKey(sources.fallback)}>
-          <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
-          <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
+          <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
+          <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
           <img
             className="object-contain w-full h-full absolute inset-0"
             src={sources.fallback}

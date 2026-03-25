@@ -37,8 +37,8 @@ import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
-import { buildPictureSourceUrls } from "@utils/image-cache";
-import { getOptimalImageQuality, getOptimalImageWidth } from "@utils/image-quality";
+import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
+import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
 import EventStickyCTA from "./components/EventStickyCTA";
 import EventSidebar from "./components/EventSidebar";
 import SocialProofCounter from "./components/SocialProofCounter";
@@ -265,23 +265,24 @@ export default async function EventPage({
   const breadcrumbJsonLd = generateBreadcrumbList(breadcrumbItems);
 
   // Preload LCP hero image — React 19 hoists <link> to <head> automatically.
-  // This lets the browser start downloading the image while parsing HTML,
-  // instead of discovering it late when the <picture> element is parsed.
-  const lcpPreloadUrl = event.imageUrl
-    ? buildPictureSourceUrls(event.imageUrl, undefined, {
-      width: getOptimalImageWidth("hero"),
+  // Uses responsive srcSet so the browser picks the right width for the viewport,
+  // instead of always downloading the full 1200px version on mobile.
+  const lcpSources = event.imageUrl
+    ? buildResponsivePictureSourceUrls(event.imageUrl, undefined, {
       quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
-    }).webp
+    }, getResponsiveWidths("hero"))
     : null;
+  const lcpSizes = getOptimalImageSizes("hero");
 
   return (
     <>
       {/* Preload LCP hero image for faster Largest Contentful Paint */}
-      {lcpPreloadUrl && (
+      {lcpSources && (
         <link
           rel="preload"
           as="image"
-          href={lcpPreloadUrl}
+          imageSrcSet={lcpSources.webpSrcSet}
+          imageSizes={lcpSizes}
           type="image/webp"
           fetchPriority="high"
         />
