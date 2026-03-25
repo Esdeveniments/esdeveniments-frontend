@@ -19,7 +19,7 @@ export default function DetailSectionTracker({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  useTrackSectionView(ref as React.RefObject<Element>, section, context);
+  useTrackSectionView(ref as unknown as React.RefObject<Element>, section, context);
 
   return (
     <div ref={ref} className={className}>

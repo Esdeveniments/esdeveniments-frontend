@@ -446,9 +446,10 @@ def collect_data(days, sections, country=None):
             "dimensions": [{"name": "customEvent:depth"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
             "dimensionFilter": with_country_filter(scroll_depth_filter, country),
-            "orderBys": [{"dimension": {"dimensionName": "customEvent:depth"}}],
             "limit": 10,
         }))
+        # Sort numerically (GA4 returns strings, so "100" < "25" lexically)
+        d["scroll_depth"].sort(key=lambda r: int(r[0]) if r[0].isdigit() else 0)
 
     # ── Compute behavior metrics ──
     if "behavior" in sections:

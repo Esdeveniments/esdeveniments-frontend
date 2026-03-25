@@ -133,7 +133,7 @@ function HybridEventsListClientContent({
   // Track zero results when filters are active and loading is complete
   useEffect(() => {
     zeroResultsTrackedRef.current = false;
-  }, [search, distance, price]);
+  }, [search, distance, price, from, to, lat, lon]);
 
   useEffect(() => {
     if (
@@ -150,9 +150,10 @@ function HybridEventsListClientContent({
         category: category || undefined,
         date: date || undefined,
         distance: distance || undefined,
+        price: price || undefined,
       });
     }
-  }, [hasClientFilters, isLoading, displayedEvents.length, error, search, place, category, date, distance]);
+  }, [hasClientFilters, isLoading, displayedEvents.length, error, search, place, category, date, distance, price]);
 
   // Track card impressions and scroll depth on the listing grid
   useListingAnalytics(listingContainer, displayedEvents.length, {

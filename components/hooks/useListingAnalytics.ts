@@ -106,7 +106,7 @@ export default function useListingAnalytics(
       io.disconnect();
       mo.disconnect();
       if (timer) clearTimeout(timer);
-      flush();
+      if (pending > 0 && eventsCountRef.current > 0) flush();
     };
   }, [container]);
 }
