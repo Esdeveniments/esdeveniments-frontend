@@ -19,6 +19,8 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
+import type { ImageSizeContext } from "types/common";
+
 /**
  * Props for ClientImageInner component
  */
@@ -30,7 +32,7 @@ export interface ClientImageInnerProps {
   fetchPriority?: "high" | "low" | "auto";
   alt: string;
   imageQuality: number;
-  context: "card" | "hero" | "list" | "detail";
+  context: ImageSizeContext;
   location?: string;
   region?: string;
   date?: string;

@@ -1,9 +1,9 @@
 import { FC } from "react";
 import type { EventImageProps } from "types/event";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
-import { getOptimalImageQuality, getOptimalImageWidth } from "@utils/image-quality";
+import { getOptimalImageQuality, getResponsiveWidths } from "@utils/image-quality";
 import {
-  buildPictureSourceUrls,
+  buildResponsivePictureSourceUrls,
   normalizeExternalImageUrl,
 } from "@utils/image-cache";
 import { escapeXml } from "@utils/xml-escape";
@@ -23,14 +23,13 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
     isExternal: true,
   });
 
-  const imageWidth = getOptimalImageWidth("hero");
+  const responsiveWidths = getResponsiveWidths("hero");
 
   const normalizedImage = image ? normalizeExternalImageUrl(image) : "";
 
-  const sources = image ? buildPictureSourceUrls(image, undefined, {
-    width: imageWidth,
+  const sources = image ? buildResponsivePictureSourceUrls(image, undefined, {
     quality: imageQuality,
-  }) : null;
+  }, responsiveWidths) : null;
 
   const hasValidImage = Boolean(image && sources);
 

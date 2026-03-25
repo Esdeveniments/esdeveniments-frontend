@@ -25,8 +25,8 @@ import {
 } from "@utils/breadcrumb-helpers";
 import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
-import { buildPictureSourceUrls } from "@utils/image-cache";
-import { getOptimalImageQuality, getOptimalImageWidth } from "@utils/image-quality";
+import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
+import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 // Lazy load below-the-fold client component via client component wrapper
@@ -258,19 +258,19 @@ async function PlacePageContent({
   const locale = await getLocaleSafely();
 
   // Preload LCP image — first real event card image.
-  // React 19 hoists <link> to <head>, letting the browser start the fetch
-  // before it parses the <picture> element deep in the card grid.
+  // Uses responsive srcSet so the browser picks the right width for the viewport.
   const firstRealEvent = events.find(isEventSummaryResponseDTO);
-  const lcpPreloadUrl = firstRealEvent?.imageUrl
-    ? buildPictureSourceUrls(
+  const lcpSources = firstRealEvent?.imageUrl
+    ? buildResponsivePictureSourceUrls(
       firstRealEvent.imageUrl,
       firstRealEvent.hash || firstRealEvent.updatedAt,
       {
-        width: getOptimalImageWidth("list"),
         quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
-      }
-    ).webp
+      },
+      getResponsiveWidths("list")
+    )
     : null;
+  const lcpSizes = getOptimalImageSizes("list");
 
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
@@ -309,11 +309,12 @@ async function PlacePageContent({
   return (
     <>
       {/* Preload LCP card image for faster Largest Contentful Paint */}
-      {lcpPreloadUrl && (
+      {lcpSources && (
         <link
           rel="preload"
           as="image"
-          href={lcpPreloadUrl}
+          imageSrcSet={lcpSources.webpSrcSet}
+          imageSizes={lcpSizes}
           type="image/webp"
           fetchPriority="high"
         />

@@ -4,10 +4,10 @@ import type { NewsHeroEventProps } from "types/props";
 import { getFormattedDate } from "@utils/date-helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
-import { buildPictureSourceUrls } from "@utils/image-cache";
+import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import {
   getOptimalImageQuality,
-  getOptimalImageWidth,
+  getResponsiveWidths,
 } from "@utils/image-quality";
 
 export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
@@ -20,28 +20,27 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
     isPriority: true,
     isExternal: true,
   });
-  const imageWidth = getOptimalImageWidth("hero");
+  const responsiveWidths = getResponsiveWidths("hero");
   const sources = rawImage
-    ? buildPictureSourceUrls(rawImage, event.hash, {
-      width: imageWidth,
+    ? buildResponsivePictureSourceUrls(rawImage, event.hash, {
       quality: imageQuality,
-    })
+    }, responsiveWidths)
     : null;
 
   const formatted = getFormattedDate(event.startDate, event.endDate, locale);
   const dateLabel = formatted.formattedEnd
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;
-  
+
   const sizes = "(max-width: 768px) 82vw, (max-width: 1280px) 75vw, 1200px";
-  
+
   return (
     <section className="relative w-full overflow-hidden rounded-xl bg-foreground-strong shadow-lg">
       {sources ? (
         <div className="relative aspect-[16/9] w-full md:h-80">
           <picture>
-            <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
-            <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+            <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
+            <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
             <img
               src={sources.fallback}
               alt={event.title}
