@@ -37,6 +37,8 @@ import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+import { buildPictureSourceUrls } from "@utils/image-cache";
+import { getOptimalImageQuality, getOptimalImageWidth } from "@utils/image-quality";
 import EventStickyCTA from "./components/EventStickyCTA";
 import EventSidebar from "./components/EventSidebar";
 import SocialProofCounter from "./components/SocialProofCounter";
@@ -261,8 +263,28 @@ export default async function EventPage({
   ];
   const breadcrumbJsonLd = generateBreadcrumbList(breadcrumbItems);
 
+  // Preload LCP hero image — React 19 hoists <link> to <head> automatically.
+  // This lets the browser start downloading the image while parsing HTML,
+  // instead of discovering it late when the <picture> element is parsed.
+  const lcpPreloadUrl = event.imageUrl
+    ? buildPictureSourceUrls(event.imageUrl, undefined, {
+      width: getOptimalImageWidth("hero"),
+      quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
+    }).webp
+    : null;
+
   return (
     <>
+      {/* Preload LCP hero image for faster Largest Contentful Paint */}
+      {lcpPreloadUrl && (
+        <link
+          rel="preload"
+          as="image"
+          href={lcpPreloadUrl}
+          type="image/webp"
+          fetchPriority="high"
+        />
+      )}
       {/* Main Event JSON-LD */}
       <JsonLdServer
         id={event.id ? String(event.id) : undefined}

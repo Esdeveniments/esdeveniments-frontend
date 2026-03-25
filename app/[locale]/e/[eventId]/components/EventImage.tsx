@@ -1,7 +1,5 @@
-"use client";
-
-import { EventImageProps } from "types/event";
-import { FC, useCallback, useMemo, useState } from "react";
+import { FC } from "react";
+import type { EventImageProps } from "types/event";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import { getOptimalImageQuality, getOptimalImageWidth } from "@utils/image-quality";
 import {
@@ -9,52 +7,15 @@ import {
   normalizeExternalImageUrl,
 } from "@utils/image-cache";
 import { escapeXml } from "@utils/xml-escape";
+import EventHeroImageClient from "./EventHeroImageClient";
 
-function EventHeroImage({
-  sources,
-  safeTitle,
-  title,
-  onError,
-}: {
-  sources: { avif: string; webp: string; fallback: string };
-  safeTitle: string;
-  title: string;
-  onError: () => void;
-}) {
-  const [hasFailed, setHasFailed] = useState(false);
-  const sizes = "(max-width: 768px) 80vw, (max-width: 1280px) 70vw, 1200px";
-
-  if (hasFailed) {
-    return (
-      <div className="absolute inset-0">
-        <ImgDefaultServer title={title} />
-      </div>
-    );
-  }
-
-  return (
-    <picture>
-      <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
-      <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
-      <img
-        src={sources.fallback}
-        alt={safeTitle}
-        loading="eager"
-        decoding="sync"
-        fetchPriority="high"
-        sizes={sizes}
-        className="object-cover w-full h-full absolute inset-0 z-10"
-        onError={() => {
-          onError();
-          setHasFailed(true);
-        }}
-      />
-    </picture>
-  );
-}
-
+/**
+ * Server component for the event hero image.
+ * Computes deterministic image URLs server-side, delegates only error
+ * handling to a tiny client component (EventHeroImageClient).
+ * This keeps the <picture> element in pure SSR HTML for faster LCP.
+ */
 const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
-  // Escape title for safe use in HTML attributes (React also escapes, but this is defensive)
   const safeTitle = escapeXml(title || "");
 
   const imageQuality = getOptimalImageQuality({
@@ -64,28 +25,16 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
 
   const imageWidth = getOptimalImageWidth("hero");
 
-  const normalizedImage = useMemo(
-    () => (image ? normalizeExternalImageUrl(image) : ""),
-    [image]
-  );
-  
-  // Generate AVIF, WebP, and JPEG URLs for <picture> element
-  const sources = useMemo(
-    () => (image ? buildPictureSourceUrls(image, undefined, {
-      width: imageWidth,
-      quality: imageQuality,
-    }) : null),
-    [image, imageWidth, imageQuality]
-  );
+  const normalizedImage = image ? normalizeExternalImageUrl(image) : "";
 
-  // If URL normalization failed (e.g., overly long URL), treat as no image
+  const sources = image ? buildPictureSourceUrls(image, undefined, {
+    width: imageWidth,
+    quality: imageQuality,
+  }) : null;
+
   const hasValidImage = Boolean(image && sources);
 
   const anchorHref = normalizedImage || image || "";
-
-  const handleImageError = useCallback(() => {
-    // Error handling - image failed to load, fallback UI will show
-  }, []);
 
   if (!hasValidImage || !sources) {
     return (
@@ -107,11 +56,10 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
         className="block w-full h-full cursor-pointer hover:opacity-95 transition-opacity relative"
         aria-label={`Veure imatge completa de ${safeTitle}`}
       >
-        <EventHeroImage
+        <EventHeroImageClient
           sources={sources}
           safeTitle={safeTitle}
           title={title}
-          onError={handleImageError}
         />
       </a>
     </div>
