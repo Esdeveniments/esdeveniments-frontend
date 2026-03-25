@@ -41,7 +41,7 @@ export default function SponsorBanner({
     isExternal: true,
   });
   const responsiveWidths = getResponsiveWidths("hero");
-  const imageWidth = responsiveWidths[responsiveWidths.length - 1] ?? 1200;
+  const imageWidth = responsiveWidths.length > 0 ? Math.max(...responsiveWidths) : 1200;
   const sizes = getOptimalImageSizes("hero");
   const sources = buildResponsivePictureSourceUrls(sponsor.imageUrl, undefined, {
     quality: imageQuality,
