@@ -422,6 +422,35 @@ def collect_data(days, sections, country=None):
             "limit": 50,
         }))
 
+        # Section visibility breakdown (which detail page sections do users see?)
+        section_view_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "section_view"},
+        }}
+        d["section_views"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [{"name": "customEvent:section"}],
+            "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
+            "dimensionFilter": with_country_filter(section_view_filter, country),
+            "orderBys": [{"metric": {"metricName": "totalUsers"}, "desc": True}],
+            "limit": 20,
+        }))
+
+        # Listing scroll depth distribution
+        scroll_depth_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "listing_scroll_depth"},
+        }}
+        d["scroll_depth"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [{"name": "customEvent:depth"}],
+            "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
+            "dimensionFilter": with_country_filter(scroll_depth_filter, country),
+            "limit": 10,
+        }))
+        # Sort numerically (GA4 returns strings, so "100" < "25" lexically)
+        d["scroll_depth"].sort(key=lambda r: safe_int(r[0][0]) if r[0] else 0)
+
     # ── Compute behavior metrics ──
     if "behavior" in sections:
         d["behavior"] = compute_behavior(d, days)
@@ -508,6 +537,11 @@ def compute_behavior(d, days):
             "calendar": adoption("add_to_calendar"),
             "favorite": adoption("favorite_add"),
             "restaurant_view": adoption("restaurant_section_view"),
+            "section_view": adoption("section_view"),
+            "card_impression": adoption("card_impression_batch"),
+            "zero_results": adoption("zero_results"),
+            "favorites_page": adoption("favorites_page_view"),
+            "pwa_installed": adoption("pwa_installed"),
         },
         "publish": {
             "starts": pub_starts,
@@ -953,7 +987,12 @@ def render_text(d, days, sections):
         for name, key in [("Search", "search"), ("Filters", "filter"),
                           ("Outbound", "outbound"), ("Share", "share"),
                           ("Calendar", "calendar"), ("Favorites", "favorite"),
-                          ("Restaurant", "restaurant_view")]:
+                          ("Restaurant", "restaurant_view"),
+                          ("Sections", "section_view"),
+                          ("Card Impr.", "card_impression"),
+                          ("Favs Page", "favorites_page"),
+                          ("Zero Results", "zero_results"),
+                          ("PWA Install", "pwa_installed")]:
             rate = b["adoption"][key]
             h = health(rate, 0.03, 0.01)
             print(f"    {h} {name:>12}: {rate:.1%}")
@@ -962,6 +1001,24 @@ def render_text(d, days, sections):
             print(f"\n  🔍 Failed searches (0 results):")
             for r in zrs[:5]:
                 print(f"    {r['count']:>4}x  {r['term']}")
+
+        # ── Section Visibility (detail page) ──
+        sv = d.get("section_views", [])
+        if sv:
+            print("\n  📐 Detail Page Section Visibility:")
+            print(f"    {'Users':>6}  {'Events':>6}  Section")
+            print(f"    {'─'*6}  {'─'*6}  {'─'*20}")
+            for dims, mets in sv:
+                print(f"    {safe_int(mets[1]):>6}  {safe_int(mets[0]):>6}  {dims[0]}")
+
+        # ── Listing Scroll Depth ──
+        sd = d.get("scroll_depth", [])
+        if sd:
+            print("\n  📏 Listing Scroll Depth:")
+            print(f"    {'Users':>6}  {'Events':>6}  Depth")
+            print(f"    {'─'*6}  {'─'*6}  {'─'*8}")
+            for dims, mets in sd:
+                print(f"    {safe_int(mets[1]):>6}  {safe_int(mets[0]):>6}  {dims[0]}%")
 
         # ── Temporal Patterns ──
         temporal = b.get("temporal", [])
@@ -1125,6 +1182,9 @@ def render_markdown(d, days):
             ("Add to Calendar", "calendar", 0.01, 0.003),
             ("Favorites", "favorite", 0.01, 0.003),
             ("Restaurant Section", "restaurant_view", 0.03, 0.01),
+            ("Section Views", "section_view", 0.05, 0.02),
+            ("Card Impressions", "card_impression", 0.10, 0.05),
+            ("Favorites Page", "favorites_page", 0.01, 0.003),
         ]
         for name, key, good, warn in items:
             rate = b["adoption"].get(key, 0)
@@ -1140,6 +1200,28 @@ def render_markdown(d, days):
             L.append("|------|-------:|")
             for r in zrs[:8]:
                 L.append(f"| {r['term']} | {r['count']} |")
+            L.append("")
+
+        # ── Section Visibility ──
+        sv = d.get("section_views", [])
+        if sv:
+            L.append("### 📐 Detail Page Section Visibility")
+            L.append("")
+            L.append("| Section | Users | Events |")
+            L.append("|---------|------:|-------:|")
+            for dims, mets in sv:
+                L.append(f"| {dims[0]} | {safe_int(mets[1])} | {safe_int(mets[0])} |")
+            L.append("")
+
+        # ── Listing Scroll Depth ──
+        sd = d.get("scroll_depth", [])
+        if sd:
+            L.append("### 📏 Listing Scroll Depth")
+            L.append("")
+            L.append("| Depth | Users | Events |")
+            L.append("|------:|------:|-------:|")
+            for dims, mets in sd:
+                L.append(f"| {dims[0]}% | {safe_int(mets[1])} | {safe_int(mets[0])} |")
             L.append("")
 
         # ── Temporal Patterns ──

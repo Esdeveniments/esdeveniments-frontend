@@ -57,13 +57,17 @@ TRACKED_CUSTOM_EVENTS = [
     "filter_chip_click", "filter_remove", "restaurant_section_view",
     "restaurant_promote_click", "location_selected", "hero_date_filter_toggle",
     "favorite_add", "favorite_remove", "favorites_limit_reached",
-    "publica_form_start", "publica_field_interact", "publica_form_abandon",
+    "publish_form_start", "publish_field_interact", "publish_form_abandon",
     "publish_submit_attempt", "publish_submit_blocked", "publish_error",
     "publish_success", "publish_image_upload_start", "publish_image_upload_success",
     "publish_image_upload_error", "publish_image_upload_abort",
     "publish_preview_open", "publish_test_url_click",
     "sticky_cta_click", "related_event_click", "explore_more_click",
     "category_quicklink_click",
+    "section_view", "card_impression_batch", "listing_scroll_depth",
+    "zero_results", "favorites_page_view", "pwa_install_prompt", "pwa_installed",
+    "date_filter_click", "explore_nearby_click", "house_ad_click",
+    "ad_impression", "ad_click",
 ]
 
 # AI referrer platforms (shared between traffic computation and breakdown)
@@ -757,7 +761,7 @@ def collect_ga4_data():
 
     # Publish funnel analysis
     publish_events = [
-        "publica_form_start", "publica_field_interact", "publish_submit_attempt",
+        "publish_form_start", "publish_field_interact", "publish_submit_attempt",
         "publish_submit_blocked", "publish_error", "publish_success",
         "publish_image_upload_start", "publish_image_upload_success",
         "publish_image_upload_error", "publish_image_upload_abort",
@@ -920,14 +924,14 @@ def collect_ga4_data():
         },
         # ── Publish Effectiveness ──
         "publish": {
-            "form_starts": ce.get("publica_form_start", {}).get("count", 0),
+            "form_starts": ce.get("publish_form_start", {}).get("count", 0),
             "submit_attempts": ce.get("publish_submit_attempt", {}).get("count", 0),
             "successes": ce.get("publish_success", {}).get("count", 0),
             "errors": ce.get("publish_error", {}).get("count", 0),
             "blocked": ce.get("publish_submit_blocked", {}).get("count", 0),
             "conversion_rate": round(
                 ce.get("publish_success", {}).get("count", 0) /
-                max(ce.get("publica_form_start", {}).get("count", 0), 1), 2
+                max(ce.get("publish_form_start", {}).get("count", 0), 1), 2
             ),
         },
         # ── Content Engagement ──
@@ -1161,7 +1165,7 @@ def generate_markdown(data, previous=None):
         lines.append("| Step | Count | Users |")
         lines.append("|------|-------|-------|")
         funnel_order = [
-            "publica_form_start", "publica_field_interact", "publish_submit_attempt",
+            "publish_form_start", "publish_field_interact", "publish_submit_attempt",
             "publish_submit_blocked", "publish_image_upload_start", "publish_image_upload_success",
             "publish_image_upload_error", "publish_image_upload_abort",
             "publish_error", "publish_success",
