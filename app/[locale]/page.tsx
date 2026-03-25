@@ -143,6 +143,15 @@ export default async function Page(): Promise<JSX.Element> {
 
   return (
     <>
+      {/* Preload LCP hero image — React 19 hoists <link> to <head> automatically */}
+      <link
+        rel="preload"
+        as="image"
+        href="/static/images/hero-castellers.webp"
+        type="image/webp"
+        fetchPriority="high"
+      />
+
       {siteNavigationSchema && (
         <JsonLdServer id="site-navigation" data={siteNavigationSchema} />
       )}

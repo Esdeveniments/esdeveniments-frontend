@@ -25,6 +25,9 @@ import {
 } from "@utils/breadcrumb-helpers";
 import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
+import { buildPictureSourceUrls } from "@utils/image-cache";
+import { getOptimalImageQuality, getOptimalImageWidth } from "@utils/image-quality";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 // Lazy load below-the-fold client component via client component wrapper
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -254,6 +257,21 @@ async function PlacePageContent({
   const tByDates = await getTranslations("Config.ByDates");
   const locale = await getLocaleSafely();
 
+  // Preload LCP image — first real event card image.
+  // React 19 hoists <link> to <head>, letting the browser start the fetch
+  // before it parses the <picture> element deep in the card grid.
+  const firstRealEvent = events.find(isEventSummaryResponseDTO);
+  const lcpPreloadUrl = firstRealEvent?.imageUrl
+    ? buildPictureSourceUrls(
+      firstRealEvent.imageUrl,
+      firstRealEvent.hash || firstRealEvent.updatedAt,
+      {
+        width: getOptimalImageWidth("list"),
+        quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
+      }
+    ).webp
+    : null;
+
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
     ? webPageSchemaFactory({ placeTypeLabel, pageData })
@@ -290,6 +308,17 @@ async function PlacePageContent({
 
   return (
     <>
+      {/* Preload LCP card image for faster Largest Contentful Paint */}
+      {lcpPreloadUrl && (
+        <link
+          rel="preload"
+          as="image"
+          href={lcpPreloadUrl}
+          type="image/webp"
+          fetchPriority="high"
+        />
+      )}
+
       {webPageSchema && (
         <JsonLdServer id="webpage-schema" data={webPageSchema} />
       )}
