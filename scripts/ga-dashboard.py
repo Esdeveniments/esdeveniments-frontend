@@ -449,7 +449,7 @@ def collect_data(days, sections, country=None):
             "limit": 10,
         }))
         # Sort numerically (GA4 returns strings, so "100" < "25" lexically)
-        d["scroll_depth"].sort(key=lambda r: int(r[0]) if r[0].isdigit() else 0)
+        d["scroll_depth"].sort(key=lambda r: safe_int(r[0][0]) if r[0] else 0)
 
     # ── Compute behavior metrics ──
     if "behavior" in sections:
@@ -990,7 +990,9 @@ def render_text(d, days, sections):
                           ("Restaurant", "restaurant_view"),
                           ("Sections", "section_view"),
                           ("Card Impr.", "card_impression"),
-                          ("Favs Page", "favorites_page")]:
+                          ("Favs Page", "favorites_page"),
+                          ("Zero Results", "zero_results"),
+                          ("PWA Install", "pwa_installed")]:
             rate = b["adoption"][key]
             h = health(rate, 0.03, 0.01)
             print(f"    {h} {name:>12}: {rate:.1%}")
@@ -1003,7 +1005,7 @@ def render_text(d, days, sections):
         # ── Section Visibility (detail page) ──
         sv = d.get("section_views", [])
         if sv:
-            print(f"\n  📐 Detail Page Section Visibility:")
+            print("\n  📐 Detail Page Section Visibility:")
             print(f"    {'Users':>6}  {'Events':>6}  Section")
             print(f"    {'─'*6}  {'─'*6}  {'─'*20}")
             for dims, mets in sv:
@@ -1012,7 +1014,7 @@ def render_text(d, days, sections):
         # ── Listing Scroll Depth ──
         sd = d.get("scroll_depth", [])
         if sd:
-            print(f"\n  📏 Listing Scroll Depth:")
+            print("\n  📏 Listing Scroll Depth:")
             print(f"    {'Users':>6}  {'Events':>6}  Depth")
             print(f"    {'─'*6}  {'─'*6}  {'─'*8}")
             for dims, mets in sd:

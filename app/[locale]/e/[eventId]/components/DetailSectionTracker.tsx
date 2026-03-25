@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useRef } from "react";
 import useTrackSectionView from "@components/hooks/useTrackSectionView";
+import type { DetailSectionTrackerProps } from "types/props";
 
 /**
  * Wraps a detail page section and fires a `section_view` GA4 event
@@ -12,12 +13,7 @@ export default function DetailSectionTracker({
   context = "event_detail",
   children,
   className,
-}: {
-  section: string;
-  context?: string;
-  children: ReactNode;
-  className?: string;
-}) {
+}: DetailSectionTrackerProps) {
   const ref = useRef<HTMLDivElement>(null);
   useTrackSectionView(ref as unknown as React.RefObject<Element>, section, context);
 
