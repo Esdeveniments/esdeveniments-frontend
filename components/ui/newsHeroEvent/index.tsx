@@ -8,6 +8,7 @@ import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import {
   getOptimalImageQuality,
   getResponsiveWidths,
+  getOptimalImageSizes,
 } from "@utils/image-quality";
 
 export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
@@ -32,7 +33,7 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
     ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
     : formatted.formattedStart;
 
-  const sizes = "(max-width: 768px) 82vw, (max-width: 1280px) 75vw, 1200px";
+  const sizes = getOptimalImageSizes("hero");
 
   return (
     <section className="relative w-full overflow-hidden rounded-xl bg-foreground-strong shadow-lg">

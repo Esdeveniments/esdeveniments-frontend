@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import type { ResponsivePictureSourceUrls } from "types/common";
+import { getOptimalImageSizes } from "@utils/image-quality";
 
 /**
  * Minimal client component for the event hero image error fallback.
@@ -19,7 +20,7 @@ export default function EventHeroImageClient({
   title: string;
 }) {
   const [hasFailed, setHasFailed] = useState(false);
-  const sizes = "(max-width: 768px) 80vw, (max-width: 1280px) 70vw, 1200px";
+  const sizes = getOptimalImageSizes("detail");
 
   if (hasFailed) {
     return (

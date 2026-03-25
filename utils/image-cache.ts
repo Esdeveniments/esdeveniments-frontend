@@ -361,7 +361,7 @@ export function buildResponsivePictureSourceUrls(
   widths: readonly number[]
 ): ResponsivePictureSourceUrls {
   const baseOptions = options ?? {};
-  const maxWidth = widths[widths.length - 1] ?? 500;
+  const maxWidth = widths.length > 0 ? Math.max(...widths) : 500;
 
   // Single-URL fallbacks use the largest width (backward compat for <img src>)
   const base = buildPictureSourceUrls(imageUrl, cacheKey, {
