@@ -2,15 +2,10 @@
 // The config you add here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import {
-  init,
-  addIntegration,
-  captureRouterTransitionStart,
-} from "@sentry/nextjs";
+import { init, captureRouterTransitionStart } from "@sentry/nextjs";
 import type { BrowserOptions } from "@sentry/nextjs";
 import {
   beforeSendClient,
-  beforeSendMetric,
   SENTRY_IGNORE_ERRORS,
   SENTRY_DENY_URLS,
 } from "@utils/sentry-helpers";
@@ -32,10 +27,10 @@ if (process.env.NODE_ENV === "production") {
     // Errors-only: disable performance tracing.
     tracesSampleRate: 0,
 
-    // Session replay: only capture replays when an error occurs.
-    // This keeps debugging capability without ingesting baseline session replays.
+    // Session Replay disabled — saves ~299 KB of @sentry-internal/replay.
+    // Error context (stack traces, breadcrumbs) is still captured.
     replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 1.0,
+    replaysOnErrorSampleRate: 0,
     // Privacy: explicitly disable sending PII by default
     sendDefaultPii: false,
     debug: false,
@@ -43,31 +38,14 @@ if (process.env.NODE_ENV === "production") {
     ignoreErrors: SENTRY_IGNORE_ERRORS,
     // Don't report errors from browser extension scripts
     denyUrls: SENTRY_DENY_URLS,
-    // Session Replay is lazy-loaded below for smaller initial bundle (~60KB savings)
     integrations: [],
     // Errors-only: do not send console logs as Sentry logs.
     enableLogs: false,
-    // Metrics: automatically enabled in v10.25.0+ (no explicit enableMetrics needed)
-    // Use Sentry.metrics.count(), Sentry.metrics.gauge(), Sentry.metrics.distribution()
-    // Filter and sanitize metrics before sending (removes sensitive data from attributes)
-    beforeSendMetric,
     // Filter and sanitize events before sending (removes sensitive data, filters non-critical errors)
     beforeSend: beforeSendClient,
   };
 
   init(config);
-
-  // Lazy-load Session Replay to reduce initial bundle size (~60KB savings)
-  // Replay is only loaded when needed (replaysOnErrorSampleRate: 1.0)
-  import("@sentry/nextjs").then((lazyLoadedSentry) => {
-    addIntegration(
-      lazyLoadedSentry.replayIntegration({
-        // Privacy defaults: avoid capturing typed content.
-        maskAllText: true,
-        blockAllMedia: false,
-      }),
-    );
-  });
 }
 
 // Export router transition tracking for Next.js App Router navigation monitoring
