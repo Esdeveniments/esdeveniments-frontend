@@ -340,9 +340,40 @@ Handles: locale detection (cookie → Accept-Language → default), canonical UR
 
 ## Workflow for AI Assistants
 
-1. **Search existing patterns FIRST** - grep for the concept, function names, related types
-2. **Check canonical locations** - `types/` for types, `utils/` for helpers, `config/` for config, `components/hooks/` for hooks
-3. **Load relevant skill** from `.github/skills/*/SKILL.md`
-4. **Propose plan and wait for confirmation**
-5. **Implement** following skill checklists
-6. **Verify**: `yarn typecheck && yarn lint` (and `yarn test` if tests affected)
+1. **Read `tasks/lessons.md`** at session start for project-specific corrections
+2. **Search existing patterns FIRST** — grep for the concept, function names, related types
+3. **Check canonical locations** — `types/` for types, `utils/` for helpers, `config/` for config, `components/hooks/` for hooks
+4. **Load relevant skill** from `.github/skills/*/SKILL.md`
+5. **Plan before building** — for anything non-trivial (3+ steps or architectural decisions), write a plan to `tasks/todo.md` and confirm before implementing
+6. **Implement** following skill checklists
+7. **Verify before declaring done** — `yarn typecheck && yarn lint` (and `yarn test` if tests affected). Demonstrate correctness, don't just assert it
+8. **If something goes sideways, STOP and re-plan** — don't push through a failing approach
+
+---
+
+## Process Rules
+
+### Planning
+- Default to planning for non-trivial work. Write checkable items to `tasks/todo.md`.
+- Mark items complete as you go. Add a review section when done.
+- For simple, obvious fixes — just do them. Don't over-process.
+
+### Subagent Usage
+- Offload research, exploration, and parallel analysis to subagents to keep the main context clean.
+- One focused task per subagent. Don't overload a single subagent with unrelated concerns.
+- For complex problems, prefer multiple focused subagents over sequential searching in the main thread.
+
+### Self-Correction
+- After ANY correction from the user, append the lesson to `tasks/lessons.md` with the pattern and the fix.
+- Write it as a rule: "When X, do Y instead of Z."
+- Review `tasks/lessons.md` at session start for relevant project context.
+
+### Verification
+- Never mark a task complete without proving it works (run tests, check types, show output).
+- For bug fixes: diff the behavior before and after when relevant.
+- For CI failures: diagnose and fix autonomously — don't ask for hand-holding.
+
+### Quality Bar
+- For non-trivial changes, pause and ask: "Is there a simpler way that matches existing patterns?"
+- If a fix feels hacky, step back and implement the clean solution. This codebase has established patterns — use them.
+- Don't over-engineer simple fixes. Three similar lines beat a premature abstraction.
