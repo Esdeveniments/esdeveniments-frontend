@@ -377,3 +377,11 @@ Handles: locale detection (cookie → Accept-Language → default), canonical UR
 - For non-trivial changes, pause and ask: "Is there a simpler way that matches existing patterns?"
 - If a fix feels hacky, step back and implement the clean solution. This codebase has established patterns — use them.
 - Don't over-engineer simple fixes. Three similar lines beat a premature abstraction.
+
+---
+
+## Core Principles
+
+- **Own the task fully.** When given a bug or feature, resolve it end-to-end. Point at logs, errors, failing tests — then fix them. Zero context switching required from the user.
+- **Find root causes.** No temporary fixes, no band-aids. Diagnose why something broke, not just what broke. Senior developer standards.
+- **Simplicity first.** Make every change as simple as possible. Impact minimal code. The right amount of complexity is what the task actually requires.
