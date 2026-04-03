@@ -22,7 +22,7 @@ Purpose: Catalan events discovery web app (Next.js 16.1 App Router + React 19 + 
 | **Security/CSP/scripts**      | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains in CSP               |
 | **Service worker**            | `service-worker-updates`       | Edit `sw-template.js`, run `yarn prebuild`                  |
 | **Performance/images**        | `bundle-optimization`          | Use quality caps, Server Components by default              |
-| **Adding env variables**      | `env-variable-management`      | Update 4 locations: code, Coolify, workflow, GitHub secrets |
+| **Adding env variables**      | `env-variable-management`      | Update 5 locations: code, env files, Coolify, workflow, GitHub secrets |
 | **Validating API data**       | `data-validation-patterns`     | Use Zod schemas in `lib/validation/`, safe fallbacks        |
 | **Evaluating PR suggestions** | `code-review-evaluation`       | Cross-reference external suggestions against project skills |
 

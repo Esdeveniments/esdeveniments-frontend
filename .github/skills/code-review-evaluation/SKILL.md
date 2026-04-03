@@ -65,7 +65,7 @@ Only check skills if the suggestion involves patterns we have rules for:
 | `url-canonicalization`         | Does it add `searchParams` to listing pages?        |
 | `i18n-best-practices`          | Does it use `next/link` instead of `@i18n/routing`? |
 | `design-system-conventions`    | Does it use `gray-*` or arbitrary utilities?        |
-| `env-variable-management`      | Does it add env var without all 4 locations?        |
+| `env-variable-management`      | Does it add env var without all 5 locations?        |
 | `data-validation-patterns`     | Does it skip Zod validation?                        |
 | `security-headers-csp`         | Does it use raw `fetch()` without wrappers?         |
 
