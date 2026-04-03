@@ -244,51 +244,128 @@ jobs:
             exit 1
           fi
 
-          # Trigger deployment via Coolify webhook
-          HTTP_CODE=$(curl -s -o /tmp/coolify-response.json -w "%{http_code}" \
-            -X POST "$COOLIFY_WEBHOOK_URL" \
-            -H "Authorization: Bearer $COOLIFY_TOKEN" \
-            -H "Content-Type: application/json" \
-            --max-time 30)
+          # Trigger deployment via Coolify webhook with retries
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            HTTP_CODE=$(curl -s -o /tmp/coolify-response.json -w "%{http_code}" \
+              -X POST "$COOLIFY_WEBHOOK_URL" \
+              -H "Authorization: Bearer $COOLIFY_TOKEN" \
+              -H "Content-Type: application/json" \
+              --max-time 30) || HTTP_CODE="000"
 
-          echo "Coolify API response: HTTP $HTTP_CODE"
+            echo "Attempt $attempt: Coolify API response HTTP $HTTP_CODE"
 
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
-            echo "::error::Coolify deployment trigger failed with HTTP $HTTP_CODE"
-            cat /tmp/coolify-response.json 2>/dev/null || true
-            exit 1
-          fi
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              echo "Deployment triggered successfully"
+              exit 0
+            fi
 
-          echo "Deployment triggered successfully"
+            if [ "$attempt" -lt "$MAX_RETRIES" ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            fi
+          done
 
-      - name: Post-deploy verification
-        if: success()
+          echo "::error::Coolify deployment trigger failed after $MAX_RETRIES attempts (last HTTP $HTTP_CODE)"
+          cat /tmp/coolify-response.json 2>/dev/null || true
+          exit 1
+
+      - name: Wait for Coolify deployment to complete
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
-          echo "Waiting for deployment to propagate..."
-          sleep 30
+          echo "Waiting for Coolify to build and deploy..."
+          # Poll health endpoint until new deployment is live.
+          # Coolify does rolling update: new container must pass HEALTHCHECK
+          # before old one is killed, so health endpoint availability = deploy done.
+          MAX_WAIT=180  # 3 minutes max (Coolify Docker build + rolling update)
+          INTERVAL=10
+          ELAPSED=0
 
-          # Smoke tests
-          echo "Running smoke tests..."
-          curl -sf --max-time 10 https://www.esdeveniments.cat/ > /dev/null && echo "Homepage OK" || echo "::warning::Homepage slow/unavailable"
-          curl -sf --max-time 10 https://www.esdeveniments.cat/barcelona > /dev/null && echo "Barcelona page OK" || echo "::warning::Barcelona page slow/unavailable"
-          curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:" && echo "robots.txt OK" || echo "::warning::robots.txt issue"
+          # Initial wait for Coolify to start building
+          sleep 15
+          ELAPSED=15
 
-          # Health check
-          echo "Checking deployment health..."
-          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" || echo "000")
-          echo "Health endpoint: HTTP $HTTP_CODE"
-          if [ -f /tmp/health.json ]; then
-            REDIS_OK=$(jq -r '.cache.strategy // "unknown"' /tmp/health.json)
-            echo "Cache strategy: $REDIS_OK"
-            [ "$REDIS_OK" = "redis" ] && echo "Redis cache OK" || echo "::warning::Redis cache not connected"
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 5 \
+              "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Health endpoint responding (HTTP 200) after ${ELAPSED}s"
+              break
+            fi
+
+            echo "Health check: HTTP $HTTP_CODE (${ELAPSED}s elapsed, waiting...)"
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "::warning::Health endpoint did not respond within ${MAX_WAIT}s — deployment may still be in progress"
           fi
 
-          echo "Post-deploy verification complete"
+      - name: Post-deploy smoke tests
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          FAILED=0
+
+          # Critical smoke tests — these MUST pass
+          echo "Running critical smoke tests..."
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://www.esdeveniments.cat/) || HTTP_CODE="000"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Homepage: OK"
+          else
+            echo "::error::Homepage returned HTTP $HTTP_CODE"
+            FAILED=1
+          fi
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://www.esdeveniments.cat/barcelona) || HTTP_CODE="000"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Barcelona page: OK"
+          else
+            echo "::error::Barcelona page returned HTTP $HTTP_CODE"
+            FAILED=1
+          fi
+
+          curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:" && echo "robots.txt: OK" || { echo "::error::robots.txt missing Sitemap directive"; FAILED=1; }
+
+          # Health check with details
+          echo ""
+          echo "Checking deployment health..."
+          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 5 "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
+          if [ "$HTTP_CODE" = "200" ] && [ -f /tmp/health.json ]; then
+            echo "Health endpoint: OK"
+            CACHE=$(jq -r '.cache.strategy // "unknown"' /tmp/health.json)
+            echo "Cache strategy: $CACHE"
+            if [ "$CACHE" != "redis" ]; then
+              echo "::warning::Redis cache not connected (strategy: $CACHE)"
+            fi
+          else
+            echo "::error::Health endpoint returned HTTP $HTTP_CODE"
+            FAILED=1
+          fi
+
+          # Summary
+          echo ""
+          echo "## Post-Deploy Smoke Tests" >> $GITHUB_STEP_SUMMARY
+          if [ $FAILED -eq 0 ]; then
+            echo "All critical smoke tests passed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Some smoke tests failed — check logs above.**" >> $GITHUB_STEP_SUMMARY
+            echo "::error::Post-deploy smoke tests failed — deployment may be broken"
+            exit 1
+          fi
 
       - name: Deployment summary
         if: success()
         run: |
-          echo "Deployment completed successfully!"
-          echo "Site URL: https://esdeveniments.cat"
+          echo "## Deployment Result" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Site:** https://www.esdeveniments.cat" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
