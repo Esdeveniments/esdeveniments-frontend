@@ -8,7 +8,6 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 });
 
 const withNextIntl = createNextIntlPlugin();
-const redisCacheEnabled = Boolean(process.env.REDIS_URL || process.env.REDIS_HOST);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -30,10 +29,11 @@ const nextConfig = {
     "@img/sharp-linux-x64",
     "@img/sharp-libvips-linux-x64",
   ],
-  // Use Redis cache handler when configured (shared cache for Coolify deployment)
-  cacheHandler: redisCacheEnabled
-    ? require.resolve("./cache-handler.js")
-    : undefined,
+  // Always load the cache handler — it gracefully falls back to no-op when
+  // Redis env vars (REDIS_URL/REDIS_HOST) are not set at runtime.
+  // Must be unconditional because next.config.js is evaluated at build time,
+  // but Redis env vars are only available at container runtime.
+  cacheHandler: require.resolve("./cache-handler.js"),
   cacheMaxMemorySize: 0,
 
   // --- React Compiler (Next 16: moved to top-level) ---

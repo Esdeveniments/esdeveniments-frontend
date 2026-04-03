@@ -47,14 +47,17 @@ async function getClient() {
       console.error("[cache-handler] Redis error:", error);
     });
 
-    clientPromise = newClient.connect().then(() => {
-      client = newClient;
-      return client;
-    }).catch((error) => {
-      console.error("[cache-handler] Redis connection failed:", error);
-      clientPromise = null;
-      return null;
-    });
+    clientPromise = newClient
+      .connect()
+      .then(() => {
+        client = newClient;
+        return client;
+      })
+      .catch((error) => {
+        console.error("[cache-handler] Redis connection failed:", error);
+        clientPromise = null;
+        return null;
+      });
   }
 
   return clientPromise;
@@ -95,7 +98,11 @@ function deserializeCacheValue(value) {
   return parsed;
 }
 
-module.exports = {
+/**
+ * Next.js custom cache handler (class-based API).
+ * Always loaded via next.config.js — gracefully no-ops when Redis is not configured.
+ */
+class CacheHandler {
   async get(key) {
     try {
       const redisClient = await getClient();
@@ -108,7 +115,7 @@ module.exports = {
       console.error("[cache-handler] get failed:", error);
       return null;
     }
-  },
+  }
 
   async set(key, data, ctx) {
     try {
@@ -147,7 +154,7 @@ module.exports = {
     } catch (error) {
       console.error("[cache-handler] set failed:", error);
     }
-  },
+  }
 
   async revalidateTag(tag) {
     try {
@@ -161,7 +168,7 @@ module.exports = {
         return;
       }
 
-      // Fetch all tag members in parallel first, then build transaction atomically
+      // Fetch all tag members in parallel, then build transaction atomically
       const tagKeys = tags.map((entry) => buildTagKey(entry));
       const allMembers = await Promise.all(
         tagKeys.map((key) => redisClient.sMembers(key))
@@ -177,7 +184,9 @@ module.exports = {
     } catch (error) {
       console.error("[cache-handler] revalidateTag failed:", error);
     }
-  },
+  }
 
-  resetRequestCache() {},
-};
+  resetRequestCache() {}
+}
+
+module.exports = CacheHandler;

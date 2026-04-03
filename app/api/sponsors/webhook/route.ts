@@ -36,10 +36,8 @@ import { MS_PER_DAY } from "@utils/constants";
 
 /**
  * Route segment config
- * - runtime: nodejs for crypto module compatibility
  * - maxDuration: 30s to allow time for Stripe API calls
  */
-export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
