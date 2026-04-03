@@ -25,12 +25,9 @@ async function checkRedisConnectivity(): Promise<boolean> {
   const host = parsedUrl?.hostname || process.env.REDIS_HOST;
   const port = Number(parsedUrl?.port || process.env.REDIS_PORT || "6379");
   const useTls = parsedUrl?.protocol === "rediss:";
-  const password =
-    (parsedUrl?.password && decodeURIComponent(parsedUrl.password)) ||
-    process.env.REDIS_PASSWORD;
-  const username =
-    (parsedUrl?.username && decodeURIComponent(parsedUrl.username)) ||
-    process.env.REDIS_USERNAME;
+  // Node's URL constructor already decodes username/password — no decodeURIComponent needed
+  const password = parsedUrl?.password || process.env.REDIS_PASSWORD;
+  const username = parsedUrl?.username || process.env.REDIS_USERNAME;
 
   if (!host) return false;
 
@@ -59,15 +56,21 @@ async function checkRedisConnectivity(): Promise<boolean> {
       }
     }
     socket.setTimeout(2000);
+    // Accumulate TCP data — responses may arrive across multiple packets
+    let buffer = "";
     socket.on("data", (data) => {
-      const response = data.toString().trim();
-      if (!authenticated && response.includes("OK")) {
+      buffer += data.toString();
+      // RESP responses are terminated by \r\n — wait for complete response
+      if (!buffer.includes("\r\n")) return;
+
+      if (!authenticated && buffer.startsWith("+OK")) {
         authenticated = true;
+        buffer = "";
         socket.write(respCmd("PING"));
         return;
       }
       socket.destroy();
-      resolve(response.includes("PONG"));
+      resolve(buffer.startsWith("+PONG"));
     });
     socket.on("error", () => {
       socket.destroy();

@@ -75,7 +75,9 @@ CacheHandler.onCreation(() => {
           : undefined,
       });
 
-      redisClient.once("error", (e) => {
+      // Use on() not once() — node-redis requires a persistent error listener
+      // to prevent unhandled exceptions if multiple errors fire before disconnect.
+      redisClient.on("error", (e) => {
         console.warn("[cache-handler] Redis error:", e.message);
         // Disconnect the failed client to prevent resource leaks.
         // Don't set __cacheHandlerConfig — the cooldown logic handles fallback.

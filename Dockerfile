@@ -10,17 +10,22 @@ COPY .yarn ./.yarn
 RUN corepack enable && yarn install --immutable
 
 FROM base AS builder
-# Build-time arguments for Next.js static optimization (NEXT_PUBLIC_* are inlined at build time)
+# Build-time arguments for Next.js static optimization.
+# ARGs are scoped to the builder stage and do NOT persist in the final runner image.
+# NEXT_PUBLIC_* vars are inlined at build time by Next.js.
+# HMAC_SECRET is needed for ISR static generation (API route HMAC signing).
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL
 ARG HMAC_SECRET
 ARG SENTRY_AUTH_TOKEN
 ARG BUILD_VERSION
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
-ENV HMAC_SECRET=$HMAC_SECRET
-ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
-ENV BUILD_VERSION=$BUILD_VERSION
+# Use ENV so child processes (yarn build) inherit the values.
+# These ENVs only exist in the builder stage, not the final runner stage.
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    HMAC_SECRET=$HMAC_SECRET \
+    SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN \
+    BUILD_VERSION=$BUILD_VERSION
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
