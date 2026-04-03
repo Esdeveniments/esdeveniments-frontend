@@ -299,9 +299,9 @@ export async function POST(request: Request) {
     const warnings: string[] = [];
     if (failedTags.length > 0) {
       warnings.push(
-        `Tag cache write failed for: ${failedTags.join(
+        `revalidateTag failed for: ${failedTags.join(
           ", "
-        )} (transient, revalidation still applied)`
+        )} (data cache NOT invalidated for these tags, in-memory cache was cleared)`
       );
     }
     const response: RevalidateResponseDTO = {
