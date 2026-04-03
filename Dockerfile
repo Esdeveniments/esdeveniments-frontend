@@ -36,7 +36,7 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/cache-handler.js ./cache-handler.js
+COPY --from=builder /app/cache-handler.mjs ./cache-handler.mjs
 
 EXPOSE 3000
 ENV PORT=3000

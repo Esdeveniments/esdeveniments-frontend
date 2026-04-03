@@ -49,6 +49,7 @@
     ]
   },
   "dependencies": {
+    "@fortedigital/nextjs-cache-handler": "^3.2.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@sentry/nextjs": "10.32.0",

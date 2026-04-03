@@ -33,7 +33,7 @@ const nextConfig = {
   // Redis env vars (REDIS_URL/REDIS_HOST) are not set at runtime.
   // Must be unconditional because next.config.js is evaluated at build time,
   // but Redis env vars are only available at container runtime.
-  cacheHandler: require.resolve("./cache-handler.js"),
+  cacheHandler: require.resolve("./cache-handler.mjs"),
   cacheMaxMemorySize: 0,
 
   // --- React Compiler (Next 16: moved to top-level) ---

@@ -11,7 +11,7 @@ e2e
 test
 playwright-report
 *.md
-!cache-handler.js
+!cache-handler.mjs
 .env*
 .env.local
 .env.*.local
