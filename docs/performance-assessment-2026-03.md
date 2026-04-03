@@ -119,7 +119,7 @@ The project has many performance best practices already implemented:
 7. **Image optimization**: AVIF/WebP formats, quality caps (35-85 range), aggressive Cache-Control (1 year)
 8. **Console removal** in production
 9. **Source maps hidden** from production
-10. **Standalone output** for efficient Lambda deployment
+10. **Standalone output** for efficient Docker deployment
 11. **CSS minification** via cssnano + PostCSS
 12. **Server-first components** — `"use client"` only at leaf level
 13. **No barrel file re-exports** policy
@@ -156,7 +156,7 @@ The project has many performance best practices already implemented:
 
 #### 5.3 `/[place]` Server Bundle Grew +6.7%
 
-**Impact**: Increased Lambda processing time for the most-visited route.  
+**Impact**: Increased server processing time for the most-visited route.  
 **Cause**: Additional client components or new imports in the listing page tree.  
 **Actions**:
 

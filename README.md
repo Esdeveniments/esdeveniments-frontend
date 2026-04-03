@@ -1,15 +1,15 @@
 # Que Fer — Next.js App
 
-Production‑ready Next.js 16.1 + TypeScript app using the App Router. Includes TailwindCSS, SWR, Zustand, Vitest, Playwright, Sentry, and a Workbox‑based service worker.
+Production‑ready Next.js 16 + TypeScript app using the App Router. Includes TailwindCSS, SWR, Zustand, Vitest, Playwright, Sentry, and a Workbox‑based service worker.
 
 For contribution rules, see AGENTS.md.
 
 ## Quickstart
 
-1. Requirements: Node 20 and Yarn 4 (Corepack)
+1. Requirements: Node 22 and Yarn 4 (Corepack)
 
 ```bash
-corepack enable && corepack prepare yarn@4.9.1 --activate
+corepack enable && corepack prepare yarn@4.12.0 --activate
 yarn install --immutable
 ```
 
@@ -19,7 +19,7 @@ Create `.env.development` (and set in CI/hosting for others):
 
 - HMAC_SECRET=your-server-secret
 - NEXT_PUBLIC_API_URL=`https://api.esdeveniments.cat/api`
-- Optional: NEXT_PUBLIC_GOOGLE_ANALYTICS, NEXT_PUBLIC_GOOGLE_ADS, SENTRY_DSN
+- Optional: NEXT_PUBLIC_GOOGLE_ANALYTICS, NEXT_PUBLIC_GOOGLE_ADS, SENTRY_DSN, REDIS_URL
 
 1. Run
 
@@ -85,14 +85,23 @@ Update the baseline (only when the increase is intentional):
 - Middleware enforces HMAC on most `/api/*` routes (`x-hmac`, `x-timestamp`); public GET endpoints (events, news, categories, places, regions, cities) are allowlisted. Avoid signing in the browser—always use internal API routes.
 - CSP: Relaxed policy with host allowlisting for Google Analytics, Ads, and trusted domains. Inline scripts are allowed via `'unsafe-inline'` to enable ISR/PPR caching. JSON-LD rendered server-side via `JsonLdServer` component. See `proxy.ts` for full CSP configuration.
 
-## Next.js 16.1 Features
-
-- **Turbopack File System Caching**: Enabled by default in `next dev` for faster compile times, especially on restarts in large projects.
-- **Experimental Bundle Analyzer**: Use `yarn analyze:experimental` to launch an interactive UI for analyzing production bundles with Turbopack integration.
-- **Improved Debugging**: Use `yarn dev:inspect` to enable Node.js debugger for easier debugging.
-- **Improved `serverExternalPackages`**: Turbopack now correctly handles transitive dependencies without additional configuration.
-
 ## Deploy
 
-- AWS Amplify config (`amplify.yml`) uses Node 20 + Yarn 4, immutable installs, prebuild SW generation, and Next sitemap postbuild. Set environment variables in hosting.
+Deployed via **Docker on Coolify** (self-hosted PaaS).
+
+- **Dockerfile**: Multi-stage build → `node:22-slim` with standalone output
+- **Cache handler**: `@fortedigital/nextjs-cache-handler` with Redis (falls back to LRU when Redis is unavailable)
+- **CI**: `.github/workflows/ci.yml` runs lint, typecheck, tests, build, bundle size check
+- **Deploy workflow**: `.github/workflows/deploy-coolify.yml` triggers Coolify webhook on push to main
+- **Health check**: `/api/health` — Docker HEALTHCHECK and deploy verification endpoint
+- **Environment variables**: See `.github/skills/env-variable-management/SKILL.md` for the 5-location checklist
+
+### Docker build locally
+
+```bash
+docker build --build-arg NEXT_PUBLIC_API_URL=https://api.esdeveniments.cat/api \
+  --build-arg HMAC_SECRET=your-secret \
+  -t esdeveniments-frontend .
+docker run -p 3000:3000 -e REDIS_URL=redis://localhost:6379 esdeveniments-frontend
+```
 

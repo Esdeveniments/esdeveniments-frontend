@@ -490,7 +490,7 @@ await fireAndForgetFetch(url, { method: "POST", body: data });
 **DON'T**:
 
 ```typescript
-// ❌ WRONG: Raw fetch (can hang indefinitely in serverless)
+// ❌ WRONG: Raw fetch (can hang indefinitely without timeout)
 const response = await fetch(url);
 
 // ❌ WRONG: Manual AbortSignal (duplicates safeFetch logic)

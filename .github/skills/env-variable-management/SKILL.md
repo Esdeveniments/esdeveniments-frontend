@@ -85,7 +85,17 @@ if (!myVar) {
 }
 ```
 
-### Step 2: Add to Coolify
+### Step 2: Add to `.env.*` files
+
+This project uses `env-cmd` for local builds. Add the variable to **all applicable env files**:
+
+- `.env.development` — used by `yarn build:development`, `yarn start:development`
+- `.env.staging` — used by `yarn build:staging`, `yarn start:staging`
+- `.env.production` — used by `yarn build:production`, `yarn start:production`
+
+> **Important**: `NEXT_PUBLIC_*` vars (especially `NEXT_PUBLIC_API_URL`) MUST be in these files because they're inlined at build time and affect the service worker registration and test runs.
+
+### Step 3: Add to Coolify
 
 1. Go to **Coolify dashboard** → your application
 2. Go to **Environment Variables** tab
@@ -93,7 +103,7 @@ if (!myVar) {
 4. Check "Build Variable" if needed during Docker build (e.g., `NEXT_PUBLIC_*` vars)
 5. Redeploy for changes to take effect
 
-### Step 3: Add to `deploy-coolify.yml`
+### Step 4: Add to `deploy-coolify.yml`
 
 If the variable is needed during CI build/test (e.g., `NEXT_PUBLIC_*` vars baked at build time):
 
@@ -104,13 +114,13 @@ If the variable is needed during CI build/test (e.g., `NEXT_PUBLIC_*` vars baked
   run: yarn build
 ```
 
-### Step 4: Add to GitHub Secrets
+### Step 5: Add to GitHub Secrets
 
 1. Go to GitHub repo → Settings → Secrets and variables → Actions
 2. Click "New repository secret"
 3. Add `MY_NEW_VAR` with the actual value
 
-### Step 5: Update Documentation (Optional but Recommended)
+### Step 6: Update Documentation (Optional but Recommended)
 
 Add to the tables in this skill file.
 
@@ -127,13 +137,14 @@ Add to the tables in this skill file.
 
 ## Local Development
 
-Create `.env.local` (gitignored) with your dev values:
+Create `.env.local` (gitignored) for overrides, and ensure `.env.development` has the variable:
 
 ```bash
-# .env.local
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
+# .env.local (gitignored — personal overrides)
 HMAC_SECRET=dev-secret-for-testing
-# ... other vars
+
+# .env.development (committed — shared dev config via env-cmd)
+NEXT_PUBLIC_API_URL=https://api.esdeveniments.cat/api
 ```
 
 ## Common Mistakes
@@ -142,24 +153,25 @@ HMAC_SECRET=dev-secret-for-testing
 2. **Adding to Coolify but not GitHub Secrets** → CI build fails
 3. **Adding to workflow but not GitHub Secrets** → Empty value, validation fails
 4. **Using `NEXT_PUBLIC_` for secrets** → Exposed to browser
-5. **Forgetting local `.env.local`** → Dev environment broken
+5. **Forgetting `.env.*` files** → `build:development`/`build:staging` broken
 6. **Not marking `NEXT_PUBLIC_*` as build variable in Coolify** → Variable undefined in client bundle
 
 ## Checklist for New Env Variable
 
 - [ ] Added `process.env.VAR_NAME` in code?
+- [ ] Added to `.env.development`, `.env.staging`, `.env.production` as applicable?
 - [ ] Added to Coolify environment variables?
 - [ ] If `NEXT_PUBLIC_*`: marked as build variable in Coolify?
 - [ ] Added to `deploy-coolify.yml` if needed for CI?
 - [ ] Added secret value in GitHub repo settings?
 - [ ] Decided: required (throw) or optional (fallback)?
 - [ ] Correct prefix: `NEXT_PUBLIC_` only for public values?
-- [ ] Updated `.env.local` for local dev?
 - [ ] Documented in this skill file (if persistent)?
 
 ## Files to Reference
 
-- [.github/workflows/deploy-coolify.yml](../../workflows/deploy-coolify.yml) - CI/CD workflow
+- `.env.development`, `.env.staging`, `.env.production` — local/CI builds via `env-cmd`
+- [.github/workflows/deploy-coolify.yml](../../workflows/deploy-coolify.yml) — CI/CD workflow
 - Coolify dashboard → Application → Environment Variables
 - GitHub repo → Settings → Secrets → Actions
 
@@ -167,6 +179,6 @@ HMAC_SECRET=dev-secret-for-testing
 
 After adding a new env var:
 
-1. **Local**: Add to `.env.local`, run `yarn dev`
+1. **Local**: Add to `.env.development`, run `yarn dev` or `yarn build:development`
 2. **CI dry-run**: Push to branch, check workflow logs
-3. **Production**: Add to Coolify, merge to main, verify via `/api/health` endpoint
+3. **Production**: Add to Coolify + `.env.production`, merge to main, verify via `/api/health` endpoint

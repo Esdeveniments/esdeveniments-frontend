@@ -43,7 +43,7 @@
 - `yarn test` Vitest; `yarn test:watch`; `yarn test:coverage`.
 - `yarn test:e2e` Playwright; `yarn test:e2e:ui` UI runner. Remote: `playwright.remote.config.ts` with `PLAYWRIGHT_TEST_BASE_URL`.
 - Extras: `yarn analyze` bundle analysis; `yarn scan` run react‑scan on `localhost:3000`.
-- CI: Amplify builds use Node 20 + Yarn 4; prebuild generates `public/sw.js` and postbuild runs sitemap.
+- CI: Docker/Coolify builds use Node 22 + Yarn 4; prebuild generates `public/sw.js` and postbuild runs sitemap.
 
 ## Rollback Procedure
 

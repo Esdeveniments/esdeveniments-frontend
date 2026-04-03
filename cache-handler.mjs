@@ -68,6 +68,11 @@ CacheHandler.onCreation(() => {
       redisClient = createClient({
         url: redisUrl,
         pingInterval: 10_000,
+        // Accept self-signed TLS certs (common in Coolify environments).
+        // Mirrors the health probe's TLS policy in app/api/health/route.ts.
+        socket: redisUrl.startsWith("rediss://")
+          ? { tls: true, rejectUnauthorized: false }
+          : undefined,
       });
 
       redisClient.once("error", (e) => {

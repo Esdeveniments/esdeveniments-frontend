@@ -29,19 +29,22 @@ const ALLOWED_TAGS = [
  * Maps cache tags to Cloudflare URL prefixes for cache purging.
  * Cloudflare prefixes are literal path prefixes (NO wildcards supported).
  *
- * HTML page prefixes (/ca/, /es/) are included so that Cloudflare's edge
- * cache (which caches ISR HTML pages) is also purged when content changes.
+ * Locale prefixes cover all supported locales:
+ * - "/" for the default locale (ca, via "as-needed" prefix strategy)
+ * - "/es/" and "/en/" for non-default locales
+ *
  * This works in tandem with the Cloudflare Cache Rule that caches HTML on
  * www.esdeveniments.cat (excluding /api/* and /preferits).
  *
  * @see https://developers.cloudflare.com/cache/how-to/purge-cache/purge-by-prefix/
  */
+const LOCALE_PREFIXES = ["/", "/es/", "/en/"];
 const TAG_TO_CLOUDFLARE_PREFIXES: Record<RevalidatableTag, string[]> = {
-  places: ["/api/places", "/ca/", "/es/"],
-  regions: ["/api/regions", "/ca/", "/es/"],
+  places: ["/api/places", ...LOCALE_PREFIXES],
+  regions: ["/api/regions", ...LOCALE_PREFIXES],
   "regions:options": ["/api/regions/options"],
-  cities: ["/api/cities", "/ca/", "/es/"],
-  categories: ["/api/categories", "/ca/", "/es/"],
+  cities: ["/api/cities", ...LOCALE_PREFIXES],
+  categories: ["/api/categories", ...LOCALE_PREFIXES],
 };
 
 /**
