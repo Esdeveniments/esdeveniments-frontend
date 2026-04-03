@@ -133,13 +133,17 @@ class CacheHandler {
       // Resolve revalidate from ctx (Next.js 16+) or data (legacy), handle false = no-cache
       const rawRevalidate = ctx?.revalidate ?? data?.revalidate ?? null;
 
-      // false or 0 means "do not cache" in Next.js
-      if (rawRevalidate === false || rawRevalidate === 0) {
+      // false, 0, or null means "do not cache" in Next.js
+      if (!rawRevalidate) {
         return;
       }
 
-      if (typeof rawRevalidate === "number" && rawRevalidate > 0) {
-        const ttl = Math.max(1, Math.floor(rawRevalidate));
+      const ttl =
+        typeof rawRevalidate === "number" && rawRevalidate > 0
+          ? Math.max(1, Math.floor(rawRevalidate))
+          : null;
+
+      if (ttl) {
         await redisClient.set(cacheKey, payload, { EX: ttl });
       } else {
         await redisClient.set(cacheKey, payload);
@@ -148,11 +152,12 @@ class CacheHandler {
       const tags = Array.isArray(ctx?.tags) ? ctx.tags : [];
       if (tags.length > 0) {
         const multi = redisClient.multi();
+        // Tag set TTL: at least 7 days, or match the entry TTL if longer
+        const tagTtl = ttl ? Math.max(TAG_TTL_SECONDS, ttl) : TAG_TTL_SECONDS;
         for (const tag of tags) {
           const tagKey = buildTagKey(tag);
           multi.sAdd(tagKey, cacheKey);
-          // Safety TTL on tag sets to prevent unbounded growth
-          multi.expire(tagKey, TAG_TTL_SECONDS);
+          multi.expire(tagKey, tagTtl);
         }
         await multi.exec();
       }

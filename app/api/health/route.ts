@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "redis";
 
 /**
  * Health check endpoint for monitoring runtime configuration.
@@ -22,8 +21,11 @@ async function checkRedisConnectivity(): Promise<boolean> {
 
   let client;
   try {
+    const { createClient } = await import("redis");
     client = createClient({ url });
-    client.on("error", () => {}); // suppress error events during probe
+    client.on("error", (err: Error) =>
+      console.error("[health] Redis probe error:", err)
+    );
     await client.connect();
     const pong = await client.ping();
     return pong === "PONG";

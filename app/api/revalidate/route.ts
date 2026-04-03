@@ -218,7 +218,7 @@ export async function POST(request: Request) {
 
     // 4. Revalidate each tag (Next.js data cache)
     // Next 16 requires a profile; use "max" to force full invalidation
-    // Wrapped in try-catch to handle transient tag cache write errors
+    // Wrapped in try-catch to handle transient tag cache write errors per tag
     const revalidatedTags: RevalidatableTag[] = [];
     const failedTags: RevalidatableTag[] = [];
     for (const tag of tags) {
