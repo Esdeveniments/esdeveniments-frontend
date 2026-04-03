@@ -79,7 +79,7 @@ CacheHandler.onCreation(() => {
         console.warn("[cache-handler] Redis error:", e.message);
         // Disconnect the failed client to prevent resource leaks.
         // Don't set __cacheHandlerConfig — the cooldown logic handles fallback.
-        redisClient.disconnect().catch(() => {});
+        redisClient?.disconnect().catch(() => {});
         globalThis.__cacheHandlerConfig = null;
         globalThis.__cacheHandlerConfigPromise = null;
         globalThis.__cacheHandlerLastFailure = Date.now();
