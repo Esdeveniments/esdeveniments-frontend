@@ -226,11 +226,8 @@ export async function POST(request: Request) {
         revalidateTag(tag, "max");
         revalidatedTags.push(tag);
       } catch (error) {
-        // Non-fatal: tag cache write failed, but revalidation still triggered
         console.warn(`revalidateTag failed for "${tag}":`, error);
         failedTags.push(tag);
-        // Still count as revalidated since the actual cache invalidation happens
-        revalidatedTags.push(tag);
       }
     }
 

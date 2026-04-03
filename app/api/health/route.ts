@@ -40,14 +40,22 @@ async function checkRedisConnectivity(): Promise<boolean> {
       ? tlsConnect({ host, port }, onConnect)
       : createConnection({ host, port }, onConnect);
 
+    /** Build a RESP array command — handles passwords with spaces/special chars. */
+    function respCmd(...args: string[]): string {
+      let cmd = `*${args.length}\r\n`;
+      for (const arg of args) {
+        cmd += `$${Buffer.byteLength(arg)}\r\n${arg}\r\n`;
+      }
+      return cmd;
+    }
+
     function onConnect() {
       if (password) {
-        const authCmd = username
-          ? `AUTH ${username} ${password}\r\n`
-          : `AUTH ${password}\r\n`;
-        socket.write(authCmd);
+        socket.write(
+          username ? respCmd("AUTH", username, password) : respCmd("AUTH", password)
+        );
       } else {
-        socket.write("PING\r\n");
+        socket.write(respCmd("PING"));
       }
     }
     socket.setTimeout(2000);
@@ -55,7 +63,7 @@ async function checkRedisConnectivity(): Promise<boolean> {
       const response = data.toString().trim();
       if (!authenticated && response.includes("OK")) {
         authenticated = true;
-        socket.write("PING\r\n");
+        socket.write(respCmd("PING"));
         return;
       }
       socket.destroy();
