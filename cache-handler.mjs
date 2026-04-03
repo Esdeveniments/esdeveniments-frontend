@@ -64,7 +64,7 @@ CacheHandler.onCreation(() => {
         pingInterval: 10_000,
       });
 
-      redisClient.on("error", (e) => {
+      redisClient.once("error", (e) => {
         console.warn("[cache-handler] Redis error:", e.message);
         // Disconnect the failed client to prevent resource leaks, then fall
         // back to shared LRU. The cooldown timestamp prevents rapid retries.

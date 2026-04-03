@@ -131,7 +131,10 @@ export async function GET(request: NextRequest) {
       environment: process.env.NODE_ENV,
     },
     {
-      status: isFullyHealthy ? 200 : 503,
+      // Use isHealthy (core services) for HTTP status — not Redis.
+      // Redis outage = degraded but app still works with LRU fallback.
+      // Returning 503 for Redis would trigger unnecessary container restarts.
+      status: isHealthy ? 200 : 503,
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate",
       },
