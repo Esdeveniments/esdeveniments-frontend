@@ -36,7 +36,7 @@ export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
   "event_image_upload_too_large";
 export const FORMDATA_PARSE_ERROR_SUBSTRING = "failed to parse body as formdata";
 export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads (compression handles the rest)
-export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024; // Sponsor images are uploaded raw (no compression) — must stay under Lambda's 6MB limit
+export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024; // Sponsor images are uploaded raw (no compression) — keep under common body size limits
 
 export const formatMegabytesLabel = (bytes: number): string => {
   const value = bytes / (1024 * 1024);

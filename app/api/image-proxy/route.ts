@@ -467,10 +467,10 @@ export async function GET(request: Request) {
         console.error("[image-proxy] Sharp processing failed:", errorMessage);
 
         // On Vercel, Sharp is not installed (expected) — skip Sentry.
-        // On SST/Lambda, Sharp is installed via open-next.config.ts — always report
+        // In Docker/Coolify, Sharp is installed via Dockerfile — always report
         // so we catch regressions like the Feb 2026 incident (4 days of silent fallback).
         // VERCEL_ENV is set by Vercel to "production"|"preview"|"development";
-        // it's undefined on SST/Lambda.
+        // it's undefined in Docker/Coolify.
         const isVercel = !!process.env.VERCEL_ENV;
 
         if (process.env.NODE_ENV === "production" && !isVercel) {

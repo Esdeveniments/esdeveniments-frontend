@@ -146,7 +146,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const robotsTxt = lines.join("\n");
 
   // Set cache headers: 1 hour TTL at edge — robots.txt only changes on deployment
-  // Longer TTL reduces Lambda invocations from frequent crawler requests
+  // Longer TTL reduces server load from frequent crawler requests
   const cacheControl = getCacheControlHeader(request, 3600, 86400);
 
   return new NextResponse(robotsTxt, {

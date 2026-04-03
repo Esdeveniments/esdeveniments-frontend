@@ -9,7 +9,7 @@ import type {
  * Lightweight in-memory rate limiter for API routes.
  *
  * Uses a sliding-window counter per IP. Safe for single-instance deployments
- * (Lambda / single container). For multi-instance, move to Redis or DynamoDB.
+ * (single container). For multi-instance, move to Redis.
  *
  * Memory is bounded: entries expire after `windowMs` and are lazily pruned
  * every `PRUNE_INTERVAL_MS` (default 60s).

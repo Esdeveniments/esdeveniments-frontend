@@ -24,7 +24,7 @@ const nextConfig = {
   // Mark sharp and its native dependencies as external
   // Sharp has native binaries that must be bundled separately for the target platform
   // Include @img/* packages to ensure Turbopack doesn't mangle the module resolution
-  // Using x86_64: SST v3 cannot cross-install arm64 on x64 CI (see Feb + Mar 2026 incidents)
+  // Using x86_64 for compatibility with native modules (sharp)
   serverExternalPackages: [
     "sharp",
     "@img/sharp-linux-x64",
