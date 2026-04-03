@@ -733,8 +733,7 @@ During `next build` (static generation), internal API routes (`/api/*`) are **no
 
 | Environment | `isBuildPhase` | Behavior |
 |-------------|----------------|----------|
-| **Coolify/Docker** | `true` (no `VERCEL_URL`) | Bypasses internal routes ✅ |
-| **Vercel** | Depends on `NEXT_PHASE` | May try internal routes → fail ❌ |
+| **Docker build** | `true` (no running server) | Bypasses internal routes ✅ |
 | **Local dev** | `false` | Uses internal routes (server running) ✅ |
 
 ### The Solution: `isBuildPhase` Bypass Pattern
