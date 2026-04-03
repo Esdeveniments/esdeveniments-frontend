@@ -29,8 +29,8 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   test("renders the patrocina page with key sections", async ({ page }) => {
     await navigateToPatrocina(page);
 
-    // Check for pricing CTA button
-    await expect(page.getByRole("link", { name: /veure preus/i })).toBeVisible();
+    // Check for pricing CTA button (text: "Comença per 5€")
+    await expect(page.getByRole("link", { name: /comença per/i })).toBeVisible();
 
     // Pricing section exists (identified by id="pricing")
     const pricingSection = page.locator("#pricing");
@@ -80,7 +80,7 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
     ).toBeVisible();
 
     // Email link is present (button/link with mailto: href)
-    const emailLink = page.getByRole("link", { name: /contactar|email/i });
+    const emailLink = page.getByRole("link", { name: /escriu/i });
     await expect(emailLink).toBeVisible();
     
     // Verify it's a mailto link
@@ -91,8 +91,8 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
   test("back to home link works", async ({ page }) => {
     await navigateToPatrocina(page);
 
-    // Find and click the back link
-    const backLink = page.getByRole("link", { name: /tornar/i });
+    // Find and click the back link (text: "Torna a l'inici")
+    const backLink = page.getByRole("link", { name: /torna/i });
     await expect(backLink).toBeVisible();
 
     await backLink.click();
@@ -122,14 +122,15 @@ test.describe("Sponsor Empty State CTA", () => {
     const sponsorSlot = page.locator('[data-testid="sponsor-slot"]');
     await expect(sponsorSlot).toBeVisible({ timeout: 10000 });
 
-    // Within the slot, either empty state CTA or sponsor banner should be visible
+    // Within the slot, either empty state CTA, sponsor banner, or house ad should be visible
     const sponsorCta = sponsorSlot.getByRole("link", { name: /anuncia/i });
     const sponsorBanner = sponsorSlot.locator('[data-testid="sponsor-banner"]');
+    const houseAd = sponsorSlot.locator('[data-testid="house-ad-text"]');
 
     // Assert: at least one of these should be visible (use .or() for auto-waiting)
     await expect(
-      sponsorCta.or(sponsorBanner).first(),
-      "Expected either sponsor CTA or sponsor banner to be visible"
+      sponsorCta.or(sponsorBanner).or(houseAd).first(),
+      "Expected either sponsor CTA, sponsor banner, or house ad to be visible"
     ).toBeVisible({ timeout: 10000 });
 
     // If empty state CTA is shown, verify it links to patrocina
@@ -137,6 +138,12 @@ test.describe("Sponsor Empty State CTA", () => {
     if ((await sponsorCta.count()) > 0 && (await sponsorCta.isVisible())) {
       const href = await sponsorCta.getAttribute("href");
       expect(href).toContain("/patrocina");
+    }
+
+    // If house ad is shown, verify it links to patrocina
+    if ((await houseAd.count()) > 0 && (await houseAd.isVisible())) {
+      const houseAdLink = houseAd.locator('a[href*="/patrocina"]');
+      await expect(houseAdLink).toBeVisible();
     }
   });
 });

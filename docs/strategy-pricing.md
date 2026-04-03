@@ -57,13 +57,46 @@ Three visibility tiers based on geographic scope:
 
 **MVP Pricing Rationale**: After analysis of traffic data and competitive landscape, we removed the €3/3-day option (high transaction cost ratio, low margin) and set floor at €5. Ceiling at €40 leaves room to grow as traffic increases.
 
-**Tier logic**:
+---
 
-- **Població**: Single town page (e.g., `/mataro`) — exclusive local presence
-- **Comarca**: Region page (e.g., `/maresme`) — covers 10-30 towns
-- **Catalunya**: Homepage (`/`) + `/catalunya` page — entire site traffic, maximum visibility
+## Cascade Logic (How Visibility Works)
 
-**Value proposition**: Exclusivity (only 1 sponsor per location), not impressions. Minimum €5 covers Stripe fees and signals quality.
+Banners appear on both **listing pages** (`/mataro`) and **event detail pages** (`/e/festa-major-...`).
+
+**Cascade rule: Specificity wins.**
+
+When rendering a banner, the system checks in order:
+1. **Town sponsor** → If exists, show town sponsor
+2. **Region sponsor** → If no town sponsor, show region sponsor
+3. **Country sponsor** → If no town/region sponsor, show country sponsor
+4. **Empty CTA** → If no sponsors at all, show "Anuncia't aquí"
+
+**Example**: Event in Cardedeu (Vallès Oriental)
+
+| Sponsors Active | What Shows on Event Page |
+|-----------------|-------------------------|
+| Cardedeu + Vallès Oriental + Catalunya | **Cardedeu** (town wins) |
+| Vallès Oriental + Catalunya | **Vallès Oriental** (region fills gap) |
+| Catalunya only | **Catalunya** (country is fallback) |
+| None | **Empty CTA** |
+
+**Why this works:**
+- Town buyer gets maximum value (listing + all town events)
+- Region buyer fills gaps in towns without sponsors
+- Country buyer is the ultimate fallback everywhere
+- Each tier has clear, differentiated value
+
+---
+
+## Tier Value Proposition
+
+**Tier logic** (updated to reflect cascade):
+
+- **Població (Town)**: Listing page + ALL event pages in that town — maximum local presence
+- **Comarca (Region)**: Region listing + event pages in towns WITHOUT a town sponsor — breadth coverage
+- **Catalunya (Country)**: Homepage + event pages WITHOUT town/region sponsors — ultimate fallback
+
+**Value proposition**: Reach (impressions across listing + event pages), with specificity-based priority. One sponsor per geographic scope.
 
 **Stripe fees impact** (1.5% + €0.25):
 

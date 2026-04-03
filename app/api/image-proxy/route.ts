@@ -307,7 +307,12 @@ export async function GET(request: Request) {
   for (const candidate of candidates) {
     try {
       const response = await fetchWithTimeout(candidate);
-      if (!response.ok) continue;
+      if (!response.ok) {
+        console.error(
+          `[image-proxy] Upstream returned ${response.status} for ${candidate.slice(0, 200)}`,
+        );
+        continue;
+      }
 
       const contentLength = Number(response.headers.get("content-length"));
       if (!Number.isNaN(contentLength) && contentLength > MAX_BYTES) {
@@ -461,7 +466,14 @@ export async function GET(request: Request) {
           sharpError instanceof Error ? sharpError.message : String(sharpError);
         console.error("[image-proxy] Sharp processing failed:", errorMessage);
 
-        if (process.env.NODE_ENV === "production") {
+        // On Vercel, Sharp is not installed (expected) — skip Sentry.
+        // On SST/Lambda, Sharp is installed via open-next.config.ts — always report
+        // so we catch regressions like the Feb 2026 incident (4 days of silent fallback).
+        // VERCEL_ENV is set by Vercel to "production"|"preview"|"development";
+        // it's undefined on SST/Lambda.
+        const isVercel = !!process.env.VERCEL_ENV;
+
+        if (process.env.NODE_ENV === "production" && !isVercel) {
           Sentry.captureException(sharpError, {
             tags: { route: "/api/image-proxy", stage: "sharp-processing" },
           });
@@ -486,13 +498,17 @@ export async function GET(request: Request) {
         });
       }
     } catch (error) {
-      if (process.env.NODE_ENV === "production") {
-        Sentry.captureException(error, {
-          tags: { route: "/api/image-proxy", candidate },
-        });
-      }
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`[image-proxy] Fetch/process failed for ${candidate}:`, msg);
+      // Don't report to Sentry — these are external broken images (404, timeout,
+      // DNS failure, TLS errors), not bugs in our code. The console.error above
+      // is sufficient for debugging. Sharp processing failures are reported
+      // separately in the inner catch block.
     }
   }
 
+  console.error(
+    `[image-proxy] All candidates exhausted for: ${rawTarget.slice(0, 200)}`,
+  );
   return buildPlaceholder();
 }

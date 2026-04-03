@@ -12,6 +12,6 @@
       "@public/*": ["./public/*"],
       "types/*": ["./types/*"]
     },
-    "types": ["./types/react-datepicker.d.ts", "./types/navigator.d.ts"]
+    "types": ["./types/navigator.d.ts"]
   }
 }

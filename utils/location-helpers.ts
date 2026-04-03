@@ -2,7 +2,6 @@ import { cache } from "react";
 import { fetchRegionsWithCities } from "@lib/api/regions";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import {
-  sanitize,
   sanitizeLegacyApostrophe,
   formatPlaceName,
 } from "./string-helpers";
@@ -13,7 +12,6 @@ import type {
   EventLocationLabels,
   EventPlaceLabelOptions,
   EventPlaceLabels,
-  EventListLocationLabelOptions,
   EventListLocationLabels,
 } from "types/location";
 
@@ -163,7 +161,7 @@ export const buildEventListLocationLabels = ({
   cityName,
   regionName,
   location,
-}: EventListLocationLabelOptions): EventListLocationLabels => {
+}: EventPlaceLabelOptions): EventListLocationLabels => {
   const cityLabel = formatOptionalPlace(cityName);
   const regionLabel = formatOptionalPlace(regionName);
   const locationLabel = formatOptionalPlace(location);
@@ -243,12 +241,11 @@ export const getPlaceTypeAndLabel = async (
           for (const region of regionsWithCities) {
             const city = region.cities.find((c) => c.value === place);
             if (city) {
-              const regionSlug = sanitize(region.name);
               return {
                 type,
                 label: formattedLabel,
                 regionLabel: formatPlaceName(region.name),
-                regionSlug,
+                regionSlug: region.slug,
               };
             }
           }
@@ -268,7 +265,7 @@ export const getPlaceTypeAndLabel = async (
 
     const region = regionsWithCities.find(
       (r) =>
-        sanitize(r.name) === place ||
+        r.slug === place ||
         sanitizeLegacyApostrophe(r.name) === place,
     );
     if (region) {
@@ -279,12 +276,11 @@ export const getPlaceTypeAndLabel = async (
       const city = region.cities.find((c) => c.value === place);
       if (city) {
         // City found - include parent region info for SEO breadcrumbs
-        const regionSlug = sanitize(region.name);
         return {
           type: "town",
           label: formatPlaceName(city.label),
           regionLabel: formatPlaceName(region.name),
-          regionSlug,
+          regionSlug: region.slug,
         };
       }
     }

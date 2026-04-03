@@ -126,7 +126,7 @@ test.describe("Locale caching invariants", () => {
 
     if (looksLikeCdnCaching) {
       expect(cacheCookie).toContain("public");
-      expect(cacheCookie).toContain("s-maxage=300");
+      expect(cacheCookie).toContain("s-maxage=1800");
     } else {
       // Dev often forces no-store; still ensure cookie doesn't change caching semantics.
       expect(cacheCookie).toBe(cacheDefault);

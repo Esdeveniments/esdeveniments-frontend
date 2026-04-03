@@ -243,6 +243,25 @@ export default function ServerPage() {
 }
 ```
 
+### ❌ No Local Barrel Files Mixing Route Contexts
+
+```typescript
+// ❌ WRONG: Barrel re-exports "use client" components from different routes
+// components/ui/sponsor/index.ts
+export { default as SponsorBannerSlot } from "./SponsorBannerSlot";  // /[place]
+export { default as CheckoutButton } from "./CheckoutButton";        // /patrocina only
+export { default as PricingSectionClient } from "./PricingSectionClient"; // /patrocina only
+
+// Importing from barrel in /[place] leaks CheckoutButton + PricingSectionClient
+// into /[place]'s client-reference-manifest (+24 KB bloat)
+import { SponsorBannerSlot } from "@components/ui/sponsor";
+
+// ✅ CORRECT: Direct file imports
+import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+```
+
+**Why**: In Next.js RSC, every `"use client"` module re-exported from a barrel gets registered in the `client-reference-manifest` of every route that imports from that barrel — even unused exports. `optimizePackageImports` (next.config.js) only works for npm packages, not local barrels.
+
 ### ❌ No Reading `searchParams` in Listing Pages
 
 ```typescript
@@ -411,6 +430,8 @@ export default async function PlacePage({ params }) {
 - [ ] Client boundaries at smallest possible scope
 - [ ] Using `Link` from `@i18n/routing` (not `next/link`)
 - [ ] No `searchParams` in `app/[place]/*` pages
+- [ ] **No local barrel files (`index.ts`) re-exporting `"use client"` components from different routes** (causes manifest bloat)
+- [ ] All component imports use direct file paths, not barrel re-exports
 - [ ] `useRef` for tracking flags (not `useState`)
 - [ ] Complete dependency arrays in hooks
 - [ ] No premature memoization

@@ -292,7 +292,7 @@ For automatic deployment to work, configure these secrets in GitHub:
 | `HMAC_SECRET`            | Server-side HMAC secret for API request signing  | (random secure string)                  |
 | `REVALIDATE_SECRET`      | Secret for on-demand cache revalidation API      | (random secure string, 32+ chars)       |
 | `SENTRY_DSN`             | Sentry DSN for server-side error tracking        | `https://...@sentry.io/...`             |
-| `NEXT_PUBLIC_API_URL`    | Production API backend URL                       | `https://api-pre.esdeveniments.cat/api` |
+| `NEXT_PUBLIC_API_URL`    | Production API backend URL                       | `https://api.esdeveniments.cat/api` |
 | `DEEPL_API_KEY`          | DeepL API key for translation services           | (DeepL API authentication key)          |
 | `STRIPE_SECRET_KEY`      | Stripe secret key for sponsor checkout           | `sk_live_...`                           |
 | `STRIPE_WEBHOOK_SECRET`  | Stripe webhook signing secret (prevents bypass)  | `whsec_...`                             |

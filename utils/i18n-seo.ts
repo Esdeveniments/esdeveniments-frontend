@@ -102,7 +102,8 @@ export function resolveLocaleFromHeaders(
 
 /**
  * Safely gets the locale from headers() with fallback to DEFAULT_LOCALE.
- * Use this in generateMetadata() and other functions that may run during static generation.
+ * Use this in Server Components and route handlers where rootParams is not available.
+ * For page/layout Server Components under [locale], prefer using rootParams directly.
  * @returns The resolved locale, or DEFAULT_LOCALE if headers() is unavailable
  */
 export async function getLocaleSafely(): Promise<AppLocale> {

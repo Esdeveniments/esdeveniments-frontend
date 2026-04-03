@@ -24,6 +24,7 @@ const nextConfig = {
   // Mark sharp and its native dependencies as external
   // Sharp has native binaries that must be bundled separately for the target platform
   // Include @img/* packages to ensure Turbopack doesn't mangle the module resolution
+  // Using x86_64: SST v3 cannot cross-install arm64 on x64 CI (see Feb + Mar 2026 incidents)
   serverExternalPackages: [
     "sharp",
     "@img/sharp-linux-x64",
@@ -38,10 +39,11 @@ const nextConfig = {
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
 
-  cacheComponents: false,
+  cacheComponents: true,
 
   // --- Experimental Features ---
   experimental: {
+    rootParams: true,
     scrollRestoration: true,
     inlineCss: true,
     // Tree-shake heavy libraries to reduce bundle size
@@ -49,7 +51,7 @@ const nextConfig = {
       "@headlessui/react",
       "@heroicons/react",
       "date-fns",
-      "react-datepicker",
+      "react-day-picker",
       "react-select",
       "react-share",
       "react-tooltip",

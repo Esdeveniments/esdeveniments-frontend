@@ -5,9 +5,8 @@ import HybridEventsList from "@components/ui/hybridEventsList";
 import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
+import { UrlFiltersProvider } from "@components/context/UrlFiltersContext";
 import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
-import { buildFaqJsonLd } from "@utils/helpers";
-import { buildListPageFaqItems } from "@utils/list-page-faq";
 import type { PlacePageShellProps } from "types/props";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
@@ -26,21 +25,23 @@ import {
 } from "@utils/breadcrumb-helpers";
 import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
+import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
+import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 // Lazy load below-the-fold client component via client component wrapper
 // This allows us to use ssr: false in Next.js 16 (required for client components)
 import LazyClientInteractiveLayer from "./LazyClientInteractiveLayer";
 
-// Lazy load server component directly (no client wrapper needed)
-// FAQ section is below the fold, so we can lazy load it to reduce initial bundle
-const ListPageFaq = dynamic(() => import("@components/ui/common/faq/ListPageFaq"), {
-  // No ssr: false needed - it's a server component
-  loading: () => null, // FAQ section is below the fold
-});
-
 // Lazy load explore navigation - below the fold, server component
 const PlacePageExploreNav = dynamic(
   () => import("@components/ui/placePageExploreNav"),
+  { loading: () => null }
+);
+
+// Lazy load nearby places cross-links - below the fold, server component
+const ExploreNearby = dynamic(
+  () => import("@components/ui/exploreNearby/ExploreNearby"),
   { loading: () => null }
 );
 
@@ -167,26 +168,28 @@ export default async function PlacePageShell({
 
   return (
     <FilterLoadingProvider>
-      <Suspense fallback={<EventsListSkeleton />}>
-        <PlacePageContent
-          shellDataPromise={shellDataPromise}
-          eventsPromise={eventsPromise}
-          place={place}
-          category={category}
-          date={date}
-          categories={categories}
-          webPageSchemaFactory={webPageSchemaFactory}
-        />
-      </Suspense>
+      <UrlFiltersProvider categories={categories}>
+        <Suspense fallback={<EventsListSkeleton />}>
+          <PlacePageContent
+            shellDataPromise={shellDataPromise}
+            eventsPromise={eventsPromise}
+            place={place}
+            category={category}
+            date={date}
+            categories={categories}
+            webPageSchemaFactory={webPageSchemaFactory}
+          />
+        </Suspense>
 
-      {/* Client Interactive Layer - Lazy loaded (filters, below fold) */}
-      <Suspense fallback={null}>
-        <LazyClientInteractiveLayer
-          categories={categories}
-          placeTypeLabel={placeTypeLabel}
-          filterLabels={filterLabels}
-        />
-      </Suspense>
+        {/* Client Interactive Layer - Lazy loaded (filters, below fold) */}
+        <Suspense fallback={null}>
+          <LazyClientInteractiveLayer
+            categories={categories}
+            placeTypeLabel={placeTypeLabel}
+            filterLabels={filterLabels}
+          />
+        </Suspense>
+      </UrlFiltersProvider>
     </FilterLoadingProvider>
   );
 }
@@ -214,11 +217,17 @@ export async function ClientLayerWithPlaceLabel({
   const { placeTypeLabel } = await shellDataPromise;
 
   return (
-    <LazyClientInteractiveLayer
-      categories={categories}
-      placeTypeLabel={placeTypeLabel}
-      filterLabels={filterLabels}
-    />
+    <FilterLoadingProvider>
+      <UrlFiltersProvider categories={categories}>
+        <Suspense fallback={null}>
+          <LazyClientInteractiveLayer
+            categories={categories}
+            placeTypeLabel={placeTypeLabel}
+            filterLabels={filterLabels}
+          />
+        </Suspense>
+      </UrlFiltersProvider>
+    </FilterLoadingProvider>
   );
 }
 
@@ -244,56 +253,29 @@ async function PlacePageContent({
   const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, structuredScripts }] =
     await Promise.all([shellDataPromise, eventsPromise]);
 
-  const tFaq = await getTranslations("Utils.ListPageFaq");
   const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
   const tByDates = await getTranslations("Config.ByDates");
   const locale = await getLocaleSafely();
+
+  // Preload LCP image — first real event card image.
+  // Uses responsive srcSet so the browser picks the right width for the viewport.
+  const firstRealEvent = events.find(isEventSummaryResponseDTO);
+  const lcpSources = firstRealEvent?.imageUrl
+    ? buildResponsivePictureSourceUrls(
+      firstRealEvent.imageUrl,
+      firstRealEvent.hash || firstRealEvent.updatedAt,
+      {
+        quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
+      },
+      getResponsiveWidths("list")
+    )
+    : null;
+  const lcpSizes = getOptimalImageSizes("list");
 
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
     ? webPageSchemaFactory({ placeTypeLabel, pageData })
     : null;
-
-  const faqItems = buildListPageFaqItems({
-    place,
-    date,
-    category,
-    placeTypeLabel,
-    categories,
-    locale,
-    labels: {
-      q1: tFaq("q1", { contextInline: "{contextInline}" }),
-      a1: tFaq("a1", { capitalizedContext: "{capitalizedContext}" }),
-      q2: tFaq("q2", { contextInline: "{contextInline}" }),
-      a2: tFaq("a2", { contextInline: "{contextInline}" }),
-      q3: tFaq("q3", {
-        categoryName: "{categoryName}",
-        contextInline: "{contextInline}",
-      }),
-      a3: tFaq("a3", {
-        categoryName: "{categoryName}",
-        contextInline: "{contextInline}",
-      }),
-    },
-    dateLabels: {
-      inline: {
-        avui: tFaq("dateInline.today"),
-        dema: tFaq("dateInline.tomorrow"),
-        setmana: tFaq("dateInline.week"),
-        "cap-de-setmana": tFaq("dateInline.weekend"),
-      },
-      capitalized: {
-        avui: tFaq("dateCapitalized.today"),
-        dema: tFaq("dateCapitalized.tomorrow"),
-        setmana: tFaq("dateCapitalized.week"),
-        "cap-de-setmana": tFaq("dateCapitalized.weekend"),
-      },
-      fallbackInline: tFaq("dateInline.fallback"),
-      fallbackCapitalized: tFaq("dateCapitalized.fallback"),
-    },
-  });
-  const faqJsonLd =
-    faqItems.length > 1 ? buildFaqJsonLd(faqItems) : null;
 
   const hasSpecificCategory = !!category && category !== DEFAULT_FILTER_VALUE;
   const categoryName =
@@ -326,6 +308,18 @@ async function PlacePageContent({
 
   return (
     <>
+      {/* Preload LCP card image for faster Largest Contentful Paint */}
+      {lcpSources && (
+        <link
+          rel="preload"
+          as="image"
+          imageSrcSet={lcpSources.webpSrcSet}
+          imageSizes={lcpSizes}
+          type="image/webp"
+          fetchPriority="high"
+        />
+      )}
+
       {webPageSchema && (
         <JsonLdServer id="webpage-schema" data={webPageSchema} />
       )}
@@ -337,13 +331,6 @@ async function PlacePageContent({
       {structuredScripts?.map((script) => (
         <JsonLdServer key={script.id} id={script.id} data={script.data} />
       ))}
-
-      {faqJsonLd && (
-        <JsonLdServer
-          id={`faq-${place}-${date ?? "general"}`}
-          data={faqJsonLd}
-        />
-      )}
 
       <FilterLoadingGate>
         <HybridEventsList
@@ -359,7 +346,7 @@ async function PlacePageContent({
         />
       </FilterLoadingGate>
 
-      {/* Explore Navigation - SEO internal links (below events, above FAQ) */}
+      {/* Explore Navigation - SEO internal links (below events) */}
       <Suspense fallback={null}>
         <PlacePageExploreNav
           place={place}
@@ -370,10 +357,14 @@ async function PlacePageContent({
         />
       </Suspense>
 
-      {/* FAQ Section - Lazy loaded (below the fold, server component) */}
+      {/* Explore Nearby - SEO cross-links to related places */}
       <Suspense fallback={null}>
-        <ListPageFaq items={faqItems} />
+        <ExploreNearby
+          place={place}
+          placeType={placeTypeLabel.type}
+        />
       </Suspense>
+
     </>
   );
 }

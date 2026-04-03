@@ -35,7 +35,7 @@ export default function DateQuickFilters(): JSX.Element {
               px-4 py-2 rounded-full text-sm font-medium transition-all border outline-none focus:ring-2 focus:ring-primary/50 relative
               ${isActive
                 ? "bg-primary text-white border-primary shadow-md pl-9"
-                : "bg-background text-foreground/80 border-border hover:border-primary hover:text-primary hover:bg-primary/5"
+                : "bg-white/15 text-white border-white/30 hover:border-white/60 hover:bg-white/25 backdrop-blur-sm"
               }
             `}
           >

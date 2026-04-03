@@ -1,0 +1,119 @@
+name: SEO Audit
+
+on:
+  # Bi-weekly: 1st and 15th of each month at 7 AM UTC (9 AM CET)
+  schedule:
+    - cron: "0 7 1,15 * *"
+  # Manual trigger with optional comparison
+  workflow_dispatch:
+    inputs:
+      skip_issue:
+        description: "Skip GitHub Issue creation (just generate report)"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: write
+  issues: write
+  actions: read
+
+concurrency:
+  group: seo-audit
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+  GSC_SITE_URL: "https://www.esdeveniments.cat/"
+  GA4_PROPERTY_ID: "406884331"
+
+jobs:
+  seo-audit:
+    name: Run SEO Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        run: |
+          pip install --quiet \
+            google-api-python-client \
+            google-auth \
+            google-analytics-data \
+            requests
+
+      - name: Authenticate with GCP
+        run: |
+          echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> $GITHUB_ENV
+
+      - name: Find previous audit data
+        id: previous
+        run: |
+          # Find the most recent audit JSON in the repo
+          LATEST=$(ls -1 data/seo-audits/*.json 2>/dev/null | sort -r | head -1)
+          if [ -n "$LATEST" ]; then
+            echo "📂 Found previous audit: $LATEST"
+            echo "path=$LATEST" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "📂 No previous audit data found (first run)"
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run SEO audit
+        id: audit
+        env:
+          PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
+        run: |
+          RUN_DATE=$(date -u +%Y-%m-%d)
+          mkdir -p data/seo-audits
+
+          PREV_ARGS=()
+          if [ "${{ steps.previous.outputs.found }}" = "true" ]; then
+            PREV_ARGS=(--previous "${{ steps.previous.outputs.path }}")
+          fi
+
+          SEO_AUDIT_OUTPUT_DIR=data/seo-audits \
+            python scripts/seo-audit.py --country Spain "${PREV_ARGS[@]}"
+
+          # Rename output files with date
+          mv data/seo-audits/seo-audit-data.json "data/seo-audits/${RUN_DATE}.json"
+          mv data/seo-audits/seo-audit-report.md "data/seo-audits/${RUN_DATE}.md"
+
+          echo "run_date=$RUN_DATE" >> $GITHUB_OUTPUT
+
+      - name: Commit audit data to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/seo-audits/
+          if git diff --staged --quiet; then
+            echo "📂 No changes to commit (data unchanged)"
+          else
+            git commit -m "chore(seo): audit ${{ steps.audit.outputs.run_date }}
+
+          Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi
+
+      - name: Create GitHub Issue
+        if: ${{ github.event.inputs.skip_issue != 'true' }}
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "📊 SEO Audit — ${{ steps.audit.outputs.run_date }}"
+          content-filepath: data/seo-audits/${{ steps.audit.outputs.run_date }}.md
+          labels: seo,automated-audit
+          assignees: albertolive
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f /tmp/gcp-sa-key.json

@@ -36,13 +36,13 @@ describe("/api/events proxy", () => {
     });
 
     const req = new Request(
-      "http://localhost/api/events?page=-5&size=100&place=barcelona&category=music&byDate=avui&lat=41.3&lon=2.1&radius=999&term=rock&from=2025-01-01&to=2025-01-31"
+      "http://localhost/api/events?page=-5&size=100&place=barcelona&category=music&byDate=avui&lat=41.3&lon=2.1&radius=999&term=rock&from=2025-01-01&to=2025-01-31",
     );
     const res = await GET(req);
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe(
-      "public, s-maxage=600, stale-while-revalidate=600"
+      "public, s-maxage=1800, stale-while-revalidate=3600",
     );
 
     // Verify mapping and clamping
@@ -74,7 +74,7 @@ describe("/api/events proxy", () => {
     });
 
     const req = new Request(
-      "http://localhost/api/events?page=abc&size=xyz&lat=NaN&lon=NaN&radius=foo"
+      "http://localhost/api/events?page=abc&size=xyz&lat=NaN&lon=NaN&radius=foo",
     );
     await GET(req);
 

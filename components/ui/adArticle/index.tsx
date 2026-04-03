@@ -1,20 +1,17 @@
 "use client";
 
-import { useState, memo, lazy, Suspense, FC } from "react";
+import { useState, memo, FC } from "react";
 import GoogleAdsenseContainer from "../GoogleAdsense";
 import { AdArticleProps } from "types/common";
-
-const AdBoard = lazy(() => import("../adBoard"));
 
 const AdArticle: FC<AdArticleProps> = memo(({ isDisplay = true, slot }) => {
   const [displayAd, setDisplayAd] = useState<boolean>(true);
 
-  if (!displayAd)
-    return (
-      <Suspense fallback={<div>Loading Ad...</div>}>
-        <AdBoard />
-      </Suspense>
-    );
+  // When the ad fails to load (ad blocker, network error, etc.),
+  // collapse the space entirely instead of showing an error box.
+  // This avoids the ugly yellow "L'anunci no s'ha pogut carregar" banner
+  // that damages perceived quality.
+  if (!displayAd) return null;
 
   return (
     <div className="flex">

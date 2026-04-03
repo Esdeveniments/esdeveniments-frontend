@@ -4,7 +4,11 @@
 
 import { init } from "@sentry/nextjs";
 import type { EdgeOptions } from "@sentry/nextjs";
-import { beforeSendEdge, beforeSendMetric } from "@utils/sentry-helpers";
+import {
+  beforeSendEdge,
+  beforeSendMetric,
+  SENTRY_IGNORE_ERRORS,
+} from "@utils/sentry-helpers";
 
 if (process.env.NODE_ENV === "production") {
   const config: EdgeOptions = {
@@ -21,6 +25,8 @@ if (process.env.NODE_ENV === "production") {
     // Privacy: explicitly disable sending PII by default
     sendDefaultPii: false,
     debug: false,
+    // SDK-level filtering: drop well-known noise before serialization (more performant than beforeSend)
+    ignoreErrors: SENTRY_IGNORE_ERRORS,
     // Errors-only: do not send console logs as Sentry logs.
     enableLogs: false,
     // Metrics: automatically enabled in v10.25.0+ (no explicit enableMetrics needed)

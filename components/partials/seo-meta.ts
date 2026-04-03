@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { DEFAULT_ROBOTS_POLICY } from "lib/meta";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { SchemaPlaceLocation } from "types/schema";
 import {
@@ -61,7 +62,7 @@ export function generateItemListStructuredData(
   listName: string,
   description?: string,
   locale?: AppLocale,
-  pageUrl?: string
+  pageUrl?: string,
 ) {
   if (!events || events.length === 0) return null;
 
@@ -185,7 +186,7 @@ export function buildPageMeta({
     robots:
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
-        : robotsOverride ?? "index, follow",
+        : (robotsOverride ?? DEFAULT_ROBOTS_POLICY),
     other: {
       ...restDefaults.other,
       "twitter:domain": siteUrl,
@@ -193,7 +194,6 @@ export function buildPageMeta({
       "twitter:image:src": image,
       "twitter:image:alt": title,
     },
-    languages: languageAlternates,
   };
 
   return baseMeta;
@@ -263,7 +263,7 @@ export function generateBreadcrumbList(breadcrumbs: BreadcrumbItem[]) {
           breadcrumb.url,
           derivedName
             ? `derived name from URL: "${derivedName}"`
-            : "using generic fallback for empty breadcrumb name"
+            : "using generic fallback for empty breadcrumb name",
         );
       }
       return {
@@ -366,14 +366,17 @@ export function generateCollectionPageSchema(options: CollectionPageOptions) {
 }
 
 export function generateSiteNavigationElementSchema(
-  navigationItems: NavigationItem[]
+  navigationItems: NavigationItem[],
+  locale?: AppLocale,
 ) {
   if (!navigationItems || navigationItems.length === 0) return null;
+
+  const localeToUse = locale ?? DEFAULT_LOCALE;
 
   const normalizeToAbsoluteUrl = (value: string) => {
     if (/^https?:\/\//i.test(value)) return value;
     const normalized = value.startsWith("/") ? value : `/${value}`;
-    return `${siteUrl}${normalized}`;
+    return toLocalizedUrl(normalized, localeToUse);
   };
 
   const fallbackPathFromName = (value: string) => {
@@ -406,7 +409,7 @@ export function generateSiteNavigationElementSchema(
     "@type": "SiteNavigationElement",
     "@id": `${siteUrl}#sitenavigation`,
     name: "Sitemap de Catalunya",
-    url: `${siteUrl}/sitemap`,
+    url: toLocalizedUrl("/sitemap", localeToUse),
     hasPart: navigationElements,
   };
 }

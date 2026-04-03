@@ -3,7 +3,9 @@ import type { Option, GroupedOption } from "types/common";
 import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
 /**
- * Generate regions options sorted alphabetically
+ * Generate regions options sorted alphabetically.
+ * Uses `sanitize(region.name)` because the `/places/regions/options`
+ * endpoint does not include a `slug` field.
  * @param regionsWithCities - Array of regions with cities from API
  * @returns Array of Option objects for regions with placeType: "region"
  */
@@ -12,7 +14,7 @@ export function generateRegionsOptions(
 ): Option[] {
   return regionsWithCities
     .map((region) => ({
-      value: sanitize(region.name),
+      value: region.slug ?? sanitize(region.name),
       label: region.name,
       placeType: "region" as const,
     }))

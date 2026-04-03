@@ -1,9 +1,9 @@
-// Place types matching backend PlaceResponseDTO and PlaceType
-export type PlaceType = "PROVINCE" | "REGION" | "CITY";
+// Backend place classification — distinct from the frontend PlaceType in types/common.ts
+export type PlaceKind = "PROVINCE" | "REGION" | "CITY";
 
 export interface PlaceResponseDTO {
   id: number;
-  type: PlaceType;
+  type: PlaceKind;
   name: string;
   slug: string;
 }

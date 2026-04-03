@@ -1,28 +1,34 @@
 "use client";
 
-import { memo, ReactElement, useMemo, Suspense } from "react";
+import { memo, ReactElement, useMemo, Suspense, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import LoadMoreButton from "@components/ui/loadMoreButton";
-import CardLoading from "@components/ui/cardLoading";
+import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
 import NoEventsFound from "@components/ui/common/noEventsFound/NoEventsFoundClient";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
-import { useUrlFilters } from "@components/hooks/useUrlFilters";
+import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
+import { hasActiveClientFilters } from "@utils/url-filters";
 import { useTranslations, useLocale } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
+import useListingAnalytics from "@components/hooks/useListingAnalytics";
 import type { AppLocale } from "types/i18n";
 
-const ClientCardsList = dynamic(() => import("./ClientCardsList"), {
-  loading: () => (
-    <div className="w-full">
+function EventsGridSkeleton() {
+  return (
+    <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-element-gap py-section-y">
       {Array.from({ length: 3 }).map((_, index) => (
-        <CardLoading key={`loading-${index}`} />
+        <EventCardSkeleton key={`loading-${index}`} />
       ))}
-    </div>
-  ),
+    </section>
+  );
+}
+
+const ClientCardsList = dynamic(() => import("./ClientCardsList"), {
+  loading: () => <EventsGridSkeleton />,
 });
 
 // Client side enhancer: handles pagination & de-duplication.
@@ -37,15 +43,20 @@ function HybridEventsListClientContent({
   category,
   date,
   serverHasMore = false,
-  categories = [],
   pageData,
 }: HybridEventsListClientProps): ReactElement | null {
-  const parsed = useUrlFilters(categories);
+  const parsed = useSharedUrlFilters();
   const t = useTranslations("Components.HybridEventsListClient");
   const locale = useLocale() as AppLocale;
+  const searchResultsTrackedRef = useRef(false);
+  const zeroResultsTrackedRef = useRef(false);
+  const [listingContainer, setListingContainer] = useState<HTMLDivElement | null>(null);
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
+  const price = parsed.queryParams.price;
+  const from = parsed.queryParams.from;
+  const to = parsed.queryParams.to;
   const lat = parsed.queryParams.lat;
   const lon = parsed.queryParams.lon;
 
@@ -54,15 +65,18 @@ function HybridEventsListClientContent({
   }, [initialEvents]);
 
   // Check if client-side filters are active
-  const hasClientFilters = !!(search || distance || lat || lon);
+  const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
 
-  const { events, hasMore, loadMore, isLoadingMore, error } =
+  const { events, hasMore, loadMore, isLoading, isLoadingMore, error } =
     useEvents({
       place,
       category,
       date,
       search,
       distance,
+      price,
+      from,
+      to,
       lat,
       lon,
       initialSize: 10,
@@ -92,6 +106,62 @@ function HybridEventsListClientContent({
     return uniqueAppended;
   }, [events, realInitialEvents, hasClientFilters]);
 
+  // Track search result counts when search filter is active and results load
+  useEffect(() => {
+    // Reset tracking flag when search term changes to track new queries
+    searchResultsTrackedRef.current = false;
+  }, [search]);
+
+  useEffect(() => {
+    if (
+      search &&
+      !isLoading &&
+      !searchResultsTrackedRef.current &&
+      hasClientFilters
+    ) {
+      searchResultsTrackedRef.current = true;
+      sendGoogleEvent("search_results_loaded", {
+        search_term: search,
+        results_count: displayedEvents.length,
+        place: place || undefined,
+        category: category || undefined,
+        date: date || undefined,
+      });
+    }
+  }, [search, isLoading, hasClientFilters, displayedEvents.length, place, category, date]);
+
+  // Track zero results when filters are active and loading is complete
+  useEffect(() => {
+    zeroResultsTrackedRef.current = false;
+  }, [search, distance, price, from, to, lat, lon]);
+
+  useEffect(() => {
+    if (
+      hasClientFilters &&
+      !isLoading &&
+      displayedEvents.length === 0 &&
+      !error &&
+      !zeroResultsTrackedRef.current
+    ) {
+      zeroResultsTrackedRef.current = true;
+      sendGoogleEvent("zero_results", {
+        search_term: search || undefined,
+        place: place || undefined,
+        category: category || undefined,
+        date: date || undefined,
+        distance: distance || undefined,
+        price: price || undefined,
+      });
+    }
+  }, [hasClientFilters, isLoading, displayedEvents.length, error, search, place, category, date, distance, price]);
+
+  // Track card impressions and scroll depth on the listing grid
+  useListingAnalytics(listingContainer, displayedEvents.length, {
+    place: place || undefined,
+    category: category || undefined,
+    date: date || undefined,
+  });
+
   // Log errors for debugging
   if (error) {
     console.error("Events loading error:", error);
@@ -119,7 +189,10 @@ function HybridEventsListClientContent({
 
   return (
     <>
-      {showErrorState ? (
+      {isLoading ? (
+        // Show skeleton immediately while fetching filtered events
+        <EventsGridSkeleton />
+      ) : showErrorState ? (
         // Show error message when events fail to load
         <div className="w-full flex flex-col items-center gap-element-gap py-section-y px-section-x">
           <div className="w-full text-center">
@@ -147,7 +220,9 @@ function HybridEventsListClientContent({
       ) : (
         <>
           {displayedEvents.length > 0 ? (
-            <ClientCardsList events={displayedEvents} />
+            <div ref={setListingContainer}>
+              <ClientCardsList events={displayedEvents} />
+            </div>
           ) : null}
           <LoadMoreButton
             onLoadMore={async () => {
@@ -177,13 +252,7 @@ function HybridEventsListClient(
 ): ReactElement | null {
   return (
     <Suspense
-      fallback={
-        <div className="w-full">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <CardLoading key={`loading-${index}`} />
-          ))}
-        </div>
-      }
+      fallback={<EventsGridSkeleton />}
     >
       <HybridEventsListClientContent {...props} />
     </Suspense>

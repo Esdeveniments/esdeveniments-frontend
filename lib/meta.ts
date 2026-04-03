@@ -15,6 +15,19 @@ import {
   stripLocaleFromPathname,
 } from "@utils/i18n-seo";
 import { getFormattedDate } from "@utils/helpers";
+import { parseDateFromIso } from "@utils/schema-helpers";
+
+// Days after event end date before we noindex it to save crawl budget
+const EXPIRED_EVENT_NOINDEX_DAYS = 60;
+
+// --- Default robots policy for indexable pages ---
+export const DEFAULT_ROBOTS_POLICY = {
+  index: true,
+  follow: true,
+  "max-image-preview": "large" as const,
+  "max-snippet": -1,
+  "max-video-preview": -1,
+};
 
 // --- Sanitization/Truncation helpers ---
 function sanitizeInput(str: string = ""): string {
@@ -45,7 +58,7 @@ export function generateMetaTitle(
   description?: string,
   location?: string,
   town?: string,
-  region?: string
+  region?: string,
 ): string {
   const titleSanitized = sanitizeAndTrim(title);
   let metaTitle = smartTruncate(titleSanitized, 60);
@@ -70,7 +83,7 @@ export function generateMetaTitle(
 
 export function generateMetaDescription(
   title: string,
-  description?: string
+  description?: string,
 ): string {
   const titleSanitized = sanitizeInput(title);
   let metaDescription = titleSanitized;
@@ -89,7 +102,7 @@ export function generateEventMetadata(
   event: EventDetailResponseDTO,
   url?: string,
   prefixTitle?: string,
-  locale: AppLocale = DEFAULT_LOCALE
+  locale: AppLocale = DEFAULT_LOCALE,
 ): Metadata {
   if (!event) return { title: "No event found" };
 
@@ -103,7 +116,7 @@ export function generateEventMetadata(
         event.description,
         event.location,
         event.city?.name,
-        event.region?.name
+        event.region?.name,
       );
 
   const pageTitle =
@@ -119,13 +132,13 @@ export function generateEventMetadata(
     // Generate enhanced description like the old version
     const enhancedDescription = generateMetaDescription(
       event.title,
-      event.description
+      event.description,
     );
     // Enrich description with date and venue, keeping under 156 chars
     const { formattedStart } = getFormattedDate(
       event.startDate,
       event.endDate,
-      localeToUse
+      localeToUse,
     );
     const descriptionParts = [enhancedDescription];
     if (formattedStart && formattedStart.trim().length > 0) {
@@ -191,10 +204,22 @@ export function generateEventMetadata(
       creator: "Esdeveniments.cat",
       images: image,
     },
-    robots:
-      process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
-        ? "noindex, nofollow"
-        : "index, follow",
+    robots: (() => {
+      if (process.env.NEXT_PUBLIC_VERCEL_ENV === "preview") {
+        return "noindex, nofollow";
+      }
+      // Noindex events that ended more than 60 days ago to save crawl budget.
+      // The JSON-LD eventStatus (EventCompleted) remains for structured data.
+      const endDateTime = parseDateFromIso(event.endDate, true);
+      if (endDateTime) {
+        const daysSinceEnd =
+          (Date.now() - endDateTime.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceEnd > EXPIRED_EVENT_NOINDEX_DAYS) {
+          return { index: false, follow: true };
+        }
+      }
+      return DEFAULT_ROBOTS_POLICY;
+    })(),
     alternates: {
       canonical,
       languages: languageAlternates,

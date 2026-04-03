@@ -11,7 +11,7 @@ import {
   PhotoIcon as PhotographIcon,
 } from "@heroicons/react/24/outline";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { SponsorBannerSlot } from "@components/ui/sponsor";
+import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { fetchEvents } from "@lib/api/events";
 import { EventSummaryResponseDTO } from "types/api/event";
 import NoEventsFound from "@components/ui/common/noEventsFound";
@@ -33,6 +33,7 @@ import { filterActiveEvents } from "@utils/event-helpers";
 import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import { createDateFilterBadgeLabels } from "./DateFilterBadges";
+import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
@@ -140,6 +141,7 @@ const resolveCategoryDetails = (
 async function ServerEventsCategorized({
   pageData,
   seoLinkSections = [],
+  localAgendasSection,
   ...contentProps
 }: ServerEventsCategorizedProps) {
   const locale = await getLocaleSafely();
@@ -196,27 +198,35 @@ async function ServerEventsCategorized({
   return (
     <div className="w-full bg-background">
       {/* 1. HERO SECTION: Search + Location + Dates */}
-      <div className="bg-background border-b border-border/40 pb-8 pt-4">
-        <div className="container">
+      <div className="relative overflow-hidden border-b border-border/40 pb-8 pt-4">
+        {/* Hero background image — uses <img> instead of CSS background-image
+            so the browser can discover it early and apply fetchpriority="high" */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/static/images/hero-castellers.webp"
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+          decoding="sync"
+          className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
+        />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
+        <div className="container relative z-10">
           <Suspense fallback={<HeroSectionSkeleton />}>
             <HeroSection subTitle={pageData?.subTitle} />
           </Suspense>
         </div>
       </div>
 
-      {/* SPONSOR BANNER - Catalunya tier appears on homepage */}
-      <div className="container py-section-y">
-        <SponsorBannerSlot place="catalunya" />
-      </div>
-
       {/* 2. SEO LINK SECTIONS (weekend, today, tomorrow, agendas) */}
       {seoLinkSectionsWithAnalytics.length > 0 && (
-        <div className="container-page py-section-y border-b border-border/40 space-y-8">
+        <div className="container py-section-y border-b border-border/40 space-y-8">
           {seoLinkSectionsWithAnalytics.map((section) => (
             <div key={section.id} className="flex flex-col gap-4">
               <SectionHeading
                 title={section.title}
-                titleClassName="heading-2 text-foreground mb-element-gap"
+                titleClassName="heading-2 text-foreground"
               />
               <div className="flex flex-wrap gap-2">
                 {section.links.map((link) => (
@@ -225,7 +235,7 @@ async function ServerEventsCategorized({
                     href={withLocale(link.href)}
                     prefetch={false}
                     variant="plain"
-                    className="px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm text-foreground/80 hover:text-foreground transition-colors"
+                    className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
                     data-analytics-event-name="home_chip_click"
                     data-analytics-context={section.analyticsContext}
                     data-analytics-place-slug={link.placeSlug}
@@ -240,6 +250,11 @@ async function ServerEventsCategorized({
           ))}
         </div>
       )}
+
+      {/* SPONSOR BANNER - Catalunya tier appears on homepage (after content, not before) */}
+      <div className="container py-section-y">
+        <SponsorBannerSlot place="catalunya" />
+      </div>
 
       {/* 3. QUICK CATEGORIES */}
       <section className="py-section-y container border-b">
@@ -276,6 +291,7 @@ async function ServerEventsCategorized({
       <Suspense fallback={<ServerEventsCategorizedFallback />}>
         <ServerEventsCategorizedContent
           localePrefix={prefix}
+          localAgendasSection={localAgendasSection}
           {...contentProps}
         />
       </Suspense>
@@ -288,7 +304,8 @@ export async function ServerEventsCategorizedContent({
   categoriesPromise,
   featuredPlaces,
   localePrefix = "",
-}: ServerEventsCategorizedContentProps & { localePrefix?: string }) {
+  localAgendasSection,
+}: ServerEventsCategorizedContentProps & { localePrefix?: string; localAgendasSection?: SeoLinkSection }) {
   const locale = await getLocaleSafely();
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
@@ -429,6 +446,25 @@ export async function ServerEventsCategorizedContent({
     ...otherSections,
   ].slice(0, MAX_CATEGORY_SECTIONS);
 
+  // 5. Derive "Popular ara" from existing categorized events (zero extra API calls)
+  const POPULAR_MIN_VISITS = 10;
+  const POPULAR_MAX_EVENTS = 10;
+  const popularEvents = (() => {
+    const allEvents = Object.values(filteredCategorizedEvents).flat();
+    const seen = new Set<string>();
+    const deduped: EventSummaryResponseDTO[] = [];
+    for (const event of allEvents) {
+      if (seen.has(event.id)) continue;
+      seen.add(event.id);
+      if (event.visits >= POPULAR_MIN_VISITS) {
+        deduped.push(event);
+      }
+    }
+    return deduped
+      .sort((a, b) => b.visits - a.visits)
+      .slice(0, POPULAR_MAX_EVENTS);
+  })();
+
   const hasEvents =
     categorySectionsToRender.length > 0 || featuredSections.length > 0;
 
@@ -472,6 +508,26 @@ export async function ServerEventsCategorizedContent({
 
   return (
     <>
+      {/* Popular Now Section — derived from existing data, zero extra API calls */}
+      {popularEvents.length > 0 && (
+        <div className="container content-auto-section">
+          <section className="py-section-y border-b">
+            <SectionHeading
+              title={tCta("popularTitle")}
+              titleClassName="heading-2 text-foreground"
+            />
+            <EventsAroundServer
+              events={popularEvents}
+              layout="horizontal"
+              usePriority={false}
+              showJsonLd
+              title={tCta("popularTitle")}
+              jsonLdId="popular-events"
+            />
+          </section>
+        </div>
+      )}
+
       {/* Featured Places Render */}
       {featuredSections.length > 0 && (
         <div className="container">
@@ -521,6 +577,33 @@ export async function ServerEventsCategorizedContent({
           );
         })}
       </div>
+
+      {/* Local Agendas — secondary navigation, rendered after main content */}
+      {localAgendasSection && localAgendasSection.links.length > 0 && (
+        <div className="container py-section-y border-b border-border/40">
+          <div className="flex flex-col gap-4">
+            <SectionHeading
+              title={localAgendasSection.title}
+              titleClassName="heading-2 text-foreground"
+            />
+            <div className="flex flex-wrap gap-2">
+              {localAgendasSection.links.map((link) => (
+                <PressableAnchor
+                  key={`local-agendas-${link.href}`}
+                  href={withLocale(link.href)}
+                  prefetch={false}
+                  variant="plain"
+                  className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
+                  data-analytics-event-name="home_chip_click"
+                  data-analytics-context="home_seo_local-agendas"
+                >
+                  {link.label.replace(/^Agenda\s+/i, "")}
+                </PressableAnchor>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CTA */}
       <section className="py-section-y container text-center">

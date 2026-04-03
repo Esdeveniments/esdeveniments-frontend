@@ -14,13 +14,8 @@ import type {
   URLQueryParams,
   ParsedFilters,
 } from "types/url-filters";
-import { VALID_DATES, isValidDateSlug } from "@lib/dates";
-import {
-  findCategoryBySlug,
-  getAllCategorySlugs,
-  isValidCategorySlugFormat,
-} from "./category-mapping";
-import { topStaticGenerationPlaces } from "./priority-places";
+import { isValidDateSlug } from "@lib/dates";
+import { isValidCategorySlugFormat } from "./category-mapping";
 import {
   DEFAULT_FILTER_VALUE,
   MAX_QUERY_PARAMS,
@@ -40,7 +35,7 @@ import { sanitize } from "./string-helpers";
  * measure for truncation scenarios (e.g., when called from other contexts).
  */
 export function toUrlSearchParams(
-  raw: Record<string, string | string[] | undefined>
+  raw: Record<string, string | string[] | undefined>,
 ): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -119,7 +114,7 @@ function parseLongitude(value: string): number | undefined {
  */
 export function isValidCategorySlug(
   categorySlug: string,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): boolean {
   // Always allow "tots" (default filter value)
   if (categorySlug === DEFAULT_FILTER_VALUE) {
@@ -152,7 +147,7 @@ export function isValidCategorySlug(
 export function parseFiltersFromUrl(
   segments: { place?: string; date?: string; category?: string },
   searchParams: URLSearchParams,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): ParsedFilters {
   // Count non-empty segments
   const segmentValues = [
@@ -255,6 +250,9 @@ export function parseFiltersFromUrl(
     queryParams: {
       search: searchParams.get("search") || undefined,
       distance: searchParams.get("distance") || undefined,
+      price: searchParams.get("price") || undefined,
+      from: searchParams.get("from") || undefined,
+      to: searchParams.get("to") || undefined,
       lat: searchParams.get("lat") || undefined,
       lon: searchParams.get("lon") || undefined,
     },
@@ -268,7 +266,7 @@ export function parseFiltersFromUrl(
  */
 export function buildCanonicalUrl(
   filters: Partial<URLFilterState>,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   return buildCanonicalUrlDynamic(filters, dynamicCategories);
 }
@@ -281,7 +279,7 @@ export function buildFilterUrl(
   currentSegments: RouteSegments,
   currentQuery: URLQueryParams,
   changes: Partial<URLFilterState>,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   const newFilters: Partial<URLFilterState> = {
     place: changes.place || currentSegments.place,
@@ -295,18 +293,24 @@ export function buildFilterUrl(
       "distance" in changes
         ? changes.distance
         : parseInt(currentQuery.distance || "50"),
+    price:
+      "price" in changes
+        ? changes.price
+        : currentQuery.price || DEFAULT_FILTER_VALUE,
+    from: "from" in changes ? changes.from : currentQuery.from,
+    to: "to" in changes ? changes.to : currentQuery.to,
     lat:
       "lat" in changes
         ? changes.lat
         : currentQuery.lat
-        ? parseLatitude(currentQuery.lat)
-        : undefined,
+          ? parseLatitude(currentQuery.lat)
+          : undefined,
     lon:
       "lon" in changes
         ? changes.lon
         : currentQuery.lon
-        ? parseLongitude(currentQuery.lon)
-        : undefined,
+          ? parseLongitude(currentQuery.lon)
+          : undefined,
   };
 
   const result = buildCanonicalUrl(newFilters, dynamicCategories);
@@ -399,6 +403,9 @@ export function urlToFilterState(parsed: ParsedFilters): URLFilterState {
     category: parsed.segments.category as URLCategory,
     searchTerm: parsed.queryParams.search || "",
     distance: parseInt(parsed.queryParams.distance || "50"),
+    price: parsed.queryParams.price || DEFAULT_FILTER_VALUE,
+    from: parsed.queryParams.from,
+    to: parsed.queryParams.to,
     lat: parsed.queryParams.lat
       ? parseLatitude(parsed.queryParams.lat)
       : undefined,
@@ -406,6 +413,27 @@ export function urlToFilterState(parsed: ParsedFilters): URLFilterState {
       ? parseLongitude(parsed.queryParams.lon)
       : undefined,
   };
+}
+
+/**
+ * Check if any client-only query-param filters are active.
+ * Single source of truth — used by useEvents, SsrListWrapper, and HybridEventsListClient.
+ */
+export function hasActiveClientFilters(
+  queryParams: Pick<
+    URLQueryParams,
+    "search" | "distance" | "price" | "from" | "to" | "lat" | "lon"
+  >,
+): boolean {
+  return !!(
+    queryParams.search ||
+    queryParams.distance ||
+    (queryParams.price && queryParams.price !== DEFAULT_FILTER_VALUE) ||
+    queryParams.from ||
+    queryParams.to ||
+    queryParams.lat ||
+    queryParams.lon
+  );
 }
 
 /**
@@ -424,19 +452,20 @@ export function getRedirectUrl(parsed: ParsedFilters): string | null {
 /**
  * Get category slug from category value - uses dynamic categories as source of truth
  * Categories API returns id, name, and slug - no transformation needed
- * 
+ *
  * 🛡️ SECURITY: Normalizes unsafe category values to prevent path traversal/injection
  */
 export function getCategorySlug(
   category: URLCategory,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   if (!category || category === DEFAULT_FILTER_VALUE) {
     return DEFAULT_FILTER_VALUE;
   }
 
   // Ensure category is a string
-  const categoryStr = typeof category === "string" ? category : String(category);
+  const categoryStr =
+    typeof category === "string" ? category : String(category);
   if (!categoryStr) {
     return DEFAULT_FILTER_VALUE;
   }
@@ -479,7 +508,11 @@ export function getCategorySlug(
   // If the category doesn't match and isn't a valid slug, sanitize it
   const normalized = sanitize(categoryStr);
   // If sanitization produces a valid slug, use it; otherwise fall back to default
-  if (normalized && normalized !== "n-a" && isValidCategorySlugFormat(normalized)) {
+  if (
+    normalized &&
+    normalized !== "n-a" &&
+    isValidCategorySlugFormat(normalized)
+  ) {
     return normalized;
   }
 
@@ -488,100 +521,18 @@ export function getCategorySlug(
 }
 
 /**
- * Generate static params for ISR - enhanced with dynamic categories and places
- */
-export function getTopStaticCombinations(
-  dynamicCategories?: CategorySummaryResponseDTO[],
-  dynamicPlaces?: { slug: string }[]
-) {
-  // Use smaller list for static generation to keep build size under 230MB
-  // Each place generates ~4.6MB, so ~15 places = ~69MB (within limit)
-  const hardcodedTopPlaces = topStaticGenerationPlaces;
-  const topDates = VALID_DATES.filter((date) => date !== DEFAULT_FILTER_VALUE); // Exclude "tots" from static generation
-
-  // Filter top places to only include those that exist in API data
-  let topPlaces;
-  if (dynamicPlaces && dynamicPlaces.length > 0) {
-    const placeSlugs = new Set(dynamicPlaces.map((p) => p.slug));
-    topPlaces = hardcodedTopPlaces.filter((slug) => placeSlugs.has(slug));
-  } else {
-    topPlaces = hardcodedTopPlaces;
-  }
-
-  // Get top categories from dynamic data (API is source of truth)
-  let topCategories = [DEFAULT_FILTER_VALUE];
-
-  if (dynamicCategories && Array.isArray(dynamicCategories)) {
-    // Use first 5 dynamic categories + "tots"
-    const dynamicSlugs = dynamicCategories.slice(0, 4).map((cat) => cat.slug);
-    topCategories = [DEFAULT_FILTER_VALUE, ...dynamicSlugs];
-  }
-  // If no dynamic categories, only use "tots" (empty array would skip category generation)
-
-  const combinations = [];
-
-  for (const place of topPlaces) {
-    for (const date of topDates) {
-      for (const category of topCategories) {
-        combinations.push({ place, date, category });
-      }
-    }
-  }
-
-  return combinations;
-}
-
-/**
- * Get all possible category slugs for ISR generation
- * Uses dynamic categories from API as source of truth
- */
-export function getAllCategorySlugsForISR(
-  dynamicCategories?: CategorySummaryResponseDTO[]
-): string[] {
-  if (dynamicCategories && Array.isArray(dynamicCategories)) {
-    return getAllCategorySlugs(dynamicCategories);
-  }
-
-  // If no dynamic categories available, return empty array
-  // ISR generation should fetch categories before calling this
-  return [];
-}
-
-/**
- * Find category by slug in dynamic categories
- * Returns category info for routing and display
- * Note: This function is currently unused but kept for potential future use
- */
-export function findCategoryForRouting(
-  slug: string,
-  dynamicCategories?: CategorySummaryResponseDTO[]
-): { id?: number; name: string; slug: string } | null {
-  // Use dynamic categories as source of truth
-  if (dynamicCategories && Array.isArray(dynamicCategories)) {
-    const category = findCategoryBySlug(dynamicCategories, slug);
-    if (category) {
-      return {
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-      };
-    }
-  }
-
-  // No legacy fallback - API is the source of truth
-  return null;
-}
-
-/**
  * Build canonical URL with dynamic category support
  * Omits /tots/ date segment when it's the default
  */
 export function buildCanonicalUrlDynamic(
   filters: Partial<URLFilterState>,
-  dynamicCategories?: CategorySummaryResponseDTO[]
+  dynamicCategories?: CategorySummaryResponseDTO[],
 ): string {
   const place = filters.place || "catalunya";
-  const date = filters.byDate || DEFAULT_FILTER_VALUE;
+  const hasExplicitRange = Boolean(filters.from && filters.to);
+  const date = hasExplicitRange
+    ? DEFAULT_FILTER_VALUE
+    : filters.byDate || DEFAULT_FILTER_VALUE;
   let categorySlug = filters.category || DEFAULT_FILTER_VALUE;
 
   // Ensure we use the correct slug for the category
@@ -614,6 +565,15 @@ export function buildCanonicalUrlDynamic(
   if (filters.distance !== undefined && filters.distance !== 50) {
     // Only add distance if it's defined and not the default value
     params.set("distance", filters.distance.toString());
+  }
+
+  if (filters.price === "gratis" || filters.price === "pagament") {
+    params.set("price", filters.price);
+  }
+
+  if (hasExplicitRange && filters.from && filters.to) {
+    params.set("from", filters.from);
+    params.set("to", filters.to);
   }
 
   if (filters.lat !== undefined) {

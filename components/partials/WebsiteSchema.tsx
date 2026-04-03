@@ -1,5 +1,5 @@
 // components/partials/WebsiteSchema.tsx
-import { siteUrl } from "@config/index";
+import { siteUrl, socialLinksSameAs } from "@config/index";
 import { DEFAULT_LOCALE, localeToHrefLang, type AppLocale } from "types/i18n";
 import JsonLdServer from "./JsonLdServer";
 
@@ -18,12 +18,7 @@ export default function WebsiteSchema({
     url: siteUrl,
     description: "Descobreix esdeveniments culturals a Catalunya",
     inLanguage,
-    sameAs: [
-      "https://www.facebook.com/esdevenimentscat",
-      "https://www.instagram.com/esdevenimentscat",
-      "https://www.tiktok.com/@esdevenimentscat",
-      "https://x.com/esdeveniments",
-    ],
+    sameAs: socialLinksSameAs,
     potentialAction: {
       "@type": "SearchAction",
       target: {

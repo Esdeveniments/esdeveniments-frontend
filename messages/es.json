@@ -24,8 +24,8 @@
           "title": "Qué hacer mañana",
           "links": {
             "barcelona": "Qué hacer mañana en Barcelona",
-            "maresme": "Qué hacer mañana en el Maresme",
-            "vallesOccidental": "Qué hacer mañana en el Vallès Occidental"
+            "baixLlobregat": "Qué hacer mañana en el Baix Llobregat",
+            "vallesOriental": "Qué hacer mañana en el Vallès Oriental"
           }
         },
         "localAgendas": {
@@ -96,6 +96,71 @@
       "teamHeading": "Nuestro equipo",
       "linkedin": "LinkedIn"
     },
+    "TermsOfService": {
+      "metaTitle": "Términos de servicio - Esdeveniments.cat",
+      "metaDescription": "Condiciones de uso del sitio web Esdeveniments.cat. Consulta las normas de uso, responsabilidades y derechos sobre el contenido de la agenda cultural de Cataluña.",
+      "heading": "Términos de servicio",
+      "lastUpdated": "Última actualización: febrero 2026",
+      "introTitle": "1. Aceptación de los términos",
+      "introBody": "Al acceder y utilizar Esdeveniments.cat (en adelante, el \"Sitio\"), aceptas cumplir con estos términos de servicio. Si no estás de acuerdo con alguna parte de estos términos, no utilices el Sitio.",
+      "descriptionTitle": "2. Descripción del servicio",
+      "descriptionBody": "Esdeveniments.cat es una plataforma colaborativa gratuita que agrega y muestra eventos culturales en Cataluña. El servicio incluye la visualización de eventos, la publicación de eventos por parte de los usuarios, y funcionalidades de búsqueda y filtrado.",
+      "userContentTitle": "3. Contenido de los usuarios",
+      "userContentBody": "Los usuarios que publiquen eventos en el Sitio son los únicos responsables de la veracidad, exactitud y legalidad del contenido publicado. Nos reservamos el derecho de eliminar cualquier contenido que consideremos inadecuado, falso o que viole derechos de terceros.",
+      "intellectualPropertyTitle": "4. Propiedad intelectual",
+      "intellectualPropertyBody": "Todo el contenido original del Sitio (diseño, código, logotipos, textos propios) es propiedad de Esdeveniments.cat. Las imágenes y descripciones de los eventos pertenecen a sus respectivos organizadores.",
+      "disclaimerTitle": "5. Limitación de responsabilidad",
+      "disclaimerBody": "Esdeveniments.cat actúa como agregador de información cultural. No garantizamos la exactitud, integridad o actualidad de la información de los eventos. No somos responsables de cambios, cancelaciones o errores en los eventos publicados por terceros.",
+      "thirdPartyTitle": "6. Enlaces a terceros",
+      "thirdPartyBody": "El Sitio puede contener enlaces a páginas web de terceros. No tenemos control sobre el contenido ni las prácticas de privacidad de estos sitios y no aceptamos ninguna responsabilidad sobre ellos.",
+      "modificationsTitle": "7. Modificaciones",
+      "modificationsBody": "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios serán efectivos a partir de su publicación en el Sitio. El uso continuado del Sitio constituye la aceptación de los términos modificados.",
+      "contactTitle": "8. Contacto",
+      "contactBody": "Para cualquier cuestión relacionada con estos términos, puedes contactarnos en:"
+    },
+    "PrivacyPolicy": {
+      "metaTitle": "Política de privacidad - Esdeveniments.cat",
+      "metaDescription": "Política de privacidad de Esdeveniments.cat. Información sobre la recogida, el uso y la protección de tus datos personales en la agenda cultural de Cataluña.",
+      "heading": "Política de privacidad",
+      "lastUpdated": "Última actualización: febrero 2026",
+      "introTitle": "1. Introducción",
+      "introBody": "En Esdeveniments.cat (en adelante, el \"Sitio\") nos comprometemos a proteger tu privacidad. Esta política describe qué datos recogemos, cómo los utilizamos y cuáles son tus derechos.",
+      "dataCollectedTitle": "2. Datos que recogemos",
+      "dataCollectedBody": "Recogemos las siguientes categorías de datos:",
+      "dataAnalytics": "Datos de análisis: información anónima sobre el uso del Sitio mediante Google Analytics (páginas visitadas, duración de las visitas, dispositivo, país de origen).",
+      "dataCookies": "Cookies: cookies técnicas necesarias para el funcionamiento del Sitio y cookies de análisis para mejorar el servicio.",
+      "dataVisitor": "Identificador de visitante: un identificador anónimo almacenado en una cookie para contabilizar visitas a los eventos.",
+      "dataEvents": "Datos de eventos: cuando publicas un evento, recopilamos la información proporcionada (título, descripción, ubicación, fechas, imágenes).",
+      "purposeTitle": "3. Finalidad del tratamiento",
+      "purposeBody": "Utilizamos los datos recogidos para:",
+      "purposeImprove": "Mejorar el funcionamiento y la experiencia del Sitio.",
+      "purposeAnalytics": "Analizar el uso del Sitio de forma agregada y anónima.",
+      "purposeDisplay": "Mostrar y gestionar los eventos publicados.",
+      "purposeAds": "Mostrar publicidad relevante (Google Ads).",
+      "thirdPartyTitle": "4. Servicios de terceros",
+      "thirdPartyBody": "Utilizamos los siguientes servicios de terceros que pueden procesar datos:",
+      "thirdPartyGA": "Google Analytics: análisis del tráfico web.",
+      "thirdPartyAds": "Google Ads: publicidad contextual.",
+      "thirdPartySentry": "Sentry: monitoreo de errores para mejorar la estabilidad del Sitio.",
+      "thirdPartyNote": "Cada servicio de terceros opera bajo sus propias políticas de privacidad.",
+      "cookiesTitle": "5. Cookies",
+      "cookiesBody": "Utilizamos cookies técnicas esenciales para el funcionamiento del Sitio y cookies de análisis. Puedes configurar tu navegador para rechazar las cookies, aunque algunas funcionalidades pueden verse afectadas.",
+      "retentionTitle": "6. Conservación de los datos",
+      "retentionBody": "Los datos de análisis se conservan según los periodos estándar de Google Analytics. Los datos de eventos publicados se conservan mientras el evento sea relevante o hasta que el organizador solicite su eliminación.",
+      "rightsTitle": "7. Derechos de los usuarios (RGPD)",
+      "rightsBody": "De acuerdo con el Reglamento General de Protección de Datos (RGPD), tienes derecho a:",
+      "rightsAccess": "Acceder a tus datos personales.",
+      "rightsRectify": "Rectificar datos inexactos.",
+      "rightsDelete": "Solicitar la eliminación de tus datos.",
+      "rightsPortability": "Solicitar la portabilidad de tus datos.",
+      "rightsObject": "Oponerte al tratamiento de tus datos.",
+      "securityTitle": "8. Seguridad",
+      "securityBody": "Implementamos medidas de seguridad técnicas y organizativas para proteger tus datos contra accesos no autorizados, alteraciones o destrucción.",
+      "changesTitle": "9. Cambios en esta política",
+      "changesBody": "Podemos actualizar esta política periódicamente. Cualquier cambio será publicado en esta página con la fecha de actualización correspondiente.",
+      "contactTitle": "10. Contacto",
+      "contactBody": "Para ejercer tus derechos o para cualquier consulta sobre la privacidad, contáctanos en:"
+    },
     "News": {
       "metaTitle": "Noticias y recomendaciones | Qué hacer en Cataluña - Esdeveniments.cat",
       "metaDescription": "Las últimas noticias, recomendaciones y planes culturales de Cataluña. Descubre conciertos, exposiciones, teatro y actividades.",
@@ -110,8 +175,11 @@
       "sectionWeekend": "Fin de semana",
       "sectionWeek": "Semana",
       "readingTime": "{minutes} min de lectura",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
       "mustSee": "IMPRESCINDIBLES",
-      "moreProposals": "MÁS PROPUESTAS"
+      "moreProposals": "MÁS PROPUESTAS",
+      "relatedArticles": "Artículos relacionados",
+      "shareArticle": "Compartir el artículo"
     },
     "NewsHubsGrid": {
       "itemListTitle": "Últimas noticias por hub",
@@ -163,6 +231,8 @@
     "Publish": {
       "heading": "Publica tu evento en Cataluña",
       "subheading": "Añade tu concierto, exposición, teatro, taller o actividad cultural a la agenda más grande de Cataluña. ¡Es gratis!",
+      "sponsorTitle": "¿Tienes un negocio local?",
+      "sponsorLink": "Ver opciones de patrocinio",
       "benefits": {
         "title": "¿Por qué publicar en Esdeveniments.cat?",
         "free": "100% gratuito - sin costes ocultos",
@@ -259,7 +329,13 @@
         "about": "Quiénes somos",
         "advertise": "Patrocina",
         "contact": "Contacto",
-        "archive": "Archivo"
+        "archive": "Archivo",
+        "terms": "Términos de servicio",
+        "privacy": "Privacidad"
+      },
+      "sponsorCta": {
+        "title": "Da visibilidad a tu negocio local",
+        "description": "Patrocina un espacio exclusivo en tu zona. Solo un anuncio por población."
       },
       "featuredAgendas": "Agendas destacadas",
       "copyright": "© {year} Esdeveniments.cat",
@@ -321,6 +397,8 @@
     "LatestNewsSection": {
       "title": "Últimas noticias",
       "titleWithPlace": "Últimas noticias {place}",
+      "titleStale": "Noticias",
+      "titleStaleWithPlace": "Noticias {place}",
       "viewAll": "Ver todas"
     },
     "CulturalMessage": {
@@ -357,6 +435,21 @@
         "Jueves",
         "Viernes",
         "Sábado"
+      ],
+      "daysShort": ["Dom.", "Lun.", "Mar.", "Mié.", "Jue.", "Vie.", "Sáb."],
+      "monthsShort": [
+        "ene.",
+        "feb.",
+        "mar.",
+        "abr.",
+        "may.",
+        "jun.",
+        "jul.",
+        "ago.",
+        "sep.",
+        "oct.",
+        "nov.",
+        "dic."
       ],
       "months": [
         "enero",
@@ -430,16 +523,22 @@
     "ServerEventsCategorized": {
       "cta": "¿No encuentras lo que buscas?",
       "ctaButton": "Ver toda la agenda",
-      "quickCategoriesTitle": "Explora por intereses"
+      "quickCategoriesTitle": "Explora por intereses",
+      "popularTitle": "Popular ahora en Cataluña"
     },
     "Filters": {
-      "triggerLabel": "Filtros"
+      "triggerLabel": "Filtros",
+      "priceFree": "Gratis",
+      "pricePaid": "De pago"
     },
     "Social": {
       "followUs": "Síguenos"
     },
-    "ListPageFaq": {
-      "title": "Preguntas frecuentes"
+    "SocialFollowPopup": {
+      "headline": "Que los planes te encuentren a ti",
+      "subtext": "Cada día compartimos los mejores eventos en redes. Síguenos y no te pierdas nada.",
+      "close": "Ahora no",
+      "aria": "Síguenos en las redes sociales"
     },
     "RestaurantPromotionForm": {
       "heading": "Promociona tu restaurante",
@@ -524,7 +623,14 @@
         "selectPlaceholder": "Selecciona población o comarca",
         "tagline": "Filtros activos",
         "dateHeading": "Fecha",
-        "categoriesHeading": "Categorías"
+        "categoriesHeading": "Categorías",
+        "priceHeading": "Precio",
+        "priceFree": "Gratis",
+        "pricePaid": "De pago",
+        "calendarLabel": "O elige en el calendario:",
+        "pickDate": "Elige una fecha...",
+        "viewMore": "Ver más",
+        "viewLess": "Ver menos"
       }
     },
     "ImageUploader": {
@@ -553,7 +659,7 @@
     "HeroCTA": {
       "buttonBase": "Ver eventos",
       "dateWeekend": "este fin de semana",
-      "helper": "Selecciona la población y las fechas, y pulsa 'Ver eventos'"
+      "helper": "Descubre los mejores planes cerca de ti"
     },
     "PromotionInfoModal": {
       "title": "Promociona tu restaurante",
@@ -613,8 +719,19 @@
       "dateTitle": "Buscar por fecha",
       "dateAriaLabel": "Filtrar por fecha",
       "categoryTitle": "Explorar categorías",
+      "otherCategoryTitle": "Otras categorías en {place}",
       "categoryAriaLabel": "Navegar por categorías",
       "categoryLinkAria": "Ver {category} en {place}"
+    },
+    "ExploreNearby": {
+      "sectionAriaLabel": "Explorar lugares cercanos",
+      "regionsTitle": "Comarcas de Cataluña",
+      "regionsAriaLabel": "Navegar por comarcas",
+      "citiesTitle": "Pueblos y ciudades de {region}",
+      "citiesAriaLabel": "Navegar por pueblos y ciudades",
+      "nearbyTitle": "Pueblos cercanos",
+      "nearbyAriaLabel": "Descubre eventos en pueblos cercanos",
+      "linkAria": "Ver eventos en {place}"
     },
     "SearchBar": {
       "placeholder": "¿Qué estás buscando?",
@@ -643,14 +760,34 @@
       "timeWindow": "esta semana"
     },
     "EventPage": {
-      "faqTitle": "Preguntas frecuentes",
-      "sponsored": "Contenido patrocinado"
+      "sponsored": "Contenido patrocinado",
+      "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
+      "stickyMoreInfo": "Más info",
+      "stickyCalendar": "Calendario",
+      "stickySave": "Guardar",
+      "free": "Gratis",
+      "paid": "De pago",
+      "sidebarMoreInfo": "Más información",
+      "sidebarVisitWebsite": "Visita la web",
+      "sidebarOpenInMaps": "Abrir en Maps",
+      "interested": "{count, plural, one {{count} interesado} other {{count} interesados}}",
+      "popular": "Popular",
+      "readMore": "Leer más",
+      "readLess": "Leer menos",
+      "durationLabel": "Duración: {duration}",
+      "sidebarAriaLabel": "Detalles del evento",
+      "toolbarAriaLabel": "Acciones del evento"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Añadir a favoritos",
-      "favoriteRemoveAria": "Quitar de favoritos"
+      "favoriteRemoveAria": "Quitar de favoritos",
+      "free": "Gratis",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "multipleDates": "Varios días",
+      "viewCountAria": "{count, plural, one {{count} visualización} other {{count} visualizaciones}}"
     },
     "EventForm": {
       "title": "Título *",
@@ -712,6 +849,7 @@
     "EventLocation": {
       "title": "Ubicación",
       "showMap": "Mostrar mapa",
+      "hideMap": "Cerrar mapa",
       "getDirections": "Cómo llegar"
     },
     "EventCalendar": {
@@ -1025,7 +1163,7 @@
         "capDeSetmana": {
           "title": "Qué hacer este fin de semana {label}",
           "subTitle": "Descubre qué hacer este fin de semana {label}: conciertos, fiestas, actividades familiares y propuestas al aire libre. Encuentra tu plan y aprovecha el fin de semana.",
-          "metaTitle": "Planes para este fin de semana {label} - Agenda",
+          "metaTitle": "Qué hacer este fin de semana {label} - Planes y agenda",
           "metaDescription": "Descubre los mejores planes para este fin de semana {label}. Consulta conciertos, fiestas populares, actividades con niños, rutas y otras propuestas culturales para aprovechar al máximo el fin de semana.",
           "notFound": "Lo sentimos, pero no hay eventos este fin de semana {label}. Consulta otras fechas, explora categorías diferentes o mira qué se hace en el resto de Cataluña para encontrar nuevos planes."
         }
@@ -1149,29 +1287,6 @@
       "range": "De {start} a {end}",
       "simpleRange": "{start} - {end}"
     },
-    "ListPageFaq": {
-      "title": "Preguntas frecuentes",
-      "dateInline": {
-        "today": "hoy",
-        "tomorrow": "mañana",
-        "weekend": "este fin de semana",
-        "week": "esta semana",
-        "fallback": "los próximos días"
-      },
-      "dateCapitalized": {
-        "today": "Hoy",
-        "tomorrow": "Mañana",
-        "weekend": "Este fin de semana",
-        "week": "Esta semana",
-        "fallback": "Los próximos días"
-      },
-      "q1": "¿Qué puedo hacer {contextInline}?",
-      "a1": "{capitalizedContext} encontrarás conciertos, ferias, actividades familiares y planes culturales actualizados cada día.",
-      "q2": "¿Hay actividades gratuitas {contextInline}?",
-      "a2": "Sí. Usa la búsqueda, los filtros de categoría y la distancia para descubrir actividades gratuitas {contextInline}.",
-      "q3": "¿Dónde puedo ver {categoryName} {contextInline}?",
-      "a3": "Selecciona la categoría \"{categoryName}\" para destacar estos eventos {contextInline} y guarda la agenda para consultarla a menudo."
-    },
     "OpeningHours": {
       "openNow": "Abierto ahora",
       "closesAt": "Cierra a las {time}",
@@ -1193,21 +1308,9 @@
         "dateRange": "del {start} al {end}",
         "dateSingle": "el {nameDay}, {start}",
         "sentence": "{title} {verb} {date}{time}{place}.",
-        "timeSuffix": ", {time}",
+        "timeSuffix": ", a las {time}",
+        "timeSuffixRange": ", de {start} a {end}",
         "placeSuffix": ", {place}"
-      },
-      "faq": {
-        "whenQ": "¿Cuándo es el evento?",
-        "whenA": "{date}{time}",
-        "whereQ": "¿Dónde se celebra?",
-        "whereA": "{place}",
-        "isFreeQ": "¿Es gratuito?",
-        "isFreeYes": "Sí, el evento es gratuito.",
-        "isFreeNo": "No, el evento es de pago.",
-        "durationQ": "¿Cuál es la duración aproximada?",
-        "durationA": "{duration}",
-        "moreInfoQ": "¿Dónde puedo encontrar más información?",
-        "moreInfoA": "Puedes consultar todos los detalles en la página oficial del evento."
       }
     },
     "StringHelpers": {
@@ -1296,7 +1399,8 @@
       "category": "Categoría",
       "date": "Fecha",
       "distance": "Distancia",
-      "search": "Buscar"
+      "search": "Buscar",
+      "price": "Precio"
     },
     "Categories": {
       "festesPopulars": "Fiestas populares",
@@ -1310,13 +1414,35 @@
       "today": "Hoy",
       "tomorrow": "Mañana",
       "weekend": "Fin de semana",
-      "week": "Esta semana"
+      "week": "Esta semana",
+      "nextWeek": "Semana que viene",
+      "thisMonth": "Este mes",
+      "nextMonth": "Mes que viene"
     }
   },
   "Sponsor": {
     "label": "Publicidad",
+    "houseAdLabel": "Patrocina este espacio",
     "emptyState": "Anuncia tu negocio aquí",
-    "cta": "Patrocina esta página"
+    "cta": "Patrocina este espacio",
+    "houseAd": {
+      "pricing": "Si tú lo ves, tu competencia también",
+      "pricingSub": "Reserva el único espacio publicitario en tu pueblo",
+      "reach": "Gente de tu pueblo, buscando planes",
+      "reachSub": "Buscan dónde comer, comprar y salir. Tú les das la respuesta.",
+      "exclusive": "Solo tú. Sin competencia.",
+      "exclusiveSub": "Ningún otro anuncio compite con el tuyo. El espacio es todo para ti.",
+      "local": "El único anuncio en tu pueblo",
+      "localSub": "Aparece cuando buscan dónde comer, comprar o salir",
+      "intent": "Gente que ya quiere salir de casa",
+      "intentSub": "Buscan qué hacer y adónde ir. Tú les das la respuesta.",
+      "simple": "Quien aparece aquí, gana clientes",
+      "simpleSub": "La agenda de tu pueblo, vista por quien busca adónde ir",
+      "results": "¿Dónde te encuentran los clientes?",
+      "resultsSub": "Aquí mismo. Cuando buscan qué hacer en tu pueblo",
+      "seasonal": "¿Hay fiesta en el pueblo?",
+      "seasonalSub": "Anúnciate cuando la gente sale de casa"
+    }
   },
   "Sponsorship": {
     "meta": {
@@ -1324,35 +1450,38 @@
       "description": "Tu negocio, destacado en la agenda de eventos de tu pueblo. Espacio exclusivo sin competidores."
     },
     "hero": {
-      "title": "Tu negocio, destacado en tu pueblo",
-      "subtitle": "Aparece en la agenda de eventos de tu zona. Espacio 100% exclusivo: ningún otro negocio compite contigo.",
-      "stats": "Espacio exclusivo · Sin competidores · Audiencia local",
-      "cta": "Ver precios"
+      "title": "Aparece cuando buscan qué hacer en tu pueblo",
+      "subtitle": "Cada día, gente de tu zona consulta la agenda de eventos para decidir dónde ir. Un espacio exclusivo para tu negocio, sin competidores.",
+      "stats": "Un solo anunciante por pueblo · Desde 0,50€/día · Garantía de satisfacción",
+      "cta": "Empieza por 5€"
     },
     "benefits": {
       "title": "¿Por qué patrocinar con nosotros?",
       "targeted": {
-        "title": "Gente que busca qué hacer",
-        "description": "Tu anuncio lo ven personas que buscan activamente qué hacer en tu zona. Público con intención."
+        "title": "Público que ya quiere salir",
+        "description": "Apareces cuando buscan qué hacer en su pueblo. Llegas a gente que ya quiere salir y busca planes."
       },
       "affordable": {
-        "title": "Accesible para todos",
-        "description": "Desde 5€ por 7 días. Ideal para fiestas locales, ferias o eventos."
+        "title": "Menos de 1€ al día por pueblo",
+        "description": "Un anuncio local en Google cuesta 50€+/mes y aparece junto a tus competidores. Aquí, desde 0,50€ al día y todo el espacio es tuyo."
       },
       "visibility": {
-        "title": "100% exclusivo",
-        "description": "Solo hay un patrocinador por población. Todo el espacio es tuyo, sin competencia."
+        "title": "Solo un anuncio por pueblo",
+        "description": "Todo el espacio publicitario es para tu negocio. Ningún competidor aparece al lado. Cuando buscan qué hacer, te ven a ti."
       }
     },
     "pricing": {
       "title": "Precios simples y transparentes",
-      "subtitle": "Elige la duración que mejor se adapte a tus necesidades. Sin compromisos ni renovaciones automáticas.",
+      "subtitle": "Sin compromisos ni renovaciones. ¿No satisfecho en 7 días? Te devolvemos el importe.",
       "popular": "Más popular",
       "cta": "Contratar",
+      "perDay": "{price}/día",
+      "savings": "Ahorra {percent}%",
+      "guarantee": "Garantía de satisfacción de 7 días · Sin renovación automática · Pago seguro con Stripe",
       "plans": {
         "7days": {
           "name": "7 días",
-          "description": "Perfecto para fines de semana largos o puentes festivos"
+          "description": "Perfecto para fines de semana largos o puentes"
         },
         "14days": {
           "name": "14 días",
@@ -1360,7 +1489,7 @@
         },
         "30days": {
           "name": "30 días",
-          "description": "Máxima exposición para tu negocio local"
+          "description": "Máxima visibilidad para tu negocio local"
         }
       }
     },
@@ -1381,7 +1510,7 @@
         },
         "step4": {
           "title": "Revisamos y activamos",
-          "description": "En menos de 24h laborables aparecerás en la página del lugar seleccionado"
+          "description": "En menos de 24h laborables aparecerás en la página del pueblo o comarca que has elegido"
         }
       }
     },

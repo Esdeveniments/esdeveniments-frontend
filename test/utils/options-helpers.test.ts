@@ -7,6 +7,7 @@ describe("generateCityOptionsWithRegionMap", () => {
       {
         id: 1,
         name: "Region One",
+        slug: "region-one",
         cities: [
           {
             id: 10,
@@ -27,6 +28,7 @@ describe("generateCityOptionsWithRegionMap", () => {
       {
         id: 2,
         name: "Region Two",
+        slug: "region-two",
         cities: [
           {
             id: 20,

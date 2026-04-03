@@ -14,6 +14,49 @@ const ADS_SRC = ADS_CLIENT
   ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`
   : "";
 
+/**
+ * Classify outbound link type from domain/path when no explicit
+ * `data-analytics-link-type` attribute is set on the anchor.
+ * Eliminates `(not set)` in GA4 outbound_click reports.
+ */
+const SOCIAL_DOMAINS = [
+  "instagram.com",
+  "facebook.com",
+  "twitter.com",
+  "x.com",
+  "tiktok.com",
+  "youtube.com",
+  "linkedin.com",
+];
+const MESSAGING_DOMAINS = ["wa.me", "t.me"];
+
+function classifyOutboundLinkType(hostname: string, pathname: string): string {
+  const h = hostname.toLowerCase();
+
+  // Maps
+  if (
+    h === "maps.google.com" ||
+    h.endsWith(".maps.google.com") ||
+    h === "maps.app.goo.gl" ||
+    ((h === "google.com" || h.endsWith(".google.com")) &&
+      pathname.startsWith("/maps"))
+  ) {
+    return "maps";
+  }
+
+  // Social profiles
+  if (SOCIAL_DOMAINS.some((d) => h === d || h.endsWith(`.${d}`))) {
+    return "social_profile";
+  }
+
+  // Messaging
+  if (MESSAGING_DOMAINS.some((d) => h === d || h.endsWith(`.${d}`))) {
+    return "messaging";
+  }
+
+  return "external_website";
+}
+
 const ensureGtag = (): WindowWithGtag | null => {
   if (typeof window === "undefined") return null;
   const win = window as WindowWithGtag;
@@ -93,6 +136,7 @@ export default function GoogleScriptsHeavy({
           sponsor_name: dataset.analyticsSponsorName || undefined,
           sponsor_place: dataset.analyticsSponsorPlace || undefined,
           sponsor_geo_scope: dataset.analyticsSponsorGeoScope || undefined,
+          sponsor_url: dataset.analyticsSponsorUrl || undefined,
         });
       }
 
@@ -121,10 +165,15 @@ export default function GoogleScriptsHeavy({
       const isExternal = url.origin !== window.location.origin;
       if (!isExternal) return;
 
+      // Classify link_type from domain when not explicitly set via data attribute
+      const resolvedLinkType =
+        outboundDataset.analyticsLinkType ||
+        classifyOutboundLinkType(url.hostname, url.pathname);
+
       win.gtag("event", "outbound_click", {
         link_domain: url.hostname,
         link_path: url.pathname,
-        link_type: outboundDataset.analyticsLinkType || undefined,
+        link_type: resolvedLinkType,
         context: outboundDataset.analyticsContext || undefined,
         event_id: outboundDataset.analyticsEventId || undefined,
         event_slug: outboundDataset.analyticsEventSlug || undefined,
@@ -269,6 +318,27 @@ export default function GoogleScriptsHeavy({
     window.addEventListener("error", handleTagErrors);
     return () => {
       window.removeEventListener("error", handleTagErrors);
+    };
+  }, []);
+
+  // PWA install tracking
+  useEffect(() => {
+    if (isE2ETestMode) return;
+    const win = ensureGtag();
+    if (!win) return;
+
+    const handleInstallPrompt = () => {
+      win.gtag("event", "pwa_install_prompt", {});
+    };
+    const handleInstalled = () => {
+      win.gtag("event", "pwa_installed", {});
+    };
+
+    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
     };
   }, []);
 

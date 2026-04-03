@@ -4,10 +4,14 @@
  */
 
 import { getSiteUrl } from "@config/index";
+import apiDefaults from "@config/api-defaults.json";
 import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
+
+/** Default API origin used as fallback when NEXT_PUBLIC_API_URL is not set. */
+const DEFAULT_API_ORIGIN = new URL(apiDefaults.apiUrl).origin;
 
 // Conditionally import headers - only available in server components/route handlers
 // Using dynamic require to avoid build-time errors when headers() is not available
@@ -37,14 +41,8 @@ export function getApiOrigin(): string {
     }
   }
 
-  // Strategy 2: Fallback based on NODE_ENV
-  const nodeEnv = process.env.NODE_ENV;
-  if (nodeEnv === "production") {
-    return "https://api-pre.esdeveniments.cat"; // Production API
-  }
-
-  // Strategy 3: Default fallback (development/staging)
-  return "https://api-pre.esdeveniments.cat";
+  // Strategy 2: Default fallback (single source of truth: config/api-defaults.json)
+  return DEFAULT_API_ORIGIN;
 }
 
 /**
@@ -80,14 +78,28 @@ export async function getInternalApiUrl(path: string): Promise<string> {
     try {
       const headersList = await headersFn();
       const host = headersList.get("host");
-      const protocol = headersList.get("x-forwarded-proto") || "https";
 
-      if (host && !host.includes("localhost") && !host.includes("127.0.0.1")) {
-        const origin = `${protocol}://${host}`;
-        try {
-          return new URL(normalized, origin).toString();
-        } catch {
-          // Fall through to next priority
+      if (host) {
+        const isLocal =
+          host.includes("localhost") || host.includes("127.0.0.1");
+
+        // In development, trust localhost headers for correct port resolution.
+        // In production, skip localhost headers (they may come from internal routing).
+        if (isLocal && process.env.NODE_ENV !== "production") {
+          const origin = `http://${host}`;
+          try {
+            return new URL(normalized, origin).toString();
+          } catch {
+            // Fall through to next priority
+          }
+        } else if (!isLocal) {
+          const protocol = headersList.get("x-forwarded-proto") || "https";
+          const origin = `${protocol}://${host}`;
+          try {
+            return new URL(normalized, origin).toString();
+          } catch {
+            // Fall through to next priority
+          }
         }
       }
     } catch {
@@ -104,7 +116,7 @@ export async function getInternalApiUrl(path: string): Promise<string> {
     } catch (error) {
       console.warn(
         `[getInternalApiUrl] Invalid INTERNAL_SITE_URL "${internalSiteUrl}":`,
-        error
+        error,
       );
     }
   }
@@ -123,7 +135,7 @@ export async function getInternalApiUrl(path: string): Promise<string> {
     } catch (error) {
       console.warn(
         `[getInternalApiUrl] Invalid VERCEL_URL "${vercelUrl}":`,
-        error
+        error,
       );
     }
   }
@@ -135,7 +147,7 @@ export async function getInternalApiUrl(path: string): Promise<string> {
     } catch (error) {
       console.warn(
         `[getInternalApiUrl] Invalid NEXT_PUBLIC_SITE_URL "${process.env.NEXT_PUBLIC_SITE_URL}":`,
-        error
+        error,
       );
     }
   }
@@ -165,13 +177,14 @@ export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
   if (params.byDate) query.byDate = params.byDate;
   if (params.from) query.from = params.from;
   if (params.to) query.to = params.to;
+  if (params.type) query.type = params.type;
 
   return new URLSearchParams(
     Object.fromEntries(
       Object.entries(query)
         .filter(([, v]) => v !== undefined)
-        .map(([k, v]) => [k, String(v)])
-    )
+        .map(([k, v]) => [k, String(v)]),
+    ),
   );
 }
 
@@ -184,7 +197,7 @@ export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
  */
 export function buildNewsQuery(
   params: FetchNewsParams,
-  setDefaults = true
+  setDefaults = true,
 ): URLSearchParams {
   const query: Partial<FetchNewsParams> = {};
   if (setDefaults) {
@@ -200,8 +213,8 @@ export function buildNewsQuery(
     Object.fromEntries(
       Object.entries(query)
         .filter(([, v]) => v !== undefined)
-        .map(([k, v]) => [k, String(v)])
-    )
+        .map(([k, v]) => [k, String(v)]),
+    ),
   );
 }
 
@@ -218,7 +231,7 @@ export function applyDistanceToParams(
     lat?: number | string;
     lon?: number | string;
     distance?: number | string;
-  }
+  },
 ): FetchEventsParams {
   // Parse lat/lon from string or number
   const lat =

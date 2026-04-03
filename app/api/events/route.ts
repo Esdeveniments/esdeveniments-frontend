@@ -35,6 +35,7 @@ export async function GET(request: Request) {
       byDate: search.get("byDate") || undefined,
       from: search.get("from") || undefined,
       to: search.get("to") || undefined,
+      type: search.get("type") || undefined,
       lat:
         latRaw !== null && Number.isFinite(parseFloat(latRaw))
           ? parseFloat(latRaw)
@@ -53,8 +54,10 @@ export async function GET(request: Request) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        // 10min CDN cache with stale-while-revalidate for background refresh
-        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=600",
+        // s-maxage=1800: events are published days ahead; 30 min staleness
+        // is invisible. swr=3600: serve stale instantly for up to 60 min after
+        // expiry while revalidating in background (eliminates TTFB spikes).
+        "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600",
       },
     });
   } catch (e) {

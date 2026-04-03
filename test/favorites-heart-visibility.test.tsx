@@ -40,7 +40,6 @@ describe("favorites heart visibility", () => {
       <CardContentClient
         event={baseEvent}
         isPriority={false}
-        isHorizontal={false}
         initialIsFavorite={false}
       />
     );
@@ -53,7 +52,6 @@ describe("favorites heart visibility", () => {
       <CardContentClient
         event={baseEvent}
         isPriority={false}
-        isHorizontal={false}
         initialIsFavorite={true}
       />
     );
@@ -66,7 +64,6 @@ describe("favorites heart visibility", () => {
       <CardContentClient
         event={{ ...baseEvent, slug: "" }}
         isPriority={false}
-        isHorizontal={false}
         initialIsFavorite={false}
       />
     );

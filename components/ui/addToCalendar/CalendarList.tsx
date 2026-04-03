@@ -14,6 +14,7 @@ const CalendarList: FC<CalendarListProps> = ({
   const handleCalendarClick = useCallback(
     (calendarType: string): void => {
       sendGoogleEvent("add_to_calendar", {
+        method: calendarType,
         event_category: "Calendar",
         event_label: calendarType,
         event_title: title,

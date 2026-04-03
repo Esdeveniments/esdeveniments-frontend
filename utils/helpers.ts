@@ -22,11 +22,7 @@ export {
   capitalizeFirstLetter,
   formatPlaceName,
 } from "./string-helpers";
-export {
-  buildEventIntroText,
-  buildFaqItems,
-  buildFaqJsonLd,
-} from "./event-copy";
+export { buildEventIntroText } from "./event-copy";
 
 // Text processing helpers
 export { processDescription } from "./text-processing";
@@ -66,4 +62,4 @@ export {
 } from "./options-helpers";
 
 // Miscellaneous helpers
-export { sendEventToGA, env, getRegionFromQuery } from "./misc-helpers";
+export { env, getRegionFromQuery } from "./misc-helpers";

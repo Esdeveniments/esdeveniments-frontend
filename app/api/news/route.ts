@@ -16,8 +16,9 @@ export async function GET(request: Request) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        // 3min CDN cache - news isn't real-time critical
-        "Cache-Control": "public, s-maxage=180, stale-while-revalidate=180",
+        // s-maxage=600: news articles are rarely updated within 10 min.
+        // swr=1800: serve stale instantly for 30 min after expiry.
+        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800",
       },
     });
   } catch (e) {

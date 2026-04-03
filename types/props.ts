@@ -1,7 +1,7 @@
 export interface LatestNewsSectionProps {
   placeSlug: string;
   placeLabel: string;
-  placeType: "region" | "town";
+  placeType: Exclude<PlaceType, "">;
   newsHref: string;
 }
 
@@ -19,6 +19,8 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
+import type { ImageSizeContext } from "types/common";
+
 /**
  * Props for ClientImageInner component
  */
@@ -30,17 +32,26 @@ export interface ClientImageInnerProps {
   fetchPriority?: "high" | "low" | "auto";
   alt: string;
   imageQuality: number;
-  context: "card" | "hero" | "list" | "detail";
+  context: ImageSizeContext;
   location?: string;
   region?: string;
   date?: string;
 }
 
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
+
+// Detail page section tracker
+export interface DetailSectionTrackerProps {
+  section: string;
+  context?: string;
+  children: ReactNode;
+  className?: string;
+}
 import {
   Option,
   GroupedOption,
   PageData,
+  PlaceType,
   PlaceTypeAndLabel,
   JsonLdScript,
   Href,
@@ -51,7 +62,7 @@ import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
-import type { FaqItem } from "types/faq";
+import type { AppLocale } from "types/i18n";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -93,8 +104,75 @@ export interface ReportViewProps {
 export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
-  isHorizontal?: boolean;
   initialIsFavorite?: boolean;
+}
+
+export interface CardLayoutProps {
+  /** Event slug for links and analytics */
+  slug: string;
+  /** Event ID for analytics */
+  eventId?: string;
+  /** Prepared title text */
+  title: string;
+  /** Original (un-truncated) title for alt text */
+  originalTitle: string;
+  /** Prepared image URL */
+  image: string;
+  /** Whether this card's image should be priority-loaded */
+  isPriority: boolean;
+  /** Formatted card date string */
+  cardDate: string;
+  /** Formatted time display (empty string if no time) */
+  timeDisplay: string;
+  /** City/region location text */
+  primaryLocation: string;
+  /** Localized category label */
+  categoryLabel?: string;
+  /** Category slug for analytics/URL building */
+  categorySlug?: string;
+  /** Localized price label (e.g., "Gratuït" for free events) */
+  priceLabel?: string;
+  /** Urgency label ("Today" / "Tomorrow") */
+  urgencyLabel?: string;
+  /** Urgency type for styling */
+  urgencyType?: "today" | "tomorrow";
+  /** Multi-day label suffix */
+  multiDayLabel?: string;
+  /** Whether to show favorite button */
+  shouldShowFavoriteButton: boolean;
+  /** Whether this event is favorited */
+  isFavorite: boolean;
+  /** Favorite button labels */
+  favoriteLabels: FavoriteButtonLabels;
+  /** Image location/region/date for alt-text context */
+  imageContext?: {
+    location?: string;
+    region?: string;
+    date?: string;
+  };
+  /** Cache key for image optimization */
+  imageCacheKey?: string;
+  /** Optional view transition name for the image container */
+  imageViewTransitionName?: string;
+  /** Render the card link wrapper. Receives children (sr-only label) and props */
+  renderLink: (props: {
+    href: string;
+    className: string;
+    "aria-label": string;
+    "data-analytics-event-name": string;
+    "data-analytics-event-id": string;
+    "data-analytics-event-slug": string;
+    children: ReactNode;
+  }) => ReactNode;
+}
+
+export interface CompactCardProps {
+  event: EventSummaryResponseDTO;
+  locale: AppLocale;
+  tCard: (key: string, values?: Record<string, string | number>) => string;
+  tTime: (key: string, values?: Record<string, string | number>) => string;
+  index: number;
+  analyticsEventName?: string;
 }
 
 export interface FavoriteButtonLabels {
@@ -147,7 +225,16 @@ export interface SocialProps {
     instagram?: string;
     telegram?: string;
     facebook?: string;
+    threads?: string;
+    linkedin?: string;
+    tiktok?: string;
+    mastodon?: string;
   };
+}
+
+export interface SocialPopupState {
+  dismissCount: number;
+  lastDismissedAt: number;
 }
 
 // Removed EventsListProps - no longer needed with server-side architecture
@@ -160,10 +247,7 @@ export interface CulturalMessageProps {
 
 export interface DescriptionProps {
   description?: string;
-  location?: string;
-  locationValue?: string;
   introText?: string;
-  locationType?: "region" | "town" | "general";
   /**
    * Optional actions rendered next to the section title (e.g. a client island button).
    * Must remain serializable/ReactNode compatible with server rendering.
@@ -191,12 +275,27 @@ export interface DatePickerComponentProps {
   onToggleAllDay?: (isAllDayEvent: boolean) => void;
 }
 
-export interface CustomHeaderProps {
-  date: Date;
-  decreaseMonth: () => void;
-  increaseMonth: () => void;
-  prevMonthButtonDisabled: boolean;
-  nextMonthButtonDisabled: boolean;
+export interface TimeSelectorProps {
+  value: string;
+  onChange: (time: string) => void;
+  minTime?: string;
+  label: string;
+}
+
+export interface DateButtonProps {
+  label: string;
+  value: string;
+  isOpen: boolean;
+  onClick: () => void;
+}
+
+export interface CalendarDatePickerProps {
+  /** Range start as YYYY-MM-DD or empty string */
+  fromDate: string;
+  /** Range end as YYYY-MM-DD or empty string */
+  toDate: string;
+  /** Callback with from/to YYYY-MM-DD strings (empty to clear) */
+  onChange: (from: string, to: string) => void;
 }
 
 export type AcceptedImageTypes =
@@ -246,7 +345,7 @@ export interface RangeInputProps {
   max: number;
   value: number;
   onChange: (
-    e: ChangeEvent<HTMLInputElement> | { target: { value: RangeInputValue } }
+    e: ChangeEvent<HTMLInputElement> | { target: { value: RangeInputValue } },
   ) => void;
   label: string;
   disabled?: boolean;
@@ -334,8 +433,7 @@ export interface ClientInteractiveLayerProps {
   filterLabels: FilterLabels;
 }
 
-export interface ClientInteractiveLayerContentProps
-  extends ClientInteractiveLayerProps {
+export interface ClientInteractiveLayerContentProps extends ClientInteractiveLayerProps {
   isNavbarVisible: boolean;
   isHydrated: boolean;
   isModalOpen: boolean;
@@ -347,6 +445,7 @@ export type FilterLabels = {
   triggerLabel: string;
   displayNameMap: Record<string, string>;
   byDates: Record<string, string>;
+  prices?: Record<string, string>;
   categoryLabelsBySlug?: Record<string, string>;
 };
 
@@ -466,6 +565,7 @@ export interface ServerEventsCategorizedProps {
   categoriesPromise?: Promise<CategorySummaryResponseDTO[]>;
   featuredPlaces?: FeaturedPlaceConfig[];
   seoLinkSections?: SeoLinkSection[];
+  localAgendasSection?: SeoLinkSection;
 }
 
 export type ServerEventsCategorizedContentProps = Pick<
@@ -512,36 +612,24 @@ export interface GeolocationButtonProps {
   className?: string;
 }
 
-export interface ListPageFaqProps {
-  items: FaqItem[];
-  title?: string;
-}
-
-export interface ListPageFaqParams {
-  place: string;
-  date?: string;
-  category?: string;
-  placeTypeLabel?: PlaceTypeAndLabel;
-  categories?: CategorySummaryResponseDTO[];
-  locale?: import("types/i18n").AppLocale;
-}
-
-export type DateContext = {
-  inline: string;
-  capitalized: string;
-};
-
 export interface UseGeolocationReturn {
   location: GeolocationCoordinates | null;
   isLoading: boolean;
   error: string | null;
   requestLocation: (
-    regions: RegionsGroupedByCitiesResponseDTO[]
+    regions: RegionsGroupedByCitiesResponseDTO[],
   ) => Promise<Option | null>;
   clearLocation: () => void;
 }
 
 // --- News components props ---
+
+export interface NewsShareButtonsProps {
+  place: string;
+  slug: string;
+  label: string;
+}
+
 export interface NewsEventsSectionProps {
   title: string;
   events: NewsEventItemDTO[];
@@ -625,7 +713,7 @@ export interface DateFilterBadgesProps {
 
 export type TranslationFn = (
   key: string,
-  values?: Record<string, any>
+  values?: Record<string, string | number | Date>,
 ) => string;
 
 export type DateFilterBadgeLabels = {
@@ -687,6 +775,57 @@ export interface PlacePageExploreNavProps {
 export interface CategoryQuicklinksProps {
   place: string;
   date?: string;
+  currentCategory?: string;
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
+}
+
+// Explore nearby places navigation
+export interface ExploreNearbyProps {
+  place: string;
+  placeType: PlaceType;
+}
+
+// Sticky CTA bar for event detail page (mobile)
+export interface EventStickyCTAProps {
+  eventUrl?: string;
+  eventSlug: string;
+  labels: {
+    moreInfo: string;
+    calendar: string;
+    save: string;
+    favoriteAdd: string;
+    favoriteRemove: string;
+  };
+}
+
+// Collapsible description wrapper (mobile)
+export interface CollapsibleDescriptionProps {
+  children: ReactNode;
+}
+
+// Event details section (duration + external link)
+export interface EventDetailsSectionProps {
+  event: import("./api/event").EventDetailResponseDTO;
+}
+
+// Sticky sidebar for event detail page (desktop)
+export interface EventSidebarProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  cityName: string;
+  regionName: string;
+  primaryPlaceSlug: string;
+  sponsorFallbackPlaces?: string[];
+}
+
+// Social proof counter
+export interface SocialProofCounterProps {
+  visits: number;
+  interestedLabel: string;
+}
+
+// URL filters context provider
+export interface UrlFiltersProviderProps {
+  children: ReactNode;
+  categories?: CategorySummaryResponseDTO[];
 }

@@ -6,7 +6,7 @@ import CheckoutButton from "./CheckoutButton";
 import { useTranslations } from "next-intl";
 import { DISPLAY_PRICES_EUR } from "@config/pricing";
 import type { PlaceOption, SponsorDuration, GeoScope } from "types/sponsor";
-import { SPONSOR_DURATIONS, POPULAR_DURATION } from "types/sponsor";
+import { SPONSOR_DURATIONS, POPULAR_DURATION, DURATION_DAYS } from "types/sponsor";
 
 // Use pricing from config (single source of truth)
 const PRICES_BY_SCOPE = DISPLAY_PRICES_EUR;
@@ -54,6 +54,28 @@ export default function PricingSectionClient() {
     return currentPrices[duration] ?? DEFAULT_PRICES[duration] ?? 0;
   };
 
+  /**
+   * Get per-day price formatted to 2 decimals
+   */
+  const getPerDayPrice = (duration: SponsorDuration): string => {
+    const days = DURATION_DAYS[duration];
+    return (getPrice(duration) / days).toFixed(2);
+  };
+
+  /**
+   * Get savings percentage vs 7-day plan (null for 7-day itself)
+   */
+  const getSavingsPercent = (duration: SponsorDuration): number | null => {
+    if (duration === "7days") return null;
+    const basePerDay = getPrice("7days") / DURATION_DAYS["7days"];
+    if (basePerDay === 0) return null;
+    const currentPerDay = getPrice(duration) / DURATION_DAYS[duration];
+    const savings = Math.round(
+      ((basePerDay - currentPerDay) / basePerDay) * 100
+    );
+    return savings > 0 ? savings : null;
+  };
+
   return (
     <div className="space-y-8">
       {/* Place Selector */}
@@ -73,44 +95,62 @@ export default function PricingSectionClient() {
 
       {/* Pricing cards */}
       <div
-        className={`transition-opacity duration-200 ${
-          selectedPlace ? "opacity-100" : "opacity-50 pointer-events-none"
-        }`}
+        className={`transition-opacity duration-200 ${selectedPlace ? "opacity-100" : "opacity-50 pointer-events-none"
+          }`}
       >
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-3xl mx-auto">
-          {DURATION_PLANS.map((plan) => (
-            <div
-              key={plan.duration}
-              className={`card-bordered card-body relative ${plan.popular ? "ring-2 ring-primary" : ""
-                }`}
-            >
-              {plan.popular && (
-                <span className="badge-primary absolute -top-3 left-1/2 -translate-x-1/2 text-xs">
-                  {t("pricing.popular")}
-                </span>
-              )}
-              <h3 className="heading-4 mb-2">
-                {t(`pricing.plans.${plan.duration}.name`)}
-              </h3>
-              <div className="mb-4">
-                <span className="heading-2">€{getPrice(plan.duration)}</span>
+          {DURATION_PLANS.map((plan) => {
+            const savings = getSavingsPercent(plan.duration);
+
+            return (
+              <div
+                key={plan.duration}
+                className={`card-bordered card-body relative ${plan.popular ? "ring-2 ring-primary" : ""
+                  }`}
+              >
+                {plan.popular && (
+                  <span className="badge-primary absolute -top-3 left-1/2 -translate-x-1/2 text-xs">
+                    {t("pricing.popular")}
+                  </span>
+                )}
+                <h3 className="heading-4 mb-2">
+                  {t(`pricing.plans.${plan.duration}.name`)}
+                </h3>
+                <div className="mb-4">
+                  <span className="heading-2">€{getPrice(plan.duration)}</span>
+                  <p className="body-small text-foreground/50 mt-1">
+                    {t("pricing.perDay", {
+                      price: `€${getPerDayPrice(plan.duration)}`,
+                    })}
+                  </p>
+                  {savings !== null && (
+                    <span className="text-primary font-semibold text-xs mt-1 inline-block">
+                      {t("pricing.savings", { percent: savings })}
+                    </span>
+                  )}
+                </div>
+                <p className="body-small text-foreground/70 mb-6">
+                  {t(`pricing.plans.${plan.duration}.description`)}
+                </p>
+                <CheckoutButton
+                  duration={plan.duration}
+                  popular={plan.popular}
+                  place={selectedPlace ? {
+                    slug: selectedPlace.slug,
+                    name: selectedPlace.name,
+                    geoScope: selectedPlace.type,
+                  } : null}
+                />
               </div>
-              <p className="body-small text-foreground/70 mb-6">
-                {t(`pricing.plans.${plan.duration}.description`)}
-              </p>
-              <CheckoutButton
-                duration={plan.duration}
-                popular={plan.popular}
-                place={selectedPlace ? {
-                  slug: selectedPlace.slug,
-                  name: selectedPlace.name,
-                  geoScope: selectedPlace.type,
-                } : null}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
+
+      {/* Trust signals */}
+      <p className="text-center body-small text-foreground/50 mt-8">
+        {t("pricing.guarantee")}
+      </p>
     </div>
   );
 }

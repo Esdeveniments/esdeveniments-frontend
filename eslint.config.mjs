@@ -181,6 +181,7 @@ export default [
     ],
     ignores: [
       "lib/api/fetch-wrapper.ts", // The wrapper itself
+      "lib/db/turso.ts", // Raw fetch to Turso HTTP API (our DB client)
       "utils/safe-fetch.ts", // The safe-fetch utility
       "test/**/*", // Tests can mock fetch
       "app/api/**/*", // API routes are the endpoints themselves
@@ -210,6 +211,23 @@ export default [
           selector: "Identifier[name='searchParams']",
           message:
             "⚠️ COST ALERT: Do NOT use searchParams in app/[place]/* pages! This makes pages dynamic and causes OpenNext to create millions of DynamoDB cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
+        },
+      ],
+    },
+  },
+  // CRITICAL: Prevent fetch cache explosion in external API wrappers
+  // Adding `next: { revalidate }` to fetchWithHmac enables unbounded S3+DynamoDB cache
+  // See: Jan 20, 2026 incident - 146K cache entries per build, 1.46M S3 objects
+  {
+    files: ["lib/api/*-external.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Property[key.name='next'] > ObjectExpression > Property[key.name='revalidate']",
+          message:
+            "⚠️ COST ALERT: Do NOT use `next: { revalidate }` in external wrappers! This enables unbounded fetch cache (146K entries per build, $300+ cost spike on Jan 20, 2026). External wrappers must use default no-store. Handle caching via Cache-Control headers in internal API routes instead.",
         },
       ],
     },

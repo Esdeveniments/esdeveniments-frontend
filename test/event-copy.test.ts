@@ -128,8 +128,8 @@ describe("buildEventIntroText", () => {
       // Should be "a Tona" not "al Tona" (this was the bug)
       expect(result).toContain("a Tona");
       expect(result).not.toContain("al Tona");
-      // Should also include region in parentheses
-      expect(result).toContain("(Osona)");
+      // Region should not appear when city is present (redundant)
+      expect(result).not.toContain("(Osona)");
     });
 
     it("should use 'a' for towns starting with consonants", async () => {
@@ -183,8 +183,8 @@ describe("buildEventIntroText", () => {
       // Should prioritize city and use "a" for the town
       expect(result).toContain("a Vic");
       expect(result).not.toContain("al Vic");
-      // Should also include region in parentheses
-      expect(result).toContain("(Osona)");
+      // Region should not appear when city is present (redundant)
+      expect(result).not.toContain("(Osona)");
     });
 
     it("should use 'a' for towns starting with vowels", async () => {
@@ -239,18 +239,9 @@ describe("buildEventIntroText", () => {
   describe("parentheses capitalization with backslashes", () => {
     it("should title-case content inside parentheses even with backslashes", async () => {
       const event = createTestEvent({
-        title: "Fira d'artesania",
-        city: {
-          id: 10,
-          name: "Foo",
-          slug: "foo",
-          latitude: 41.0,
-          longitude: 2.0,
-          postalCode: "00000",
-          rssFeed: null,
-          enabled: true,
-        },
-        region: { id: 11, name: "test\\data", slug: "test-data" },
+        title: "Fira d'artesania (test\\data)",
+        city: MOCK_CITIES.barcelona,
+        region: undefined,
       });
 
       const result = await buildEventIntroText(event);

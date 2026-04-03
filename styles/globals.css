@@ -41,8 +41,9 @@ body {
   -moz-font-smoothing: antialiased;
   -o-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   color: #454545;
   font-weight: 400;
   letter-spacing: 0;
@@ -87,7 +88,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #D6002F;
+  background: #d6002f;
   cursor: pointer;
   margin-top: -10.5px; /* (3px track - 24px thumb) / 2 */
 }
@@ -96,13 +97,14 @@ input[type="range"]::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #D6002F;
+  background: #d6002f;
   cursor: pointer;
 }
 
 p {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   letter-spacing: 0;
   font-size: 1rem; /* 16px */
   line-height: 1.6;
@@ -599,10 +601,6 @@ iframe {
   margin-bottom: 0.6666667em;
 }
 
-.react-datepicker-wrapper {
-  width: 100%;
-}
-
 img,
 video {
   max-width: 100%;
@@ -623,6 +621,29 @@ video {
 
 .animate-appear {
   animation: appear 0.3s ease-out;
+}
+
+.animate-disappear {
+  animation: appear 0.3s ease-in reverse forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.35s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideUp 0.3s ease-in reverse forwards;
 }
 
 /* View Transitions */
@@ -670,4 +691,174 @@ video {
   content-visibility: auto;
   contain-intrinsic-size: auto 600px; /* Estimated section height (cards + header) */
   width: 100%; /* Ensure wrapper doesn't collapse */
+}
+
+/* ─── react-day-picker overrides (design-system tokens) ───
+   primary: #D6002F, primary-foreground: #ffffff,
+   foreground: rgb(69 69 69), foreground-strong: rgb(0 0 0)
+─── */
+.rdp-filter-wrapper {
+  --rdp-accent-color: #d6002f;
+  --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
+  --rdp-range_middle-color: rgb(69, 69, 69);
+  --rdp-range_middle-background-color: rgba(214, 0, 47, 0.08);
+  --rdp-selected-border: 0px solid transparent;
+  --rdp-day_button-border-radius: 9999px;
+  --rdp-day_button-height: 28px;
+  --rdp-day_button-width: 28px;
+  --rdp-outside-opacity: 0.4;
+}
+
+.rdp-filter-wrapper .rdp-root {
+  --rdp-font-family: var(--font-family, inherit);
+
+  font-size: 0.8125rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+/* Remove default blue outline ring on all interactive elements */
+.rdp-filter-wrapper .rdp-day_button {
+  outline: none !important;
+  border: none;
+}
+
+.rdp-filter-wrapper .rdp-month_caption {
+  font-weight: 600;
+  text-transform: capitalize;
+  font-size: 0.8125rem;
+  color: rgb(0, 0, 0);
+  padding-bottom: 0.25rem;
+}
+
+.rdp-filter-wrapper .rdp-weekday {
+  color: rgba(69, 69, 69, 0.4);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.125rem 0;
+}
+
+.rdp-filter-wrapper .rdp-day {
+  color: rgb(69, 69, 69);
+}
+
+.rdp-filter-wrapper .rdp-day.rdp-disabled {
+  color: rgba(69, 69, 69, 0.25);
+}
+
+/* Selected start/end circles – solid brand red, no outline ring */
+.rdp-filter-wrapper .rdp-day.rdp-range_start .rdp-day_button,
+.rdp-filter-wrapper .rdp-day.rdp-range_end .rdp-day_button,
+.rdp-filter-wrapper .rdp-day.rdp-selected .rdp-day_button {
+  background-color: #d6002f;
+  color: #ffffff;
+  font-weight: 600;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none;
+}
+
+/* Range middle – soft rose tint */
+.rdp-filter-wrapper .rdp-day.rdp-range_middle .rdp-day_button {
+  background-color: rgba(214, 0, 47, 0.08);
+  color: rgb(69, 69, 69);
+  border-radius: 0;
+  outline: none !important;
+  border: none !important;
+}
+
+/* Today indicator – subtle dotted border */
+.rdp-filter-wrapper
+  .rdp-day.rdp-today:not(
+    .rdp-selected,
+    .rdp-range_start,
+    .rdp-range_end,
+    .rdp-range_middle
+  )
+  .rdp-day_button {
+  border: 1px solid rgba(214, 0, 47, 0.35) !important;
+}
+
+.rdp-filter-wrapper .rdp-button_previous,
+.rdp-filter-wrapper .rdp-button_next {
+  color: #d6002f;
+  width: 24px;
+  height: 24px;
+}
+
+.rdp-filter-wrapper .rdp-button_previous:hover,
+.rdp-filter-wrapper .rdp-button_next:hover {
+  color: #d6002f;
+  background-color: rgba(214, 0, 47, 0.06);
+}
+
+.rdp-filter-wrapper .rdp-chevron {
+  fill: #d6002f;
+}
+
+.rdp-filter-wrapper .rdp-nav {
+  gap: 0.25rem;
+}
+
+/* Keyboard focus: visible ring for accessibility (box-shadow survives outline:none on selected days) */
+.rdp-filter-wrapper .rdp-day_button:focus-visible,
+.rdp-filter-wrapper .rdp-button_previous:focus-visible,
+.rdp-filter-wrapper .rdp-button_next:focus-visible {
+  box-shadow: 0 0 0 2px #d6002f !important;
+  border-radius: 9999px;
+}
+
+.rdp-filter-wrapper .rdp-months {
+  gap: 0;
+}
+
+/* EventForm date picker overrides */
+.rdp-form-wrapper {
+  --rdp-accent-color: #d6002f;
+  --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
+  --rdp-selected-border: 0px solid transparent;
+  --rdp-day_button-border-radius: 9999px;
+  --rdp-day_button-height: 36px;
+  --rdp-day_button-width: 36px;
+}
+
+.rdp-form-wrapper .rdp-root {
+  font-size: 0.875rem;
+}
+
+.rdp-form-wrapper .rdp-day_button {
+  outline: none !important;
+  border: none;
+}
+
+.rdp-form-wrapper .rdp-month_caption {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.rdp-form-wrapper .rdp-day.rdp-selected .rdp-day_button {
+  background-color: #d6002f;
+  color: #ffffff;
+  font-weight: 600;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none;
+}
+
+.rdp-form-wrapper .rdp-day.rdp-today:not(.rdp-selected) .rdp-day_button {
+  border: 1px solid rgba(214, 0, 47, 0.35) !important;
+}
+
+.rdp-form-wrapper .rdp-range_middle .rdp-day_button {
+  background-color: rgba(214, 0, 47, 0.06);
+  color: rgb(69, 69, 69);
+  outline: none !important;
+}
+
+/* Keyboard focus: visible ring for form calendar accessibility */
+.rdp-form-wrapper .rdp-day_button:focus-visible,
+.rdp-form-wrapper .rdp-button_previous:focus-visible,
+.rdp-form-wrapper .rdp-button_next:focus-visible {
+  box-shadow: 0 0 0 2px #d6002f !important;
+  border-radius: 9999px;
 }

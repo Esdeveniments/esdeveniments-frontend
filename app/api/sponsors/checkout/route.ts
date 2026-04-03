@@ -9,6 +9,7 @@ import {
   buildMetadataParams,
 } from "@lib/stripe/checkout-helpers";
 import { isValidPlace } from "@utils/route-validation";
+import { getOccupiedPlaceStatus } from "@lib/db/sponsors";
 import type {
   SponsorDuration,
   SponsorCheckoutRequest,
@@ -126,6 +127,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid place format" },
         { status: 400 },
+      );
+    }
+
+    // Server-side occupancy check — prevent checkout for already-occupied places
+    const occupiedStatus = await getOccupiedPlaceStatus();
+    if (occupiedStatus.has(place)) {
+      const daysLeft = occupiedStatus.get(place);
+      return NextResponse.json(
+        {
+          error: "place_occupied",
+          message: `This place is already occupied for ${daysLeft} more day(s)`,
+          daysLeft,
+        },
+        { status: 409 },
       );
     }
 

@@ -8,15 +8,6 @@ import type { WindowWithGtag } from "types/common";
 import { isE2ETestMode } from "@utils/env";
 import { scheduleIdleCallback } from "@utils/browser";
 
-// Debug logging for production investigation - remove after debugging
-// Uses console.warn because console.log is stripped in production (see next.config.js removeConsole)
-const DEBUG_ADS = true; // Set to false to disable
-const debugLog = (...args: unknown[]) => {
-  if (DEBUG_ADS && typeof window !== 'undefined') {
-    console.warn('[GoogleScripts]', ...args);
-  }
-};
-
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
 // FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
@@ -122,7 +113,6 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
 
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
-  debugLog('Component mounted, adsAllowed:', adsAllowed, 'isE2ETestMode:', isE2ETestMode);
 
   const [HeavyComponent, setHeavyComponent] = useState<
     React.ComponentType<{ adsAllowed: boolean }> | null
@@ -260,48 +250,31 @@ export default function GoogleScripts() {
               Since googlefcPresent uses beforeInteractive, ordering is guaranteed.
               AdContext polls for __tcfapi and falls back after 5s. */}
           {FUNDING_CHOICES_SRC && (
-            <Script 
-              src={FUNDING_CHOICES_SRC} 
+            <Script
+              src={FUNDING_CHOICES_SRC}
               strategy="lazyOnload"
               onLoad={() => {
-                debugLog('Funding Choices script loaded, checking googlefc state...');
-                debugLog('Current URL:', window.location.href);
-                debugLog('Document readyState:', document.readyState);
-                
-                // Log googlefc state after a short delay to let it initialize
+                // WORKAROUND: Google FC sometimes marks the page as "inactive" on root paths
+                // due to script loading order issues from performance optimizations.
+                // When this happens, googlefcInactive iframe exists but consent banner doesn't show.
+                // Detect this condition and manually trigger the consent UI.
                 setTimeout(() => {
-                  const win = window as unknown as { 
-                    googlefc?: { showRevocationMessage?: () => void }; 
+                  const win = window as unknown as {
+                    googlefc?: { showRevocationMessage?: () => void };
                     __tcfapi?: unknown;
                     frames?: Record<string, unknown>;
                   };
-                  debugLog('googlefc object:', win.googlefc);
-                  debugLog('__tcfapi available:', typeof win.__tcfapi);
-                  
-                  // Check if there are any cookies that might affect consent
-                  const fcCookies = document.cookie.split(';')
-                    .filter(c => c.includes('__gfc') || c.includes('__gpi') || c.includes('FCCDCF'));
-                  debugLog('Funding Choices cookies:', fcCookies.length > 0 ? fcCookies : 'none');
-                  
-                  // WORKAROUND: Google FC sometimes marks the page as "inactive" on root paths
-                  // due to script loading order issues from performance optimizations.
-                  // When this happens, googlefcInactive iframe exists but consent banner doesn't show.
-                  // Detect this condition and manually trigger the consent UI.
+
                   const hasInactiveFrame = Boolean(window.frames && 'googlefcInactive' in window.frames);
                   // Check if consent UI is already visible (Google FC uses .fc-consent-root)
                   const consentUIAlreadyVisible = Boolean(document.querySelector('.fc-consent-root'));
-                  
-                  debugLog('googlefcInactive frame detected:', hasInactiveFrame);
-                  debugLog('Consent UI already visible:', consentUIAlreadyVisible);
-                  
+
                   // Only trigger if: inactive frame exists AND consent UI is not showing
-                  // Note: We removed the cookie check because FCCDCF stores session state, not consent decision
                   if (hasInactiveFrame && !consentUIAlreadyVisible && win.googlefc?.showRevocationMessage) {
-                    debugLog('Triggering consent UI manually due to googlefcInactive condition');
                     try {
                       win.googlefc.showRevocationMessage();
-                    } catch (e) {
-                      debugLog('Failed to show consent UI:', e);
+                    } catch {
+                      // Consent UI trigger failed silently
                     }
                   }
                 }, 500);
@@ -309,45 +282,7 @@ export default function GoogleScripts() {
             />
           )}
 
-          {/* AI Referrer Analytics - lazyOnload + robust dataLayer check */}
-          <Script id="ai-referrer-analytics" strategy="lazyOnload">
-            {`
-              (function() {
-                try {
-                  const referrer = document.referrer;
-                  if (!referrer) return;
-                  
-                  const aiDomains = [
-                    'chat.openai.com',
-                    'perplexity.ai',
-                    'gemini.google.com',
-                    'bard.google.com',
-                    'claude.ai'
-                  ];
-                  
-                  const isAiReferrer = aiDomains.some(domain => referrer.includes(domain));
-                  if (!isAiReferrer) return;
-                  
-                  const domain = aiDomains.find(d => referrer.includes(d));
-                  const sessionKey = 'ai_referrer_tracked_' + domain;
-                  
-                  if (sessionStorage.getItem(sessionKey)) return;
-                  
-                  // Robustness fix: Push directly to dataLayer instead of relying on global gtag function
-                  window.dataLayer = window.dataLayer || [];
-                  window.dataLayer.push({
-                    event: 'ai_referrer',
-                    referrer_domain: domain,
-                    referrer_url: referrer
-                  });
-                  
-                  sessionStorage.setItem(sessionKey, 'true');
-                } catch (error) {
-                  console.warn('AI referrer analytics error:', error);
-                }
-              })();
-            `}
-          </Script>
+
         </>
       )}
 

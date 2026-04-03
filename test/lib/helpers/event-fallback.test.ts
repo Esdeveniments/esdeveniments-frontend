@@ -89,6 +89,7 @@ describe("fetchEventsWithFallback", () => {
       {
         id: 10,
         name: "Region",
+        slug: "region",
         cities: [
           {
             id: 1,
@@ -133,6 +134,7 @@ describe("fetchEventsWithFallback", () => {
       {
         id: 10,
         name: "Region",
+        slug: "region",
         cities: [
           {
             id: 1,

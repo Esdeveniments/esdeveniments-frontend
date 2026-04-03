@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fetchEvents, insertAds, uploadEventImage } from "../lib/api/events";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
+
+vi.mock("next/server", () => ({
+  connection: vi.fn().mockResolvedValue(undefined),
+}));
 import {
   PagedResponseDTO,
   EventSummaryResponseDTO,
@@ -34,7 +38,7 @@ describe("lib/api/events", () => {
     expect(result).toEqual({
       content: [],
       currentPage: 0,
-      pageSize: 10,
+      pageSize: 12,
       totalElements: 0,
       totalPages: 0,
       last: true,

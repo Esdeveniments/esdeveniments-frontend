@@ -144,6 +144,7 @@ function getCsp() {
     // In development, also allow HTTP to ease testing against non-TLS sources
     "img-src": ["'self'", "data:", "https:", "blob:", isDev ? "http:" : ""],
     "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
+    "media-src": ["'self'", "blob:"],
     "frame-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],
     "object-src": ["'none'"],
@@ -169,6 +170,9 @@ const CACHED_CSP = getCsp();
 // created as files in the codebase.
 // Allow percent-encoded slugs (accents, spaces, etc.) by matching any non-slash
 // segment for dynamic route parts.
+// IMPORTANT: These pattern-based routes are restricted to GET-only in the
+// isPublicApiRequest check below for defense-in-depth. If a POST/PUT/DELETE
+// handler is accidentally added to one of these routes, it will still require HMAC.
 export const PUBLIC_API_PATTERNS = [
   // Regions: base, [id], or /options
   /^\/api\/regions(\/(options|[^/]+))?$/,
@@ -179,7 +183,7 @@ export const PUBLIC_API_PATTERNS = [
 ];
 
 // Routes that require exact match
-const PUBLIC_API_EXACT_PATHS = [
+export const PUBLIC_API_EXACT_PATHS = [
   "/api/promotions/config",
   "/api/promotions/price-preview",
   "/api/promotions/active",
@@ -197,14 +201,78 @@ const PUBLIC_API_EXACT_PATHS = [
   "/api/health",
   // Sponsor checkout (browser-initiated Stripe checkout session creation)
   "/api/sponsors/checkout",
+  // Sponsor availability check (browser-initiated from PlaceSelector)
+  "/api/sponsors/availability",
   // Sponsor paid-only image upload (browser-initiated; gated by Stripe session status)
   "/api/sponsors/image-upload",
   // Stripe webhook (signature verified by endpoint, not HMAC)
   "/api/sponsors/webhook",
+  // TikTok share page API routes (browser-initiated, proxies to TikTok API)
+  "/api/tiktok/token",
+  "/api/tiktok/creator-info",
+  "/api/tiktok/publish",
+  "/api/tiktok/upload",
+  "/api/tiktok/status",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
 export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
+
+// Routes exempt from Origin check (server-to-server callbacks that won't have
+// a browser Origin header):
+export const ORIGIN_CHECK_EXEMPT = new Set([
+  "/api/sponsors/webhook", // Stripe webhook (server-to-server)
+  "/api/revalidate", // External revalidation trigger (has own secret)
+  "/api/health", // Monitoring probes
+]);
+
+/**
+ * For public POST/PUT/DELETE routes, verify the Origin header matches the
+ * site's domain. This blocks casual abuse (curl, bots, cross-site requests)
+ * but won't stop sophisticated attackers who spoof headers.
+ */
+export function isOriginAllowed(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+
+  // No Origin header → block (curl, scripts, server-to-server without exemption)
+  if (!origin) return false;
+
+  try {
+    const originHost = new URL(origin).host;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+    // Warn if NEXT_PUBLIC_SITE_URL is missing in production — all non-GET
+    // public routes will silently 403 because localhost:3000 won't match.
+    if (!siteUrl && !isDev) {
+      console.warn(
+        "[proxy] NEXT_PUBLIC_SITE_URL is not set in production — Origin checks will fail",
+      );
+    }
+
+    const siteHost = new URL(siteUrl || "http://localhost:3000").host;
+
+    // Allow exact host match against configured SITE_URL
+    if (originHost === siteHost) return true;
+
+    // Also allow when Origin matches the request's own Host header.
+    // This handles preview/staging deployments where the URL differs
+    // from NEXT_PUBLIC_SITE_URL (e.g. Amplify preview branches).
+    const requestHost = request.headers.get("host");
+    if (requestHost && originHost === requestHost) return true;
+
+    // In development, also allow localhost variants
+    if (
+      isDev &&
+      (originHost.startsWith("localhost") || originHost.startsWith("127.0.0.1"))
+    ) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -212,22 +280,34 @@ export default async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/api/")) {
     const isPublicApiRequest =
-      // Pattern-based routes (base path, dynamic segments, or specific sub-paths)
-      PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname)) ||
+      // Pattern-based routes (GET only): these only export GET handlers;
+      // restricting at middleware level prevents accidental exposure if a
+      // POST/PUT/DELETE handler is added later without adding HMAC.
+      (request.method === "GET" &&
+        PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname))) ||
       // Exact match routes
       PUBLIC_API_EXACT_PATHS.includes(pathname) ||
       // Event routes (GET only): base, [slug], or /categorized
       (request.method === "GET" && EVENTS_PATTERN.test(pathname)) ||
       // Image proxy (GET only): used by Next/Image to safely load external images
-      (pathname === "/api/image-proxy" && request.method === "GET") ||
-      // Visit counter endpoint (POST only)
-      (pathname === "/api/visits" && request.method === "POST");
+      (pathname === "/api/image-proxy" && request.method === "GET");
 
     if (isPublicApiRequest) {
+      // For non-GET public routes, verify Origin header matches the site domain.
+      // This blocks casual abuse (scripts, bots, cross-site requests) while
+      // allowing legitimate browser requests from our frontend.
+      // Exempt: webhooks, revalidation, and health checks (server-to-server).
+      if (
+        request.method !== "GET" &&
+        !ORIGIN_CHECK_EXEMPT.has(pathname) &&
+        !isOriginAllowed(request)
+      ) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
       // Endpoints that need visitor_id for idempotency/tracking
       const needsVisitorId =
-        (pathname === "/api/visits" && request.method === "POST") ||
-        (pathname === "/api/sponsors/checkout" && request.method === "POST");
+        pathname === "/api/sponsors/checkout" && request.method === "POST";
 
       if (needsVisitorId) {
         const cookieVisitor = request.cookies?.get?.("visitor_id")?.value;
@@ -328,6 +408,7 @@ export default async function proxy(request: NextRequest) {
     stripLocalePrefix(pathname);
   const localeFromCookie = getLocaleFromCookie(request);
 
+  // Redirect explicit default locale prefix to canonical form (e.g., /ca/foo → /foo)
   if (localeFromPath === DEFAULT_LOCALE) {
     const redirectUrl = new URL(
       `${pathnameWithoutLocale}${search || ""}`,
@@ -338,6 +419,7 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  // Auto-redirect to preferred non-default locale on root path
   if (!localeFromPath && pathname === "/") {
     const preferredLocale =
       localeFromCookie ||
@@ -370,7 +452,7 @@ export default async function proxy(request: NextRequest) {
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);
 
-  // No per-page visitor id injection; handled only for /api/visits.
+  // No per-page visitor id injection; handled only for /api/sponsors/checkout.
 
   const baseResponseInit = {
     request: {
@@ -378,26 +460,32 @@ export default async function proxy(request: NextRequest) {
     },
   };
 
-  // When a locale prefix exists (e.g., /es/...), rewrite to the locale-stripped
-  // pathname for routing while preserving the original URL in the browser.
-  // This keeps locale-prefixed URLs indexable and allows us to reuse the
-  // existing route tree without duplicating files.
+  // With [locale] route segment, all page routes live under app/[locale]/.
+  // - Paths without locale prefix (default locale, e.g., /barcelona) → rewrite
+  //   to /ca/barcelona so it matches app/[locale=ca]/[place=barcelona]/page.tsx
+  // - Paths with locale prefix (e.g., /es/barcelona) → pass through, already
+  //   matches app/[locale=es]/[place=barcelona]/page.tsx
   const response = localeFromPath
-    ? (() => {
+    ? NextResponse.next(baseResponseInit)
+    : (() => {
         const rewriteUrl = request.nextUrl.clone();
-        rewriteUrl.pathname = pathnameWithoutLocale || "/";
-        // Avoid RSC/data cache collisions between locales by making the rewritten
-        // request URL vary per locale while keeping the visible URL unchanged.
-        rewriteUrl.searchParams.set("__locale", resolvedLocale);
+        rewriteUrl.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
         return NextResponse.rewrite(rewriteUrl, baseResponseInit);
-      })()
-    : NextResponse.next(baseResponseInit);
+      })();
 
   if (shouldPersistLocaleFromPath && localeFromPath) {
     persistLocaleCookie(response, localeFromPath);
+  } else if (
+    !localeFromPath &&
+    localeFromCookie !== null &&
+    localeFromCookie !== DEFAULT_LOCALE
+  ) {
+    // Clear stale non-default locale cookie when user visits unprefixed path
+    // (which resolves to DEFAULT_LOCALE), so subsequent / visits don't redirect
+    persistLocaleCookie(response, DEFAULT_LOCALE);
   }
 
-  // visitor_id cookie is set for /api/visits and /api/sponsors/checkout if missing.
+  // visitor_id cookie is set for /api/sponsors/checkout if missing.
 
   // Use Report-Only in preview (or when explicitly requested), enforce otherwise
   const reportOnly =
@@ -423,9 +511,12 @@ export default async function proxy(request: NextRequest) {
 
   // Cache-Control for public HTML pages (excluding API and Next assets).
   //
-  // IMPORTANT: We must not cache HTML for 24h at the CDN, otherwise "today" pages
-  // (e.g., /catalunya) can show yesterday's events for up to a day. Keep a short
-  // shared-cache TTL aligned with our typical ISR revalidate window (5 minutes).
+  // s-maxage=1800 (30 min): Cultural events are published days in advance, so
+  // 30 min staleness is invisible to users. With stale-while-revalidate=3600,
+  // CloudFront serves the stale page instantly for up to 60 min after expiry
+  // while revalidating in the background — eliminating TTFB spikes from
+  // synchronous revalidation. This raises CloudFront cache-hit ratio and
+  // reduces Lambda invocations significantly.
   //
   // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
   // still serve quickly and revalidate in the background.
@@ -438,21 +529,38 @@ export default async function proxy(request: NextRequest) {
       "Cache-Control",
       isPersonalizedHtml
         ? "private, no-store"
-        : "public, max-age=0, s-maxage=300, stale-while-revalidate=300",
+        : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
     );
   }
 
   // Set Content-Language header for SEO and accessibility
   response.headers.set("Content-Language", resolvedLocale);
 
-  // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, lat, lon)
+  // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, price, lat, lon)
   // This prevents indexing of filtered/personalized URLs without making pages dynamic
-  const NON_CANONICAL_PARAMS = ["search", "distance", "lat", "lon"];
+  const NON_CANONICAL_PARAMS = [
+    "search",
+    "distance",
+    "price",
+    "from",
+    "to",
+    "lat",
+    "lon",
+  ];
   const hasNonCanonicalParams = NON_CANONICAL_PARAMS.some((param) => {
     const value = request.nextUrl.searchParams.get(param);
     return value !== null && value.trim().length > 0;
   });
-  if (hasNonCanonicalParams) {
+
+  // Hidden tool pages that should never be indexed by crawlers
+  const NOINDEX_PATHS = ["/compartir-tiktok", "/callback"];
+  const isNoindexPath = NOINDEX_PATHS.some((p) =>
+    (pathnameWithoutLocale || pathname).startsWith(p),
+  );
+
+  if (isNoindexPath) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  } else if (hasNonCanonicalParams) {
     response.headers.set("X-Robots-Tag", "noindex, follow");
   }
 
@@ -461,6 +569,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
   ],
 };

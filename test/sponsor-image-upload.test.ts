@@ -17,6 +17,12 @@ vi.mock("lib/stripe", () => ({
   updatePaymentIntentMetadata: vi.fn(),
 }));
 
+// Mock rate limiter to avoid in-memory counter accumulating across watch-mode
+// re-runs (shared 127.0.0.1 key could hit 10/min threshold → flaky 429s)
+vi.mock("utils/rate-limit", () => ({
+  createRateLimiter: () => ({ check: () => null }),
+}));
+
 // Import after mocks are set up
 import { POST } from "app/api/sponsors/image-upload/route";
 import { uploadEventImage } from "lib/api/events";
@@ -30,7 +36,7 @@ import {
 const mockUploadEventImage = vi.mocked(uploadEventImage);
 const mockFetchCheckoutSession = vi.mocked(fetchCheckoutSession);
 const mockUpdateCheckoutSessionMetadata = vi.mocked(
-  updateCheckoutSessionMetadata
+  updateCheckoutSessionMetadata,
 );
 const mockUpdatePaymentIntentMetadata = vi.mocked(updatePaymentIntentMetadata);
 
@@ -62,6 +68,28 @@ describe("Sponsor Image Upload Route", () => {
   const createMockRequest = (formData: FormData) => {
     return {
       formData: () => Promise.resolve(formData),
+      headers: new Headers({
+        "x-real-ip": "127.0.0.1",
+        "content-type": "multipart/form-data; boundary=----boundary",
+      }),
+    } as unknown as Request;
+  };
+
+  const createMockRequestWithoutContentType = (formData: FormData) => {
+    return {
+      formData: () => Promise.resolve(formData),
+      headers: new Headers({ "x-real-ip": "127.0.0.1" }),
+    } as unknown as Request;
+  };
+
+  const createMockRequestWithBrokenBody = () => {
+    return {
+      formData: () =>
+        Promise.reject(new TypeError("Failed to parse body as FormData.")),
+      headers: new Headers({
+        "x-real-ip": "127.0.0.1",
+        "content-type": "multipart/form-data; boundary=----boundary",
+      }),
     } as unknown as Request;
   };
 
@@ -160,6 +188,27 @@ describe("Sponsor Image Upload Route", () => {
 
       expect(response.status).toBe(400);
       expect(json.errorCode).toBe("missing_session");
+    });
+
+    it("rejects request without multipart/form-data content-type", async () => {
+      const formData = createMockFormData(validSessionId, createMockJpegFile());
+      const request = createMockRequestWithoutContentType(formData);
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.errorCode).toBe("invalid_content_type");
+    });
+
+    it("returns 413 when body cannot be parsed as FormData (Lambda truncation)", async () => {
+      const request = createMockRequestWithBrokenBody();
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(413);
+      expect(json.errorCode).toBe("image_too_large");
     });
 
     it("rejects missing image file", async () => {

@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fetchWithHmac } from "../lib/api/fetch-wrapper";
 import * as hmac from "../utils/hmac";
 
+vi.mock("next/server", () => ({
+  connection: vi.fn().mockResolvedValue(undefined),
+}));
+
 const originalEnv = { ...process.env };
 
 describe("lib/api/fetch-wrapper", () => {

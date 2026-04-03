@@ -271,13 +271,11 @@ export async function fetchYourResourceExternal(
   const url = query ? `${baseUrl}?${query.toString()}` : baseUrl;
 
   try {
-    // 3. FETCH WITH HMAC (10s timeout)
+    // 3. FETCH WITH HMAC (10s timeout, no-store by default)
+    // ⚠️ DO NOT add `next: { revalidate }` - causes cache explosion!
+    // Caching is handled via Cache-Control headers in internal API routes.
     const response = await fetchWithHmac(url, {
       method: "GET",
-      next: {
-        revalidate: 600, // ISR: 10 minutes
-        tags: ["your-resource"],
-      },
     });
 
     if (!response.ok) {
@@ -314,8 +312,34 @@ export async function fetchYourResourceExternal(
 - [x] **Timeout**: `fetchWithHmac` has built-in 10s timeout
 - [x] **Zod parsing**: Validate response shape at runtime
 - [x] **Safe fallback**: Return empty DTO on error (never throw)
-- [x] **Cache tags**: Use `next: { revalidate, tags }` for ISR
+- [x] **NO fetch cache**: Do NOT use `next: { revalidate }` (causes cache explosion!)
 - [x] **Error logging**: Log errors for debugging
+
+---
+
+## ⚠️ CRITICAL: Fetch Cache Warning
+
+**NEVER add `next: { revalidate, tags }` to `fetchWithHmac` calls in external wrappers!**
+
+This enables Next.js fetch cache, which on OpenNext/SST stores **every unique URL** as a separate entry in both S3 and DynamoDB. With high-cardinality APIs (100+ places × categories × dates × pages × event slugs), this creates **hundreds of thousands of cache entries**.
+
+**Jan 20, 2026 Incident**: Adding `next: { revalidate }` to external wrappers caused:
+- 146,394 fetch cache entries per build (vs baseline 150)
+- S3 objects: 400K → 1.46M (3.6x increase)
+- DynamoDB writes: 16K → 280K/day (17x increase)
+- See: `docs/incidents/2026-01-20-fetch-cache-explosion.md`
+
+**Correct caching approach**:
+```typescript
+// ❌ WRONG - causes unbounded cache growth
+const response = await fetchWithHmac(url, {
+  next: { revalidate: 600, tags: ["events"] },  // NEVER DO THIS!
+});
+
+// ✅ CORRECT - uses no-store (fetchWithHmac default)
+const response = await fetchWithHmac(url);
+// Caching handled via Cache-Control headers in internal API routes
+```
 
 ---
 

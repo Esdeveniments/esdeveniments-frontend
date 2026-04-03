@@ -20,11 +20,9 @@ import { siteUrl } from "@config/index";
  *
  * The host is dynamically determined for multi-domain support.
  *
- * IMPORTANT: This route is marked as dynamic to prevent Next.js from caching it.
- * Without this, Next.js may serve a cached version even after deployment.
+ * Route handlers using NextRequest are dynamic by default.
+ * Cache behavior is controlled via Cache-Control headers (getCacheControlHeader).
  */
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const robotsConfig: MetadataRoute.Robots = {
@@ -147,10 +145,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const robotsTxt = lines.join("\n");
 
-  // Set cache headers: short TTL at edge (5 minutes) to prevent stale content
-  // Matches the pattern used by sitemap.xml/route.ts for consistency
-  // If cache-busting is requested, disable caching entirely
-  const cacheControl = getCacheControlHeader(request, 300);
+  // Set cache headers: 1 hour TTL at edge — robots.txt only changes on deployment
+  // Longer TTL reduces Lambda invocations from frequent crawler requests
+  const cacheControl = getCacheControlHeader(request, 3600, 86400);
 
   return new NextResponse(robotsTxt, {
     status: 200,

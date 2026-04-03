@@ -11,14 +11,15 @@ import {
   buildCustomFieldParams,
   buildMetadataParams,
 } from "lib/stripe/checkout-helpers";
+import { MS_PER_DAY } from "utils/constants";
 
 // Mock the sponsors array to test the logic without affecting production data
 const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
   function getTodayUtc() {
     const now = new Date();
-    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    return new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
   }
 
   function isSponsorActive(sponsor: SponsorConfig, date: Date) {
@@ -30,22 +31,39 @@ const createMockSponsorModule = (sponsors: SponsorConfig[]) => {
   function getRemainingDays(sponsor: SponsorConfig, todayUtc: Date) {
     const endDateUtc = new Date(`${sponsor.endDate}T00:00:00.000Z`);
     const diffDays = Math.floor(
-      (endDateUtc.getTime() - todayUtc.getTime()) / MS_PER_DAY
+      (endDateUtc.getTime() - todayUtc.getTime()) / MS_PER_DAY,
     );
     return Math.max(1, diffDays + 1);
   }
 
   // Replicate the exact logic from config/sponsors.ts (UTC-based)
-  function getActiveSponsorForPlace(place: string) {
+  // Now supports fallback cascade for event pages
+  function getActiveSponsorForPlace(
+    place: string,
+    fallbackPlaces?: string[],
+  ): { sponsor: SponsorConfig; matchedPlace: string } | null {
     const today = getTodayUtc();
 
+    // Try primary place first
     for (const sponsor of sponsors) {
-      if (!sponsor.places.includes(place)) {
-        continue;
+      if (sponsor.places.includes(place) && isSponsorActive(sponsor, today)) {
+        return { sponsor, matchedPlace: place };
       }
+    }
 
-      if (isSponsorActive(sponsor, today)) {
-        return sponsor;
+    // Try fallback places in order (region → country)
+    if (fallbackPlaces) {
+      for (const fallback of fallbackPlaces) {
+        if (fallback) {
+          for (const sponsor of sponsors) {
+            if (
+              sponsor.places.includes(fallback) &&
+              isSponsorActive(sponsor, today)
+            ) {
+              return { sponsor, matchedPlace: fallback };
+            }
+          }
+        }
       }
     }
 
@@ -139,7 +157,8 @@ describe("Sponsor System", () => {
 
       const result = getActiveSponsorForPlace("barcelona");
       expect(result).not.toBeNull();
-      expect(result?.businessName).toBe("Matching Business");
+      expect(result?.sponsor.businessName).toBe("Matching Business");
+      expect(result?.matchedPlace).toBe("barcelona");
     });
 
     test("returns null when sponsor is expired (end date passed)", () => {
@@ -190,7 +209,7 @@ describe("Sponsor System", () => {
 
       const result = getActiveSponsorForPlace("barcelona");
       expect(result).not.toBeNull();
-      expect(result?.businessName).toBe("Start Day Sponsor");
+      expect(result?.sponsor.businessName).toBe("Start Day Sponsor");
     });
 
     test("includes sponsor on exact end date", () => {
@@ -207,7 +226,7 @@ describe("Sponsor System", () => {
 
       const result = getActiveSponsorForPlace("barcelona");
       expect(result).not.toBeNull();
-      expect(result?.businessName).toBe("End Day Sponsor");
+      expect(result?.sponsor.businessName).toBe("End Day Sponsor");
     });
 
     test("returns first matching sponsor when multiple match (first-match-wins)", () => {
@@ -234,7 +253,7 @@ describe("Sponsor System", () => {
       const { getActiveSponsorForPlace } = createMockSponsorModule(sponsors);
 
       const result = getActiveSponsorForPlace("barcelona");
-      expect(result?.businessName).toBe("First Sponsor");
+      expect(result?.sponsor.businessName).toBe("First Sponsor");
     });
 
     test("matches place from multiple places array", () => {
@@ -249,15 +268,206 @@ describe("Sponsor System", () => {
       };
       const { getActiveSponsorForPlace } = createMockSponsorModule([sponsor]);
 
-      expect(getActiveSponsorForPlace("gracia")?.businessName).toBe(
-        "Multi-place Sponsor"
+      expect(getActiveSponsorForPlace("gracia")?.sponsor.businessName).toBe(
+        "Multi-place Sponsor",
       );
-      expect(getActiveSponsorForPlace("sants")?.businessName).toBe(
-        "Multi-place Sponsor"
+      expect(getActiveSponsorForPlace("sants")?.sponsor.businessName).toBe(
+        "Multi-place Sponsor",
       );
-      expect(getActiveSponsorForPlace("barcelona")?.businessName).toBe(
-        "Multi-place Sponsor"
+      expect(getActiveSponsorForPlace("barcelona")?.sponsor.businessName).toBe(
+        "Multi-place Sponsor",
       );
+    });
+  });
+
+  describe("Cascade Logic (Event Pages)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("returns town sponsor when town has sponsor (no fallback needed)", () => {
+      const townSponsor: SponsorConfig = {
+        businessName: "Town Sponsor",
+        imageUrl: "https://example.com/town.jpg",
+        targetUrl: "https://town.example.com",
+        places: ["cardedeu"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const regionSponsor: SponsorConfig = {
+        businessName: "Region Sponsor",
+        imageUrl: "https://example.com/region.jpg",
+        targetUrl: "https://region.example.com",
+        places: ["valles-oriental"],
+        geoScope: "region",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        townSponsor,
+        regionSponsor,
+      ]);
+
+      // Town sponsor wins even with fallbacks
+      const result = getActiveSponsorForPlace("cardedeu", [
+        "valles-oriental",
+        "catalunya",
+      ]);
+      expect(result?.sponsor.businessName).toBe("Town Sponsor");
+      expect(result?.matchedPlace).toBe("cardedeu");
+    });
+
+    test("falls back to region when town has no sponsor", () => {
+      const regionSponsor: SponsorConfig = {
+        businessName: "Region Sponsor",
+        imageUrl: "https://example.com/region.jpg",
+        targetUrl: "https://region.example.com",
+        places: ["valles-oriental"],
+        geoScope: "region",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        regionSponsor,
+      ]);
+
+      // No town sponsor for cardedeu, falls back to region
+      const result = getActiveSponsorForPlace("cardedeu", [
+        "valles-oriental",
+        "catalunya",
+      ]);
+      expect(result?.sponsor.businessName).toBe("Region Sponsor");
+      expect(result?.matchedPlace).toBe("valles-oriental");
+    });
+
+    test("falls back to country when neither town nor region has sponsor", () => {
+      const countrySponsor: SponsorConfig = {
+        businessName: "Country Sponsor",
+        imageUrl: "https://example.com/country.jpg",
+        targetUrl: "https://country.example.com",
+        places: ["catalunya"],
+        geoScope: "country",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        countrySponsor,
+      ]);
+
+      // No town or region sponsor, falls back to country
+      const result = getActiveSponsorForPlace("cardedeu", [
+        "valles-oriental",
+        "catalunya",
+      ]);
+      expect(result?.sponsor.businessName).toBe("Country Sponsor");
+      expect(result?.matchedPlace).toBe("catalunya");
+    });
+
+    test("returns null when no sponsors at any level", () => {
+      const { getActiveSponsorForPlace } = createMockSponsorModule([]);
+
+      const result = getActiveSponsorForPlace("cardedeu", [
+        "valles-oriental",
+        "catalunya",
+      ]);
+      expect(result).toBeNull();
+    });
+
+    test("respects cascade order: town → region → country", () => {
+      const townSponsor: SponsorConfig = {
+        businessName: "Town Sponsor",
+        imageUrl: "https://example.com/town.jpg",
+        targetUrl: "https://town.example.com",
+        places: ["cardedeu"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const regionSponsor: SponsorConfig = {
+        businessName: "Region Sponsor",
+        imageUrl: "https://example.com/region.jpg",
+        targetUrl: "https://region.example.com",
+        places: ["valles-oriental"],
+        geoScope: "region",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const countrySponsor: SponsorConfig = {
+        businessName: "Country Sponsor",
+        imageUrl: "https://example.com/country.jpg",
+        targetUrl: "https://country.example.com",
+        places: ["catalunya"],
+        geoScope: "country",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([
+        townSponsor,
+        regionSponsor,
+        countrySponsor,
+      ]);
+
+      // All three active: town wins
+      expect(
+        getActiveSponsorForPlace("cardedeu", ["valles-oriental", "catalunya"])
+          ?.sponsor.businessName,
+      ).toBe("Town Sponsor");
+
+      // No town sponsor for different town: region wins
+      expect(
+        getActiveSponsorForPlace("la-garriga", ["valles-oriental", "catalunya"])
+          ?.sponsor.businessName,
+      ).toBe("Region Sponsor");
+
+      // No town or region sponsor: country wins
+      expect(
+        getActiveSponsorForPlace("girona", ["girones", "catalunya"])?.sponsor
+          .businessName,
+      ).toBe("Country Sponsor");
+    });
+
+    test("handles empty fallbackPlaces array", () => {
+      const sponsor: SponsorConfig = {
+        businessName: "Town Sponsor",
+        imageUrl: "https://example.com/banner.jpg",
+        targetUrl: "https://example.com",
+        places: ["barcelona"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([sponsor]);
+
+      // With empty fallbacks, behaves like no fallbacks
+      expect(
+        getActiveSponsorForPlace("barcelona", [])?.sponsor.businessName,
+      ).toBe("Town Sponsor");
+      expect(getActiveSponsorForPlace("girona", [])).toBeNull();
+    });
+
+    test("handles undefined fallbackPlaces", () => {
+      const sponsor: SponsorConfig = {
+        businessName: "Town Sponsor",
+        imageUrl: "https://example.com/banner.jpg",
+        targetUrl: "https://example.com",
+        places: ["barcelona"],
+        geoScope: "town",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      };
+      const { getActiveSponsorForPlace } = createMockSponsorModule([sponsor]);
+
+      // Without fallbacks, only checks primary place
+      expect(getActiveSponsorForPlace("barcelona")?.sponsor.businessName).toBe(
+        "Town Sponsor",
+      );
+      expect(getActiveSponsorForPlace("girona")).toBeNull();
     });
   });
 
@@ -544,6 +754,166 @@ describe("Sponsor System", () => {
     });
   });
 
+  describe("Occupied Place Selection Guard", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("occupied places are detected for all geo scopes (town, region, country)", () => {
+      const sponsors: SponsorConfig[] = [
+        {
+          businessName: "Town Sponsor",
+          imageUrl: "https://example.com/town.jpg",
+          targetUrl: "https://town.example.com",
+          places: ["cardedeu"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-20",
+        },
+        {
+          businessName: "Region Sponsor",
+          imageUrl: "https://example.com/region.jpg",
+          targetUrl: "https://region.example.com",
+          places: ["valles-oriental"],
+          geoScope: "region",
+          startDate: "2026-01-10",
+          endDate: "2026-01-25",
+        },
+        {
+          businessName: "Country Sponsor",
+          imageUrl: "https://example.com/country.jpg",
+          targetUrl: "https://country.example.com",
+          places: ["catalunya"],
+          geoScope: "country",
+          startDate: "2026-01-12",
+          endDate: "2026-01-18",
+        },
+      ];
+      const { getOccupiedPlaceStatus } = createMockSponsorModule(sponsors);
+      const status = getOccupiedPlaceStatus();
+
+      // All three geo scopes should be occupied
+      expect(status.has("cardedeu")).toBe(true);
+      expect(status.has("valles-oriental")).toBe(true);
+      expect(status.has("catalunya")).toBe(true);
+
+      // Unrelated places should NOT be occupied
+      expect(status.has("barcelona")).toBe(false);
+      expect(status.has("maresme")).toBe(false);
+    });
+
+    test("unoccupied places are not in the map", () => {
+      const sponsors: SponsorConfig[] = [
+        {
+          businessName: "Only Barcelona",
+          imageUrl: "https://example.com/banner.jpg",
+          targetUrl: "https://example.com",
+          places: ["barcelona"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-20",
+        },
+      ];
+      const { getOccupiedPlaceStatus } = createMockSponsorModule(sponsors);
+      const status = getOccupiedPlaceStatus();
+
+      expect(status.has("barcelona")).toBe(true);
+      expect(status.has("girona")).toBe(false);
+      expect(status.has("mataro")).toBe(false);
+      expect(status.has("catalunya")).toBe(false);
+    });
+
+    test("expired sponsors do not mark places as occupied", () => {
+      const sponsors: SponsorConfig[] = [
+        {
+          businessName: "Expired Sponsor",
+          imageUrl: "https://example.com/banner.jpg",
+          targetUrl: "https://example.com",
+          places: ["barcelona"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-10", // Before fixed date 2026-01-15
+        },
+      ];
+      const { getOccupiedPlaceStatus } = createMockSponsorModule(sponsors);
+      const status = getOccupiedPlaceStatus();
+
+      expect(status.has("barcelona")).toBe(false);
+    });
+
+    test("future sponsors do not mark places as occupied", () => {
+      const sponsors: SponsorConfig[] = [
+        {
+          businessName: "Future Sponsor",
+          imageUrl: "https://example.com/banner.jpg",
+          targetUrl: "https://example.com",
+          places: ["barcelona"],
+          geoScope: "town",
+          startDate: "2026-01-20", // After fixed date 2026-01-15
+          endDate: "2026-01-31",
+        },
+      ];
+      const { getOccupiedPlaceStatus } = createMockSponsorModule(sponsors);
+      const status = getOccupiedPlaceStatus();
+
+      expect(status.has("barcelona")).toBe(false);
+    });
+
+    test("occupied place has an active sponsor via getActiveSponsorForPlace", () => {
+      const sponsors: SponsorConfig[] = [
+        {
+          businessName: "Active Sponsor",
+          imageUrl: "https://example.com/banner.jpg",
+          targetUrl: "https://example.com",
+          places: ["barcelona"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-20",
+        },
+      ];
+      const { getOccupiedPlaceStatus, getActiveSponsorForPlace } =
+        createMockSponsorModule(sponsors);
+      const status = getOccupiedPlaceStatus();
+
+      // Barcelona is occupied — a checkout guard should prevent selection
+      expect(status.has("barcelona")).toBe(true);
+      const daysLeft = status.get("barcelona");
+      expect(typeof daysLeft).toBe("number");
+      expect(daysLeft).toBeGreaterThan(0);
+
+      // The sponsor exists and is active — confirming it's the occupied sponsor
+      const result = getActiveSponsorForPlace("barcelona");
+      expect(result).not.toBeNull();
+      expect(result?.sponsor.businessName).toBe("Active Sponsor");
+    });
+
+    test("multi-place sponsor marks all its places as occupied", () => {
+      const sponsors: SponsorConfig[] = [
+        {
+          businessName: "Multi-place Sponsor",
+          imageUrl: "https://example.com/banner.jpg",
+          targetUrl: "https://example.com",
+          places: ["barcelona", "girona", "tarragona"],
+          geoScope: "town",
+          startDate: "2026-01-01",
+          endDate: "2026-01-20",
+        },
+      ];
+      const { getOccupiedPlaceStatus } = createMockSponsorModule(sponsors);
+      const status = getOccupiedPlaceStatus();
+
+      expect(status.has("barcelona")).toBe(true);
+      expect(status.has("girona")).toBe(true);
+      expect(status.has("tarragona")).toBe(true);
+      expect(status.has("lleida")).toBe(false);
+    });
+  });
+
   describe("Date Edge Cases", () => {
     test("handles timezone correctly (start of day normalization)", () => {
       // Test at different times of the day in UTC
@@ -665,7 +1035,7 @@ describe("Checkout Helpers", () => {
       buildLineItemParams(params, "7days", "town", "ca");
 
       expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
-        "Patrocini 7 dies"
+        "Patrocini 7 dies",
       );
     });
 
@@ -674,7 +1044,7 @@ describe("Checkout Helpers", () => {
       buildLineItemParams(params, "7days", "town", "es");
 
       expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
-        "Patrocinio 7 días"
+        "Patrocinio 7 días",
       );
     });
 
@@ -683,7 +1053,7 @@ describe("Checkout Helpers", () => {
       buildLineItemParams(params, "7days", "town", "en");
 
       expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
-        "Sponsorship 7 days"
+        "Sponsorship 7 days",
       );
     });
 
@@ -692,7 +1062,7 @@ describe("Checkout Helpers", () => {
       buildLineItemParams(params, "7days", "town", "fr");
 
       expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
-        "Patrocini 7 dies"
+        "Patrocini 7 dies",
       );
     });
 
@@ -701,7 +1071,7 @@ describe("Checkout Helpers", () => {
       buildLineItemParams(params, "14days", "town", "ca");
 
       const description = params.get(
-        "line_items[0][price_data][product_data][description]"
+        "line_items[0][price_data][product_data][description]",
       );
       expect(description).toContain("14");
       expect(description).toContain("dies de patrocini");
@@ -725,10 +1095,10 @@ describe("Checkout Helpers", () => {
       buildLineItemParams(params30days, "30days", "town", "ca");
 
       const price7 = Number(
-        params7days.get("line_items[0][price_data][unit_amount]")
+        params7days.get("line_items[0][price_data][unit_amount]"),
       );
       const price30 = Number(
-        params30days.get("line_items[0][price_data][unit_amount]")
+        params30days.get("line_items[0][price_data][unit_amount]"),
       );
 
       expect(price30).toBeGreaterThan(price7);
@@ -744,13 +1114,13 @@ describe("Checkout Helpers", () => {
       buildLineItemParams(paramsCountry, "7days", "country", "ca");
 
       const priceTown = Number(
-        paramsTown.get("line_items[0][price_data][unit_amount]")
+        paramsTown.get("line_items[0][price_data][unit_amount]"),
       );
       const priceRegion = Number(
-        paramsRegion.get("line_items[0][price_data][unit_amount]")
+        paramsRegion.get("line_items[0][price_data][unit_amount]"),
       );
       const priceCountry = Number(
-        paramsCountry.get("line_items[0][price_data][unit_amount]")
+        paramsCountry.get("line_items[0][price_data][unit_amount]"),
       );
 
       expect(priceRegion).toBeGreaterThan(priceTown);
@@ -786,10 +1156,10 @@ describe("Checkout Helpers", () => {
       buildCustomFieldParams(params, "ca");
 
       expect(params.get("custom_fields[0][label][custom]")).toBe(
-        "Nom del negoci"
+        "Nom del negoci",
       );
       expect(params.get("custom_fields[1][label][custom]")).toBe(
-        "URL del teu web (opcional)"
+        "URL del teu web (opcional)",
       );
     });
 
@@ -798,10 +1168,10 @@ describe("Checkout Helpers", () => {
       buildCustomFieldParams(params, "es");
 
       expect(params.get("custom_fields[0][label][custom]")).toBe(
-        "Nombre del negocio"
+        "Nombre del negocio",
       );
       expect(params.get("custom_fields[1][label][custom]")).toBe(
-        "URL de tu web (opcional)"
+        "URL de tu web (opcional)",
       );
     });
 
@@ -810,10 +1180,10 @@ describe("Checkout Helpers", () => {
       buildCustomFieldParams(params, "en");
 
       expect(params.get("custom_fields[0][label][custom]")).toBe(
-        "Business name"
+        "Business name",
       );
       expect(params.get("custom_fields[1][label][custom]")).toBe(
-        "Your website URL (optional)"
+        "Your website URL (optional)",
       );
     });
 
@@ -822,7 +1192,7 @@ describe("Checkout Helpers", () => {
       buildCustomFieldParams(params, "de");
 
       expect(params.get("custom_fields[0][label][custom]")).toBe(
-        "Nom del negoci"
+        "Nom del negoci",
       );
     });
 
@@ -872,22 +1242,22 @@ describe("Checkout Helpers", () => {
 
       // Check that all metadata is also set on payment_intent_data
       expect(params.get("payment_intent_data[metadata][product]")).toBe(
-        "sponsor_banner"
+        "sponsor_banner",
       );
       expect(params.get("payment_intent_data[metadata][duration]")).toBe(
-        "7days"
+        "7days",
       );
       expect(params.get("payment_intent_data[metadata][duration_days]")).toBe(
-        "7"
+        "7",
       );
       expect(params.get("payment_intent_data[metadata][place]")).toBe(
-        "barcelona"
+        "barcelona",
       );
       expect(params.get("payment_intent_data[metadata][place_name]")).toBe(
-        "Barcelona"
+        "Barcelona",
       );
       expect(params.get("payment_intent_data[metadata][geo_scope]")).toBe(
-        "country"
+        "country",
       );
     });
 

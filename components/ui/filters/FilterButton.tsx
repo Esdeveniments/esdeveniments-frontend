@@ -1,5 +1,5 @@
 "use client";
-import { JSX, MouseEvent } from "react";
+import { JSX, MouseEvent, startTransition } from "react";
 import { useRouter } from "../../../i18n/routing";
 import { XMarkIcon as XIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import { usePressFeedback } from "@components/hooks/usePressFeedback";
@@ -10,6 +10,7 @@ import {
 } from "@lib/navigation-feedback";
 import { FilterButtonProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
+import { scheduleIdleCallback } from "@utils/browser";
 
 const FilterButton = ({
   filterKey,
@@ -26,27 +27,33 @@ const FilterButton = ({
   const handleRemove = (e: MouseEvent) => {
     e.stopPropagation();
 
-    sendGoogleEvent("filter_remove", {
-      context: "filters_bar",
-      filter_key: filterKey,
-      enabled,
-    });
+    // Defer GA dispatch to idle time — removes 1-5ms from INP critical path
+    scheduleIdleCallback(() =>
+      sendGoogleEvent("filter_remove", {
+        context: "filters_bar",
+        filter_key: filterKey,
+        enabled,
+      })
+    );
 
     if (isPlainLeftClick(e)) {
       startNavigationFeedback();
     }
-    setLoading(true);
+    startTransition(() => setLoading(true));
     router.push(removeUrl);
     // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleChipClick = () => {
-    sendGoogleEvent("filter_chip_click", {
-      context: "filters_bar",
-      filter_key: filterKey,
-      enabled,
-    });
+    // Defer GA dispatch to idle time — removes 1-5ms from INP critical path
+    scheduleIdleCallback(() =>
+      sendGoogleEvent("filter_chip_click", {
+        context: "filters_bar",
+        filter_key: filterKey,
+        enabled,
+      })
+    );
     onOpenModal();
   };
 

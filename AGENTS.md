@@ -45,6 +45,20 @@
 - Extras: `yarn analyze` bundle analysis; `yarn scan` run react‑scan on `localhost:3000`.
 - CI: Amplify builds use Node 20 + Yarn 4; prebuild generates `public/sw.js` and postbuild runs sitemap.
 
+## Rollback Procedure
+
+If a production deploy causes issues (broken pages, Sharp failure, performance regression):
+
+1. **Quick rollback** (recommended): Go to **GitHub Actions → "Rollback (SST)" → Run workflow** → leave `commit_sha` empty → click **Run**. This deploys the last commit that passed all post-deploy checks (~15 min).
+2. **Rollback to specific commit**: Same workflow, but enter the commit SHA in the `commit_sha` field.
+3. **CLI alternative**: `gh workflow run rollback-sst.yml` or `gh workflow run rollback-sst.yml -f commit_sha=abc123`.
+
+**How it works**: Every successful deploy tags the commit as `last-successful-deploy`. The rollback workflow checks out that tag (or the provided SHA), builds, deploys directly to production (no staging — speed matters), and verifies with smoke tests.
+
+**Prerequisite**: The `last-successful-deploy` tag must exist (created automatically after the first green deploy with this workflow).
+
+**What it does NOT do**: It does not revert database migrations or external API changes. It only redeploys the frontend Lambda + CloudFront.
+
 ## Coding Style & Naming Conventions
 
 - TypeScript strict; prefer server components by default. Add `"use client"` only when needed.
@@ -52,6 +66,7 @@
 - Define all type aliases/interfaces in `types/` (ESLint‑enforced).
 - Components: PascalCase; hooks: `useXxx`; helpers: lowerCamelCase.
 - Indentation: 2 spaces; prefer path aliases; Tailwind utilities for styling; globals in `styles/`.
+- **No barrel files (`index.ts` re-exports) that mix components from different routes.** Local barrels leak all `"use client"` re-exports into every importing route's `client-reference-manifest`, inflating server bundles. Always use direct file imports (e.g., `from "@components/ui/sponsor/SponsorBannerSlot"` not `from "@components/ui/sponsor"`).
 
 ## Internationalization (i18n) Rules
 
@@ -102,13 +117,11 @@
 Before writing ANY new code, ALWAYS search first:
 
 1. **Search for existing patterns** using `grep_search` or `semantic_search`:
-
    - The concept name (e.g., "slug validation", "price formatting")
    - Function name patterns (`isValid*`, `format*`, `build*`, `use*`)
    - The literal value (regex pattern, constant)
 
 2. **Check canonical locations** based on what you're creating:
-
    - Type/interface → search `types/`
    - Validation function → search `utils/` for `isValid*`, `validate*`
    - Helper/utility → search `utils/`, `lib/`
@@ -117,7 +130,6 @@ Before writing ANY new code, ALWAYS search first:
    - Hook → search `components/hooks/`
 
 3. **Report findings** before proposing implementation:
-
    - "Found `isValidCategorySlugFormat` in `utils/category-mapping.ts` - will reuse"
    - "No existing pattern found - will create new utility in `utils/`"
 
@@ -129,10 +141,12 @@ Before writing ANY new code, ALWAYS search first:
 
 - Prefer surgical diffs; keep file moves/renames minimal and scoped.
 - Do not edit generated or build output (`public/sw.js`, `.next/**`, `tsconfig.tsbuildinfo`, `server-place-sitemap.xml`). Edit `public/sw-template.js` and run prebuild instead.
+- **⚠️ NEVER delete `open-next.config.ts`** — it's the primary mechanism that installs Sharp into the Lambda bundle. `server.install` in `sst.config.ts` provides a safety net. Both must use x86_64/x64. The `arch` in `open-next.config.ts` MUST match `args.architecture` in `sst.config.ts` (currently both x86_64/x64). Do NOT switch to arm64 — SST v3 + OpenNext cannot cross-install (verified broken Feb + Mar 2026). See: `docs/incidents/2026-02-18-sharp-architecture-mismatch.md`.
 - Types live only in `types/`; avoid redefining `NavigationItem`, `SocialLinks`, `EventProps`, `CitySummaryResponseDTO` (see `types/common.ts`, `types/api/city.ts`).
 - Any reusable/derived props types (e.g., Picks of an existing props interface) must be declared in `types/` (typically `types/props.ts`) rather than inline within components.
 - Before introducing a new type/interface, search `types/` (and related feature folders) for existing candidates to reuse/extend, and place additions in the most appropriate shared file (e.g., `types/props.ts` for UI props, `types/api/*` for DTOs).
 - Server-first by default; mark client components with `"use client"` only when necessary. Avoid exposing secrets in client code.
+- **No local barrel files** that re-export `"use client"` components from different route contexts. Use direct file imports to prevent manifest bloat (see Feb 2026 incident: `components/ui/sponsor/index.ts` leaked 3 `/patrocina`-only components into `/[place]` manifest, adding 24 KB).
 - API security: Internal API routes (`app/api/*`) handle HMAC signing server-side via `*-external.ts` wrappers. Middleware enforces HMAC on most `/api/*` routes; public GET endpoints (events, news, categories, places, regions, cities) are allowlisted. Never sign requests in the browser—always use internal API routes.
 - Use Yarn 4 commands and Node 20 locally; run `yarn lint && yarn typecheck && yarn test` before finalizing changes.
 
@@ -145,6 +159,8 @@ Before writing ANY new code, ALWAYS search first:
 
 ## ⚠️ CRITICAL: ISR/Caching Cost Prevention
 
+### Issue 1: Dynamic Pages from `searchParams`
+
 **NEVER add `searchParams` to page components in `app/[place]/` routes.**
 
 Reading `searchParams` in a page component makes the page **dynamic**, causing OpenNext/SST to create a separate DynamoDB cache entry for every unique URL+query combination. This caused a **$300+ cost spike** on Dec 28, 2025.
@@ -155,6 +171,31 @@ Reading `searchParams` in a page component makes the page **dynamic**, causing O
 2. Query params (`search`, `distance`, `lat`, `lon`) are handled **client-side only** via SWR
 3. SEO robots `noindex` for filtered URLs is handled via `X-Robots-Tag` header in `proxy.ts`
 4. CloudWatch alarm `DynamoDB-HighWriteCost-Alert` monitors for write spikes >100k/hour
+
+**If you need query-dependent behavior:**
+
+- Handle it in middleware (`proxy.ts`) for headers/redirects
+- Handle it client-side for data fetching
+- NEVER make the page component read `searchParams`
+
+### Issue 2: Fetch Cache Explosion from `next: { revalidate }`
+
+**NEVER add `next: { revalidate, tags }` to external API fetches in `lib/api/*-external.ts` files.**
+
+This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL as a separate entry in **both S3 and DynamoDB**. With high-cardinality APIs (100+ places × categories × dates × pages), this caused a cost spike on Jan 20, 2026 (146K cache entries per build vs baseline 150).
+
+**Rules:**
+
+1. External wrappers (`*-external.ts`) must use `fetchWithHmac` WITHOUT `next:` option
+2. This defaults to `cache: "no-store"` which prevents unbounded cache growth
+3. Internal API routes handle caching via `Cache-Control` headers instead
+4. See incident: `docs/incidents/2026-01-20-fetch-cache-explosion.md`
+
+**If you want to improve API caching:**
+
+- Add/adjust `Cache-Control` headers in internal API routes (`app/api/*`)
+- Use in-memory TTL caches (`createCache`/`createKeyedCache`) in client libraries
+- NEVER use `next: { revalidate }` on external fetches
 
 **If you need query-dependent behavior:**
 
@@ -178,3 +219,30 @@ Reading `searchParams` in a page component makes the page **dynamic**, causing O
 - Tests: add unit tests under `test/` and E2E flows under `e2e/` when user‑visible.
 - SW/Caching: if adding external API usage or offline behavior, edit `public/sw-template.js` and re‑run prebuild/dev.
 - Pre‑PR: `yarn lint && yarn typecheck && yarn test` (and E2E if applicable); include screenshots for UI.
+
+## Cursor Cloud specific instructions
+
+### Environment
+
+- **Node 22** and **Yarn 4.12.0** (via Corepack) are required. The VM ships with both pre-installed via nvm.
+- Dependencies: `corepack enable && yarn install --immutable` from the repo root.
+- A `.env.development` file must exist with at least `HMAC_SECRET=<any-value>`. The app falls back to the default API URL in `config/api-defaults.json` when `NEXT_PUBLIC_API_URL` is not set.
+- Without the production `HMAC_SECRET`, the external backend returns HTTP 401. The app still renders (pages return 200) but with empty event/news data. Unit tests are unaffected (test setup seeds its own `HMAC_SECRET`).
+
+### Running services
+
+| Command          | Purpose                        | Notes                                                                      |
+| ---------------- | ------------------------------ | -------------------------------------------------------------------------- |
+| `yarn dev`       | Next.js dev server (port 3000) | Auto-runs prebuild (service worker generation). Uses Turbopack.            |
+| `yarn lint`      | ESLint                         | 0 errors expected; warnings are pre-existing and acceptable.               |
+| `yarn typecheck` | `tsc --noEmit`                 | Must pass cleanly.                                                         |
+| `yarn test`      | Vitest unit/integration tests  | All 100 test files / 1401 tests should pass with no external dependencies. |
+| `yarn test:e2e`  | Playwright E2E                 | Requires a running app and valid API credentials.                          |
+
+### Gotchas
+
+- The `yarn dev` command is `next dev` (no env-cmd wrapper). To load `.env.development`, Next.js reads it automatically. For build variants, use `yarn build:development` which explicitly sources it via `env-cmd`.
+- `public/sw.js` is generated, not committed. `yarn dev` runs prebuild automatically, but a standalone `yarn build` does **not** — use `yarn build:development` (or run `yarn prebuild` manually first).
+- The pre-push hook runs `yarn typecheck && yarn test --run && yarn i18n:check`. Ensure these pass before pushing.
+- Port 3000 may be occupied by Chrome's network service in the Cloud VM. If `yarn dev` fails with `EADDRINUSE`, use `--port 3001` or kill the conflicting process first. Also remove `/workspace/.next/dev/lock` if a stale lock file blocks startup.
+- The `HMAC_SECRET` environment variable is injected via Cursor Secrets. When writing `.env.development`, populate it from `$HMAC_SECRET` so Next.js picks it up: `echo "HMAC_SECRET=$HMAC_SECRET" > .env.development`.

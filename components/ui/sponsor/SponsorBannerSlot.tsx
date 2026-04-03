@@ -1,18 +1,44 @@
 import { Suspense } from "react";
-import { getActiveSponsorForPlace } from "@config/sponsors";
+import { connection } from "next/server";
+import { getActiveSponsorForPlace, getHouseAdForSlot } from "@config/sponsors";
 import type { SponsorBannerSlotProps } from "types/sponsor";
 import SponsorBanner from "./SponsorBanner";
 import SponsorEmptyState from "./SponsorEmptyState";
+import TextHouseAd from "./TextHouseAd";
 
 /**
  * Server component that fetches sponsor data and renders the appropriate banner.
- * Shows SponsorBanner if active sponsor exists, otherwise SponsorEmptyState CTA.
+ * Uses cascade logic: tries primary place first, then fallbacks (region → country).
+ *
+ * Priority order:
+ * 1. Paid sponsor (always wins)
+ * 2. House ad (~70% when no paid sponsor):
+ *    - "text": CSS-rendered banner linking to /patrocina (no image needed)
+ * 3. Empty state CTA (~30% when no paid sponsor)
  */
-function SponsorBannerSlotContent({ place }: SponsorBannerSlotProps) {
-  const sponsor = getActiveSponsorForPlace(place);
+async function SponsorBannerSlotContent({
+  place,
+  fallbackPlaces,
+}: SponsorBannerSlotProps) {
+  // Signal dynamic rendering for DB call (getActiveSponsorForPlace).
+  // This component is wrapped in <Suspense>, so only this subtree streams dynamically.
+  await connection();
 
-  if (sponsor) {
-    return <SponsorBanner sponsor={sponsor} place={place} />;
+  const result = await getActiveSponsorForPlace(place, fallbackPlaces);
+
+  if (result) {
+    return <SponsorBanner sponsor={result.sponsor} place={result.matchedPlace} />;
+  }
+
+  // No paid sponsor — try house ad
+  const houseAdResult = getHouseAdForSlot();
+  if (houseAdResult) {
+    const { houseAd } = houseAdResult;
+
+    // Text house ad — CSS-rendered, no image
+    if (houseAd.type === "text") {
+      return <TextHouseAd houseAd={houseAd} place={place} />;
+    }
   }
 
   return <SponsorEmptyState />;
@@ -21,12 +47,18 @@ function SponsorBannerSlotContent({ place }: SponsorBannerSlotProps) {
 /**
  * Wrapper with Suspense for non-blocking render.
  * Place this below heading/filters, above events list.
+ *
+ * For event pages, pass fallbackPlaces to enable cascade:
+ * <SponsorBannerSlot place={citySlug} fallbackPlaces={[regionSlug]} />
  */
-export default function SponsorBannerSlot({ place }: SponsorBannerSlotProps) {
+export default function SponsorBannerSlot({
+  place,
+  fallbackPlaces,
+}: SponsorBannerSlotProps) {
   return (
     <div className="mb-4 mt-2" data-testid="sponsor-slot">
       <Suspense fallback={null}>
-        <SponsorBannerSlotContent place={place} />
+        <SponsorBannerSlotContent place={place} fallbackPlaces={fallbackPlaces} />
       </Suspense>
     </div>
   );
