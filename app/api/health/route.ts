@@ -118,9 +118,10 @@ export async function GET(request: NextRequest) {
       status: isFullyHealthy ? "healthy" : "degraded",
       timestamp: new Date().toISOString(),
       cache: {
-        strategy: redisConfigured ? "redis" : "filesystem",
-        shared: redisConfigured,
+        strategy: redisReachable ? "redis" : "filesystem",
+        shared: redisReachable,
         connected: redisReachable,
+        configured: redisConfigured,
       },
       config: {
         apiUrlConfigured,
@@ -128,6 +129,7 @@ export async function GET(request: NextRequest) {
         revalidateSecretConfigured: Boolean(process.env.REVALIDATE_SECRET),
         redisConfigured,
       },
+      buildVersion: process.env.BUILD_VERSION || "unknown",
       environment: process.env.NODE_ENV,
     },
     {

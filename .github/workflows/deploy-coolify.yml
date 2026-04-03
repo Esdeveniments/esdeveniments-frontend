@@ -156,6 +156,10 @@ jobs:
           PORT: 3000
           E2E_TEST_MODE: "1"
           NEXT_PUBLIC_E2E_TEST_MODE: "1"
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
 
       - name: Wait for server to be ready
         run: npx wait-on http://localhost:3000 --timeout 60000
@@ -275,11 +279,12 @@ jobs:
       - name: Wait for Coolify deployment to complete
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          EXPECTED_VERSION: ${{ github.sha }}
         run: |
-          echo "Waiting for Coolify to build and deploy..."
-          # Poll health endpoint until new deployment is live.
-          # Coolify does rolling update: new container must pass HEALTHCHECK
-          # before old one is killed, so health endpoint availability = deploy done.
+          echo "Waiting for Coolify to deploy revision ${EXPECTED_VERSION:0:7}..."
+          # Poll health endpoint until the new revision is live.
+          # Check buildVersion in the response to ensure we're hitting the new container,
+          # not the old one during a rolling update.
           MAX_WAIT=180  # 3 minutes max (Coolify Docker build + rolling update)
           INTERVAL=10
           ELAPSED=0
@@ -289,22 +294,23 @@ jobs:
           ELAPSED=15
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-              --max-time 5 \
-              "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
+            RESPONSE=$(curl -s --max-time 5 \
+              "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}") || RESPONSE=""
 
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "Health endpoint responding (HTTP 200) after ${ELAPSED}s"
+            LIVE_VERSION=$(echo "$RESPONSE" | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || LIVE_VERSION=""
+
+            if [ "$LIVE_VERSION" = "$EXPECTED_VERSION" ]; then
+              echo "New revision ${EXPECTED_VERSION:0:7} is live after ${ELAPSED}s"
               break
             fi
 
-            echo "Health check: HTTP $HTTP_CODE (${ELAPSED}s elapsed, waiting...)"
+            echo "Waiting... live=${LIVE_VERSION:-unknown} expected=${EXPECTED_VERSION:0:7} (${ELAPSED}s elapsed)"
             sleep $INTERVAL
             ELAPSED=$((ELAPSED + INTERVAL))
           done
 
           if [ $ELAPSED -ge $MAX_WAIT ]; then
-            echo "::warning::Health endpoint did not respond within ${MAX_WAIT}s — deployment may still be in progress"
+            echo "::warning::New revision not detected within ${MAX_WAIT}s — deployment may still be in progress"
           fi
 
       - name: Post-deploy smoke tests

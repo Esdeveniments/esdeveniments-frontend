@@ -1,6 +1,6 @@
 ---
 name: env-variable-management
-description: Guide for adding environment variables. Use when adding new env vars to ensure all 4 locations are updated (code, Coolify, workflow, GitHub secrets).
+description: Guide for adding environment variables. Use when adding new env vars to ensure all 5 locations are updated (code, env files, Coolify, workflow, GitHub secrets).
 ---
 
 # Environment Variable Management Skill
@@ -9,16 +9,19 @@ description: Guide for adding environment variables. Use when adding new env var
 
 Ensure environment variables are properly configured across ALL required locations. Missing a location causes **production runtime crashes**.
 
-## ⚠️ CRITICAL: 4 Locations Must Stay in Sync
+## ⚠️ CRITICAL: 5 Locations Must Stay in Sync
 
-When adding ANY new environment variable, you MUST update **ALL 4 locations**:
+When adding ANY new environment variable, you MUST update **ALL applicable locations**:
 
-| #   | Location            | Purpose                | Where                                        |
-| --- | ------------------- | ---------------------- | -------------------------------------------- |
-| 1   | **Code**            | Read the variable      | `process.env.VAR_NAME`                       |
-| 2   | **Coolify**         | Container runtime env  | Coolify dashboard → Application → Environment |
-| 3   | **Deploy Workflow** | CI/CD build secrets    | `.github/workflows/deploy-coolify.yml`       |
-| 4   | **GitHub Secrets**  | Actual secret values   | GitHub repo settings                         |
+| #   | Location            | Purpose                          | Where                                        |
+| --- | ------------------- | -------------------------------- | -------------------------------------------- |
+| 1   | **Code**            | Read the variable                | `process.env.VAR_NAME`                       |
+| 2   | **Env files**       | Local dev/build via `env-cmd`    | `.env.development`, `.env.staging`, `.env.production` |
+| 3   | **Coolify**         | Container runtime env            | Coolify dashboard → Application → Environment |
+| 4   | **Deploy Workflow** | CI/CD build secrets              | `.github/workflows/deploy-coolify.yml`       |
+| 5   | **GitHub Secrets**  | Actual secret values             | GitHub repo settings                         |
+
+> **Note**: `NEXT_PUBLIC_API_URL` must be present in `.env.*` files because it affects the service worker registration and test runs (`build:development`, `build:staging`, etc. use `env-cmd`).
 
 ## Required vs Optional Pattern
 

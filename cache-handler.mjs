@@ -34,7 +34,19 @@ const RETRY_COOLDOWN_MS = 30_000;
 const lruFallbackConfig = { handlers: [createLruHandler()] };
 
 CacheHandler.onCreation(() => {
-  // Singleton: reuse existing config if already initialized
+  // If a previous failure occurred, check whether the cooldown has elapsed.
+  // If so, clear the fallback config to allow a reconnection attempt below.
+  if (globalThis.__cacheHandlerLastFailure) {
+    if (Date.now() - globalThis.__cacheHandlerLastFailure < RETRY_COOLDOWN_MS) {
+      // Still in cooldown — keep using LRU fallback
+      return lruFallbackConfig;
+    }
+    // Cooldown expired — clear failure state so we retry Redis
+    globalThis.__cacheHandlerLastFailure = null;
+    globalThis.__cacheHandlerConfig = null;
+  }
+
+  // Singleton: reuse existing config if already initialized (healthy Redis or stable LRU)
   if (globalThis.__cacheHandlerConfig) {
     return globalThis.__cacheHandlerConfig;
   }
@@ -49,12 +61,6 @@ CacheHandler.onCreation(() => {
     return lruFallbackConfig;
   }
 
-  // Cooldown: skip reconnection attempts for a period after failure
-  if (globalThis.__cacheHandlerLastFailure &&
-      Date.now() - globalThis.__cacheHandlerLastFailure < RETRY_COOLDOWN_MS) {
-    return lruFallbackConfig;
-  }
-
   globalThis.__cacheHandlerConfigPromise = (async () => {
     let redisClient = null;
 
@@ -66,10 +72,10 @@ CacheHandler.onCreation(() => {
 
       redisClient.once("error", (e) => {
         console.warn("[cache-handler] Redis error:", e.message);
-        // Disconnect the failed client to prevent resource leaks, then fall
-        // back to shared LRU. The cooldown timestamp prevents rapid retries.
+        // Disconnect the failed client to prevent resource leaks.
+        // Don't set __cacheHandlerConfig — the cooldown logic handles fallback.
         redisClient.disconnect().catch(() => {});
-        globalThis.__cacheHandlerConfig = lruFallbackConfig;
+        globalThis.__cacheHandlerConfig = null;
         globalThis.__cacheHandlerConfigPromise = null;
         globalThis.__cacheHandlerLastFailure = Date.now();
       });
@@ -86,7 +92,8 @@ CacheHandler.onCreation(() => {
     if (!redisClient?.isReady) {
       console.warn("[cache-handler] Falling back to LRU cache.");
       globalThis.__cacheHandlerConfigPromise = null;
-      globalThis.__cacheHandlerConfig = lruFallbackConfig;
+      // Don't set __cacheHandlerConfig — keep fallback ephemeral so
+      // the cooldown logic can retry Redis after RETRY_COOLDOWN_MS.
       return lruFallbackConfig;
     }
 
