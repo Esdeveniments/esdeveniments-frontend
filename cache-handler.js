@@ -2,6 +2,7 @@ const { createClient } = require("redis");
 
 const CACHE_PREFIX = "next:cache:";
 const TAG_PREFIX = "next:tag:";
+const TAG_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days safety TTL for tag sets
 
 function getRedisUrl() {
   const directUrl = process.env.REDIS_URL;
@@ -55,6 +56,8 @@ async function getClient() {
       })
       .catch((error) => {
         console.error("[cache-handler] Redis connection failed:", error);
+        // Clean up the failed client to avoid connection leaks
+        newClient.quit().catch(() => {});
         clientPromise = null;
         return null;
       });
@@ -126,18 +129,17 @@ class CacheHandler {
 
       const cacheKey = buildCacheKey(key);
       const payload = serializeCacheValue(data);
-      const revalidate =
-        typeof data?.revalidate === "number" && Number.isFinite(data.revalidate)
-          ? data.revalidate
-          : null;
 
-      // revalidate: 0 means "do not cache" in Next.js
-      if (revalidate === 0) {
+      // Resolve revalidate from ctx (Next.js 16+) or data (legacy), handle false = no-cache
+      const rawRevalidate = ctx?.revalidate ?? data?.revalidate ?? null;
+
+      // false or 0 means "do not cache" in Next.js
+      if (rawRevalidate === false || rawRevalidate === 0) {
         return;
       }
 
-      if (typeof revalidate === "number" && revalidate > 0) {
-        const ttl = Math.max(1, Math.floor(revalidate));
+      if (typeof rawRevalidate === "number" && rawRevalidate > 0) {
+        const ttl = Math.max(1, Math.floor(rawRevalidate));
         await redisClient.set(cacheKey, payload, { EX: ttl });
       } else {
         await redisClient.set(cacheKey, payload);
@@ -147,7 +149,10 @@ class CacheHandler {
       if (tags.length > 0) {
         const multi = redisClient.multi();
         for (const tag of tags) {
-          multi.sAdd(buildTagKey(tag), cacheKey);
+          const tagKey = buildTagKey(tag);
+          multi.sAdd(tagKey, cacheKey);
+          // Safety TTL on tag sets to prevent unbounded growth
+          multi.expire(tagKey, TAG_TTL_SECONDS);
         }
         await multi.exec();
       }
@@ -176,7 +181,10 @@ class CacheHandler {
 
       const multi = redisClient.multi();
       allMembers.forEach((members, index) => {
-        members.forEach((member) => multi.del(member));
+        // Batch delete: pass all members to a single DEL call
+        if (members.length > 0) {
+          multi.del(members);
+        }
         multi.del(tagKeys[index]);
       });
 
