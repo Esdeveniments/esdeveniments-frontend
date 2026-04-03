@@ -149,10 +149,9 @@ The project has many performance best practices already implemented:
 **Cause**: Server response time, likely from edge function cold starts or API fetch latency.  
 **Actions**:
 
-- Review CloudFront/Lambda cold start patterns — consider provisioned concurrency for key routes
 - Evaluate if the ISR `s-maxage` values can be increased for high-traffic routes to reduce origin hits
 - Consider stale-while-revalidate patterns more aggressively for listing pages
-- Ensure the SST Lambda architecture (arm64) matches the OpenNext config
+- Monitor Docker container memory/CPU usage and adjust Coolify resource limits if needed
 - Evaluate PPR (Partial Prerendering) for the `/[place]` route to serve a static shell instantly
 
 #### 5.3 `/[place]` Server Bundle Grew +6.7%

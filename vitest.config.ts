@@ -65,8 +65,6 @@ export default defineConfig({
         "messages/",
         "plan/",
         "**/*.config.*",
-        "sst.config.ts",
-        "open-next.config.ts",
         "instrumentation*.ts",
         "sentry.*.config.ts",
       ],

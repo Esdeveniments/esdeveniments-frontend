@@ -26,7 +26,7 @@ const PRUNE_INTERVAL_MS = 60_000;
 /**
  * Extract client IP from request headers.
  *
- * Prefer x-real-ip (set by trusted proxy like CloudFront/ALB).
+ * Prefer x-real-ip (set by trusted reverse proxy like Traefik/Cloudflare).
  * Fall back to the LAST entry in x-forwarded-for, which is the one
  * appended by the outermost trusted proxy (the first entry is
  * client-controlled and can be spoofed to bypass rate limiting).

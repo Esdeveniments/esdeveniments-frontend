@@ -500,7 +500,7 @@ describe("hydration consistency (string-based operations)", () => {
 describe("image proxy cache key stripping", () => {
   // These tests document the behavior that the image proxy strips ?v= before
   // fetching upstream, since some external servers reject URLs with unknown query params.
-  // CloudFront still caches by the full proxy URL (with ?v=), so cache-busting works.
+  // The CDN still caches by the full proxy URL (with ?v=), so cache-busting works.
 
   it("withImageCacheKey adds ?v= that would be stripped by proxy before upstream fetch", () => {
     const original =
@@ -600,7 +600,7 @@ describe("buildOptimizedImageUrl - proxy all external URLs", () => {
     expect(result).toBe("/static/images/logo.png?v=key1");
   });
 
-  it("includes cache key in proxy URL for CloudFront cache-busting", () => {
+  it("includes cache key in proxy URL for CDN cache-busting", () => {
     const result = buildOptimizedImageUrl(
       "https://example.com/image.jpg",
       "version123"

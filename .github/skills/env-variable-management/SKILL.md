@@ -1,6 +1,6 @@
 ---
 name: env-variable-management
-description: Guide for adding environment variables. Use when adding new env vars to ensure all 4 locations are updated (code, SST, workflow, GitHub secrets).
+description: Guide for adding environment variables. Use when adding new env vars to ensure all 4 locations are updated (code, Coolify, workflow, GitHub secrets).
 ---
 
 # Environment Variable Management Skill
@@ -13,84 +13,40 @@ Ensure environment variables are properly configured across ALL required locatio
 
 When adding ANY new environment variable, you MUST update **ALL 4 locations**:
 
-| #   | Location            | Purpose                | File                               |
-| --- | ------------------- | ---------------------- | ---------------------------------- |
-| 1   | **Code**            | Read the variable      | `process.env.VAR_NAME`             |
-| 2   | **SST Config**      | Lambda runtime env     | `sst.config.ts`                    |
-| 3   | **Deploy Workflow** | CI/CD secrets → `.env` | `.github/workflows/deploy-sst.yml` |
-| 4   | **GitHub Secrets**  | Actual secret values   | GitHub repo settings               |
+| #   | Location            | Purpose                | Where                                        |
+| --- | ------------------- | ---------------------- | -------------------------------------------- |
+| 1   | **Code**            | Read the variable      | `process.env.VAR_NAME`                       |
+| 2   | **Coolify**         | Container runtime env  | Coolify dashboard → Application → Environment |
+| 3   | **Deploy Workflow** | CI/CD build secrets    | `.github/workflows/deploy-coolify.yml`       |
+| 4   | **GitHub Secrets**  | Actual secret values   | GitHub repo settings                         |
 
 ## Required vs Optional Pattern
 
 ### Required Variables (Fail Fast)
 
-For variables that MUST exist in production:
-
-**In `sst.config.ts`:**
+For variables that MUST exist in production, validate at startup or usage:
 
 ```typescript
-environment: {
-  MY_REQUIRED_VAR: (() => {
-    const value = process.env.MY_REQUIRED_VAR;
-    if (!value) {
-      throw new Error(
-        "MY_REQUIRED_VAR environment variable must be set for SST deployment"
-      );
-    }
-    return value;
-  })(),
+const myVar = process.env.MY_REQUIRED_VAR;
+if (!myVar) {
+  throw new Error("MY_REQUIRED_VAR environment variable must be set");
 }
-```
-
-**In `deploy-sst.yml`:**
-
-```yaml
-- name: Create .env.production file
-  env:
-    MY_REQUIRED_VAR: ${{ secrets.MY_REQUIRED_VAR }}
-  run: |
-    # Validate required secret
-    if [ -z "$MY_REQUIRED_VAR" ]; then
-      echo "::error::MY_REQUIRED_VAR secret is required but not set"
-      exit 1
-    fi
-    echo "MY_REQUIRED_VAR=$MY_REQUIRED_VAR" >> .env.production
 ```
 
 ### Optional Variables (Graceful Fallback)
 
 For variables with defaults or optional features:
 
-**In `sst.config.ts`:**
-
 ```typescript
-environment: {
-  // Optional: only include if set
-  ...(process.env.MY_OPTIONAL_VAR && {
-    MY_OPTIONAL_VAR: process.env.MY_OPTIONAL_VAR,
-  }),
-}
-```
-
-**In `deploy-sst.yml`:**
-
-```yaml
-if [ -n "$MY_OPTIONAL_VAR" ]; then
-echo "MY_OPTIONAL_VAR=$MY_OPTIONAL_VAR" >> .env.production
-echo "✅ MY_OPTIONAL_VAR configured"
-else
-echo "::warning::MY_OPTIONAL_VAR not set. Feature X will be disabled."
-fi
+const myVar = process.env.MY_OPTIONAL_VAR ?? "default-value";
 ```
 
 ## Current Required Secrets
 
-These MUST be set in GitHub Secrets for deployment:
+These MUST be set in both **Coolify environment** and **GitHub Secrets**:
 
 | Secret                  | Purpose                    |
 | ----------------------- | -------------------------- |
-| `AWS_ACCESS_KEY_ID`     | AWS deployment credentials |
-| `AWS_SECRET_ACCESS_KEY` | AWS deployment credentials |
 | `NEXT_PUBLIC_API_URL`   | Backend API URL            |
 | `HMAC_SECRET`           | API request signing        |
 | `SENTRY_DSN`            | Error tracking             |
@@ -98,6 +54,8 @@ These MUST be set in GitHub Secrets for deployment:
 | `STRIPE_SECRET_KEY`     | Payment processing         |
 | `STRIPE_WEBHOOK_SECRET` | Webhook verification       |
 | `REVALIDATE_SECRET`     | Cache revalidation         |
+| `COOLIFY_TOKEN`         | Deployment trigger (GitHub only) |
+| `COOLIFY_WEBHOOK_URL`   | Deployment trigger (GitHub only) |
 
 ## Current Optional Secrets
 
@@ -110,6 +68,7 @@ These MUST be set in GitHub Secrets for deployment:
 | `CLOUDFLARE_ZONE_ID`           | CDN purge   | Skipped      |
 | `CLOUDFLARE_API_TOKEN`         | CDN purge   | Skipped      |
 | `GOOGLE_PLACES_API_KEY`        | Places API  | Disabled     |
+| `REDIS_URL`                    | Redis cache | Filesystem   |
 
 ## Step-by-Step: Adding a New Environment Variable
 
@@ -123,42 +82,23 @@ if (!myVar) {
 }
 ```
 
-### Step 2: Add to `sst.config.ts`
+### Step 2: Add to Coolify
 
-Find the `environment` block in `sst.config.ts` (~line 165):
+1. Go to **Coolify dashboard** → your application
+2. Go to **Environment Variables** tab
+3. Add `MY_NEW_VAR` with the production value
+4. Check "Build Variable" if needed during Docker build (e.g., `NEXT_PUBLIC_*` vars)
+5. Redeploy for changes to take effect
 
-```typescript
-const site = new sst.aws.Nextjs("site", {
-  // ...
-  environment: {
-    // Add here - use required or optional pattern above
-    MY_NEW_VAR: (() => {
-      const value = process.env.MY_NEW_VAR;
-      if (!value) {
-        throw new Error("MY_NEW_VAR must be set for SST deployment");
-      }
-      return value;
-    })(),
-  },
-});
-```
+### Step 3: Add to `deploy-coolify.yml`
 
-### Step 3: Add to `deploy-sst.yml`
-
-Find "Create .env.production file" step (~line 89):
+If the variable is needed during CI build/test (e.g., `NEXT_PUBLIC_*` vars baked at build time):
 
 ```yaml
-- name: Create .env.production file
+- name: Build Next.js application
   env:
-    # Add to env block
     MY_NEW_VAR: ${{ secrets.MY_NEW_VAR }}
-  run: |
-    # Add validation (for required) or conditional (for optional)
-    if [ -z "$MY_NEW_VAR" ]; then
-      echo "::error::MY_NEW_VAR is required"
-      exit 1
-    fi
-    echo "MY_NEW_VAR=$MY_NEW_VAR" >> .env.production
+  run: yarn build
 ```
 
 ### Step 4: Add to GitHub Secrets
@@ -180,6 +120,8 @@ Add to the tables in this skill file.
 
 **Security**: Never expose secrets to the client. API keys like `STRIPE_SECRET_KEY` must NOT have `NEXT_PUBLIC_` prefix.
 
+**Important**: `NEXT_PUBLIC_*` vars are inlined at **build time**. They must be available both in Coolify (as build variables) and in the GitHub Actions workflow (for CI builds).
+
 ## Local Development
 
 Create `.env.local` (gitignored) with your dev values:
@@ -193,17 +135,19 @@ HMAC_SECRET=dev-secret-for-testing
 
 ## Common Mistakes
 
-1. **Adding to code but not SST** → Runtime crash in Lambda
-2. **Adding to SST but not workflow** → Build fails, secret not available
+1. **Adding to code but not Coolify** → Runtime crash in container
+2. **Adding to Coolify but not GitHub Secrets** → CI build fails
 3. **Adding to workflow but not GitHub Secrets** → Empty value, validation fails
 4. **Using `NEXT_PUBLIC_` for secrets** → Exposed to browser
 5. **Forgetting local `.env.local`** → Dev environment broken
+6. **Not marking `NEXT_PUBLIC_*` as build variable in Coolify** → Variable undefined in client bundle
 
 ## Checklist for New Env Variable
 
 - [ ] Added `process.env.VAR_NAME` in code?
-- [ ] Added to `sst.config.ts` environment block?
-- [ ] Added to `deploy-sst.yml` env and run sections?
+- [ ] Added to Coolify environment variables?
+- [ ] If `NEXT_PUBLIC_*`: marked as build variable in Coolify?
+- [ ] Added to `deploy-coolify.yml` if needed for CI?
 - [ ] Added secret value in GitHub repo settings?
 - [ ] Decided: required (throw) or optional (fallback)?
 - [ ] Correct prefix: `NEXT_PUBLIC_` only for public values?
@@ -212,8 +156,8 @@ HMAC_SECRET=dev-secret-for-testing
 
 ## Files to Reference
 
-- [sst.config.ts](../../../sst.config.ts) - Lambda environment (~line 165)
-- [.github/workflows/deploy-sst.yml](../../workflows/deploy-sst.yml) - CI/CD (~line 89)
+- [.github/workflows/deploy-coolify.yml](../../workflows/deploy-coolify.yml) - CI/CD workflow
+- Coolify dashboard → Application → Environment Variables
 - GitHub repo → Settings → Secrets → Actions
 
 ## Testing Your Changes
@@ -222,4 +166,4 @@ After adding a new env var:
 
 1. **Local**: Add to `.env.local`, run `yarn dev`
 2. **CI dry-run**: Push to branch, check workflow logs
-3. **Production**: Merge to main, verify in CloudWatch logs
+3. **Production**: Add to Coolify, merge to main, verify via `/api/health` endpoint
