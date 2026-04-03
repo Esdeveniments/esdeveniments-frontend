@@ -37,7 +37,7 @@ async function checkRedisConnectivity(): Promise<boolean> {
   return new Promise((resolve) => {
     let authenticated = !password; // skip auth if no password
     const socket = useTls
-      ? tlsConnect({ host, port }, onConnect)
+      ? tlsConnect({ host, port, rejectUnauthorized: false }, onConnect)
       : createConnection({ host, port }, onConnect);
 
     /** Build a RESP array command — handles passwords with spaces/special chars. */
