@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createConnection } from "net";
 
 /**
  * Health check endpoint for monitoring runtime configuration.
@@ -11,29 +12,37 @@ import { NextRequest, NextResponse } from "next/server";
  *   GET /api/health?secret=<REVALIDATE_SECRET> → full details
  */
 
+/** Lightweight Redis PING using raw TCP — avoids importing the redis package. */
 async function checkRedisConnectivity(): Promise<boolean> {
-  const url =
-    process.env.REDIS_URL ||
-    (process.env.REDIS_HOST
-      ? `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT || "6379"}`
-      : null);
-  if (!url) return false;
+  const redisUrl = process.env.REDIS_URL;
+  const host = redisUrl
+    ? new URL(redisUrl).hostname
+    : process.env.REDIS_HOST;
+  const port = redisUrl
+    ? Number(new URL(redisUrl).port || "6379")
+    : Number(process.env.REDIS_PORT || "6379");
 
-  let client;
-  try {
-    const { createClient } = await import("redis");
-    client = createClient({ url });
-    client.on("error", (err: Error) =>
-      console.error("[health] Redis probe error:", err)
-    );
-    await client.connect();
-    const pong = await client.ping();
-    return pong === "PONG";
-  } catch {
-    return false;
-  } finally {
-    client?.quit().catch(() => {});
-  }
+  if (!host) return false;
+
+  return new Promise((resolve) => {
+    const socket = createConnection({ host, port }, () => {
+      socket.write("PING\r\n");
+    });
+    socket.setTimeout(2000);
+    socket.on("data", (data) => {
+      const response = data.toString().trim();
+      socket.destroy();
+      resolve(response.includes("PONG"));
+    });
+    socket.on("error", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.on("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
 }
 
 export async function GET(request: NextRequest) {
