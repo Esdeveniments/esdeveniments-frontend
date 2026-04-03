@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createConnection } from "net";
+import { connect as tlsConnect } from "tls";
 
 /**
  * Health check endpoint for monitoring runtime configuration.
@@ -14,23 +15,49 @@ import { createConnection } from "net";
 
 /** Lightweight Redis PING using raw TCP — avoids importing the redis package. */
 async function checkRedisConnectivity(): Promise<boolean> {
-  const redisUrl = process.env.REDIS_URL;
-  const host = redisUrl
-    ? new URL(redisUrl).hostname
-    : process.env.REDIS_HOST;
-  const port = redisUrl
-    ? Number(new URL(redisUrl).port || "6379")
-    : Number(process.env.REDIS_PORT || "6379");
+  let parsedUrl: URL | null = null;
+  try {
+    if (process.env.REDIS_URL) parsedUrl = new URL(process.env.REDIS_URL);
+  } catch {
+    /* invalid URL */
+  }
+
+  const host = parsedUrl?.hostname || process.env.REDIS_HOST;
+  const port = Number(parsedUrl?.port || process.env.REDIS_PORT || "6379");
+  const useTls = parsedUrl?.protocol === "rediss:";
+  const password =
+    (parsedUrl?.password && decodeURIComponent(parsedUrl.password)) ||
+    process.env.REDIS_PASSWORD;
+  const username =
+    (parsedUrl?.username && decodeURIComponent(parsedUrl.username)) ||
+    process.env.REDIS_USERNAME;
 
   if (!host) return false;
 
   return new Promise((resolve) => {
-    const socket = createConnection({ host, port }, () => {
-      socket.write("PING\r\n");
-    });
+    let authenticated = !password; // skip auth if no password
+    const socket = useTls
+      ? tlsConnect({ host, port, rejectUnauthorized: false }, onConnect)
+      : createConnection({ host, port }, onConnect);
+
+    function onConnect() {
+      if (password) {
+        const authCmd = username
+          ? `AUTH ${username} ${password}\r\n`
+          : `AUTH ${password}\r\n`;
+        socket.write(authCmd);
+      } else {
+        socket.write("PING\r\n");
+      }
+    }
     socket.setTimeout(2000);
     socket.on("data", (data) => {
       const response = data.toString().trim();
+      if (!authenticated && response.includes("OK")) {
+        authenticated = true;
+        socket.write("PING\r\n");
+        return;
+      }
       socket.destroy();
       resolve(response.includes("PONG"));
     });
