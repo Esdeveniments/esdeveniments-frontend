@@ -26,25 +26,25 @@ const ALLOWED_TAGS = [
 ] as const satisfies readonly RevalidatableTag[];
 
 /**
- * Maps cache tags to Cloudflare URL prefixes for cache purging.
- * Cloudflare prefixes are literal path prefixes (NO wildcards supported).
- *
- * Locale prefixes cover all supported locales:
- * - "/" for the default locale (ca, via "as-needed" prefix strategy)
- * - "/es/" and "/en/" for non-default locales
- *
- * This works in tandem with the Cloudflare Cache Rule that caches HTML on
- * www.esdeveniments.cat (excluding /api/* and /preferits).
- *
- * @see https://developers.cloudflare.com/cache/how-to/purge-cache/purge-by-prefix/
+ * Tags that require a full Cloudflare cache purge.
+ * These are structural data (places, regions, cities, categories) that affect
+ * navigation, filters, and sitemaps across ALL locales and pages.
+ * Prefix-based purge can't target the default locale cleanly (it uses unprefixed
+ * paths via next-intl's "as-needed" strategy), so we purge everything.
+ * These revalidations are rare (only when new towns/places are added).
  */
-const LOCALE_PREFIXES = ["/", "/es/", "/en/"];
-const TAG_TO_CLOUDFLARE_PREFIXES: Record<RevalidatableTag, string[]> = {
-  places: ["/api/places", ...LOCALE_PREFIXES],
-  regions: ["/api/regions", ...LOCALE_PREFIXES],
+const FULL_PURGE_TAGS: ReadonlySet<RevalidatableTag> = new Set([
+  "places",
+  "regions",
+  "cities",
+  "categories",
+]);
+
+/**
+ * Tags with targeted Cloudflare prefix purges (API-only, no HTML pages).
+ */
+const TAG_TO_CLOUDFLARE_PREFIXES: Partial<Record<RevalidatableTag, string[]>> = {
   "regions:options": ["/api/regions/options"],
-  cities: ["/api/cities", ...LOCALE_PREFIXES],
-  categories: ["/api/categories", ...LOCALE_PREFIXES],
 };
 
 /**
@@ -96,11 +96,11 @@ function validateTags(tags: unknown): tags is RevalidatableTag[] {
 }
 
 /**
- * Purge Cloudflare cache for given URL prefixes.
+ * Purge Cloudflare cache. Supports full purge or prefix-based purge.
  * Returns success status and any error message.
  */
 async function purgeCloudflareCache(
-  prefixes: string[]
+  options: { purgeEverything: true } | { prefixes: string[] }
 ): Promise<{ success: boolean; error?: string; skipped?: boolean }> {
   const zoneId = process.env.CLOUDFLARE_ZONE_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
@@ -109,6 +109,11 @@ async function purgeCloudflareCache(
   if (!zoneId || !apiToken) {
     return { success: true, skipped: true }; // Not an error, just not configured
   }
+
+  const body =
+    "purgeEverything" in options
+      ? { purge_everything: true }
+      : { prefixes: options.prefixes };
 
   try {
     const controller = new AbortController();
@@ -124,7 +129,7 @@ async function purgeCloudflareCache(
             Authorization: `Bearer ${apiToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ prefixes }),
+          body: JSON.stringify(body),
           signal: controller.signal,
         }
       );
@@ -245,15 +250,26 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5. Purge Cloudflare cache for corresponding URL prefixes
+    // 5. Purge Cloudflare cache
+    // Structural tags (places, regions, etc.) trigger a full purge since they
+    // affect all locales and pages. Other tags use targeted prefix purge.
+    const needsFullPurge = tags.some((tag) => FULL_PURGE_TAGS.has(tag));
     const cfPrefixes = new Set(
       tags.flatMap((tag) => TAG_TO_CLOUDFLARE_PREFIXES[tag] ?? [])
     );
 
     let cloudflareResult: CloudflarePurgeResult;
-    if (cfPrefixes.size > 0) {
+    if (needsFullPurge) {
+      const cfResult = await purgeCloudflareCache({ purgeEverything: true });
+      cloudflareResult = {
+        purged: cfResult.success && !cfResult.skipped,
+        prefixes: ["*"],
+        skipped: cfResult.skipped,
+        error: cfResult.error,
+      };
+    } else if (cfPrefixes.size > 0) {
       const prefixArray = Array.from(cfPrefixes);
-      const cfResult = await purgeCloudflareCache(prefixArray);
+      const cfResult = await purgeCloudflareCache({ prefixes: prefixArray });
       cloudflareResult = {
         purged: cfResult.success && !cfResult.skipped,
         prefixes: prefixArray,
