@@ -3,7 +3,20 @@ name: Deploy to Coolify
 on:
   push:
     branches: [main]
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      skip_e2e:
+        description: "Skip E2E tests (faster deploy)"
+        type: boolean
+        default: false
+      skip_tests:
+        description: "Skip ALL tests (lint + typecheck still run)"
+        type: boolean
+        default: false
+      skip_ci:
+        description: "Skip entire CI — deploy immediately (emergency only)"
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-coolify-${{ github.ref }}
@@ -18,8 +31,81 @@ env:
   NODE_VERSION: "22"
 
 jobs:
-  test:
-    name: Pre-deploy validation
+  # -----------------------------------------------------------------
+  # Quality gate: lint + typecheck (always runs unless skip_ci)
+  # -----------------------------------------------------------------
+  quality:
+    name: Lint & Typecheck
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_ci) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Type check
+        run: yarn typecheck
+
+  # -----------------------------------------------------------------
+  # Unit tests (skipped when skip_tests or skip_ci)
+  # -----------------------------------------------------------------
+  unit-tests:
+    name: Unit tests
+    if: >-
+      !(github.event_name == 'workflow_dispatch' &&
+        (inputs.skip_tests || inputs.skip_ci))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run unit tests
+        env:
+          CI: true
+        run: yarn test
+
+  # -----------------------------------------------------------------
+  # Build + E2E tests (skipped when skip_e2e, skip_tests, or skip_ci)
+  # -----------------------------------------------------------------
+  e2e-tests:
+    name: Build & E2E tests
+    if: >-
+      !(github.event_name == 'workflow_dispatch' &&
+        (inputs.skip_e2e || inputs.skip_tests || inputs.skip_ci))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -36,22 +122,10 @@ jobs:
         run: corepack enable
 
       - name: Configure Yarn
-        run: |
-          yarn config set enableImmutableInstalls false
+        run: yarn config set enableImmutableInstalls false
 
       - name: Install dependencies
         run: yarn install --immutable
-
-      - name: Lint
-        run: yarn lint
-
-      - name: Type check
-        run: yarn typecheck
-
-      - name: Run unit tests
-        env:
-          CI: true
-        run: yarn test
 
       - name: Generate service worker and robots.txt (prebuild)
         env:
@@ -121,10 +195,20 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  # -----------------------------------------------------------------
+  # Deploy to Coolify (waits for whichever CI jobs actually ran)
+  # -----------------------------------------------------------------
   deploy:
     name: Deploy to Coolify
     runs-on: ubuntu-latest
-    needs: test
+    needs: [quality, unit-tests, e2e-tests]
+    # Run deploy if all non-skipped jobs succeeded.
+    # `always()` lets us proceed when skipped jobs report as skipped (not failed).
+    if: >-
+      always() &&
+      (needs.quality.result == 'success' || needs.quality.result == 'skipped') &&
+      (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'skipped') &&
+      (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
     timeout-minutes: 10
     # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
     environment:
@@ -132,6 +216,24 @@ jobs:
       url: https://www.esdeveniments.cat
 
     steps:
+      - name: Deployment mode summary
+        run: |
+          echo "## Deployment Mode" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Quality (lint+typecheck) | ${{ needs.quality.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "**Trigger:** Manual dispatch" >> $GITHUB_STEP_SUMMARY
+            echo "- skip_e2e: ${{ inputs.skip_e2e }}" >> $GITHUB_STEP_SUMMARY
+            echo "- skip_tests: ${{ inputs.skip_tests }}" >> $GITHUB_STEP_SUMMARY
+            echo "- skip_ci: ${{ inputs.skip_ci }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Trigger:** Push to main (full CI)" >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Trigger Coolify deployment
         env:
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
