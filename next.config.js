@@ -54,7 +54,6 @@ const nextConfig = {
       "react-day-picker",
       "react-select",
       "react-share",
-      "react-tooltip",
     ],
     // --- Server Actions Configuration ---
     serverActions: {
@@ -179,10 +178,10 @@ module.exports = withSentryConfig(
         removeDebugLogging: true,
         // Remove tracing code since tracesSampleRate is 0
         removeTracing: true,
-        // Remove iframe capture code from Session Replay
+        // Remove all Session Replay code (replay is fully disabled)
         excludeReplayIframe: true,
-        // Remove shadow DOM capture code from Session Replay
         excludeReplayShadowDOM: true,
+        excludeReplayCanvas: true,
       },
       automaticVercelMonitors: true,
     },
