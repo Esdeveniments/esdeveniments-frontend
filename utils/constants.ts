@@ -13,9 +13,9 @@ export const MAX_FAVORITES = 10;
 // Year range for sitemap/archive pages validation
 export const MIN_VALID_YEAR = 2000;
 export const MAX_VALID_YEAR = 2100;
-// Keep safely under Lambda's 6MB cap and common CDN/body limits
+// Keep safely under common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
-// Sitemap chunking: places per chunk to stay under Lambda 6MB payload limit
+// Sitemap chunking: places per chunk to keep response sizes manageable
 export const SITEMAP_PLACES_PER_CHUNK = 100;
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
   "event_image_upload_too_large";

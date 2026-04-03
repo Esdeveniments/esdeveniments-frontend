@@ -26,6 +26,6 @@ export interface RevalidateResponseDTO {
   cloudflare: CloudflarePurgeResult;
   /** ISO 8601 timestamp of revalidation */
   timestamp: string;
-  /** Warning message for transient errors (e.g., DynamoDB tag cache failures) */
+  /** Warning message for transient errors (e.g., tag cache write failures) */
   warning?: string;
 }

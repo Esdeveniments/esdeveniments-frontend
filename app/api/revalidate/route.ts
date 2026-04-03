@@ -40,7 +40,7 @@ const TAG_TO_CLOUDFLARE_PREFIXES: Record<RevalidatableTag, string[]> = {
 
 /**
  * Maps cache tags to in-memory cache clear functions.
- * Used to clear warm Lambda instance caches during revalidation.
+ * Used to clear process-level caches during revalidation.
  */
 const TAG_TO_CLEAR_FN: Record<RevalidatableTag, () => void> = {
   places: clearPlacesCaches,
@@ -212,7 +212,7 @@ export async function POST(request: Request) {
 
     // 4. Revalidate each tag (Next.js data cache)
     // Next 16 requires a profile; use "max" to force full invalidation
-    // Wrapped in try-catch to handle transient DynamoDB tag cache errors in OpenNext
+    // Wrapped in try-catch to handle transient tag cache write errors
     const revalidatedTags: RevalidatableTag[] = [];
     const failedTags: RevalidatableTag[] = [];
     for (const tag of tags) {
@@ -228,8 +228,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4b. Clear in-memory Lambda caches based on tags
-    // This ensures warm Lambda instances get fresh data
+    // 4b. Clear in-memory process caches based on tags
+    // This ensures the running server gets fresh data
     const clearedFns = new Set<() => void>();
     for (const tag of tags) {
       const clearFn = TAG_TO_CLEAR_FN[tag];

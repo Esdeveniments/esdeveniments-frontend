@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        // Increased from 300s to reduce Lambda invocations by ~50%
+        // 10min CDN cache with stale-while-revalidate for background refresh
         "Cache-Control": "public, s-maxage=600, stale-while-revalidate=600",
       },
     });

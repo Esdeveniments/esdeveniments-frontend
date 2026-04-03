@@ -30,7 +30,7 @@ import type {
  */
 
 /**
- * Route segment config for Lambda/Edge compatibility
+ * Route segment config
  * - runtime: nodejs for crypto module compatibility
  * - maxDuration: 30s to allow time for Stripe API calls
  */

@@ -18,10 +18,10 @@ const nextConfig = {
   compress: true,
   productionBrowserSourceMaps: false,
 
-  // --- SST/OpenNext Configuration ---
-  // Required for SST deployment (uses OpenNext adapter)
+  // --- Deployment Configuration ---
+  // Required for Docker/Coolify deployment (standalone server.js output)
   output: "standalone",
-  // Mark sharp and its native dependencies as external - required for SST/Lambda deployment
+  // Mark sharp and its native dependencies as external
   // Sharp has native binaries that must be bundled separately for the target platform
   // Include @img/* packages to ensure Turbopack doesn't mangle the module resolution
   serverExternalPackages: [
@@ -29,7 +29,7 @@ const nextConfig = {
     "@img/sharp-linux-x64",
     "@img/sharp-libvips-linux-x64",
   ],
-  // Use Redis cache handler when configured (Coolify multi-instance support)
+  // Use Redis cache handler when configured (shared cache for Coolify deployment)
   cacheHandler: redisCacheEnabled
     ? require.resolve("./cache-handler.js")
     : undefined,
@@ -44,7 +44,7 @@ const nextConfig = {
   experimental: {
     scrollRestoration: true,
     inlineCss: true,
-    // Tree-shake heavy libraries to reduce Lambda bundle size
+    // Tree-shake heavy libraries to reduce bundle size
     optimizePackageImports: [
       "@headlessui/react",
       "@heroicons/react",
@@ -77,13 +77,12 @@ const nextConfig = {
     deviceSizes: [480, 640, 768, 1024, 1280, 1600, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/avif", "image/webp"],
-    // Aggressive caching for CloudFront: 1 year (31536000 seconds)
-    // This prevents Lambda Image Optimizer from being invoked repeatedly for the same image.
+    // Aggressive caching: 1 year (31536000 seconds)
     // Cache-busting is handled explicitly in utils/image-cache.ts using event.hash/updatedAt,
-    // so updating an image changes its URL (e.g., ?v=<hash>) and forces CloudFront to fetch it again.
+    // so updating an image changes its URL (e.g., ?v=<hash>) and forces CDN to fetch it again.
     minimumCacheTTL: 31536000,
     // Next.js 16: Explicitly configure allowed quality values
-    // Reduced from 10 to 5 values to minimize cache fragmentation and Lambda invocations
+    // Reduced from 10 to 5 values to minimize cache fragmentation
     qualities: [35, 50, 60, 75, 85],
     // Next.js 16: Configure local patterns for API routes with query strings
     // Allow any query string on our internal image proxy route

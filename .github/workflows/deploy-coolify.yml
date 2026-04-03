@@ -1,0 +1,192 @@
+name: Deploy to Coolify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual trigger
+
+concurrency:
+  group: deploy-coolify-${{ github.ref }}
+  cancel-in-progress: false # Don't cancel - let deployments complete
+
+# Explicit least-privilege permissions (security best practice)
+permissions:
+  contents: read
+  actions: read
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  test:
+    name: Pre-deploy validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: |
+          yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Type check
+        run: yarn typecheck
+
+      - name: Run unit tests
+        env:
+          CI: true
+        run: yarn test
+
+      - name: Generate service worker and robots.txt (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+        run: yarn prebuild
+
+      - name: Build Next.js application
+        env:
+          NODE_ENV: production
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: yarn build
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Start Next.js server (background)
+        run: |
+          yarn start &
+          echo $! > .next-server.pid
+          echo "Started Next.js server with PID $(cat .next-server.pid)"
+        env:
+          NODE_ENV: production
+          PORT: 3000
+          E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_E2E_TEST_MODE: "1"
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Sanity check robots.txt
+        run: |
+          set -euo pipefail
+          robots="$(curl -fsS http://localhost:3000/robots.txt)"
+          echo "$robots" | grep -F -i "allow: /" > /dev/null
+          echo "$robots" | grep -F -i "disallow: /_next/" > /dev/null
+          echo "$robots" | grep -F -i "disallow: /api/" > /dev/null
+          echo "$robots" | grep -F -i "user-agent: gptbot" > /dev/null
+          echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/server-static-sitemap.xml" > /dev/null
+          echo "robots.txt looks correct"
+
+      - name: Run E2E tests
+        run: yarn test:e2e -c playwright.remote.config.ts --workers=2
+        env:
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+
+      - name: Stop Next.js server
+        if: always()
+        run: |
+          if [ -f .next-server.pid ]; then
+            kill $(cat .next-server.pid) || true
+            rm .next-server.pid
+          fi
+          pkill -f "yarn start" || true
+
+      - name: Upload Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-deploy
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  deploy:
+    name: Deploy to Coolify
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 10
+    # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
+    environment:
+      name: production
+      url: https://www.esdeveniments.cat
+
+    steps:
+      - name: Trigger Coolify deployment
+        env:
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+        run: |
+          if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
+            echo "::error::COOLIFY_WEBHOOK_URL secret is required"
+            exit 1
+          fi
+
+          # Trigger deployment via Coolify webhook
+          HTTP_CODE=$(curl -s -o /tmp/coolify-response.json -w "%{http_code}" \
+            -X POST "$COOLIFY_WEBHOOK_URL" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            --max-time 30)
+
+          echo "Coolify API response: HTTP $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Coolify deployment trigger failed with HTTP $HTTP_CODE"
+            cat /tmp/coolify-response.json 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "Deployment triggered successfully"
+
+      - name: Post-deploy verification
+        if: success()
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          echo "Waiting for deployment to propagate..."
+          sleep 30
+
+          # Smoke tests
+          echo "Running smoke tests..."
+          curl -sf --max-time 10 https://www.esdeveniments.cat/ > /dev/null && echo "Homepage OK" || echo "::warning::Homepage slow/unavailable"
+          curl -sf --max-time 10 https://www.esdeveniments.cat/barcelona > /dev/null && echo "Barcelona page OK" || echo "::warning::Barcelona page slow/unavailable"
+          curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:" && echo "robots.txt OK" || echo "::warning::robots.txt issue"
+
+          # Health check
+          echo "Checking deployment health..."
+          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" || echo "000")
+          echo "Health endpoint: HTTP $HTTP_CODE"
+          if [ -f /tmp/health.json ]; then
+            REDIS_OK=$(jq -r '.cache.strategy // "unknown"' /tmp/health.json)
+            echo "Cache strategy: $REDIS_OK"
+            [ "$REDIS_OK" = "redis" ] && echo "Redis cache OK" || echo "::warning::Redis cache not connected"
+          fi
+
+          echo "Post-deploy verification complete"
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "Deployment completed successfully!"
+          echo "Site URL: https://esdeveniments.cat"

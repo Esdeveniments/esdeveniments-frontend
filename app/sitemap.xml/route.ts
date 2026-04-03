@@ -15,12 +15,12 @@ export async function GET(request: NextRequest) {
   // So we reference the chunked sitemaps directly instead of the index routes
   const sitemapUrls = [
     `${siteUrl}/server-static-sitemap.xml`, // Static pages
-    // Event sitemaps (chunked to stay under 6MB Lambda limit)
+    // Event sitemaps (chunked to stay under 6MB response limit)
     ...Array.from(
       { length: EVENT_CHUNKS },
       (_, i) => `${siteUrl}/sitemap-events/${i + 1}.xml`
     ),
-    // Place sitemaps (chunked to stay under 6MB Lambda limit)
+    // Place sitemaps (chunked to stay under 6MB response limit)
     ...Array.from(
       { length: PLACE_CHUNKS },
       (_, i) => `${siteUrl}/sitemap-places/${i + 1}.xml`
