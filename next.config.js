@@ -41,6 +41,18 @@ const nextConfig = {
 
   cacheComponents: true,
 
+  // --- Output File Tracing ---
+  // Ensure cache handler dependencies are included in standalone output.
+  // Next.js tracing can miss modules loaded via require.resolve() in config.
+  outputFileTracingIncludes: {
+    "/": [
+      "./cache-handler.mjs",
+      "./node_modules/@fortedigital/nextjs-cache-handler/**/*",
+      "./node_modules/redis/**/*",
+      "./node_modules/@redis/**/*",
+    ],
+  },
+
   // --- Experimental Features ---
   experimental: {
     rootParams: true,

@@ -27,6 +27,9 @@ function getRedisUrl() {
   return `redis://${auth}${host}:${port}`;
 }
 
+/** Cooldown period (ms) before retrying Redis after a failure — prevents log spam during outages. */
+const RETRY_COOLDOWN_MS = 30_000;
+
 CacheHandler.onCreation(() => {
   // Singleton: reuse existing config if already initialized
   if (globalThis.__cacheHandlerConfig) {
@@ -44,6 +47,12 @@ CacheHandler.onCreation(() => {
     return { handlers: [lruCache] };
   }
 
+  // Cooldown: skip reconnection attempts for a period after failure
+  if (globalThis.__cacheHandlerLastFailure &&
+      Date.now() - globalThis.__cacheHandlerLastFailure < RETRY_COOLDOWN_MS) {
+    return { handlers: [lruCache] };
+  }
+
   globalThis.__cacheHandlerConfigPromise = (async () => {
     let redisClient = null;
 
@@ -55,9 +64,12 @@ CacheHandler.onCreation(() => {
 
       redisClient.on("error", (e) => {
         console.warn("[cache-handler] Redis error:", e.message);
-        // Reset so next request retries connection
+        // Disconnect the failed client to prevent resource leaks, then reset
+        // globals so the next request retries after a cooldown period.
+        redisClient.disconnect().catch(() => {});
         globalThis.__cacheHandlerConfig = null;
         globalThis.__cacheHandlerConfigPromise = null;
+        globalThis.__cacheHandlerLastFailure = Date.now();
       });
 
       await redisClient.connect();
@@ -66,6 +78,7 @@ CacheHandler.onCreation(() => {
       console.warn("[cache-handler] Redis connection failed:", error.message);
       await redisClient?.disconnect().catch(() => {});
       redisClient = null;
+      globalThis.__cacheHandlerLastFailure = Date.now();
     }
 
     if (!redisClient?.isReady) {

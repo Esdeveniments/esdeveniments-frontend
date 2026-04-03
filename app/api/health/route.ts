@@ -102,10 +102,12 @@ export async function GET(request: NextRequest) {
 
   // Authenticated response: full diagnostic details with Redis connectivity
   const redisReachable = redisConfigured ? await checkRedisConnectivity() : false;
+  // Degrade status when Redis is expected but unreachable (cache layer is down)
+  const isFullyHealthy = isHealthy && (!redisConfigured || redisReachable);
 
   return NextResponse.json(
     {
-      status: isHealthy ? "healthy" : "degraded",
+      status: isFullyHealthy ? "healthy" : "degraded",
       timestamp: new Date().toISOString(),
       cache: {
         strategy: redisConfigured ? "redis" : "filesystem",
@@ -121,7 +123,7 @@ export async function GET(request: NextRequest) {
       environment: process.env.NODE_ENV,
     },
     {
-      status: isHealthy ? 200 : 503,
+      status: isFullyHealthy ? 200 : 503,
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate",
       },
