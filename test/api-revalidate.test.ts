@@ -286,8 +286,8 @@ describe("/api/revalidate", () => {
 
       expect(response.status).toBe(200);
       expect(data.cloudflare).toBeDefined();
-      // When CF is not configured, purge is skipped but prefixes are still returned
-      expect(data.cloudflare.prefixes).toContain("/api/places");
+      // Structural tags trigger full purge (prefixes = ["*"]), even when CF is skipped
+      expect(data.cloudflare.prefixes).toEqual(["*"]);
       expect(data.cloudflare.purged).toBe(false);
       expect(data.cloudflare.skipped).toBe(true);
       // The Cloudflare API should NOT have been called
@@ -323,10 +323,10 @@ describe("/api/revalidate", () => {
 
       expect(response.status).toBe(200);
       expect(data.cloudflare.purged).toBe(true);
-      expect(data.cloudflare.prefixes).toContain("/api/places");
-      expect(data.cloudflare.prefixes).toContain("/api/regions");
+      // Structural tags (places, regions) trigger a full purge
+      expect(data.cloudflare.prefixes).toEqual(["*"]);
 
-      // Verify Cloudflare API was called
+      // Verify Cloudflare API was called with purge_everything
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("api.cloudflare.com"),
         expect.objectContaining({
@@ -334,6 +334,7 @@ describe("/api/revalidate", () => {
           headers: expect.objectContaining({
             Authorization: "Bearer test-api-token",
           }),
+          body: JSON.stringify({ purge_everything: true }),
         })
       );
 
