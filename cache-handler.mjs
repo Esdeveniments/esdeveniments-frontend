@@ -47,10 +47,11 @@ CacheHandler.onCreation(() => {
     return { handlers: [lruCache] };
   }
 
-  // Cooldown: skip reconnection attempts for a period after failure
+  // Cooldown: skip reconnection attempts for a period after failure, reuse shared LRU
   if (globalThis.__cacheHandlerLastFailure &&
       Date.now() - globalThis.__cacheHandlerLastFailure < RETRY_COOLDOWN_MS) {
-    return { handlers: [lruCache] };
+    globalThis.__cacheHandlerConfig = { handlers: [lruCache] };
+    return globalThis.__cacheHandlerConfig;
   }
 
   globalThis.__cacheHandlerConfigPromise = (async () => {

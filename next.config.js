@@ -28,6 +28,11 @@ const nextConfig = {
     "sharp",
     "@img/sharp-linux-x64",
     "@img/sharp-libvips-linux-x64",
+    // Cache handler and Redis are loaded at runtime by the cache-handler.mjs entry point.
+    // Marking them external prevents Next.js from tracing them into every server route bundle.
+    "redis",
+    "@redis/client",
+    "@fortedigital/nextjs-cache-handler",
   ],
   // Always load the cache handler — it gracefully falls back to no-op when
   // Redis env vars (REDIS_URL/REDIS_HOST) are not set at runtime.
@@ -40,18 +45,6 @@ const nextConfig = {
   reactCompiler: true,
 
   cacheComponents: true,
-
-  // --- Output File Tracing ---
-  // Ensure cache handler dependencies are included in standalone output.
-  // Next.js tracing can miss modules loaded via require.resolve() in config.
-  outputFileTracingIncludes: {
-    "/": [
-      "./cache-handler.mjs",
-      "./node_modules/@fortedigital/nextjs-cache-handler/**/*",
-      "./node_modules/redis/**/*",
-      "./node_modules/@redis/**/*",
-    ],
-  },
 
   // --- Experimental Features ---
   experimental: {
