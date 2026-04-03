@@ -33,6 +33,10 @@ RUN corepack enable && yarn prebuild && yarn build
 
 FROM base AS runner
 ENV NODE_ENV=production
+# Re-declare BUILD_VERSION ARG to pass it from builder to runner stage.
+# This is the only non-secret value that needs to persist in the final image.
+ARG BUILD_VERSION
+ENV BUILD_VERSION=$BUILD_VERSION
 WORKDIR /app
 
 RUN groupadd --system --gid 1001 nodejs \

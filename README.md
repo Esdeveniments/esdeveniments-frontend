@@ -99,9 +99,18 @@ Deployed via **Docker on Coolify** (self-hosted PaaS).
 ### Docker build locally
 
 ```bash
-docker build --build-arg NEXT_PUBLIC_API_URL=https://api.esdeveniments.cat/api \
+# Build: NEXT_PUBLIC_* inlined by Next.js, HMAC_SECRET needed for ISR static generation
+docker build \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.esdeveniments.cat/api \
+  --build-arg NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat \
   --build-arg HMAC_SECRET=your-secret \
   -t esdeveniments-frontend .
-docker run -p 3000:3000 -e REDIS_URL=redis://localhost:6379 esdeveniments-frontend
+
+# Run: server-side secrets provided at runtime (not baked into image)
+docker run -p 3000:3000 \
+  -e HMAC_SECRET=your-secret \
+  -e REVALIDATE_SECRET=your-revalidate-secret \
+  -e REDIS_URL=redis://localhost:6379 \
+  esdeveniments-frontend
 ```
 

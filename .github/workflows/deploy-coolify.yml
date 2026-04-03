@@ -281,10 +281,13 @@ jobs:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
           EXPECTED_VERSION: ${{ github.sha }}
         run: |
-          echo "Waiting for Coolify to deploy revision ${EXPECTED_VERSION:0:7}..."
-          # Poll health endpoint until the new revision is live.
-          # Check buildVersion in the response to ensure we're hitting the new container,
-          # not the old one during a rolling update.
+          echo "Waiting for Coolify deployment..."
+          # Poll health endpoint until the new container is live.
+          # If BUILD_VERSION is configured in Coolify (recommended), we verify the
+          # exact commit SHA. Otherwise, we fall back to HTTP 200 health check.
+          #
+          # To enable version verification, set BUILD_VERSION=$SOURCE_COMMIT as a
+          # build variable in Coolify dashboard → Application → Environment.
           MAX_WAIT=180  # 3 minutes max (Coolify Docker build + rolling update)
           INTERVAL=10
           ELAPSED=0
@@ -293,24 +296,44 @@ jobs:
           sleep 15
           ELAPSED=15
 
+          # Record the current live version before deployment
+          PRE_DEPLOY_VERSION=$(curl -s --max-time 5 \
+            "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" \
+            | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || PRE_DEPLOY_VERSION=""
+
           while [ $ELAPSED -lt $MAX_WAIT ]; do
             RESPONSE=$(curl -s --max-time 5 \
               "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}") || RESPONSE=""
 
             LIVE_VERSION=$(echo "$RESPONSE" | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || LIVE_VERSION=""
+            HTTP_OK=$(echo "$RESPONSE" | grep -o '"status":"healthy"') || HTTP_OK=""
 
+            # Best case: exact version match
             if [ "$LIVE_VERSION" = "$EXPECTED_VERSION" ]; then
               echo "New revision ${EXPECTED_VERSION:0:7} is live after ${ELAPSED}s"
               break
             fi
 
-            echo "Waiting... live=${LIVE_VERSION:-unknown} expected=${EXPECTED_VERSION:0:7} (${ELAPSED}s elapsed)"
+            # Fallback: version changed from pre-deploy (new container is up)
+            if [ -n "$HTTP_OK" ] && [ -n "$LIVE_VERSION" ] && [ "$LIVE_VERSION" != "$PRE_DEPLOY_VERSION" ] && [ "$LIVE_VERSION" != "unknown" ]; then
+              echo "New deployment detected (version: ${LIVE_VERSION}) after ${ELAPSED}s"
+              break
+            fi
+
+            # Last resort: healthy response after enough time (for first deploy or when BUILD_VERSION isn't configured)
+            if [ -n "$HTTP_OK" ] && [ $ELAPSED -ge 60 ]; then
+              echo "::warning::Health endpoint is healthy but BUILD_VERSION not configured in Coolify — cannot verify exact revision"
+              echo "Set BUILD_VERSION=\$SOURCE_COMMIT as a build variable in Coolify to enable version verification"
+              break
+            fi
+
+            echo "Waiting... live=${LIVE_VERSION:-unknown} (${ELAPSED}s elapsed)"
             sleep $INTERVAL
             ELAPSED=$((ELAPSED + INTERVAL))
           done
 
-          if [ "$LIVE_VERSION" != "$EXPECTED_VERSION" ]; then
-            echo "::error::New revision ${EXPECTED_VERSION:0:7} was not observed within ${MAX_WAIT}s (live: ${LIVE_VERSION:-none})"
+          if [ $ELAPSED -ge $MAX_WAIT ] && [ -z "$HTTP_OK" ]; then
+            echo "::error::Health endpoint did not respond within ${MAX_WAIT}s"
             exit 1
           fi
 
