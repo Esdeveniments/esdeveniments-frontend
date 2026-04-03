@@ -43,19 +43,19 @@ const myVar = process.env.MY_OPTIONAL_VAR ?? "default-value";
 
 ## Current Required Secrets
 
-These MUST be set in both **Coolify environment** and **GitHub Secrets**:
+These MUST be set in the location(s) indicated:
 
-| Secret                  | Purpose                    |
-| ----------------------- | -------------------------- |
-| `NEXT_PUBLIC_API_URL`   | Backend API URL            |
-| `HMAC_SECRET`           | API request signing        |
-| `SENTRY_DSN`            | Error tracking             |
-| `DEEPL_API_KEY`         | Translation service        |
-| `STRIPE_SECRET_KEY`     | Payment processing         |
-| `STRIPE_WEBHOOK_SECRET` | Webhook verification       |
-| `REVALIDATE_SECRET`     | Cache revalidation         |
-| `COOLIFY_TOKEN`         | Deployment trigger (GitHub only) |
-| `COOLIFY_WEBHOOK_URL`   | Deployment trigger (GitHub only) |
+| Secret                  | Purpose                    | Location                   |
+| ----------------------- | -------------------------- | -------------------------- |
+| `NEXT_PUBLIC_API_URL`   | Backend API URL            | Coolify + GitHub Secrets   |
+| `HMAC_SECRET`           | API request signing        | Coolify + GitHub Secrets   |
+| `SENTRY_DSN`            | Error tracking             | Coolify + GitHub Secrets   |
+| `DEEPL_API_KEY`         | Translation service        | Coolify                    |
+| `STRIPE_SECRET_KEY`     | Payment processing         | Coolify                    |
+| `STRIPE_WEBHOOK_SECRET` | Webhook verification       | Coolify                    |
+| `REVALIDATE_SECRET`     | Cache revalidation         | Coolify + GitHub Secrets   |
+| `COOLIFY_TOKEN`         | Deployment trigger         | GitHub Secrets only        |
+| `COOLIFY_WEBHOOK_URL`   | Deployment trigger         | GitHub Secrets only        |
 
 ## Current Optional Secrets
 

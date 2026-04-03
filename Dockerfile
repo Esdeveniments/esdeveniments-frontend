@@ -10,6 +10,18 @@ COPY .yarn ./.yarn
 RUN corepack enable && yarn install --immutable
 
 FROM base AS builder
+# Build-time arguments for Next.js static optimization (NEXT_PUBLIC_* are inlined at build time)
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_SITE_URL
+ARG HMAC_SECRET
+ARG SENTRY_AUTH_TOKEN
+ARG BUILD_VERSION
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV HMAC_SECRET=$HMAC_SECRET
+ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+ENV BUILD_VERSION=$BUILD_VERSION
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN corepack enable && yarn prebuild && yarn build
@@ -24,6 +36,7 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/cache-handler.js ./cache-handler.js
 
 EXPOSE 3000
 ENV PORT=3000

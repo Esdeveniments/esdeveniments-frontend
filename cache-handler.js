@@ -50,6 +50,10 @@ async function getClient() {
     clientPromise = newClient.connect().then(() => {
       client = newClient;
       return client;
+    }).catch((error) => {
+      console.error("[cache-handler] Redis connection failed:", error);
+      clientPromise = null;
+      return null;
     });
   }
 
@@ -120,8 +124,14 @@ module.exports = {
           ? data.revalidate
           : null;
 
-      if (revalidate && revalidate > 0) {
-        await redisClient.set(cacheKey, payload, { EX: Math.floor(revalidate) });
+      // revalidate: 0 means "do not cache" in Next.js
+      if (revalidate === 0) {
+        return;
+      }
+
+      if (typeof revalidate === "number" && revalidate > 0) {
+        const ttl = Math.max(1, Math.floor(revalidate));
+        await redisClient.set(cacheKey, payload, { EX: ttl });
       } else {
         await redisClient.set(cacheKey, payload);
       }
@@ -151,15 +161,17 @@ module.exports = {
         return;
       }
 
+      // Fetch all tag members in parallel first, then build transaction atomically
+      const tagKeys = tags.map((entry) => buildTagKey(entry));
+      const allMembers = await Promise.all(
+        tagKeys.map((key) => redisClient.sMembers(key))
+      );
+
       const multi = redisClient.multi();
-      for (const entry of tags) {
-        const tagKey = buildTagKey(entry);
-        const members = await redisClient.sMembers(tagKey);
-        if (members.length > 0) {
-          members.forEach((member) => multi.del(member));
-        }
-        multi.del(tagKey);
-      }
+      allMembers.forEach((members, index) => {
+        members.forEach((member) => multi.del(member));
+        multi.del(tagKeys[index]);
+      });
 
       await multi.exec();
     } catch (error) {

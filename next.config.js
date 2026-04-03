@@ -99,7 +99,6 @@ const nextConfig = {
         pathname: "/static/**",
       },
     ],
-    customCacheHandler: redisCacheEnabled,
   },
 
   // The `headers` block has been removed.

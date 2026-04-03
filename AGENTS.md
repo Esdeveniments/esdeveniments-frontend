@@ -18,7 +18,7 @@
 | Security/CSP              | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains    |
 | Service worker            | `service-worker-updates`       | Edit `sw-template.js`, run `prebuild`     |
 | Performance/images        | `bundle-optimization`          | Quality caps, Server Components default   |
-| Env variables             | `env-variable-management`      | Update 4 locations: code, Coolify, workflow |
+| Env variables             | `env-variable-management`      | Update 4 locations: code, Coolify, workflow, GitHub secrets |
 | API data validation       | `data-validation-patterns`     | Zod in `lib/validation/`, safe fallbacks  |
 | Evaluating PR suggestions | `code-review-evaluation`       | Cross-reference against project skills    |
 
