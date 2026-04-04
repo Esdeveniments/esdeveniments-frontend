@@ -65,9 +65,11 @@ async function checkRedisConnectivity(): Promise<boolean> {
 
       if (!authenticated && buffer.startsWith("+OK")) {
         authenticated = true;
-        buffer = "";
+        // Keep any data after the +OK\r\n (e.g. +PONG\r\n in same packet)
+        buffer = buffer.substring(buffer.indexOf("\r\n") + 2);
         socket.write(respCmd("PING"));
-        return;
+        if (!buffer.includes("\r\n")) return; // wait for PONG in next packet
+        // fall through to check for PONG below
       }
       socket.destroy();
       resolve(buffer.startsWith("+PONG"));
