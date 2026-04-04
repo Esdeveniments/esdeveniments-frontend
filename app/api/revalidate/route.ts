@@ -44,7 +44,7 @@ const FULL_PURGE_TAGS: ReadonlySet<RevalidatableTag> = new Set([
  * Tags with targeted Cloudflare prefix purges (API-only, no HTML pages).
  */
 const TAG_TO_CLOUDFLARE_PREFIXES: Partial<Record<RevalidatableTag, string[]>> = {
-  "regions:options": ["/api/regions/options"],
+  "regions:options": ["www.esdeveniments.cat/api/regions/options"],
 };
 
 /**
@@ -225,13 +225,13 @@ export async function POST(request: Request) {
     }
 
     // 4. Revalidate each tag (Next.js data cache)
-    // Next 16 requires a profile; use "max" to force full invalidation
-    // Wrapped in try-catch to handle transient tag cache write errors per tag
+    // Use { expire: 0 } for immediate invalidation (not stale-while-revalidate)
+    // to prevent Cloudflare from repopulating with stale content after purge
     const revalidatedTags: RevalidatableTag[] = [];
     const failedTags: RevalidatableTag[] = [];
     for (const tag of tags) {
       try {
-        revalidateTag(tag, "max");
+        revalidateTag(tag, { expire: 0 });
         revalidatedTags.push(tag);
       } catch (error) {
         console.warn(`revalidateTag failed for "${tag}":`, error);
@@ -253,9 +253,9 @@ export async function POST(request: Request) {
     // 5. Purge Cloudflare cache
     // Structural tags (places, regions, etc.) trigger a full purge since they
     // affect all locales and pages. Other tags use targeted prefix purge.
-    const needsFullPurge = tags.some((tag) => FULL_PURGE_TAGS.has(tag));
+    const needsFullPurge = revalidatedTags.some((tag) => FULL_PURGE_TAGS.has(tag));
     const cfPrefixes = new Set(
-      tags.flatMap((tag) => TAG_TO_CLOUDFLARE_PREFIXES[tag] ?? [])
+      revalidatedTags.flatMap((tag) => TAG_TO_CLOUDFLARE_PREFIXES[tag] ?? [])
     );
 
     let cloudflareResult: CloudflarePurgeResult;

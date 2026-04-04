@@ -182,7 +182,7 @@ describe("/api/revalidate", () => {
       expect(data.revalidated).toBe(true);
       expect(data.tags).toEqual(["places"]);
       expect(data.timestamp).toBeDefined();
-      expect(revalidateTag).toHaveBeenCalledWith("places", "max");
+      expect(revalidateTag).toHaveBeenCalledWith("places", { expire: 0 });
     });
 
     it("revalidates multiple valid tags", async () => {
@@ -199,9 +199,9 @@ describe("/api/revalidate", () => {
       expect(data.revalidated).toBe(true);
       expect(data.tags).toEqual(["places", "regions", "cities"]);
       expect(revalidateTag).toHaveBeenCalledTimes(3);
-      expect(revalidateTag).toHaveBeenCalledWith("places", "max");
-      expect(revalidateTag).toHaveBeenCalledWith("regions", "max");
-      expect(revalidateTag).toHaveBeenCalledWith("cities", "max");
+      expect(revalidateTag).toHaveBeenCalledWith("places", { expire: 0 });
+      expect(revalidateTag).toHaveBeenCalledWith("regions", { expire: 0 });
+      expect(revalidateTag).toHaveBeenCalledWith("cities", { expire: 0 });
     });
 
     it("accepts all allowed tags", async () => {

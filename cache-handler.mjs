@@ -24,6 +24,8 @@ function getRedisUrl() {
       ? `${encodeURIComponent(username)}@`
       : "";
 
+  // TLS (rediss://) requires REDIS_URL to be set directly.
+  // Individual REDIS_HOST/PASSWORD vars always use plain redis://.
   return `redis://${auth}${host}:${port}`;
 }
 

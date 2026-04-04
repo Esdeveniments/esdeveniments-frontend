@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createConnection } from "net";
-import { connect as tlsConnect } from "tls";
+import { createConnection } from "node:net";
+import { connect as tlsConnect } from "node:tls";
 
 /**
  * Health check endpoint for monitoring runtime configuration.
