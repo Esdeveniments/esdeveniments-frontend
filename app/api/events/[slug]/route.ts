@@ -22,7 +22,7 @@ export async function GET(
     });
     // Note: Removed per-request revalidateTag call for past events.
     // The previous logic called revalidateTag on EVERY request for past events,
-    // which caused excessive DynamoDB writeTags operations and transient errors.
+    // which caused excessive cache write operations and transient errors.
     // Event lists already have time-based revalidation (revalidate: 300 seconds)
     // via the fetch cache in lib/api/events.ts, so this was redundant.
     return NextResponse.json(data ?? null, {

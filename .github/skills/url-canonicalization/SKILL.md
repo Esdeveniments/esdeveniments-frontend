@@ -13,7 +13,7 @@ Enforce URL canonicalization rules to prevent SEO issues and **CRITICAL cost inc
 
 **NEVER add `searchParams` to page components in `app/[place]/` routes.**
 
-Reading `searchParams` in a page component makes the page **dynamic**, causing OpenNext/SST to create a separate DynamoDB cache entry for every unique URL+query combination.
+Reading `searchParams` in a page component makes the page **dynamic**, creating a separate cache entry for every unique URL+query combination.
 
 **Real Incident**: This caused a **$300+ cost spike** on December 28, 2025.
 

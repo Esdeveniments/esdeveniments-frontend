@@ -3,7 +3,7 @@
  * @returns The appropriate site URL for localhost, preview/development, or production
  */
 export function getSiteUrl(): string {
-  // Priority 1: Explicitly set site URL (SST deployments, custom configs)
+  // Priority 1: Explicitly set site URL (Coolify/custom deployments)
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return process.env.NEXT_PUBLIC_SITE_URL;
   }
@@ -29,7 +29,7 @@ export function getSiteUrl(): string {
 /**
  * Get the site URL from a request, falling back to environment-based detection.
  * Prefers the actual request host for accuracy, especially in production.
- * Handles CloudFront/edge environments by checking multiple header sources.
+ * Handles reverse proxy environments by checking multiple header sources.
  * @param request - Optional NextRequest to extract host from
  * @returns The site URL (with protocol)
  */
@@ -45,7 +45,7 @@ export function getSiteUrlFromRequest(request?: {
     // Determine protocol (default to https for production)
     const protocol = requestUrl?.protocol || "https:";
 
-    // Try multiple sources for host (CloudFront/edge environments)
+    // Try multiple sources for host (reverse proxy environments)
     // Priority: nextUrl.host > x-forwarded-host > host header
     const host =
       requestUrl?.host ||
@@ -60,8 +60,8 @@ export function getSiteUrlFromRequest(request?: {
     if (
       host &&
       (!isLocalhost || process.env.NODE_ENV === "development") &&
-      !host.includes(".cloudfront.net") && // Avoid CloudFront distribution domains
-      !host.includes(".lambda-url.") // Avoid Lambda function URLs
+      !host.includes(".cloudfront.net") && // Avoid CDN distribution domains
+      !host.includes(".lambda-url.") // Avoid serverless function URLs
     ) {
       // Normalize 127.0.0.1 to localhost in development for consistency
       const normalizedHost =
@@ -73,7 +73,7 @@ export function getSiteUrlFromRequest(request?: {
   }
 
   // Fallback to environment-based detection
-  // In SST, NEXT_PUBLIC_SITE_URL is set to "https://www.esdeveniments.cat"
+  // In production, NEXT_PUBLIC_SITE_URL is set to "https://www.esdeveniments.cat"
   return getSiteUrl();
 }
 

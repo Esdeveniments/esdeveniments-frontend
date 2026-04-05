@@ -41,7 +41,7 @@ This directory contains **15 Agent Skills** that guide AI coding agents (GitHub 
 
 | Skill                                                         | Purpose          | Key Rule                       |
 | ------------------------------------------------------------- | ---------------- | ------------------------------ |
-| [env-variable-management](env-variable-management/SKILL.md)   | Environment vars | Update 4 locations             |
+| [env-variable-management](env-variable-management/SKILL.md)   | Environment vars | Update 5 locations             |
 | [data-validation-patterns](data-validation-patterns/SKILL.md) | Data validation  | Zod schemas, safe fallbacks    |
 | [code-review-evaluation](code-review-evaluation/SKILL.md)     | PR reviews       | Cross-reference against skills |
 

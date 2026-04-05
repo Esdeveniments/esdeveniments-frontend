@@ -157,7 +157,7 @@ export function isLegacyFileHandler(url: string): boolean {
  * Appends (or replaces) a cache-busting query parameter to an image URL.
  * Uses string-based operations only to ensure SSR/client hydration consistency.
  * Uses the provided cacheKey (event hash, updatedAt, etc.) so that
- * CloudFront can keep a long TTL while still reflecting new uploads.
+ * the CDN can keep a long TTL while still reflecting new uploads.
  *
  * Also normalizes protocol-relative URLs (//cdn.example.com/image.jpg) to HTTPS.
  *
@@ -256,7 +256,7 @@ export function toProxiedImageUrl(
       proxyUrl += `&q=${options.quality}`;
     }
   }
-  // Format param bypasses Accept header detection (CloudFront may not forward Accept)
+  // Format param bypasses Accept header detection (CDN may not forward Accept)
   if (options?.format) {
     proxyUrl += `&format=${options.format}`;
   }

@@ -7,7 +7,7 @@ import { siteUrl } from "@config/index";
  * robots.txt route handler with explicit cache control
  *
  * Converted from app/robots.ts (Metadata API) to route handler to:
- * 1. Set explicit cache headers for CloudFront/SST (short TTL to prevent stale content)
+ * 1. Set explicit cache headers for CDN (short TTL to prevent stale content)
  * 2. Ensure dynamic generation on every deployment
  * 3. Match the pattern used by sitemap.xml/route.ts for consistency
  *
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const robotsTxt = lines.join("\n");
 
   // Set cache headers: 1 hour TTL at edge — robots.txt only changes on deployment
-  // Longer TTL reduces Lambda invocations from frequent crawler requests
+  // Longer TTL reduces server load from frequent crawler requests
   const cacheControl = getCacheControlHeader(request, 3600, 86400);
 
   return new NextResponse(robotsTxt, {

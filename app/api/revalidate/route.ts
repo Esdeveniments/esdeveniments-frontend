@@ -1,26 +1,16 @@
-import { timingSafeEqual, randomUUID } from "crypto";
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import {
-  CloudFrontClient,
-  CreateInvalidationCommand,
-} from "@aws-sdk/client-cloudfront";
 import { handleApiError } from "@utils/api-error-handler";
 import type { RevalidatableTag } from "types/cache";
 import type {
   CloudflarePurgeResult,
-  CloudFrontInvalidationResult,
   RevalidateResponseDTO,
 } from "types/api/revalidate";
 import { clearPlacesCaches } from "@lib/api/places";
 import { clearRegionsCaches } from "@lib/api/regions";
 import { clearCategoriesCaches } from "@lib/api/categories";
 import { clearCitiesCaches } from "@lib/api/cities";
-
-// CloudFront's control plane API is always in us-east-1, regardless of distribution region
-const CLOUDFRONT_API_REGION = "us-east-1";
-// Timeout for CloudFront invalidation API calls (prevents indefinite hangs in serverless)
-const CLOUDFRONT_INVALIDATION_TIMEOUT_MS = 10_000;
 
 /**
  * Whitelist of cache tags that can be revalidated via this endpoint.
@@ -36,43 +26,30 @@ const ALLOWED_TAGS = [
 ] as const satisfies readonly RevalidatableTag[];
 
 /**
- * Maps cache tags to Cloudflare URL prefixes for cache purging.
- * Cloudflare prefixes are literal path prefixes (NO wildcards supported).
- *
- * HTML page prefixes (/ca/, /es/) are included so that Cloudflare's edge
- * cache (which caches ISR HTML pages) is also purged when content changes.
- * This works in tandem with the Cloudflare Cache Rule that caches HTML on
- * www.esdeveniments.cat (excluding /api/* and /preferits).
- *
- * @see https://developers.cloudflare.com/cache/how-to/purge-cache/purge-by-prefix/
+ * Tags that require a full Cloudflare cache purge.
+ * These are structural data (places, regions, cities, categories) that affect
+ * navigation, filters, and sitemaps across ALL locales and pages.
+ * Prefix-based purge can't target the default locale cleanly (it uses unprefixed
+ * paths via next-intl's "as-needed" strategy), so we purge everything.
+ * These revalidations are rare (only when new towns/places are added).
  */
-const TAG_TO_CLOUDFLARE_PREFIXES: Record<RevalidatableTag, string[]> = {
-  places: ["/api/places", "/ca/", "/es/"],
-  regions: ["/api/regions", "/ca/", "/es/"],
-  "regions:options": ["/api/regions/options"],
-  cities: ["/api/cities", "/ca/", "/es/"],
-  categories: ["/api/categories", "/ca/", "/es/"],
-};
+const FULL_PURGE_TAGS: ReadonlySet<RevalidatableTag> = new Set([
+  "places",
+  "regions",
+  "cities",
+  "categories",
+]);
 
 /**
- * Maps cache tags to CloudFront invalidation paths.
- * CloudFront supports wildcard patterns (* at end of path).
- * @see https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html
+ * Tags with targeted Cloudflare prefix purges (API-only, no HTML pages).
  */
-const TAG_TO_CLOUDFRONT_PATHS: Record<RevalidatableTag, string[]> = {
-  places: ["/api/places", "/api/places/*"],
-  regions: ["/api/regions", "/api/regions/*"],
-  "regions:options": ["/api/regions/options"],
-  cities: ["/api/cities", "/api/cities/*"],
-  categories: ["/api/categories", "/api/categories/*"],
+const TAG_TO_CLOUDFLARE_PREFIXES: Partial<Record<RevalidatableTag, string[]>> = {
+  "regions:options": ["www.esdeveniments.cat/api/regions/options"],
 };
-
-/** CloudFront invalidation limits */
-const CLOUDFRONT_MAX_PATHS = 3000;
 
 /**
  * Maps cache tags to in-memory cache clear functions.
- * Used to clear warm Lambda instance caches during revalidation.
+ * Used to clear process-level caches during revalidation.
  */
 const TAG_TO_CLEAR_FN: Record<RevalidatableTag, () => void> = {
   places: clearPlacesCaches,
@@ -119,11 +96,11 @@ function validateTags(tags: unknown): tags is RevalidatableTag[] {
 }
 
 /**
- * Purge Cloudflare cache for given URL prefixes.
+ * Purge Cloudflare cache. Supports full purge or prefix-based purge.
  * Returns success status and any error message.
  */
 async function purgeCloudflareCache(
-  prefixes: string[]
+  options: { purgeEverything: true } | { prefixes: string[] }
 ): Promise<{ success: boolean; error?: string; skipped?: boolean }> {
   const zoneId = process.env.CLOUDFLARE_ZONE_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
@@ -132,6 +109,11 @@ async function purgeCloudflareCache(
   if (!zoneId || !apiToken) {
     return { success: true, skipped: true }; // Not an error, just not configured
   }
+
+  const body =
+    "purgeEverything" in options
+      ? { purge_everything: true }
+      : { prefixes: options.prefixes };
 
   try {
     const controller = new AbortController();
@@ -147,7 +129,7 @@ async function purgeCloudflareCache(
             Authorization: `Bearer ${apiToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ prefixes }),
+          body: JSON.stringify(body),
           signal: controller.signal,
         }
       );
@@ -172,86 +154,10 @@ async function purgeCloudflareCache(
 }
 
 /**
- * Invalidate CloudFront cache for given paths.
- * Uses AWS SDK with Lambda's IAM role credentials.
- * Note: paths may be fewer than input if truncated due to CloudFront limit (3000 max).
- */
-async function invalidateCloudFrontCache(
-  paths: string[]
-): Promise<CloudFrontInvalidationResult> {
-  const distributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
-
-  // Skip if CloudFront is not configured
-  if (!distributionId) {
-    return { invalidated: false, skipped: true };
-  }
-
-  // Normalize paths: ensure leading slash, non-empty, and de-duplicate
-  const normalizedPaths = [
-    ...new Set(
-      paths
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0)
-        .map((p) => (p.startsWith("/") ? p : `/${p}`))
-    ),
-  ];
-
-  if (normalizedPaths.length === 0) {
-    return { invalidated: false, skipped: true };
-  }
-
-  // CloudFront has a hard limit of 3000 paths per invalidation
-  const truncated = normalizedPaths.length > CLOUDFRONT_MAX_PATHS;
-  if (truncated) {
-    console.warn(
-      `CloudFront invalidation truncated: ${normalizedPaths.length} paths exceeds ${CLOUDFRONT_MAX_PATHS} limit`
-    );
-  }
-  // slice is a no-op when under the limit
-  const pathsToInvalidate = normalizedPaths.slice(0, CLOUDFRONT_MAX_PATHS);
-  const originalCount = truncated ? normalizedPaths.length : undefined;
-
-  try {
-    // CloudFront client uses Lambda's IAM role credentials automatically
-    const client = new CloudFrontClient({ region: CLOUDFRONT_API_REGION });
-
-    const command = new CreateInvalidationCommand({
-      DistributionId: distributionId,
-      InvalidationBatch: {
-        CallerReference: `revalidate-${randomUUID()}`,
-        Paths: {
-          Quantity: pathsToInvalidate.length,
-          Items: pathsToInvalidate,
-        },
-      },
-    });
-
-    // Add timeout to prevent indefinite hangs in serverless
-    const response = await client.send(command, {
-      abortSignal: AbortSignal.timeout(CLOUDFRONT_INVALIDATION_TIMEOUT_MS),
-    });
-    const invalidationId = response.Invalidation?.Id;
-
-    return {
-      invalidated: true,
-      invalidationId,
-      paths: pathsToInvalidate,
-      truncated,
-      originalCount,
-    };
-  } catch (error) {
-    const errorMsg =
-      error instanceof Error ? error.message : "Unknown CloudFront error";
-    console.error("CloudFront invalidation error:", error);
-    return { invalidated: false, error: errorMsg };
-  }
-}
-
-/**
  * POST /api/revalidate
  *
  * Secure endpoint to trigger Next.js cache revalidation for specific tags.
- * Also purges Cloudflare and CloudFront CDN caches if configured.
+ * Also purges Cloudflare CDN caches if configured.
  * Used when new towns/places are added to the backend.
  *
  * Headers:
@@ -319,25 +225,22 @@ export async function POST(request: Request) {
     }
 
     // 4. Revalidate each tag (Next.js data cache)
-    // Next 16 requires a profile; use "max" to force full invalidation
-    // Wrapped in try-catch to handle transient DynamoDB tag cache errors in OpenNext
+    // Use { expire: 0 } for immediate invalidation (not stale-while-revalidate)
+    // to prevent Cloudflare from repopulating with stale content after purge
     const revalidatedTags: RevalidatableTag[] = [];
     const failedTags: RevalidatableTag[] = [];
     for (const tag of tags) {
       try {
-        revalidateTag(tag, "max");
+        revalidateTag(tag, { expire: 0 });
         revalidatedTags.push(tag);
       } catch (error) {
-        // Non-fatal: tag cache write failed, but revalidation still triggered
         console.warn(`revalidateTag failed for "${tag}":`, error);
         failedTags.push(tag);
-        // Still count as revalidated since the actual cache invalidation happens
-        revalidatedTags.push(tag);
       }
     }
 
-    // 4b. Clear in-memory Lambda caches based on tags
-    // This ensures warm Lambda instances get fresh data
+    // 4b. Clear in-memory process caches based on tags
+    // This ensures the running server gets fresh data
     const clearedFns = new Set<() => void>();
     for (const tag of tags) {
       const clearFn = TAG_TO_CLEAR_FN[tag];
@@ -347,15 +250,26 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5. Purge Cloudflare cache for corresponding URL prefixes
+    // 5. Purge Cloudflare cache
+    // Structural tags (places, regions, etc.) trigger a full purge since they
+    // affect all locales and pages. Other tags use targeted prefix purge.
+    const needsFullPurge = revalidatedTags.some((tag) => FULL_PURGE_TAGS.has(tag));
     const cfPrefixes = new Set(
-      tags.flatMap((tag) => TAG_TO_CLOUDFLARE_PREFIXES[tag] ?? [])
+      revalidatedTags.flatMap((tag) => TAG_TO_CLOUDFLARE_PREFIXES[tag] ?? [])
     );
 
     let cloudflareResult: CloudflarePurgeResult;
-    if (cfPrefixes.size > 0) {
+    if (needsFullPurge) {
+      const cfResult = await purgeCloudflareCache({ purgeEverything: true });
+      cloudflareResult = {
+        purged: cfResult.success && !cfResult.skipped,
+        prefixes: ["*"],
+        skipped: cfResult.skipped,
+        error: cfResult.error,
+      };
+    } else if (cfPrefixes.size > 0) {
       const prefixArray = Array.from(cfPrefixes);
-      const cfResult = await purgeCloudflareCache(prefixArray);
+      const cfResult = await purgeCloudflareCache({ prefixes: prefixArray });
       cloudflareResult = {
         purged: cfResult.success && !cfResult.skipped,
         prefixes: prefixArray,
@@ -366,28 +280,7 @@ export async function POST(request: Request) {
       cloudflareResult = { purged: false, skipped: true };
     }
 
-    // 6. Invalidate CloudFront cache (AWS CDN in front of OpenNext/SST)
-    // Use CloudFront-specific paths (supports wildcards)
-    const cfrontPaths = new Set(
-      tags.flatMap((tag) => TAG_TO_CLOUDFRONT_PATHS[tag] ?? [])
-    );
-
-    const cloudfrontResult: CloudFrontInvalidationResult =
-      cfrontPaths.size > 0
-        ? await invalidateCloudFrontCache(Array.from(cfrontPaths))
-        : { invalidated: false, skipped: true };
-
     // 7. Log successful revalidation
-    const cloudfrontStatus = cloudfrontResult.invalidated
-      ? `invalidated${
-          cloudfrontResult.invalidationId
-            ? ` (${cloudfrontResult.invalidationId})`
-            : ""
-        }`
-      : cloudfrontResult.skipped
-      ? "skipped"
-      : "failed";
-
     console.log(
       `[revalidate] Tags: ${revalidatedTags.join(", ")}${
         failedTags.length > 0
@@ -399,29 +292,22 @@ export async function POST(request: Request) {
           : cloudflareResult.skipped
           ? "skipped"
           : "failed"
-      } | CloudFront: ${cloudfrontStatus}`
+      }`
     );
 
     // Collect warnings for transient/partial failures
     const warnings: string[] = [];
     if (failedTags.length > 0) {
       warnings.push(
-        `Tag cache write failed for: ${failedTags.join(
+        `revalidateTag failed for: ${failedTags.join(
           ", "
-        )} (transient, revalidation still applied)`
+        )} (data cache NOT invalidated for these tags, in-memory cache was cleared)`
       );
     }
-    if (cloudfrontResult.truncated && cloudfrontResult.originalCount) {
-      warnings.push(
-        `CloudFront invalidation truncated: ${cloudfrontResult.originalCount} paths exceeds limit. Only first ${CLOUDFRONT_MAX_PATHS} were invalidated.`
-      );
-    }
-
     const response: RevalidateResponseDTO = {
       revalidated: true,
       tags: revalidatedTags,
       cloudflare: cloudflareResult,
-      cloudfront: cloudfrontResult,
       timestamp: new Date().toISOString(),
       ...(warnings.length > 0 && { warning: warnings.join(" | ") }),
     };

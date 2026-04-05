@@ -19,7 +19,7 @@ let schemaPromise: Promise<void> | null = null;
  * Call on write paths only (webhook, image-upload, seed script).
  * Read paths skip this — the table already exists after first setup.
  *
- * Uses a shared promise to deduplicate concurrent calls on the same Lambda.
+ * Uses a shared promise to deduplicate concurrent calls in the same process.
  */
 export async function ensureSchema(): Promise<void> {
   if (schemaInitialized) return;

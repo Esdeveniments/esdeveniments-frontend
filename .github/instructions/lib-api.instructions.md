@@ -16,4 +16,4 @@ applyTo: "lib/api/**/*.ts"
 - Use `fetchWithHmac` for all external calls (built-in 10s timeout, HMAC signing).
 - Parse responses with Zod schemas from `lib/validation/`.
 - Return safe fallback DTOs on error — never throw from read endpoints.
-- NEVER add `next: { revalidate, tags }` — this causes unbounded cache growth on OpenNext/SST.
+- NEVER add `next: { revalidate, tags }` — this causes unbounded cache growth (one entry per unique URL).

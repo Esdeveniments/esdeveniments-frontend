@@ -166,7 +166,7 @@ Features:
 - 5s default timeout
 - Response validation
 - Sentry error logging
-- Never hangs in serverless
+- Never hangs (timeout-protected)
 
 ## Rationale for Relaxed CSP
 

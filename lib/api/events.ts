@@ -171,7 +171,7 @@ export async function fetchEventBySlug(
   }
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
-    // Use getInternalApiUrl which now properly resolves to CloudFront in SST
+    // Use getInternalApiUrl which resolves the correct internal origin
     const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`);
 
     const res = await fetch(internalApiUrl, {
