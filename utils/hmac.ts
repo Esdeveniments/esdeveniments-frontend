@@ -2,11 +2,13 @@ import { FIVE_MINUTES_IN_MS, ONE_MINUTE_IN_MS } from "./constants";
 const encoder = new TextEncoder();
 const keyCache = new Map<string, Promise<CryptoKey>>();
 
-// Rely solely on Web Crypto API with runtime check
-if (!globalThis.crypto?.subtle) {
-  throw new Error("Web Crypto API not available");
+// Lazy accessor for Web Crypto API — avoids top-level throw in edge cases
+function getCryptoSubtle(): SubtleCrypto {
+  if (!globalThis.crypto?.subtle) {
+    throw new Error("Web Crypto API not available");
+  }
+  return globalThis.crypto.subtle;
 }
-const cryptoSubtle = globalThis.crypto.subtle;
 
 // Use the server-only secret. This ensures the secret is never exposed to the browser.
 function getHmacSecret(): string {
@@ -20,7 +22,7 @@ function getHmacSecret(): string {
 function getHmacKey(secret: string = getHmacSecret()) {
   let promise = keyCache.get(secret);
   if (!promise) {
-    promise = cryptoSubtle.importKey(
+    promise = getCryptoSubtle().importKey(
       "raw",
       encoder.encode(secret),
       { name: "HMAC", hash: "SHA-256" },
@@ -57,7 +59,7 @@ export const generateHmac = async (
   const stringToSign = buildStringToSign(body, timestamp, pathAndQuery, method);
   const key = await getHmacKey();
   const dataBuffer = encoder.encode(stringToSign);
-  const signatureBuffer = await cryptoSubtle.sign("HMAC", key, dataBuffer);
+  const signatureBuffer = await getCryptoSubtle().sign("HMAC", key, dataBuffer);
   const signatureHex = Array.from(new Uint8Array(signatureBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -112,7 +114,7 @@ export const verifyHmacSignature = async (
     if (!signatureBytes) {
       return false;
     }
-    return await cryptoSubtle.verify("HMAC", key, signatureBytes, dataBuffer);
+    return await getCryptoSubtle().verify("HMAC", key, signatureBytes, dataBuffer);
   } catch (error) {
     console.error("Error verifying HMAC signature:", error);
     return false;
