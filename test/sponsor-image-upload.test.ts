@@ -201,7 +201,7 @@ describe("Sponsor Image Upload Route", () => {
       expect(json.errorCode).toBe("invalid_content_type");
     });
 
-    it("returns 413 when body cannot be parsed as FormData (Lambda truncation)", async () => {
+    it("returns 413 when body cannot be parsed as FormData (body truncation)", async () => {
       const request = createMockRequestWithBrokenBody();
 
       const response = await POST(request);

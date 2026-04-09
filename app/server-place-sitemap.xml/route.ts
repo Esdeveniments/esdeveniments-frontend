@@ -4,7 +4,7 @@ import { buildSitemapIndex } from "@utils/sitemap";
 import { SITEMAP_PLACES_PER_CHUNK } from "@utils/constants";
 
 export async function GET() {
-  // Sitemap index: references chunked place sitemaps to avoid 6MB Lambda payload limit
+  // Sitemap index: references chunked place sitemaps to keep response sizes manageable
   // Each chunk handles a subset of places × dates × categories
   const places = await fetchPlaces();
   const totalChunks = Math.ceil(places.length / SITEMAP_PLACES_PER_CHUNK);

@@ -19,17 +19,8 @@ const compat = new FlatCompat({
 export default [
   {
     ignores: [
-      ".sst/**",
-      ".sst/**/*",
-      ".sst",
-      ".sst.*",
-      "*.sst",
-      "**/.sst/**",
-      ".open-next/**",
-      ".open-next/**/*",
       ".next/**",
       ".next/**/*",
-      "sst-env.d.ts",
     ],
   },
   // Spread converted ESLintRC configs from FlatCompat
@@ -205,9 +196,9 @@ export default [
       ],
     },
   },
-  // CRITICAL: Prevent searchParams in listing pages to avoid $300+ DynamoDB cost spikes
-  // Reading searchParams makes pages dynamic, causing OpenNext/SST to create millions of cache entries
-  // See: Dec 28, 2025 incident - 200M DynamoDB writes = $307 cost
+  // CRITICAL: Prevent searchParams in listing pages to avoid cache explosion
+  // Reading searchParams makes pages dynamic, creating a separate cache entry per unique URL+query
+  // See: Dec 28, 2025 incident - 200M cache writes = $307 cost
   {
     files: ["app/\\[place\\]/**/*.tsx", "app/\\[place\\]/**/*.ts"],
     rules: {
@@ -216,7 +207,7 @@ export default [
         {
           selector: "Identifier[name='searchParams']",
           message:
-            "⚠️ COST ALERT: Do NOT use searchParams in app/[place]/* pages! This makes pages dynamic and causes OpenNext to create millions of DynamoDB cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
+            "⚠️ COST ALERT: Do NOT use searchParams in app/[place]/* pages! This makes pages dynamic and creates millions of cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
         },
       ],
     },

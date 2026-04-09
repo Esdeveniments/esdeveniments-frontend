@@ -16,10 +16,6 @@ import AdArticle from "components/ui/adArticle";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { useTranslations } from "next-intl";
 
-// const Tooltip = dynamic(() => import("components/ui/tooltip"), {
-//   ssr: false,
-// });
-
 // computeTemporalStatus now imported from utils/event-status for reuse & testability
 
 export default function EventClient({

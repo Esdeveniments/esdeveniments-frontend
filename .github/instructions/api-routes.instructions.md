@@ -12,4 +12,4 @@ applyTo: "app/api/**/*.ts"
 - Set `Cache-Control` headers with appropriate TTLs (events 600s, news 60s, categories 3600s).
 - Use `stale-while-revalidate` for resilience.
 - Handle errors gracefully — return a structured JSON error response, never let raw exceptions leak.
-- NEVER add `next: { revalidate }` to fetches in external wrappers — this causes cache explosion on OpenNext/SST.
+- NEVER add `next: { revalidate }` to fetches in external wrappers — this causes unbounded cache growth (one entry per unique URL).

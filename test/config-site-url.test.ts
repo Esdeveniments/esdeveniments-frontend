@@ -227,7 +227,7 @@ describe("config/index:getSiteUrlFromRequest", () => {
     );
   });
 
-  it("uses x-forwarded-host header when nextUrl.host is missing (SST/CloudFront)", () => {
+  it("uses x-forwarded-host header when nextUrl.host is missing (reverse proxy)", () => {
     const mockRequest = {
       nextUrl: {
         protocol: "https:",

@@ -3,7 +3,7 @@ import type { CitySummaryResponseDTO } from "types/api/city";
 import { parseCities, parseCity } from "lib/validation/city";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
-// This causes OpenNext/SST to create a separate S3+DynamoDB cache entry for every unique URL.
+// This creates a separate cache entry for every unique URL.
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
 

@@ -1,4 +1,4 @@
-import type { Event, EventHint, ErrorEvent, Metric } from "@sentry/nextjs";
+import type { Event, EventHint, ErrorEvent } from "@sentry/nextjs";
 
 /**
  * Well-known error patterns to ignore at SDK level (before serialization).
@@ -21,7 +21,7 @@ export const SENTRY_IGNORE_ERRORS: Array<string | RegExp> = [
   // Next.js rolling deployment mismatch — old client hits new server. Not actionable.
   "Failed to find Server Action",
   // React PPR resumption mismatch — happens during deployment transitions when
-  // OpenNext serves stale postponed metadata. Not a code bug.
+  // the server serves stale postponed metadata. Not a code bug.
   "Couldn't find all resumable slots",
 ];
 
@@ -213,33 +213,3 @@ export function beforeSendEdge(
   return beforeSend(event, hint) as ErrorEvent | null;
 }
 
-/**
- * Filters and sanitizes Sentry metrics before sending.
- * Implements best practices for metrics monitoring:
- * - Scrubs sensitive data from metric attributes
- * - Filters out metrics that shouldn't be sent
- * - Prevents information disclosure
- *
- * Use with beforeSendMetric option in Sentry.init()
- */
-export function beforeSendMetric(metric: Metric): Metric | null {
-  // Scrub sensitive data from metric attributes
-  if (metric.attributes) {
-    const sensitiveKeys = [
-      "password",
-      "token",
-      "api_key",
-      "apikey",
-      "secret",
-      "auth",
-      "authorization",
-    ];
-    sensitiveKeys.forEach((key) => {
-      if (metric.attributes?.[key]) {
-        metric.attributes[key] = "[Filtered]";
-      }
-    });
-  }
-
-  return metric;
-}

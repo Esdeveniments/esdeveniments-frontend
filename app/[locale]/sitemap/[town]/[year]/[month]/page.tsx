@@ -152,7 +152,7 @@ export default async function Page({
     DEFAULT_MONTHS_URL
   );
 
-  // Limit to 100 events per page to stay under Lambda's 6MB payload limit
+  // Limit to 100 events per page to keep response sizes manageable
   // Archive pages are for SEO/discoverability; users can click through to event detail pages
   const MAX_EVENTS_PER_PAGE = 100;
   // Limit JSON-LD to top 50 events to reduce payload size while maintaining SEO value
@@ -184,7 +184,7 @@ export default async function Page({
     : [];
 
   // Limit JSON-LD to first N events to reduce payload size
-  // This still provides good SEO value while staying under Lambda's 6MB limit
+  // This still provides good SEO value while keeping response sizes manageable
   const eventsForJsonLd = filteredEvents.slice(0, MAX_EVENTS_FOR_JSON_LD);
 
   // Generate event JSON-LD data (limited to avoid payload overflow)

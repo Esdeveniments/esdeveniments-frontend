@@ -37,8 +37,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:ui": "playwright test --ui",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "typecheck:sst": "tsc --noEmit --project tsconfig.sst.json"
+    "typecheck": "tsc --noEmit"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -50,9 +49,7 @@
     ]
   },
   "dependencies": {
-    "@aws-sdk/client-cloudfront": "^3.940.0",
-    "@aws-sdk/client-dynamodb": "^3.966.0",
-    "@aws-sdk/client-s3": "^3.992.0",
+    "@fortedigital/nextjs-cache-handler": "^3.2.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@sentry/nextjs": "10.32.0",
@@ -72,16 +69,14 @@
     "react-dom": "19.2.4",
     "react-select": "^5.7.0",
     "react-share": "^5.0.3",
-    "react-tooltip": "^5.26.0",
+    "redis": "^5.10.0",
     "sharp": "^0.34.5",
-    "sst": "3.19.3",
     "swr": "^2.2.5",
     "tailwindcss": "3.3.6",
     "zod": "3.24.3",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@aws-sdk/client-ssm": "^3.940.0",
     "@eslint-react/eslint-plugin": "^2.5.3",
     "@lhci/cli": "^0.15.1",
     "@lingual/i18n-check": "^0.8.15",

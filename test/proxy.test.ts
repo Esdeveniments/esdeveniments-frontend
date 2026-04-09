@@ -5,13 +5,10 @@ import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
 
-// Mock crypto globally
+// Only mock randomUUID; keep native crypto.subtle so real HMAC ops work
+const nativeSubtle = globalThis.crypto.subtle;
 vi.stubGlobal("crypto", {
-  subtle: {
-    importKey: vi.fn(),
-    sign: vi.fn(),
-    verify: vi.fn(),
-  },
+  subtle: nativeSubtle,
   randomUUID: vi.fn().mockReturnValue("test-uuid"),
 });
 
@@ -82,11 +79,7 @@ describe("proxy", () => {
     // Reset mocks
     vi.restoreAllMocks();
     vi.stubGlobal("crypto", {
-      subtle: {
-        importKey: vi.fn(),
-        sign: vi.fn(),
-        verify: vi.fn(),
-      },
+      subtle: nativeSubtle,
       randomUUID: vi.fn().mockReturnValue("test-uuid"),
     });
 
@@ -402,9 +395,6 @@ describe("proxy", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      // Mock verifyHmac to return false
-      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(false);
-
       await proxy(mockRequest);
 
       expect(NextResponse.json).toHaveBeenCalledWith(
@@ -437,9 +427,6 @@ describe("proxy", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      // Mock verifyHmac to return true
-      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
-
       await proxy(mockRequest);
 
       expect(NextResponse.next).toHaveBeenCalled();
@@ -468,8 +455,6 @@ describe("proxy", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
-
       await proxy(mockRequest);
 
       expect(NextResponse.next).toHaveBeenCalled();
@@ -493,8 +478,6 @@ describe("proxy", () => {
         method: "GET",
       } as unknown as NextRequest;
 
-      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
-
       await proxy(mockRequest);
 
       expect(mockRequest.clone().text).not.toHaveBeenCalled();
@@ -514,8 +497,6 @@ describe("proxy", () => {
         text: vi.fn().mockRejectedValue(new Error("Read error")),
         method: "GET",
       } as unknown as NextRequest;
-
-      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
       await proxy(mockRequest);
 
@@ -572,8 +553,6 @@ describe("proxy", () => {
         text: vi.fn().mockResolvedValue(bodyString),
         method: "POST",
       } as unknown as NextRequest;
-
-      (globalThis.crypto.subtle.verify as Mock).mockResolvedValue(true);
 
       await proxy(mockRequest);
 

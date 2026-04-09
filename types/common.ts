@@ -390,11 +390,6 @@ export interface ListProps {
   children: (event: ListEvent, index: number) => React.ReactElement;
 }
 
-export interface TooltipComponentProps {
-  id: string;
-  children: React.ReactNode;
-}
-
 export interface ViewCounterProps {
   visits: number;
   hideText?: boolean;

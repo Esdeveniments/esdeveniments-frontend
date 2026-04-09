@@ -6,7 +6,7 @@ import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
 import type { SitemapPartsRouteContext } from "types/props";
 
-// Chunk size chosen to keep response well under 6MB Lambda limit
+// Chunk size chosen to keep response sizes manageable
 // With image URLs and hreflang alternates, ~500 events per chunk is safe
 const EVENTS_PER_CHUNK = 500;
 
