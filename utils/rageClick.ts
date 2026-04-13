@@ -11,6 +11,12 @@ import { sendGoogleEvent } from "@utils/analytics";
 const CLICK_WINDOW_MS = 1000;
 const CLICK_THRESHOLD = 3;
 
+// Selectors for stable interactive ancestors. Clicks on children (icons,
+// text spans) are folded up to the nearest interactive element so rapid
+// clicks don't split across multiple DOM nodes and hide the rage pattern.
+const INTERACTIVE_SELECTORS =
+  'button, a, [role="button"], [role="link"], input, [data-rage-id]';
+
 let initialized = false;
 
 const recentClicks = new WeakMap<Element, number[]>();
@@ -37,8 +43,13 @@ export function initRageClick(): void {
   document.addEventListener(
     "click",
     (e) => {
-      const target = e.target as Element | null;
-      if (!target || target.nodeType !== 1) return;
+      const rawTarget = e.target as Element | null;
+      if (!rawTarget || rawTarget.nodeType !== 1) return;
+
+      // Normalize to the nearest interactive ancestor so clicks on icons or
+      // text inside a button collapse to the same identity. Falls back to
+      // the raw target when nothing interactive is above it.
+      const target = rawTarget.closest(INTERACTIVE_SELECTORS) ?? rawTarget;
 
       const now = Date.now();
       const prior = recentClicks.get(target) ?? [];

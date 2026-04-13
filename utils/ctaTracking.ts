@@ -18,7 +18,6 @@ const idStats = new Map<TrackedCtaId, CtaStats>();
 const countedElements = new WeakSet<Element>();
 
 let sessionStart = 0;
-let flushed = false;
 let flushListenersAttached = false;
 
 function getStats(id: TrackedCtaId): CtaStats {
@@ -31,9 +30,11 @@ function getStats(id: TrackedCtaId): CtaStats {
 }
 
 function flush(): void {
-  if (flushed) return;
   if (idStats.size === 0) return;
-  flushed = true;
+
+  // Self-heal if `registerCta` was called before `initCtaTracking` somehow —
+  // otherwise `session_duration_ms` would be Date.now() − 0 (~55 years).
+  if (sessionStart === 0) sessionStart = Date.now();
 
   const sessionDurationMs = Date.now() - sessionStart;
   // Emit one flat event per CTA so GA4 reports aggregate cleanly across
@@ -47,6 +48,14 @@ function flush(): void {
       session_duration_ms: sessionDurationMs,
     });
   }
+
+  // Reset per-window state so SPA navigations and tab-switch-and-return
+  // keep tracking instead of locking the buffer after the first flush.
+  // `countedElements` is a WeakSet keyed by DOM nodes — elements still
+  // mounted intentionally won't re-emit impressions; elements replaced on
+  // navigation get GC'd automatically.
+  idStats.clear();
+  sessionStart = Date.now();
 }
 
 function ensureObserver(): void {
@@ -91,6 +100,10 @@ export function initCtaTracking(): void {
 }
 
 export function registerCta(element: Element, id: TrackedCtaId): void {
+  // Defensive: if callers register elements before `initCtaTracking` runs
+  // (unusual React mount order, Strict Mode double-invocation, etc.), bring
+  // the tracker online so `session_duration_ms` doesn't overflow at flush.
+  if (sessionStart === 0) initCtaTracking();
   ensureObserver();
   if (!io) return;
   elementToId.set(element, id);

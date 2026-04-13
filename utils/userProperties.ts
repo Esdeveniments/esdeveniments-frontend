@@ -26,6 +26,58 @@ function detectReturning(): "true" | "false" {
   }
 }
 
+// Search-engine brand labels. Matched as whole hostname segments so
+// `mygooglesite.com` is NOT classified as organic — only hosts where the
+// label appears between dots (google.com, www.bing.co.uk) qualify.
+const ORGANIC_LABELS = [
+  "google",
+  "bing",
+  "duckduckgo",
+  "yahoo",
+  "ecosia",
+  "qwant",
+];
+
+// Social-media hostnames matched by exact suffix (so `evil-facebook.com` is
+// NOT misclassified but `m.facebook.com` is).
+const SOCIAL_SUFFIXES = [
+  "facebook.com",
+  "fb.com",
+  "instagram.com",
+  "twitter.com",
+  "x.com",
+  "t.co",
+  "linkedin.com",
+  "tiktok.com",
+  "threads.net",
+  "telegram.org",
+  "t.me",
+  "whatsapp.com",
+  "reddit.com",
+  "mastodon.social",
+];
+
+// AI-assistant hostnames — checked BEFORE organic because Gemini lives on
+// `gemini.google.com`, which would otherwise match the organic "google"
+// label.
+const AI_SUFFIXES = [
+  "openai.com",
+  "chatgpt.com",
+  "claude.ai",
+  "perplexity.ai",
+  "gemini.google.com",
+  "copilot.microsoft.com",
+  "poe.com",
+];
+
+function hostEndsWith(host: string, suffix: string): boolean {
+  return host === suffix || host.endsWith("." + suffix);
+}
+
+function hostContainsLabel(host: string, label: string): boolean {
+  return host.split(".").some((part) => part === label);
+}
+
 function detectReferrerCategory(): AnalyticsUserProperties["referrer_category"] {
   if (typeof document === "undefined") return "other";
   const ref = document.referrer;
@@ -33,23 +85,9 @@ function detectReferrerCategory(): AnalyticsUserProperties["referrer_category"] 
 
   try {
     const host = new URL(ref).hostname.toLowerCase();
-    if (/(google|bing|duckduckgo|yahoo|ecosia|qwant)\./.test(host)) {
-      return "organic";
-    }
-    if (
-      /(facebook|instagram|twitter|x\.com|linkedin|tiktok|threads|telegram|whatsapp|t\.co|reddit|mastodon)/.test(
-        host
-      )
-    ) {
-      return "social";
-    }
-    if (
-      /(chat\.openai|chatgpt|claude\.ai|perplexity|gemini\.google|copilot\.microsoft|poe\.com)/.test(
-        host
-      )
-    ) {
-      return "ai";
-    }
+    if (AI_SUFFIXES.some((s) => hostEndsWith(host, s))) return "ai";
+    if (SOCIAL_SUFFIXES.some((s) => hostEndsWith(host, s))) return "social";
+    if (ORGANIC_LABELS.some((l) => hostContainsLabel(host, l))) return "organic";
     return "other";
   } catch {
     return "other";
@@ -64,10 +102,13 @@ function detectDeviceClass(): AnalyticsUserProperties["device_class"] {
   return "desktop";
 }
 
-let applied = false;
+// Track the last-applied locale instead of a boolean so mid-session locale
+// switches (ca → es → en) re-set `preferred_locale` on GA4 rather than
+// silently retaining the original.
+let appliedForLocale: string | null = null;
 
 export function setUserProperties(locale: string, attempt = 0): void {
-  if (applied) return;
+  if (appliedForLocale === locale) return;
   if (typeof window === "undefined") return;
   if (attempt > MAX_ATTEMPTS) return;
 
@@ -77,7 +118,7 @@ export function setUserProperties(locale: string, attempt = 0): void {
     return;
   }
 
-  applied = true;
+  appliedForLocale = locale;
   const props: AnalyticsUserProperties = {
     is_returning: detectReturning(),
     referrer_category: detectReferrerCategory(),
