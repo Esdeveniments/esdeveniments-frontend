@@ -9,6 +9,7 @@ import { HeartIcon as HeartIconOutline } from "@heroicons/react/24/outline";
 
 import Button from "@components/ui/common/button";
 import { sendGoogleEvent } from "@utils/analytics";
+import useTrackedCta from "@components/hooks/useTrackedCta";
 import { queueFavoriteRequest } from "@utils/favorites-queue";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
@@ -40,6 +41,7 @@ export default function FavoriteButton({
   const isMutatingRef = useRef(false);
   const router = useRouter();
   const t = useTranslations("Components.FavoriteButton");
+  const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("favorite_button");
 
   const { data: favoritesData, mutate: mutateFavorites } = useSWR<
     { ok: true; favorites: string[] } | { ok: false; error: string }
@@ -70,7 +72,7 @@ export default function FavoriteButton({
   const Icon = isFavorite ? HeartIconSolid : HeartIconOutline;
 
   return (
-    <div className="relative">
+    <div ref={ctaRef} className="relative">
       <Button
         type="button"
         variant="ghost"
@@ -83,6 +85,7 @@ export default function FavoriteButton({
           e.preventDefault();
           e.stopPropagation();
 
+          trackClick();
           setLimitMessage(null);
           const nextIsFavorite = !isFavorite;
           setIsFavorite(nextIsFavorite);
