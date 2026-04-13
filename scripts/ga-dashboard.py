@@ -11,7 +11,6 @@ Usage:
     python3 scripts/ga-dashboard.py --md         # Full Markdown (for CI/GH Issues)
     python3 scripts/ga-dashboard.py --days 30    # Change period
     python3 scripts/ga-dashboard.py --country Spain  # Filter to one country (removes bots)
-    python3 scripts/ga-dashboard.py --realtime   # Real-time only
     python3 scripts/ga-dashboard.py --events     # Custom events deep-dive
     python3 scripts/ga-dashboard.py --publish    # Publish funnel analysis
     python3 scripts/ga-dashboard.py --search     # Search terms + filters
@@ -26,7 +25,7 @@ import subprocess
 import sys
 import urllib.request
 import urllib.error
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 PROPERTY_ID = "406884331"
 QUOTA_PROJECT = "esdeveniments-3"
@@ -146,13 +145,69 @@ def pct(num, den):
     return f"{num / den * 100:.1f}%"
 
 
-def health(rate, good, warn):
-    """Return traffic light emoji based on thresholds."""
+def health(rate, good, warn, count=None, min_n=10):
+    """Return traffic light emoji based on thresholds.
+
+    When ``count`` is supplied and falls below ``min_n`` (default 10), returns
+    '⚪' to mark the signal as low-n (directional only). This prevents flagging
+    a 0% → 100% swing as urgent when the absolute sample is just a handful of
+    events. Callers that don't care about n can omit ``count``.
+    """
+    if count is not None and count < min_n:
+        return "⚪"
     if rate >= good:
         return "🟢"
     if rate >= warn:
         return "🟡"
     return "🔴"
+
+
+def load_holidays():
+    """Load Spain + Catalonia holiday calendar from scripts/holidays.json.
+
+    Returns an empty dict if the file is missing or malformed so the
+    dashboard keeps working even without the calendar.
+    """
+    path = os.path.join(os.path.dirname(__file__), "holidays.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return {}
+
+
+def detect_holiday_overlap(start_date, end_date, holidays):
+    """Return a sorted, de-duplicated list of holiday/period names that fall
+    within [start_date, end_date] (both inclusive, ``date`` objects).
+
+    Handles two shapes in ``holidays.json``:
+      * top-level keys ``"YYYY-MM-DD": "Name"`` (single-day holidays)
+      * ``_periods`` sub-object with ``{from, to, name}`` entries (multi-day)
+
+    Underscore-prefixed keys (``_comment``, ``_periods``) are treated as
+    metadata and skipped for the single-day pass.
+    """
+    hits = set()
+    for date_key, name in holidays.items():
+        if date_key.startswith("_"):
+            continue
+        try:
+            d = datetime.strptime(date_key, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if start_date <= d <= end_date:
+            hits.add(name)
+    for period in (holidays.get("_periods") or {}).values():
+        try:
+            p_from = datetime.strptime(period["from"], "%Y-%m-%d").date()
+            p_to = datetime.strptime(period["to"], "%Y-%m-%d").date()
+        except (KeyError, ValueError, TypeError):
+            continue
+        # Ranges overlap unless one ends before the other starts.
+        if not (p_to < start_date or p_from > end_date):
+            hits.add(period.get("name", ""))
+    hits.discard("")
+    return sorted(hits)
 
 
 def with_country_filter(existing_filter, country):
@@ -187,15 +242,6 @@ def collect_data(days, sections, country=None):
     d = {}
     d["country_filter"] = country
     rng = [{"startDate": f"{days}daysAgo", "endDate": "today"}]
-
-    # ── Realtime ──
-    if "realtime" in sections:
-        d["realtime"] = extract_rows(api_call("runRealtimeReport", {
-            "dimensions": [{"name": "unifiedScreenName"}],
-            "metrics": [{"name": "activeUsers"}, {"name": "screenPageViews"}],
-            "orderBys": [{"metric": {"metricName": "activeUsers"}, "desc": True}],
-            "limit": 15,
-        }))
 
     # ── Daily overview ──
     if "overview" in sections:
@@ -450,6 +496,52 @@ def collect_data(days, sections, country=None):
         }))
         # Sort numerically (GA4 returns strings, so "100" < "25" lexically)
         d["scroll_depth"].sort(key=lambda r: safe_int(r[0][0]) if r[0] else 0)
+
+        # ── Instrumentation signals added April 2026 ──
+        # Real-user Core Web Vitals (one event per metric per page load).
+        wv_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "web_vitals"},
+        }}
+        d["web_vitals"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [
+                {"name": "customEvent:metric"},
+                {"name": "customEvent:rating"},
+            ],
+            "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
+            "dimensionFilter": with_country_filter(wv_filter, country),
+            "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
+            "limit": 40,
+        }))
+
+        # CTA session summary (flushed once per session on pagehide).
+        cta_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "cta_session"},
+        }}
+        d["cta_session"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [{"name": "customEvent:cta_id"}],
+            "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
+            "dimensionFilter": with_country_filter(cta_filter, country),
+            "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
+            "limit": 20,
+        }))
+
+        # Rage-click hotspots (3+ clicks within 1s on same element).
+        rage_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "rage_click"},
+        }}
+        d["rage_click"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [{"name": "customEvent:element"}],
+            "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
+            "dimensionFilter": with_country_filter(rage_filter, country),
+            "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
+            "limit": 15,
+        }))
 
     # ── Compute behavior metrics ──
     if "behavior" in sections:
@@ -852,17 +944,6 @@ def section(title):
 def render_text(d, days, sections):
     """Render collected data as terminal-friendly text."""
 
-    if "realtime" in sections and "realtime" in d:
-        section("REAL-TIME (last 30 min)")
-        rows = d["realtime"]
-        total = sum(safe_int(m[0]) for _, m in rows)
-        print(f"\n  🟢 Active users: {total}\n")
-        if rows:
-            print(f"  {'Users':>5}  {'Views':>5}  Page")
-            print(f"  {'─'*5}  {'─'*5}  {'─'*40}")
-            for dims, mets in rows:
-                print(f"  {mets[0]:>5}  {mets[1]:>5}  {dims[0][:55]}")
-
     if "overview" in sections and "daily" in d:
         section(f"DAILY OVERVIEW (last {days} days)")
         print(f"\n  {'Date':>10}  {'Users':>6}  {'Sessions':>8}  {'Views':>6}  {'Bounce':>7}  {'AvgDur':>7}")
@@ -1110,6 +1191,38 @@ def render_markdown(d, days):
     L.append(f"> Property `{PROPERTY_ID}` · Period: **last {days} days**{filter_note} · Generated: {now}")
     L.append("")
 
+    # ── Context: holiday / seasonality annotation ──
+    # Annotate both the analysis window AND the comparison window (previous N
+    # days) so readers can tell seasonal shifts from behavioral shifts.
+    today = date.today()
+    analysis_start = today - timedelta(days=days - 1)
+    compare_end = analysis_start - timedelta(days=1)
+    compare_start = compare_end - timedelta(days=days - 1)
+
+    holidays_data = load_holidays()
+    analysis_holidays = detect_holiday_overlap(analysis_start, today, holidays_data)
+    compare_holidays = detect_holiday_overlap(compare_start, compare_end, holidays_data)
+
+    if analysis_holidays or compare_holidays:
+        L.append("## Context")
+        L.append("")
+        if analysis_holidays:
+            L.append(
+                f"- **Analysis window ({analysis_start} → {today})** overlaps: "
+                f"{', '.join(analysis_holidays)}."
+            )
+        if compare_holidays:
+            L.append(
+                f"- **Comparison window ({compare_start} → {compare_end})** overlaps: "
+                f"{', '.join(compare_holidays)}."
+            )
+        L.append("")
+        L.append(
+            "> Metric changes may reflect seasonality rather than product "
+            "changes. Factor this in before attributing regressions to code."
+        )
+        L.append("")
+
     # ── Health Check ──
     b = d.get("behavior", {})
     if b:
@@ -1141,21 +1254,6 @@ def render_markdown(d, days):
             L.append(f"- {emoji} **[{pri}] {title}** — {desc}")
         L.append("")
 
-    # ── Realtime ──
-    if "realtime" in d:
-        rows = d["realtime"]
-        total = sum(safe_int(m[0]) for _, m in rows)
-        L.append("## 🟢 Real-Time")
-        L.append("")
-        L.append(f"**{total} active users** right now")
-        L.append("")
-        if rows:
-            L.append("| Users | Views | Page |")
-            L.append("|------:|------:|------|")
-            for dims, mets in rows[:10]:
-                L.append(f"| {mets[0]} | {mets[1]} | {dims[0][:60]} |")
-            L.append("")
-
     # ── Behavior Funnel ──
     if b:
         L.append("## 🔍 User Journey Funnel")
@@ -1172,24 +1270,35 @@ def render_markdown(d, days):
 
         L.append("### Feature Adoption")
         L.append("")
-        L.append("| Feature | % of Users | Status |")
-        L.append("|---------|-----------|--------|")
+        L.append("Legend: 🟢 healthy · 🟡 room to grow · 🔴 below warn threshold · ⚪ low-n (directional only, <10 users)")
+        L.append("")
+        L.append("| Feature | % of Users | n | Status |")
+        L.append("|---------|-----------|--:|--------|")
+        # (label, adoption_key, source_event_name, good, warn). The event name
+        # is used to look up absolute user counts so n-gate can flag
+        # statistically weak signals (⚪) regardless of the rate.
         items = [
-            ("Search", "search", 0.05, 0.02),
-            ("Filters", "filter", 0.03, 0.01),
-            ("Outbound Click", "outbound", 0.05, 0.02),
-            ("Share", "share", 0.01, 0.003),
-            ("Add to Calendar", "calendar", 0.01, 0.003),
-            ("Favorites", "favorite", 0.01, 0.003),
-            ("Restaurant Section", "restaurant_view", 0.03, 0.01),
-            ("Section Views", "section_view", 0.05, 0.02),
-            ("Card Impressions", "card_impression", 0.10, 0.05),
-            ("Favorites Page", "favorites_page", 0.01, 0.003),
+            ("Search", "search", "search", 0.05, 0.02),
+            ("Filters", "filter", "filter_change", 0.03, 0.01),
+            ("Outbound Click", "outbound", "outbound_click", 0.05, 0.02),
+            ("Share", "share", "share", 0.01, 0.003),
+            ("Add to Calendar", "calendar", "add_to_calendar", 0.01, 0.003),
+            ("Favorites", "favorite", "favorite_add", 0.01, 0.003),
+            ("Restaurant Section", "restaurant_view", "restaurant_section_view", 0.03, 0.01),
+            ("Section Views", "section_view", "section_view", 0.05, 0.02),
+            ("Card Impressions", "card_impression", "card_impression_batch", 0.10, 0.05),
+            ("Favorites Page", "favorites_page", "favorites_page_view", 0.01, 0.003),
         ]
-        for name, key, good, warn in items:
+        event_users = {
+            dims[0]: safe_int(mets[1])
+            for dims, mets in d.get("events", [])
+            if dims
+        }
+        for name, key, event_name, good, warn in items:
             rate = b["adoption"].get(key, 0)
-            h = health(rate, good, warn)
-            L.append(f"| {name} | {rate:.1%} | {h} |")
+            count = event_users.get(event_name, 0)
+            h = health(rate, good, warn, count=count)
+            L.append(f"| {name} | {rate:.1%} | {count} | {h} |")
         L.append("")
 
         zrs = b.get("zero_result_searches", [])
@@ -1459,6 +1568,51 @@ def render_markdown(d, days):
         L.append("</details>")
         L.append("")
 
+    # ── Instrumentation signals (web-vitals, CTA sessions, rage clicks) ──
+    # Added April 2026 — see components/partials/AnalyticsBootstrap.tsx for the
+    # client-side emitters. These sections stay empty until the first deploy
+    # ships the new events, after which each render will surface them.
+
+    wv = d.get("web_vitals") or []
+    if wv:
+        L.append("## ⚡ Real-User Core Web Vitals")
+        L.append("")
+        L.append("| Metric | Rating | Users | Events |")
+        L.append("|--------|--------|------:|-------:|")
+        for dims, mets in wv:
+            metric_name = dims[0] if dims and len(dims) > 0 else "—"
+            rating = dims[1] if dims and len(dims) > 1 else "—"
+            L.append(f"| {metric_name} | {rating} | {safe_int(mets[1])} | {safe_int(mets[0])} |")
+        L.append("")
+        L.append("> Values sourced from the `web-vitals` package at session start (CLS×1000, others ms).")
+        L.append("")
+
+    cta = d.get("cta_session") or []
+    if cta:
+        L.append("## 🎯 CTA Session Health")
+        L.append("")
+        L.append("| CTA | Sessions | Events |")
+        L.append("|-----|--------:|-------:|")
+        for dims, mets in cta:
+            cta_id = dims[0] if dims and len(dims) > 0 else "—"
+            L.append(f"| {cta_id} | {safe_int(mets[1])} | {safe_int(mets[0])} |")
+        L.append("")
+        L.append("> One `cta_session` event per tracked CTA per pagehide. Impression/click counts live in event parameters — promote to GA4 custom metrics to surface CTR.")
+        L.append("")
+
+    rage = d.get("rage_click") or []
+    if rage:
+        L.append("## 😠 Rage-Click Hotspots")
+        L.append("")
+        L.append("| Element | Users | Events |")
+        L.append("|---------|------:|-------:|")
+        for dims, mets in rage[:10]:
+            element = (dims[0] if dims and len(dims) > 0 else "—")[:80]
+            L.append(f"| `{element}` | {safe_int(mets[1])} | {safe_int(mets[0])} |")
+        L.append("")
+        L.append("> 3+ clicks within 1s on the same element. Dedupes one emission per element per session — each row is a distinct UX friction point.")
+        L.append("")
+
     L.append("---")
     L.append(f"*Generated by `ga-dashboard.py` on {now}*")
     return "\n".join(L)
@@ -1492,15 +1646,12 @@ def main():
     sections = set()
 
     if show_all:
-        sections = {"realtime", "overview", "traffic", "pages", "devices",
+        sections = {"overview", "traffic", "pages", "devices",
                     "events", "publish", "search", "engagement", "behavior"}
     elif no_flags:
         # Quick overview: core sections + behavior (most important)
-        sections = {"realtime", "overview", "traffic", "pages", "behavior",
-                    "events"}
+        sections = {"overview", "traffic", "pages", "behavior", "events"}
     else:
-        if "--realtime" in args:
-            sections.add("realtime")
         if "--events" in args:
             sections.add("events")
         if "--publish" in args:
