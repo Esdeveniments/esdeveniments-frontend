@@ -97,10 +97,35 @@ def current_prompt(trigger: dict) -> str:
 
 
 def build_update_body(trigger: dict, new_prompt: str) -> dict:
-    """Return the minimal update body — replace only the event content."""
-    job_config = trigger["job_config"]
-    events = job_config["ccr"]["events"]
-    events[0]["data"]["message"]["content"] = new_prompt
+    """Return the minimal update body — replace only the event content.
+
+    Raises ``ValueError`` with a useful message if the trigger response is
+    missing the nested ``job_config.ccr.events[0].data.message`` structure,
+    rather than crashing with ``KeyError``/``IndexError`` and sending a
+    malformed update payload.
+    """
+    job_config = trigger.get("job_config")
+    if not isinstance(job_config, dict):
+        raise ValueError("Trigger response is missing `job_config`.")
+    ccr = job_config.get("ccr")
+    if not isinstance(ccr, dict):
+        raise ValueError("Trigger response is missing `job_config.ccr`.")
+    events = ccr.get("events") or []
+    if not events or not isinstance(events[0], dict):
+        raise ValueError(
+            "Trigger response has no `job_config.ccr.events[0]` entry to update."
+        )
+    data = events[0].get("data")
+    if not isinstance(data, dict):
+        raise ValueError(
+            "Trigger response is missing `job_config.ccr.events[0].data`."
+        )
+    message = data.get("message")
+    if not isinstance(message, dict):
+        raise ValueError(
+            "Trigger response is missing `job_config.ccr.events[0].data.message`."
+        )
+    message["content"] = new_prompt
     return {"job_config": job_config}
 
 
@@ -132,26 +157,47 @@ def main() -> int:
     args = parser.parse_args()
 
     token = os.environ.get("CLAUDE_SESSION_KEY")
-    if not token and not args.dry_run:
+    if not token:
         print(
-            "CLAUDE_SESSION_KEY env var not set. Run with --dry-run to preview, "
-            "or export the session cookie from claude.ai.",
+            "CLAUDE_SESSION_KEY env var not set. Export the session cookie "
+            "from claude.ai — needed for both dry-run (to compare) and apply.",
             file=sys.stderr,
         )
         return 2
 
+    # Fetch + diff every prompt, regardless of mode. --dry-run only skips the
+    # final POST; it still shows exactly what would change. A transient fetch
+    # failure on one prompt should not abort the whole run.
     changes = []
     for filename, trigger_id in PROMPT_TRIGGERS.items():
         new_prompt = load_prompt(filename)
-        if args.dry_run or not token:
-            print(f"  [?] {filename}: unable to compare (dry-run or no token)")
+        try:
+            trigger = fetch_trigger(trigger_id, token)
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="replace")[:200]
+            print(
+                f"  [!] {filename}: fetch failed (HTTP {e.code}) — skipping. "
+                f"Detail: {detail}",
+                file=sys.stderr,
+            )
             continue
-        trigger = fetch_trigger(trigger_id, token)
+        except urllib.error.URLError as e:
+            print(
+                f"  [!] {filename}: fetch failed (network) — skipping. "
+                f"Reason: {e.reason}",
+                file=sys.stderr,
+            )
+            continue
         old_prompt = current_prompt(trigger)
         if show_diff(filename, old_prompt, new_prompt):
             changes.append((filename, trigger_id, trigger, new_prompt))
 
     if args.dry_run:
+        if changes:
+            print(
+                f"Dry-run: {len(changes)} update(s) would be applied. "
+                f"Re-run without --dry-run to apply."
+            )
         return 0
     if not changes:
         print("Nothing to sync. All triggers match repo state.")
@@ -163,15 +209,34 @@ def main() -> int:
             print("Aborted.")
             return 1
 
+    had_error = False
     for filename, trigger_id, trigger, new_prompt in changes:
-        body = build_update_body(trigger, new_prompt)
+        try:
+            body = build_update_body(trigger, new_prompt)
+        except ValueError as e:
+            print(f"  [✗] {filename}: malformed trigger — {e}", file=sys.stderr)
+            had_error = True
+            continue
         try:
             update_trigger(trigger_id, body, token)
             print(f"  [✓] {filename} → {trigger_id}")
         except urllib.error.HTTPError as e:
-            print(f"  [✗] {filename}: HTTP {e.code} — {e.read().decode()}", file=sys.stderr)
-            return 1
+            detail = e.read().decode("utf-8", errors="replace")[:200]
+            print(
+                f"  [✗] {filename}: HTTP {e.code} — {detail}",
+                file=sys.stderr,
+            )
+            had_error = True
+        except urllib.error.URLError as e:
+            print(
+                f"  [✗] {filename}: network error — {e.reason}",
+                file=sys.stderr,
+            )
+            had_error = True
 
+    if had_error:
+        print("Done with errors.", file=sys.stderr)
+        return 1
     print("Done.")
     return 0
 

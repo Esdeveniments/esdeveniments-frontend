@@ -1591,8 +1591,12 @@ def render_markdown(d, days):
     if cta:
         L.append("## 🎯 CTA Session Health")
         L.append("")
-        L.append("| CTA | Sessions | Events |")
-        L.append("|-----|--------:|-------:|")
+        # Column is "Users" because the metric is `totalUsers` — one row per
+        # distinct user that fired a `cta_session` event for this cta_id,
+        # not the number of sessions (which would require `sessions` metric
+        # + a session-scoped dimension, unavailable on event-scoped queries).
+        L.append("| CTA | Users | Events |")
+        L.append("|-----|------:|-------:|")
         for dims, mets in cta:
             cta_id = dims[0] if dims and len(dims) > 0 else "—"
             L.append(f"| {cta_id} | {safe_int(mets[1])} | {safe_int(mets[0])} |")
