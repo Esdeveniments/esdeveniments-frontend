@@ -15,7 +15,10 @@ const OBSERVER_THRESHOLD = 0.5;
 let io: IntersectionObserver | null = null;
 const elementToId = new WeakMap<Element, TrackedCtaId>();
 const idStats = new Map<TrackedCtaId, CtaStats>();
-const countedElements = new WeakSet<Element>();
+// Use Set (not WeakSet) so we can iterate and clear on flush.
+const countedElements = new Set<Element>();
+// Track all registered elements so flush can re-arm them for the next session.
+const registeredElements = new Set<Element>();
 
 let sessionStart = 0;
 let flushListenersAttached = false;
@@ -51,11 +54,20 @@ function flush(): void {
 
   // Reset per-window state so SPA navigations and tab-switch-and-return
   // keep tracking instead of locking the buffer after the first flush.
-  // `countedElements` is a WeakSet keyed by DOM nodes — elements still
-  // mounted intentionally won't re-emit impressions; elements replaced on
-  // navigation get GC'd automatically.
   idStats.clear();
   sessionStart = Date.now();
+
+  // Re-arm still-mounted elements so impressions are counted in the next
+  // session window — prevents `impressions: 0` with non-zero clicks after
+  // a background/restore cycle.
+  if (io) {
+    for (const el of registeredElements) {
+      if (countedElements.has(el)) {
+        io.observe(el);
+      }
+    }
+  }
+  countedElements.clear();
 }
 
 function ensureObserver(): void {
@@ -107,11 +119,14 @@ export function registerCta(element: Element, id: TrackedCtaId): void {
   ensureObserver();
   if (!io) return;
   elementToId.set(element, id);
+  registeredElements.add(element);
   io.observe(element);
 }
 
 export function unregisterCta(element: Element): void {
   elementToId.delete(element);
+  registeredElements.delete(element);
+  countedElements.delete(element);
   io?.unobserve(element);
 }
 

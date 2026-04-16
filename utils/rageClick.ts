@@ -28,11 +28,14 @@ function getElementKey(el: Element): string {
 
   const tag = el.tagName.toLowerCase();
   const id = el.id ? `#${el.id}` : "";
-  const className =
-    typeof el.className === "string" && el.className
-      ? "." + el.className.trim().split(/\s+/).slice(0, 2).join(".")
-      : "";
-  return `${tag}${id}${className}`.slice(0, 120);
+  // Use getAttribute("class") instead of el.className — SVG elements
+  // return an SVGAnimatedString for className, not a plain string.
+  const rawClass = el.getAttribute("class") || "";
+  const className = rawClass
+    ? "." + rawClass.trim().replace(/\s+/g, ".") 
+    : "";
+  // GA4 caps event parameter values at 100 characters.
+  return (tag + id + className).slice(0, 100);
 }
 
 export function initRageClick(): void {
@@ -60,8 +63,11 @@ export function initRageClick(): void {
       if (recent.length < CLICK_THRESHOLD) return;
 
       const key = getElementKey(target);
-      if (reportedElements.has(key)) return;
-      reportedElements.add(key);
+      // Scope dedupe by route to prevent cross-page collisions on elements
+      // with identical tag/class signatures.
+      const scopedKey = `${window.location.pathname}::${key}`;
+      if (reportedElements.has(scopedKey)) return;
+      reportedElements.add(scopedKey);
 
       sendGoogleEvent("rage_click", {
         element: key,

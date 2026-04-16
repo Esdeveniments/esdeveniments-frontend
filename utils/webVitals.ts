@@ -19,9 +19,11 @@ export function initWebVitals(): void {
   const emit = (metric: Metric) => {
     sendGoogleEvent("web_vitals", {
       metric: metric.name,
+      // Use `delta` (not `value`) so GA4 sums reconstruct the final metric
+      // correctly when a metric fires multiple times per page load (LCP, INP).
       // CLS is unitless; scale x1000 so GA4 sees an integer it can aggregate.
       value: Math.round(
-        metric.name === "CLS" ? metric.value * 1000 : metric.value
+        metric.name === "CLS" ? metric.delta * 1000 : metric.delta
       ),
       rating: metric.rating,
       navigation_type: metric.navigationType,

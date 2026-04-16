@@ -106,19 +106,28 @@ function detectDeviceClass(): AnalyticsUserProperties["device_class"] {
 // switches (ca → es → en) re-set `preferred_locale` on GA4 rather than
 // silently retaining the original.
 let appliedForLocale: string | null = null;
+// Cancellation token: increments on each new call to invalidate stale retries.
+let currentAttemptId = 0;
 
 export function setUserProperties(locale: string, attempt = 0): void {
   if (appliedForLocale === locale) return;
   if (typeof window === "undefined") return;
   if (attempt > MAX_ATTEMPTS) return;
 
+  // On a fresh call (attempt 0), bump the token so any pending retries from
+  // a previous locale become stale and self-cancel.
+  const myId = attempt === 0 ? ++currentAttemptId : currentAttemptId;
+
   const gtagWindow = window as unknown as Partial<WindowWithGtag>;
   if (typeof gtagWindow.gtag !== "function") {
-    setTimeout(() => setUserProperties(locale, attempt + 1), RETRY_DELAY_MS);
+    setTimeout(() => {
+      // Stale retry — a newer setUserProperties call has been made.
+      if (myId !== currentAttemptId) return;
+      setUserProperties(locale, attempt + 1);
+    }, RETRY_DELAY_MS);
     return;
   }
 
-  appliedForLocale = locale;
   const props: AnalyticsUserProperties = {
     is_returning: detectReturning(),
     referrer_category: detectReferrerCategory(),
@@ -127,4 +136,6 @@ export function setUserProperties(locale: string, attempt = 0): void {
   };
 
   gtagWindow.gtag("set", "user_properties", props);
+  // Mark applied only after gtag succeeds — if it threw, retries can re-attempt.
+  appliedForLocale = locale;
 }
