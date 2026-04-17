@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 import { sendGoogleEvent } from "@utils/analytics";
+import useTrackedCta from "@components/hooks/useTrackedCta";
 import type { EventStickyCTAProps } from "types/props";
 import { useTranslations } from "next-intl";
 
@@ -42,6 +43,7 @@ export default function EventStickyCTA({
     return btn?.getAttribute("aria-pressed") === "true";
   });
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("sticky_cta");
 
   // Sync favorite state from the real FavoriteButton's aria-pressed attribute
   const syncFavoriteState = useCallback(() => {
@@ -88,6 +90,7 @@ export default function EventStickyCTA({
   }, [syncFavoriteState]);
 
   const handleMoreInfo = () => {
+    trackClick();
     sendGoogleEvent("sticky_cta_click", {
       action: "more_info",
       event_slug: eventSlug,
@@ -95,6 +98,7 @@ export default function EventStickyCTA({
   };
 
   const handleCalendar = () => {
+    trackClick();
     const calendarSection = document.querySelector("[data-calendar-section]");
     if (calendarSection) {
       calendarSection.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -106,6 +110,7 @@ export default function EventStickyCTA({
   };
 
   const handleSave = () => {
+    trackClick();
     // Delegate to the real FavoriteButton so the cookie-based API stays in sync
     const btn = findFavoriteButton();
     if (!btn) return;
@@ -120,6 +125,7 @@ export default function EventStickyCTA({
 
   return (
     <div
+      ref={ctaRef}
       className="fixed bottom-16 left-0 right-0 z-40 md:hidden"
       role="toolbar"
       aria-label={t("toolbarAriaLabel")}

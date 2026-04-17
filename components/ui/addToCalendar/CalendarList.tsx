@@ -1,6 +1,9 @@
+"use client";
+
 import { memo, useCallback, useEffect, FC } from "react";
 import Image from "next/image";
 import { sendGoogleEvent } from "@utils/analytics";
+import useTrackedCta from "@components/hooks/useTrackedCta";
 import type { CalendarOption, CalendarListProps } from "types/common";
 
 const CalendarList: FC<CalendarListProps> = ({
@@ -10,9 +13,11 @@ const CalendarList: FC<CalendarListProps> = ({
   labels,
 }) => {
   const urls = getUrls();
+  const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("add_to_calendar");
 
   const handleCalendarClick = useCallback(
     (calendarType: string): void => {
+      trackClick();
       sendGoogleEvent("add_to_calendar", {
         method: calendarType,
         event_category: "Calendar",
@@ -21,7 +26,7 @@ const CalendarList: FC<CalendarListProps> = ({
       });
       setTimeout(onClick, 500);
     },
-    [onClick, title]
+    [onClick, title, trackClick]
   );
 
   const calendarOptions: CalendarOption[] = [
@@ -51,7 +56,7 @@ const CalendarList: FC<CalendarListProps> = ({
   }, [title]);
 
   return (
-    <div className="absolute top-full left-0 mt-2 z-10 bg-background">
+    <div ref={ctaRef} className="absolute top-full left-0 mt-2 z-10 bg-background">
       <div className="shadow-md rounded-md p-4 border border-border animate-appear">
         {calendarOptions.map(
           (option) =>

@@ -15,6 +15,7 @@ import GoogleScripts from "../GoogleScripts";
 import { AdProvider } from "@lib/context/AdContext";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
+import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
 import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -118,6 +119,7 @@ export default async function LocaleLayout({
               <Suspense fallback={null}>
                 <GoogleScripts />
               </Suspense>
+              <AnalyticsBootstrap />
               <BaseLayout>{children}</BaseLayout>
             </AdProvider>
           </Suspense>
