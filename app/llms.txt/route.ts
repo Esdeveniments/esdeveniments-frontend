@@ -56,10 +56,18 @@ export async function GET(request: NextRequest) {
 
   const cacheControl = getCacheControlHeader(request, 300);
 
+  // Support Markdown for Agents content negotiation
+  // When proxy.ts rewrites with _accept=text/markdown, respond with text/markdown Content-Type
+  const isMarkdownNegotiation =
+    request.nextUrl.searchParams.get("_accept") === "text/markdown";
+  const contentType = isMarkdownNegotiation
+    ? "text/markdown; charset=utf-8"
+    : "text/plain; charset=utf-8";
+
   return new NextResponse(llmsTxt, {
     status: 200,
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Type": contentType,
       "Cache-Control": cacheControl,
       "X-LLMS-Source": "route-handler-v1",
     },

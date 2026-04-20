@@ -83,6 +83,10 @@ CLAUDE.local.md
 
 .ts-migration*
 
+# Legacy AWS SST/OpenNext build artifacts (migrated to Coolify April 2026)
+.sst/
+.open-next/
+
 # IDE/Editor specific
 .idea/
 .vscode/

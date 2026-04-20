@@ -143,14 +143,16 @@ Before writing ANY new code, ALWAYS search first:
 - Server-first by default; mark client components with `"use client"` only when necessary. Avoid exposing secrets in client code.
 - **No local barrel files** that re-export `"use client"` components from different route contexts. Use direct file imports to prevent manifest bloat (see Feb 2026 incident: `components/ui/sponsor/index.ts` leaked 3 `/patrocina`-only components into `/[place]` manifest, adding 24 KB).
 - API security: Internal API routes (`app/api/*`) handle HMAC signing server-side via `*-external.ts` wrappers. Middleware enforces HMAC on most `/api/*` routes; public GET endpoints (events, news, categories, places, regions, cities) are allowlisted. Never sign requests in the browser—always use internal API routes.
-- Use Yarn 4 commands and Node 20 locally; run `yarn lint && yarn typecheck && yarn test` before finalizing changes.
+- Use Yarn 4 commands and Node 22 locally; run `yarn lint && yarn typecheck && yarn test` before finalizing changes.
 
 ## Architecture Overview
 
+- **Hosting**: Docker container on Hetzner via Coolify (self-hosted PaaS). Cloudflare for DNS, CDN edge caching, and TLS termination. Origin certificate (Cloudflare → Traefik) for Full (Strict) SSL.
+- **CDN**: Cloudflare caches HTML pages and static assets at the edge. `_next/image` paths bypass CF cache (cache rule) to preserve format negotiation (avif/webp/jpeg via `Vary: Accept`). Origin handles image caching via Next.js 1-year `Cache-Control`.
 - Next.js App Router with server‑first rendering; client state via Zustand (`store.ts`) and client data fetching via SWR.
 - API layer: Internal proxy pattern—client libraries (`lib/api/*`) call internal Next.js API routes (`app/api/*`) which proxy to external backend via `*-external.ts` wrappers with HMAC signing.
-- SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `middleware.ts` handles edge behavior, canonical redirects, and CSP.
-- URL canonicalization: Middleware automatically redirects legacy query params and `/tots` segments to canonical paths (301 redirects).
+- SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `proxy.ts` handles canonical redirects, security headers, and CSP.
+- URL canonicalization: Proxy automatically redirects legacy query params and `/tots` segments to canonical paths (301 redirects).
 
 ## ⚠️ CRITICAL: ISR/Caching Cost Prevention
 
@@ -200,8 +202,8 @@ This enables Next.js fetch cache, which stores every unique URL as a separate ca
 
 ## Local Setup
 
-- Requirements: Node 20, Yarn 4.9+ (use Corepack).
-- Install: `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable`.
+- Requirements: Node 22, Yarn 4.12+ (use Corepack).
+- Install: `corepack enable && corepack prepare yarn@4.12.0 --activate && yarn install --immutable`.
 - Env: set `HMAC_SECRET` (server‑only), `NEXT_PUBLIC_API_URL` (defaults handled), optional `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `SENTRY_DSN`.
 - Run: `yarn dev` (generates `public/sw.js` via prebuild). Build: `yarn build`.
 - Tests: `yarn test`; E2E: `yarn test:e2e` (local config starts the app).
