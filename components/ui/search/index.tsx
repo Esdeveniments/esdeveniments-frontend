@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
   startTransition,
   ChangeEvent,
@@ -18,8 +19,11 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import { sendGoogleEvent } from "@utils/analytics";
+import { matchSearchToPlace } from "@utils/string-helpers";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
+import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
+import { transformRegionsToOptions } from "@components/ui/locationDiscoveryWidget/utils";
 
 const sendSearchTermGA = (searchTerm: string): void => {
   if (searchTerm && searchTerm.length > 0) {
@@ -39,6 +43,14 @@ export default function Search(): JSX.Element {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
   const { setLoading } = useFilterLoading();
+
+  // Lazy-load places for place-name detection (SWR-cached 24h, no cost if unused)
+  const [hasSearched, setHasSearched] = useState(false);
+  const { regionsWithCities } = useGetRegionsWithCities(hasSearched);
+  const places = useMemo(
+    () => (regionsWithCities ? transformRegionsToOptions(regionsWithCities) : []),
+    [regionsWithCities]
+  );
 
   // Get current search term from URL
   const urlSearchTerm = searchParams?.get("search") || "";
@@ -74,9 +86,30 @@ export default function Search(): JSX.Element {
     // Avoid redundant searches if the term hasn't changed
     if (value === urlSearchTerm) return;
 
+    // Enable place data fetch for future searches
+    if (!hasSearched) setHasSearched(true);
+
     sendSearchTermGA(value);
+
+    // If the search term matches a known place, navigate to its page instead
+    if (value && places.length > 0) {
+      const matchedPlace = matchSearchToPlace(value, places);
+      if (matchedPlace) {
+        sendGoogleEvent("search_place_redirect", {
+          category: "search",
+          label: value,
+          matched_place: matchedPlace.value,
+        });
+        startNavigationFeedback();
+        startTransition(() => setLoading(true));
+        setInputValue("");
+        router.push(`/${matchedPlace.value}`);
+        return;
+      }
+    }
+
     updateSearchUrl(value);
-  }, [inputValue, updateSearchUrl, urlSearchTerm]);
+  }, [inputValue, updateSearchUrl, urlSearchTerm, places, hasSearched, setLoading, router]);
 
   // Sync input with URL search term when URL changes
   useEffect(() => {
@@ -86,8 +119,9 @@ export default function Search(): JSX.Element {
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
-    // No auto-search - user must click button or press Enter
-  }, []);
+    // Prefetch place data on first keystroke so it's ready when user submits
+    if (!hasSearched && value.length > 0) setHasSearched(true);
+  }, [hasSearched]);
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {

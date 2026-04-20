@@ -5,6 +5,7 @@ import {
   extractUuidFromSlug,
   truncateString,
   normalizeForSearch,
+  matchSearchToPlace,
   normalizeUrl,
   formatPlaceName,
   slug,
@@ -99,6 +100,95 @@ describe("normalizeForSearch", () => {
 
   it("handles complex Catalan text", () => {
     expect(normalizeForSearch("Exposició d'Art")).toBe("exposicio d'art");
+  });
+});
+
+describe("matchSearchToPlace", () => {
+  const places = [
+    { label: "Barcelona", value: "barcelona" },
+    { label: "Cardedeu", value: "cardedeu" },
+    { label: "Sant Vicenç de Montalt", value: "sant-vicenc-de-montalt" },
+    { label: "Premià de Mar", value: "premia-de-mar" },
+    { label: "Montgat", value: "montgat" },
+    { label: "Catalunya", value: "catalunya" },
+    { label: "Maresme", value: "maresme" },
+  ];
+
+  it("returns exact match (case-insensitive)", () => {
+    expect(matchSearchToPlace("cardedeu", places)).toEqual({
+      label: "Cardedeu",
+      value: "cardedeu",
+    });
+  });
+
+  it("returns exact match (accent-insensitive)", () => {
+    expect(matchSearchToPlace("Sant Vicenç de Montalt", places)).toEqual({
+      label: "Sant Vicenç de Montalt",
+      value: "sant-vicenc-de-montalt",
+    });
+  });
+
+  it("matches without accents (user types 'premia')", () => {
+    expect(matchSearchToPlace("premia de mar", places)).toEqual({
+      label: "Premià de Mar",
+      value: "premia-de-mar",
+    });
+  });
+
+  it("falls back to startsWith when no exact match", () => {
+    expect(matchSearchToPlace("sant vicen", places)).toEqual({
+      label: "Sant Vicenç de Montalt",
+      value: "sant-vicenc-de-montalt",
+    });
+  });
+
+  it("prefers exact match over startsWith", () => {
+    const withOverlap = [
+      { label: "Montgat", value: "montgat" },
+      { label: "Montgat Playa", value: "montgat-playa" },
+    ];
+    expect(matchSearchToPlace("montgat", withOverlap)).toEqual({
+      label: "Montgat",
+      value: "montgat",
+    });
+  });
+
+  it("returns null for empty or too-short input", () => {
+    expect(matchSearchToPlace("", places)).toBeNull();
+    expect(matchSearchToPlace("a", places)).toBeNull();
+    expect(matchSearchToPlace("  ", places)).toBeNull();
+  });
+
+  it("requires 4+ chars for startsWith (avoids greedy prefix matches)", () => {
+    // "ba" is too short for startsWith → no match (Barcelona is not an exact match for "ba")
+    expect(matchSearchToPlace("ba", places)).toBeNull();
+    // "bar" is still too short for startsWith
+    expect(matchSearchToPlace("bar", places)).toBeNull();
+    // "barc" is 4 chars → startsWith kicks in
+    expect(matchSearchToPlace("barc", places)).toEqual({
+      label: "Barcelona",
+      value: "barcelona",
+    });
+  });
+
+  it("still allows exact match at 2-3 chars", () => {
+    const shortPlaces = [{ label: "Eu", value: "eu" }];
+    expect(matchSearchToPlace("eu", shortPlaces)).toEqual({
+      label: "Eu",
+      value: "eu",
+    });
+  });
+
+  it("returns null when no match", () => {
+    expect(matchSearchToPlace("family trail", places)).toBeNull();
+    expect(matchSearchToPlace("concerts barcelona", places)).toBeNull();
+  });
+
+  it("handles mixed case and whitespace", () => {
+    expect(matchSearchToPlace("  MONTGAT  ", places)).toEqual({
+      label: "Montgat",
+      value: "montgat",
+    });
   });
 });
 
