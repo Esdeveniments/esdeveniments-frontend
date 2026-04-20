@@ -404,6 +404,13 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  // OpenAPI spec: rewrite /openapi.json to /openapi route handler
+  if (pathname === "/openapi.json") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/openapi";
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   // Markdown for Agents: content negotiation
   // When agents request text/markdown, serve the llms.txt content with proper Content-Type
   const acceptHeader = request.headers.get("accept") || "";
@@ -556,6 +563,7 @@ export default async function proxy(request: NextRequest) {
     "Link",
     [
       '</.well-known/api-catalog>; rel="api-catalog"',
+      '</openapi.json>; rel="service-desc"; type="application/openapi+json"',
       '</llms.txt>; rel="service-doc"; type="text/plain"',
       '</.well-known/agent-skills/index.json>; rel="describedby"',
     ].join(", "),

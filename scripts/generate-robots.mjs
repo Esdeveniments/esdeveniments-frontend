@@ -101,6 +101,16 @@ function generateRobotsTxt() {
     lines.push(`Sitemap: ${sitemap}`);
   }
 
+  // Content Signals
+  lines.push("");
+  lines.push("# Content Signals — AI usage preferences");
+  lines.push("Content-Signal: ai-train=no, search=yes, ai-input=no");
+
+  // Schema feed directive
+  lines.push("");
+  lines.push("# Schema feed for structured data discovery");
+  lines.push(`schemamap: ${normalizedSiteUrl}/openapi.json`);
+
   return lines.join("\n");
 }
 

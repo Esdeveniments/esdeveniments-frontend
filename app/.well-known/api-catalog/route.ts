@@ -12,6 +12,7 @@ export async function GET() {
       {
         anchor: `${siteUrl}/api/events`,
         "service-desc": [
+          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
           { href: `${siteUrl}/llms.txt`, type: "text/plain" },
         ],
         "service-doc": [{ href: `${siteUrl}/llms.txt`, type: "text/plain" }],
@@ -19,19 +20,19 @@ export async function GET() {
       {
         anchor: `${siteUrl}/api/categories`,
         "service-desc": [
-          { href: `${siteUrl}/llms.txt`, type: "text/plain" },
+          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
         ],
       },
       {
         anchor: `${siteUrl}/api/places`,
         "service-desc": [
-          { href: `${siteUrl}/llms.txt`, type: "text/plain" },
+          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
         ],
       },
       {
         anchor: `${siteUrl}/api/news`,
         "service-desc": [
-          { href: `${siteUrl}/llms.txt`, type: "text/plain" },
+          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
         ],
       },
     ],
