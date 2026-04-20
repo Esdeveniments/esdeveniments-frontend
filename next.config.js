@@ -87,6 +87,11 @@ const nextConfig = {
     // Cache-busting is handled explicitly in utils/image-cache.ts using event.hash/updatedAt,
     // so updating an image changes its URL (e.g., ?v=<hash>) and forces CDN to fetch it again.
     minimumCacheTTL: 31536000,
+    // Cap the on-disk optimized-image cache (<distDir>/cache/images).
+    // Default per Next.js docs is 50% of available disk at startup, which on a
+    // shared Coolify VPS can grow to tens of GB and starve the host. LRU
+    // eviction kicks in above the cap.
+    maximumDiskCacheSize: 2_000_000_000, // 2 GB
     // Next.js 16: Explicitly configure allowed quality values
     // Reduced from 10 to 5 values to minimize cache fragmentation
     qualities: [35, 50, 60, 75, 85],
