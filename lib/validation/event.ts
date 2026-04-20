@@ -255,10 +255,14 @@ function enhanceEventDetail(
     return normalizedEvent;
   }
 
+  // Related events' description is not rendered by card components and only
+  // bloats the HTML/RSC payload. Drop it here so the wire size stays small.
+  // JSON-LD ItemList items fall back to a synthesized description in generateJsonData.
   return {
     ...normalizedEvent,
-    relatedEvents: event.relatedEvents.map((relatedEvent) =>
-      enhanceEventImage(relatedEvent)
-    ) as EventDetailResponseDTO["relatedEvents"],
+    relatedEvents: event.relatedEvents.map((relatedEvent) => ({
+      ...enhanceEventImage(relatedEvent),
+      description: "",
+    })) as EventDetailResponseDTO["relatedEvents"],
   };
 }
