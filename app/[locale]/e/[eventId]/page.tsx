@@ -6,6 +6,7 @@ import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "@lib/meta";
 import { redirect, notFound } from "next/navigation";
+import { connection } from "next/server";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
 import EventHeader from "./components/EventHeader";
@@ -169,6 +170,10 @@ export default async function EventPage({
       placeSuffix: tCopy("sentence.placeSuffix", { place: "{place}" }),
     },
   };
+  // Signal dynamic rendering before using new Date() in computeTemporalStatus.
+  // Without this, cacheComponents caches the RSC payload with a stale temporal state,
+  // causing "Couldn't find all resumable slots" when the tree shape changes (e.g., upcoming → past).
+  await connection();
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
     event.startDate,
     event.endDate,
