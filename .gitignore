@@ -78,10 +78,15 @@ yarn-error.log*
 # AI Tool Local Files (personal preferences, not committed)
 CLAUDE.local.md
 .claude/CLAUDE.local.md
+.claude/settings.local.json
 
 .early.coverage
 
 .ts-migration*
+
+# Python bytecode
+__pycache__/
+*.pyc
 
 # Legacy AWS SST/OpenNext build artifacts (migrated to Coolify April 2026)
 .sst/
