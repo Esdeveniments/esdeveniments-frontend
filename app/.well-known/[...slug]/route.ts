@@ -53,39 +53,54 @@ export async function GET(
   // /.well-known/mcp/server-card.json
   if (path === "mcp/server-card.json") {
     const serverCard = {
-      serverInfo: {
-        name: "esdeveniments-cat",
-        version: "1.0.0",
-        description:
-          "Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (ca/es/en) event listings by place, date, and category.",
-      },
+      name: "esdeveniments-cat",
+      description:
+        "Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (ca/es/en) event listings by place, date, and category.",
+      version: "1.0.0",
+      url: `${siteUrl}/api`,
+      transport: "http",
+      icon: `${siteUrl}/icons/icon-512x512.png`,
       capabilities: {
-        resources: [
-          {
-            name: "events",
-            description:
-              "Search and browse cultural events in Catalonia by place, date, and category",
-            uri: `${siteUrl}/api/events`,
-          },
-          {
-            name: "categories",
-            description: "List all event categories",
-            uri: `${siteUrl}/api/categories`,
-          },
-          {
-            name: "places",
-            description:
-              "Look up towns, cities, and regions in Catalonia",
-            uri: `${siteUrl}/api/places`,
-          },
-          {
-            name: "news",
-            description:
-              "Read local news about events and culture in Catalonia",
-            uri: `${siteUrl}/api/news`,
-          },
-        ],
+        tools: true,
+        resources: true,
       },
+      tools: [
+        {
+          name: "listEvents",
+          description:
+            "Search and browse cultural events in Catalonia by place, date, and category",
+          parameters: {
+            place: { type: "string", description: "Place slug (e.g. 'barcelona')" },
+            category: { type: "string", description: "Category slug (e.g. 'concerts')" },
+            byDate: { type: "string", description: "Date shortcut: avui, dema, setmana, cap-de-setmana" },
+            term: { type: "string", description: "Free-text search term" },
+          },
+        },
+        {
+          name: "getEvent",
+          description: "Get full details for a single event by slug or ID",
+          parameters: {
+            slug: { type: "string", description: "Event slug or numeric ID", required: true },
+          },
+        },
+        {
+          name: "listNews",
+          description: "Browse local news about events and culture in Catalonia",
+          parameters: {
+            place: { type: "string", description: "Filter by place slug" },
+          },
+        },
+        {
+          name: "listCategories",
+          description: "List all event categories",
+          parameters: {},
+        },
+        {
+          name: "listPlaces",
+          description: "List all towns, cities, and regions in Catalonia",
+          parameters: {},
+        },
+      ],
       documentation: `${siteUrl}/llms.txt`,
     };
 
@@ -98,17 +113,58 @@ export async function GET(
     });
   }
 
-  // /.well-known/mcp.json (MCP discovery — points to the server card)
+  // /.well-known/mcp.json (MCP discovery — flat format matching orank convention)
   if (path === "mcp.json") {
     const mcpDiscovery = {
-      mcp: {
-        name: "esdeveniments-cat",
-        description:
-          "Esdeveniments.cat — Cultural events discovery API for Catalonia",
-        server_card: `${siteUrl}/.well-known/mcp/server-card.json`,
-        documentation: `${siteUrl}/llms.txt`,
-        openapi: `${siteUrl}/openapi.json`,
+      name: "esdeveniments-cat",
+      description:
+        "Esdeveniments.cat — Cultural events discovery API for Catalonia. Free multilingual (ca/es/en) events platform with public REST API.",
+      version: "1.0.0",
+      url: `${siteUrl}/api`,
+      transport: "http",
+      icon: `${siteUrl}/icons/icon-512x512.png`,
+      capabilities: {
+        tools: true,
+        resources: true,
       },
+      tools: [
+        {
+          name: "listEvents",
+          description: "Search cultural events in Catalonia by place, date, category, or keyword",
+          parameters: {
+            place: { type: "string", description: "Place slug", required: false },
+            category: { type: "string", description: "Category slug", required: false },
+            byDate: { type: "string", description: "Date shortcut", required: false },
+            term: { type: "string", description: "Search term", required: false },
+          },
+        },
+        {
+          name: "getEvent",
+          description: "Get event details by slug",
+          parameters: {
+            slug: { type: "string", description: "Event slug or ID", required: true },
+          },
+        },
+        {
+          name: "listCategories",
+          description: "List all event categories",
+          parameters: {},
+        },
+        {
+          name: "listPlaces",
+          description: "List all towns, cities, and regions",
+          parameters: {},
+        },
+        {
+          name: "listNews",
+          description: "Browse local news",
+          parameters: {
+            place: { type: "string", description: "Filter by place", required: false },
+          },
+        },
+      ],
+      documentation: `${siteUrl}/llms.txt`,
+      openapi: `${siteUrl}/openapi.json`,
     };
 
     return NextResponse.json(mcpDiscovery, {

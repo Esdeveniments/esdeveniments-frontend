@@ -108,4 +108,5 @@ export const socialLinksSameAs: string[] = [
   socialLinks.threads,
   socialLinks.mastodon,
   socialLinks.linkedin,
+  "https://github.com/esdeveniments",
 ];

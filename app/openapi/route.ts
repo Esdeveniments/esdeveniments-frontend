@@ -168,6 +168,12 @@ export async function GET() {
                   description: "Seconds to wait before retrying",
                 },
               },
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                  example: { error: "Rate limit exceeded", status: 429 },
+                },
+              },
             },
           },
         },
@@ -197,7 +203,14 @@ export async function GET() {
                 },
               },
             },
-            "404": { description: "Event not found" },
+            "404": {
+              description: "Event not found",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
           },
         },
       },
@@ -265,7 +278,14 @@ export async function GET() {
                 },
               },
             },
-            "404": { description: "Article not found" },
+            "404": {
+              description: "Article not found",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
           },
         },
       },
@@ -334,7 +354,14 @@ export async function GET() {
                 },
               },
             },
-            "404": { description: "Place not found" },
+            "404": {
+              description: "Place not found",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
           },
         },
       },
@@ -383,6 +410,7 @@ export async function GET() {
       schemas: {
         PagedEvents: {
           type: "object",
+          required: ["content", "currentPage", "pageSize", "totalElements", "totalPages", "last"],
           properties: {
             content: {
               type: "array",
@@ -397,6 +425,7 @@ export async function GET() {
         },
         EventSummary: {
           type: "object",
+          required: ["id", "title", "slug"],
           properties: {
             id: { type: "integer" },
             title: { type: "string" },
@@ -411,6 +440,7 @@ export async function GET() {
         },
         EventDetail: {
           type: "object",
+          required: ["id", "title", "slug"],
           properties: {
             id: { type: "integer" },
             title: { type: "string" },
@@ -428,6 +458,7 @@ export async function GET() {
         },
         PagedNews: {
           type: "object",
+          required: ["content", "currentPage", "pageSize", "totalElements", "totalPages", "last"],
           properties: {
             content: {
               type: "array",
@@ -442,6 +473,7 @@ export async function GET() {
         },
         NewsSummary: {
           type: "object",
+          required: ["id", "title", "slug"],
           properties: {
             id: { type: "integer" },
             title: { type: "string" },
@@ -453,6 +485,7 @@ export async function GET() {
         },
         NewsDetail: {
           type: "object",
+          required: ["id", "title", "slug"],
           properties: {
             id: { type: "integer" },
             title: { type: "string" },
@@ -464,6 +497,7 @@ export async function GET() {
         },
         Category: {
           type: "object",
+          required: ["id", "name", "slug"],
           properties: {
             id: { type: "integer" },
             name: { type: "string" },
@@ -472,6 +506,7 @@ export async function GET() {
         },
         Place: {
           type: "object",
+          required: ["id", "name", "slug", "type"],
           properties: {
             id: { type: "integer" },
             name: { type: "string" },
@@ -484,6 +519,7 @@ export async function GET() {
         },
         PlaceDetail: {
           type: "object",
+          required: ["id", "name", "slug", "type"],
           properties: {
             id: { type: "integer" },
             name: { type: "string" },
@@ -495,6 +531,7 @@ export async function GET() {
         },
         Region: {
           type: "object",
+          required: ["id", "name", "slug"],
           properties: {
             id: { type: "integer" },
             name: { type: "string" },
@@ -503,6 +540,7 @@ export async function GET() {
         },
         City: {
           type: "object",
+          required: ["id", "name", "slug"],
           properties: {
             id: { type: "integer" },
             name: { type: "string" },
@@ -511,6 +549,15 @@ export async function GET() {
             longitude: { type: "number" },
             postalCode: { type: "string" },
           },
+        },
+        ErrorResponse: {
+          type: "object",
+          required: ["error"],
+          properties: {
+            error: { type: "string", description: "Human-readable error message" },
+            status: { type: "integer", description: "HTTP status code" },
+          },
+          example: { error: "Not found", status: 404 },
         },
       },
     },
