@@ -207,7 +207,9 @@ jobs:
       (needs.quality.result == 'success' || needs.quality.result == 'skipped') &&
       (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'skipped') &&
       (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
-    timeout-minutes: 10
+    # 15 min = 10 min MAX_WAIT for Coolify build (realistic for Next.js + Docker)
+    # + ~5 min for webhook trigger, smoke tests, and GitHub runner overhead.
+    timeout-minutes: 15
     # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
