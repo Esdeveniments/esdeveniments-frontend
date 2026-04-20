@@ -2,7 +2,7 @@ name: Deploy to Coolify
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       skip_e2e:
@@ -29,6 +29,8 @@ permissions:
 
 env:
   NODE_VERSION: "22"
+  IS_PRODUCTION: ${{ github.ref_name == 'main' }}
+  DEPLOY_URL: ${{ github.ref_name == 'main' && 'https://www.esdeveniments.cat' || 'https://staging.esdeveniments.cat' }}
 
 jobs:
   # -----------------------------------------------------------------
@@ -98,6 +100,7 @@ jobs:
   e2e-tests:
     name: Build & E2E tests
     if: >-
+      github.ref_name == 'main' &&
       !(github.event_name == 'workflow_dispatch' &&
         (inputs.skip_e2e || inputs.skip_tests || inputs.skip_ci))
     runs-on: ubuntu-latest
@@ -207,8 +210,8 @@ jobs:
     timeout-minutes: 10
     # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
     environment:
-      name: production
-      url: https://www.esdeveniments.cat
+      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      url: ${{ env.DEPLOY_URL }}
 
     steps:
       - name: Deployment mode summary
@@ -226,13 +229,13 @@ jobs:
             echo "- skip_tests: ${{ inputs.skip_tests }}" >> $GITHUB_STEP_SUMMARY
             echo "- skip_ci: ${{ inputs.skip_ci }}" >> $GITHUB_STEP_SUMMARY
           else
-            echo "**Trigger:** Push to main (full CI)" >> $GITHUB_STEP_SUMMARY
+            echo "**Trigger:** Push to ${{ github.ref_name }} ($([ '${{ github.ref_name }}' = 'main' ] && echo 'full CI' || echo 'lint+typecheck+unit'))" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Trigger Coolify deployment
         env:
-          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_TOKEN: ${{ github.ref_name == 'main' && secrets.COOLIFY_TOKEN || secrets.COOLIFY_TOKEN_STAGING }}
+          COOLIFY_WEBHOOK_URL: ${{ github.ref_name == 'main' && secrets.COOLIFY_WEBHOOK_URL || secrets.COOLIFY_WEBHOOK_URL_STAGING }}
         run: |
           if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
             echo "::error::COOLIFY_WEBHOOK_URL secret is required"
@@ -271,6 +274,7 @@ jobs:
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
           EXPECTED_VERSION: ${{ github.sha }}
+          SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
           echo "Waiting for Coolify deployment..."
           # Poll health endpoint until the new container is live.
@@ -289,12 +293,12 @@ jobs:
 
           # Record the current live version before deployment
           PRE_DEPLOY_VERSION=$(curl -s --max-time 5 \
-            "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}" \
+            "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}" \
             | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || PRE_DEPLOY_VERSION=""
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
             RESPONSE=$(curl -s --max-time 5 \
-              "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}") || RESPONSE=""
+              "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}") || RESPONSE=""
 
             LIVE_VERSION=$(echo "$RESPONSE" | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || LIVE_VERSION=""
             HTTP_OK=$(echo "$RESPONSE" | grep -o '"status":"healthy"') || HTTP_OK=""
@@ -331,13 +335,14 @@ jobs:
       - name: Post-deploy smoke tests
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
           FAILED=0
 
           # Critical smoke tests — these MUST pass
           echo "Running critical smoke tests..."
 
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://www.esdeveniments.cat/) || HTTP_CODE="000"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SITE_URL}/") || HTTP_CODE="000"
           if [ "$HTTP_CODE" = "200" ]; then
             echo "Homepage: OK"
           else
@@ -345,7 +350,7 @@ jobs:
             FAILED=1
           fi
 
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://www.esdeveniments.cat/barcelona) || HTTP_CODE="000"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SITE_URL}/barcelona") || HTTP_CODE="000"
           if [ "$HTTP_CODE" = "200" ]; then
             echo "Barcelona page: OK"
           else
@@ -353,12 +358,12 @@ jobs:
             FAILED=1
           fi
 
-          curl -sf --max-time 5 https://www.esdeveniments.cat/robots.txt | grep -q "Sitemap:" && echo "robots.txt: OK" || { echo "::error::robots.txt missing Sitemap directive"; FAILED=1; }
+          curl -sf --max-time 5 "${SITE_URL}/robots.txt" | grep -q "Sitemap:" && echo "robots.txt: OK" || { echo "::error::robots.txt missing Sitemap directive"; FAILED=1; }
 
           # Health check with details
           echo ""
           echo "Checking deployment health..."
-          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 5 "https://www.esdeveniments.cat/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
+          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 5 "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
           if [ "$HTTP_CODE" = "200" ] && [ -f /tmp/health.json ]; then
             echo "Health endpoint: OK"
             CACHE=$(jq -r '.cache.strategy // "unknown"' /tmp/health.json)
@@ -387,6 +392,7 @@ jobs:
         run: |
           echo "## Deployment Result" >> $GITHUB_STEP_SUMMARY
           echo "Deployment completed successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "- **Site:** https://www.esdeveniments.cat" >> $GITHUB_STEP_SUMMARY
+          echo "- **Site:** ${{ env.DEPLOY_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.ref_name == 'main' && 'production' || 'staging' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
