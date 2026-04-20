@@ -411,6 +411,11 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
+  // NLWeb /ask endpoint: bypass locale handling
+  if (pathname === "/ask") {
+    return NextResponse.next();
+  }
+
   // Markdown for Agents: content negotiation
   // When agents request text/markdown, serve the llms.txt content with proper Content-Type
   const acceptHeader = request.headers.get("accept") || "";
@@ -572,6 +577,10 @@ export default async function proxy(request: NextRequest) {
       '</.well-known/agent-skills/index.json>; rel="describedby"',
     ].join(", "),
   );
+
+  // Vary on Accept so CDN caches text/markdown and text/html variants separately
+  // Required for markdown content negotiation to work through Cloudflare
+  response.headers.append("Vary", "Accept");
 
   // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, price, lat, lon)
   // This prevents indexing of filtered/personalized URLs without making pages dynamic
