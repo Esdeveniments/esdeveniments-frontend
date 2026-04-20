@@ -422,7 +422,11 @@ export default async function proxy(request: NextRequest) {
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = "/llms.txt";
     rewriteUrl.searchParams.set("_accept", "text/markdown");
-    return NextResponse.rewrite(rewriteUrl);
+    const headers = new Headers(request.headers);
+    headers.set("x-markdown-negotiation", "1");
+    return NextResponse.rewrite(rewriteUrl, {
+      request: { headers },
+    });
   }
 
   const { locale: localeFromPath, pathnameWithoutLocale } =

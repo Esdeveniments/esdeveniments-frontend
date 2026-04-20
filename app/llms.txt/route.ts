@@ -110,9 +110,11 @@ export async function GET(request: NextRequest) {
   const cacheControl = getCacheControlHeader(request, 300);
 
   // Support Markdown for Agents content negotiation
-  // When proxy.ts rewrites with _accept=text/markdown, respond with text/markdown Content-Type
+  // When proxy.ts rewrites with _accept=text/markdown or x-markdown-negotiation header
   const isMarkdownNegotiation =
-    request.nextUrl.searchParams.get("_accept") === "text/markdown";
+    request.nextUrl.searchParams.get("_accept") === "text/markdown" ||
+    request.headers.get("x-markdown-negotiation") === "1" ||
+    request.headers.get("accept")?.includes("text/markdown");
   const contentType = isMarkdownNegotiation
     ? "text/markdown; charset=utf-8"
     : "text/plain; charset=utf-8";
