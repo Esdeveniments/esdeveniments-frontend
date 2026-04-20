@@ -26,7 +26,7 @@ const CitySummaryResponseDTOSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   postalCode: z.string(),
-  rssFeed: z.string().nullable(),
+  rssFeed: z.string().nullable().optional(),
   enabled: z.boolean(),
 });
 

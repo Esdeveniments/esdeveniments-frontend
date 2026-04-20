@@ -1,0 +1,366 @@
+{
+  "metadata": {
+    "date": "2026-04-17 08:55 UTC",
+    "geo": "ES-CT",
+    "timeframe": "today 3-m"
+  },
+  "interest_growth": {
+    "family": {
+      "activitats nens catalunya": {
+        "avg_first_half": 0.0,
+        "avg_second_half": 0.0,
+        "latest_value": 0,
+        "peak_value": 0,
+        "growth_pct": 0,
+        "trend": "➡️ stable"
+      },
+      "que fer amb nens": {
+        "avg_first_half": 0.0,
+        "avg_second_half": 3.2,
+        "latest_value": 30,
+        "peak_value": 30,
+        "growth_pct": 0,
+        "trend": "➡️ stable"
+      },
+      "excursions familiars": {
+        "avg_first_half": 0.0,
+        "avg_second_half": 0.0,
+        "latest_value": 0,
+        "peak_value": 0,
+        "growth_pct": 0,
+        "trend": "➡️ stable"
+      },
+      "parcs infantils": {
+        "avg_first_half": 0.0,
+        "avg_second_half": 0.7,
+        "latest_value": 0,
+        "peak_value": 10,
+        "growth_pct": 0,
+        "trend": "➡️ stable"
+      },
+      "activitats gratuites": {
+        "avg_first_half": 0.0,
+        "avg_second_half": 2.3,
+        "latest_value": 0,
+        "peak_value": 100,
+        "growth_pct": 0,
+        "trend": "➡️ stable"
+      }
+    },
+    "seasonal": {
+      "sant jordi 2026": {
+        "avg_first_half": 2.6,
+        "avg_second_half": 29.0,
+        "latest_value": 94,
+        "peak_value": 100,
+        "growth_pct": 1035.6,
+        "trend": "📈 growing"
+      },
+      "revetlla sant joan": {
+        "avg_first_half": 0.3,
+        "avg_second_half": 0.0,
+        "latest_value": 0,
+        "peak_value": 12,
+        "growth_pct": -83.7,
+        "trend": "📉 declining"
+      },
+      "fira de nadal": {
+        "avg_first_half": 0.0,
+        "avg_second_half": 0.0,
+        "latest_value": 0,
+        "peak_value": 0,
+        "growth_pct": 0,
+        "trend": "➡️ stable"
+      },
+      "carnaval catalunya": {
+        "avg_first_half": 0.6,
+        "avg_second_half": 0.0,
+        "latest_value": 0,
+        "peak_value": 15,
+        "growth_pct": -100.0,
+        "trend": "📉 declining"
+      },
+      "setmana santa activitats": {
+        "avg_first_half": 0.0,
+        "avg_second_half": 0.2,
+        "latest_value": 0,
+        "peak_value": 4,
+        "growth_pct": 0,
+        "trend": "➡️ stable"
+      }
+    }
+  },
+  "rising_queries": {
+    "sant jordi 2026": [
+      {
+        "query": "llibres sant jordi 2026",
+        "growth": "468350"
+      },
+      {
+        "query": "creu sant jordi 2026",
+        "growth": "128150"
+      },
+      {
+        "query": "cartell sant jordi 2026",
+        "growth": "90450"
+      },
+      {
+        "query": "libros para sant jordi 2026",
+        "growth": "88450"
+      },
+      {
+        "query": "premi sant jordi 2026",
+        "growth": "250"
+      },
+      {
+        "query": "dia sant jordi 2026",
+        "growth": "90"
+      }
+    ]
+  },
+  "top_queries": {
+    "que fer avui": [
+      {
+        "query": "que fer avui barcelona",
+        "value": 100
+      },
+      {
+        "query": "que fer avui amb nens",
+        "value": 39
+      },
+      {
+        "query": "que fer avui a girona",
+        "value": 33
+      },
+      {
+        "query": "que fer avui a catalunya",
+        "value": 3
+      }
+    ],
+    "que fer a barcelona": [
+      {
+        "query": "que fer a barcelona avui",
+        "value": 100
+      },
+      {
+        "query": "que fer a barcelona amb nens",
+        "value": 72
+      }
+    ],
+    "parcs infantils": [
+      {
+        "query": "parcs infantils barcelona",
+        "value": 100
+      }
+    ],
+    "sant jordi 2026": [
+      {
+        "query": "sant jordi barcelona",
+        "value": 100
+      },
+      {
+        "query": "palau sant jordi",
+        "value": 92
+      },
+      {
+        "query": "llibres sant jordi 2026",
+        "value": 24
+      },
+      {
+        "query": "dia sant jordi 2026",
+        "value": 21
+      },
+      {
+        "query": "dia de sant jordi 2026",
+        "value": 11
+      },
+      {
+        "query": "premi sant jordi 2026",
+        "value": 10
+      },
+      {
+        "query": "creu sant jordi 2026",
+        "value": 7
+      },
+      {
+        "query": "parada sant jordi 2026",
+        "value": 6
+      },
+      {
+        "query": "cartell sant jordi 2026",
+        "value": 5
+      },
+      {
+        "query": "libros para sant jordi 2026",
+        "value": 4
+      }
+    ]
+  },
+  "rising_topics": {},
+  "suggestions": {
+    "agenda catalunya": [
+      {
+        "title": "Servei Meteorològic de Catalunya",
+        "type": "Servei de previsió meteorològica a Barcelona, Espanya"
+      },
+      {
+        "title": "Conseller d'Acció Climàtica, Alimentació i Agenda Rural de Catalunya",
+        "type": "Tema"
+      },
+      {
+        "title": "Modern Barcelona apartment next to the Metro",
+        "type": "Tema"
+      },
+      {
+        "title": "Forum 4 Apartment",
+        "type": "Tema"
+      },
+      {
+        "title": "3-3 CAP DE Creus - Standard Apartment",
+        "type": "Tema"
+      }
+    ],
+    "que fer avui": [
+      {
+        "title": "Estimat Evan Hansen",
+        "type": "Llibre"
+      },
+      {
+        "title": "Mèxic insurgent",
+        "type": "Llibre de John Reed"
+      }
+    ],
+    "que fer a barcelona": [
+      {
+        "title": "The Sadness of the Samurai: A Novel",
+        "type": "Llibre de Víctor del Árbol Romero"
+      }
+    ],
+    "activitats nens catalunya": [
+      {
+        "title": "Budget Beach Studio 21",
+        "type": "Tema"
+      },
+      {
+        "title": "Budget Beach Studio 22",
+        "type": "Tema"
+      },
+      {
+        "title": "Patio Budget Apartment 12",
+        "type": "Tema"
+      },
+      {
+        "title": "Natalici",
+        "type": "Tema"
+      },
+      {
+        "title": "Ludoteca",
+        "type": "Tema"
+      }
+    ],
+    "excursions familiars": [
+      {
+        "title": "Londres essencial",
+        "type": "Llibre"
+      },
+      {
+        "title": "París essencial",
+        "type": "Llibre"
+      },
+      {
+        "title": "DARSENA C 1-2 1102",
+        "type": "Tema"
+      }
+    ],
+    "parcs infantils": [
+      {
+        "title": "Subministrament d'equipament per a parcs infantils",
+        "type": "Tema"
+      },
+      {
+        "title": "Parcs infantils d'en Patufet",
+        "type": "Tema"
+      },
+      {
+        "title": "Desconnectar Bellver de Cerdanya II",
+        "type": "Tema"
+      }
+    ],
+    "activitats gratuites": [
+      {
+        "title": "Calculadora gràfica GeoGebra",
+        "type": "Aplicació"
+      },
+      {
+        "title": "Targeta City Card d'1 any amb 4 activitats gratuïtes i descomptes",
+        "type": "Tema"
+      },
+      {
+        "title": "Targeta City Card d'1 any amb 4 activitats gratuïtes i descomptes",
+        "type": "Tema"
+      },
+      {
+        "title": "ABCmouse",
+        "type": "Programari"
+      },
+      {
+        "title": "Wikiloc - Rutes del Món",
+        "type": "Aplicació"
+      }
+    ],
+    "sant jordi 2026": [
+      {
+        "title": "Concert d'En Tol Sarmiento a Barcelona",
+        "type": "Esdeveniment esportiu"
+      }
+    ],
+    "revetlla sant joan": [
+      {
+        "title": "Nit de Sant Joan",
+        "type": "Dia festiu"
+      }
+    ],
+    "fira de nadal": [
+      {
+        "title": "Fira de Nadal de la Sagrada Família",
+        "type": "Tema"
+      },
+      {
+        "title": "Fira de Nadal Sagrada Família",
+        "type": "Tema"
+      },
+      {
+        "title": "Fira de Nadal - Desembre",
+        "type": "Tema"
+      }
+    ],
+    "carnaval catalunya": [
+      {
+        "title": "Carnaval a Venècia",
+        "type": "Llibre"
+      }
+    ]
+  },
+  "breakout_keywords": [
+    {
+      "query": "llibres sant jordi 2026",
+      "seed": "sant jordi 2026",
+      "group": "seasonal"
+    },
+    {
+      "query": "creu sant jordi 2026",
+      "seed": "sant jordi 2026",
+      "group": "seasonal"
+    },
+    {
+      "query": "cartell sant jordi 2026",
+      "seed": "sant jordi 2026",
+      "group": "seasonal"
+    },
+    {
+      "query": "libros para sant jordi 2026",
+      "seed": "sant jordi 2026",
+      "group": "seasonal"
+    }
+  ]
+}

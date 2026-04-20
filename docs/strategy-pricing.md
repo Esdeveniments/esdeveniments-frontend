@@ -227,7 +227,7 @@ Add a temporary entry in `config/sponsors.ts` so the banner clearly shows a paid
    ```typescript
    {
      businessName: "Restaurant Example",
-     imageUrl: "https://s3.amazonaws.com/bucket/sponsors/xxx.jpg",
+     imageUrl: "https://www.esdeveniments.cat/static/images/sponsors/xxx.jpg",
      targetUrl: "https://example.com",
      places: ["mataro"],           // or ["maresme"] for comarca, or ["catalunya"] for country
      geoScope: "town",             // "town" | "region" | "country"

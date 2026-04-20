@@ -146,7 +146,8 @@ The project has many performance best practices already implemented:
 #### 5.2 Mobile TTFB is 1.1s (threshold: 0.8s)
 
 **Impact**: Directly delays LCP and FCP on mobile.  
-**Cause**: Server response time, likely from edge function cold starts or API fetch latency.  
+**Cause**: Server response time, likely from API fetch latency or ISR revalidation overhead.  
+**Note (April 2026)**: After migrating from AWS SST to Coolify (Docker on Hetzner) + Cloudflare CDN, TTFB dropped to ~80-90ms for cached pages. This issue is now resolved.
 **Actions**:
 
 - Evaluate if the ISR `s-maxage` values can be increased for high-traffic routes to reduce origin hits
@@ -250,7 +251,7 @@ Partial Prerendering could serve static shells for `/[place]` instantly while st
 | #   | Priority | Action                                                                    | Expected Impact                 |
 | --- | -------- | ------------------------------------------------------------------------- | ------------------------------- |
 | 1   | 🔴       | Profile and reduce mobile INP (debounce interactions, lazy-mount pickers) | Keep INP under 200ms threshold  |
-| 2   | 🔴       | Investigate TTFB 1.1s on mobile (cold starts, ISR cache TTLs)             | Improve to < 0.8s               |
+| 2   | ✅       | ~~Investigate TTFB 1.1s on mobile (cold starts, ISR cache TTLs)~~  **Resolved**: Coolify migration reduced TTFB to ~80-90ms | Improved to < 0.1s              |
 | 3   | 🔴       | Audit `/[place]` server bundle growth (+6.7%)                             | Prevent further regression      |
 | 4   | 🟡       | Reduce client reference manifest sizes (audit layout client imports)      | -100-200 KB per route manifest  |
 | 5   | 🟡       | Investigate 221 KB largest chunk composition                              | Potential -50-100 KB savings    |

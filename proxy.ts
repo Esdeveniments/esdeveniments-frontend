@@ -404,6 +404,27 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  // OpenAPI spec: rewrite /openapi.json to /openapi route handler
+  if (pathname === "/openapi.json") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/openapi";
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  // Markdown for Agents: content negotiation
+  // When agents request text/markdown, serve the llms.txt content with proper Content-Type
+  const acceptHeader = request.headers.get("accept") || "";
+  if (
+    acceptHeader.includes("text/markdown") &&
+    !pathname.startsWith("/api/") &&
+    !pathname.startsWith("/_next/")
+  ) {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/llms.txt";
+    rewriteUrl.searchParams.set("_accept", "text/markdown");
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   const { locale: localeFromPath, pathnameWithoutLocale } =
     stripLocalePrefix(pathname);
   const localeFromCookie = getLocaleFromCookie(request);
@@ -535,6 +556,18 @@ export default async function proxy(request: NextRequest) {
 
   // Set Content-Language header for SEO and accessibility
   response.headers.set("Content-Language", resolvedLocale);
+
+  // Agent discovery: Link headers (RFC 8288)
+  // Help AI agents discover machine-readable resources
+  response.headers.set(
+    "Link",
+    [
+      '</.well-known/api-catalog>; rel="api-catalog"',
+      '</openapi.json>; rel="service-desc"; type="application/openapi+json"',
+      '</llms.txt>; rel="service-doc"; type="text/plain"',
+      '</.well-known/agent-skills/index.json>; rel="describedby"',
+    ].join(", "),
+  );
 
   // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, price, lat, lon)
   // This prevents indexing of filtered/personalized URLs without making pages dynamic
