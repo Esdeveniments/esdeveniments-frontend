@@ -23,10 +23,34 @@ export async function GET() {
       },
     },
     servers: [{ url: siteUrl, description: "Production" }],
+    "x-rateLimit": {
+      description: "60 requests per minute per IP. Returns 429 with Retry-After header when exceeded.",
+      limit: 60,
+      window: "1 minute",
+    },
+    externalDocs: {
+      description: "LLM-friendly documentation and quickstart guide",
+      url: `${siteUrl}/llms.txt`,
+    },
+    tags: [
+      {
+        name: "Events",
+        description: "Cultural events in Catalonia — concerts, theatre, exhibitions, festivals, and more",
+      },
+      {
+        name: "News",
+        description: "Local news about events and culture in Catalonia",
+      },
+      {
+        name: "Reference",
+        description: "Categories, places, regions, and cities",
+      },
+    ],
     paths: {
       "/api/events": {
         get: {
           operationId: "listEvents",
+          tags: ["Events"],
           summary: "List cultural events",
           description:
             "Search and browse cultural events in Catalonia. Supports filtering by place, category, date, location radius, and text search. Returns paginated results.",
@@ -114,6 +138,34 @@ export async function GET() {
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/PagedEvents" },
+                  example: {
+                    content: [
+                      {
+                        id: 12345,
+                        title: "Festival de Jazz de Barcelona",
+                        slug: "festival-de-jazz-de-barcelona",
+                        description: "Annual jazz festival in Barcelona",
+                        startDate: "2026-07-01T20:00:00Z",
+                        endDate: "2026-07-15T23:00:00Z",
+                        location: "Barcelona",
+                        category: "concerts",
+                      },
+                    ],
+                    currentPage: 0,
+                    pageSize: 15,
+                    totalElements: 342,
+                    totalPages: 23,
+                    last: false,
+                  },
+                },
+              },
+            },
+            "429": {
+              description: "Rate limit exceeded (60 req/min/IP)",
+              headers: {
+                "Retry-After": {
+                  schema: { type: "integer" },
+                  description: "Seconds to wait before retrying",
                 },
               },
             },
@@ -123,6 +175,7 @@ export async function GET() {
       "/api/events/{slug}": {
         get: {
           operationId: "getEvent",
+          tags: ["Events"],
           summary: "Get event details",
           description:
             "Retrieve full details for a single event by its slug or ID.",
@@ -151,6 +204,7 @@ export async function GET() {
       "/api/news": {
         get: {
           operationId: "listNews",
+          tags: ["News"],
           summary: "List news articles",
           description:
             "Browse local news about events and culture in Catalonia. Optionally filter by place.",
@@ -192,6 +246,7 @@ export async function GET() {
       "/api/news/{slug}": {
         get: {
           operationId: "getNewsArticle",
+          tags: ["News"],
           summary: "Get news article details",
           parameters: [
             {
@@ -217,6 +272,7 @@ export async function GET() {
       "/api/categories": {
         get: {
           operationId: "listCategories",
+          tags: ["Reference"],
           summary: "List all event categories",
           description: "Returns all available event categories with slugs.",
           responses: {
@@ -237,6 +293,7 @@ export async function GET() {
       "/api/places": {
         get: {
           operationId: "listPlaces",
+          tags: ["Reference"],
           summary: "List all places",
           description:
             "Returns all towns, cities, and regions in Catalonia with their types.",
@@ -258,6 +315,7 @@ export async function GET() {
       "/api/places/{slug}": {
         get: {
           operationId: "getPlace",
+          tags: ["Reference"],
           summary: "Get place details",
           parameters: [
             {
@@ -283,6 +341,7 @@ export async function GET() {
       "/api/regions": {
         get: {
           operationId: "listRegions",
+          tags: ["Reference"],
           summary: "List all regions (comarques)",
           responses: {
             "200": {
@@ -302,6 +361,7 @@ export async function GET() {
       "/api/cities": {
         get: {
           operationId: "listCities",
+          tags: ["Reference"],
           summary: "List all cities",
           responses: {
             "200": {
