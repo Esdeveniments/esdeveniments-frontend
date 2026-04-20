@@ -308,19 +308,15 @@ jobs:
             LIVE_VERSION=$(echo "$RESPONSE" | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || LIVE_VERSION=""
             HTTP_OK=$(echo "$RESPONSE" | grep -o '"status":"healthy"') || HTTP_OK=""
 
-            # Best case: exact version match
+            # Only accept exact version match. A "just became non-pre-deploy
+            # and non-expected" heuristic looks like it means "superseded by a
+            # later push", but it also fires when a PRIOR failed/slow build
+            # retroactively propagates mid-poll — which masks real failures of
+            # OUR commit. Require exact SHA match; if concurrent pushes caused
+            # an earlier workflow to never see its exact SHA, that workflow
+            # will fail, which is recoverable. False successes are not.
             if [ "$LIVE_VERSION" = "$EXPECTED_VERSION" ]; then
               echo "New revision ${EXPECTED_VERSION:0:7} is live after ${ELAPSED}s"
-              DEPLOY_CONFIRMED=1
-              break
-            fi
-
-            # Accept: a different new version is live (our commit was
-            # superseded by a later push while this deploy was running).
-            if [ -n "$HTTP_OK" ] && [ -n "$LIVE_VERSION" ] && \
-               [ "$LIVE_VERSION" != "$PRE_DEPLOY_VERSION" ] && \
-               [ "$LIVE_VERSION" != "unknown" ]; then
-              echo "::warning::Newer version ${LIVE_VERSION:0:7} is live (expected ${EXPECTED_VERSION:0:7}). Our commit was likely superseded by a later push."
               DEPLOY_CONFIRMED=1
               break
             fi
@@ -340,9 +336,9 @@ jobs:
             elif [ -z "$LIVE_VERSION" ] || [ "$LIVE_VERSION" = "unknown" ]; then
               echo "::error::Health endpoint is up but did not expose a buildVersion. Check that BUILD_VERSION=\$SOURCE_COMMIT is set as a build variable in Coolify → Application → Environment."
             elif [ "$LIVE_VERSION" = "$PRE_DEPLOY_VERSION" ]; then
-              echo "::error::Container did NOT swap within ${MAX_WAIT}s. live=${LIVE_VERSION:0:7} expected=${EXPECTED_VERSION:0:7}. Coolify build may still be running — check the Coolify dashboard. If builds legitimately take longer, bump MAX_WAIT in this workflow."
+              echo "::error::Container did NOT swap within ${MAX_WAIT}s. live=${LIVE_VERSION:0:7} expected=${EXPECTED_VERSION:0:7}. Coolify build may still be running or may have failed — check the Coolify dashboard. If builds legitimately take longer, bump MAX_WAIT in this workflow."
             else
-              echo "::error::Unexpected state after ${MAX_WAIT}s: live=${LIVE_VERSION:0:7} expected=${EXPECTED_VERSION:0:7}"
+              echo "::error::Container swapped but serving the wrong commit within ${MAX_WAIT}s. live=${LIVE_VERSION:0:7} expected=${EXPECTED_VERSION:0:7}. Possible causes: (1) a rapid subsequent push caused Coolify to process webhooks out of order; (2) a prior failed build retried mid-poll. Re-run the workflow or push again."
             fi
             exit 1
           fi
