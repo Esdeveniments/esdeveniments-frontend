@@ -17,6 +17,41 @@ import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
 import type { AppLocale } from "types/i18n";
+import {
+  CLIENT_APP_KEYS,
+  CLIENT_COMPONENT_KEYS,
+  CLIENT_UTILS_KEYS,
+  CLIENT_FULL_TOP_LEVEL,
+} from "@lib/i18n/client-namespaces";
+
+function pickNamespace<T extends Record<string, unknown>>(
+  source: T | undefined,
+  keys: readonly string[],
+): Partial<T> {
+  if (!source) return {};
+  const out: Partial<T> = {};
+  for (const key of keys) {
+    if (key in source) {
+      (out as Record<string, unknown>)[key] = source[key];
+    }
+  }
+  return out;
+}
+
+function pickClientMessages(
+  messages: Awaited<ReturnType<typeof getMessages>>,
+): Partial<typeof messages> {
+  const m = messages as Record<string, Record<string, unknown> | undefined>;
+  const picked: Record<string, unknown> = {
+    App: pickNamespace(m.App, CLIENT_APP_KEYS),
+    Components: pickNamespace(m.Components, CLIENT_COMPONENT_KEYS),
+    Utils: pickNamespace(m.Utils, CLIENT_UTILS_KEYS),
+  };
+  for (const key of CLIENT_FULL_TOP_LEVEL) {
+    if (m[key] !== undefined) picked[key] = m[key];
+  }
+  return picked as Partial<typeof messages>;
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await rootLocale()) as AppLocale;
@@ -67,6 +102,7 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const messages = await getMessages();
+  const clientMessages = pickClientMessages(messages);
 
   return (
     <html lang={locale}>
@@ -110,7 +146,7 @@ export default async function LocaleLayout({
         />
         <NextIntlClientProvider
           key={locale}
-          messages={messages}
+          messages={clientMessages}
           locale={locale}
         >
           <Suspense fallback={null}>
