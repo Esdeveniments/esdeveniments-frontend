@@ -282,6 +282,38 @@ export async function GET(
     });
   }
 
+  // /.well-known/openid-configuration (OpenID Connect Discovery 1.0)
+  // /.well-known/oauth-authorization-server (RFC 8414)
+  if (
+    path === "openid-configuration" ||
+    path === "oauth-authorization-server"
+  ) {
+    const oauthMeta = {
+      issuer: url,
+      authorization_endpoint: `${url}/oauth/authorize`,
+      token_endpoint: `${url}/oauth/token`,
+      jwks_uri: `${url}/oauth/jwks`,
+      registration_endpoint: `${url}/oauth/register`,
+      scopes_supported: ["openid", "read:events", "read:news", "read:places"],
+      response_types_supported: ["code"],
+      grant_types_supported: [
+        "authorization_code",
+        "client_credentials",
+      ],
+      token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+      service_documentation: `${url}/llms.txt`,
+      code_challenge_methods_supported: ["S256"],
+    };
+
+    return NextResponse.json(oauthMeta, {
+      status: 200,
+      headers: {
+        "Cache-Control":
+          "public, max-age=86400, stale-while-revalidate=86400",
+      },
+    });
+  }
+
   return new Response("Not Found", { status: 404 });
 }
 
