@@ -110,7 +110,8 @@ export async function POST(request: NextRequest) {
         },
       },
     );
-  } catch {
+  } catch (error) {
+    console.error("/ask POST error:", error);
     return NextResponse.json(
       {
         _meta: {
