@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
-import { siteUrl } from "@config/index";
+import { getSiteUrlFromRequest } from "@config/index";
 
 /**
  * .well-known catch-all route handler
  * Serves agent discovery endpoints and returns 404 for unknown paths.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ slug: string[] }> },
 ) {
   const { slug } = await params;
   const path = slug.join("/");
+  const url = getSiteUrlFromRequest({ headers: request.headers });
 
   // /.well-known/agent-skills/index.json
   if (path === "agent-skills/index.json") {
@@ -22,21 +23,21 @@ export async function GET(
           type: "api",
           description:
             "Discover cultural events in Catalonia by place, date, and category. Returns event listings with pagination.",
-          url: `${siteUrl}/llms.txt`,
+          url: `${url}/llms.txt`,
         },
         {
           name: "news-reader",
           type: "api",
           description:
             "Read local news articles about events and culture in Catalonia.",
-          url: `${siteUrl}/llms.txt`,
+          url: `${url}/llms.txt`,
         },
         {
           name: "place-explorer",
           type: "api",
           description:
             "Explore towns, cities, and regions in Catalonia to find events near a location.",
-          url: `${siteUrl}/llms.txt`,
+          url: `${url}/llms.txt`,
         },
       ],
     };
@@ -57,9 +58,9 @@ export async function GET(
       description:
         "Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (ca/es/en) event listings by place, date, and category.",
       version: "1.0.0",
-      url: `${siteUrl}/api`,
+      url: `${url}/api`,
       transport: "http",
-      icon: `${siteUrl}/icons/icon-512x512.png`,
+      icon: `${url}/icons/icon-512x512.png`,
       capabilities: {
         tools: true,
         resources: true,
@@ -101,7 +102,7 @@ export async function GET(
           parameters: {},
         },
       ],
-      documentation: `${siteUrl}/llms.txt`,
+      documentation: `${url}/llms.txt`,
     };
 
     return NextResponse.json(serverCard, {
@@ -120,9 +121,9 @@ export async function GET(
       description:
         "Esdeveniments.cat — Cultural events discovery API for Catalonia. Free multilingual (ca/es/en) events platform with public REST API.",
       version: "1.0.0",
-      url: `${siteUrl}/api`,
+      url: `${url}/api`,
       transport: "http",
-      icon: `${siteUrl}/icons/icon-512x512.png`,
+      icon: `${url}/icons/icon-512x512.png`,
       capabilities: {
         tools: true,
         resources: true,
@@ -163,8 +164,8 @@ export async function GET(
           },
         },
       ],
-      documentation: `${siteUrl}/llms.txt`,
-      openapi: `${siteUrl}/openapi.json`,
+      documentation: `${url}/llms.txt`,
+      openapi: `${url}/openapi.json`,
     };
 
     return NextResponse.json(mcpDiscovery, {
@@ -182,10 +183,10 @@ export async function GET(
       name: "Esdeveniments.cat",
       description:
         "Cultural events discovery agent for Catalonia (Spain). Provides event listings, news, and place information in Catalan, Spanish, and English.",
-      url: siteUrl,
+      url: url,
       provider: {
         organization: "Esdeveniments.cat",
-        url: siteUrl,
+        url: url,
       },
       version: "1.0.0",
       capabilities: {
@@ -246,11 +247,11 @@ export async function GET(
       auth: { type: "none" },
       api: {
         type: "openapi",
-        url: `${siteUrl}/openapi.json`,
+        url: `${url}/openapi.json`,
       },
-      logo_url: `${siteUrl}/icons/icon-512x512.png`,
+      logo_url: `${url}/icons/icon-512x512.png`,
       contact_email: "info@esdeveniments.cat",
-      legal_info_url: `${siteUrl}/termes-servei`,
+      legal_info_url: `${url}/termes-servei`,
     };
 
     return NextResponse.json(pluginManifest, {
