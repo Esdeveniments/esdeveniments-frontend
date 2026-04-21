@@ -416,6 +416,11 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // OpenAPI spec: bypass locale handling so route handler is used
+  if (pathname === "/openapi") {
+    return NextResponse.next();
+  }
+
   // Markdown for Agents: content negotiation
   // When agents request text/markdown, serve the llms.txt content with proper Content-Type
   const acceptHeader = request.headers.get("accept") || "";
