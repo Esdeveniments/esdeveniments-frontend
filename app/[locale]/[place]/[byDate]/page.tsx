@@ -133,29 +133,34 @@ async function ByDateGate({
 }: Readonly<{
   paramsPromise: Promise<{ place: string; byDate: string }>;
 }>) {
-  // Resolve params, locale, and categories concurrently.
-  const [{ place, byDate }, locale, categoriesResult] = await Promise.all([
-    paramsPromise,
-    getLocaleSafely() as Promise<AppLocale>,
-    getCategories().catch((error) => {
-      console.error(
-        "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
-        error
-      );
-      return [] as CategorySummaryResponseDTO[];
-    }),
-  ]);
+  // Fan out all independent fetches in a single Promise.all so none block
+  // each other. Translations depend on locale but we can chain them off the
+  // locale promise rather than awaiting sequentially.
+  const localePromise = getLocaleSafely() as Promise<AppLocale>;
+  const tFallbackPromise = localePromise.then((locale) =>
+    getTranslations({ locale, namespace: "App.PlaceByDate" })
+  );
+  const categoriesPromise = getCategories().catch((error) => {
+    console.error(
+      "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
+      error
+    );
+    return [] as CategorySummaryResponseDTO[];
+  });
+
+  const [{ place, byDate }, locale, categoriesResult, tFallback] =
+    await Promise.all([
+      paramsPromise,
+      localePromise,
+      categoriesPromise,
+      tFallbackPromise,
+    ]);
 
   try {
     validatePlaceOrThrow(place);
   } catch {
     notFound();
   }
-
-  const tFallback = await getTranslations({
-    locale,
-    namespace: "App.PlaceByDate",
-  });
 
   let categories: CategorySummaryResponseDTO[] = categoriesResult;
 

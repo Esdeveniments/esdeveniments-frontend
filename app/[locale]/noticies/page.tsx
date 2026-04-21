@@ -57,11 +57,14 @@ async function NewsPageContent({
   searchParamsPromise?: Promise<RouteSearchParams>;
 }>) {
   const localePromise = getLocaleSafely();
-  const [locale, query] = await Promise.all([
+  const tPromise = localePromise.then((locale) =>
+    getTranslations({ locale, namespace: "App.News" })
+  );
+  const [locale, query, t] = await Promise.all([
     localePromise,
-    (searchParamsPromise ?? Promise.resolve<RouteSearchParams>({})),
+    searchParamsPromise ?? Promise.resolve<RouteSearchParams>({}),
+    tPromise,
   ]);
-  const t = await getTranslations({ locale, namespace: "App.News" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;

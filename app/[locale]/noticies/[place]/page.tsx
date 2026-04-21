@@ -78,13 +78,18 @@ async function NewsPlacePageContent({
   paramsPromise: Promise<{ place: string }>;
   searchParamsPromise?: Promise<RouteSearchParams>;
 }>) {
-  // Resolve independent inputs in parallel.
-  const [{ place }, locale, query] = await Promise.all([
+  // Fan out everything — translations chain off locale so they don't block
+  // on params/searchParams.
+  const localePromise = getLocaleSafely();
+  const tPromise = localePromise.then((locale) =>
+    getTranslations({ locale, namespace: "App.NewsPlace" })
+  );
+  const [{ place }, locale, query, t] = await Promise.all([
     paramsPromise,
-    getLocaleSafely(),
+    localePromise,
     searchParamsPromise ?? Promise.resolve<RouteSearchParams>({}),
+    tPromise,
   ]);
-  const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const { currentPage, pageSize } = parseNewsPagination(query);
 

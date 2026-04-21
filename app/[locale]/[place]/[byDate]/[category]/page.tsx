@@ -130,15 +130,23 @@ async function FilteredPageGate({
 }: Readonly<{
   paramsPromise: Promise<{ place: string; byDate: string; category: string }>;
 }>) {
-  // Resolve params, locale, and categories concurrently.
-  const [{ place, byDate, category }, locale, categoriesResult] =
+  // Fan out all independent fetches; chain translations off locale so they
+  // don't block on categories.
+  const localePromise = getLocaleSafely() as Promise<AppLocale>;
+  const tFallbackPromise = localePromise.then((locale) =>
+    getTranslations({ locale, namespace: "App.PlaceByDateCategory" })
+  );
+  const categoriesPromise = getCategories().catch((error) => {
+    console.error("Error fetching categories:", error);
+    return [] as CategorySummaryResponseDTO[];
+  });
+
+  const [{ place, byDate, category }, locale, categoriesResult, tFallback] =
     await Promise.all([
       paramsPromise,
-      getLocaleSafely() as Promise<AppLocale>,
-      getCategories().catch((error) => {
-        console.error("Error fetching categories:", error);
-        return [] as CategorySummaryResponseDTO[];
-      }),
+      localePromise,
+      categoriesPromise,
+      tFallbackPromise,
     ]);
 
   try {
@@ -146,11 +154,6 @@ async function FilteredPageGate({
   } catch {
     notFound();
   }
-
-  const tFallback = await getTranslations({
-    locale,
-    namespace: "App.PlaceByDateCategory",
-  });
 
   let categories: CategorySummaryResponseDTO[] = categoriesResult;
 
