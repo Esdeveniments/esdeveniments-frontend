@@ -132,7 +132,7 @@ async function FilteredPageGate({
 }>) {
   // Fan out all independent fetches; chain translations off locale so they
   // don't block on categories.
-  const localePromise = getLocaleSafely() as Promise<AppLocale>;
+  const localePromise = getLocaleSafely();
   const tFallbackPromise = localePromise.then((locale) =>
     getTranslations({ locale, namespace: "App.PlaceByDateCategory" })
   );

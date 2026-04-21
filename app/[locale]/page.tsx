@@ -36,20 +36,19 @@ export async function generateMetadata() {
   });
 }
 
-export default async function Page(): Promise<JSX.Element> {
-  const locale = (await rootLocale()) as AppLocale;
-
-  // Start promises without awaiting — push dynamic access down to the
-  // components that actually need each value so the static shell can flush
-  // while these resolve in parallel.
+export default function Page(): JSX.Element {
+  // Sync: every dynamic access lives in Suspense-wrapped children so the
+  // static shell (link preload) flushes in chunk 0.
+  const localePromise = rootLocale() as Promise<AppLocale>;
   const categorizedEventsPromise = getCategorizedEvents(5);
   const categoriesPromise = fetchCategories();
   const pageDataPromise = generatePagesData({ place: "", byDate: "" });
-  const tHomePromise = getTranslations({ locale, namespace: "App.Home" });
-  const tTopAgendaPromise = getTranslations({
-    locale,
-    namespace: "Config.TopAgenda",
-  });
+  const tHomePromise = localePromise.then((locale) =>
+    getTranslations({ locale, namespace: "App.Home" })
+  );
+  const tTopAgendaPromise = localePromise.then((locale) =>
+    getTranslations({ locale, namespace: "Config.TopAgenda" })
+  );
 
   return (
     <>
@@ -63,39 +62,25 @@ export default async function Page(): Promise<JSX.Element> {
         fetchPriority="high"
       />
 
-      {/* SEO: descriptive text for crawlers without JS. Locale-only, no translations needed. */}
-      <noscript>
-        <div>
-          <p>
-            {locale === "es"
-              ? "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti."
-              : locale === "en"
-                ? "Esdeveniments.cat is the most comprehensive free platform for discovering cultural events across Catalonia. Browse concerts, theatre, exhibitions, festivals, family activities, and more across 900+ Catalan municipalities. Find what to do today, tomorrow, or this weekend near you."
-                : "Esdeveniments.cat és la plataforma gratuïta més completa per descobrir esdeveniments culturals a Catalunya. Consulta l'agenda de concerts, teatre, exposicions, festivals, activitats familiars i molt més en més de 900 municipis catalans. Troba què fer avui, demà o aquest cap de setmana a prop teu."}
-          </p>
-          <p>
-            {locale === "es"
-              ? "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria."
-              : locale === "en"
-                ? "Free public API available at /llms.txt and /openapi.json — no authentication required."
-                : "API pública gratuïta disponible a /llms.txt i /openapi.json — sense autenticació necessària."}
-          </p>
-        </div>
-      </noscript>
+      {/* SEO copy for crawlers without JS. Locale-dependent, so it streams in
+          the first Suspense boundary — resolves as soon as rootLocale does. */}
+      <Suspense fallback={null}>
+        <HomeNoScript localePromise={localePromise} />
+      </Suspense>
 
-      {/* Structured data streams independently — can't start until events resolve. */}
+      {/* Structured data streams independently — waits for events + pageData. */}
       <Suspense fallback={null}>
         <HomeStructuredData
           categorizedEventsPromise={categorizedEventsPromise}
           pageDataPromise={pageDataPromise}
-          locale={locale}
+          localePromise={localePromise}
         />
       </Suspense>
 
       {/* Main content streams when pageData + translations resolve. */}
       <Suspense fallback={<HomePageSkeleton />}>
         <HomeContent
-          locale={locale}
+          localePromise={localePromise}
           pageDataPromise={pageDataPromise}
           tHomePromise={tHomePromise}
           tTopAgendaPromise={tTopAgendaPromise}
@@ -107,22 +92,51 @@ export default async function Page(): Promise<JSX.Element> {
   );
 }
 
+async function HomeNoScript({
+  localePromise,
+}: Readonly<{
+  localePromise: Promise<AppLocale>;
+}>): Promise<JSX.Element> {
+  const locale = await localePromise;
+  return (
+    <noscript>
+      <div>
+        <p>
+          {locale === "es"
+            ? "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti."
+            : locale === "en"
+              ? "Esdeveniments.cat is the most comprehensive free platform for discovering cultural events across Catalonia. Browse concerts, theatre, exhibitions, festivals, family activities, and more across 900+ Catalan municipalities. Find what to do today, tomorrow, or this weekend near you."
+              : "Esdeveniments.cat és la plataforma gratuïta més completa per descobrir esdeveniments culturals a Catalunya. Consulta l'agenda de concerts, teatre, exposicions, festivals, activitats familiars i molt més en més de 900 municipis catalans. Troba què fer avui, demà o aquest cap de setmana a prop teu."}
+        </p>
+        <p>
+          {locale === "es"
+            ? "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria."
+            : locale === "en"
+              ? "Free public API available at /llms.txt and /openapi.json — no authentication required."
+              : "API pública gratuïta disponible a /llms.txt i /openapi.json — sense autenticació necessària."}
+        </p>
+      </div>
+    </noscript>
+  );
+}
+
 async function HomeContent({
-  locale,
+  localePromise,
   pageDataPromise,
   tHomePromise,
   tTopAgendaPromise,
   categorizedEventsPromise,
   categoriesPromise,
 }: Readonly<{
-  locale: AppLocale;
+  localePromise: Promise<AppLocale>;
   pageDataPromise: Promise<PageData>;
   tHomePromise: ReturnType<typeof getTranslations>;
   tTopAgendaPromise: ReturnType<typeof getTranslations>;
   categorizedEventsPromise: Promise<CategorizedEvents>;
   categoriesPromise: Promise<Awaited<ReturnType<typeof fetchCategories>>>;
 }>): Promise<JSX.Element> {
-  const [t, tTopAgenda, pageData] = await Promise.all([
+  const [locale, t, tTopAgenda, pageData] = await Promise.all([
+    localePromise,
     tHomePromise,
     tTopAgendaPromise,
     pageDataPromise,
@@ -245,15 +259,16 @@ async function HomeContent({
 async function HomeStructuredData({
   categorizedEventsPromise,
   pageDataPromise,
-  locale,
+  localePromise,
 }: Readonly<{
   categorizedEventsPromise: Promise<CategorizedEvents>;
   pageDataPromise: Promise<PageData>;
-  locale: AppLocale;
+  localePromise: Promise<AppLocale>;
 }>): Promise<JSX.Element> {
-  const [categorizedEvents, pageData] = await Promise.all([
+  const [categorizedEvents, pageData, locale] = await Promise.all([
     categorizedEventsPromise,
     pageDataPromise,
+    localePromise,
   ]);
   const allEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
 

@@ -136,7 +136,7 @@ async function ByDateGate({
   // Fan out all independent fetches in a single Promise.all so none block
   // each other. Translations depend on locale but we can chain them off the
   // locale promise rather than awaiting sequentially.
-  const localePromise = getLocaleSafely() as Promise<AppLocale>;
+  const localePromise = getLocaleSafely();
   const tFallbackPromise = localePromise.then((locale) =>
     getTranslations({ locale, namespace: "App.PlaceByDate" })
   );
