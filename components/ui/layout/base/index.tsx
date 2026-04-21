@@ -11,7 +11,18 @@ export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
-      <Navbar />
+      <Suspense
+        fallback={
+          <div
+            aria-hidden="true"
+            className="w-full bg-background md:sticky md:top-0 z-50 border-b border-border/50 md:shadow-sm md:backdrop-blur-sm"
+          >
+            <div className="container bg-background py-2 h-14" />
+          </div>
+        }
+      >
+        <Navbar />
+      </Suspense>
       <main
         className="w-full min-h-screen bg-background flex flex-col items-center overflow-hidden"
         data-testid="app-content"
@@ -21,7 +32,9 @@ export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
       <Suspense fallback={null}>
         <Footer />
       </Suspense>
-      <LazySocialFollowPopup />
+      <Suspense fallback={null}>
+        <LazySocialFollowPopup />
+      </Suspense>
     </>
   );
 }

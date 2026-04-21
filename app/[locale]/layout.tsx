@@ -150,17 +150,15 @@ export default async function LocaleLayout({
           messages={clientMessages}
           locale={locale}
         >
-          <Suspense fallback={null}>
-            <AdProvider>
-              <WebsiteSchema locale={locale} />
-              <Suspense fallback={null}>
-                <GoogleScripts />
-              </Suspense>
-              <AnalyticsBootstrap />
-              <WebMcpTools />
-              <BaseLayout>{children}</BaseLayout>
-            </AdProvider>
-          </Suspense>
+          <AdProvider>
+            <WebsiteSchema locale={locale} />
+            <Suspense fallback={null}>
+              <GoogleScripts />
+            </Suspense>
+            <AnalyticsBootstrap />
+            <WebMcpTools />
+            <BaseLayout>{children}</BaseLayout>
+          </AdProvider>
         </NextIntlClientProvider>
       </body>
     </html>

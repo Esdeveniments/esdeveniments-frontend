@@ -49,37 +49,48 @@ export async function generateMetadata({
   };
 }
 
-export default async function Page({
+export default function Page({
   params,
   searchParams,
 }: {
   params: Promise<{ place: string }>;
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { place } = await params;
+  return (
+    <div className="w-full bg-background pb-10">
+      <div className="container flex flex-col gap-section-y min-w-0">
+        <Suspense fallback={<NewsListSkeleton />}>
+          <NewsPlacePageContent
+            paramsPromise={params}
+            searchParamsPromise={searchParams}
+          />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+async function NewsPlacePageContent({
+  paramsPromise,
+  searchParamsPromise,
+}: {
+  paramsPromise: Promise<{ place: string }>;
+  searchParamsPromise?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { place } = await paramsPromise;
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const withLocale = (path: string) => withLocalePath(path, locale);
-  const query = (await (searchParams || Promise.resolve({}))) as {
+  const query = (await (searchParamsPromise || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;
   };
   const { currentPage, pageSize } = parseNewsPagination(query);
 
-  // Start fetches immediately
   const newsPromise = fetchNews({ page: currentPage, size: pageSize, place });
   const placeTypePromise = getPlaceTypeAndLabelCached(place);
-  const placeLabelPromise = placeTypePromise.then((value) => value.label).catch(() => place);
-
-  // We can await placeTypePromise if we want the title to be perfect immediately, 
-  // but to be strictly non-blocking as requested, we use the slug for the shell 
-  // and let the component handle the label.
-  // However, the user asked to render Breadcrumbs and Title immediately.
-  // Using the slug for the title is a good compromise.
-
-  // We await placeLabelPromise here to ensure consistency across Breadcrumbs, Title, and Links.
-  // Since generateMetadata already fetches this data (cached), this await is effectively instant
-  // and does not introduce new blocking or negate the streaming benefits for the NewsList below.
-  const placeLabel = await placeLabelPromise;
+  const placeLabel = await placeTypePromise
+    .then((value) => value.label)
+    .catch(() => place);
 
   const breadcrumbs = [
     { name: t("breadcrumbHome"), url: siteUrl },
@@ -98,80 +109,62 @@ export default async function Page({
   const agendaHref = place === "catalunya" ? "/catalunya" : `/${place}`;
 
   return (
-    <div className="w-full bg-background pb-10">
-      <div className="container flex flex-col gap-section-y min-w-0">
+    <>
+      <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
+      {breadcrumbListSchema && (
+        <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
+      )}
 
-        <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
-        {breadcrumbListSchema && (
-          <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
-        )}
+      <Breadcrumbs
+        items={[
+          { label: t("breadcrumbHome"), href: "/" },
+          { label: t("breadcrumbNews"), href: "/noticies" },
+          { label: placeLabel },
+        ]}
+        className="px-section-x pt-4"
+      />
 
-        {/* Breadcrumb Navigation */}
-        <Breadcrumbs
-          items={[
-            { label: t("breadcrumbHome"), href: "/" },
-            { label: t("breadcrumbNews"), href: "/noticies" },
-            { label: placeLabel },
-          ]}
-          className="px-section-x pt-4"
-        />
-
-        {/* Page Header Section */}
-        <header className="w-full mb-section-y-sm">
-          {/* Title and Action Links */}
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-element-gap mb-element-gap">
-            <h1 className="heading-1 uppercase text-foreground-strong flex-1">
-              {t("heading", { place: placeLabel })}
-            </h1>
-            <nav
-              aria-label="Page actions"
-              className="flex flex-wrap items-center gap-x-4 gap-y-2 md:mt-0"
-            >
-              <PressableAnchor
-                href={withLocale(agendaHref)}
-                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
-                prefetch={false}
-                variant="inline"
-              >
-                {t("seeAgenda", { place: placeLabel })}
-              </PressableAnchor>
-              <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
-                ·
-              </span>
-              <PressableAnchor
-                href={withLocale(`/noticies`)}
-                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
-                prefetch={false}
-                variant="inline"
-              >
-                {t("seeAll")}
-              </PressableAnchor>
-              {/* <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
-              ·
-            </span>
+      <header className="w-full mb-section-y-sm">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-element-gap mb-element-gap">
+          <h1 className="heading-1 uppercase text-foreground-strong flex-1">
+            {t("heading", { place: placeLabel })}
+          </h1>
+          <nav
+            aria-label="Page actions"
+            className="flex flex-wrap items-center gap-x-4 gap-y-2 md:mt-0"
+          >
             <PressableAnchor
-              href={withLocale(`/noticies/${place}/rss.xml`)}
+              href={withLocale(agendaHref)}
               className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
               prefetch={false}
               variant="inline"
             >
-              {t("rssLabel")}
-            </PressableAnchor> */}
-            </nav>
-          </div>
-        </header>
+              {t("seeAgenda", { place: placeLabel })}
+            </PressableAnchor>
+            <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              ·
+            </span>
+            <PressableAnchor
+              href={withLocale(`/noticies`)}
+              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+              prefetch={false}
+              variant="inline"
+            >
+              {t("seeAll")}
+            </PressableAnchor>
+          </nav>
+        </div>
+      </header>
 
-        {/* News List Content */}
-        <Suspense fallback={<NewsListSkeleton />}>
-          <NewsList
-            newsPromise={newsPromise}
-            placeTypePromise={placeTypePromise}
-            place={place}
-            currentPage={currentPage}
-            pageSize={pageSize}
-          />
-        </Suspense>
-      </div>
-    </div>
+      <Suspense fallback={<NewsListSkeleton />}>
+        <NewsList
+          newsPromise={newsPromise}
+          placeTypePromise={placeTypePromise}
+          place={place}
+          currentPage={currentPage}
+          pageSize={pageSize}
+        />
+      </Suspense>
+    </>
   );
 }

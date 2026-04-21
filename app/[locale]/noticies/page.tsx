@@ -20,10 +20,8 @@ import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { fetchNewsCities } from "@lib/api/news";
 
 // Lazy load server component (below the fold, cities section)
-// No client wrapper needed - it's a server component
 const NewsCitiesSection = dynamic(() => import("@components/noticies/NewsCitiesSection"), {
-  // No ssr: false needed - it's a server component
-  loading: () => null, // Cities section is below the fold
+  loading: () => null,
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,10 +35,26 @@ export async function generateMetadata(): Promise<Metadata> {
   }) as unknown as Metadata;
 }
 
-export default async function Page({
+export default function Page({
   searchParams,
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  return (
+    <div className="w-full bg-background pb-10">
+      <div className="container flex flex-col gap-section-y min-w-0">
+        <Suspense fallback={<NewsListSkeleton />}>
+          <NewsPageContent searchParamsPromise={searchParams} />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+async function NewsPageContent({
+  searchParamsPromise,
+}: {
+  searchParamsPromise?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "App.News" });
@@ -48,8 +62,7 @@ export default async function Page({
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
 
-  // Option A: /noticies shows latest Catalunya news.
-  const query = (await (searchParams || Promise.resolve({}))) as {
+  const query = (await (searchParamsPromise || Promise.resolve({}))) as {
     [key: string]: string | string[] | undefined;
   };
   const { currentPage, pageSize } = parseNewsPagination(query);
@@ -64,9 +77,7 @@ export default async function Page({
   const citiesSize = showAllCities ? 200 : 30;
 
   // NOTE: Backend expects a city/region name for `place`.
-  // Swagger shows `place` is optional; using "catalunya" can yield 0 results.
   // For the main /noticies feed, fetch without place to get global latest.
-  // We still use "catalunya" as the URL segment when linking to articles.
   const articlePlaceSlug = "catalunya";
   const newsPromise = fetchNews({ page: currentPage, size: pageSize });
   const placeTypePromise = getPlaceTypeAndLabelCached(articlePlaceSlug);
@@ -100,55 +111,48 @@ export default async function Page({
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbs);
 
   return (
-    <div className="w-full bg-background pb-10">
-      <div className="container flex flex-col gap-section-y min-w-0">
-        <JsonLdServer id="news-list-webpage-breadcrumbs" data={webPageSchema} />
-        {breadcrumbListSchema && (
-          <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
-        )}
+    <>
+      <JsonLdServer id="news-list-webpage-breadcrumbs" data={webPageSchema} />
+      {breadcrumbListSchema && (
+        <JsonLdServer id="news-list-breadcrumbs" data={breadcrumbListSchema} />
+      )}
 
-        {/* Breadcrumb Navigation */}
-        <Breadcrumbs
-          items={[
-            { label: t("breadcrumbHome"), href: "/" },
-            { label: t("breadcrumbCurrent") },
-          ]}
-          className="px-section-x pt-4"
+      <Breadcrumbs
+        items={[
+          { label: t("breadcrumbHome"), href: "/" },
+          { label: t("breadcrumbCurrent") },
+        ]}
+        className="px-section-x pt-4"
+      />
+
+      <header className="w-full mb-section-y-sm">
+        <h1 className="heading-1 uppercase text-foreground-strong mb-element-gap">
+          {t("heading")}
+        </h1>
+        <p className="body-large text-foreground-strong/80 text-left">
+          {t("intro")}
+        </p>
+      </header>
+
+      <Suspense fallback={<NewsListSkeleton />}>
+        <NewsList
+          newsPromise={newsPromise}
+          placeTypePromise={placeTypePromise}
+          place={articlePlaceSlug}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          basePath="/noticies"
         />
+      </Suspense>
 
-        {/* Page Header Section */}
-        <header className="w-full mb-section-y-sm">
-          <h1 className="heading-1 uppercase text-foreground-strong mb-element-gap">
-            {t("heading")}
-          </h1>
-          <p className="body-large text-foreground-strong/80 text-left">
-            {t("intro")}
-          </p>
-        </header>
-
-        {/* Latest News List (Catalunya) */}
-        <Suspense fallback={<NewsListSkeleton />}>
-          <NewsList
-            newsPromise={newsPromise}
-            placeTypePromise={placeTypePromise}
-            place={articlePlaceSlug}
-            currentPage={currentPage}
-            pageSize={pageSize}
-            basePath="/noticies"
-          />
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <NewsCitiesSection
-            citiesPromise={citiesPromise}
-            showAll={showAllCities}
-            showMoreHref={showMoreHref}
-            showLessHref={showLessHref}
-          />
-        </Suspense>
-
-        {/* Featured places section temporarily disabled. */}
-      </div>
-    </div>
+      <Suspense fallback={null}>
+        <NewsCitiesSection
+          citiesPromise={citiesPromise}
+          showAll={showAllCities}
+          showMoreHref={showMoreHref}
+          showLessHref={showLessHref}
+        />
+      </Suspense>
+    </>
   );
 }

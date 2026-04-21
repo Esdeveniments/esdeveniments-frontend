@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
@@ -44,6 +45,7 @@ import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+import PlacePageSkeleton from "@components/ui/common/skeletons/PlacePageSkeleton";
 
 // page-level ISR not set here; fetch-level caching applies
 
@@ -114,15 +116,33 @@ export async function generateMetadata({
 
 // No generateStaticParams — all place/date pages are rendered on first request and cached.
 
-export default async function ByDatePage({
+export default function ByDatePage({
   params,
 }: {
   params: Promise<{ place: string; byDate: string }>;
 }) {
-  const { place, byDate } = await params;
+  return (
+    <Suspense fallback={<PlacePageSkeleton />}>
+      <ByDateGate paramsPromise={params} />
+    </Suspense>
+  );
+}
+
+async function ByDateGate({
+  paramsPromise,
+}: {
+  paramsPromise: Promise<{ place: string; byDate: string }>;
+}) {
+  const { place, byDate } = await paramsPromise;
+
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
+    notFound();
+  }
+
   const locale: AppLocale = await getLocaleSafely();
 
-  // Parallelize independent operations: translations and categories fetch
   const [tFallback, categoriesResult] = await Promise.all([
     getTranslations({
       locale,
@@ -137,29 +157,16 @@ export default async function ByDatePage({
     }),
   ]);
 
-  try {
-    validatePlaceOrThrow(place);
-  } catch {
-    notFound();
-  }
-
-  // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
-  // Invalid places will naturally result in empty event lists, which the page handles gracefully.
-
   let categories: CategorySummaryResponseDTO[] = categoriesResult;
 
   // Use empty searchParams to keep pages static (ISR-compatible)
-  // Query params (search, distance, lat, lon) are handled client-side
   const urlSearchParams = new URLSearchParams();
 
-  // Preserve user-requested category even if categories API fails
   if (categories.length === 0) {
     const fallbackSlug = urlSearchParams.get("category");
     if (fallbackSlug && isValidCategorySlugFormat(fallbackSlug)) {
       categories = [{ id: -1, name: fallbackSlug, slug: fallbackSlug }];
     } else if (!isValidDateSlug(byDate) && isValidCategorySlugFormat(byDate)) {
-      // For two-segment URLs like /barcelona/teatre, byDate might actually be a category
-      // Create a synthetic category to preserve user intent when categories API fails
       categories = [{ id: -1, name: byDate, slug: byDate }];
     }
   }
@@ -170,11 +177,9 @@ export default async function ByDatePage({
     categories
   );
 
-  // Canonicalization note:
-  // - Middleware handles structural normalization (folding query date/category, omitting "tots")
-  // - This page-level redirect remains to validate category slugs against dynamic categories
-  //   and normalize unknown slugs (middleware cannot fetch categories at edge time)
-  // - When middleware already normalized, this is a no-op
+  // Client-side redirect since we're inside a Suspense boundary. Middleware
+  // already handles structural normalization, so this only fires on the
+  // edge case of category-slug rewrites the edge can't resolve.
   const redirectUrl = getRedirectUrl(parsed);
   if (redirectUrl) {
     redirect(redirectUrl);
@@ -182,8 +187,6 @@ export default async function ByDatePage({
 
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;
-
-  // Since we don't read searchParams (to keep pages static), category comes from URL path only
   const finalCategory = actualCategory;
 
   const paramsForFetch: FetchEventsParams = {
@@ -191,7 +194,6 @@ export default async function ByDatePage({
     size: 12,
   };
 
-  // Only add date filters if actualDate is not "tots"
   const dateRange = getDateRangeFromByDate(actualDate);
   if (dateRange) {
     paramsForFetch.from = toLocalDateString(dateRange.from);
@@ -205,9 +207,6 @@ export default async function ByDatePage({
   if (finalCategory && finalCategory !== DEFAULT_FILTER_VALUE) {
     paramsForFetch.category = finalCategory;
   }
-
-  // Intentionally do NOT apply querystring filters (search/distance/lat/lon) on the server.
-  // These are handled client-side to keep ISR query-agnostic.
 
   const categoryData = categories.find((cat) => cat.slug === finalCategory);
 
@@ -251,10 +250,7 @@ export default async function ByDatePage({
     locale,
   });
 
-
-  // Late existence check to preserve UX without creating an early oracle
-  // Note: We pass empty searchParams to keep pages static (ISR-compatible).
-  // Query params are not preserved on alias redirects (rare edge case).
+  // Client-side alias redirect (same trade-off as place page).
   const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
     place,
     locale,
@@ -285,7 +281,6 @@ export default async function ByDatePage({
           description: pageData.metaDescription,
           url: pageData.canonical,
           locale,
-          // SEO: For city pages, include parent region (comarca) relationship
           ...(placeTypeLabel.regionLabel &&
             placeTypeLabel.regionSlug && {
               containedInPlace: {

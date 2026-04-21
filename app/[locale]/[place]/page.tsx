@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { insertAds } from "@lib/api/events";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -24,7 +25,7 @@ import {
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import { redirect, notFound } from "next/navigation";
-import type { PlacePageEventsResult } from "types/props";
+import type { PlacePageEventsResult, PlaceShellData } from "types/props";
 import { twoWeeksDefault } from "@lib/dates";
 import { siteUrl } from "@config/index";
 import { getTranslations } from "next-intl/server";
@@ -33,6 +34,7 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+import PlacePageSkeleton from "@components/ui/common/skeletons/PlacePageSkeleton";
 
 // Note: This page is fully dynamic (on-demand ISR). Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
@@ -50,7 +52,6 @@ export async function generateMetadata({
     return validation.fallbackMetadata;
   }
 
-  // Start locale fetch early (runs in parallel with placeTypeLabel)
   const localePromise = getLocaleSafely();
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
@@ -70,50 +71,61 @@ export async function generateMetadata({
   });
 }
 
-export default async function Page({
+export default function Page({
   params,
 }: {
   params: Promise<PlaceStaticPathParams>;
 }) {
-  const { place } = await params;
-  const locale = await getLocaleSafely();
+  // params is a Promise — awaiting it at the page level would count as
+  // runtime data access outside Suspense and block the static shell.
+  // Pass it down; the gate awaits it inside the Suspense boundary.
+  return (
+    <Suspense fallback={<PlacePageSkeleton />}>
+      <PlacePageGate paramsPromise={params} />
+    </Suspense>
+  );
+}
 
+async function PlacePageGate({
+  paramsPromise,
+}: {
+  paramsPromise: Promise<PlaceStaticPathParams>;
+}) {
+  const { place } = await paramsPromise;
+
+  // Inside Suspense: notFound() becomes <meta name="robots" content="noindex">
+  // rather than an HTTP 404. Acceptable for rare invalid-slug hits.
   try {
     validatePlaceOrThrow(place);
   } catch {
     notFound();
   }
 
+  // Start every promise inside the Suspense boundary so cacheComponents
+  // doesn't flag them as blocking the static shell.
+  const localePromise = getLocaleSafely();
   const categoriesPromise = fetchCategories().catch((error) => {
     console.error("Error fetching categories:", error);
     return [] as CategorySummaryResponseDTO[];
   });
-  const placeShellDataPromise = (async () => {
-    try {
-      const placeTypeLabel: PlaceTypeAndLabel =
-        await getPlaceTypeAndLabelCached(place);
-      const pageData: PageData = await generatePagesData({
-        place,
-        byDate: "",
-        placeTypeLabel,
-      });
-      return { placeTypeLabel, pageData };
-    } catch (error) {
-      console.error("Place page: unable to build shell data", error);
-      // Fetch translations only on error path (avoids blocking happy path)
-      const t = await getTranslations({ locale, namespace: "App.Publish" });
-      return await buildFallbackPlaceShellData(place, t("noEventsFound"));
-    }
+  const placeShellDataPromise = buildPlaceShellDataPromise({
+    place,
+    localePromise,
+  });
+  const eventsPromise = (async () => {
+    const locale = await localePromise;
+    return buildPlaceEventsPromise({ place, locale });
   })();
 
-  const eventsPromise = buildPlaceEventsPromise({ place, locale });
+  const [locale, categories] = await Promise.all([
+    localePromise,
+    categoriesPromise,
+  ]);
 
-  // Await categories for late existence check only
-  const categories = await categoriesPromise;
-
-  // Late existence check to preserve UX without creating an enumeration oracle
-  // Note: We pass empty searchParams to keep pages static (ISR-compatible).
-  // Query params are not preserved on alias redirects (rare edge case).
+  // Late alias/invalid-place redirect. Because this runs inside a Suspense
+  // boundary it becomes a client-side redirect rather than an HTTP 3xx — an
+  // acceptable trade-off for rare alias hits that would otherwise force the
+  // whole page to block the shell on a catalog fetch.
   const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
     place,
     locale,
@@ -155,13 +167,35 @@ export default async function Page({
   );
 }
 
+async function buildPlaceShellDataPromise({
+  place,
+  localePromise,
+}: {
+  place: string;
+  localePromise: Promise<AppLocale>;
+}): Promise<PlaceShellData> {
+  try {
+    const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+      place
+    );
+    const pageData: PageData = await generatePagesData({
+      place,
+      byDate: "",
+      placeTypeLabel,
+    });
+    return { placeTypeLabel, pageData };
+  } catch (error) {
+    console.error("Place page: unable to build shell data", error);
+    const locale = await localePromise;
+    const t = await getTranslations({ locale, namespace: "App.Publish" });
+    return await buildFallbackPlaceShellData(place, t("noEventsFound"));
+  }
+}
+
 async function buildFallbackPlaceShellData(
   place: string,
   notFoundDescription: string
-): Promise<{
-  placeTypeLabel: PlaceTypeAndLabel;
-  pageData: PageData;
-}> {
+): Promise<PlaceShellData> {
   const tFallback = await getTranslations("App.PlaceFallback");
   const fallbackPlaceTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
   const pathSegment = place === "catalunya" ? "" : `/${place}`;

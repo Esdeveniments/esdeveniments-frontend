@@ -46,9 +46,9 @@ import SocialProofCounter from "./components/SocialProofCounter";
 import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
 import DetailSectionTracker from "./components/DetailSectionTracker";
+import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 
 // Lazy load below-the-fold client components via client component wrappers
-// This allows us to use ssr: false in Next.js 16 (required for client components)
 import LazyRestaurantPromotion from "./components/LazyRestaurantPromotion";
 
 export async function generateMetadata(props: {
@@ -58,39 +58,123 @@ export async function generateMetadata(props: {
   const locale = (await rootLocale()) as AppLocale;
   const event = await getEventBySlug(slug);
   if (!event) return { title: "No event found" };
-  // Use canonical derived from the event itself to avoid locking old slugs
-  // into metadata; this helps consolidate SEO to the canonical path.
   const canonical = `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`;
   return generateEventMetadata(event, canonical, undefined, locale);
 }
 
 // Main page component
-export default async function EventPage({
+export default function EventPage({
   params,
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  const slug = (await params).eventId;
+  // All awaits (params, rootLocale, getEventBySlug) live inside the
+  // Suspense child. Trade-off: notFound() becomes <meta noindex> and the
+  // canonical slug redirect becomes client-side (no HTTP 3xx).
+  return (
+    <Suspense fallback={<EventDetailSkeleton />}>
+      <EventPageGate paramsPromise={params} />
+    </Suspense>
+  );
+}
 
+async function EventPageGate({
+  paramsPromise,
+}: {
+  paramsPromise: Promise<{ eventId: string }>;
+}) {
+  const slug = (await paramsPromise).eventId;
   const locale = (await rootLocale()) as AppLocale;
-
-  // With relaxed CSP we no longer require a nonce here; compute mobile on client
-  const initialIsMobile = false;
 
   const event: EventDetailResponseDTO | null = await getEventBySlug(slug);
   if (!event) notFound();
   if (event.title === "CANCELLED") notFound();
 
-  // If the requested slug doesn't match the canonical one, redirect
-  // to consolidate SEO. This prevents duplicate content issues and ensures
-  // all traffic goes to the canonical URL for better rankings.
-  // Default to enabled unless explicitly disabled via environment variable.
   const disableCanonicalRedirect =
     process.env.NEXT_PUBLIC_CANONICAL_REDIRECT === "0" ||
     process.env.CANONICAL_REDIRECT === "0";
   if (!disableCanonicalRedirect && slug !== event.slug && event.slug) {
     redirect(withLocalePath(`/e/${event.slug}`, locale));
   }
+
+  const title = event?.title ?? "";
+  const jsonData = generateJsonData({ ...event }, locale);
+
+  const relatedEventsJsonData =
+    event.relatedEvents && event.relatedEvents.length > 0
+      ? {
+        "@id": `${siteUrl}#itemlist-${title
+          ?.toLowerCase()
+          .replace(/\s+/g, "-")}`,
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Related Events",
+        numberOfItems: event.relatedEvents.length,
+        itemListElement: event.relatedEvents
+          .slice(0, 10)
+          .map((relatedEvent, index) => {
+            try {
+              return {
+                "@type": "ListItem",
+                position: index + 1,
+                item: generateJsonData(relatedEvent, locale),
+              };
+            } catch (err) {
+              console.error(
+                "Error generating JSON-LD for related event:",
+                relatedEvent.id,
+                err
+              );
+              return null;
+            }
+          })
+          .filter(Boolean),
+      }
+      : null;
+
+  const lcpSources = event.imageUrl
+    ? buildResponsivePictureSourceUrls(event.imageUrl, undefined, {
+      quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
+    }, getResponsiveWidths("hero"))
+    : null;
+  const lcpSizes = getOptimalImageSizes("hero");
+
+  return (
+    <>
+      {lcpSources && (
+        <link
+          rel="preload"
+          as="image"
+          imageSrcSet={lcpSources.webpSrcSet}
+          imageSizes={lcpSizes}
+          type="image/webp"
+          fetchPriority="high"
+        />
+      )}
+      <JsonLdServer
+        id={event.id ? String(event.id) : undefined}
+        data={jsonData}
+      />
+      {relatedEventsJsonData && (
+        <JsonLdServer
+          id={`related-events-${event.id}`}
+          data={relatedEventsJsonData}
+        />
+      )}
+      <EventContent event={event} locale={locale} />
+    </>
+  );
+}
+
+async function EventContent({
+  event,
+  locale,
+}: {
+  event: EventDetailResponseDTO;
+  locale: AppLocale;
+}) {
+  // With relaxed CSP we no longer require a nonce here; compute mobile on client
+  const initialIsMobile = false;
 
   const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";
@@ -113,7 +197,6 @@ export default async function EventPage({
   const eventDateString = event.endDate
     ? `Del ${event.startDate} al ${event.endDate}`
     : `${event.startDate}`;
-  const jsonData = generateJsonData({ ...event }, locale);
 
   // Parallelize all translation fetches to eliminate waterfall (8 calls → 1 round trip)
   const [
@@ -189,49 +272,14 @@ export default async function EventPage({
     remove: tCard("favoriteRemoveAria"),
   };
 
-  // Build intro text via shared utils (no assumptions)
   const introText = await buildEventIntroText(event, eventCopyLabels, locale);
 
-  // Prepare place data for LatestNewsSection (streamed separately)
   const placeLabel = cityName || regionName || "Catalunya";
   const placeType: "region" | "town" = event.city ? "town" : "region";
   const newsHref = withLocalePath(
     primaryPlaceSlug === "catalunya" ? "/noticies" : `/noticies/${primaryPlaceSlug}`,
     locale
   );
-
-  // Generate JSON-LD for related events (server-side for SEO)
-  const relatedEventsJsonData =
-    event.relatedEvents && event.relatedEvents.length > 0
-      ? {
-        "@id": `${siteUrl}#itemlist-${title
-          ?.toLowerCase()
-          .replace(/\s+/g, "-")}`,
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        name: "Related Events",
-        numberOfItems: event.relatedEvents.length,
-        itemListElement: event.relatedEvents
-          .slice(0, 10) // Limit for performance
-          .map((relatedEvent, index) => {
-            try {
-              return {
-                "@type": "ListItem",
-                position: index + 1,
-                item: generateJsonData(relatedEvent, locale),
-              };
-            } catch (err) {
-              console.error(
-                "Error generating JSON-LD for related event:",
-                relatedEvent.id,
-                err
-              );
-              return null;
-            }
-          })
-          .filter(Boolean),
-      }
-      : null;
 
   const howToSteps = [
     tHowTo("step1"),
@@ -251,71 +299,29 @@ export default async function EventPage({
     return "Esdeveniment";
   })();
 
-  // Build breadcrumb items with region for cities (SEO: geographic hierarchy)
-  // Structure: Inici > Region > City > Event  OR  Inici > Region > Event (if no city)
   const hasCity = Boolean(citySlug);
   const hasRegion = Boolean(regionSlug);
 
-  // Build breadcrumb items array with localized URLs
   const homeLabel = tBreadcrumbs("home");
   const breadcrumbItems = [
     { name: homeLabel, url: toLocalizedUrl("/", locale) },
-    // Add region (comarca) if available
     ...(hasRegion ? [{ name: regionName, url: toLocalizedUrl(`/${regionSlug}`, locale) }] : []),
-    // Add city if different from region
     ...(hasCity ? [{ name: cityName, url: toLocalizedUrl(`/${citySlug}`, locale) }] : []),
-    // Add event
     { name: breadcrumbName, url: toLocalizedUrl(`/e/${event.slug}`, locale) },
   ];
   const breadcrumbJsonLd = generateBreadcrumbList(breadcrumbItems);
 
-  // Preload LCP hero image — React 19 hoists <link> to <head> automatically.
-  // Uses responsive srcSet so the browser picks the right width for the viewport,
-  // instead of always downloading the full 1200px version on mobile.
-  const lcpSources = event.imageUrl
-    ? buildResponsivePictureSourceUrls(event.imageUrl, undefined, {
-      quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
-    }, getResponsiveWidths("hero"))
-    : null;
-  const lcpSizes = getOptimalImageSizes("hero");
-
   return (
     <>
-      {/* Preload LCP hero image for faster Largest Contentful Paint */}
-      {lcpSources && (
-        <link
-          rel="preload"
-          as="image"
-          imageSrcSet={lcpSources.webpSrcSet}
-          imageSizes={lcpSizes}
-          type="image/webp"
-          fetchPriority="high"
-        />
-      )}
-      {/* Main Event JSON-LD */}
-      <JsonLdServer
-        id={event.id ? String(event.id) : undefined}
-        data={jsonData}
-      />
-      {/* Related Events JSON-LD */}
-      {relatedEventsJsonData && (
-        <JsonLdServer
-          id={`related-events-${event.id}`}
-          data={relatedEventsJsonData}
-        />
-      )}
-      {/* HowTo JSON-LD for SEO strategy 5 */}
       {howToJsonData && (
         <JsonLdServer id={`howto-${event.id}`} data={howToJsonData} />
       )}
-      {/* Breadcrumbs JSON-LD */}
       {breadcrumbJsonLd && (
         <JsonLdServer id={`breadcrumbs-${event.id}`} data={breadcrumbJsonLd} />
       )}
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
-            {/* Visible Breadcrumbs for internal linking — full width */}
             <Breadcrumbs
               items={[
                 { label: tBreadcrumbs("home"), href: "/" },
@@ -336,16 +342,12 @@ export default async function EventPage({
               className="px-section-x pt-4"
             />
 
-            {/* Two-column layout: Main content + Sticky sidebar (desktop) */}
             <div className="flex flex-col lg:flex-row lg:gap-8">
-              {/* ========== MAIN CONTENT (left column) ========== */}
               <div className="flex-1 min-w-0 flex flex-col gap-section-y-sm">
-                {/* Event Media Hero */}
                 <div className="w-full flex flex-col">
                   <div className="w-full">
                     <EventMedia event={event} title={title} />
                   </div>
-                  {/* Share bar + favorite + social proof */}
                   <div className="w-full flex justify-between items-center mt-element-gap-sm">
                     <EventShareBar
                       slug={eventSlug}
@@ -372,7 +374,6 @@ export default async function EventPage({
                   </div>
                 </div>
 
-                {/* Event Header with status pill + social proof */}
                 <div className="flex flex-col gap-1">
                   <EventHeader title={title} temporalStatus={temporalStatus} />
                   <SocialProofCounter
@@ -381,14 +382,12 @@ export default async function EventPage({
                   />
                 </div>
 
-                {/* Calendar — mobile only (between title and description) */}
                 <DetailSectionTracker section="calendar" className="lg:hidden">
                   <div data-calendar-section>
                     <EventCalendar event={event} compact />
                   </div>
                 </DetailSectionTracker>
 
-                {/* Description with collapsible on mobile */}
                 <DetailSectionTracker section="description">
                   <CollapsibleDescription>
                     <EventDescription
@@ -400,7 +399,6 @@ export default async function EventPage({
                   </CollapsibleDescription>
                 </DetailSectionTracker>
 
-                {/* Location — mobile only */}
                 <DetailSectionTracker section="location" className="lg:hidden">
                   <EventLocation
                     location={event.location}
@@ -411,14 +409,12 @@ export default async function EventPage({
                   />
                 </DetailSectionTracker>
 
-                {/* Weather — mobile only (desktop shows in sidebar) */}
                 {temporalStatus.state !== "past" && (
                   <div className="lg:hidden">
                     <EventWeather weather={event.weather} />
                   </div>
                 )}
 
-                {/* Past Event Banner — early visibility for past events */}
                 {temporalStatus.state === "past" && (
                   <PastEventBanner
                     temporalStatus={temporalStatus}
@@ -430,7 +426,6 @@ export default async function EventPage({
                   />
                 )}
 
-                {/* Sponsor — mobile only */}
                 <div className="lg:hidden">
                   <SponsorBannerSlot
                     place={primaryPlaceSlug}
@@ -438,7 +433,6 @@ export default async function EventPage({
                   />
                 </div>
 
-                {/* Related Events */}
                 {event.relatedEvents && event.relatedEvents.length > 0 && (
                   <DetailSectionTracker section="related_events">
                     <div
@@ -455,19 +449,16 @@ export default async function EventPage({
                   </DetailSectionTracker>
                 )}
 
-                {/* Explore more plans — after related events, before categories */}
                 <CulturalMessage
                   location={cityName || regionName}
                   locationValue={event.city?.slug || event.region?.slug || ""}
                   locationType={placeType}
                 />
 
-                {/* Event Categories */}
                 <DetailSectionTracker section="categories">
                   <EventCategories categories={event.categories} place={primaryPlaceSlug} />
                 </DetailSectionTracker>
 
-                {/* Restaurant Promotion */}
                 <Suspense fallback={null}>
                   <LazyRestaurantPromotion
                     eventId={event.id}
@@ -481,11 +472,9 @@ export default async function EventPage({
                   />
                 </Suspense>
 
-                {/* Client-side ad + notifications */}
                 <ClientEventClient event={event} />
               </div>
 
-              {/* ========== STICKY SIDEBAR (desktop only) ========== */}
               <EventSidebar
                 event={event}
                 cityName={cityName}
@@ -498,7 +487,6 @@ export default async function EventPage({
         </div>
       </div>
 
-      {/* Latest News Section - Streamed separately to improve TTFB */}
       <Suspense fallback={null}>
         <LatestNewsSection
           placeSlug={primaryPlaceSlug}
@@ -508,7 +496,6 @@ export default async function EventPage({
         />
       </Suspense>
 
-      {/* Sticky CTA bar for mobile — sits above bottom nav */}
       {temporalStatus.state !== "past" && (
         <EventStickyCTA
           eventUrl={event.url}
