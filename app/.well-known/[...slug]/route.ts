@@ -263,6 +263,25 @@ export async function GET(
     });
   }
 
+  // /.well-known/oauth-protected-resource (RFC 9728)
+  if (path === "oauth-protected-resource") {
+    const oauthResource = {
+      resource: url,
+      authorization_servers: [`${url}/oauth`],
+      scopes_supported: ["read:events", "read:news", "read:places"],
+      bearer_methods_supported: ["header"],
+      resource_documentation: `${url}/llms.txt`,
+    };
+
+    return NextResponse.json(oauthResource, {
+      status: 200,
+      headers: {
+        "Cache-Control":
+          "public, max-age=86400, stale-while-revalidate=86400",
+      },
+    });
+  }
+
   return new Response("Not Found", { status: 404 });
 }
 
