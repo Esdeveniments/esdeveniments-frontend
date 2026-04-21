@@ -49,6 +49,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // NOTE: We ALLOW browsing/search crawlers (ChatGPT-User, Claude-Web, PerplexityBot)
       // so we appear in AI-powered searches
       {
+        userAgent: "ChatGPT-User", // OpenAI browsing feature — ALLOWED
+        allow: ["/"],
+      },
+      {
+        userAgent: "Claude-Web", // Claude browsing feature — ALLOWED
+        allow: ["/"],
+      },
+      {
+        userAgent: "PerplexityBot", // Perplexity search — ALLOWED
+        allow: ["/"],
+      },
+      {
+        userAgent: "DeepSeekBot", // DeepSeek search — ALLOWED
+        allow: ["/"],
+      },
+      {
         userAgent: "GPTBot", // OpenAI's training crawler
         disallow: ["/"],
       },
@@ -88,11 +104,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         userAgent: "Omgilibot", // Webz.io data harvesting
         disallow: ["/"],
       },
-      // ALLOWED for AI-powered SEARCH (not blocked):
-      // - ChatGPT-User (ChatGPT browsing feature)
-      // - Claude-Web (Claude browsing feature)
-      // - PerplexityBot (Perplexity search)
-      // - Googlebot (includes AI Overviews)
     ],
     // Declare all sitemaps for comprehensive discovery
     sitemap: [
@@ -142,7 +153,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   // Declare AI content usage preferences
   lines.push("");
   lines.push("# Content Signals — AI usage preferences");
-  lines.push("Content-Signal: ai-train=no, search=yes, ai-input=no");
+  lines.push("Content-Signal: ai-train=no, search=yes, ai-input=yes");
 
   // NLWeb schema feed directive
   lines.push("");

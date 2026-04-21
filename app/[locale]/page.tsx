@@ -152,6 +152,28 @@ export default async function Page(): Promise<JSX.Element> {
         fetchPriority="high"
       />
 
+      {/* SEO: visible H1 + descriptive text for crawlers and AI agents */}
+      <h1 className="sr-only">{pageData.title}</h1>
+      <noscript>
+        <div>
+          <h2>{pageData.subTitle}</h2>
+          <p>
+            {locale === "es"
+              ? "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti."
+              : locale === "en"
+                ? "Esdeveniments.cat is the most comprehensive free platform for discovering cultural events across Catalonia. Browse concerts, theatre, exhibitions, festivals, family activities, and more across 900+ Catalan municipalities. Find what to do today, tomorrow, or this weekend near you."
+                : "Esdeveniments.cat és la plataforma gratuïta més completa per descobrir esdeveniments culturals a Catalunya. Consulta l'agenda de concerts, teatre, exposicions, festivals, activitats familiars i molt més en més de 900 municipis catalans. Troba què fer avui, demà o aquest cap de setmana a prop teu."}
+          </p>
+          <p>
+            {locale === "es"
+              ? "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria."
+              : locale === "en"
+                ? "Free public API available at /llms.txt and /openapi.json — no authentication required."
+                : "API pública gratuïta disponible a /llms.txt i /openapi.json — sense autenticació necessària."}
+          </p>
+        </div>
+      </noscript>
+
       {siteNavigationSchema && (
         <JsonLdServer id="site-navigation" data={siteNavigationSchema} />
       )}
