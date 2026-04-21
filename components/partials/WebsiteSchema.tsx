@@ -138,11 +138,17 @@ export default function WebsiteSchema({
     },
     knowsAbout: localized.knowsAbout,
     sameAs: socialLinksSameAs,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: "info@esdeveniments.cat",
+      availableLanguage: ["Catalan", "Spanish", "English"],
+    },
   };
 
   const webAppSchema = {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
+    "@type": ["WebApplication", "SoftwareApplication"],
     name: "Esdeveniments.cat",
     alternateName: "Què Fer a Catalunya",
     description: localized.appDescription,
@@ -162,11 +168,55 @@ export default function WebsiteSchema({
     screenshot: `${siteUrl}/static/images/og-home.jpg`,
   };
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name:
+          locale === "es"
+            ? "¿Qué es Esdeveniments.cat?"
+            : locale === "en"
+              ? "What is Esdeveniments.cat?"
+              : "Què és Esdeveniments.cat?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            locale === "es"
+              ? "Esdeveniments.cat es la plataforma gratuita y multilingüe más completa para descubrir eventos culturales en Cataluña. Cubre más de 900 municipios con conciertos, teatro, exposiciones, festivales y más."
+              : locale === "en"
+                ? "Esdeveniments.cat is the most comprehensive free multilingual platform for discovering cultural events across Catalonia. It covers 900+ municipalities with concerts, theatre, exhibitions, festivals, and more."
+                : "Esdeveniments.cat és la plataforma gratuïta i multilingüe més completa per descobrir esdeveniments culturals a Catalunya. Cobreix més de 900 municipis amb concerts, teatre, exposicions, festivals i més.",
+        },
+      },
+      {
+        "@type": "Question",
+        name:
+          locale === "es"
+            ? "¿Tiene Esdeveniments.cat una API pública?"
+            : locale === "en"
+              ? "Does Esdeveniments.cat have a public API?"
+              : "Esdeveniments.cat té una API pública?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            locale === "es"
+              ? "Sí, Esdeveniments.cat ofrece una API REST pública y gratuita. No requiere autenticación para endpoints de lectura. Documentación disponible en /llms.txt y /openapi.json."
+              : locale === "en"
+                ? "Yes, Esdeveniments.cat offers a free public REST API. No authentication is required for read endpoints. Documentation is available at /llms.txt and /openapi.json."
+                : "Sí, Esdeveniments.cat ofereix una API REST pública i gratuïta. No requereix autenticació per als endpoints de lectura. Documentació disponible a /llms.txt i /openapi.json.",
+        },
+      },
+    ],
+  };
+
   return (
     <>
       <JsonLdServer id="website-schema" data={websiteSchema} />
       <JsonLdServer id="organization-schema" data={organizationSchema} />
       <JsonLdServer id="webapp-schema" data={webAppSchema} />
+      <JsonLdServer id="faq-schema" data={faqSchema} />
     </>
   );
 }

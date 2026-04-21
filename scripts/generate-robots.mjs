@@ -42,7 +42,13 @@ const robotsConfig = {
       allow: ["/"],
       disallow: ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"],
     },
-    // Block AI TRAINING crawlers (not search/browsing crawlers)
+    // AI agent BROWSING/SEARCH crawlers — ALLOWED for agent readiness
+    // These crawlers power AI-powered search and agent tools
+    { userAgent: "ChatGPT-User", allow: ["/"] },
+    { userAgent: "Claude-Web", allow: ["/"] },
+    { userAgent: "PerplexityBot", allow: ["/"] },
+    { userAgent: "DeepSeekBot", allow: ["/"] },
+    // Block AI TRAINING-ONLY crawlers (protect content from training)
     { userAgent: "GPTBot", disallow: ["/"] },
     { userAgent: "CCBot", disallow: ["/"] },
     { userAgent: "Google-Extended", disallow: ["/"] },
@@ -104,7 +110,7 @@ function generateRobotsTxt() {
   // Content Signals
   lines.push("");
   lines.push("# Content Signals — AI usage preferences");
-  lines.push("Content-Signal: ai-train=no, search=yes, ai-input=no");
+  lines.push("Content-Signal: ai-train=no, search=yes, ai-input=yes");
 
   // Schema feed directive
   lines.push("");

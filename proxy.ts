@@ -421,6 +421,19 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // /index.md: serve markdown homepage for agents
+  if (pathname === "/index.md") {
+    return NextResponse.next();
+  }
+
+  // ?mode=agent: return structured agent view
+  if (request.nextUrl.searchParams.get("mode") === "agent") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/agent-view";
+    rewriteUrl.searchParams.delete("mode");
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   // Markdown for Agents: content negotiation
   // When agents request text/markdown, serve the llms.txt content with proper Content-Type
   const acceptHeader = request.headers.get("accept") || "";

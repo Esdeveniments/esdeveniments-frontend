@@ -208,8 +208,18 @@ export async function GET() {
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/ErrorResponse" },
+                  example: { error: "Event not found", status: 404 },
                 },
               },
+            },
+            "429": {
+              description: "Rate limit exceeded",
+              headers: { "Retry-After": { schema: { type: "integer" }, description: "Seconds to wait" } },
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "500": {
+              description: "Internal server error",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
           },
         },
@@ -307,6 +317,15 @@ export async function GET() {
                 },
               },
             },
+            "429": {
+              description: "Rate limit exceeded",
+              headers: { "Retry-After": { schema: { type: "integer" }, description: "Seconds to wait" } },
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "500": {
+              description: "Internal server error",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
           },
         },
       },
@@ -328,6 +347,15 @@ export async function GET() {
                   },
                 },
               },
+            },
+            "429": {
+              description: "Rate limit exceeded",
+              headers: { "Retry-After": { schema: { type: "integer" }, description: "Seconds to wait" } },
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "500": {
+              description: "Internal server error",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
           },
         },
@@ -382,6 +410,15 @@ export async function GET() {
                 },
               },
             },
+            "429": {
+              description: "Rate limit exceeded",
+              headers: { "Retry-After": { schema: { type: "integer" }, description: "Seconds to wait" } },
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "500": {
+              description: "Internal server error",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
           },
         },
       },
@@ -401,6 +438,15 @@ export async function GET() {
                   },
                 },
               },
+            },
+            "429": {
+              description: "Rate limit exceeded",
+              headers: { "Retry-After": { schema: { type: "integer" }, description: "Seconds to wait" } },
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "500": {
+              description: "Internal server error",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
           },
         },
@@ -556,6 +602,10 @@ export async function GET() {
           properties: {
             error: { type: "string", description: "Human-readable error message" },
             status: { type: "integer", description: "HTTP status code" },
+            retryAfter: {
+              type: "integer",
+              description: "Seconds to wait before retrying (only on 429)",
+            },
           },
           example: { error: "Not found", status: 404 },
         },
