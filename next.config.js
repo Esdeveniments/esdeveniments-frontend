@@ -34,12 +34,15 @@ const nextConfig = {
     "@redis/client",
     "@fortedigital/nextjs-cache-handler",
   ],
-  // Always load the cache handler — it gracefully falls back to no-op when
-  // Redis env vars (REDIS_URL/REDIS_HOST) are not set at runtime.
-  // Must be unconditional because next.config.js is evaluated at build time,
-  // but Redis env vars are only available at container runtime.
-  cacheHandler: require.resolve("./cache-handler.mjs"),
-  cacheMaxMemorySize: 0,
+  // Custom cache handler for Docker/Coolify (Redis + LRU fallback).
+  // Vercel has its own caching infrastructure and doesn't bundle standalone files,
+  // so skip the custom handler there to avoid "Cannot find module" errors.
+  ...(process.env.VERCEL
+    ? {}
+    : {
+        cacheHandler: require.resolve("./cache-handler.mjs"),
+        cacheMaxMemorySize: 0,
+      }),
 
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,

@@ -251,6 +251,7 @@ jobs:
           echo "preview-url=$URL" >> $GITHUB_OUTPUT
       - name: Verify preview readiness
         if: ${{ env.PREVIEW_URL != '' }}
+        id: readiness
         env:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
@@ -258,22 +259,26 @@ jobs:
           MAX_RETRIES=5
           RETRY=0
           while [ $RETRY -lt $MAX_RETRIES ]; do
-            RESP=$(curl -fsSL \
+            HTTP_CODE=$(curl -s -o /tmp/readiness-resp.txt -w "%{http_code}" \
               -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
               -H "x-vercel-set-bypass-cookie: true" \
-              "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || true)
-            if echo "$RESP" | head -c 1 | grep -q "{"; then
-              echo "Preview is ready"
+              "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || echo "000")
+            RESP=$(cat /tmp/readiness-resp.txt 2>/dev/null || true)
+            if [ "$HTTP_CODE" = "200" ] && echo "$RESP" | head -c 1 | grep -q "{"; then
+              echo "Preview is ready (HTTP $HTTP_CODE, valid JSON)"
+              echo "ready=true" >> $GITHUB_OUTPUT
               exit 0
             fi
+            echo "Attempt $((RETRY + 1))/$MAX_RETRIES: HTTP $HTTP_CODE (body: $(echo "$RESP" | head -c 200))"
             RETRY=$((RETRY + 1))
             if [ $RETRY -lt $MAX_RETRIES ]; then
               sleep $((2 ** RETRY))
             fi
           done
-          echo "Warning: API endpoint test failed after $MAX_RETRIES attempts - this may indicate HMAC_SECRET is not set or deployment is slow"
+          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Skipping E2E to avoid 30min timeout."
+          echo "ready=false" >> $GITHUB_OUTPUT
       - name: Run E2E tests (Playwright) against Vercel Preview
-        if: ${{ env.PREVIEW_URL != '' }}
+        if: ${{ env.PREVIEW_URL != '' && steps.readiness.outputs.ready == 'true' }}
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
