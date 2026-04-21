@@ -115,9 +115,9 @@ export async function generateMetadata({
 
 export default function FilteredPage({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ place: string; byDate: string; category: string }>;
-}) {
+}>) {
   return (
     <Suspense fallback={<PlacePageSkeleton />}>
       <FilteredPageGate paramsPromise={params} />
@@ -127,10 +127,19 @@ export default function FilteredPage({
 
 async function FilteredPageGate({
   paramsPromise,
-}: {
+}: Readonly<{
   paramsPromise: Promise<{ place: string; byDate: string; category: string }>;
-}) {
-  const { place, byDate, category } = await paramsPromise;
+}>) {
+  // Resolve params, locale, and categories concurrently.
+  const [{ place, byDate, category }, locale, categoriesResult] =
+    await Promise.all([
+      paramsPromise,
+      getLocaleSafely() as Promise<AppLocale>,
+      getCategories().catch((error) => {
+        console.error("Error fetching categories:", error);
+        return [] as CategorySummaryResponseDTO[];
+      }),
+    ]);
 
   try {
     validatePlaceOrThrow(place);
@@ -138,19 +147,12 @@ async function FilteredPageGate({
     notFound();
   }
 
-  const locale: AppLocale = await getLocaleSafely();
   const tFallback = await getTranslations({
     locale,
     namespace: "App.PlaceByDateCategory",
   });
 
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await getCategories();
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    categories = [];
-  }
+  let categories: CategorySummaryResponseDTO[] = categoriesResult;
 
   const canonicalSearchParams = new URLSearchParams();
 

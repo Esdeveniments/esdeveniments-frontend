@@ -65,9 +65,9 @@ export async function generateMetadata(props: {
 // Main page component
 export default function EventPage({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ eventId: string }>;
-}) {
+}>) {
   // All awaits (params, rootLocale, getEventBySlug) live inside the
   // Suspense child. Trade-off: notFound() becomes <meta noindex> and the
   // canonical slug redirect becomes client-side (no HTTP 3xx).
@@ -80,11 +80,15 @@ export default function EventPage({
 
 async function EventPageGate({
   paramsPromise,
-}: {
+}: Readonly<{
   paramsPromise: Promise<{ eventId: string }>;
-}) {
-  const slug = (await paramsPromise).eventId;
-  const locale = (await rootLocale()) as AppLocale;
+}>) {
+  // Resolve params + locale concurrently so we can start the event fetch
+  // as soon as both are available.
+  const [{ eventId: slug }, locale] = await Promise.all([
+    paramsPromise,
+    rootLocale() as Promise<AppLocale>,
+  ]);
 
   const event: EventDetailResponseDTO | null = await getEventBySlug(slug);
   if (!event) notFound();
@@ -100,8 +104,31 @@ async function EventPageGate({
   const title = event?.title ?? "";
   const jsonData = generateJsonData({ ...event }, locale);
 
+  // Build first — so numberOfItems matches the items we actually emit
+  // (ItemList.numberOfItems must equal itemListElement.length for valid Schema.org).
+  const relatedEventListItems =
+    event.relatedEvents
+      ?.slice(0, 10)
+      .map((relatedEvent, index) => {
+        try {
+          return {
+            "@type": "ListItem" as const,
+            position: index + 1,
+            item: generateJsonData(relatedEvent, locale),
+          };
+        } catch (err) {
+          console.error(
+            "Error generating JSON-LD for related event:",
+            relatedEvent.id,
+            err
+          );
+          return null;
+        }
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null) ?? [];
+
   const relatedEventsJsonData =
-    event.relatedEvents && event.relatedEvents.length > 0
+    relatedEventListItems.length > 0
       ? {
         "@id": `${siteUrl}#itemlist-${title
           ?.toLowerCase()
@@ -109,26 +136,8 @@ async function EventPageGate({
         "@context": "https://schema.org",
         "@type": "ItemList",
         name: "Related Events",
-        numberOfItems: event.relatedEvents.length,
-        itemListElement: event.relatedEvents
-          .slice(0, 10)
-          .map((relatedEvent, index) => {
-            try {
-              return {
-                "@type": "ListItem",
-                position: index + 1,
-                item: generateJsonData(relatedEvent, locale),
-              };
-            } catch (err) {
-              console.error(
-                "Error generating JSON-LD for related event:",
-                relatedEvent.id,
-                err
-              );
-              return null;
-            }
-          })
-          .filter(Boolean),
+        numberOfItems: relatedEventListItems.length,
+        itemListElement: relatedEventListItems,
       }
       : null;
 
@@ -169,10 +178,10 @@ async function EventPageGate({
 async function EventContent({
   event,
   locale,
-}: {
+}: Readonly<{
   event: EventDetailResponseDTO;
   locale: AppLocale;
-}) {
+}>) {
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;
 

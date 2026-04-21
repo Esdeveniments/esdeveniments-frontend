@@ -73,9 +73,9 @@ export async function generateMetadata({
 
 export default function Page({
   params,
-}: {
+}: Readonly<{
   params: Promise<PlaceStaticPathParams>;
-}) {
+}>) {
   // params is a Promise — awaiting it at the page level would count as
   // runtime data access outside Suspense and block the static shell.
   // Pass it down; the gate awaits it inside the Suspense boundary.
@@ -88,10 +88,17 @@ export default function Page({
 
 async function PlacePageGate({
   paramsPromise,
-}: {
+}: Readonly<{
   paramsPromise: Promise<PlaceStaticPathParams>;
-}) {
-  const { place } = await paramsPromise;
+}>) {
+  // Start independent work in parallel so the gate resolves as soon as both
+  // the route params and the dynamic locale are known.
+  const localePromise = getLocaleSafely();
+  const categoriesPromise = fetchCategories().catch((error) => {
+    console.error("Error fetching categories:", error);
+    return [] as CategorySummaryResponseDTO[];
+  });
+  const [{ place }, locale] = await Promise.all([paramsPromise, localePromise]);
 
   // Inside Suspense: notFound() becomes <meta name="robots" content="noindex">
   // rather than an HTTP 404. Acceptable for rare invalid-slug hits.
@@ -101,26 +108,12 @@ async function PlacePageGate({
     notFound();
   }
 
-  // Start every promise inside the Suspense boundary so cacheComponents
-  // doesn't flag them as blocking the static shell.
-  const localePromise = getLocaleSafely();
-  const categoriesPromise = fetchCategories().catch((error) => {
-    console.error("Error fetching categories:", error);
-    return [] as CategorySummaryResponseDTO[];
-  });
   const placeShellDataPromise = buildPlaceShellDataPromise({
     place,
     localePromise,
   });
-  const eventsPromise = (async () => {
-    const locale = await localePromise;
-    return buildPlaceEventsPromise({ place, locale });
-  })();
-
-  const [locale, categories] = await Promise.all([
-    localePromise,
-    categoriesPromise,
-  ]);
+  const eventsPromise = buildPlaceEventsPromise({ place, locale });
+  const categories = await categoriesPromise;
 
   // Late alias/invalid-place redirect. Because this runs inside a Suspense
   // boundary it becomes a client-side redirect rather than an HTTP 3xx — an

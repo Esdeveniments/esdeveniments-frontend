@@ -114,14 +114,14 @@ async function HomeContent({
   tTopAgendaPromise,
   categorizedEventsPromise,
   categoriesPromise,
-}: {
+}: Readonly<{
   locale: AppLocale;
   pageDataPromise: Promise<PageData>;
   tHomePromise: ReturnType<typeof getTranslations>;
   tTopAgendaPromise: ReturnType<typeof getTranslations>;
   categorizedEventsPromise: Promise<CategorizedEvents>;
   categoriesPromise: Promise<Awaited<ReturnType<typeof fetchCategories>>>;
-}): Promise<JSX.Element> {
+}>): Promise<JSX.Element> {
   const [t, tTopAgenda, pageData] = await Promise.all([
     tHomePromise,
     tTopAgendaPromise,
@@ -246,11 +246,11 @@ async function HomeStructuredData({
   categorizedEventsPromise,
   pageDataPromise,
   locale,
-}: {
+}: Readonly<{
   categorizedEventsPromise: Promise<CategorizedEvents>;
   pageDataPromise: Promise<PageData>;
   locale: AppLocale;
-}): Promise<JSX.Element> {
+}>): Promise<JSX.Element> {
   const [categorizedEvents, pageData] = await Promise.all([
     categorizedEventsPromise,
     pageDataPromise,

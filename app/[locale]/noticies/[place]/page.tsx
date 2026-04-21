@@ -9,6 +9,7 @@ import {
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { parseNewsPagination } from "@utils/news-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import type { RouteSearchParams } from "types/common";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
@@ -52,10 +53,10 @@ export async function generateMetadata({
 export default function Page({
   params,
   searchParams,
-}: {
+}: Readonly<{
   params: Promise<{ place: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+  searchParams?: Promise<RouteSearchParams>;
+}>) {
   return (
     <div className="w-full bg-background pb-10">
       <div className="container flex flex-col gap-section-y min-w-0">
@@ -73,24 +74,29 @@ export default function Page({
 async function NewsPlacePageContent({
   paramsPromise,
   searchParamsPromise,
-}: {
+}: Readonly<{
   paramsPromise: Promise<{ place: string }>;
-  searchParamsPromise?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const { place } = await paramsPromise;
-  const locale = await getLocaleSafely();
+  searchParamsPromise?: Promise<RouteSearchParams>;
+}>) {
+  // Resolve independent inputs in parallel.
+  const [{ place }, locale, query] = await Promise.all([
+    paramsPromise,
+    getLocaleSafely(),
+    searchParamsPromise ?? Promise.resolve<RouteSearchParams>({}),
+  ]);
   const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const withLocale = (path: string) => withLocalePath(path, locale);
-  const query = (await (searchParamsPromise || Promise.resolve({}))) as {
-    [key: string]: string | string[] | undefined;
-  };
   const { currentPage, pageSize } = parseNewsPagination(query);
 
   const newsPromise = fetchNews({ page: currentPage, size: pageSize, place });
-  const placeTypePromise = getPlaceTypeAndLabelCached(place);
-  const placeLabel = await placeTypePromise
-    .then((value) => value.label)
-    .catch(() => place);
+  // Catch once on the shared promise so both this gate and <NewsList> below
+  // receive a fulfilled promise (otherwise a rejection here propagates to
+  // <NewsList> and breaks the streamed list).
+  const placeTypePromise = getPlaceTypeAndLabelCached(place).catch(() => ({
+    type: "" as const,
+    label: place,
+  }));
+  const { label: placeLabel } = await placeTypePromise;
 
   const breadcrumbs = [
     { name: t("breadcrumbHome"), url: siteUrl },

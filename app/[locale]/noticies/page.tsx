@@ -11,7 +11,7 @@ import {
 import { siteUrl } from "@config/index";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { parseNewsPagination } from "@utils/news-helpers";
-import type { Href } from "types/common";
+import type { Href, RouteSearchParams } from "types/common";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import NewsList from "@components/noticies/NewsList";
@@ -37,9 +37,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function Page({
   searchParams,
-}: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+}: Readonly<{
+  searchParams?: Promise<RouteSearchParams>;
+}>) {
   return (
     <div className="w-full bg-background pb-10">
       <div className="container flex flex-col gap-section-y min-w-0">
@@ -53,18 +53,18 @@ export default function Page({
 
 async function NewsPageContent({
   searchParamsPromise,
-}: {
-  searchParamsPromise?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const locale = await getLocaleSafely();
+}: Readonly<{
+  searchParamsPromise?: Promise<RouteSearchParams>;
+}>) {
+  const localePromise = getLocaleSafely();
+  const [locale, query] = await Promise.all([
+    localePromise,
+    (searchParamsPromise ?? Promise.resolve<RouteSearchParams>({})),
+  ]);
   const t = await getTranslations({ locale, namespace: "App.News" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
-
-  const query = (await (searchParamsPromise || Promise.resolve({}))) as {
-    [key: string]: string | string[] | undefined;
-  };
   const { currentPage, pageSize } = parseNewsPagination(query);
 
   const citiesParam =

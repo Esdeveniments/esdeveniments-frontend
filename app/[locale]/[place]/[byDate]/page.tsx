@@ -118,9 +118,9 @@ export async function generateMetadata({
 
 export default function ByDatePage({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ place: string; byDate: string }>;
-}) {
+}>) {
   return (
     <Suspense fallback={<PlacePageSkeleton />}>
       <ByDateGate paramsPromise={params} />
@@ -130,24 +130,13 @@ export default function ByDatePage({
 
 async function ByDateGate({
   paramsPromise,
-}: {
+}: Readonly<{
   paramsPromise: Promise<{ place: string; byDate: string }>;
-}) {
-  const { place, byDate } = await paramsPromise;
-
-  try {
-    validatePlaceOrThrow(place);
-  } catch {
-    notFound();
-  }
-
-  const locale: AppLocale = await getLocaleSafely();
-
-  const [tFallback, categoriesResult] = await Promise.all([
-    getTranslations({
-      locale,
-      namespace: "App.PlaceByDate",
-    }),
+}>) {
+  // Resolve params, locale, and categories concurrently.
+  const [{ place, byDate }, locale, categoriesResult] = await Promise.all([
+    paramsPromise,
+    getLocaleSafely() as Promise<AppLocale>,
     getCategories().catch((error) => {
       console.error(
         "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
@@ -156,6 +145,17 @@ async function ByDateGate({
       return [] as CategorySummaryResponseDTO[];
     }),
   ]);
+
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
+    notFound();
+  }
+
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDate",
+  });
 
   let categories: CategorySummaryResponseDTO[] = categoriesResult;
 
