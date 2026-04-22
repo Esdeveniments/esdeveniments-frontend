@@ -28,6 +28,17 @@ export function getApiUrl(): string {
   return process.env[_envKey] || DEFAULT_API_URL;
 }
 
+/**
+ * Report whether NEXT_PUBLIC_API_URL is explicitly configured at runtime.
+ * Uses the same indirect env lookup as getApiUrl() to avoid build-time
+ * inlining. Callers use this to decide between hitting the default
+ * production URL and taking a safe fallback path (e.g., throw for
+ * mutations, return empty payload for read wrappers).
+ */
+export function isApiUrlConfigured(): boolean {
+  return Boolean(process.env[_envKey]);
+}
+
 // Conditionally import headers - only available in server components/route handlers
 // Using dynamic require to avoid build-time errors when headers() is not available
 
@@ -46,8 +57,9 @@ try {
  * Edge runtime has limitations with environment variables
  */
 export function getApiOrigin(): string {
-  // Strategy 1: Try environment variable (works in most cases)
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  // Strategy 1: Try environment variable (works in most cases).
+  // Use indirect lookup so Turbopack does NOT inline at build time.
+  const apiUrl = process.env[_envKey];
   if (apiUrl) {
     try {
       return new URL(apiUrl).origin;

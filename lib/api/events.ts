@@ -7,6 +7,7 @@ import {
   buildEventsQuery,
   getVercelProtectionBypassHeaders,
   getApiUrl,
+  isApiUrlConfigured,
 } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import {
@@ -250,6 +251,13 @@ export async function updateEventById(
   uuid: string,
   data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
+  // Refuse to mutate against the hardcoded production fallback when the env
+  // is not explicitly configured (e.g., misconfigured preview deployment).
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
+  }
   const response = await fetchWithHmac(
     `${getApiUrl()}/events/${uuid}`,
     {
@@ -277,6 +285,12 @@ export async function createEvent(
 ): Promise<EventDetailResponseDTO> {
   if (isE2ETestMode && e2eEventsStore) {
     return createE2EEvent(data, e2eExtras);
+  }
+
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
   }
 
   const apiUrl = getApiUrl();
@@ -315,6 +329,12 @@ export async function uploadEventImage(
       url: `https://example.com/${imageFile.name || "e2e-image"}.jpg`,
       publicId: "e2e-image",
     };
+  }
+
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
   }
 
   const apiUrl = getApiUrl();
