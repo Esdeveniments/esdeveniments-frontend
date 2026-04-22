@@ -10,8 +10,23 @@ import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
 
-/** Default API origin used as fallback when NEXT_PUBLIC_API_URL is not set. */
-const DEFAULT_API_ORIGIN = new URL(apiDefaults.apiUrl).origin;
+/** Default API URL used as fallback when NEXT_PUBLIC_API_URL is not set. */
+const DEFAULT_API_URL = apiDefaults.apiUrl;
+
+/** Default API origin (scheme + host) for proxy/middleware use. */
+const DEFAULT_API_ORIGIN = new URL(DEFAULT_API_URL).origin;
+
+/**
+ * Get the full external API URL (e.g. "https://api.esdeveniments.cat/api").
+ *
+ * Uses indirect env access so Turbopack does NOT inline the value at build
+ * time. This means the runtime value (set by Coolify / Docker ENV) is always
+ * read, and when the var is genuinely absent the JSON default kicks in.
+ */
+const _envKey = "NEXT_PUBLIC_API_URL";
+export function getApiUrl(): string {
+  return process.env[_envKey] || DEFAULT_API_URL;
+}
 
 // Conditionally import headers - only available in server components/route handlers
 // Using dynamic require to avoid build-time errors when headers() is not available

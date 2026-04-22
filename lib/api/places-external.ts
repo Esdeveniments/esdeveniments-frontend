@@ -1,4 +1,5 @@
 import { fetchWithHmac } from "./fetch-wrapper";
+import { getApiUrl } from "@utils/api-helpers";
 import type { PlaceResponseDTO } from "types/api/place";
 import { parsePlace, parsePlaces } from "lib/validation/place";
 
@@ -16,8 +17,7 @@ export async function fetchPlaceBySlugExternal(
     return null;
   }
 
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return null;
+  const api = getApiUrl();
   try {
     const encodedSlug = encodeURIComponent(slug);
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
@@ -47,8 +47,7 @@ export async function fetchPlaceBySlugExternal(
 export async function fetchPlacesAggregatedExternal(): Promise<
   PlaceResponseDTO[]
 > {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return [];
+  const api = getApiUrl();
   const endpoints: Array<{ path: string; type: "REGION" | "CITY" }> = [
     { path: "/places/regions", type: "REGION" },
     { path: "/places/cities", type: "CITY" },

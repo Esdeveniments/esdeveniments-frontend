@@ -1,4 +1,5 @@
 import { fetchWithHmac } from "./fetch-wrapper";
+import { getApiUrl } from "@utils/api-helpers";
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { parseRegionsGrouped } from "@lib/validation/region";
@@ -11,8 +12,7 @@ import { parseRegionsGrouped } from "@lib/validation/region";
 export async function fetchRegionsExternal(): Promise<
   RegionSummaryResponseDTO[]
 > {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return [];
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/places/regions`);
@@ -30,8 +30,7 @@ export async function fetchRegionsExternal(): Promise<
 export async function fetchRegionsOptionsExternal(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return [];
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/places/regions/options`);
@@ -52,8 +51,7 @@ export async function fetchRegionsOptionsExternal(): Promise<
 export async function fetchRegionByIdExternal(
   id: string | number
 ): Promise<RegionSummaryResponseDTO | null> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return null;
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/places/regions/${id}`);
