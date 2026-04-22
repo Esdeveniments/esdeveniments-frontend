@@ -20,14 +20,14 @@ import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 import { filterActiveEvents } from "@utils/event-helpers";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
-import HomePageSkeleton from "@components/ui/common/skeletons/HomePageSkeleton";
 
 export async function generateMetadata() {
+  const locale = (await rootLocale()) as AppLocale;
   const pageData: PageData = await generatePagesData({
     place: "",
     byDate: "",
+    locale,
   });
-  const locale = (await rootLocale()) as AppLocale;
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
@@ -36,110 +36,16 @@ export async function generateMetadata() {
   });
 }
 
-export default function Page(): JSX.Element {
-  // Sync: every dynamic access lives in Suspense-wrapped children so the
-  // static shell (link preload) flushes in chunk 0.
-  const localePromise = rootLocale() as Promise<AppLocale>;
+export default async function Page(): Promise<JSX.Element> {
+  const locale = (await rootLocale()) as AppLocale;
   const categorizedEventsPromise = getCategorizedEvents(5);
   const categoriesPromise = fetchCategories();
-  const pageDataPromise = generatePagesData({ place: "", byDate: "" });
-  const tHomePromise = localePromise.then((locale) =>
-    getTranslations({ locale, namespace: "App.Home" })
-  );
-  const tTopAgendaPromise = localePromise.then((locale) =>
-    getTranslations({ locale, namespace: "Config.TopAgenda" })
-  );
 
-  return (
-    <>
-      {/* Preload LCP hero image — React 19 hoists <link> to <head> automatically.
-          Kept in the sync shell so the browser starts the fetch from the first chunk. */}
-      <link
-        rel="preload"
-        as="image"
-        href="/static/images/hero-castellers.webp"
-        type="image/webp"
-        fetchPriority="high"
-      />
-
-      {/* SEO copy for crawlers without JS. Locale-dependent, so it streams in
-          the first Suspense boundary — resolves as soon as rootLocale does. */}
-      <Suspense fallback={null}>
-        <HomeNoScript localePromise={localePromise} />
-      </Suspense>
-
-      {/* Structured data streams independently — waits for events + pageData. */}
-      <Suspense fallback={null}>
-        <HomeStructuredData
-          categorizedEventsPromise={categorizedEventsPromise}
-          pageDataPromise={pageDataPromise}
-          localePromise={localePromise}
-        />
-      </Suspense>
-
-      {/* Main content streams when pageData + translations resolve. */}
-      <Suspense fallback={<HomePageSkeleton />}>
-        <HomeContent
-          localePromise={localePromise}
-          pageDataPromise={pageDataPromise}
-          tHomePromise={tHomePromise}
-          tTopAgendaPromise={tTopAgendaPromise}
-          categorizedEventsPromise={categorizedEventsPromise}
-          categoriesPromise={categoriesPromise}
-        />
-      </Suspense>
-    </>
-  );
-}
-
-async function HomeNoScript({
-  localePromise,
-}: Readonly<{
-  localePromise: Promise<AppLocale>;
-}>): Promise<JSX.Element> {
-  const locale = await localePromise;
-  return (
-    <noscript>
-      <div>
-        <p>
-          {locale === "es"
-            ? "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti."
-            : locale === "en"
-              ? "Esdeveniments.cat is the most comprehensive free platform for discovering cultural events across Catalonia. Browse concerts, theatre, exhibitions, festivals, family activities, and more across 900+ Catalan municipalities. Find what to do today, tomorrow, or this weekend near you."
-              : "Esdeveniments.cat és la plataforma gratuïta més completa per descobrir esdeveniments culturals a Catalunya. Consulta l'agenda de concerts, teatre, exposicions, festivals, activitats familiars i molt més en més de 900 municipis catalans. Troba què fer avui, demà o aquest cap de setmana a prop teu."}
-        </p>
-        <p>
-          {locale === "es"
-            ? "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria."
-            : locale === "en"
-              ? "Free public API available at /llms.txt and /openapi.json — no authentication required."
-              : "API pública gratuïta disponible a /llms.txt i /openapi.json — sense autenticació necessària."}
-        </p>
-      </div>
-    </noscript>
-  );
-}
-
-async function HomeContent({
-  localePromise,
-  pageDataPromise,
-  tHomePromise,
-  tTopAgendaPromise,
-  categorizedEventsPromise,
-  categoriesPromise,
-}: Readonly<{
-  localePromise: Promise<AppLocale>;
-  pageDataPromise: Promise<PageData>;
-  tHomePromise: ReturnType<typeof getTranslations>;
-  tTopAgendaPromise: ReturnType<typeof getTranslations>;
-  categorizedEventsPromise: Promise<CategorizedEvents>;
-  categoriesPromise: Promise<Awaited<ReturnType<typeof fetchCategories>>>;
-}>): Promise<JSX.Element> {
-  const [locale, t, tTopAgenda, pageData] = await Promise.all([
-    localePromise,
-    tHomePromise,
-    tTopAgendaPromise,
-    pageDataPromise,
+  // Parallelize independent operations to eliminate waterfall (3 calls → 1 round trip)
+  const [t, tTopAgenda, pageData] = await Promise.all([
+    getTranslations({ locale, namespace: "App.Home" }),
+    getTranslations({ locale, namespace: "Config.TopAgenda" }),
+    generatePagesData({ place: "", byDate: "", locale }),
   ]);
   const agendaLabel = tTopAgenda("agenda");
 
@@ -193,6 +99,7 @@ async function HomeContent({
     },
   ];
 
+  // Local agendas section — rendered lower on the page (after carousels, before CTA)
   const localAgendasSection: SeoLinkSection = {
     id: "local-agendas",
     title: t("seoSections.localAgendas.title"),
@@ -237,12 +144,48 @@ async function HomeContent({
 
   return (
     <>
-      {/* SEO: visible H1 for crawlers and AI agents */}
+      {/* Preload LCP hero image — React 19 hoists <link> to <head> automatically */}
+      <link
+        rel="preload"
+        as="image"
+        href="/static/images/hero-castellers.webp"
+        type="image/webp"
+        fetchPriority="high"
+      />
+
+      {/* SEO: visible H1 + descriptive text for crawlers and AI agents */}
       <h1 className="sr-only">{pageData.title}</h1>
+      <noscript>
+        <div>
+          <h2>{pageData.subTitle}</h2>
+          <p>
+            {locale === "es"
+              ? "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti."
+              : locale === "en"
+                ? "Esdeveniments.cat is the most comprehensive free platform for discovering cultural events across Catalonia. Browse concerts, theatre, exhibitions, festivals, family activities, and more across 900+ Catalan municipalities. Find what to do today, tomorrow, or this weekend near you."
+                : "Esdeveniments.cat és la plataforma gratuïta més completa per descobrir esdeveniments culturals a Catalunya. Consulta l'agenda de concerts, teatre, exposicions, festivals, activitats familiars i molt més en més de 900 municipis catalans. Troba què fer avui, demà o aquest cap de setmana a prop teu."}
+          </p>
+          <p>
+            {locale === "es"
+              ? "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria."
+              : locale === "en"
+                ? "Free public API available at /llms.txt and /openapi.json — no authentication required."
+                : "API pública gratuïta disponible a /llms.txt i /openapi.json — sense autenticació necessària."}
+          </p>
+        </div>
+      </noscript>
 
       {siteNavigationSchema && (
         <JsonLdServer id="site-navigation" data={siteNavigationSchema} />
       )}
+
+      <Suspense fallback={null}>
+        <HomeStructuredData
+          categorizedEventsPromise={categorizedEventsPromise}
+          pageData={pageData}
+          locale={locale}
+        />
+      </Suspense>
 
       <ServerEventsCategorized
         categorizedEventsPromise={categorizedEventsPromise}
@@ -258,18 +201,14 @@ async function HomeContent({
 
 async function HomeStructuredData({
   categorizedEventsPromise,
-  pageDataPromise,
-  localePromise,
-}: Readonly<{
+  pageData,
+  locale,
+}: {
   categorizedEventsPromise: Promise<CategorizedEvents>;
-  pageDataPromise: Promise<PageData>;
-  localePromise: Promise<AppLocale>;
-}>): Promise<JSX.Element> {
-  const [categorizedEvents, pageData, locale] = await Promise.all([
-    categorizedEventsPromise,
-    pageDataPromise,
-    localePromise,
-  ]);
+  pageData: PageData;
+  locale: AppLocale;
+}): Promise<JSX.Element> {
+  const categorizedEvents = await categorizedEventsPromise;
   const allEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
 
   // Deduplicate: the same event can appear in multiple categories

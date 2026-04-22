@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import { contactEmail, siteUrl } from "@config/index";
 import type { NextPage } from "next";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.TermsOfService" });
   return buildPageMeta({
     title: t("metaTitle"),
@@ -19,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const TermesServei: NextPage = async () => {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({
     locale,
     namespace: "App.TermsOfService",

@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { contactEmail, siteUrl, socialLinksSameAs } from "@config/index";
 import Image from "next/image";
@@ -8,9 +8,10 @@ import type { TeamMember as TeamMemberType } from "types/common";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { DEFAULT_LOCALE } from "types/i18n";
+import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata() {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.About" });
   return buildPageMeta({
     title: t("metaTitle"),
@@ -45,7 +46,7 @@ const teamMembers: TeamMemberType[] = [
 ];
 
 const QuiSom: NextPage = async () => {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.About" });
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {

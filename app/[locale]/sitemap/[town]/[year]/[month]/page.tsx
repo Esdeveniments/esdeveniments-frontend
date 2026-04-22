@@ -27,10 +27,10 @@ import {
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import {
-  getLocaleSafely,
   toLocalizedUrl,
   withLocalePath,
 } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
 import {
   MONTHS_URL as DEFAULT_MONTHS_URL,
@@ -47,7 +47,7 @@ export async function generateMetadata({
 }: {
   params: Promise<MonthStaticPathParams>;
 }) {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
   const tConstants = await getTranslations({
     locale,
@@ -114,7 +114,7 @@ export default async function Page({
   params: Promise<MonthStaticPathParams>;
 }) {
   const { town, year, month } = await params;
-  const locale: AppLocale = await getLocaleSafely();
+  const locale: AppLocale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
   const tConstants = await getTranslations({
     locale,

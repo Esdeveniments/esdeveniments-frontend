@@ -3,11 +3,13 @@ import { getTranslations } from "next-intl/server";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { withLocalePath } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import type { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.PublishPage" });
   return buildPageMeta({
     title: t("metaTitle"),
@@ -18,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const publishEventSchema = async () => {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.PublishPage" });
   const localizedPath = withLocalePath("/publica", locale);
   const localizedUrl = `${siteUrl}${localizedPath === "/" ? "" : localizedPath}`;

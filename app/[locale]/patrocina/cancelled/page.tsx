@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import { Link } from "@i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   setRequestLocale(locale);
   const t = await getTranslations("Sponsorship");
   return {
@@ -15,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PatrocinaCancelledPage() {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   setRequestLocale(locale);
   const t = await getTranslations("Sponsorship");
 

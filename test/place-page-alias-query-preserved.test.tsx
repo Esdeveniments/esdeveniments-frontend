@@ -128,18 +128,11 @@ describe("/[place] alias redirects preserve query", () => {
       return "/ca/barcelona";
     });
 
-    // The page now returns a <Suspense> boundary whose child runs the
-    // redirect check. Walk into that child and invoke it so the redirect
-    // path still fires during the test.
-    const tree = await Page({
-      params: Promise.resolve({ place: "bcn" }),
-    });
-    const gateElement = tree.props.children;
-    const GateFn = gateElement.type as (
-      props: typeof gateElement.props,
-    ) => Promise<unknown>;
-
-    await expect(GateFn(gateElement.props)).rejects.toThrow("NEXT_REDIRECT");
+    await expect(
+      Page({
+        params: Promise.resolve({ place: "bcn" }),
+      })
+    ).rejects.toThrow("NEXT_REDIRECT");
 
     expect(redirectHelperMock).toHaveBeenCalledTimes(1);
     expect(redirectMock).toHaveBeenCalledWith("/ca/barcelona");

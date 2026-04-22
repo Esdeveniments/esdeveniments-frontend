@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
@@ -36,14 +35,14 @@ import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { getTranslations } from "next-intl/server";
 import { redirect, notFound } from "next/navigation";
-import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import PlacePageSkeleton from "@components/ui/common/skeletons/PlacePageSkeleton";
 
 export async function generateMetadata({
   params,
@@ -79,18 +78,22 @@ export async function generateMetadata({
     categories = [{ id: -1, name: category, slug: category }];
   }
 
+  // Parse filters for metadata generation WITH categories
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
     canonicalSearchParams,
-    categories
+    categories // ✅ Now passing categories like in main function
   );
   const filters = urlToFilterState(parsed);
 
+  // Find category name for SEO
   const categoryData = categories.find((cat) => cat.slug === filters.category);
 
   const placeTypeAndLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
     filters.place
   );
+
+  const locale = (await rootLocale()) as AppLocale;
 
   const pageData: PageData = await generatePagesData({
     place: filters.place,
@@ -100,8 +103,8 @@ export async function generateMetadata({
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     categoryName: categoryData?.name,
     search: parsed.queryParams.search,
+    locale,
   });
-  const locale = await getLocaleSafely();
 
   return buildPageMeta({
     title: pageData.title,
@@ -113,41 +116,17 @@ export async function generateMetadata({
 
 // No generateStaticParams — all filtered pages are rendered on first request and cached.
 
-export default function FilteredPage({
+export default async function FilteredPage({
   params,
-}: Readonly<{
+}: {
   params: Promise<{ place: string; byDate: string; category: string }>;
-}>) {
-  return (
-    <Suspense fallback={<PlacePageSkeleton />}>
-      <FilteredPageGate paramsPromise={params} />
-    </Suspense>
-  );
-}
-
-async function FilteredPageGate({
-  paramsPromise,
-}: Readonly<{
-  paramsPromise: Promise<{ place: string; byDate: string; category: string }>;
-}>) {
-  // Fan out all independent fetches; chain translations off locale so they
-  // don't block on categories.
-  const localePromise = getLocaleSafely();
-  const tFallbackPromise = localePromise.then((locale) =>
-    getTranslations({ locale, namespace: "App.PlaceByDateCategory" })
-  );
-  const categoriesPromise = getCategories().catch((error) => {
-    console.error("Error fetching categories:", error);
-    return [] as CategorySummaryResponseDTO[];
+}) {
+  const { place, byDate, category } = await params;
+  const locale = (await rootLocale()) as AppLocale;
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDateCategory",
   });
-
-  const [{ place, byDate, category }, locale, categoriesResult, tFallback] =
-    await Promise.all([
-      paramsPromise,
-      localePromise,
-      categoriesPromise,
-      tFallbackPromise,
-    ]);
 
   try {
     validatePlaceOrThrow(place);
@@ -155,10 +134,24 @@ async function FilteredPageGate({
     notFound();
   }
 
-  let categories: CategorySummaryResponseDTO[] = categoriesResult;
+  // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
+  // Invalid places will naturally result in empty event lists, which the page handles gracefully.
 
+  // Fetch dynamic categories BEFORE parsing URL to validate category slugs
+  let categories: CategorySummaryResponseDTO[] = [];
+  try {
+    categories = await getCategories();
+  } catch (error) {
+    // Continue without categories - will use static fallbacks
+    console.error("Error fetching categories:", error);
+    categories = []; // Fallback to empty array if fetch fails
+  }
+
+  // Use empty searchParams to keep pages static (ISR-compatible)
+  // Query params (search, distance, lat, lon) are handled client-side
   const canonicalSearchParams = new URLSearchParams();
 
+  // Preserve user-requested category from path if categories API fails
   if (
     categories.length === 0 &&
     category &&
@@ -167,38 +160,54 @@ async function FilteredPageGate({
     categories = [{ id: -1, name: category, slug: category }];
   }
 
+  // Parse filters from URL with dynamic categories for validation
   const parsed = parseFiltersFromUrl(
     { place, date: byDate, category },
     canonicalSearchParams,
     categories
   );
 
+  // Canonicalization note:
+  // - Middleware handles structural normalization (folding query date/category, omitting "tots")
+  // - This page-level redirect remains to validate category slugs against dynamic categories
+  //   and normalize unknown slugs (middleware cannot fetch categories at edge time)
+  // - When middleware already normalized, this is a no-op
+  // - Query params (search, distance, lat, lon) are preserved through redirects
   const redirectUrl = getRedirectUrl(parsed);
   if (redirectUrl) {
     redirect(redirectUrl);
   }
 
+  // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
 
+  // Prepare fetch params (align with byDate page behavior)
   const fetchParams: FetchEventsParams = {
     page: 0,
     size: 12,
     category:
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
+    // term is client-driven via SWR; omit on server to keep ISR static
   };
 
+  // Only add place when not catalunya (API treats empty as full Catalonia)
   if (filters.place !== "catalunya") {
     fetchParams.place = filters.place;
   }
 
+  // Use explicit date range for reliability across backends
   const dateRange = getDateRangeFromByDate(filters.byDate);
   if (dateRange) {
     fetchParams.from = toLocalDateString(dateRange.from);
     fetchParams.to = toLocalDateString(dateRange.until);
   }
 
+  // Intentionally do NOT apply querystring filters (search/distance/lat/lon) on the server.
+  // These are handled client-side to keep ISR query-agnostic.
+
   const categoryData = categories.find((cat) => cat.slug === filters.category);
 
+  // Fetch shell data parallel to events/news
   const placeShellDataPromise = (async () => {
     try {
       const placeTypeLabel: PlaceTypeAndLabel =
@@ -213,6 +222,7 @@ async function FilteredPageGate({
             : undefined,
         categoryName: categoryData?.name,
         search: parsed.queryParams.search,
+        locale,
       });
       return { placeTypeLabel, pageData };
     } catch (error) {
@@ -238,6 +248,9 @@ async function FilteredPageGate({
     locale,
   });
 
+  // Late existence check to preserve UX without creating an early oracle
+  // Note: We pass empty searchParams to keep pages static (ISR-compatible).
+  // Query params are not preserved on alias redirects (rare edge case).
   const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
     place,
     locale,
@@ -269,13 +282,14 @@ async function FilteredPageGate({
           description: pageData.metaDescription,
           url: pageData.canonical,
           locale,
+          // SEO: For city pages, include parent region (comarca) relationship
           ...(placeTypeLabel.regionLabel &&
             placeTypeLabel.regionSlug && {
-              containedInPlace: {
-                name: placeTypeLabel.regionLabel,
-                url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
-              },
-            }),
+            containedInPlace: {
+              name: placeTypeLabel.regionLabel,
+              url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
+            },
+          }),
         })
       }
     />

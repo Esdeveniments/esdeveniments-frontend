@@ -10,8 +10,10 @@ import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { withLocalePath } from "@utils/i18n-seo";
 import { permanentRedirect } from "next/navigation";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 
 const reportNewsDetailError = (
   source: "generateMetadata" | "Page",
@@ -57,7 +59,7 @@ export async function generateMetadata({
   }
   const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
   const placeType = await getPlaceTypeAndLabelCached(place);
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({
     locale,
     namespace: "App.NewsArticleFallback",
@@ -96,7 +98,7 @@ export default async function Page({
 }) {
   const { place, article } = await params;
 
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   let detail: NewsDetailResponseDTO | null = null;
   try {
     detail = await getNewsBySlug(article);

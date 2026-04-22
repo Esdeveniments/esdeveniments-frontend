@@ -1,14 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
-
-vi.mock("@utils/i18n-seo", async () => {
-  const actual =
-    await vi.importActual<typeof import("@utils/i18n-seo")>("@utils/i18n-seo");
-
-  return {
-    ...actual,
-    getLocaleSafely: async () => "en",
-  };
-});
+import { describe, it, expect } from "vitest";
 
 import { generatePagesData } from "@components/partials/generatePagesData";
 import type { GeneratePagesDataProps, PlaceTypeAndLabel } from "types/common";
@@ -26,6 +16,7 @@ describe("generatePagesData localization", () => {
       ...baseParams,
       category: "literatura",
       categoryName: "Literatura",
+      locale: "en",
     });
 
     expect(result.metaTitle).toContain("Literature");

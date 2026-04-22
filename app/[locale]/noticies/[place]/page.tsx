@@ -6,12 +6,13 @@ import {
   buildPageMeta,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import { withLocalePath } from "@utils/i18n-seo";
 import { parseNewsPagination } from "@utils/news-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
-import type { RouteSearchParams } from "types/common";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
+import type { AppLocale } from "types/i18n";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
@@ -25,7 +26,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { place } = await params;
   const placeType = await getPlaceTypeAndLabelCached(place);
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const base = buildPageMeta({
     title: t("metaTitle", { place: placeType.label }),
@@ -50,58 +51,37 @@ export async function generateMetadata({
   };
 }
 
-export default function Page({
+export default async function Page({
   params,
   searchParams,
-}: Readonly<{
+}: {
   params: Promise<{ place: string }>;
-  searchParams?: Promise<RouteSearchParams>;
-}>) {
-  return (
-    <div className="w-full bg-background pb-10">
-      <div className="container flex flex-col gap-section-y min-w-0">
-        <Suspense fallback={<NewsListSkeleton />}>
-          <NewsPlacePageContent
-            paramsPromise={params}
-            searchParamsPromise={searchParams}
-          />
-        </Suspense>
-      </div>
-    </div>
-  );
-}
-
-async function NewsPlacePageContent({
-  paramsPromise,
-  searchParamsPromise,
-}: Readonly<{
-  paramsPromise: Promise<{ place: string }>;
-  searchParamsPromise?: Promise<RouteSearchParams>;
-}>) {
-  // Fan out everything — translations chain off locale so they don't block
-  // on params/searchParams.
-  const localePromise = getLocaleSafely();
-  const tPromise = localePromise.then((locale) =>
-    getTranslations({ locale, namespace: "App.NewsPlace" })
-  );
-  const [{ place }, locale, query, t] = await Promise.all([
-    paramsPromise,
-    localePromise,
-    searchParamsPromise ?? Promise.resolve<RouteSearchParams>({}),
-    tPromise,
-  ]);
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { place } = await params;
+  const locale = (await rootLocale()) as AppLocale;
+  const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const withLocale = (path: string) => withLocalePath(path, locale);
+  const query = (await (searchParams || Promise.resolve({}))) as {
+    [key: string]: string | string[] | undefined;
+  };
   const { currentPage, pageSize } = parseNewsPagination(query);
 
+  // Start fetches immediately
   const newsPromise = fetchNews({ page: currentPage, size: pageSize, place });
-  // Catch once on the shared promise so both this gate and <NewsList> below
-  // receive a fulfilled promise (otherwise a rejection here propagates to
-  // <NewsList> and breaks the streamed list).
-  const placeTypePromise = getPlaceTypeAndLabelCached(place).catch(() => ({
-    type: "" as const,
-    label: place,
-  }));
-  const { label: placeLabel } = await placeTypePromise;
+  const placeTypePromise = getPlaceTypeAndLabelCached(place);
+  const placeLabelPromise = placeTypePromise.then((value) => value.label).catch(() => place);
+
+  // We can await placeTypePromise if we want the title to be perfect immediately, 
+  // but to be strictly non-blocking as requested, we use the slug for the shell 
+  // and let the component handle the label.
+  // However, the user asked to render Breadcrumbs and Title immediately.
+  // Using the slug for the title is a good compromise.
+
+  // We await placeLabelPromise here to ensure consistency across Breadcrumbs, Title, and Links.
+  // Since generateMetadata already fetches this data (cached), this await is effectively instant
+  // and does not introduce new blocking or negate the streaming benefits for the NewsList below.
+  const placeLabel = await placeLabelPromise;
 
   const breadcrumbs = [
     { name: t("breadcrumbHome"), url: siteUrl },
@@ -120,62 +100,80 @@ async function NewsPlacePageContent({
   const agendaHref = place === "catalunya" ? "/catalunya" : `/${place}`;
 
   return (
-    <>
-      <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
-      {breadcrumbListSchema && (
-        <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
-      )}
+    <div className="w-full bg-background pb-10">
+      <div className="container flex flex-col gap-section-y min-w-0">
 
-      <Breadcrumbs
-        items={[
-          { label: t("breadcrumbHome"), href: "/" },
-          { label: t("breadcrumbNews"), href: "/noticies" },
-          { label: placeLabel },
-        ]}
-        className="px-section-x pt-4"
-      />
+        <JsonLdServer id="news-place-webpage-breadcrumbs" data={webPageSchema} />
+        {breadcrumbListSchema && (
+          <JsonLdServer id="news-place-breadcrumbs" data={breadcrumbListSchema} />
+        )}
 
-      <header className="w-full mb-section-y-sm">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-element-gap mb-element-gap">
-          <h1 className="heading-1 uppercase text-foreground-strong flex-1">
-            {t("heading", { place: placeLabel })}
-          </h1>
-          <nav
-            aria-label="Page actions"
-            className="flex flex-wrap items-center gap-x-4 gap-y-2 md:mt-0"
-          >
-            <PressableAnchor
-              href={withLocale(agendaHref)}
-              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
-              prefetch={false}
-              variant="inline"
+        {/* Breadcrumb Navigation */}
+        <Breadcrumbs
+          items={[
+            { label: t("breadcrumbHome"), href: "/" },
+            { label: t("breadcrumbNews"), href: "/noticies" },
+            { label: placeLabel },
+          ]}
+          className="px-section-x pt-4"
+        />
+
+        {/* Page Header Section */}
+        <header className="w-full mb-section-y-sm">
+          {/* Title and Action Links */}
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-element-gap mb-element-gap">
+            <h1 className="heading-1 uppercase text-foreground-strong flex-1">
+              {t("heading", { place: placeLabel })}
+            </h1>
+            <nav
+              aria-label="Page actions"
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 md:mt-0"
             >
-              {t("seeAgenda", { place: placeLabel })}
-            </PressableAnchor>
-            <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              <PressableAnchor
+                href={withLocale(agendaHref)}
+                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+                prefetch={false}
+                variant="inline"
+              >
+                {t("seeAgenda", { place: placeLabel })}
+              </PressableAnchor>
+              <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+                ·
+              </span>
+              <PressableAnchor
+                href={withLocale(`/noticies`)}
+                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+                prefetch={false}
+                variant="inline"
+              >
+                {t("seeAll")}
+              </PressableAnchor>
+              {/* <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
               ·
             </span>
             <PressableAnchor
-              href={withLocale(`/noticies`)}
+              href={withLocale(`/noticies/${place}/rss.xml`)}
               className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
               prefetch={false}
               variant="inline"
             >
-              {t("seeAll")}
-            </PressableAnchor>
-          </nav>
-        </div>
-      </header>
+              {t("rssLabel")}
+            </PressableAnchor> */}
+            </nav>
+          </div>
+        </header>
 
-      <Suspense fallback={<NewsListSkeleton />}>
-        <NewsList
-          newsPromise={newsPromise}
-          placeTypePromise={placeTypePromise}
-          place={place}
-          currentPage={currentPage}
-          pageSize={pageSize}
-        />
-      </Suspense>
-    </>
+        {/* News List Content */}
+        <Suspense fallback={<NewsListSkeleton />}>
+          <NewsList
+            newsPromise={newsPromise}
+            placeTypePromise={placeTypePromise}
+            place={place}
+            currentPage={currentPage}
+            pageSize={pageSize}
+          />
+        </Suspense>
+      </div>
+    </div>
   );
 }
