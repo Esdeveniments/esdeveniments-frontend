@@ -101,7 +101,6 @@ async function EventPageGate({
     redirect(withLocalePath(`/e/${event.slug}`, locale));
   }
 
-  const title = event?.title ?? "";
   const jsonData = generateJsonData({ ...event }, locale);
 
   // Build first — so numberOfItems matches the items we actually emit
@@ -130,9 +129,7 @@ async function EventPageGate({
   const relatedEventsJsonData =
     relatedEventListItems.length > 0
       ? {
-        "@id": `${siteUrl}#itemlist-${title
-          ?.toLowerCase()
-          .replace(/\s+/g, "-")}`,
+        "@id": `${siteUrl}#itemlist-${event.id}`,
         "@context": "https://schema.org",
         "@type": "ItemList",
         name: "Related Events",
