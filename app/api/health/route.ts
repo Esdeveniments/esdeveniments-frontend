@@ -86,12 +86,18 @@ async function checkRedisConnectivity(): Promise<boolean> {
 }
 
 export async function GET(request: NextRequest) {
-  const apiUrlConfigured = Boolean(process.env.NEXT_PUBLIC_API_URL);
+  // Only check server-only env vars for public health status.
+  // NEXT_PUBLIC_* vars get inlined at build time by Turbopack — if the build
+  // arg is missing (e.g. PR preview deployments), the inlined value is ""
+  // which would make the healthcheck fail even though the runtime env is set.
+  // The API URL has a fallback in config/api-defaults.json, so the app works
+  // without NEXT_PUBLIC_API_URL. Full config diagnostics are in the
+  // authenticated response below.
   const hmacConfigured = Boolean(process.env.HMAC_SECRET);
   const redisConfigured = Boolean(
     process.env.REDIS_URL || process.env.REDIS_HOST
   );
-  const isHealthy = apiUrlConfigured && hmacConfigured;
+  const isHealthy = hmacConfigured;
 
   // Check if authenticated (use same secret as revalidation endpoint)
   const secret = request.nextUrl.searchParams.get("secret");
@@ -117,6 +123,9 @@ export async function GET(request: NextRequest) {
   const redisReachable = redisConfigured ? await checkRedisConnectivity() : false;
   // Degrade status when Redis is expected but unreachable (cache layer is down)
   const isFullyHealthy = isHealthy && (!redisConfigured || redisReachable);
+  // Use indirect access for diagnostic display — avoids Turbopack inlining
+  const apiUrlKey = "NEXT_PUBLIC_API_URL";
+  const apiUrlConfigured = Boolean(process.env[apiUrlKey]);
 
   return NextResponse.json(
     {
