@@ -259,7 +259,7 @@ jobs:
           MAX_RETRIES=5
           RETRY=0
           while [ $RETRY -lt $MAX_RETRIES ]; do
-            HTTP_CODE=$(curl -s -o /tmp/readiness-resp.txt -w "%{http_code}" \
+            HTTP_CODE=$(curl -s --connect-timeout 5 --max-time 15 -o /tmp/readiness-resp.txt -w "%{http_code}" \
               -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
               -H "x-vercel-set-bypass-cookie: true" \
               "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || echo "000")
