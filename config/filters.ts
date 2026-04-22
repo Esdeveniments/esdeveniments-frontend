@@ -97,20 +97,24 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
     }),
   },
 
-  {
-    key: "price",
-    displayName: "price",
-    defaultValue: DEFAULT_FILTER_VALUE,
-    type: "price",
-    isEnabled: (state: FilterDisplayState) =>
-      state.filters.price !== DEFAULT_FILTER_VALUE,
-    getDisplayText: (state: FilterDisplayState) => {
-      if (state.filters.price === DEFAULT_FILTER_VALUE) return undefined;
-      // Return raw value; FiltersClient translates via labels
-      return state.filters.price;
-    },
-    getRemovalChanges: () => ({ price: undefined }),
-  },
+  // TODO: Re-enable price filter when backend supports the `type` query param.
+  // Currently the API ignores `type=FREE|PAID` (returns same results).
+  // All plumbing (state, URL parsing, API forwarding) is in place —
+  // just uncomment this config once the backend filters by event type.
+  // {
+  //   key: "price",
+  //   displayName: "price",
+  //   defaultValue: DEFAULT_FILTER_VALUE,
+  //   type: "price",
+  //   isEnabled: (state: FilterDisplayState) =>
+  //     state.filters.price !== DEFAULT_FILTER_VALUE,
+  //   getDisplayText: (state: FilterDisplayState) => {
+  //     if (state.filters.price === DEFAULT_FILTER_VALUE) return undefined;
+  //     // Return raw value; FiltersClient translates via labels
+  //     return state.filters.price;
+  //   },
+  //   getRemovalChanges: () => ({ price: undefined }),
+  // },
 
   {
     key: "searchTerm",
