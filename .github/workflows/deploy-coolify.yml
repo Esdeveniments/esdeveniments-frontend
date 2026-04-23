@@ -343,6 +343,32 @@ jobs:
             exit 1
           fi
 
+      - name: Purge Cloudflare CDN cache
+        if: github.ref_name == 'main'
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_ZONE_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN not set — skipping CDN purge"
+            exit 0
+          fi
+
+          echo "Purging Cloudflare cache to prevent stale chunk references..."
+          HTTP_CODE=$(curl -s -o /tmp/cf-purge.json -w "%{http_code}" \
+            -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' \
+            --max-time 10) || HTTP_CODE="000"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Cloudflare cache purged successfully"
+          else
+            echo "::warning::Cloudflare purge returned HTTP $HTTP_CODE (non-fatal)"
+            cat /tmp/cf-purge.json 2>/dev/null || true
+          fi
+
       - name: Post-deploy smoke tests
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
