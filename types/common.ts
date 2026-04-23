@@ -608,6 +608,8 @@ export interface WebPageOptions {
     name: string;
     url: string;
   };
+  /** SEO: CSS selectors identifying speakable content (Schema.org SpeakableSpecification) */
+  speakableCssSelectors?: string[];
 }
 
 export interface CollectionPageOptions {

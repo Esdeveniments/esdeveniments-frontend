@@ -286,6 +286,7 @@ export function generateWebPageSchema(options: WebPageOptions) {
     mainContentOfPage,
     locale,
     containedInPlace,
+    speakableCssSelectors,
   } = options;
 
   const localeToUse = locale ?? DEFAULT_LOCALE;
@@ -321,6 +322,13 @@ export function generateWebPageSchema(options: WebPageOptions) {
         url: containedInPlace.url,
       },
     }),
+    ...(speakableCssSelectors &&
+      speakableCssSelectors.length > 0 && {
+        speakable: {
+          "@type": "SpeakableSpecification",
+          cssSelector: speakableCssSelectors,
+        },
+      }),
   };
 }
 

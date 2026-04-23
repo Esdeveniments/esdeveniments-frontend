@@ -77,8 +77,13 @@ function HomeStaticFallback({ locale }: { locale: AppLocale }) {
       <noscript>
         <div>
           <h2>{content.h2}</h2>
-          <p>{content.description}</p>
+          <p data-speakable="description">{content.description}</p>
           <p>{content.apiNote}</p>
+          <p>
+            <a href="/openapi.json">API Documentation (OpenAPI)</a>
+            {" · "}
+            <a href="/llms.txt">LLM Integration Guide</a>
+          </p>
         </div>
       </noscript>
     </>
@@ -290,6 +295,7 @@ async function HomeStructuredData({
     url: pageData.canonical,
     mainContentOfPage: itemListSchema || undefined,
     locale,
+    speakableCssSelectors: ["h1", "[data-speakable='description']"],
   });
 
   const collectionSchema =
