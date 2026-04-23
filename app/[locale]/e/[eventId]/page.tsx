@@ -1,7 +1,8 @@
-import { Suspense } from "react";
+import { Suspense, use } from "react";
+import type { JSX } from "react";
+import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
 import { getEventBySlug } from "@lib/api/events";
-import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "@lib/meta";
@@ -64,24 +65,39 @@ export async function generateMetadata(props: {
   return generateEventMetadata(event, canonical, undefined, locale);
 }
 
-// Main page component
-export default async function EventPage({
+// Main page component — sync, unwraps params with use() and returns a Suspense
+// boundary immediately so the static shell (layout) can flush before any async
+// work. All async logic (locale, event fetch, translations, redirects) lives
+// inside EventPageContent and streams in under the EventDetailSkeleton fallback.
+export default function EventPage({
   params,
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  // Start event fetch as soon as params resolve — don't wait for locale.
-  // Kick off both in parallel so locale resolution doesn't block the API call.
-  const eventPromise = params.then(({ eventId }) => getEventBySlug(eventId));
-  const [{ eventId: slug }, locale] = await Promise.all([
-    params,
+  const { eventId: slug } = use(params);
+
+  return (
+    <Suspense fallback={<EventDetailSkeleton />}>
+      <EventPageContent slug={slug} />
+    </Suspense>
+  );
+}
+
+async function EventPageContent({
+  slug,
+}: {
+  slug: string;
+}): Promise<JSX.Element> {
+  // Kick off event fetch and locale resolution in parallel — both are
+  // independent operations and locale resolution shouldn't block the API call.
+  const [locale, event] = await Promise.all([
     rootLocale() as Promise<AppLocale>,
+    getEventBySlug(slug),
   ]);
 
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;
 
-  const event: EventDetailResponseDTO | null = await eventPromise;
   if (!event) notFound();
   if (event.title === "CANCELLED") notFound();
 

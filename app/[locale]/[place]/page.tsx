@@ -1,4 +1,6 @@
 import { insertAds } from "@lib/api/events";
+import { Suspense, use } from "react";
+import type { JSX } from "react";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
@@ -69,16 +71,26 @@ export async function generateMetadata({
   });
 }
 
-export default async function Page({
+// Sync page component: unwraps params with use() and immediately returns a
+// Suspense boundary so the static shell (layout) can flush before any async
+// work. All async logic — locale, validation, categories, alias/404 redirect,
+// shell data, and events fetch — lives inside PlacePageGate and streams in.
+export default function Page({
   params,
 }: {
   params: Promise<PlaceStaticPathParams>;
 }) {
-  // Parallelize params and locale resolution (independent operations).
-  const [{ place }, locale] = await Promise.all([
-    params,
-    rootLocale() as Promise<AppLocale>,
-  ]);
+  const { place } = use(params);
+
+  return (
+    <Suspense fallback={null}>
+      <PlacePageGate place={place} />
+    </Suspense>
+  );
+}
+
+export async function PlacePageGate({ place }: { place: string }): Promise<JSX.Element> {
+  const locale = (await rootLocale()) as AppLocale;
 
   try {
     validatePlaceOrThrow(place);
