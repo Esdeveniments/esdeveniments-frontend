@@ -2,7 +2,7 @@ import { insertAds } from "@lib/api/events";
 import { Suspense, use } from "react";
 import type { JSX } from "react";
 import { fetchCategories } from "@lib/api/categories";
-import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import { getPlaceTypeAndLabelCached, formatPlaceName } from "@utils/helpers";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
@@ -82,8 +82,15 @@ export default function Page({
 }) {
   const { place } = use(params);
 
+  // Minimal SEO-safe fallback: if the streamed gate fails (broken env,
+  // Suspense error, etc.) crawlers still see an h1 derived from the slug.
+  // This mirrors the homepage's HomeStaticFallback pattern.
+  const placeLabel = formatPlaceName(place);
+
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={<h1 className="sr-only">{placeLabel}</h1>}
+    >
       <PlacePageGate place={place} />
     </Suspense>
   );

@@ -76,8 +76,18 @@ export default function EventPage({
 }) {
   const { eventId: slug } = use(params);
 
+  // Fallback combines the visual skeleton (aria-hidden) with a minimal
+  // sr-only h1 derived from the slug — ensures crawlers see a heading even
+  // if the Suspense stream fails (broken env, error boundary, etc.).
   return (
-    <Suspense fallback={<EventDetailSkeleton />}>
+    <Suspense
+      fallback={
+        <>
+          <h1 className="sr-only">{slug.replace(/-/g, " ")}</h1>
+          <EventDetailSkeleton />
+        </>
+      }
+    >
       <EventPageContent slug={slug} />
     </Suspense>
   );
