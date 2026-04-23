@@ -1,6 +1,6 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseEventDetail, parsePagedEvents } from "lib/validation/event";
-import { buildEventsQuery } from "@utils/api-helpers";
+import { buildEventsQuery, getApiUrl } from "@utils/api-helpers";
 import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
@@ -18,11 +18,7 @@ import type { FetchEventsParams } from "types/event";
 export async function fetchEventBySlug(
   slug: string,
 ): Promise<EventDetailResponseDTO | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    console.error("NEXT_PUBLIC_API_URL is not defined");
-    return null;
-  }
+  const apiUrl = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const response = await fetchWithHmac(`${apiUrl}/events/${slug}`);
@@ -39,17 +35,7 @@ export async function fetchEventBySlug(
 export async function fetchEventsExternal(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) {
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 12,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
-  }
+  const api = getApiUrl();
   try {
     const qs = buildEventsQuery(params);
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
@@ -82,8 +68,7 @@ export async function fetchEventsExternal(
 export async function fetchCategorizedEventsExternal(
   maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return {};
+  const api = getApiUrl();
   try {
     const params = new URLSearchParams();
     if (maxEventsPerCategory !== undefined) {
@@ -112,8 +97,7 @@ export async function fetchCategorizedEventsExternal(
 export async function fetchEventCountExternal(
   place: string,
 ): Promise<number | null> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return null;
+  const api = getApiUrl();
   try {
     const qs = buildEventsQuery({ place, size: 1 });
     const res = await fetchWithHmac(`${api}/events?${qs.toString()}`);

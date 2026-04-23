@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import SponsorUploadPageClient from "@components/ui/sponsor/SponsorUploadPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   setRequestLocale(locale);
   const t = await getTranslations("Sponsorship");
   return {
@@ -29,7 +30,7 @@ function UploadPageSkeleton() {
 }
 
 export default async function PatrocinaUploadPage() {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   setRequestLocale(locale);
 
   return (

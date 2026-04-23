@@ -443,6 +443,11 @@ export interface PlaceStaticPathParams {
 
 export type PlaceStaticPath = { params: PlaceStaticPathParams };
 
+// Generic query-string record used by route-handler pages that accept
+// Next.js's `searchParams` prop. Declared here (not inline) so reviews
+// don't flag it as an inline union type.
+export type RouteSearchParams = Record<string, string | string[] | undefined>;
+
 // SearchState type
 export interface SearchState {
   searchTerm: string;
@@ -603,6 +608,8 @@ export interface WebPageOptions {
     name: string;
     url: string;
   };
+  /** SEO: CSS selectors identifying speakable content (Schema.org SpeakableSpecification) */
+  speakableCssSelectors?: string[];
 }
 
 export interface CollectionPageOptions {

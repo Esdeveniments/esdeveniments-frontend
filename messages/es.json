@@ -44,7 +44,9 @@
         "vallesOccidental": {
           "title": "Planes en el Vallès Occidental"
         }
-      }
+      },
+      "noscriptDescription": "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti.",
+      "noscriptApiNote": "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria."
     },
     "NotFound": {
       "title": "Página no encontrada",

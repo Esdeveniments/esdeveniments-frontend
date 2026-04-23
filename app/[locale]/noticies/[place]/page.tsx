@@ -6,11 +6,14 @@ import {
   buildPageMeta,
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import { withLocalePath } from "@utils/i18n-seo";
 import { parseNewsPagination } from "@utils/news-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
+import type { AppLocale } from "types/i18n";
+import type { RouteSearchParams } from "types/common";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
@@ -24,7 +27,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { place } = await params;
   const placeType = await getPlaceTypeAndLabelCached(place);
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const base = buildPageMeta({
     title: t("metaTitle", { place: placeType.label }),
@@ -56,13 +59,14 @@ export default async function Page({
   params: Promise<{ place: string }>;
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { place } = await params;
-  const locale = await getLocaleSafely();
+  // Parallelize independent awaits (params + locale + searchParams) to reduce TTFB.
+  const [{ place }, locale, query] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
+    (searchParams || Promise.resolve({})) as Promise<RouteSearchParams>,
+  ]);
   const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const withLocale = (path: string) => withLocalePath(path, locale);
-  const query = (await (searchParams || Promise.resolve({}))) as {
-    [key: string]: string | string[] | undefined;
-  };
   const { currentPage, pageSize } = parseNewsPagination(query);
 
   // Start fetches immediately

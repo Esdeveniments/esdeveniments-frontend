@@ -58,8 +58,8 @@ export async function GET(
       description:
         "Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (ca/es/en) event listings by place, date, and category.",
       version: "1.0.0",
-      url: `${url}/api`,
-      transport: "http",
+      url: `${url}/mcp`,
+      transport: "streamable-http",
       icon: `${url}/icons/icon-512x512.png`,
       capabilities: {
         tools: true,
@@ -121,8 +121,8 @@ export async function GET(
       description:
         "Esdeveniments.cat — Cultural events discovery API for Catalonia. Free multilingual (ca/es/en) events platform with public REST API.",
       version: "1.0.0",
-      url: `${url}/api`,
-      transport: "http",
+      url: `${url}/mcp`,
+      transport: "streamable-http",
       icon: `${url}/icons/icon-512x512.png`,
       capabilities: {
         tools: true,
@@ -312,6 +312,26 @@ export async function GET(
           "public, max-age=86400, stale-while-revalidate=86400",
       },
     });
+  }
+
+  // /.well-known/mcp — Handled by proxy.ts rewrite to /mcp (preserves POST body)
+  // GET fallback: return MCP server info for discovery
+  if (path === "mcp") {
+    return NextResponse.json(
+      {
+        name: "esdeveniments-cat",
+        description: "Esdeveniments.cat MCP Server — Cultural events discovery for Catalonia",
+        url: `${url}/mcp`,
+        transport: "streamable-http",
+        method: "POST",
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
+        },
+      },
+    );
   }
 
   return new Response("Not Found", { status: 404 });

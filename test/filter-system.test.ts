@@ -162,7 +162,6 @@ describe("Filter Configuration System", () => {
         category: DEFAULT_FILTER_VALUE,
         searchTerm: "",
         distance: 50,
-        price: DEFAULT_FILTER_VALUE,
         lat: undefined,
         lon: undefined,
       });
@@ -174,49 +173,7 @@ describe("Filter Configuration System", () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    describe("Price Filter", () => {
-      test("price isEnabled when value is not default", () => {
-        const stateWithPrice: FilterDisplayState = {
-          ...mockDisplayState,
-          filters: {
-            ...mockDisplayState.filters,
-            price: "gratis",
-          },
-        };
-        expect(FilterOperations.isEnabled("price", stateWithPrice)).toBe(true);
-      });
-
-      test("price isEnabled false when value is default", () => {
-        expect(FilterOperations.isEnabled("price", mockDisplayState)).toBe(
-          false,
-        );
-      });
-
-      test("price getDisplayText returns raw value when not default", () => {
-        const stateWithPrice: FilterDisplayState = {
-          ...mockDisplayState,
-          filters: {
-            ...mockDisplayState.filters,
-            price: "pagament",
-          },
-        };
-        expect(FilterOperations.getDisplayText("price", stateWithPrice)).toBe(
-          "pagament",
-        );
-      });
-
-      test("price getDisplayText returns undefined when default", () => {
-        expect(
-          FilterOperations.getDisplayText("price", mockDisplayState),
-        ).toBeUndefined();
-      });
-
-      test("price removal resets to undefined", () => {
-        const priceConfig = FilterOperations.getConfig("price");
-        const changes = priceConfig?.getRemovalChanges();
-        expect(changes).toEqual({ price: undefined });
-      });
-    });
+    // Price filter tests are intentionally omitted while backend `type` filtering is unsupported.
   });
 
   describe("Filter Removal Logic", () => {

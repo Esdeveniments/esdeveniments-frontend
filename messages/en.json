@@ -44,7 +44,9 @@
         "vallesOccidental": {
           "title": "Plans in Vallès Occidental"
         }
-      }
+      },
+      "noscriptDescription": "Esdeveniments.cat is the most comprehensive free platform for discovering cultural events across Catalonia. Browse concerts, theatre, exhibitions, festivals, family activities, and more across 900+ Catalan municipalities. Find what to do today, tomorrow, or this weekend near you.",
+      "noscriptApiNote": "Free public API available at /llms.txt and /openapi.json — no authentication required."
     },
     "NotFound": {
       "title": "Page not found",

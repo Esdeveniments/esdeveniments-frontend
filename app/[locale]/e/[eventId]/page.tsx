@@ -1,7 +1,8 @@
-import { Suspense } from "react";
+import { Suspense, use } from "react";
+import type { JSX } from "react";
+import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
 import { getEventBySlug } from "@lib/api/events";
-import { EventDetailResponseDTO } from "types/api/event";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "@lib/meta";
@@ -64,20 +65,49 @@ export async function generateMetadata(props: {
   return generateEventMetadata(event, canonical, undefined, locale);
 }
 
-// Main page component
-export default async function EventPage({
+// Main page component — sync, unwraps params with use() and returns a Suspense
+// boundary immediately so the static shell (layout) can flush before any async
+// work. All async logic (locale, event fetch, translations, redirects) lives
+// inside EventPageContent and streams in under the EventDetailSkeleton fallback.
+export default function EventPage({
   params,
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  const slug = (await params).eventId;
+  const { eventId: slug } = use(params);
 
-  const locale = (await rootLocale()) as AppLocale;
+  // Fallback combines the visual skeleton (aria-hidden) with a minimal
+  // sr-only h1 derived from the slug — ensures crawlers see a heading even
+  // if the Suspense stream fails (broken env, error boundary, etc.).
+  return (
+    <Suspense
+      fallback={
+        <>
+          <h1 className="sr-only">{slug.replace(/-/g, " ")}</h1>
+          <EventDetailSkeleton />
+        </>
+      }
+    >
+      <EventPageContent slug={slug} />
+    </Suspense>
+  );
+}
+
+async function EventPageContent({
+  slug,
+}: {
+  slug: string;
+}): Promise<JSX.Element> {
+  // Kick off event fetch and locale resolution in parallel — both are
+  // independent operations and locale resolution shouldn't block the API call.
+  const [locale, event] = await Promise.all([
+    rootLocale() as Promise<AppLocale>,
+    getEventBySlug(slug),
+  ]);
 
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;
 
-  const event: EventDetailResponseDTO | null = await getEventBySlug(slug);
   if (!event) notFound();
   if (event.title === "CANCELLED") notFound();
 
@@ -204,12 +234,13 @@ export default async function EventPage({
   const relatedEventsJsonData =
     event.relatedEvents && event.relatedEvents.length > 0
       ? {
-        "@id": `${siteUrl}#itemlist-${title
-          ?.toLowerCase()
-          .replace(/\s+/g, "-")}`,
+        // Anchor the ItemList @id to the event's canonical URL with a stable
+        // fixed fragment — avoids homepage-scoped @id and fragile title slugs.
+        "@id": `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}#related-events`,
         "@context": "https://schema.org",
         "@type": "ItemList",
         name: "Related Events",
+        url: `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`,
         numberOfItems: event.relatedEvents.length,
         itemListElement: event.relatedEvents
           .slice(0, 10) // Limit for performance

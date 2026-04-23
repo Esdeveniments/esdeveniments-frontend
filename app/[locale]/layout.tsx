@@ -116,6 +116,8 @@ export default async function LocaleLayout({
         <link rel="dns-prefetch" href="//www.google-analytics.com" />
         <link rel="dns-prefetch" href="//stats.g.doubleclick.net" />
         <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
+        {/* MCP server discovery for AI agents (WebMCP + Streamable HTTP) */}
+        <link rel="mcp-server-sse" href="/.well-known/mcp" />
       </head>
       <body>
         <Script

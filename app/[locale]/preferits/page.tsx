@@ -9,7 +9,8 @@ import { siteUrl } from "@config/index";
 import { fetchEventBySlugWithStatus } from "@lib/api/events";
 import { captureException } from "@sentry/nextjs";
 import { filterActiveEvents, isEventActive } from "@utils/event-helpers";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import { MAX_FAVORITES } from "@utils/constants";
 import { getFavoritesFromCookies } from "@utils/favorites";
 import { getTranslations } from "next-intl/server";
@@ -20,7 +21,7 @@ import FavoritesPageTracker from "./FavoritesPageTracker";
 const FETCH_CONCURRENCY = 5;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.Favorites" });
 
   return {
@@ -100,7 +101,7 @@ async function fetchFavoritesEvents(
 }
 
 export default async function PreferitsPage() {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.Favorites" });
 
   const favoriteSlugs = [...(await getFavoritesFromCookies())].reverse();

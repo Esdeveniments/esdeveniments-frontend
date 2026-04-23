@@ -65,15 +65,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         allow: ["/"],
       },
       {
+        userAgent: "ora-agent", // Ora.ai agent — ALLOWED
+        allow: ["/"],
+      },
+      {
+        userAgent: "Qwen-Agent", // Alibaba Qwen agent — ALLOWED
+        allow: ["/"],
+      },
+      {
+        userAgent: "Google-Extended", // Google AI features (Gemini, etc.) — ALLOWED
+        allow: ["/"],
+      },
+      {
         userAgent: "GPTBot", // OpenAI's training crawler
         disallow: ["/"],
       },
       {
         userAgent: "CCBot", // Common Crawl bot (used for AI training datasets)
-        disallow: ["/"],
-      },
-      {
-        userAgent: "Google-Extended", // Google's AI training crawler (separate from search)
         disallow: ["/"],
       },
       {
