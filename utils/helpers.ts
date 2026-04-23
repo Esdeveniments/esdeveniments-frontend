@@ -62,4 +62,4 @@ export {
 } from "./options-helpers";
 
 // Miscellaneous helpers
-export { sendEventToGA, env, getRegionFromQuery } from "./misc-helpers";
+export { env, getRegionFromQuery } from "./misc-helpers";

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { getActiveSponsorForPlace, getHouseAdForSlot } from "@config/sponsors";
 import type { SponsorBannerSlotProps } from "types/sponsor";
 import SponsorBanner from "./SponsorBanner";
@@ -19,6 +20,10 @@ async function SponsorBannerSlotContent({
   place,
   fallbackPlaces,
 }: SponsorBannerSlotProps) {
+  // Signal dynamic rendering for DB call (getActiveSponsorForPlace).
+  // This component is wrapped in <Suspense>, so only this subtree streams dynamically.
+  await connection();
+
   const result = await getActiveSponsorForPlace(place, fallbackPlaces);
 
   if (result) {
@@ -44,7 +49,7 @@ async function SponsorBannerSlotContent({
  * Place this below heading/filters, above events list.
  *
  * For event pages, pass fallbackPlaces to enable cascade:
- * <SponsorBannerSlot place={citySlug} fallbackPlaces={[regionSlug, "catalunya"]} />
+ * <SponsorBannerSlot place={citySlug} fallbackPlaces={[regionSlug]} />
  */
 export default function SponsorBannerSlot({
   place,

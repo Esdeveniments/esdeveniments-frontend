@@ -3,8 +3,7 @@
  * Optimized for performance with external images based on 2024 best practices
  */
 
-import { QualityOptions, QualityPreset } from "types/common";
-import { NetworkQuality } from "types/common";
+import { QualityOptions, QualityPreset, ImageSizeContext, NetworkQuality } from "types/common";
 
 /**
  * Determines optimal image quality based on context
@@ -96,19 +95,17 @@ export function getQualityPreset(preset: QualityPreset): number {
 /**
  * Get optimal image width based on component usage context
  * Used for server-side image resizing in the image proxy
- * 
- * Note: These widths are maximums - the `sizes` attribute tells the browser
- * which actual size to request based on viewport. Mobile gets smaller widths,
- * desktop gets these full widths. This preserves mobile Lighthouse scores.
+ *
+ * Note: These widths are maximums — the browser selects an appropriate width
+ * from the responsive srcSet based on the `sizes` attribute and viewport.
  */
 export const getOptimalImageWidth = (
-  context: "card" | "hero" | "list" | "detail" = "card"
+  context: ImageSizeContext = "card"
 ): number => {
-  const widthMap = {
+  const widthMap: Record<ImageSizeContext, number> = {
     // Event cards: 500px covers ~280px display at 2x retina (matches CARD_WIDTH in image-proxy)
     card: 500,
     // Hero/featured images: 1200px for crisp desktop display
-    // Mobile will request smaller via sizes attribute, preserving LCP
     hero: 1200,
     // List view / horizontal cards
     list: 500,
@@ -120,18 +117,42 @@ export const getOptimalImageWidth = (
 };
 
 /**
+ * Get responsive width breakpoints for multi-resolution srcSet.
+ * These are the widths baked into srcSet with `w` descriptors so the browser
+ * can pick the best match given the `sizes` attribute and device pixel ratio.
+ *
+ * Widths are chosen to cover: mobile 1x, mobile 2x retina, tablet, desktop.
+ * Card/list contexts need fewer variants (small images); hero/detail need more.
+ */
+export const getResponsiveWidths = (
+  context: ImageSizeContext = "card"
+): readonly number[] => {
+  const widthsMap: Record<ImageSizeContext, readonly number[]> = {
+    // Cards are small — 300px covers mobile 1x, 500px covers 2x retina
+    card: [300, 500],
+    // Hero images span full viewport — need mobile, tablet, and desktop variants
+    hero: [500, 800, 1200],
+    // List cards same as card
+    list: [300, 500],
+    // Detail hero same as hero
+    detail: [500, 800, 1200],
+  };
+
+  return widthsMap[context];
+};
+
+/**
  * Get optimized sizes attribute based on component usage context
  * Based on actual usage patterns from the Lighthouse analysis
- * 
- * IMPORTANT: These sizes control which image width the browser requests.
- * Mobile viewports request smaller widths (fast LCP, quality 50).
- * Desktop viewports request larger widths (crisp images, quality 65 via proxy boost).
- * This preserves mobile Lighthouse scores while improving desktop quality.
+ *
+ * IMPORTANT: These sizes control which image width the browser requests
+ * from the responsive srcSet. Mobile viewports select smaller widths (fast LCP),
+ * desktop viewports select larger widths (crisp images).
  */
 export const getOptimalImageSizes = (
-  context: "card" | "hero" | "list" | "detail" = "card"
+  context: ImageSizeContext = "card"
 ): string => {
-  const sizesMap = {
+  const sizesMap: Record<ImageSizeContext, string> = {
     // Event cards in listings (most common usage)
     // Mobile: 92vw (~350px on typical phone) - fast LCP
     // Desktop: capped at 672px (max-w-2xl container)

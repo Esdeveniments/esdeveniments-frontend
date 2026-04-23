@@ -11,11 +11,14 @@ import {
 } from "react-share";
 import type { CardShareButtonProps, CustomIconProps } from "types/common";
 import { sendGoogleEvent } from "@utils/analytics";
+import useTrackedCta from "@components/hooks/useTrackedCta";
 
 export default function CardShareButton({
   slug,
+  url,
 }: CardShareButtonProps): JSX.Element {
-  const eventUrl = `${siteUrl}/e/${slug}`;
+  const eventUrl = url || `${siteUrl}/e/${slug}`;
+  const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("card_share");
 
   const iconProps: CustomIconProps = {
     bgStyle: { fill: "#FFF" },
@@ -24,12 +27,17 @@ export default function CardShareButton({
     round: true,
   };
 
+  const handleShareClick = (method: string) => {
+    trackClick();
+    sendGoogleEvent("share", { method, content: slug });
+  };
+
   return (
-    <div className="w-full h-8 flex justify-start items-center gap-4">
+    <div ref={ctaRef} className="w-full h-8 flex justify-start items-center gap-4">
       <TelegramShareButton
         url={eventUrl}
         aria-label="Telegram"
-        onClick={() => sendGoogleEvent("share", { method: "telegram", content: slug })}
+        onClick={() => handleShareClick("telegram")}
       >
         <TelegramIcon {...iconProps} className="mr-[10px]" />
       </TelegramShareButton>
@@ -37,7 +45,7 @@ export default function CardShareButton({
       <WhatsappShareButton
         url={eventUrl}
         aria-label="Whatsapp"
-        onClick={() => sendGoogleEvent("share", { method: "whatsapp", content: slug })}
+        onClick={() => handleShareClick("whatsapp")}
       >
         <WhatsappIcon {...iconProps} className="mr-1" />
       </WhatsappShareButton>
@@ -45,14 +53,14 @@ export default function CardShareButton({
       <FacebookShareButton
         url={eventUrl}
         aria-label="Facebook"
-        onClick={() => sendGoogleEvent("share", { method: "facebook", content: slug })}
+        onClick={() => handleShareClick("facebook")}
       >
         <FacebookIcon {...iconProps} size={31} />
       </FacebookShareButton>
 
       <TwitterShareButton
         url={eventUrl}
-        onClick={() => sendGoogleEvent("share", { method: "twitter", content: slug })}
+        onClick={() => handleShareClick("twitter")}
       >
         <svg
           className="w-7 h-5 fill-foreground-strong"

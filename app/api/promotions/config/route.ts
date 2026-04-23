@@ -22,5 +22,10 @@ export async function GET() {
       (process.env.STRIPE_TAX_MODE as TaxMode) ||
       "automatic",
   };
-  return NextResponse.json(body, { status: 200 });
+  return NextResponse.json(body, {
+    status: 200,
+    headers: {
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+    },
+  });
 }

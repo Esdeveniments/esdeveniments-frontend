@@ -24,7 +24,7 @@ describe("handleCanonicalRedirects", () => {
 
   function createMockRequest(
     pathname: string,
-    search: string = ""
+    search: string = "",
   ): NextRequest {
     const url = new URL(`https://example.com${pathname}${search}`);
     return {
@@ -69,7 +69,7 @@ describe("handleCanonicalRedirects", () => {
     it("preserves date query param for /place/tots/category?date=dema", () => {
       const request = createMockRequest(
         "/barcelona/tots/concerts",
-        "?date=dema"
+        "?date=dema",
       );
       const result = handleCanonicalRedirects(request);
 
@@ -92,7 +92,7 @@ describe("handleCanonicalRedirects", () => {
     it("preserves both date and category query params for /place/tots?date=avui&category=teatre", () => {
       const request = createMockRequest(
         "/barcelona/tots",
-        "?date=avui&category=teatre"
+        "?date=avui&category=teatre",
       );
       const result = handleCanonicalRedirects(request);
 
@@ -105,7 +105,7 @@ describe("handleCanonicalRedirects", () => {
     it("preserves other query params when redirecting /place/tots/category?date=avui&search=rock", () => {
       const request = createMockRequest(
         "/barcelona/tots/teatre",
-        "?date=avui&search=rock"
+        "?date=avui&search=rock",
       );
       const result = handleCanonicalRedirects(request);
 
@@ -246,7 +246,7 @@ describe("handleCanonicalRedirects", () => {
     it("redirects /place?date=avui&category=teatre to /place/avui/teatre", () => {
       const request = createMockRequest(
         "/barcelona",
-        "?date=avui&category=teatre"
+        "?date=avui&category=teatre",
       );
       const result = handleCanonicalRedirects(request);
 
@@ -309,7 +309,7 @@ describe("handleCanonicalRedirects", () => {
       // Even with query params, 4+ segments should not be processed
       const request = createMockRequest(
         "/barcelona/avui/teatre/extra",
-        "?date=dema&category=concerts"
+        "?date=dema&category=concerts",
       );
       const result = handleCanonicalRedirects(request);
 
@@ -331,7 +331,7 @@ describe("handleCanonicalRedirects", () => {
     it("ignores invalid date query params", () => {
       const request = createMockRequest(
         "/barcelona/tots/teatre",
-        "?date=invalid-date"
+        "?date=invalid-date",
       );
       const result = handleCanonicalRedirects(request);
 
@@ -371,7 +371,7 @@ describe("handleCanonicalRedirects", () => {
       const longValue = "a".repeat(2000);
       const request = createMockRequest(
         "/barcelona",
-        `?category=teatre&long=${longValue}`
+        `?category=teatre&long=${longValue}`,
       );
       const result = handleCanonicalRedirects(request);
 
@@ -422,7 +422,7 @@ describe("handleCanonicalRedirects", () => {
       }
       const request = createMockRequest(
         "/barcelona/tots",
-        `?${params.join("&")}&date=avui`
+        `?${params.join("&")}&date=avui`,
       );
       handleCanonicalRedirects(request);
 
@@ -435,7 +435,7 @@ describe("handleCanonicalRedirects", () => {
       const longValue = "a".repeat(500); // Exactly at the limit
       const request = createMockRequest(
         "/barcelona/tots",
-        `?date=avui&search=${longValue}`
+        `?date=avui&search=${longValue}`,
       );
       const result = handleCanonicalRedirects(request);
 
@@ -457,6 +457,65 @@ describe("handleCanonicalRedirects", () => {
       // Should process normally (not rejected by DOS protection)
       // May return null for other reasons, but DOS protection should pass
       expect(result).toBeNull(); // This is expected since there's no redirect needed
+    });
+  });
+
+  describe("preserves price, from, to query params during redirects", () => {
+    it("preserves price query param when redirecting /place/tots to /place", () => {
+      const request = createMockRequest("/barcelona/tots", "?price=gratis");
+      handleCanonicalRedirects(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalled();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona");
+      expect(redirectUrl.searchParams.get("price")).toBe("gratis");
+    });
+
+    it("preserves from and to query params when redirecting", () => {
+      const request = createMockRequest(
+        "/barcelona/tots",
+        "?from=2026-04-01&to=2026-04-07",
+      );
+      handleCanonicalRedirects(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalled();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona");
+      expect(redirectUrl.searchParams.get("from")).toBe("2026-04-01");
+      expect(redirectUrl.searchParams.get("to")).toBe("2026-04-07");
+    });
+
+    it("preserves price, from, to together with search during redirect", () => {
+      const request = createMockRequest(
+        "/barcelona/tots/concerts",
+        "?search=jazz&price=pagament&from=2026-05-01&to=2026-05-31",
+      );
+      handleCanonicalRedirects(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalled();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona/concerts");
+      expect(redirectUrl.searchParams.get("search")).toBe("jazz");
+      expect(redirectUrl.searchParams.get("price")).toBe("pagament");
+      expect(redirectUrl.searchParams.get("from")).toBe("2026-05-01");
+      expect(redirectUrl.searchParams.get("to")).toBe("2026-05-31");
+    });
+
+    it("preserves price when redirecting legacy query params to canonical path", () => {
+      const request = createMockRequest(
+        "/barcelona",
+        "?date=avui&price=gratis",
+      );
+      handleCanonicalRedirects(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalled();
+      const redirectCall = vi.mocked(NextResponse.redirect).mock.calls[0];
+      const redirectUrl = redirectCall[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona/avui");
+      expect(redirectUrl.searchParams.get("price")).toBe("gratis");
     });
   });
 });

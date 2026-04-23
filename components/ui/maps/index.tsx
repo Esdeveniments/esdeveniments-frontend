@@ -1,10 +1,11 @@
 import { useEffect, useRef, FC, RefObject } from "react";
 import type { EventMapsProps } from "types/event";
 
-const Maps: FC<EventMapsProps> = ({ location }) => {
+const Maps: FC<EventMapsProps> = ({ location, cityName, regionName }) => {
   const mapRef = useRef<HTMLDivElement | null>(
     null
   ) as RefObject<HTMLDivElement>;
+  const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -26,7 +27,7 @@ const Maps: FC<EventMapsProps> = ({ location }) => {
   return (
     <div
       className="w-full flex justify-center items-center overflow-hidden"
-      data-src={`https://www.google.com/maps/embed/v1/place?q=${location}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS}`}
+      data-src={`https://www.google.com/maps/embed/v1/place?q=${query}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS}`}
       id="mymap"
       ref={mapRef}
     />

@@ -178,7 +178,6 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
     // Always navigate (even with empty search to clear the param)
     const url = buildHeroUrl(place, date, value);
-
     startNavigationFeedback();
     router.push(url);
   }, [searchTerm, place, date, router]);
@@ -261,7 +260,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             </Modal>
           </div>
         </h1>
-        <p className="body-large text-white/90 drop-shadow-md max-w-xl mx-auto">
+        <p className="body-large text-white/90 drop-shadow-md max-w-xl mx-auto" data-speakable="description">
           {subTitle || t("subtitleDefault")}
         </p>
       </div>

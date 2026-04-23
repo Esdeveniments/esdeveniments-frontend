@@ -161,6 +161,14 @@ function getCsp() {
 // Cache CSP string at module load to avoid recomputing on every request
 const CACHED_CSP = getCsp();
 
+// AI/SEO bots NOT in Next.js's hardcoded html-bots.ts getBotType() regex.
+// These bots receive PPR shells (empty HTML) instead of blocking renders.
+// Matched UAs get "Slurp" appended so getBotType() returns 'html' → full render.
+// Bots already handled by Next.js: Googlebot, Bingbot, BingPreview, Slurp,
+// DuckDuckBot, applebot, facebookexternalhit, LinkedInBot, Twitterbot, etc.
+const AI_BOT_UA_RE =
+  /GPTBot|ChatGPT-User|OAI-SearchBot|Claude-Web|ClaudeBot|anthropic-ai|PerplexityBot|Perplexity-User|ora-scan|ora-agent|DeepSeekBot|Qwen-Agent|Bytespider|CCBot|Meta-ExternalAgent|Meta-ExternalFetcher|Applebot-Extended|cohere-ai|YouBot|Diffbot|Amazonbot|Timpibot|ImagesiftBot|PetalBot|Novellum/i;
+
 // Cache API route patterns at module load to avoid recreating on every request
 // Allowlist public API routes that don't require HMAC from the browser
 // Use regex patterns for precise matching to prevent accidental exposure of
@@ -213,6 +221,8 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/publish",
   "/api/tiktok/upload",
   "/api/tiktok/status",
+  // API-scoped llms.txt (public, machine-readable)
+  "/api/llms.txt",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
@@ -404,10 +414,85 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  // OpenAPI spec: rewrite /openapi.json to /openapi route handler
+  if (pathname === "/openapi.json") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/openapi";
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  // NLWeb /ask endpoint: bypass locale handling
+  if (pathname === "/ask") {
+    return NextResponse.next();
+  }
+
+  // /.well-known/mcp: rewrite to /mcp so MCP is discoverable at standard path
+  // Uses rewrite instead of redirect to preserve POST body for MCP transport
+  if (pathname === "/.well-known/mcp") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/mcp";
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  // Trust anchor page aliases: standard English paths → Catalan equivalents
+  // Enables orank and AI agents to find About/Contact/Privacy at conventional URLs
+  const trustAnchorMap: Record<string, string> = {
+    "/about": "/qui-som",
+    "/contact": "/qui-som",
+    "/privacy": "/politica-privacitat",
+    "/terms": "/termes-servei",
+  };
+  const trustTarget = trustAnchorMap[pathname];
+  if (trustTarget) {
+    return NextResponse.redirect(new URL(trustTarget, request.url), 301);
+  }
+
+  // OpenAPI spec: bypass locale handling so route handler is used
+  if (pathname === "/openapi") {
+    return NextResponse.next();
+  }
+
+  // /docs paths: bypass locale handling for documentation routes
+  if (pathname.startsWith("/docs/")) {
+    return NextResponse.next();
+  }
+
+  // /index.md: serve markdown homepage for agents
+  if (pathname === "/index.md") {
+    return NextResponse.next();
+  }
+
+  // ?mode=agent: return structured agent view
+  if (request.nextUrl.searchParams.get("mode") === "agent") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/agent-view";
+    rewriteUrl.searchParams.delete("mode");
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  // Markdown for Agents: content negotiation
+  // When agents request text/markdown, serve the llms.txt content with proper Content-Type
+  const acceptHeader = request.headers.get("accept") || "";
+  if (
+    acceptHeader.includes("text/markdown") &&
+    !pathname.startsWith("/api/") &&
+    !pathname.startsWith("/_next/")
+  ) {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/llms.txt";
+    rewriteUrl.searchParams.set("_accept", "text/markdown");
+    const headers = new Headers(request.headers);
+    headers.set("x-markdown-negotiation", "1");
+    return NextResponse.rewrite(rewriteUrl, {
+      request: { headers },
+    });
+  }
+
   const { locale: localeFromPath, pathnameWithoutLocale } =
     stripLocalePrefix(pathname);
   const localeFromCookie = getLocaleFromCookie(request);
 
+  // Redirect explicit default locale prefix to canonical form (e.g., /ca/foo → /foo)
   if (localeFromPath === DEFAULT_LOCALE) {
     const redirectUrl = new URL(
       `${pathnameWithoutLocale}${search || ""}`,
@@ -418,6 +503,7 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  // Auto-redirect to preferred non-default locale on root path
   if (!localeFromPath && pathname === "/") {
     const preferredLocale =
       localeFromCookie ||
@@ -450,6 +536,17 @@ export default async function proxy(request: NextRequest) {
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);
 
+  // PPR bot fix: Next.js's hardcoded getBotType() only recognizes ~27 traditional
+  // crawlers for blocking render. AI bots (GPTBot, ClaudeBot, ora-scan, etc.)
+  // get PPR shells (empty HTML) because they're unrecognized. Appending "Slurp"
+  // (already in the hardcoded regex) to the UA triggers blocking render for these
+  // bots, so they receive full server-rendered HTML.
+  // See: node_modules/next/dist/shared/lib/router/utils/is-bot.js
+  const ua = request.headers.get("user-agent") || "";
+  if (AI_BOT_UA_RE.test(ua)) {
+    requestHeaders.set("user-agent", `${ua} Slurp`);
+  }
+
   // No per-page visitor id injection; handled only for /api/sponsors/checkout.
 
   const baseResponseInit = {
@@ -458,23 +555,29 @@ export default async function proxy(request: NextRequest) {
     },
   };
 
-  // When a locale prefix exists (e.g., /es/...), rewrite to the locale-stripped
-  // pathname for routing while preserving the original URL in the browser.
-  // This keeps locale-prefixed URLs indexable and allows us to reuse the
-  // existing route tree without duplicating files.
+  // With [locale] route segment, all page routes live under app/[locale]/.
+  // - Paths without locale prefix (default locale, e.g., /barcelona) → rewrite
+  //   to /ca/barcelona so it matches app/[locale=ca]/[place=barcelona]/page.tsx
+  // - Paths with locale prefix (e.g., /es/barcelona) → pass through, already
+  //   matches app/[locale=es]/[place=barcelona]/page.tsx
   const response = localeFromPath
-    ? (() => {
+    ? NextResponse.next(baseResponseInit)
+    : (() => {
         const rewriteUrl = request.nextUrl.clone();
-        rewriteUrl.pathname = pathnameWithoutLocale || "/";
-        // Avoid RSC/data cache collisions between locales by making the rewritten
-        // request URL vary per locale while keeping the visible URL unchanged.
-        rewriteUrl.searchParams.set("__locale", resolvedLocale);
+        rewriteUrl.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
         return NextResponse.rewrite(rewriteUrl, baseResponseInit);
-      })()
-    : NextResponse.next(baseResponseInit);
+      })();
 
   if (shouldPersistLocaleFromPath && localeFromPath) {
     persistLocaleCookie(response, localeFromPath);
+  } else if (
+    !localeFromPath &&
+    localeFromCookie !== null &&
+    localeFromCookie !== DEFAULT_LOCALE
+  ) {
+    // Clear stale non-default locale cookie when user visits unprefixed path
+    // (which resolves to DEFAULT_LOCALE), so subsequent / visits don't redirect
+    persistLocaleCookie(response, DEFAULT_LOCALE);
   }
 
   // visitor_id cookie is set for /api/sponsors/checkout if missing.
@@ -504,10 +607,11 @@ export default async function proxy(request: NextRequest) {
   // Cache-Control for public HTML pages (excluding API and Next assets).
   //
   // s-maxage=1800 (30 min): Cultural events are published days in advance, so
-  // 30 min staleness is invisible to users. With stale-while-revalidate, CloudFront
-  // serves the cached page instantly and revalidates in the background — the next
-  // visitor gets fresh data. This raises CloudFront cache-hit ratio from ~3.6%
-  // to ~20-30%, reducing Lambda invocations significantly.
+  // 30 min staleness is invisible to users. With stale-while-revalidate=3600,
+  // CloudFront serves the stale page instantly for up to 60 min after expiry
+  // while revalidating in the background — eliminating TTFB spikes from
+  // synchronous revalidation. This raises CloudFront cache-hit ratio and
+  // reduces Lambda invocations significantly.
   //
   // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
   // still serve quickly and revalidate in the background.
@@ -520,16 +624,40 @@ export default async function proxy(request: NextRequest) {
       "Cache-Control",
       isPersonalizedHtml
         ? "private, no-store"
-        : "public, max-age=0, s-maxage=1800, stale-while-revalidate=1800",
+        : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
     );
   }
 
   // Set Content-Language header for SEO and accessibility
   response.headers.set("Content-Language", resolvedLocale);
 
-  // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, lat, lon)
+  // Agent discovery: Link headers (RFC 8288)
+  // Help AI agents discover machine-readable resources
+  response.headers.set(
+    "Link",
+    [
+      '</.well-known/api-catalog>; rel="api-catalog"',
+      '</openapi.json>; rel="service-desc"; type="application/openapi+json"',
+      '</llms.txt>; rel="service-doc"; type="text/plain"',
+      '</.well-known/agent-skills/index.json>; rel="describedby"',
+    ].join(", "),
+  );
+
+  // Vary on Accept so CDN caches text/markdown and text/html variants separately
+  // Required for markdown content negotiation to work through Cloudflare
+  response.headers.append("Vary", "Accept");
+
+  // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, price, lat, lon)
   // This prevents indexing of filtered/personalized URLs without making pages dynamic
-  const NON_CANONICAL_PARAMS = ["search", "distance", "lat", "lon"];
+  const NON_CANONICAL_PARAMS = [
+    "search",
+    "distance",
+    "price",
+    "from",
+    "to",
+    "lat",
+    "lon",
+  ];
   const hasNonCanonicalParams = NON_CANONICAL_PARAMS.some((param) => {
     const value = request.nextUrl.searchParams.get(param);
     return value !== null && value.trim().length > 0;
@@ -552,6 +680,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view).*)",
   ],
 };

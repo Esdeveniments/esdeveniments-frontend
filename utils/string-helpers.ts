@@ -70,6 +70,33 @@ export function normalizeForSearch(input: string): string {
 }
 
 /**
+ * Matches a search term against a list of place options using accent-insensitive comparison.
+ * Returns the first exact match, or the first startsWith match if no exact match.
+ * Used to detect when users type place names (e.g. "Cardedeu", "sant vicen") in the search bar
+ * and redirect them to the place page instead of a text search.
+ */
+export function matchSearchToPlace(
+  searchTerm: string,
+  places: ReadonlyArray<{ label: string; value: string }>
+): { label: string; value: string } | null {
+  const normalized = normalizeForSearch(searchTerm);
+  if (!normalized || normalized.length < 2) return null;
+
+  let startsWithMatch: { label: string; value: string } | null = null;
+
+  for (const place of places) {
+    const normalizedLabel = normalizeForSearch(place.label);
+    if (normalizedLabel === normalized) return place;
+    // Require at least 4 chars for prefix matching to avoid greedy matches ("ba" → "Barcelona")
+    if (!startsWithMatch && normalized.length >= 4 && normalizedLabel.startsWith(normalized)) {
+      startsWithMatch = place;
+    }
+  }
+
+  return startsWithMatch;
+}
+
+/**
  * Normalizes a URL input by automatically adding https:// protocol if missing.
  * Handles common URL formats:
  * - "example.com" -> "https://example.com"

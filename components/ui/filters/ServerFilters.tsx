@@ -67,9 +67,9 @@ const ServerFilters = async ({
   const currentCategoryEntry: readonly [string, string] | null =
     currentCategorySlug && currentCategorySlug !== DEFAULT_FILTER_VALUE
       ? (() => {
-          const label = getCategoryLabelBySlug(currentCategorySlug);
-          return label ? ([currentCategorySlug, label] as const) : null;
-        })()
+        const label = getCategoryLabelBySlug(currentCategorySlug);
+        return label ? ([currentCategorySlug, label] as const) : null;
+      })()
       : null;
 
   const categoryLabelsBySlug = Object.fromEntries(
@@ -88,12 +88,17 @@ const ServerFilters = async ({
       byDate: tFilters("date"),
       distance: tFilters("distance"),
       searchTerm: tFilters("search"),
+      price: tFilters("price"),
     },
     byDates: {
       avui: tByDates("today"),
       dema: tByDates("tomorrow"),
       setmana: tByDates("week"),
       "cap-de-setmana": tByDates("weekend"),
+    },
+    prices: {
+      gratis: tFiltersUi("priceFree"),
+      pagament: tFiltersUi("pricePaid"),
     },
     categoryLabelsBySlug,
   };

@@ -1,5 +1,5 @@
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
-import type { ByDateOption } from "types/common";
+import type { ByDateOption, DateRangeShortcut } from "types/common";
 import { getTranslations } from "next-intl/server";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
@@ -22,13 +22,21 @@ export const TIMEZONE_MADRID = "Europe/Madrid";
 // Year range for sitemap/archive pages validation
 export const MIN_VALID_YEAR = 2000;
 export const MAX_VALID_YEAR = 2100;
-// Keep safely under Lambda's 6MB cap and common CDN/body limits
+// Keep safely under common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
-// Sitemap chunking: places per chunk to stay under Lambda 6MB payload limit
+// Sitemap chunking: places per chunk to keep response sizes manageable
 export const SITEMAP_PLACES_PER_CHUNK = 100;
+// Minimum event count for a place to get full date/category expansion in sitemap.
+// Places below this threshold only get the base /[place] URL to avoid
+// submitting thin/empty filtered pages that waste crawl budget.
+export const SITEMAP_MIN_EVENTS_FOR_EXPANSION = 10;
+// Number of top categories to include in place sitemap expansion
+export const SITEMAP_TOP_CATEGORIES_COUNT = 5;
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
   "event_image_upload_too_large";
-export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads
+export const FORMDATA_PARSE_ERROR_SUBSTRING = "failed to parse body as formdata";
+export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads (compression handles the rest)
+export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024; // Sponsor images are uploaded raw (no compression) — keep under common body size limits
 
 export const formatMegabytesLabel = (bytes: number): string => {
   const value = bytes / (1024 * 1024);
@@ -133,6 +141,70 @@ export const BYDATES: ByDateOption[] = [
   { value: "dema", labelKey: "tomorrow" },
   { value: "cap-de-setmana", labelKey: "weekend" },
   { value: "setmana", labelKey: "week" },
+];
+
+/**
+ * Date range shortcuts that compute from/to dates client-side.
+ * These populate from/to query params instead of byDate URL segments.
+ */
+function toYMD(d: Date): string {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: TIMEZONE_MADRID,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const y = parts.find((p) => p.type === "year")?.value ?? "";
+  const m = parts.find((p) => p.type === "month")?.value ?? "";
+  const day = parts.find((p) => p.type === "day")?.value ?? "";
+  return `${y}-${m}-${day}`;
+}
+
+/** Create a Date representing "now" in Madrid local time (avoids wrong day at tz boundaries). */
+function nowInMadrid(): Date {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: TIMEZONE_MADRID,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const y = Number(parts.find((p) => p.type === "year")?.value);
+  const m = Number(parts.find((p) => p.type === "month")?.value) - 1;
+  const d = Number(parts.find((p) => p.type === "day")?.value);
+  return new Date(y, m, d, 12, 0, 0);
+}
+
+export const DATE_RANGE_SHORTCUTS: DateRangeShortcut[] = [
+  {
+    labelKey: "nextWeek",
+    getRange: () => {
+      const today = nowInMadrid();
+      const dayOfWeek = today.getDay(); // 0=Sun
+      const daysUntilNextMon = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+      const nextMon = new Date(today);
+      nextMon.setDate(today.getDate() + daysUntilNextMon);
+      const nextSun = new Date(nextMon);
+      nextSun.setDate(nextMon.getDate() + 6);
+      return { from: toYMD(nextMon), to: toYMD(nextSun) };
+    },
+  },
+  {
+    labelKey: "thisMonth",
+    getRange: () => {
+      const today = nowInMadrid();
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return { from: toYMD(today), to: toYMD(lastDay) };
+    },
+  },
+  {
+    labelKey: "nextMonth",
+    getRange: () => {
+      const today = nowInMadrid();
+      const firstDay = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+      return { from: toYMD(firstDay), to: toYMD(lastDay) };
+    },
+  },
 ];
 
 /**

@@ -18,7 +18,7 @@
 | Security/CSP              | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains    |
 | Service worker            | `service-worker-updates`       | Edit `sw-template.js`, run `prebuild`     |
 | Performance/images        | `bundle-optimization`          | Quality caps, Server Components default   |
-| Env variables             | `env-variable-management`      | Update 4 locations: code, SST, workflow   |
+| Env variables             | `env-variable-management`      | Update 5 locations: code, env files, Coolify, workflow, GitHub secrets |
 | API data validation       | `data-validation-patterns`     | Zod in `lib/validation/`, safe fallbacks  |
 | Evaluating PR suggestions | `code-review-evaluation`       | Cross-reference against project skills    |
 
@@ -43,7 +43,27 @@
 - `yarn test` Vitest; `yarn test:watch`; `yarn test:coverage`.
 - `yarn test:e2e` Playwright; `yarn test:e2e:ui` UI runner. Remote: `playwright.remote.config.ts` with `PLAYWRIGHT_TEST_BASE_URL`.
 - Extras: `yarn analyze` bundle analysis; `yarn scan` run react‑scan on `localhost:3000`.
-- CI: Amplify builds use Node 20 + Yarn 4; prebuild generates `public/sw.js` and postbuild runs sitemap.
+- CI: Docker/Coolify builds use Node 22 + Yarn 4; prebuild generates `public/sw.js` and postbuild runs sitemap.
+
+## Rollback Procedure
+
+If a production deploy causes issues (broken pages, Sharp failure, performance regression):
+
+1. **Quick rollback** (recommended): In the **Coolify dashboard**, go to your application → **Deployments** → click **Rollback** on a previous successful deployment.
+2. **Redeploy via workflow**: Go to **GitHub Actions → "Deploy to Coolify" → Run workflow** with `skip_ci` checked for fastest recovery.
+
+**What it does NOT do**: It does not revert database migrations or external API changes. It only redeploys the frontend Docker container.
+
+## PR Preview Limitations
+
+Coolify PR preview deployments (`pr-XXX.esdeveniments.cat`) may **not have runtime env vars** (`NEXT_PUBLIC_API_URL`, `HMAC_SECRET`). Without these, all server-side data fetches fail silently (safe fallbacks return empty data), causing:
+- Empty `<main>` tag (only nav bar renders as HTML)
+- 5 `$RX` Suspense boundary errors in the HTML response
+- Page content exists only in RSC flight data (JS payloads), invisible to crawlers
+
+**Do not use PR previews for SEO or SSR testing** unless you verify env vars are set in the Coolify dashboard first. Quick check: `curl -sS "https://pr-XXX.esdeveniments.cat/" | grep -c '<h1'` — should be >0.
+
+See: `docs/incidents/2026-04-23-coolify-pr-preview-empty-html.md`
 
 ## Coding Style & Naming Conventions
 
@@ -103,13 +123,11 @@
 Before writing ANY new code, ALWAYS search first:
 
 1. **Search for existing patterns** using `grep_search` or `semantic_search`:
-
    - The concept name (e.g., "slug validation", "price formatting")
    - Function name patterns (`isValid*`, `format*`, `build*`, `use*`)
    - The literal value (regex pattern, constant)
 
 2. **Check canonical locations** based on what you're creating:
-
    - Type/interface → search `types/`
    - Validation function → search `utils/` for `isValid*`, `validate*`
    - Helper/utility → search `utils/`, `lib/`
@@ -118,7 +136,6 @@ Before writing ANY new code, ALWAYS search first:
    - Hook → search `components/hooks/`
 
 3. **Report findings** before proposing implementation:
-
    - "Found `isValidCategorySlugFormat` in `utils/category-mapping.ts` - will reuse"
    - "No existing pattern found - will create new utility in `utils/`"
 
@@ -130,21 +147,24 @@ Before writing ANY new code, ALWAYS search first:
 
 - Prefer surgical diffs; keep file moves/renames minimal and scoped.
 - Do not edit generated or build output (`public/sw.js`, `.next/**`, `tsconfig.tsbuildinfo`, `server-place-sitemap.xml`). Edit `public/sw-template.js` and run prebuild instead.
-- **⚠️ NEVER delete `open-next.config.ts`** — it's the primary mechanism that installs Sharp into the Lambda bundle. SST's `server.install` alone is NOT sufficient. Its `arch` must match `args.architecture` in `sst.config.ts`. See: `docs/incidents/2026-02-18-sharp-architecture-mismatch.md`.
+- **Sharp image optimization**: Sharp is installed via the Dockerfile and configured in `next.config.js` (`serverExternalPackages`). Ensure Sharp remains in the Docker image and the `serverExternalPackages` config.
 - Types live only in `types/`; avoid redefining `NavigationItem`, `SocialLinks`, `EventProps`, `CitySummaryResponseDTO` (see `types/common.ts`, `types/api/city.ts`).
 - Any reusable/derived props types (e.g., Picks of an existing props interface) must be declared in `types/` (typically `types/props.ts`) rather than inline within components.
 - Before introducing a new type/interface, search `types/` (and related feature folders) for existing candidates to reuse/extend, and place additions in the most appropriate shared file (e.g., `types/props.ts` for UI props, `types/api/*` for DTOs).
 - Server-first by default; mark client components with `"use client"` only when necessary. Avoid exposing secrets in client code.
+- **`cacheComponents` determinism**: With `cacheComponents: true`, server components that use `new Date()` / `Date.now()` for **conditional rendering** (different tree structure) MUST call `await connection()` from `next/server` before the time-dependent code. Content-only date usage (text formatting) is fine without `connection()`.
 - **No local barrel files** that re-export `"use client"` components from different route contexts. Use direct file imports to prevent manifest bloat (see Feb 2026 incident: `components/ui/sponsor/index.ts` leaked 3 `/patrocina`-only components into `/[place]` manifest, adding 24 KB).
 - API security: Internal API routes (`app/api/*`) handle HMAC signing server-side via `*-external.ts` wrappers. Middleware enforces HMAC on most `/api/*` routes; public GET endpoints (events, news, categories, places, regions, cities) are allowlisted. Never sign requests in the browser—always use internal API routes.
-- Use Yarn 4 commands and Node 20 locally; run `yarn lint && yarn typecheck && yarn test` before finalizing changes.
+- Use Yarn 4 commands and Node 22 locally; run `yarn lint && yarn typecheck && yarn test` before finalizing changes.
 
 ## Architecture Overview
 
+- **Hosting**: Docker container on Hetzner via Coolify (self-hosted PaaS). Cloudflare for DNS, CDN edge caching, and TLS termination. Origin certificate (Cloudflare → Traefik) for Full (Strict) SSL.
+- **CDN**: Cloudflare caches HTML pages and static assets at the edge. `_next/image` paths bypass CF cache (cache rule) to preserve format negotiation (avif/webp/jpeg via `Vary: Accept`). Origin handles image caching via Next.js 1-year `Cache-Control`.
 - Next.js App Router with server‑first rendering; client state via Zustand (`store.ts`) and client data fetching via SWR.
 - API layer: Internal proxy pattern—client libraries (`lib/api/*`) call internal Next.js API routes (`app/api/*`) which proxy to external backend via `*-external.ts` wrappers with HMAC signing.
-- SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `middleware.ts` handles edge behavior, canonical redirects, and CSP.
-- URL canonicalization: Middleware automatically redirects legacy query params and `/tots` segments to canonical paths (301 redirects).
+- SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `proxy.ts` handles canonical redirects, security headers, and CSP.
+- URL canonicalization: Proxy automatically redirects legacy query params and `/tots` segments to canonical paths (301 redirects).
 
 ## ⚠️ CRITICAL: ISR/Caching Cost Prevention
 
@@ -152,14 +172,14 @@ Before writing ANY new code, ALWAYS search first:
 
 **NEVER add `searchParams` to page components in `app/[place]/` routes.**
 
-Reading `searchParams` in a page component makes the page **dynamic**, causing OpenNext/SST to create a separate DynamoDB cache entry for every unique URL+query combination. This caused a **$300+ cost spike** on Dec 28, 2025.
+Reading `searchParams` in a page component makes the page **dynamic**, creating a separate cache entry for every unique URL+query combination. This caused a **$300+ cost spike** on Dec 28, 2025.
 
 **Rules:**
 
 1. Listing pages (`app/[place]/*`) must NOT read `searchParams` - keep them static (ISR)
 2. Query params (`search`, `distance`, `lat`, `lon`) are handled **client-side only** via SWR
 3. SEO robots `noindex` for filtered URLs is handled via `X-Robots-Tag` header in `proxy.ts`
-4. CloudWatch alarm `DynamoDB-HighWriteCost-Alert` monitors for write spikes >100k/hour
+4. Monitor cache usage via the `/api/health` endpoint and Coolify resource metrics
 
 **If you need query-dependent behavior:**
 
@@ -171,7 +191,7 @@ Reading `searchParams` in a page component makes the page **dynamic**, causing O
 
 **NEVER add `next: { revalidate, tags }` to external API fetches in `lib/api/*-external.ts` files.**
 
-This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL as a separate entry in **both S3 and DynamoDB**. With high-cardinality APIs (100+ places × categories × dates × pages), this caused a cost spike on Jan 20, 2026 (146K cache entries per build vs baseline 150).
+This enables Next.js fetch cache, which stores every unique URL as a separate cache entry. With high-cardinality APIs (100+ places × categories × dates × pages), this caused a cost spike on Jan 20, 2026 (146K cache entries per build vs baseline 150).
 
 **Rules:**
 
@@ -194,8 +214,8 @@ This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL 
 
 ## Local Setup
 
-- Requirements: Node 20, Yarn 4.9+ (use Corepack).
-- Install: `corepack enable && corepack prepare yarn@4.9.1 --activate && yarn install --immutable`.
+- Requirements: Node 22, Yarn 4.12+ (use Corepack).
+- Install: `corepack enable && corepack prepare yarn@4.12.0 --activate && yarn install --immutable`.
 - Env: set `HMAC_SECRET` (server‑only), `NEXT_PUBLIC_API_URL` (defaults handled), optional `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `SENTRY_DSN`.
 - Run: `yarn dev` (generates `public/sw.js` via prebuild). Build: `yarn build`.
 - Tests: `yarn test`; E2E: `yarn test:e2e` (local config starts the app).
@@ -220,13 +240,13 @@ This enables Next.js fetch cache, which on OpenNext/SST stores every unique URL 
 
 ### Running services
 
-| Command | Purpose | Notes |
-|---|---|---|
-| `yarn dev` | Next.js dev server (port 3000) | Auto-runs prebuild (service worker generation). Uses Turbopack. |
-| `yarn lint` | ESLint | 0 errors expected; warnings are pre-existing and acceptable. |
-| `yarn typecheck` | `tsc --noEmit` | Must pass cleanly. |
-| `yarn test` | Vitest unit/integration tests | All 100 test files / 1401 tests should pass with no external dependencies. |
-| `yarn test:e2e` | Playwright E2E | Requires a running app and valid API credentials. |
+| Command          | Purpose                        | Notes                                                                      |
+| ---------------- | ------------------------------ | -------------------------------------------------------------------------- |
+| `yarn dev`       | Next.js dev server (port 3000) | Auto-runs prebuild (service worker generation). Uses Turbopack.            |
+| `yarn lint`      | ESLint                         | 0 errors expected; warnings are pre-existing and acceptable.               |
+| `yarn typecheck` | `tsc --noEmit`                 | Must pass cleanly.                                                         |
+| `yarn test`      | Vitest unit/integration tests  | All 100 test files / 1401 tests should pass with no external dependencies. |
+| `yarn test:e2e`  | Playwright E2E                 | Requires a running app and valid API credentials.                          |
 
 ### Gotchas
 

@@ -1,42 +1,103 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createConnection } from "node:net";
+import { connect as tlsConnect } from "node:tls";
 
 /**
- * Health check endpoint for monitoring cache infrastructure.
- * 
+ * Health check endpoint for monitoring runtime configuration.
+ *
  * Public access: Returns simple status only (no sensitive details)
- * Authenticated access: Returns full diagnostic info
- * 
- * Usage: 
+ * Authenticated access: Returns full diagnostic info including Redis connectivity
+ *
+ * Usage:
  *   GET /api/health → { status: "healthy" | "degraded" }
  *   GET /api/health?secret=<REVALIDATE_SECRET> → full details
  */
 
-function isValidBucketName(name: string | undefined): boolean {
-  if (!name) return false;
-  // SST bucket names follow pattern like: production-site-xxxxx
-  // Invalid values we've seen: "__fetch", undefined, null, empty string
-  if (name === "__fetch" || name.startsWith("__")) return false;
-  if (name.length < 3 || name.length > 63) return false;
-  // Basic S3 bucket name validation (lowercase, numbers, hyphens)
-  return /^[a-z0-9][a-z0-9.-]*[a-z0-9]$/.test(name);
-}
+/** Lightweight Redis PING using raw TCP — avoids importing the redis package. */
+async function checkRedisConnectivity(): Promise<boolean> {
+  let parsedUrl: URL | null = null;
+  try {
+    if (process.env.REDIS_URL) parsedUrl = new URL(process.env.REDIS_URL);
+  } catch {
+    /* invalid URL */
+  }
 
-function isValidTableName(name: string | undefined): boolean {
-  if (!name) return false;
-  // Invalid values: null, undefined, empty, or placeholder strings
-  if (name === "null" || name === "undefined") return false;
-  if (name.length < 3 || name.length > 255) return false;
-  // DynamoDB table names: alphanumeric, hyphens, underscores, dots
-  return /^[a-zA-Z0-9._-]+$/.test(name);
+  const host = parsedUrl?.hostname || process.env.REDIS_HOST;
+  const port = Number(parsedUrl?.port || process.env.REDIS_PORT || "6379");
+  const useTls = parsedUrl?.protocol === "rediss:";
+  // Node's URL constructor already decodes username/password — no decodeURIComponent needed
+  const password = parsedUrl?.password || process.env.REDIS_PASSWORD;
+  const username = parsedUrl?.username || process.env.REDIS_USERNAME;
+
+  if (!host) return false;
+
+  return new Promise((resolve) => {
+    let authenticated = !password; // skip auth if no password
+    const socket = useTls
+      ? tlsConnect({ host, port, rejectUnauthorized: false }, onConnect)
+      : createConnection({ host, port }, onConnect);
+
+    /** Build a RESP array command — handles passwords with spaces/special chars. */
+    function respCmd(...args: string[]): string {
+      let cmd = `*${args.length}\r\n`;
+      for (const arg of args) {
+        cmd += `$${Buffer.byteLength(arg)}\r\n${arg}\r\n`;
+      }
+      return cmd;
+    }
+
+    function onConnect() {
+      if (password) {
+        socket.write(
+          username ? respCmd("AUTH", username, password) : respCmd("AUTH", password)
+        );
+      } else {
+        socket.write(respCmd("PING"));
+      }
+    }
+    socket.setTimeout(2000);
+    // Accumulate TCP data — responses may arrive across multiple packets
+    let buffer = "";
+    socket.on("data", (data) => {
+      buffer += data.toString();
+      // RESP responses are terminated by \r\n — wait for complete response
+      if (!buffer.includes("\r\n")) return;
+
+      if (!authenticated && buffer.startsWith("+OK")) {
+        authenticated = true;
+        // Keep any data after the +OK\r\n (e.g. +PONG\r\n in same packet)
+        buffer = buffer.substring(buffer.indexOf("\r\n") + 2);
+        socket.write(respCmd("PING"));
+        if (!buffer.includes("\r\n")) return; // wait for PONG in next packet
+        // fall through to check for PONG below
+      }
+      socket.destroy();
+      resolve(buffer.startsWith("+PONG"));
+    });
+    socket.on("error", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.on("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
 }
 
 export async function GET(request: NextRequest) {
-  const bucketName = process.env.CACHE_BUCKET_NAME;
-  const tableName = process.env.CACHE_DYNAMO_TABLE;
-
-  const s3Valid = isValidBucketName(bucketName);
-  const dynamoValid = isValidTableName(tableName);
-  const isHealthy = s3Valid && dynamoValid;
+  // Only check server-only env vars for public health status.
+  // NEXT_PUBLIC_* vars get inlined at build time by Turbopack — if the build
+  // arg is missing (e.g. PR preview deployments), the inlined value is ""
+  // which would make the healthcheck fail even though the runtime env is set.
+  // The API URL has a fallback in config/api-defaults.json, so the app works
+  // without NEXT_PUBLIC_API_URL. Full config diagnostics are in the
+  // authenticated response below.
+  const hmacConfigured = Boolean(process.env.HMAC_SECRET);
+  const redisConfigured = Boolean(
+    process.env.REDIS_URL || process.env.REDIS_HOST
+  );
+  const isHealthy = hmacConfigured;
 
   // Check if authenticated (use same secret as revalidation endpoint)
   const secret = request.nextUrl.searchParams.get("secret");
@@ -58,28 +119,37 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Authenticated response: full diagnostic details
+  // Authenticated response: full diagnostic details with Redis connectivity
+  const redisReachable = redisConfigured ? await checkRedisConnectivity() : false;
+  // Degrade status when Redis is expected but unreachable (cache layer is down)
+  const isFullyHealthy = isHealthy && (!redisConfigured || redisReachable);
+  // Use indirect access for diagnostic display — avoids Turbopack inlining
+  const apiUrlKey = "NEXT_PUBLIC_API_URL";
+  const apiUrlConfigured = Boolean(process.env[apiUrlKey]);
+
   return NextResponse.json(
     {
-      status: isHealthy ? "healthy" : "degraded",
+      status: isFullyHealthy ? "healthy" : "degraded",
       timestamp: new Date().toISOString(),
       cache: {
-        s3: {
-          configured: s3Valid,
-          // Only show bucket name if valid (don't leak invalid placeholder values)
-          bucket: s3Valid ? bucketName : null,
-          issue: s3Valid ? null : bucketName ? `invalid: "${bucketName}"` : "not set",
-        },
-        dynamodb: {
-          configured: dynamoValid,
-          table: dynamoValid ? tableName : null,
-          issue: dynamoValid ? null : tableName ? `invalid: "${tableName}"` : "not set",
-        },
+        strategy: redisReachable ? "redis" : "filesystem",
+        shared: redisReachable,
+        connected: redisReachable,
+        configured: redisConfigured,
       },
+      config: {
+        apiUrlConfigured,
+        hmacConfigured,
+        revalidateSecretConfigured: Boolean(process.env.REVALIDATE_SECRET),
+        redisConfigured,
+      },
+      buildVersion: process.env.BUILD_VERSION || "unknown",
       environment: process.env.NODE_ENV,
-      region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "unknown",
     },
     {
+      // Use isHealthy (core services) for HTTP status — not Redis.
+      // Redis outage = degraded but app still works with LRU fallback.
+      // Returning 503 for Redis would trigger unnecessary container restarts.
       status: isHealthy ? 200 : 503,
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate",

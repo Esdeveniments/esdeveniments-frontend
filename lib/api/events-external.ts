@@ -1,6 +1,6 @@
 import { fetchWithHmac } from "./fetch-wrapper";
-import { parseEventDetail } from "lib/validation/event";
-import { buildEventsQuery } from "@utils/api-helpers";
+import { parseEventDetail, parsePagedEvents } from "lib/validation/event";
+import { buildEventsQuery, getApiUrl } from "@utils/api-helpers";
 import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
@@ -10,17 +10,15 @@ import type {
 import type { FetchEventsParams } from "types/event";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
-// This causes OpenNext/SST to create a separate S3+DynamoDB cache entry for every unique URL.
+// This creates a separate cache entry for every unique URL.
 // With 100+ places × categories × dates × pages, this caused a cost spike on Jan 20, 2026.
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
 
-export async function fetchEventBySlug(slug: string): Promise<EventDetailResponseDTO | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    console.error("NEXT_PUBLIC_API_URL is not defined");
-    return null;
-  }
+export async function fetchEventBySlug(
+  slug: string,
+): Promise<EventDetailResponseDTO | null> {
+  const apiUrl = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const response = await fetchWithHmac(`${apiUrl}/events/${slug}`);
@@ -35,19 +33,9 @@ export async function fetchEventBySlug(slug: string): Promise<EventDetailRespons
 }
 
 export async function fetchEventsExternal(
-  params: FetchEventsParams
+  params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) {
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 12,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
-  }
+  const api = getApiUrl();
   try {
     const qs = buildEventsQuery(params);
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
@@ -78,10 +66,9 @@ export async function fetchEventsExternal(
 }
 
 export async function fetchCategorizedEventsExternal(
-  maxEventsPerCategory?: number
+  maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return {};
+  const api = getApiUrl();
   try {
     const params = new URLSearchParams();
     if (maxEventsPerCategory !== undefined) {
@@ -98,5 +85,31 @@ export async function fetchCategorizedEventsExternal(
   } catch (error) {
     console.error("fetchCategorizedEventsExternal: failed", error);
     return {};
+  }
+}
+
+/**
+ * Fetches only the total event count for a place.
+ * Returns the actual count (may be 0 for a real empty place) or null on API failure.
+ * Unlike fetchEventsExternal, null explicitly signals "unknown" so callers can
+ * distinguish a real zero from an error.
+ */
+export async function fetchEventCountExternal(
+  place: string,
+): Promise<number | null> {
+  const api = getApiUrl();
+  try {
+    const qs = buildEventsQuery({ place, size: 1 });
+    const res = await fetchWithHmac(`${api}/events?${qs.toString()}`);
+    if (!res.ok) {
+      console.error(`fetchEventCountExternal: HTTP ${res.status} for ${place}`);
+      return null;
+    }
+    const payload = await res.json();
+    const data = parsePagedEvents(payload);
+    return data?.totalElements ?? null;
+  } catch (error) {
+    console.error("fetchEventCountExternal: failed", error);
+    return null;
   }
 }

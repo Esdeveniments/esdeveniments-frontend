@@ -1,17 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Generates public/robots.txt at build time for OpenNext/SST deployment.
+ * Generates public/robots.txt at build time.
  *
  * WHY THIS EXISTS:
- * OpenNext checks S3 for static files BEFORE route handlers. If robots.txt
- * was ever in public/, OpenNext expects it in S3. The route handler
- * (app/robots.txt/route.ts) is NEVER invoked because S3 takes precedence.
- *
- * This script generates public/robots.txt at build time, ensuring the
- * correct content is deployed to S3 automatically.
- *
- * See: docs/incidents/2025-12-23-robots-txt-routing-issues.md
+ * Ensures robots.txt is always present as a static file in the build output,
+ * providing reliable serving regardless of the deployment platform.
+ * The route handler (app/robots.txt/route.ts) serves as a fallback.
  */
 
 import { writeFileSync } from "fs";
@@ -47,7 +42,13 @@ const robotsConfig = {
       allow: ["/"],
       disallow: ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"],
     },
-    // Block AI TRAINING crawlers (not search/browsing crawlers)
+    // AI agent BROWSING/SEARCH crawlers — ALLOWED for agent readiness
+    // These crawlers power AI-powered search and agent tools
+    { userAgent: "ChatGPT-User", allow: ["/"] },
+    { userAgent: "Claude-Web", allow: ["/"] },
+    { userAgent: "PerplexityBot", allow: ["/"] },
+    { userAgent: "DeepSeekBot", allow: ["/"] },
+    // Block AI TRAINING-ONLY crawlers (protect content from training)
     { userAgent: "GPTBot", disallow: ["/"] },
     { userAgent: "CCBot", disallow: ["/"] },
     { userAgent: "Google-Extended", disallow: ["/"] },
@@ -105,6 +106,16 @@ function generateRobotsTxt() {
   for (const sitemap of robotsConfig.sitemaps) {
     lines.push(`Sitemap: ${sitemap}`);
   }
+
+  // Content Signals
+  lines.push("");
+  lines.push("# Content Signals — AI usage preferences");
+  lines.push("Content-Signal: ai-train=no, search=yes, ai-input=yes");
+
+  // Schema feed directive
+  lines.push("");
+  lines.push("# Schema feed for structured data discovery");
+  lines.push(`schemamap: ${normalizedSiteUrl}/openapi.json`);
 
   return lines.join("\n");
 }

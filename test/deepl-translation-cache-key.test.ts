@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { hashText, getCacheKey } from "../app/e/[eventId]/translation-utils";
+import { hashText, getCacheKey } from "../app/[locale]/e/[eventId]/translation-utils";
 
 describe("DeepL translation cache key", () => {
   it("is deterministic for the same (text, lang)", () => {

@@ -27,6 +27,7 @@ const FiltersClient = ({
     category: segments.category || DEFAULT_FILTER_VALUE,
     searchTerm: queryParams.search || "",
     distance: parseInt(queryParams.distance || "50"),
+    price: queryParams.price || DEFAULT_FILTER_VALUE,
     lat: queryParams.lat ? parseFloat(queryParams.lat) : undefined,
     lon: queryParams.lon ? parseFloat(queryParams.lon) : undefined,
   };
@@ -95,6 +96,18 @@ const FiltersClient = ({
     }))
     .sort((a, b) => Number(b.enabled) - Number(a.enabled));
 
+  // Pre-compute all removal URLs once per render cycle. The React Compiler
+  // auto-memoizes this when segments/queryParams haven't changed, avoiding
+  // redundant getRemovalUrl calls inside the JSX map.
+  const removalUrls: Record<string, string> = {};
+  for (const config of visibleConfigurations) {
+    removalUrls[config.key] = FilterOperations.getRemovalUrl(
+      config.key,
+      segments,
+      queryParams
+    );
+  }
+
   return (
     <div className="w-full bg-background flex justify-center items-center mt-element-gap">
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
@@ -133,7 +146,9 @@ const FiltersClient = ({
                 ? translatedByDate(displayState.filters.byDate)
                 : config.key === "category" && displayText
                   ? translatedCategory(displayState.filters.category)
-                  : displayText;
+                  : config.key === "price" && displayText
+                    ? labels.prices?.[displayText] || displayText
+                    : displayText;
             return (
               <FilterButton
                 key={config.key}
@@ -143,11 +158,7 @@ const FiltersClient = ({
                   displayNameMap[config.key] || config.displayName
                 )}
                 enabled={enabled}
-                removeUrl={FilterOperations.getRemovalUrl(
-                  config.key,
-                  segments,
-                  queryParams
-                )}
+                removeUrl={removalUrls[config.key]}
                 onOpenModal={handleOpenModal}
                 testId={`filter-pill-${config.key}`}
               />

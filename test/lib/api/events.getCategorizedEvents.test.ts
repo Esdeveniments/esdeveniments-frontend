@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 
+vi.mock("next/server", () => ({
+  connection: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock React's cache to a simple in-memory memoizer for the test environment
 vi.mock("react", async () => {
   const actual = await vi.importActual<typeof import("react")>("react");

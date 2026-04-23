@@ -11,15 +11,6 @@ import {
 } from "react";
 import type { TcfCallback, AdContextType } from "types/ads";
 
-// Debug logging for production investigation - remove after debugging
-// Uses console.warn because console.log is stripped in production (see next.config.js removeConsole)
-const DEBUG_ADS = true; // Set to false to disable
-const debugLog = (...args: unknown[]) => {
-  if (DEBUG_ADS && typeof window !== 'undefined') {
-    console.warn('[AdContext]', ...args);
-  }
-};
-
 const AdContext = createContext<AdContextType | undefined>(undefined);
 
 export const useAdContext = () => {
@@ -32,7 +23,6 @@ export const useAdContext = () => {
 
 export const AdProvider = ({ children }: { children: ReactNode }) => {
   const [adsAllowed, setAdsAllowed] = useState(false);
-  debugLog('AdProvider mounted, initial adsAllowed: false');
 
   // Shared Observers
   const visibilityObserver = useRef<IntersectionObserver | null>(null);
@@ -52,15 +42,12 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     let cmpListenerRegistered = false;
 
     const setConsent = (allowed: boolean) => {
-      debugLog('setConsent called with:', allowed, 'isMounted:', isMounted, 'current __adsConsentGranted:', window.__adsConsentGranted);
       if (!isMounted) return;
       // Always update if value changed (important for consent revocation)
       if (window.__adsConsentGranted === allowed) {
-        debugLog('Skipping setConsent - value unchanged');
         return;
       }
 
-      debugLog('Updating consent to:', allowed);
       window.__adsConsentGranted = allowed;
       window.dispatchEvent(
         new CustomEvent("ads-consent-changed", { detail: { allowed } })
@@ -79,19 +66,12 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const maybeHandleTcData: TcfCallback = (tcData, success) => {
-      debugLog('maybeHandleTcData called:', { success, eventStatus: tcData?.eventStatus, listenerId: tcData?.listenerId });
-      if (!success || !tcData) {
-        debugLog('maybeHandleTcData: early return - success:', success, 'tcData:', !!tcData);
-        return;
-      }
+      if (!success || !tcData) return;
       if (
         tcData.eventStatus === "useractioncomplete" ||
         tcData.eventStatus === "tcloaded"
       ) {
-        debugLog('maybeHandleTcData: valid eventStatus, calling setConsent with hasAdConsent:', hasAdConsent(tcData));
         setConsent(hasAdConsent(tcData));
-      } else {
-        debugLog('maybeHandleTcData: eventStatus not actionable:', tcData.eventStatus);
       }
       if (typeof tcData.listenerId === "number") {
         listenerId = tcData.listenerId;
@@ -103,32 +83,20 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       if (typeof window.__tcfapi !== "function") return;
 
       cmpListenerRegistered = true;
-      debugLog('registerCmpListeners: calling getTCData');
       window.__tcfapi("getTCData", 2, maybeHandleTcData);
-      debugLog('registerCmpListeners: calling addEventListener');
       window.__tcfapi("addEventListener", 2, maybeHandleTcData);
-      debugLog('registerCmpListeners: done');
     };
 
     const initConsent = () => {
-      debugLog('initConsent called');
-      if (!isMounted) {
-        debugLog('initConsent: not mounted, returning');
-        return;
-      }
-      if (typeof window === "undefined") {
-        debugLog('initConsent: window undefined, returning');
-        return;
-      }
+      if (!isMounted) return;
+      if (typeof window === "undefined") return;
 
       // If CMP already available, register immediately
       if (typeof window.__tcfapi === "function") {
-        debugLog('initConsent: __tcfapi already available, registering listeners');
         registerCmpListeners();
         return;
       }
 
-      debugLog('initConsent: __tcfapi not available, starting poll');
       // CMP not loaded yet - poll for it
       // Key insight: We ALWAYS want to register listeners when CMP appears,
       // even if we've already fallen back to default consent.
@@ -139,17 +107,14 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
 
       pollIntervalId = setInterval(() => {
         if (!isMounted) {
-          debugLog('Poll: unmounted, clearing interval');
           if (pollIntervalId) clearInterval(pollIntervalId);
           return;
         }
 
         attempts++;
-        debugLog('Poll attempt', attempts, '- __tcfapi available:', typeof window.__tcfapi === "function");
 
         if (typeof window.__tcfapi === "function") {
           // CMP loaded! Register listeners (this handles consent revocation too)
-          debugLog('Poll: CMP now available! Registering listeners.');
           if (pollIntervalId) clearInterval(pollIntervalId);
           registerCmpListeners();
           return;
@@ -158,7 +123,6 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
         if (attempts === maxAttemptsBeforeFallback) {
           // After 5s: Enable ads with default consent (user can still revoke later)
           // This is safe because we CONTINUE polling for CMP
-          debugLog('Poll: 5s timeout reached, falling back to default consent (true)');
           setConsent(true);
           // Don't clear interval - keep polling for CMP to handle revocation
         }
@@ -166,7 +130,6 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
         if (attempts >= maxAttemptsTotal) {
           // After 15s: Stop polling. CMP is likely blocked or failed.
           // Ads are already running with default consent.
-          debugLog('Poll: 15s timeout reached, stopping poll');
           if (pollIntervalId) clearInterval(pollIntervalId);
         }
       }, 250);

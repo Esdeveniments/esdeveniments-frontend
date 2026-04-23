@@ -148,6 +148,28 @@ import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 
 **Why**: In Next.js RSC, every `"use client"` module re-exported from a barrel gets registered in the `client-reference-manifest` of every route that imports from that barrel. This caused 24 KB of bloat on `/[place]` (Feb 2026). `optimizePackageImports` only works for npm packages.
 
+### ❌ Time-Dependent Conditional Rendering in Server Components Without `connection()`
+
+```typescript
+// WRONG: new Date() drives tree structure in a cached server component
+const status = computeTemporalStatus(event.startDate); // uses new Date()
+return (
+  <>
+    {status.state !== "past" && <EventWeather />}  // tree shape changes over time!
+    {status.state === "past" && <PastEventBanner />}
+  </>
+);
+
+// CORRECT: call connection() first to opt out of component caching
+import { connection } from "next/server";
+
+await connection(); // signals dynamic rendering
+const status = computeTemporalStatus(event.startDate);
+// Now the conditional tree is safe — no stale cache replay
+```
+
+**Why**: With `cacheComponents: true`, React caches the RSC payload. If `new Date()` produces a different tree shape on replay (e.g., event went from "upcoming" to "past"), React throws "Couldn't find all resumable slots" and falls back to full client rendering — killing SSR performance and SEO. This caused repeated errors in production (Apr 2026). Content-only date usage (formatting text) is fine without `connection()`.
+
 ---
 
 ## 📋 Decision Tree: Should I Create New Code?

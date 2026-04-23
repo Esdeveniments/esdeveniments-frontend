@@ -2,7 +2,7 @@ import { siteUrl } from "@config/index";
 import { buildSitemapIndex } from "@utils/sitemap";
 
 export async function GET() {
-  // Sitemap index: references chunked event sitemaps to avoid 6MB Lambda payload limit
+  // Sitemap index: references chunked event sitemaps to keep response sizes manageable
   // Each chunk handles 500 events (see sitemap-events route)
   // Adjust CHUNKS based on expected total event count (~2500 events = 5 chunks)
   const CHUNKS = 5;

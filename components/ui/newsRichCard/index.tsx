@@ -1,15 +1,12 @@
 import { getTranslations } from "next-intl/server";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
 import type { NewsRichCardProps } from "types/props";
-import { getFormattedDate } from "@utils/date-helpers";
+import { formatCardDate } from "@utils/date-helpers";
 import { stripHtmlTags } from "@utils/sanitize";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
-import {
-  getOptimalImageQuality,
-  getOptimalImageWidth,
-} from "@utils/image-quality";
-import { buildPictureSourceUrls } from "@utils/image-cache";
+import { CATEGORY_BADGE_COLOR } from "@utils/constants";
+import Image from "@components/ui/common/image";
 
 export default async function NewsRichCard({
   event,
@@ -19,33 +16,20 @@ export default async function NewsRichCard({
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
   const rawImage = event.imageUrl;
-  const formatted = getFormattedDate(event.startDate, event.endDate, locale);
-  const dateLabel = formatted.formattedEnd
-    ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
-    : formatted.formattedStart;
+  const { cardDate: dateLabel } = formatCardDate(
+    event.startDate,
+    event.endDate,
+    locale,
+  );
   const primaryCategory =
     event.categories && event.categories.length > 0
       ? { name: event.categories[0].name, slug: event.categories[0].slug }
       : undefined;
   const plainDescription = stripHtmlTags(event.description || "");
 
-  // Generate AVIF, WebP, and JPEG URLs for <picture> element
-  const imageQuality = getOptimalImageQuality({
-    isPriority: false,
-    isExternal: true,
-  });
-  const imageWidth = getOptimalImageWidth(variant === "horizontal" ? "list" : "card");
-  const sources = rawImage
-    ? buildPictureSourceUrls(rawImage, event.hash, {
-      width: imageWidth,
-      quality: imageQuality,
-    })
-    : null;
-
   if (variant === "horizontal") {
-    const horizontalSizes = "(max-width: 768px) 88vw, 192px";
     return (
-      <article className="card-elevated group w-full overflow-hidden">
+      <article className="relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group w-full">
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 p-4 sm:p-6 relative z-[1]">
           {numbered && (
             <div className="flex-shrink-0">
@@ -56,28 +40,20 @@ export default async function NewsRichCard({
           )}
 
           <div className="md:flex-shrink-0">
-            {sources ? (
-              <picture>
-                <source srcSet={sources.webp} type="image/webp" sizes={horizontalSizes} />
-                <source srcSet={sources.avif} type="image/avif" sizes={horizontalSizes} />
-                <img
-                  src={sources.fallback}
-                  alt={event.title}
-                  width={200}
-                  height={150}
-                  loading="lazy"
-                  decoding="async"
-                  sizes={horizontalSizes}
-                  className="aspect-[4/3] w-full md:w-48 object-cover rounded-lg transition-transform group-hover:scale-105"
-                />
-              </picture>
-            ) : (
-              <div className="aspect-[4/3] w-full md:w-48 bg-gradient-to-br from-foreground-strong to-border rounded-lg" />
-            )}
+            <div className="aspect-[4/3] w-full md:w-48 rounded-lg overflow-hidden bg-muted">
+              <Image
+                className="w-full h-full object-cover transition-transform group-hover:scale-[1.03]"
+                title={event.title}
+                image={rawImage}
+                alt={event.title}
+                context="list"
+                cacheKey={event.hash}
+              />
+            </div>
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-3 text-foreground-strong group-hover:text-primary transition-colors">
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-3 text-foreground-strong group-hover:text-primary/85 transition-colors">
               <PressableAnchor
                 href={`/e/${event.slug}`}
                 prefetch={false}
@@ -94,7 +70,7 @@ export default async function NewsRichCard({
                 <PressableAnchor
                   href={`/catalunya/${primaryCategory.slug}`}
                   prefetch={false}
-                  className="badge-primary"
+                  className={`inline-block text-[11px] font-semibold rounded-badge px-2 py-0.5 ${CATEGORY_BADGE_COLOR}`}
                   aria-label={t("viewCategory", { name: primaryCategory.name })}
                   variant="inline"
                 >
@@ -123,7 +99,7 @@ export default async function NewsRichCard({
               <PressableAnchor
                 href={`/e/${event.slug}`}
                 prefetch={false}
-                className="btn-primary text-xs sm:text-sm"
+                className="text-xs sm:text-sm font-semibold text-primary hover:text-primary/85 transition-colors"
                 aria-label={t("readMoreAria", { title: event.title })}
                 variant="inline"
               >
@@ -136,33 +112,21 @@ export default async function NewsRichCard({
     );
   }
 
-  const defaultSizes = "(max-width: 768px) 88vw, (max-width: 1280px) 70vw, 800px";
-
   return (
-    <article className="card-elevated group w-full overflow-hidden">
-      <div className="relative overflow-hidden">
-        {sources ? (
-          <picture>
-            <source srcSet={sources.webp} type="image/webp" sizes={defaultSizes} />
-            <source srcSet={sources.avif} type="image/avif" sizes={defaultSizes} />
-            <img
-              src={sources.fallback}
-              alt={event.title}
-              width={1200}
-              height={675}
-              loading="lazy"
-              decoding="async"
-              sizes={defaultSizes}
-              className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
-            />
-          </picture>
-        ) : (
-          <div className="aspect-[16/9] w-full bg-gradient-to-br from-foreground-strong to-border" />
-        )}
+    <article className="relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group w-full">
+      <div className="relative aspect-[3/2] overflow-hidden bg-muted">
+        <Image
+          className="w-full h-full object-cover transition-transform group-hover:scale-[1.03]"
+          title={event.title}
+          image={rawImage}
+          alt={event.title}
+          context="card"
+          cacheKey={event.hash}
+        />
       </div>
 
       <div className="p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-4 text-foreground-strong group-hover:text-primary transition-colors">
+        <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-4 text-foreground-strong group-hover:text-primary/85 transition-colors">
           <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
@@ -179,8 +143,8 @@ export default async function NewsRichCard({
             <PressableAnchor
               href={`/catalunya/${primaryCategory.slug}`}
               prefetch={false}
-              className="badge-primary"
-              aria-label={`Veure categoria ${primaryCategory.name}`}
+              className={`inline-block text-[11px] font-semibold rounded-badge px-2 py-0.5 ${CATEGORY_BADGE_COLOR}`}
+              aria-label={t("viewCategory", { name: primaryCategory.name })}
               variant="inline"
             >
               {primaryCategory.name}
@@ -208,7 +172,7 @@ export default async function NewsRichCard({
           <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
-            className="btn-primary text-xs sm:text-sm"
+            className="text-xs sm:text-sm font-semibold text-primary hover:text-primary/85 transition-colors"
             aria-label={t("readMoreAria", { title: event.title })}
             variant="inline"
           >

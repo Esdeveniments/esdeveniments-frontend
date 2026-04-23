@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Google Ads API Tool Design Document - Esdeveniments.cat</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #333; }
+h1 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+h2 { color: #333; margin-top: 30px; }
+.note { background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; margin: 20px 0; }
+.section { margin-bottom: 25px; }
+ul { margin: 10px 0; }
+li { margin: 5px 0; }
+.mockup { border: 2px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; background: #fafafa; }
+.mockup-header { background: #1a73e8; color: white; padding: 12px 20px; margin: -20px -20px 20px -20px; border-radius: 6px 6px 0 0; font-size: 18px; font-weight: bold; }
+.metrics { display: flex; gap: 20px; margin: 15px 0; }
+.metric-box { flex: 1; background: #e8f0fe; border: 1px solid #1a73e8; padding: 15px; text-align: center; border-radius: 4px; }
+.metric-label { font-weight: bold; color: #1a73e8; font-size: 14px; }
+.metric-value { font-size: 24px; margin-top: 5px; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #1a73e8; color: white; padding: 10px; text-align: left; }
+td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+tr:nth-child(even) { background: #f5f5f5; }
+.api-list { background: #f0f7ff; padding: 15px; border-left: 4px solid #1a73e8; margin: 15px 0; }
+</style>
+</head>
+<body>
+
+<h1>Google Ads API Tool Design Document</h1>
+
+<div class="section">
+<p><strong>Company Name:</strong> Esdeveniments.cat (operated by Albert Olivé)</p>
+<p><strong>Date:</strong> April 2026</p>
+<p><strong>MCC Account ID:</strong> 467-859-2752</p>
+</div>
+
+<h2>Business Model</h2>
+<div class="section">
+<p>Esdeveniments.cat is a Catalan cultural events discovery website built with Next.js. The website aggregates and displays local events across Catalonia, helping users find activities in their area. The site is monetized through Google AdSense display advertising.</p>
+<p>We want to use the Google Ads API <strong>exclusively for Keyword Planner access</strong> to:</p>
+<ul>
+<li>Research monthly search volumes for event-related keywords in Catalan, Spanish, and English</li>
+<li>Identify trending search terms related to local events and activities</li>
+<li>Optimize our content and SEO strategy based on actual search demand data</li>
+</ul>
+<p><strong>We do not run Google Ads campaigns.</strong> Our sole use of the API is the KeywordPlanService for SEO research purposes.</p>
+</div>
+
+<h2>Tool Access/Use</h2>
+<div class="section">
+<p>The tool is an <strong>internal-only command-line Python script</strong> used exclusively by the site owner/developer (Albert Olivé) for periodic keyword research. It is not externally accessible and has no web interface available to the public.</p>
+<ul>
+<li><strong>Users:</strong> 1 internal user (site owner/developer)</li>
+<li><strong>Access method:</strong> Command-line script run locally on developer machine</li>
+<li><strong>Frequency:</strong> Run manually, approximately 1-2 times per week</li>
+<li><strong>No external users</strong> will have access to the tool or its output data</li>
+</ul>
+</div>
+
+<h2>Tool Design</h2>
+<div class="section">
+<p>The tool is a Python script (<code>scripts/keyword-planner.py</code>) that:</p>
+<ol>
+<li>Accepts seed keywords as command-line arguments (e.g., "que fer avui", "agenda barcelona")</li>
+<li>Calls the Google Ads API KeywordPlanIdeaService to retrieve keyword suggestions, monthly search volumes, and competition levels</li>
+<li>Outputs results as a Markdown report saved locally to <code>data/seo-audits/</code></li>
+<li>Optionally outputs JSON for further analysis</li>
+</ol>
+<p><strong>No data is stored in any external database.</strong> Results are saved as local files only.</p>
+<p><strong>No campaign management or ad creation is performed.</strong></p>
+</div>
+
+<div class="api-list">
+<p><strong>API Services Called:</strong></p>
+<ul>
+<li><strong>KeywordPlanIdeaService</strong> — Generate keyword ideas with search volume metrics (<code>GenerateKeywordIdeas</code>)</li>
+<li><strong>KeywordPlanIdeaService</strong> — Get historical search volume data (<code>GenerateKeywordHistoricalMetrics</code>)</li>
+</ul>
+<p><strong>API Services NOT Used:</strong></p>
+<ul>
+<li>No CampaignService, AdGroupService, or any campaign management</li>
+<li>No BiddingStrategyService or budget management</li>
+<li>No ConversionTrackingService or remarketing</li>
+<li>No account creation or management for third parties</li>
+</ul>
+</div>
+
+<h2>Tool Mockups</h2>
+
+<div class="mockup">
+<div class="mockup-header">Keyword Planner Research Tool — esdeveniments.cat</div>
+
+<p><strong>Command-line usage:</strong></p>
+<pre style="background:#333;color:#0f0;padding:15px;border-radius:4px;overflow-x:auto;">
+$ python scripts/keyword-planner.py \
+    --seeds "que fer avui" "agenda barcelona" "events catalonia" \
+    --language ca,es \
+    --country ES \
+    --output data/seo-audits/keywords-2026-04.md
+
+🔑 Fetching keyword ideas for 3 seeds...
+   Language: ca, es | Country: ES
+
+📊 Results: 47 keyword ideas found
+
+💾 Report saved to data/seo-audits/keywords-2026-04.md
+</pre>
+
+<p style="margin-top:20px;"><strong>Sample output report:</strong></p>
+
+<table>
+<tr>
+<th>Keyword</th>
+<th>Avg. Monthly Searches</th>
+<th>Competition</th>
+<th>Top of Page Bid (low)</th>
+<th>Top of Page Bid (high)</th>
+</tr>
+<tr>
+<td>que fer avui barcelona</td>
+<td>12,100</td>
+<td>LOW</td>
+<td>€0.10</td>
+<td>€0.45</td>
+</tr>
+<tr>
+<td>agenda barcelona</td>
+<td>8,100</td>
+<td>MEDIUM</td>
+<td>€0.15</td>
+<td>€0.60</td>
+</tr>
+<tr>
+<td>events barcelona today</td>
+<td>5,400</td>
+<td>LOW</td>
+<td>€0.08</td>
+<td>€0.35</td>
+</tr>
+<tr>
+<td>que fer a girona</td>
+<td>2,900</td>
+<td>LOW</td>
+<td>€0.05</td>
+<td>€0.25</td>
+</tr>
+<tr>
+<td>activitats catalans avui</td>
+<td>1,600</td>
+<td>LOW</td>
+<td>€0.04</td>
+<td>€0.20</td>
+</tr>
+<tr>
+<td>festes majors catalunya</td>
+<td>1,300</td>
+<td>LOW</td>
+<td>€0.03</td>
+<td>€0.15</td>
+</tr>
+</table>
+
+<div class="metrics" style="margin-top: 25px;">
+<div class="metric-box">
+<div class="metric-label">Total Keywords</div>
+<div class="metric-value">47</div>
+</div>
+<div class="metric-box">
+<div class="metric-label">Avg. Monthly Volume</div>
+<div class="metric-value">4,580</div>
+</div>
+<div class="metric-box">
+<div class="metric-label">Low Competition</div>
+<div class="metric-value">38</div>
+</div>
+<div class="metric-box">
+<div class="metric-label">High Volume (>1K)</div>
+<div class="metric-value">12</div>
+</div>
+</div>
+</div>
+
+<h2>Data Handling & Privacy</h2>
+<div class="section">
+<ul>
+<li>No user data is collected or processed — the tool only queries aggregate keyword metrics</li>
+<li>No Google Ads account data from other companies is accessed</li>
+<li>API credentials (OAuth2 tokens) are stored as environment variables, never committed to source control</li>
+<li>The tool accesses only the MCC account owned by the developer (467-859-2752)</li>
+<li>Output reports are stored locally and not shared publicly</li>
+</ul>
+</div>
+
+<h2>Rate Limiting & Compliance</h2>
+<div class="section">
+<ul>
+<li>The tool is used manually 1-2 times per week, generating minimal API traffic</li>
+<li>Each run makes approximately 1-5 API calls (one per seed keyword batch)</li>
+<li>Built-in rate limiting with delays between requests</li>
+<li>Full compliance with Google Ads API Terms of Service and Required Minimum Functionality policies</li>
+</ul>
+</div>
+
+<h2>Architecture Diagram</h2>
+<div class="mockup" style="text-align: center; font-family: monospace; font-size: 14px;">
+<pre>
+┌─────────────────┐     ┌──────────────────────┐     ┌──────────────┐
+│                 │     │                      │     │              │
+│  Developer      │────▶│  Python CLI Script   │────▶│  Google Ads  │
+│  (local machine)│     │  keyword-planner.py  │     │  API         │
+│                 │     │                      │     │  (Keyword    │
+└─────────────────┘     └──────────┬───────────┘     │   Planner)   │
+                                   │                 │              │
+                                   ▼                 └──────────────┘
+                        ┌──────────────────────┐
+                        │                      │
+                        │  Local Markdown/JSON  │
+                        │  Report Files         │
+                        │  data/seo-audits/     │
+                        │                      │
+                        └──────────────────────┘
+</pre>
+</div>
+
+</body>
+</html>

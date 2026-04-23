@@ -1,0 +1,449 @@
+name: Deploy to Coolify
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".claude/**"
+      - ".github/skills/**"
+      - ".vscode/**"
+      - ".cursor/**"
+      - "LICENSE"
+  workflow_dispatch:
+    inputs:
+      skip_e2e:
+        description: "Skip E2E tests (faster deploy)"
+        type: boolean
+        default: false
+      skip_tests:
+        description: "Skip ALL tests (lint + typecheck still run)"
+        type: boolean
+        default: false
+      skip_ci:
+        description: "Skip entire CI — deploy immediately (emergency only)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-coolify-${{ github.ref }}
+  # Cancel superseded deploys. Coolify has a known stuck-build bug class
+  # (coollabsio/coolify #5850, #6414, #6579) where overlapping Next.js
+  # builds on the app server can wedge one build "In Progress" forever,
+  # which in turn blocks Coolify's automatic Docker cleanup from running
+  # and fills the disk. Cancelling in-flight deploys on a newer push is
+  # safer than queueing them.
+  cancel-in-progress: true
+
+# Explicit least-privilege permissions (security best practice)
+permissions:
+  contents: read
+  actions: read
+
+env:
+  NODE_VERSION: "22"
+  IS_PRODUCTION: ${{ github.ref_name == 'main' }}
+  DEPLOY_URL: ${{ github.ref_name == 'main' && 'https://www.esdeveniments.cat' || 'https://staging.esdeveniments.cat' }}
+
+jobs:
+  # -----------------------------------------------------------------
+  # Quality gate: lint + typecheck (always runs unless skip_ci)
+  # -----------------------------------------------------------------
+  quality:
+    name: Lint & Typecheck
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_ci) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Type check
+        run: yarn typecheck
+
+  # -----------------------------------------------------------------
+  # Unit tests (skipped when skip_tests or skip_ci)
+  # -----------------------------------------------------------------
+  unit-tests:
+    name: Unit tests
+    if: >-
+      !(github.event_name == 'workflow_dispatch' &&
+        (inputs.skip_tests || inputs.skip_ci))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run unit tests
+        env:
+          CI: true
+        run: yarn test
+
+  # -----------------------------------------------------------------
+  # Build + E2E tests (skipped when skip_e2e, skip_tests, or skip_ci)
+  # -----------------------------------------------------------------
+  e2e-tests:
+    name: Build & E2E tests
+    if: >-
+      github.ref_name == 'main' &&
+      !(github.event_name == 'workflow_dispatch' &&
+        (inputs.skip_e2e || inputs.skip_tests || inputs.skip_ci))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate service worker and robots.txt (prebuild)
+        env:
+          BUILD_VERSION: ${{ github.sha }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+        run: yarn prebuild
+
+      - name: Build Next.js application
+        env:
+          NODE_ENV: production
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: yarn build
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Start Next.js server (background)
+        run: |
+          yarn start &
+          echo $! > .next-server.pid
+          echo "Started Next.js server with PID $(cat .next-server.pid)"
+        env:
+          NODE_ENV: production
+          PORT: 3000
+          E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_E2E_TEST_MODE: "1"
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Sanity check robots.txt
+        run: |
+          set -euo pipefail
+          robots="$(curl -fsS http://localhost:3000/robots.txt)"
+          echo "$robots" | grep -F -i "allow: /" > /dev/null
+          echo "$robots" | grep -F -i "disallow: /_next/" > /dev/null
+          echo "$robots" | grep -F -i "disallow: /api/" > /dev/null
+          echo "$robots" | grep -F -i "user-agent: gptbot" > /dev/null
+          echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/server-static-sitemap.xml" > /dev/null
+          echo "robots.txt looks correct"
+
+      - name: Run E2E tests
+        run: yarn test:e2e -c playwright.remote.config.ts --workers=2
+        env:
+          CI: true
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+
+      - name: Stop Next.js server
+        if: always()
+        run: |
+          if [ -f .next-server.pid ]; then
+            kill $(cat .next-server.pid) || true
+            rm .next-server.pid
+          fi
+          pkill -f "yarn start" || true
+
+      - name: Upload Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-deploy
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # -----------------------------------------------------------------
+  # Deploy to Coolify (waits for whichever CI jobs actually ran)
+  # -----------------------------------------------------------------
+  deploy:
+    name: Deploy to Coolify
+    runs-on: ubuntu-latest
+    needs: [quality, unit-tests, e2e-tests]
+    # Run deploy if all non-skipped jobs succeeded.
+    # `always()` lets us proceed when skipped jobs report as skipped (not failed).
+    if: >-
+      always() &&
+      (needs.quality.result == 'success' || needs.quality.result == 'skipped') &&
+      (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'skipped') &&
+      (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
+    # 15 min = 10 min MAX_WAIT for Coolify build (realistic for Next.js + Docker)
+    # + ~5 min for webhook trigger, smoke tests, and GitHub runner overhead.
+    timeout-minutes: 15
+    # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
+    environment:
+      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      url: ${{ env.DEPLOY_URL }}
+
+    steps:
+      - name: Deployment mode summary
+        run: |
+          echo "## Deployment Mode" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Quality (lint+typecheck) | ${{ needs.quality.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "**Trigger:** Manual dispatch" >> $GITHUB_STEP_SUMMARY
+            echo "- skip_e2e: ${{ inputs.skip_e2e }}" >> $GITHUB_STEP_SUMMARY
+            echo "- skip_tests: ${{ inputs.skip_tests }}" >> $GITHUB_STEP_SUMMARY
+            echo "- skip_ci: ${{ inputs.skip_ci }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Trigger:** Push to ${{ github.ref_name }} ($([ '${{ github.ref_name }}' = 'main' ] && echo 'full CI' || echo 'lint+typecheck+unit'))" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Trigger Coolify deployment
+        env:
+          COOLIFY_TOKEN: ${{ github.ref_name == 'main' && secrets.COOLIFY_TOKEN || secrets.COOLIFY_TOKEN_STAGING }}
+          COOLIFY_WEBHOOK_URL: ${{ github.ref_name == 'main' && secrets.COOLIFY_WEBHOOK_URL || secrets.COOLIFY_WEBHOOK_URL_STAGING }}
+        run: |
+          if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
+            echo "::error::COOLIFY_WEBHOOK_URL secret is required"
+            exit 1
+          fi
+
+          # Trigger deployment via Coolify webhook with retries
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            HTTP_CODE=$(curl -s -o /tmp/coolify-response.json -w "%{http_code}" \
+              -X POST "$COOLIFY_WEBHOOK_URL" \
+              -H "Authorization: Bearer $COOLIFY_TOKEN" \
+              -H "Content-Type: application/json" \
+              --max-time 30) || HTTP_CODE="000"
+
+            echo "Attempt $attempt: Coolify API response HTTP $HTTP_CODE"
+
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              echo "Deployment triggered successfully"
+              exit 0
+            fi
+
+            if [ "$attempt" -lt "$MAX_RETRIES" ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            fi
+          done
+
+          echo "::error::Coolify deployment trigger failed after $MAX_RETRIES attempts (last HTTP $HTTP_CODE)"
+          cat /tmp/coolify-response.json 2>/dev/null || true
+          exit 1
+
+      - name: Wait for Coolify deployment to complete
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          EXPECTED_VERSION: ${{ github.sha }}
+          SITE_URL: ${{ env.DEPLOY_URL }}
+        run: |
+          echo "Waiting for Coolify deployment..."
+          # Poll health endpoint until the new container is live. Requires
+          # BUILD_VERSION=$SOURCE_COMMIT to be set as a build variable in the
+          # Coolify dashboard → Application → Environment so /api/health
+          # exposes the running commit SHA.
+          #
+          # Next.js + Docker builds routinely take 5-8 minutes on Coolify.
+          # A short MAX_WAIT produced silent false-positive "successes" when
+          # the workflow exited before the container actually swapped.
+          MAX_WAIT=600  # 10 minutes — realistic upper bound for full rebuild
+          INTERVAL=10
+          ELAPSED=0
+          DEPLOY_CONFIRMED=0
+
+          # Initial wait for Coolify to start building
+          sleep 15
+          ELAPSED=15
+
+          # Record the current live version before deployment
+          PRE_DEPLOY_VERSION=$(curl -s --max-time 5 \
+            "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}" \
+            | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || PRE_DEPLOY_VERSION=""
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            RESPONSE=$(curl -s --max-time 5 \
+              "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}") || RESPONSE=""
+
+            LIVE_VERSION=$(echo "$RESPONSE" | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || LIVE_VERSION=""
+            HTTP_OK=$(echo "$RESPONSE" | grep -o '"status":"healthy"') || HTTP_OK=""
+
+            # Only accept exact version match. A "just became non-pre-deploy
+            # and non-expected" heuristic looks like it means "superseded by a
+            # later push", but it also fires when a PRIOR failed/slow build
+            # retroactively propagates mid-poll — which masks real failures of
+            # OUR commit. Require exact SHA match; if concurrent pushes caused
+            # an earlier workflow to never see its exact SHA, that workflow
+            # will fail, which is recoverable. False successes are not.
+            if [ "$LIVE_VERSION" = "$EXPECTED_VERSION" ]; then
+              echo "New revision ${EXPECTED_VERSION:0:7} is live after ${ELAPSED}s"
+              DEPLOY_CONFIRMED=1
+              break
+            fi
+
+            echo "Waiting... live=${LIVE_VERSION:-unknown} (${ELAPSED}s elapsed)"
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          # Post-loop: if we never confirmed a deploy, fail with a specific
+          # diagnosis. Previous behavior exited green after 60s via a "last
+          # resort" branch that incorrectly conflated "build still running"
+          # with "BUILD_VERSION not configured", hiding real deploy failures.
+          if [ "$DEPLOY_CONFIRMED" -ne 1 ]; then
+            if [ -z "$HTTP_OK" ]; then
+              echo "::error::Health endpoint unresponsive within ${MAX_WAIT}s"
+            elif [ -z "$LIVE_VERSION" ] || [ "$LIVE_VERSION" = "unknown" ]; then
+              echo "::error::Health endpoint is up but did not expose a buildVersion. Check that BUILD_VERSION=\$SOURCE_COMMIT is set as a build variable in Coolify → Application → Environment."
+            elif [ "$LIVE_VERSION" = "$PRE_DEPLOY_VERSION" ]; then
+              echo "::error::Container did NOT swap within ${MAX_WAIT}s. live=${LIVE_VERSION:0:7} expected=${EXPECTED_VERSION:0:7}. Coolify build may still be running or may have failed — check the Coolify dashboard. If builds legitimately take longer, bump MAX_WAIT in this workflow."
+            else
+              echo "::error::Container swapped but serving the wrong commit within ${MAX_WAIT}s. live=${LIVE_VERSION:0:7} expected=${EXPECTED_VERSION:0:7}. Possible causes: (1) a rapid subsequent push caused Coolify to process webhooks out of order; (2) a prior failed build retried mid-poll. Re-run the workflow or push again."
+            fi
+            exit 1
+          fi
+
+      - name: Purge Cloudflare CDN cache
+        if: github.ref_name == 'main'
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_ZONE_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN not set — skipping CDN purge"
+            exit 0
+          fi
+
+          echo "Purging Cloudflare cache to prevent stale chunk references..."
+          HTTP_CODE=$(curl -s -o /tmp/cf-purge.json -w "%{http_code}" \
+            -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' \
+            --max-time 10) || HTTP_CODE="000"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Cloudflare cache purged successfully"
+          else
+            echo "::warning::Cloudflare purge returned HTTP $HTTP_CODE (non-fatal)"
+            cat /tmp/cf-purge.json 2>/dev/null || true
+          fi
+
+      - name: Post-deploy smoke tests
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          SITE_URL: ${{ env.DEPLOY_URL }}
+        run: |
+          FAILED=0
+
+          # Critical smoke tests — these MUST pass
+          echo "Running critical smoke tests..."
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SITE_URL}/") || HTTP_CODE="000"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Homepage: OK"
+          else
+            echo "::error::Homepage returned HTTP $HTTP_CODE"
+            FAILED=1
+          fi
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SITE_URL}/barcelona") || HTTP_CODE="000"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Barcelona page: OK"
+          else
+            echo "::error::Barcelona page returned HTTP $HTTP_CODE"
+            FAILED=1
+          fi
+
+          curl -sf --max-time 5 "${SITE_URL}/robots.txt" | grep -q "Sitemap:" && echo "robots.txt: OK" || { echo "::error::robots.txt missing Sitemap directive"; FAILED=1; }
+
+          # Health check with details
+          echo ""
+          echo "Checking deployment health..."
+          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 5 "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
+          if [ "$HTTP_CODE" = "200" ] && [ -f /tmp/health.json ]; then
+            echo "Health endpoint: OK"
+            CACHE=$(jq -r '.cache.strategy // "unknown"' /tmp/health.json)
+            echo "Cache strategy: $CACHE"
+            if [ "$CACHE" != "redis" ]; then
+              echo "::warning::Redis cache not connected (strategy: $CACHE)"
+            fi
+          else
+            echo "::error::Health endpoint returned HTTP $HTTP_CODE"
+            FAILED=1
+          fi
+
+          # Summary
+          echo ""
+          echo "## Post-Deploy Smoke Tests" >> $GITHUB_STEP_SUMMARY
+          if [ $FAILED -eq 0 ]; then
+            echo "All critical smoke tests passed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Some smoke tests failed — check logs above.**" >> $GITHUB_STEP_SUMMARY
+            echo "::error::Post-deploy smoke tests failed — deployment may be broken"
+            exit 1
+          fi
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "## Deployment Result" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Site:** ${{ env.DEPLOY_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.ref_name == 'main' && 'production' || 'staging' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY

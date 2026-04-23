@@ -16,7 +16,10 @@ test.describe("Localized SEO (hreflang + JSON-LD)", () => {
       timeout: 90000,
     });
 
-    const alternates = page.locator('head link[rel="alternate"]');
+    // With PPR/cacheComponents, async generateMetadata delivers alternate links
+    // via RSC flight data into the body (React 19 doesn't auto-hoist link[rel=alternate]
+    // to <head>). Check the full DOM — crawlers execute JS and see these.
+    const alternates = page.locator('link[rel="alternate"]');
     await expect(alternates.first()).toBeAttached({
       timeout: process.env.CI ? 90000 : 60000,
     });

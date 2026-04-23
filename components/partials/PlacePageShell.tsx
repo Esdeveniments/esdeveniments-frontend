@@ -5,6 +5,7 @@ import HybridEventsList from "@components/ui/hybridEventsList";
 import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
+import { UrlFiltersProvider } from "@components/context/UrlFiltersContext";
 import FilterLoadingGate from "@components/ui/common/FilterLoadingGate";
 import type { PlacePageShellProps } from "types/props";
 import { getTranslations } from "next-intl/server";
@@ -24,6 +25,9 @@ import {
 } from "@utils/breadcrumb-helpers";
 import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
+import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
+import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 
 // Lazy load below-the-fold client component via client component wrapper
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -164,26 +168,28 @@ export default async function PlacePageShell({
 
   return (
     <FilterLoadingProvider>
-      <Suspense fallback={<EventsListSkeleton />}>
-        <PlacePageContent
-          shellDataPromise={shellDataPromise}
-          eventsPromise={eventsPromise}
-          place={place}
-          category={category}
-          date={date}
-          categories={categories}
-          webPageSchemaFactory={webPageSchemaFactory}
-        />
-      </Suspense>
+      <UrlFiltersProvider categories={categories}>
+        <Suspense fallback={<EventsListSkeleton />}>
+          <PlacePageContent
+            shellDataPromise={shellDataPromise}
+            eventsPromise={eventsPromise}
+            place={place}
+            category={category}
+            date={date}
+            categories={categories}
+            webPageSchemaFactory={webPageSchemaFactory}
+          />
+        </Suspense>
 
-      {/* Client Interactive Layer - Lazy loaded (filters, below fold) */}
-      <Suspense fallback={null}>
-        <LazyClientInteractiveLayer
-          categories={categories}
-          placeTypeLabel={placeTypeLabel}
-          filterLabels={filterLabels}
-        />
-      </Suspense>
+        {/* Client Interactive Layer - Lazy loaded (filters, below fold) */}
+        <Suspense fallback={null}>
+          <LazyClientInteractiveLayer
+            categories={categories}
+            placeTypeLabel={placeTypeLabel}
+            filterLabels={filterLabels}
+          />
+        </Suspense>
+      </UrlFiltersProvider>
     </FilterLoadingProvider>
   );
 }
@@ -211,11 +217,17 @@ export async function ClientLayerWithPlaceLabel({
   const { placeTypeLabel } = await shellDataPromise;
 
   return (
-    <LazyClientInteractiveLayer
-      categories={categories}
-      placeTypeLabel={placeTypeLabel}
-      filterLabels={filterLabels}
-    />
+    <FilterLoadingProvider>
+      <UrlFiltersProvider categories={categories}>
+        <Suspense fallback={null}>
+          <LazyClientInteractiveLayer
+            categories={categories}
+            placeTypeLabel={placeTypeLabel}
+            filterLabels={filterLabels}
+          />
+        </Suspense>
+      </UrlFiltersProvider>
+    </FilterLoadingProvider>
   );
 }
 
@@ -244,6 +256,21 @@ async function PlacePageContent({
   const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
   const tByDates = await getTranslations("Config.ByDates");
   const locale = await getLocaleSafely();
+
+  // Preload LCP image — first real event card image.
+  // Uses responsive srcSet so the browser picks the right width for the viewport.
+  const firstRealEvent = events.find(isEventSummaryResponseDTO);
+  const lcpSources = firstRealEvent?.imageUrl
+    ? buildResponsivePictureSourceUrls(
+      firstRealEvent.imageUrl,
+      firstRealEvent.hash || firstRealEvent.updatedAt,
+      {
+        quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
+      },
+      getResponsiveWidths("list")
+    )
+    : null;
+  const lcpSizes = getOptimalImageSizes("list");
 
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
@@ -281,6 +308,18 @@ async function PlacePageContent({
 
   return (
     <>
+      {/* Preload LCP card image for faster Largest Contentful Paint */}
+      {lcpSources && (
+        <link
+          rel="preload"
+          as="image"
+          imageSrcSet={lcpSources.webpSrcSet}
+          imageSizes={lcpSizes}
+          type="image/webp"
+          fetchPriority="high"
+        />
+      )}
+
       {webPageSchema && (
         <JsonLdServer id="webpage-schema" data={webPageSchema} />
       )}

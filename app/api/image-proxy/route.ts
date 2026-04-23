@@ -12,7 +12,7 @@ import {
   normalizeExternalImageUrl,
   isLegacyFileHandler,
 } from "@utils/image-cache";
-// Dynamic import to avoid Turbopack bundling issues with native modules in Lambda
+// Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
 const MAX_BYTES = 5_000_000; // 5MB guard
@@ -74,7 +74,7 @@ function buildPlaceholder(status = 502) {
     status,
     headers: {
       // Do not cache fallbacks: if we return an error once, we don't want
-      // CloudFront/Service Worker to keep serving it after the upstream recovers.
+      // CDN/Service Worker to keep serving it after the upstream recovers.
       "Cache-Control": "no-store, max-age=0",
       "X-Image-Proxy-Fallback": "1",
     },
@@ -189,7 +189,7 @@ function hasStrongCacheKey(upstreamUrl: string): boolean {
 /**
  * Strip our cache-busting `?v=` param before fetching from upstream.
  * Some external servers reject URLs with unexpected query params.
- * CloudFront still caches by the full proxy URL (with ?v=), so cache-busting
+ * The CDN still caches by the full proxy URL (with ?v=), so cache-busting
  * works on our side without affecting upstream servers.
  */
 function stripCacheKeyForUpstream(imageUrl: string): string {
@@ -260,7 +260,7 @@ export async function GET(request: Request) {
     : baseQuality;
   // Determine output format:
   // 1. Explicit format param takes priority (avif, webp, jpeg, png)
-  // 2. Falls back to Accept header (but CloudFront may not forward it)
+  // 2. Falls back to Accept header (CDN may not forward it)
   // 3. Defaults to source format or JPEG
   const formatParam = url.searchParams.get("format")?.toLowerCase();
   const acceptHeader = request.headers.get("accept") || "";
@@ -307,7 +307,12 @@ export async function GET(request: Request) {
   for (const candidate of candidates) {
     try {
       const response = await fetchWithTimeout(candidate);
-      if (!response.ok) continue;
+      if (!response.ok) {
+        console.error(
+          `[image-proxy] Upstream returned ${response.status} for ${candidate.slice(0, 200)}`,
+        );
+        continue;
+      }
 
       const contentLength = Number(response.headers.get("content-length"));
       if (!Number.isNaN(contentLength) && contentLength > MAX_BYTES) {
@@ -373,7 +378,7 @@ export async function GET(request: Request) {
       }
 
       // Process image with Sharp
-      // Lambda: eval("require") bypasses Turbopack's module mangling
+      // eval("require") bypasses Turbopack's module mangling for native modules
       try {
         const sharp = eval("require")("sharp") as typeof import("sharp");
         let sharpInstance: Sharp = sharp(imageBuffer);
@@ -461,7 +466,14 @@ export async function GET(request: Request) {
           sharpError instanceof Error ? sharpError.message : String(sharpError);
         console.error("[image-proxy] Sharp processing failed:", errorMessage);
 
-        if (process.env.NODE_ENV === "production") {
+        // On Vercel, Sharp is not installed (expected) — skip Sentry.
+        // In Docker/Coolify, Sharp is installed via Dockerfile — always report
+        // so we catch regressions like the Feb 2026 incident (4 days of silent fallback).
+        // VERCEL_ENV is set by Vercel to "production"|"preview"|"development";
+        // it's undefined in Docker/Coolify.
+        const isVercel = !!process.env.VERCEL_ENV;
+
+        if (process.env.NODE_ENV === "production" && !isVercel) {
           Sentry.captureException(sharpError, {
             tags: { route: "/api/image-proxy", stage: "sharp-processing" },
           });
@@ -486,13 +498,17 @@ export async function GET(request: Request) {
         });
       }
     } catch (error) {
-      if (process.env.NODE_ENV === "production") {
-        Sentry.captureException(error, {
-          tags: { route: "/api/image-proxy", candidate },
-        });
-      }
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`[image-proxy] Fetch/process failed for ${candidate}:`, msg);
+      // Don't report to Sentry — these are external broken images (404, timeout,
+      // DNS failure, TLS errors), not bugs in our code. The console.error above
+      // is sufficient for debugging. Sharp processing failures are reported
+      // separately in the inner catch block.
     }
   }
 
+  console.error(
+    `[image-proxy] All candidates exhausted for: ${rawTarget.slice(0, 200)}`,
+  );
   return buildPlaceholder();
 }

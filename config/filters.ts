@@ -31,7 +31,7 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
     getDisplayText: (state: FilterDisplayState) => {
       if (state.filters.category === DEFAULT_FILTER_VALUE) return undefined;
       const category = state.extraData?.categories?.find(
-        (cat) => cat.slug === state.filters.category
+        (cat) => cat.slug === state.filters.category,
       );
       return category?.name;
     },
@@ -44,14 +44,32 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
     defaultValue: DEFAULT_FILTER_VALUE,
     type: "date",
     isEnabled: (state: FilterDisplayState) =>
-      state.filters.byDate !== DEFAULT_FILTER_VALUE,
+      state.filters.byDate !== DEFAULT_FILTER_VALUE ||
+      Boolean(state.queryParams.from),
     getDisplayText: (state: FilterDisplayState) => {
+      // Calendar date takes precedence in display
+      if (state.queryParams.from) {
+        const fmtDate = (d: string) => {
+          const parts = d.split("-");
+          return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+        };
+        const from = fmtDate(state.queryParams.from);
+        const to = state.queryParams.to
+          ? fmtDate(state.queryParams.to)
+          : undefined;
+        if (to && to !== from) return `${from} - ${to}`;
+        return from;
+      }
       const byDate = BYDATES.find(
-        (item) => item.value === state.filters.byDate
+        (item) => item.value === state.filters.byDate,
       );
       return byDate?.labelKey;
     },
-    getRemovalChanges: () => ({ byDate: DEFAULT_FILTER_VALUE }),
+    getRemovalChanges: () => ({
+      byDate: DEFAULT_FILTER_VALUE,
+      from: undefined,
+      to: undefined,
+    }),
   },
 
   {
@@ -65,7 +83,7 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
       Boolean(state.queryParams.lat && state.queryParams.lon),
     getDisplayText: (state: FilterDisplayState) => {
       const hasLocation = Boolean(
-        state.queryParams.lat && state.queryParams.lon
+        state.queryParams.lat && state.queryParams.lon,
       );
       if (state.filters.distance !== 50 || hasLocation) {
         return `${state.filters.distance} km`;
@@ -78,6 +96,25 @@ export const FILTER_CONFIGURATIONS: FilterConfig[] = [
       lon: undefined,
     }),
   },
+
+  // TODO: Re-enable price filter when backend supports the `type` query param.
+  // Currently the API ignores `type=FREE|PAID` (returns same results).
+  // All plumbing (state, URL parsing, API forwarding) is in place —
+  // just uncomment this config once the backend filters by event type.
+  // {
+  //   key: "price",
+  //   displayName: "price",
+  //   defaultValue: DEFAULT_FILTER_VALUE,
+  //   type: "price",
+  //   isEnabled: (state: FilterDisplayState) =>
+  //     state.filters.price !== DEFAULT_FILTER_VALUE,
+  //   getDisplayText: (state: FilterDisplayState) => {
+  //     if (state.filters.price === DEFAULT_FILTER_VALUE) return undefined;
+  //     // Return raw value; FiltersClient translates via labels
+  //     return state.filters.price;
+  //   },
+  //   getRemovalChanges: () => ({ price: undefined }),
+  // },
 
   {
     key: "searchTerm",

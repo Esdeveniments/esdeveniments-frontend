@@ -9,7 +9,7 @@ import type {
  * Lightweight in-memory rate limiter for API routes.
  *
  * Uses a sliding-window counter per IP. Safe for single-instance deployments
- * (Lambda / single container). For multi-instance, move to Redis or DynamoDB.
+ * (single container). For multi-instance, move to Redis.
  *
  * Memory is bounded: entries expire after `windowMs` and are lazily pruned
  * every `PRUNE_INTERVAL_MS` (default 60s).
@@ -26,7 +26,7 @@ const PRUNE_INTERVAL_MS = 60_000;
 /**
  * Extract client IP from request headers.
  *
- * Prefer x-real-ip (set by trusted proxy like CloudFront/ALB).
+ * Prefer x-real-ip (set by trusted reverse proxy like Traefik/Cloudflare).
  * Fall back to the LAST entry in x-forwarded-for, which is the one
  * appended by the outermost trusted proxy (the first entry is
  * client-controlled and can be spoofed to bypass rate limiting).

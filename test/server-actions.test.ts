@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createEventAction } from "../app/publica/actions";
-import { editEvent } from "../app/e/[eventId]/edita/actions";
+import { createEventAction } from "../app/[locale]/publica/actions";
+import { editEvent } from "../app/[locale]/e/[eventId]/edita/actions";
 import type { EventCreateRequestDTO, EventUpdateRequestDTO } from "types/api/event";
 import type { EventDetailResponseDTO } from "types/api/event";
 

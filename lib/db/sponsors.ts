@@ -11,7 +11,8 @@ import "server-only";
  */
 
 import { captureException } from "@sentry/nextjs";
-import { isDbConfigured, execute, ensureSchema } from "./turso";
+import { isDbConfigured, execute } from "./turso";
+import { ensureSchema } from "./turso-schema";
 import { createCache, createKeyedCache } from "@lib/api/cache";
 import { MS_PER_DAY } from "@utils/constants";
 import type {

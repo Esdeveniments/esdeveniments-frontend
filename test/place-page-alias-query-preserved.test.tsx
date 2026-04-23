@@ -106,7 +106,7 @@ vi.mock("@utils/place-alias-or-invalid-redirect", () => {
   };
 });
 
-import Page from "app/[place]/page";
+import { PlacePageGate } from "app/[locale]/[place]/page";
 import { redirect } from "next/navigation";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
 
@@ -128,11 +128,11 @@ describe("/[place] alias redirects preserve query", () => {
       return "/ca/barcelona";
     });
 
-    await expect(
-      Page({
-        params: Promise.resolve({ place: "bcn" }),
-      })
-    ).rejects.toThrow("NEXT_REDIRECT");
+    // Call the async gate directly — the outer Page component is now sync
+    // (use(params) + Suspense) and the redirect logic lives inside the gate.
+    await expect(PlacePageGate({ place: "bcn" })).rejects.toThrow(
+      "NEXT_REDIRECT"
+    );
 
     expect(redirectHelperMock).toHaveBeenCalledTimes(1);
     expect(redirectMock).toHaveBeenCalledWith("/ca/barcelona");

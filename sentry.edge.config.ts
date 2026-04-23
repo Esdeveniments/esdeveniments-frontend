@@ -6,7 +6,6 @@ import { init } from "@sentry/nextjs";
 import type { EdgeOptions } from "@sentry/nextjs";
 import {
   beforeSendEdge,
-  beforeSendMetric,
   SENTRY_IGNORE_ERRORS,
 } from "@utils/sentry-helpers";
 
@@ -29,10 +28,6 @@ if (process.env.NODE_ENV === "production") {
     ignoreErrors: SENTRY_IGNORE_ERRORS,
     // Errors-only: do not send console logs as Sentry logs.
     enableLogs: false,
-    // Metrics: automatically enabled in v10.25.0+ (no explicit enableMetrics needed)
-    // Use Sentry.metrics.count(), Sentry.metrics.gauge(), Sentry.metrics.distribution()
-    // Filter and sanitize metrics before sending (removes sensitive data from attributes)
-    beforeSendMetric,
     // Filter and sanitize events before sending (removes sensitive data, filters non-critical errors)
     beforeSend: beforeSendEdge,
   };

@@ -1,0 +1,275 @@
+import { insertAds } from "@lib/api/events";
+import { Suspense, use } from "react";
+import type { JSX } from "react";
+import { fetchCategories } from "@lib/api/categories";
+import { getPlaceTypeAndLabelCached, formatPlaceName } from "@utils/helpers";
+import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
+import { generatePagesData } from "@components/partials/generatePagesData";
+import {
+  buildPageMeta,
+  generateItemListStructuredData,
+  generateWebPageSchema,
+} from "@components/partials/seo-meta";
+import type {
+  PlaceStaticPathParams,
+  PlaceTypeAndLabel,
+  PageData,
+} from "types/common";
+import type { CategorySummaryResponseDTO } from "types/api/category";
+import type { FetchEventsParams } from "types/event";
+import PlacePageShell from "@components/partials/PlacePageShell";
+import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
+import {
+  validatePlaceOrThrow,
+  validatePlaceForMetadata,
+} from "@utils/route-validation";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { fetchPlaceBySlug } from "@lib/api/places";
+import { redirect, notFound } from "next/navigation";
+import type { PlacePageEventsResult } from "types/props";
+import { twoWeeksDefault } from "@lib/dates";
+import { siteUrl } from "@config/index";
+import { getTranslations } from "next-intl/server";
+import { locale as rootLocale } from "next/root-params";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { addLocalizedDateFields } from "@utils/mappers/event";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+
+// Note: This page is fully dynamic (on-demand ISR). Server renders canonical, query-agnostic HTML.
+// All query filters (search, distance, lat, lon) are handled client-side.
+// No generateStaticParams — all place pages are rendered on first request and cached.
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<PlaceStaticPathParams>;
+}) {
+  const { place } = await params;
+
+  const validation = validatePlaceForMetadata(place);
+  if (!validation.isValid) {
+    return validation.fallbackMetadata;
+  }
+
+  const locale = (await rootLocale()) as AppLocale;
+
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+    place
+  );
+  const pageData: PageData = await generatePagesData({
+    place,
+    byDate: "",
+    placeTypeLabel,
+    locale,
+  });
+  return buildPageMeta({
+    title: pageData.metaTitle,
+    description: pageData.metaDescription,
+    canonical: pageData.canonical,
+    locale,
+  });
+}
+
+// Sync page component: unwraps params with use() and immediately returns a
+// Suspense boundary so the static shell (layout) can flush before any async
+// work. All async logic — locale, validation, categories, alias/404 redirect,
+// shell data, and events fetch — lives inside PlacePageGate and streams in.
+export default function Page({
+  params,
+}: {
+  params: Promise<PlaceStaticPathParams>;
+}) {
+  const { place } = use(params);
+
+  // Minimal SEO-safe fallback: if the streamed gate fails (broken env,
+  // Suspense error, etc.) crawlers still see an h1 derived from the slug.
+  // This mirrors the homepage's HomeStaticFallback pattern.
+  const placeLabel = formatPlaceName(place);
+
+  return (
+    <Suspense
+      fallback={<h1 className="sr-only">{placeLabel}</h1>}
+    >
+      <PlacePageGate place={place} />
+    </Suspense>
+  );
+}
+
+export async function PlacePageGate({ place }: { place: string }): Promise<JSX.Element> {
+  const locale = (await rootLocale()) as AppLocale;
+
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
+    notFound();
+  }
+
+  const categoriesPromise = fetchCategories().catch((error) => {
+    console.error("Error fetching categories:", error);
+    return [] as CategorySummaryResponseDTO[];
+  });
+  const placeShellDataPromise = (async () => {
+    try {
+      const placeTypeLabel: PlaceTypeAndLabel =
+        await getPlaceTypeAndLabelCached(place);
+      const pageData: PageData = await generatePagesData({
+        place,
+        byDate: "",
+        placeTypeLabel,
+        locale,
+      });
+      return { placeTypeLabel, pageData };
+    } catch (error) {
+      console.error("Place page: unable to build shell data", error);
+      // Fetch translations only on error path (avoids blocking happy path)
+      const t = await getTranslations({ locale, namespace: "App.Publish" });
+      return await buildFallbackPlaceShellData(place, t("noEventsFound"));
+    }
+  })();
+
+  const eventsPromise = buildPlaceEventsPromise({ place, locale });
+
+  // Await categories for late existence check only
+  const categories = await categoriesPromise;
+
+  // Late existence check to preserve UX without creating an enumeration oracle
+  // Note: We pass empty searchParams to keep pages static (ISR-compatible).
+  // Query params are not preserved on alias redirects (rare edge case).
+  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
+    place,
+    locale,
+    rawSearchParams: {},
+    buildTargetPath: (alias) => `/${alias}`,
+    buildFallbackUrlForInvalidPlace: () =>
+      buildFallbackUrlForInvalidPlace({
+        rawSearchParams: {},
+      }),
+    fetchPlaceBySlug,
+  });
+  if (placeRedirectUrl) {
+    redirect(placeRedirectUrl);
+  }
+
+  return (
+    <PlacePageShell
+      eventsPromise={eventsPromise}
+      shellDataPromise={placeShellDataPromise}
+      place={place}
+      categories={categories}
+      webPageSchemaFactory={({ placeTypeLabel, pageData }) =>
+        generateWebPageSchema({
+          title: pageData.title,
+          description: pageData.metaDescription,
+          url: pageData.canonical,
+          locale,
+          // SEO: For city pages, include parent region (comarca) relationship
+          ...(placeTypeLabel.regionLabel &&
+            placeTypeLabel.regionSlug && {
+            containedInPlace: {
+              name: placeTypeLabel.regionLabel,
+              url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
+            },
+          }),
+        })
+      }
+    />
+  );
+}
+
+async function buildFallbackPlaceShellData(
+  place: string,
+  notFoundDescription: string
+): Promise<{
+  placeTypeLabel: PlaceTypeAndLabel;
+  pageData: PageData;
+}> {
+  const tFallback = await getTranslations("App.PlaceFallback");
+  const fallbackPlaceTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
+  const pathSegment = place === "catalunya" ? "" : `/${place}`;
+  const canonical = `${siteUrl}${pathSegment}`;
+  const titleSuffix =
+    place === "catalunya"
+      ? tFallback("catalunyaSuffix")
+      : tFallback("placeSuffix", { place });
+  const descriptionSuffix =
+    place === "catalunya" ? "" : tFallback("placeSuffix", { place });
+
+  return {
+    placeTypeLabel: fallbackPlaceTypeLabel,
+    pageData: {
+      title: tFallback("title", { suffix: titleSuffix }),
+      subTitle: tFallback("subTitle", { suffix: descriptionSuffix }),
+      metaTitle: tFallback("metaTitle", { suffix: titleSuffix }),
+      metaDescription: tFallback("metaDescription", {
+        suffix: descriptionSuffix,
+      }),
+      canonical,
+      notFoundTitle: tFallback("notFoundTitle"),
+      notFoundDescription,
+    },
+  };
+}
+
+export async function buildPlaceEventsPromise({
+  place,
+  locale = DEFAULT_LOCALE,
+}: {
+  place: string;
+  locale?: AppLocale;
+}): Promise<PlacePageEventsResult> {
+  const fetchParams: FetchEventsParams = {
+    page: 0,
+    size: 12,
+  };
+
+  if (place !== "catalunya") {
+    fetchParams.place = place;
+  }
+
+  const { eventsResponse, events, noEventsFound } =
+    await fetchEventsWithFallback({
+      place,
+      initialParams: fetchParams,
+      regionFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: true,
+      },
+      finalFallback: {
+        size: 7,
+        includeCategory: false,
+        includeDateRange: true,
+        dateRangeFactory: twoWeeksDefault,
+        place: undefined,
+      },
+    });
+  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
+
+  const localizedEvents = addLocalizedDateFields(events, locale);
+  const eventsWithAds = insertAds(localizedEvents);
+  const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
+  const pageUrl = toLocalizedUrl(place === "catalunya" ? "/" : `/${place}`, locale);
+  const structuredScripts =
+    validEvents.length > 0
+      ? [
+        {
+          id: `events-${place}`,
+          data: generateItemListStructuredData(
+            validEvents,
+            `Esdeveniments ${place}`,
+            undefined,
+            locale,
+            pageUrl
+          ),
+        },
+      ]
+      : undefined;
+
+  return {
+    events: eventsWithAds,
+    noEventsFound,
+    serverHasMore,
+    structuredScripts,
+  };
+}

@@ -26,7 +26,7 @@ const CitySummaryResponseDTOSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   postalCode: z.string(),
-  rssFeed: z.string().nullable(),
+  rssFeed: z.string().nullable().optional(),
   enabled: z.boolean(),
 });
 
@@ -172,6 +172,7 @@ export interface FetchEventsParams {
   byDate?: string; // Date filter
   from?: string; // Start date
   to?: string; // End date
+  type?: string; // Price filter: "FREE" | "PAID"
   isToday?: boolean;
   profileSlug?: string; // Filter events by profile/venue slug
   // Note: API expects 'term' for search queries
@@ -281,6 +282,8 @@ export interface EventNotificationsProps {
 
 export interface EventMapsProps {
   location: string;
+  cityName: string;
+  regionName: string;
 }
 
 export interface EventWeatherProps {
@@ -349,6 +352,9 @@ export interface UseEventsOptions {
   date?: string;
   search?: string; // Client-side search term filter
   distance?: string; // Client-side distance filter
+  price?: string; // Client-side price filter: "gratis" | "pagament"
+  from?: string; // Calendar date filter (YYYY-MM-DD)
+  to?: string; // Calendar date filter (YYYY-MM-DD)
   lat?: string; // Client-side latitude filter
   lon?: string; // Client-side longitude filter
   profileSlug?: string; // Filter events by profile/venue slug
@@ -361,6 +367,8 @@ export interface UseEventsReturn {
   events: EventSummaryResponseDTO[];
   hasMore: boolean;
   totalEvents: number;
+  /** True while fetching the first page after a filter change (no cached data yet) */
+  isLoading: boolean;
   isLoadingMore: boolean;
   loadMore: () => void | Promise<void>;
   error: Error | undefined;

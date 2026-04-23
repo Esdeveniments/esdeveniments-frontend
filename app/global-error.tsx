@@ -2,10 +2,14 @@
 
 import { captureException } from "@sentry/nextjs";
 import { useEffect } from "react";
-import { NextIntlClientProvider, useTranslations } from "next-intl";
-import type { AbstractIntlMessages } from "next-intl";
-import caMessages from "../messages/ca.json";
-import "../styles/globals.css";
+
+// Inline strings to avoid bundling full ca.json (82 KB) and next-intl runtime.
+// This page only renders on catastrophic errors — keep it minimal.
+const STRINGS = {
+  title: "Alguna cosa ha anat malament",
+  retry: "Si us plau, torna-ho a intentar.",
+  reload: "Torna a carregar",
+};
 
 export default function GlobalError({
   error,
@@ -32,40 +36,37 @@ export default function GlobalError({
     captureException(error);
   }, [error]);
 
-  const locale = "ca";
+  const fallbackMessage = STRINGS.retry;
 
   return (
-    <html lang={locale}>
+    <html lang="ca">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
-        <NextIntlClientProvider
-          messages={caMessages as unknown as AbstractIntlMessages}
-          locale={locale}
-        >
-          <GlobalErrorContent error={error} reset={reset} />
-        </NextIntlClientProvider>
+        <div style={{ padding: 32, textAlign: "center", fontFamily: "system-ui, sans-serif" }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: 16 }}>
+            {STRINGS.title}
+          </h1>
+          <p>
+            {process.env.NODE_ENV === "development"
+              ? error?.message || fallbackMessage
+              : fallbackMessage}
+          </p>
+          <button
+            onClick={reset}
+            style={{
+              marginTop: 16,
+              padding: "8px 24px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+              cursor: "pointer",
+            }}
+          >
+            {STRINGS.reload}
+          </button>
+        </div>
       </body>
     </html>
-  );
-}
-
-function GlobalErrorContent({ error, reset }: { error: Error; reset: () => void }) {
-  const t = useTranslations("App.GlobalError");
-  const fallbackMessage = t("retry");
-
-  return (
-    <div style={{ padding: 32, textAlign: "center" }}>
-      <h1 className="heading-2">{t("title")}</h1>
-      <p>
-        {process.env.NODE_ENV === "development"
-          ? error?.message || fallbackMessage
-          : fallbackMessage}
-      </p>
-      <button onClick={reset} style={{ marginTop: 16 }}>
-        {t("reload")}
-      </button>
-    </div>
   );
 }

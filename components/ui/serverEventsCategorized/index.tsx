@@ -199,11 +199,16 @@ async function ServerEventsCategorized({
     <div className="w-full bg-background">
       {/* 1. HERO SECTION: Search + Location + Dates */}
       <div className="relative overflow-hidden border-b border-border/40 pb-8 pt-4">
-        {/* Hero background image */}
-        <div
-          className="absolute inset-0 bg-cover bg-[center_60%] bg-no-repeat"
-          style={{ backgroundImage: "url('/static/images/hero-castellers.webp')" }}
+        {/* Hero background image — uses <img> instead of CSS background-image
+            so the browser can discover it early and apply fetchpriority="high" */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/static/images/hero-castellers.webp"
+          alt=""
           aria-hidden="true"
+          fetchPriority="high"
+          decoding="sync"
+          className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
         />
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
@@ -505,7 +510,7 @@ export async function ServerEventsCategorizedContent({
     <>
       {/* Popular Now Section — derived from existing data, zero extra API calls */}
       {popularEvents.length > 0 && (
-        <div className="container">
+        <div className="container content-auto-section">
           <section className="py-section-y border-b">
             <SectionHeading
               title={tCta("popularTitle")}

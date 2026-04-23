@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { DEFAULT_ROBOTS_POLICY } from "lib/meta";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { SchemaPlaceLocation } from "types/schema";
 import {
@@ -188,7 +189,7 @@ export function buildPageMeta({
     robots:
       process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
         ? "noindex, nofollow"
-        : (robotsOverride ?? "index, follow"),
+        : (robotsOverride ?? DEFAULT_ROBOTS_POLICY),
     other: {
       ...restDefaults.other,
       "twitter:domain": siteUrl,
@@ -288,6 +289,7 @@ export function generateWebPageSchema(options: WebPageOptions) {
     mainContentOfPage,
     locale,
     containedInPlace,
+    speakableCssSelectors,
   } = options;
 
   const localeToUse = locale ?? DEFAULT_LOCALE;
@@ -323,6 +325,13 @@ export function generateWebPageSchema(options: WebPageOptions) {
         url: containedInPlace.url,
       },
     }),
+    ...(speakableCssSelectors &&
+      speakableCssSelectors.length > 0 && {
+        speakable: {
+          "@type": "SpeakableSpecification",
+          cssSelector: speakableCssSelectors,
+        },
+      }),
   };
 }
 

@@ -1,15 +1,15 @@
 import { fetchWithHmac } from "./fetch-wrapper";
+import { getApiUrl } from "@utils/api-helpers";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import { parseCities, parseCity } from "lib/validation/city";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
-// This causes OpenNext/SST to create a separate S3+DynamoDB cache entry for every unique URL.
+// This creates a separate cache entry for every unique URL.
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
 
 export async function fetchCitiesExternal(): Promise<CitySummaryResponseDTO[]> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return [];
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/places/cities`);
@@ -28,8 +28,7 @@ export async function fetchCitiesExternal(): Promise<CitySummaryResponseDTO[]> {
 export async function fetchCityByIdExternal(
   id: string | number
 ): Promise<CitySummaryResponseDTO | null> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return null;
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/places/cities/${id}`);

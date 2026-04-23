@@ -1,18 +1,18 @@
 import { fetchWithHmac } from "./fetch-wrapper";
+import { getApiUrl } from "@utils/api-helpers";
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { parseRegionsGrouped } from "@lib/validation/region";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
-// This causes OpenNext/SST to create a separate S3+DynamoDB cache entry for every unique URL.
+// This creates a separate cache entry for every unique URL.
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
 
 export async function fetchRegionsExternal(): Promise<
   RegionSummaryResponseDTO[]
 > {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return [];
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/places/regions`);
@@ -30,8 +30,7 @@ export async function fetchRegionsExternal(): Promise<
 export async function fetchRegionsOptionsExternal(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return [];
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/places/regions/options`);
@@ -52,8 +51,7 @@ export async function fetchRegionsOptionsExternal(): Promise<
 export async function fetchRegionByIdExternal(
   id: string | number
 ): Promise<RegionSummaryResponseDTO | null> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return null;
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/places/regions/${id}`);

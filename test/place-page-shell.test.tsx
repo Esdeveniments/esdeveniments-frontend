@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { PlaceTypeAndLabel } from "types/common";
 import type { PlacePageShellProps } from "types/props";
 import { ClientLayerWithPlaceLabel } from "components/partials/PlacePageShell";
+import type { ReactElement } from "react";
 
 const mockPageData = {
   metaTitle: "title",
@@ -12,6 +13,22 @@ const mockPageData = {
   notFoundTitle: "Not found",
   notFoundDescription: "Missing",
 };
+
+/**
+ * ClientLayerWithPlaceLabel wraps LazyClientInteractiveLayer in
+ * FilterLoadingProvider > UrlFiltersProvider > Suspense.
+ * Drill through to the leaf to inspect its props.
+ */
+function getLeafProps(element: ReactElement): Record<string, unknown> {
+  let current: ReactElement = element;
+  let props = current.props as Record<string, unknown>;
+  while (props.children) {
+    const child = props.children;
+    current = Array.isArray(child) ? child[0] : (child as ReactElement);
+    props = current.props as Record<string, unknown>;
+  }
+  return props;
+}
 
 describe("PlacePageShell client layer", () => {
   it("passes placeTypeLabel from shellDataPromise to ClientInteractiveLayer", async () => {
@@ -27,7 +44,7 @@ describe("PlacePageShell client layer", () => {
       categories: [],
     });
 
-    expect(element.props.placeTypeLabel).toEqual(placeTypeLabel);
+    expect(getLeafProps(element).placeTypeLabel).toEqual(placeTypeLabel);
   });
 
   it("passes categories through to ClientInteractiveLayer", async () => {
@@ -44,6 +61,6 @@ describe("PlacePageShell client layer", () => {
       categories,
     });
 
-    expect(element.props.categories).toEqual(categories);
+    expect(getLeafProps(element).categories).toEqual(categories);
   });
 });

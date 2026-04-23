@@ -44,7 +44,9 @@
         "vallesOccidental": {
           "title": "Plans in Vallès Occidental"
         }
-      }
+      },
+      "noscriptDescription": "Esdeveniments.cat is the most comprehensive free platform for discovering cultural events across Catalonia. Browse concerts, theatre, exhibitions, festivals, family activities, and more across 900+ Catalan municipalities. Find what to do today, tomorrow, or this weekend near you.",
+      "noscriptApiNote": "Free public API available at /llms.txt and /openapi.json — no authentication required."
     },
     "NotFound": {
       "title": "Page not found",
@@ -177,7 +179,9 @@
       "readingTime": "{minutes} min read",
       "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "mustSee": "MUST-SEE",
-      "moreProposals": "MORE IDEAS"
+      "moreProposals": "MORE IDEAS",
+      "relatedArticles": "Related articles",
+      "shareArticle": "Share this article"
     },
     "NewsHubsGrid": {
       "itemListTitle": "Latest news by hub",
@@ -550,7 +554,9 @@
       "popularTitle": "Popular now in Catalonia"
     },
     "Filters": {
-      "triggerLabel": "Filters"
+      "triggerLabel": "Filters",
+      "priceFree": "Free",
+      "pricePaid": "Paid"
     },
     "Social": {
       "followUs": "Follow us"
@@ -644,7 +650,14 @@
         "selectPlaceholder": "Select town or county",
         "tagline": "Active filters",
         "dateHeading": "Date",
-        "categoriesHeading": "Categories"
+        "categoriesHeading": "Categories",
+        "priceHeading": "Price",
+        "priceFree": "Free",
+        "pricePaid": "Paid",
+        "calendarLabel": "Or pick from calendar:",
+        "pickDate": "Pick a date...",
+        "viewMore": "View more",
+        "viewLess": "View less"
       }
     },
     "ImageUploader": {
@@ -733,6 +746,7 @@
       "dateTitle": "Browse by date",
       "dateAriaLabel": "Filter by date",
       "categoryTitle": "Explore categories",
+      "otherCategoryTitle": "Other categories in {place}",
       "categoryAriaLabel": "Browse by category",
       "categoryLinkAria": "View {category} in {place}"
     },
@@ -1411,7 +1425,8 @@
       "category": "Category",
       "date": "Date",
       "distance": "Distance",
-      "search": "Search"
+      "search": "Search",
+      "price": "Price"
     },
     "Categories": {
       "festesPopulars": "Popular festivals",
@@ -1425,7 +1440,10 @@
       "today": "Today",
       "tomorrow": "Tomorrow",
       "weekend": "Weekend",
-      "week": "This week"
+      "week": "This week",
+      "nextWeek": "Next week",
+      "thisMonth": "This month",
+      "nextMonth": "Next month"
     }
   },
   "Sponsor": {

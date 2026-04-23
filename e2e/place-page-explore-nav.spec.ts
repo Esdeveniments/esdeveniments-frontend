@@ -20,28 +20,42 @@ test.describe("Place Page Explore Navigation", () => {
     await page.goto("/barcelona/avui");
 
     // Date badges should be hidden (already filtered by date)
-    await expect(page.getByText("Cerca per data")).not.toBeVisible();
+    await expect(page.getByText("Cerca per data").first()).not.toBeVisible();
 
     // Category links should still be visible
-    await expect(page.getByText("Explora categories")).toBeVisible();
+    await expect(page.getByText("Explora categories").first()).toBeVisible();
   });
 
-  test("hides category links when category is selected", async ({ page }) => {
+  test("shows other categories when category is selected", async ({ page }) => {
     await page.goto("/barcelona/musica");
 
     // Date badges should still be visible
-    await expect(page.getByText("Cerca per data")).toBeVisible();
+    // Use .first() because PPR streaming may briefly render duplicate elements
+    await expect(page.getByText("Cerca per data").first()).toBeVisible();
 
-    // Category links should be hidden (already filtered by category)
-    await expect(page.getByText("Explora categories")).not.toBeVisible();
+    // "Explora categories" heading replaced by "Altres categories a Barcelona"
+    await expect(page.getByText("Explora categories").first()).not.toBeVisible();
+    await expect(
+      page.getByText(/Altres categories a Barcelona/i).first()
+    ).toBeVisible();
+
+    // The selected category (musica) should NOT appear in the links
+    await expect(
+      page.getByRole("link", { name: /concerts/i })
+    ).not.toBeVisible();
   });
 
-  test("hides entire section when fully filtered", async ({ page }) => {
+  test("hides date badges but shows other categories when fully filtered", async ({ page }) => {
     await page.goto("/barcelona/avui/musica");
 
-    // Both should be hidden
-    await expect(page.getByText("Cerca per data")).not.toBeVisible();
-    await expect(page.getByText("Explora categories")).not.toBeVisible();
+    // Date badges hidden (already filtered by date)
+    await expect(page.getByText("Cerca per data").first()).not.toBeVisible();
+
+    // Other categories still shown for cross-linking
+    await expect(page.getByText("Explora categories").first()).not.toBeVisible();
+    await expect(
+      page.getByText(/Altres categories a Barcelona/i).first()
+    ).toBeVisible();
   });
 
   test("category links navigate to correct URLs", async ({ page }) => {

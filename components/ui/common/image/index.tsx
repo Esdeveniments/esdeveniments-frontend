@@ -1,4 +1,4 @@
-import type { ImageComponentProps } from "types/common";
+import type { ImageComponentProps, ImageSizeContext } from "types/common";
 import ImageServer from "./ImageServer";
 import ClientImage from "./ClientImage";
 
@@ -8,7 +8,7 @@ import ClientImage from "./ClientImage";
  * - Image present: opt into enhanced client features (retry, network-adaptive quality).
  */
 export default function Image(
-  props: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }
+  props: ImageComponentProps & { context?: ImageSizeContext }
 ) {
   if (!props.image) {
     return <ImageServer {...props} />;

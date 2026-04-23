@@ -1,11 +1,12 @@
 import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import { ImageComponentProps } from "types/common";
+import type { ImageSizeContext } from "types/common";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
-  getOptimalImageWidth,
+  getResponsiveWidths,
 } from "@utils/image-quality";
-import { buildPictureSourceUrls } from "@utils/image-cache";
+import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 
 // Server-side compatible Image component with modern format support (WebP > AVIF > JPEG)
 // WebP is prioritized over AVIF for faster encoding and more reliable output.
@@ -22,20 +23,19 @@ function ImageServer({
   quality,
   context = "card",
   cacheKey,
-}: ImageComponentProps & { context?: "card" | "hero" | "list" | "detail" }) {
+}: ImageComponentProps & { context?: ImageSizeContext }) {
   const imageQuality = getOptimalImageQuality({
     isPriority: priority,
     isExternal: true,
     customQuality: quality,
   });
 
-  const imageWidth = getOptimalImageWidth(context);
+  const responsiveWidths = getResponsiveWidths(context);
 
-  // Generate AVIF, WebP, and JPEG URLs for <picture> element
-  const sources = buildPictureSourceUrls(image ?? "", cacheKey, {
-    width: imageWidth,
+  // Generate responsive AVIF, WebP, and JPEG URLs for <picture> element
+  const sources = buildResponsivePictureSourceUrls(image ?? "", cacheKey, {
     quality: imageQuality,
-  });
+  }, responsiveWidths);
 
   // Show fallback if no image or URL normalization failed
   if (!sources.fallback) {
@@ -75,8 +75,8 @@ function ImageServer({
       }}
     >
       <picture>
-        <source srcSet={sources.webp} type="image/webp" sizes={sizes} />
-        <source srcSet={sources.avif} type="image/avif" sizes={sizes} />
+        <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
+        <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
         <img
           className="object-cover w-full h-full absolute inset-0"
           src={sources.fallback}

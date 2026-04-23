@@ -1,7 +1,7 @@
 export interface LatestNewsSectionProps {
   placeSlug: string;
   placeLabel: string;
-  placeType: "region" | "town";
+  placeType: Exclude<PlaceType, "">;
   newsHref: string;
 }
 
@@ -19,6 +19,8 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
+import type { ImageSizeContext } from "types/common";
+
 /**
  * Props for ClientImageInner component
  */
@@ -30,13 +32,21 @@ export interface ClientImageInnerProps {
   fetchPriority?: "high" | "low" | "auto";
   alt: string;
   imageQuality: number;
-  context: "card" | "hero" | "list" | "detail";
+  context: ImageSizeContext;
   location?: string;
   region?: string;
   date?: string;
 }
 
 import { ChangeEvent, MouseEvent, ReactNode } from "react";
+
+// Detail page section tracker
+export interface DetailSectionTrackerProps {
+  section: string;
+  context?: string;
+  children: ReactNode;
+  className?: string;
+}
 import {
   Option,
   GroupedOption,
@@ -265,12 +275,27 @@ export interface DatePickerComponentProps {
   onToggleAllDay?: (isAllDayEvent: boolean) => void;
 }
 
-export interface CustomHeaderProps {
-  date: Date;
-  decreaseMonth: () => void;
-  increaseMonth: () => void;
-  prevMonthButtonDisabled: boolean;
-  nextMonthButtonDisabled: boolean;
+export interface TimeSelectorProps {
+  value: string;
+  onChange: (time: string) => void;
+  minTime?: string;
+  label: string;
+}
+
+export interface DateButtonProps {
+  label: string;
+  value: string;
+  isOpen: boolean;
+  onClick: () => void;
+}
+
+export interface CalendarDatePickerProps {
+  /** Range start as YYYY-MM-DD or empty string */
+  fromDate: string;
+  /** Range end as YYYY-MM-DD or empty string */
+  toDate: string;
+  /** Callback with from/to YYYY-MM-DD strings (empty to clear) */
+  onChange: (from: string, to: string) => void;
 }
 
 export type AcceptedImageTypes =
@@ -424,6 +449,7 @@ export type FilterLabels = {
   triggerLabel: string;
   displayNameMap: Record<string, string>;
   byDates: Record<string, string>;
+  prices?: Record<string, string>;
   categoryLabelsBySlug?: Record<string, string>;
 };
 
@@ -614,6 +640,13 @@ export interface UseGeolocationReturn {
 }
 
 // --- News components props ---
+
+export interface NewsShareButtonsProps {
+  place: string;
+  slug: string;
+  label: string;
+}
+
 export interface NewsEventsSectionProps {
   title: string;
   events: NewsEventItemDTO[];
@@ -759,6 +792,7 @@ export interface PlacePageExploreNavProps {
 export interface CategoryQuicklinksProps {
   place: string;
   date?: string;
+  currentCategory?: string;
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
 }
@@ -817,12 +851,17 @@ export interface EventSidebarProps {
   cityName: string;
   regionName: string;
   primaryPlaceSlug: string;
-  citySlug?: string;
-  regionSlug?: string;
+  sponsorFallbackPlaces?: string[];
 }
 
 // Social proof counter
 export interface SocialProofCounterProps {
   visits: number;
   interestedLabel: string;
+}
+
+// URL filters context provider
+export interface UrlFiltersProviderProps {
+  children: ReactNode;
+  categories?: CategorySummaryResponseDTO[];
 }

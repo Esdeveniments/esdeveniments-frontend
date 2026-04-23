@@ -13,6 +13,7 @@ import { CATEGORY_CONFIG, PRIORITY_CATEGORY_SLUGS } from "@config/categories";
 export default async function CategoryQuicklinks({
   place,
   date,
+  currentCategory,
   categories = [],
   placeLabel,
 }: CategoryQuicklinksProps) {
@@ -31,8 +32,18 @@ export default async function CategoryQuicklinks({
     return null;
   }
 
+  // Filter out the current category when one is selected
+  const filteredCategories = currentCategory
+    ? categories.filter((c) => c.slug !== currentCategory)
+    : categories;
+
+  // Nothing to show if current category was the only one
+  if (filteredCategories.length === 0) {
+    return null;
+  }
+
   // Sort categories: priority first, then by API order
-  const displayCategories = [...categories].sort((a, b) => {
+  const displayCategories = [...filteredCategories].sort((a, b) => {
     const aIsPriority = PRIORITY_CATEGORY_SLUGS.includes(a.slug);
     const bIsPriority = PRIORITY_CATEGORY_SLUGS.includes(b.slug);
 
@@ -71,7 +82,9 @@ export default async function CategoryQuicklinks({
   return (
     <div>
       <h2 className="body-normal font-medium text-muted-foreground mb-element-gap-sm">
-        {t("categoryTitle")}
+        {currentCategory
+          ? t("otherCategoryTitle", { place: placeLabel })
+          : t("categoryTitle")}
       </h2>
       <nav aria-label={t("categoryAriaLabel")}>
         <ul className="flex flex-wrap gap-element-gap-sm">
@@ -83,6 +96,10 @@ export default async function CategoryQuicklinks({
                   category: getCategoryLabel(category),
                   place: placeLabel,
                 })}
+                data-analytics-event-name="category_quicklink_click"
+                data-analytics-category-slug={category.slug}
+                data-analytics-context="place_page"
+                data-analytics-place-slug={place}
               >
                 {getCategoryLabel(category)}
               </Badge>

@@ -9,6 +9,7 @@ import {
   buildMetadataParams,
 } from "@lib/stripe/checkout-helpers";
 import { isValidPlace } from "@utils/route-validation";
+import { getOccupiedPlaceStatus } from "@lib/db/sponsors";
 import type {
   SponsorDuration,
   SponsorCheckoutRequest,
@@ -49,6 +50,9 @@ async function createStripeCheckoutSession(
   // Locale for checkout page (Stripe doesn't support Catalan, use Spanish as fallback)
   const stripeLocale = ["ca", "es"].includes(locale) ? "es" : "en";
   params.append("locale", stripeLocale);
+
+  // Allow promotion codes (coupon input on checkout page)
+  params.append("allow_promotion_codes", "true");
 
   // Customer creation to get email
   params.append("customer_creation", "always");
@@ -129,6 +133,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Server-side occupancy check — prevent checkout for already-occupied places
+    const occupiedStatus = await getOccupiedPlaceStatus();
+    if (occupiedStatus.has(place)) {
+      const daysLeft = occupiedStatus.get(place);
+      return NextResponse.json(
+        {
+          error: "place_occupied",
+          message: `This place is already occupied for ${daysLeft} more day(s)`,
+          daysLeft,
+        },
+        { status: 409 },
+      );
+    }
+
     // Generate idempotency key from request params to prevent duplicate sessions
     // Purpose: Same user + same params = same Stripe session (prevents duplicate charges on retry)
     //
@@ -165,6 +183,27 @@ export async function POST(request: NextRequest) {
 
     // Get the actual request URL for redirects (important for preview deployments)
     const baseUrl = getSiteUrlFromRequest(request);
+
+    // Safety: In production, redirect URLs MUST use HTTPS.
+    // If baseUrl resolved to an internal address (http://0.0.0.0, http://10.x, etc.),
+    // that's a misconfiguration — fail early instead of creating a broken Stripe session.
+    if (
+      process.env.NODE_ENV === "production" &&
+      !baseUrl.startsWith("https://")
+    ) {
+      console.error(
+        `[checkout] Resolved baseUrl is not HTTPS in production: ${baseUrl}. ` +
+          "Check NEXT_PUBLIC_SITE_URL and proxy headers.",
+      );
+      captureException(
+        new Error(`Checkout baseUrl not HTTPS: ${baseUrl}`),
+        { tags: { api: "sponsors-checkout" } },
+      );
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 },
+      );
+    }
 
     const session = await createStripeCheckoutSession(
       duration,

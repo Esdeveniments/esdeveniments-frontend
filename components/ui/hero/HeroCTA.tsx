@@ -10,6 +10,7 @@ import { buildHeroUrl } from "./utils";
 import { HERO_DATE_FILTERS } from "./constants";
 import { formatPlacePreposition } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
+import useTrackedCta from "@components/hooks/useTrackedCta";
 import { useLocale } from "next-intl";
 
 export default function HeroCTA() {
@@ -18,8 +19,10 @@ export default function HeroCTA() {
   const locale = useLocale();
   const { place, label, placeType, date, searchTerm } = useHero();
   const router = useRouter();
+  const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("hero_cta");
 
   const handleSearch = () => {
+    trackClick();
     sendGoogleEvent("hero_cta_click", {
       category: "hero_cta",
       context: "home_hero",
@@ -59,7 +62,7 @@ export default function HeroCTA() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center mt-8 w-full px-4">
+    <div ref={ctaRef} className="flex flex-col items-center justify-center mt-8 w-full px-4">
       <Button
         type="button"
         variant="primary"

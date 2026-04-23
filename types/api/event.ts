@@ -97,8 +97,8 @@ export interface EventTimeDTO {
   nano?: number;
 }
 
-// --- Event update (PUT) request DTO ---
-export interface EventUpdateRequestDTO {
+// --- Shared event write request DTO (used for both create POST and update PUT) ---
+export interface EventBaseRequestDTO {
   title: string;
   type: EventType;
   url: string;
@@ -114,22 +114,9 @@ export interface EventUpdateRequestDTO {
   categories: number[];
 }
 
-// --- Event create (POST) request DTO ---
-export interface EventCreateRequestDTO {
-  title: string;
-  type: EventType;
-  url: string;
-  description: string;
-  imageUrl: string | null;
-  regionId: number;
-  cityId: number;
-  startDate: string;
-  startTime: string;
-  endDate: string;
-  endTime: string;
-  location: string;
-  categories: number[];
-}
+// Aliases kept for semantic clarity and potential future divergence
+export type EventCreateRequestDTO = EventBaseRequestDTO;
+export type EventUpdateRequestDTO = EventBaseRequestDTO;
 
 // --- E2E Testing Types ---
 export type E2EEventExtras = {

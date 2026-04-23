@@ -44,7 +44,9 @@
         "vallesOccidental": {
           "title": "Plans al Vallès Occidental"
         }
-      }
+      },
+      "noscriptDescription": "Esdeveniments.cat és la plataforma gratuïta més completa per descobrir esdeveniments culturals a Catalunya. Consulta l'agenda de concerts, teatre, exposicions, festivals, activitats familiars i molt més en més de 900 municipis catalans. Troba què fer avui, demà o aquest cap de setmana a prop teu.",
+      "noscriptApiNote": "API pública gratuïta disponible a /llms.txt i /openapi.json — sense autenticació necessària."
     },
     "NotFound": {
       "title": "Pàgina no trobada",
@@ -177,7 +179,9 @@
       "readingTime": "{minutes} min lectura",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "mustSee": "ELS IMPRESCINDIBLES",
-      "moreProposals": "MÉS PROPOSTES"
+      "moreProposals": "MÉS PROPOSTES",
+      "relatedArticles": "Articles relacionats",
+      "shareArticle": "Comparteix l'article"
     },
     "NewsHubsGrid": {
       "itemListTitle": "Últimes notícies per hub",
@@ -467,15 +471,7 @@
         "Divendres",
         "Dissabte"
       ],
-      "daysShort": [
-        "Dg.",
-        "Dl.",
-        "Dt.",
-        "Dc.",
-        "Dj.",
-        "Dv.",
-        "Ds."
-      ],
+      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
       "monthsShort": [
         "gen.",
         "feb.",
@@ -566,7 +562,9 @@
       "popularTitle": "Popular ara a Catalunya"
     },
     "Filters": {
-      "triggerLabel": "Filtres"
+      "triggerLabel": "Filtres",
+      "priceFree": "Gratuït",
+      "pricePaid": "De pagament"
     },
     "Social": {
       "followUs": "Segueix-nos"
@@ -660,7 +658,14 @@
         "selectPlaceholder": "Selecciona població o comarca",
         "tagline": "Filtres actius",
         "dateHeading": "Data",
-        "categoriesHeading": "Categories"
+        "categoriesHeading": "Categories",
+        "priceHeading": "Preu",
+        "priceFree": "Gratuït",
+        "pricePaid": "De pagament",
+        "calendarLabel": "O escull al calendari:",
+        "pickDate": "Escull una data...",
+        "viewMore": "Veure més",
+        "viewLess": "Veure menys"
       }
     },
     "ImageUploader": {
@@ -748,6 +753,7 @@
       "dateTitle": "Cerca per data",
       "dateAriaLabel": "Filtra per data",
       "categoryTitle": "Explora categories",
+      "otherCategoryTitle": "Altres categories a {place}",
       "categoryAriaLabel": "Navega per categories",
       "categoryLinkAria": "Veure {category} a {place}"
     },
@@ -1368,10 +1374,7 @@
         "pel",
         "pels"
       ],
-      "feminineExceptions": [
-        "gent gran",
-        "dansa"
-      ],
+      "feminineExceptions": ["gent gran", "dansa"],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1425,7 +1428,8 @@
       "category": "Categoria",
       "date": "Data",
       "distance": "Distància",
-      "search": "Cerca"
+      "search": "Cerca",
+      "price": "Preu"
     },
     "Categories": {
       "festesPopulars": "Festes Populars",
@@ -1439,7 +1443,10 @@
       "today": "Avui",
       "tomorrow": "Demà",
       "weekend": "Cap de setmana",
-      "week": "Aquesta setmana"
+      "week": "Aquesta setmana",
+      "nextWeek": "Setmana vinent",
+      "thisMonth": "Aquest mes",
+      "nextMonth": "Mes vinent"
     }
   },
   "Sponsor": {

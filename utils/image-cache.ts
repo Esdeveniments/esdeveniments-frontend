@@ -1,4 +1,4 @@
-import type { ImageProxyOptions } from "types/common";
+import type { ImageProxyOptions, PictureSourceUrls, ResponsivePictureSourceUrls } from "types/common";
 
 const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
 const CACHE_PARAM = "v";
@@ -157,7 +157,7 @@ export function isLegacyFileHandler(url: string): boolean {
  * Appends (or replaces) a cache-busting query parameter to an image URL.
  * Uses string-based operations only to ensure SSR/client hydration consistency.
  * Uses the provided cacheKey (event hash, updatedAt, etc.) so that
- * CloudFront can keep a long TTL while still reflecting new uploads.
+ * the CDN can keep a long TTL while still reflecting new uploads.
  *
  * Also normalizes protocol-relative URLs (//cdn.example.com/image.jpg) to HTTPS.
  *
@@ -256,7 +256,7 @@ export function toProxiedImageUrl(
       proxyUrl += `&q=${options.quality}`;
     }
   }
-  // Format param bypasses Accept header detection (CloudFront may not forward Accept)
+  // Format param bypasses Accept header detection (CDN may not forward Accept)
   if (options?.format) {
     proxyUrl += `&format=${options.format}`;
   }
@@ -323,7 +323,7 @@ export function buildPictureSourceUrls(
   imageUrl: string,
   cacheKey?: string | number | null,
   options?: Omit<ImageProxyOptions, "format">
-): { avif: string; webp: string; fallback: string } {
+): PictureSourceUrls {
   const baseOptions = options ?? {};
 
   return {
@@ -336,5 +336,55 @@ export function buildPictureSourceUrls(
       format: "webp",
     }),
     fallback: buildOptimizedImageUrl(imageUrl, cacheKey, baseOptions), // JPEG (no format param)
+  };
+}
+
+/**
+ * Generate responsive srcSet strings with width descriptors for <picture> element.
+ * Extends buildPictureSourceUrls with multi-width srcSet entries so the browser
+ * can select the optimal resolution based on viewport and DPR via the `sizes` attribute.
+ *
+ * Usage:
+ * ```tsx
+ * const sources = buildResponsivePictureSourceUrls(imageUrl, cacheKey, { quality }, [500, 800, 1200]);
+ * <picture>
+ *   <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
+ *   <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
+ *   <img src={sources.fallback} alt="..." sizes={sizes} />
+ * </picture>
+ * ```
+ */
+export function buildResponsivePictureSourceUrls(
+  imageUrl: string,
+  cacheKey: string | number | null | undefined,
+  options: Omit<ImageProxyOptions, "format" | "width">,
+  widths: readonly number[]
+): ResponsivePictureSourceUrls {
+  const baseOptions = options ?? {};
+  const maxWidth = widths.length > 0 ? Math.max(...widths) : 500;
+
+  // Single-URL fallbacks use the largest width (backward compat for <img src>)
+  const base = buildPictureSourceUrls(imageUrl, cacheKey, {
+    ...baseOptions,
+    width: maxWidth,
+  });
+
+  // Build "url1 500w, url2 800w, url3 1200w" srcSet strings
+  const buildSrcSet = (format: "avif" | "webp"): string =>
+    widths
+      .map((w) => {
+        const url = buildOptimizedImageUrl(imageUrl, cacheKey, {
+          ...baseOptions,
+          width: w,
+          format,
+        });
+        return `${url} ${w}w`;
+      })
+      .join(", ");
+
+  return {
+    ...base,
+    webpSrcSet: buildSrcSet("webp"),
+    avifSrcSet: buildSrcSet("avif"),
   };
 }

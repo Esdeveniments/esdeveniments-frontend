@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
-import { buildPlaceEventsPromise } from "app/[place]/page";
+import { buildPlaceEventsPromise } from "app/[locale]/[place]/page";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import type { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
 import { addLocalizedDateFields } from "@utils/mappers/event";

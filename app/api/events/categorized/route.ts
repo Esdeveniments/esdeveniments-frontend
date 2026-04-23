@@ -13,8 +13,9 @@ export async function GET(request: Request) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        // Increased from 300s to reduce Lambda invocations
-        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=600",
+        // s-maxage=1800: categorized events change infrequently.
+        // swr=3600: serve stale instantly while revalidating in background.
+        "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600",
       },
     });
   } catch (e) {

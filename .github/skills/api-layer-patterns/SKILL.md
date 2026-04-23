@@ -321,7 +321,7 @@ export async function fetchYourResourceExternal(
 
 **NEVER add `next: { revalidate, tags }` to `fetchWithHmac` calls in external wrappers!**
 
-This enables Next.js fetch cache, which on OpenNext/SST stores **every unique URL** as a separate entry in both S3 and DynamoDB. With high-cardinality APIs (100+ places × categories × dates × pages × event slugs), this creates **hundreds of thousands of cache entries**.
+This enables Next.js fetch cache, which stores **every unique URL** as a separate cache entry. With high-cardinality APIs (100+ places × categories × dates × pages × event slugs), this creates **hundreds of thousands of cache entries**.
 
 **Jan 20, 2026 Incident**: Adding `next: { revalidate }` to external wrappers caused:
 - 146,394 fetch cache entries per build (vs baseline 150)
@@ -490,7 +490,7 @@ await fireAndForgetFetch(url, { method: "POST", body: data });
 **DON'T**:
 
 ```typescript
-// ❌ WRONG: Raw fetch (can hang indefinitely in serverless)
+// ❌ WRONG: Raw fetch (can hang indefinitely without timeout)
 const response = await fetch(url);
 
 // ❌ WRONG: Manual AbortSignal (duplicates safeFetch logic)
@@ -733,8 +733,7 @@ During `next build` (static generation), internal API routes (`/api/*`) are **no
 
 | Environment | `isBuildPhase` | Behavior |
 |-------------|----------------|----------|
-| **SST/AWS** | `true` (no `VERCEL_URL`) | Bypasses internal routes ✅ |
-| **Vercel** | Depends on `NEXT_PHASE` | May try internal routes → fail ❌ |
+| **Docker build** | `true` (no running server) | Bypasses internal routes ✅ |
 | **Local dev** | `false` | Uses internal routes (server running) ✅ |
 
 ### The Solution: `isBuildPhase` Bypass Pattern

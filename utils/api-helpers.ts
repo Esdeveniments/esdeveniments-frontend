@@ -10,8 +10,34 @@ import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
 
-/** Default API origin used as fallback when NEXT_PUBLIC_API_URL is not set. */
-const DEFAULT_API_ORIGIN = new URL(apiDefaults.apiUrl).origin;
+/** Default API URL used as fallback when NEXT_PUBLIC_API_URL is not set. */
+const DEFAULT_API_URL = apiDefaults.apiUrl;
+
+/** Default API origin (scheme + host) for proxy/middleware use. */
+const DEFAULT_API_ORIGIN = new URL(DEFAULT_API_URL).origin;
+
+/**
+ * Get the full external API URL (e.g. "https://api.esdeveniments.cat/api").
+ *
+ * Uses indirect env access so Turbopack does NOT inline the value at build
+ * time. This means the runtime value (set by Coolify / Docker ENV) is always
+ * read, and when the var is genuinely absent the JSON default kicks in.
+ */
+const _envKey = "NEXT_PUBLIC_API_URL";
+export function getApiUrl(): string {
+  return process.env[_envKey] || DEFAULT_API_URL;
+}
+
+/**
+ * Report whether NEXT_PUBLIC_API_URL is explicitly configured at runtime.
+ * Uses the same indirect env lookup as getApiUrl() to avoid build-time
+ * inlining. Callers use this to decide between hitting the default
+ * production URL and taking a safe fallback path (e.g., throw for
+ * mutations, return empty payload for read wrappers).
+ */
+export function isApiUrlConfigured(): boolean {
+  return Boolean(process.env[_envKey]);
+}
 
 // Conditionally import headers - only available in server components/route handlers
 // Using dynamic require to avoid build-time errors when headers() is not available
@@ -31,8 +57,9 @@ try {
  * Edge runtime has limitations with environment variables
  */
 export function getApiOrigin(): string {
-  // Strategy 1: Try environment variable (works in most cases)
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  // Strategy 1: Try environment variable (works in most cases).
+  // Use indirect lookup so Turbopack does NOT inline at build time.
+  const apiUrl = process.env[_envKey];
   if (apiUrl) {
     try {
       return new URL(apiUrl).origin;
@@ -178,6 +205,7 @@ export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
   if (params.from) query.from = params.from;
   if (params.to) query.to = params.to;
   if (params.profileSlug) query.profileSlug = params.profileSlug;
+  if (params.type) query.type = params.type;
 
   return new URLSearchParams(
     Object.fromEntries(

@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { getSiteUrl, getSiteUrlFromRequest } from "../config/index";
+import {
+  getSiteUrl,
+  getSiteUrlFromRequest,
+  isInternalHost,
+} from "../config/index";
 import type { NextRequest } from "next/server";
 
 const originalEnv = { ...process.env };
@@ -227,7 +231,7 @@ describe("config/index:getSiteUrlFromRequest", () => {
     );
   });
 
-  it("uses x-forwarded-host header when nextUrl.host is missing (SST/CloudFront)", () => {
+  it("uses x-forwarded-host header when nextUrl.host is missing (reverse proxy)", () => {
     const mockRequest = {
       nextUrl: {
         protocol: "https:",
@@ -258,6 +262,117 @@ describe("config/index:getSiteUrlFromRequest", () => {
     expect(getSiteUrlFromRequest(mockRequest)).toBe(
       "https://www.esdeveniments.cat"
     );
+  });
+
+  it("falls back to getSiteUrl() for 0.0.0.0 (Docker HOSTNAME)", () => {
+    const mockRequest = {
+      nextUrl: {
+        protocol: "http:",
+        host: "0.0.0.0:3000",
+      },
+      headers: new Headers(),
+    } as unknown as NextRequest;
+
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+    expect(getSiteUrlFromRequest(mockRequest)).toBe(
+      "https://www.esdeveniments.cat"
+    );
+  });
+
+  it("falls back to getSiteUrl() for RFC 1918 private IPs", () => {
+    const privateHosts = [
+      "10.0.0.1:3000",
+      "10.42.0.5:3000",
+      "172.16.0.1:3000",
+      "172.31.255.255:3000",
+      "192.168.1.1:3000",
+      "192.168.0.100:3000",
+    ];
+
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+
+    for (const host of privateHosts) {
+      const mockRequest = {
+        nextUrl: { protocol: "http:", host },
+        headers: new Headers(),
+      } as unknown as NextRequest;
+
+      expect(getSiteUrlFromRequest(mockRequest)).toBe(
+        "https://www.esdeveniments.cat"
+      );
+    }
+  });
+
+  it("falls back to getSiteUrl() for .internal and .local domains", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+
+    for (const host of ["app.internal", "myhost.local"]) {
+      const mockRequest = {
+        nextUrl: { protocol: "http:", host },
+        headers: new Headers(),
+      } as unknown as NextRequest;
+
+      expect(getSiteUrlFromRequest(mockRequest)).toBe(
+        "https://www.esdeveniments.cat"
+      );
+    }
+  });
+});
+
+describe("config/index:isInternalHost", () => {
+  it("detects Docker bind address 0.0.0.0", () => {
+    expect(isInternalHost("0.0.0.0:3000")).toBe(true);
+    expect(isInternalHost("0.0.0.0")).toBe(true);
+  });
+
+  it("detects localhost variants", () => {
+    expect(isInternalHost("localhost")).toBe(true);
+    expect(isInternalHost("localhost:3000")).toBe(true);
+    expect(isInternalHost("127.0.0.1:3000")).toBe(true);
+    expect(isInternalHost("127.0.0.42")).toBe(true);
+  });
+
+  it("detects IPv6 loopback", () => {
+    expect(isInternalHost("::1")).toBe(true);
+    expect(isInternalHost("[::1]")).toBe(true);
+  });
+
+  it("detects RFC 1918 private ranges", () => {
+    expect(isInternalHost("10.0.0.1")).toBe(true);
+    expect(isInternalHost("10.42.0.5:3000")).toBe(true);
+    expect(isInternalHost("172.16.0.1")).toBe(true);
+    expect(isInternalHost("172.31.255.255")).toBe(true);
+    expect(isInternalHost("192.168.1.1")).toBe(true);
+    expect(isInternalHost("192.168.0.100:3000")).toBe(true);
+  });
+
+  it("detects link-local addresses", () => {
+    expect(isInternalHost("169.254.0.1")).toBe(true);
+    expect(isInternalHost("169.254.169.254")).toBe(true);
+  });
+
+  it("detects infrastructure domains", () => {
+    expect(isInternalHost("d123.cloudfront.net")).toBe(true);
+    expect(isInternalHost("abc.lambda-url.eu-west-3.on.aws")).toBe(true);
+    expect(isInternalHost("app.internal")).toBe(true);
+    expect(isInternalHost("myhost.local")).toBe(true);
+  });
+
+  it("allows real public domains", () => {
+    expect(isInternalHost("www.esdeveniments.cat")).toBe(false);
+    expect(isInternalHost("esdeveniments.cat")).toBe(false);
+    expect(isInternalHost("preview-abc.vercel.app")).toBe(false);
+    expect(isInternalHost("pr-123.esdeveniments.cat")).toBe(false);
+  });
+
+  it("does not false-positive on IPs outside private ranges", () => {
+    expect(isInternalHost("172.15.0.1")).toBe(false);
+    expect(isInternalHost("172.32.0.1")).toBe(false);
+    expect(isInternalHost("8.8.8.8")).toBe(false);
+    expect(isInternalHost("1.1.1.1")).toBe(false);
   });
 });
 

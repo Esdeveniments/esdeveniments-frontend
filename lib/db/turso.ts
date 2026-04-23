@@ -115,37 +115,3 @@ export async function execute(
 
   return { rows, rowsAffected: result.affected_row_count ?? 0 };
 }
-
-// ── Schema management ────────────────────────────────────────────
-
-export { SPONSORS_SCHEMA, SPONSORS_INDEXES } from "./sponsors-schema";
-import { SPONSORS_SCHEMA, SPONSORS_INDEXES } from "./sponsors-schema";
-
-let schemaInitialized = false;
-let schemaPromise: Promise<void> | null = null;
-
-/**
- * Ensure the sponsors table and indexes exist.
- * Call on write paths only (webhook, image-upload, seed script).
- * Read paths skip this — the table already exists after first setup.
- *
- * Uses a shared promise to deduplicate concurrent calls on the same Lambda.
- */
-export async function ensureSchema(): Promise<void> {
-  if (schemaInitialized) return;
-  if (!schemaPromise) {
-    schemaPromise = (async () => {
-      try {
-        await execute(SPONSORS_SCHEMA);
-        for (const idx of SPONSORS_INDEXES) {
-          await execute(idx);
-        }
-        schemaInitialized = true;
-      } catch (err) {
-        schemaPromise = null;
-        throw err;
-      }
-    })();
-  }
-  return schemaPromise;
-}

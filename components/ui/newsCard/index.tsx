@@ -1,16 +1,11 @@
 import { getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
-import { getFormattedDate } from "@utils/date-helpers";
+import { formatCardDate } from "@utils/date-helpers";
 import { stripHtmlTags } from "@utils/sanitize";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { CalendarIcon, MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
-import {
-  getOptimalImageQuality,
-  getOptimalImageSizes,
-  getOptimalImageWidth,
-} from "@utils/image-quality";
-import { buildPictureSourceUrls } from "@utils/image-cache";
+import Image from "@components/ui/common/image";
 
 export default async function NewsCard({
   event,
@@ -21,29 +16,15 @@ export default async function NewsCard({
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
   const rawImage = event.imageUrl;
-  const formatted = getFormattedDate(event.startDate, event.endDate, locale);
-  const dateLabel = formatted.formattedEnd
-    ? `${formatted.formattedStart} – ${formatted.formattedEnd}`
-    : formatted.formattedStart;
+  const { cardDate: dateLabel } = formatCardDate(
+    event.startDate,
+    event.endDate,
+    locale,
+  );
   const href = withLocalePath(`/noticies/${placeSlug}/${event.slug}`, locale);
   const plainDescription = stripHtmlTags(event.description || "");
 
   if (variant === "hero") {
-    const heroImageQuality = getOptimalImageQuality({
-      isPriority: true,
-      isExternal: true,
-    });
-    const heroImageWidth = getOptimalImageWidth("hero");
-    const heroImageSizes = getOptimalImageSizes("hero");
-
-    // Generate AVIF, WebP, and JPEG URLs for <picture> element
-    const heroSources = rawImage
-      ? buildPictureSourceUrls(rawImage, event.updatedAt, {
-        width: heroImageWidth,
-        quality: heroImageQuality,
-      })
-      : null;
-
     return (
       <PressableAnchor
         href={href}
@@ -53,25 +34,17 @@ export default async function NewsCard({
         aria-label={event.title}
       >
         <section className="relative w-full overflow-hidden rounded-xl">
-          {heroSources ? (
-            <div className="relative aspect-[16/9] w-full">
-              <picture>
-                <source srcSet={heroSources.avif} type="image/avif" sizes={heroImageSizes} />
-                <source srcSet={heroSources.webp} type="image/webp" sizes={heroImageSizes} />
-                <img
-                  src={heroSources.fallback}
-                  alt={event.title}
-                  loading="eager"
-                  decoding="sync"
-                  fetchPriority="high"
-                  sizes={heroImageSizes}
-                  className="object-cover w-full h-full absolute inset-0"
-                />
-              </picture>
-            </div>
-          ) : (
-            <div className="aspect-[16/9] w-full bg-gradient-to-br from-primary-soft to-primary" />
-          )}
+          <div className="relative aspect-[16/9] w-full">
+            <Image
+              className="w-full h-full object-cover"
+              title={event.title}
+              image={rawImage}
+              alt={event.title}
+              priority
+              context="hero"
+              cacheKey={event.updatedAt}
+            />
+          </div>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground-strong/95 via-foreground-strong/70 to-foreground-strong/40" />
 
           <div className="absolute inset-x-0 bottom-0 px-4 pt-4 pb-4 sm:p-6 text-background">
@@ -101,21 +74,6 @@ export default async function NewsCard({
     );
   }
 
-  const cardImageQuality = getOptimalImageQuality({
-    isPriority: false,
-    isExternal: true,
-  });
-  const cardImageWidth = getOptimalImageWidth("card");
-  const cardImageSizes = getOptimalImageSizes("card");
-
-  // Generate AVIF, WebP, and JPEG URLs for <picture> element
-  const cardSources = rawImage
-    ? buildPictureSourceUrls(rawImage, event.updatedAt, {
-      width: cardImageWidth,
-      quality: cardImageQuality,
-    })
-    : null;
-
   return (
     <PressableAnchor
       href={href}
@@ -124,30 +82,20 @@ export default async function NewsCard({
       className="w-full block"
       aria-label={event.title}
     >
-      <article className="card-elevated group w-full overflow-hidden">
-        <div className="relative overflow-hidden">
-          {cardSources ? (
-            <picture>
-              <source srcSet={cardSources.webp} type="image/webp" sizes={cardImageSizes} />
-              <source srcSet={cardSources.avif} type="image/avif" sizes={cardImageSizes} />
-              <img
-                src={cardSources.fallback}
-                alt={event.title}
-                width={1200}
-                height={675}
-                loading="lazy"
-                decoding="async"
-                sizes={cardImageSizes}
-                className="aspect-[16/9] w-full object-cover transition-transform group-hover:scale-105"
-              />
-            </picture>
-          ) : (
-            <div className="aspect-[16/9] w-full bg-gradient-to-br from-foreground-strong to-border" />
-          )}
+      <article className="relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group w-full">
+        <div className="relative aspect-[3/2] overflow-hidden bg-muted">
+          <Image
+            className="w-full h-full object-cover transition-transform group-hover:scale-[1.03]"
+            title={event.title}
+            image={rawImage}
+            alt={event.title}
+            context="card"
+            cacheKey={event.updatedAt}
+          />
         </div>
 
         <div className="p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-4 text-foreground-strong group-hover:text-primary transition-colors">
+          <h3 className="text-base sm:text-lg md:text-xl font-semibold tracking-normal leading-snug mb-4 text-foreground-strong group-hover:text-primary/85 transition-colors">
             {event.title}
           </h3>
 
@@ -171,7 +119,7 @@ export default async function NewsCard({
           )}
 
           <div className="flex items-center justify-between">
-            <span className="btn-primary text-xs sm:text-sm inline-block">
+            <span className="text-xs sm:text-sm font-semibold text-primary inline-block">
               {t("readMore")}
             </span>
           </div>

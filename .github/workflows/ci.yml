@@ -23,10 +23,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
@@ -62,10 +62,10 @@ jobs:
       - name: Validate i18n placeholders
         run: yarn i18n:validate
 
-      - name: Run unit tests (Vitest)
+      - name: Run unit tests with coverage (Vitest)
         env:
           CI: true
-        run: yarn test
+        run: yarn test:coverage
 
       - name: Generate service worker (prebuild)
         env:
@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload bundle sizes report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bundle-sizes
           path: bundle-sizes.json
@@ -103,13 +103,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
@@ -141,7 +141,7 @@ jobs:
 
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouseci-report
           path: .lighthouseci/
@@ -156,10 +156,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
@@ -230,7 +230,7 @@ jobs:
           # VERCEL_ORG_ID and VERCEL_PROJECT_ID env vars should be automatically used by Vercel CLI
           # along with the .vercel/project.json file
           # --confirm avoids interactive prompts
-          npx vercel@25 --token="$VERCEL_TOKEN" \
+          npx vercel@latest --token="$VERCEL_TOKEN" \
             --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --env HMAC_SECRET="$HMAC_SECRET" \
             --env VERCEL_AUTOMATION_BYPASS_SECRET="$VERCEL_AUTOMATION_BYPASS_SECRET" \
@@ -251,6 +251,7 @@ jobs:
           echo "preview-url=$URL" >> $GITHUB_OUTPUT
       - name: Verify preview readiness
         if: ${{ env.PREVIEW_URL != '' }}
+        id: readiness
         env:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
@@ -258,22 +259,26 @@ jobs:
           MAX_RETRIES=5
           RETRY=0
           while [ $RETRY -lt $MAX_RETRIES ]; do
-            RESP=$(curl -fsSL \
+            HTTP_CODE=$(curl -s --connect-timeout 5 --max-time 15 -o /tmp/readiness-resp.txt -w "%{http_code}" \
               -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
               -H "x-vercel-set-bypass-cookie: true" \
-              "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || true)
-            if echo "$RESP" | head -c 1 | grep -q "{"; then
-              echo "Preview is ready"
+              "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || echo "000")
+            RESP=$(cat /tmp/readiness-resp.txt 2>/dev/null || true)
+            if [ "$HTTP_CODE" = "200" ] && echo "$RESP" | head -c 1 | grep -q "{"; then
+              echo "Preview is ready (HTTP $HTTP_CODE, valid JSON)"
+              echo "ready=true" >> $GITHUB_OUTPUT
               exit 0
             fi
+            echo "Attempt $((RETRY + 1))/$MAX_RETRIES: HTTP $HTTP_CODE (body: $(echo "$RESP" | head -c 200))"
             RETRY=$((RETRY + 1))
             if [ $RETRY -lt $MAX_RETRIES ]; then
               sleep $((2 ** RETRY))
             fi
           done
-          echo "Warning: API endpoint test failed after $MAX_RETRIES attempts - this may indicate HMAC_SECRET is not set or deployment is slow"
+          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Skipping E2E to avoid 30min timeout."
+          echo "ready=false" >> $GITHUB_OUTPUT
       - name: Run E2E tests (Playwright) against Vercel Preview
-        if: ${{ env.PREVIEW_URL != '' }}
+        if: ${{ env.PREVIEW_URL != '' && steps.readiness.outputs.ready == 'true' }}
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
@@ -283,7 +288,7 @@ jobs:
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/

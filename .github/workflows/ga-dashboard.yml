@@ -1,0 +1,69 @@
+name: Weekly GA4 Dashboard
+
+on:
+  # Weekly: Monday at 8 AM UTC (10 AM CET)
+  schedule:
+    - cron: "0 8 * * 1"
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Number of days to analyze"
+        required: false
+        default: "7"
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ga-dashboard
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  dashboard:
+    name: Generate GA4 Dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        run: |
+          pip install --quiet \
+            google-auth \
+            google-analytics-data
+
+      - name: Authenticate with GCP
+        run: |
+          echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> $GITHUB_ENV
+
+      - name: Run GA4 Dashboard
+        id: dashboard
+        run: |
+          DAYS="${{ github.event.inputs.days || '7' }}"
+          python3 scripts/ga-dashboard.py --md --days "$DAYS" --country Spain > /tmp/dashboard-output.md
+
+      - name: Create GitHub Issue
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "📊 Weekly GA4 Dashboard — ${{ github.event.inputs.days || '7' }}d"
+          content-filepath: /tmp/dashboard-output.md
+          labels: analytics,automated-dashboard
+          assignees: albertolive
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f /tmp/gcp-sa-key.json

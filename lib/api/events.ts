@@ -6,6 +6,8 @@ import {
   getInternalApiUrl,
   buildEventsQuery,
   getVercelProtectionBypassHeaders,
+  getApiUrl,
+  isApiUrlConfigured,
 } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import {
@@ -43,23 +45,23 @@ import { isE2ETestMode } from "@utils/env";
 const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
 
 const e2eEventsStore = isE2ETestMode
-  ? getE2EGlobal().__E2E_EVENTS__ ??
-    (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>())
+  ? (getE2EGlobal().__E2E_EVENTS__ ??
+    (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>()))
   : null;
 
-const ensureImageWithinLimit = (imageFile: File) => {
-  if (imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYTES) => {
+  if (imageFile.size > maxBytes) {
     console.warn(
       `uploadEventImage: image ${formatMegabytes(
-        imageFile.size
-      )}MB exceeds limit ${formatMegabytes(MAX_TOTAL_UPLOAD_BYTES)}MB`
+        imageFile.size,
+      )}MB exceeds limit ${formatMegabytes(maxBytes)}MB`,
     );
     throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
   }
 };
 
 async function fetchEventsInternal(
-  params: FetchEventsParams
+  params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
     content: [],
@@ -104,11 +106,7 @@ async function fetchEventsInternal(
 
   try {
     const queryString = buildEventsQuery(params);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-    if (!apiUrl) {
-      throw new Error("NEXT_PUBLIC_API_URL is not defined");
-    }
+    const apiUrl = getApiUrl();
 
     const finalUrl = `${apiUrl}/events?${queryString}`;
 
@@ -124,7 +122,7 @@ async function fetchEventsInternal(
         .text()
         .catch(() => "Unable to read error response");
       console.error(
-        `fetchEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
+        `fetchEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`,
       );
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -154,7 +152,7 @@ async function fetchEventsInternal(
         {
           tags: { section: "events-fetch", fallback: "external-also-failed" },
           extra: { params },
-        }
+        },
       );
     }
     return externalResult ?? fallbackResponse;
@@ -164,14 +162,14 @@ async function fetchEventsInternal(
 export const fetchEvents = cache(fetchEventsInternal);
 
 export async function fetchEventBySlug(
-  fullSlug: string
+  fullSlug: string,
 ): Promise<EventDetailResponseDTO | null> {
   if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
     return e2eEventsStore.get(fullSlug) ?? null;
   }
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
-    // Use getInternalApiUrl which now properly resolves to CloudFront in SST
+    // Use getInternalApiUrl which resolves the correct internal origin
     const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`);
 
     const res = await fetch(internalApiUrl, {
@@ -181,14 +179,14 @@ export async function fetchEventBySlug(
 
     if (res.status === 404) {
       console.warn(
-        `fetchEventBySlug: Event not found (404) for slug: ${fullSlug}`
+        `fetchEventBySlug: Event not found (404) for slug: ${fullSlug}`,
       );
       return null;
     }
     if (!res.ok) {
       const errorText = await res.text().catch(() => "No error text");
       console.error(
-        `fetchEventBySlug: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`
+        `fetchEventBySlug: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`,
       );
       throw new Error(`HTTP error! status: ${res.status}`);
     }
@@ -197,7 +195,7 @@ export async function fetchEventBySlug(
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
-      errorMessage
+      errorMessage,
     );
     return null;
   }
@@ -221,7 +219,7 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
 
     if (res.status === 404) {
       console.warn(
-        `fetchEventBySlugWithStatus: Event not found (404) for slug: ${fullSlug}`
+        `fetchEventBySlugWithStatus: Event not found (404) for slug: ${fullSlug}`,
       );
       return { event: null, notFound: true };
     }
@@ -229,7 +227,7 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
     if (!res.ok) {
       const errorText = await res.text().catch(() => "No error text");
       console.error(
-        `fetchEventBySlugWithStatus: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`
+        `fetchEventBySlugWithStatus: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`,
       );
       return { event: null, notFound: false };
     }
@@ -239,7 +237,7 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
-      errorMessage
+      errorMessage,
     );
     return { event: null, notFound: false };
   }
@@ -251,10 +249,17 @@ export const getEventBySlug = cache(fetchEventBySlug);
 
 export async function updateEventById(
   uuid: string,
-  data: EventUpdateRequestDTO
+  data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
+  // Refuse to mutate against the hardcoded production fallback when the env
+  // is not explicitly configured (e.g., misconfigured preview deployment).
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
+  }
   const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`,
+    `${getApiUrl()}/events/${uuid}`,
     {
       method: "PUT",
       headers: {
@@ -262,13 +267,13 @@ export async function updateEventById(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
-    }
+    },
   );
   if (!response.ok) {
     const errorText = await response.text();
     console.error("updateEventById: error response:", errorText);
     throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
   return response.json();
@@ -276,16 +281,19 @@ export async function updateEventById(
 
 export async function createEvent(
   data: EventCreateRequestDTO,
-  e2eExtras?: E2EEventExtras
+  e2eExtras?: E2EEventExtras,
 ): Promise<EventDetailResponseDTO> {
   if (isE2ETestMode && e2eEventsStore) {
     return createE2EEvent(data, e2eExtras);
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is not defined");
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
   }
+
+  const apiUrl = getApiUrl();
 
   const response = await fetchWithHmac(`${apiUrl}/events`, {
     method: "POST",
@@ -301,19 +309,20 @@ export async function createEvent(
     const errorText = await response.text();
     console.error("createEvent: error response:", errorText);
     throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
   return response.json();
 }
 
 export async function uploadEventImage(
-  imageFile: File
+  imageFile: File,
+  maxBytes?: number,
 ): Promise<UploadImageResponse> {
   if (!imageFile) {
     throw new Error("uploadEventImage: imageFile is required");
   }
-  ensureImageWithinLimit(imageFile);
+  ensureImageWithinLimit(imageFile, maxBytes);
 
   if (isE2ETestMode) {
     return {
@@ -322,10 +331,13 @@ export async function uploadEventImage(
     };
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is not defined");
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
   }
+
+  const apiUrl = getApiUrl();
 
   const formData = new FormData();
   formData.append("imageFile", imageFile);
@@ -343,13 +355,13 @@ export async function uploadEventImage(
       .text()
       .catch(() => "Unable to read error response");
     console.error(
-      `uploadEventImage: HTTP error! status: ${response.status}, body: ${errorText}`
+      `uploadEventImage: HTTP error! status: ${response.status}, body: ${errorText}`,
     );
     if (response.status === 413) {
       throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
     }
     throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
 
@@ -367,7 +379,7 @@ export async function uploadEventImage(
     typeof (payload as { publicId?: unknown }).publicId !== "string"
   ) {
     throw new Error(
-      "uploadEventImage: backend response missing url/publicId fields"
+      "uploadEventImage: backend response missing url/publicId fields",
     );
   }
 
@@ -377,7 +389,7 @@ export async function uploadEventImage(
 
 function createE2EEvent(
   data: EventCreateRequestDTO,
-  extras?: E2EEventExtras
+  extras?: E2EEventExtras,
 ): EventDetailResponseDTO {
   const slug = `e2e-event-${Date.now()}`;
   const safeCityId = data.cityId || 1;
@@ -450,18 +462,9 @@ function createE2EEvent(
  * At runtime (ISR/SSR), uses internal API proxy for better caching and security.
  */
 export async function fetchCategorizedEvents(
-  maxEventsPerCategory?: number
+  maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    if (isE2ETestMode) {
-      return buildE2EFallbackCategorizedEvents();
-    }
-    console.warn(
-      "fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object"
-    );
-    return {};
-  }
+  const apiUrl = getApiUrl();
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (homepage) can fetch data during next build
@@ -477,7 +480,7 @@ export async function fetchCategorizedEvents(
     } catch (e) {
       console.error(
         "fetchCategorizedEvents: Build phase external fetch failed:",
-        e
+        e,
       );
       return {};
     }
@@ -506,7 +509,7 @@ export async function fetchCategorizedEvents(
         .text()
         .catch(() => "Unable to read error response");
       console.error(
-        `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`
+        `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`,
       );
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -531,7 +534,7 @@ export async function fetchCategorizedEvents(
       const errorMessage = getSanitizedErrorMessage(fallbackError);
       console.error(
         "fetchCategorizedEvents: Both direct and external API failed:",
-        errorMessage
+        errorMessage,
       );
       return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
     }
@@ -592,48 +595,29 @@ function buildE2EFallbackCategorizedEvents(): CategorizedEvents {
  * Delegates to the shared filterActiveEvents helper to keep logic aligned.
  */
 export function filterPastEvents(
-  events: EventSummaryResponseDTO[]
+  events: EventSummaryResponseDTO[],
 ): EventSummaryResponseDTO[] {
   return filterActiveEvents(events);
 }
 
-function insertAdsRandomly(
+/**
+ * Insert ads at deterministic positions in the event list.
+ * Uses fixed spacing instead of Math.random() to ensure the component tree
+ * is identical across renders — required for cacheComponents (RSC resumption).
+ */
+function insertAdsDeterministic(
   events: EventSummaryResponseDTO[],
   ads: AdEvent[],
-  minDistance = 4,
-  maxDistance = 6,
-  startFrom = 3
+  spacing = 5,
+  startFrom = 3,
 ): ListEvent[] {
   const result: ListEvent[] = [...events];
 
-  // Shuffle the ads for random distribution
-  const shuffledAds = [...ads].sort(() => Math.random() - 0.5);
-
-  // Track inserted positions to avoid conflicts
-  const insertedIndexes: number[] = [];
-
-  // Insert ads at calculated positions
-  shuffledAds.forEach((ad, i) => {
-    // Calculate the index for the ad based on the min and max distance
-    let index =
-      startFrom +
-      i * minDistance +
-      Math.floor(Math.random() * (maxDistance - minDistance + 1));
-
-    // Adjust index to account for previously inserted ads
-    insertedIndexes.forEach((insertedIndex) => {
-      if (index >= insertedIndex) {
-        index++;
-      }
-    });
-
-    // Check if the index is valid
+  ads.forEach((ad, i) => {
+    // Fixed position: startFrom + i * spacing, adjusted for prior insertions
+    const index = startFrom + i * (spacing + 1);
     if (index <= result.length) {
-      // Insert the ad at the calculated index
       result.splice(index, 0, ad);
-      // Add the index to the insertedIndexes array
-      insertedIndexes.push(index);
-      insertedIndexes.sort((a, b) => a - b); // Keep sorted for next iteration
     }
   });
 
@@ -642,7 +626,7 @@ function insertAdsRandomly(
 
 export function insertAds(
   events: EventSummaryResponseDTO[],
-  adFrequencyRatio = 4 // 1 ad per 4 events, matching old behavior
+  adFrequencyRatio = 4, // 1 ad per 4 events, matching old behavior
 ): ListEvent[] {
   if (!events.length) {
     return [];
@@ -659,10 +643,10 @@ export function insertAds(
         images: [],
         location: "",
         slug: "",
-      } as AdEvent)
+      }) as AdEvent,
   );
 
-  return insertAdsRandomly(events, ads);
+  return insertAdsDeterministic(events, ads);
 }
 
 // Re-export for backward compatibility
