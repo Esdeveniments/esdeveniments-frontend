@@ -59,6 +59,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   alt={logoAlt}
                   width={190}
                   height={18}
+                  loading="eager"
                 />
               </PressableLink>
             </div>
