@@ -325,14 +325,15 @@ async function handleRequest(req: JsonRpcRequest, requestOrigin: string): Promis
         // Use request origin to avoid DNS resolution issues in containers
         const resourcePath = new URL(resource.uri).pathname;
         const res = await fetch(`${requestOrigin}${resourcePath}`, { next: { revalidate: 3600 } });
-        const text = res.ok ? await res.text() : `Failed to fetch resource (HTTP ${res.status})`;
+        if (!res.ok) {
+          return jsonRpcError(id, -32603, `Failed to fetch resource (HTTP ${res.status})`);
+        }
+        const text = await res.text();
         return jsonRpcSuccess(id, {
           contents: [{ uri: resource.uri, mimeType: resource.mimeType, text }],
         });
       } catch {
-        return jsonRpcSuccess(id, {
-          contents: [{ uri: resource.uri, mimeType: resource.mimeType, text: `Failed to fetch resource: ${resource.uri}` }],
-        });
+        return jsonRpcError(id, -32603, `Failed to fetch resource: ${uri}`);
       }
     }
 
