@@ -121,8 +121,16 @@ export default async function FilteredPage({
 }: {
   params: Promise<{ place: string; byDate: string; category: string }>;
 }) {
-  const { place, byDate, category } = await params;
-  const locale = (await rootLocale()) as AppLocale;
+  // Parallelize independent operations: params, locale, and categories fetch.
+  const [resolvedParams, locale, categoriesResult] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
+    getCategories().catch((error) => {
+      console.error("Error fetching categories:", error);
+      return [] as CategorySummaryResponseDTO[];
+    }),
+  ]);
+  const { place, byDate, category } = resolvedParams;
   const tFallback = await getTranslations({
     locale,
     namespace: "App.PlaceByDateCategory",
@@ -137,15 +145,7 @@ export default async function FilteredPage({
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
 
-  // Fetch dynamic categories BEFORE parsing URL to validate category slugs
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await getCategories();
-  } catch (error) {
-    // Continue without categories - will use static fallbacks
-    console.error("Error fetching categories:", error);
-    categories = []; // Fallback to empty array if fetch fails
-  }
+  let categories: CategorySummaryResponseDTO[] = categoriesResult;
 
   // Use empty searchParams to keep pages static (ISR-compatible)
   // Query params (search, distance, lat, lon) are handled client-side

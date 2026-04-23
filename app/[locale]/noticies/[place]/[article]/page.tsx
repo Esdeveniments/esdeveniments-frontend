@@ -96,9 +96,11 @@ export default async function Page({
 }: {
   params: Promise<{ place: string; article: string }>;
 }) {
-  const { place, article } = await params;
-
-  const locale = (await rootLocale()) as AppLocale;
+  // Parallelize params and locale resolution (independent operations).
+  const [{ place, article }, locale] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
+  ]);
   let detail: NewsDetailResponseDTO | null = null;
   try {
     detail = await getNewsBySlug(article);

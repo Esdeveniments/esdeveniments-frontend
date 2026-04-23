@@ -74,8 +74,11 @@ export default async function Page({
 }: {
   params: Promise<PlaceStaticPathParams>;
 }) {
-  const { place } = await params;
-  const locale = (await rootLocale()) as AppLocale;
+  // Parallelize params and locale resolution (independent operations).
+  const [{ place }, locale] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
+  ]);
 
   try {
     validatePlaceOrThrow(place);

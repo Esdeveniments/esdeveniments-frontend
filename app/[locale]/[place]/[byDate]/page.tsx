@@ -122,15 +122,10 @@ export default async function ByDatePage({
 }: {
   params: Promise<{ place: string; byDate: string }>;
 }) {
-  const { place, byDate } = await params;
-  const locale = (await rootLocale()) as AppLocale;
-
-  // Parallelize independent operations: translations and categories fetch
-  const [tFallback, categoriesResult] = await Promise.all([
-    getTranslations({
-      locale,
-      namespace: "App.PlaceByDate",
-    }),
+  // Parallelize independent operations: params, locale, and categories fetch.
+  const [resolvedParams, locale, categoriesResult] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
     getCategories().catch((error) => {
       console.error(
         "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
@@ -139,6 +134,12 @@ export default async function ByDatePage({
       return [] as CategorySummaryResponseDTO[];
     }),
   ]);
+  const { place, byDate } = resolvedParams;
+
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDate",
+  });
 
   try {
     validatePlaceOrThrow(place);
