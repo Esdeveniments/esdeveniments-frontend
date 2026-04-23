@@ -34,15 +34,12 @@ const nextConfig = {
     "@redis/client",
     "@fortedigital/nextjs-cache-handler",
   ],
-  // Custom cache handler for Docker/Coolify (Redis + LRU fallback).
-  // Vercel has its own caching infrastructure and doesn't bundle standalone files,
-  // so skip the custom handler there to avoid "Cannot find module" errors.
-  ...(process.env.VERCEL
-    ? {}
-    : {
-        cacheHandler: require.resolve("./cache-handler.mjs"),
-        cacheMaxMemorySize: 0,
-      }),
+  // Always load the cache handler — it gracefully falls back to no-op when
+  // Redis env vars (REDIS_URL/REDIS_HOST) are not set at runtime.
+  // Must be unconditional because next.config.js is evaluated at build time,
+  // but Redis env vars are only available at container runtime.
+  cacheHandler: require.resolve("./cache-handler.mjs"),
+  cacheMaxMemorySize: 0,
 
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
@@ -104,6 +101,11 @@ const nextConfig = {
     // Cache-busting is handled explicitly in utils/image-cache.ts using event.hash/updatedAt,
     // so updating an image changes its URL (e.g., ?v=<hash>) and forces CDN to fetch it again.
     minimumCacheTTL: 31536000,
+    // Cap the on-disk optimized-image cache (<distDir>/cache/images).
+    // Default per Next.js docs is 50% of available disk at startup, which on a
+    // shared Coolify VPS can grow to tens of GB and starve the host. LRU
+    // eviction kicks in above the cap.
+    maximumDiskCacheSize: 2_000_000_000, // 2 GB
     // Next.js 16: Explicitly configure allowed quality values
     // Reduced from 10 to 5 values to minimize cache fragmentation
     qualities: [35, 50, 60, 75, 85],

@@ -3,6 +3,14 @@ name: Deploy to Coolify
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".claude/**"
+      - ".github/skills/**"
+      - ".vscode/**"
+      - ".cursor/**"
+      - "LICENSE"
   workflow_dispatch:
     inputs:
       skip_e2e:
@@ -20,7 +28,13 @@ on:
 
 concurrency:
   group: deploy-coolify-${{ github.ref }}
-  cancel-in-progress: false # Don't cancel - let deployments complete
+  # Cancel superseded deploys. Coolify has a known stuck-build bug class
+  # (coollabsio/coolify #5850, #6414, #6579) where overlapping Next.js
+  # builds on the app server can wedge one build "In Progress" forever,
+  # which in turn blocks Coolify's automatic Docker cleanup from running
+  # and fills the disk. Cancelling in-flight deploys on a newer push is
+  # safer than queueing them.
+  cancel-in-progress: true
 
 # Explicit least-privilege permissions (security best practice)
 permissions:
