@@ -96,8 +96,7 @@ test.describe("Payment webhook endpoint (signed synthetic events)", () => {
     // through findSponsorBySessionId → proves DB connectivity end-to-end).
     const replay = await request.post("/api/sponsors/webhook", {
       headers: {
-        "stripe-signature": signPayload(payload, env.stripeWebhookSecret)
-          .signature,
+        "stripe-signature": signature,
         "content-type": "application/json",
       },
       data: payload,
