@@ -213,6 +213,8 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/publish",
   "/api/tiktok/upload",
   "/api/tiktok/status",
+  // API-scoped llms.txt (public, machine-readable)
+  "/api/llms.txt",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
@@ -633,6 +635,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view).*)",
   ],
 };

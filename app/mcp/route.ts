@@ -285,13 +285,30 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
 
     case "tools/call": {
       const toolName = (req.params?.name as string) ?? "";
+      if (!toolName) {
+        return jsonRpcError(id, -32602, "Missing required parameter: name", {
+          type: "invalid_params",
+          param: "name",
+        });
+      }
+      const knownTools = TOOLS.map((t) => t.name);
+      if (!knownTools.includes(toolName)) {
+        return jsonRpcError(id, -32602, `Unknown tool: ${toolName}`, {
+          type: "tool_not_found",
+          tool: toolName,
+          availableTools: knownTools,
+        });
+      }
       const toolArgs = (req.params?.arguments as Record<string, unknown>) ?? {};
       try {
         const result = await handleToolCall(toolName, toolArgs);
         return jsonRpcSuccess(id, result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Tool execution failed";
-        return jsonRpcError(id, -32603, message);
+        return jsonRpcError(id, -32603, message, {
+          type: "tool_execution_error",
+          tool: toolName,
+        });
       }
     }
 
