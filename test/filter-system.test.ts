@@ -173,14 +173,7 @@ describe("Filter Configuration System", () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    // TODO: Re-enable price filter tests when backend supports `type` query param.
-    // describe("Price Filter", () => {
-    //   test("price isEnabled when value is not default", () => { ... });
-    //   test("price isEnabled false when value is default", () => { ... });
-    //   test("price getDisplayText returns raw value when not default", () => { ... });
-    //   test("price getDisplayText returns undefined when default", () => { ... });
-    //   test("price removal resets to undefined", () => { ... });
-    // });
+    // Price filter tests are intentionally omitted while backend `type` filtering is unsupported.
   });
 
   describe("Filter Removal Logic", () => {
