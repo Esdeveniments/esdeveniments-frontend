@@ -133,4 +133,7 @@ tasks/
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Graphify
 .graphifyignore
+graphify-out/
