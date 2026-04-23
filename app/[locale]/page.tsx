@@ -105,14 +105,17 @@ export default function Page({
       />
 
       <Suspense fallback={<HomeStaticFallback locale={appLocale} />}>
-        <HomeContent />
+        <HomeContent locale={appLocale} />
       </Suspense>
     </>
   );
 }
 
-async function HomeContent(): Promise<JSX.Element> {
-  const locale = (await rootLocale()) as AppLocale;
+async function HomeContent({
+  locale,
+}: {
+  locale: AppLocale;
+}): Promise<JSX.Element> {
   const categorizedEventsPromise = getCategorizedEvents(5);
   const categoriesPromise = fetchCategories();
 
