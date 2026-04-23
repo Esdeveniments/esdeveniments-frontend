@@ -12,7 +12,7 @@ import { siteUrl } from "@config/index";
 import { locale as rootLocale } from "next/root-params";
 import { withLocalePath } from "@utils/i18n-seo";
 import { parseNewsPagination } from "@utils/news-helpers";
-import type { Href } from "types/common";
+import type { Href, RouteSearchParams } from "types/common";
 import type { AppLocale } from "types/i18n";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
@@ -47,9 +47,7 @@ export default async function Page({
   // Parallelize independent awaits (locale + searchParams) to reduce TTFB.
   const [locale, query] = await Promise.all([
     rootLocale() as Promise<AppLocale>,
-    (searchParams || Promise.resolve({})) as Promise<{
-      [key: string]: string | string[] | undefined;
-    }>,
+    (searchParams || Promise.resolve({})) as Promise<RouteSearchParams>,
   ]);
   const t = await getTranslations({ locale, namespace: "App.News" });
   const withLocale = (path: string) => withLocalePath(path, locale);
