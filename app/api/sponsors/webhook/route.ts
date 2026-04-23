@@ -87,8 +87,11 @@ async function handleCheckoutCompleted(
   }
 
   // Guard: Only process when payment is actually completed
-  // For async payment methods, wait for checkout.session.async_payment_succeeded
-  if (session.payment_status !== "paid") {
+  // "paid" = normal card payment completed
+  // "no_payment_required" = 100% discount coupon (nothing to charge)
+  // For async payment methods (unpaid), wait for checkout.session.async_payment_succeeded
+  const completedStatuses = ["paid", "no_payment_required"];
+  if (!completedStatuses.includes(session.payment_status)) {
     console.log(
       `Checkout ${session.id} completed but payment_status is "${session.payment_status}" - awaiting payment confirmation`,
     );
