@@ -116,8 +116,8 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
         category: args.category as string | undefined,
         byDate: args.byDate as string | undefined,
         term: args.term as string | undefined,
-        page: args.page != null ? Number(args.page) : 0,
-        size: args.size != null ? Math.min(Number(args.size), 50) : 15,
+        page: Number.isInteger(Number(args.page)) ? Number(args.page) : 0,
+        size: Number.isInteger(Number(args.size)) ? Math.max(1, Math.min(Number(args.size), 50)) : 15,
       });
       return {
         content: [
@@ -304,10 +304,17 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
       if (!resource) {
         return jsonRpcError(id, -32602, `Resource not found: ${uri}`);
       }
-      // Return a pointer — actual content fetch is left to the client
-      return jsonRpcSuccess(id, {
-        contents: [{ uri: resource.uri, mimeType: resource.mimeType, text: `See ${resource.uri}` }],
-      });
+      try {
+        const res = await fetch(resource.uri, { next: { revalidate: 3600 } });
+        const text = res.ok ? await res.text() : `Failed to fetch resource (HTTP ${res.status})`;
+        return jsonRpcSuccess(id, {
+          contents: [{ uri: resource.uri, mimeType: resource.mimeType, text }],
+        });
+      } catch {
+        return jsonRpcSuccess(id, {
+          contents: [{ uri: resource.uri, mimeType: resource.mimeType, text: `Failed to fetch resource: ${resource.uri}` }],
+        });
+      }
     }
 
     case "ping":
