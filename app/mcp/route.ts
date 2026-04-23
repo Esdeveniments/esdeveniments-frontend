@@ -116,7 +116,7 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
         category: args.category as string | undefined,
         byDate: args.byDate as string | undefined,
         term: args.term as string | undefined,
-        page: Number.isInteger(Number(args.page)) ? Number(args.page) : 0,
+        page: Number.isInteger(Number(args.page)) ? Math.max(0, Number(args.page)) : 0,
         size: Number.isInteger(Number(args.size)) ? Math.max(1, Math.min(Number(args.size), 50)) : 15,
       });
       return {
@@ -190,8 +190,8 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
     case "listNews": {
       const data = await fetchNewsExternal({
         place: args.place as string | undefined,
-        page: args.page != null ? Number(args.page) : 0,
-        size: args.size != null ? Number(args.size) : 15,
+        page: Number.isInteger(Number(args.page)) ? Math.max(0, Number(args.page)) : 0,
+        size: Number.isInteger(Number(args.size)) ? Math.max(1, Math.min(Number(args.size), 50)) : 15,
       });
       return {
         content: [
@@ -257,7 +257,7 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
   }
 }
 
-async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
+async function handleRequest(req: JsonRpcRequest, requestOrigin: string): Promise<JsonRpcResponse> {
   const id = req.id ?? null;
 
   switch (req.method) {
@@ -322,7 +322,9 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
         return jsonRpcError(id, -32602, `Resource not found: ${uri}`);
       }
       try {
-        const res = await fetch(resource.uri, { next: { revalidate: 3600 } });
+        // Use request origin to avoid DNS resolution issues in containers
+        const resourcePath = new URL(resource.uri).pathname;
+        const res = await fetch(`${requestOrigin}${resourcePath}`, { next: { revalidate: 3600 } });
         const text = res.ok ? await res.text() : `Failed to fetch resource (HTTP ${res.status})`;
         return jsonRpcSuccess(id, {
           contents: [{ uri: resource.uri, mimeType: resource.mimeType, text }],
@@ -363,11 +365,12 @@ export async function POST(request: NextRequest) {
 
   const accept = request.headers.get("accept") ?? "";
   const wantsSse = accept.includes("text/event-stream");
+  const requestOrigin = request.nextUrl.origin;
 
   // Handle batch requests
   if (Array.isArray(body)) {
     const responses = await Promise.all(
-      body.map((req: JsonRpcRequest) => handleRequest(req)),
+      body.map((req: JsonRpcRequest) => handleRequest(req, requestOrigin)),
     );
     // Filter out notification responses (id === null and no error)
     const filtered = responses.filter((r) => r.id !== null || r.error);
@@ -390,7 +393,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const response = await handleRequest(rpcReq);
+  const response = await handleRequest(rpcReq, requestOrigin);
 
   if (wantsSse) {
     return sseResponse([response]);
