@@ -159,7 +159,7 @@ export default async function LocaleLayout({
                 <GoogleScripts />
               </Suspense>
               <AnalyticsBootstrap />
-              <WebMcpTools />
+              <WebMcpTools locale={locale} />
               <BaseLayout>{children}</BaseLayout>
             </AdProvider>
           </Suspense>

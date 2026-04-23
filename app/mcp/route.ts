@@ -40,6 +40,7 @@ const TOOLS = [
       },
     },
     annotations: { title: "List Events", readOnlyHint: true, openWorldHint: true },
+    _meta: { ui: { resourceUri: "ui://esdeveniments-cat/events-search" } },
   },
   {
     name: "getEvent",
@@ -52,6 +53,7 @@ const TOOLS = [
       required: ["slug"],
     },
     annotations: { title: "Get Event Details", readOnlyHint: true, openWorldHint: false },
+    _meta: { ui: { resourceUri: "ui://esdeveniments-cat/event-detail" } },
   },
   {
     name: "listNews",
@@ -92,6 +94,18 @@ const RESOURCES = [
     name: "OpenAPI Specification",
     description: "OpenAPI 3.1.0 spec for all public API endpoints",
     mimeType: "application/json",
+  },
+  {
+    uri: "ui://esdeveniments-cat/events-search",
+    name: "Events Search UI",
+    description: "Interactive search interface for cultural events in Catalonia",
+    mimeType: "text/html",
+  },
+  {
+    uri: "ui://esdeveniments-cat/event-detail",
+    name: "Event Detail UI",
+    description: "Interactive event detail view with map and calendar integration",
+    mimeType: "text/html",
   },
 ];
 
@@ -257,6 +271,113 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
   }
 }
 
+function generateAppHtml(uri: string): string | null {
+  if (uri === "ui://esdeveniments-cat/events-search") {
+    return `<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Esdeveniments.cat — Events Search</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;padding:16px;color:#1a1a1a;background:#fff}
+h1{font-size:1.25rem;margin-bottom:12px}
+.field{margin-bottom:8px}
+label{display:block;font-size:.85rem;font-weight:600;margin-bottom:2px}
+input,select{width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:.9rem}
+button{background:#e63946;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-size:.9rem;cursor:pointer;margin-top:8px}
+button:hover{background:#c1121f}
+#results{margin-top:16px}
+.event{border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px}
+.event h3{font-size:1rem;margin-bottom:4px}
+.event p{font-size:.85rem;color:#4b5563}
+</style>
+</head>
+<body>
+<h1>Cerca esdeveniments culturals</h1>
+<div class="field"><label>Lloc</label><input id="place" placeholder="barcelona, girona..."/></div>
+<div class="field"><label>Categoria</label><input id="category" placeholder="concerts, teatre..."/></div>
+<div class="field"><label>Data</label><select id="byDate"><option value="">Tots</option><option value="avui">Avui</option><option value="dema">Demà</option><option value="setmana">Aquesta setmana</option><option value="cap-de-setmana">Cap de setmana</option></select></div>
+<div class="field"><label>Cerca</label><input id="term" placeholder="Paraula clau..."/></div>
+<button onclick="search()">Cercar</button>
+<div id="results"></div>
+<script>
+function search(){
+  const args={};
+  ['place','category','byDate','term'].forEach(k=>{const v=document.getElementById(k).value;if(v)args[k]=v});
+  window.parent.postMessage({type:'mcp:tool_call',tool:'listEvents',arguments:args},'*');
+}
+window.addEventListener('message',e=>{
+  if(e.data?.type==='mcp:tool_result'){
+    try{
+      const d=JSON.parse(e.data.content);
+      const el=document.getElementById('results');
+      if(!d.events?.length){el.innerHTML='<p>Cap resultat</p>';return}
+      el.innerHTML=d.events.map(ev=>'<div class="event"><h3>'+esc(ev.title)+'</h3><p>'+(ev.startDate||'')+' · '+(ev.location||ev.city?.name||'')+'</p></div>').join('');
+    }catch{}
+  }
+});
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+</script>
+</body>
+</html>`;
+  }
+
+  if (uri === "ui://esdeveniments-cat/event-detail") {
+    return `<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Esdeveniments.cat — Event Detail</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;padding:16px;color:#1a1a1a;background:#fff}
+h1{font-size:1.25rem;margin-bottom:8px}
+.meta{font-size:.85rem;color:#4b5563;margin-bottom:12px}
+.desc{font-size:.9rem;line-height:1.5}
+.tags{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:12px;font-size:.8rem}
+a{color:#e63946}
+#event{display:none}
+#loading{text-align:center;padding:20px;color:#6b7280}
+</style>
+</head>
+<body>
+<div id="loading">Carregant...</div>
+<div id="event">
+<h1 id="title"></h1>
+<div class="meta"><span id="dates"></span> · <span id="location"></span></div>
+<div class="desc" id="description"></div>
+<div class="tags" id="categories"></div>
+<p style="margin-top:12px"><a id="link" href="#" target="_blank">Veure a Esdeveniments.cat →</a></p>
+</div>
+<script>
+window.addEventListener('message',e=>{
+  if(e.data?.type==='mcp:tool_result'){
+    try{
+      const ev=JSON.parse(e.data.content);
+      document.getElementById('loading').style.display='none';
+      document.getElementById('event').style.display='block';
+      document.getElementById('title').textContent=ev.title||'';
+      document.getElementById('dates').textContent=[ev.startDate,ev.endDate].filter(Boolean).join(' – ');
+      document.getElementById('location').textContent=ev.location||ev.city?.name||'';
+      document.getElementById('description').textContent=(ev.description||'').slice(0,500);
+      if(ev.categories?.length){document.getElementById('categories').innerHTML=ev.categories.map(c=>'<span class="tag">'+esc(c.name||c)+'</span>').join('')}
+      if(ev.url){const a=document.getElementById('link');a.href=ev.url;a.style.display='inline'}
+    }catch{}
+  }
+});
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+</script>
+</body>
+</html>`;
+  }
+
+  return null;
+}
+
 async function handleRequest(req: JsonRpcRequest, requestOrigin: string): Promise<JsonRpcResponse> {
   const id = req.id ?? null;
 
@@ -267,6 +388,12 @@ async function handleRequest(req: JsonRpcRequest, requestOrigin: string): Promis
         capabilities: {
           tools: { listChanged: false },
           resources: { subscribe: false, listChanged: false },
+          experimental: {
+            "ext-apps": {
+              version: "2026-01-26",
+              supported: true,
+            },
+          },
         },
         serverInfo: SERVER_INFO,
         instructions:
@@ -321,6 +448,18 @@ async function handleRequest(req: JsonRpcRequest, requestOrigin: string): Promis
       if (!resource) {
         return jsonRpcError(id, -32602, `Resource not found: ${uri}`);
       }
+
+      // Handle ui:// resources for MCP Apps
+      if (uri.startsWith("ui://")) {
+        const html = generateAppHtml(uri);
+        if (!html) {
+          return jsonRpcError(id, -32602, `Unknown UI resource: ${uri}`);
+        }
+        return jsonRpcSuccess(id, {
+          contents: [{ uri, mimeType: "text/html", text: html }],
+        });
+      }
+
       try {
         // Use request origin to avoid DNS resolution issues in containers
         const resourcePath = new URL(resource.uri).pathname;
