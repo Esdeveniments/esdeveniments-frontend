@@ -22,6 +22,7 @@ Files are named: `YYYY-MM-DD-short-description.md`
 
 | Date       | Incident                                                                   | Impact                                  | Status                |
 | ---------- | -------------------------------------------------------------------------- | --------------------------------------- | --------------------- |
+| 2026-04-23 | [Coolify PR Preview Empty HTML](./2026-04-23-coolify-pr-preview-empty-html.md) | SEO testing unreliable on PR previews | Resolved (Documented) |
 | 2026-02-18 | [Sharp Architecture Mismatch](./2026-02-18-sharp-architecture-mismatch.md) | Performance (4 days unoptimized images) | Resolved              |
 | 2026-01-20 | [Fetch Cache Explosion](./2026-01-20-fetch-cache-explosion.md)             | Cost                                    | Resolved              |
 | 2025-12-28 | [DynamoDB Write Cost Spike](./2025-12-28-dynamodb-write-cost-spike.md)     | $307.50                                 | Resolved              |

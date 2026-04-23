@@ -54,6 +54,17 @@ If a production deploy causes issues (broken pages, Sharp failure, performance r
 
 **What it does NOT do**: It does not revert database migrations or external API changes. It only redeploys the frontend Docker container.
 
+## PR Preview Limitations
+
+Coolify PR preview deployments (`pr-XXX.esdeveniments.cat`) may **not have runtime env vars** (`NEXT_PUBLIC_API_URL`, `HMAC_SECRET`). Without these, all server-side data fetches fail silently (safe fallbacks return empty data), causing:
+- Empty `<main>` tag (only nav bar renders as HTML)
+- 5 `$RX` Suspense boundary errors in the HTML response
+- Page content exists only in RSC flight data (JS payloads), invisible to crawlers
+
+**Do not use PR previews for SEO or SSR testing** unless you verify env vars are set in the Coolify dashboard first. Quick check: `curl -sS "https://pr-XXX.esdeveniments.cat/" | grep -c '<h1'` — should be >0.
+
+See: `docs/incidents/2026-04-23-coolify-pr-preview-empty-html.md`
+
 ## Coding Style & Naming Conventions
 
 - TypeScript strict; prefer server components by default. Add `"use client"` only when needed.
