@@ -82,8 +82,6 @@ async function fetchPlacesFromApi(): Promise<PlaceResponseDTO[]> {
  * @returns Array of PlaceResponseDTO
  */
 export async function fetchPlaces(): Promise<PlaceResponseDTO[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) return [];
   // During build, bypass internal API (server not running) and call external directly
   if (isBuildPhase) {
     try {

@@ -1,62 +1,63 @@
 import { NextResponse } from "next/server";
-import { siteUrl } from "@config/index";
+import { getSiteUrlFromRequest } from "@config/index";
 
 /**
  * API Catalog (RFC 9727)
  * Returns a linkset+json document advertising discoverable API endpoints.
  * https://www.rfc-editor.org/rfc/rfc9727
  */
-export async function GET() {
+export async function GET(request: Request) {
+  const url = getSiteUrlFromRequest({ headers: request.headers });
   const catalog = {
     linkset: [
       {
-        anchor: `${siteUrl}/.well-known/api-catalog`,
+        anchor: `${url}/.well-known/api-catalog`,
         item: [
-          { href: `${siteUrl}/api/events` },
-          { href: `${siteUrl}/api/news` },
-          { href: `${siteUrl}/api/categories` },
-          { href: `${siteUrl}/api/places` },
-          { href: `${siteUrl}/api/regions` },
-          { href: `${siteUrl}/api/cities` },
+          { href: `${url}/api/events` },
+          { href: `${url}/api/news` },
+          { href: `${url}/api/categories` },
+          { href: `${url}/api/places` },
+          { href: `${url}/api/regions` },
+          { href: `${url}/api/cities` },
         ],
       },
       {
-        anchor: `${siteUrl}/api/events`,
+        anchor: `${url}/api/events`,
         "service-desc": [
-          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
+          { href: `${url}/openapi.json`, type: "application/openapi+json" },
         ],
         "service-doc": [
-          { href: `${siteUrl}/llms.txt`, type: "text/plain" },
+          { href: `${url}/llms.txt`, type: "text/plain" },
         ],
       },
       {
-        anchor: `${siteUrl}/api/news`,
+        anchor: `${url}/api/news`,
         "service-desc": [
-          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
+          { href: `${url}/openapi.json`, type: "application/openapi+json" },
         ],
       },
       {
-        anchor: `${siteUrl}/api/categories`,
+        anchor: `${url}/api/categories`,
         "service-desc": [
-          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
+          { href: `${url}/openapi.json`, type: "application/openapi+json" },
         ],
       },
       {
-        anchor: `${siteUrl}/api/places`,
+        anchor: `${url}/api/places`,
         "service-desc": [
-          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
+          { href: `${url}/openapi.json`, type: "application/openapi+json" },
         ],
       },
       {
-        anchor: `${siteUrl}/api/regions`,
+        anchor: `${url}/api/regions`,
         "service-desc": [
-          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
+          { href: `${url}/openapi.json`, type: "application/openapi+json" },
         ],
       },
       {
-        anchor: `${siteUrl}/api/cities`,
+        anchor: `${url}/api/cities`,
         "service-desc": [
-          { href: `${siteUrl}/openapi.json`, type: "application/openapi+json" },
+          { href: `${url}/openapi.json`, type: "application/openapi+json" },
         ],
       },
     ],

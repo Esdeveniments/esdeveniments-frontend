@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-03-22T15:35:41.825420+00:00",
-  "clientTotalBytes": 2295614,
+  "lastUpdated": "2026-04-21T18:45:00+00:00",
+  "clientTotalBytes": 2283119,
   "thresholds": {
     "warning": {
       "ratio": 0.05,
@@ -14,107 +14,107 @@
   },
   "routes": {
     "/[locale]": {
-      "serverBytes": 9663655,
+      "serverBytes": 9806705,
       "fileCount": 220
     },
     "/[locale]/patrocina": {
-      "serverBytes": 1464350,
+      "serverBytes": 1484779,
       "fileCount": 32
     },
     "/[locale]/sitemap": {
-      "serverBytes": 1388788,
+      "serverBytes": 1408796,
       "fileCount": 32
     },
     "/[locale]/[place]": {
-      "serverBytes": 1208735,
+      "serverBytes": 1228131,
       "fileCount": 24
     },
     "/[locale]/noticies": {
-      "serverBytes": 1136851,
+      "serverBytes": 1152684,
       "fileCount": 36
     },
     "/[locale]/sitemap/[town]": {
-      "serverBytes": 1023810,
+      "serverBytes": 1038755,
       "fileCount": 24
     },
     "/[locale]/e/[eventId]": {
-      "serverBytes": 935505,
+      "serverBytes": 950083,
       "fileCount": 16
     },
     "/[locale]/[place]/[byDate]": {
-      "serverBytes": 806869,
+      "serverBytes": 819807,
       "fileCount": 16
     },
     "/[locale]/noticies/[place]": {
-      "serverBytes": 753710,
+      "serverBytes": 764280,
       "fileCount": 22
     },
     "/[locale]/sitemap/[town]/[year]": {
-      "serverBytes": 657879,
+      "serverBytes": 667758,
       "fileCount": 16
     },
     "/[locale]/e/[eventId]/edita": {
-      "serverBytes": 450859,
+      "serverBytes": 456508,
       "fileCount": 8
     },
     "/[locale]/[place]/[byDate]/[category]": {
-      "serverBytes": 403956,
+      "serverBytes": 410428,
       "fileCount": 8
     },
     "/[locale]/preferits": {
-      "serverBytes": 372355,
+      "serverBytes": 379196,
       "fileCount": 8
     },
     "/[locale]/noticies/[place]/[article]": {
-      "serverBytes": 371692,
+      "serverBytes": 377080,
       "fileCount": 8
     },
     "/[locale]/sitemap/[town]/[year]/[month]": {
-      "serverBytes": 370898,
+      "serverBytes": 376130,
       "fileCount": 8
     },
     "/[locale]/publica": {
-      "serverBytes": 368999,
+      "serverBytes": 374142,
       "fileCount": 8
     },
     "/[locale]/e2e/load-more": {
-      "serverBytes": 367614,
+      "serverBytes": 372762,
       "fileCount": 8
     },
     "/[locale]/patrocina/upload": {
-      "serverBytes": 366979,
+      "serverBytes": 372125,
       "fileCount": 8
     },
     "/[locale]/qui-som": {
-      "serverBytes": 365983,
+      "serverBytes": 371126,
       "fileCount": 8
     },
     "/[locale]/compartir-tiktok": {
-      "serverBytes": 365756,
+      "serverBytes": 370899,
       "fileCount": 8
     },
     "/[locale]/callback": {
-      "serverBytes": 365711,
+      "serverBytes": 370854,
       "fileCount": 8
     },
     "/[locale]/patrocina/cancelled": {
-      "serverBytes": 365421,
+      "serverBytes": 370495,
       "fileCount": 8
     },
     "/[locale]/patrocina/success": {
-      "serverBytes": 365413,
+      "serverBytes": 370479,
       "fileCount": 8
     },
     "/[locale]/offline": {
-      "serverBytes": 365115,
+      "serverBytes": 370178,
       "fileCount": 8
     },
     "/[locale]/politica-privacitat": {
-      "serverBytes": 285729,
+      "serverBytes": 290368,
       "fileCount": 8
     },
     "/[locale]/termes-servei": {
-      "serverBytes": 285693,
+      "serverBytes": 290334,
       "fileCount": 8
     },
     "/api/places": {
@@ -153,10 +153,6 @@
       "serverBytes": 30171,
       "fileCount": 8
     },
-    "/api/revalidate": {
-      "serverBytes": 25411,
-      "fileCount": 6
-    },
     "/api/sponsors/image-upload": {
       "serverBytes": 24539,
       "fileCount": 6
@@ -167,10 +163,6 @@
     },
     "/api/events/categorized": {
       "serverBytes": 24453,
-      "fileCount": 6
-    },
-    "/api/sponsors/webhook": {
-      "serverBytes": 24437,
       "fileCount": 6
     },
     "/api/events/[slug]": {
@@ -213,6 +205,10 @@
       "serverBytes": 24307,
       "fileCount": 6
     },
+    "/api/sponsors/webhook": {
+      "serverBytes": 24267,
+      "fileCount": 6
+    },
     "/api/places/[slug]": {
       "serverBytes": 24249,
       "fileCount": 6
@@ -227,6 +223,10 @@
     },
     "/api/promotions/price-preview": {
       "serverBytes": 23813,
+      "fileCount": 6
+    },
+    "/api/revalidate": {
+      "serverBytes": 23769,
       "fileCount": 6
     },
     "/api/leads/restaurant": {
@@ -250,11 +250,11 @@
       "fileCount": 6
     },
     "/[locale]/noticies/[place]/rss.xml": {
-      "serverBytes": 14349,
+      "serverBytes": 14307,
       "fileCount": 6
     },
     "/[locale]/noticies/rss.xml": {
-      "serverBytes": 13859,
+      "serverBytes": 13817,
       "fileCount": 6
     },
     "/api/tiktok/creator-info": {
@@ -301,20 +301,36 @@
       "serverBytes": 12825,
       "fileCount": 6
     },
-    "/api/health": {
-      "serverBytes": 12582,
+    "/ask": {
+      "serverBytes": 12803,
+      "fileCount": 6
+    },
+    "/.well-known/api-catalog": {
+      "serverBytes": 12660,
       "fileCount": 6
     },
     "/.well-known/[...slug]": {
-      "serverBytes": 12436,
+      "serverBytes": 12648,
+      "fileCount": 6
+    },
+    "/api/health": {
+      "serverBytes": 12582,
       "fileCount": 6
     },
     "/manifest.webmanifest": {
       "serverBytes": 12309,
       "fileCount": 6
     },
+    "/openapi": {
+      "serverBytes": 12287,
+      "fileCount": 6
+    },
     "/server-static-sitemap.xml": {
       "serverBytes": 12215,
+      "fileCount": 6
+    },
+    "/agent-view": {
+      "serverBytes": 12141,
       "fileCount": 6
     },
     "/robots.txt": {
@@ -326,11 +342,15 @@
       "fileCount": 6
     },
     "/server-sitemap.xml": {
-      "serverBytes": 11983,
+      "serverBytes": 11941,
       "fileCount": 6
     },
     "/sitemap.xml": {
-      "serverBytes": 11939,
+      "serverBytes": 11897,
+      "fileCount": 6
+    },
+    "/index.md": {
+      "serverBytes": 11881,
       "fileCount": 6
     }
   }

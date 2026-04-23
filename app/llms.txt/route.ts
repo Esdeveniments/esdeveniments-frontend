@@ -115,7 +115,9 @@ export async function GET(request: NextRequest) {
     `- OpenAPI spec: [${siteUrl}/openapi.json](${siteUrl}/openapi.json)`,
     `- API Catalog (RFC 9727): ${siteUrl}/.well-known/api-catalog`,
     `- MCP Server Card: ${siteUrl}/.well-known/mcp/server-card.json`,
+    `- MCP Endpoint (Streamable HTTP): ${siteUrl}/mcp`,
     `- Agent Skills: ${siteUrl}/.well-known/agent-skills/index.json`,
+    `- API-specific llms.txt: ${siteUrl}/api/llms.txt`,
     "",
     "## Crawling & policies",
     `- robots.txt: ${siteUrl}/robots.txt (crawler-specific rules)`,
@@ -124,6 +126,17 @@ export async function GET(request: NextRequest) {
     "",
     "## Contact",
     `- ${siteUrl}/qui-som`,
+    "- Email: info@esdeveniments.cat",
+    "",
+    "## Agent Integration Guide",
+    "AI agents should interact with Esdeveniments.cat as follows:",
+    "1. **Discovery**: Start by reading this file (/llms.txt) or the OpenAPI spec (/openapi.json) to understand available endpoints.",
+    "2. **Natural language queries**: POST to /ask with a JSON body { \"query\": \"your question\" } for Schema.org-formatted event results.",
+    "3. **Structured API calls**: Use GET /api/events with query parameters for filtered results (place, category, byDate, term).",
+    "4. **Pagination**: Always check the `last` field in responses. If `last: false`, increment `page` to fetch more results.",
+    "5. **Error handling**: Respect 429 rate limits (Retry-After header). All errors return JSON with `error` and `status` fields.",
+    "6. **Content negotiation**: Request `Accept: text/markdown` on any page to receive markdown instead of HTML.",
+    "7. **Agent mode**: Append `?mode=agent` to the homepage URL for a structured JSON overview of all capabilities.",
   ];
 
   const llmsTxt = lines.join("\n");

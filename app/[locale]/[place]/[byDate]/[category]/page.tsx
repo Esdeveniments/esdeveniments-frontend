@@ -35,7 +35,8 @@ import { toLocalDateString } from "@utils/helpers";
 import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
 import { getTranslations } from "next-intl/server";
 import { redirect, notFound } from "next/navigation";
-import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { isValidCategorySlugFormat } from "@utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
@@ -92,6 +93,8 @@ export async function generateMetadata({
     filters.place
   );
 
+  const locale = (await rootLocale()) as AppLocale;
+
   const pageData: PageData = await generatePagesData({
     place: filters.place,
     byDate: filters.byDate as ByDateOptions,
@@ -100,8 +103,8 @@ export async function generateMetadata({
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     categoryName: categoryData?.name,
     search: parsed.queryParams.search,
+    locale,
   });
-  const locale = await getLocaleSafely();
 
   return buildPageMeta({
     title: pageData.title,
@@ -118,8 +121,16 @@ export default async function FilteredPage({
 }: {
   params: Promise<{ place: string; byDate: string; category: string }>;
 }) {
-  const { place, byDate, category } = await params;
-  const locale: AppLocale = await getLocaleSafely();
+  // Parallelize independent operations: params, locale, and categories fetch.
+  const [resolvedParams, locale, categoriesResult] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
+    getCategories().catch((error) => {
+      console.error("Error fetching categories:", error);
+      return [] as CategorySummaryResponseDTO[];
+    }),
+  ]);
+  const { place, byDate, category } = resolvedParams;
   const tFallback = await getTranslations({
     locale,
     namespace: "App.PlaceByDateCategory",
@@ -134,15 +145,7 @@ export default async function FilteredPage({
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
 
-  // Fetch dynamic categories BEFORE parsing URL to validate category slugs
-  let categories: CategorySummaryResponseDTO[] = [];
-  try {
-    categories = await getCategories();
-  } catch (error) {
-    // Continue without categories - will use static fallbacks
-    console.error("Error fetching categories:", error);
-    categories = []; // Fallback to empty array if fetch fails
-  }
+  let categories: CategorySummaryResponseDTO[] = categoriesResult;
 
   // Use empty searchParams to keep pages static (ISR-compatible)
   // Query params (search, distance, lat, lon) are handled client-side
@@ -219,6 +222,7 @@ export default async function FilteredPage({
             : undefined,
         categoryName: categoryData?.name,
         search: parsed.queryParams.search,
+        locale,
       });
       return { placeTypeLabel, pageData };
     } catch (error) {
@@ -281,11 +285,11 @@ export default async function FilteredPage({
           // SEO: For city pages, include parent region (comarca) relationship
           ...(placeTypeLabel.regionLabel &&
             placeTypeLabel.regionSlug && {
-              containedInPlace: {
-                name: placeTypeLabel.regionLabel,
-                url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
-              },
-            }),
+            containedInPlace: {
+              name: placeTypeLabel.regionLabel,
+              url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
+            },
+          }),
         })
       }
     />

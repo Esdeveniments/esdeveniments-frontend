@@ -1,6 +1,8 @@
 import { insertAds } from "@lib/api/events";
+import { Suspense, use } from "react";
+import type { JSX } from "react";
 import { fetchCategories } from "@lib/api/categories";
-import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import { getPlaceTypeAndLabelCached, formatPlaceName } from "@utils/helpers";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
@@ -28,7 +30,7 @@ import type { PlacePageEventsResult } from "types/props";
 import { twoWeeksDefault } from "@lib/dates";
 import { siteUrl } from "@config/index";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
@@ -50,8 +52,7 @@ export async function generateMetadata({
     return validation.fallbackMetadata;
   }
 
-  // Start locale fetch early (runs in parallel with placeTypeLabel)
-  const localePromise = getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
 
   const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
     place
@@ -60,8 +61,8 @@ export async function generateMetadata({
     place,
     byDate: "",
     placeTypeLabel,
+    locale,
   });
-  const locale = await localePromise;
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
@@ -70,13 +71,33 @@ export async function generateMetadata({
   });
 }
 
-export default async function Page({
+// Sync page component: unwraps params with use() and immediately returns a
+// Suspense boundary so the static shell (layout) can flush before any async
+// work. All async logic — locale, validation, categories, alias/404 redirect,
+// shell data, and events fetch — lives inside PlacePageGate and streams in.
+export default function Page({
   params,
 }: {
   params: Promise<PlaceStaticPathParams>;
 }) {
-  const { place } = await params;
-  const locale = await getLocaleSafely();
+  const { place } = use(params);
+
+  // Minimal SEO-safe fallback: if the streamed gate fails (broken env,
+  // Suspense error, etc.) crawlers still see an h1 derived from the slug.
+  // This mirrors the homepage's HomeStaticFallback pattern.
+  const placeLabel = formatPlaceName(place);
+
+  return (
+    <Suspense
+      fallback={<h1 className="sr-only">{placeLabel}</h1>}
+    >
+      <PlacePageGate place={place} />
+    </Suspense>
+  );
+}
+
+export async function PlacePageGate({ place }: { place: string }): Promise<JSX.Element> {
+  const locale = (await rootLocale()) as AppLocale;
 
   try {
     validatePlaceOrThrow(place);
@@ -96,6 +117,7 @@ export default async function Page({
         place,
         byDate: "",
         placeTypeLabel,
+        locale,
       });
       return { placeTypeLabel, pageData };
     } catch (error) {
@@ -144,11 +166,11 @@ export default async function Page({
           // SEO: For city pages, include parent region (comarca) relationship
           ...(placeTypeLabel.regionLabel &&
             placeTypeLabel.regionSlug && {
-              containedInPlace: {
-                name: placeTypeLabel.regionLabel,
-                url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
-              },
-            }),
+            containedInPlace: {
+              name: placeTypeLabel.regionLabel,
+              url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
+            },
+          }),
         })
       }
     />

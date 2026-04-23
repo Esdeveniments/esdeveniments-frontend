@@ -46,6 +46,20 @@ const nextConfig = {
 
   cacheComponents: true,
 
+  // --- HTML-limited bots (blocking render, no streaming) ---
+  // With cacheComponents (PPR) + self-hosted cache handler, streamed HTML arrives
+  // with Suspense placeholders ($RX bailouts) that only resolve after JS hydrates.
+  // AI crawlers / SEO scanners (Orank, GPTBot, ClaudeBot, PerplexityBot, etc.)
+  // don't execute JS, so they see an empty <main>. Forcing a blocking render for
+  // these user agents makes the full HTML available to them, restoring SEO/AI
+  // discoverability without disabling PPR for real users.
+  // NOTE: Setting this OVERRIDES the Next.js default list, so we must include
+  // the upstream defaults (kept verbatim from
+  // https://github.com/vercel/next.js/blob/canary/packages/next/src/shared/lib/router/utils/html-bots.ts)
+  // and extend them with AI / scanner UAs.
+  htmlLimitedBots:
+    /[\w-]+-Google|Google-[\w-]+|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight|Googlebot|GPTBot|ChatGPT-User|OAI-SearchBot|Claude-Web|ClaudeBot|anthropic-ai|PerplexityBot|Perplexity-User|ora-scan|ora-agent|DeepSeekBot|Qwen-Agent|Bytespider|CCBot|Meta-ExternalAgent|Meta-ExternalFetcher|Applebot-Extended|cohere-ai|Omgilibot|YouBot|Diffbot|Amazonbot|Timpibot|ImagesiftBot/i,
+
   // --- Experimental Features ---
   experimental: {
     rootParams: true,
@@ -87,6 +101,11 @@ const nextConfig = {
     // Cache-busting is handled explicitly in utils/image-cache.ts using event.hash/updatedAt,
     // so updating an image changes its URL (e.g., ?v=<hash>) and forces CDN to fetch it again.
     minimumCacheTTL: 31536000,
+    // Cap the on-disk optimized-image cache (<distDir>/cache/images).
+    // Default per Next.js docs is 50% of available disk at startup, which on a
+    // shared Coolify VPS can grow to tens of GB and starve the host. LRU
+    // eviction kicks in above the cap.
+    maximumDiskCacheSize: 2_000_000_000, // 2 GB
     // Next.js 16: Explicitly configure allowed quality values
     // Reduced from 10 to 5 values to minimize cache fragmentation
     qualities: [35, 50, 60, 75, 85],

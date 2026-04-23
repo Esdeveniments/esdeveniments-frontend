@@ -16,6 +16,7 @@ import { AdProvider } from "@lib/context/AdContext";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
+import WebMcpTools from "@components/partials/WebMcpTools";
 import type { AppLocale } from "types/i18n";
 import {
   CLIENT_APP_KEYS,
@@ -115,6 +116,8 @@ export default async function LocaleLayout({
         <link rel="dns-prefetch" href="//www.google-analytics.com" />
         <link rel="dns-prefetch" href="//stats.g.doubleclick.net" />
         <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
+        {/* MCP server discovery for AI agents (WebMCP + Streamable HTTP) */}
+        <link rel="mcp-server-sse" href="/.well-known/mcp" />
       </head>
       <body>
         <Script
@@ -156,6 +159,7 @@ export default async function LocaleLayout({
                 <GoogleScripts />
               </Suspense>
               <AnalyticsBootstrap />
+              <WebMcpTools />
               <BaseLayout>{children}</BaseLayout>
             </AdProvider>
           </Suspense>

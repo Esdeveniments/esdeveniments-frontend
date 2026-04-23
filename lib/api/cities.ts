@@ -46,13 +46,6 @@ async function fetchCitiesFromApi(): Promise<CitySummaryResponseDTO[]> {
  * At runtime (ISR/SSR), uses internal API proxy for better caching and security.
  */
 export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    console.warn(
-      "fetchCities: NEXT_PUBLIC_API_URL not set, returning empty array",
-    );
-    return [];
-  }
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (sitemap) can fetch data during next build

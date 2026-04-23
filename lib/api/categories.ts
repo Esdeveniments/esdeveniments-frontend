@@ -38,8 +38,6 @@ async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {
 }
 
 export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) return [];
   // During build, bypass internal API (server not running) and call external directly
   if (isBuildPhase) {
     try {

@@ -213,6 +213,8 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/publish",
   "/api/tiktok/upload",
   "/api/tiktok/status",
+  // API-scoped llms.txt (public, machine-readable)
+  "/api/llms.txt",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
@@ -416,6 +418,50 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // /.well-known/mcp: rewrite to /mcp so MCP is discoverable at standard path
+  // Uses rewrite instead of redirect to preserve POST body for MCP transport
+  if (pathname === "/.well-known/mcp") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/mcp";
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  // Trust anchor page aliases: standard English paths → Catalan equivalents
+  // Enables orank and AI agents to find About/Contact/Privacy at conventional URLs
+  const trustAnchorMap: Record<string, string> = {
+    "/about": "/qui-som",
+    "/contact": "/qui-som",
+    "/privacy": "/politica-privacitat",
+    "/terms": "/termes-servei",
+  };
+  const trustTarget = trustAnchorMap[pathname];
+  if (trustTarget) {
+    return NextResponse.redirect(new URL(trustTarget, request.url), 301);
+  }
+
+  // OpenAPI spec: bypass locale handling so route handler is used
+  if (pathname === "/openapi") {
+    return NextResponse.next();
+  }
+
+  // /docs paths: bypass locale handling for documentation routes
+  if (pathname.startsWith("/docs/")) {
+    return NextResponse.next();
+  }
+
+  // /index.md: serve markdown homepage for agents
+  if (pathname === "/index.md") {
+    return NextResponse.next();
+  }
+
+  // ?mode=agent: return structured agent view
+  if (request.nextUrl.searchParams.get("mode") === "agent") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/agent-view";
+    rewriteUrl.searchParams.delete("mode");
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   // Markdown for Agents: content negotiation
   // When agents request text/markdown, serve the llms.txt content with proper Content-Type
   const acceptHeader = request.headers.get("accept") || "";
@@ -615,6 +661,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view).*)",
   ],
 };

@@ -4,6 +4,13 @@ import { vi } from "vitest";
 
 vi.mock("next-intl", () => import("./mocks/next-intl"));
 vi.mock("next-intl/server", () => import("./mocks/next-intl-server"));
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return { ...actual, connection: vi.fn().mockResolvedValue(undefined) };
+});
+vi.mock("next/root-params", () => ({
+  locale: vi.fn().mockResolvedValue("ca"),
+}));
 
 process.env.HMAC_SECRET = "test-secret";
 
