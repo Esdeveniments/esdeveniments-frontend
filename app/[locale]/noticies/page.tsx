@@ -9,9 +9,11 @@ import {
   generateBreadcrumbList,
 } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import { withLocalePath } from "@utils/i18n-seo";
 import { parseNewsPagination } from "@utils/news-helpers";
-import type { Href } from "types/common";
+import type { Href, RouteSearchParams } from "types/common";
+import type { AppLocale } from "types/i18n";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import NewsList from "@components/noticies/NewsList";
@@ -27,7 +29,7 @@ const NewsCitiesSection = dynamic(() => import("@components/noticies/NewsCitiesS
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.News" });
   return buildPageMeta({
     title: t("metaTitle"),
@@ -42,16 +44,15 @@ export default async function Page({
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const locale = await getLocaleSafely();
+  // Parallelize independent awaits (locale + searchParams) to reduce TTFB.
+  const [locale, query] = await Promise.all([
+    rootLocale() as Promise<AppLocale>,
+    (searchParams || Promise.resolve({})) as Promise<RouteSearchParams>,
+  ]);
   const t = await getTranslations({ locale, namespace: "App.News" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
-
-  // Option A: /noticies shows latest Catalunya news.
-  const query = (await (searchParams || Promise.resolve({}))) as {
-    [key: string]: string | string[] | undefined;
-  };
   const { currentPage, pageSize } = parseNewsPagination(query);
 
   const citiesParam =

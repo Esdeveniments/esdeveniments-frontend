@@ -58,8 +58,8 @@ export async function GET(
       description:
         "Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (ca/es/en) event listings by place, date, and category.",
       version: "1.0.0",
-      url: `${url}/api`,
-      transport: "http",
+      url: `${url}/mcp`,
+      transport: "streamable-http",
       icon: `${url}/icons/icon-512x512.png`,
       capabilities: {
         tools: true,
@@ -121,8 +121,8 @@ export async function GET(
       description:
         "Esdeveniments.cat — Cultural events discovery API for Catalonia. Free multilingual (ca/es/en) events platform with public REST API.",
       version: "1.0.0",
-      url: `${url}/api`,
-      transport: "http",
+      url: `${url}/mcp`,
+      transport: "streamable-http",
       icon: `${url}/icons/icon-512x512.png`,
       capabilities: {
         tools: true,
@@ -261,6 +261,77 @@ export async function GET(
           "public, max-age=86400, stale-while-revalidate=86400",
       },
     });
+  }
+
+  // /.well-known/oauth-protected-resource (RFC 9728)
+  if (path === "oauth-protected-resource") {
+    const oauthResource = {
+      resource: url,
+      authorization_servers: [`${url}/oauth`],
+      scopes_supported: ["read:events", "read:news", "read:places"],
+      bearer_methods_supported: ["header"],
+      resource_documentation: `${url}/llms.txt`,
+    };
+
+    return NextResponse.json(oauthResource, {
+      status: 200,
+      headers: {
+        "Cache-Control":
+          "public, max-age=86400, stale-while-revalidate=86400",
+      },
+    });
+  }
+
+  // /.well-known/openid-configuration (OpenID Connect Discovery 1.0)
+  // /.well-known/oauth-authorization-server (RFC 8414)
+  if (
+    path === "openid-configuration" ||
+    path === "oauth-authorization-server"
+  ) {
+    const oauthMeta = {
+      issuer: url,
+      authorization_endpoint: `${url}/oauth/authorize`,
+      token_endpoint: `${url}/oauth/token`,
+      jwks_uri: `${url}/oauth/jwks`,
+      registration_endpoint: `${url}/oauth/register`,
+      scopes_supported: ["openid", "read:events", "read:news", "read:places"],
+      response_types_supported: ["code"],
+      grant_types_supported: [
+        "authorization_code",
+        "client_credentials",
+      ],
+      token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+      service_documentation: `${url}/llms.txt`,
+      code_challenge_methods_supported: ["S256"],
+    };
+
+    return NextResponse.json(oauthMeta, {
+      status: 200,
+      headers: {
+        "Cache-Control":
+          "public, max-age=86400, stale-while-revalidate=86400",
+      },
+    });
+  }
+
+  // /.well-known/mcp — Handled by proxy.ts rewrite to /mcp (preserves POST body)
+  // GET fallback: return MCP server info for discovery
+  if (path === "mcp") {
+    return NextResponse.json(
+      {
+        name: "esdeveniments-cat",
+        description: "Esdeveniments.cat MCP Server — Cultural events discovery for Catalonia",
+        url: `${url}/mcp`,
+        transport: "streamable-http",
+        method: "POST",
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
+        },
+      },
+    );
   }
 
   return new Response("Not Found", { status: 404 });

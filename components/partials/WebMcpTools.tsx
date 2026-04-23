@@ -11,8 +11,7 @@ import { useEffect } from "react";
  */
 export default function WebMcpTools() {
   useEffect(() => {
-    const mc = (navigator as Navigator & { modelContext?: ModelContext })
-      .modelContext;
+    const mc = navigator.modelContext;
     if (!mc) return;
 
     const ac = new AbortController();
@@ -161,20 +160,3 @@ export default function WebMcpTools() {
   return null;
 }
 
-/* Minimal type shims — the real types come from the browser when the API ships */
-interface ModelContext {
-  registerTool(
-    tool: {
-      name: string;
-      title?: string;
-      description: string;
-      inputSchema?: object;
-      annotations?: { readOnlyHint?: boolean };
-      execute: (
-        input: Record<string, unknown>,
-        client?: unknown,
-      ) => Promise<unknown>;
-    },
-    options?: { signal?: AbortSignal },
-  ): void;
-}

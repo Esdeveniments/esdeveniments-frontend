@@ -7,7 +7,7 @@ import type {
 import type { FetchNewsParams } from "./news";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { PagedResponseDTO } from "types/api/event";
-import { buildNewsQuery } from "@utils/api-helpers";
+import { buildNewsQuery, getApiUrl } from "@utils/api-helpers";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
 // This creates a separate cache entry for every unique URL.
@@ -17,17 +17,7 @@ import { buildNewsQuery } from "@utils/api-helpers";
 export async function fetchNewsExternal(
   params: FetchNewsParams
 ): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) {
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
-  }
+  const api = getApiUrl();
   try {
     // Use buildNewsQuery with setDefaults=false to match original behavior
     // (only add params if they're defined)
@@ -62,8 +52,7 @@ export async function fetchNewsExternal(
 export async function fetchNewsBySlugExternal(
   slug: string
 ): Promise<NewsDetailResponseDTO | null> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return null;
+  const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/news/${slug}`);
@@ -82,17 +71,7 @@ export async function fetchNewsBySlugExternal(
 export async function fetchNewsCitiesExternal(
   params: { page?: number; size?: number }
 ): Promise<PagedResponseDTO<CitySummaryResponseDTO>> {
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) {
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
-  }
+  const api = getApiUrl();
 
   try {
     const query = new URLSearchParams();

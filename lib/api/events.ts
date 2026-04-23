@@ -6,6 +6,8 @@ import {
   getInternalApiUrl,
   buildEventsQuery,
   getVercelProtectionBypassHeaders,
+  getApiUrl,
+  isApiUrlConfigured,
 } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import {
@@ -104,11 +106,7 @@ async function fetchEventsInternal(
 
   try {
     const queryString = buildEventsQuery(params);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-    if (!apiUrl) {
-      throw new Error("NEXT_PUBLIC_API_URL is not defined");
-    }
+    const apiUrl = getApiUrl();
 
     const finalUrl = `${apiUrl}/events?${queryString}`;
 
@@ -253,8 +251,15 @@ export async function updateEventById(
   uuid: string,
   data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
+  // Refuse to mutate against the hardcoded production fallback when the env
+  // is not explicitly configured (e.g., misconfigured preview deployment).
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
+  }
   const response = await fetchWithHmac(
-    `${process.env.NEXT_PUBLIC_API_URL}/events/${uuid}`,
+    `${getApiUrl()}/events/${uuid}`,
     {
       method: "PUT",
       headers: {
@@ -282,10 +287,13 @@ export async function createEvent(
     return createE2EEvent(data, e2eExtras);
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is not defined");
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
   }
+
+  const apiUrl = getApiUrl();
 
   const response = await fetchWithHmac(`${apiUrl}/events`, {
     method: "POST",
@@ -323,10 +331,13 @@ export async function uploadEventImage(
     };
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is not defined");
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
   }
+
+  const apiUrl = getApiUrl();
 
   const formData = new FormData();
   formData.append("imageFile", imageFile);
@@ -453,16 +464,7 @@ function createE2EEvent(
 export async function fetchCategorizedEvents(
   maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    if (isE2ETestMode) {
-      return buildE2EFallbackCategorizedEvents();
-    }
-    console.warn(
-      "fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object",
-    );
-    return {};
-  }
+  const apiUrl = getApiUrl();
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (homepage) can fetch data during next build

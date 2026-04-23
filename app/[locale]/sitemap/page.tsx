@@ -11,13 +11,15 @@ import {
   buildPageMeta,
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
-import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import SitemapContent from "@components/sitemap/SitemapContent";
 import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
 
 export async function generateMetadata() {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.Sitemap" });
   return buildPageMeta({
     title: t("metaTitle"),
@@ -38,7 +40,7 @@ async function getData(): Promise<{
 
 export default async function Page() {
   const dataPromise = getData();
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const tAppPromise = getTranslations({ locale, namespace: "App.Sitemap" });
   const tContentPromise = getTranslations({
     locale,

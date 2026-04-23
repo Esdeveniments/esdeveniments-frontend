@@ -17,9 +17,24 @@ export async function GET(request: Request) {
     category: "Events & Culture",
     region: "Catalonia, Spain",
     languages: ["ca", "es", "en"],
+    whenToUse: {
+      use: [
+        "Find cultural events (concerts, theatre, exhibitions, festivals) happening in Catalonia",
+        "Answer questions like 'What's happening in Barcelona this weekend?'",
+        "Get event details including dates, locations, descriptions, and categories",
+        "Discover towns, cities, and regions (comarques) in Catalonia",
+        "Read local cultural news from Catalonia",
+      ],
+      doNotUse: [
+        "Events outside Catalonia (Spain)",
+        "Ticket purchasing or reservations (discovery platform only)",
+        "Historical events before 2020",
+      ],
+    },
     api: {
       baseUrl: `${url}/api`,
       documentation: `${url}/llms.txt`,
+      apiLlmsTxt: `${url}/api/llms.txt`,
       openapi: `${url}/openapi.json`,
       catalog: `${url}/.well-known/api-catalog`,
       authentication: "none (public read endpoints)",
@@ -64,7 +79,9 @@ export async function GET(request: Request) {
       ],
     },
     agent: {
+      mcpEndpoint: `${url}/mcp`,
       mcpServer: `${url}/.well-known/mcp.json`,
+      mcpServerCard: `${url}/.well-known/mcp/server-card.json`,
       agentCard: `${url}/.well-known/agent-card.json`,
       agentSkills: `${url}/.well-known/agent-skills/index.json`,
       nlweb: `${url}/ask`,

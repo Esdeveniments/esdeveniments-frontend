@@ -1,6 +1,7 @@
 import { siteUrl } from "@config/index";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
+import { connection } from "next/server";
 import {
   PageData,
   GeneratePagesDataProps,
@@ -8,7 +9,7 @@ import {
 } from "types/common";
 import { formatPlacePreposition } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
-import { applyLocaleToCanonical, getLocaleSafely } from "@utils/i18n-seo";
+import { applyLocaleToCanonical } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 // Normalize subtitles for LLM/AI SEO extractability:
@@ -79,10 +80,12 @@ export async function generatePagesData({
   category,
   categoryName,
   search,
+  locale,
 }: GeneratePagesDataProps & {
   placeTypeLabel?: PlaceTypeAndLabel;
+  locale?: AppLocale;
 }): Promise<PageData> {
-  const resolvedLocale = (await getLocaleSafely()) || DEFAULT_LOCALE;
+  const resolvedLocale = locale || DEFAULT_LOCALE;
 
   // Parallelize translation fetches to eliminate waterfall (2 calls → 1 round trip)
   const [t, tConstants] = await Promise.all([
@@ -96,6 +99,7 @@ export async function generatePagesData({
     }),
   ]);
 
+  await connection();
   const now = new Date();
 
   // Used only for parsing numeric month/year parts deterministically.

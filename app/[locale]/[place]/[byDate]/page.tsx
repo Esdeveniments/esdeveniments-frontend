@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
@@ -92,6 +93,8 @@ export async function generateMetadata({
 
   const categoryData = categories.find((cat) => cat.slug === actualCategory);
 
+  const locale = (await rootLocale()) as AppLocale;
+
   const pageData = await generatePagesData({
     place,
     byDate: actualDate as ByDateOptions,
@@ -102,8 +105,8 @@ export async function generateMetadata({
         : undefined,
     categoryName: categoryData?.name,
     search: parsed.queryParams.search,
+    locale,
   });
-  const locale = await getLocaleSafely();
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
@@ -119,15 +122,10 @@ export default async function ByDatePage({
 }: {
   params: Promise<{ place: string; byDate: string }>;
 }) {
-  const { place, byDate } = await params;
-  const locale: AppLocale = await getLocaleSafely();
-
-  // Parallelize independent operations: translations and categories fetch
-  const [tFallback, categoriesResult] = await Promise.all([
-    getTranslations({
-      locale,
-      namespace: "App.PlaceByDate",
-    }),
+  // Parallelize independent operations: params, locale, and categories fetch.
+  const [resolvedParams, locale, categoriesResult] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
     getCategories().catch((error) => {
       console.error(
         "🔥 [place]/[byDate]/page.tsx - Error fetching categories:",
@@ -136,6 +134,12 @@ export default async function ByDatePage({
       return [] as CategorySummaryResponseDTO[];
     }),
   ]);
+  const { place, byDate } = resolvedParams;
+
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDate",
+  });
 
   try {
     validatePlaceOrThrow(place);
@@ -225,6 +229,7 @@ export default async function ByDatePage({
             : undefined,
         categoryName: categoryData?.name,
         search: parsed.queryParams.search,
+        locale,
       });
       return { placeTypeLabel, pageData };
     } catch (error) {
@@ -288,11 +293,11 @@ export default async function ByDatePage({
           // SEO: For city pages, include parent region (comarca) relationship
           ...(placeTypeLabel.regionLabel &&
             placeTypeLabel.regionSlug && {
-              containedInPlace: {
-                name: placeTypeLabel.regionLabel,
-                url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
-              },
-            }),
+            containedInPlace: {
+              name: placeTypeLabel.regionLabel,
+              url: toLocalizedUrl(`/${placeTypeLabel.regionSlug}`, locale),
+            },
+          }),
         })
       }
     />

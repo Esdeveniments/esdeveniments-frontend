@@ -49,11 +49,12 @@ describe("lib/api/categories", () => {
     vi.restoreAllMocks();
   });
 
-  it("fetchCategories returns empty array when NEXT_PUBLIC_API_URL is missing", async () => {
+  it("fetchCategories uses fallback API URL when NEXT_PUBLIC_API_URL is missing", async () => {
     delete process.env.NEXT_PUBLIC_API_URL;
     const { fetchCategories } = await import("lib/api/categories");
     const result = await fetchCategories();
-    expect(result).toEqual([]);
+    // With getApiUrl() fallback to api-defaults.json, the fetch still works
+    expect(result.length).toBeGreaterThan(0);
   });
 
   it("fetchCategories makes fetch call and returns parsed data", async () => {

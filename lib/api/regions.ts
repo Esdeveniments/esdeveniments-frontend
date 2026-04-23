@@ -50,13 +50,6 @@ async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
  * At runtime (ISR/SSR), uses internal API proxy for better caching and security.
  */
 export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    console.warn(
-      "fetchRegions: NEXT_PUBLIC_API_URL not set, returning empty array",
-    );
-    return [];
-  }
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (homepage, sitemap) can fetch data during next build
@@ -119,28 +112,12 @@ async function fetchRegionsWithCitiesFromApi(): Promise<
 export async function fetchRegionsWithCities(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
   // During build phase, bypass internal proxy
   // Detection: Check if NEXT_PHASE is set, or if we're in production build context
   const isBuildPhase =
     process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
     (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
 
-  if (!apiUrl) {
-    if (isBuildPhase) {
-      // Fail build if API URL is missing - this is a configuration error
-      throw new Error(
-        "fetchRegionsWithCities: NEXT_PUBLIC_API_URL not set during build. Cannot proceed without API configuration.",
-      );
-    }
-
-    // Runtime: return empty array if API URL is missing
-    console.warn(
-      "fetchRegionsWithCities: NEXT_PUBLIC_API_URL not set, returning empty array",
-    );
-    return [];
-  }
   if (isBuildPhase) {
     try {
       const data = await fetchRegionsOptionsExternal();

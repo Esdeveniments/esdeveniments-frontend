@@ -175,6 +175,14 @@ export async function GET() {
                 },
               },
             },
+            "500": {
+              description: "Internal server error",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
           },
         },
       },
@@ -235,11 +243,13 @@ export async function GET() {
             {
               name: "page",
               in: "query",
+              description: "Page number (0-indexed)",
               schema: { type: "integer", minimum: 0, default: 0 },
             },
             {
               name: "size",
               in: "query",
+              description: "Results per page (1-50)",
               schema: {
                 type: "integer",
                 minimum: 1,
@@ -263,6 +273,23 @@ export async function GET() {
                 },
               },
             },
+            "429": {
+              description: "Rate limit exceeded (60 req/min/IP)",
+              headers: {
+                "Retry-After": {
+                  schema: { type: "integer" },
+                  description: "Seconds to wait before retrying",
+                },
+              },
+            },
+            "500": {
+              description: "Internal server error",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
           },
         },
       },
@@ -276,6 +303,7 @@ export async function GET() {
               name: "slug",
               in: "path",
               required: true,
+              description: "News article slug identifier",
               schema: { type: "string" },
             },
           ],
@@ -290,6 +318,23 @@ export async function GET() {
             },
             "404": {
               description: "Article not found",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
+            "429": {
+              description: "Rate limit exceeded (60 req/min/IP)",
+              headers: {
+                "Retry-After": {
+                  schema: { type: "integer" },
+                  description: "Seconds to wait before retrying",
+                },
+              },
+            },
+            "500": {
+              description: "Internal server error",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -370,6 +415,7 @@ export async function GET() {
               name: "slug",
               in: "path",
               required: true,
+              description: "Place slug identifier (e.g. 'barcelona', 'girona')",
               schema: { type: "string" },
             },
           ],
@@ -384,6 +430,23 @@ export async function GET() {
             },
             "404": {
               description: "Place not found",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
+            "429": {
+              description: "Rate limit exceeded (60 req/min/IP)",
+              headers: {
+                "Retry-After": {
+                  schema: { type: "integer" },
+                  description: "Seconds to wait before retrying",
+                },
+              },
+            },
+            "500": {
+              description: "Internal server error",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -488,18 +551,58 @@ export async function GET() {
           type: "object",
           required: ["id", "title", "slug"],
           properties: {
-            id: { type: "integer" },
-            title: { type: "string" },
-            slug: { type: "string" },
-            description: { type: "string" },
-            startDate: { type: "string", format: "date-time" },
-            endDate: { type: "string", format: "date-time" },
-            location: { type: "string" },
-            imageUrl: { type: "string", format: "uri" },
-            category: { type: "string" },
-            lat: { type: "number" },
-            lon: { type: "number" },
-            url: { type: "string", format: "uri" },
+            id: { type: "string", description: "Unique event identifier (UUID)" },
+            title: { type: "string", description: "Event title" },
+            slug: { type: "string", description: "URL-friendly event identifier" },
+            description: { type: "string", description: "Full event description" },
+            startDate: { type: "string", format: "date-time", description: "Event start date (ISO 8601)" },
+            endDate: { type: "string", format: "date-time", description: "Event end date (ISO 8601)" },
+            location: { type: "string", description: "Event venue or address" },
+            imageUrl: { type: "string", format: "uri", description: "Event image URL" },
+            url: { type: "string", format: "uri", description: "Original event source URL" },
+            type: { type: "string", enum: ["FREE", "PAID"], description: "Whether the event is free or paid" },
+            lat: { type: "number", description: "Latitude of event location" },
+            lon: { type: "number", description: "Longitude of event location" },
+            city: {
+              type: "object",
+              description: "City where the event takes place",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+                slug: { type: "string" },
+              },
+            },
+            region: {
+              type: "object",
+              description: "Region (comarca) where the event takes place",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+                slug: { type: "string" },
+              },
+            },
+            province: {
+              type: "object",
+              description: "Province where the event takes place",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+                slug: { type: "string" },
+              },
+            },
+            categories: {
+              type: "array",
+              description: "Event categories",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "integer" },
+                  name: { type: "string" },
+                  slug: { type: "string" },
+                },
+              },
+            },
+            visits: { type: "integer", description: "Number of page views" },
           },
         },
         PagedNews: {
@@ -533,12 +636,14 @@ export async function GET() {
           type: "object",
           required: ["id", "title", "slug"],
           properties: {
-            id: { type: "integer" },
-            title: { type: "string" },
-            slug: { type: "string" },
-            content: { type: "string" },
-            imageUrl: { type: "string", format: "uri" },
-            publishedAt: { type: "string", format: "date-time" },
+            id: { type: "integer", description: "Unique news article identifier" },
+            title: { type: "string", description: "Article title" },
+            slug: { type: "string", description: "URL-friendly article identifier" },
+            content: { type: "string", description: "Full article content (may contain HTML)" },
+            description: { type: "string", description: "Short article summary" },
+            imageUrl: { type: "string", format: "uri", description: "Article image URL" },
+            publishedAt: { type: "string", format: "date-time", description: "Publication date (ISO 8601)" },
+            place: { type: "string", description: "Related place slug" },
           },
         },
         Category: {

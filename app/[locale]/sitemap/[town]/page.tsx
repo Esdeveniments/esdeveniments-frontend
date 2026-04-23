@@ -14,10 +14,10 @@ import {
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
 import {
-  getLocaleSafely,
   toLocalizedUrl,
   withLocalePath,
 } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
 import { SitemapLayout, SitemapBreadcrumb } from "@components/ui/sitemap";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import SitemapHeader from "@components/sitemap/SitemapHeader";
@@ -29,7 +29,7 @@ export async function generateMetadata({
 }: {
   params: Promise<TownStaticPathParams>;
 }) {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const { town } = await params;
   const place = await getPlaceBySlug(town);
@@ -66,7 +66,7 @@ export default function Page({
 
 async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) {
   const { town } = await params;
-  const locale: AppLocale = await getLocaleSafely();
+  const locale: AppLocale = (await rootLocale()) as AppLocale;
   const years: number[] = getAllYears();
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const tConstants = await getTranslations({

@@ -8,10 +8,12 @@ import {
   CurrencyEuroIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/outline";
-import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   setRequestLocale(locale);
   const t = await getTranslations("Sponsorship");
 
@@ -26,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PatrocinaPage() {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   setRequestLocale(locale);
 
   const t = await getTranslations("Sponsorship");

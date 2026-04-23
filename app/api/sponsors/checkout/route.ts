@@ -51,6 +51,9 @@ async function createStripeCheckoutSession(
   const stripeLocale = ["ca", "es"].includes(locale) ? "es" : "en";
   params.append("locale", stripeLocale);
 
+  // Allow promotion codes (coupon input on checkout page)
+  params.append("allow_promotion_codes", "true");
+
   // Customer creation to get email
   params.append("customer_creation", "always");
 
