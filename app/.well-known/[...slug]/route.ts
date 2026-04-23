@@ -314,6 +314,50 @@ export async function GET(
     });
   }
 
+  // /.well-known/ucp (Universal Commerce Protocol discovery profile)
+  if (path === "ucp") {
+    const ucpProfile = {
+      ucp: {
+        version: "2026-04-08",
+        services: {
+          "cat.esdeveniments.events": [
+            {
+              version: "2026-04-08",
+              spec: `${url}/llms.txt`,
+              transport: "mcp",
+              endpoint: `${url}/mcp`,
+              schema: `${url}/openapi.json`,
+            },
+            {
+              version: "2026-04-08",
+              spec: `${url}/llms.txt`,
+              transport: "rest",
+              endpoint: `${url}/api`,
+              schema: `${url}/openapi.json`,
+            },
+          ],
+        },
+        capabilities: {
+          "cat.esdeveniments.events.discovery": [
+            {
+              version: "2026-04-08",
+              spec: `${url}/llms.txt`,
+              schema: `${url}/openapi.json`,
+            },
+          ],
+        },
+      },
+    };
+
+    return NextResponse.json(ucpProfile, {
+      status: 200,
+      headers: {
+        "Cache-Control":
+          "public, max-age=86400, stale-while-revalidate=86400",
+      },
+    });
+  }
+
   // /.well-known/mcp — Handled by proxy.ts rewrite to /mcp (preserves POST body)
   // GET fallback: return MCP server info for discovery
   if (path === "mcp") {

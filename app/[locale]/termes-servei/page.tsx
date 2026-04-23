@@ -16,7 +16,6 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t("metaDescription"),
     canonical: toLocalizedUrl("/termes-servei", locale),
     locale,
-    robotsOverride: "noindex, follow",
   });
 }
 

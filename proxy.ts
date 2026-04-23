@@ -161,6 +161,14 @@ function getCsp() {
 // Cache CSP string at module load to avoid recomputing on every request
 const CACHED_CSP = getCsp();
 
+// AI/SEO bots NOT in Next.js's hardcoded html-bots.ts getBotType() regex.
+// These bots receive PPR shells (empty HTML) instead of blocking renders.
+// Matched UAs get "Slurp" appended so getBotType() returns 'html' → full render.
+// Bots already handled by Next.js: Googlebot, Bingbot, BingPreview, Slurp,
+// DuckDuckBot, applebot, facebookexternalhit, LinkedInBot, Twitterbot, etc.
+const AI_BOT_UA_RE =
+  /GPTBot|ChatGPT-User|OAI-SearchBot|Claude-Web|ClaudeBot|anthropic-ai|PerplexityBot|Perplexity-User|ora-scan|ora-agent|DeepSeekBot|Qwen-Agent|Bytespider|CCBot|Meta-ExternalAgent|Meta-ExternalFetcher|Applebot-Extended|cohere-ai|YouBot|Diffbot|Amazonbot|Timpibot|ImagesiftBot|PetalBot|Novellum/i;
+
 // Cache API route patterns at module load to avoid recreating on every request
 // Allowlist public API routes that don't require HMAC from the browser
 // Use regex patterns for precise matching to prevent accidental exposure of
@@ -527,6 +535,17 @@ export default async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);
+
+  // PPR bot fix: Next.js's hardcoded getBotType() only recognizes ~27 traditional
+  // crawlers for blocking render. AI bots (GPTBot, ClaudeBot, ora-scan, etc.)
+  // get PPR shells (empty HTML) because they're unrecognized. Appending "Slurp"
+  // (already in the hardcoded regex) to the UA triggers blocking render for these
+  // bots, so they receive full server-rendered HTML.
+  // See: node_modules/next/dist/shared/lib/router/utils/is-bot.js
+  const ua = request.headers.get("user-agent") || "";
+  if (AI_BOT_UA_RE.test(ua)) {
+    requestHeaders.set("user-agent", `${ua} Slurp`);
+  }
 
   // No per-page visitor id injection; handled only for /api/sponsors/checkout.
 

@@ -27,6 +27,72 @@ export function getSiteUrl(): string {
 }
 
 /**
+ * Check if a hostname is an internal/private address that should never be
+ * used as a public-facing URL. Covers Docker bind addresses (0.0.0.0),
+ * loopback (127.x, ::1), RFC 1918 private ranges (10.x, 172.16-31.x, 192.168.x),
+ * link-local (169.254.x), and common container hostnames.
+ *
+ * Coolify/Docker context: HOSTNAME=0.0.0.0 is the bind address for the container.
+ * Next.js reflects this in nextUrl.host when no proxy headers override it.
+ */
+function isInternalHost(host: string): boolean {
+  // Strip port: handle IPv6 bracket notation [::1]:3000 and IPv4 0.0.0.0:3000
+  let hostname = host;
+  if (hostname.startsWith("[")) {
+    // IPv6 bracket notation: [::1]:3000 or [::1]
+    const bracketEnd = hostname.indexOf("]");
+    if (bracketEnd !== -1) {
+      hostname = hostname.slice(1, bracketEnd);
+    }
+  } else {
+    // IPv4 or hostname: only strip port from last colon
+    // But if there are multiple colons, it's bare IPv6 (e.g. "::1") — don't strip
+    const colonCount = (hostname.match(/:/g) || []).length;
+    if (colonCount === 1) {
+      const lastColon = hostname.lastIndexOf(":");
+      const afterColon = hostname.slice(lastColon + 1);
+      if (/^\d+$/.test(afterColon)) {
+        hostname = hostname.slice(0, lastColon);
+      }
+    }
+  }
+
+  // Loopback, unspecified, and common dev names
+  if (
+    hostname === "localhost" ||
+    hostname === "0.0.0.0" ||
+    hostname === "::1" ||
+    hostname === "[::1]"
+  ) {
+    return true;
+  }
+
+  // IPv4 private/reserved ranges
+  // 127.x.x.x (loopback), 10.x.x.x, 192.168.x.x, 172.16-31.x.x, 169.254.x.x (link-local)
+  if (
+    /^127\./.test(hostname) ||
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+    /^169\.254\./.test(hostname)
+  ) {
+    return true;
+  }
+
+  // Infrastructure domains that aren't the real public host
+  if (
+    hostname.endsWith(".cloudfront.net") ||
+    hostname.includes(".lambda-url.") ||
+    hostname.endsWith(".internal") ||
+    hostname.endsWith(".local")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Get the site URL from a request, falling back to environment-based detection.
  * Prefers the actual request host for accuracy, especially in production.
  * Handles reverse proxy environments by checking multiple header sources.
@@ -52,23 +118,18 @@ export function getSiteUrlFromRequest(request?: {
       headers?.get("x-forwarded-host") ||
       headers?.get("host");
 
-    // Use request host if available
-    // Allow localhost ONLY in development mode
-    const isLocalhost =
-      host?.includes("localhost") || host?.includes("127.0.0.1");
+    if (host) {
+      const internal = isInternalHost(host);
 
-    if (
-      host &&
-      (!isLocalhost || process.env.NODE_ENV === "development") &&
-      !host.includes(".cloudfront.net") && // Avoid CDN distribution domains
-      !host.includes(".lambda-url.") // Avoid serverless function URLs
-    ) {
-      // Normalize 127.0.0.1 to localhost in development for consistency
-      const normalizedHost =
-        process.env.NODE_ENV === "development" && host.includes("127.0.0.1")
-          ? host.replace("127.0.0.1", "localhost")
-          : host;
-      return `${protocol}//${normalizedHost}`;
+      // Allow internal hosts ONLY in development mode
+      if (!internal || process.env.NODE_ENV === "development") {
+        // Normalize 127.0.0.1 to localhost in development for consistency
+        const normalizedHost =
+          process.env.NODE_ENV === "development" && host.includes("127.0.0.1")
+            ? host.replace("127.0.0.1", "localhost")
+            : host;
+        return `${protocol}//${normalizedHost}`;
+      }
     }
   }
 
@@ -76,6 +137,9 @@ export function getSiteUrlFromRequest(request?: {
   // In production, NEXT_PUBLIC_SITE_URL is set to "https://www.esdeveniments.cat"
   return getSiteUrl();
 }
+
+// Export for testing
+export { isInternalHost };
 
 // Keep the const for backward compatibility
 export const siteUrl = getSiteUrl();

@@ -184,6 +184,27 @@ export async function POST(request: NextRequest) {
     // Get the actual request URL for redirects (important for preview deployments)
     const baseUrl = getSiteUrlFromRequest(request);
 
+    // Safety: In production, redirect URLs MUST use HTTPS.
+    // If baseUrl resolved to an internal address (http://0.0.0.0, http://10.x, etc.),
+    // that's a misconfiguration — fail early instead of creating a broken Stripe session.
+    if (
+      process.env.NODE_ENV === "production" &&
+      !baseUrl.startsWith("https://")
+    ) {
+      console.error(
+        `[checkout] Resolved baseUrl is not HTTPS in production: ${baseUrl}. ` +
+          "Check NEXT_PUBLIC_SITE_URL and proxy headers.",
+      );
+      captureException(
+        new Error(`Checkout baseUrl not HTTPS: ${baseUrl}`),
+        { tags: { api: "sponsors-checkout" } },
+      );
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 },
+      );
+    }
+
     const session = await createStripeCheckoutSession(
       duration,
       locale,
