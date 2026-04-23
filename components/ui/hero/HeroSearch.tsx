@@ -260,7 +260,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             </Modal>
           </div>
         </h1>
-        <p className="body-large text-white/90 drop-shadow-md max-w-xl mx-auto">
+        <p className="body-large text-white/90 drop-shadow-md max-w-xl mx-auto" data-speakable="description">
           {subTitle || t("subtitleDefault")}
         </p>
       </div>
