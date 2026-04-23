@@ -105,6 +105,9 @@ async function fetchEventsInternal(
   }
 
   try {
+    // External-wrapper policy: short-circuit when NEXT_PUBLIC_API_URL is unset
+    // instead of hitting the default production URL from unconfigured envs.
+    if (!isApiUrlConfigured()) return fallbackResponse;
     const queryString = buildEventsQuery(params);
     const apiUrl = getApiUrl();
 

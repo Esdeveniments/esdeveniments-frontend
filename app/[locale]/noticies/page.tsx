@@ -44,16 +44,17 @@ export default async function Page({
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const locale = (await rootLocale()) as AppLocale;
+  // Parallelize independent awaits (locale + searchParams) to reduce TTFB.
+  const [locale, query] = await Promise.all([
+    rootLocale() as Promise<AppLocale>,
+    (searchParams || Promise.resolve({})) as Promise<{
+      [key: string]: string | string[] | undefined;
+    }>,
+  ]);
   const t = await getTranslations({ locale, namespace: "App.News" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
-
-  // Option A: /noticies shows latest Catalunya news.
-  const query = (await (searchParams || Promise.resolve({}))) as {
-    [key: string]: string | string[] | undefined;
-  };
   const { currentPage, pageSize } = parseNewsPagination(query);
 
   const citiesParam =

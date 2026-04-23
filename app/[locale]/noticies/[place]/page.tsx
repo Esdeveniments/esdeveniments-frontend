@@ -58,13 +58,16 @@ export default async function Page({
   params: Promise<{ place: string }>;
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { place } = await params;
-  const locale = (await rootLocale()) as AppLocale;
+  // Parallelize independent awaits (params + locale + searchParams) to reduce TTFB.
+  const [{ place }, locale, query] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
+    (searchParams || Promise.resolve({})) as Promise<{
+      [key: string]: string | string[] | undefined;
+    }>,
+  ]);
   const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const withLocale = (path: string) => withLocalePath(path, locale);
-  const query = (await (searchParams || Promise.resolve({}))) as {
-    [key: string]: string | string[] | undefined;
-  };
   const { currentPage, pageSize } = parseNewsPagination(query);
 
   // Start fetches immediately

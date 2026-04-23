@@ -219,7 +219,12 @@ async function HomeContent(): Promise<JSX.Element> {
 
   return (
     <>
-      {/* h1 + noscript are in HomeStaticFallback (PPR static shell) — not duplicated here */}
+      {/* h1 is duplicated in HomeContent so that after the Suspense fallback is
+          replaced by the streamed content, the final DOM still contains the h1
+          (important for SEO crawlers that execute JS and for accessibility).
+          The <noscript> stays in HomeStaticFallback only — it is prerendered
+          in the PPR static shell and is what JS-less crawlers see. */}
+      <h1 className="sr-only">{pageData.title}</h1>
 
       {siteNavigationSchema && (
         <JsonLdServer id="site-navigation" data={siteNavigationSchema} />

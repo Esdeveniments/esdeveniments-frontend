@@ -30,15 +30,16 @@ describe("lib/api/events", () => {
 
   it("returns safe fallback when backend URL is missing (internal route returns empty)", async () => {
     delete process.env.NEXT_PUBLIC_API_URL;
-    // When NEXT_PUBLIC_API_URL is missing, fetchEventsExternal returns early without calling fetch
-    // So we just verify it returns the fallback response
+    // When NEXT_PUBLIC_API_URL is missing, fetchEventsInternal short-circuits via
+    // isApiUrlConfigured() and returns its local fallbackResponse, which mirrors
+    // the requested page/size so the caller gets a predictable paged shape.
     const result: PagedResponseDTO<EventSummaryResponseDTO> = await fetchEvents(
       { page: 0, size: 10 }
     );
     expect(result).toEqual({
       content: [],
       currentPage: 0,
-      pageSize: 12,
+      pageSize: 10,
       totalElements: 0,
       totalPages: 0,
       last: true,

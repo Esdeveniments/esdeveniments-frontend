@@ -208,12 +208,13 @@ export default async function EventPage({
   const relatedEventsJsonData =
     event.relatedEvents && event.relatedEvents.length > 0
       ? {
-        "@id": `${siteUrl}#itemlist-${title
-          ?.toLowerCase()
-          .replace(/\s+/g, "-")}`,
+        // Anchor the ItemList @id to the event's canonical URL with a stable
+        // fixed fragment — avoids homepage-scoped @id and fragile title slugs.
+        "@id": `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}#related-events`,
         "@context": "https://schema.org",
         "@type": "ItemList",
         name: "Related Events",
+        url: `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`,
         numberOfItems: event.relatedEvents.length,
         itemListElement: event.relatedEvents
           .slice(0, 10) // Limit for performance
