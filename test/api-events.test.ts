@@ -28,18 +28,22 @@ describe("lib/api/events", () => {
     process.env = originalEnv;
   });
 
-  it("returns safe fallback when backend URL is missing (internal route returns empty)", async () => {
+  it("returns safe fallback when backend URL is missing and fetch fails", async () => {
     delete process.env.NEXT_PUBLIC_API_URL;
-    // When NEXT_PUBLIC_API_URL is missing, fetchEventsInternal short-circuits via
-    // isApiUrlConfigured() and returns its local fallbackResponse, which mirrors
-    // the requested page/size so the caller gets a predictable paged shape.
+    // When NEXT_PUBLIC_API_URL is missing, getApiUrl() falls back to the
+    // default production URL (config/api-defaults.json) so PR previews still
+    // work. If that fetch fails, the caller should still receive a safe
+    // paged fallback (from fetchEventsExternal's catch block).
+    const mockFetch = vi.fn().mockRejectedValue(new Error("network error"));
+    (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
+
     const result: PagedResponseDTO<EventSummaryResponseDTO> = await fetchEvents(
       { page: 0, size: 10 }
     );
     expect(result).toEqual({
       content: [],
       currentPage: 0,
-      pageSize: 10,
+      pageSize: 12,
       totalElements: 0,
       totalPages: 0,
       last: true,

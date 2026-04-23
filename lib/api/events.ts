@@ -105,9 +105,6 @@ async function fetchEventsInternal(
   }
 
   try {
-    // External-wrapper policy: short-circuit when NEXT_PUBLIC_API_URL is unset
-    // instead of hitting the default production URL from unconfigured envs.
-    if (!isApiUrlConfigured()) return fallbackResponse;
     const queryString = buildEventsQuery(params);
     const apiUrl = getApiUrl();
 
@@ -467,18 +464,6 @@ function createE2EEvent(
 export async function fetchCategorizedEvents(
   maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
-  // External-wrapper policy: short-circuit when NEXT_PUBLIC_API_URL is unset
-  // instead of hitting the default production URL from unconfigured envs
-  // (e.g. PR previews). Aligns with fetchEventsExternal / fetchNewsExternal.
-  if (!isApiUrlConfigured()) {
-    if (isE2ETestMode) {
-      return buildE2EFallbackCategorizedEvents();
-    }
-    console.warn(
-      "fetchCategorizedEvents: NEXT_PUBLIC_API_URL not set, returning empty object",
-    );
-    return {};
-  }
   const apiUrl = getApiUrl();
 
   // During build phase, bypass internal proxy and call external API directly
