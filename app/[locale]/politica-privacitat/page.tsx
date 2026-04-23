@@ -19,7 +19,6 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t("metaDescription"),
     canonical: toLocalizedUrl("/politica-privacitat", locale),
     locale,
-    robotsOverride: "noindex, follow",
   });
 }
 
