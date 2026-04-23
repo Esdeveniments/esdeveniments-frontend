@@ -70,14 +70,18 @@ export default async function EventPage({
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  const slug = (await params).eventId;
-
-  const locale = (await rootLocale()) as AppLocale;
+  // Start event fetch as soon as params resolve — don't wait for locale.
+  // Kick off both in parallel so locale resolution doesn't block the API call.
+  const eventPromise = params.then(({ eventId }) => getEventBySlug(eventId));
+  const [{ eventId: slug }, locale] = await Promise.all([
+    params,
+    rootLocale() as Promise<AppLocale>,
+  ]);
 
   // With relaxed CSP we no longer require a nonce here; compute mobile on client
   const initialIsMobile = false;
 
-  const event: EventDetailResponseDTO | null = await getEventBySlug(slug);
+  const event: EventDetailResponseDTO | null = await eventPromise;
   if (!event) notFound();
   if (event.title === "CANCELLED") notFound();
 

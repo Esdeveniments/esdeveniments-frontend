@@ -1,6 +1,6 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseEventDetail, parsePagedEvents } from "lib/validation/event";
-import { buildEventsQuery, getApiUrl } from "@utils/api-helpers";
+import { buildEventsQuery, getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
 import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
@@ -18,6 +18,7 @@ import type { FetchEventsParams } from "types/event";
 export async function fetchEventBySlug(
   slug: string,
 ): Promise<EventDetailResponseDTO | null> {
+  if (!isApiUrlConfigured()) return null;
   const apiUrl = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
@@ -35,6 +36,16 @@ export async function fetchEventBySlug(
 export async function fetchEventsExternal(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  if (!isApiUrlConfigured()) {
+    return {
+      content: [],
+      currentPage: 0,
+      pageSize: 12,
+      totalElements: 0,
+      totalPages: 0,
+      last: true,
+    };
+  }
   const api = getApiUrl();
   try {
     const qs = buildEventsQuery(params);
@@ -68,6 +79,7 @@ export async function fetchEventsExternal(
 export async function fetchCategorizedEventsExternal(
   maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
+  if (!isApiUrlConfigured()) return {};
   const api = getApiUrl();
   try {
     const params = new URLSearchParams();
@@ -97,6 +109,7 @@ export async function fetchCategorizedEventsExternal(
 export async function fetchEventCountExternal(
   place: string,
 ): Promise<number | null> {
+  if (!isApiUrlConfigured()) return null;
   const api = getApiUrl();
   try {
     const qs = buildEventsQuery({ place, size: 1 });
