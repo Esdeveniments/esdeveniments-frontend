@@ -49,9 +49,16 @@ export function readPaymentEnv(): PaymentEnv {
     );
   }
 
+  const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
+  if (!stripeWebhookSecret.startsWith("whsec_")) {
+    throw new Error(
+      "STRIPE_WEBHOOK_SECRET must be a valid Stripe webhook secret (starts with 'whsec_').",
+    );
+  }
+
   return {
     stripeSecretKey,
-    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET as string,
+    stripeWebhookSecret,
     tursoDatabaseUrl: process.env.TURSO_DATABASE_URL as string,
     tursoAuthToken: process.env.TURSO_AUTH_TOKEN as string,
     baseUrl: process.env.PLAYWRIGHT_TEST_BASE_URL as string,

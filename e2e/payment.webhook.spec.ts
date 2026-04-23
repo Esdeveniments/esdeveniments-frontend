@@ -102,7 +102,10 @@ test.describe("Payment webhook endpoint (signed synthetic events)", () => {
       },
       data: payload,
     });
-    expect(replay.status()).toBe(200);
+    expect(
+      replay.status(),
+      `Replay failed: ${await replay.text().catch(() => "<no body>")}`,
+    ).toBe(200);
   });
 
   test("rejects a request with a tampered signature", async ({ request }) => {
