@@ -74,6 +74,16 @@ function HomeStaticFallback({ locale }: { locale: AppLocale }) {
   return (
     <>
       <h1 className="sr-only">{content.h1}</h1>
+      {/* API doc links — visible to crawlers for agent discovery (orank public-api-docs check).
+          Uses <a> not <Link> because these are machine-readable file URLs, not navigable pages. */}
+      {/* eslint-disable @next/next/no-html-link-for-pages */}
+      <nav aria-label="Developer resources" className="sr-only">
+        <a href="/openapi.json">API Documentation (OpenAPI)</a>
+        <a href="/llms.txt">LLM Integration Guide</a>
+        <a href="/api/llms.txt">API Reference</a>
+        <a href="/.well-known/mcp">MCP Server</a>
+      </nav>
+      {/* eslint-enable @next/next/no-html-link-for-pages */}
       <noscript>
         <div>
           <h2>{content.h2}</h2>

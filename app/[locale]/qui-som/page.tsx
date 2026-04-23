@@ -71,6 +71,12 @@ const QuiSom: NextPage = async () => {
       name: "Esdeveniments.cat",
       url: siteUrl,
       email: contactEmail,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Barcelona",
+        addressRegion: "Catalunya",
+        addressCountry: "ES",
+      },
       contactPoint: [
         {
           "@type": "ContactPoint",

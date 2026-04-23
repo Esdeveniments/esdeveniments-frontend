@@ -314,9 +314,24 @@ export async function GET(
     });
   }
 
-  // /.well-known/mcp — Standard MCP discovery path, redirect to /mcp endpoint
+  // /.well-known/mcp — Handled by proxy.ts rewrite to /mcp (preserves POST body)
+  // GET fallback: return MCP server info for discovery
   if (path === "mcp") {
-    return NextResponse.redirect(new URL("/mcp", url), 307);
+    return NextResponse.json(
+      {
+        name: "esdeveniments-cat",
+        description: "Esdeveniments.cat MCP Server — Cultural events discovery for Catalonia",
+        url: `${url}/mcp`,
+        transport: "streamable-http",
+        method: "POST",
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
+        },
+      },
+    );
   }
 
   return new Response("Not Found", { status: 404 });

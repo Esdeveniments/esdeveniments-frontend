@@ -418,6 +418,14 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // /.well-known/mcp: rewrite to /mcp so MCP is discoverable at standard path
+  // Uses rewrite instead of redirect to preserve POST body for MCP transport
+  if (pathname === "/.well-known/mcp") {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = "/mcp";
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   // OpenAPI spec: bypass locale handling so route handler is used
   if (pathname === "/openapi") {
     return NextResponse.next();
@@ -635,6 +643,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view).*)",
+    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view).*)",
   ],
 };
