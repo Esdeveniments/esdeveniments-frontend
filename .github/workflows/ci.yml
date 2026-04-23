@@ -300,6 +300,7 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL_TEST }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN_TEST }}
         run: yarn test:e2e -c playwright.remote.config.ts --workers=2
 
       - name: Upload Playwright report

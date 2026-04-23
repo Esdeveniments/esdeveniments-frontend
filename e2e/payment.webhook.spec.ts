@@ -18,7 +18,7 @@ import { isPaymentE2EEnabled, readPaymentEnv } from "./helpers/paymentEnv";
 
 function buildSessionCompletedEvent(sessionId: string, placeSlug: string) {
   return {
-    id: `evt_test_${Date.now()}`,
+    id: `evt_test_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     type: "checkout.session.completed",
     data: {
       object: {

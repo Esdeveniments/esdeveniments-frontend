@@ -22,7 +22,7 @@ test.describe("Payment checkout endpoint (Stripe test mode)", () => {
   test("POST /api/sponsors/checkout returns a Stripe test-mode session URL", async ({
     request,
   }) => {
-    readPaymentEnv();
+    const env = readPaymentEnv();
 
     // Random slug per run avoids collisions with existing sponsors in the
     // test Turso DB (getOccupiedPlaceStatus would return 409 otherwise).
@@ -33,7 +33,8 @@ test.describe("Payment checkout endpoint (Stripe test mode)", () => {
     const res = await request.post("/api/sponsors/checkout", {
       headers: {
         // Unique visitor id → unique Stripe idempotency key → fresh session.
-        "x-visitor-id": `e2e-visitor-${Date.now()}`,
+        "x-visitor-id": `e2e-visitor-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        origin: env.baseUrl,
       },
       data: {
         duration: "7days",
@@ -61,12 +62,16 @@ test.describe("Payment checkout endpoint (Stripe test mode)", () => {
   test("POST /api/sponsors/checkout rejects invalid geoScope with 400", async ({
     request,
   }) => {
-    readPaymentEnv();
+    const env = readPaymentEnv();
 
     const res = await request.post("/api/sponsors/checkout", {
-      headers: { "x-visitor-id": `e2e-visitor-${Date.now()}` },
+      headers: {
+        "x-visitor-id": `e2e-visitor-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        origin: env.baseUrl,
+      },
       data: {
         duration: "7days",
+        locale: "ca",
         place: "mataro",
         placeName: "Mataró",
         geoScope: "galaxy",

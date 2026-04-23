@@ -11,6 +11,7 @@ const REQUIRED_VARS = [
   "STRIPE_SECRET_KEY",
   "STRIPE_WEBHOOK_SECRET",
   "TURSO_DATABASE_URL",
+  "TURSO_AUTH_TOKEN",
   "PLAYWRIGHT_TEST_BASE_URL",
 ] as const;
 
@@ -18,6 +19,7 @@ export type PaymentEnv = {
   stripeSecretKey: string;
   stripeWebhookSecret: string;
   tursoDatabaseUrl: string;
+  tursoAuthToken: string;
   baseUrl: string;
 };
 
@@ -51,6 +53,7 @@ export function readPaymentEnv(): PaymentEnv {
     stripeSecretKey,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET as string,
     tursoDatabaseUrl: process.env.TURSO_DATABASE_URL as string,
+    tursoAuthToken: process.env.TURSO_AUTH_TOKEN as string,
     baseUrl: process.env.PLAYWRIGHT_TEST_BASE_URL as string,
   };
 }
