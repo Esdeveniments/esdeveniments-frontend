@@ -213,6 +213,12 @@ jobs:
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
           # Vercel Deployment Protection bypass secret (optional but required for CI E2E against protected previews)
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          # Payment E2E: Stripe test-mode + dedicated test Turso DB. Safe to
+          # ship to every preview — never touches prod data or live Stripe.
+          STRIPE_SECRET_KEY_TEST: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+          STRIPE_WEBHOOK_SECRET_TEST: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
+          TURSO_DATABASE_URL_TEST: ${{ secrets.TURSO_DATABASE_URL_TEST }}
+          TURSO_AUTH_TOKEN_TEST: ${{ secrets.TURSO_AUTH_TOKEN_TEST }}
         run: |
           # Deploy and capture logs
           LOG=$(mktemp)
@@ -234,6 +240,10 @@ jobs:
             --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --env HMAC_SECRET="$HMAC_SECRET" \
             --env VERCEL_AUTOMATION_BYPASS_SECRET="$VERCEL_AUTOMATION_BYPASS_SECRET" \
+            --env STRIPE_SECRET_KEY="$STRIPE_SECRET_KEY_TEST" \
+            --env STRIPE_WEBHOOK_SECRET="$STRIPE_WEBHOOK_SECRET_TEST" \
+            --env TURSO_DATABASE_URL="$TURSO_DATABASE_URL_TEST" \
+            --env TURSO_AUTH_TOKEN="$TURSO_AUTH_TOKEN_TEST" \
             --build-env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --build-env HMAC_SECRET="$HMAC_SECRET" \
             --build-env NEXT_PUBLIC_E2E_TEST_MODE="1" \
@@ -284,6 +294,13 @@ jobs:
           PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
           NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          # Enable payment E2E only on PRs targeting main — lets PRs to develop
+          # iterate fast without hitting Stripe test mode every push.
+          RUN_PAYMENT_E2E: ${{ github.event.pull_request.base.ref == 'main' && '1' || '' }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL_TEST }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN_TEST }}
         run: yarn test:e2e -c playwright.remote.config.ts --workers=2
 
       - name: Upload Playwright report
