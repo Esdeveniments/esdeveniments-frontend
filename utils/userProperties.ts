@@ -57,17 +57,25 @@ const SOCIAL_SUFFIXES = [
   "mastodon.social",
 ];
 
-// AI-assistant hostnames — checked BEFORE organic because Gemini lives on
-// `gemini.google.com`, which would otherwise match the organic "google"
-// label.
+// AI-assistant hostnames — checked BEFORE organic because Gemini and Bard
+// live on google.com subdomains, which would otherwise match the organic
+// "google" label.
 const AI_SUFFIXES = [
   "openai.com",
   "chatgpt.com",
   "claude.ai",
   "perplexity.ai",
   "gemini.google.com",
+  "bard.google.com",
   "copilot.microsoft.com",
+  "copilot.com",
   "poe.com",
+  "meta.ai",
+  "grok.com",
+  "mistral.ai",
+  "you.com",
+  "phind.com",
+  "character.ai",
 ];
 
 function hostEndsWith(host: string, suffix: string): boolean {
@@ -138,4 +146,22 @@ export function setUserProperties(locale: string, attempt = 0): void {
   gtagWindow.gtag("set", "user_properties", props);
   // Mark applied only after gtag succeeds — if it threw, retries can re-attempt.
   appliedForLocale = locale;
+
+  // Fire a one-time-per-session custom event when the referrer is an AI
+  // assistant. user_properties alone don't support funnel/key-event analysis
+  // in GA4 — a custom event with the referrer domain lets us segment AI
+  // traffic per-source. sessionStorage dedupes across page navigations.
+  if (props.referrer_category === "ai") {
+    try {
+      if (!sessionStorage.getItem("ai_referrer_fired")) {
+        const host = new URL(document.referrer).hostname.toLowerCase();
+        gtagWindow.gtag("event", "ai_referrer", { referrer_domain: host });
+        sessionStorage.setItem("ai_referrer_fired", "1");
+      }
+    } catch {
+      // sessionStorage throws in Safari private mode / storage-disabled
+      // contexts; referrer URL may also be malformed. Silent fallback is
+      // intentional — analytics loss is acceptable, page must not break.
+    }
+  }
 }
