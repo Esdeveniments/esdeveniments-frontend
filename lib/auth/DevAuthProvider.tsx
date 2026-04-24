@@ -3,7 +3,7 @@
 import { useMemo, type ReactNode } from "react";
 import { AuthProvider } from "./AuthProvider";
 import { createMockAdapter } from "./mock-adapter";
-import { noopAdapter } from "./adapter";
+import { createApiAdapter } from "./api-adapter";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -12,17 +12,17 @@ export function DevAuthProvider({ children }: { children: ReactNode }) {
     () =>
       isDev
         ? createMockAdapter({
-            delay: 200,
-            preloadUsers: [
-              {
-                email: "dev@test.com",
-                password: "dev",
-                displayName: "Razzmatazz",
-                profileSlug: "razzmatazz",
-              },
-            ],
-          })
-        : noopAdapter,
+          delay: 200,
+          preloadUsers: [
+            {
+              email: "dev@test.com",
+              password: "dev",
+              displayName: "Razzmatazz",
+              profileSlug: "razzmatazz",
+            },
+          ],
+        })
+        : createApiAdapter(),
     []
   );
 

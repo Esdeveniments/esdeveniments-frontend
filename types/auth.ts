@@ -5,12 +5,16 @@ export type AuthMethod =
   | "oauth-github"
   | "passwordless";
 
+export type AuthRole = "USER" | "ADMIN";
+
 export interface AuthUser {
   id: string;
   email: string;
   displayName?: string;
   avatarUrl?: string;
   profileSlug?: string;
+  role?: AuthRole;
+  emailVerified?: boolean;
 }
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -28,6 +32,8 @@ export type AuthErrorCode =
   | "network-error"
   | "not-configured"
   | "rate-limited"
+  | "email-not-verified"
+  | "account-locked"
   | "unknown";
 
 export interface LoginCredentials {
@@ -41,11 +47,43 @@ export interface RegisterCredentials {
   displayName?: string;
 }
 
+export interface ForgotPasswordCredentials {
+  email: string;
+}
+
+export interface ResetPasswordCredentials {
+  token: string;
+  newPassword: string;
+}
+
 export interface AuthResult {
   success: boolean;
   user?: AuthUser;
   error?: AuthErrorCode;
+  message?: string;
   requiresVerification?: boolean;
+}
+
+/** Backend DTO: what POST /api/auth/login returns */
+export interface AuthResponseDTO {
+  accessToken: string;
+  tokenType: string;
+  expiresAt: string;
+  user: AuthenticatedUserDTO;
+}
+
+/** Backend DTO: what GET /api/auth/me returns */
+export interface AuthenticatedUserDTO {
+  id: number;
+  email: string;
+  name: string;
+  role: AuthRole;
+  emailVerified: boolean;
+}
+
+/** Backend DTO: message-only responses (register, forgot, reset, verify) */
+export interface AuthMessageResponseDTO {
+  message: string;
 }
 
 export type AuthUnsubscribe = () => void;

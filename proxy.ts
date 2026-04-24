@@ -223,6 +223,14 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/status",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
+  // Auth routes (browser-initiated; backend HMAC handled by external wrapper)
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/me",
+  "/api/auth/password/forgot",
+  "/api/auth/password/reset",
+  "/api/auth/verification/confirm",
+  "/api/auth/verification/resend",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
