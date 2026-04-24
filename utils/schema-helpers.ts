@@ -229,34 +229,21 @@ export const generateJsonData = (
       };
     }
 
+    // Paid events without known price: omit offers entirely.
+    // Emitting price:0 + "Consult price" placeholder violates Google's
+    // sd-policies ("don't use structured data to deceive") and suppresses
+    // rich results. schema.org/Event treats offers as recommended, not required.
     logSchemaWarning(slug, "offers", "missing price for paid event");
-    return {
-      ...baseOffer,
-      price: 0,
-      priceSpecification: {
-        "@type": "PriceSpecification" as const,
-        priceCurrency: "EUR",
-        description: "Consult price", // Indicates price is not known, consult for details
-      },
-    };
+    return null;
   };
 
   const offers = buildOffer();
 
-  // Dynamic eventStatus (improves accuracy for past/ongoing events)
-  const now = new Date();
-  const startDateTime = parseDateFromIso(resolvedStartDate);
-  const endDateTime = parseDateFromIso(resolvedEndDate, true);
-  let eventStatusValue = "https://schema.org/EventScheduled";
-  if (endDateTime && now > endDateTime) {
-    eventStatusValue = "https://schema.org/EventCompleted";
-  } else if (
-    startDateTime &&
-    now >= startDateTime &&
-    (!endDateTime || now <= endDateTime)
-  ) {
-    eventStatusValue = "https://schema.org/EventInProgress";
-  }
+  // Always emit EventScheduled. schema.org/EventStatusType only defines:
+  // EventScheduled, EventCancelled, EventMovedOnline, EventPostponed,
+  // EventRescheduled. "EventInProgress" and "EventCompleted" are NOT valid
+  // values — emitting them suppresses Google Event rich results. Past events
+  // are filtered by Google's freshness policy regardless of this field.
 
   const schemaName = trimmedTitle || `Esdeveniment a ${fallbackPlace}`.trim();
   const placeName = sanitizedLocation || addressLocality || fallbackPlace;
@@ -270,7 +257,7 @@ export const generateJsonData = (
     startDate: resolvedStartDate,
     endDate: resolvedEndDate,
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    eventStatus: eventStatusValue,
+    eventStatus: "https://schema.org/EventScheduled",
     location: {
       "@type": "Place" as const,
       name: placeName,
@@ -304,7 +291,7 @@ export const generateJsonData = (
       name: organizerName,
       url: siteUrl,
     },
-    offers,
+    ...(offers && { offers }),
     // isAccessibleForFree removed: event.type defaults to "FREE" so this is unreliable.
     // We only want to claim "Free" when we are 100% sure.
     ...(isValidHttpUrl(event.url) && {

@@ -4,6 +4,7 @@ import { EventSummaryResponseDTO } from "types/api/event";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
+import { EXPIRED_EVENT_NOINDEX_DAYS } from "@lib/meta";
 import type { SitemapPartsRouteContext } from "types/props";
 
 // Chunk size chosen to keep response sizes manageable
@@ -64,8 +65,21 @@ export async function GET(
 
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
 
+  // Keep sitemap aligned with on-page robots policy: events older than
+  // EXPIRED_EVENT_NOINDEX_DAYS are noindex'd in lib/meta.ts, so excluding
+  // them from the sitemap prevents signal conflicts and preserves sitemap
+  // trust. Events without a resolvable end date are kept (edge case).
+  const expiredCutoffMs = Date.now() - EXPIRED_EVENT_NOINDEX_DAYS * 24 * 60 * 60 * 1000;
+
   const fields: SitemapField[] = normalizedEvents
     .filter((event) => !event.isAd)
+    .filter((event) => {
+      const end = event.endDate || event.startDate;
+      if (!end) return true;
+      const endTime = new Date(end).getTime();
+      if (Number.isNaN(endTime)) return true;
+      return endTime > expiredCutoffMs;
+    })
     .map((data) => {
       const image = data.imageUrl || defaultImage;
       let lastModDate = data.updatedAt
