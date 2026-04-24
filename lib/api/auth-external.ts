@@ -29,6 +29,7 @@ export async function loginExternal(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
+      skipBodySigning: true, // backend ignores body for signature; align client signing
     });
 
     const json = await response.json();
@@ -66,6 +67,7 @@ export async function registerExternal(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, name }),
+      skipBodySigning: true, // backend ignores body for signature; align client signing
     });
 
     const json = await response.json();
@@ -115,6 +117,7 @@ export async function forgotPasswordExternal(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
+      skipBodySigning: true, // backend ignores body for signature; align client signing
     });
 
     const json = await response.json();
@@ -146,6 +149,7 @@ export async function resetPasswordExternal(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, newPassword }),
+      skipBodySigning: true, // backend ignores body for signature; align client signing
     });
 
     const json = await response.json();
@@ -204,6 +208,7 @@ export async function resendVerificationExternal(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
+      skipBodySigning: true, // backend ignores body for signature; align client signing
     });
 
     const json = await response.json();
