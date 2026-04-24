@@ -28,9 +28,13 @@ const normalizedSiteUrl = siteUrl.replace(/\/$/, "").replace(/^http:/, "https:")
 /**
  * robots.txt configuration - KEEP IN SYNC with app/robots.txt/route.ts
  *
- * 2025 SEO Best Practices:
+ * 2026 policy — AI-agent-first discoverability:
  * - Allow search engine crawlers (Googlebot, Bingbot, etc.)
- * - Block AI training crawlers (GPTBot, CCBot, etc.) to protect content
+ * - Allow AI agent crawlers (browsing + training) so LLM citations,
+ *   deep-research tools, and agent-readiness scanners (orank.ai
+ *   sim-chatgpt / sim-claude) can reach our content. Our data is
+ *   public cultural-events information; training protection has
+ *   lower value than broad agent reach.
  * - Block /_next/ static files (JS chunks, CSS, build artifacts)
  * - Block /api/ routes (internal endpoints, not for indexing)
  */
@@ -42,22 +46,25 @@ const robotsConfig = {
       allow: ["/"],
       disallow: ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"],
     },
-    // AI agent BROWSING/SEARCH crawlers — ALLOWED for agent readiness
-    // These crawlers power AI-powered search and agent tools
+    // AI agent BROWSING/SEARCH crawlers — explicit allow (agent readiness)
     { userAgent: "ChatGPT-User", allow: ["/"] },
     { userAgent: "Claude-Web", allow: ["/"] },
     { userAgent: "PerplexityBot", allow: ["/"] },
     { userAgent: "DeepSeekBot", allow: ["/"] },
-    // Block AI TRAINING-ONLY crawlers (protect content from training)
-    { userAgent: "GPTBot", disallow: ["/"] },
+    // AI TRAINING crawlers — explicit allow (2026 policy; see header).
+    // Removing these explicit rules would also allow them (via `*`), but we
+    // list them to make the policy visible to maintainers and to scanners.
+    { userAgent: "GPTBot", allow: ["/"] },
+    { userAgent: "ClaudeBot", allow: ["/"] },
+    { userAgent: "anthropic-ai", allow: ["/"] },
+    { userAgent: "Google-Extended", allow: ["/"] },
+    { userAgent: "Applebot-Extended", allow: ["/"] },
+    { userAgent: "Meta-ExternalAgent", allow: ["/"] },
+    { userAgent: "cohere-ai", allow: ["/"] },
+    // Still-blocked: non-vendor data harvesters with no direct user-agent
+    // value. These resell scraped data without powering any end-user agent.
     { userAgent: "CCBot", disallow: ["/"] },
-    { userAgent: "Google-Extended", disallow: ["/"] },
     { userAgent: "Bytespider", disallow: ["/"] },
-    { userAgent: "anthropic-ai", disallow: ["/"] },
-    { userAgent: "ClaudeBot", disallow: ["/"] },
-    { userAgent: "Applebot-Extended", disallow: ["/"] },
-    { userAgent: "Meta-ExternalAgent", disallow: ["/"] },
-    { userAgent: "cohere-ai", disallow: ["/"] },
     { userAgent: "Omgilibot", disallow: ["/"] },
   ],
   sitemaps: [
@@ -128,4 +135,6 @@ writeFileSync(outputPath, robotsTxt, "utf-8");
 
 console.log(`✅ Generated ${outputPath}`);
 console.log(`   Site URL: ${normalizedSiteUrl}`);
-console.log(`   AI training bots blocked: ${robotsConfig.rules.length - 1}`);
+const blocked = robotsConfig.rules.filter((r) => r.disallow && !r.allow).length;
+const allowed = robotsConfig.rules.filter((r) => r.allow).length;
+console.log(`   User-agent rules: ${allowed} allow, ${blocked} disallow`);
