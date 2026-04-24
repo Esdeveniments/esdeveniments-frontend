@@ -24,10 +24,12 @@ export default async function RegisterPage({
   searchParams: Promise<{ redirect?: string }>;
 }) {
   const params = await searchParams;
+  const redirectParam =
+    typeof params.redirect === "string" ? params.redirect : undefined;
   // Only allow safe relative paths to prevent open redirect attacks
   const redirectTo =
-    params.redirect && params.redirect.startsWith("/") && !params.redirect.startsWith("//")
-      ? params.redirect
+    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
       : undefined;
 
   return (

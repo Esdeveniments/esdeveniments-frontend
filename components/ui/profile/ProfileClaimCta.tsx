@@ -17,7 +17,7 @@ export default function ProfileClaimCta({
     <p className="body-small text-foreground/60 mb-element-gap">
       {t("claimQuestion")}{" "}
       <Link
-        href={`/iniciar-sessio?redirect=/perfil/${profileSlug}`}
+        href={`/iniciar-sessio?redirect=/perfil/${encodeURIComponent(profileSlug)}`}
         className="text-primary font-semibold"
       >
         {t("claimLogin")}
