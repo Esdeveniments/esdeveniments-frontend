@@ -140,7 +140,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                         </p>
                         {user.profileSlug && (
                           <ActiveLink
-                            href={`/perfil/${user.profileSlug}`}
+                            href={`/perfil/${encodeURIComponent(user.profileSlug)}`}
                             className="block w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
                           >
                             {labels.myProfile}
