@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
@@ -52,11 +52,7 @@ export const useEvents = ({
   const [activationKey, setActivationKey] = useState<string | null>(null);
   const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
-  const currentKey = useMemo(
-    () =>
-      `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${profileSlug}|${initialSize}`,
-    [place, category, date, search, distance, price, explicitFrom, explicitTo, lat, lon, profileSlug, initialSize]
-  );
+  const currentKey = `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${profileSlug}|${initialSize}`;
 
   const eventType = priceToType(price);
 

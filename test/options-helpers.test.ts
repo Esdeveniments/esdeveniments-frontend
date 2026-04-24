@@ -145,9 +145,7 @@ describe("options-helpers", () => {
     });
 
     it("returns empty array for null/undefined input", () => {
-       
       expect(generateRegionsAndTownsOptions(null as any)).toEqual([]);
-       
       expect(generateRegionsAndTownsOptions(undefined as any)).toEqual([]);
     });
   });
