@@ -16,6 +16,7 @@
 declare function fetchWithHmac(
   url: string,
   options?: RequestInit & {
+    skipBodySigning?: boolean;
     next?: {
       revalidate?: number;
       tags?: string[];
