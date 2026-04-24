@@ -199,7 +199,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               </div>
 
               <div className="flex-center">
-                {isAuthenticated ? (
+                {!isLoading && isAuthenticated ? (
                   <ActiveLink
                     href="/preferits"
                     activeLinkClass="text-primary bg-primary/10"
@@ -208,7 +208,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   >
                     <HeartIcon className="h-6 w-6" />
                   </ActiveLink>
-                ) : (
+                ) : !isLoading ? (
                   <ActiveLink
                     href="/iniciar-sessio"
                     activeLinkClass="text-primary bg-primary/10"
@@ -217,7 +217,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   >
                     <UserCircleIcon className="h-6 w-6" />
                   </ActiveLink>
-                )}
+                ) : null}
               </div>
 
               <div className="flex-center">

@@ -18,18 +18,18 @@ async function fetchProfileBySlugInternal(
   }
 
   try {
-    const response = await fetchWithHmac(`${apiUrl}/profiles/${slug}`);
+    const response = await fetchWithHmac(`${apiUrl}/profiles/${encodeURIComponent(slug)}`);
     if (response.status === 404) return null;
     if (!response.ok) {
       console.error(
         `fetchProfileBySlug: HTTP error! status: ${response.status}`
       );
-      return fetchProfileBySlugExternal(slug);
+      return null;
     }
     return parseProfileDetail(await response.json());
   } catch (error) {
-    console.error("fetchProfileBySlug: failed, falling back to external", error);
-    return fetchProfileBySlugExternal(slug);
+    console.error("fetchProfileBySlug: failed", error);
+    return null;
   }
 }
 

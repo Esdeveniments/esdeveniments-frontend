@@ -29,12 +29,13 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     try {
       const result = await login({ email, password: showPassword ? password : undefined });
       if (result.success) {
-        router.push((redirectTo || "/") as `/${string}`);
+        if (isMagicLink) {
+          setMagicLinkSent(true);
+        } else {
+          router.push((redirectTo || "/") as `/${string}`);
+        }
       } else if (result.error) {
         setError(result.error);
-      }
-      if (isMagicLink && result.success) {
-        setMagicLinkSent(true);
       }
     } finally {
       setSubmitting(false);

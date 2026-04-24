@@ -77,7 +77,8 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
               {[profile.city, profile.region].filter(Boolean).join(", ")}
             </span>
           )}
-          {profile.website && (
+          {profile.website &&
+            /^https?:\/\//i.test(profile.website) && (
             <a
               href={profile.website}
               target="_blank"

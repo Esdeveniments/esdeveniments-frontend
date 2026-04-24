@@ -32,16 +32,16 @@ export async function fetchProfileBySlugExternal(
     return MOCK_PROFILES[slug] ?? null;
   }
   try {
-    const response = await fetchWithHmac(`${apiUrl}/profiles/${slug}`);
+    const response = await fetchWithHmac(`${apiUrl}/profiles/${encodeURIComponent(slug)}`);
     if (response.status === 404) return null;
     if (!response.ok) {
       console.error(`fetchProfileBySlugExternal: HTTP ${response.status}`);
-      return MOCK_PROFILES[slug] ?? null;
+      return null;
     }
     const json = await response.json();
     return parseProfileDetail(json);
   } catch (error) {
     console.error("fetchProfileBySlugExternal: failed", error);
-    return MOCK_PROFILES[slug] ?? null;
+    return null;
   }
 }

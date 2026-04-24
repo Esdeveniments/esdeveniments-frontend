@@ -3,7 +3,7 @@ import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton
 export default function ProfileLoading() {
   return (
     <div
-      className="container flex-col justify-center items-center pt-[6rem]"
+      className="container flex flex-col justify-center items-center pt-[6rem]"
       data-testid="profile-page-skeleton"
     >
       {/* Profile header skeleton */}

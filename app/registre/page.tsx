@@ -24,11 +24,16 @@ export default async function RegisterPage({
   searchParams: Promise<{ redirect?: string }>;
 }) {
   const params = await searchParams;
+  // Only allow safe relative paths to prevent open redirect attacks
+  const redirectTo =
+    params.redirect && params.redirect.startsWith("/") && !params.redirect.startsWith("//")
+      ? params.redirect
+      : undefined;
 
   return (
     <div className="container flex-center pt-[6rem] pb-section-y">
       <div className="w-full max-w-md">
-        <RegisterForm redirectTo={params.redirect} />
+        <RegisterForm redirectTo={redirectTo} />
       </div>
     </div>
   );

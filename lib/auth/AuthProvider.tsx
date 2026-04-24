@@ -4,7 +4,7 @@ import {
   createContext,
   useCallback,
   useEffect,
-  useRef,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -33,16 +33,19 @@ export function AuthProvider({
   const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState<AuthErrorCode | null>(null);
   const [hydrated, setHydrated] = useState(false);
-  const initRef = useRef(false);
 
   useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
-
-    adapter.getSession().then((sessionUser) => {
-      setUser(sessionUser);
-      setHydrated(true);
-    });
+    adapter
+      .getSession()
+      .then((sessionUser) => {
+        setUser(sessionUser);
+      })
+      .catch((err) => {
+        console.error("AuthProvider: getSession failed", err);
+      })
+      .finally(() => {
+        setHydrated(true);
+      });
 
     const unsubscribe = adapter.onAuthStateChange((updatedUser) => {
       setUser(updatedUser);
@@ -80,7 +83,11 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
-    await adapter.logout();
+    try {
+      await adapter.logout();
+    } catch (err) {
+      console.error("AuthProvider: logout failed", err);
+    }
     setUser(null);
     setError(null);
   }, [adapter]);
@@ -91,17 +98,20 @@ export function AuthProvider({
       ? "authenticated" as const
       : "unauthenticated" as const;
 
-  const value: AuthContextValue = {
-    status,
-    user,
-    error,
-    isAuthenticated: status === "authenticated",
-    isLoading: status === "loading",
-    supportedMethods: adapter.supportedMethods,
-    login,
-    register,
-    logout,
-  };
+  const value: AuthContextValue = useMemo(
+    () => ({
+      status,
+      user,
+      error,
+      isAuthenticated: status === "authenticated",
+      isLoading: status === "loading",
+      supportedMethods: adapter.supportedMethods,
+      login,
+      register,
+      logout,
+    }),
+    [status, user, error, adapter.supportedMethods, login, register, logout]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

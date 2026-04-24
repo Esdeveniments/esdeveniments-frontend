@@ -83,6 +83,16 @@ export default function EventLocation({
             )}
           </div>
         )}
+        {/* Profile/venue link */}
+        {profile && (
+          <PressableAnchor
+            href={`/perfil/${profile.slug}`}
+            className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
+            variant="inline"
+          >
+            {t("profileLink", { name: profile.name })}
+          </PressableAnchor>
+        )}
       </div>
     );
   }

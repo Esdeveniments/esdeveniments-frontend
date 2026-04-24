@@ -21,6 +21,8 @@ export async function GET(
       },
     });
   } catch (e) {
-    return handleApiError(e, "/api/profiles/[slug]");
+    return handleApiError(e, "/api/profiles/[slug]", {
+      fallbackData: null,
+    });
   }
 }
