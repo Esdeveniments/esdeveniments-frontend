@@ -66,8 +66,12 @@ async function createStripeCheckoutSession(
     "ESDEV-CAT",
   );
 
-  // Session expiration - 30 minutes for better UX (default is 24h)
-  const expiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
+  // Session expiration - aligned to 30-min window boundaries.
+  // This ensures retries within the same window produce identical params
+  // (required for idempotency key reuse — Stripe rejects same key + different params).
+  const windowSeconds = 30 * 60;
+  const expiresAt =
+    (Math.floor(Date.now() / 1000 / windowSeconds) + 1) * windowSeconds;
   params.append("expires_at", String(expiresAt));
 
   const response = await stripeRequest("/checkout/sessions", {
@@ -177,9 +181,19 @@ export async function POST(request: NextRequest) {
     }
 
     const userKey = visitorId || `ip-${clientIp}`;
+
+    // Time window must match the session expiry window so that:
+    // - Rapid retries (double-click) within the same window → same key → Stripe returns cached session
+    // - After navigating back (different window) → new key → new session created
+    // Without this, expires_at changes every second causing "params differ" idempotency errors.
+    const windowSeconds = 30 * 60; // 30 min, matching session expiry
+    const timeWindow = Math.floor(Date.now() / 1000 / windowSeconds);
+
     const idempotencyKey = crypto
       .createHash("sha256")
-      .update(`${userKey}-${duration}-${geoScope}-${place}-${placeName}`)
+      .update(
+        `${userKey}-${duration}-${geoScope}-${place}-${placeName}-${timeWindow}`,
+      )
       .digest("hex")
       .slice(0, 32);
 
