@@ -1,0 +1,391 @@
+name: SEO Health Check
+
+# Daily regression detection for structured data, sitemap, bot-parity, and
+# analytics tracking. Runs four independent checks in parallel; a report job
+# aggregates failures into a single GitHub issue (silent on success).
+#
+# Companion to seo-audit.yml (traffic-driven, bi-weekly) — this is
+# technical-health-driven, daily. Each check corresponds to a recent fix or
+# a production invariant that previously regressed silently:
+#
+#   rich-results    -> Event JSON-LD valid per Google schema (fix e4190962)
+#   sitemap-validate -> sitemap-events filters expired events (fix e4190962)
+#   bot-parity      -> AI crawlers receive full SSR (Apr 23 incident)
+#   ai-referrer     -> GA4 custom event fires for AI traffic (fix 40fe1ed6)
+
+on:
+  schedule:
+    # Daily at 6 AM UTC (8 AM CET). Early enough to surface overnight
+    # regressions before owner starts day.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      skip_issue:
+        description: "Skip GitHub Issue creation (just run checks)"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: seo-health
+  cancel-in-progress: false
+
+env:
+  SITE_URL: "https://www.esdeveniments.cat"
+  GA4_PROPERTY_ID: "406884331"
+
+jobs:
+  # ----------------------------------------------------------------
+  # 1. Rich Results — validate Event JSON-LD on sample event URLs.
+  # Regression detector for schema fixes in commit e4190962.
+  # ----------------------------------------------------------------
+  rich-results:
+    name: Validate Event JSON-LD
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate Event schema on 5 sample URLs
+        id: check
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee /tmp/rich-results.md
+          import json, re, sys, urllib.request, random
+
+          SITE = "${{ env.SITE_URL }}"
+
+          # Valid schema.org/EventStatusType enum (per 2025-12-22 spec).
+          VALID_EVENT_STATUS = {
+              "https://schema.org/EventScheduled",
+              "https://schema.org/EventCancelled",
+              "https://schema.org/EventMovedOnline",
+              "https://schema.org/EventPostponed",
+              "https://schema.org/EventRescheduled",
+          }
+
+          # Pull 5 event URLs from the first sitemap chunk.
+          sm = urllib.request.urlopen(f"{SITE}/sitemap-events/1.xml", timeout=30).read().decode()
+          urls = re.findall(r"<loc>([^<]+/e/[^<]+)</loc>", sm)
+          sample = random.sample(urls, min(5, len(urls))) if urls else []
+
+          failures = []
+          print(f"# Rich Results check — {len(sample)} URLs\n")
+
+          for url in sample:
+              try:
+                  html = urllib.request.urlopen(
+                      urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1)"}),
+                      timeout=30,
+                  ).read().decode(errors="replace")
+              except Exception as e:
+                  failures.append(f"- `{url}` — fetch failed: {e}")
+                  continue
+
+              scripts = re.findall(
+                  r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+                  html, re.DOTALL,
+              )
+              event_found = False
+              for raw in scripts:
+                  try:
+                      data = json.loads(raw.strip())
+                  except json.JSONDecodeError:
+                      continue
+                  # JSON-LD can be an object, array, or graph.
+                  candidates = data if isinstance(data, list) else [data]
+                  for c in candidates:
+                      if isinstance(c, dict) and c.get("@type") == "Event":
+                          event_found = True
+                          # Required per Google's Event rich result spec.
+                          missing = [k for k in ("name", "startDate", "location") if not c.get(k)]
+                          if missing:
+                              failures.append(f"- `{url}` — missing required: {missing}")
+                          # eventStatus must be in the schema.org enum.
+                          es = c.get("eventStatus")
+                          if es and es not in VALID_EVENT_STATUS:
+                              failures.append(f"- `{url}` — invalid eventStatus: `{es}`")
+                          # Deceptive placeholder price (previously shipped bug).
+                          offers = c.get("offers") or {}
+                          price_spec = (offers.get("priceSpecification") or {}) if isinstance(offers, dict) else {}
+                          if isinstance(price_spec, dict) and "consult" in (price_spec.get("description") or "").lower():
+                              failures.append(f"- `{url}` — placeholder price in offers (regressed)")
+                          break
+                  if event_found:
+                      break
+              if not event_found:
+                  failures.append(f"- `{url}` — no Event JSON-LD emitted")
+
+          if failures:
+              print("## ❌ Failures\n")
+              print("\n".join(failures))
+              sys.exit(1)
+          print(f"All {len(sample)} event URLs emit valid Event JSON-LD.")
+          PY
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rich-results
+          path: /tmp/rich-results.md
+          if-no-files-found: ignore
+
+  # ----------------------------------------------------------------
+  # 2. Sitemap validate — XML well-formed, count sane, no expired events.
+  # Regression detector for expired-events filter in commit e4190962.
+  # ----------------------------------------------------------------
+  sitemap-validate:
+    name: Validate sitemap-events
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check sitemap structure and freshness
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee /tmp/sitemap.md
+          import sys, urllib.request, xml.etree.ElementTree as ET
+          from datetime import datetime, timezone, timedelta
+
+          SITE = "${{ env.SITE_URL }}"
+          # Expected lower bound of event URLs in chunk 1. Tune if backend size changes.
+          MIN_EVENTS = 100
+          # Most recent lastmod must be within this window (data feed liveness).
+          MAX_STALENESS_DAYS = 7
+          # No event's lastmod should be older than the EXPIRED_EVENT_NOINDEX_DAYS
+          # constant + a grace window (sitemaps cache for 24h; grace = 2d).
+          MAX_EXPIRED_DAYS = 62
+
+          try:
+              xml = urllib.request.urlopen(f"{SITE}/sitemap-events/1.xml", timeout=30).read()
+              root = ET.fromstring(xml)
+          except Exception as e:
+              print(f"❌ sitemap-events/1.xml unreachable or malformed: {e}")
+              sys.exit(1)
+
+          ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+          urls = root.findall("sm:url", ns)
+          if len(urls) < MIN_EVENTS:
+              print(f"❌ sitemap-events/1.xml has only {len(urls)} URLs (expected >= {MIN_EVENTS})")
+              sys.exit(1)
+
+          now = datetime.now(timezone.utc)
+          latest = None
+          stale_violations = []
+          for u in urls:
+              lm = u.find("sm:lastmod", ns)
+              if lm is None or not lm.text:
+                  continue
+              try:
+                  dt = datetime.fromisoformat(lm.text.replace("Z", "+00:00"))
+              except ValueError:
+                  continue
+              if latest is None or dt > latest:
+                  latest = dt
+              age_days = (now - dt).days
+              if age_days > MAX_EXPIRED_DAYS:
+                  loc = u.find("sm:loc", ns)
+                  stale_violations.append(f"- `{loc.text if loc is not None else '?'}` lastmod {lm.text} ({age_days}d old)")
+
+          failed = False
+          if latest is None or (now - latest).days > MAX_STALENESS_DAYS:
+              print(f"❌ Newest lastmod is {latest} — data feed may be stale")
+              failed = True
+          if stale_violations:
+              print(f"❌ {len(stale_violations)} events older than {MAX_EXPIRED_DAYS}d still in sitemap:")
+              print("\n".join(stale_violations[:10]))
+              if len(stale_violations) > 10:
+                  print(f"... and {len(stale_violations) - 10} more")
+              failed = True
+
+          if failed:
+              sys.exit(1)
+          print(f"✅ {len(urls)} URLs, newest lastmod {latest.isoformat() if latest else '?'}, no expired events")
+          PY
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sitemap-validate
+          path: /tmp/sitemap.md
+          if-no-files-found: ignore
+
+  # ----------------------------------------------------------------
+  # 3. Bot parity — AI crawlers must receive full SSR, not cached PPR shells.
+  # Regression detector for Cloudflare cache rule / bot detection middleware.
+  # ----------------------------------------------------------------
+  bot-parity:
+    name: Verify AI bot SSR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Run verify-ai-bot-ssr.sh
+        run: |
+          set -euo pipefail
+          bash scripts/verify-ai-bot-ssr.sh "${{ env.SITE_URL }}" | tee /tmp/bot-parity.md
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-parity
+          path: /tmp/bot-parity.md
+          if-no-files-found: ignore
+
+  # ----------------------------------------------------------------
+  # 4. AI referrer — GA4 must record ai_referrer custom events when AI
+  # traffic is present. Regression detector for tracking in commit 40fe1ed6.
+  # ----------------------------------------------------------------
+  ai-referrer:
+    name: Verify ai_referrer event firing
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install --quiet google-auth google-analytics-data
+      - name: Authenticate with GCP
+        run: |
+          echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> $GITHUB_ENV
+      - name: Query GA4 for ai_referrer events vs AI sessions
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee /tmp/ai-referrer.md
+          import os, sys
+          from google.analytics.data_v1beta import BetaAnalyticsDataClient
+          from google.analytics.data_v1beta.types import (
+              DateRange, Dimension, Metric, RunReportRequest, Filter, FilterExpression,
+          )
+
+          PROPERTY_ID = "${{ env.GA4_PROPERTY_ID }}"
+          # Look at the past 2 days rather than 24h to smooth over low-traffic nights
+          # and timezone boundaries. Raise the session floor to avoid alerting when
+          # there's genuinely no AI traffic to measure.
+          MIN_AI_SESSIONS_TO_CHECK = 10
+
+          client = BetaAnalyticsDataClient()
+
+          # Sessions with referrer_category=ai (user property set by userProperties.ts).
+          ai_sessions = client.run_report(RunReportRequest(
+              property=f"properties/{PROPERTY_ID}",
+              date_ranges=[DateRange(start_date="2daysAgo", end_date="today")],
+              metrics=[Metric(name="sessions")],
+              dimension_filter=FilterExpression(filter=Filter(
+                  field_name="customUser:referrer_category",
+                  string_filter=Filter.StringFilter(value="ai"),
+              )),
+          ))
+          ai_session_count = int(ai_sessions.rows[0].metric_values[0].value) if ai_sessions.rows else 0
+
+          # Count of ai_referrer custom events.
+          events = client.run_report(RunReportRequest(
+              property=f"properties/{PROPERTY_ID}",
+              date_ranges=[DateRange(start_date="2daysAgo", end_date="today")],
+              metrics=[Metric(name="eventCount")],
+              dimension_filter=FilterExpression(filter=Filter(
+                  field_name="eventName",
+                  string_filter=Filter.StringFilter(value="ai_referrer"),
+              )),
+          ))
+          ai_event_count = int(events.rows[0].metric_values[0].value) if events.rows else 0
+
+          print(f"AI sessions (last 2d): {ai_session_count}")
+          print(f"ai_referrer events (last 2d): {ai_event_count}")
+
+          if ai_session_count < MIN_AI_SESSIONS_TO_CHECK:
+              print(f"ℹ️  AI sessions below threshold ({MIN_AI_SESSIONS_TO_CHECK}) — inconclusive, skipping alert")
+              sys.exit(0)
+
+          if ai_event_count == 0:
+              print(f"❌ {ai_session_count} AI sessions but 0 ai_referrer events fired — tracking regressed")
+              sys.exit(1)
+
+          ratio = ai_event_count / ai_session_count
+          # Rough expectation: one event per session minimum. A ratio < 0.2 suggests
+          # sessionStorage dedupe is working too aggressively across unrelated sessions
+          # (e.g. same user across days) OR the event is failing intermittently.
+          if ratio < 0.2:
+              print(f"⚠️  Low fire ratio: {ratio:.2f} events/session — investigate dedupe logic")
+              sys.exit(1)
+
+          print(f"✅ Event firing healthy: {ratio:.2f} events/session")
+          PY
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f /tmp/gcp-sa-key.json
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-referrer
+          path: /tmp/ai-referrer.md
+          if-no-files-found: ignore
+
+  # ----------------------------------------------------------------
+  # Report — aggregate failures from the four checks above into a single
+  # GitHub issue. Stays silent when all green.
+  # ----------------------------------------------------------------
+  report:
+    name: Report regressions
+    needs: [rich-results, sitemap-validate, bot-parity, ai-referrer]
+    if: always() && github.event.inputs.skip_issue != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Evaluate job outcomes
+        id: eval
+        run: |
+          set -euo pipefail
+          fails=()
+          [[ "${{ needs.rich-results.result }}" != "success" ]] && fails+=("rich-results")
+          [[ "${{ needs.sitemap-validate.result }}" != "success" ]] && fails+=("sitemap-validate")
+          [[ "${{ needs.bot-parity.result }}" != "success" ]] && fails+=("bot-parity")
+          [[ "${{ needs.ai-referrer.result }}" != "success" ]] && fails+=("ai-referrer")
+          if [[ ${#fails[@]} -eq 0 ]]; then
+            echo "has_failures=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_failures=true" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "${fails[@]}" > /tmp/failing-jobs.txt
+          fi
+
+      - name: Download all reports
+        if: steps.eval.outputs.has_failures == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/reports
+
+      - name: Assemble issue body
+        if: steps.eval.outputs.has_failures == 'true'
+        run: |
+          set -euo pipefail
+          {
+            echo "# SEO Health Regression — $(date -u +%Y-%m-%d)"
+            echo ""
+            echo "One or more health checks failed. See details below."
+            echo ""
+            echo "[Workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo ""
+            while read -r job; do
+              echo "## $job"
+              echo ""
+              cat "/tmp/reports/$job/"*.md 2>/dev/null || echo "_(report artifact missing)_"
+              echo ""
+            done < /tmp/failing-jobs.txt
+          } > /tmp/issue-body.md
+
+      - name: Create or update issue
+        if: steps.eval.outputs.has_failures == 'true'
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "🚨 SEO Health Regression — ${{ github.run_id }}"
+          content-filepath: /tmp/issue-body.md
+          labels: seo,automated-audit,regression
+          assignees: albertolive

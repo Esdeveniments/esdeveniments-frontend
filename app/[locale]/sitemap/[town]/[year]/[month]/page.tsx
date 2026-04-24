@@ -37,6 +37,7 @@ import {
   MIN_VALID_YEAR,
   MAX_VALID_YEAR,
 } from "@utils/constants";
+import { connection } from "next/server";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
@@ -55,7 +56,7 @@ export async function generateMetadata({
   });
   const tNotFound = await getTranslations({ locale, namespace: "App.NotFound" });
   const { town, year, month } = await params;
-  
+
   // Validate required params
   if (!town || !year || !month || !isValidPlace(town)) {
     return {
@@ -63,7 +64,7 @@ export async function generateMetadata({
       description: tNotFound("description"),
     };
   }
-  
+
   // Validate year is numeric and reasonable
   const yearNum = Number(year);
   if (!Number.isFinite(yearNum) || yearNum < MIN_VALID_YEAR || yearNum > MAX_VALID_YEAR) {
@@ -113,6 +114,11 @@ export default async function Page({
 }: {
   params: Promise<MonthStaticPathParams>;
 }) {
+  // Opt out of cacheComponents caching — conditional JsonLdServer rendering
+  // below depends on event count (jsonData.length, eventsItemList). Without this,
+  // cached tree shape can differ from replay → "Expected Fragment but got script".
+  await connection();
+
   const { town, year, month } = await params;
   const locale: AppLocale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
@@ -126,7 +132,7 @@ export default async function Page({
   if (!town || !year || !month || !isValidPlace(town)) {
     notFound();
   }
-  
+
   // Validate year is numeric and reasonable
   const yearNum = Number(year);
   if (!Number.isFinite(yearNum) || yearNum < MIN_VALID_YEAR || yearNum > MAX_VALID_YEAR) {
