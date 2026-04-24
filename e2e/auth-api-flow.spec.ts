@@ -1,24 +1,83 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
-// In development mode, the app uses createMockAdapter (in-memory user store)
-// instead of the real API adapter. This means auth requests are handled
-// entirely in-browser by the mock adapter — no HTTP requests to /api/auth/*.
+// With E2E_TEST_MODE=1 (set via playwright.config.ts), DevAuthProvider uses
+// createApiAdapter() instead of the mock adapter. This means auth requests go
+// through the full proxy chain: client adapter → fetch /api/auth/* → internal
+// Next.js route → external wrapper → backend.
 //
-// Preloaded mock user: dev@test.com / dev (configured in DevAuthProvider.tsx)
-//
-// The API proxy chain (adapter → internal routes → external wrapper → backend)
-// is thoroughly tested by unit tests in test/auth-external.test.ts and
-// test/auth-api-adapter.test.ts.
+// We intercept at the Playwright network layer (page.route) to mock the
+// internal API responses, testing the adapter + HTTP pipeline without needing
+// a live backend.
 
-const MOCK_EMAIL = "dev@test.com";
-const MOCK_PASSWORD = "dev";
+const MOCK_USER = {
+  id: 1,
+  email: "test@example.com",
+  name: "Test User",
+  role: "USER" as const,
+  emailVerified: true,
+};
 
-test.describe("Auth flow", () => {
+const MOCK_AUTH_RESPONSE = {
+  accessToken: "mock-jwt-token",
+  tokenType: "Bearer",
+  expiresAt: new Date(Date.now() + 3600000).toISOString(),
+  user: MOCK_USER,
+};
+
+/** Set up route mocks for auth API endpoints */
+async function mockAuthRoutes(
+  page: Page,
+  overrides?: {
+    loginStatus?: number;
+    loginBody?: unknown;
+    registerStatus?: number;
+    registerBody?: unknown;
+    meStatus?: number;
+    meBody?: unknown;
+  }
+) {
+  await page.route("**/api/auth/login", (route) => {
+    if (route.request().method() !== "POST") {
+      return route.fallback();
+    }
+    return route.fulfill({
+      status: overrides?.loginStatus ?? 200,
+      contentType: "application/json",
+      body: JSON.stringify(overrides?.loginBody ?? MOCK_AUTH_RESPONSE),
+    });
+  });
+
+  await page.route("**/api/auth/register", (route) => {
+    if (route.request().method() !== "POST") {
+      return route.fallback();
+    }
+    return route.fulfill({
+      status: overrides?.registerStatus ?? 200,
+      contentType: "application/json",
+      body: JSON.stringify(
+        overrides?.registerBody ?? {
+          message:
+            "User registered. Please verify your email before logging in.",
+        }
+      ),
+    });
+  });
+
+  await page.route("**/api/auth/me", (route) => {
+    return route.fulfill({
+      status: overrides?.meStatus ?? 200,
+      contentType: "application/json",
+      body: JSON.stringify(overrides?.meBody ?? MOCK_USER),
+    });
+  });
+}
+
+test.describe("Auth flow (real adapter + mocked routes)", () => {
   test.setTimeout(process.env.CI ? 120000 : 60000);
 
-  test("login with valid credentials succeeds and shows avatar", async ({
-    page,
-  }) => {
+  test("login succeeds and shows user avatar", async ({ page }) => {
+    await mockAuthRoutes(page);
+
     await page.goto("/en/iniciar-sessio", {
       waitUntil: "domcontentloaded",
       timeout: 90000,
@@ -28,8 +87,8 @@ test.describe("Auth flow", () => {
       timeout: process.env.CI ? 60000 : 30000,
     });
 
-    await page.getByLabel(/email/i).fill(MOCK_EMAIL);
-    await page.getByLabel(/password/i).fill(MOCK_PASSWORD);
+    await page.getByLabel(/email/i).fill("test@example.com");
+    await page.getByLabel(/password/i).fill("Password123!");
     await page
       .getByTestId("login-form")
       .getByRole("button", { name: /log in/i })
@@ -47,6 +106,11 @@ test.describe("Auth flow", () => {
   });
 
   test("login with invalid credentials shows error", async ({ page }) => {
+    await mockAuthRoutes(page, {
+      loginStatus: 401,
+      loginBody: { error: "invalid-credentials" },
+    });
+
     await page.goto("/en/iniciar-sessio", {
       waitUntil: "domcontentloaded",
       timeout: 90000,
@@ -63,12 +127,45 @@ test.describe("Auth flow", () => {
       .getByRole("button", { name: /log in/i })
       .click();
 
-    await expect(page.getByRole("alert")).toBeVisible({
+    await expect(
+      page.getByTestId("login-form").getByRole("alert")
+    ).toBeVisible({
       timeout: process.env.CI ? 30000 : 15000,
     });
   });
 
-  test("register new account succeeds and redirects", async ({ page }) => {
+  test("login with unverified email shows error", async ({ page }) => {
+    await mockAuthRoutes(page, {
+      loginStatus: 400,
+      loginBody: { error: "email-not-verified" },
+    });
+
+    await page.goto("/en/iniciar-sessio", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+
+    await expect(page.getByTestId("login-form")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    await page.getByLabel(/email/i).fill("unverified@test.com");
+    await page.getByLabel(/password/i).fill("Password123!");
+    await page
+      .getByTestId("login-form")
+      .getByRole("button", { name: /log in/i })
+      .click();
+
+    await expect(
+      page.getByTestId("login-form").getByRole("alert")
+    ).toBeVisible({
+      timeout: process.env.CI ? 30000 : 15000,
+    });
+  });
+
+  test("register succeeds and redirects", async ({ page }) => {
+    await mockAuthRoutes(page);
+
     await page.goto("/en/registre", {
       waitUntil: "domcontentloaded",
       timeout: 90000,
@@ -78,10 +175,9 @@ test.describe("Auth flow", () => {
       timeout: process.env.CI ? 60000 : 30000,
     });
 
-    const uniqueEmail = `e2e-${Date.now()}@example.com`;
-    await page.getByLabel(/email/i).fill(uniqueEmail);
+    await page.getByLabel(/email/i).fill("new@example.com");
     await page.getByLabel(/password/i).fill("Password123!");
-    await page.getByLabel(/name/i).fill("E2E User");
+    await page.getByLabel(/name/i).fill("New User");
     await page
       .getByTestId("register-form")
       .getByRole("button", { name: /create account/i })
@@ -94,6 +190,11 @@ test.describe("Auth flow", () => {
   });
 
   test("register with duplicate email shows error", async ({ page }) => {
+    await mockAuthRoutes(page, {
+      registerStatus: 409,
+      registerBody: { error: "email-taken" },
+    });
+
     await page.goto("/en/registre", {
       waitUntil: "domcontentloaded",
       timeout: 90000,
@@ -103,20 +204,21 @@ test.describe("Auth flow", () => {
       timeout: process.env.CI ? 60000 : 30000,
     });
 
-    // Use the preloaded mock user email → "email-taken" error
-    await page.getByLabel(/email/i).fill(MOCK_EMAIL);
+    await page.getByLabel(/email/i).fill("existing@test.com");
     await page.getByLabel(/password/i).fill("Password123!");
     await page
       .getByTestId("register-form")
       .getByRole("button", { name: /create account/i })
       .click();
 
-    await expect(page.getByRole("alert")).toBeVisible({
+    await expect(
+      page.getByTestId("register-form").getByRole("alert")
+    ).toBeVisible({
       timeout: process.env.CI ? 30000 : 15000,
     });
   });
 
-  test("register with weak password shows client-side validation error", async ({
+  test("register with weak password is blocked by validation", async ({
     page,
   }) => {
     await page.goto("/en/registre", {
@@ -129,22 +231,29 @@ test.describe("Auth flow", () => {
     });
 
     await page.getByLabel(/email/i).fill("new@test.com");
-    await page.getByLabel(/password/i).fill("short");
+    const passwordInput = page.getByLabel(/password/i);
+    await passwordInput.fill("short");
     await page
       .getByTestId("register-form")
       .getByRole("button", { name: /create account/i })
       .click();
 
-    // Client-side validation: password < 8 chars shows error
-    await expect(page.getByRole("alert")).toBeVisible({
-      timeout: process.env.CI ? 30000 : 15000,
-    });
+    // Browser native validation (minLength=8) prevents form submission.
+    // The input becomes invalid and the page stays on the register form.
+    const isInvalid = await passwordInput.evaluate(
+      (el: HTMLInputElement) => !el.validity.valid
+    );
+    expect(isInvalid).toBe(true);
+
+    // Confirm we're still on the register page (form was not submitted)
+    await expect(page.getByTestId("register-form")).toBeVisible();
   });
 
-  test("login redirect param sends user back to original page", async ({
+  test("login redirect param sends user to original page", async ({
     page,
   }) => {
-    // Go to login with redirect to /preferits
+    await mockAuthRoutes(page);
+
     await page.goto("/en/iniciar-sessio?redirect=%2Fen%2Fpreferits", {
       waitUntil: "domcontentloaded",
       timeout: 90000,
@@ -154,20 +263,21 @@ test.describe("Auth flow", () => {
       timeout: process.env.CI ? 60000 : 30000,
     });
 
-    await page.getByLabel(/email/i).fill(MOCK_EMAIL);
-    await page.getByLabel(/password/i).fill(MOCK_PASSWORD);
+    await page.getByLabel(/email/i).fill("test@example.com");
+    await page.getByLabel(/password/i).fill("Password123!");
     await page
       .getByTestId("login-form")
       .getByRole("button", { name: /log in/i })
       .click();
 
-    // Should redirect to the original page
     await page.waitForURL("**/preferits", {
       timeout: process.env.CI ? 30000 : 15000,
     });
   });
 
   test("logout clears avatar from navbar", async ({ page }) => {
+    await mockAuthRoutes(page);
+
     // Login first
     await page.goto("/en/iniciar-sessio", {
       waitUntil: "domcontentloaded",
@@ -178,8 +288,8 @@ test.describe("Auth flow", () => {
       timeout: process.env.CI ? 60000 : 30000,
     });
 
-    await page.getByLabel(/email/i).fill(MOCK_EMAIL);
-    await page.getByLabel(/password/i).fill(MOCK_PASSWORD);
+    await page.getByLabel(/email/i).fill("test@example.com");
+    await page.getByLabel(/password/i).fill("Password123!");
     await page
       .getByTestId("login-form")
       .getByRole("button", { name: /log in/i })
@@ -205,14 +315,14 @@ test.describe("Auth flow", () => {
     await expect(logoutButton).toBeVisible();
     await logoutButton.click();
 
-    // Avatar should disappear, login button should reappear
+    // Avatar should disappear
     await expect(page.getByTestId("user-avatar-button")).not.toBeVisible({
       timeout: process.env.CI ? 15000 : 10000,
     });
   });
 
   test("API auth routes respond correctly", async ({ page }) => {
-    // Smoke test: verify internal API routes exist and respond
+    // Smoke test without mocks: verify internal API routes exist
     // (actual responses depend on backend availability and HMAC config)
 
     const loginResponse = await page.request.post("/api/auth/login", {

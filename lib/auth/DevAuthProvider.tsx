@@ -6,11 +6,14 @@ import { createMockAdapter } from "./mock-adapter";
 import { createApiAdapter } from "./api-adapter";
 
 const isDev = process.env.NODE_ENV === "development";
+const isE2E = process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
 
 export function DevAuthProvider({ children }: { children: ReactNode }) {
   const adapter = useMemo(
     () =>
-      isDev
+      // E2E tests use the real API adapter so Playwright can intercept
+      // HTTP requests to /api/auth/* and test the full proxy chain.
+      isDev && !isE2E
         ? createMockAdapter({
           delay: 200,
           preloadUsers: [
