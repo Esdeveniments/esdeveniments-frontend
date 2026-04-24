@@ -9,8 +9,6 @@ import { siteUrl } from "@config/index";
 import type { PageData } from "types/common";
 import type { FetchEventsParams } from "types/event";
 
-export const dynamicParams = true;
-
 export async function generateStaticParams() {
   return [];
 }
