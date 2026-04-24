@@ -36,7 +36,7 @@ export default async function ProfilePageShell({
     url: toLocalizedUrl(`/perfil/${profile.slug}`, locale),
     ...(profile.avatarUrl && { logo: profile.avatarUrl }),
     ...(profile.bio && { description: profile.bio }),
-    ...(profile.website && { sameAs: [profile.website] }),
+    ...(profile.website && /^https?:\/\//i.test(profile.website) && { sameAs: [profile.website] }),
   };
 
   return (

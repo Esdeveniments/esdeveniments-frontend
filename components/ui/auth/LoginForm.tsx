@@ -37,6 +37,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       } else if (result.error) {
         setError(result.error);
       }
+    } catch {
+      setError("unknown");
     } finally {
       setSubmitting(false);
     }

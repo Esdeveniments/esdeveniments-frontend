@@ -86,7 +86,7 @@ export default function EventLocation({
         {/* Profile/venue link */}
         {profile && (
           <PressableAnchor
-            href={`/perfil/${profile.slug}`}
+            href={`/perfil/${encodeURIComponent(profile.slug)}`}
             className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
             variant="inline"
           >
@@ -146,9 +146,7 @@ export default function EventLocation({
             {/* Profile/venue link */}
             {profile && (
               <PressableAnchor
-                href={`/perfil/${profile.slug}`}
-                className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
-                variant="inline"
+                href={`/perfil/${encodeURIComponent(profile.slug)}`}
               >
                 {t("profileLink", { name: profile.name })}
               </PressableAnchor>

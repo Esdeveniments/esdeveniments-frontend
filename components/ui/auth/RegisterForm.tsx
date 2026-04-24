@@ -41,6 +41,8 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       } else if (result.error) {
         setError(result.error);
       }
+    } catch {
+      setError("unknown");
     } finally {
       setSubmitting(false);
     }
