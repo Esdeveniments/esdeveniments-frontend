@@ -51,6 +51,9 @@ async function createStripeCheckoutSession(
   const stripeLocale = ["ca", "es"].includes(locale) ? "es" : "en";
   params.append("locale", stripeLocale);
 
+  // Allow promotion codes (coupon input on checkout page)
+  params.append("allow_promotion_codes", "true");
+
   // Customer creation to get email
   params.append("customer_creation", "always");
 
@@ -74,9 +77,11 @@ async function createStripeCheckoutSession(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error("Stripe API error:", error);
-    throw new Error(`Stripe API error: ${response.status}`);
+    const errorBody = await response.text();
+    console.error("Stripe API error:", response.status, errorBody);
+    throw new Error(
+      `Stripe API error ${response.status}: ${errorBody.slice(0, 500)}`,
+    );
   }
 
   const session = (await response.json()) as StripeCheckoutSessionResponse;
@@ -217,15 +222,18 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error(
-      "Checkout error:",
-      error instanceof Error ? error.message : "Unknown error",
-    );
+    const message =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error("Checkout error:", message);
     captureException(error, {
       tags: { api: "sponsors-checkout" },
     });
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      {
+        error: "Failed to create checkout session",
+        // Include Stripe error detail for debugging (no secrets exposed)
+        detail: message,
+      },
       { status: 500 },
     );
   }
