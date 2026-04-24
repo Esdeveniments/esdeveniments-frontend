@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { captureException } from "@sentry/nextjs";
 import { getSiteUrlFromRequest } from "@config/index";
 import { stripeRequest } from "@lib/stripe/api";
@@ -66,12 +65,8 @@ async function createStripeCheckoutSession(
     "ESDEV-CAT",
   );
 
-  // Session expiration - aligned to 30-min window boundaries.
-  // This ensures retries within the same window produce identical params
-  // (required for idempotency key reuse — Stripe rejects same key + different params).
-  const windowSeconds = 30 * 60;
-  const expiresAt =
-    (Math.floor(Date.now() / 1000 / windowSeconds) + 1) * windowSeconds;
+  // Session expiration - 30 minutes for better UX (default is 24h)
+  const expiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
   params.append("expires_at", String(expiresAt));
 
   const response = await stripeRequest("/checkout/sessions", {
@@ -153,49 +148,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate idempotency key from request params to prevent duplicate sessions
-    // Purpose: Same user + same params = same Stripe session (prevents duplicate charges on retry)
+    // Idempotency key: client sends a UUID per click attempt (X-Idempotency-Key header).
+    // Per Stripe docs: "We recommend creating a new Session each time your customer
+    // attempts to pay" and "we suggest using V4 UUIDs" for idempotency keys.
     //
-    // Primary: visitor_id from x-visitor-id header (set by proxy.ts middleware)
-    // - proxy.ts ALWAYS sets this header for /api/sponsors/checkout requests
-    // - Uses existing cookie OR generates new UUID, then forwards via header
-    // - Header is used because cookie isn't available to route handler until next request
+    // - Double-click / network retry → same UUID → Stripe returns cached session
+    // - User navigates back + clicks again → new UUID → new session (correct)
     //
-    // Fallback: IP-based key (only if header somehow missing)
-    // - Maintains idempotency for retries (same IP = same key)
-    // - Small theoretical collision risk for users behind same NAT with identical params
-    //   (same duration + geoScope + place + placeName) - astronomically unlikely
-    // - UUID fallback was rejected: defeats idempotency entirely, causes duplicate charges
-    const visitorId = request.headers.get("x-visitor-id");
-    const clientIp =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      "unknown-ip";
-
-    // Log warning if fallback is used - this should never happen in production
-    // If we see this in logs, investigate why proxy.ts isn't setting the header
-    if (!visitorId) {
-      console.warn(
-        "[checkout] Missing x-visitor-id header - using IP fallback. " +
-          `IP: ${clientIp}, place: ${place}. Investigate proxy.ts middleware.`,
-      );
-    }
-
-    const userKey = visitorId || `ip-${clientIp}`;
-
-    // Time window must match the session expiry window so that:
-    // - Rapid retries (double-click) within the same window → same key → Stripe returns cached session
-    // - After navigating back (different window) → new key → new session created
-    // Without this, expires_at changes every second causing "params differ" idempotency errors.
-    const windowSeconds = 30 * 60; // 30 min, matching session expiry
-    const timeWindow = Math.floor(Date.now() / 1000 / windowSeconds);
-
-    const idempotencyKey = crypto
-      .createHash("sha256")
-      .update(
-        `${userKey}-${duration}-${geoScope}-${place}-${placeName}-${timeWindow}`,
-      )
-      .digest("hex")
-      .slice(0, 32);
+    // Server-side fallback uses visitor_id + timestamp to avoid the old problem
+    // where a deterministic key clashed with changing params (expires_at).
+    const clientKey = request.headers.get("x-idempotency-key");
+    const idempotencyKey =
+      clientKey ||
+      `${request.headers.get("x-visitor-id") || "anon"}-${Date.now()}`;
 
     // Get the actual request URL for redirects (important for preview deployments)
     const baseUrl = getSiteUrlFromRequest(request);
