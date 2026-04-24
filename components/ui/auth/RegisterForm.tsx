@@ -118,7 +118,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
 
       <p className="body-small text-foreground/60 text-center">
         {t("register.hasAccount")}{" "}
-        <Link href="/iniciar-sessio" className="text-primary font-semibold hover:underline">
+        <Link href={redirectTo ? `/iniciar-sessio?redirect=${encodeURIComponent(redirectTo)}` : "/iniciar-sessio"} className="text-primary font-semibold hover:underline">
           {t("register.loginLink")}
         </Link>
       </p>

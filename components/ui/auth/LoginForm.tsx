@@ -108,7 +108,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
       <p className="body-small text-foreground/60 text-center">
         {t("login.noAccount")}{" "}
-        <Link href="/registre" className="text-primary font-semibold hover:underline">
+        <Link href={redirectTo ? `/registre?redirect=${encodeURIComponent(redirectTo)}` : "/registre"} className="text-primary font-semibold hover:underline">
           {t("login.registerLink")}
         </Link>
       </p>
