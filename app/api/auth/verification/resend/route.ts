@@ -14,6 +14,13 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
     const { email } = body;
 
     if (!email) {
