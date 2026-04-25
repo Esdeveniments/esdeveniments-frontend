@@ -1,3 +1,4 @@
+import { Suspense, use } from "react";
 import { notFound } from "next/navigation";
 import { fetchProfileBySlug } from "@lib/api/profiles";
 import { fetchEvents, insertAds } from "@lib/api/events";
@@ -9,13 +10,9 @@ import { siteUrl } from "@config/index";
 import type { PageData } from "types/common";
 import type { FetchEventsParams } from "types/event";
 
-// cacheComponents requires non-empty generateStaticParams for dynamic routes.
-// Profile slugs are user-generated with infinite cardinality, so we provide a
-// placeholder to satisfy the build validation. All real slugs are rendered on
-// first request and cached automatically.
-export function generateStaticParams() {
-  return [{ slug: "_placeholder" }];
-}
+// No generateStaticParams — profile slugs are user-generated with infinite
+// cardinality. Pages render on first request and are cached automatically.
+// The Suspense boundary allows the shell to flush before async data loads.
 
 export async function generateMetadata({
   params,
@@ -47,12 +44,24 @@ export async function generateMetadata({
   });
 }
 
-export default async function ProfilePage({
+// Sync page component: unwraps params with use() and returns a Suspense
+// boundary so the static shell (layout + loading.tsx) can flush before any
+// async work. All data fetching lives inside ProfilePageGate.
+export default function ProfilePage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug } = use(params);
+
+  return (
+    <Suspense fallback={<h1 className="sr-only">{slug}</h1>}>
+      <ProfilePageGate slug={slug} />
+    </Suspense>
+  );
+}
+
+async function ProfilePageGate({ slug }: { slug: string }) {
   const [profile, locale, t] = await Promise.all([
     fetchProfileBySlug(slug),
     getLocaleSafely(),
