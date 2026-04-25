@@ -20,6 +20,11 @@ function getStripeSecretKey(): string {
   if (!key) {
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
+  if (!key.startsWith("sk_live_") && !key.startsWith("sk_test_")) {
+    throw new Error(
+      "STRIPE_SECRET_KEY has invalid format — must start with 'sk_live_' or 'sk_test_'",
+    );
+  }
   return key;
 }
 

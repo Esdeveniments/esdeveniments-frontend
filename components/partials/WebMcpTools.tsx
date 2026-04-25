@@ -30,10 +30,17 @@ export default function WebMcpTools({ locale = "ca" }: { locale?: string }) {
         __html: `(function() {
   var mc = navigator.modelContext;
   if (!mc) return;
+  // Support both current W3C API (registerTool) and earlier draft name
+  // (provideContext) some scanners/clients still probe for.
+  var fn = mc.registerTool || mc.provideContext;
+  if (typeof fn !== "function") return;
+  var register = fn.bind(mc);
   var base = location.origin;
 
   function reg(tool) {
-    try { mc.registerTool(tool); } catch(e) {}
+    try { register(tool); } catch(e) {
+      if (window.console && console.warn) console.warn("[webmcp]", tool.name, e);
+    }
   }
 
   reg({

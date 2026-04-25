@@ -124,6 +124,7 @@ export default function WebsiteSchema({
     "@type": "Organization",
     "@id": `${siteUrl}#organization`,
     name: "Esdeveniments.cat",
+    alternateName: "Esdeveniments Catalunya",
     url: siteUrl,
     logo: {
       "@type": "ImageObject",
@@ -149,23 +150,44 @@ export default function WebsiteSchema({
   const webAppSchema = {
     "@context": "https://schema.org",
     "@type": ["WebApplication", "SoftwareApplication"],
+    "@id": `${siteUrl}#webapp`,
     name: "Esdeveniments.cat",
     alternateName: "Què Fer a Catalunya",
     description: localized.appDescription,
     url: siteUrl,
     applicationCategory: "EntertainmentApplication",
+    applicationSubCategory: "Events Discovery",
     operatingSystem: "All",
     browserRequirements: "Requires HTML5",
     inLanguage: ["ca", "es", "en"],
     isAccessibleForFree: true,
+    countriesSupported: "ES",
     offers: {
       "@type": "Offer",
       price: 0,
       priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
     },
     featureList: localized.featureList,
     provider: { "@id": `${siteUrl}#organization` },
+    publisher: { "@id": `${siteUrl}#organization` },
     screenshot: `${siteUrl}/static/images/og-home.jpg`,
+    softwareHelp: { "@type": "CreativeWork", url: `${siteUrl}/llms.txt` },
+    potentialAction: [
+      {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${siteUrl}/catalunya/?search={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+      {
+        "@type": "ViewAction",
+        target: `${siteUrl}/openapi.json`,
+        name: "View API Documentation",
+      },
+    ],
   };
 
   const faqSchema = {

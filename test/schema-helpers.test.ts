@@ -59,7 +59,7 @@ describe("generateJsonData", () => {
     expect(schema.offers!.price).toBe(0);
   });
 
-  it("emits meaningful offers for paid events without price information", () => {
+  it("omits offers for paid events without price information", () => {
     const schema = generateJsonData(
       createEvent({
         type: "PAID",
@@ -68,13 +68,10 @@ describe("generateJsonData", () => {
       })
     );
 
-    // isAccessibleForFree was removed - event.type defaults to "FREE" so it's unreliable
-    expect(schema.offers).toBeDefined();
-    expect(schema.offers!.price).toBe(0);
-    expect(schema.offers!.priceSpecification).toBeDefined();
-    expect(schema.offers!.priceSpecification?.description).toBe(
-      "Consult price"
-    );
+    // Per Google sd-policies: emitting price:0 + placeholder descriptions for
+    // unknown prices is misleading and suppresses rich results. offers is
+    // recommended, not required — omitting it is correct when price is unknown.
+    expect(schema.offers).toBeUndefined();
     expect(schema.performer.name).toBe("Palau de la Música");
     expect(schema.location.address.streetAddress).toBe("Palau de la Música");
   });

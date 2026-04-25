@@ -18,7 +18,7 @@ import { getFormattedDate } from "@utils/helpers";
 import { parseDateFromIso } from "@utils/schema-helpers";
 
 // Days after event end date before we noindex it to save crawl budget
-const EXPIRED_EVENT_NOINDEX_DAYS = 60;
+export const EXPIRED_EVENT_NOINDEX_DAYS = 60;
 
 // --- Default robots policy for indexable pages ---
 export const DEFAULT_ROBOTS_POLICY = {
@@ -209,7 +209,6 @@ export function generateEventMetadata(
         return "noindex, nofollow";
       }
       // Noindex events that ended more than 60 days ago to save crawl budget.
-      // The JSON-LD eventStatus (EventCompleted) remains for structured data.
       const endDateTime = parseDateFromIso(event.endDate, true);
       if (endDateTime) {
         const daysSinceEnd =

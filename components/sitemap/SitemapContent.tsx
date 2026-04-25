@@ -4,11 +4,17 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import { generateSiteNavigationElementSchema } from "@components/partials/seo-meta";
 import type { SitemapContentProps } from "types/sitemap";
 import { toLocalizedUrl, withLocalePath } from "@utils/i18n-seo";
+import { connection } from "next/server";
 
 export default async function SitemapContent({
   dataPromise,
   locale,
 }: SitemapContentProps) {
+  // Opt out of cacheComponents caching — conditional JsonLdServer below
+  // depends on API data (regions/cities). Without this, cached tree shape
+  // can differ from replay → "Expected Fragment but got script".
+  await connection();
+
   const t = await getTranslations("Components.SitemapContent");
   const { regions, cities } = await dataPromise;
   const withLocale = (path: string) => withLocalePath(path, locale);

@@ -27,5 +27,7 @@ declare global {
       },
       options?: { signal?: AbortSignal },
     ): void;
+    // Older draft alias still probed for by some agent-readiness scanners.
+    provideContext?: ModelContext["registerTool"];
   }
 }

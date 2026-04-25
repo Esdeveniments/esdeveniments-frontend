@@ -30,10 +30,17 @@ export default function CheckoutButton({
     setError(null);
 
     try {
+      // Generate UUID per click — Stripe recommends V4 UUIDs for idempotency keys.
+      // Protects against network retries (double-click) while allowing intentional
+      // retries (back + try again) to create fresh sessions, per Stripe docs:
+      // "We recommend creating a new Session each time your customer attempts to pay."
+      const idempotencyKey = crypto.randomUUID();
+
       const response = await fetch("/api/sponsors/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Idempotency-Key": idempotencyKey,
         },
         body: JSON.stringify({
           duration,

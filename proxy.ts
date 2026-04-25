@@ -551,7 +551,8 @@ export default async function proxy(request: NextRequest) {
   // bots, so they receive full server-rendered HTML.
   // See: node_modules/next/dist/shared/lib/router/utils/is-bot.js
   const ua = request.headers.get("user-agent") || "";
-  if (AI_BOT_UA_RE.test(ua)) {
+  const isAiBot = AI_BOT_UA_RE.test(ua);
+  if (isAiBot) {
     requestHeaders.set("user-agent", `${ua} Slurp`);
   }
 
@@ -628,9 +629,19 @@ export default async function proxy(request: NextRequest) {
     const isFavoritesPage = normalizedPath === "/preferits";
     const isPersonalizedHtml = isFavoritesPage;
 
+    // AI bot requests must not pollute or be served from the shared CDN cache:
+    // - Origin renders a different (fully-SSR) HTML for bots (see Slurp trick
+    //   above). If that response were cached, browsers would get over-rendered
+    //   HTML; if a browser PPR shell is already cached, bots would get empty
+    //   content. Both hurt orank.ai checks (content-no-js, semantic-indexing,
+    //   sim-chatgpt, sim-claude) and general AI-agent discoverability.
+    // - NOTE: This prevents the BOT response from being cached but does NOT
+    //   stop Cloudflare from serving an already-cached browser shell to bots.
+    //   A Cloudflare Cache Rule must also bypass cache when User-Agent matches
+    //   the bot regex. See docs/incidents/2026-04-24-ai-bot-cdn-cache-mix.md.
     response.headers.set(
       "Cache-Control",
-      isPersonalizedHtml
+      isPersonalizedHtml || isAiBot
         ? "private, no-store"
         : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
     );
