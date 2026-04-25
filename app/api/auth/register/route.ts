@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { registerExternal } from "@lib/api/auth-external";
 import { handleApiError } from "@utils/api-error-handler";
+import { createRateLimiter } from "@utils/rate-limit";
 import type { RegisterRequestDTO } from "types/api/auth";
 
+const limiter = createRateLimiter({ maxRequests: 3, windowMs: 15 * 60 * 1000 });
+
 export async function POST(request: Request): Promise<Response> {
+  const blocked = limiter.check(request);
+  if (blocked) return blocked;
+
   try {
     let body: RegisterRequestDTO;
     try {
