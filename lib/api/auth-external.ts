@@ -36,7 +36,7 @@ export async function loginExternal(
 
     if (!response.ok) {
       const errorCode = parseAuthError(json);
-      return { data: null, error: errorCode ?? "invalid-credentials", status: response.status };
+      return { data: null, error: errorCode ?? "unknown", status: response.status };
     }
 
     const parsed = parseAuthResponse(json);
@@ -74,7 +74,7 @@ export async function registerExternal(
 
     if (!response.ok) {
       const errorCode = parseAuthError(json);
-      return { data: null, error: errorCode ?? "email-taken", status: response.status };
+      return { data: null, error: errorCode ?? "unknown", status: response.status };
     }
 
     const parsed = parseAuthMessageResponse(json);

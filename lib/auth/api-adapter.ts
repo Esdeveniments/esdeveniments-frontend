@@ -68,6 +68,7 @@ export function createApiAdapter(): AuthAdapter {
   ): Promise<Response> {
     return fetch(path, {
       ...options,
+      signal: options?.signal ?? AbortSignal.timeout(10_000),
       headers: {
         ...options?.headers,
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
@@ -114,7 +115,8 @@ export function createApiAdapter(): AuthAdapter {
           user: currentUser,
           requiresVerification: !data.user.emailVerified,
         };
-      } catch {
+      } catch (error) {
+        console.error("api-adapter login failed:", error);
         return { success: false, error: "network-error" };
       }
     },
@@ -145,7 +147,8 @@ export function createApiAdapter(): AuthAdapter {
           message: json.message,
           requiresVerification: true,
         };
-      } catch {
+      } catch (error) {
+        console.error("api-adapter register failed:", error);
         return { success: false, error: "network-error" };
       }
     },
@@ -177,8 +180,10 @@ export function createApiAdapter(): AuthAdapter {
           return null;
         }
         currentUser = mapDtoToUser(dto);
+        notify(currentUser);
         return currentUser;
-      } catch {
+      } catch (error) {
+        console.error("api-adapter getSession failed:", error);
         clearSession();
         return null;
       }
