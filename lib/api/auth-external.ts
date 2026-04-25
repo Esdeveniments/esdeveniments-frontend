@@ -78,6 +78,10 @@ export async function registerExternal(
     }
 
     const parsed = parseAuthMessageResponse(json);
+    if (!parsed) {
+      console.error("registerExternal: invalid response shape", json);
+      return { data: null, error: "unknown", status: 500 };
+    }
     return { data: parsed, error: null, status: 200 };
   } catch (error) {
     console.error("registerExternal: failed", error);
@@ -128,6 +132,10 @@ export async function forgotPasswordExternal(
     }
 
     const parsed = parseAuthMessageResponse(json);
+    if (!parsed) {
+      console.error("forgotPasswordExternal: invalid response shape", json);
+      return { data: null, error: "unknown", status: 500 };
+    }
     return { data: parsed, error: null, status: 200 };
   } catch (error) {
     console.error("forgotPasswordExternal: failed", error);
@@ -160,6 +168,10 @@ export async function resetPasswordExternal(
     }
 
     const parsed = parseAuthMessageResponse(json);
+    if (!parsed) {
+      console.error("resetPasswordExternal: invalid response shape", json);
+      return { data: null, error: "unknown", status: 500 };
+    }
     return { data: parsed, error: null, status: 200 };
   } catch (error) {
     console.error("resetPasswordExternal: failed", error);
@@ -188,6 +200,10 @@ export async function confirmEmailExternal(
     }
 
     const parsed = parseAuthMessageResponse(json);
+    if (!parsed) {
+      console.error("confirmEmailExternal: invalid response shape", json);
+      return { data: null, error: "unknown", status: 500 };
+    }
     return { data: parsed, error: null, status: 200 };
   } catch (error) {
     console.error("confirmEmailExternal: failed", error);
@@ -219,6 +235,10 @@ export async function resendVerificationExternal(
     }
 
     const parsed = parseAuthMessageResponse(json);
+    if (!parsed) {
+      console.error("resendVerificationExternal: invalid response shape", json);
+      return { data: null, error: "unknown", status: 500 };
+    }
     return { data: parsed, error: null, status: 200 };
   } catch (error) {
     console.error("resendVerificationExternal: failed", error);

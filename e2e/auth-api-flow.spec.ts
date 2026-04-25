@@ -325,11 +325,14 @@ test.describe("Auth flow (real adapter + mocked routes)", () => {
     // Smoke test without mocks: verify internal API routes exist
     // (actual responses depend on backend availability and HMAC config)
 
+    const baseUrl =
+      process.env.PLAYWRIGHT_TEST_BASE_URL || "http://127.0.0.1:3000";
+
     const loginResponse = await page.request.post("/api/auth/login", {
       data: { email: "a@b.com", password: "test" },
       headers: {
         "Content-Type": "application/json",
-        Origin: page.url() || "http://localhost:3001",
+        Origin: baseUrl,
       },
     });
 
@@ -340,7 +343,7 @@ test.describe("Auth flow (real adapter + mocked routes)", () => {
       data: { email: "a@b.com", password: "test12345", name: "Test" },
       headers: {
         "Content-Type": "application/json",
-        Origin: page.url() || "http://localhost:3001",
+        Origin: baseUrl,
       },
     });
 

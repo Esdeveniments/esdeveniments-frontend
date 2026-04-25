@@ -1,4 +1,9 @@
 import { z } from "zod";
+import type {
+  AuthResponseDTO,
+  AuthenticatedUserDTO,
+  AuthMessageResponseDTO,
+} from "types/api/auth";
 
 const AuthRoleSchema = z.enum(["USER", "ADMIN"]);
 
@@ -40,17 +45,19 @@ export const AuthErrorSchema = z.object({
   message: z.string().optional(),
 });
 
-export function parseAuthResponse(data: unknown) {
+export function parseAuthResponse(data: unknown): AuthResponseDTO | null {
   const result = AuthResponseSchema.safeParse(data);
   return result.success ? result.data : null;
 }
 
-export function parseAuthUser(data: unknown) {
+export function parseAuthUser(data: unknown): AuthenticatedUserDTO | null {
   const result = AuthenticatedUserDTOSchema.safeParse(data);
   return result.success ? result.data : null;
 }
 
-export function parseAuthMessageResponse(data: unknown) {
+export function parseAuthMessageResponse(
+  data: unknown
+): AuthMessageResponseDTO | null {
   const result = AuthMessageResponseSchema.safeParse(data);
   return result.success ? result.data : null;
 }

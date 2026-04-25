@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { confirmEmailExternal } from "@lib/api/auth-external";
 import { handleApiError } from "@utils/api-error-handler";
 
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
     const token = url.searchParams.get("token");
@@ -17,7 +17,10 @@ export async function GET(request: Request) {
     const { data, error, status } = await confirmEmailExternal(token);
 
     if (error || !data) {
-      return NextResponse.json({ error: error ?? "unknown" }, { status });
+      return NextResponse.json(
+        { error: error ?? "unknown" },
+        { status: status === 200 ? 500 : status }
+      );
     }
 
     return NextResponse.json(data, {

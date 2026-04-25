@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getMeExternal } from "@lib/api/auth-external";
 import { handleApiError } from "@utils/api-error-handler";
 
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<Response> {
   try {
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace(/^Bearer\s+/i, "");

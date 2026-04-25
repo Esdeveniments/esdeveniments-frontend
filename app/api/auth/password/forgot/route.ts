@@ -2,10 +2,19 @@ import { NextResponse } from "next/server";
 import { forgotPasswordExternal } from "@lib/api/auth-external";
 import { handleApiError } from "@utils/api-error-handler";
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   try {
-    const body = await request.json();
-    const { email } = body as { email?: string };
+    let body: { email?: string };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
+    const { email } = body;
 
     if (!email) {
       return NextResponse.json(
@@ -17,7 +26,10 @@ export async function POST(request: Request) {
     const { data, error, status } = await forgotPasswordExternal(email);
 
     if (error || !data) {
-      return NextResponse.json({ error: error ?? "unknown" }, { status });
+      return NextResponse.json(
+        { error: error ?? "unknown" },
+        { status: status === 200 ? 500 : status }
+      );
     }
 
     return NextResponse.json(data, {

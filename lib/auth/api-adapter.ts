@@ -5,11 +5,11 @@ import type {
   AuthResult,
   AuthUser,
   AuthUnsubscribe,
-  AuthenticatedUserDTO,
-  AuthResponseDTO,
   LoginCredentials,
   RegisterCredentials,
 } from "types/auth";
+import type { AuthenticatedUserDTO } from "types/api/auth";
+import { parseAuthResponse, parseAuthUser } from "@lib/validation/auth";
 
 /** Map backend DTO to frontend AuthUser */
 function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
@@ -38,6 +38,9 @@ function mapErrorCode(
   return errorMap[error] ?? "unknown";
 }
 
+// Expire tokens 60s early to account for client/server clock skew
+const EXPIRY_BUFFER_MS = 60_000;
+
 export function createApiAdapter(): AuthAdapter {
   let accessToken: string | null = null;
   let expiresAt: number | null = null;
@@ -50,7 +53,7 @@ export function createApiAdapter(): AuthAdapter {
 
   function isTokenExpired(): boolean {
     if (!expiresAt) return true;
-    return Date.now() >= expiresAt;
+    return Date.now() >= (expiresAt - EXPIRY_BUFFER_MS);
   }
 
   function clearSession() {
@@ -95,9 +98,14 @@ export function createApiAdapter(): AuthAdapter {
           };
         }
 
-        const data = json as AuthResponseDTO;
+        const data = parseAuthResponse(json);
+        if (!data) {
+          return { success: false, error: "unknown" };
+        }
+
         accessToken = data.accessToken;
-        expiresAt = new Date(data.expiresAt).getTime();
+        const expiry = new Date(data.expiresAt).getTime();
+        expiresAt = isNaN(expiry) ? 0 : expiry;
         currentUser = mapDtoToUser(data.user);
         notify(currentUser);
 
@@ -162,7 +170,12 @@ export function createApiAdapter(): AuthAdapter {
           return null;
         }
 
-        const dto = (await res.json()) as AuthenticatedUserDTO;
+        const json = await res.json();
+        const dto = parseAuthUser(json);
+        if (!dto) {
+          clearSession();
+          return null;
+        }
         currentUser = mapDtoToUser(dto);
         return currentUser;
       } catch {

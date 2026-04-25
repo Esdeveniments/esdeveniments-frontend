@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 import { registerExternal } from "@lib/api/auth-external";
 import { handleApiError } from "@utils/api-error-handler";
+import type { RegisterRequestDTO } from "types/api/auth";
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   try {
-    const body = await request.json();
-    const { email, password, name } = body as {
-      email?: string;
-      password?: string;
-      name?: string;
-    };
+    let body: RegisterRequestDTO;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
+    const { email, password, name } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -21,7 +27,10 @@ export async function POST(request: Request) {
     const { data, error, status } = await registerExternal(email, password, name);
 
     if (error || !data) {
-      return NextResponse.json({ error: error ?? "unknown" }, { status });
+      return NextResponse.json(
+        { error: error ?? "unknown" },
+        { status: status === 200 ? 500 : status }
+      );
     }
 
     return NextResponse.json(data, {

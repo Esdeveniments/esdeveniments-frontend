@@ -64,27 +64,7 @@ export interface AuthResult {
   requiresVerification?: boolean;
 }
 
-/** Backend DTO: what POST /api/auth/login returns */
-export interface AuthResponseDTO {
-  accessToken: string;
-  tokenType: string;
-  expiresAt: string;
-  user: AuthenticatedUserDTO;
-}
-
-/** Backend DTO: what GET /api/auth/me returns */
-export interface AuthenticatedUserDTO {
-  id: number;
-  email: string;
-  name: string;
-  role: AuthRole;
-  emailVerified: boolean;
-}
-
-/** Backend DTO: message-only responses (register, forgot, reset, verify) */
-export interface AuthMessageResponseDTO {
-  message: string;
-}
+export type { AuthResponseDTO, AuthenticatedUserDTO, AuthMessageResponseDTO } from "./api/auth";
 
 export type AuthUnsubscribe = () => void;
 

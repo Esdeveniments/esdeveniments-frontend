@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import { loginExternal } from "@lib/api/auth-external";
 import { handleApiError } from "@utils/api-error-handler";
+import type { LoginRequestDTO } from "types/api/auth";
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   try {
-    const body = await request.json();
-    const { email, password } = body as { email?: string; password?: string };
+    let body: LoginRequestDTO;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
+    const { email, password } = body;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -17,7 +27,10 @@ export async function POST(request: Request) {
     const { data, error, status } = await loginExternal(email, password);
 
     if (error || !data) {
-      return NextResponse.json({ error: error ?? "unknown" }, { status });
+      return NextResponse.json(
+        { error: error ?? "unknown" },
+        { status: status === 200 ? 500 : status }
+      );
     }
 
     return NextResponse.json(data, {
