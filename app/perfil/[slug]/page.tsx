@@ -9,7 +9,13 @@ import { siteUrl } from "@config/index";
 import type { PageData } from "types/common";
 import type { FetchEventsParams } from "types/event";
 
-export const dynamic = "force-dynamic";
+// cacheComponents requires non-empty generateStaticParams for dynamic routes.
+// Profile slugs are user-generated with infinite cardinality, so we provide a
+// placeholder to satisfy the build validation. All real slugs are rendered on
+// first request and cached automatically.
+export function generateStaticParams() {
+  return [{ slug: "_placeholder" }];
+}
 
 export async function generateMetadata({
   params,
