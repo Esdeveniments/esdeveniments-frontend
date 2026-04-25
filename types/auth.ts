@@ -36,6 +36,8 @@ export type AuthErrorCode =
   | "account-locked"
   | "unknown";
 
+export type VerifyEmailStatus = "loading" | "success" | "error";
+
 export interface LoginCredentials {
   email: string;
   password?: string;

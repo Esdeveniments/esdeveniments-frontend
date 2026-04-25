@@ -540,6 +540,15 @@ export default async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
+  // Redirect legacy /verify-email (backend email links) to /verificar-email
+  if (pathnameWithoutLocale === "/verify-email") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/verificar-email`
+      : "/verificar-email";
+    return NextResponse.redirect(url, 301);
+  }
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);
