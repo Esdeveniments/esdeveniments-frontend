@@ -38,6 +38,8 @@ export type AuthErrorCode =
 
 export type VerifyEmailStatus = "loading" | "success" | "error";
 
+export type ResetPasswordStatus = "form" | "submitting" | "success" | "error";
+
 export interface LoginCredentials {
   email: string;
   password?: string;

@@ -549,6 +549,15 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
+  // Redirect legacy /reset-password (backend email links) to /restablir-contrasenya
+  if (pathnameWithoutLocale === "/reset-password") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/restablir-contrasenya`
+      : "/restablir-contrasenya";
+    return NextResponse.redirect(url, 301);
+  }
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);

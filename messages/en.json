@@ -1723,7 +1723,9 @@
       "registerTitle": "Create account | Esdeveniments.cat",
       "registerDescription": "Create your Esdeveniments.cat account to publish events",
       "verifyEmailTitle": "Verify email | Esdeveniments.cat",
-      "verifyEmailDescription": "Verify your email to activate your Esdeveniments.cat account"
+      "verifyEmailDescription": "Verify your email to activate your Esdeveniments.cat account",
+      "resetPasswordTitle": "Reset password | Esdeveniments.cat",
+      "resetPasswordDescription": "Reset your Esdeveniments.cat account password"
     },
     "verification": {
       "checkEmailTitle": "Check your email",
@@ -1736,6 +1738,20 @@
       "errorDescription": "We couldn't verify your email. The link may have expired or already been used.",
       "invalidToken": "Invalid link",
       "invalidTokenDescription": "The verification link is not valid. Please register again or request a new verification email."
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "subtitle": "Enter your new password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Change password",
+      "passwordMismatch": "Passwords do not match",
+      "successTitle": "Password changed!",
+      "successDescription": "Your password has been updated. You can now log in.",
+      "errorTitle": "Reset failed",
+      "errorDescription": "We couldn't reset your password. The link may have expired or already been used.",
+      "invalidToken": "Invalid link",
+      "invalidTokenDescription": "The password reset link is not valid. Please request a new one."
     }
   }
 }
