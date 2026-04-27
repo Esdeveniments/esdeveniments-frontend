@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { connection } from "next/server";
 import { fetchNews } from "@lib/api/news";
 import NewsCard from "@components/ui/newsCard";
 import { formatPlacePreposition } from "@utils/helpers";
@@ -13,6 +14,12 @@ export default async function LatestNewsSection({
   placeType,
   newsHref,
 }: LatestNewsSectionProps) {
+  // Opt out of cacheComponents caching: this component renders a variable-shape
+  // tree (early `return null`, freshness-dependent title) driven by `new Date()`
+  // and async data. Without connection(), the cached prerender tree can mismatch
+  // the resume tree → "Expected Fragment but got script" PPR resume errors.
+  await connection();
+
   const t = await getTranslations("Components.LatestNewsSection");
   const locale = await getLocaleSafely();
   const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
