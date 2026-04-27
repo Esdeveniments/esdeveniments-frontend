@@ -173,4 +173,5 @@ export const socialLinksSameAs: string[] = [
   socialLinks.mastodon,
   socialLinks.linkedin,
   "https://github.com/esdeveniments",
+  "https://www.wikidata.org/wiki/Q139549463",
 ];

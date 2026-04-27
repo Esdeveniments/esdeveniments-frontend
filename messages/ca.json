@@ -471,7 +471,15 @@
         "Divendres",
         "Dissabte"
       ],
-      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
+      "daysShort": [
+        "Dg.",
+        "Dl.",
+        "Dt.",
+        "Dc.",
+        "Dj.",
+        "Dv.",
+        "Ds."
+      ],
       "monthsShort": [
         "gen.",
         "feb.",
@@ -1374,7 +1382,10 @@
         "pel",
         "pels"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1713,7 +1724,37 @@
       "loginTitle": "Iniciar sessió | Esdeveniments.cat",
       "loginDescription": "Inicia sessió al teu compte d'Esdeveniments.cat",
       "registerTitle": "Crear compte | Esdeveniments.cat",
-      "registerDescription": "Crea el teu compte a Esdeveniments.cat per publicar esdeveniments"
+      "registerDescription": "Crea el teu compte a Esdeveniments.cat per publicar esdeveniments",
+      "verifyEmailTitle": "Verificar correu | Esdeveniments.cat",
+      "verifyEmailDescription": "Verifica el teu correu electrònic per activar el teu compte d'Esdeveniments.cat",
+      "resetPasswordTitle": "Restablir contrasenya | Esdeveniments.cat",
+      "resetPasswordDescription": "Restableix la contrasenya del teu compte d'Esdeveniments.cat"
+    },
+    "verification": {
+      "checkEmailTitle": "Revisa el teu correu",
+      "checkEmailDescription": "Hem enviat un correu de verificació a {email}. Fes clic a l'enllaç per activar el teu compte.",
+      "resend": "Tornar a enviar el correu",
+      "resent": "Correu enviat!",
+      "successTitle": "Correu verificat!",
+      "successDescription": "El teu compte ha estat verificat correctament. Ja pots iniciar sessió.",
+      "errorTitle": "Error de verificació",
+      "errorDescription": "No hem pogut verificar el teu correu. L'enllaç pot haver caducat o ja ha estat utilitzat.",
+      "invalidToken": "Enllaç no vàlid",
+      "invalidTokenDescription": "L'enllaç de verificació no és vàlid. Torna a registrar-te o sol·licita un nou correu de verificació."
+    },
+    "resetPassword": {
+      "title": "Restablir contrasenya",
+      "subtitle": "Introdueix la teva nova contrasenya",
+      "newPassword": "Nova contrasenya",
+      "confirmPassword": "Confirma la contrasenya",
+      "submit": "Canviar contrasenya",
+      "passwordMismatch": "Les contrasenyes no coincideixen",
+      "successTitle": "Contrasenya canviada!",
+      "successDescription": "La teva contrasenya s'ha actualitzat correctament. Ja pots iniciar sessió.",
+      "errorTitle": "Error al restablir",
+      "errorDescription": "No hem pogut restablir la contrasenya. L'enllaç pot haver caducat o ja ha estat utilitzat.",
+      "invalidToken": "Enllaç no vàlid",
+      "invalidTokenDescription": "L'enllaç per restablir la contrasenya no és vàlid. Sol·licita'n un de nou."
     }
   }
 }

@@ -10,6 +10,7 @@ import {
   withLocalePath,
 } from "@utils/i18n-seo";
 import { resolveNewsItemPlace } from "@utils/news-helpers";
+import { connection } from "next/server";
 
 export default async function NewsList({
   newsPromise,
@@ -19,6 +20,10 @@ export default async function NewsList({
   pageSize,
   basePath,
 }: NewsListProps) {
+  // Opt out of cacheComponents caching — early return on empty list produces
+  // a completely different tree (no JsonLdServer) vs the normal path.
+  await connection();
+
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.NewsList" });
   const withLocale = (path: string) => withLocalePath(path, locale);

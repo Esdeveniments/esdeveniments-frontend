@@ -463,7 +463,15 @@
         "Viernes",
         "Sábado"
       ],
-      "daysShort": ["Dom.", "Lun.", "Mar.", "Mié.", "Jue.", "Vie.", "Sáb."],
+      "daysShort": [
+        "Dom.",
+        "Lun.",
+        "Mar.",
+        "Mié.",
+        "Jue.",
+        "Vie.",
+        "Sáb."
+      ],
       "monthsShort": [
         "ene.",
         "feb.",
@@ -1373,7 +1381,10 @@
         "por el",
         "por los"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1712,7 +1723,37 @@
       "loginTitle": "Iniciar sesión | Esdeveniments.cat",
       "loginDescription": "Inicia sesión en tu cuenta de Esdeveniments.cat",
       "registerTitle": "Crear cuenta | Esdeveniments.cat",
-      "registerDescription": "Crea tu cuenta en Esdeveniments.cat para publicar eventos"
+      "registerDescription": "Crea tu cuenta en Esdeveniments.cat para publicar eventos",
+      "verifyEmailTitle": "Verificar correo | Esdeveniments.cat",
+      "verifyEmailDescription": "Verifica tu correo electrónico para activar tu cuenta de Esdeveniments.cat",
+      "resetPasswordTitle": "Restablecer contraseña | Esdeveniments.cat",
+      "resetPasswordDescription": "Restablece la contraseña de tu cuenta de Esdeveniments.cat"
+    },
+    "verification": {
+      "checkEmailTitle": "Revisa tu correo",
+      "checkEmailDescription": "Hemos enviado un correo de verificación a {email}. Haz clic en el enlace para activar tu cuenta.",
+      "resend": "Volver a enviar el correo",
+      "resent": "¡Correo enviado!",
+      "successTitle": "¡Correo verificado!",
+      "successDescription": "Tu cuenta ha sido verificada correctamente. Ya puedes iniciar sesión.",
+      "errorTitle": "Error de verificación",
+      "errorDescription": "No hemos podido verificar tu correo. El enlace puede haber caducado o ya ha sido utilizado.",
+      "invalidToken": "Enlace no válido",
+      "invalidTokenDescription": "El enlace de verificación no es válido. Vuelve a registrarte o solicita un nuevo correo de verificación."
+    },
+    "resetPassword": {
+      "title": "Restablecer contraseña",
+      "subtitle": "Introduce tu nueva contraseña",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirma la contraseña",
+      "submit": "Cambiar contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "successTitle": "¡Contraseña cambiada!",
+      "successDescription": "Tu contraseña se ha actualizado correctamente. Ya puedes iniciar sesión.",
+      "errorTitle": "Error al restablecer",
+      "errorDescription": "No hemos podido restablecer la contraseña. El enlace puede haber caducado o ya ha sido utilizado.",
+      "invalidToken": "Enlace no válido",
+      "invalidTokenDescription": "El enlace para restablecer la contraseña no es válido. Solicita uno nuevo."
     }
   }
 }

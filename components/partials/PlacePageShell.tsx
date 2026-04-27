@@ -28,6 +28,7 @@ import type { AppLocale } from "types/i18n";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { connection } from "next/server";
 
 // Lazy load below-the-fold client component via client component wrapper
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -249,6 +250,12 @@ async function PlacePageContent({
   | "categories"
   | "webPageSchemaFactory"
 >): Promise<JSX.Element> {
+  // Opt out of cacheComponents caching — the conditional JSON-LD tree below
+  // depends on event data (variable structuredScripts count, optional webPageSchema,
+  // optional LCP preload link). Without this, React caches one tree shape and
+  // the replay produces a different one → "Expected Fragment but got script".
+  await connection();
+
   // Await shell data and events in parallel
   const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, structuredScripts }] =
     await Promise.all([shellDataPromise, eventsPromise]);

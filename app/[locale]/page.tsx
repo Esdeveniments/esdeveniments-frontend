@@ -20,6 +20,7 @@ import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 import { filterActiveEvents } from "@utils/event-helpers";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
+import { connection } from "next/server";
 
 export async function generateMetadata() {
   const locale = (await rootLocale()) as AppLocale;
@@ -277,6 +278,12 @@ async function HomeStructuredData({
   pageData: PageData;
   locale: AppLocale;
 }): Promise<JSX.Element> {
+  // Opt out of cacheComponents caching — the conditional JSON-LD tree below
+  // depends on event data (which changes over time). Without this, React caches
+  // one tree shape and the replay produces a different one → "Expected Fragment
+  // but got script" Sentry errors.
+  await connection();
+
   const categorizedEvents = await categorizedEventsPromise;
   const allEvents = filterActiveEvents(Object.values(categorizedEvents).flat());
 

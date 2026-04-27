@@ -7,8 +7,14 @@ import { siteUrl } from "@config/index";
 import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { NewsHubsGridProps } from "types/props";
+import { connection } from "next/server";
 
 export default async function NewsHubsGrid({ promise }: NewsHubsGridProps) {
+  // Opt out of cacheComponents caching — conditional JsonLdServer below
+  // depends on API data (article count). Without this, cached tree shape
+  // can differ from replay → "Expected Fragment but got script".
+  await connection();
+
   const locale = await getLocaleSafely();
   const t = await getTranslations({
     locale,

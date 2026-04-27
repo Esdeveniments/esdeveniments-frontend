@@ -223,6 +223,14 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/status",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
+  // Auth routes (browser-initiated; backend HMAC handled by external wrapper)
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/me",
+  "/api/auth/password/forgot",
+  "/api/auth/password/reset",
+  "/api/auth/verification/confirm",
+  "/api/auth/verification/resend",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
@@ -532,6 +540,24 @@ export default async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
+  // Redirect legacy /verify-email (backend email links) to /verificar-email
+  if (pathnameWithoutLocale === "/verify-email") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/verificar-email`
+      : "/verificar-email";
+    return NextResponse.redirect(url, 301);
+  }
+
+  // Redirect legacy /reset-password (backend email links) to /restablir-contrasenya
+  if (pathnameWithoutLocale === "/reset-password") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/restablir-contrasenya`
+      : "/restablir-contrasenya";
+    return NextResponse.redirect(url, 301);
+  }
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);
@@ -543,7 +569,8 @@ export default async function proxy(request: NextRequest) {
   // bots, so they receive full server-rendered HTML.
   // See: node_modules/next/dist/shared/lib/router/utils/is-bot.js
   const ua = request.headers.get("user-agent") || "";
-  if (AI_BOT_UA_RE.test(ua)) {
+  const isAiBot = AI_BOT_UA_RE.test(ua);
+  if (isAiBot) {
     requestHeaders.set("user-agent", `${ua} Slurp`);
   }
 
@@ -620,9 +647,19 @@ export default async function proxy(request: NextRequest) {
     const isFavoritesPage = normalizedPath === "/preferits";
     const isPersonalizedHtml = isFavoritesPage;
 
+    // AI bot requests must not pollute or be served from the shared CDN cache:
+    // - Origin renders a different (fully-SSR) HTML for bots (see Slurp trick
+    //   above). If that response were cached, browsers would get over-rendered
+    //   HTML; if a browser PPR shell is already cached, bots would get empty
+    //   content. Both hurt orank.ai checks (content-no-js, semantic-indexing,
+    //   sim-chatgpt, sim-claude) and general AI-agent discoverability.
+    // - NOTE: This prevents the BOT response from being cached but does NOT
+    //   stop Cloudflare from serving an already-cached browser shell to bots.
+    //   A Cloudflare Cache Rule must also bypass cache when User-Agent matches
+    //   the bot regex. See docs/incidents/2026-04-24-ai-bot-cdn-cache-mix.md.
     response.headers.set(
       "Cache-Control",
-      isPersonalizedHtml
+      isPersonalizedHtml || isAiBot
         ? "private, no-store"
         : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
     );

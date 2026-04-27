@@ -5,12 +5,16 @@ export type AuthMethod =
   | "oauth-github"
   | "passwordless";
 
+export type AuthRole = "USER" | "ADMIN";
+
 export interface AuthUser {
   id: string;
   email: string;
   displayName?: string;
   avatarUrl?: string;
   profileSlug?: string;
+  role?: AuthRole;
+  emailVerified?: boolean;
 }
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -28,7 +32,13 @@ export type AuthErrorCode =
   | "network-error"
   | "not-configured"
   | "rate-limited"
+  | "email-not-verified"
+  | "account-locked"
   | "unknown";
+
+export type VerifyEmailStatus = "loading" | "success" | "error";
+
+export type ResetPasswordStatus = "form" | "submitting" | "success" | "error";
 
 export interface LoginCredentials {
   email: string;
@@ -41,12 +51,24 @@ export interface RegisterCredentials {
   displayName?: string;
 }
 
+export interface ForgotPasswordCredentials {
+  email: string;
+}
+
+export interface ResetPasswordCredentials {
+  token: string;
+  newPassword: string;
+}
+
 export interface AuthResult {
   success: boolean;
   user?: AuthUser;
   error?: AuthErrorCode;
+  message?: string;
   requiresVerification?: boolean;
 }
+
+export type { AuthResponseDTO, AuthenticatedUserDTO, AuthMessageResponseDTO } from "./api/auth";
 
 export type AuthUnsubscribe = () => void;
 

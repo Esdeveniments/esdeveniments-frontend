@@ -53,6 +53,15 @@ if (
   );
 }
 
+// Fail-fast: Catch misconfigured webhook secret (e.g. URL pasted instead of whsec_...)
+// Stripe signing secrets always start with "whsec_"
+if (WEBHOOK_SECRET && !WEBHOOK_SECRET.startsWith("whsec_")) {
+  throw new Error(
+    "FATAL: STRIPE_WEBHOOK_SECRET has invalid format — must start with 'whsec_'. " +
+      `Got: "${WEBHOOK_SECRET.slice(0, 20)}..."`,
+  );
+}
+
 /**
  * Extract custom field value by key
  */

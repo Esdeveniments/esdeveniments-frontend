@@ -463,7 +463,15 @@
         "Friday",
         "Saturday"
       ],
-      "daysShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      "daysShort": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
       "monthsShort": [
         "Jan",
         "Feb",
@@ -1371,7 +1379,10 @@
         "for the",
         "by the"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1710,7 +1721,37 @@
       "loginTitle": "Log in | Esdeveniments.cat",
       "loginDescription": "Log in to your Esdeveniments.cat account",
       "registerTitle": "Create account | Esdeveniments.cat",
-      "registerDescription": "Create your Esdeveniments.cat account to publish events"
+      "registerDescription": "Create your Esdeveniments.cat account to publish events",
+      "verifyEmailTitle": "Verify email | Esdeveniments.cat",
+      "verifyEmailDescription": "Verify your email to activate your Esdeveniments.cat account",
+      "resetPasswordTitle": "Reset password | Esdeveniments.cat",
+      "resetPasswordDescription": "Reset your Esdeveniments.cat account password"
+    },
+    "verification": {
+      "checkEmailTitle": "Check your email",
+      "checkEmailDescription": "We sent a verification email to {email}. Click the link to activate your account.",
+      "resend": "Resend verification email",
+      "resent": "Email sent!",
+      "successTitle": "Email verified!",
+      "successDescription": "Your account has been verified. You can now log in.",
+      "errorTitle": "Verification failed",
+      "errorDescription": "We couldn't verify your email. The link may have expired or already been used.",
+      "invalidToken": "Invalid link",
+      "invalidTokenDescription": "The verification link is not valid. Please register again or request a new verification email."
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "subtitle": "Enter your new password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Change password",
+      "passwordMismatch": "Passwords do not match",
+      "successTitle": "Password changed!",
+      "successDescription": "Your password has been updated. You can now log in.",
+      "errorTitle": "Reset failed",
+      "errorDescription": "We couldn't reset your password. The link may have expired or already been used.",
+      "invalidToken": "Invalid link",
+      "invalidTokenDescription": "The password reset link is not valid. Please request a new one."
     }
   }
 }

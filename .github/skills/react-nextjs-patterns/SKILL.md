@@ -317,6 +317,32 @@ export default async function Page() {
 }
 ```
 
+### ❌ No Conditional `<script>` Rendering Without `connection()` (cacheComponents)
+
+With `cacheComponents: true`, React caches server component output and expects identical tree structure on replay. If a server component conditionally renders `<JsonLdServer>` (which outputs `<script>`) based on data that changes over time, the cached tree shape can differ from the replayed one → "Expected the resume to render `<Fragment>` in this slot but instead it rendered `<script>`" errors → full client-side fallback (kills SSR + SEO).
+
+```typescript
+// ❌ WRONG: Conditional JsonLdServer without connection()
+async function StructuredData({ dataPromise }) {
+  const events = await dataPromise;
+  const schema = events.length > 0 ? generateSchema(events) : null;
+  return schema ? <JsonLdServer data={schema} /> : null;
+  // Cached with 5 events → replayed with 0 events → tree mismatch!
+}
+
+// ✅ CORRECT: Opt out of caching before conditional tree
+import { connection } from "next/server";
+
+async function StructuredData({ dataPromise }) {
+  await connection(); // Ensures fresh render, no cached tree reuse
+  const events = await dataPromise;
+  const schema = events.length > 0 ? generateSchema(events) : null;
+  return schema ? <JsonLdServer data={schema} /> : null;
+}
+```
+
+**Rule**: Any server component with conditional rendering that produces different element types/counts based on data or time **must** call `await connection()` before the conditional logic.
+
 ---
 
 ## 📝 Component Structure Template

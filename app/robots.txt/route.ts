@@ -11,9 +11,13 @@ import { siteUrl } from "@config/index";
  * 2. Ensure dynamic generation on every deployment
  * 3. Match the pattern used by sitemap.xml/route.ts for consistency
  *
- * 2025 SEO Best Practices:
+ * 2026 policy — AI-agent-first discoverability:
  * - Allow search engine crawlers (Googlebot, Bingbot, etc.)
- * - Block AI training crawlers (GPTBot, CCBot, etc.) to protect content
+ * - Allow AI agent crawlers (browsing + training) so LLM citations,
+ *   deep-research tools, and agent-readiness scanners (orank.ai
+ *   sim-chatgpt / sim-claude) can reach our content. Our data is
+ *   public cultural-events information; training protection has
+ *   lower value than broad agent reach.
  * - Block /_next/ static files (JS chunks, CSS, build artifacts)
  * - Block /api/ routes (internal endpoints, not for indexing)
  * - Declare multiple sitemaps for comprehensive discovery
@@ -44,68 +48,73 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           "/login/",
         ],
       },
-      // Block AI TRAINING crawlers (2025 best practice)
-      // These crawlers scrape content for LLM training without adding SEO value
-      // NOTE: We ALLOW browsing/search crawlers (ChatGPT-User, Claude-Web, PerplexityBot)
-      // so we appear in AI-powered searches
+      // AI agent crawlers — all ALLOWED under 2026 policy (see header).
+      // This includes both browsing/search bots (ChatGPT-User, Claude-Web,
+      // PerplexityBot, DeepSeekBot, ora-agent, Qwen-Agent) and training
+      // crawlers (GPTBot, ClaudeBot, anthropic-ai, Google-Extended,
+      // Applebot-Extended, Meta-ExternalAgent, cohere-ai). Trading training
+      // protection for discoverability in LLM answers and orank score.
       {
-        userAgent: "ChatGPT-User", // OpenAI browsing feature — ALLOWED
+        userAgent: "ChatGPT-User", // OpenAI browsing feature
         allow: ["/"],
       },
       {
-        userAgent: "Claude-Web", // Claude browsing feature — ALLOWED
+        userAgent: "Claude-Web", // Claude browsing feature
         allow: ["/"],
       },
       {
-        userAgent: "PerplexityBot", // Perplexity search — ALLOWED
+        userAgent: "PerplexityBot", // Perplexity search
         allow: ["/"],
       },
       {
-        userAgent: "DeepSeekBot", // DeepSeek search — ALLOWED
+        userAgent: "DeepSeekBot", // DeepSeek search
         allow: ["/"],
       },
       {
-        userAgent: "ora-agent", // Ora.ai agent — ALLOWED
+        userAgent: "ora-agent", // Ora.ai agent
         allow: ["/"],
       },
       {
-        userAgent: "Qwen-Agent", // Alibaba Qwen agent — ALLOWED
+        userAgent: "Qwen-Agent", // Alibaba Qwen agent
         allow: ["/"],
       },
       {
-        userAgent: "Google-Extended", // Google AI features (Gemini, etc.) — ALLOWED
+        userAgent: "Google-Extended", // Google AI features (Gemini, etc.)
         allow: ["/"],
       },
       {
-        userAgent: "GPTBot", // OpenAI's training crawler
+        userAgent: "GPTBot", // OpenAI training crawler — ALLOWED (2026 policy)
+        allow: ["/"],
+      },
+      {
+        userAgent: "ClaudeBot", // Anthropic training bot — ALLOWED (2026 policy)
+        allow: ["/"],
+      },
+      {
+        userAgent: "anthropic-ai", // Anthropic training crawler — ALLOWED (2026 policy)
+        allow: ["/"],
+      },
+      {
+        userAgent: "Applebot-Extended", // Apple AI training — ALLOWED (2026 policy)
+        allow: ["/"],
+      },
+      {
+        userAgent: "Meta-ExternalAgent", // Meta AI training — ALLOWED (2026 policy)
+        allow: ["/"],
+      },
+      {
+        userAgent: "cohere-ai", // Cohere training — ALLOWED (2026 policy)
+        allow: ["/"],
+      },
+      // Still-blocked: non-vendor data harvesters with no direct
+      // user-agent value. These resell scraped data without powering any
+      // end-user agent.
+      {
+        userAgent: "CCBot", // Common Crawl (dataset reseller)
         disallow: ["/"],
       },
       {
-        userAgent: "CCBot", // Common Crawl bot (used for AI training datasets)
-        disallow: ["/"],
-      },
-      {
-        userAgent: "Bytespider", // ByteDance/TikTok AI crawler
-        disallow: ["/"],
-      },
-      {
-        userAgent: "anthropic-ai", // Anthropic's training crawler
-        disallow: ["/"],
-      },
-      {
-        userAgent: "ClaudeBot", // Anthropic training bot (different from Claude-Web browsing)
-        disallow: ["/"],
-      },
-      {
-        userAgent: "Applebot-Extended", // Apple's AI training (separate from search)
-        disallow: ["/"],
-      },
-      {
-        userAgent: "Meta-ExternalAgent", // Meta/Facebook AI training
-        disallow: ["/"],
-      },
-      {
-        userAgent: "cohere-ai", // Cohere AI training crawler
+        userAgent: "Bytespider", // ByteDance/TikTok data harvester
         disallow: ["/"],
       },
       {
