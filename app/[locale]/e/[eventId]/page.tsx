@@ -98,6 +98,14 @@ async function EventPageContent({
 }: {
   slug: string;
 }): Promise<JSX.Element> {
+  // Opt out of cacheComponents caching FIRST, before any data fetch whose
+  // result drives JSX shape (relatedEvents JSON-LD, howTo JSON-LD, breadcrumbs,
+  // LCP preload, sticky CTA, weather block, past-event banner — all conditional).
+  // With cacheComponents, every await is a cache point: if connection() runs
+  // after data fetches, the prerender path can cache a tree shape that doesn't
+  // match the resume → "Expected Fragment but got script" PPR errors.
+  await connection();
+
   // Kick off event fetch and locale resolution in parallel — both are
   // independent operations and locale resolution shouldn't block the API call.
   const [locale, event] = await Promise.all([
@@ -200,10 +208,6 @@ async function EventPageContent({
       placeSuffix: tCopy("sentence.placeSuffix", { place: "{place}" }),
     },
   };
-  // Signal dynamic rendering before using new Date() in computeTemporalStatus.
-  // Without this, cacheComponents caches the RSC payload with a stale temporal state,
-  // causing "Couldn't find all resumable slots" when the tree shape changes (e.g., upcoming → past).
-  await connection();
   const temporalStatus: EventTemporalStatus = computeTemporalStatus(
     event.startDate,
     event.endDate,
