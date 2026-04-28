@@ -22,6 +22,17 @@ function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
   };
 }
 
+/**
+ * Parse expiresAt string as UTC epoch ms.
+ * Backend returns ISO-like strings without timezone suffix (e.g. "2026-04-28T18:00:00").
+ * Without "Z", JS Date() interprets as local time → wrong maxAge in non-UTC zones.
+ */
+function parseExpiresAtUtc(expiresAt: string): number | null {
+  const utcString = expiresAt.endsWith("Z") ? expiresAt : `${expiresAt}Z`;
+  const ms = new Date(utcString).getTime();
+  return isNaN(ms) ? null : ms;
+}
+
 /** Map backend error strings to AuthErrorCode */
 function mapErrorCode(
   error: string
@@ -102,8 +113,7 @@ export function createApiAdapter(): AuthAdapter {
         }
 
         const json = await res.json();
-        const expiry = new Date(json.expiresAt).getTime();
-        expiresAt = isNaN(expiry) ? null : expiry;
+        expiresAt = parseExpiresAtUtc(json.expiresAt);
 
         scheduleRefresh();
         return true;
@@ -152,8 +162,7 @@ export function createApiAdapter(): AuthAdapter {
           return { success: false, error: "unknown" };
         }
 
-        const expiry = new Date(json.expiresAt).getTime();
-        expiresAt = isNaN(expiry) ? null : expiry;
+        expiresAt = parseExpiresAtUtc(json.expiresAt);
         currentUser = mapDtoToUser(dto);
 
         scheduleRefresh();

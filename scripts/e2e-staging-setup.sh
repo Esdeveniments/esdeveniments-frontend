@@ -116,7 +116,7 @@ echo ""
 echo "📄 Setting up .env.development..."
 cat > .env.development <<EOF
 HMAC_SECRET=$HMAC_SECRET
-NEXT_PUBLIC_API_URL=$API_URL
+NEXT_PUBLIC_API_URL=${API_URL}/api
 EOF
 echo "   ✅ .env.development created"
 
