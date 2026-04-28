@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
+import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import { fetchWithHmac } from "./fetch-wrapper";
 import {
   getInternalApiUrl,
@@ -251,13 +252,17 @@ export async function updateEventById(
   uuid: string,
   data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
-  // Refuse to mutate against the hardcoded production fallback when the env
-  // is not explicitly configured (e.g., misconfigured preview deployment).
   if (!isApiUrlConfigured()) {
     throw new Error(
       "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
     );
   }
+
+  const authToken = await getAccessTokenFromCookies();
+  if (!authToken) {
+    throw new Error("Authentication required to update events");
+  }
+
   const response = await fetchWithHmac(
     `${getApiUrl()}/events/${uuid}`,
     {
@@ -265,6 +270,7 @@ export async function updateEventById(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify(data),
     },
@@ -293,6 +299,11 @@ export async function createEvent(
     );
   }
 
+  const authToken = await getAccessTokenFromCookies();
+  if (!authToken) {
+    throw new Error("Authentication required to create events");
+  }
+
   const apiUrl = getApiUrl();
 
   const response = await fetchWithHmac(`${apiUrl}/events`, {
@@ -300,6 +311,7 @@ export async function createEvent(
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
     },
     body: JSON.stringify(data),
     skipBodySigning: true, // backend ignores body for signature; align client signing
@@ -339,6 +351,11 @@ export async function uploadEventImage(
 
   const apiUrl = getApiUrl();
 
+  const authToken = await getAccessTokenFromCookies();
+  if (!authToken) {
+    throw new Error("Authentication required to upload images");
+  }
+
   const formData = new FormData();
   formData.append("imageFile", imageFile);
 
@@ -346,6 +363,7 @@ export async function uploadEventImage(
     method: "POST",
     headers: {
       Accept: "application/json",
+      Authorization: `Bearer ${authToken}`,
     },
     body: formData,
   });
