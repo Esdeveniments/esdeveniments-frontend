@@ -285,6 +285,37 @@ export async function updateEventById(
   return response.json();
 }
 
+export async function deleteEventById(uuid: string): Promise<void> {
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
+  }
+
+  const authToken = await getAccessTokenFromCookies();
+  if (!authToken) {
+    throw new Error("Authentication required to delete events");
+  }
+
+  const response = await fetchWithHmac(
+    `${getApiUrl()}/events/${uuid}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("deleteEventById: error response:", errorText);
+    throw new Error(
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
+    );
+  }
+}
+
 export async function createEvent(
   data: EventCreateRequestDTO,
   e2eExtras?: E2EEventExtras,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
+import { deleteEventById } from "@lib/api/events";
 import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
 import type { EventDetailResponseDTO } from "types/api/event";
@@ -20,15 +21,9 @@ export async function GET(
     const data = await eventDetailCache(slug, async (key) => {
       return await fetchExternalEvent(String(key));
     });
-    // Note: Removed per-request revalidateTag call for past events.
-    // The previous logic called revalidateTag on EVERY request for past events,
-    // which caused excessive cache write operations and transient errors.
-    // Event lists already have time-based revalidation (revalidate: 300 seconds)
-    // via the fetch cache in lib/api/events.ts, so this was redundant.
     return NextResponse.json(data ?? null, {
       status: data ? 200 : 404,
       headers: {
-        // Shared cache at the edge; app fetch can also set revalidate tags
         "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=1800",
       },
     });
@@ -36,5 +31,19 @@ export async function GET(
     return handleApiError(e, "/api/events/[slug]", {
       fallbackData: null,
     });
+  }
+}
+
+// DELETE /api/events/[slug] - delete event by UUID (requires auth cookie)
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const { slug: uuid } = await context.params;
+    await deleteEventById(uuid);
+    return new NextResponse(null, { status: 204 });
+  } catch (e) {
+    return handleApiError(e, "/api/events/[slug] DELETE");
   }
 }
