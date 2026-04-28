@@ -99,7 +99,7 @@
     "@typescript-eslint/parser": "^8.48.0",
     "@vitejs/plugin-react": "^4.3.0",
     "@vitest/coverage-v8": "^4.0.18",
-    "babel-plugin-react-compiler": "^19.1.0-rc.1",
+    "babel-plugin-react-compiler": "^19.1.0-rc.3",
     "baseline-browser-mapping": "^2.8.32",
     "cheerio": "^1.1.2",
     "cross-env": "^10.1.0",
