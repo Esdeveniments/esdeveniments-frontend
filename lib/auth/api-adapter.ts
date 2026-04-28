@@ -7,14 +7,19 @@ import type {
   AuthUnsubscribe,
   LoginCredentials,
   RegisterCredentials,
+  PersistedAuthSession,
 } from "types/auth";
 import type { AuthenticatedUserDTO } from "types/api/auth";
-import { parseAuthResponse, parseAuthUser } from "@lib/validation/auth";
+import {
+  parseAuthResponse,
+  parseAuthUser,
+  parseRefreshTokenResponse,
+} from "@lib/validation/auth";
 
 /** Map backend DTO to frontend AuthUser */
 function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
   return {
-    id: String(dto.id),
+    id: dto.id,
     email: dto.email,
     displayName: dto.name,
     role: dto.role,
@@ -41,10 +46,45 @@ function mapErrorCode(
 // Expire tokens 60s early to account for client/server clock skew
 const EXPIRY_BUFFER_MS = 60_000;
 
+// Refresh tokens 5 minutes before expiry
+const REFRESH_BEFORE_EXPIRY_MS = 5 * 60_000;
+
+const STORAGE_KEY = "auth-session";
+
+function persistSession(session: PersistedAuthSession): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // localStorage may be unavailable (SSR, private browsing quota exceeded)
+  }
+}
+
+function loadPersistedSession(): PersistedAuthSession | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedAuthSession;
+    if (!parsed.accessToken || !parsed.expiresAt || !parsed.user) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function clearPersistedSession(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 export function createApiAdapter(): AuthAdapter {
   let accessToken: string | null = null;
+  let refreshToken: string | null = null;
   let expiresAt: number | null = null;
   let currentUser: AuthUser | null = null;
+  let refreshTimer: ReturnType<typeof setTimeout> | null = null;
   const listeners = new Set<(user: AuthUser | null) => void>();
 
   const notify = (user: AuthUser | null) => {
@@ -58,8 +98,79 @@ export function createApiAdapter(): AuthAdapter {
 
   function clearSession() {
     accessToken = null;
+    refreshToken = null;
     expiresAt = null;
     currentUser = null;
+    clearPersistedSession();
+    if (refreshTimer) {
+      clearTimeout(refreshTimer);
+      refreshTimer = null;
+    }
+  }
+
+  function scheduleRefresh() {
+    if (refreshTimer) clearTimeout(refreshTimer);
+    if (!expiresAt || !refreshToken) return;
+
+    const msUntilRefresh = expiresAt - Date.now() - REFRESH_BEFORE_EXPIRY_MS;
+    if (msUntilRefresh <= 0) {
+      // Already past the refresh window, try immediately
+      void attemptRefresh();
+      return;
+    }
+
+    refreshTimer = setTimeout(() => {
+      void attemptRefresh();
+    }, msUntilRefresh);
+  }
+
+  async function attemptRefresh(): Promise<boolean> {
+    if (!refreshToken) return false;
+
+    try {
+      const res = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!res.ok) {
+        clearSession();
+        notify(null);
+        return false;
+      }
+
+      const json = await res.json();
+      const data = parseRefreshTokenResponse(json);
+      if (!data) {
+        clearSession();
+        notify(null);
+        return false;
+      }
+
+      accessToken = data.accessToken;
+      refreshToken = data.refreshToken ?? refreshToken;
+      const expiry = new Date(data.expiresAt).getTime();
+      expiresAt = isNaN(expiry) ? 0 : expiry;
+
+      if (currentUser) {
+        persistSession({
+          accessToken: data.accessToken,
+          refreshToken,
+          expiresAt: expiresAt,
+          user: currentUser,
+        });
+      }
+
+      scheduleRefresh();
+      return true;
+    } catch (error) {
+      console.error("api-adapter refresh failed:", error);
+      clearSession();
+      notify(null);
+      return false;
+    }
   }
 
   async function fetchInternal(
@@ -105,9 +216,19 @@ export function createApiAdapter(): AuthAdapter {
         }
 
         accessToken = data.accessToken;
+        refreshToken = data.refreshToken ?? null;
         const expiry = new Date(data.expiresAt).getTime();
         expiresAt = isNaN(expiry) ? 0 : expiry;
         currentUser = mapDtoToUser(data.user);
+
+        persistSession({
+          accessToken: data.accessToken,
+          refreshToken,
+          expiresAt,
+          user: currentUser,
+        });
+
+        scheduleRefresh();
         notify(currentUser);
 
         return {
@@ -159,16 +280,53 @@ export function createApiAdapter(): AuthAdapter {
     },
 
     async getSession(): Promise<AuthUser | null> {
+      // If we have a valid in-memory token, return the cached user
+      if (accessToken && !isTokenExpired() && currentUser) {
+        return currentUser;
+      }
+
+      // Try to restore from localStorage
+      if (!accessToken) {
+        const persisted = loadPersistedSession();
+        if (persisted) {
+          accessToken = persisted.accessToken;
+          refreshToken = persisted.refreshToken;
+          expiresAt = persisted.expiresAt;
+          currentUser = persisted.user;
+        }
+      }
+
+      // If token is expired, try refresh
+      if (isTokenExpired() && refreshToken) {
+        const refreshed = await attemptRefresh();
+        if (!refreshed) return null;
+      }
+
       if (!accessToken || isTokenExpired()) {
         clearSession();
         return null;
       }
 
-      if (currentUser) return currentUser;
-
+      // Validate token against backend
       try {
         const res = await fetchInternal("/api/auth/me");
         if (!res.ok) {
+          // Token invalid — try refresh before giving up
+          if (refreshToken) {
+            const refreshed = await attemptRefresh();
+            if (refreshed) {
+              const retryRes = await fetchInternal("/api/auth/me");
+              if (retryRes.ok) {
+                const retryJson = await retryRes.json();
+                const retryDto = parseAuthUser(retryJson);
+                if (retryDto) {
+                  currentUser = mapDtoToUser(retryDto);
+                  notify(currentUser);
+                  return currentUser;
+                }
+              }
+            }
+          }
           clearSession();
           return null;
         }
@@ -180,6 +338,7 @@ export function createApiAdapter(): AuthAdapter {
           return null;
         }
         currentUser = mapDtoToUser(dto);
+        scheduleRefresh();
         notify(currentUser);
         return currentUser;
       } catch (error) {

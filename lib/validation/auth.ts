@@ -3,13 +3,14 @@ import type {
   AuthResponseDTO,
   AuthenticatedUserDTO,
   AuthMessageResponseDTO,
+  RefreshTokenResponseDTO,
 } from "types/api/auth";
 
-const AuthRoleSchema = z.enum(["USER", "ADMIN"]);
+const AuthRoleSchema = z.enum(["USER", "ADMIN", "ORGANIZATION"]);
 
 /** Schema for backend AuthenticatedUserDTO */
 export const AuthenticatedUserDTOSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   email: z.string().email(),
   name: z.string(),
   role: AuthRoleSchema,
@@ -29,9 +30,18 @@ export const AuthUserSchema = z.object({
 /** Schema for POST /api/auth/login response */
 export const AuthResponseSchema = z.object({
   accessToken: z.string(),
+  refreshToken: z.string().optional(),
   tokenType: z.string(),
   expiresAt: z.string(),
   user: AuthenticatedUserDTOSchema,
+});
+
+/** Schema for POST /api/auth/refresh response */
+export const RefreshTokenResponseSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string().optional(),
+  tokenType: z.string(),
+  expiresAt: z.string(),
 });
 
 /** Schema for message-only responses (register, forgot, reset, verify) */
@@ -65,4 +75,11 @@ export function parseAuthMessageResponse(
 export function parseAuthError(data: unknown): string | null {
   const result = AuthErrorSchema.safeParse(data);
   return result.success ? result.data.error : null;
+}
+
+export function parseRefreshTokenResponse(
+  data: unknown
+): RefreshTokenResponseDTO | null {
+  const result = RefreshTokenResponseSchema.safeParse(data);
+  return result.success ? result.data : null;
 }

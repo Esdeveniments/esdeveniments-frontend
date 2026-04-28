@@ -5,6 +5,14 @@ const mockFetch = vi.fn();
 
 vi.stubGlobal("fetch", mockFetch);
 
+// Mock localStorage for token persistence
+const store: Record<string, string> = {};
+vi.stubGlobal("localStorage", {
+  getItem: vi.fn((key: string) => store[key] ?? null),
+  setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+  removeItem: vi.fn((key: string) => { delete store[key]; }),
+});
+
 function jsonResponse(data: unknown, status = 200) {
   return {
     ok: status >= 200 && status < 300,
@@ -15,6 +23,7 @@ function jsonResponse(data: unknown, status = 200) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  Object.keys(store).forEach(key => delete store[key]);
 });
 
 describe("createApiAdapter (real API adapter)", () => {
@@ -26,7 +35,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: new Date(Date.now() + 3600000).toISOString(),
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "Alice",
             role: "USER",
@@ -44,7 +53,7 @@ describe("createApiAdapter (real API adapter)", () => {
       expect(result.success).toBe(true);
       expect(result.user?.email).toBe("a@b.com");
       expect(result.user?.displayName).toBe("Alice");
-      expect(result.user?.id).toBe("1"); // number → string mapping
+      expect(result.user?.id).toBe("550e8400-e29b-41d4-a716-446655440001");
     });
 
     it("sends POST with JSON body to /api/auth/login", async () => {
@@ -54,7 +63,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: new Date(Date.now() + 3600000).toISOString(),
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
             role: "USER",
@@ -111,7 +120,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: new Date(Date.now() + 3600000).toISOString(),
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
             role: "USER",
@@ -200,7 +209,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: new Date(Date.now() + 3600000).toISOString(),
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
             role: "USER",
@@ -227,7 +236,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: new Date(Date.now() + 3600000).toISOString(),
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
             role: "USER",
@@ -258,7 +267,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: new Date(Date.now() + 3600000).toISOString(),
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
             role: "USER",
@@ -287,7 +296,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: new Date(Date.now() + 3600000).toISOString(),
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
             role: "USER",
@@ -338,7 +347,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: "not-a-date",
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
             role: "USER",
@@ -366,7 +375,7 @@ describe("createApiAdapter (real API adapter)", () => {
           tokenType: "Bearer",
           expiresAt: soonExpiry,
           user: {
-            id: 1,
+            id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
             role: "USER",
@@ -391,7 +400,7 @@ describe("createApiAdapter (real API adapter)", () => {
             tokenType: "Bearer",
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             user: {
-              id: 1,
+              id: "550e8400-e29b-41d4-a716-446655440001",
               email: "a@b.com",
               name: "A",
               role: "USER",
@@ -414,7 +423,7 @@ describe("createApiAdapter (real API adapter)", () => {
             tokenType: "Bearer",
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             user: {
-              id: 2,
+              id: "550e8400-e29b-41d4-a716-446655440002",
               email: "b@b.com",
               name: "B",
               role: "USER",
