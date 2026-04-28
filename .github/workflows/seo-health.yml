@@ -273,13 +273,13 @@ jobs:
 
           client = BetaAnalyticsDataClient()
 
-          # Sessions with referrer_category=ai (user property set by userProperties.ts).
+          # Sessions with referrer_category=ai (event-scoped custom dimension in GA4).
           ai_sessions = client.run_report(RunReportRequest(
               property=f"properties/{PROPERTY_ID}",
               date_ranges=[DateRange(start_date="2daysAgo", end_date="today")],
               metrics=[Metric(name="sessions")],
               dimension_filter=FilterExpression(filter=Filter(
-                  field_name="customUser:referrer_category",
+                  field_name="customEvent:referrer_category",
                   string_filter=Filter.StringFilter(value="ai"),
               )),
           ))
