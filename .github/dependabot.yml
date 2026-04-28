@@ -1,24 +1,44 @@
-# Low-noise config: security alerts always come through, only major version updates monthly
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Low-noise config aligned with 2026 GitHub guidance:
+# - groups bundle related updates into single PRs (less review noise)
+# - cooldown delays new releases so flaky .0 bumps settle before being proposed
+# - NO blanket `ignore` of patch/minor: that ALSO suppresses security PRs
+#   (see "Security updates" icon on the `ignore` option in the docs)
+# - majors land as individual PRs so they get human review
+# https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference
 
 version: 2
 
 updates:
-  # npm: Only major updates, monthly, individual PRs
+  # npm / yarn
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 5
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-patch"
-          - "version-update:semver-minor"
+      interval: "weekly"
+    # Limit applies to version updates only; security has its own internal limit (10).
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+    groups:
+      production-minor-patch:
+        applies-to: version-updates
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      development-minor-patch:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+      # Bundle simultaneous security alerts into a single PR
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
 
-  # GitHub Actions: Keep workflows secure
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 3
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions-all:
+        patterns: ["*"]
