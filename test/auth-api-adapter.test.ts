@@ -5,13 +5,21 @@ const mockFetch = vi.fn();
 
 vi.stubGlobal("fetch", mockFetch);
 
-// Mock localStorage for token persistence
-const store: Record<string, string> = {};
-vi.stubGlobal("localStorage", {
-  getItem: vi.fn((key: string) => store[key] ?? null),
-  setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
-  removeItem: vi.fn((key: string) => { delete store[key]; }),
-});
+const UUID = "550e8400-e29b-41d4-a716-446655440001";
+
+function loginResponse(overrides?: Record<string, unknown>) {
+  return jsonResponse({
+    expiresAt: new Date(Date.now() + 3600000).toISOString(),
+    user: {
+      id: UUID,
+      email: "a@b.com",
+      name: "Alice",
+      role: "USER",
+      emailVerified: true,
+    },
+    ...overrides,
+  });
+}
 
 function jsonResponse(data: unknown, status = 200) {
   return {
@@ -23,54 +31,24 @@ function jsonResponse(data: unknown, status = 200) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  Object.keys(store).forEach(key => delete store[key]);
 });
 
-describe("createApiAdapter (real API adapter)", () => {
+describe("createApiAdapter (cookie-based auth)", () => {
   describe("login", () => {
-    it("calls /api/auth/login and stores token on success", async () => {
-      mockFetch.mockResolvedValue(
-        jsonResponse({
-          accessToken: "jwt-123",
-          tokenType: "Bearer",
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "Alice",
-            role: "USER",
-            emailVerified: true,
-          },
-        })
-      );
+    it("calls /api/auth/login and returns user (no tokens in response)", async () => {
+      mockFetch.mockResolvedValue(loginResponse());
 
       const adapter = createApiAdapter();
-      const result = await adapter.login({
-        email: "a@b.com",
-        password: "pass",
-      });
+      const result = await adapter.login({ email: "a@b.com", password: "pass" });
 
       expect(result.success).toBe(true);
       expect(result.user?.email).toBe("a@b.com");
       expect(result.user?.displayName).toBe("Alice");
-      expect(result.user?.id).toBe("550e8400-e29b-41d4-a716-446655440001");
+      expect(result.user?.id).toBe(UUID);
     });
 
     it("sends POST with JSON body to /api/auth/login", async () => {
-      mockFetch.mockResolvedValue(
-        jsonResponse({
-          accessToken: "t",
-          tokenType: "Bearer",
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "A",
-            role: "USER",
-            emailVerified: true,
-          },
-        })
-      );
+      mockFetch.mockResolvedValue(loginResponse());
 
       const adapter = createApiAdapter();
       await adapter.login({ email: "a@b.com", password: "pass" });
@@ -85,16 +63,23 @@ describe("createApiAdapter (real API adapter)", () => {
       });
     });
 
+    it("does not send Authorization header (cookies are automatic)", async () => {
+      mockFetch.mockResolvedValue(loginResponse());
+
+      const adapter = createApiAdapter();
+      await adapter.login({ email: "a@b.com", password: "pass" });
+
+      const [, opts] = mockFetch.mock.calls[0];
+      expect(opts.headers?.Authorization).toBeUndefined();
+    });
+
     it("returns error on non-ok response", async () => {
       mockFetch.mockResolvedValue(
         jsonResponse({ error: "invalid-credentials" }, 401)
       );
 
       const adapter = createApiAdapter();
-      const result = await adapter.login({
-        email: "a@b.com",
-        password: "wrong",
-      });
+      const result = await adapter.login({ email: "a@b.com", password: "wrong" });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("invalid-credentials");
@@ -104,30 +89,14 @@ describe("createApiAdapter (real API adapter)", () => {
       mockFetch.mockRejectedValue(new Error("fetch failed"));
 
       const adapter = createApiAdapter();
-      const result = await adapter.login({
-        email: "a@b.com",
-        password: "pass",
-      });
+      const result = await adapter.login({ email: "a@b.com", password: "pass" });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("network-error");
     });
 
     it("notifies listeners on successful login", async () => {
-      mockFetch.mockResolvedValue(
-        jsonResponse({
-          accessToken: "t",
-          tokenType: "Bearer",
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "A",
-            role: "USER",
-            emailVerified: true,
-          },
-        })
-      );
+      mockFetch.mockResolvedValue(loginResponse());
 
       const adapter = createApiAdapter();
       const events: (string | null)[] = [];
@@ -160,11 +129,7 @@ describe("createApiAdapter (real API adapter)", () => {
       mockFetch.mockResolvedValue(jsonResponse({ message: "ok" }));
 
       const adapter = createApiAdapter();
-      await adapter.register({
-        email: "x@y.com",
-        password: "p",
-        displayName: "Xavi",
-      });
+      await adapter.register({ email: "x@y.com", password: "p", displayName: "Xavi" });
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(body.name).toBe("Xavi");
@@ -181,15 +146,10 @@ describe("createApiAdapter (real API adapter)", () => {
     });
 
     it("returns error on duplicate email", async () => {
-      mockFetch.mockResolvedValue(
-        jsonResponse({ error: "email-taken" }, 409)
-      );
+      mockFetch.mockResolvedValue(jsonResponse({ error: "email-taken" }, 409));
 
       const adapter = createApiAdapter();
-      const result = await adapter.register({
-        email: "dup@b.com",
-        password: "p",
-      });
+      const result = await adapter.register({ email: "dup@b.com", password: "p" });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("email-taken");
@@ -197,113 +157,120 @@ describe("createApiAdapter (real API adapter)", () => {
   });
 
   describe("getSession", () => {
-    it("returns null when no token stored", async () => {
-      const adapter = createApiAdapter();
-      expect(await adapter.getSession()).toBeNull();
-    });
-
-    it("returns cached user after login", async () => {
+    it("fetches /api/auth/me on fresh adapter (no cached user)", async () => {
       mockFetch.mockResolvedValue(
         jsonResponse({
-          accessToken: "t",
-          tokenType: "Bearer",
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "A",
-            role: "USER",
-            emailVerified: true,
-          },
+          id: UUID,
+          email: "a@b.com",
+          name: "A",
+          role: "USER",
+          emailVerified: true,
         })
       );
 
       const adapter = createApiAdapter();
+      const user = await adapter.getSession();
+
+      expect(user?.email).toBe("a@b.com");
+      expect(mockFetch).toHaveBeenCalledWith("/api/auth/me", expect.any(Object));
+    });
+
+    it("returns cached user after login without extra fetch", async () => {
+      mockFetch.mockResolvedValue(loginResponse());
+
+      const adapter = createApiAdapter();
       await adapter.login({ email: "a@b.com", password: "p" });
 
-      // Second call uses cached user, no extra fetch
       mockFetch.mockClear();
       const session = await adapter.getSession();
       expect(session?.email).toBe("a@b.com");
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it("sends Authorization header when fetching /api/auth/me", async () => {
-      // Login first to store token
+    it("returns null when /api/auth/me returns 401 and refresh fails", async () => {
+      // /me returns 401
+      mockFetch.mockResolvedValueOnce(jsonResponse({ error: "expired" }, 401));
+      // /refresh also fails
+      mockFetch.mockResolvedValueOnce(jsonResponse({ error: "invalid" }, 401));
+
+      const adapter = createApiAdapter();
+      const user = await adapter.getSession();
+
+      expect(user).toBeNull();
+    });
+
+    it("retries /me after successful refresh on 401", async () => {
+      // First /me returns 401
+      mockFetch.mockResolvedValueOnce(jsonResponse({ error: "expired" }, 401));
+      // /refresh succeeds
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ expiresAt: new Date(Date.now() + 3600000).toISOString() })
+      );
+      // Retry /me succeeds
       mockFetch.mockResolvedValueOnce(
         jsonResponse({
-          accessToken: "jwt-secret",
-          tokenType: "Bearer",
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "A",
-            role: "USER",
-            emailVerified: true,
-          },
+          id: UUID,
+          email: "a@b.com",
+          name: "A",
+          role: "USER",
+          emailVerified: true,
         })
       );
 
       const adapter = createApiAdapter();
-      await adapter.login({ email: "a@b.com", password: "p" });
+      const user = await adapter.getSession();
 
-      // Clear cached user by logging out and logging in again without caching
-      // Instead, let's just verify the fetchInternal adds auth header
-      // We can check by calling getSession on a fresh adapter with a token
-      // But the token is internal... Let's verify the login call itself includes headers
+      expect(user?.email).toBe("a@b.com");
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
 
-      const [, loginOpts] = mockFetch.mock.calls[0];
-      // Login shouldn't have Authorization (no token yet)
-      expect(loginOpts.headers.Authorization).toBeUndefined();
+    it("returns null when /me returns invalid shape", async () => {
+      mockFetch.mockResolvedValue(jsonResponse({ unexpected: "shape" }));
+
+      const adapter = createApiAdapter();
+      const user = await adapter.getSession();
+
+      expect(user).toBeNull();
     });
   });
 
   describe("logout", () => {
-    it("clears session and notifies listeners", async () => {
-      mockFetch.mockResolvedValue(
-        jsonResponse({
-          accessToken: "t",
-          tokenType: "Bearer",
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "A",
-            role: "USER",
-            emailVerified: true,
-          },
-        })
+    it("calls /api/auth/logout and clears session", async () => {
+      mockFetch.mockResolvedValue(loginResponse());
+
+      const adapter = createApiAdapter();
+      await adapter.login({ email: "a@b.com", password: "p" });
+
+      mockFetch.mockClear();
+      mockFetch.mockResolvedValue(jsonResponse({ message: "Logged out" }));
+
+      await adapter.logout();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/auth/logout",
+        expect.objectContaining({ method: "POST" })
       );
+    });
+
+    it("notifies listeners on logout", async () => {
+      mockFetch.mockResolvedValue(loginResponse());
 
       const adapter = createApiAdapter();
       const events: (string | null)[] = [];
       adapter.onAuthStateChange((user) => events.push(user?.email ?? null));
 
       await adapter.login({ email: "a@b.com", password: "p" });
+
+      mockFetch.mockResolvedValue(jsonResponse({ message: "Logged out" }));
       await adapter.logout();
 
       expect(events).toEqual(["a@b.com", null]);
-      expect(await adapter.getSession()).toBeNull();
     });
   });
 
   describe("onAuthStateChange", () => {
     it("unsubscribe stops notifications", async () => {
-      mockFetch.mockResolvedValue(
-        jsonResponse({
-          accessToken: "t",
-          tokenType: "Bearer",
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "A",
-            role: "USER",
-            emailVerified: true,
-          },
-        })
-      );
+      mockFetch.mockResolvedValue(loginResponse());
 
       const adapter = createApiAdapter();
       const events: (string | null)[] = [];
@@ -313,9 +280,10 @@ describe("createApiAdapter (real API adapter)", () => {
 
       await adapter.login({ email: "a@b.com", password: "p" });
       unsub();
+
+      mockFetch.mockResolvedValue(jsonResponse({ message: "Logged out" }));
       await adapter.logout();
 
-      // Only login event, logout was after unsubscribe
       expect(events).toEqual(["a@b.com"]);
     });
   });
@@ -327,11 +295,9 @@ describe("createApiAdapter (real API adapter)", () => {
     });
   });
 
-  describe("Zod validation + edge cases", () => {
+  describe("edge cases", () => {
     it("returns unknown error when login response fails Zod parsing", async () => {
-      mockFetch.mockResolvedValue(
-        jsonResponse({ unexpected: "shape" })
-      );
+      mockFetch.mockResolvedValue(jsonResponse({ unexpected: "shape" }));
 
       const adapter = createApiAdapter();
       const result = await adapter.login({ email: "a@b.com", password: "p" });
@@ -340,109 +306,37 @@ describe("createApiAdapter (real API adapter)", () => {
       expect(result.error).toBe("unknown");
     });
 
-    it("handles NaN expiresAt by treating as immediately expired", async () => {
-      mockFetch.mockResolvedValue(
-        jsonResponse({
-          accessToken: "t",
-          tokenType: "Bearer",
-          expiresAt: "not-a-date",
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "A",
-            role: "USER",
-            emailVerified: true,
-          },
-        })
-      );
+    it("handles NaN expiresAt by falling through to /me on getSession", async () => {
+      mockFetch.mockResolvedValueOnce(loginResponse({ expiresAt: "not-a-date" }));
 
       const adapter = createApiAdapter();
       const result = await adapter.login({ email: "a@b.com", password: "p" });
-      // Login still succeeds (it stores the token)
       expect(result.success).toBe(true);
 
-      // But getSession returns null because expiresAt=0 is expired
-      const session = await adapter.getSession();
-      expect(session).toBeNull();
-    });
-
-    it("expires token 60s early (clock skew buffer)", async () => {
-      // Set expiresAt to 30 seconds from now — within the 60s buffer
-      const soonExpiry = new Date(Date.now() + 30_000).toISOString();
-      mockFetch.mockResolvedValue(
+      // expiresAt is null, so getSession skips cache and calls /me
+      mockFetch.mockResolvedValueOnce(
         jsonResponse({
-          accessToken: "t",
-          tokenType: "Bearer",
-          expiresAt: soonExpiry,
-          user: {
-            id: "550e8400-e29b-41d4-a716-446655440001",
-            email: "a@b.com",
-            name: "A",
-            role: "USER",
-            emailVerified: true,
-          },
+          id: UUID,
+          email: "a@b.com",
+          name: "Alice",
+          role: "USER",
+          emailVerified: true,
         })
       );
 
-      const adapter = createApiAdapter();
-      await adapter.login({ email: "a@b.com", password: "p" });
-
-      // Token expires in 30s but buffer is 60s, so session should be null
       const session = await adapter.getSession();
-      expect(session).toBeNull();
+      expect(session?.email).toBe("a@b.com");
     });
 
-    it("returns null from getSession when /api/auth/me returns invalid shape", async () => {
-      mockFetch
-        .mockResolvedValueOnce(
-          jsonResponse({
-            accessToken: "t",
-            tokenType: "Bearer",
-            expiresAt: new Date(Date.now() + 3600000).toISOString(),
-            user: {
-              id: "550e8400-e29b-41d4-a716-446655440001",
-              email: "a@b.com",
-              name: "A",
-              role: "USER",
-              emailVerified: true,
-            },
-          })
-        );
+    it("handles network error in logout gracefully", async () => {
+      mockFetch.mockResolvedValue(loginResponse());
 
       const adapter = createApiAdapter();
       await adapter.login({ email: "a@b.com", password: "p" });
 
-      // Clear cached user to force /me fetch
+      mockFetch.mockRejectedValue(new Error("network down"));
+      // Should not throw
       await adapter.logout();
-
-      // Login again, then clear cache by logging out and calling getSession
-      mockFetch
-        .mockResolvedValueOnce(
-          jsonResponse({
-            accessToken: "t2",
-            tokenType: "Bearer",
-            expiresAt: new Date(Date.now() + 3600000).toISOString(),
-            user: {
-              id: "550e8400-e29b-41d4-a716-446655440002",
-              email: "b@b.com",
-              name: "B",
-              role: "USER",
-              emailVerified: true,
-            },
-          })
-        );
-
-      const adapter2 = createApiAdapter();
-      await adapter2.login({ email: "b@b.com", password: "p" });
-
-      // Simulate /me returning invalid shape (clear currentUser is internal,
-      // so we test via a fresh adapter that has a stored token but no user)
-      // This is tricky since currentUser is cached after login...
-      // The Zod guard in getSession only runs when currentUser is null and
-      // we fetch /me. Since login always caches the user, the /me path
-      // only triggers after page refresh (which clears memory).
-      // We can't easily test this without exposing internals.
-      expect(await adapter2.getSession()).not.toBeNull();
     });
   });
 });

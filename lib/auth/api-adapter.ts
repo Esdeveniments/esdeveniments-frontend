@@ -7,14 +7,9 @@ import type {
   AuthUnsubscribe,
   LoginCredentials,
   RegisterCredentials,
-  PersistedAuthSession,
 } from "types/auth";
 import type { AuthenticatedUserDTO } from "types/api/auth";
-import {
-  parseAuthResponse,
-  parseAuthUser,
-  parseRefreshTokenResponse,
-} from "@lib/validation/auth";
+import { parseAuthUser } from "@lib/validation/auth";
 
 /** Map backend DTO to frontend AuthUser */
 function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
@@ -43,47 +38,19 @@ function mapErrorCode(
   return errorMap[error] ?? "unknown";
 }
 
-// Expire tokens 60s early to account for client/server clock skew
-const EXPIRY_BUFFER_MS = 60_000;
-
 // Refresh tokens 5 minutes before expiry
 const REFRESH_BEFORE_EXPIRY_MS = 5 * 60_000;
 
-const STORAGE_KEY = "auth-session";
-
-function persistSession(session: PersistedAuthSession): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  } catch {
-    // localStorage may be unavailable (SSR, private browsing quota exceeded)
-  }
-}
-
-function loadPersistedSession(): PersistedAuthSession | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as PersistedAuthSession;
-    if (!parsed.accessToken || !parsed.expiresAt || !parsed.user) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function clearPersistedSession(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // ignore
-  }
-}
-
+/**
+ * Cookie-based auth adapter.
+ *
+ * Tokens are stored in HttpOnly cookies (set by server API routes).
+ * The client never sees or handles raw tokens — it only receives user data.
+ * Browser sends cookies automatically with same-origin requests.
+ */
 export function createApiAdapter(): AuthAdapter {
-  let accessToken: string | null = null;
-  let refreshToken: string | null = null;
-  let expiresAt: number | null = null;
   let currentUser: AuthUser | null = null;
+  let expiresAt: number | null = null;
   let refreshTimer: ReturnType<typeof setTimeout> | null = null;
   const listeners = new Set<(user: AuthUser | null) => void>();
 
@@ -91,17 +58,9 @@ export function createApiAdapter(): AuthAdapter {
     for (const cb of listeners) cb(user);
   };
 
-  function isTokenExpired(): boolean {
-    if (!expiresAt) return true;
-    return Date.now() >= (expiresAt - EXPIRY_BUFFER_MS);
-  }
-
   function clearSession() {
-    accessToken = null;
-    refreshToken = null;
-    expiresAt = null;
     currentUser = null;
-    clearPersistedSession();
+    expiresAt = null;
     if (refreshTimer) {
       clearTimeout(refreshTimer);
       refreshTimer = null;
@@ -110,11 +69,10 @@ export function createApiAdapter(): AuthAdapter {
 
   function scheduleRefresh() {
     if (refreshTimer) clearTimeout(refreshTimer);
-    if (!expiresAt || !refreshToken) return;
+    if (!expiresAt) return;
 
     const msUntilRefresh = expiresAt - Date.now() - REFRESH_BEFORE_EXPIRY_MS;
     if (msUntilRefresh <= 0) {
-      // Already past the refresh window, try immediately
       void attemptRefresh();
       return;
     }
@@ -125,13 +83,10 @@ export function createApiAdapter(): AuthAdapter {
   }
 
   async function attemptRefresh(): Promise<boolean> {
-    if (!refreshToken) return false;
-
     try {
+      // Cookies are sent automatically — no body needed
       const res = await fetch("/api/auth/refresh", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
         signal: AbortSignal.timeout(10_000),
       });
 
@@ -142,26 +97,8 @@ export function createApiAdapter(): AuthAdapter {
       }
 
       const json = await res.json();
-      const data = parseRefreshTokenResponse(json);
-      if (!data) {
-        clearSession();
-        notify(null);
-        return false;
-      }
-
-      accessToken = data.accessToken;
-      refreshToken = data.refreshToken ?? refreshToken;
-      const expiry = new Date(data.expiresAt).getTime();
-      expiresAt = isNaN(expiry) ? 0 : expiry;
-
-      if (currentUser) {
-        persistSession({
-          accessToken: data.accessToken,
-          refreshToken,
-          expiresAt: expiresAt,
-          user: currentUser,
-        });
-      }
+      const expiry = new Date(json.expiresAt).getTime();
+      expiresAt = isNaN(expiry) ? null : expiry;
 
       scheduleRefresh();
       return true;
@@ -173,32 +110,19 @@ export function createApiAdapter(): AuthAdapter {
     }
   }
 
-  async function fetchInternal(
-    path: string,
-    options?: RequestInit
-  ): Promise<Response> {
-    return fetch(path, {
-      ...options,
-      signal: options?.signal ?? AbortSignal.timeout(10_000),
-      headers: {
-        ...options?.headers,
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      },
-    });
-  }
-
   return {
     supportedMethods: ["credentials"],
 
     async login(credentials: LoginCredentials): Promise<AuthResult> {
       try {
-        const res = await fetchInternal("/api/auth/login", {
+        const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: credentials.email,
             password: credentials.password,
           }),
+          signal: AbortSignal.timeout(10_000),
         });
 
         const json = await res.json();
@@ -210,23 +134,15 @@ export function createApiAdapter(): AuthAdapter {
           };
         }
 
-        const data = parseAuthResponse(json);
-        if (!data) {
+        // Server sets HttpOnly cookies — we only get user data + expiresAt
+        const dto = parseAuthUser(json.user);
+        if (!dto) {
           return { success: false, error: "unknown" };
         }
 
-        accessToken = data.accessToken;
-        refreshToken = data.refreshToken ?? null;
-        const expiry = new Date(data.expiresAt).getTime();
-        expiresAt = isNaN(expiry) ? 0 : expiry;
-        currentUser = mapDtoToUser(data.user);
-
-        persistSession({
-          accessToken: data.accessToken,
-          refreshToken,
-          expiresAt,
-          user: currentUser,
-        });
+        const expiry = new Date(json.expiresAt).getTime();
+        expiresAt = isNaN(expiry) ? null : expiry;
+        currentUser = mapDtoToUser(dto);
 
         scheduleRefresh();
         notify(currentUser);
@@ -234,7 +150,7 @@ export function createApiAdapter(): AuthAdapter {
         return {
           success: true,
           user: currentUser,
-          requiresVerification: !data.user.emailVerified,
+          requiresVerification: !dto.emailVerified,
         };
       } catch (error) {
         console.error("api-adapter login failed:", error);
@@ -244,7 +160,7 @@ export function createApiAdapter(): AuthAdapter {
 
     async register(credentials: RegisterCredentials): Promise<AuthResult> {
       try {
-        const res = await fetchInternal("/api/auth/register", {
+        const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -252,6 +168,7 @@ export function createApiAdapter(): AuthAdapter {
             password: credentials.password,
             name: credentials.displayName ?? credentials.email.split("@")[0],
           }),
+          signal: AbortSignal.timeout(10_000),
         });
 
         const json = await res.json();
@@ -275,47 +192,39 @@ export function createApiAdapter(): AuthAdapter {
     },
 
     async logout(): Promise<void> {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          signal: AbortSignal.timeout(10_000),
+        });
+      } catch (error) {
+        console.error("api-adapter logout failed:", error);
+      }
       clearSession();
       notify(null);
     },
 
     async getSession(): Promise<AuthUser | null> {
-      // If we have a valid in-memory token, return the cached user
-      if (accessToken && !isTokenExpired() && currentUser) {
+      // Return cached user if we have one and haven't expired
+      if (currentUser && expiresAt && Date.now() < expiresAt) {
         return currentUser;
       }
 
-      // Try to restore from localStorage
-      if (!accessToken) {
-        const persisted = loadPersistedSession();
-        if (persisted) {
-          accessToken = persisted.accessToken;
-          refreshToken = persisted.refreshToken;
-          expiresAt = persisted.expiresAt;
-          currentUser = persisted.user;
-        }
-      }
-
-      // If token is expired, try refresh
-      if (isTokenExpired() && refreshToken) {
-        const refreshed = await attemptRefresh();
-        if (!refreshed) return null;
-      }
-
-      if (!accessToken || isTokenExpired()) {
-        clearSession();
-        return null;
-      }
-
-      // Validate token against backend
+      // Ask server — cookies are sent automatically
       try {
-        const res = await fetchInternal("/api/auth/me");
+        const res = await fetch("/api/auth/me", {
+          signal: AbortSignal.timeout(10_000),
+        });
+
         if (!res.ok) {
-          // Token invalid — try refresh before giving up
-          if (refreshToken) {
+          // Token expired — try refresh (cookie-based)
+          if (res.status === 401) {
             const refreshed = await attemptRefresh();
             if (refreshed) {
-              const retryRes = await fetchInternal("/api/auth/me");
+              // Retry with new cookies
+              const retryRes = await fetch("/api/auth/me", {
+                signal: AbortSignal.timeout(10_000),
+              });
               if (retryRes.ok) {
                 const retryJson = await retryRes.json();
                 const retryDto = parseAuthUser(retryJson);

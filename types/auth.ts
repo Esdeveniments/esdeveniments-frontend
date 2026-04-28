@@ -17,13 +17,6 @@ export interface AuthUser {
   emailVerified?: boolean;
 }
 
-export interface PersistedAuthSession {
-  accessToken: string;
-  refreshToken: string | null;
-  expiresAt: number;
-  user: AuthUser;
-}
-
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 export interface AuthState {

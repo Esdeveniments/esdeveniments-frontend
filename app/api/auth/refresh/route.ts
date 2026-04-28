@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { refreshTokenExternal } from "@lib/api/auth-external";
 import { handleApiError } from "@utils/api-error-handler";
 import { createRateLimiter } from "@utils/rate-limit";
+import {
+  getRefreshTokenFromCookies,
+  setAuthCookies,
+  clearAuthCookies,
+} from "@utils/auth-cookies";
 
 const limiter = createRateLimiter({ maxRequests: 10, windowMs: 15 * 60 * 1000 });
 
@@ -10,38 +15,40 @@ export async function POST(request: Request): Promise<Response> {
   if (blocked) return blocked;
 
   try {
-    let body: { refreshToken?: string };
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON body" },
-        { status: 400 }
-      );
-    }
-
-    const { refreshToken } = body;
+    const refreshToken = await getRefreshTokenFromCookies();
 
     if (!refreshToken) {
       return NextResponse.json(
         { error: "Refresh token is required" },
-        { status: 400 }
+        { status: 401 }
       );
     }
 
     const { data, error, status } = await refreshTokenExternal(refreshToken);
 
     if (error || !data) {
-      return NextResponse.json(
+      // Clear stale cookies on refresh failure
+      const errorResponse = NextResponse.json(
         { error: error ?? "unknown" },
         { status: status === 200 ? 500 : status }
       );
+      clearAuthCookies(errorResponse);
+      return errorResponse;
     }
 
-    return NextResponse.json(data, {
-      status: 200,
-      headers: { "Cache-Control": "no-store" },
-    });
+    const response = NextResponse.json(
+      { expiresAt: data.expiresAt },
+      { status: 200, headers: { "Cache-Control": "no-store" } }
+    );
+
+    setAuthCookies(
+      response,
+      data.accessToken,
+      data.expiresAt,
+      data.refreshToken
+    );
+
+    return response;
   } catch (e) {
     return handleApiError(e, "/api/auth/refresh");
   }
