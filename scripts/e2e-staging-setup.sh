@@ -50,11 +50,13 @@ hmac_sign() {
 # ── Step 1: Register ──
 echo "📝 Registering test user: $TEST_EMAIL"
 read -r ts hmac <<< "$(hmac_sign /api/auth/register)"
+REGISTER_PAYLOAD=$(jq -n --arg email "$TEST_EMAIL" --arg pass "$TEST_PASSWORD" --arg name "$TEST_NAME" \
+  '{email: $email, password: $pass, name: $name}')
 REGISTER_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/auth/register" \
   -H "Content-Type: application/json" \
   -H "x-timestamp: $ts" \
   -H "x-hmac: $hmac" \
-  -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\",\"name\":\"$TEST_NAME\"}")
+  -d "$REGISTER_PAYLOAD")
 
 HTTP_CODE=$(echo "$REGISTER_RESPONSE" | tail -1)
 BODY=$(echo "$REGISTER_RESPONSE" | sed '$d')

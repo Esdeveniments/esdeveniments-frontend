@@ -1,10 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from "vitest";
 import { createApiAdapter } from "../lib/auth/api-adapter";
 
 const mockFetch = vi.fn();
 
 vi.stubGlobal("fetch", mockFetch);
-vi.useFakeTimers();
+vi.useFakeTimers({ shouldAdvanceTime: false });
+
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 const UUID = "550e8400-e29b-41d4-a716-446655440001";
 

@@ -27,8 +27,10 @@ function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
  * Backend returns ISO-like strings without timezone suffix (e.g. "2026-04-28T18:00:00").
  * Without "Z", JS Date() interprets as local time → wrong maxAge in non-UTC zones.
  */
-function parseExpiresAtUtc(expiresAt: string): number | null {
-  const utcString = expiresAt.endsWith("Z") ? expiresAt : `${expiresAt}Z`;
+function parseExpiresAtUtc(expiresAt: string | undefined | null): number | null {
+  if (!expiresAt) return null;
+  const hasTimezone = /Z|[+-]\d{2}:\d{2}$/.test(expiresAt);
+  const utcString = hasTimezone ? expiresAt : `${expiresAt}Z`;
   const ms = new Date(utcString).getTime();
   return isNaN(ms) ? null : ms;
 }
@@ -260,6 +262,7 @@ export function createApiAdapter(): AuthAdapter {
             }
           }
           clearSession();
+          notify(null);
           return null;
         }
 
@@ -267,6 +270,7 @@ export function createApiAdapter(): AuthAdapter {
         const dto = parseAuthUser(json);
         if (!dto) {
           clearSession();
+          notify(null);
           return null;
         }
         currentUser = mapDtoToUser(dto);
@@ -277,6 +281,7 @@ export function createApiAdapter(): AuthAdapter {
       } catch (error) {
         console.error("api-adapter getSession failed:", error);
         clearSession();
+        notify(null);
         return null;
       }
     },

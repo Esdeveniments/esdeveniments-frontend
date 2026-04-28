@@ -23,8 +23,9 @@ export function setAuthCookies(
   refreshToken?: string
 ): void {
   // Backend returns expiresAt without timezone suffix (e.g. "2026-04-28T18:17:23").
-  // Treat it as UTC by appending "Z" to avoid local-time misinterpretation.
-  const utcString = expiresAt.endsWith("Z") ? expiresAt : `${expiresAt}Z`;
+  // Treat it as UTC by appending "Z" — but only if it lacks any timezone indicator.
+  const hasTimezone = /Z|[+-]\d{2}:\d{2}$/.test(expiresAt);
+  const utcString = hasTimezone ? expiresAt : `${expiresAt}Z`;
   const expiry = new Date(utcString).getTime();
   const maxAge = isNaN(expiry)
     ? ACCESS_TOKEN_MAX_AGE

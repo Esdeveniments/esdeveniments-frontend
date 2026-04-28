@@ -361,17 +361,26 @@ export async function uploadEventImage(
     };
   }
 
-  const { apiUrl, authToken } = await requireMutationAuth();
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
+  }
+
+  const apiUrl = getApiUrl();
+  // Auth is optional — sponsor image uploads use Stripe session, not user login
+  const authToken = await getAccessTokenFromCookies();
+  const headers: HeadersInit = { Accept: "application/json" };
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
 
   const formData = new FormData();
   formData.append("imageFile", imageFile);
 
   const response = await fetchWithHmac(`${apiUrl}/events/images`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
+    headers,
     body: formData,
   });
 
