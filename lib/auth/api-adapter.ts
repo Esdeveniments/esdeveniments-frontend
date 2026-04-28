@@ -8,8 +8,34 @@ import type {
   LoginCredentials,
   RegisterCredentials,
 } from "types/auth";
-import type { AuthenticatedUserDTO } from "types/api/auth";
-import { parseAuthResponse, parseAuthUser } from "@lib/validation/auth";
+import type {
+  AuthenticatedUserDTO,
+  AuthResponseDTO,
+} from "types/api/auth";
+
+// Lightweight runtime guards — Zod validation happens server-side in API routes.
+// Keeping Zod out of the client bundle saves ~60KB.
+
+function isAuthResponseDTO(v: unknown): v is AuthResponseDTO {
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  return (
+    typeof o.accessToken === "string" &&
+    typeof o.expiresAt === "string" &&
+    isAuthenticatedUserDTO(o.user)
+  );
+}
+
+function isAuthenticatedUserDTO(v: unknown): v is AuthenticatedUserDTO {
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  return (
+    typeof o.id === "number" &&
+    typeof o.email === "string" &&
+    typeof o.name === "string" &&
+    typeof o.emailVerified === "boolean"
+  );
+}
 
 /** Map backend DTO to frontend AuthUser */
 function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
@@ -99,10 +125,10 @@ export function createApiAdapter(): AuthAdapter {
           };
         }
 
-        const data = parseAuthResponse(json);
-        if (!data) {
+        if (!isAuthResponseDTO(json)) {
           return { success: false, error: "unknown" };
         }
+        const data = json;
 
         accessToken = data.accessToken;
         const expiry = new Date(data.expiresAt).getTime();
@@ -174,12 +200,11 @@ export function createApiAdapter(): AuthAdapter {
         }
 
         const json = await res.json();
-        const dto = parseAuthUser(json);
-        if (!dto) {
+        if (!isAuthenticatedUserDTO(json)) {
           clearSession();
           return null;
         }
-        currentUser = mapDtoToUser(dto);
+        currentUser = mapDtoToUser(json);
         notify(currentUser);
         return currentUser;
       } catch (error) {
