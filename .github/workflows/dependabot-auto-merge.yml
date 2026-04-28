@@ -13,7 +13,7 @@ jobs:
   dependabot:
     runs-on: ubuntu-latest
     # Security: verify both actor AND repository to prevent forks from triggering
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'albertolive/que-fer'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'Esdeveniments/esdeveniments-frontend'
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
