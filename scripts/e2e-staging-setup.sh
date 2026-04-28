@@ -31,10 +31,12 @@ fi
 
 # ── HMAC helper ──
 hmac_sign() {
-  local method="$1" path="$2" body="${3:-}" 
+  local path="$1"
   local timestamp
   timestamp=$(node -e "console.log(Date.now().toString())")
-  local data="${method}${path}${body}${timestamp}"
+  # Backend HMAC format: body + timestamp + pathAndQuery
+  # Auth endpoints use skipBodySigning (body = empty string)
+  local data="${timestamp}${path}"
   local signature
   signature=$(echo -n "$data" | openssl dgst -sha256 -hmac "$HMAC_SECRET" | awk '{print $2}')
   echo "$timestamp $signature"
@@ -42,7 +44,7 @@ hmac_sign() {
 
 # ── Step 1: Register ──
 echo "📝 Registering test user: $TEST_EMAIL"
-read -r ts hmac <<< "$(hmac_sign POST /api/auth/register)"
+read -r ts hmac <<< "$(hmac_sign /api/auth/register)"
 REGISTER_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/auth/register" \
   -H "Content-Type: application/json" \
   -H "x-timestamp: $ts" \
@@ -69,7 +71,7 @@ fi
 # ── Step 2: Try login ──
 echo ""
 echo "🔐 Attempting login..."
-read -r ts hmac <<< "$(hmac_sign POST /api/auth/login)"
+read -r ts hmac <<< "$(hmac_sign /api/auth/login)"
 LOGIN_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/auth/login" \
   -H "Content-Type: application/json" \
   -H "x-timestamp: $ts" \
