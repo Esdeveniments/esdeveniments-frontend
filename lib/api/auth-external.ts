@@ -268,6 +268,11 @@ export async function refreshTokenExternal(
 
     if (!response.ok) {
       const errorCode = parseAuthError(json);
+      console.error("refreshTokenExternal: backend error", {
+        status: response.status,
+        errorCode,
+        body: JSON.stringify(json).slice(0, 200),
+      });
       return { data: null, error: errorCode ?? "unknown", status: response.status };
     }
 

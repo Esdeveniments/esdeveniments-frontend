@@ -270,7 +270,8 @@ export function createApiAdapter(): AuthAdapter {
           return null;
         }
         currentUser = mapDtoToUser(dto);
-        scheduleRefresh();
+        // Note: proactive refresh not scheduled here — /api/auth/me doesn't
+        // return expiresAt. Reactive 401-based refresh handles token renewal.
         notify(currentUser);
         return currentUser;
       } catch (error) {

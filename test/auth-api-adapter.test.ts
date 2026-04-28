@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createApiAdapter } from "../lib/auth/api-adapter";
 
 const mockFetch = vi.fn();
 
 vi.stubGlobal("fetch", mockFetch);
+vi.useFakeTimers();
 
 const UUID = "550e8400-e29b-41d4-a716-446655440001";
 
@@ -31,6 +32,11 @@ function jsonResponse(data: unknown, status = 200) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.clearAllTimers();
+});
+
+afterEach(() => {
+  vi.clearAllTimers();
 });
 
 describe("createApiAdapter (cookie-based auth)", () => {
