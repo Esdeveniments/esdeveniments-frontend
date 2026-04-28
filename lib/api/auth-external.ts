@@ -273,7 +273,7 @@ export async function refreshTokenExternal(
 
     const parsed = parseRefreshTokenResponse(json);
     if (!parsed) {
-      console.error("refreshTokenExternal: invalid response shape", json);
+      console.error("refreshTokenExternal: invalid response shape");
       return { data: null, error: "unknown", status: 500 };
     }
     return { data: parsed, error: null, status: 200 };

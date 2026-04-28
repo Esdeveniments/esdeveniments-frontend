@@ -52,6 +52,7 @@ export function createApiAdapter(): AuthAdapter {
   let currentUser: AuthUser | null = null;
   let expiresAt: number | null = null;
   let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  let refreshPromise: Promise<boolean> | null = null;
   const listeners = new Set<(user: AuthUser | null) => void>();
 
   const notify = (user: AuthUser | null) => {
@@ -83,30 +84,41 @@ export function createApiAdapter(): AuthAdapter {
   }
 
   async function attemptRefresh(): Promise<boolean> {
-    try {
-      // Cookies are sent automatically — no body needed
-      const res = await fetch("/api/auth/refresh", {
-        method: "POST",
-        signal: AbortSignal.timeout(10_000),
-      });
+    // Deduplicate concurrent refresh attempts (e.g., timer + 401 retry race)
+    if (refreshPromise) return refreshPromise;
 
-      if (!res.ok) {
+    refreshPromise = (async () => {
+      try {
+        // Cookies are sent automatically — no body needed
+        const res = await fetch("/api/auth/refresh", {
+          method: "POST",
+          signal: AbortSignal.timeout(10_000),
+        });
+
+        if (!res.ok) {
+          clearSession();
+          notify(null);
+          return false;
+        }
+
+        const json = await res.json();
+        const expiry = new Date(json.expiresAt).getTime();
+        expiresAt = isNaN(expiry) ? null : expiry;
+
+        scheduleRefresh();
+        return true;
+      } catch (error) {
+        console.error("api-adapter refresh failed:", error);
         clearSession();
         notify(null);
         return false;
       }
+    })();
 
-      const json = await res.json();
-      const expiry = new Date(json.expiresAt).getTime();
-      expiresAt = isNaN(expiry) ? null : expiry;
-
-      scheduleRefresh();
-      return true;
-    } catch (error) {
-      console.error("api-adapter refresh failed:", error);
-      clearSession();
-      notify(null);
-      return false;
+    try {
+      return await refreshPromise;
+    } finally {
+      refreshPromise = null;
     }
   }
 
@@ -230,6 +242,8 @@ export function createApiAdapter(): AuthAdapter {
                 const retryDto = parseAuthUser(retryJson);
                 if (retryDto) {
                   currentUser = mapDtoToUser(retryDto);
+                  // expiresAt was already set by attemptRefresh()
+                  scheduleRefresh();
                   notify(currentUser);
                   return currentUser;
                 }

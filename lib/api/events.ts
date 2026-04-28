@@ -50,6 +50,20 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>()))
   : null;
 
+/** Shared guard for mutation endpoints: validates API URL and auth cookie. */
+async function requireMutationAuth(): Promise<{ apiUrl: string; authToken: string }> {
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
+  }
+  const authToken = await getAccessTokenFromCookies();
+  if (!authToken) {
+    throw new Error("Authentication required");
+  }
+  return { apiUrl: getApiUrl(), authToken };
+}
+
 const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYTES) => {
   if (imageFile.size > maxBytes) {
     console.warn(
@@ -252,19 +266,10 @@ export async function updateEventById(
   uuid: string,
   data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
-
-  const authToken = await getAccessTokenFromCookies();
-  if (!authToken) {
-    throw new Error("Authentication required to update events");
-  }
+  const { apiUrl, authToken } = await requireMutationAuth();
 
   const response = await fetchWithHmac(
-    `${getApiUrl()}/events/${uuid}`,
+    `${apiUrl}/events/${uuid}`,
     {
       method: "PUT",
       headers: {
@@ -273,6 +278,7 @@ export async function updateEventById(
         Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify(data),
+      skipBodySigning: true,
     },
   );
   if (!response.ok) {
@@ -286,24 +292,16 @@ export async function updateEventById(
 }
 
 export async function deleteEventById(uuid: string): Promise<void> {
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
-
-  const authToken = await getAccessTokenFromCookies();
-  if (!authToken) {
-    throw new Error("Authentication required to delete events");
-  }
+  const { apiUrl, authToken } = await requireMutationAuth();
 
   const response = await fetchWithHmac(
-    `${getApiUrl()}/events/${uuid}`,
+    `${apiUrl}/events/${uuid}`,
     {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
+      skipBodySigning: true,
     },
   );
 
@@ -324,18 +322,7 @@ export async function createEvent(
     return createE2EEvent(data, e2eExtras);
   }
 
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
-
-  const authToken = await getAccessTokenFromCookies();
-  if (!authToken) {
-    throw new Error("Authentication required to create events");
-  }
-
-  const apiUrl = getApiUrl();
+  const { apiUrl, authToken } = await requireMutationAuth();
 
   const response = await fetchWithHmac(`${apiUrl}/events`, {
     method: "POST",
@@ -374,18 +361,7 @@ export async function uploadEventImage(
     };
   }
 
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
-
-  const apiUrl = getApiUrl();
-
-  const authToken = await getAccessTokenFromCookies();
-  if (!authToken) {
-    throw new Error("Authentication required to upload images");
-  }
+  const { apiUrl, authToken } = await requireMutationAuth();
 
   const formData = new FormData();
   formData.append("imageFile", imageFile);

@@ -21,9 +21,8 @@ const hasCredentials = Boolean(email && password);
 const UNIQUE_SUFFIX = `e2e-${Date.now()}`;
 const TEST_EVENT_TITLE = `Test Event ${UNIQUE_SUFFIX}`;
 
-// Store created event slug/uuid for cleanup
+// Store created event slug for cleanup
 let createdEventSlug: string | null = null;
-let createdEventUuid: string | null = null;
 
 /** Login via the UI form */
 async function loginViaUI(page: Page) {
@@ -66,13 +65,13 @@ test.describe("Publish integration (staging)", () => {
   test.setTimeout(180_000); // 3 minutes — real backend is slow
 
   test.afterAll(async ({ browser }) => {
-    // Best-effort cleanup via API if we captured the UUID
-    if (createdEventUuid) {
+    // Best-effort cleanup via API if we captured the slug
+    if (createdEventSlug) {
       const context = await browser.newContext();
       const page = await context.newPage();
       try {
         await loginViaUI(page);
-        await cleanupEvent(page, createdEventUuid);
+        await cleanupEvent(page, createdEventSlug);
       } catch (error) {
         console.warn("Cleanup failed:", error);
       } finally {

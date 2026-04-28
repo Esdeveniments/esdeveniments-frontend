@@ -20,12 +20,17 @@ set -euo pipefail
 
 # ── Config ──
 API_URL="https://api-preproduction.esdeveniments.cat"
-TEST_EMAIL="e2e-test@esdeveniments.cat"
-TEST_PASSWORD="E2eTest2026!Secure"
+TEST_EMAIL="${E2E_STAGING_EMAIL:-e2e-test@esdeveniments.cat}"
+TEST_PASSWORD="${E2E_STAGING_PASSWORD:-}"
 TEST_NAME="E2E Test User"
 
 if [ -z "${HMAC_SECRET:-}" ]; then
   echo "❌ HMAC_SECRET is required. Run: HMAC_SECRET=<secret> $0"
+  exit 1
+fi
+
+if [ -z "$TEST_PASSWORD" ]; then
+  echo "❌ E2E_STAGING_PASSWORD is required. Run: E2E_STAGING_PASSWORD=<pass> $0"
   exit 1
 fi
 

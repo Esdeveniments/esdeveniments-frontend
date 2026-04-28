@@ -8,7 +8,7 @@ import type { EventDetailResponseDTO } from "types/api/event";
 // Cache event detail by slug to avoid hitting backend on every refresh (which increments visits).
 // TTL aligns with Cache-Control s-maxage for consistency.
 const EVENT_DETAIL_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const { cache: eventDetailCache } =
+const { cache: eventDetailCache, delete: deleteEventDetailCache } =
   createKeyedCache<EventDetailResponseDTO | null>(EVENT_DETAIL_TTL_MS);
 
 // GET /api/events/[slug] - server-only proxy with server-side HMAC and stable caching
@@ -42,6 +42,8 @@ export async function DELETE(
   try {
     const { slug: uuid } = await context.params;
     await deleteEventById(uuid);
+    // Invalidate cached entry so stale detail is not served after deletion
+    deleteEventDetailCache(uuid);
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     return handleApiError(e, "/api/events/[slug] DELETE");
