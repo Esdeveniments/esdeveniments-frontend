@@ -259,7 +259,13 @@ export function createApiAdapter(): AuthAdapter {
                   return currentUser;
                 }
               }
+              // Retry succeeded HTTP-wise but parsing failed
+              clearSession();
+              notify(null);
+              return null;
             }
+            // attemptRefresh already called clearSession + notify(null)
+            return null;
           }
           clearSession();
           notify(null);

@@ -29,6 +29,11 @@ if [ -z "${HMAC_SECRET:-}" ]; then
   exit 1
 fi
 
+if ! command -v jq &>/dev/null; then
+  echo "❌ jq is required but not installed. Install it with: brew install jq (macOS) or apt-get install jq (Linux)"
+  exit 1
+fi
+
 if [ -z "$TEST_PASSWORD" ]; then
   echo "❌ E2E_STAGING_PASSWORD is required. Run: E2E_STAGING_PASSWORD=<pass> $0"
   exit 1
