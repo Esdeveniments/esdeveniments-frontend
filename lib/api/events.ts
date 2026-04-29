@@ -59,7 +59,9 @@ async function requireMutationAuth(): Promise<{ apiUrl: string; authToken: strin
   }
   const authToken = await getAccessTokenFromCookies();
   if (!authToken) {
-    throw new Error("Authentication required");
+    const err = new Error("Authentication required");
+    (err as Error & { status: number }).status = 401;
+    throw err;
   }
   return { apiUrl: getApiUrl(), authToken };
 }

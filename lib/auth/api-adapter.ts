@@ -253,8 +253,7 @@ export function createApiAdapter(): AuthAdapter {
                 const retryDto = parseAuthUser(retryJson);
                 if (retryDto) {
                   currentUser = mapDtoToUser(retryDto);
-                  // expiresAt was already set by attemptRefresh()
-                  scheduleRefresh();
+                  // expiresAt and scheduleRefresh already handled by attemptRefresh()
                   notify(currentUser);
                   return currentUser;
                 }

@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock next/headers cookies()
-const mockCookieStore = {
+const mockCookieStore = vi.hoisted(() => ({
   get: vi.fn(),
-};
+}));
 vi.mock("next/headers", () => ({
   cookies: vi.fn(() => Promise.resolve(mockCookieStore)),
 }));
