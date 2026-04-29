@@ -28,3 +28,17 @@ jobs:
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # npm patch + minor auto-merge.
+      # Safety: branch protection on main/develop must require the e2e + quality
+      # checks. `gh pr merge --auto` queues the merge and only completes when
+      # all required checks pass. Major bumps are intentionally excluded.
+      - name: Auto-merge npm patch and minor updates
+        if: |
+          steps.metadata.outputs.package-ecosystem == 'npm_and_yarn' &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-minor')
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
