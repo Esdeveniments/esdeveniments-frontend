@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { generateEventMetadata, getCanonicalUrl } from "../lib/meta";
 
 describe("meta helpers (black-box)", () => {
@@ -96,5 +96,68 @@ describe("meta helpers (black-box)", () => {
     expect(getCanonicalUrl("https://www.esdeveniments.cat/mataro")).toBe(
       "https://www.esdeveniments.cat/mataro"
     );
+  });
+
+  describe("generateEventMetadata robots policy", () => {
+    const baseEvent = {
+      id: "1",
+      title: "Concert",
+      description: "Live music",
+      location: "Plaça Major",
+      city: { id: 1, name: "Vic", slug: "vic", postalCode: "08500" },
+      region: { id: 2, name: "Osona", slug: "osona" },
+      // Future event so the EXPIRED_EVENT_NOINDEX_DAYS branch doesn't fire.
+      startDate: "2099-06-20",
+      endDate: "2099-06-20",
+      slug: "concert-1",
+      categories: [{ id: 10, name: "Música", slug: "musica" }],
+      visits: 0,
+      imageUrl: "https://example.com/image.jpg",
+      relatedEvents: [],
+      weather: null,
+    } as any;
+
+    const originalEnv = { ...process.env };
+    afterEach(() => {
+      process.env = { ...originalEnv };
+    });
+
+    it("does NOT emit noindex on production host", () => {
+      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+      const meta = generateEventMetadata(baseEvent);
+      expect(meta.robots).not.toBe("noindex, nofollow");
+    });
+
+    it("does NOT emit noindex when NEXT_PUBLIC_SITE_URL is undefined (fail-open)", () => {
+      // CRITICAL: Coolify Dockerfile only sets NEXT_PUBLIC_SITE_URL in the
+      // builder stage, so at runtime in production it can be undefined. We
+      // must NOT noindex production pages just because the env var is missing.
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+      const meta = generateEventMetadata(baseEvent);
+      expect(meta.robots).not.toBe("noindex, nofollow");
+    });
+
+    it("emits noindex on staging host", () => {
+      process.env.NEXT_PUBLIC_SITE_URL = "https://staging.esdeveniments.cat";
+      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+      const meta = generateEventMetadata(baseEvent);
+      expect(meta.robots).toBe("noindex, nofollow");
+    });
+
+    it("emits noindex on PR-preview host with default Coolify template", () => {
+      process.env.NEXT_PUBLIC_SITE_URL = "https://42.esdeveniments.cat";
+      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+      const meta = generateEventMetadata(baseEvent);
+      expect(meta.robots).toBe("noindex, nofollow");
+    });
+
+    it("emits noindex when NEXT_PUBLIC_VERCEL_ENV=preview", () => {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+      process.env.NEXT_PUBLIC_VERCEL_ENV = "preview";
+      const meta = generateEventMetadata(baseEvent);
+      expect(meta.robots).toBe("noindex, nofollow");
+    });
   });
 });

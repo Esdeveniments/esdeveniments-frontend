@@ -25,6 +25,29 @@ const siteUrl =
 // Normalize URL (remove trailing slash, ensure https)
 const normalizedSiteUrl = siteUrl.replace(/\/$/, "").replace(/^http:/, "https:");
 
+// Detect non-production hosts (staging, PR previews, dev) — these must not
+// be indexed. GSC reported ~7,800 staging URLs leaking into Google's index
+// because robots.txt allowed everything and no X-Robots-Tag was emitted.
+//
+// Default-deny: anything not on the production allowlist below is treated as
+// non-production. Substring checks (e.g. `pr-`) silently fail if Coolify's
+// PR-preview URL template changes.
+//
+// KEEP IN SYNC WITH `utils/production-host.ts` (runtime copy).
+const PRODUCTION_HOSTS = new Set([
+  "www.esdeveniments.cat",
+  "esdeveniments.cat",
+]);
+let isNonProductionHost = true;
+try {
+  isNonProductionHost = !PRODUCTION_HOSTS.has(
+    new URL(normalizedSiteUrl).hostname.toLowerCase(),
+  );
+} catch {
+  // Malformed URL → treat as non-production (safer default).
+  isNonProductionHost = true;
+}
+
 /**
  * robots.txt configuration - KEEP IN SYNC with app/robots.txt/route.ts
  *
@@ -77,6 +100,18 @@ const robotsConfig = {
   ],
   host: normalizedSiteUrl,
 };
+
+// On non-production hosts (staging, PR previews), block all crawlers and
+// strip sitemaps. Disallow-all on User-Agent: * fully blocks indexing.
+if (isNonProductionHost) {
+  robotsConfig.rules = [
+    {
+      userAgent: "*",
+      disallow: ["/"],
+    },
+  ];
+  robotsConfig.sitemaps = [];
+}
 
 function generateRobotsTxt() {
   const lines = [];

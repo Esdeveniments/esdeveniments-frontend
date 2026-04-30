@@ -1,5 +1,6 @@
 import { siteUrl } from "@config/index";
 import { DEFAULT_ROBOTS_POLICY } from "lib/meta";
+import { isProductionSiteUrl } from "@utils/production-host";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { SchemaPlaceLocation } from "types/schema";
 import {
@@ -183,10 +184,21 @@ export function buildPageMeta({
       images: [image],
     },
     ...restDefaults,
-    robots:
-      process.env.NEXT_PUBLIC_VERCEL_ENV === "preview"
-        ? "noindex, nofollow"
-        : (robotsOverride ?? DEFAULT_ROBOTS_POLICY),
+    robots: (() => {
+      // Defense-in-depth meta tag (proxy header is the primary defense).
+      // Fail-open: only emit noindex on positive evidence of non-production.
+      // NEXT_PUBLIC_SITE_URL may be undefined at runtime in Coolify because
+      // the Dockerfile only sets it in the builder stage.
+      const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL;
+      const isKnownNonProd = !!siteUrlEnv && !isProductionSiteUrl(siteUrlEnv);
+      if (
+        process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
+        isKnownNonProd
+      ) {
+        return "noindex, nofollow";
+      }
+      return robotsOverride ?? DEFAULT_ROBOTS_POLICY;
+    })(),
     other: {
       ...restDefaults.other,
       "twitter:domain": siteUrl,
