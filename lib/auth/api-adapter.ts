@@ -60,6 +60,8 @@ const REFRESH_BEFORE_EXPIRY_MS = 5 * 60_000;
 // Prevents repeated /me calls on every getSession while keeping the window short enough
 // to pick up account changes (role updates, bans) within a reasonable timeframe.
 const ME_DEFAULT_TTL_MS = 5 * 60_000;
+/** Fallback TTL when backend refresh response omits expiresAt */
+const REFRESH_FALLBACK_TTL_MS = 60 * 60_000;
 
 /**
  * Cookie-based auth adapter.
@@ -130,7 +132,7 @@ export function createApiAdapter(): AuthAdapter {
 
         const json = await res.json();
         // Fall back to 1-hour TTL if backend doesn't return expiresAt yet
-        expiresAt = parseBackendDateAsUtcMs(json.expiresAt) ?? (Date.now() + 60 * 60_000);
+        expiresAt = parseBackendDateAsUtcMs(json.expiresAt) ?? (Date.now() + REFRESH_FALLBACK_TTL_MS);
 
         scheduleRefresh();
         return true;
