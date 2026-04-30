@@ -9,7 +9,20 @@ import type {
   RegisterCredentials,
 } from "types/auth";
 import type { AuthenticatedUserDTO } from "types/api/auth";
-import { parseAuthUser } from "@lib/validation/auth";
+import { parseBackendDateAsUtcMs } from "@utils/date-helpers";
+
+/** Lightweight runtime guard — no Zod in the browser bundle */
+function parseAuthUser(data: unknown): AuthenticatedUserDTO | null {
+  if (
+    !data ||
+    typeof data !== "object" ||
+    typeof (data as Record<string, unknown>).id !== "string" ||
+    typeof (data as Record<string, unknown>).email !== "string" ||
+    typeof (data as Record<string, unknown>).name !== "string"
+  )
+    return null;
+  return data as AuthenticatedUserDTO;
+}
 
 /** Map backend DTO to frontend AuthUser */
 function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
@@ -20,19 +33,6 @@ function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
     role: dto.role,
     emailVerified: dto.emailVerified,
   };
-}
-
-/**
- * Parse expiresAt string as UTC epoch ms.
- * Backend returns ISO-like strings without timezone suffix (e.g. "2026-04-28T18:00:00").
- * Without "Z", JS Date() interprets as local time → wrong maxAge in non-UTC zones.
- */
-function parseExpiresAtUtc(expiresAt: string | undefined | null): number | null {
-  if (!expiresAt) return null;
-  const hasTimezone = /Z|[+-]\d{2}:\d{2}$/.test(expiresAt);
-  const utcString = hasTimezone ? expiresAt : `${expiresAt}Z`;
-  const ms = new Date(utcString).getTime();
-  return isNaN(ms) ? null : ms;
 }
 
 /** Map backend error strings to AuthErrorCode */
@@ -115,7 +115,7 @@ export function createApiAdapter(): AuthAdapter {
         }
 
         const json = await res.json();
-        expiresAt = parseExpiresAtUtc(json.expiresAt);
+        expiresAt = parseBackendDateAsUtcMs(json.expiresAt);
 
         scheduleRefresh();
         return true;
@@ -164,7 +164,7 @@ export function createApiAdapter(): AuthAdapter {
           return { success: false, error: "unknown" };
         }
 
-        expiresAt = parseExpiresAtUtc(json.expiresAt);
+        expiresAt = parseBackendDateAsUtcMs(json.expiresAt);
         currentUser = mapDtoToUser(dto);
 
         scheduleRefresh();

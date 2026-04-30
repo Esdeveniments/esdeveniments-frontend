@@ -265,13 +265,13 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
 export const getEventBySlug = cache(fetchEventBySlug);
 
 export async function updateEventById(
-  uuid: string,
+  id: string,
   data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
   const { apiUrl, authToken } = await requireMutationAuth();
 
   const response = await fetchWithHmac(
-    `${apiUrl}/events/${uuid}`,
+    `${apiUrl}/events/${id}`,
     {
       method: "PUT",
       headers: {
@@ -293,11 +293,11 @@ export async function updateEventById(
   return response.json();
 }
 
-export async function deleteEventById(uuid: string): Promise<void> {
+export async function deleteEventById(id: string): Promise<void> {
   const { apiUrl, authToken } = await requireMutationAuth();
 
   const response = await fetchWithHmac(
-    `${apiUrl}/events/${uuid}`,
+    `${apiUrl}/events/${id}`,
     {
       method: "DELETE",
       headers: {

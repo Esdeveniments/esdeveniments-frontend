@@ -34,16 +34,16 @@ export async function GET(
   }
 }
 
-// DELETE /api/events/[slug] - delete event by UUID (requires auth cookie)
+// DELETE /api/events/[slug] - delete event by id (requires auth cookie)
 export async function DELETE(
   _request: Request,
   context: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug: uuid } = await context.params;
-    await deleteEventById(uuid);
+    const { slug: id } = await context.params;
+    await deleteEventById(id);
     // Invalidate cached entry so stale detail is not served after deletion
-    deleteEventDetailCache(uuid);
+    deleteEventDetailCache(id);
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     return handleApiError(e, "/api/events/[slug] DELETE");
