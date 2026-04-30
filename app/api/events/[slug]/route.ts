@@ -4,6 +4,7 @@ import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external
 import { deleteEventById } from "@lib/api/events";
 import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 // Cache event detail by slug to avoid hitting backend on every refresh (which increments visits).
@@ -46,11 +47,12 @@ export async function DELETE(
     // Clear in-memory cache so next GET doesn't serve stale data
     deleteEventDetailCache(id);
     // Purge Next.js Data Cache for all locales of the event detail page.
-    // The id doubles as slug in our URL scheme — best-effort, won't throw.
+    // Default locale (ca) has no prefix; non-default locales get a prefix path.
     try {
-      revalidatePath(`/e/${id}`);
-      revalidatePath(`/es/e/${id}`);
-      revalidatePath(`/en/e/${id}`);
+      for (const locale of SUPPORTED_LOCALES) {
+        const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+        revalidatePath(`${prefix}/e/${id}`);
+      }
     } catch {
       // revalidatePath is a no-op outside of a render context in some environments
     }

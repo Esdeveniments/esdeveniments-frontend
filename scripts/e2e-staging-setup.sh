@@ -115,7 +115,7 @@ if command -v gh &>/dev/null; then
 else
   echo "   ⚠️ gh CLI not found — set secrets manually:"
   echo "   gh secret set E2E_STAGING_EMAIL   (value: $TEST_EMAIL)"
-  echo "   gh secret set E2E_STAGING_PASSWORD (value: $TEST_PASSWORD)"
+  echo "   gh secret set E2E_STAGING_PASSWORD (value: ****)"
 fi
 
 # ── Step 4: Create .env.development ──
