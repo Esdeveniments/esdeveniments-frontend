@@ -8,7 +8,12 @@ import { test, expect, type Page } from "@playwright/test";
  *   - E2E_STAGING_PASSWORD: Test user password
  *   - PLAYWRIGHT_TEST_BASE_URL: Staging URL (e.g., https://pre.esdeveniments.cat)
  *
- * Run with: PLAYWRIGHT_TEST_BASE_URL=<url> E2E_STAGING_EMAIL=<email> E2E_STAGING_PASSWORD=<pass> \
+ * Run locally (against dev server):
+ *   E2E_STAGING_EMAIL=<email> E2E_STAGING_PASSWORD=<pass> \
+ *   npx playwright test e2e/publish-integration.spec.ts --config playwright.config.ts
+ *
+ * Run against a deployed staging URL:
+ *   PLAYWRIGHT_TEST_BASE_URL=<url> E2E_STAGING_EMAIL=<email> E2E_STAGING_PASSWORD=<pass> \
  *   npx playwright test e2e/publish-integration.spec.ts --config playwright.remote.config.ts
  *
  * Gated: Skips automatically if env vars are not set.

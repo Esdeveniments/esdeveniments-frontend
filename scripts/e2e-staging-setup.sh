@@ -136,8 +136,7 @@ echo ""
 
 E2E_STAGING_EMAIL="$TEST_EMAIL" \
 E2E_STAGING_PASSWORD="$TEST_PASSWORD" \
-PLAYWRIGHT_TEST_BASE_URL="http://localhost:3000" \
-npx playwright test e2e/publish-integration.spec.ts --config playwright.remote.config.ts
+npx playwright test e2e/publish-integration.spec.ts --config playwright.config.ts
 
 echo ""
 echo "🎉 Done!"
