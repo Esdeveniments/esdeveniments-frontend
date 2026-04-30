@@ -18,7 +18,9 @@ function parseAuthUser(data: unknown): AuthenticatedUserDTO | null {
     typeof data !== "object" ||
     typeof (data as Record<string, unknown>).id !== "string" ||
     typeof (data as Record<string, unknown>).email !== "string" ||
-    typeof (data as Record<string, unknown>).name !== "string"
+    typeof (data as Record<string, unknown>).name !== "string" ||
+    typeof (data as Record<string, unknown>).role !== "string" ||
+    typeof (data as Record<string, unknown>).emailVerified !== "boolean"
   )
     return null;
   return data as AuthenticatedUserDTO;
@@ -66,6 +68,7 @@ export function createApiAdapter(): AuthAdapter {
   let expiresAt: number | null = null;
   let refreshTimer: ReturnType<typeof setTimeout> | null = null;
   let refreshPromise: Promise<boolean> | null = null;
+  let loggedOut = false;
   const listeners = new Set<(user: AuthUser | null) => void>();
 
   const notify = (user: AuthUser | null) => {
@@ -107,6 +110,9 @@ export function createApiAdapter(): AuthAdapter {
           method: "POST",
           signal: AbortSignal.timeout(10_000),
         });
+
+        // If logout happened while refresh was in-flight, discard result
+        if (loggedOut) return false;
 
         if (!res.ok) {
           clearSession();
@@ -164,6 +170,7 @@ export function createApiAdapter(): AuthAdapter {
           return { success: false, error: "unknown" };
         }
 
+        loggedOut = false;
         expiresAt = parseBackendDateAsUtcMs(json.expiresAt);
         currentUser = mapDtoToUser(dto);
 
@@ -215,6 +222,7 @@ export function createApiAdapter(): AuthAdapter {
     },
 
     async logout(): Promise<void> {
+      loggedOut = true;
       try {
         await fetch("/api/auth/logout", {
           method: "POST",

@@ -27,12 +27,14 @@ export async function POST(request: Request): Promise<Response> {
     const { data, error, status } = await refreshTokenExternal(refreshToken);
 
     if (error || !data) {
-      // Clear stale cookies on refresh failure
       const errorResponse = NextResponse.json(
         { error: error ?? "unknown" },
         { status: status === 200 ? 500 : status }
       );
-      clearAuthCookies(errorResponse);
+      // Only clear cookies on auth failures (401/403), not transient server/network errors
+      if (status === 401 || status === 403) {
+        clearAuthCookies(errorResponse);
+      }
       return errorResponse;
     }
 
