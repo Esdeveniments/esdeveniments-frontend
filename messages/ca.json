@@ -886,7 +886,8 @@
     "EventDetailsSection": {
       "title": "Detalls de l'esdeveniment",
       "eventLink": "Enllaç a l'esdeveniment:",
-      "duration": "Durada aproximada: {duration}"
+      "duration": "Durada aproximada: {duration}",
+      "createdBy": "Publicat per {name}"
     },
     "EventLocation": {
       "title": "Ubicació",

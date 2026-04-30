@@ -227,6 +227,8 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/me",
+  "/api/auth/refresh",
+  "/api/auth/logout",
   "/api/auth/password/forgot",
   "/api/auth/password/reset",
   "/api/auth/verification/confirm",

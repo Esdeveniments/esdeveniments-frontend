@@ -72,6 +72,13 @@ export interface PagedResponseDTO<T> {
   last: boolean;
 }
 
+/** Backend DTO: event creator info (user who created the event) */
+export interface EventCreatorResponseDTO {
+  id: string;
+  email: string;
+  name: string;
+}
+
 // Detail endpoint always includes location fields
 export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   city: CitySummaryResponseDTO;
@@ -83,6 +90,7 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   relatedEvents?: EventSummaryResponseDTO[]; // Related events from list endpoint (no location fields)
   metaTitle?: string;
   metaDescription?: string;
+  createdByUser?: EventCreatorResponseDTO;
 }
 
 export type CategorizedEvents = {

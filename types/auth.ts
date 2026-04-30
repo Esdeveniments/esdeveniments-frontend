@@ -5,7 +5,7 @@ export type AuthMethod =
   | "oauth-github"
   | "passwordless";
 
-export type AuthRole = "USER" | "ADMIN";
+export type AuthRole = "USER" | "ADMIN" | "ORGANIZATION";
 
 export interface AuthUser {
   id: string;
@@ -68,7 +68,7 @@ export interface AuthResult {
   requiresVerification?: boolean;
 }
 
-export type { AuthResponseDTO, AuthenticatedUserDTO, AuthMessageResponseDTO } from "./api/auth";
+export type { AuthResponseDTO, AuthenticatedUserDTO, AuthMessageResponseDTO, RefreshTokenRequestDTO, RefreshTokenResponseDTO } from "./api/auth";
 
 export type AuthUnsubscribe = () => void;
 

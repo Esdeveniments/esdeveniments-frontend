@@ -879,7 +879,8 @@
     "EventDetailsSection": {
       "title": "Event details",
       "eventLink": "Event link:",
-      "duration": "Approximate duration: {duration}"
+      "duration": "Approximate duration: {duration}",
+      "createdBy": "Published by {name}"
     },
     "EventLocation": {
       "title": "Location",

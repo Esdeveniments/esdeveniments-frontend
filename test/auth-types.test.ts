@@ -14,7 +14,7 @@ describe("lib/validation/auth", () => {
         tokenType: "Bearer",
         expiresAt: "2026-03-01T00:00:00Z",
         user: {
-          id: 1,
+          id: "550e8400-e29b-41d4-a716-446655440001",
           email: "a@b.com",
           name: "Alice",
           role: "USER",
@@ -34,7 +34,7 @@ describe("lib/validation/auth", () => {
         tokenType: "Bearer",
         expiresAt: "2026-03-01T00:00:00Z",
         user: {
-          id: 2,
+          id: "550e8400-e29b-41d4-a716-446655440002",
           email: "b@c.com",
           name: "Bob",
           role: "ADMIN",
@@ -56,14 +56,14 @@ describe("lib/validation/auth", () => {
   describe("parseAuthUser (AuthenticatedUserDTO)", () => {
     it("parses valid backend user DTO", () => {
       const result = parseAuthUser({
-        id: 1,
+        id: "550e8400-e29b-41d4-a716-446655440001",
         email: "a@b.com",
         name: "Alice",
         role: "USER",
         emailVerified: true,
       });
       expect(result).not.toBeNull();
-      expect(result?.id).toBe(1);
+      expect(result?.id).toBe("550e8400-e29b-41d4-a716-446655440001");
       expect(result?.name).toBe("Alice");
     });
 

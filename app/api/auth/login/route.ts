@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { loginExternal } from "@lib/api/auth-external";
 import { handleApiError } from "@utils/api-error-handler";
 import { createRateLimiter } from "@utils/rate-limit";
+import { setAuthCookies } from "@utils/auth-cookies";
 import type { LoginRequestDTO } from "types/api/auth";
 
 const limiter = createRateLimiter({ maxRequests: 5, windowMs: 15 * 60 * 1000 });
@@ -46,10 +47,15 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    return NextResponse.json(data, {
-      status: 200,
-      headers: { "Cache-Control": "no-store" },
-    });
+    // Set HttpOnly cookies — tokens never reach the client
+    const response = NextResponse.json(
+      { user: data.user, expiresAt: data.expiresAt },
+      { status: 200, headers: { "Cache-Control": "no-store" } }
+    );
+
+    setAuthCookies(response, data.accessToken, data.expiresAt, data.refreshToken);
+
+    return response;
   } catch (e) {
     return handleApiError(e, "/api/auth/login");
   }

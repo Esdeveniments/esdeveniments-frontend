@@ -16,6 +16,7 @@ export interface RegisterRequestDTO {
 /** Backend DTO: what POST /api/auth/login returns */
 export interface AuthResponseDTO {
   accessToken: string;
+  refreshToken?: string;
   tokenType: string;
   expiresAt: string;
   user: AuthenticatedUserDTO;
@@ -23,11 +24,24 @@ export interface AuthResponseDTO {
 
 /** Backend DTO: what GET /api/auth/me returns */
 export interface AuthenticatedUserDTO {
-  id: number;
+  id: string;
   email: string;
   name: string;
   role: AuthRole;
   emailVerified: boolean;
+}
+
+/** Backend DTO: request body for POST /api/auth/refresh */
+export interface RefreshTokenRequestDTO {
+  refreshToken: string;
+}
+
+/** Backend DTO: what POST /api/auth/refresh returns */
+export interface RefreshTokenResponseDTO {
+  accessToken: string;
+  refreshToken?: string;
+  tokenType: string;
+  expiresAt: string;
 }
 
 /** Backend DTO: message-only responses (register, forgot, reset, verify) */

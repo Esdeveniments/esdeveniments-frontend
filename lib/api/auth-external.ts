@@ -5,11 +5,13 @@ import {
   parseAuthUser,
   parseAuthMessageResponse,
   parseAuthError,
+  parseRefreshTokenResponse,
 } from "@lib/validation/auth";
 import type {
   AuthResponseDTO,
   AuthenticatedUserDTO,
   AuthMessageResponseDTO,
+  RefreshTokenResponseDTO,
 } from "types/auth";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
@@ -242,6 +244,46 @@ export async function resendVerificationExternal(
     return { data: parsed, error: null, status: 200 };
   } catch (error) {
     console.error("resendVerificationExternal: failed", error);
+    return { data: null, error: "network-error", status: 500 };
+  }
+}
+
+export async function refreshTokenExternal(
+  token: string
+): Promise<{
+  data: RefreshTokenResponseDTO | null;
+  error: string | null;
+  status: number;
+}> {
+  const apiUrl = getApiUrl();
+  try {
+    const response = await fetchWithHmac(`${apiUrl}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: token }),
+      skipBodySigning: true,
+    });
+
+    const json = await response.json();
+
+    if (!response.ok) {
+      const errorCode = parseAuthError(json);
+      console.error("refreshTokenExternal: backend error", {
+        status: response.status,
+        errorCode,
+        body: JSON.stringify(json).slice(0, 200),
+      });
+      return { data: null, error: errorCode ?? "unknown", status: response.status };
+    }
+
+    const parsed = parseRefreshTokenResponse(json);
+    if (!parsed) {
+      console.error("refreshTokenExternal: invalid response shape");
+      return { data: null, error: "unknown", status: 500 };
+    }
+    return { data: parsed, error: null, status: 200 };
+  } catch (error) {
+    console.error("refreshTokenExternal: failed", error);
     return { data: null, error: "network-error", status: 500 };
   }
 }

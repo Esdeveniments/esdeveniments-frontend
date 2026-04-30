@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
+import { deleteEventById } from "@lib/api/events";
 import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 // Cache event detail by slug to avoid hitting backend on every refresh (which increments visits).
 // TTL aligns with Cache-Control s-maxage for consistency.
 const EVENT_DETAIL_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const { cache: eventDetailCache } =
+const { cache: eventDetailCache, delete: deleteEventDetailCache } =
   createKeyedCache<EventDetailResponseDTO | null>(EVENT_DETAIL_TTL_MS);
 
 // GET /api/events/[slug] - server-only proxy with server-side HMAC and stable caching
@@ -20,15 +23,9 @@ export async function GET(
     const data = await eventDetailCache(slug, async (key) => {
       return await fetchExternalEvent(String(key));
     });
-    // Note: Removed per-request revalidateTag call for past events.
-    // The previous logic called revalidateTag on EVERY request for past events,
-    // which caused excessive cache write operations and transient errors.
-    // Event lists already have time-based revalidation (revalidate: 300 seconds)
-    // via the fetch cache in lib/api/events.ts, so this was redundant.
     return NextResponse.json(data ?? null, {
       status: data ? 200 : 404,
       headers: {
-        // Shared cache at the edge; app fetch can also set revalidate tags
         "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=1800",
       },
     });
@@ -36,5 +33,31 @@ export async function GET(
     return handleApiError(e, "/api/events/[slug]", {
       fallbackData: null,
     });
+  }
+}
+
+// DELETE /api/events/[slug] - delete event by id (requires auth cookie)
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const { slug: id } = await context.params;
+    await deleteEventById(id);
+    // Clear in-memory cache so next GET doesn't serve stale data
+    deleteEventDetailCache(id);
+    // Purge Next.js Data Cache for all locales of the event detail page.
+    // Default locale (ca) has no prefix; non-default locales get a prefix path.
+    try {
+      for (const locale of SUPPORTED_LOCALES) {
+        const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+        revalidatePath(`${prefix}/e/${id}`);
+      }
+    } catch {
+      // revalidatePath is a no-op outside of a render context in some environments
+    }
+    return new NextResponse(null, { status: 204 });
+  } catch (e) {
+    return handleApiError(e, "/api/events/[slug] DELETE");
   }
 }
