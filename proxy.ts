@@ -6,6 +6,7 @@ import {
   verifyHmacSignature,
 } from "@utils/hmac";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
+import { isProductionHost } from "@utils/production-host";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -708,7 +709,13 @@ export default async function proxy(request: NextRequest) {
     (pathnameWithoutLocale || pathname).startsWith(p),
   );
 
-  if (isNoindexPath) {
+  // Block all non-production hosts from indexing (staging, preview deployments).
+  // GSC reported ~7,800 staging URLs leaking into Google's "Crawled - currently
+  // not indexed" bucket because no noindex header was emitted.
+  // Default-deny: anything not on the production allowlist is noindexed.
+  const isNonProductionHost = !isProductionHost(request.headers.get("host"));
+
+  if (isNonProductionHost || isNoindexPath) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   } else if (hasNonCanonicalParams) {
     response.headers.set("X-Robots-Tag", "noindex, follow");

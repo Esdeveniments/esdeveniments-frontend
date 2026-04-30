@@ -9,6 +9,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Minimal default token scope. Jobs that need more (none here) must opt in explicitly.
+permissions:
+  contents: read
+
 env:
   NODE_VERSION: "22"
   # Single source of truth for CI: set in GitHub Settings > Variables > Repository variables
@@ -235,7 +239,8 @@ jobs:
           # VERCEL_ORG_ID and VERCEL_PROJECT_ID env vars should be automatically used by Vercel CLI
           # along with the .vercel/project.json file
           # --confirm avoids interactive prompts
-          npx vercel@latest --token="$VERCEL_TOKEN" \
+          # Pin Vercel CLI major to avoid running an unreviewed release with our secrets.
+          npx vercel@52 --token="$VERCEL_TOKEN" \
             --env NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
             --env HMAC_SECRET="$HMAC_SECRET" \
             --env VERCEL_AUTOMATION_BYPASS_SECRET="$VERCEL_AUTOMATION_BYPASS_SECRET" \
