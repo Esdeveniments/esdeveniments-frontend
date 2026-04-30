@@ -56,6 +56,11 @@ function mapErrorCode(
 // Refresh tokens 5 minutes before expiry
 const REFRESH_BEFORE_EXPIRY_MS = 5 * 60_000;
 
+// Default session TTL used when /api/auth/me succeeds but doesn't return expiresAt.
+// Prevents repeated /me calls on every getSession while keeping the window short enough
+// to pick up account changes (role updates, bans) within a reasonable timeframe.
+const ME_DEFAULT_TTL_MS = 5 * 60_000;
+
 /**
  * Cookie-based auth adapter.
  *
@@ -115,8 +120,11 @@ export function createApiAdapter(): AuthAdapter {
         if (loggedOut) return false;
 
         if (!res.ok) {
-          clearSession();
-          notify(null);
+          // Only clear session on auth failures — preserve session on transient 5xx/network errors
+          if (res.status === 401 || res.status === 403) {
+            clearSession();
+            notify(null);
+          }
           return false;
         }
 
@@ -127,8 +135,12 @@ export function createApiAdapter(): AuthAdapter {
         return true;
       } catch (error) {
         console.error("api-adapter refresh failed:", error);
-        clearSession();
-        notify(null);
+        // Don't clear session on network errors if the token hasn't expired yet —
+        // transient failures (timeout, offline) shouldn't log users out
+        if (!expiresAt || Date.now() >= expiresAt) {
+          clearSession();
+          notify(null);
+        }
         return false;
       }
     })();
@@ -287,8 +299,10 @@ export function createApiAdapter(): AuthAdapter {
           return null;
         }
         currentUser = mapDtoToUser(dto);
-        // Note: proactive refresh not scheduled here — /api/auth/me doesn't
-        // return expiresAt. Reactive 401-based refresh handles token renewal.
+        // /api/auth/me doesn't return expiresAt — set a short default TTL so
+        // repeated getSession calls use the cache instead of hitting the server.
+        // Reactive 401 still handles actual token expiry.
+        if (!expiresAt) expiresAt = Date.now() + ME_DEFAULT_TTL_MS;
         notify(currentUser);
         return currentUser;
       } catch (error) {
