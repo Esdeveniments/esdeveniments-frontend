@@ -228,9 +228,12 @@ export async function generatePagesData({
       resolvedLocale === DEFAULT_LOCALE && categoryName
         ? categoryName
         : categorySEO.titleSuffix;
-    const baseCanonical = `${siteUrl}/${place}${
-      byDate ? `/${byDate}` : ""
-    }/${category}`;
+    // 3-segment URLs (/[place]/[date]/[category]) are noindex,follow via
+    // proxy.ts because GSC flagged them as thin/duplicate. Reinforce that
+    // signal by pointing the canonical to the 2-segment /[place]/[category]
+    // page that we DO want indexed. Defense-in-depth: noindex tells Google
+    // "drop this URL"; canonical tells it "consolidate into URL X".
+    const baseCanonical = `${siteUrl}/${place}/${category}`;
 
     if (byDate === "avui") {
       return createPageData(

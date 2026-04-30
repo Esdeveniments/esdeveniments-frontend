@@ -335,7 +335,17 @@ function buildFallbackCategoryShellData({
     canonicalSegments.push(category);
   }
   const canonicalPath = `/${canonicalSegments.join("/")}`;
-  const canonical = `${siteUrl}${canonicalPath}`;
+  // 3-segment URLs (/[place]/[date]/[category]) are noindex,follow via proxy.ts
+  // because GSC flagged them as thin/duplicate. Reinforce the signal by pointing
+  // the canonical link to the 2-segment /[place]/[category] page that we DO
+  // want indexed. Defense-in-depth: noindex tells Google "drop this URL";
+  // canonical tells it "consolidate signals into URL X".
+  const isNoindexThreeSegment =
+    hasSpecificDate && category && category !== DEFAULT_FILTER_VALUE;
+  const canonicalForLink = isNoindexThreeSegment
+    ? `/${[place, category].join("/")}`
+    : canonicalPath;
+  const canonical = `${siteUrl}${canonicalForLink}`;
   const title = t("title", { categoryLabel: titleCategoryLabel, dateLabel, place });
   const subTitle = hasSpecificDate
     ? t("subtitleWithDate", { plansLabel, date: byDate, place })
