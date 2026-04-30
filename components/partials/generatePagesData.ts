@@ -10,6 +10,7 @@ import {
 import { formatPlacePreposition } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical } from "@utils/i18n-seo";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 // Normalize subtitles for LLM/AI SEO extractability:
@@ -413,13 +414,24 @@ export async function generatePagesData({
   }
 
   if (byDate && place) {
+    // 3-segment URLs (/[place]/[date]/[category]) are noindex,follow via
+    // proxy.ts because GSC flagged them as thin/duplicate. When this branch
+    // runs with a category present (categorySEO branch was skipped because
+    // the category lacks a static SEO entry — e.g. gastronomia, familiar),
+    // point the canonical to /[place]/[category] instead of /[place]/[date]
+    // so signals consolidate onto the URL we DO want indexed.
+    const byDatePlaceCanonical =
+      category && category !== DEFAULT_FILTER_VALUE
+        ? `${siteUrl}/${place}/${category}`
+        : `${siteUrl}/${place}/${byDate}`;
+
     if (byDate === "avui") {
       return createPageData(
         t("byDatePlace.avui.title", { label: labelWithArticle }),
         t("byDatePlace.avui.subTitle", { label: labelWithArticle }),
         t("byDatePlace.avui.metaTitle", { label: labelWithArticle }),
         t("byDatePlace.avui.metaDescription", { label: labelWithArticle }),
-        `${siteUrl}/${place}/${byDate}`,
+        byDatePlaceCanonical,
         t("byDatePlace.avui.notFound", { label: labelWithArticle })
       );
     } else if (byDate === "dema") {
@@ -428,7 +440,7 @@ export async function generatePagesData({
         t("byDatePlace.dema.subTitle", { label: labelWithArticle }),
         t("byDatePlace.dema.metaTitle", { label: labelWithArticle }),
         t("byDatePlace.dema.metaDescription", { label: labelWithArticle }),
-        `${siteUrl}/${place}/${byDate}`,
+        byDatePlaceCanonical,
         t("byDatePlace.dema.notFound", { label: labelWithArticle })
       );
     } else if (byDate === "setmana") {
@@ -437,7 +449,7 @@ export async function generatePagesData({
         t("byDatePlace.setmana.subTitle", { label: labelWithArticle }),
         t("byDatePlace.setmana.metaTitle", { label: labelWithArticle }),
         t("byDatePlace.setmana.metaDescription", { label: labelWithArticle }),
-        `${siteUrl}/${place}/${byDate}`,
+        byDatePlaceCanonical,
         t("byDatePlace.setmana.notFound", { label: labelWithArticle })
       );
     } else if (byDate === "cap-de-setmana") {
