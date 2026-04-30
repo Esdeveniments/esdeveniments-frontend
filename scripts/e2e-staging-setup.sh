@@ -95,7 +95,7 @@ BODY=$(echo "$LOGIN_RESPONSE" | sed '$d')
 
 if [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Login successful!"
-  echo "   User: $(echo "$BODY" | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("user",{}).get("name","?"))' 2>/dev/null || echo '?')"
+  echo "   User: $(echo "$BODY" | jq -r '.user.name // "?"' 2>/dev/null || echo '?')"
 else
   echo "❌ Login failed (HTTP $HTTP_CODE): $BODY"
   if echo "$BODY" | grep -qi "not verified\|verification"; then
@@ -136,7 +136,8 @@ echo ""
 
 E2E_STAGING_EMAIL="$TEST_EMAIL" \
 E2E_STAGING_PASSWORD="$TEST_PASSWORD" \
-npx playwright test e2e/publish-integration.spec.ts --config playwright.config.ts
+PLAYWRIGHT_TEST_BASE_URL="http://localhost:3000" \
+npx playwright test e2e/publish-integration.spec.ts --config playwright.remote.config.ts
 
 echo ""
 echo "🎉 Done!"
