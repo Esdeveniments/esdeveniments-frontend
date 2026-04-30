@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
 import { deleteEventById } from "@lib/api/events";
 import { handleApiError } from "@utils/api-error-handler";
@@ -42,8 +43,17 @@ export async function DELETE(
   try {
     const { slug: id } = await context.params;
     await deleteEventById(id);
-    // Invalidate cached entry so stale detail is not served after deletion
+    // Clear in-memory cache so next GET doesn't serve stale data
     deleteEventDetailCache(id);
+    // Purge Next.js Data Cache for all locales of the event detail page.
+    // The id doubles as slug in our URL scheme — best-effort, won't throw.
+    try {
+      revalidatePath(`/e/${id}`);
+      revalidatePath(`/es/e/${id}`);
+      revalidatePath(`/en/e/${id}`);
+    } catch {
+      // revalidatePath is a no-op outside of a render context in some environments
+    }
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     return handleApiError(e, "/api/events/[slug] DELETE");

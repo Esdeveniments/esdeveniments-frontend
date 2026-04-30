@@ -129,7 +129,8 @@ export function createApiAdapter(): AuthAdapter {
         }
 
         const json = await res.json();
-        expiresAt = parseBackendDateAsUtcMs(json.expiresAt);
+        // Fall back to 1-hour TTL if backend doesn't return expiresAt yet
+        expiresAt = parseBackendDateAsUtcMs(json.expiresAt) ?? (Date.now() + 60 * 60_000);
 
         scheduleRefresh();
         return true;
