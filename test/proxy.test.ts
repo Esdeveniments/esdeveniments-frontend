@@ -390,6 +390,95 @@ describe("proxy", () => {
     });
   });
 
+  describe("X-Robots-Tag (3-segment listing pages)", () => {
+    /**
+     * GSC audit (April 2026) found that /[place]/[date]/[category] URLs
+     * generated thin/duplicate content flagged as "Crawled - currently not
+     * indexed". The proxy now emits noindex,follow for these so crawlers
+     * still discover the canonical /[place]/[category] page.
+     */
+    function buildPathRequest(
+      pathname: string,
+      host = "www.esdeveniments.cat",
+    ): NextRequest {
+      return {
+        nextUrl: mockNextUrl({
+          pathname,
+          search: "",
+          searchParams: new URLSearchParams(),
+        }),
+        headers: new Headers({ host, accept: "text/html" }),
+        method: "GET",
+      } as unknown as NextRequest;
+    }
+
+    it.each([
+      "/barcelona/avui/musica",
+      "/barcelona/dema/teatre",
+      "/valles-oriental/setmana/festes-populars",
+      "/girona/cap-de-setmana/exposicions",
+    ])("sets noindex,follow on %s", async (pathname) => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(buildPathRequest(pathname));
+
+      expect(result.headers.get("X-Robots-Tag")).toBe("noindex, follow");
+    });
+
+    it("does NOT set noindex on canonical 2-segment /[place]/[category]", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(buildPathRequest("/barcelona/musica"));
+
+      expect(result.headers.get("X-Robots-Tag")).toBeNull();
+    });
+
+    it("does NOT set noindex on /[place]/[category] for unrelated date-like slugs", async () => {
+      // Not in VALID_DATES → must not match the 3-segment heuristic.
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(
+        buildPathRequest("/barcelona/historia/musica"),
+      );
+
+      expect(result.headers.get("X-Robots-Tag")).toBeNull();
+    });
+
+    it("does NOT match 1-segment /[place]", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(buildPathRequest("/barcelona"));
+
+      expect(result.headers.get("X-Robots-Tag")).toBeNull();
+    });
+
+    it("does NOT match 4-segment paths", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(
+        buildPathRequest("/barcelona/avui/musica/extra"),
+      );
+
+      expect(result.headers.get("X-Robots-Tag")).toBeNull();
+    });
+
+    it("matches 3-segment paths under a locale prefix (/es, /en)", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(
+        buildPathRequest("/es/barcelona/avui/musica"),
+      );
+
+      expect(result.headers.get("X-Robots-Tag")).toBe("noindex, follow");
+    });
+  });
+
   describe("API routes", () => {
     it("returns 401 when x-hmac header is missing", async () => {
       const mockRequest = {

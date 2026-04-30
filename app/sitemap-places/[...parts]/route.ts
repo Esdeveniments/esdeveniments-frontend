@@ -160,20 +160,10 @@ export async function GET(
         alternates: buildAlternateLinks(dateLoc),
       });
 
-      // /[place]/[date]/[category]
-      for (const category of topCategories) {
-        const dateCatLoc = `${siteUrl}${buildCanonicalUrlDynamic(
-          { place: place.slug, byDate: date, category },
-          categories,
-        )}`;
-        fields.push({
-          loc: dateCatLoc,
-          lastmod: lastmod,
-          changefreq: "daily",
-          priority: 0.6,
-          alternates: buildAlternateLinks(dateCatLoc),
-        });
-      }
+      // NOTE: 3-segment /[place]/[date]/[category] URLs were removed from the
+      // sitemap on 2026-04 after a GSC audit revealed they generated thin /
+      // duplicate pages. They are blocked from indexing via X-Robots-Tag in
+      // proxy.ts. Do not re-add without re-evaluating the indexing impact.
     }
 
     // /[place]/[category] (when date is "tots" but omitted in URL)

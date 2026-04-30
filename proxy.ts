@@ -687,9 +687,20 @@ export default async function proxy(request: NextRequest) {
   // Default-deny: anything not on the production allowlist is noindexed.
   const isNonProductionHost = !isProductionHost(request.headers.get("host"));
 
+  // SEO: 3-segment listing paths /[place]/[date]/[category] with a non-default
+  // date (avui|dema|setmana|cap-de-setmana) generate thin/duplicate content
+  // that GSC flags as "Crawled - currently not indexed". Mark noindex,follow
+  // so crawlers can still discover the canonical /[place]/[category] page.
+  // Note: /[place]/tots/[category] is already 301'd to /[place]/[category] by
+  // handleCanonicalRedirects above, so we only need to match non-tots dates.
+  const THREE_SEGMENT_NOINDEX_RE =
+    /^\/[a-z0-9-]+\/(?:avui|dema|setmana|cap-de-setmana)\/[a-z0-9-]+$/;
+  const pathToCheck = pathnameWithoutLocale || pathname;
+  const isThreeSegmentListing = THREE_SEGMENT_NOINDEX_RE.test(pathToCheck);
+
   if (isNonProductionHost || isNoindexPath) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
-  } else if (hasNonCanonicalParams) {
+  } else if (hasNonCanonicalParams || isThreeSegmentListing) {
     response.headers.set("X-Robots-Tag", "noindex, follow");
   }
 
