@@ -87,7 +87,7 @@ export async function fetchEventsWithFallback(
 
   latestResponse = await fetchEvents(finalParams);
 
-  const finalLevel: EventFallbackLevel = hasEvents(latestResponse)
+  const finalLevel = hasEvents(latestResponse)
     ? "catalonia"
     : "none";
   recordFallbackUsage(place, finalLevel);
