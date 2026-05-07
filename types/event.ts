@@ -193,10 +193,20 @@ export interface FetchEventsWithFallbackOptions {
   finalFallback?: EventFallbackStageOptions;
 }
 
+/**
+ * Which stage of the fallback chain produced the rendered events.
+ * - "local"     — town-specific query returned events
+ * - "region"    — comarca rescued an empty town query
+ * - "catalonia" — final all-Catalonia rescue
+ * - "none"      — every stage returned zero
+ */
+export type EventFallbackLevel = "local" | "region" | "catalonia" | "none";
+
 export interface FetchEventsWithFallbackResult {
   eventsResponse: PagedResponseDTO<EventSummaryResponseDTO> | null;
   events: EventSummaryResponseDTO[];
   noEventsFound: boolean;
+  fallbackLevel: EventFallbackLevel;
 }
 
 /**

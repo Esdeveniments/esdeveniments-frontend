@@ -76,6 +76,7 @@ describe("fetchEventsWithFallback", () => {
 
     expect(result.events).toEqual(initialEvents);
     expect(result.noEventsFound).toBe(false);
+    expect(result.fallbackLevel).toBe("local");
     expect(mockFetchEvents).toHaveBeenCalledTimes(1);
     expect(mockFetchRegionsWithCities).not.toHaveBeenCalled();
   });
@@ -117,6 +118,7 @@ describe("fetchEventsWithFallback", () => {
 
     expect(result.events).toHaveLength(1);
     expect(result.noEventsFound).toBe(true);
+    expect(result.fallbackLevel).toBe("region");
     expect(mockFetchEvents).toHaveBeenCalledTimes(2);
     const regionCall = mockFetchEvents.mock.calls[1][0] as FetchEventsParams;
     expect(regionCall.place).toBe("catalunya-central");
@@ -168,6 +170,7 @@ describe("fetchEventsWithFallback", () => {
 
     expect(result.events).toHaveLength(1);
     expect(result.noEventsFound).toBe(true);
+    expect(result.fallbackLevel).toBe("catalonia");
     expect(mockFetchEvents).toHaveBeenCalledTimes(3);
     const finalCall =
       mockFetchEvents.mock.calls[mockFetchEvents.mock.calls.length - 1][0];
@@ -176,5 +179,42 @@ describe("fetchEventsWithFallback", () => {
     expect(finalCall.category).toBeUndefined();
     expect(finalCall.from).toBe(dateRange.from.toISOString().slice(0, 10));
     expect(finalCall.to).toBe(dateRange.until.toISOString().slice(0, 10));
+  });
+
+  it("returns fallbackLevel \"none\" when every stage is empty", async () => {
+    mockFetchEvents
+      .mockResolvedValueOnce(createResponse([]))
+      .mockResolvedValueOnce(createResponse([]))
+      .mockResolvedValueOnce(createResponse([]));
+
+    mockFetchRegionsWithCities.mockResolvedValue([
+      {
+        id: 10,
+        name: "Region",
+        slug: "region",
+        cities: [
+          {
+            id: 1,
+            value: "barcelona",
+            label: "Barcelona",
+            latitude: 1,
+            longitude: 1,
+          },
+        ],
+      },
+    ]);
+    mockFetchRegions.mockResolvedValue([
+      { id: 10, name: "Region", slug: "catalunya-central" },
+    ]);
+
+    const result = await fetchEventsWithFallback({
+      place: "barcelona",
+      initialParams: { page: 0, size: 10 },
+      finalFallback: { place: undefined },
+    });
+
+    expect(result.events).toHaveLength(0);
+    expect(result.noEventsFound).toBe(true);
+    expect(result.fallbackLevel).toBe("none");
   });
 });

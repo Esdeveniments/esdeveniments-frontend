@@ -75,6 +75,7 @@ describe("buildPlaceEventsPromise", () => {
       eventsResponse: emptyResponse,
       events: [],
       noEventsFound: true,
+      fallbackLevel: "none",
     });
 
     await buildPlaceEventsPromise({ place: "catalunya" });
@@ -100,6 +101,7 @@ describe("buildPlaceEventsPromise", () => {
       },
       events: [eventA, eventB],
       noEventsFound: false,
+      fallbackLevel: "local",
     });
 
     const result = await buildPlaceEventsPromise({ place: "catalunya" });
@@ -111,6 +113,7 @@ describe("buildPlaceEventsPromise", () => {
 
     expect(result.events).toEqual(localized);
     expect(result.noEventsFound).toBe(false);
+    expect(result.fallbackLevel).toBe("local");
     expect(result.serverHasMore).toBe(true);
   });
 });

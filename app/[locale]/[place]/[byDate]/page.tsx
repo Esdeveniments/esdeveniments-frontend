@@ -389,7 +389,7 @@ async function buildPlaceByDateEventsPromise({
   pageDataPromise: Promise<PageData>;
   locale: AppLocale;
 }): Promise<PlacePageEventsResult> {
-  const { eventsResponse, events, noEventsFound } =
+  const { eventsResponse, events, noEventsFound, fallbackLevel } =
     await fetchEventsWithFallback({
       place,
       initialParams: paramsForFetch,
@@ -449,6 +449,7 @@ async function buildPlaceByDateEventsPromise({
   return {
     events: eventsWithAds,
     noEventsFound,
+    fallbackLevel,
     serverHasMore,
     structuredScripts: structuredScripts.length
       ? structuredScripts
