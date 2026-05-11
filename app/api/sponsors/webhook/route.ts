@@ -237,6 +237,10 @@ async function handleCheckoutCompleted(
       console.log(`Sponsor already exists for session ${session.id} - skipping duplicate insert`);
       return;
     }
+    console.error("Failed to create sponsor record:", {
+      sessionId: session.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 

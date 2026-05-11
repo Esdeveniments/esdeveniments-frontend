@@ -141,6 +141,7 @@ async function fetchWithTimeout(
     const response = await fetch(url, init as RequestInit);
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
+      await response.body?.cancel();
       if (!location || redirectsRemaining <= 0) {
         throw new Error("Blocked image upstream redirect");
       }
