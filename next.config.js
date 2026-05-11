@@ -10,6 +10,9 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 const withNextIntl = createNextIntlPlugin();
 const isDev = process.env.NODE_ENV !== "production";
 
+// Direct next/image usage is limited to first-party and upload hosts.
+// Event/news images from councils intentionally go through /api/image-proxy,
+// where upstream URLs are validated before the server fetches them.
 const remoteImagePatterns = [
   { protocol: "https", hostname: "www.esdeveniments.cat" },
   { protocol: "https", hostname: "esdeveniments.cat" },
@@ -102,8 +105,8 @@ const nextConfig = {
 
   // --- Image Optimization ---
   images: {
-    // IMPORTANT: Whitelist only the specific domains you load images from.
-    // Using wildcards is a security risk.
+    // Do not add wildcard remote patterns here. Arbitrary public event images
+    // are handled by /api/image-proxy instead of Next's optimizer.
     remotePatterns: remoteImagePatterns,
     deviceSizes: [480, 640, 768, 1024, 1280, 1600, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
