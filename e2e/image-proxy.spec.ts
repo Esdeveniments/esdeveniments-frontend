@@ -194,7 +194,7 @@ test.describe("Image Proxy", () => {
     }) => {
       const response = await request.get(
         `/_next/image?url=${encodeURIComponent(
-          "http://169.254.169.254/latest/meta-data/"
+          "https://metadata.google.internal/computeMetadata/v1/"
         )}&w=16&q=75`
       );
 

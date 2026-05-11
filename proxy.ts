@@ -165,7 +165,10 @@ const CACHED_CSP = getCsp();
 function addAllowedOriginHost(hosts: Set<string>, rawUrl: string | undefined) {
   if (!rawUrl) return;
   try {
-    hosts.add(new URL(rawUrl).host);
+    const normalizedUrl = /^https?:\/\//i.test(rawUrl)
+      ? rawUrl
+      : `https://${rawUrl}`;
+    hosts.add(new URL(normalizedUrl).host);
   } catch {
     // Ignore invalid deployment config here; the route will reject the Origin.
   }
@@ -181,15 +184,13 @@ function getAllowedOriginHosts(): Set<string> {
 
   const vercelUrl = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
   if (vercelUrl) {
-    addAllowedOriginHost(
-      hosts,
-      vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`,
-    );
+    addAllowedOriginHost(hosts, vercelUrl);
   }
 
   if (isDev) {
     hosts.add("localhost:3000");
     hosts.add("127.0.0.1:3000");
+    hosts.add("[::1]:3000");
   }
 
   return hosts;
@@ -319,14 +320,6 @@ export function isOriginAllowed(request: NextRequest): boolean {
     }
 
     if (getAllowedOriginHosts().has(originHost)) return true;
-
-    // In development, also allow localhost variants
-    if (
-      isDev &&
-      (originHost.startsWith("localhost") || originHost.startsWith("127.0.0.1"))
-    ) {
-      return true;
-    }
 
     return false;
   } catch {

@@ -1,14 +1,24 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import {
   normalizeHost,
   isDevelopmentHost,
 } from "../utils/host-validation";
 import { isSafePublicFetchUrl } from "../utils/public-fetch-safety";
 
+const { lookupMock } = vi.hoisted(() => ({
+  lookupMock: vi.fn(),
+}));
+
+vi.mock("node:dns/promises", () => ({
+  default: { lookup: lookupMock },
+  lookup: lookupMock,
+}));
+
 const originalEnv = { ...process.env };
 
 afterEach(() => {
   process.env = { ...originalEnv };
+  lookupMock.mockReset();
 });
 
 describe("utils/host-validation", () => {
@@ -74,5 +84,31 @@ describe("utils/public-fetch-safety", () => {
     await expect(isSafePublicFetchUrl("ftp://8.8.8.8/logo.png")).resolves.toBe(
       false,
     );
+  });
+
+  it("rejects hostnames that resolve to private addresses", async () => {
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+    lookupMock.mockResolvedValueOnce([{ address: "10.0.0.1", family: 4 }]);
+
+    await expect(
+      isSafePublicFetchUrl("https://municipal.example.test/image.jpg"),
+    ).resolves.toBe(false);
+
+    expect(lookupMock).toHaveBeenCalledWith("municipal.example.test", {
+      all: true,
+      verbatim: true,
+    });
+  });
+
+  it("rejects hostnames with mixed public and private DNS answers", async () => {
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+    lookupMock.mockResolvedValueOnce([
+      { address: "8.8.8.8", family: 4 },
+      { address: "10.0.0.1", family: 4 },
+    ]);
+
+    await expect(
+      isSafePublicFetchUrl("https://images.example.test/cartell.jpg"),
+    ).resolves.toBe(false);
   });
 });

@@ -47,8 +47,7 @@ function isInternalHost(host: string): boolean {
     hostname === "metadata.google.internal" ||
     hostname === "0.0.0.0" ||
     hostname === "::" ||
-    hostname === "::1" ||
-    hostname === "[::1]"
+    hostname === "::1"
   ) {
     return true;
   }

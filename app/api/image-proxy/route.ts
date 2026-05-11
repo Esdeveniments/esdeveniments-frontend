@@ -88,14 +88,23 @@ function isAbsoluteHttpUrl(candidate: string): boolean {
   return /^https?:\/\//i.test(candidate);
 }
 
-async function fetchWithTimeout(url: string, redirectsRemaining = MAX_REDIRECTS): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  redirectsRemaining = MAX_REDIRECTS,
+  deadline = Date.now() + TIMEOUT_MS,
+): Promise<Response> {
   const targetIsSafe = await isSafePublicFetchUrl(url);
   if (!targetIsSafe) {
     throw new Error("Blocked unsafe image upstream");
   }
 
+  const remainingMs = deadline - Date.now();
+  if (remainingMs <= 0) {
+    throw new Error("Image upstream fetch timed out");
+  }
+
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), remainingMs);
   try {
     const bypassTls = shouldBypassTlsVerification(url);
     const init: RequestInit & { dispatcher?: unknown } = {
@@ -114,7 +123,7 @@ async function fetchWithTimeout(url: string, redirectsRemaining = MAX_REDIRECTS)
         throw new Error("Blocked image upstream redirect");
       }
       const redirectUrl = new URL(location, url).toString();
-      return fetchWithTimeout(redirectUrl, redirectsRemaining - 1);
+      return await fetchWithTimeout(redirectUrl, redirectsRemaining - 1, deadline);
     }
     return response;
   } catch (error) {
@@ -224,10 +233,10 @@ function buildFetchCandidates(
   absoluteUrl: string,
   originalWasHttp: boolean
 ): string[] {
-  // Always try HTTPS first for non-localhost, then fall back to HTTP when applicable.
+  // Always try HTTPS first for non-development hosts, then fall back to HTTP when applicable.
   try {
     const parsed = new URL(absoluteUrl);
-    const isLocalhost = isDevelopmentHost(parsed.hostname);
+    const isDevHost = isDevelopmentHost(parsed.hostname);
 
     const https = new URL(parsed.toString());
     https.protocol = "https:";
@@ -235,8 +244,8 @@ function buildFetchCandidates(
     const http = new URL(parsed.toString());
     http.protocol = "http:";
 
-    // If localhost, prefer original protocol (usually http) and don't force https first.
-    if (isLocalhost) {
+    // For development hosts, prefer original protocol and don't force https first.
+    if (isDevHost) {
       return [parsed.toString()];
     }
 

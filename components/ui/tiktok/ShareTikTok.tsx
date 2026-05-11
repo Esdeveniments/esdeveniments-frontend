@@ -11,7 +11,11 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { TikTokCreatorInfo, ShareTikTokState } from "types/tiktok";
+import {
+  isTikTokCallbackPayload,
+  type TikTokCreatorInfo,
+  type ShareTikTokState,
+} from "types/tiktok";
 import TikTokPostForm from "./TikTokPostForm";
 import TikTokStatusCheck from "./TikTokStatusCheck";
 
@@ -118,16 +122,19 @@ export default function ShareTikTok() {
       ) {
         return;
       }
-      const data = event.data as { type?: string; code?: string; state?: string } | undefined;
+      const data = isTikTokCallbackPayload(event.data) ? event.data : undefined;
       if (data?.type === "tiktok-auth" && data.code) {
         const expectedState =
           oauthStateRef.current || sessionStorage.getItem(TIKTOK_OAUTH_STATE_KEY);
-        if (!data.state || !expectedState || data.state !== expectedState) {
+        if (!data.state || !expectedState) {
           setError("OAuth state mismatch. Please try signing in again.");
           setState("error");
           codeVerifierRef.current = null;
           oauthStateRef.current = null;
           sessionStorage.removeItem(TIKTOK_OAUTH_STATE_KEY);
+          return;
+        }
+        if (data.state !== expectedState) {
           return;
         }
         void exchangeCode(data.code);

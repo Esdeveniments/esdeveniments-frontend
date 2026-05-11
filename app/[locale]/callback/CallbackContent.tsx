@@ -6,6 +6,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import type { TikTokCallbackPayload } from "types/tiktok";
 
 export default function CallbackContent() {
   const searchParams = useSearchParams();
@@ -20,7 +21,8 @@ export default function CallbackContent() {
   // This is safe: the auth code is already visible in the URL bar.
   useEffect(() => {
     if (window.opener && code) {
-      window.opener.postMessage({ type: "tiktok-auth", code, state }, "*");
+      const payload: TikTokCallbackPayload = { type: "tiktok-auth", code, state };
+      window.opener.postMessage(payload, "*");
       window.close();
     }
   }, [code, state]);

@@ -68,6 +68,12 @@ export const generateCalendarUrls = ({
 
   const htmlDescription = `${description.trim()}<br><br>${moreInfoHtml}`;
   const plainDescription = `${description.trim()}\n\n${moreInfoText}`;
+  const safeCanonical = canonical.replace(/[\r\n]/g, "");
+  const uidToken =
+    `${safeCanonical}-${start}`
+      .replace(/[^A-Za-z0-9._-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "") || "event";
 
   const googleParams = {
     action: "TEMPLATE",
@@ -92,12 +98,14 @@ export const generateCalendarUrls = ({
     "VERSION:2.0",
     "PRODID:-//Esdeveniments.cat//Calendar//CA",
     "BEGIN:VEVENT",
+    `UID:${uidToken}@esdeveniments.cat`,
+    `DTSTAMP:${formatDate(new Date())}`,
     `DTSTART:${start}`,
     `DTEND:${end}`,
     `SUMMARY:${escapeIcsText(title)}`,
     `DESCRIPTION:${escapeIcsText(plainDescription)}`,
     `LOCATION:${escapeIcsText(location)}`,
-    `URL:${canonical}`,
+    `URL:${safeCanonical}`,
     "END:VEVENT",
     "END:VCALENDAR",
   ];

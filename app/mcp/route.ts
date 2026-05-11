@@ -512,8 +512,8 @@ export async function POST(request: NextRequest) {
   const blocked = mcpLimiter.check(request);
   if (blocked) return blocked;
 
-  const contentType = request.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
+  const contentType = (request.headers.get("content-type") ?? "").toLowerCase();
+  if (!contentType.startsWith("application/json")) {
     return new Response(
       JSON.stringify(jsonRpcError(null, -32700, "Content-Type must be application/json")),
       { status: 400, headers: { "Content-Type": "application/json" } },
@@ -538,7 +538,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (bodyText.length > MAX_MCP_BODY_BYTES) {
+    if (new TextEncoder().encode(bodyText).byteLength > MAX_MCP_BODY_BYTES) {
       return new Response(
         JSON.stringify(jsonRpcError(null, -32700, "Request body too large")),
         { status: 413, headers: mcpHeaders() },

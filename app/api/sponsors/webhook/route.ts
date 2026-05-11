@@ -63,9 +63,8 @@ if (WEBHOOK_SECRET && !WEBHOOK_SECRET.startsWith("whsec_")) {
 
 function isDuplicateSponsorInsert(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return (
-    message.includes("UNIQUE constraint failed") &&
-    message.includes("stripe_session_id")
+  return message.includes(
+    "UNIQUE constraint failed: sponsors.stripe_session_id",
   );
 }
 

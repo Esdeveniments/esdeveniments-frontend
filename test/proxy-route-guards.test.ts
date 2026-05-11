@@ -78,9 +78,16 @@ describe("isOriginAllowed", () => {
     process.env.VERCEL_URL = "preview-123.vercel.app";
     const req = createRequest("/api/sponsors/checkout", "POST", {
       origin: "https://preview-123.vercel.app",
-      host: "preview-123.vercel.app",
+      host: "attacker.example.com",
     });
     expect(isOriginAllowed(req)).toBe(true);
+  });
+
+  it("rejects host-like localhost origins in development", () => {
+    const req = createRequest("/api/sponsors/checkout", "POST", {
+      origin: "http://localhost.evil.test:3000",
+    });
+    expect(isOriginAllowed(req)).toBe(false);
   });
 
   it("does not trust attacker-controlled Host for origin checks", () => {
