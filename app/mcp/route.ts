@@ -524,7 +524,7 @@ export async function POST(request: NextRequest) {
   if (mediaType !== "application/json") {
     return new Response(
       JSON.stringify(jsonRpcError(null, -32700, "Content-Type must be application/json")),
-      { status: 400, headers: { "Content-Type": "application/json" } },
+      { status: 400, headers: mcpHeaders() },
     );
   }
 

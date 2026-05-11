@@ -32,6 +32,8 @@ describe("MCP route", () => {
     const body = await response.json();
 
     expect(response.status).toBe(400);
+    expect(response.headers.get("Mcp-Protocol-Version")).toBe("2025-03-26");
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(body.error.message).toBe("Content-Type must be application/json");
   });
 
