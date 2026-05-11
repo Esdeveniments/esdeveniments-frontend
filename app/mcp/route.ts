@@ -513,7 +513,8 @@ export async function POST(request: NextRequest) {
   if (blocked) return blocked;
 
   const contentType = (request.headers.get("content-type") ?? "").toLowerCase();
-  if (!contentType.startsWith("application/json")) {
+  const mediaType = contentType.split(";")[0]?.trim();
+  if (mediaType !== "application/json") {
     return new Response(
       JSON.stringify(jsonRpcError(null, -32700, "Content-Type must be application/json")),
       { status: 400, headers: { "Content-Type": "application/json" } },

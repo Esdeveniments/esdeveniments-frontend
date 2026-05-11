@@ -15,14 +15,11 @@ export default function CallbackContent() {
   const error = searchParams.get("error");
   const scopes = searchParams.get("scopes");
 
-  // If opened as a popup, send the code to the opener and close.
-  // Uses "*" target origin because the opener may be on a different origin
-  // (e.g. localhost during dev vs production callback URL).
-  // This is safe: the auth code is already visible in the URL bar.
+  // If opened as a popup, send the code only to the callback page's origin.
   useEffect(() => {
     if (window.opener && code) {
       const payload: TikTokCallbackPayload = { type: "tiktok-auth", code, state };
-      window.opener.postMessage(payload, "*");
+      window.opener.postMessage(payload, window.location.origin);
       window.close();
     }
   }, [code, state]);
