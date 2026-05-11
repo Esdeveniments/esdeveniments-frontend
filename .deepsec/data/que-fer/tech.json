@@ -1,0 +1,16 @@
+{
+  "tags": [
+    "docker",
+    "github-actions",
+    "nextjs",
+    "node",
+    "react"
+  ],
+  "sentinels": [
+    "Dockerfile",
+    "next.config.js",
+    "package.json"
+  ],
+  "detectedAt": "2026-05-11T16:05:36.321Z",
+  "rootPath": "/Users/albertolive/Repos/que-fer"
+}
