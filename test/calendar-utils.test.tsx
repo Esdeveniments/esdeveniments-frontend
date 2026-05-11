@@ -37,6 +37,13 @@ describe("calendar utils (black-box)", () => {
     );
 
     expect(urls.ical.startsWith("data:text/calendar;charset=utf8,")).toBe(true);
+    const decodedIcs = decodeURIComponent(
+      urls.ical.replace("data:text/calendar;charset=utf8,", "")
+    );
+    expect(decodedIcs).toContain("BEGIN:VCALENDAR");
+    expect(decodedIcs).toContain("BEGIN:VEVENT");
+    expect(decodedIcs).toContain("SUMMARY:Castellers a plaça");
+    expect(decodedIcs).not.toContain("BEGIN=VCALENDAR");
   });
 
   it("formatEventDateRange returns string and jsx in expected shape", () => {

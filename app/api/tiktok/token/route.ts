@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { createRateLimiter } from "@utils/rate-limit";
 
 const TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
+const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
 
 /**
  * POST /api/tiktok/token
@@ -8,6 +10,9 @@ const TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
  * Keeps TIKTOK_CLIENT_SECRET server-side.
  */
 export async function POST(request: Request) {
+  const blocked = limiter.check(request);
+  if (blocked) return blocked;
+
   try {
     const body = (await request.json()) as {
       code?: string;

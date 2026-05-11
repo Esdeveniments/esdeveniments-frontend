@@ -10,6 +10,7 @@ import { useEffect } from "react";
 export default function CallbackContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
+  const state = searchParams.get("state");
   const error = searchParams.get("error");
   const scopes = searchParams.get("scopes");
 
@@ -19,10 +20,10 @@ export default function CallbackContent() {
   // This is safe: the auth code is already visible in the URL bar.
   useEffect(() => {
     if (window.opener && code) {
-      window.opener.postMessage({ type: "tiktok-auth", code }, "*");
+      window.opener.postMessage({ type: "tiktok-auth", code, state }, "*");
       window.close();
     }
-  }, [code]);
+  }, [code, state]);
 
   return (
     <div

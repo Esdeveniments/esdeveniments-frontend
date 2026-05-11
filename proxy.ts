@@ -162,6 +162,64 @@ function getCsp() {
 // Cache CSP string at module load to avoid recomputing on every request
 const CACHED_CSP = getCsp();
 
+function addAllowedOriginHost(hosts: Set<string>, rawUrl: string | undefined) {
+  if (!rawUrl) return;
+  try {
+    hosts.add(new URL(rawUrl).host);
+  } catch {
+    // Ignore invalid deployment config here; the route will reject the Origin.
+  }
+}
+
+function getAllowedOriginHosts(): Set<string> {
+  const hosts = new Set<string>();
+  addAllowedOriginHost(
+    hosts,
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      (isDev ? "http://localhost:3000" : "https://www.esdeveniments.cat"),
+  );
+
+  const vercelUrl = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
+  if (vercelUrl) {
+    addAllowedOriginHost(
+      hosts,
+      vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`,
+    );
+  }
+
+  if (isDev) {
+    hosts.add("localhost:3000");
+    hosts.add("127.0.0.1:3000");
+  }
+
+  return hosts;
+}
+
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  // Use Report-Only in preview (or when explicitly requested), enforce otherwise
+  const reportOnly =
+    process.env.NEXT_PUBLIC_CSP_REPORT_ONLY === "1" ||
+    process.env.VERCEL_ENV === "preview" ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+  if (reportOnly) {
+    response.headers.set("Content-Security-Policy-Report-Only", CACHED_CSP);
+  } else {
+    response.headers.set("Content-Security-Policy", CACHED_CSP);
+  }
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload",
+  );
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(self)",
+  );
+  return response;
+}
+
 // AI/SEO bots NOT in Next.js's hardcoded html-bots.ts getBotType() regex.
 // These bots receive PPR shells (empty HTML) instead of blocking renders.
 // Matched UAs get "Slurp" appended so getBotType() returns 'html' → full render.
@@ -260,16 +318,7 @@ export function isOriginAllowed(request: NextRequest): boolean {
       );
     }
 
-    const siteHost = new URL(siteUrl || "http://localhost:3000").host;
-
-    // Allow exact host match against configured SITE_URL
-    if (originHost === siteHost) return true;
-
-    // Also allow when Origin matches the request's own Host header.
-    // This handles preview/staging deployments where the URL differs
-    // from NEXT_PUBLIC_SITE_URL (e.g. Amplify preview branches).
-    const requestHost = request.headers.get("host");
-    if (requestHost && originHost === requestHost) return true;
+    if (getAllowedOriginHosts().has(originHost)) return true;
 
     // In development, also allow localhost variants
     if (
@@ -355,15 +404,20 @@ export default async function proxy(request: NextRequest) {
       return new NextResponse("Internal Server Error", { status: 500 });
     }
 
-    if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
-      try {
-        requestBody = await request.clone().text();
-      } catch (error) {
-        console.error("Could not read request body in middleware:", error);
-        return new NextResponse("Bad Request: Unable to read request body", {
-          status: 400,
-        });
-      }
+    if (contentType.toLowerCase().startsWith("multipart/form-data")) {
+      return NextResponse.json(
+        { error: "Unsupported media type" },
+        { status: 415 },
+      );
+    }
+
+    try {
+      requestBody = await request.clone().text();
+    } catch (error) {
+      console.error("Could not read request body in middleware:", error);
+      return new NextResponse("Bad Request: Unable to read request body", {
+        status: 400,
+      });
     }
 
     if (!hmac || !timestamp) {
@@ -424,7 +478,7 @@ export default async function proxy(request: NextRequest) {
 
   // NLWeb /ask endpoint: bypass locale handling
   if (pathname === "/ask") {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
 
   // /.well-known/mcp: rewrite to /mcp so MCP is discoverable at standard path
@@ -584,27 +638,7 @@ export default async function proxy(request: NextRequest) {
 
   // visitor_id cookie is set for /api/sponsors/checkout if missing.
 
-  // Use Report-Only in preview (or when explicitly requested), enforce otherwise
-  const reportOnly =
-    process.env.NEXT_PUBLIC_CSP_REPORT_ONLY === "1" ||
-    process.env.VERCEL_ENV === "preview" ||
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
-  if (reportOnly) {
-    response.headers.set("Content-Security-Policy-Report-Only", CACHED_CSP);
-  } else {
-    response.headers.set("Content-Security-Policy", CACHED_CSP);
-  }
-  response.headers.set(
-    "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload",
-  );
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "SAMEORIGIN");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(self)",
-  );
+  applySecurityHeaders(response);
 
   // Cache-Control for public HTML pages (excluding API and Next assets).
   //
@@ -698,6 +732,7 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/.well-known/mcp",
     "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view).*)",
   ],
 };

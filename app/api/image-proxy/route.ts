@@ -12,6 +12,8 @@ import {
   normalizeExternalImageUrl,
   isLegacyFileHandler,
 } from "@utils/image-cache";
+import { isDevelopmentHost } from "@utils/host-validation";
+import { isSafePublicFetchUrl } from "@utils/public-fetch-safety";
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
@@ -19,6 +21,7 @@ const MAX_BYTES = 5_000_000; // 5MB guard
 const TIMEOUT_MS = 5000;
 const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
+const MAX_REDIRECTS = 2;
 
 // Image optimization defaults
 const DEFAULT_QUALITY = 50; // Base quality for mobile - Lighthouse tests on mobile viewport
@@ -85,22 +88,37 @@ function isAbsoluteHttpUrl(candidate: string): boolean {
   return /^https?:\/\//i.test(candidate);
 }
 
-async function fetchWithTimeout(url: string) {
+async function fetchWithTimeout(url: string, redirectsRemaining = MAX_REDIRECTS): Promise<Response> {
+  const targetIsSafe = await isSafePublicFetchUrl(url);
+  if (!targetIsSafe) {
+    throw new Error("Blocked unsafe image upstream");
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const bypassTls = shouldBypassTlsVerification(url);
     const init: RequestInit & { dispatcher?: unknown } = {
       signal: controller.signal,
+      redirect: "manual",
     };
 
     if (bypassTls) {
       init.dispatcher = insecureTlsDispatcher;
     }
 
-    return await fetch(url, init as RequestInit);
+    const response = await fetch(url, init as RequestInit);
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      if (!location || redirectsRemaining <= 0) {
+        throw new Error("Blocked image upstream redirect");
+      }
+      const redirectUrl = new URL(location, url).toString();
+      return fetchWithTimeout(redirectUrl, redirectsRemaining - 1);
+    }
+    return response;
   } catch (error) {
-    throw new Error(`Fetch failed for ${url}`, { cause: error });
+    throw new Error("Image upstream fetch failed", { cause: error });
   } finally {
     clearTimeout(timeout);
   }
@@ -209,8 +227,7 @@ function buildFetchCandidates(
   // Always try HTTPS first for non-localhost, then fall back to HTTP when applicable.
   try {
     const parsed = new URL(absoluteUrl);
-    const isLocalhost =
-      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    const isLocalhost = isDevelopmentHost(parsed.hostname);
 
     const https = new URL(parsed.toString());
     https.protocol = "https:";

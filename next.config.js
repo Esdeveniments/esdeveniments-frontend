@@ -8,6 +8,20 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 });
 
 const withNextIntl = createNextIntlPlugin();
+const isDev = process.env.NODE_ENV !== "production";
+
+const remoteImagePatterns = [
+  { protocol: "https", hostname: "www.esdeveniments.cat" },
+  { protocol: "https", hostname: "esdeveniments.cat" },
+  { protocol: "https", hostname: "esdeveniments.vercel.app" },
+  { protocol: "https", hostname: "res.cloudinary.com" },
+  ...(isDev
+    ? [
+        { protocol: "http", hostname: "localhost", port: "3000" },
+        { protocol: "http", hostname: "127.0.0.1", port: "3000" },
+      ]
+    : []),
+];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -90,10 +104,7 @@ const nextConfig = {
   images: {
     // IMPORTANT: Whitelist only the specific domains you load images from.
     // Using wildcards is a security risk.
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
-    ],
+    remotePatterns: remoteImagePatterns,
     deviceSizes: [480, 640, 768, 1024, 1280, 1600, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/avif", "image/webp"],
