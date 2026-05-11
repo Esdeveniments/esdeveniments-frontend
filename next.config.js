@@ -37,6 +37,9 @@ const nextConfig = {
   // --- Deployment Configuration ---
   // Required for Docker/Coolify deployment (standalone server.js output)
   output: "standalone",
+  outputFileTracingIncludes: {
+    "/*": ["./cache-handler.mjs"],
+  },
   // Mark sharp and its native dependencies as external
   // Sharp has native binaries that must be bundled separately for the target platform
   // Include @img/* packages to ensure Turbopack doesn't mangle the module resolution
