@@ -3,7 +3,10 @@ import {
   normalizeHost,
   isDevelopmentHost,
 } from "../utils/host-validation";
-import { isSafePublicFetchUrl } from "../utils/public-fetch-safety";
+import {
+  getPublicFetchSafety,
+  isSafePublicFetchUrl,
+} from "../utils/public-fetch-safety";
 
 const { lookupMock } = vi.hoisted(() => ({
   lookupMock: vi.fn(),
@@ -64,11 +67,19 @@ describe("utils/public-fetch-safety", () => {
     ).resolves.toBe(false);
   });
 
-  it("allows exact localhost only outside production", async () => {
+  it("allows exact localhost only in development", async () => {
     (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
 
     await expect(isSafePublicFetchUrl("http://localhost:3000/x")).resolves.toBe(
       true,
+    );
+  });
+
+  it("blocks localhost outside development", async () => {
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "test";
+
+    await expect(isSafePublicFetchUrl("http://localhost:3000/x")).resolves.toBe(
+      false,
     );
   });
 
@@ -110,5 +121,17 @@ describe("utils/public-fetch-safety", () => {
     await expect(
       isSafePublicFetchUrl("https://images.example.test/cartell.jpg"),
     ).resolves.toBe(false);
+  });
+
+  it("returns validated DNS records for callers that pin the fetch connection", async () => {
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+    lookupMock.mockResolvedValueOnce([{ address: "8.8.8.8", family: 4 }]);
+
+    await expect(
+      getPublicFetchSafety("https://images.example.test/cartell.jpg"),
+    ).resolves.toEqual({
+      isSafe: true,
+      dnsRecords: [{ address: "8.8.8.8", family: 4 }],
+    });
   });
 });

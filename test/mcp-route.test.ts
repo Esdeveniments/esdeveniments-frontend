@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "../app/mcp/route";
+
+const originalEnv = { ...process.env };
 
 function buildMcpRequest(contentType: string, clientIp = "203.0.113.10"): NextRequest {
   return new NextRequest("http://localhost:3000/mcp", {
@@ -19,6 +21,15 @@ function buildMcpBodyRequest(body: object, clientIp: string): NextRequest {
 }
 
 describe("MCP route", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    process.env = { ...originalEnv };
+  });
+
   it("accepts JSON content type with parameters case-insensitively", async () => {
     const response = await POST(buildMcpRequest("Application/JSON; charset=utf-8"));
     const body = await response.json();
@@ -57,6 +68,8 @@ describe("MCP route", () => {
   });
 
   it("bounds resource fetches with an abort signal", async () => {
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
+
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(
       new Response("guide", { status: 200, headers: { "content-type": "text/plain" } }),
     );
@@ -83,7 +96,5 @@ describe("MCP route", () => {
         signal: expect.any(AbortSignal),
       }),
     );
-
-    fetchMock.mockRestore();
   });
 });

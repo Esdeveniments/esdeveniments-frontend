@@ -8,8 +8,11 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 });
 
 const withNextIntl = createNextIntlPlugin();
-const isDev = process.env.NODE_ENV !== "production";
+const isDev = process.env.NODE_ENV === "development";
 const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
+const vercelPreviewImagePatterns = process.env.VERCEL_URL
+  ? [{ protocol: "https", hostname: process.env.VERCEL_URL }]
+  : [];
 
 // Direct next/image usage is limited to first-party and upload hosts.
 // Event/news images from councils intentionally go through /api/image-proxy,
@@ -18,6 +21,7 @@ const remoteImagePatterns = [
   { protocol: "https", hostname: "www.esdeveniments.cat" },
   { protocol: "https", hostname: "esdeveniments.cat" },
   { protocol: "https", hostname: "esdeveniments.vercel.app" },
+  ...vercelPreviewImagePatterns,
   { protocol: "https", hostname: "res.cloudinary.com" },
   ...(isDev
     ? [

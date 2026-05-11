@@ -536,26 +536,26 @@ export async function POST(request: NextRequest) {
     );
   }
 
-    let bodyText: string;
-    try {
-      bodyText = await request.text();
-    } catch {
-      return new Response(JSON.stringify(jsonRpcError(null, -32700, "Parse error")), {
-        status: 400,
-        headers: mcpHeaders(),
-      });
-    }
-
-    if (new TextEncoder().encode(bodyText).byteLength > MAX_MCP_BODY_BYTES) {
-      return new Response(
-        JSON.stringify(jsonRpcError(null, -32700, "Request body too large")),
-        { status: 413, headers: mcpHeaders() },
-      );
-    }
-
-    let body: unknown;
+  let bodyText: string;
   try {
-      body = JSON.parse(bodyText);
+    bodyText = await request.text();
+  } catch {
+    return new Response(JSON.stringify(jsonRpcError(null, -32700, "Parse error")), {
+      status: 400,
+      headers: mcpHeaders(),
+    });
+  }
+
+  if (Buffer.byteLength(bodyText, "utf8") > MAX_MCP_BODY_BYTES) {
+    return new Response(
+      JSON.stringify(jsonRpcError(null, -32700, "Request body too large")),
+      { status: 413, headers: mcpHeaders() },
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(bodyText);
   } catch {
     return new Response(
       JSON.stringify(jsonRpcError(null, -32700, "Parse error")),

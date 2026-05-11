@@ -13,7 +13,8 @@ import {
   isLegacyFileHandler,
 } from "@utils/image-cache";
 import { isDevelopmentHost } from "@utils/host-validation";
-import { isSafePublicFetchUrl } from "@utils/public-fetch-safety";
+import { getPublicFetchSafety } from "@utils/public-fetch-safety";
+import type { LookupAddress } from "node:dns";
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
@@ -58,6 +59,24 @@ const insecureTlsDispatcher = new Agent({
   },
 });
 
+function buildPinnedDnsDispatcher(
+  dnsRecords: LookupAddress[],
+  rejectUnauthorized: boolean,
+): Agent | null {
+  const firstRecord = dnsRecords[0];
+  if (!firstRecord) return null;
+
+  return new Agent({
+    connect: {
+      keepAlive: false,
+      rejectUnauthorized,
+      lookup(_hostname, _options, callback) {
+        callback(null, firstRecord.address, firstRecord.family);
+      },
+    },
+  });
+}
+
 function shouldBypassTlsVerification(candidateUrl: string): boolean {
   try {
     const parsed = new URL(candidateUrl);
@@ -93,8 +112,8 @@ async function fetchWithTimeout(
   redirectsRemaining = MAX_REDIRECTS,
   deadline = Date.now() + TIMEOUT_MS,
 ): Promise<Response> {
-  const targetIsSafe = await isSafePublicFetchUrl(url);
-  if (!targetIsSafe) {
+  const targetSafety = await getPublicFetchSafety(url);
+  if (!targetSafety.isSafe) {
     throw new Error("Blocked unsafe image upstream");
   }
 
@@ -107,13 +126,16 @@ async function fetchWithTimeout(
   const timeout = setTimeout(() => controller.abort(), remainingMs);
   try {
     const bypassTls = shouldBypassTlsVerification(url);
+    const pinnedDnsDispatcher = targetSafety.dnsRecords
+      ? buildPinnedDnsDispatcher(targetSafety.dnsRecords, !bypassTls)
+      : null;
     const init: RequestInit & { dispatcher?: unknown } = {
       signal: controller.signal,
       redirect: "manual",
     };
 
-    if (bypassTls) {
-      init.dispatcher = insecureTlsDispatcher;
+    if (pinnedDnsDispatcher || bypassTls) {
+      init.dispatcher = pinnedDnsDispatcher ?? insecureTlsDispatcher;
     }
 
     const response = await fetch(url, init as RequestInit);
