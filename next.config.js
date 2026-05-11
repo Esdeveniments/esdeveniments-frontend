@@ -9,6 +9,7 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 
 const withNextIntl = createNextIntlPlugin();
 const isDev = process.env.NODE_ENV !== "production";
+const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
 
 // Direct next/image usage is limited to first-party and upload hosts.
 // Event/news images from councils intentionally go through /api/image-proxy,
@@ -54,12 +55,16 @@ const nextConfig = {
     "@redis/client",
     "@fortedigital/nextjs-cache-handler",
   ],
-  // Always load the cache handler — it gracefully falls back to no-op when
-  // Redis env vars (REDIS_URL/REDIS_HOST) are not set at runtime.
-  // Must be unconditional because next.config.js is evaluated at build time,
-  // but Redis env vars are only available at container runtime.
-  cacheHandler: require.resolve("./cache-handler.mjs"),
-  cacheMaxMemorySize: 0,
+  ...(isVercel
+    ? {}
+    : {
+        // Always load the cache handler for self-hosted deployments; it gracefully
+        // falls back to no-op when Redis env vars are not set at runtime.
+        // Must be unconditional outside Vercel because next.config.js is evaluated
+        // at build time, but Redis env vars are only available at container runtime.
+        cacheHandler: require.resolve("./cache-handler.mjs"),
+        cacheMaxMemorySize: 0,
+      }),
 
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
