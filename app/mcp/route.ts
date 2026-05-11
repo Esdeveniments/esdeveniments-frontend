@@ -484,9 +484,11 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
         if (!(await isSafePublicFetchUrl(resourceUrl))) {
           return jsonRpcError(id, -32603, "Unsafe resource URL");
         }
+        // eslint-disable-next-line no-restricted-globals -- MCP resources are same-origin text/HTML and are timeout-bounded here.
         const res = await fetch(resourceUrl, {
           next: { revalidate: 3600 },
           redirect: "manual",
+          signal: AbortSignal.timeout(10_000),
         });
         if (!res.ok) {
           return jsonRpcError(id, -32603, `Failed to fetch resource (HTTP ${res.status})`);
@@ -510,7 +512,12 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
 
 export async function POST(request: NextRequest) {
   const blocked = mcpLimiter.check(request);
-  if (blocked) return blocked;
+  if (blocked) {
+    for (const [key, value] of Object.entries(mcpHeaders())) {
+      blocked.headers.set(key, value);
+    }
+    return blocked;
+  }
 
   const contentType = (request.headers.get("content-type") ?? "").toLowerCase();
   const mediaType = contentType.split(";")[0]?.trim();
