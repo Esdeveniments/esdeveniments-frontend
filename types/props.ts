@@ -58,6 +58,7 @@ import {
   NavigationItem,
 } from "types/common";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import type { EventFallbackLevel } from "types/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
@@ -517,6 +518,7 @@ export interface SsrListWrapperProps {
 export interface PlacePageEventsResult {
   events: ListEvent[];
   noEventsFound: boolean;
+  fallbackLevel: EventFallbackLevel;
   serverHasMore: boolean;
   structuredScripts?: JsonLdScript[];
 }

@@ -1,8 +1,10 @@
+import { addBreadcrumb } from "@sentry/nextjs";
 import { fetchEvents } from "@lib/api/events";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { toLocalDateString } from "@utils/helpers";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import type {
+  EventFallbackLevel,
   EventFallbackStageOptions,
   FetchEventsParams,
   FetchEventsWithFallbackOptions,
@@ -26,12 +28,13 @@ export async function fetchEventsWithFallback(
       eventsResponse: initialResponse,
       events: initialResponse.content,
       noEventsFound: false,
+      fallbackLevel: "local",
     };
   }
 
   let latestResponse: PagedResponseDTO<EventSummaryResponseDTO> | null =
     initialResponse;
-  let noEventsFound = true;
+  const noEventsFound = true;
 
   if (shouldAttemptRegionFallback(place, options.regionFallback)) {
     const regionSlug = await resolveRegionSlugForPlace(place);
@@ -50,20 +53,24 @@ export async function fetchEventsWithFallback(
       latestResponse = await fetchEvents(regionParams);
 
       if (hasEvents(latestResponse)) {
+        recordFallbackUsage(place, "region", regionSlug);
         return {
           eventsResponse: latestResponse,
           events: latestResponse.content,
           noEventsFound,
+          fallbackLevel: "region",
         };
       }
     }
   }
 
   if (options.finalFallback?.enabled === false) {
+    recordFallbackUsage(place, "none");
     return {
       eventsResponse: latestResponse,
       events: latestResponse?.content ?? [],
       noEventsFound,
+      fallbackLevel: "none",
     };
   }
 
@@ -80,11 +87,37 @@ export async function fetchEventsWithFallback(
 
   latestResponse = await fetchEvents(finalParams);
 
+  const finalLevel = hasEvents(latestResponse)
+    ? "catalonia"
+    : "none";
+  recordFallbackUsage(place, finalLevel);
+
   return {
     eventsResponse: latestResponse,
     events: latestResponse?.content ?? [],
     noEventsFound,
+    fallbackLevel: finalLevel,
   };
+}
+
+/**
+ * Phase 0 telemetry: emits a Sentry breadcrumb (free, attached to any error)
+ * and a structured console.info line (collected by Coolify/Docker logs).
+ * Only called for non-"local" outcomes — successful town queries are silent.
+ */
+function recordFallbackUsage(
+  place: string,
+  level: Exclude<EventFallbackLevel, "local">,
+  regionSlug?: string
+): void {
+  const data = { place, level, ...(regionSlug ? { regionSlug } : {}) };
+  addBreadcrumb({
+    category: "events.fallback",
+    message: `events.fallback level=${level} place=${place}`,
+    level: "info",
+    data,
+  });
+  console.info("events.fallback", data);
 }
 
 function hasEvents(

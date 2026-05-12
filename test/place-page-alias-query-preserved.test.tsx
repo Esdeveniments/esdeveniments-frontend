@@ -43,6 +43,7 @@ vi.mock("@lib/helpers/event-fallback", () => {
       eventsResponse: { last: true },
       events: [],
       noEventsFound: false,
+      fallbackLevel: "local",
     })),
   };
 });

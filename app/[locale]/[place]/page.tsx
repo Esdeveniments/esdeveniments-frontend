@@ -227,7 +227,7 @@ export async function buildPlaceEventsPromise({
     fetchParams.place = place;
   }
 
-  const { eventsResponse, events, noEventsFound } =
+  const { eventsResponse, events, noEventsFound, fallbackLevel } =
     await fetchEventsWithFallback({
       place,
       initialParams: fetchParams,
@@ -269,6 +269,7 @@ export async function buildPlaceEventsPromise({
   return {
     events: eventsWithAds,
     noEventsFound,
+    fallbackLevel,
     serverHasMore,
     structuredScripts,
   };

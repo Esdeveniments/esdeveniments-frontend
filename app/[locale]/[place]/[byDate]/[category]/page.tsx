@@ -382,7 +382,7 @@ async function buildCategoryEventsPromise({
   categoryName?: string;
   locale: AppLocale;
 }): Promise<PlacePageEventsResult> {
-  const { eventsResponse, events, noEventsFound } =
+  const { eventsResponse, events, noEventsFound, fallbackLevel } =
     await fetchEventsWithFallback({
       place: filters.place,
       initialParams: fetchParams,
@@ -442,6 +442,7 @@ async function buildCategoryEventsPromise({
   return {
     events: eventsWithAds,
     noEventsFound,
+    fallbackLevel,
     serverHasMore,
     structuredScripts: structuredScripts.length ? structuredScripts : undefined,
   };
