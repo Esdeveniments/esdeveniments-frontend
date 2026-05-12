@@ -2,8 +2,25 @@ import type { CalendarParams, CalendarUrls, CalendarLabels } from "types/calenda
 
 import * as React from "react";
 
-const formatDate = (date: string | Date): string =>
-  new Date(date).toISOString().replace(/-|:|\.\d+/g, "");
+const parseCalendarDate = (date: unknown): Date | null => {
+  if (date instanceof Date) {
+    if (Number.isNaN(date.getTime())) return null;
+    return date;
+  }
+
+  if (typeof date !== "string") return null;
+
+  const trimmedDate = date.trim();
+  if (trimmedDate === "") return null;
+  if (!/^\d{4}-\d{2}-\d{2}(?:T|\s|$)/.test(trimmedDate)) return null;
+
+  const parsedDate = new Date(trimmedDate);
+  if (Number.isNaN(parsedDate.getTime())) return null;
+  return parsedDate;
+};
+
+const formatDate = (date: Date): string =>
+  date.toISOString().replace(/-|:|\.\d+/g, "");
 
 const encodeParams = (params: Record<string, string>): string =>
   Object.entries(params)
@@ -60,8 +77,16 @@ export const generateCalendarUrls = ({
   canonical,
   labels,
 }: CalendarParams & { labels: CalendarLabels }): CalendarUrls => {
-  const start = formatDate(startDate);
-  const end = formatDate(endDate);
+  const parsedStart = parseCalendarDate(startDate);
+  if (!parsedStart) {
+    return { google: "", outlook: "", ical: "" };
+  }
+
+  const parsedEnd = parseCalendarDate(endDate);
+  const safeEnd =
+    parsedEnd && parsedEnd >= parsedStart ? parsedEnd : parsedStart;
+  const start = formatDate(parsedStart);
+  const end = formatDate(safeEnd);
 
   const moreInfoHtml = labels.moreInfoHtml.replace("{url}", canonical);
   const moreInfoText = labels.moreInfoText.replace("{url}", canonical);

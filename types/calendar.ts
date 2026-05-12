@@ -3,7 +3,7 @@ export interface CalendarParams {
   description: string;
   location: string;
   startDate: string | Date;
-  endDate: string | Date;
+  endDate?: string | Date | null;
   canonical: string;
 }
 
