@@ -8,6 +8,28 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 });
 
 const withNextIntl = createNextIntlPlugin();
+const isDev = process.env.NODE_ENV === "development";
+const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
+const vercelPreviewImagePatterns = process.env.VERCEL_URL
+  ? [{ protocol: "https", hostname: process.env.VERCEL_URL }]
+  : [];
+
+// Direct next/image usage is limited to first-party and upload hosts.
+// Event/news images from councils intentionally go through /api/image-proxy,
+// where upstream URLs are validated before the server fetches them.
+const remoteImagePatterns = [
+  { protocol: "https", hostname: "www.esdeveniments.cat" },
+  { protocol: "https", hostname: "esdeveniments.cat" },
+  { protocol: "https", hostname: "esdeveniments.vercel.app" },
+  ...vercelPreviewImagePatterns,
+  { protocol: "https", hostname: "res.cloudinary.com" },
+  ...(isDev
+    ? [
+        { protocol: "http", hostname: "localhost", port: "3000" },
+        { protocol: "http", hostname: "127.0.0.1", port: "3000" },
+      ]
+    : []),
+];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -20,6 +42,9 @@ const nextConfig = {
   // --- Deployment Configuration ---
   // Required for Docker/Coolify deployment (standalone server.js output)
   output: "standalone",
+  outputFileTracingIncludes: {
+    "/*": ["./cache-handler.mjs"],
+  },
   // Mark sharp and its native dependencies as external
   // Sharp has native binaries that must be bundled separately for the target platform
   // Include @img/* packages to ensure Turbopack doesn't mangle the module resolution
@@ -34,12 +59,16 @@ const nextConfig = {
     "@redis/client",
     "@fortedigital/nextjs-cache-handler",
   ],
-  // Always load the cache handler — it gracefully falls back to no-op when
-  // Redis env vars (REDIS_URL/REDIS_HOST) are not set at runtime.
-  // Must be unconditional because next.config.js is evaluated at build time,
-  // but Redis env vars are only available at container runtime.
-  cacheHandler: require.resolve("./cache-handler.mjs"),
-  cacheMaxMemorySize: 0,
+  ...(isVercel
+    ? {}
+    : {
+        // Always load the cache handler for self-hosted deployments; it gracefully
+        // falls back to no-op when Redis env vars are not set at runtime.
+        // Must be unconditional outside Vercel because next.config.js is evaluated
+        // at build time, but Redis env vars are only available at container runtime.
+        cacheHandler: require.resolve("./cache-handler.mjs"),
+        cacheMaxMemorySize: 0,
+      }),
 
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
@@ -88,12 +117,9 @@ const nextConfig = {
 
   // --- Image Optimization ---
   images: {
-    // IMPORTANT: Whitelist only the specific domains you load images from.
-    // Using wildcards is a security risk.
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
-    ],
+    // Do not add wildcard remote patterns here. Arbitrary public event images
+    // are handled by /api/image-proxy instead of Next's optimizer.
+    remotePatterns: remoteImagePatterns,
     deviceSizes: [480, 640, 768, 1024, 1280, 1600, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/avif", "image/webp"],

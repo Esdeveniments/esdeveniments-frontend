@@ -5,6 +5,7 @@
 
 import { getSiteUrl } from "@config/index";
 import apiDefaults from "@config/api-defaults.json";
+import { isDevelopmentHost } from "@utils/host-validation";
 import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
@@ -93,35 +94,21 @@ export function getVercelProtectionBypassHeaders(): Record<string, string> {
  * This is necessary when running without a request context (e.g., during build
  * or static generation), where relative URLs are invalid in Node's fetch.
  *
- * In Vercel preview deployments, this function will use the request host header
- * when available to ensure the correct preview URL is used.
+ * Preview/staging deployments should provide INTERNAL_SITE_URL or VERCEL_URL.
+ * Request Host is only trusted for exact localhost development hosts.
  */
 export async function getInternalApiUrl(path: string): Promise<string> {
   const normalized = path.startsWith("/") ? path : `/${path}`;
 
-  // Priority 1: Try to get host from request headers (works in server components)
-  // This ensures Vercel preview URLs are correctly resolved
-  if (headersFn) {
+  // Priority 1: In development, trust exact localhost headers for correct port resolution.
+  if (headersFn && process.env.NODE_ENV !== "production") {
     try {
       const headersList = await headersFn();
       const host = headersList.get("host");
 
       if (host) {
-        const isLocal =
-          host.includes("localhost") || host.includes("127.0.0.1");
-
-        // In development, trust localhost headers for correct port resolution.
-        // In production, skip localhost headers (they may come from internal routing).
-        if (isLocal && process.env.NODE_ENV !== "production") {
+        if (isDevelopmentHost(host)) {
           const origin = `http://${host}`;
-          try {
-            return new URL(normalized, origin).toString();
-          } catch {
-            // Fall through to next priority
-          }
-        } else if (!isLocal) {
-          const protocol = headersList.get("x-forwarded-proto") || "https";
-          const origin = `${protocol}://${host}`;
           try {
             return new URL(normalized, origin).toString();
           } catch {

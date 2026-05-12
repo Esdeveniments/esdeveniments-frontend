@@ -246,7 +246,7 @@ export interface AddToCalendarProps {
   description: string;
   location: string;
   startDate: DateString;
-  endDate: DateString;
+  endDate?: DateString | null;
   canonical: string;
   hideText?: boolean;
 }

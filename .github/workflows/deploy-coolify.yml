@@ -386,6 +386,7 @@ jobs:
       - name: Post-deploy smoke tests
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          IS_PRODUCTION_DEPLOY: ${{ github.ref_name == 'main' }}
           SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
           FAILED=0
@@ -409,7 +410,15 @@ jobs:
             FAILED=1
           fi
 
-          curl -sf --max-time 5 "${SITE_URL}/robots.txt" | grep -q "Sitemap:" && echo "robots.txt: OK" || { echo "::error::robots.txt missing Sitemap directive"; FAILED=1; }
+          ROBOTS_TXT=$(curl -sf --max-time 5 "${SITE_URL}/robots.txt") || ROBOTS_TXT=""
+          if [ -z "$ROBOTS_TXT" ]; then
+            echo "::error::robots.txt could not be fetched"
+            FAILED=1
+          elif [ "$IS_PRODUCTION_DEPLOY" = "true" ]; then
+            echo "$ROBOTS_TXT" | grep -q "Sitemap:" && echo "robots.txt: OK" || { echo "::error::production robots.txt missing Sitemap directive"; FAILED=1; }
+          else
+            echo "$ROBOTS_TXT" | grep -q "Disallow: /" && echo "robots.txt: OK (staging disallows crawlers)" || { echo "::error::staging robots.txt does not disallow crawlers"; FAILED=1; }
+          fi
 
           # Health check with details
           echo ""
