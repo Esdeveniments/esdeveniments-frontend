@@ -5,6 +5,8 @@ import { fetchNewsExternal } from "lib/api/news-external";
 import { fetchCategoriesExternal } from "lib/api/categories-external";
 import { fetchPlacesAggregatedExternal } from "lib/api/places-external";
 import type { JsonRpcRequest, JsonRpcResponse } from "types/mcp";
+import { createRateLimiter } from "@utils/rate-limit";
+import { isSafePublicFetchUrl } from "@utils/public-fetch-safety";
 
 /**
  * MCP (Model Context Protocol) Streamable HTTP endpoint
@@ -15,6 +17,9 @@ import type { JsonRpcRequest, JsonRpcResponse } from "types/mcp";
  */
 
 const MCP_PROTOCOL_VERSION = "2025-03-26";
+const MAX_MCP_BODY_BYTES = 100_000;
+const MAX_MCP_BATCH_SIZE = 5;
+const mcpLimiter = createRateLimiter({ maxRequests: 60, windowMs: 60_000 });
 const SERVER_INFO = {
   name: "esdeveniments-cat",
   version: "1.0.0",
@@ -120,6 +125,12 @@ function jsonRpcError(
   data?: unknown,
 ): JsonRpcResponse {
   return { jsonrpc: "2.0", id, error: { code, message, ...(data !== undefined && { data }) } };
+}
+
+function isJsonRpcRequest(candidate: unknown): candidate is JsonRpcRequest {
+  if (!candidate || typeof candidate !== "object") return false;
+  const request = candidate as { jsonrpc?: unknown; method?: unknown };
+  return request.jsonrpc === "2.0" && typeof request.method === "string";
 }
 
 async function handleToolCall(name: string, args: Record<string, unknown>) {
@@ -309,16 +320,22 @@ function search(){
   window.parent.postMessage({type:'mcp:tool_call',tool:'listEvents',arguments:args},'*');
 }
 window.addEventListener('message',e=>{
+  if(e.source!==window.parent)return;
   if(e.data?.type==='mcp:tool_result'){
     try{
       const d=JSON.parse(e.data.content);
       const el=document.getElementById('results');
-      if(!d.events?.length){el.innerHTML='<p>Cap resultat</p>';return}
-      el.innerHTML=d.events.map(ev=>'<div class="event"><h3>'+esc(ev.title)+'</h3><p>'+(ev.startDate||'')+' · '+(ev.location||ev.city?.name||'')+'</p></div>').join('');
+      el.replaceChildren();
+      if(!d.events?.length){const p=document.createElement('p');p.textContent='Cap resultat';el.appendChild(p);return}
+      d.events.forEach(ev=>{
+        const item=document.createElement('div');item.className='event';
+        const title=document.createElement('h3');title.textContent=ev.title||'';
+        const meta=document.createElement('p');meta.textContent=[ev.startDate||'',ev.location||ev.city?.name||''].filter(Boolean).join(' · ');
+        item.append(title,meta);el.appendChild(item);
+      });
     }catch{}
   }
 });
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 </script>
 </body>
 </html>`;
@@ -355,6 +372,7 @@ a{color:#e63946}
 </div>
 <script>
 window.addEventListener('message',e=>{
+  if(e.source!==window.parent)return;
   if(e.data?.type==='mcp:tool_result'){
     try{
       const ev=JSON.parse(e.data.content);
@@ -364,12 +382,12 @@ window.addEventListener('message',e=>{
       document.getElementById('dates').textContent=[ev.startDate,ev.endDate].filter(Boolean).join(' – ');
       document.getElementById('location').textContent=ev.location||ev.city?.name||'';
       document.getElementById('description').textContent=(ev.description||'').slice(0,500);
-      if(ev.categories?.length){document.getElementById('categories').innerHTML=ev.categories.map(c=>'<span class="tag">'+esc(c.name||c)+'</span>').join('')}
+      const categories=document.getElementById('categories');categories.replaceChildren();
+      if(ev.categories?.length){ev.categories.forEach(c=>{const tag=document.createElement('span');tag.className='tag';tag.textContent=typeof c==='string'?c:(c.name||'');categories.appendChild(tag);})}
       if(ev.url){const a=document.getElementById('link');a.href=ev.url;a.style.display='inline'}
     }catch{}
   }
 });
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 </script>
 </body>
 </html>`;
@@ -378,7 +396,7 @@ function esc(s){const d=document.createElement('div');d.textContent=s;return d.i
   return null;
 }
 
-async function handleRequest(req: JsonRpcRequest, requestOrigin: string): Promise<JsonRpcResponse> {
+async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
   const id = req.id ?? null;
 
   switch (req.method) {
@@ -461,9 +479,17 @@ async function handleRequest(req: JsonRpcRequest, requestOrigin: string): Promis
       }
 
       try {
-        // Use request origin to avoid DNS resolution issues in containers
         const resourcePath = new URL(resource.uri).pathname;
-        const res = await fetch(`${requestOrigin}${resourcePath}`, { next: { revalidate: 3600 } });
+        const resourceUrl = new URL(resourcePath, siteUrl).toString();
+        if (!(await isSafePublicFetchUrl(resourceUrl))) {
+          return jsonRpcError(id, -32603, "Unsafe resource URL");
+        }
+        // eslint-disable-next-line no-restricted-globals -- MCP resources are same-origin text/HTML and are timeout-bounded here.
+        const res = await fetch(resourceUrl, {
+          next: { revalidate: 3600 },
+          redirect: "manual",
+          signal: AbortSignal.timeout(10_000),
+        });
         if (!res.ok) {
           return jsonRpcError(id, -32603, `Failed to fetch resource (HTTP ${res.status})`);
         }
@@ -485,17 +511,51 @@ async function handleRequest(req: JsonRpcRequest, requestOrigin: string): Promis
 }
 
 export async function POST(request: NextRequest) {
-  const contentType = request.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
+  const blocked = mcpLimiter.check(request);
+  if (blocked) {
+    for (const [key, value] of Object.entries(mcpHeaders())) {
+      blocked.headers.set(key, value);
+    }
+    return blocked;
+  }
+
+  const contentType = (request.headers.get("content-type") ?? "").toLowerCase();
+  const mediaType = contentType.split(";")[0]?.trim();
+  if (mediaType !== "application/json") {
     return new Response(
       JSON.stringify(jsonRpcError(null, -32700, "Content-Type must be application/json")),
-      { status: 400, headers: { "Content-Type": "application/json" } },
+      { status: 400, headers: mcpHeaders() },
+    );
+  }
+
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_MCP_BODY_BYTES) {
+    return new Response(
+      JSON.stringify(jsonRpcError(null, -32700, "Request body too large")),
+      { status: 413, headers: mcpHeaders() },
+    );
+  }
+
+  let bodyText: string;
+  try {
+    bodyText = await request.text();
+  } catch {
+    return new Response(JSON.stringify(jsonRpcError(null, -32700, "Parse error")), {
+      status: 400,
+      headers: mcpHeaders(),
+    });
+  }
+
+  if (Buffer.byteLength(bodyText, "utf8") > MAX_MCP_BODY_BYTES) {
+    return new Response(
+      JSON.stringify(jsonRpcError(null, -32700, "Request body too large")),
+      { status: 413, headers: mcpHeaders() },
     );
   }
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(bodyText);
   } catch {
     return new Response(
       JSON.stringify(jsonRpcError(null, -32700, "Parse error")),
@@ -505,13 +565,24 @@ export async function POST(request: NextRequest) {
 
   const accept = request.headers.get("accept") ?? "";
   const wantsSse = accept.includes("text/event-stream");
-  const requestOrigin = request.nextUrl.origin;
 
   // Handle batch requests
   if (Array.isArray(body)) {
-    const responses = await Promise.all(
-      body.map((req: JsonRpcRequest) => handleRequest(req, requestOrigin)),
-    );
+    if (body.length > MAX_MCP_BATCH_SIZE) {
+      return new Response(
+        JSON.stringify(jsonRpcError(null, -32600, "JSON-RPC batch too large")),
+        { status: 413, headers: mcpHeaders() },
+      );
+    }
+
+    const responses: JsonRpcResponse[] = [];
+    for (const req of body) {
+      responses.push(
+        isJsonRpcRequest(req)
+          ? await handleRequest(req)
+          : jsonRpcError(null, -32600, "Invalid JSON-RPC request"),
+      );
+    }
     // Filter out notification responses (id === null and no error)
     const filtered = responses.filter((r) => r.id !== null || r.error);
 
@@ -525,15 +596,14 @@ export async function POST(request: NextRequest) {
   }
 
   // Single request
-  const rpcReq = body as JsonRpcRequest;
-  if (!rpcReq.jsonrpc || rpcReq.jsonrpc !== "2.0" || !rpcReq.method) {
+  if (!isJsonRpcRequest(body)) {
     return new Response(
-      JSON.stringify(jsonRpcError(rpcReq?.id ?? null, -32600, "Invalid JSON-RPC request")),
+      JSON.stringify(jsonRpcError(null, -32600, "Invalid JSON-RPC request")),
       { status: 400, headers: mcpHeaders() },
     );
   }
 
-  const response = await handleRequest(rpcReq, requestOrigin);
+  const response = await handleRequest(body);
 
   if (wantsSse) {
     return sseResponse([response]);

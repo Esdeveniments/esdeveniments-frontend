@@ -1,4 +1,4 @@
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowUpTrayIcon as UploadIcon } from "@heroicons/react/24/outline";
@@ -364,7 +364,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               />
             </svg>
           </button>
-          <Image
+          <img
             alt={t("altPreview")}
             height={100}
             width={100}

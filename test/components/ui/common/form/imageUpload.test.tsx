@@ -333,4 +333,24 @@ describe("ImageUploader file validation", () => {
 
     expect(onUpload).not.toHaveBeenCalled();
   });
+
+  it("previews arbitrary external image URLs without Next optimizer", () => {
+    const externalImage = "https://www.cardedeu.cat/media/cartell.jpg";
+
+    renderWithProviders(
+      <ImageUploader
+        value={null}
+        onUpload={vi.fn()}
+        progress={0}
+        mode="url"
+        imageUrlValue={externalImage}
+      />,
+    );
+
+    const preview = document.querySelector(
+      `img[src="${externalImage}"]`,
+    );
+
+    expect(preview).toBeInTheDocument();
+  });
 });

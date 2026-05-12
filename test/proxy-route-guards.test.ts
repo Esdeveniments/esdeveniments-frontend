@@ -28,6 +28,7 @@ const matchesPublicApi = (pathname: string) =>
 
 describe("isOriginAllowed", () => {
   const originalEnv = process.env.NEXT_PUBLIC_SITE_URL;
+  const originalVercelUrl = process.env.VERCEL_URL;
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
@@ -38,6 +39,11 @@ describe("isOriginAllowed", () => {
       process.env.NEXT_PUBLIC_SITE_URL = originalEnv;
     } else {
       delete process.env.NEXT_PUBLIC_SITE_URL;
+    }
+    if (originalVercelUrl !== undefined) {
+      process.env.VERCEL_URL = originalVercelUrl;
+    } else {
+      delete process.env.VERCEL_URL;
     }
   });
 
@@ -67,15 +73,29 @@ describe("isOriginAllowed", () => {
     expect(isOriginAllowed(req)).toBe(false);
   });
 
-  it("allows Origin matching the request Host header (preview deployments)", () => {
-    // Simulate a preview deployment where SITE_URL is production
-    // but the actual request comes from a preview URL
+  it("allows configured Vercel preview origins", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+    process.env.VERCEL_URL = "preview-123.vercel.app";
     const req = createRequest("/api/sponsors/checkout", "POST", {
-      origin: "https://preview-123.amplifyapp.com",
-      host: "preview-123.amplifyapp.com",
+      origin: "https://preview-123.vercel.app",
+      host: "attacker.example.com",
     });
     expect(isOriginAllowed(req)).toBe(true);
+  });
+
+  it("rejects host-like localhost origins in development", () => {
+    const req = createRequest("/api/sponsors/checkout", "POST", {
+      origin: "http://localhost.evil.test:3000",
+    });
+    expect(isOriginAllowed(req)).toBe(false);
+  });
+
+  it("does not trust attacker-controlled Host for origin checks", () => {
+    const req = createRequest("/api/sponsors/checkout", "POST", {
+      origin: "https://evil.com",
+      host: "evil.com",
+    });
+    expect(isOriginAllowed(req)).toBe(false);
   });
 
   it("rejects when NEXT_PUBLIC_SITE_URL is unset (falls back to localhost)", () => {
