@@ -13,6 +13,16 @@ const encodeParams = (params: Record<string, string>): string =>
 const createUrl = (base: string, params: Record<string, string>): string =>
   `${base}?${encodeParams(params)}`;
 
+const escapeIcsText = (value: string): string =>
+  value
+    .replace(/\\/g, "\\\\")
+    .replace(/\r\n|\r|\n/g, "\\n")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,");
+
+const createIcalDataUri = (lines: string[]): string =>
+  `data:text/calendar;charset=utf8,${encodeURIComponent(lines.join("\r\n"))}`;
+
 // Utility to format event date as string and JSX with <time> for accessibility
 export function formatEventDateRange(
   startDate: string,
@@ -58,6 +68,12 @@ export const generateCalendarUrls = ({
 
   const htmlDescription = `${description.trim()}<br><br>${moreInfoHtml}`;
   const plainDescription = `${description.trim()}\n\n${moreInfoText}`;
+  const safeCanonical = canonical.replace(/[\r\n]/g, "");
+  const uidToken =
+    `${safeCanonical}-${start}`
+      .replace(/[^A-Za-z0-9._-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "") || "event";
 
   const googleParams = {
     action: "TEMPLATE",
@@ -77,25 +93,26 @@ export const generateCalendarUrls = ({
     location,
   };
 
-  const iCalParams = {
-    BEGIN: "VCALENDAR",
-    VERSION: "2.0",
-    BEGIN_2: "VEVENT",
-    DTSTART: start,
-    DTEND: end,
-    SUMMARY: title,
-    DESCRIPTION: plainDescription,
-    LOCATION: location,
-    END: "VEVENT",
-    END_2: "VCALENDAR",
-  };
+  const iCalLines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Esdeveniments.cat//Calendar//CA",
+    "BEGIN:VEVENT",
+    `UID:${uidToken}@esdeveniments.cat`,
+    `DTSTAMP:${formatDate(new Date())}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${escapeIcsText(title)}`,
+    `DESCRIPTION:${escapeIcsText(plainDescription)}`,
+    `LOCATION:${escapeIcsText(location)}`,
+    `URL:${safeCanonical}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
 
   return {
     google: createUrl("https://www.google.com/calendar/render", googleParams),
     outlook: createUrl("https://outlook.live.com/owa/", outlookParams),
-    ical: `data:text/calendar;charset=utf8,${encodeParams(iCalParams).replace(
-      /&/g,
-      "%0D%0A"
-    )}`,
+    ical: createIcalDataUri(iCalLines),
   };
 };
