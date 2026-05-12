@@ -654,6 +654,7 @@ export interface NewsCardProps {
   placeSlug: string;
   placeLabel?: string;
   variant?: "default" | "hero";
+  priority?: boolean;
 }
 
 export interface NewsArticleDetailProps {
@@ -800,6 +801,23 @@ export interface EventStickyCTAProps {
     favoriteRemove: string;
   };
 }
+
+export interface EventClientPayload {
+  id: EventSummaryResponseDTO["id"];
+  slug: EventSummaryResponseDTO["slug"];
+  title: EventSummaryResponseDTO["title"];
+  endDate: EventSummaryResponseDTO["endDate"];
+  categorySlug?: CategorySummaryResponseDTO["slug"];
+  placeSlug?: string;
+  hasImage: boolean;
+  origin: EventSummaryResponseDTO["origin"];
+}
+
+export interface EventClientProps {
+  event: EventClientPayload;
+}
+
+export type ClientEventClientProps = EventClientProps;
 
 // Collapsible description wrapper (mobile)
 export interface CollapsibleDescriptionProps {

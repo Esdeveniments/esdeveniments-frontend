@@ -122,7 +122,7 @@ export default function RestaurantPromotionSection({
           const usedDate = isValid(parsed) ? parsed : new Date(eventStartDate);
           dateParam = `&date=${format(usedDate, "yyyy-MM-dd")}`;
         }
-        const url = `/api/places/nearby?lat=${eventLat}&lng=${eventLng}&limit=3${dateParam}`;
+        const url = `/api/places/nearby?lat=${eventLat}&lng=${eventLng}&limit=2${dateParam}`;
         const res = await fetch(url);
 
         if (res.ok) {

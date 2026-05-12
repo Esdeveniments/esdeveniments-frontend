@@ -159,5 +159,20 @@ describe("meta helpers (black-box)", () => {
       const meta = generateEventMetadata(baseEvent);
       expect(meta.robots).toBe("noindex, nofollow");
     });
+
+    it("emits {index:false, follow:true} for events with malformed (feed-leak) slugs", () => {
+      // GSC reported ~1,127 404s for slugs corrupted by upstream RSS/XML feed
+      // imports. Until the backend slug generator is fixed, the frontend
+      // noindexes these on the detail page so Google drops them from the index.
+      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+      const malformedEvent = {
+        ...baseEvent,
+        slug:
+          "bibliobustitle-linkhttpswwwsbgcatactualitatagenda2400-bibliobushtmllink-descriptioncdata-2400-fri-27-mar-2026",
+      };
+      const meta = generateEventMetadata(malformedEvent);
+      expect(meta.robots).toEqual({ index: false, follow: true });
+    });
   });
 });
