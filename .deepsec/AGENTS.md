@@ -19,5 +19,5 @@ asked to set a project up.
 ## Reference
 
 The deepsec skill is at `node_modules/deepsec/SKILL.md` (after
-`pnpm install`). The full docs ship at
+`yarn install`). The full docs ship at
 `node_modules/deepsec/dist/docs/`.

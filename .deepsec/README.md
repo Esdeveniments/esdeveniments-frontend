@@ -9,7 +9,7 @@ Currently configured project: `que-fer` (target: `..`).
 
 ## Setup
 
-1. `pnpm install` - installs deepsec.
+1. `yarn install` - installs deepsec.
 2. Add an AI Gateway / Anthropic / OpenAI token to `.env.local`. If
    you already have `claude` or `codex` CLI logged in on this
    machine, you can skip the token for non-sandbox runs (`process` /
@@ -23,10 +23,10 @@ Currently configured project: `que-fer` (target: `..`).
 ## Daily commands
 
 ```bash
-pnpm deepsec scan
-pnpm deepsec process     --concurrency 5
-pnpm deepsec revalidate  --concurrency 5                  # cuts FP rate
-pnpm deepsec export      --format md-dir --out ./findings
+yarn deepsec scan
+yarn deepsec process     --concurrency 5
+yarn deepsec revalidate  --concurrency 5                  # cuts FP rate
+yarn deepsec export      --format md-dir --out ./findings
 ```
 
 `--project-id` is auto-resolved while there's only one project in
@@ -41,7 +41,7 @@ on Opus by default). Run state goes to `data/que-fer/`.
 To scan another codebase from this same `.deepsec/`:
 
 ```bash
-pnpm deepsec init-project ../some-other-package   # path relative to .deepsec/
+yarn deepsec init-project ../some-other-package   # path relative to .deepsec/
 ```
 
 Appends an entry to `deepsec.config.ts` and writes
@@ -50,7 +50,7 @@ in your agent to fill in INFO.md.
 
 ## Layout
 
-```
+```text
 deepsec.config.ts        Project list (one entry per scanned repo)
 data/que-fer/
    INFO.md                Repo context - checked into git, hand-curated
@@ -65,7 +65,7 @@ AGENTS.md                Pointer for coding agents
 
 ## Docs
 
-After `pnpm install`:
+After `yarn install`:
 
 - Skill: `node_modules/deepsec/SKILL.md`
 - Full docs: `node_modules/deepsec/dist/docs/{getting-started,configuration,models,writing-matchers,plugins,architecture,data-layout,vercel-setup,faq}.md`
