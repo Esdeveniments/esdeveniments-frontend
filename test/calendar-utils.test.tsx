@@ -73,6 +73,118 @@ describe("calendar utils (black-box)", () => {
     expect(decodedIcs).not.toContain("\nX-EVIL:YES");
   });
 
+  it("generateCalendarUrls falls back to the start date when endDate is null", () => {
+    const urls = generateCalendarUrls({
+      title: "Presentació del llibre",
+      description: "Presentació del llibre 'Entendre els mapes'",
+      location: "Altafulla",
+      startDate: "2026-07-27T00:00:00.000Z",
+      endDate: null,
+      canonical: "https://www.esdeveniments.cat/e/presentacio",
+      labels: {
+        moreInfoHtml: "More info: {url}",
+        moreInfoText: "More info: {url}",
+        dateRange: "From {start} to {end}",
+        dateSingle: "From {start}",
+      },
+    });
+
+    const googleParams = new URL(urls.google).searchParams;
+    const outlookParams = new URL(urls.outlook).searchParams;
+    const decodedIcal = decodeURIComponent(urls.ical);
+
+    expect(googleParams.get("dates")).toBe(
+      "20260727T000000Z/20260727T000000Z"
+    );
+    expect(outlookParams.get("enddt")).toBe("20260727T000000Z");
+    expect(decodedIcal).toContain("DTEND:20260727T000000Z");
+    expect(urls.google).not.toContain("19700101");
+  });
+
+  it("generateCalendarUrls parses whitespace-padded ISO date strings", () => {
+    const urls = generateCalendarUrls({
+      title: "Presentació del llibre",
+      description: "Presentació del llibre 'Entendre els mapes'",
+      location: "Altafulla",
+      startDate: " 2026-07-27T00:00:00.000Z ",
+      endDate: " 2026-07-27T01:00:00.000Z ",
+      canonical: "https://www.esdeveniments.cat/e/presentacio",
+      labels: {
+        moreInfoHtml: "More info: {url}",
+        moreInfoText: "More info: {url}",
+        dateRange: "From {start} to {end}",
+        dateSingle: "From {start}",
+      },
+    });
+
+    expect(new URL(urls.google).searchParams.get("dates")).toBe(
+      "20260727T000000Z/20260727T010000Z"
+    );
+  });
+
+  it("generateCalendarUrls ignores non-date runtime endDate values", () => {
+    const urls = generateCalendarUrls({
+      title: "Presentació del llibre",
+      description: "Presentació del llibre 'Entendre els mapes'",
+      location: "Altafulla",
+      startDate: "2026-07-27T00:00:00.000Z",
+      endDate: 0 as unknown as Date,
+      canonical: "https://www.esdeveniments.cat/e/presentacio",
+      labels: {
+        moreInfoHtml: "More info: {url}",
+        moreInfoText: "More info: {url}",
+        dateRange: "From {start} to {end}",
+        dateSingle: "From {start}",
+      },
+    });
+
+    expect(new URL(urls.google).searchParams.get("dates")).toBe(
+      "20260727T000000Z/20260727T000000Z"
+    );
+    expect(urls.google).not.toContain("19700101");
+  });
+
+  it("generateCalendarUrls falls back when endDate is before startDate", () => {
+    const urls = generateCalendarUrls({
+      title: "Presentació del llibre",
+      description: "Presentació del llibre 'Entendre els mapes'",
+      location: "Altafulla",
+      startDate: "2026-07-27T00:00:00.000Z",
+      endDate: "1970-01-01T00:00:00.000Z",
+      canonical: "https://www.esdeveniments.cat/e/presentacio",
+      labels: {
+        moreInfoHtml: "More info: {url}",
+        moreInfoText: "More info: {url}",
+        dateRange: "From {start} to {end}",
+        dateSingle: "From {start}",
+      },
+    });
+
+    expect(new URL(urls.google).searchParams.get("dates")).toBe(
+      "20260727T000000Z/20260727T000000Z"
+    );
+    expect(urls.google).not.toContain("19700101");
+  });
+
+  it("generateCalendarUrls returns empty URLs for invalid startDate values", () => {
+    const urls = generateCalendarUrls({
+      title: "Presentació del llibre",
+      description: "Presentació del llibre 'Entendre els mapes'",
+      location: "Altafulla",
+      startDate: "not-a-date",
+      endDate: "2026-07-27T00:00:00.000Z",
+      canonical: "https://www.esdeveniments.cat/e/presentacio",
+      labels: {
+        moreInfoHtml: "More info: {url}",
+        moreInfoText: "More info: {url}",
+        dateRange: "From {start} to {end}",
+        dateSingle: "From {start}",
+      },
+    });
+
+    expect(urls).toEqual({ google: "", outlook: "", ical: "" });
+  });
+
   it("formatEventDateRange returns string and jsx in expected shape", () => {
     const labels = {
       dateRange: "From {start} to {end}",
