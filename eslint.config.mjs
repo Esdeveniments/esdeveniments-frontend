@@ -1,19 +1,9 @@
 import next from "eslint-config-next";
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import globals from "globals";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
+import * as espree from "espree";
+import { fixupConfigRules } from "@eslint/compat";
 import eslintReact from "@eslint-react/eslint-plugin";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
 
 export default [
   {
@@ -22,11 +12,9 @@ export default [
       ".next/**/*",
     ],
   },
-  // Spread converted ESLintRC configs from FlatCompat
-  ...compat.extends("eslint:recommended"),
-  // Spread Next.js configs (they're already flat config compatible)
-  ...next,
-  ...nextCoreWebVitals,
+  // Patch legacy rule context for ESLint 10 compatibility
+  ...fixupConfigRules(next),
+  ...fixupConfigRules(nextCoreWebVitals),
   // Base configuration
   {
     languageOptions: {
@@ -57,6 +45,12 @@ export default [
 
     rules: {
       "no-undef": "off",
+    },
+  },
+  {
+    files: ["**/*.{js,mjs,cjs,jsx}"],
+    languageOptions: {
+      parser: espree,
     },
   },
   {
@@ -148,6 +142,9 @@ export default [
       "@eslint-react/no-context-provider": "off",
       "@eslint-react/no-use-context": "off",
       "@eslint-react/no-forward-ref": "off",
+      // Keep parity with previous lint baseline during ESLint 10 migration
+      "@eslint-react/static-components": "off",
+      "@eslint-react/unsupported-syntax": "off",
     },
   },
   // Disable hook naming rules in test mocks (they need to match real hook names)
