@@ -1,3 +1,4 @@
+import { flattenError } from "zod/mini";
 import {
   createEventFormSchema,
   defaultEventFormZodLabels,
@@ -31,7 +32,7 @@ export const getZodValidationState = (
   if (!result.success) {
     // Collect first error message
     const firstError =
-      Object.values(result.error.flatten().fieldErrors)[0]?.[0] ||
+      Object.values(flattenError(result.error).fieldErrors)[0]?.[0] ||
       labels.genericError;
     return { isDisabled: true, isPristine, message: firstError };
   }

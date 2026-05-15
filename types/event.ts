@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/mini";
 import type {
   RegionSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -26,7 +26,7 @@ const CitySummaryResponseDTOSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   postalCode: z.string(),
-  rssFeed: z.string().nullable().optional(),
+  rssFeed: z.optional(z.nullable(z.string())),
   enabled: z.boolean(),
 });
 
@@ -61,40 +61,44 @@ export const createEventFormSchema = (
   labels: EventFormZodLabels = defaultEventFormZodLabels,
 ) =>
   z.object({
-    id: z.string().optional(),
-    title: z.string().min(1, labels.titleRequired),
-    description: z.string().min(1, labels.descriptionRequired),
+    id: z.optional(z.string()),
+    title: z.string().check(z.minLength(1, labels.titleRequired)),
+    description: z.string().check(z.minLength(1, labels.descriptionRequired)),
     type: z.enum(["FREE", "PAID"]),
     startDate: z.string(), // "YYYY-MM-DD" - consistent with API
-    startTime: z.string().nullable(), // ISO time string or null - consistent with API
+    startTime: z.nullable(z.string()), // ISO time string or null - consistent with API
     endDate: z.string(), // "YYYY-MM-DD" - consistent with API
-    endTime: z.string().nullable(), // ISO time string or null - consistent with API
-    region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
-    town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
-    location: z.string().min(1, labels.locationRequired),
-    imageUrl: z
-      .string()
-      .url(labels.invalidUrl)
-      .refine((val) => {
-        if (!val) return true;
-        try {
-          const url = new URL(val);
-          return url.hostname.includes(".");
-        } catch {
-          return false;
-        }
-      }, labels.invalidUrl)
-      .nullable()
-      .or(z.literal("")),
+    endTime: z.nullable(z.string()), // ISO time string or null - consistent with API
+    region: z.nullable(z.union([RegionSummaryResponseDTOSchema, OptionSchema])),
+    town: z.nullable(z.union([CitySummaryResponseDTOSchema, OptionSchema])),
+    location: z.string().check(z.minLength(1, labels.locationRequired)),
+    imageUrl: z.union([
+      z.nullable(
+        z.url(labels.invalidUrl).check(
+          z.refine((val) => {
+            if (!val) return true;
+            try {
+              const urlObj = new URL(val);
+              return urlObj.hostname.includes(".");
+            } catch {
+              return false;
+            }
+          }, labels.invalidUrl),
+        ),
+      ),
+      z.literal(""),
+    ]),
     url: z
       .string()
-      .refine(
-        (val) => !val || z.string().url().safeParse(val).success,
-        labels.invalidUrl,
+      .check(
+        z.refine(
+          (val) => !val || z.url().safeParse(val).success,
+          labels.invalidUrl,
+        ),
       ),
     categories: z.array(CategoryFormItemSchema),
-    email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
-    isAllDay: z.boolean().optional(),
+    email: z.optional(z.union([z.email(labels.invalidEmail), z.literal("")])),
+    isAllDay: z.optional(z.boolean()),
   });
 
 // --- Zod schema for canonical event form data ---
