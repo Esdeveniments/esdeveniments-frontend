@@ -307,15 +307,15 @@ p {
   /* ===================================== */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-muted {
@@ -323,11 +323,11 @@ p {
   }
 
   .btn-category {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-badge px-4 py-2.5 border border-border/80 bg-background text-foreground hover:border-primary hover:text-primary transition-all duration-fast ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-badge px-4 py-2.5 border border-border/80 bg-background text-foreground hover:border-primary hover:text-primary transition-all duration-fast ease-smooth focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-transparent text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-transparent text-foreground hover:bg-muted transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
   }
 
   /* ===================================== */
@@ -471,7 +471,7 @@ p {
   }
 
   .pressable-chip {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2;
+    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2;
   }
 
   .pressable-card {
@@ -525,7 +525,7 @@ p {
 
   .input {
     /* Enforce 16px to avoid iOS Safari auto-zoom on focus */
-    @apply w-full rounded-input border border-border bg-background text-foreground text-base px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
+    @apply w-full rounded-input border border-border bg-background text-foreground text-base px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
   }
 
   .input-lg {
@@ -566,11 +566,11 @@ p {
   /* ===================================== */
 
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
   }
 
   .focus-ring-error {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2;
+    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2;
   }
 
   /* ===================================== */
