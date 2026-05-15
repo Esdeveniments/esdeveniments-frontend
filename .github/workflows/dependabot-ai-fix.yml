@@ -3,13 +3,25 @@
 # Flow:
 #   1. CI workflow finishes with conclusion=failure
 #   2. We detect the PR was opened by dependabot[bot]
-#   3. Post a comment with a pointer to the failed run logs
+#   3. Label the PR `ai-fix-requested`
 #   4. Assign `copilot-swe-agent` so the coding agent picks it up and pushes fixes
-#   5. Label the PR `ai-fix-requested` for visibility
+#   5. Post a comment with a pointer to the failed run logs
 #
 # Idempotent: skips if the label is already present (Copilot already running).
 # Pairs with `dependabot-auto-merge.yml` — that one merges patch/minor when CI
 # passes; this one rescues failures. Majors stay manual either way.
+#
+# REQUIRED SECRET: COPILOT_AUTOFIX_PAT
+#   The default GITHUB_TOKEN cannot assign agents (it's an App installation token;
+#   GitHub returns: "Assigning agents is not supported with GitHub App installation
+#   tokens. Use a user token (personal access token or OAuth token) instead.").
+#   Create a fine-grained PAT with these permissions on this repo:
+#     - "Pull requests": Read and write
+#     - "Issues": Read and write
+#     - "Metadata": Read
+#   Then add it as repo secret `COPILOT_AUTOFIX_PAT`.
+#   If the secret is missing, the workflow still labels + comments, and posts an
+#   "ASSIGN MANUALLY" note for the human to do the assignment.
 
 name: Dependabot AI fix
 
@@ -88,17 +100,41 @@ jobs:
 
       - name: Assign Copilot coding agent
         if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        id: assign
+        env:
+          # PAT required: GitHub App installation tokens cannot assign agents.
+          GH_TOKEN: ${{ secrets.COPILOT_AUTOFIX_PAT || secrets.GITHUB_TOKEN }}
         run: |
-          gh api graphql \
+          set +e
+          OUT=$(gh api graphql \
             -f query='mutation($assignableId:ID!,$actorIds:[ID!]!){ replaceActorsForAssignable(input:{assignableId:$assignableId, actorIds:$actorIds}){ clientMutationId } }' \
             -F assignableId="${{ steps.pr.outputs.node_id }}" \
-            -F actorIds="$COPILOT_BOT_ID"
+            -F actorIds="$COPILOT_BOT_ID" 2>&1)
+          STATUS=$?
+          echo "$OUT"
+          if [ $STATUS -ne 0 ]; then
+            if echo "$OUT" | grep -q "not supported with GitHub App installation tokens"; then
+              echo "::warning::COPILOT_AUTOFIX_PAT secret missing or invalid. Falling back to comment-only mode."
+              echo "assigned=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::Unexpected error assigning Copilot."
+            exit 1
+          fi
+          echo "assigned=true" >> "$GITHUB_OUTPUT"
 
       - name: Comment with failure context
         if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
         run: |
+          if [ "${{ steps.assign.outputs.assigned }}" = "true" ]; then
+            ASSIGN_LINE="Copilot coding agent has been assigned and will start a session shortly."
+          else
+            ASSIGN_LINE="⚠️ Copilot was NOT auto-assigned (COPILOT_AUTOFIX_PAT secret missing or invalid). Please assign \`@copilot\` manually."
+          fi
           BODY=$(cat <<EOF
           @copilot CI failed on this Dependabot PR. Please investigate and push a fix to the PR branch.
+
+          ${ASSIGN_LINE}
 
           - Failed run: ${RUN_URL}
           - Inspect logs: \`gh run view ${RUN_ID} -R ${REPO} --log-failed\`
