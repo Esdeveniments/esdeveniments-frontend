@@ -81,7 +81,7 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="not-exist-description"
                   name="not-exist"
                   type="checkbox"
-                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
@@ -99,7 +99,7 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="duplicated-description"
                   name="duplicated"
                   type="checkbox"
-                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
@@ -117,7 +117,7 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="offensive-description"
                   name="offensive"
                   type="checkbox"
-                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
@@ -135,7 +135,7 @@ const EditModal: FC<EditModalProps> = ({
                   aria-describedby="others-description"
                   name="others"
                   type="checkbox"
-                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="h-5 w-5 text-primary-dark border-foreground-strong rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 />
               </div>
               <div className="p-2">
@@ -162,7 +162,7 @@ const EditModal: FC<EditModalProps> = ({
                   onSendDeleteReason();
                 }
               }}
-              className="disabled:opacity-50 disabled:cursor-default disabled:hover:bg-primary text-background bg-primary rounded-xl py-3 px-6 ease-in-out duration-300 border border-background focus:outline-none font-barlow uppercase font-semibold tracking-wide"
+              className="disabled:opacity-50 disabled:cursor-default disabled:hover:bg-primary text-background bg-primary rounded-xl py-3 px-6 ease-in-out duration-300 border border-background focus:outline-hidden font-barlow uppercase font-semibold tracking-wide"
             >
               {t("submit")}
             </button>

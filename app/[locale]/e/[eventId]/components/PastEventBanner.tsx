@@ -46,7 +46,7 @@ export default function PastEventBanner({
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-start md:justify-center">
             <PressableAnchor
               href={explorePlaceHref}
-              className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-primary-dark text-primary-foreground text-sm font-semibold hover:bg-primary-dark/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
+              className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-primary-dark text-primary-foreground text-sm font-semibold hover:bg-primary-dark/90 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
               variant="inline"
               data-analytics-event-name="explore_more_click"
               data-analytics-context="past_event_banner"
@@ -60,7 +60,7 @@ export default function PastEventBanner({
             {primaryCategorySlug && (
               <PressableAnchor
                 href={exploreCategoryHref}
-                className="body-small text-primary hover:text-primary-dark font-medium transition-colors sm:ml-2 inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
+                className="body-small text-primary hover:text-primary-dark font-medium transition-colors sm:ml-2 inline-flex items-center gap-1 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
                 variant="inline"
                 data-analytics-event-name="explore_more_click"
                 data-analytics-context="past_event_banner"

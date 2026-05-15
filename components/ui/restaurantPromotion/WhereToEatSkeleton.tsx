@@ -33,7 +33,7 @@ export default function WhereToEatSkeleton({
           <button
             type="button"
             onClick={onPromoteClick}
-            className="text-xs font-medium text-primary underline focus:outline-none disabled:opacity-50"
+            className="text-xs font-medium text-primary underline focus:outline-hidden disabled:opacity-50"
             disabled
             aria-disabled="true"
           >

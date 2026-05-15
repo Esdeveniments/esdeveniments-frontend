@@ -173,9 +173,9 @@ export default function LocationDiscoveryWidget({
               </button>
 
               {isOpen && (
-                <div className="absolute top-full left-0 right-0 md:right-auto mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden w-full md:w-max md:min-w-[300px] md:max-w-md">
+                <div className="absolute top-full left-0 right-0 md:right-auto mt-1 bg-background border border-border/50 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden w-full md:w-max md:min-w-[300px] md:max-w-md">
                   {/* Search input */}
-                  <div className="p-input-x border-b border-border border-opacity-30">
+                  <div className="p-input-x border-b border-border/30">
                     <div className="relative">
                       <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 w-4 h-4" />
                       <input
@@ -194,7 +194,7 @@ export default function LocationDiscoveryWidget({
                   {/* Discover other events */}
                   <button
                     type="button"
-                    className="w-full flex items-center gap-3 px-button-x py-button-y border-b border-border border-opacity-30 hover:bg-muted transition-colors duration-200 group focus-ring"
+                    className="w-full flex items-center gap-3 px-button-x py-button-y border-b border-border/30 hover:bg-muted transition-colors duration-200 group focus-ring"
                     onClick={onDiscoverOtherEvents}
                   >
                     <div className="w-6 h-6 flex items-center justify-center">
@@ -230,7 +230,7 @@ export default function LocationDiscoveryWidget({
                               onClick={() =>
                                 handleLocationSelect(location.label)
                               }
-                              className="w-full px-input-x py-input-y hover:bg-muted cursor-pointer body-small text-foreground-strong flex items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                              className="w-full px-input-x py-input-y hover:bg-muted cursor-pointer body-small text-foreground-strong flex items-center gap-2 text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                             >
                               <LocationMarkerIcon className="h-4 w-4 text-foreground/60 flex-shrink-0" />
                               {location.label}

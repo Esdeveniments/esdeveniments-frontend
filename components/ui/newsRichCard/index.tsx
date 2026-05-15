@@ -57,7 +57,7 @@ export default async function NewsRichCard({
               <PressableAnchor
                 href={`/e/${event.slug}`}
                 prefetch={false}
-                className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
+                className="focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
                 aria-label={event.title}
                 variant="inline"
               >
@@ -130,7 +130,7 @@ export default async function NewsRichCard({
           <PressableAnchor
             href={`/e/${event.slug}`}
             prefetch={false}
-            className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
+            className="focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
             aria-label={event.title}
             variant="inline"
           >
