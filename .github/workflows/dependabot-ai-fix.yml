@@ -83,8 +83,8 @@ jobs:
       - name: Apply label
         if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
         run: |
-          gh pr edit "${{ steps.pr.outputs.number }}" -R "$REPO" \
-            --add-label ai-fix-requested
+          gh api "repos/$REPO/issues/${{ steps.pr.outputs.number }}/labels" \
+            -f "labels[]=ai-fix-requested" >/dev/null
 
       - name: Assign Copilot coding agent
         if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
