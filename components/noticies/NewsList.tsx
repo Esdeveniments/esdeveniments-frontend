@@ -85,6 +85,8 @@ export default async function NewsList({
     }),
   };
 
+  const heroPlace = resolvePlace(list[0]);
+
   return (
     <>
 
@@ -92,20 +94,15 @@ export default async function NewsList({
 
       <section className="px-2 lg:px-0">
         {/* First card as hero (full width) */}
-        {list.length > 0 && (() => {
-          const heroPlace = resolvePlace(list[0]);
-          return (
-            <div className="mb-6">
-              <NewsCard
-                key={`${list[0].id}-hero`}
-                event={list[0]}
-                placeSlug={heroPlace.slug}
-                placeLabel={heroPlace.label}
-                variant="hero"
-              />
-            </div>
-          );
-        })()}
+        <div className="mb-6">
+          <NewsCard
+            key={`${list[0].id}-hero`}
+            event={list[0]}
+            placeSlug={heroPlace.slug}
+            placeLabel={heroPlace.label}
+            variant="hero"
+          />
+        </div>
 
         {/* Remaining cards in responsive grid */}
         {list.length > 1 && (

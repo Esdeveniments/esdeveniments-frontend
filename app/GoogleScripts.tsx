@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense, useMemo, useState, useRef } from "react";
+import { useEffect, lazy, Suspense, useMemo, useRef } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
@@ -10,6 +10,11 @@ import { scheduleIdleCallback } from "@utils/browser";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
+
+// Lazy-load heavy tracking + Auto Ads only when needed (after consent).
+// React.lazy defers the import until the component is first rendered,
+// so the chunk is never fetched when adsAllowed is false.
+const LazyGoogleScriptsHeavy = lazy(() => import("./GoogleScriptsHeavy"));
 // FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
 const FUNDING_CHOICES_PUB_ID = ADS_CLIENT?.replace(/^ca-/, "") ?? "";
 const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
@@ -114,9 +119,6 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
 
-  const [HeavyComponent, setHeavyComponent] = useState<
-    React.ComponentType<{ adsAllowed: boolean }> | null
-  >(null);
   // Track last consent state to avoid duplicate consent updates
   // Using useRef (not module-level) to handle React Strict Mode correctly
   const lastConsentStateRef = useRef<"granted" | "denied" | null>(null);
@@ -161,27 +163,6 @@ export default function GoogleScripts() {
     );
 
     return cleanup;
-  }, [adsAllowed]);
-
-  // Load heavy tracking + Auto Ads only after hydration.
-  // This prevents server/client HTML mismatches caused by client-only boundaries.
-  useEffect(() => {
-    if (!adsAllowed) return;
-    if (isE2ETestMode) return;
-    let cancelled = false;
-
-    import("./GoogleScriptsHeavy")
-      .then((mod) => {
-        if (cancelled) return;
-        setHeavyComponent(() => mod.default);
-      })
-      .catch(() => {
-        // Keep resilient: analytics/ads helpers should never break rendering
-      });
-
-    return () => {
-      cancelled = true;
-    };
   }, [adsAllowed]);
 
   return (
@@ -294,8 +275,10 @@ export default function GoogleScripts() {
       )}
 
       {/* Heavy tracking + Auto Ads: only load after consent */}
-      {!isE2ETestMode && adsAllowed && HeavyComponent && (
-        <HeavyComponent adsAllowed={adsAllowed} />
+      {!isE2ETestMode && adsAllowed && (
+        <Suspense fallback={null}>
+          <LazyGoogleScriptsHeavy adsAllowed={adsAllowed} />
+        </Suspense>
       )}
     </>
   );

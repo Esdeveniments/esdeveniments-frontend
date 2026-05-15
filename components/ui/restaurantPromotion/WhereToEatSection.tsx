@@ -63,6 +63,10 @@ export default function WhereToEatSection({
           // Google Maps requires both query and query_place_id parameters
           // query serves as fallback if place_id is not found
           const encodedPlaceName = encodeURIComponent(place.name);
+          const photoUrl = getPhotoUrl(place);
+          const normalizedPhotoUrl = photoUrl
+            ? withImageCacheKey(photoUrl, place.place_id || place.name)
+            : null;
           return (
             <a
               key={place.place_id}
@@ -77,46 +81,36 @@ export default function WhereToEatSection({
               aria-label={`Obrir ${place.name} a Google Maps`}
             >
               <div className="flex items-start gap-4">
-                {(() => {
-                  const photoUrl = getPhotoUrl(place);
-                  if (!photoUrl) {
-                    return (
-                      <div className="w-20 h-20 rounded-md flex items-center justify-center bg-muted text-foreground/60 flex-shrink-0 ml-4">
-                        <svg
-                          className="w-8 h-8"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                          />
-                        </svg>
-                      </div>
-                    );
-                  }
-                  const normalizedPhotoUrl = withImageCacheKey(
-                    photoUrl,
-                    place.place_id || place.name
-                  );
-                  return (
-                    <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted ml-4">
-                      <NextImage
-                        src={normalizedPhotoUrl}
-                        alt={`Foto de ${place.name}`}
-                        fill
-                        priority={false}
-                        sizes="80px"
-                        quality={getOptimalImageQuality({ isExternal: true })}
-                        className="object-cover"
-                        style={{ objectFit: "cover" }}
+                {normalizedPhotoUrl ? (
+                  <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted ml-4">
+                    <NextImage
+                      src={normalizedPhotoUrl}
+                      alt={`Foto de ${place.name}`}
+                      fill
+                      priority={false}
+                      sizes="80px"
+                      quality={getOptimalImageQuality({ isExternal: true })}
+                      className="object-cover"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-md flex items-center justify-center bg-muted text-foreground/60 flex-shrink-0 ml-4">
+                    <svg
+                      className="w-8 h-8"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                       />
-                    </div>
-                  );
-                })()}
+                    </svg>
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-medium text-foreground-strong line-clamp-1 group-hover:underline min-w-0">
