@@ -5,7 +5,7 @@ import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from
 import dynamic from "next/dynamic";
 import { Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
-import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
+import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/form-helpers";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
 import { getZodValidationState } from "@utils/form-validation";

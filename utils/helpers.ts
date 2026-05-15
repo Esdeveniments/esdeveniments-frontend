@@ -44,12 +44,11 @@ export {
 } from "./category-helpers";
 
 // Location helpers
+export { getDistance, deg2rad } from "./location-helpers";
 export {
   getPlaceTypeAndLabel,
   getPlaceTypeAndLabelCached,
-  getDistance,
-  deg2rad,
-} from "./location-helpers";
+} from "./location-helpers-server";
 
 // Schema helpers
 export { generateJsonData } from "./schema-helpers";

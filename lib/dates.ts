@@ -3,7 +3,7 @@ import {
   DEFAULT_FILTER_VALUE,
   getMonthUrlNames,
 } from "@utils/constants";
-import { nextDay, isWeekend } from "@utils/helpers";
+import { nextDay, isWeekend } from "@utils/date-helpers";
 import { DateRange } from "types/common";
 import type { ValidDateSlug } from "types/dates";
 

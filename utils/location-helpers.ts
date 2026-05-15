@@ -1,11 +1,5 @@
-import { cache } from "react";
-import { fetchRegionsWithCities } from "@lib/api/regions";
-import { fetchPlaceBySlug } from "@lib/api/places";
-import {
-  sanitizeLegacyApostrophe,
-  formatPlaceName,
-} from "./string-helpers";
-import type { Location, PlaceTypeAndLabel } from "types/common";
+import { formatPlaceName } from "./string-helpers";
+import type { Location } from "types/common";
 import type {
   BuildDisplayLocationOptions,
   EventLocationLabelOptions,
@@ -205,94 +199,6 @@ export const buildEventListLocationLabels = ({
     secondaryLabel,
   };
 };
-
-export const getPlaceTypeAndLabel = async (
-  place: string,
-): Promise<PlaceTypeAndLabel> => {
-  // Empty place means home page or Catalunya-wide view
-  // Return default without making API calls
-  if (!place || place === "") {
-    return { type: "region", label: "Catalunya" };
-  }
-
-  // "catalunya" is a frontend-only SEO concept, not a real place in the backend
-  // Return early without making API calls
-  if (place === "catalunya") {
-    return { type: "region", label: "Catalunya" };
-  }
-
-  try {
-    const placeInfo = await fetchPlaceBySlug(place);
-    if (placeInfo) {
-      const formattedLabel = formatPlaceName(placeInfo.name);
-      const type =
-        placeInfo.type === "CITY"
-          ? "town"
-          : placeInfo.type === "REGION"
-            ? "region"
-            : placeInfo.type === "PROVINCE"
-              ? "region"
-              : "town";
-
-      // For cities, look up parent region from cached data for SEO breadcrumbs
-      if (type === "town") {
-        try {
-          const regionsWithCities = await fetchRegionsWithCities();
-          for (const region of regionsWithCities) {
-            const city = region.cities.find((c) => c.value === place);
-            if (city) {
-              return {
-                type,
-                label: formattedLabel,
-                regionLabel: formatPlaceName(region.name),
-                regionSlug: region.slug,
-              };
-            }
-          }
-        } catch {
-          // Region lookup failed, return without region info
-        }
-      }
-
-      return { type, label: formattedLabel };
-    }
-  } catch (error) {
-    console.error("Error fetching place by slug:", error);
-  }
-
-  try {
-    const regionsWithCities = await fetchRegionsWithCities();
-
-    const region = regionsWithCities.find(
-      (r) =>
-        r.slug === place ||
-        sanitizeLegacyApostrophe(r.name) === place,
-    );
-    if (region) {
-      return { type: "region", label: formatPlaceName(region.name) };
-    }
-
-    for (const region of regionsWithCities) {
-      const city = region.cities.find((c) => c.value === place);
-      if (city) {
-        // City found - include parent region info for SEO breadcrumbs
-        return {
-          type: "town",
-          label: formatPlaceName(city.label),
-          regionLabel: formatPlaceName(region.name),
-          regionSlug: region.slug,
-        };
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching regions for place lookup:", error);
-  }
-
-  return { type: "town", label: formatPlaceName(place.replace(/-/g, " ")) };
-};
-
-// Per-request memoized wrapper for server routes
-export const getPlaceTypeAndLabelCached = cache(getPlaceTypeAndLabel);
 
 export const getDistance = (
   location1: Location,

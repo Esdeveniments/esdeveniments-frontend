@@ -8,7 +8,7 @@ import { MagnifyingGlassIcon as SearchIcon } from "@heroicons/react/24/solid";
 import Button from "@components/ui/common/button";
 import { buildHeroUrl } from "./utils";
 import { HERO_DATE_FILTERS } from "./constants";
-import { formatPlacePreposition } from "@utils/helpers";
+import { formatPlacePreposition } from "@utils/string-helpers";
 import { sendGoogleEvent } from "@utils/analytics";
 import useTrackedCta from "@components/hooks/useTrackedCta";
 import { useLocale } from "next-intl";

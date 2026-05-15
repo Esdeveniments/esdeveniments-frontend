@@ -1,4 +1,4 @@
-import { truncateString } from "@utils/helpers";
+import { truncateString } from "@utils/string-helpers";
 import { buildEventPlaceLabels } from "@utils/location-helpers";
 import {
   formatCardDate,

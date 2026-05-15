@@ -20,7 +20,7 @@ const CalendarDatePicker = dynamic(
   () => import("./CalendarDatePicker"),
   { ssr: false, loading: () => <div className="h-[220px] w-full animate-pulse bg-muted/30 rounded-card" /> },
 );
-import { generateRegionsAndTownsOptions } from "@utils/helpers";
+import { generateRegionsAndTownsOptions } from "@utils/options-helpers";
 import { sendGoogleEvent } from "@utils/analytics";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { Option, PlaceType } from "types/common";

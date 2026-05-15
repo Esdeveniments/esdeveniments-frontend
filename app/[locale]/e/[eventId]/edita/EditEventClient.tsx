@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition } from "react";
 import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";
 import { editEvent } from "./actions";
-import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
+import { formDataToBackendDTO, eventDtoToFormData } from "@utils/form-helpers";
 import { normalizeUrl } from "@utils/string-helpers";
 import { EventDetailResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";

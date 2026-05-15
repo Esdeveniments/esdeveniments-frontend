@@ -8,7 +8,7 @@ import apiDefaults from "@config/api-defaults.json";
 import { isDevelopmentHost } from "@utils/host-validation";
 import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
-import type { FetchNewsParams } from "@lib/api/news";
+import type { FetchNewsParams } from "types/api/news";
 import type { HeadersFn } from "types/utils";
 
 /** Default API URL used as fallback when NEXT_PUBLIC_API_URL is not set. */

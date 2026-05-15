@@ -15,7 +15,8 @@ import {
 } from "@heroicons/react/24/solid";
 import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
-import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
+import { formatCatalanA } from "@utils/string-helpers";
+import { generateRegionsAndTownsOptions } from "@utils/options-helpers";
 import { stripLocalePrefix } from "@utils/i18n-routing";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";

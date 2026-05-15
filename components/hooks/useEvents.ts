@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
-import { toLocalDateString } from "@utils/helpers";
+import { toLocalDateString } from "@utils/date-helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { hasActiveClientFilters } from "@utils/url-filters";
 import { buildEventsQuery } from "@utils/api-helpers";
