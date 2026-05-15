@@ -87,7 +87,7 @@ describe("WhereToEatSection", () => {
     );
   });
 
-  it("renders multiple places with correct URLs", () => {
+  it("renders multiple places with correct URLs (max 2)", () => {
     const places: GooglePlace[] = [
       { ...mockPlace, place_id: "PLACE_1", name: "Restaurant 1" },
       { ...mockPlace, place_id: "PLACE_2", name: "Restaurant 2" },
@@ -98,8 +98,9 @@ describe("WhereToEatSection", () => {
       <WhereToEatSection places={places} attribution="Powered by Google" />
     );
 
+    // Component slices to 2 cards maximum (cost-reduction change)
     const links = screen.getAllByLabelText(/Obrir .* a Google Maps/i);
-    expect(links).toHaveLength(3);
+    expect(links).toHaveLength(2);
 
     links.forEach((link, index) => {
       const anchor = link as HTMLAnchorElement;

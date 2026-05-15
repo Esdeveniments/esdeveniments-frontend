@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { WhereToEatSectionProps, GooglePlace } from "types/api/restaurant";
 import NextImage from "next/image";
-import { FireIcon } from "@heroicons/react/24/outline";
+import { FireIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { getOptimalImageQuality } from "@utils/image-quality";
 import {
   formatPriceLevelGeneric,
@@ -12,6 +13,7 @@ import {
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { withImageCacheKey } from "@utils/image-cache";
 import { useTranslations } from "next-intl";
+import { sendGoogleEvent } from "@utils/analytics";
 
 // Helper: derive photo proxy URL (Places API v1 only)
 function getPhotoUrl(place: GooglePlace): string | null {
@@ -29,6 +31,26 @@ export default function WhereToEatSection({
   onPromoteClick,
 }: WhereToEatSectionProps) {
   const t = useTranslations("Components.WhereToEatSection");
+
+  // Click-to-load: only fetch Google Places photo bytes when the user
+  // explicitly requests them. Each loaded photo is one billed
+  // `Place Details Photos` call, so default to a placeholder.
+  const [loadedPhotoIds, setLoadedPhotoIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const handleLoadPhoto = useCallback((placeId: string, placeName: string) => {
+    setLoadedPhotoIds((prev) => {
+      if (prev.has(placeId)) return prev;
+      const next = new Set(prev);
+      next.add(placeId);
+      return next;
+    });
+    sendGoogleEvent("restaurant_photo_load", {
+      context: "where_to_eat",
+      place_id: placeId,
+      place_name: placeName,
+    });
+  }, []);
 
   if (!places || places.length === 0) {
     return null;
@@ -55,7 +77,7 @@ export default function WhereToEatSection({
         )}
       </div>
       <div className="space-y-element-gap  px-section-x">
-        {places.slice(0, 3).map((place: GooglePlace) => {
+        {places.slice(0, 2).map((place: GooglePlace) => {
           const openInfo = getOpenLineInfo(place);
           const price = formatPriceLevelGeneric(place.price_level);
           const shortAddress =
@@ -63,6 +85,8 @@ export default function WhereToEatSection({
           // Google Maps requires both query and query_place_id parameters
           // query serves as fallback if place_id is not found
           const encodedPlaceName = encodeURIComponent(place.name);
+          const photoIdKey = place.place_id || place.name;
+          const isPhotoLoaded = loadedPhotoIds.has(photoIdKey);
           return (
             <a
               key={place.place_id}
@@ -96,6 +120,29 @@ export default function WhereToEatSection({
                           />
                         </svg>
                       </div>
+                    );
+                  }
+                  if (!isPhotoLoaded) {
+                    // Click-to-load placeholder. The button is nested inside
+                    // the outer <a>, so we stop propagation/prevent default
+                    // to avoid opening Google Maps when the user requests
+                    // the photo.
+                    return (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleLoadPhoto(photoIdKey, place.name);
+                        }}
+                        aria-label={t("showPhoto")}
+                        className="w-20 h-20 rounded-md flex flex-col items-center justify-center bg-muted hover:bg-muted/80 text-foreground/70 hover:text-foreground-strong flex-shrink-0 ml-4 transition-colors gap-1 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      >
+                        <PhotoIcon className="w-6 h-6" aria-hidden="true" />
+                        <span className="text-[10px] font-medium leading-none">
+                          {t("showPhoto")}
+                        </span>
+                      </button>
                     );
                   }
                   const normalizedPhotoUrl = withImageCacheKey(

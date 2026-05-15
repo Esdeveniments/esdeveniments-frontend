@@ -679,6 +679,7 @@
       "activeUntil": "Promotion active until {date}"
     },
     "WhereToEatSection": {
+      "showPhoto": "Show photo",
       "title": "Where you can eat",
       "promote": "Promote your restaurant"
     },
