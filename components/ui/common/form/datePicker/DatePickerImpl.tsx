@@ -76,7 +76,7 @@ function TimeSelector({
       min={minTime}
       onChange={(e) => onChange(e.target.value)}
       aria-label={label}
-      className="w-full px-3 py-2 border border-border rounded-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="w-full px-3 py-2 border border-border rounded-input bg-background text-foreground text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/40"
     />
   );
 }
@@ -95,7 +95,7 @@ function DateButton({
       onClick={onClick}
       aria-label={accessibleLabel}
       aria-expanded={isOpen}
-      className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all flex items-center justify-between gap-2 ${isOpen ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
+      className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-hidden transition-all flex items-center justify-between gap-2 ${isOpen ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
     >
       <span>{value || label}</span>
       <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />

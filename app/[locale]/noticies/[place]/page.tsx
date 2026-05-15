@@ -133,7 +133,7 @@ export default async function Page({
             >
               <PressableAnchor
                 href={withLocale(agendaHref)}
-                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
                 prefetch={false}
                 variant="inline"
               >
@@ -144,7 +144,7 @@ export default async function Page({
               </span>
               <PressableAnchor
                 href={withLocale(`/noticies`)}
-                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+                className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
                 prefetch={false}
                 variant="inline"
               >
@@ -155,7 +155,7 @@ export default async function Page({
             </span>
             <PressableAnchor
               href={withLocale(`/noticies/${place}/rss.xml`)}
-              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+              className="body-small text-primary hover:underline hover:text-primary-dark transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
               prefetch={false}
               variant="inline"
             >

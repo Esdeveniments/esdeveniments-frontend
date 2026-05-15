@@ -158,7 +158,7 @@ export default function Search(): JSX.Element {
         {/* Input field in the middle */}
         <input
           type="text"
-          className="w-full border-0 placeholder:text-foreground/60 body-normal focus:outline-none"
+          className="w-full border-0 placeholder:text-foreground/60 body-normal focus:outline-hidden"
           placeholder={t("placeholder")}
           value={inputValue}
           onKeyDown={handleKeyPress}
@@ -183,7 +183,7 @@ export default function Search(): JSX.Element {
         <button
           type="button"
           onClick={triggerSearch}
-          className="h-10 flex justify-center items-center cursor-pointer px-2 bg-muted hover:bg-muted/80 active:bg-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground-strong rounded-r-input"
+          className="h-10 flex justify-center items-center cursor-pointer px-2 bg-muted hover:bg-muted/80 active:bg-muted/60 transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-foreground-strong rounded-r-input"
           aria-label={t("search")}
           data-testid="search-button"
         >

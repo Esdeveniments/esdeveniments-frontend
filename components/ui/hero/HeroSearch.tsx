@@ -273,7 +273,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           </div>
           <input
             type="text"
-            className="w-full pl-11 pr-12 py-3 bg-background border border-border rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-foreground/40"
+            className="w-full pl-11 pr-12 py-3 bg-background border border-border rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-hidden text-base placeholder:text-foreground/40"
             placeholder={t("searchPlaceholder", { location: label })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
