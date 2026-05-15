@@ -1,0 +1,116 @@
+# Auto-route failing Dependabot PRs to GitHub Copilot coding agent.
+#
+# Flow:
+#   1. CI workflow finishes with conclusion=failure
+#   2. We detect the PR was opened by dependabot[bot]
+#   3. Post a comment with a pointer to the failed run logs
+#   4. Assign `copilot-swe-agent` so the coding agent picks it up and pushes fixes
+#   5. Label the PR `ai-fix-requested` for visibility
+#
+# Idempotent: skips if the label is already present (Copilot already running).
+# Pairs with `dependabot-auto-merge.yml` — that one merges patch/minor when CI
+# passes; this one rescues failures. Majors stay manual either way.
+
+name: Dependabot AI fix
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  route-to-copilot:
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+      github.repository == 'Esdeveniments/esdeveniments-frontend'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      COPILOT_BOT_ID: BOT_kgDOC9w8XQ
+    steps:
+      - name: Resolve PR for failed run
+        id: pr
+        run: |
+          set -euo pipefail
+          PR_NUMBER=$(gh api "repos/$REPO/actions/runs/$RUN_ID" \
+            --jq '.pull_requests[0].number // empty')
+          if [ -z "$PR_NUMBER" ]; then
+            # Fallback: look up by head branch (workflow_run sometimes omits pull_requests)
+            PR_NUMBER=$(gh pr list -R "$REPO" --head "$HEAD_BRANCH" --state open \
+              --json number --jq '.[0].number // empty')
+          fi
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No open PR found for run $RUN_ID (branch $HEAD_BRANCH); skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          PR_NODE_ID=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '.node_id')
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "node_id=$PR_NODE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if already assigned to Copilot
+        if: steps.pr.outputs.skip != 'true'
+        id: gate
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ steps.pr.outputs.number }}"
+          HAS_LABEL=$(gh pr view "$PR_NUMBER" -R "$REPO" \
+            --json labels --jq '.labels[].name' | grep -c '^ai-fix-requested$' || true)
+          if [ "$HAS_LABEL" != "0" ]; then
+            echo "Already labeled ai-fix-requested; Copilot is on it. Skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ensure label exists
+        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        run: |
+          gh label create ai-fix-requested \
+            --color BFD4F2 \
+            --description "Routed to Copilot coding agent after CI failure" \
+            -R "$REPO" 2>/dev/null || true
+
+      - name: Apply label
+        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        run: |
+          gh pr edit "${{ steps.pr.outputs.number }}" -R "$REPO" \
+            --add-label ai-fix-requested
+
+      - name: Assign Copilot coding agent
+        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        run: |
+          gh api graphql \
+            -f query='mutation($assignableId:ID!,$actorIds:[ID!]!){ replaceActorsForAssignable(input:{assignableId:$assignableId, actorIds:$actorIds}){ clientMutationId } }' \
+            -F assignableId="${{ steps.pr.outputs.node_id }}" \
+            -F actorIds="$COPILOT_BOT_ID"
+
+      - name: Comment with failure context
+        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        run: |
+          BODY=$(cat <<EOF
+          @copilot CI failed on this Dependabot PR. Please investigate and push a fix to the PR branch.
+
+          - Failed run: ${RUN_URL}
+          - Inspect logs: \`gh run view ${RUN_ID} -R ${REPO} --log-failed\`
+          - Branch: \`${HEAD_BRANCH}\`
+
+          Guidance:
+          - For lint/test/typecheck failures: fix in-place.
+          - For deps with codemods (Tailwind v4, Next.js, etc.): run the official codemod, then resolve remaining issues.
+          - For breaking API changes (Zod v4, ESLint v10, etc.): update call sites; do not downgrade the dependency.
+          - Run \`yarn lint && yarn typecheck && yarn test\` locally before pushing.
+
+          Once green, the existing dependabot-auto-merge workflow will auto-merge patch/minor bumps. Majors still require human review.
+          EOF
+          )
+          gh pr comment "${{ steps.pr.outputs.number }}" -R "$REPO" --body "$BODY"
