@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
-@source "../components/**/*.{js,ts,jsx,tsx}";
-@source "../app/**/*.{js,ts,jsx,tsx}";
+@source "../app/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../config/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
+@source "../utils/**/*.{ts,tsx}";
 
-@plugin "@tailwindcss/typography";
 @plugin "@tailwindcss/forms";
 
 @theme {
