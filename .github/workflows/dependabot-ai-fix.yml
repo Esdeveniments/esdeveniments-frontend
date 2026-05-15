@@ -98,7 +98,7 @@ jobs:
           PR_NUMBER: ${{ steps.resolve.outputs.number }}
         run: |
           set -euo pipefail
-          # Title is fetched via gh CLI — never interpolated as ${{ }} into the script.
+          # Title is fetched via gh CLI — never interpolated from a workflow expression.
           TITLE=$(gh pr view "$PR_NUMBER" -R "$REPO" --json title --jq '.title')
           IS_MAJOR=false
           # Dependabot title format: "bump <pkg> from <from-version> to <to-version>"
