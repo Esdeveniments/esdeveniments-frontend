@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { useEvents } from "@components/hooks/useEvents";
 import type { UseEventsOptions } from "types/event";
 import type { EventSummaryResponseDTO } from "types/api/event";
@@ -152,20 +158,22 @@ describe("useEvents load more (integration)", () => {
       createMockEvent("2", "Event 2", "e2"),
     ];
 
-    render(
-      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <EventsHarness
-            place="barcelona"
-            category="music"
-            date="avui"
-            initialSize={10}
-            fallbackData={fallback}
-            serverHasMore={true}
-          />
-        </React.Suspense>
-      </SWRConfig>
-    );
+    await act(async () => {
+      render(
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <EventsHarness
+              place="barcelona"
+              category="music"
+              date="avui"
+              initialSize={10}
+              fallbackData={fallback}
+              serverHasMore={true}
+            />
+          </React.Suspense>
+        </SWRConfig>
+      );
+    });
 
     // Initially should show fallback data (2 events)
     await waitFor(() => {
