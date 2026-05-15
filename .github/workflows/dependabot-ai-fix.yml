@@ -84,8 +84,40 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Ensure label exists
+      # Skip major-version bumps — those need human review, not AI auto-fix.
+      # AI fixes can mask real concerns (bundle bloat, behavior changes, API breaks).
+      - name: Skip major-version bumps
         if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        id: major
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ steps.pr.outputs.number }}"
+          TITLE=$(gh pr view "$PR_NUMBER" -R "$REPO" --json title --jq '.title')
+          # Match "from X.Y.Z to A.B.C" (also allows "v" prefix, pre-release suffixes)
+          if echo "$TITLE" | grep -qiE 'from v?[0-9]+'; then
+            FROM_MAJOR=$(echo "$TITLE" | sed -nE 's/.*from v?([0-9]+)\..*/\1/p')
+            TO_MAJOR=$(echo "$TITLE" | sed -nE 's/.* to v?([0-9]+)\..*/\1/p')
+            if [ -n "$FROM_MAJOR" ] && [ -n "$TO_MAJOR" ] && [ "$FROM_MAJOR" != "$TO_MAJOR" ]; then
+              echo "Major bump detected: $FROM_MAJOR -> $TO_MAJOR. Skipping AI routing."
+              gh label create needs-human-review --color FBCA04 \
+                --description "Cannot be auto-merged — requires manual evaluation" \
+                -R "$REPO" 2>/dev/null || true
+              gh api "repos/$REPO/issues/$PR_NUMBER/labels" \
+                -f "labels[]=needs-human-review" >/dev/null
+              gh pr comment "$PR_NUMBER" -R "$REPO" --body "🛑 **Major version bump detected** ($FROM_MAJOR → $TO_MAJOR) — not auto-routed to Copilot.
+
+          Major upgrades carry breaking changes, bundle-size cost, and behavior shifts that need human evaluation:
+          - Is the new major's feature set worth the upgrade cost?
+          - Are there breaking API changes affecting our code?
+          - Does the bundle / runtime regress meaningfully?
+
+          Review manually. If approved for upgrade, assign \`@copilot\` yourself with explicit migration guidance."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Ensure label exists
+        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true' && steps.major.outputs.skip != 'true'
         run: |
           gh label create ai-fix-requested \
             --color BFD4F2 \
@@ -93,13 +125,13 @@ jobs:
             -R "$REPO" 2>/dev/null || true
 
       - name: Apply label
-        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true' && steps.major.outputs.skip != 'true'
         run: |
           gh api "repos/$REPO/issues/${{ steps.pr.outputs.number }}/labels" \
             -f "labels[]=ai-fix-requested" >/dev/null
 
       - name: Assign Copilot coding agent
-        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true' && steps.major.outputs.skip != 'true'
         id: assign
         env:
           # PAT required: GitHub App installation tokens cannot assign agents.
@@ -124,7 +156,7 @@ jobs:
           echo "assigned=true" >> "$GITHUB_OUTPUT"
 
       - name: Comment with failure context
-        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true'
+        if: steps.pr.outputs.skip != 'true' && steps.gate.outputs.skip != 'true' && steps.major.outputs.skip != 'true'
         run: |
           if [ "${{ steps.assign.outputs.assigned }}" = "true" ]; then
             ASSIGN_LINE="Copilot coding agent has been assigned and will start a session shortly."
