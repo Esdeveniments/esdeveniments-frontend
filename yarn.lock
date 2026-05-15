@@ -721,7 +721,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint-react/eslint-plugin@npm:5.7.8":
+"@eslint-react/eslint-plugin@npm:^5.7.8":
   version: 5.7.8
   resolution: "@eslint-react/eslint-plugin@npm:5.7.8"
   dependencies:
@@ -11516,7 +11516,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
-    "@eslint-react/eslint-plugin": "npm:5.7.8"
+    "@eslint-react/eslint-plugin": "npm:^5.7.8"
     "@eslint/compat": "npm:^2.1.0"
     "@eslint/eslintrc": "npm:^3.3.5"
     "@eslint/js": "npm:^10.0.1"

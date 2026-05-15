@@ -142,7 +142,7 @@ export default [
       "@eslint-react/no-context-provider": "off",
       "@eslint-react/no-use-context": "off",
       "@eslint-react/no-forward-ref": "off",
-      // Keep parity with previous lint baseline during ESLint 10 migration
+      // New in eslint-react 5.x; disabled to avoid unrelated code churn in this deps PR
       "@eslint-react/static-components": "off",
       "@eslint-react/unsupported-syntax": "off",
     },
