@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlaceResponseDTO } from "types/api/place";
-import { resolvePlaceSlugAliasFromPlaces } from "@utils/place-alias";
+import { resolvePlaceSlugAliasFromPlaces } from "@utils/place-alias-server";
 
 describe("resolvePlaceSlugAliasFromPlaces", () => {
   it("resolves missing hyphens", () => {

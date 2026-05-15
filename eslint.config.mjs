@@ -222,6 +222,56 @@ export default [
       ],
     },
   },
+  // CRITICAL: Prevent server-only modules leaking into client bundles (+290 KB zod regression, May 2026)
+  // utils/ files are client-safe utilities — they MUST NOT import @lib/api/* or @lib/validation/*
+  // (those pull zod and HMAC-signed fetch into client chunks via transitive imports)
+  // For server-only utils, use the *-server.ts naming convention (e.g. location-helpers-server.ts)
+  {
+    files: ["utils/**/*.{ts,tsx}"],
+    ignores: ["utils/**/*-server.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@lib/api/*", "**/lib/api/**"],
+              message:
+                "utils/ files must be client-safe. @lib/api/* is server-only (HMAC signing). Move server-only logic to a utils/*-server.ts file.",
+            },
+            {
+              group: ["@lib/validation/*", "**/lib/validation/**"],
+              message:
+                "utils/ files must be client-safe. @lib/validation/* imports zod which inflates client bundles (+290 KB). Move validation to server-only code.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // components/hooks/ are always client-side — same restriction applies
+  {
+    files: ["components/hooks/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@lib/api/*", "**/lib/api/**"],
+              message:
+                "Hooks run on the client. Use SWR + internal API routes (/api/*) instead of importing @lib/api/* directly.",
+            },
+            {
+              group: ["@lib/validation/*", "**/lib/validation/**"],
+              message:
+                "Hooks run on the client. @lib/validation/* imports zod which inflates client bundles. Validation belongs in server-only code.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Warn about using next/link directly - prefer next-intl's Link for locale handling
   // Allowed exceptions: primitives (have manual locale handling), types, tests, external-only links
   {

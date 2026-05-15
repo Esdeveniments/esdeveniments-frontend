@@ -1,5 +1,5 @@
 import type { AppLocale } from "types/i18n";
-import { resolvePlaceSlugAlias } from "@utils/place-alias";
+import { resolvePlaceSlugAlias } from "@utils/place-alias-server";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { toUrlSearchParams } from "@utils/url-filters";
 

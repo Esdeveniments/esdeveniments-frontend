@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@utils/place-alias", () => ({
+vi.mock("@utils/place-alias-server", () => ({
   resolvePlaceSlugAlias: vi.fn(),
 }));
 
@@ -18,7 +18,7 @@ vi.mock("@utils/i18n-seo", async () => {
 });
 
 import { getPlaceAliasRedirectUrl } from "@utils/place-alias-redirect";
-import { resolvePlaceSlugAlias } from "@utils/place-alias";
+import { resolvePlaceSlugAlias } from "@utils/place-alias-server";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 
 describe("getPlaceAliasRedirectUrl", () => {
