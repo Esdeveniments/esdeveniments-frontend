@@ -321,6 +321,24 @@
     "Breadcrumbs": {
       "home": "Inicio"
     },
+    "Profile": {
+      "title": "{name} — Perfil",
+      "metaDescription": "Descubre los eventos de {name}. Consulta sus próximos eventos, conciertos, exposiciones y mucho más.",
+      "events": "Eventos",
+      "verified": "Verificado",
+      "joinedDate": "Desde {date}",
+      "noEvents": "Aún no hay eventos",
+      "website": "Sitio web",
+      "breadcrumbProfiles": "Perfiles",
+      "totalEvents": "{count, plural, one {# evento} other {# eventos}}",
+      "notFound": "Perfil no encontrado",
+      "notFoundDescription": "El perfil que buscas no existe o ha sido eliminado.",
+      "backHome": "Volver al inicio",
+      "editProfile": "Editar perfil",
+      "comingSoon": "(próximamente)",
+      "claimQuestion": "¿Es tu local?",
+      "claimLogin": "Iniciar sesión"
+    },
     "Footer": {
       "navigation": {
         "home": "Inicio",
@@ -333,7 +351,8 @@
         "contact": "Contacto",
         "archive": "Archivo",
         "terms": "Términos de servicio",
-        "privacy": "Privacidad"
+        "privacy": "Privacidad",
+        "login": "Iniciar sesión"
       },
       "sponsorCta": {
         "title": "Da visibilidad a tu negocio local",
@@ -373,7 +392,13 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publicar"
+      "mobilePublishLabel": "Publicar",
+      "auth": {
+        "login": "Iniciar sesión",
+        "logout": "Cerrar sesión",
+        "userMenu": "Menú de usuario",
+        "myProfile": "Mi perfil"
+      }
     },
     "NoEventsFound": {
       "cta": "Añade un evento",
@@ -438,7 +463,15 @@
         "Viernes",
         "Sábado"
       ],
-      "daysShort": ["Dom.", "Lun.", "Mar.", "Mié.", "Jue.", "Vie.", "Sáb."],
+      "daysShort": [
+        "Dom.",
+        "Lun.",
+        "Mar.",
+        "Mié.",
+        "Jue.",
+        "Vie.",
+        "Sáb."
+      ],
       "monthsShort": [
         "ene.",
         "feb.",
@@ -846,13 +879,15 @@
     "EventDetailsSection": {
       "title": "Detalles del evento",
       "eventLink": "Enlace al evento:",
-      "duration": "Duración aproximada: {duration}"
+      "duration": "Duración aproximada: {duration}",
+      "createdBy": "Publicado por {name}"
     },
     "EventLocation": {
       "title": "Ubicación",
       "showMap": "Mostrar mapa",
       "hideMap": "Cerrar mapa",
-      "getDirections": "Cómo llegar"
+      "getDirections": "Cómo llegar",
+      "profileLink": "Perfil de {name}"
     },
     "EventCalendar": {
       "title": "Fecha y hora"
@@ -1347,7 +1382,10 @@
         "por el",
         "por los"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1650,5 +1688,73 @@
       "backHome": "Volver al inicio"
     },
     "backToHome": "Volver al inicio"
+  },
+  "Auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "subtitle": "Accede a tu cuenta para gestionar tus eventos",
+      "submit": "Iniciar sesión",
+      "noAccount": "¿No tienes cuenta?",
+      "registerLink": "Crea una",
+      "magicLinkSent": "Revisa tu correo para el enlace de acceso"
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "subtitle": "Únete a la comunidad y publica tus eventos",
+      "submit": "Crear cuenta",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "loginLink": "Inicia sesión",
+      "passwordHint": "Mínimo 8 caracteres"
+    },
+    "fields": {
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "displayName": "Nombre (opcional)"
+    },
+    "errors": {
+      "invalid-credentials": "Correo o contraseña incorrectos",
+      "email-taken": "Ya existe una cuenta con este correo",
+      "weak-password": "La contraseña debe tener mínimo 8 caracteres",
+      "network-error": "Error de conexión. Inténtalo de nuevo.",
+      "not-configured": "La autenticación aún no está configurada",
+      "rate-limited": "Demasiados intentos. Espera un momento.",
+      "unknown": "Algo ha salido mal. Inténtalo de nuevo."
+    },
+    "meta": {
+      "loginTitle": "Iniciar sesión | Esdeveniments.cat",
+      "loginDescription": "Inicia sesión en tu cuenta de Esdeveniments.cat",
+      "registerTitle": "Crear cuenta | Esdeveniments.cat",
+      "registerDescription": "Crea tu cuenta en Esdeveniments.cat para publicar eventos",
+      "verifyEmailTitle": "Verificar correo | Esdeveniments.cat",
+      "verifyEmailDescription": "Verifica tu correo electrónico para activar tu cuenta de Esdeveniments.cat",
+      "resetPasswordTitle": "Restablecer contraseña | Esdeveniments.cat",
+      "resetPasswordDescription": "Restablece la contraseña de tu cuenta de Esdeveniments.cat"
+    },
+    "verification": {
+      "checkEmailTitle": "Revisa tu correo",
+      "checkEmailDescription": "Hemos enviado un correo de verificación a {email}. Haz clic en el enlace para activar tu cuenta.",
+      "resend": "Volver a enviar el correo",
+      "resent": "¡Correo enviado!",
+      "successTitle": "¡Correo verificado!",
+      "successDescription": "Tu cuenta ha sido verificada correctamente. Ya puedes iniciar sesión.",
+      "errorTitle": "Error de verificación",
+      "errorDescription": "No hemos podido verificar tu correo. El enlace puede haber caducado o ya ha sido utilizado.",
+      "invalidToken": "Enlace no válido",
+      "invalidTokenDescription": "El enlace de verificación no es válido. Vuelve a registrarte o solicita un nuevo correo de verificación."
+    },
+    "resetPassword": {
+      "title": "Restablecer contraseña",
+      "subtitle": "Introduce tu nueva contraseña",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirma la contraseña",
+      "submit": "Cambiar contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "successTitle": "¡Contraseña cambiada!",
+      "successDescription": "Tu contraseña se ha actualizado correctamente. Ya puedes iniciar sesión.",
+      "errorTitle": "Error al restablecer",
+      "errorDescription": "No hemos podido restablecer la contraseña. El enlace puede haber caducado o ya ha sido utilizado.",
+      "invalidToken": "Enlace no válido",
+      "invalidTokenDescription": "El enlace para restablecer la contraseña no es válido. Solicita uno nuevo."
+    }
   }
 }

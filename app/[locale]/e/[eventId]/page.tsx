@@ -443,6 +443,7 @@ async function EventPageContent({
                     regionName={regionName}
                     citySlug={event.city?.slug}
                     regionSlug={event.region?.slug}
+                    profile={event.profile}
                   />
                 </DetailSectionTracker>
 

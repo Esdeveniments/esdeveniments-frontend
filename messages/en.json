@@ -321,6 +321,24 @@
     "Breadcrumbs": {
       "home": "Home"
     },
+    "Profile": {
+      "title": "{name} — Profile",
+      "metaDescription": "Discover events by {name}. Browse their upcoming events, concerts, exhibitions and more.",
+      "events": "Events",
+      "verified": "Verified",
+      "joinedDate": "Joined {date}",
+      "noEvents": "No events yet",
+      "website": "Website",
+      "breadcrumbProfiles": "Profiles",
+      "totalEvents": "{count, plural, one {# event} other {# events}}",
+      "notFound": "Profile not found",
+      "notFoundDescription": "The profile you're looking for doesn't exist or has been removed.",
+      "backHome": "Back to home",
+      "editProfile": "Edit profile",
+      "comingSoon": "(coming soon)",
+      "claimQuestion": "Is this your venue?",
+      "claimLogin": "Log in"
+    },
     "Footer": {
       "navigation": {
         "home": "Home",
@@ -333,7 +351,8 @@
         "contact": "Contact",
         "archive": "Archive",
         "terms": "Terms",
-        "privacy": "Privacy"
+        "privacy": "Privacy",
+        "login": "Log in"
       },
       "sponsorCta": {
         "title": "Make your local business visible",
@@ -373,7 +392,13 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publish"
+      "mobilePublishLabel": "Publish",
+      "auth": {
+        "login": "Log in",
+        "logout": "Log out",
+        "userMenu": "User menu",
+        "myProfile": "My profile"
+      }
     },
     "NoEventsFound": {
       "cta": "Add an event",
@@ -438,7 +463,15 @@
         "Friday",
         "Saturday"
       ],
-      "daysShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      "daysShort": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
       "monthsShort": [
         "Jan",
         "Feb",
@@ -846,13 +879,15 @@
     "EventDetailsSection": {
       "title": "Event details",
       "eventLink": "Event link:",
-      "duration": "Approximate duration: {duration}"
+      "duration": "Approximate duration: {duration}",
+      "createdBy": "Published by {name}"
     },
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
       "hideMap": "Close map",
-      "getDirections": "Get directions"
+      "getDirections": "Get directions",
+      "profileLink": "Profile of {name}"
     },
     "EventCalendar": {
       "title": "Date and time"
@@ -1345,7 +1380,10 @@
         "for the",
         "by the"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1648,5 +1686,73 @@
       "backHome": "Back to home"
     },
     "backToHome": "Back to home"
+  },
+  "Auth": {
+    "login": {
+      "title": "Log in",
+      "subtitle": "Access your account to manage your events",
+      "submit": "Log in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Create one",
+      "magicLinkSent": "Check your email for the login link"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Join the community and publish your events",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "passwordHint": "At least 8 characters"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "displayName": "Name (optional)"
+    },
+    "errors": {
+      "invalid-credentials": "Incorrect email or password",
+      "email-taken": "An account with this email already exists",
+      "weak-password": "Password must be at least 8 characters",
+      "network-error": "Connection error. Please try again.",
+      "not-configured": "Authentication is not configured yet",
+      "rate-limited": "Too many attempts. Please wait a moment.",
+      "unknown": "Something went wrong. Please try again."
+    },
+    "meta": {
+      "loginTitle": "Log in | Esdeveniments.cat",
+      "loginDescription": "Log in to your Esdeveniments.cat account",
+      "registerTitle": "Create account | Esdeveniments.cat",
+      "registerDescription": "Create your Esdeveniments.cat account to publish events",
+      "verifyEmailTitle": "Verify email | Esdeveniments.cat",
+      "verifyEmailDescription": "Verify your email to activate your Esdeveniments.cat account",
+      "resetPasswordTitle": "Reset password | Esdeveniments.cat",
+      "resetPasswordDescription": "Reset your Esdeveniments.cat account password"
+    },
+    "verification": {
+      "checkEmailTitle": "Check your email",
+      "checkEmailDescription": "We sent a verification email to {email}. Click the link to activate your account.",
+      "resend": "Resend verification email",
+      "resent": "Email sent!",
+      "successTitle": "Email verified!",
+      "successDescription": "Your account has been verified. You can now log in.",
+      "errorTitle": "Verification failed",
+      "errorDescription": "We couldn't verify your email. The link may have expired or already been used.",
+      "invalidToken": "Invalid link",
+      "invalidTokenDescription": "The verification link is not valid. Please register again or request a new verification email."
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "subtitle": "Enter your new password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Change password",
+      "passwordMismatch": "Passwords do not match",
+      "successTitle": "Password changed!",
+      "successDescription": "Your password has been updated. You can now log in.",
+      "errorTitle": "Reset failed",
+      "errorDescription": "We couldn't reset your password. The link may have expired or already been used.",
+      "invalidToken": "Invalid link",
+      "invalidTokenDescription": "The password reset link is not valid. Please request a new one."
+    }
   }
 }

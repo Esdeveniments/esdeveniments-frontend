@@ -191,6 +191,7 @@ export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
   if (params.byDate) query.byDate = params.byDate;
   if (params.from) query.from = params.from;
   if (params.to) query.to = params.to;
+  if (params.profileSlug) query.profileSlug = params.profileSlug;
   if (params.type) query.type = params.type;
 
   return new URLSearchParams(

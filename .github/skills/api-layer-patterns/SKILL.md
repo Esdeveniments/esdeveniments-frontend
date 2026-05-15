@@ -457,6 +457,27 @@ const signature = crypto.createHmac("sha256", secret).update(url).digest("hex");
 
 - `/api/visits` (POST)
 - `/api/events/*` (POST/PUT/DELETE)
+- `/api/auth/*` (POST — login, register, forgot/reset password, email verification)
+
+**IMPORTANT: `skipBodySigning: true` is required on all POST/PUT/DELETE calls.**
+The backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. Without this flag, mutation requests fail with 401 "Invalid HMAC".
+
+```typescript
+// ✅ Correct — always pass skipBodySigning for mutations
+const response = await fetchWithHmac(`${apiUrl}/auth/register`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password, name }),
+  skipBodySigning: true, // backend ignores body for signature
+});
+
+// ❌ Wrong — will fail with 401 "Invalid HMAC"
+const response = await fetchWithHmac(`${apiUrl}/auth/register`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password, name }),
+});
+```
 
 **Implementation**: `proxy.ts` allowlists public GET routes; all others require HMAC.
 

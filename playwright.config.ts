@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const host = process.env.HOST || "127.0.0.1";
+const host = process.env.HOST || "localhost";
 const port = process.env.PORT || "3000";
 const baseUrl =
   process.env.PLAYWRIGHT_TEST_BASE_URL || `http://${host}:${port}`;

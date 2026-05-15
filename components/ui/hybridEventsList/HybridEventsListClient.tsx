@@ -42,6 +42,7 @@ function HybridEventsListClientContent({
   place,
   category,
   date,
+  profileSlug,
   serverHasMore = false,
   pageData,
 }: HybridEventsListClientProps): ReactElement | null {
@@ -79,6 +80,7 @@ function HybridEventsListClientContent({
       to,
       lat,
       lon,
+      profileSlug,
       initialSize: 10,
       fallbackData: realInitialEvents,
       serverHasMore,

@@ -1,5 +1,6 @@
 import { CategorySummaryResponseDTO } from "./category";
 import type { CitySummaryResponseDTO } from "./city";
+import type { ProfileSummaryResponseDTO } from "./profile";
 
 export type EventType = "FREE" | "PAID";
 export type EventOrigin = "SCRAPE" | "RSS" | "MANUAL" | "MIGRATION";
@@ -37,6 +38,7 @@ export interface EventSummaryResponseDTO {
   region?: RegionSummaryResponseDTO;
   province?: ProvinceSummaryResponseDTO;
   categories: CategorySummaryResponseDTO[];
+  profile?: ProfileSummaryResponseDTO;
   updatedAt?: string; // ISO date string for last update
   weather?: {
     temperature: string;
@@ -70,6 +72,13 @@ export interface PagedResponseDTO<T> {
   last: boolean;
 }
 
+/** Backend DTO: event creator info (user who created the event) */
+export interface EventCreatorResponseDTO {
+  id: string;
+  email: string;
+  name: string;
+}
+
 // Detail endpoint always includes location fields
 export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   city: CitySummaryResponseDTO;
@@ -81,6 +90,7 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   relatedEvents?: EventSummaryResponseDTO[]; // Related events from list endpoint (no location fields)
   metaTitle?: string;
   metaDescription?: string;
+  createdByUser?: EventCreatorResponseDTO;
 }
 
 export type CategorizedEvents = {

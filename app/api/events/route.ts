@@ -35,6 +35,7 @@ export async function GET(request: Request) {
       byDate: search.get("byDate") || undefined,
       from: search.get("from") || undefined,
       to: search.get("to") || undefined,
+      profileSlug: search.get("profileSlug") || undefined,
       type: search.get("type") || undefined,
       lat:
         latRaw !== null && Number.isFinite(parseFloat(latRaw))

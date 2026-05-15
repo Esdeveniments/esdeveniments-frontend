@@ -37,6 +37,7 @@ export const CLIENT_COMPONENT_KEYS = [
   "NoEventsFound",
   "Notification",
   "PromotionInfoModal",
+  "Profile",
   "RestaurantPromotionForm",
   "SearchBar",
   "Select",
@@ -55,6 +56,7 @@ export const CLIENT_UTILS_KEYS = [
 // Top-level namespaces that are shipped to the client in full (no sub-key pick).
 // If you drop one here, add the specific sub-keys it needs in its own constant.
 export const CLIENT_FULL_TOP_LEVEL = [
+  "Auth",
   "Config",
   "Partials",
   "Sponsor",

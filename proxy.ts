@@ -283,6 +283,16 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/status",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
+  // Auth routes (browser-initiated; backend HMAC handled by external wrapper)
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/me",
+  "/api/auth/refresh",
+  "/api/auth/logout",
+  "/api/auth/password/forgot",
+  "/api/auth/password/reset",
+  "/api/auth/verification/confirm",
+  "/api/auth/verification/resend",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
@@ -578,6 +588,24 @@ export default async function proxy(request: NextRequest) {
       persistLocaleCookie(redirectResponse, localeFromPath);
     }
     return redirectResponse;
+  }
+
+  // Redirect legacy /verify-email (backend email links) to /verificar-email
+  if (pathnameWithoutLocale === "/verify-email") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/verificar-email`
+      : "/verificar-email";
+    return NextResponse.redirect(url, 301);
+  }
+
+  // Redirect legacy /reset-password (backend email links) to /restablir-contrasenya
+  if (pathnameWithoutLocale === "/reset-password") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/restablir-contrasenya`
+      : "/restablir-contrasenya";
+    return NextResponse.redirect(url, 301);
   }
 
   const requestHeaders = new Headers(request.headers);

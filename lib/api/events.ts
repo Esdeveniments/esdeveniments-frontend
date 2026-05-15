@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
+import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import { fetchWithHmac } from "./fetch-wrapper";
 import {
   getInternalApiUrl,
@@ -48,6 +49,22 @@ const e2eEventsStore = isE2ETestMode
   ? (getE2EGlobal().__E2E_EVENTS__ ??
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>()))
   : null;
+
+/** Shared guard for mutation endpoints: validates API URL and auth cookie. */
+async function requireMutationAuth(): Promise<{ apiUrl: string; authToken: string }> {
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
+  }
+  const authToken = await getAccessTokenFromCookies();
+  if (!authToken) {
+    const err = new Error("Authentication required");
+    (err as Error & { status: number }).status = 401;
+    throw err;
+  }
+  return { apiUrl: getApiUrl(), authToken };
+}
 
 const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYTES) => {
   if (imageFile.size > maxBytes) {
@@ -248,25 +265,22 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
 export const getEventBySlug = cache(fetchEventBySlug);
 
 export async function updateEventById(
-  uuid: string,
+  id: string,
   data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
-  // Refuse to mutate against the hardcoded production fallback when the env
-  // is not explicitly configured (e.g., misconfigured preview deployment).
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
+  const { apiUrl, authToken } = await requireMutationAuth();
+
   const response = await fetchWithHmac(
-    `${getApiUrl()}/events/${uuid}`,
+    `${apiUrl}/events/${id}`,
     {
       method: "PUT",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify(data),
+      skipBodySigning: true,
     },
   );
   if (!response.ok) {
@@ -279,6 +293,29 @@ export async function updateEventById(
   return response.json();
 }
 
+export async function deleteEventById(id: string): Promise<void> {
+  const { apiUrl, authToken } = await requireMutationAuth();
+
+  const response = await fetchWithHmac(
+    `${apiUrl}/events/${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      skipBodySigning: true,
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("deleteEventById: error response:", errorText);
+    throw new Error(
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
+    );
+  }
+}
+
 export async function createEvent(
   data: EventCreateRequestDTO,
   e2eExtras?: E2EEventExtras,
@@ -287,19 +324,14 @@ export async function createEvent(
     return createE2EEvent(data, e2eExtras);
   }
 
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
-
-  const apiUrl = getApiUrl();
+  const { apiUrl, authToken } = await requireMutationAuth();
 
   const response = await fetchWithHmac(`${apiUrl}/events`, {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
     },
     body: JSON.stringify(data),
     skipBodySigning: true, // backend ignores body for signature; align client signing
@@ -338,15 +370,19 @@ export async function uploadEventImage(
   }
 
   const apiUrl = getApiUrl();
+  // Auth is optional — sponsor image uploads use Stripe session, not user login
+  const authToken = await getAccessTokenFromCookies();
+  const headers: HeadersInit = { Accept: "application/json" };
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
 
   const formData = new FormData();
   formData.append("imageFile", imageFile);
 
   const response = await fetchWithHmac(`${apiUrl}/events/images`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-    },
+    headers,
     body: formData,
   });
 
