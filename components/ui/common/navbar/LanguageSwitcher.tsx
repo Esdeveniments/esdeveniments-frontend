@@ -98,7 +98,7 @@ export default function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full rounded-input border border-border bg-background pl-button-x pr-3 py-button-y text-foreground min-h-[44px] md:min-h-0 gap-2 focus:outline-none focus:ring-2 focus:ring-primary/50 hover:border-border/80 transition-interactive"
+        className="flex items-center justify-between w-full rounded-input border border-border bg-background pl-button-x pr-3 py-button-y text-foreground min-h-[44px] md:min-h-0 gap-2 focus:outline-hidden focus:ring-2 focus:ring-primary/50 hover:border-border/80 transition-interactive"
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
@@ -119,7 +119,7 @@ export default function LanguageSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-dropdown mt-2 w-32 origin-top-right rounded-card bg-background border border-border shadow-dropdown focus:outline-none">
+        <div className="absolute right-0 z-dropdown mt-2 w-32 origin-top-right rounded-card bg-background border border-border shadow-dropdown focus:outline-hidden">
           <div className="py-1">
             {options.map((option) => (
               <Link
