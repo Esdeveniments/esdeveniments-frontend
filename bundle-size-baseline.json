@@ -1,8 +1,8 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-05-17T15:19:35Z",
-  "note": "Updated for Tailwind CSS v4 migration. v4's CSS custom properties approach generates ~2x more CSS than v3 (~121 KB vs ~60 KB), which inflates RSC segments when inlineCss:true is enabled. This is the expected v4 baseline. | Refreshed from CI run 25929622767 (2026-05-17) to match CI build environment.",
-  "clientTotalBytes": 2326691,
+  "lastUpdated": "2026-05-17T15:32:26.236Z",
+  "note": "Tailwind CSS v4 baseline. The analyzer subtracts CSS inlined into page_client-reference-manifest.js (a side-effect of experimental.inlineCss:true) so serverBytes tracks the JS surface, not the per-route CSS payload. The +100 KB CI error threshold is meaningful again under this measurement. Inlined CSS impact on user-facing payload is tracked via clientTotalBytes.",
+  "clientTotalBytes": 2326711,
   "thresholds": {
     "warning": {
       "ratio": 0.05,
@@ -15,112 +15,52 @@
   },
   "routes": {
     "/[locale]": {
-      "serverBytes": 14378545,
+      "serverBytes": 1588520,
       "fileCount": 220
     },
-    "/[locale]/patrocina": {
-      "serverBytes": 2195119,
-      "fileCount": 32
-    },
-    "/[locale]/sitemap": {
-      "serverBytes": 2074426,
-      "fileCount": 32
-    },
     "/[locale]/[place]": {
-      "serverBytes": 1760525,
+      "serverBytes": 270425,
       "fileCount": 24
     },
+    "/[locale]/sitemap": {
+      "serverBytes": 211801,
+      "fileCount": 32
+    },
+    "/[locale]/patrocina": {
+      "serverBytes": 208319,
+      "fileCount": 32
+    },
     "/[locale]/noticies": {
-      "serverBytes": 1684853,
+      "serverBytes": 194753,
       "fileCount": 36
     },
+    "/[locale]/[place]/[byDate]": {
+      "serverBytes": 181320,
+      "fileCount": 16
+    },
     "/[locale]/sitemap/[town]": {
-      "serverBytes": 1526789,
+      "serverBytes": 160864,
       "fileCount": 24
     },
     "/[locale]/e/[eventId]": {
-      "serverBytes": 1394686,
-      "fileCount": 16
-    },
-    "/[locale]/[place]/[byDate]": {
-      "serverBytes": 1174720,
+      "serverBytes": 152936,
       "fileCount": 16
     },
     "/[locale]/noticies/[place]": {
-      "serverBytes": 1119142,
+      "serverBytes": 125742,
       "fileCount": 22
     },
     "/[locale]/sitemap/[town]/[year]": {
-      "serverBytes": 978208,
+      "serverBytes": 108983,
       "fileCount": 16
-    },
-    "/[locale]/e/[eventId]/edita": {
-      "serverBytes": 678845,
-      "fileCount": 8
-    },
-    "/[locale]/[place]/[byDate]/[category]": {
-      "serverBytes": 587877,
-      "fileCount": 8
-    },
-    "/[locale]/preferits": {
-      "serverBytes": 556867,
-      "fileCount": 8
-    },
-    "/[locale]/noticies/[place]/[article]": {
-      "serverBytes": 554654,
-      "fileCount": 8
-    },
-    "/[locale]/sitemap/[town]/[year]/[month]": {
-      "serverBytes": 553690,
-      "fileCount": 8
-    },
-    "/[locale]/publica": {
-      "serverBytes": 551813,
-      "fileCount": 8
-    },
-    "/[locale]/e2e/load-more": {
-      "serverBytes": 550344,
-      "fileCount": 8
-    },
-    "/[locale]/patrocina/upload": {
-      "serverBytes": 549709,
-      "fileCount": 8
-    },
-    "/[locale]/qui-som": {
-      "serverBytes": 548722,
-      "fileCount": 8
-    },
-    "/[locale]/compartir-tiktok": {
-      "serverBytes": 548495,
-      "fileCount": 8
-    },
-    "/[locale]/callback": {
-      "serverBytes": 548450,
-      "fileCount": 8
-    },
-    "/[locale]/patrocina/cancelled": {
-      "serverBytes": 548071,
-      "fileCount": 8
-    },
-    "/[locale]/patrocina/success": {
-      "serverBytes": 548063,
-      "fileCount": 8
-    },
-    "/[locale]/offline": {
-      "serverBytes": 547774,
-      "fileCount": 8
-    },
-    "/[locale]/politica-privacitat": {
-      "serverBytes": 423284,
-      "fileCount": 8
-    },
-    "/[locale]/termes-servei": {
-      "serverBytes": 423248,
-      "fileCount": 8
     },
     "/api/places": {
       "serverBytes": 96443,
       "fileCount": 24
+    },
+    "/[locale]/[place]/[byDate]/[category]": {
+      "serverBytes": 91177,
+      "fileCount": 8
     },
     "/api/events": {
       "serverBytes": 72942,
@@ -133,6 +73,66 @@
     "/api/news": {
       "serverBytes": 72669,
       "fileCount": 18
+    },
+    "/[locale]/preferits": {
+      "serverBytes": 60167,
+      "fileCount": 8
+    },
+    "/[locale]/e/[eventId]/edita": {
+      "serverBytes": 57970,
+      "fileCount": 8
+    },
+    "/[locale]/noticies/[place]/[article]": {
+      "serverBytes": 57954,
+      "fileCount": 8
+    },
+    "/[locale]/sitemap/[town]/[year]/[month]": {
+      "serverBytes": 56990,
+      "fileCount": 8
+    },
+    "/[locale]/publica": {
+      "serverBytes": 55113,
+      "fileCount": 8
+    },
+    "/[locale]/e2e/load-more": {
+      "serverBytes": 53644,
+      "fileCount": 8
+    },
+    "/[locale]/patrocina/upload": {
+      "serverBytes": 53009,
+      "fileCount": 8
+    },
+    "/[locale]/qui-som": {
+      "serverBytes": 52022,
+      "fileCount": 8
+    },
+    "/[locale]/compartir-tiktok": {
+      "serverBytes": 51795,
+      "fileCount": 8
+    },
+    "/[locale]/callback": {
+      "serverBytes": 51750,
+      "fileCount": 8
+    },
+    "/[locale]/patrocina/cancelled": {
+      "serverBytes": 51371,
+      "fileCount": 8
+    },
+    "/[locale]/patrocina/success": {
+      "serverBytes": 51363,
+      "fileCount": 8
+    },
+    "/[locale]/offline": {
+      "serverBytes": 51074,
+      "fileCount": 8
+    },
+    "/[locale]/politica-privacitat": {
+      "serverBytes": 50759,
+      "fileCount": 8
+    },
+    "/[locale]/termes-servei": {
+      "serverBytes": 50723,
+      "fileCount": 8
     },
     "/api/categories": {
       "serverBytes": 48364,

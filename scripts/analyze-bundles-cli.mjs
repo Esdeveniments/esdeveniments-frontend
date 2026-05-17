@@ -113,9 +113,32 @@ function analyzeRouteServerBundle(route) {
   const bundles = files
     .filter(f => f.endsWith('.js') || f.endsWith('.json'))
     .map(file => {
-      const size = getFileSize(file);
-      const relativePath = file.replace(projectRoot + '/', '');
       const fileName = file.split('/').pop();
+      let size = getFileSize(file);
+
+      // When `experimental.inlineCss` is enabled, Next.js embeds the full
+      // compiled CSS as `{ inlined: true, content: "..." }` into every
+      // `page_client-reference-manifest.js`. With Tailwind v4 this CSS is
+      // ~2× larger than v3 and dominates manifest size (~89%), making the
+      // raw file size meaningless as a JS bundle metric.
+      // We subtract the inlined CSS payload so this script tracks the JS
+      // surface (which the +100 KB CI threshold was calibrated against).
+      if (fileName === 'page_client-reference-manifest.js') {
+        try {
+          const content = readFileSync(file, 'utf8');
+          let cssBytes = 0;
+          const re = /"inlined":true,"content":"((?:\\.|[^"\\])*)"/g;
+          let m;
+          while ((m = re.exec(content)) !== null) {
+            cssBytes += m[1].length;
+          }
+          size = Math.max(0, size - cssBytes);
+        } catch {
+          // Ignore read failures; fall back to raw size.
+        }
+      }
+
+      const relativePath = file.replace(projectRoot + '/', '');
       return {
         path: relativePath,
         fileName,
