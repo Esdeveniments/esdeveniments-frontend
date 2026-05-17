@@ -1,8 +1,8 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-05-15T00:00:00+00:00",
-  "note": "Updated for Tailwind CSS v4 migration. v4's CSS custom properties approach generates ~2x more CSS than v3 (~121 KB vs ~60 KB), which inflates RSC segments when inlineCss:true is enabled. This is the expected v4 baseline.",
-  "clientTotalBytes": 2325135,
+  "lastUpdated": "2026-05-17T15:19:35Z",
+  "note": "Updated for Tailwind CSS v4 migration. v4's CSS custom properties approach generates ~2x more CSS than v3 (~121 KB vs ~60 KB), which inflates RSC segments when inlineCss:true is enabled. This is the expected v4 baseline. | Refreshed from CI run 25929622767 (2026-05-17) to match CI build environment.",
+  "clientTotalBytes": 2326691,
   "thresholds": {
     "warning": {
       "ratio": 0.05,
@@ -15,107 +15,107 @@
   },
   "routes": {
     "/[locale]": {
-      "serverBytes": 14226311,
+      "serverBytes": 14378545,
       "fileCount": 220
     },
     "/[locale]/patrocina": {
-      "serverBytes": 2171471,
+      "serverBytes": 2195119,
       "fileCount": 32
     },
     "/[locale]/sitemap": {
-      "serverBytes": 2052256,
+      "serverBytes": 2074426,
       "fileCount": 32
     },
     "/[locale]/[place]": {
-      "serverBytes": 1742789,
+      "serverBytes": 1760525,
       "fileCount": 24
     },
     "/[locale]/noticies": {
-      "serverBytes": 1667117,
+      "serverBytes": 1684853,
       "fileCount": 36
     },
     "/[locale]/sitemap/[town]": {
-      "serverBytes": 1510531,
+      "serverBytes": 1526789,
       "fileCount": 24
     },
     "/[locale]/e/[eventId]": {
-      "serverBytes": 1379906,
+      "serverBytes": 1394686,
       "fileCount": 16
     },
     "/[locale]/[place]/[byDate]": {
-      "serverBytes": 1162896,
+      "serverBytes": 1174720,
       "fileCount": 16
     },
     "/[locale]/noticies/[place]": {
-      "serverBytes": 1107318,
+      "serverBytes": 1119142,
       "fileCount": 22
     },
     "/[locale]/sitemap/[town]/[year]": {
-      "serverBytes": 967862,
+      "serverBytes": 978208,
       "fileCount": 16
     },
     "/[locale]/e/[eventId]/edita": {
-      "serverBytes": 671455,
+      "serverBytes": 678845,
       "fileCount": 8
     },
     "/[locale]/[place]/[byDate]/[category]": {
-      "serverBytes": 581965,
+      "serverBytes": 587877,
       "fileCount": 8
     },
     "/[locale]/preferits": {
-      "serverBytes": 550955,
+      "serverBytes": 556867,
       "fileCount": 8
     },
     "/[locale]/noticies/[place]/[article]": {
-      "serverBytes": 548742,
+      "serverBytes": 554654,
       "fileCount": 8
     },
     "/[locale]/sitemap/[town]/[year]/[month]": {
-      "serverBytes": 547778,
+      "serverBytes": 553690,
       "fileCount": 8
     },
     "/[locale]/publica": {
-      "serverBytes": 545901,
+      "serverBytes": 551813,
       "fileCount": 8
     },
     "/[locale]/e2e/load-more": {
-      "serverBytes": 544432,
+      "serverBytes": 550344,
       "fileCount": 8
     },
     "/[locale]/patrocina/upload": {
-      "serverBytes": 543797,
+      "serverBytes": 549709,
       "fileCount": 8
     },
     "/[locale]/qui-som": {
-      "serverBytes": 542810,
+      "serverBytes": 548722,
       "fileCount": 8
     },
     "/[locale]/compartir-tiktok": {
-      "serverBytes": 542583,
+      "serverBytes": 548495,
       "fileCount": 8
     },
     "/[locale]/callback": {
-      "serverBytes": 542538,
+      "serverBytes": 548450,
       "fileCount": 8
     },
     "/[locale]/patrocina/cancelled": {
-      "serverBytes": 542159,
+      "serverBytes": 548071,
       "fileCount": 8
     },
     "/[locale]/patrocina/success": {
-      "serverBytes": 542151,
+      "serverBytes": 548063,
       "fileCount": 8
     },
     "/[locale]/offline": {
-      "serverBytes": 541862,
+      "serverBytes": 547774,
       "fileCount": 8
     },
     "/[locale]/politica-privacitat": {
-      "serverBytes": 418850,
+      "serverBytes": 423284,
       "fileCount": 8
     },
     "/[locale]/termes-servei": {
-      "serverBytes": 418814,
+      "serverBytes": 423248,
       "fileCount": 8
     },
     "/api/places": {

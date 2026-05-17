@@ -68,7 +68,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               <button
                 type="button"
                 onClick={toggleMenu}
-                className="inline-flex items-center justify-center py-2 px-3 rounded-button hover:bg-muted transition-interactive focus:outline-hidden"
+                className="inline-flex items-center justify-center py-2 px-3 rounded-button hover:bg-muted transition-interactive focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 aria-expanded={isMenuOpen}
                 aria-controls="mobile-menu-panel"
                 aria-label={isMenuOpen ? labels.closeMenu : labels.openMenu}

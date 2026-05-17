@@ -106,7 +106,7 @@
     0 6px 12px -3px rgb(69 69 69 / 0.1);
   --shadow-xl: 0 20px 32px -8px rgb(69 69 69 / 0.18),
     0 8px 16px -4px rgb(69 69 69 / 0.12);
-  --shadow-focus: 0 0 0 3px rgba(255, 0, 55, 0.2);
+  --shadow-focus: 0 0 0 3px rgba(214, 0, 47, 0.2);
   --shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.2);
 
   /* === TRANSITIONS === */
