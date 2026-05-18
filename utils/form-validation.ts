@@ -1,9 +1,12 @@
+import { z } from "zod";
 import {
   createEventFormSchema,
   defaultEventFormZodLabels,
-  type EventFormSchemaType,
-  type EventFormZodLabels,
-  type ValidationLabels,
+} from "@lib/validation/event-form";
+import type {
+  EventFormSchemaType,
+  EventFormZodLabels,
+  ValidationLabels,
 } from "types/event";
 import { normalizeUrl } from "./string-helpers";
 
@@ -31,7 +34,7 @@ export const getZodValidationState = (
   if (!result.success) {
     // Collect first error message
     const firstError =
-      Object.values(result.error.flatten().fieldErrors)[0]?.[0] ||
+      Object.values(z.flattenError(result.error).fieldErrors)[0]?.[0] ||
       labels.genericError;
     return { isDisabled: true, isPristine, message: firstError };
   }
