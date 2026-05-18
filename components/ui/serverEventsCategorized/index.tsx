@@ -235,7 +235,7 @@ async function ServerEventsCategorized({
                     href={withLocale(link.href)}
                     prefetch={false}
                     variant="plain"
-                    className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
+                    className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-xs"
                     data-analytics-event-name="home_chip_click"
                     data-analytics-context={section.analyticsContext}
                     data-analytics-place-slug={link.placeSlug}
@@ -593,7 +593,7 @@ export async function ServerEventsCategorizedContent({
                   href={withLocale(link.href)}
                   prefetch={false}
                   variant="plain"
-                  className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
+                  className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-xs"
                   data-analytics-event-name="home_chip_click"
                   data-analytics-context="home_seo_local-agendas"
                 >

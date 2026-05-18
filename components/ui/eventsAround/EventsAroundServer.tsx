@@ -12,7 +12,7 @@ import { getLocaleSafely } from "@utils/i18n-seo";
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const isHorizontal = layout === "horizontal";
   return (
-    <div className={`rounded-card overflow-hidden bg-background shadow-sm flex flex-col ${isHorizontal ? "w-full" : "w-44 min-w-[11rem]"}`}>
+    <div className={`rounded-card overflow-hidden bg-background shadow-xs flex flex-col ${isHorizontal ? "w-full" : "w-44 min-w-[11rem]"}`}>
       <div className={`bg-muted animate-fast-pulse ${isHorizontal ? "aspect-[3/2]" : "aspect-[4/3]"}`} />
       <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1.5">
         <div className="w-2/3 h-3 bg-border/40 rounded animate-fast-pulse" />

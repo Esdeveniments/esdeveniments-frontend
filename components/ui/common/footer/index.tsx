@@ -132,7 +132,7 @@ export default async function Footer(): Promise<JSX.Element> {
           <h2 id="featured-agendas" className="heading-4 text-foreground-strong">
             {t("featuredAgendas")}
           </h2>
-          <div className="w-full max-w-5xl bg-background/50 rounded-card p-6 shadow-sm border border-border/40">
+          <div className="w-full max-w-5xl bg-background/50 rounded-card p-6 shadow-xs border border-border/40">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3">
               {TOP_AGENDA_LINKS.map((item) => (
                 <PressableAnchorClient

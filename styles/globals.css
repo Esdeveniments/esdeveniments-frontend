@@ -155,6 +155,12 @@
   canvas {
     overflow: clip;
   }
+
+  /* v4 changed button preflight to cursor:default; restore pointer for interactive buttons */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 /* Optimize font loading - ensure text stays visible during webfont loading */
@@ -418,7 +424,7 @@ p {
   /* ===================================== */
 
   .shadow-card {
-    @apply shadow-sm;
+    @apply shadow-xs;
   }
 
   .shadow-card-hover {
@@ -488,7 +494,7 @@ p {
     .pressable-chip[data-pressed="true"],
     .pressable-chip:active {
       transform: translateY(1px);
-      @apply shadow-sm;
+      @apply shadow-xs;
     }
 
     .pressable-card[data-pressed="true"],
