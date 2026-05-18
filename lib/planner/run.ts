@@ -2,6 +2,7 @@ import { fetchEventBySlug } from "@lib/api/events-external";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import { DEFAULT_LOCALE } from "types/i18n";
 import type {
+  ChatMessage,
   PlannerEventCitation,
   RunPlannerArgs,
   RunPlannerResult,
@@ -11,7 +12,6 @@ import {
   chatCompletions,
   isPlannerConfigured,
   PLANNER_MODEL_ID,
-  type ChatMessage,
 } from "./client";
 import {
   buildSystemPrompt,

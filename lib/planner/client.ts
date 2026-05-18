@@ -1,3 +1,8 @@
+import type {
+  ChatCompletionRequest,
+  ChatCompletionResponse,
+} from "types/planner";
+
 // GitHub Models exposes an OpenAI-compatible inference endpoint hosted on Azure.
 // Free for prototyping with strict rate limits — perfect for a PoC.
 // Auth: a GitHub PAT or Actions GITHUB_TOKEN with `models:read` scope.
@@ -20,54 +25,6 @@ function resolveToken(): string | null {
 
 export function isPlannerConfigured(): boolean {
   return resolveToken() !== null;
-}
-
-export interface ChatToolCall {
-  id: string;
-  type: "function";
-  function: { name: string; arguments: string };
-}
-
-export type ChatMessage =
-  | { role: "system"; content: string }
-  | { role: "user"; content: string }
-  | {
-      role: "assistant";
-      content: string | null;
-      tool_calls?: ChatToolCall[];
-    }
-  | { role: "tool"; tool_call_id: string; content: string };
-
-export interface ChatCompletionToolDefinition {
-  type: "function";
-  function: {
-    name: string;
-    description: string;
-    parameters: Record<string, unknown>;
-  };
-}
-
-export interface ChatCompletionRequest {
-  model: string;
-  messages: ChatMessage[];
-  tools?: ChatCompletionToolDefinition[];
-  temperature?: number;
-  max_tokens?: number;
-}
-
-export interface ChatCompletionChoice {
-  index: number;
-  message: {
-    role: "assistant";
-    content: string | null;
-    tool_calls?: ChatToolCall[];
-  };
-  finish_reason: string | null;
-}
-
-export interface ChatCompletionResponse {
-  id: string;
-  choices: ChatCompletionChoice[];
 }
 
 export async function chatCompletions(
