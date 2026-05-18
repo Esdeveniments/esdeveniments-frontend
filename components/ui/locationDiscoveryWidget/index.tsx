@@ -199,7 +199,7 @@ export default function LocationDiscoveryWidget({
                   >
                     <div className="w-6 h-6 flex items-center justify-center">
                       <div className="w-5 h-5 border-2 border-primary rounded flex items-center justify-center group-hover:border-primary/80 transition-colors">
-                        <div className="w-2 h-1 bg-primary rounded-sm group-hover:bg-primary/80 transition-colors" />
+                        <div className="w-2 h-1 bg-primary rounded-xs group-hover:bg-primary/80 transition-colors" />
                       </div>
                     </div>
                     <span className="text-foreground-strong body-small font-medium group-hover:opacity-90">
