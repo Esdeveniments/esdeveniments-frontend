@@ -155,7 +155,10 @@ export function parseEventDetail(
 ): EventDetailResponseDTO | null {
   const result = EventDetailResponseDTOSchema.safeParse(input);
   if (!result.success) {
-    console.error("parseEventDetail: invalid event payload", result.error);
+    console.error(
+      "parseEventDetail: invalid event payload",
+      z.treeifyError(result.error)
+    );
     return null;
   }
 
@@ -187,7 +190,7 @@ export function parsePagedEvents(
   if (!result.success) {
     console.error(
       "parsePagedEvents: invalid paged events payload",
-      result.error
+      z.treeifyError(result.error)
     );
     return null;
   }
@@ -212,7 +215,7 @@ export function parseCategorizedEvents(
   if (!result.success) {
     console.error(
       "parseCategorizedEvents: invalid categorized events payload",
-      result.error
+      z.treeifyError(result.error)
     );
     return null;
   }
