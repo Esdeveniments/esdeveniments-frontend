@@ -27,7 +27,16 @@ export default async function PlacePageExploreNav({
   category,
   categories = [],
   placeLabel,
+  expandable = true,
 }: PlacePageExploreNavProps) {
+  // When a place lacks event depth (sitemap excludes its /[date] and /[category]
+  // URLs), the page must also stop linking to them. Otherwise Googlebot keeps
+  // discovering near-duplicate filter URLs via crawl. See
+  // utils/place-expandability.ts for the policy contract.
+  if (!expandable) {
+    return null;
+  }
+
   const locale = await getLocaleSafely();
   const t = await getTranslations({
     locale,

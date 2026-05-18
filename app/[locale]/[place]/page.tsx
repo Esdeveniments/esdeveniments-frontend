@@ -35,6 +35,13 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+import { getPlaceExpandability } from "@utils/place-expandability";
+
+// SSR page size: expandable places (regions, catalunya, towns with >= SITEMAP_MIN_EVENTS_FOR_EXPANSION)
+// SSR more events so Googlebot indexes substantively unique content per place.
+// Thin places stay at 12 to avoid amplifying fallback-content duplication.
+const SSR_EVENTS_SIZE_EXPANDABLE = 30;
+const SSR_EVENTS_SIZE_THIN = 12;
 
 // Note: This page is fully dynamic (on-demand ISR). Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
@@ -218,9 +225,17 @@ export async function buildPlaceEventsPromise({
   place: string;
   locale?: AppLocale;
 }): Promise<PlacePageEventsResult> {
+  // Both helpers are React cache()-wrapped, so duplicate calls in the same
+  // request (e.g. from PlacePageShell/generateMetadata) are deduplicated.
+  const placeTypeLabel = await getPlaceTypeAndLabelCached(place);
+  const expandable = await getPlaceExpandability(
+    place,
+    placeTypeLabel.type
+  );
+
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: 12,
+    size: expandable ? SSR_EVENTS_SIZE_EXPANDABLE : SSR_EVENTS_SIZE_THIN,
   };
 
   if (place !== "catalunya") {

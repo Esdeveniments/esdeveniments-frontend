@@ -1,14 +1,24 @@
 import { getSiteUrlFromRequest } from "@config/index";
+import { fetchPlaces } from "@lib/api/places";
 import { buildSitemapIndex } from "@utils/sitemap";
+import { SITEMAP_PLACES_PER_CHUNK } from "@utils/constants";
 import { NextRequest } from "next/server";
 
-// Chunk counts must match the corresponding sitemap routes
+// Event chunk count is stable (capped by event-count threshold) — keep static.
 const EVENT_CHUNKS = 5; // Matches server-sitemap.xml
-const PLACE_CHUNKS = 5; // Matches server-place-sitemap.xml
 
 export async function GET(request: NextRequest) {
   // Get site URL from request (prefers request host, falls back to env-based detection)
   const siteUrl = getSiteUrlFromRequest(request);
+
+  // Place chunk count is derived from actual place count to avoid listing
+  // chunks that don't exist (which would 404 and surface as sitemap errors
+  // in Google Search Console). Mirrors server-place-sitemap.xml/route.ts.
+  const places = await fetchPlaces();
+  const placeChunks = Math.max(
+    1,
+    Math.ceil(places.length / SITEMAP_PLACES_PER_CHUNK),
+  );
 
   // Build sitemap index referencing all sitemaps
   // IMPORTANT: Sitemap indexes cannot reference other sitemap indexes (nested indexes not allowed)
@@ -20,9 +30,9 @@ export async function GET(request: NextRequest) {
       { length: EVENT_CHUNKS },
       (_, i) => `${siteUrl}/sitemap-events/${i + 1}.xml`
     ),
-    // Place sitemaps (chunked to stay under 6MB response limit)
+    // Place sitemaps (chunk count derived from current place inventory)
     ...Array.from(
-      { length: PLACE_CHUNKS },
+      { length: placeChunks },
       (_, i) => `${siteUrl}/sitemap-places/${i + 1}.xml`
     ),
     `${siteUrl}/server-news-sitemap.xml`,

@@ -43,6 +43,12 @@ import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
+import { getPlaceExpandability } from "@utils/place-expandability";
+
+// SSR page size: expandable places get 30 (more unique content for Google to index);
+// non-expandable places stay at 12 (these pages are noindex,follow regardless).
+const SSR_EVENTS_SIZE_EXPANDABLE = 30;
+const SSR_EVENTS_SIZE_THIN = 12;
 
 export async function generateMetadata({
   params,
@@ -106,11 +112,19 @@ export async function generateMetadata({
     locale,
   });
 
+  // Noindex thin filter sub-pages for non-expandable places. See utils/place-expandability.ts
+  // and [byDate]/page.tsx for full rationale (sitemap/index policy must stay in sync).
+  const expandable = await getPlaceExpandability(
+    filters.place,
+    placeTypeAndLabel.type,
+  );
+
   return buildPageMeta({
     title: pageData.title,
     description: pageData.metaDescription,
     canonical: pageData.canonical,
     locale,
+    robotsOverride: expandable ? undefined : "noindex, follow",
   });
 }
 
@@ -181,10 +195,21 @@ export default async function FilteredPage({
   // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
 
+  // Match SSR depth to indexability: expandable places get a richer first page;
+  // thin places stay small. Both helpers are React cache()-wrapped, so duplicate
+  // calls in the same request are deduped.
+  const placeTypeLabelForFetch = await getPlaceTypeAndLabelCached(filters.place);
+  const isExpandableForFetch = await getPlaceExpandability(
+    filters.place,
+    placeTypeLabelForFetch.type
+  );
+
   // Prepare fetch params (align with byDate page behavior)
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: 12,
+    size: isExpandableForFetch
+      ? SSR_EVENTS_SIZE_EXPANDABLE
+      : SSR_EVENTS_SIZE_THIN,
     category:
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     // term is client-driven via SWR; omit on server to keep ISR static

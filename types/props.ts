@@ -771,6 +771,15 @@ export interface PlacePageExploreNavProps {
   category?: string;
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
+  /**
+   * Whether this place has enough event depth to warrant filter URLs
+   * (mirrors the sitemap policy). When false, the explore nav renders
+   * nothing — internal linking to /[place]/[date] and /[place]/[category]
+   * stays consistent with the sitemap's omission of those URLs.
+   * Defaults to true so behaviour for callers that don't pass the flag
+   * is unchanged.
+   */
+  expandable?: boolean;
 }
 
 export interface CategoryQuicklinksProps {
