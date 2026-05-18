@@ -282,7 +282,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-foreground/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-foreground/50 backdrop-blur-xs"
         onClick={dismiss}
         aria-hidden="true"
       />

@@ -50,7 +50,7 @@ function ClientInteractiveLayerContent({
   const stickyClasses =
     isHydrated && isNavbarVisible
       ? "top-14 z-sticky"
-      : "!top-0 z-sticky border-border md:border-b-0 shadow-sm md:shadow-none pt-element-gap-sm";
+      : "!top-0 z-sticky border-border md:border-b-0 shadow-xs md:shadow-none pt-element-gap-sm";
 
   return (
     <>

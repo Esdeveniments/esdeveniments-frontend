@@ -40,7 +40,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
   return (
     <nav
       id="site-navbar"
-      className="w-full bg-background md:sticky md:top-0 z-50 border-b border-border/50 md:shadow-sm md:backdrop-blur-sm"
+      className="w-full bg-background md:sticky md:top-0 z-50 border-b border-border/50 md:shadow-xs md:backdrop-blur-xs"
     >
       <div className="container bg-background py-2 h-14">
         <div className="h-full flex flex-col justify-center">
@@ -68,7 +68,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               <button
                 type="button"
                 onClick={toggleMenu}
-                className="inline-flex items-center justify-center py-2 px-3 rounded-button hover:bg-muted transition-interactive focus:outline-none"
+                className="inline-flex items-center justify-center py-2 px-3 rounded-button hover:bg-muted transition-interactive focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 aria-expanded={isMenuOpen}
                 aria-controls="mobile-menu-panel"
                 aria-label={isMenuOpen ? labels.closeMenu : labels.openMenu}
@@ -107,7 +107,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
                   aria-label={labels.home}
                 >
                   <HomeIcon className="h-6 w-6" />
@@ -118,7 +118,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/catalunya"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
                   aria-label={labels.agenda}
                 >
                   <CalendarIcon className="h-6 w-6" />
@@ -129,7 +129,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/preferits"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
                   aria-label={labels.favorites}
                 >
                   <HeartIcon className="h-6 w-6" />
@@ -140,7 +140,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/publica"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
+                  className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
                   aria-label={labels.publish}
                 >
                   <PlusSmIcon className="h-6 w-6" />
@@ -154,7 +154,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/noticies"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
                   aria-label={labels.news}
                 >
                   <NewspaperIcon className="h-6 w-6" />

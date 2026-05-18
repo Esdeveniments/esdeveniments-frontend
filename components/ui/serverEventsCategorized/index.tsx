@@ -235,7 +235,7 @@ async function ServerEventsCategorized({
                     href={withLocale(link.href)}
                     prefetch={false}
                     variant="plain"
-                    className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
+                    className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-xs"
                     data-analytics-event-name="home_chip_click"
                     data-analytics-context={section.analyticsContext}
                     data-analytics-place-slug={link.placeSlug}
@@ -593,7 +593,7 @@ export async function ServerEventsCategorizedContent({
                   href={withLocale(link.href)}
                   prefetch={false}
                   variant="plain"
-                  className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
+                  className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-xs"
                   data-analytics-event-name="home_chip_click"
                   data-analytics-context="home_seo_local-agendas"
                 >
@@ -633,7 +633,7 @@ function ServerEventsCategorizedFallback() {
         <div className="h-5 w-2/3 rounded bg-foreground/10" />
         <div className="grid gap-element-gap md:grid-cols-2">
           {[0, 1, 2, 3].map((index) => (
-            <div key={index} className="space-y-4 rounded-lg border p-6">
+            <div key={index} className="space-y-4 rounded-lg border border-border p-6">
               <div className="h-6 w-40 rounded bg-foreground/10" />
               <div className="h-4 w-full rounded bg-foreground/10" />
               <div className="h-4 w-3/4 rounded bg-foreground/10" />

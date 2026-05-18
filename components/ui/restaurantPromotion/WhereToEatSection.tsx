@@ -48,7 +48,7 @@ export default function WhereToEatSection({
           <button
             type="button"
             onClick={onPromoteClick}
-            className="text-xs font-medium text-primary hover:text-primary-dark underline focus:outline-none"
+            className="text-xs font-medium text-primary hover:text-primary-dark underline focus:outline-hidden"
           >
             {t("promote")}
           </button>
@@ -73,7 +73,7 @@ export default function WhereToEatSection({
               data-analytics-context="where_to_eat"
               data-analytics-place-id={place.place_id}
               data-analytics-place-name={place.name}
-              className="group block border border-border rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="group block border border-border rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-hidden focus:ring-2 focus:ring-primary/40"
               aria-label={`Obrir ${place.name} a Google Maps`}
             >
               <div className="flex items-start gap-4">
