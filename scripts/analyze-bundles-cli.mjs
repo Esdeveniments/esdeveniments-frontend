@@ -130,7 +130,7 @@ function analyzeRouteServerBundle(route) {
           const re = /"inlined":true,"content":"((?:\\.|[^"\\])*)"/g;
           let m;
           while ((m = re.exec(content)) !== null) {
-            cssBytes += m[1].length;
+            cssBytes += Buffer.byteLength(m[1], 'utf8');
           }
           size = Math.max(0, size - cssBytes);
         } catch {

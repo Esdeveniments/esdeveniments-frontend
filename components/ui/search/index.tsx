@@ -158,7 +158,7 @@ export default function Search(): JSX.Element {
         {/* Input field in the middle */}
         <input
           type="text"
-          className="w-full border-0 placeholder:text-foreground/60 body-normal focus:outline-hidden"
+          className="w-full border-0 placeholder:text-foreground/60 body-normal focus-ring"
           placeholder={t("placeholder")}
           value={inputValue}
           onKeyDown={handleKeyPress}

@@ -48,7 +48,7 @@ export default function WhereToEatSection({
           <button
             type="button"
             onClick={onPromoteClick}
-            className="text-xs font-medium text-primary hover:text-primary-dark underline focus:outline-hidden"
+            className="text-xs font-medium text-primary hover:text-primary-dark underline focus-ring rounded-xs"
           >
             {t("promote")}
           </button>

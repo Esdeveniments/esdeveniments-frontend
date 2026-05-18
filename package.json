@@ -127,7 +127,7 @@
     "production": [
       "chrome >= 122",
       "edge >= 122",
-      "firefox >= 125",
+      "firefox >= 128",
       "safari >= 17.4",
       "ios_saf >= 17.4"
     ]
