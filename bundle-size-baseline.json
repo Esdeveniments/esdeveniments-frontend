@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-04-21T18:45:00+00:00",
+  "lastUpdated": "2026-05-18T08:30:00+00:00",
   "clientTotalBytes": 2283119,
   "thresholds": {
     "warning": {
@@ -14,8 +14,8 @@
   },
   "routes": {
     "/[locale]": {
-      "serverBytes": 9806705,
-      "fileCount": 220
+      "serverBytes": 10188207,
+      "fileCount": 228
     },
     "/[locale]/patrocina": {
       "serverBytes": 1484779,

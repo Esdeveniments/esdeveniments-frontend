@@ -122,13 +122,19 @@ export async function runPlanner(
         continue;
       }
       toolCallsCount += 1;
-      let parsedArgs: unknown = {};
+      let result;
       try {
-        parsedArgs = JSON.parse(call.function.arguments || "{}");
-      } catch {
-        parsedArgs = {};
+        const parsedArgs = JSON.parse(call.function.arguments || "{}");
+        result = await runSearchEvents(parsedArgs);
+      } catch (err) {
+        // Surface the parse error to the LLM so it can correct its output
+        // on the next iteration instead of silently running an unfiltered search.
+        result = {
+          events: [],
+          total: 0,
+          note: `Invalid tool arguments: ${err instanceof Error ? err.message : "malformed JSON"}. Reissue the call with valid JSON.`,
+        };
       }
-      const result = await runSearchEvents(parsedArgs);
       messages.push({
         role: "tool",
         tool_call_id: call.id,
