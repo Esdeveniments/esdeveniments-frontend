@@ -10,11 +10,9 @@ Pulls signals the GSC UI surfaces but the API exposes only partially:
 
 Auth: ADC. Set up via `gcloud auth application-default login --scopes=...webmasters.readonly`.
 """
-import os
 import sys
-import json
-import time
 import re
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
@@ -46,8 +44,8 @@ def classify(url: str) -> str:
         path = url.split("://", 1)[1].split("/", 1)[1]
     except IndexError:
         return "homepage"
-    # strip locale prefix
-    if path.startswith("es/") or path.startswith("en/"):
+    # strip locale prefix (ca | es | en)
+    if re.match(r"^(ca|es|en)(/|$)", path):
         path = path.split("/", 1)[1] if "/" in path else ""
     if not path or path == "":
         return "homepage"
@@ -127,8 +125,10 @@ def sitemap_stats(gsc):
     return rows
 
 
-def gsc_pages(gsc, start, end, limit=25000):
-    """All pages with impressions in window."""
+def gsc_pages(gsc, start, end, limit=1_000_000):
+    """All pages with impressions in window. Limit is a safety cap (raised
+    well above the previous 25k single-page cap so audits don't silently
+    truncate on larger properties)."""
     out, start_row = [], 0
     while True:
         body = {
@@ -152,7 +152,7 @@ def gsc_pages(gsc, start, end, limit=25000):
 
 
 def pattern_aggregation(gsc):
-    print(f"\n=== PERFORMANCE BY URL PATTERN (current 28d vs prior 28d) ===")
+    print("\n=== PERFORMANCE BY URL PATTERN (current 28d vs prior 28d) ===")
     print(f"Current:  {START_28} → {END}")
     print(f"Previous: {START_PREV} → {END_PREV}")
 
@@ -178,8 +178,8 @@ def pattern_aggregation(gsc):
         f"\n{'bucket':<26} {'pages':>7} {'pgΔ':>6} {'clicks':>8} {'clkΔ%':>7} {'impr':>10} {'imprΔ%':>8}"
     )
     for b in buckets:
-        c = cur_agg.get(b, {"pages": 0, "clicks": 0, "impr": 0})
-        p = prev_agg.get(b, {"pages": 0, "clicks": 0, "impr": 0})
+        c = cur_agg[b]
+        p = prev_agg[b]
         pg_d = c["pages"] - p["pages"]
         clk_d = (
             ((c["clicks"] - p["clicks"]) / p["clicks"] * 100) if p["clicks"] else 0

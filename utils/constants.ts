@@ -37,6 +37,14 @@ export const SITEMAP_PLACES_PER_CHUNK = 100;
 // with ≥40 events have enough depth for date/category filters to render a
 // distinct subset of the parent.
 export const SITEMAP_MIN_EVENTS_FOR_EXPANSION = 40;
+// SSR page size for place listings. Expandable places (regions, catalunya,
+// towns >= SITEMAP_MIN_EVENTS_FOR_EXPANSION) ship a richer first page so
+// Googlebot indexes substantively unique content; thin places stay small to
+// avoid amplifying fallback-content duplication. Used by app/[locale]/[place]/
+// (and its [byDate]/[category] sub-pages) and matched by client pagination
+// initialSize so "Load more" doesn't refetch already-rendered events.
+export const SSR_EVENTS_SIZE_EXPANDABLE = 30;
+export const SSR_EVENTS_SIZE_THIN = 12;
 // Number of top categories to include in place sitemap expansion
 export const SITEMAP_TOP_CATEGORIES_COUNT = 5;
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =

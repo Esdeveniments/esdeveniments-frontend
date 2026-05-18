@@ -43,12 +43,11 @@ import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { PlacePageEventsResult } from "types/props";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getPlaceExpandability } from "@utils/place-expandability";
-
-// SSR page size: expandable places get 30 (more unique content for Google to index);
-// non-expandable places stay at 12 (these pages are noindex,follow regardless).
-const SSR_EVENTS_SIZE_EXPANDABLE = 30;
-const SSR_EVENTS_SIZE_THIN = 12;
+import { getPlaceExpandability } from "@lib/seo/place-expandability";
+import {
+  SSR_EVENTS_SIZE_EXPANDABLE,
+  SSR_EVENTS_SIZE_THIN,
+} from "@utils/constants";
 
 export async function generateMetadata({
   params,
@@ -468,6 +467,7 @@ async function buildCategoryEventsPromise({
     events: eventsWithAds,
     noEventsFound,
     serverHasMore,
+    ssrPageSize: fetchParams.size as number,
     structuredScripts: structuredScripts.length ? structuredScripts : undefined,
   };
 }

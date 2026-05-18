@@ -45,13 +45,11 @@ import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getPlaceExpandability } from "@utils/place-expandability";
-
-// SSR page size: expandable places get 30 (more unique content for Google to index);
-// non-expandable places stay at 12 (these pages are already noindex,follow — see
-// robotsOverride below — but a tighter fetch keeps payload small).
-const SSR_EVENTS_SIZE_EXPANDABLE = 30;
-const SSR_EVENTS_SIZE_THIN = 12;
+import { getPlaceExpandability } from "@lib/seo/place-expandability";
+import {
+  SSR_EVENTS_SIZE_EXPANDABLE,
+  SSR_EVENTS_SIZE_THIN,
+} from "@utils/constants";
 
 // page-level ISR not set here; fetch-level caching applies
 
@@ -478,6 +476,7 @@ async function buildPlaceByDateEventsPromise({
     events: eventsWithAds,
     noEventsFound,
     serverHasMore,
+    ssrPageSize: paramsForFetch.size as number,
     structuredScripts: structuredScripts.length
       ? structuredScripts
       : undefined,

@@ -4,7 +4,7 @@ vi.mock("@lib/api/events-external", () => ({
   fetchEventCountExternal: vi.fn(),
 }));
 
-import { getPlaceExpandability } from "../utils/place-expandability";
+import { getPlaceExpandability } from "@lib/seo/place-expandability";
 import { fetchEventCountExternal } from "@lib/api/events-external";
 
 const mockedFetchCount = vi.mocked(fetchEventCountExternal);
@@ -27,7 +27,7 @@ describe("getPlaceExpandability", () => {
   });
 
   it("returns true for empty slug without calling the API", async () => {
-    const result = await getPlaceExpandability("", "");
+    const result = await getPlaceExpandability("", "town");
     expect(result).toBe(true);
     expect(mockedFetchCount).not.toHaveBeenCalled();
   });

@@ -29,7 +29,7 @@ import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { connection } from "next/server";
-import { getPlaceExpandability } from "@utils/place-expandability";
+import { getPlaceExpandability } from "@lib/seo/place-expandability";
 
 // Lazy load below-the-fold client component via client component wrapper
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -258,7 +258,7 @@ async function PlacePageContent({
   await connection();
 
   // Await shell data and events in parallel
-  const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, structuredScripts }] =
+  const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, ssrPageSize, structuredScripts }] =
     await Promise.all([shellDataPromise, eventsPromise]);
 
   // Gate filter quicklinks on event depth. Mirrors sitemap policy: cities with
@@ -360,6 +360,7 @@ async function PlacePageContent({
           category={category}
           date={date}
           serverHasMore={serverHasMore}
+          ssrPageSize={ssrPageSize}
           categories={categories}
         />
       </FilterLoadingGate>

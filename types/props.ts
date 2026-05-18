@@ -500,6 +500,13 @@ export interface HybridEventsListProps {
   category?: string;
   date?: string;
   serverHasMore?: boolean; // Add server pagination info
+  /**
+   * Page size used for the SSR fetch. Forwarded to the client SWR hook so
+   * subsequent "Load more" requests start AFTER the SSR window instead of
+   * refetching events already on screen (e.g. SSR size 30 + client size 10
+   * would refetch events 10–19 and append 0 new items).
+   */
+  ssrPageSize?: number;
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
 }
@@ -518,6 +525,8 @@ export interface PlacePageEventsResult {
   events: ListEvent[];
   noEventsFound: boolean;
   serverHasMore: boolean;
+  /** Page size used for the initial SSR fetch (threaded to SWR initialSize) */
+  ssrPageSize: number;
   structuredScripts?: JsonLdScript[];
 }
 
