@@ -16,10 +16,13 @@ import type { PlaceResponseDTO } from "types/api/place";
 import type { PlaceType } from "types/common";
 import { buildAlternateLinks } from "@utils/i18n-seo";
 
-// Map backend PlaceResponseDTO.type ("REGION" | "CITY") to the canonical
-// PlaceType used by the shared getPlaceExpandability helper.
+// Map backend PlaceResponseDTO.type ("PROVINCE" | "REGION" | "CITY") to the
+// canonical PlaceType used by the shared getPlaceExpandability helper.
+// PROVINCE and REGION both aggregate events across multiple cities and should
+// always qualify for expansion; only CITY is treated as a leaf "town" that
+// must clear the event-count threshold.
 function toPlaceType(dto: PlaceResponseDTO): PlaceType {
-  return dto.type === "REGION" ? "region" : "town";
+  return dto.type === "CITY" ? "town" : "region";
 }
 
 /**

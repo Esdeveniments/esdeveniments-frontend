@@ -21,15 +21,14 @@ export async function GET(request: NextRequest) {
   // Place chunk count is derived from actual place count to avoid listing
   // chunks that don't exist (which would 404 and surface as sitemap errors
   // in Google Search Console). Mirrors server-place-sitemap.xml/route.ts.
-  // Fail-open: on API failure use PLACE_CHUNKS_FALLBACK so search engines keep
-  // discovering existing place chunks instead of being redirected to a single
-  // (possibly empty) chunk.
+  // Fail-open ONLY on a thrown error: a successful response of [] is a real
+  // "no places" signal and should publish zero place chunks. If we used the
+  // fallback there, the index would advertise /sitemap-places/1..5.xml URLs
+  // that 404 (the route 404s when the requested chunk is out of range).
   let placeChunks = PLACE_CHUNKS_FALLBACK;
   try {
     const places = await fetchPlaces();
-    if (places.length > 0) {
-      placeChunks = Math.ceil(places.length / SITEMAP_PLACES_PER_CHUNK);
-    }
+    placeChunks = Math.ceil(places.length / SITEMAP_PLACES_PER_CHUNK);
   } catch (error) {
     console.error(
       "sitemap.xml: fetchPlaces failed, using fallback chunk count",

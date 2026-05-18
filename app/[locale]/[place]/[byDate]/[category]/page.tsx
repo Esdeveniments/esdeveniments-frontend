@@ -111,7 +111,7 @@ export async function generateMetadata({
     locale,
   });
 
-  // Noindex thin filter sub-pages for non-expandable places. See utils/place-expandability.ts
+  // Noindex thin filter sub-pages for non-expandable places. See lib/seo/place-expandability.ts
   // and [byDate]/page.tsx for full rationale (sitemap/index policy must stay in sync).
   const expandable = await getPlaceExpandability(
     filters.place,

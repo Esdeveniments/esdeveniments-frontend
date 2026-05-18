@@ -206,7 +206,7 @@ def big_droppers(cur_rows, prev_rows, limit=15):
         if prev_imp < 50:
             continue
         delta = cur_imp - prev_imp
-        if delta < -prev_imp * 0.7:  # lost ≥70% impressions
+        if delta <= -prev_imp * 0.7:  # lost ≥70% impressions (exact 70% included)
             drops.append((url, prev_imp, cur_imp, delta))
     drops.sort(key=lambda x: x[3])  # biggest absolute drop first
 
