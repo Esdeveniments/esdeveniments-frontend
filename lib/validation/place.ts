@@ -15,7 +15,7 @@ export const PlaceResponseArraySchema = z.array(PlaceResponseDTOSchema);
 export function parsePlace(input: unknown): PlaceResponseDTO | null {
   const result = PlaceResponseDTOSchema.safeParse(input);
   if (!result.success) {
-    console.error("parsePlace: invalid place payload", result.error.format());
+    console.error("parsePlace: invalid place payload", z.treeifyError(result.error));
     return null;
   }
   return result.data;
@@ -24,7 +24,7 @@ export function parsePlace(input: unknown): PlaceResponseDTO | null {
 export function parsePlaces(input: unknown): PlaceResponseDTO[] {
   const result = PlaceResponseArraySchema.safeParse(input);
   if (!result.success) {
-    console.error("parsePlaces: invalid places payload", result.error.format());
+    console.error("parsePlaces: invalid places payload", z.treeifyError(result.error));
     return [];
   }
   return result.data;

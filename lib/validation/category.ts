@@ -29,7 +29,7 @@ export function parseCategories(input: unknown): CategorySummaryResponseDTO[] {
   if (!result.success) {
     console.error(
       "parseCategories: invalid categories payload",
-      result.error.format()
+      z.treeifyError(result.error)
     );
     return [];
   }
@@ -43,7 +43,7 @@ export function parseCategoryDetail(
   if (!result.success) {
     console.error(
       "parseCategoryDetail: invalid category payload",
-      result.error.format()
+      z.treeifyError(result.error)
     );
     return null;
   }

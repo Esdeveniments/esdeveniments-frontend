@@ -42,7 +42,7 @@ export function parseRegionsGrouped(
   if (!raw.success) {
     console.error(
       "parseRegionsGrouped: validation failed",
-      raw.error.format(),
+      z.treeifyError(raw.error),
     );
     return [];
   }

@@ -5,7 +5,7 @@ import { DEFAULT_FILTER_VALUE } from "./constants";
 
 // Dynamic schema generation based on configuration
 const createFilterSchema = () => {
-  const schemaObject: Record<string, z.ZodTypeAny> = {};
+  const schemaObject: Record<string, z.ZodType> = {};
 
   FILTER_CONFIGURATIONS.forEach((config) => {
     switch (config.type) {

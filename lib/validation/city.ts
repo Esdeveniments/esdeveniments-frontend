@@ -7,7 +7,7 @@ export const CitySummaryArraySchema = z.array(CitySummaryResponseDTOSchema);
 export function parseCities(input: unknown): CitySummaryResponseDTO[] {
   const result = CitySummaryArraySchema.safeParse(input);
   if (!result.success) {
-    console.error("parseCities: invalid cities payload", result.error.format());
+    console.error("parseCities: invalid cities payload", z.treeifyError(result.error));
     return [];
   }
   return result.data;
@@ -16,7 +16,7 @@ export function parseCities(input: unknown): CitySummaryResponseDTO[] {
 export function parseCity(input: unknown): CitySummaryResponseDTO | null {
   const result = CitySummaryResponseDTOSchema.safeParse(input);
   if (!result.success) {
-    console.error("parseCity: invalid city payload", result.error.format());
+    console.error("parseCity: invalid city payload", z.treeifyError(result.error));
     return null;
   }
   return result.data;
