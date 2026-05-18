@@ -1,26 +1,35 @@
 import { siteUrl } from "@config/index";
 import { fetchPlaces } from "@lib/api/places";
 import { fetchCategories } from "@lib/api/categories";
-import { fetchEventCountExternal } from "@lib/api/events-external";
 import { VALID_DATES } from "@lib/dates";
 import { buildCanonicalUrlDynamic } from "@utils/url-filters";
 import { buildSitemap } from "@utils/sitemap";
 import {
   DEFAULT_FILTER_VALUE,
   SITEMAP_PLACES_PER_CHUNK,
-  SITEMAP_MIN_EVENTS_FOR_EXPANSION,
   SITEMAP_TOP_CATEGORIES_COUNT,
 } from "@utils/constants";
+import { getPlaceExpandability } from "@lib/seo/place-expandability";
 import type { SitemapField } from "types/sitemap";
 import type { SitemapPartsRouteContext } from "types/props";
 import type { PlaceResponseDTO } from "types/api/place";
+import type { PlaceType } from "types/common";
 import { buildAlternateLinks } from "@utils/i18n-seo";
 
+// Map backend PlaceResponseDTO.type ("PROVINCE" | "REGION" | "CITY") to the
+// canonical PlaceType used by the shared getPlaceExpandability helper.
+// PROVINCE and REGION both aggregate events across multiple cities and should
+// always qualify for expansion; only CITY is treated as a leaf "town" that
+// must clear the event-count threshold.
+function toPlaceType(dto: PlaceResponseDTO): PlaceType {
+  return dto.type === "CITY" ? "town" : "region";
+}
+
 /**
- * Dynamically determines which places have enough content for full sitemap expansion.
- * REGIONs always expand (they aggregate city events, always have content).
- * CITYs expand only if they have enough events (>= SITEMAP_MIN_EVENTS_FOR_EXPANSION).
- * This avoids submitting thin/empty filtered pages that waste crawl budget.
+ * Dynamically determines which places have enough content for full sitemap
+ * expansion. Delegates per-place policy to the shared getPlaceExpandability
+ * helper so sitemap, page-level SSR depth, meta robots, and explore-nav stay
+ * in lock-step. Runs in small batches to avoid hammering the events API.
  */
 async function getExpandablePlaces(
   places: PlaceResponseDTO[],
@@ -31,25 +40,10 @@ async function getExpandablePlaces(
   for (let i = 0; i < places.length; i += BATCH_SIZE) {
     const batch = places.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.all(
-      batch.map(async (place) => {
-        // REGIONs always qualify — they aggregate events from all cities in the region
-        if (place.type === "REGION") {
-          return { slug: place.slug, expandable: true };
-        }
-        try {
-          // Returns null on API failure, real count (≥0) on success.
-          // null → expand by default so transient failures don't shrink the sitemap.
-          const count = await fetchEventCountExternal(place.slug);
-          return {
-            slug: place.slug,
-            expandable:
-              count === null || count >= SITEMAP_MIN_EVENTS_FOR_EXPANSION,
-          };
-        } catch {
-          // Expand on unexpected error to avoid collapsing sitemap on failures
-          return { slug: place.slug, expandable: true };
-        }
-      }),
+      batch.map(async (place) => ({
+        slug: place.slug,
+        expandable: await getPlaceExpandability(place.slug, toPlaceType(place)),
+      })),
     );
     results.push(...batchResults);
   }
