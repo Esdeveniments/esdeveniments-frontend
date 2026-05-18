@@ -1,4 +1,3 @@
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { fetchEventBySlug } from "@lib/api/events-external";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import { DEFAULT_LOCALE } from "types/i18n";
@@ -9,9 +8,10 @@ import type {
 } from "types/planner";
 import { SEARCH_EVENTS_TOOL_NAME } from "types/planner";
 import {
-  getPlannerClient,
+  chatCompletions,
   isPlannerConfigured,
   PLANNER_MODEL_ID,
+  type ChatMessage,
 } from "./client";
 import {
   buildSystemPrompt,
@@ -67,11 +67,10 @@ export async function runPlanner(
     return { ok: false, error: "LLM_UNAVAILABLE" };
   }
 
-  const client = getPlannerClient();
   const locale = args.locale ?? DEFAULT_LOCALE;
   const systemPrompt = buildSystemPrompt(locale, args.today);
 
-  const messages: ChatCompletionMessageParam[] = [
+  const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt },
     { role: "user", content: args.query },
   ];
@@ -79,7 +78,7 @@ export async function runPlanner(
   let toolCallsCount = 0;
 
   for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
-    const completion = await client.chat.completions.create({
+    const completion = await chatCompletions({
       model: PLANNER_MODEL_ID,
       messages,
       tools: [SEARCH_EVENTS_TOOL_DEFINITION],
