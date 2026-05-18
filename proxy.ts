@@ -281,6 +281,8 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/publish",
   "/api/tiktok/upload",
   "/api/tiktok/status",
+  // AI planner endpoint (browser-initiated; LLM token validated server-side)
+  "/api/planner",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
 ];

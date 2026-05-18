@@ -309,6 +309,29 @@
       "notFoundTitle": "Sin eventos disponibles",
       "notFoundDescriptionWithDate": "No hemos encontrado {activitiesLabel} para {date} en {place}.",
       "notFoundDescriptionFallback": "No hemos encontrado {activitiesLabel} para los próximos días en {place}."
+    },
+    "Planner": {
+      "title": "Planificador IA - Esdeveniments.cat",
+      "description": "Pide un plan y te proponemos eventos reales que encajen.",
+      "badge": "Pruebas · PoC",
+      "heading": "¿Qué quieres hacer?",
+      "subheading": "Explícame en una frase qué buscas (zona, día, con quién vas) y te propongo un plan con eventos reales de nuestro catálogo.",
+      "placeholder": "Ej: este finde en Granollers con dos niños pequeños, gratis",
+      "submit": "Planifica",
+      "loading": "Buscando planes…",
+      "empty": "Escribe una frase un poco más larga para poder ayudarte.",
+      "error": "Ha habido un error generando el plan. Vuelve a intentarlo.",
+      "suggestionsLabel": "Ideas para empezar",
+      "suggestions": [
+        "¿Qué hago este finde con niños en el Vallès Oriental?",
+        "Conciertos gratuitos en Barcelona esta semana",
+        "Una fiesta popular tradicional el mes que viene",
+        "Planes tranquilos en Girona para una pareja"
+      ],
+      "resultsLabel": "Tu plan",
+      "eventsLabel": "Eventos sugeridos",
+      "noMatches": "No se han podido asociar eventos del catálogo al plan. Prueba a ser más concreto.",
+      "modelDisclaimer": "Generado por IA. Verifica horarios y disponibilidad en la web oficial."
     }
   },
   "Components": {
@@ -438,7 +461,15 @@
         "Viernes",
         "Sábado"
       ],
-      "daysShort": ["Dom.", "Lun.", "Mar.", "Mié.", "Jue.", "Vie.", "Sáb."],
+      "daysShort": [
+        "Dom.",
+        "Lun.",
+        "Mar.",
+        "Mié.",
+        "Jue.",
+        "Vie.",
+        "Sáb."
+      ],
       "monthsShort": [
         "ene.",
         "feb.",
@@ -1347,7 +1378,10 @@
         "por el",
         "por los"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",

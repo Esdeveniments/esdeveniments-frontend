@@ -10050,6 +10050,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"openai@npm:^6.38.0":
+  version: 6.38.0
+  resolution: "openai@npm:6.38.0"
+  peerDependencies:
+    ws: ^8.18.0
+    zod: ^3.25 || ^4.0
+  peerDependenciesMeta:
+    ws:
+      optional: true
+    zod:
+      optional: true
+  bin:
+    openai: bin/cli
+  checksum: 10c0/5557c3f4c33c4232939763bce0f1d548596a7d1dfdb24a59f5177a972a369e583f196cd67e9352e6ca6379ad842e44d83f3ef993c0f320888b457bad878203ba
+  languageName: node
+  linkType: hard
+
 "opener@npm:^1.5.2":
   version: 1.5.2
   resolution: "opener@npm:1.5.2"
@@ -11668,6 +11685,7 @@ __metadata:
     next: "npm:16.2.6"
     next-intl: "npm:^4.9.2"
     next-sitemap: "npm:^4.2.3"
+    openai: "npm:^6.38.0"
     postcss: "npm:^8.5.10"
     react: "npm:19.2.4"
     react-day-picker: "npm:^9.14.0"

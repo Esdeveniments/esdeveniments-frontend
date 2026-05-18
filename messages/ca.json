@@ -309,6 +309,29 @@
       "notFoundTitle": "Sense esdeveniments disponibles",
       "notFoundDescriptionWithDate": "No hem trobat {activitiesLabel} per {date} a {place}.",
       "notFoundDescriptionFallback": "No hem trobat {activitiesLabel} per als propers dies a {place}."
+    },
+    "Planner": {
+      "title": "Planificador IA - Esdeveniments.cat",
+      "description": "Demana un pla i et proposem esdeveniments reals que t'encaixin.",
+      "badge": "Proves · PoC",
+      "heading": "Què vols fer?",
+      "subheading": "Explica'm en una frase què busques (zona, dia, amb qui hi vas) i et proposo un pla amb esdeveniments reals del nostre catàleg.",
+      "placeholder": "Ex: aquest cap de setmana a Granollers amb dos nens petits, gratuït",
+      "submit": "Planifica",
+      "loading": "Buscant plans…",
+      "empty": "Escriu una frase més llarga per a poder ajudar-te.",
+      "error": "Hi ha hagut un error generant el pla. Torna-ho a provar.",
+      "suggestionsLabel": "Idees per començar",
+      "suggestions": [
+        "Què faig aquest cap de setmana amb nens al Vallès Oriental?",
+        "Concerts gratuïts a Barcelona aquesta setmana",
+        "Una festa popular tradicional el mes vinent",
+        "Plans tranquils a Girona per a una parella"
+      ],
+      "resultsLabel": "El teu pla",
+      "eventsLabel": "Esdeveniments suggerits",
+      "noMatches": "No s'han pogut associar esdeveniments del catàleg al pla. Prova de fer la pregunta més concreta.",
+      "modelDisclaimer": "Generat per IA. Verifica horaris i disponibilitat al lloc oficial."
     }
   },
   "Components": {
@@ -446,7 +469,15 @@
         "Divendres",
         "Dissabte"
       ],
-      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
+      "daysShort": [
+        "Dg.",
+        "Dl.",
+        "Dt.",
+        "Dc.",
+        "Dj.",
+        "Dv.",
+        "Ds."
+      ],
       "monthsShort": [
         "gen.",
         "feb.",
@@ -1348,7 +1379,10 @@
         "pel",
         "pels"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
