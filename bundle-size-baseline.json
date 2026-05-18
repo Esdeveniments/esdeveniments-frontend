@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-05-15T12:28:10+00:00",
-  "clientTotalBytes": 2799999,
+  "lastUpdated": "2026-05-18T17:00:00+00:00",
+  "clientTotalBytes": 2750000,
   "thresholds": {
     "warning": {
       "ratio": 0.05,
