@@ -1,6 +1,6 @@
 export default function EventCardSkeleton() {
   return (
-    <div className="rounded-card overflow-hidden bg-background shadow h-full flex flex-col">
+    <div className="rounded-card overflow-hidden bg-background shadow-sm h-full flex flex-col">
       <div className="aspect-[3/2] bg-border/40 animate-pulse" />
       <div className="px-4 pt-3 pb-4 flex-1 flex flex-col">
         {/* Category badge skeleton */}

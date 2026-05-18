@@ -260,7 +260,7 @@ export default function RestaurantPromotionForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, restaurantName: e.target.value }))
           }
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder={t("restaurantNamePlaceholder")}
         />
         {errors.restaurantName && (
@@ -283,7 +283,7 @@ export default function RestaurantPromotionForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, location: e.target.value }))
           }
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder={t("locationPlaceholder")}
         />
         {errors.location && (
@@ -308,7 +308,7 @@ export default function RestaurantPromotionForm({
               displayDurationDays: parseInt(e.target.value),
             }))
           }
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent"
         >
           {durations.map((duration) => (
             <option key={duration} value={duration}>
@@ -335,7 +335,7 @@ export default function RestaurantPromotionForm({
               geoScopeType: e.target.value as GeoScopeType,
             }))
           }
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent"
         >
           {geoScopes.map((scope) => (
             <option key={scope} value={scope}>
@@ -363,7 +363,7 @@ export default function RestaurantPromotionForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, geoScopeId: e.target.value }))
           }
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder={
             formData.geoScopeType === "town"
               ? t("geoScopeTownPlaceholder")
@@ -390,7 +390,7 @@ export default function RestaurantPromotionForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, placeId: e.target.value }))
           }
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder={t("placeIdPlaceholder")}
         />
         <p className="mt-1 text-xs text-muted-foreground">

@@ -15,8 +15,8 @@ const RadioInput: React.FC<RadioInputProps> = ({
       <input
         id={id}
         name={name}
-        type="checkbox"
-        className="h-4 w-4 rounded-md text-primary border border-primary focus:outline-none focus:ring-0 focus:ring-background"
+        type="radio"
+        className="h-4 w-4 rounded-md text-primary border border-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         checked={typeof checkedValue === typeof value && checkedValue === value}
         onClick={() => onChange(value)}
         readOnly
