@@ -29,15 +29,29 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # npm patch + minor auto-merge.
+      # npm patch + minor auto-merge (any dependency-type).
       # Safety: branch protection on main/develop must require the e2e + quality
       # checks. `gh pr merge --auto` queues the merge and only completes when
-      # all required checks pass. Major bumps are intentionally excluded.
+      # all required checks pass. Production majors are still gated below.
       - name: Auto-merge npm patch and minor updates
         if: |
           steps.metadata.outputs.package-ecosystem == 'npm_and_yarn' &&
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
            steps.metadata.outputs.update-type == 'version-update:semver-minor')
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # npm major auto-merge ONLY for dev-dependencies (e.g. @types/*,
+      # lint-staged, test tooling). Green CI is a strong signal for dev deps
+      # because they don't ship to production. Production majors (react, next,
+      # zod, sentry, etc.) still require human review.
+      - name: Auto-merge npm dev-dependency major updates
+        if: |
+          steps.metadata.outputs.package-ecosystem == 'npm_and_yarn' &&
+          steps.metadata.outputs.update-type == 'version-update:semver-major' &&
+          steps.metadata.outputs.dependency-type == 'direct:development'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
