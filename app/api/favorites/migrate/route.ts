@@ -9,6 +9,7 @@ import {
 import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import { fetchEventBySlugWithStatus } from "@lib/api/events";
 import { addFavoriteEventExternal } from "@lib/api/favorites-external";
+import type { FavoriteMigrationSlugResult } from "types/api/favorites";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 const RESOLVE_CONCURRENCY = 5;
@@ -46,15 +47,10 @@ export async function POST() {
     let dropped = 0;
     let failed = 0;
 
-    type SlugResult =
-      | { kind: "migrated"; slug: string }
-      | { kind: "dropped"; slug: string } // permanently gone — safe to drop
-      | { kind: "failed"; slug: string }; // transient — retry next login
-
     for (let i = 0; i < unique.length; i += RESOLVE_CONCURRENCY) {
       const chunk = unique.slice(i, i + RESOLVE_CONCURRENCY);
       const settled = await Promise.allSettled(
-        chunk.map(async (slug): Promise<SlugResult> => {
+        chunk.map(async (slug): Promise<FavoriteMigrationSlugResult> => {
           const { event, notFound } = await fetchEventBySlugWithStatus(slug);
           // Permanent 404 from the backend — the event no longer exists.
           // Treat as "successfully dropped" so it won't block clearing the
