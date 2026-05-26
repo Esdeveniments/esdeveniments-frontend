@@ -1,5 +1,5 @@
 "use client";
-/* eslint-disable @eslint-react/web-api/no-leaked-timeout -- 
+/* eslint-disable @eslint-react/web-api-no-leaked-timeout --
    Timeouts in this file are tracked in timeoutIds array and cleared on cleanup.
    The ESLint rule can't detect this pattern with nested async callbacks. */
 

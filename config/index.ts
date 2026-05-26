@@ -1,3 +1,6 @@
+import { normalizeHost } from "@utils/host-validation";
+import type { SocialLinks } from "types/common";
+
 /**
  * Get the site URL based on the environment
  * @returns The appropriate site URL for localhost, preview/development, or production
@@ -30,53 +33,63 @@ export function getSiteUrl(): string {
  * Check if a hostname is an internal/private address that should never be
  * used as a public-facing URL. Covers Docker bind addresses (0.0.0.0),
  * loopback (127.x, ::1), RFC 1918 private ranges (10.x, 172.16-31.x, 192.168.x),
- * link-local (169.254.x), and common container hostnames.
+ * link-local (169.254.x), multicast/reserved ranges, and common container hostnames.
  *
  * Coolify/Docker context: HOSTNAME=0.0.0.0 is the bind address for the container.
  * Next.js reflects this in nextUrl.host when no proxy headers override it.
  */
 function isInternalHost(host: string): boolean {
-  // Strip port: handle IPv6 bracket notation [::1]:3000 and IPv4 0.0.0.0:3000
-  let hostname = host;
-  if (hostname.startsWith("[")) {
-    // IPv6 bracket notation: [::1]:3000 or [::1]
-    const bracketEnd = hostname.indexOf("]");
-    if (bracketEnd !== -1) {
-      hostname = hostname.slice(1, bracketEnd);
-    }
-  } else {
-    // IPv4 or hostname: only strip port from last colon
-    // But if there are multiple colons, it's bare IPv6 (e.g. "::1") — don't strip
-    const colonCount = (hostname.match(/:/g) || []).length;
-    if (colonCount === 1) {
-      const lastColon = hostname.lastIndexOf(":");
-      const afterColon = hostname.slice(lastColon + 1);
-      if (/^\d+$/.test(afterColon)) {
-        hostname = hostname.slice(0, lastColon);
-      }
-    }
-  }
+  const hostname = normalizeHost(host);
 
   // Loopback, unspecified, and common dev names
   if (
     hostname === "localhost" ||
+    hostname === "metadata.google.internal" ||
     hostname === "0.0.0.0" ||
-    hostname === "::1" ||
-    hostname === "[::1]"
+    hostname === "::" ||
+    hostname === "::1"
   ) {
     return true;
   }
 
   // IPv4 private/reserved ranges
-  // 127.x.x.x (loopback), 10.x.x.x, 192.168.x.x, 172.16-31.x.x, 169.254.x.x (link-local)
+  // 127.x.x.x (loopback), 10.x.x.x, 192.168.x.x, 172.16-31.x.x, 169.254.x.x (link-local),
+  // 100.64-127.x.x (carrier-grade NAT), 192.0.0.x / documentation ranges,
+  // 198.18-19.x.x (benchmarking), 224-239.x.x (multicast), 240-255.x.x (reserved).
   if (
+    /^0\./.test(hostname) ||
     /^127\./.test(hostname) ||
     /^10\./.test(hostname) ||
     /^192\.168\./.test(hostname) ||
     /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
-    /^169\.254\./.test(hostname)
+    /^169\.254\./.test(hostname) ||
+    /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(hostname) ||
+    /^192\.0\.0\./.test(hostname) ||
+    /^192\.0\.2\./.test(hostname) ||
+    /^198\.(1[89])\./.test(hostname) ||
+    /^198\.51\.100\./.test(hostname) ||
+    /^203\.0\.113\./.test(hostname) ||
+    /^(22[4-9]|23\d)\./.test(hostname) ||
+    /^(24\d|25[0-5])\./.test(hostname)
   ) {
     return true;
+  }
+
+  // IPv6 private, link-local, multicast, and IPv4-mapped loopback/private forms.
+  if (hostname.includes(":")) {
+    if (
+      hostname.startsWith("fc") ||
+      hostname.startsWith("fd") ||
+      hostname.startsWith("fe80") ||
+      hostname.startsWith("ff") ||
+      hostname.startsWith("::ffff:127.") ||
+      hostname.startsWith("::ffff:10.") ||
+      hostname.startsWith("::ffff:192.168.") ||
+      /^::ffff:172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      hostname.startsWith("::ffff:169.254.")
+    ) {
+      return true;
+    }
   }
 
   // Infrastructure domains that aren't the real public host
@@ -147,8 +160,6 @@ export const siteUrl = getSiteUrl();
 // Central contact email used across UI (defaults to esdeveniments inbox)
 export const contactEmail =
   process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hola@esdeveniments.cat";
-
-import type { SocialLinks } from "types/common";
 
 /** Canonical social media links — single source of truth for footer, schema, popups. */
 export const socialLinks: SocialLinks = {

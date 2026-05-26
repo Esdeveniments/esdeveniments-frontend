@@ -172,6 +172,35 @@ test.describe("Image Proxy", () => {
       // stripped by CloudFront on 5xx responses, so we don't assert it here.
     });
 
+    test("blocks private and metadata upstream targets", async ({ request }) => {
+      const blockedTargets = [
+        "http://10.0.0.1/private.png",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://metadata.google.internal/computeMetadata/v1/",
+      ];
+
+      for (const target of blockedTargets) {
+        const response = await request.get(
+          `/api/image-proxy?url=${encodeURIComponent(target)}`
+        );
+
+        expect(response.status(), `${target} should be blocked`).toBe(502);
+        expect(response.headers()["cache-control"]).toContain("no-store");
+      }
+    });
+
+    test("Next image optimizer rejects non-allowlisted remote targets", async ({
+      request,
+    }) => {
+      const response = await request.get(
+        `/_next/image?url=${encodeURIComponent(
+          "https://metadata.google.internal/computeMetadata/v1/"
+        )}&w=16&q=75`
+      );
+
+      expect(response.status()).toBe(400);
+    });
+
     test("respects Accept header for format selection", async ({ request }) => {
       const testImageUrl = "https://picsum.photos/400/300.jpg";
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(

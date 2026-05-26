@@ -166,4 +166,20 @@ describe("Sponsor webhook - payment_status handling", () => {
     expect(mockFindSponsorBySessionId).toHaveBeenCalledWith(sessionId);
     expect(mockCreateSponsor).not.toHaveBeenCalled();
   });
+
+  it("should acknowledge duplicate insert races without retrying", async () => {
+    const sessionId = "cs_test_duplicate_race";
+    const event = buildCheckoutEvent("paid", sessionId);
+    mockParseAndValidateEvent.mockReturnValue(event);
+    mockFindSponsorBySessionId.mockResolvedValue(false);
+    mockCreateSponsor.mockRejectedValue(
+      new Error("Turso SQL error: UNIQUE constraint failed: sponsors.stripe_session_id"),
+    );
+
+    const request = createWebhookRequest(JSON.stringify(event));
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(mockCreateSponsor).toHaveBeenCalledOnce();
+  });
 });

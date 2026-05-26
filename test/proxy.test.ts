@@ -565,7 +565,7 @@ describe("proxy", () => {
       expect(NextResponse.next).toHaveBeenCalled();
     });
 
-    it("skips body reading for multipart/form-data", async () => {
+    it("rejects multipart/form-data on protected HMAC routes", async () => {
       const timestamp = Date.now();
       const pathAndQuery = "/api/upload";
 
@@ -586,7 +586,10 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       expect(mockRequest.clone().text).not.toHaveBeenCalled();
-      expect(NextResponse.next).toHaveBeenCalled();
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unsupported media type" },
+        { status: 415 },
+      );
     });
 
     it("handles body reading errors gracefully", async () => {

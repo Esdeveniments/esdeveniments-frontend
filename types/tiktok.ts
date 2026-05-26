@@ -63,6 +63,29 @@ export interface TikTokPublishStatusData {
   publicaly_available_post_id?: string[];
 }
 
+/** Payload posted by the OAuth callback popup to the opener window. */
+export interface TikTokCallbackPayload {
+  type?: string;
+  code?: string;
+  state?: string | null;
+}
+
+export function isTikTokCallbackPayload(
+  value: unknown,
+): value is TikTokCallbackPayload {
+  if (!value || typeof value !== "object") return false;
+
+  const type = Reflect.get(value, "type");
+  const code = Reflect.get(value, "code");
+  const state = Reflect.get(value, "state");
+
+  return (
+    (type === undefined || typeof type === "string") &&
+    (code === undefined || typeof code === "string") &&
+    (state === undefined || state === null || typeof state === "string")
+  );
+}
+
 /* -- Component prop types for the Share to TikTok page -- */
 
 /** State machine for the ShareTikTok orchestrator */
