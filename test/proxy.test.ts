@@ -285,6 +285,111 @@ describe("proxy", () => {
     });
   });
 
+  describe("X-Robots-Tag (production-host allowlist)", () => {
+    /** Build a minimal page request hitting a given Host header. */
+    function buildPageRequest(host: string): NextRequest {
+      return {
+        nextUrl: mockNextUrl({
+          pathname: "/catalunya",
+          search: "",
+          searchParams: new URLSearchParams(),
+        }),
+        headers: new Headers({ host, accept: "text/html" }),
+        method: "GET",
+      } as unknown as NextRequest;
+    }
+
+    it("does NOT set X-Robots-Tag on production host (www)", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(buildPageRequest("www.esdeveniments.cat"));
+
+      expect(result.headers.get("X-Robots-Tag")).toBeNull();
+    });
+
+    it("does NOT set X-Robots-Tag on production host (apex)", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(buildPageRequest("esdeveniments.cat"));
+
+      expect(result.headers.get("X-Robots-Tag")).toBeNull();
+    });
+
+    it("sets noindex,nofollow on staging host", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(
+        buildPageRequest("staging.esdeveniments.cat"),
+      );
+
+      expect(result.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    });
+
+    it("sets noindex,nofollow on PR-preview host with pr- template", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(buildPageRequest("pr-42.esdeveniments.cat"));
+
+      expect(result.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    });
+
+    it("sets noindex,nofollow on PR-preview host with default Coolify template", async () => {
+      // Default Coolify template is `{{pr_id}}.{{domain}}` → no `pr-` prefix.
+      // Substring-based detection would silently miss this; allowlist catches it.
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(buildPageRequest("42.esdeveniments.cat"));
+
+      expect(result.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    });
+
+    it("sets noindex,nofollow when Host header is missing (default-deny)", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const request = {
+        nextUrl: mockNextUrl({
+          pathname: "/catalunya",
+          search: "",
+          searchParams: new URLSearchParams(),
+        }),
+        headers: new Headers({ accept: "text/html" }),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      const result = await proxy(request);
+
+      expect(result.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    });
+
+    it("sets noindex,nofollow on /compartir-tiktok even on production host", async () => {
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const request = {
+        nextUrl: mockNextUrl({
+          pathname: "/compartir-tiktok",
+          search: "",
+          searchParams: new URLSearchParams(),
+        }),
+        headers: new Headers({
+          host: "www.esdeveniments.cat",
+          accept: "text/html",
+        }),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      const result = await proxy(request);
+
+      expect(result.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    });
+  });
+
   describe("API routes", () => {
     it("returns 401 when x-hmac header is missing", async () => {
       const mockRequest = {
@@ -460,7 +565,7 @@ describe("proxy", () => {
       expect(NextResponse.next).toHaveBeenCalled();
     });
 
-    it("skips body reading for multipart/form-data", async () => {
+    it("rejects multipart/form-data on protected HMAC routes", async () => {
       const timestamp = Date.now();
       const pathAndQuery = "/api/upload";
 
@@ -481,7 +586,10 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       expect(mockRequest.clone().text).not.toHaveBeenCalled();
-      expect(NextResponse.next).toHaveBeenCalled();
+      expect(NextResponse.json).toHaveBeenCalledWith(
+        { error: "Unsupported media type" },
+        { status: 415 },
+      );
     });
 
     it("handles body reading errors gracefully", async () => {

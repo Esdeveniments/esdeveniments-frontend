@@ -455,3 +455,19 @@ export const formatCardDate = (
     isMultiDay: true,
   };
 };
+
+/**
+ * Parses a date string from the backend as UTC milliseconds.
+ * Backend omits timezone suffix (e.g. "2026-04-28T18:17:23") — we append "Z"
+ * unless the string already has a timezone offset or "Z" suffix.
+ * Returns null if the string is empty, undefined, or unparseable.
+ */
+export function parseBackendDateAsUtcMs(
+  date: string | undefined | null,
+): number | null {
+  if (!date) return null;
+  const hasTimezone = /Z|[+-]\d{2}:\d{2}$/.test(date);
+  const utcString = hasTimezone ? date : `${date}Z`;
+  const ms = new Date(utcString).getTime();
+  return isNaN(ms) ? null : ms;
+}

@@ -10,18 +10,16 @@ import { test, expect, type Page } from "@playwright/test";
 // a live backend.
 
 const MOCK_USER = {
-  id: 1,
+  id: "550e8400-e29b-41d4-a716-446655440001",
   email: "test@example.com",
   name: "Test User",
   role: "USER" as const,
   emailVerified: true,
 };
 
-const MOCK_AUTH_RESPONSE = {
-  accessToken: "mock-jwt-token",
-  tokenType: "Bearer",
-  expiresAt: new Date(Date.now() + 3600000).toISOString(),
+const MOCK_LOGIN_RESPONSE = {
   user: MOCK_USER,
+  expiresAt: new Date(Date.now() + 3600000).toISOString(),
 };
 
 /** Set up route mocks for auth API endpoints */
@@ -43,7 +41,7 @@ async function mockAuthRoutes(
     return route.fulfill({
       status: overrides?.loginStatus ?? 200,
       contentType: "application/json",
-      body: JSON.stringify(overrides?.loginBody ?? MOCK_AUTH_RESPONSE),
+      body: JSON.stringify(overrides?.loginBody ?? MOCK_LOGIN_RESPONSE),
     });
   });
 

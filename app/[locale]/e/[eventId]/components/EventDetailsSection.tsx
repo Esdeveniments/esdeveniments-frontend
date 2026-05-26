@@ -1,12 +1,12 @@
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { GlobeAltIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { GlobeAltIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
 const GlobeIcon = GlobeAltIcon;
 import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { useTranslations } from "next-intl";
 
 /**
- * Renders ancillary event details: duration + external link.
+ * Renders ancillary event details: duration + external link + creator info.
  * Status badge and date/time info are intentionally NOT shown here
  * to avoid duplication (they already appear in EventHeader and EventCalendar).
  */
@@ -14,9 +14,10 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
 
   const hasValidUrl = !!event.url && /^https?:\/\//i.test(event.url);
+  const createdByUser = event.createdByUser;
 
   // Only render if there's something to show
-  if (!event.duration && !hasValidUrl) return null;
+  if (!event.duration && !hasValidUrl && !createdByUser) return null;
 
   return (
     <div className="w-full">
@@ -52,6 +53,13 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
               >
                 {event.title}
               </PressableAnchor>
+            </div>
+          )}
+
+          {createdByUser && (
+            <div className="body-small flex items-center gap-element-gap text-foreground-strong/70">
+              <UserIcon className="w-4 h-4" />
+              {t("createdBy", { name: createdByUser.name })}
             </div>
           )}
 

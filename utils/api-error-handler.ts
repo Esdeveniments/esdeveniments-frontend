@@ -35,7 +35,13 @@ export function handleApiError(
   routePath: string,
   options: ApiErrorOptions = {}
 ): NextResponse {
-  const { status = 500, errorMessage, fallbackData, sentryContext } = options;
+  const rawStatus = error instanceof Error && "status" in error
+    ? (error as Error & { status: unknown }).status
+    : undefined;
+  const errorStatus = typeof rawStatus === "number" && rawStatus >= 400 && rawStatus < 600
+    ? rawStatus
+    : undefined;
+  const { status = errorStatus ?? 500, errorMessage, fallbackData, sentryContext } = options;
 
   // Normalize error to Error object for better logging
   // Use getSanitizedErrorMessage for consistency with other error handling

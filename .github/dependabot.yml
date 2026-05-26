@@ -1,24 +1,60 @@
-# Low-noise config: security alerts always come through, only major version updates monthly
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Low-noise config aligned with 2026 GitHub guidance:
+# - groups bundle related updates into single PRs (less review noise)
+# - cooldown delays new releases so flaky .0 bumps settle before being proposed
+# - NO blanket `ignore` of patch/minor: that ALSO suppresses security PRs
+#   (see "Security updates" icon on the `ignore` option in the docs)
+# - majors land as individual PRs so they get human review
+# https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference
 
 version: 2
 
 updates:
-  # npm: Only major updates, monthly, individual PRs
+  # npm / yarn
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 5
+      interval: "weekly"
+    # Limit applies to version updates only; security has its own internal limit (10).
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+    groups:
+      production-minor-patch:
+        applies-to: version-updates
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      development-minor-patch:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+      # Bundle simultaneous security alerts into a single PR
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+    # Ignored majors keep getting patch/minor + security PRs.
+    # https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#ignore--
     ignore:
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-patch"
-          - "version-update:semver-minor"
+      # zod 4 ships a ~250 KB client-runtime chunk that Turbopack puts in a
+      # shared vendor chunk and preloads as `<script async>` on the homepage
+      # and every /[place] / /[byDate] listing page — even though those routes
+      # never call zod (the only direct consumers are /publica and
+      # /e/[eventId]/edita). Net: +442 KB / +19.4% on every SEO-critical organic
+      # landing page. PR #308 explored architectural refactor,
+      # optimizePackageImports, and zod/mini; none moved the shared chunk and
+      # mini made it worse. Revisit when zod ships a smaller v4 classic
+      # runtime, a v4-only feature is needed (JSON Schema export, Standard
+      # Schema integration), or the form schema is fully rewritten in zod/mini
+      # end-to-end with a verified bundle win.
+      - dependency-name: "zod"
+        update-types: ["version-update:semver-major"]
 
-  # GitHub Actions: Keep workflows secure
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 3
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions-all:
+        patterns: ["*"]

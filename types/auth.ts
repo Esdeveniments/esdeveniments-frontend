@@ -68,7 +68,7 @@ export interface AuthResult {
   requiresVerification?: boolean;
 }
 
-export type { AuthResponseDTO, AuthenticatedUserDTO, AuthMessageResponseDTO } from "./api/auth";
+export type { AuthResponseDTO, AuthenticatedUserDTO, AuthMessageResponseDTO, RefreshTokenRequestDTO, RefreshTokenResponseDTO } from "./api/auth";
 
 export type AuthUnsubscribe = () => void;
 

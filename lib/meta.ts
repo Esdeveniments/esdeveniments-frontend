@@ -15,6 +15,7 @@ import {
   stripLocaleFromPathname,
 } from "@utils/i18n-seo";
 import { getFormattedDate } from "@utils/helpers";
+import { isProductionSiteUrl } from "@utils/production-host";
 import { parseDateFromIso } from "@utils/schema-helpers";
 
 // Days after event end date before we noindex it to save crawl budget
@@ -205,7 +206,21 @@ export function generateEventMetadata(
       images: image,
     },
     robots: (() => {
-      if (process.env.NEXT_PUBLIC_VERCEL_ENV === "preview") {
+      // Block non-production hosts (preview deployments, staging) from indexing.
+      // The proxy emits X-Robots-Tag at the response level for these hosts;
+      // this meta tag is defense-in-depth in case the header is stripped by
+      // a CDN.
+      //
+      // IMPORTANT: only emit noindex on positive evidence of non-production.
+      // The Dockerfile strips NEXT_PUBLIC_SITE_URL from the runner stage
+      // (only set in the builder), so at runtime it may be undefined in
+      // production too. Fail-open: undefined env = trust the default policy.
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      const isKnownNonProd = !!siteUrl && !isProductionSiteUrl(siteUrl);
+      if (
+        process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
+        isKnownNonProd
+      ) {
         return "noindex, nofollow";
       }
       // Noindex events that ended more than 60 days ago to save crawl budget.

@@ -12,6 +12,9 @@ import {
   normalizeExternalImageUrl,
   isLegacyFileHandler,
 } from "@utils/image-cache";
+import { isDevelopmentHost } from "@utils/host-validation";
+import { getPublicFetchSafety } from "@utils/public-fetch-safety";
+import type { LookupAddress } from "node:dns";
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
@@ -19,6 +22,7 @@ const MAX_BYTES = 5_000_000; // 5MB guard
 const TIMEOUT_MS = 5000;
 const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
+const MAX_REDIRECTS = 2;
 
 // Image optimization defaults
 const DEFAULT_QUALITY = 50; // Base quality for mobile - Lighthouse tests on mobile viewport
@@ -55,6 +59,24 @@ const insecureTlsDispatcher = new Agent({
   },
 });
 
+function buildPinnedDnsDispatcher(
+  dnsRecords: LookupAddress[],
+  rejectUnauthorized: boolean,
+): Agent | null {
+  const firstRecord = dnsRecords[0];
+  if (!firstRecord) return null;
+
+  return new Agent({
+    connect: {
+      keepAlive: false,
+      rejectUnauthorized,
+      lookup(_hostname, _options, callback) {
+        callback(null, firstRecord.address, firstRecord.family);
+      },
+    },
+  });
+}
+
 function shouldBypassTlsVerification(candidateUrl: string): boolean {
   try {
     const parsed = new URL(candidateUrl);
@@ -85,22 +107,50 @@ function isAbsoluteHttpUrl(candidate: string): boolean {
   return /^https?:\/\//i.test(candidate);
 }
 
-async function fetchWithTimeout(url: string) {
+async function fetchWithTimeout(
+  url: string,
+  redirectsRemaining = MAX_REDIRECTS,
+  deadline = Date.now() + TIMEOUT_MS,
+): Promise<Response> {
+  const targetSafety = await getPublicFetchSafety(url);
+  if (!targetSafety.isSafe) {
+    throw new Error("Blocked unsafe image upstream");
+  }
+
+  const remainingMs = deadline - Date.now();
+  if (remainingMs <= 0) {
+    throw new Error("Image upstream fetch timed out");
+  }
+
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), remainingMs);
   try {
     const bypassTls = shouldBypassTlsVerification(url);
+    const pinnedDnsDispatcher = targetSafety.dnsRecords
+      ? buildPinnedDnsDispatcher(targetSafety.dnsRecords, !bypassTls)
+      : null;
     const init: RequestInit & { dispatcher?: unknown } = {
       signal: controller.signal,
+      redirect: "manual",
     };
 
-    if (bypassTls) {
-      init.dispatcher = insecureTlsDispatcher;
+    if (pinnedDnsDispatcher || bypassTls) {
+      init.dispatcher = pinnedDnsDispatcher ?? insecureTlsDispatcher;
     }
 
-    return await fetch(url, init as RequestInit);
+    const response = await fetch(url, init as RequestInit);
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      await response.body?.cancel();
+      if (!location || redirectsRemaining <= 0) {
+        throw new Error("Blocked image upstream redirect");
+      }
+      const redirectUrl = new URL(location, url).toString();
+      return await fetchWithTimeout(redirectUrl, redirectsRemaining - 1, deadline);
+    }
+    return response;
   } catch (error) {
-    throw new Error(`Fetch failed for ${url}`, { cause: error });
+    throw new Error("Image upstream fetch failed", { cause: error });
   } finally {
     clearTimeout(timeout);
   }
@@ -206,11 +256,10 @@ function buildFetchCandidates(
   absoluteUrl: string,
   originalWasHttp: boolean
 ): string[] {
-  // Always try HTTPS first for non-localhost, then fall back to HTTP when applicable.
+  // Always try HTTPS first for non-development hosts, then fall back to HTTP when applicable.
   try {
     const parsed = new URL(absoluteUrl);
-    const isLocalhost =
-      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    const isDevHost = isDevelopmentHost(parsed.hostname);
 
     const https = new URL(parsed.toString());
     https.protocol = "https:";
@@ -218,8 +267,8 @@ function buildFetchCandidates(
     const http = new URL(parsed.toString());
     http.protocol = "http:";
 
-    // If localhost, prefer original protocol (usually http) and don't force https first.
-    if (isLocalhost) {
+    // For development hosts, prefer original protocol and don't force https first.
+    if (isDevHost) {
       return [parsed.toString()];
     }
 
