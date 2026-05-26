@@ -8,12 +8,19 @@ export const FavoriteStatusResponseDTOSchema = z.object({
   favorite: z.boolean(),
 });
 
-// Minimal validation for the paged favorites response.
 // We do not redeclare the full EventSummaryResponseDTO schema here — the
-// page wrapper is the load-bearing shape; per-event validation is the
-// responsibility of consumers that need it.
+// page wrapper is the load-bearing shape. Items are validated as
+// object-shaped (with at least `id` + `slug`) so a malformed entry fails
+// at parse time rather than crashing the consumer when it reads fields.
+const FavoriteEventItemSchema = z
+  .object({
+    id: z.string(),
+    slug: z.string(),
+  })
+  .passthrough();
+
 export const FavoriteEventsPageDTOSchema = z.object({
-  content: z.array(z.unknown()),
+  content: z.array(FavoriteEventItemSchema),
   currentPage: z.number().int(),
   pageSize: z.number().int(),
   totalElements: z.number().int(),
@@ -40,5 +47,8 @@ export function parseFavoriteEventsPage(
     console.error("parseFavoriteEventsPage: invalid payload", result.error);
     return null;
   }
-  return result.data as FavoriteEventsPageDTO;
+  // Items are validated as object-shaped with id + slug at parse time;
+  // the full EventSummaryResponseDTO field-by-field schema is owned by
+  // consumers that need it (passthrough preserves the remaining fields).
+  return result.data as unknown as FavoriteEventsPageDTO;
 }

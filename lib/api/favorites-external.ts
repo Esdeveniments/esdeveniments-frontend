@@ -15,6 +15,14 @@ function authHeaders(accessToken: string): Record<string, string> {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
+async function logBackendError(
+  context: string,
+  response: Response
+): Promise<void> {
+  const body = await response.text().catch(() => "<unreadable>");
+  console.error(`${context}: HTTP ${response.status} — ${body}`);
+}
+
 export async function listFavoriteEventsExternal(
   accessToken: string,
   page = 0,
@@ -34,9 +42,7 @@ export async function listFavoriteEventsExternal(
       headers: authHeaders(accessToken),
     });
     if (!response.ok) {
-      console.error(
-        `listFavoriteEventsExternal: HTTP ${response.status}`
-      );
+      await logBackendError("listFavoriteEventsExternal", response);
       return null;
     }
     return parseFavoriteEventsPage(await response.json());
@@ -58,7 +64,10 @@ export async function isFavoriteEventExternal(
       `${apiUrl}/users/me/favorites/events/${encodeURIComponent(eventId)}`,
       { headers: authHeaders(accessToken) }
     );
-    if (!response.ok) return null;
+    if (!response.ok) {
+      await logBackendError("isFavoriteEventExternal", response);
+      return null;
+    }
     const parsed = parseFavoriteStatus(await response.json());
     return parsed?.favorite ?? null;
   } catch (error) {
@@ -83,6 +92,9 @@ export async function addFavoriteEventExternal(
         skipBodySigning: true,
       }
     );
+    if (!response.ok) {
+      await logBackendError("addFavoriteEventExternal", response);
+    }
     return { ok: response.ok, status: response.status };
   } catch (error) {
     console.error("addFavoriteEventExternal: failed", error);
@@ -106,6 +118,9 @@ export async function removeFavoriteEventExternal(
         skipBodySigning: true,
       }
     );
+    if (!response.ok) {
+      await logBackendError("removeFavoriteEventExternal", response);
+    }
     return { ok: response.ok, status: response.status };
   } catch (error) {
     console.error("removeFavoriteEventExternal: failed", error);
