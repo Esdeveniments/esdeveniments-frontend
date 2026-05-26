@@ -27,9 +27,11 @@ const ToggleFavoriteSchema = z.object({
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
-async function backendFavoriteSlugs(authToken: string): Promise<string[]> {
+async function backendFavoriteSlugs(
+  authToken: string
+): Promise<string[] | null> {
   const page = await listFavoriteEventsExternal(authToken, 0, MAX_FAVORITES);
-  if (!page) return [];
+  if (!page) return null;
   return (page.content ?? [])
     .map((e) => e.slug)
     .filter((s): s is string => typeof s === "string" && s.length > 0);
@@ -41,6 +43,14 @@ export async function GET() {
 
     if (authToken) {
       const favorites = await backendFavoriteSlugs(authToken);
+      if (favorites === null) {
+        // Don't pretend the list is empty when the backend is unreachable —
+        // an authed user with real favorites would see them disappear.
+        return NextResponse.json(
+          { ok: false, error: "BACKEND_ERROR" },
+          { status: 502, headers: NO_STORE }
+        );
+      }
       return NextResponse.json(
         { ok: true, favorites },
         { headers: NO_STORE }
@@ -132,9 +142,15 @@ export async function POST(request: Request) {
         );
       }
 
+      // After a successful mutation, refresh the canonical list. If that
+      // refresh fails (backend transient), we still tell the client the
+      // mutation succeeded — but without the list snapshot, so SWR keeps
+      // its previous data instead of being overwritten with stale empties.
       const favorites = await backendFavoriteSlugs(authToken);
       return NextResponse.json(
-        { ok: true, favorites },
+        favorites === null
+          ? { ok: true }
+          : { ok: true, favorites },
         { headers: NO_STORE }
       );
     }

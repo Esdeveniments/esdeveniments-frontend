@@ -111,14 +111,23 @@ export default async function PreferitsPage() {
   let events: EventSummaryResponseDTO[];
   let uniqueFavoritesCount: number;
   let slugsToRemove: string[];
+  let backendUnavailable = false;
 
   if (authToken) {
     // Authed: backend is the source of truth. Returns fully populated event
     // summaries, so we skip the slug-by-slug round trip the cookie path uses.
     const page = await listFavoriteEventsExternal(authToken, 0, MAX_FAVORITES);
-    events = page?.content ?? [];
-    uniqueFavoritesCount =
-      page?.totalElements ?? new Set(events.map((e) => e.slug)).size;
+    if (page === null) {
+      // Backend is unreachable; refuse to render an empty list (which would
+      // make the user think they have no favorites). Show an error state.
+      events = [];
+      uniqueFavoritesCount = 0;
+      backendUnavailable = true;
+    } else {
+      events = page.content ?? [];
+      uniqueFavoritesCount =
+        page.totalElements ?? new Set(events.map((e) => e.slug)).size;
+    }
     // Server-side store has no stale slugs to prune.
     slugsToRemove = [];
   } else {
@@ -139,6 +148,20 @@ export default async function PreferitsPage() {
 
   const activeEvents = filterActiveEvents(events);
   const favoriteSlugs = events.map((e) => e.slug).filter(Boolean) as string[];
+
+  if (backendUnavailable) {
+    return (
+      <div
+        className="container py-section-y flex-col justify-center items-center"
+        data-testid="favorites-page-error"
+      >
+        <NoEventsFound
+          title={t("errorTitle")}
+          description={t("errorDescription")}
+        />
+      </div>
+    );
+  }
 
   if (favoriteSlugs.length === 0 || activeEvents.length === 0) {
     return (

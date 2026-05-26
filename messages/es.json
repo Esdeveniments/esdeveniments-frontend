@@ -80,7 +80,9 @@
       "subtitle": "Solo se muestran eventos futuros. Cuando un evento termina, se elimina automáticamente de favoritos.",
       "countLabel": "{count}/{max} guardados",
       "emptyTitle": "Aún no tienes eventos futuros guardados",
-      "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos."
+      "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos.",
+      "errorTitle": "No hemos podido cargar tus favoritos",
+      "errorDescription": "Inténtalo de nuevo en un momento. Tus favoritos están a salvo."
     },
     "About": {
       "metaTitle": "Quiénes somos - Agenda cultural de Cataluña | Esdeveniments.cat",

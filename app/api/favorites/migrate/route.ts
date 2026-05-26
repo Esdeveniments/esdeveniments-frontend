@@ -67,11 +67,13 @@ export async function POST() {
       }
     }
 
-    // Clear the guest cookie regardless: anything that couldn't migrate
-    // (event deleted, 409 max-reached, transient backend error) won't be
-    // recovered by retrying — and we don't want it duplicated next login.
-    const cookieStore = await cookies();
-    cookieStore.delete(FAVORITES_COOKIE_NAME);
+    // Only clear the guest cookie when every entry migrated. If even one
+    // failed we keep the cookie so the next login (or a manual retry) can
+    // pick up the leftovers — failures may be transient (timeout, 5xx).
+    if (failed === 0) {
+      const cookieStore = await cookies();
+      cookieStore.delete(FAVORITES_COOKIE_NAME);
+    }
 
     return NextResponse.json(
       { ok: true, migrated, failed },

@@ -80,7 +80,9 @@
       "subtitle": "Només es mostren esdeveniments futurs. Quan un esdeveniment finalitza, s'elimina automàticament dels preferits.",
       "countLabel": "{count}/{max} desats",
       "emptyTitle": "Encara no tens esdeveniments futurs desats",
-      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits."
+      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits.",
+      "errorTitle": "No hem pogut carregar els teus preferits",
+      "errorDescription": "Torna-ho a provar en un moment. Els teus preferits estan segurs."
     },
     "About": {
       "metaTitle": "Qui som - Agenda cultural de Catalunya | Esdeveniments.cat",
