@@ -24,11 +24,13 @@ export async function listFavoriteEventsExternal(
   if (!apiUrl) return null;
 
   try {
-    const url = new URL(`${apiUrl}/users/me/favorites/events`);
-    url.searchParams.set("page", String(page));
-    url.searchParams.set("size", String(size));
+    const query = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+    }).toString();
+    const url = `${apiUrl}/users/me/favorites/events?${query}`;
 
-    const response = await fetchWithHmac(url.toString(), {
+    const response = await fetchWithHmac(url, {
       headers: authHeaders(accessToken),
     });
     if (!response.ok) {
