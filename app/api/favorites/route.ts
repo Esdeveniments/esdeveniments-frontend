@@ -30,7 +30,7 @@ const NO_STORE = { "Cache-Control": "no-store" } as const;
 async function backendFavoriteSlugs(authToken: string): Promise<string[]> {
   const page = await listFavoriteEventsExternal(authToken, 0, MAX_FAVORITES);
   if (!page) return [];
-  return page.content
+  return (page.content ?? [])
     .map((e) => e.slug)
     .filter((s): s is string => typeof s === "string" && s.length > 0);
 }
@@ -95,7 +95,16 @@ export async function POST(request: Request) {
     const authToken = await getAccessTokenFromCookies();
 
     // Authenticated branch: backend is the source of truth.
-    if (authToken && eventId) {
+    if (authToken) {
+      if (!eventId) {
+        // Falling back to the cookie path here would silently desync state:
+        // the cookie write never reaches the backend and /preferits would
+        // read an empty list for the user. Surface the bad request instead.
+        return NextResponse.json(
+          { ok: false, error: "EVENT_ID_REQUIRED" },
+          { status: 400, headers: NO_STORE }
+        );
+      }
       const result = shouldBeFavorite
         ? await addFavoriteEventExternal(authToken, eventId)
         : await removeFavoriteEventExternal(authToken, eventId);
