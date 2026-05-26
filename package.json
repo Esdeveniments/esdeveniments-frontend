@@ -98,10 +98,10 @@
     "@types/node": "^25.6.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.59.2",
-    "@typescript-eslint/parser": "^8.59.2",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
     "@vitejs/plugin-react": "^4.3.0",
-    "@vitest/coverage-v8": "^4.1.5",
+    "@vitest/coverage-v8": "^4.1.7",
     "babel-plugin-react-compiler": "^19.1.0-rc.1",
     "baseline-browser-mapping": "^2.10.30",
     "cheerio": "^1.2.0",
@@ -116,7 +116,7 @@
     "next-sitemap": "^4.2.3",
     "typescript": "5.9.3",
     "vite-tsconfig-paths": "^4.3.0",
-    "vitest": "4.1.6"
+    "vitest": "4.1.7"
   },
   "packageManager": "yarn@4.12.0",
   "browserslist": {
