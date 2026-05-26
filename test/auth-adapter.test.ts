@@ -52,11 +52,11 @@ describe("MockAuthAdapter", () => {
     const result = await adapter.register({
       email: "new@t.com",
       password: "pass123",
-      displayName: "New User",
+      name: "New User",
     });
     expect(result.success).toBe(true);
     expect(result.user?.email).toBe("new@t.com");
-    expect(result.user?.displayName).toBe("New User");
+    expect(result.user?.name).toBe("New User");
   });
 
   it("rejects duplicate registration", async () => {

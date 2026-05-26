@@ -30,9 +30,10 @@ function isAuthenticatedUserDTO(v: unknown): v is AuthenticatedUserDTO {
   if (!v || typeof v !== "object") return false;
   const o = v as Record<string, unknown>;
   return (
-    typeof o.id === "number" &&
+    typeof o.id === "string" &&
     typeof o.email === "string" &&
     typeof o.name === "string" &&
+    typeof o.username === "string" &&
     typeof o.emailVerified === "boolean"
   );
 }
@@ -40,9 +41,10 @@ function isAuthenticatedUserDTO(v: unknown): v is AuthenticatedUserDTO {
 /** Map backend DTO to frontend AuthUser */
 function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
   return {
-    id: String(dto.id),
+    id: dto.id,
     email: dto.email,
-    displayName: dto.name,
+    name: dto.name,
+    username: dto.username,
     role: dto.role,
     emailVerified: dto.emailVerified,
   };
@@ -155,7 +157,7 @@ export function createApiAdapter(): AuthAdapter {
           body: JSON.stringify({
             email: credentials.email,
             password: credentials.password,
-            name: credentials.displayName ?? credentials.email.split("@")[0],
+            name: credentials.name ?? credentials.email.split("@")[0],
           }),
         });
 

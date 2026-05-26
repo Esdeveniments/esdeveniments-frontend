@@ -1709,7 +1709,7 @@
     "fields": {
       "email": "Correu electrònic",
       "password": "Contrasenya",
-      "displayName": "Nom (opcional)"
+      "name": "Nom (opcional)"
     },
     "errors": {
       "invalid-credentials": "Correu o contrasenya incorrectes",

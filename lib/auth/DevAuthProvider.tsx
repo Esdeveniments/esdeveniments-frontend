@@ -20,8 +20,8 @@ export function DevAuthProvider({ children }: { children: ReactNode }) {
             {
               email: "dev@test.com",
               password: "dev",
-              displayName: "Razzmatazz",
-              profileSlug: "razzmatazz",
+              name: "Razzmatazz",
+              username: "razzmatazz",
             },
           ],
         })

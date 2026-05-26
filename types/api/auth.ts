@@ -23,9 +23,10 @@ export interface AuthResponseDTO {
 
 /** Backend DTO: what GET /api/auth/me returns */
 export interface AuthenticatedUserDTO {
-  id: number;
+  id: string;
   email: string;
   name: string;
+  username: string;
   role: AuthRole;
   emailVerified: boolean;
 }

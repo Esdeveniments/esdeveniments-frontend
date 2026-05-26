@@ -37,9 +37,10 @@ describe("auth-external", () => {
           tokenType: "Bearer",
           expiresAt: "2026-12-01T00:00:00Z",
           user: {
-            id: 1,
+            id: "u1",
             email: "a@b.com",
             name: "Alice",
+            username: "alice",
             role: "USER",
             emailVerified: true,
           },
@@ -59,9 +60,10 @@ describe("auth-external", () => {
           tokenType: "Bearer",
           expiresAt: "2026-12-01T00:00:00Z",
           user: {
-            id: 1,
+            id: "u1",
             email: "a@b.com",
             name: "A",
+            username: "a",
             role: "USER",
             emailVerified: true,
           },
@@ -131,9 +133,10 @@ describe("auth-external", () => {
     it("returns user DTO on success", async () => {
       mockFetchWithHmac.mockResolvedValue(
         jsonResponse({
-          id: 1,
+          id: "u1",
           email: "a@b.com",
           name: "Alice",
+          username: "alice",
           role: "USER",
           emailVerified: true,
         })
@@ -147,9 +150,10 @@ describe("auth-external", () => {
     it("sends Authorization header", async () => {
       mockFetchWithHmac.mockResolvedValue(
         jsonResponse({
-          id: 1,
+          id: "u1",
           email: "a@b.com",
           name: "A",
+          username: "a",
           role: "USER",
           emailVerified: true,
         })

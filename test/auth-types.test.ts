@@ -14,9 +14,10 @@ describe("lib/validation/auth", () => {
         tokenType: "Bearer",
         expiresAt: "2026-03-01T00:00:00Z",
         user: {
-          id: 1,
+          id: "u1",
           email: "a@b.com",
           name: "Alice",
+          username: "alice",
           role: "USER",
           emailVerified: true,
         },
@@ -34,9 +35,10 @@ describe("lib/validation/auth", () => {
         tokenType: "Bearer",
         expiresAt: "2026-03-01T00:00:00Z",
         user: {
-          id: 2,
+          id: "u2",
           email: "b@c.com",
           name: "Bob",
+          username: "bob",
           role: "ADMIN",
           emailVerified: false,
         },
@@ -56,20 +58,22 @@ describe("lib/validation/auth", () => {
   describe("parseAuthUser (AuthenticatedUserDTO)", () => {
     it("parses valid backend user DTO", () => {
       const result = parseAuthUser({
-        id: 1,
+        id: "u1",
         email: "a@b.com",
         name: "Alice",
+        username: "alice",
         role: "USER",
         emailVerified: true,
       });
       expect(result).not.toBeNull();
-      expect(result?.id).toBe(1);
+      expect(result?.id).toBe("u1");
       expect(result?.name).toBe("Alice");
+      expect(result?.username).toBe("alice");
     });
 
     it("returns null for missing required fields", () => {
-      expect(parseAuthUser({ id: 1 })).toBeNull();
-      expect(parseAuthUser({ id: 1, email: "a@b.com" })).toBeNull();
+      expect(parseAuthUser({ id: "u1" })).toBeNull();
+      expect(parseAuthUser({ id: "u1", email: "a@b.com" })).toBeNull();
     });
   });
 

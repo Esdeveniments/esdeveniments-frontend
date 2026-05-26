@@ -5,13 +5,14 @@ import type {
   AuthMessageResponseDTO,
 } from "types/api/auth";
 
-const AuthRoleSchema = z.enum(["USER", "ADMIN"]);
+const AuthRoleSchema = z.enum(["USER", "ADMIN", "ORGANIZATION"]);
 
 /** Schema for backend AuthenticatedUserDTO */
 export const AuthenticatedUserDTOSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   email: z.string().email(),
   name: z.string(),
+  username: z.string(),
   role: AuthRoleSchema,
   emailVerified: z.boolean(),
 });
@@ -20,7 +21,8 @@ export const AuthenticatedUserDTOSchema = z.object({
 export const AuthUserSchema = z.object({
   id: z.string(),
   email: z.string().email(),
-  displayName: z.string().nullable().optional(),
+  name: z.string(),
+  username: z.string(),
   avatarUrl: z.string().url().nullable().optional(),
   role: AuthRoleSchema.optional(),
   emailVerified: z.boolean().optional(),

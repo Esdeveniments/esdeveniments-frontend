@@ -1708,7 +1708,7 @@
     "fields": {
       "email": "Correo electrónico",
       "password": "Contraseña",
-      "displayName": "Nombre (opcional)"
+      "name": "Nombre (opcional)"
     },
     "errors": {
       "invalid-credentials": "Correo o contraseña incorrectos",

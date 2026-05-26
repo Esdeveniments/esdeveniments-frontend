@@ -9,6 +9,15 @@ import type {
   MockAdapterOptions,
 } from "types/auth";
 
+function slugifyUsername(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function createMockAdapter(
   options: MockAdapterOptions = {}
 ): AuthAdapter {
@@ -23,13 +32,14 @@ export function createMockAdapter(
   let currentUser: AuthUser | null = null;
 
   for (const u of preloadUsers) {
+    const name = u.name ?? u.email.split("@")[0];
     users.set(u.email, {
       password: u.password,
       user: {
         id: crypto.randomUUID(),
         email: u.email,
-        displayName: u.displayName,
-        profileSlug: u.profileSlug,
+        name,
+        username: u.username ?? slugifyUsername(name),
       },
     });
   }
@@ -59,10 +69,12 @@ export function createMockAdapter(
       if (users.has(credentials.email)) {
         return { success: false, error: "email-taken" };
       }
+      const name = credentials.name ?? credentials.email.split("@")[0];
       const user: AuthUser = {
         id: crypto.randomUUID(),
         email: credentials.email,
-        displayName: credentials.displayName,
+        name,
+        username: slugifyUsername(name),
       };
       users.set(credentials.email, {
         password: credentials.password ?? "",

@@ -1,4 +1,3 @@
-import Badge from "@components/ui/common/badge";
 import ProfileOwnerActions from "@components/ui/profile/ProfileOwnerActions";
 import { getTranslations } from "next-intl/server";
 import type { ProfileHeaderProps } from "types/props";
@@ -21,74 +20,23 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
 
   return (
     <section
-      className="card-bordered rounded-lg overflow-hidden mb-section-y"
+      className="card-bordered rounded-lg overflow-hidden mb-section-y w-full"
       aria-label={t("title", { name: profile.name })}
       data-testid="profile-header"
     >
-      {/* Cover image — decorative, empty alt */}
-      {profile.coverUrl ? (
-        <div className="h-40 sm:h-52 w-full overflow-hidden">
-          <img
-            src={profile.coverUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        </div>
-      ) : (
-        <div className="h-40 sm:h-52 w-full bg-muted" />
-      )}
+      <div className="h-40 sm:h-52 w-full bg-muted" />
 
-      {/* Profile info */}
       <div className="px-section-x py-element-gap -mt-10 relative">
         <div className="flex items-end gap-element-gap mb-element-gap">
-          {profile.avatarUrl ? (
-            <img
-              src={profile.avatarUrl}
-              alt={t("title", { name: profile.name })}
-              className="w-20 h-20 rounded-full border-4 border-background object-cover"
-            />
-          ) : (
-            <AvatarFallback name={profile.name} />
-          )}
+          <AvatarFallback name={profile.name} />
         </div>
 
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <h1 className="heading-1 text-foreground">{profile.name}</h1>
-          {profile.verified && (
-            <Badge className="bg-primary/10 text-primary border-primary/30">
-              {t("verified")}
-            </Badge>
-          )}
-          <ProfileOwnerActions profileSlug={profile.slug} />
+          <ProfileOwnerActions username={profile.username} />
         </div>
 
-        {profile.bio && (
-          <p className="body-normal text-foreground/80 mb-element-gap">
-            {profile.bio}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-4 text-sm text-foreground/60">
-          {profile.totalEvents > 0 && (
-            <span>{t("totalEvents", { count: profile.totalEvents })}</span>
-          )}
-          {(profile.city || profile.region) && (
-            <span>
-              {[profile.city, profile.region].filter(Boolean).join(", ")}
-            </span>
-          )}
-          {profile.website &&
-            /^https?:\/\//i.test(profile.website) && (
-            <a
-              href={profile.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {t("website")}
-            </a>
-          )}
-        </div>
+        <p className="body-small text-foreground/60">@{profile.username}</p>
       </div>
     </section>
   );

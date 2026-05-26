@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchProfileBySlugExternal } from "../lib/api/profiles-external";
 import { buildEventsQuery } from "../utils/api-helpers";
 
 const originalEnv = { ...process.env };
 
-describe("lib/api/profiles-external", () => {
+describe("lib/api/users-external", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();
@@ -15,25 +14,17 @@ describe("lib/api/profiles-external", () => {
     process.env = originalEnv;
   });
 
-  it("returns mock data when NEXT_PUBLIC_API_URL is missing", async () => {
+  it("returns null when NEXT_PUBLIC_API_URL is missing", async () => {
     delete process.env.NEXT_PUBLIC_API_URL;
-
-    const result = await fetchProfileBySlugExternal("razzmatazz");
-    expect(result).not.toBeNull();
-    expect(result?.slug).toBe("razzmatazz");
-    expect(result?.name).toBe("Razzmatazz");
-    expect(result?.verified).toBe(true);
-  });
-
-  it("returns null for unknown slug when NEXT_PUBLIC_API_URL is missing", async () => {
-    delete process.env.NEXT_PUBLIC_API_URL;
-
-    const result = await fetchProfileBySlugExternal("nonexistent");
+    const { getUserByUsernameExternal } = await import(
+      "../lib/api/users-external"
+    );
+    const result = await getUserByUsernameExternal("razzmatazz");
     expect(result).toBeNull();
   });
 });
 
-describe("buildEventsQuery with profileSlug", () => {
+describe("buildEventsQuery with profileSlug (legacy filter, no-op on backend)", () => {
   it("includes profileSlug param when set", () => {
     const qs = buildEventsQuery({
       page: 0,

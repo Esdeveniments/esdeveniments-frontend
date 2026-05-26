@@ -501,10 +501,6 @@ export interface ProfileHeaderProps {
 
 export interface ProfilePageShellProps {
   profile: import("types/api/profile").ProfileDetailResponseDTO;
-  initialEvents: ListEvent[];
-  noEventsFound: boolean;
-  serverHasMore: boolean;
-  pageData: PageData;
 }
 
 export interface HybridEventsListProps {
@@ -814,12 +810,12 @@ export interface RegisterFormProps {
 
 // Profile owner actions client island props
 export interface ProfileOwnerActionsProps {
-  profileSlug: string;
+  username: string;
 }
 
 // Profile claim CTA client island props
 export interface ProfileClaimCtaProps {
-  profileSlug: string;
+  username: string;
 }
 
 // Sticky CTA bar for event detail page (mobile)

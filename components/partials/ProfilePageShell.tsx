@@ -1,9 +1,6 @@
-import { Suspense } from "react";
-import HybridEventsList from "@components/ui/hybridEventsList";
 import JsonLdServer from "./JsonLdServer";
 import ProfileHeader from "@components/ui/profile/ProfileHeader";
 import ProfileClaimCta from "@components/ui/profile/ProfileClaimCta";
-import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
@@ -12,31 +9,30 @@ import type { ProfilePageShellProps } from "types/props";
 
 export default async function ProfilePageShell({
   profile,
-  initialEvents,
-  noEventsFound,
-  serverHasMore,
-  pageData,
 }: ProfilePageShellProps) {
   const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
   const tProfile = await getTranslations("Components.Profile");
   const locale = await getLocaleSafely();
 
+  const profileUrl = toLocalizedUrl(`/perfil/${profile.username}`, locale);
+
   const breadcrumbItems: BreadcrumbItem[] = [
     { name: tBreadcrumbs("home"), url: toLocalizedUrl("/", locale) },
-    { name: tProfile("breadcrumbProfiles"), url: toLocalizedUrl("/perfil", locale) },
-    { name: profile.name, url: toLocalizedUrl(`/perfil/${profile.slug}`, locale) },
+    {
+      name: tProfile("breadcrumbProfiles"),
+      url: toLocalizedUrl("/perfil", locale),
+    },
+    { name: profile.name, url: profileUrl },
   ];
 
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbItems);
 
-  const organizationSchema = {
+  const personSchema = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "Person",
     name: profile.name,
-    url: toLocalizedUrl(`/perfil/${profile.slug}`, locale),
-    ...(profile.avatarUrl && { logo: profile.avatarUrl }),
-    ...(profile.bio && { description: profile.bio }),
-    ...(profile.website && /^https?:\/\//i.test(profile.website) && { sameAs: [profile.website] }),
+    url: profileUrl,
+    identifier: profile.username,
   };
 
   return (
@@ -45,24 +41,13 @@ export default async function ProfilePageShell({
         <JsonLdServer id="breadcrumbs-schema" data={breadcrumbListSchema} />
       )}
       <JsonLdServer
-        id={`organization-${profile.slug}`}
-        data={organizationSchema}
+        id={`person-${profile.username}`}
+        data={personSchema}
       />
 
       <div className="container flex flex-col justify-center items-center pt-[6rem]">
         <ProfileHeader profile={profile} />
-        <ProfileClaimCta profileSlug={profile.slug} />
-
-        <Suspense fallback={<EventsListSkeleton />}>
-          <HybridEventsList
-            initialEvents={initialEvents}
-            pageData={pageData}
-            noEventsFound={noEventsFound}
-            place={profile.city?.toLowerCase() || "catalunya"}
-            profileSlug={profile.slug}
-            serverHasMore={serverHasMore}
-          />
-        </Suspense>
+        <ProfileClaimCta username={profile.username} />
       </div>
     </>
   );

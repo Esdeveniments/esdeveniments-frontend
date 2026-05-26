@@ -13,7 +13,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState<AuthErrorCode | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [registered, setRegistered] = useState(false);
@@ -36,7 +36,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       const result = await register({
         email,
         password: showPassword ? password : undefined,
-        displayName: displayName || undefined,
+        name: name || undefined,
       });
       if (result.success) {
         setRegistered(true);
@@ -149,14 +149,14 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       )}
 
       <label className="label" htmlFor="register-name">
-        {t("fields.displayName")}
+        {t("fields.name")}
       </label>
       <input
         id="register-name"
         type="text"
         autoComplete="name"
-        value={displayName}
-        onChange={(e) => setDisplayName(e.target.value)}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
         className="rounded-input"
       />
 

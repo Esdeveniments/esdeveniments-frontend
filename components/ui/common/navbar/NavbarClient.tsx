@@ -130,17 +130,17 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                           className="w-9 h-9 rounded-full object-cover"
                         />
                       ) : (
-                        (user.displayName || user.email).charAt(0).toUpperCase()
+                        (user.name || user.email).charAt(0).toUpperCase()
                       )}
                     </button>
                     {isUserMenuOpen && (
                       <div className="absolute right-0 mt-2 w-48 card-bordered card-body shadow-md bg-background z-50 rounded-lg" data-testid="user-dropdown-menu">
                         <p className="body-small text-foreground/60 truncate mb-2">
-                          {user.displayName || user.email}
+                          {user.name || user.email}
                         </p>
-                        {user.profileSlug && (
+                        {user.username && (
                           <ActiveLink
-                            href={`/perfil/${encodeURIComponent(user.profileSlug)}`}
+                            href={`/perfil/${encodeURIComponent(user.username)}`}
                             className="block w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
                           >
                             {labels.myProfile}
@@ -271,11 +271,11 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 {isAuthenticated && user ? (
                   <>
                     <p className="body-small text-foreground/60 text-center truncate">
-                      {user.displayName || user.email}
+                      {user.name || user.email}
                     </p>
-                    {user.profileSlug && (
+                    {user.username && (
                       <ActiveLink
-                        href={`/perfil/${user.profileSlug}`}
+                        href={`/perfil/${user.username}`}
                         className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
                       >
                         {labels.myProfile}
