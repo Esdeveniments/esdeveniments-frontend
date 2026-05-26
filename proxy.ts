@@ -259,6 +259,10 @@ export const PUBLIC_API_EXACT_PATHS = [
   // Favorites cookie endpoints (browser-initiated)
   "/api/favorites",
   "/api/favorites/prune",
+  // Migrates guest-cookie favorites into the user's server-side favorites
+  // (browser-initiated; auth enforced by the route handler reading the
+  // HttpOnly auth_token cookie).
+  "/api/favorites/migrate",
   // DISABLED: Restaurant promotions feature is currently disabled
   // "/api/cloudinary/sign",
   // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)

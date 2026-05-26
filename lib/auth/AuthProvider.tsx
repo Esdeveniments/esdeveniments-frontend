@@ -60,6 +60,12 @@ export function AuthProvider({
       const result = await adapter.login(credentials);
       if (result.success && result.user) {
         setUser(result.user);
+        // Fire-and-forget migration of any guest-cookie favorites to the
+        // user's server-side favorites. Endpoint short-circuits when the
+        // cookie is empty, so it's cheap on a clean login.
+        fetch("/api/favorites/migrate", { method: "POST" }).catch(() => {
+          /* best-effort */
+        });
       } else if (result.error) {
         setError(result.error);
       }

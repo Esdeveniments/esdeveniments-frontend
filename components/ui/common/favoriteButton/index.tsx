@@ -99,6 +99,7 @@ export default function FavoriteButton({
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     eventSlug,
+                    eventId,
                     shouldBeFavorite: nextIsFavorite,
                   }),
                 })

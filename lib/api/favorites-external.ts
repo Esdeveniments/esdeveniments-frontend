@@ -1,5 +1,5 @@
 import { fetchWithHmac } from "./fetch-wrapper";
-import { getApiUrl } from "@utils/api-helpers";
+import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
 import {
   parseFavoriteEventsPage,
   parseFavoriteStatus,
@@ -23,22 +23,25 @@ async function logBackendError(
   console.error(`${context}: HTTP ${response.status} — ${body}`);
 }
 
+function favoritesBaseUrl(): string | null {
+  if (!isApiUrlConfigured()) return null;
+  return `${getApiUrl()}/users/me/favorites/events`;
+}
+
 export async function listFavoriteEventsExternal(
   accessToken: string,
   page = 0,
   size = 50
 ): Promise<FavoriteEventsPageDTO | null> {
-  const apiUrl = getApiUrl();
-  if (!apiUrl) return null;
+  const base = favoritesBaseUrl();
+  if (!base) return null;
 
   try {
     const query = new URLSearchParams({
       page: String(page),
       size: String(size),
     }).toString();
-    const url = `${apiUrl}/users/me/favorites/events?${query}`;
-
-    const response = await fetchWithHmac(url, {
+    const response = await fetchWithHmac(`${base}?${query}`, {
       headers: authHeaders(accessToken),
     });
     if (!response.ok) {
@@ -56,12 +59,12 @@ export async function isFavoriteEventExternal(
   accessToken: string,
   eventId: string
 ): Promise<boolean | null> {
-  const apiUrl = getApiUrl();
-  if (!apiUrl) return null;
+  const base = favoritesBaseUrl();
+  if (!base) return null;
 
   try {
     const response = await fetchWithHmac(
-      `${apiUrl}/users/me/favorites/events/${encodeURIComponent(eventId)}`,
+      `${base}/${encodeURIComponent(eventId)}`,
       { headers: authHeaders(accessToken) }
     );
     if (!response.ok) {
@@ -80,12 +83,12 @@ export async function addFavoriteEventExternal(
   accessToken: string,
   eventId: string
 ): Promise<MutationResult> {
-  const apiUrl = getApiUrl();
-  if (!apiUrl) return { ok: false, status: 0 };
+  const base = favoritesBaseUrl();
+  if (!base) return { ok: false, status: 0 };
 
   try {
     const response = await fetchWithHmac(
-      `${apiUrl}/users/me/favorites/events/${encodeURIComponent(eventId)}`,
+      `${base}/${encodeURIComponent(eventId)}`,
       {
         method: "POST",
         headers: authHeaders(accessToken),
@@ -106,12 +109,12 @@ export async function removeFavoriteEventExternal(
   accessToken: string,
   eventId: string
 ): Promise<MutationResult> {
-  const apiUrl = getApiUrl();
-  if (!apiUrl) return { ok: false, status: 0 };
+  const base = favoritesBaseUrl();
+  if (!base) return { ok: false, status: 0 };
 
   try {
     const response = await fetchWithHmac(
-      `${apiUrl}/users/me/favorites/events/${encodeURIComponent(eventId)}`,
+      `${base}/${encodeURIComponent(eventId)}`,
       {
         method: "DELETE",
         headers: authHeaders(accessToken),
