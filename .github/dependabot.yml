@@ -32,6 +32,22 @@ updates:
       security-updates:
         applies-to: security-updates
         patterns: ["*"]
+    # Ignored majors keep getting patch/minor + security PRs.
+    # https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#ignore--
+    ignore:
+      # zod 4 ships a ~250 KB client-runtime chunk that Turbopack puts in a
+      # shared vendor chunk and preloads as `<script async>` on the homepage
+      # and every /[place] / /[byDate] listing page — even though those routes
+      # never call zod (the only direct consumers are /publica and
+      # /e/[eventId]/edita). Net: +442 KB / +19.4% on every SEO-critical organic
+      # landing page. PR #308 explored architectural refactor,
+      # optimizePackageImports, and zod/mini; none moved the shared chunk and
+      # mini made it worse. Revisit when zod ships a smaller v4 classic
+      # runtime, a v4-only feature is needed (JSON Schema export, Standard
+      # Schema integration), or the form schema is fully rewritten in zod/mini
+      # end-to-end with a verified bundle win.
+      - dependency-name: "zod"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
