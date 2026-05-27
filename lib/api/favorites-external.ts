@@ -59,7 +59,7 @@ export async function isFavoriteEventExternal(
   accessToken: string,
   eventId: string
 ): Promise<boolean | null> {
-  if (!eventId.trim()) return null;
+  if (!eventId || !eventId.trim()) return null;
   const base = favoritesBaseUrl();
   if (!base) return null;
 
@@ -84,7 +84,7 @@ export async function addFavoriteEventExternal(
   accessToken: string,
   eventId: string
 ): Promise<MutationResult> {
-  if (!eventId.trim()) return { ok: false, status: 0 };
+  if (!eventId || !eventId.trim()) return { ok: false, status: 0 };
   const base = favoritesBaseUrl();
   if (!base) return { ok: false, status: 0 };
 
@@ -111,7 +111,7 @@ export async function removeFavoriteEventExternal(
   accessToken: string,
   eventId: string
 ): Promise<MutationResult> {
-  if (!eventId.trim()) return { ok: false, status: 0 };
+  if (!eventId || !eventId.trim()) return { ok: false, status: 0 };
   const base = favoritesBaseUrl();
   if (!base) return { ok: false, status: 0 };
 

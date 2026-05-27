@@ -6,7 +6,7 @@ import type { UserPublicResponseDTO } from "types/api/user";
 export async function getUserByUsernameExternal(
   username: string
 ): Promise<UserPublicResponseDTO | null> {
-  if (!username.trim()) return null;
+  if (!username || !username.trim()) return null;
   const apiUrl = getApiUrl();
   if (!apiUrl) return null;
 
