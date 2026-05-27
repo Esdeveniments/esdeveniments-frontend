@@ -211,67 +211,55 @@ test.describe("Publish integration (staging)", () => {
     const currentUrl = page.url();
     console.log(`Event created, redirected to: ${currentUrl}`);
 
-    // Extract slug from URL (pattern: /e/{slug} or /en/e/{slug})
+    // Publishing must land on an event detail page. Failing to extract a slug
+    // means the publish didn't complete — assert rather than silently skip.
     const slugMatch = currentUrl.match(/\/e\/([^/?#]+)/);
-    if (slugMatch) {
-      createdEventSlug = slugMatch[1];
-      console.log(`Created event slug: ${createdEventSlug}`);
-    }
+    expect(
+      slugMatch,
+      `expected to land on /e/{slug}, got: ${currentUrl}`
+    ).not.toBeNull();
+    createdEventSlug = slugMatch![1];
+    console.log(`Created event slug: ${createdEventSlug}`);
 
-    // ── Step 7: Verify event detail page ──
-    // If we got redirected to the event page, verify content
-    if (createdEventSlug) {
-      // Navigate to ensure clean load
-      await page.goto(`/en/e/${createdEventSlug}`, {
-        waitUntil: "domcontentloaded",
-        timeout: 60_000,
-      });
-
-      // Verify the event title is displayed
-      await expect(page.getByRole("heading", { level: 1 })).toContainText(
-        TEST_EVENT_TITLE,
-        { timeout: 15_000 }
-      );
-
-      // Verify "Created by" / "Published by" user info is shown (optional — backend may not return it yet)
-      const creatorText = page.locator("text=/created by|publicat per|creado por/i");
-      const creatorVisible = await creatorText.isVisible().catch(() => false);
-      if (creatorVisible) {
-        console.log("✅ Creator info is displayed on event detail page");
-      } else {
-        console.log("ℹ️ Creator info not shown — backend may not include createdByUser yet");
-      }
-
-      // Extract event UUID from page data or API for cleanup
-      // Try to find it from the page's meta or data attributes
-      try {
-        const metaUuid = await page.evaluate(() => {
-          // Look for canonical URL or data attribute containing the UUID
-          const canonical = document.querySelector('link[rel="canonical"]');
-          const ogUrl = document.querySelector('meta[property="og:url"]');
-          return (canonical as HTMLLinkElement)?.href ?? (ogUrl as HTMLMetaElement)?.content ?? null;
-        });
-        console.log(`Event meta URL: ${metaUuid}`);
-      } catch {
-        // UUID extraction optional — we'll try slug-based cleanup
-      }
-    }
-
-    // ── Step 8: Verify listing page shows event ──
-    // Go to the listing and check the event appears
-    await page.goto("/en/barcelona", {
+    // ── Step 7: Verify the event detail page ──
+    await page.goto(`/en/e/${createdEventSlug}`, {
       waitUntil: "domcontentloaded",
       timeout: 60_000,
     });
 
-    // The event should appear in the listing (may need to scroll)
-    const eventCard = page.locator(`text=${TEST_EVENT_TITLE}`).first();
-    // Don't fail on this — event might be on page 2 or take time to appear
-    const isVisible = await eventCard.isVisible().catch(() => false);
-    if (isVisible) {
-      console.log("✅ Event visible in listing page");
-    } else {
-      console.log("⚠️ Event not immediately visible in listing (may be cached)");
-    }
+    // Title (data we entered) is the H1. This also proves it's not the
+    // not-found page, which would render a different heading.
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      TEST_EVENT_TITLE,
+      { timeout: 15_000 }
+    );
+
+    // Location we entered is rendered somewhere on the page.
+    await expect(page.getByText("Test Venue - E2E").first()).toBeVisible({
+      timeout: 15_000,
+    });
+
+    // Creator attribution ("Published by …"). The DTO + UI exist; assert it
+    // softly so a backend not yet populating createdByUser surfaces as a
+    // reported failure without masking the core publish→detail flow.
+    await expect
+      .soft(
+        page.getByText(/published by|publicat per|publicado por/i),
+        "event detail should attribute the creator (createdByUser)"
+      )
+      .toBeVisible({ timeout: 10_000 });
+
+    // ── Step 8: Verify the event appears on a listing page ──
+    await page.goto("/en/barcelona", {
+      waitUntil: "domcontentloaded",
+      timeout: 60_000,
+    });
+    // Soft: listing may be cached or paginate the fresh event off page 1.
+    await expect
+      .soft(
+        page.getByText(TEST_EVENT_TITLE).first(),
+        "freshly published event should appear in the Barcelona listing"
+      )
+      .toBeVisible({ timeout: 15_000 });
   });
 });
