@@ -1,0 +1,91 @@
+name: E2E Integration (preproduction)
+
+# Opt-in, write-heavy E2E that runs the full publish → event-detail flow
+# against a REAL backend (preproduction). Kept out of regular PR CI so it
+# never creates events on production. Runs manually (workflow_dispatch) and
+# nightly. The publish-integration spec self-skips when credentials are
+# absent, so a missing secret never turns this red.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Frontend URL backed by the preproduction API (overrides PREPROD_BASE_URL var)"
+        required: false
+        type: string
+  schedule:
+    - cron: "0 3 * * *" # nightly at 03:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never run two write-heavy integration runs at once against the shared
+  # preproduction backend.
+  group: e2e-integration
+  cancel-in-progress: false
+
+jobs:
+  publish-integration:
+    name: Publish → detail (preproduction)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Resolve target URL
+        id: target
+        env:
+          INPUT_URL: ${{ github.event.inputs.base_url }}
+          VAR_URL: ${{ vars.PREPROD_BASE_URL }}
+        run: |
+          URL="${INPUT_URL:-$VAR_URL}"
+          if [ -z "$URL" ]; then
+            echo "::error::No preproduction base URL. Set the PREPROD_BASE_URL repo variable or pass base_url on dispatch."
+            exit 1
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Target: $URL"
+
+      - name: Run publish → detail integration (preproduction)
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.target.outputs.url }}
+          # Dedicated preproduction test user. When unset, the spec self-skips.
+          E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
+          E2E_STAGING_PASSWORD: ${{ secrets.E2E_STAGING_PASSWORD }}
+          # Only needed if the preproduction frontend sits behind Vercel
+          # deployment protection.
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-integration-report
+          path: playwright-report/
+          retention-days: 7
