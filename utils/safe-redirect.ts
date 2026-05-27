@@ -12,6 +12,10 @@ export function getSafeRedirect(
 ): string | undefined {
   if (typeof param !== "string") return undefined;
   if (!param.startsWith("/")) return undefined;
-  if (param.startsWith("//")) return undefined;
+  // Browsers normalize "\" to "/", so "/\evil.com" resolves to the
+  // protocol-relative "//evil.com". Reject a "/" or "\" in the second
+  // position, and any backslash anywhere, to close that bypass.
+  if (param[1] === "/" || param[1] === "\\") return undefined;
+  if (param.includes("\\")) return undefined;
   return param;
 }

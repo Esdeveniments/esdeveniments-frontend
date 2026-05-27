@@ -15,6 +15,14 @@ describe("getSafeRedirect", () => {
     expect(getSafeRedirect("//evil.example/path")).toBeUndefined();
   });
 
+  it("rejects backslash normalization bypasses", () => {
+    // Browsers treat "\" as "/", so these resolve to protocol-relative URLs.
+    expect(getSafeRedirect("/\\evil.example")).toBeUndefined();
+    expect(getSafeRedirect("/\\/evil.example")).toBeUndefined();
+    expect(getSafeRedirect("/foo\\bar")).toBeUndefined();
+    expect(getSafeRedirect("\\\\evil.example")).toBeUndefined();
+  });
+
   it("rejects absolute URLs", () => {
     expect(getSafeRedirect("https://evil.example")).toBeUndefined();
     expect(getSafeRedirect("http://evil.example")).toBeUndefined();
