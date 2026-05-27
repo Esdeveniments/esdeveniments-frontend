@@ -33,7 +33,7 @@ async function backendFavoriteSlugs(
   const page = await listFavoriteEventsExternal(authToken, 0, MAX_FAVORITES);
   if (!page) return null;
   return (page.content ?? [])
-    .map((e) => e.slug)
+    .map((e) => e?.slug)
     .filter((s): s is string => typeof s === "string" && s.length > 0);
 }
 
