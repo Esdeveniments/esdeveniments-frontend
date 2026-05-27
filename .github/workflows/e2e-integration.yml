@@ -7,11 +7,13 @@ name: E2E Integration (preproduction)
 # There is no separate "base URL": the workflow builds and runs THIS app
 # locally and points Playwright at localhost. Which backend it talks to is
 # just NEXT_PUBLIC_API_URL — the same knob you switch in Vercel/Coolify.
-# All environment-specific values come from the `preproduction` GitHub
-# Environment (Settings → Environments), mirroring how prod config lives in
-# the hosting platform:
+# All environment-specific values come from the existing `staging` GitHub
+# Environment (Settings → Environments) — staging == preproduction here.
+# Mirrors how prod config lives in the hosting platform:
 #   vars.NEXT_PUBLIC_API_URL        → preproduction API (defaults below)
 #   secrets.HMAC_SECRET             → preproduction HMAC signing secret
+#                                     (falls back to the repo-level secret if
+#                                     the staging env doesn't define one)
 #   secrets.E2E_STAGING_EMAIL       → a dedicated, email-verified test user
 #   secrets.E2E_STAGING_PASSWORD    ↲
 # The publish-integration spec self-skips when the test-user secrets are
@@ -34,7 +36,7 @@ jobs:
     name: Publish → detail (preproduction)
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    environment: preproduction
+    environment: staging
     env:
       NODE_VERSION: "22"
     steps:
