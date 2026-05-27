@@ -420,6 +420,11 @@
     "FavoriteButton": {
       "maxReached": "Has arribat al límit de {max} preferits. Elimina'n un per afegir-ne més."
     },
+    "FavoritesLoginNudge": {
+      "message": "Desat! Inicia sessió per sincronitzar els teus preferits entre dispositius.",
+      "login": "Inicia sessió",
+      "dismiss": "Tanca"
+    },
     "EventNotifications": {
       "thankYou": "Gràcies per contribuir a millorar el contingut de Esdeveniments.cat! En menys de 24 hores estarà disponible el canvi."
     },

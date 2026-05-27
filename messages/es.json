@@ -420,6 +420,11 @@
     "FavoriteButton": {
       "maxReached": "Has alcanzado el límite de {max} favoritos. Elimina uno para añadir más."
     },
+    "FavoritesLoginNudge": {
+      "message": "¡Guardado! Inicia sesión para sincronizar tus favoritos entre dispositivos.",
+      "login": "Iniciar sesión",
+      "dismiss": "Cerrar"
+    },
     "EventNotifications": {
       "thankYou": "¡Gracias por ayudar a mejorar el contenido de Esdeveniments.cat! En menos de 24 horas el cambio estará disponible."
     },

@@ -420,6 +420,11 @@
     "FavoriteButton": {
       "maxReached": "You've reached the limit of {max} favorites. Remove one to add more."
     },
+    "FavoritesLoginNudge": {
+      "message": "Saved! Sign in to sync your favorites across devices.",
+      "login": "Sign in",
+      "dismiss": "Dismiss"
+    },
     "EventNotifications": {
       "thankYou": "Thanks for helping improve Esdeveniments.cat! Your change will be live within 24 hours."
     },

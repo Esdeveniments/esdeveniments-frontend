@@ -11,6 +11,8 @@ import Button from "@components/ui/common/button";
 import { sendGoogleEvent } from "@utils/analytics";
 import useTrackedCta from "@components/hooks/useTrackedCta";
 import { queueFavoriteRequest } from "@utils/favorites-queue";
+import { useAuth } from "@components/hooks/useAuth";
+import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
 
@@ -40,6 +42,7 @@ export default function FavoriteButton({
   const [isPending, startTransition] = useTransition();
   const isMutatingRef = useRef(false);
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const t = useTranslations("Components.FavoriteButton");
   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("favorite_button");
 
@@ -148,6 +151,14 @@ export default function FavoriteButton({
                 event_id: eventId,
                 event_title: eventTitle,
               });
+
+              // Guest just saved a favorite (kept in the cookie until they
+              // log in). Nudge them — once per session — to sign in so it
+              // syncs. The session-level FavoriteLoginNudge owns the UI and
+              // the once-per-session guard; we only emit the signal.
+              if (nextIsFavorite && !isAuthenticated) {
+                window.dispatchEvent(new Event(GUEST_FAVORITE_SAVED_EVENT));
+              }
 
               // Preserve existing /preferits UX: reflect removals immediately.
               // Avoid refreshing other pages to keep the toggle lightweight.
