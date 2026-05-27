@@ -126,7 +126,8 @@ export default async function PreferitsPage() {
     } else {
       events = page.content ?? [];
       uniqueFavoritesCount =
-        page.totalElements ?? new Set(events.map((e) => e.slug)).size;
+        page.totalElements ??
+        new Set(events.map((e) => e.slug).filter(Boolean)).size;
     }
     // Server-side store has no stale slugs to prune.
     slugsToRemove = [];

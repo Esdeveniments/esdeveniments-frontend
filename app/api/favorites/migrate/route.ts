@@ -59,7 +59,12 @@ export async function POST() {
           if (notFound) return { kind: "dropped", slug };
           if (!event?.id) return { kind: "failed", slug };
           const result = await addFavoriteEventExternal(authToken, event.id);
-          return { kind: result.ok ? "migrated" : "failed", slug };
+          if (result.ok) return { kind: "migrated", slug };
+          // 409 = server-side favorites limit reached. Permanent, not
+          // transient — drop it so it doesn't pin the cookie and trigger
+          // an infinite migrate retry on every future login.
+          if (result.status === 409) return { kind: "dropped", slug };
+          return { kind: "failed", slug };
         })
       );
 
