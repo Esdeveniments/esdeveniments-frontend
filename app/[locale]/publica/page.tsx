@@ -34,6 +34,8 @@ import {
 } from "@utils/publica-analytics";
 
 import Modal from "@components/ui/common/modal";
+import { useAuth } from "@components/hooks/useAuth";
+import PublishAuthGate from "./PublishAuthGate";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 // Lazy load preview content (only shown in modal when user clicks preview)
@@ -116,6 +118,7 @@ const Publica = () => {
   const t = useTranslations("App.Publish");
   const tForm = useTranslations("Components.EventForm");
   const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -673,6 +676,22 @@ const Publica = () => {
   };
 
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
+
+  // Publishing creates a user-attributed event (backend returns 401 for
+  // guests). Gate the form upfront so nobody fills it out only to fail at
+  // submit. While the session resolves, hold with a light skeleton to avoid
+  // flashing the gate at an already-authenticated user.
+  if (isAuthLoading) {
+    return (
+      <div className="container flex-center pt-[6rem] pb-section-y">
+        <div className="w-full max-w-md h-80 rounded-lg bg-border/40 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <PublishAuthGate />;
+  }
 
   return (
     <>

@@ -233,6 +233,13 @@
       "description": "Las últimas noticias y recomendaciones culturales de Cataluña"
     },
     "Publish": {
+      "authGate": {
+        "title": "Inicia sesión para publicar",
+        "description": "Crea una cuenta o inicia sesión para añadir tu evento. Es rápido y después podrás gestionar tus eventos.",
+        "login": "Iniciar sesión",
+        "noAccount": "¿No tienes cuenta?",
+        "register": "Regístrate"
+      },
       "heading": "Publica tu evento en Cataluña",
       "subheading": "Añade tu concierto, exposición, teatro, taller o actividad cultural a la agenda más grande de Cataluña. ¡Es gratis!",
       "sponsorTitle": "¿Tienes un negocio local?",

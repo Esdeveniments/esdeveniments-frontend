@@ -233,6 +233,13 @@
       "description": "Les últimes notícies i recomanacions culturals de Catalunya"
     },
     "Publish": {
+      "authGate": {
+        "title": "Inicia sessió per publicar",
+        "description": "Crea un compte o inicia sessió per afegir el teu esdeveniment. És ràpid i després podràs gestionar els teus esdeveniments.",
+        "login": "Inicia sessió",
+        "noAccount": "No tens compte?",
+        "register": "Registra't"
+      },
       "heading": "Publica el teu esdeveniment a Catalunya",
       "subheading": "Afegeix el teu concert, exposició, teatre, taller o activitat cultural a l'agenda més gran de Catalunya. És gratuït!",
       "sponsorTitle": "Tens un negoci local?",

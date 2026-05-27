@@ -233,6 +233,13 @@
       "description": "The latest news and cultural recommendations for Catalonia"
     },
     "Publish": {
+      "authGate": {
+        "title": "Sign in to publish",
+        "description": "Create an account or sign in to add your event. It only takes a moment, and you'll be able to manage your events afterwards.",
+        "login": "Sign in",
+        "noAccount": "Don't have an account?",
+        "register": "Sign up"
+      },
       "heading": "Publish your event in Catalonia",
       "subheading": "Add your concert, exhibition, theatre, workshop or cultural activity to Catalonia's largest agenda. It's free!",
       "sponsorTitle": "Have a local business?",
