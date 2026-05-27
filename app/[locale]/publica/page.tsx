@@ -114,11 +114,12 @@ const isCategoryOption = (
 const buildFileSignature = (file: File) =>
   `${file.name}-${file.size}-${file.lastModified}`;
 
-const Publica = () => {
+// The form body. Mounted only for authenticated users (see Publica below),
+// so its data hooks (regions/cities, categories) never fire for guests.
+const PublishForm = () => {
   const t = useTranslations("App.Publish");
   const tForm = useTranslations("Components.EventForm");
   const router = useRouter();
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -677,22 +678,6 @@ const Publica = () => {
 
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
 
-  // Publishing creates a user-attributed event (backend returns 401 for
-  // guests). Gate the form upfront so nobody fills it out only to fail at
-  // submit. While the session resolves, hold with a light skeleton to avoid
-  // flashing the gate at an already-authenticated user.
-  if (isAuthLoading) {
-    return (
-      <div className="container flex-center pt-[6rem] pb-section-y">
-        <div className="w-full max-w-md h-80 rounded-lg bg-border/40 animate-pulse" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <PublishAuthGate />;
-  }
-
   return (
     <>
       {showPreview && previewEvent && (
@@ -789,6 +774,32 @@ const Publica = () => {
       </div>
     </>
   );
+};
+
+/**
+ * Publishing creates a user-attributed event (the backend returns 401 for
+ * guests). Gate upfront so guests never fill the form only to fail at submit
+ * — and, by mounting PublishForm only when authenticated, its region/city
+ * and category data hooks never fire for guests either. A light skeleton
+ * holds while the session resolves so an authenticated user never sees the
+ * gate flash.
+ */
+const Publica = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="container flex-center pt-[6rem] pb-section-y">
+        <div className="w-full max-w-md h-80 rounded-lg bg-border/40 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <PublishAuthGate />;
+  }
+
+  return <PublishForm />;
 };
 
 export default Publica;
