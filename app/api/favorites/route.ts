@@ -142,17 +142,11 @@ export async function POST(request: Request) {
         );
       }
 
-      // After a successful mutation, refresh the canonical list. If that
-      // refresh fails (backend transient), we still tell the client the
-      // mutation succeeded — but without the list snapshot, so SWR keeps
-      // its previous data instead of being overwritten with stale empties.
-      const favorites = await backendFavoriteSlugs(authToken);
-      return NextResponse.json(
-        favorites === null
-          ? { ok: true }
-          : { ok: true, favorites },
-        { headers: NO_STORE }
-      );
+      // Don't re-fetch the full list here: the client optimistically
+      // updated the toggled button, and SWR revalidates the shared list via
+      // GET on its own cadence. Returning early saves a second backend
+      // round-trip on every toggle (the GET handler is the canonical list).
+      return NextResponse.json({ ok: true }, { headers: NO_STORE });
     }
 
     // Guest branch: cookie store, keyed by slug.
