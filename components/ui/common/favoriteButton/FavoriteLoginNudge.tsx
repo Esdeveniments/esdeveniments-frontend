@@ -66,12 +66,10 @@ export default function FavoriteLoginNudge() {
     };
   }, [isAuthenticated]);
 
-  // A session that authenticates mid-way should drop any open nudge.
-  useEffect(() => {
-    if (isAuthenticated) dismiss();
-  }, [isAuthenticated, dismiss]);
-
-  if (!visible) return null;
+  // A session that authenticates mid-way should never show the nudge —
+  // guarding at render (rather than via a setState effect) keeps this off
+  // the cascading-render path the lint rule flags.
+  if (isAuthenticated || !visible) return null;
 
   return (
     <div
