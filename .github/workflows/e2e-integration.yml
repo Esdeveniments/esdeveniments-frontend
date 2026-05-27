@@ -37,9 +37,6 @@ jobs:
     environment: preproduction
     env:
       NODE_VERSION: "22"
-      NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
-      HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -71,11 +68,15 @@ jobs:
       - name: Start app against preproduction (dev mode, real writes)
         # dev mode (not E2E_TEST_MODE) so createEvent hits the real backend
         # and the localhost origin is accepted for POST/PUT/DELETE.
+        # Secrets/vars are scoped to this step (the only one running the app).
         run: |
           yarn dev > /tmp/next-dev.log 2>&1 &
           echo $! > .next-server.pid
         env:
           PORT: "3000"
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
 
       - name: Wait for server
         run: npx wait-on http://localhost:3000 --timeout 90000
