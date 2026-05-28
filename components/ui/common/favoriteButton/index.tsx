@@ -134,12 +134,28 @@ export default function FavoriteButton({
                 "favorites" in payload &&
                 Array.isArray((payload as { favorites?: unknown }).favorites)
               ) {
+                // Guest cookie branch echoes the canonical list — adopt it.
                 const favorites = (payload as { favorites: unknown[] }).favorites
                   .filter((value): value is string => typeof value === "string")
                   .map((value) => value.trim())
                   .filter(Boolean);
 
                 mutateFavorites({ ok: true, favorites }, { revalidate: false });
+              } else {
+                // Authed branch returns `{ ok: true }` only (one less round
+                // trip per toggle). Keep cross-instance SWR consumers in
+                // sync by updating the cache locally with the same change
+                // the backend just persisted.
+                mutateFavorites(
+                  (current) => {
+                    if (!current || current.ok !== true) return current;
+                    const set = new Set(current.favorites);
+                    if (nextIsFavorite) set.add(eventSlug);
+                    else set.delete(eventSlug);
+                    return { ok: true, favorites: Array.from(set) };
+                  },
+                  { revalidate: false }
+                );
               }
 
               const analyticsEventName = nextIsFavorite
