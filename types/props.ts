@@ -804,6 +804,18 @@ export interface LoginFormProps {
   redirectTo?: string;
 }
 
+/**
+ * Recoverable-action state shown next to a login error message.
+ * - idle: no recovery flow in progress.
+ * - pending: the recovery request is in flight.
+ * - sent: a confirmation message has been shown (forgot-password reset
+ *   email or verification email), keyed by which one was triggered.
+ */
+export type LoginRecoveryAffordance =
+  | { kind: "idle" }
+  | { kind: "pending" }
+  | { kind: "sent"; type: "forgot" | "verification" };
+
 export interface RegisterFormProps {
   redirectTo?: string;
 }

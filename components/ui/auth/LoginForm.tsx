@@ -5,13 +5,11 @@ import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
 import { contactEmail } from "@config/index";
-import type { LoginFormProps } from "types/props";
+import type {
+  LoginFormProps,
+  LoginRecoveryAffordance,
+} from "types/props";
 import type { AuthErrorCode } from "types/auth";
-
-type Affordance =
-  | { kind: "idle" }
-  | { kind: "pending" }
-  | { kind: "sent"; type: "forgot" | "verification" };
 
 export default function LoginForm({ redirectTo }: LoginFormProps) {
   const t = useTranslations("Auth");
@@ -23,7 +21,9 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   const [error, setError] = useState<AuthErrorCode | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
-  const [affordance, setAffordance] = useState<Affordance>({ kind: "idle" });
+  const [affordance, setAffordance] = useState<LoginRecoveryAffordance>({
+    kind: "idle",
+  });
 
   const showPassword = supportedMethods.includes("credentials");
   const isMagicLink = supportedMethods.includes("magic-link") && !showPassword;
