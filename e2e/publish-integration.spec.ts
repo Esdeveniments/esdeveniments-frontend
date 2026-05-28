@@ -241,15 +241,16 @@ test.describe("Publish integration (staging)", () => {
       timeout: 15_000,
     });
 
-    // Creator attribution ("Published by …"). The DTO + UI exist; assert it
-    // softly so a backend not yet populating createdByUser surfaces as a
-    // reported failure without masking the core publish→detail flow.
-    await expect
-      .soft(
-        page.getByText(/published by|publicat per|publicado por/i),
-        "event detail should attribute the creator (createdByUser)"
-      )
-      .toBeVisible({ timeout: 10_000 });
+    // Creator attribution: the detail page must show "Published by <name>"
+    // with the name linked to /perfil/<username>. Hard-assert both the
+    // visible name AND the href, since the backend now exposes
+    // createdByUser.username (verified against the swagger).
+    const creatorBlock = page.getByTestId("event-created-by");
+    await expect(creatorBlock).toBeVisible({ timeout: 10_000 });
+    await expect(creatorBlock).toContainText(/E2E Test User/);
+    await expect(
+      page.getByTestId("event-created-by-link")
+    ).toHaveAttribute("href", /\/perfil\/e2e-test-user/);
 
     // ── Step 8: Verify the event appears on a listing page ──
     await page.goto("/en/barcelona", {

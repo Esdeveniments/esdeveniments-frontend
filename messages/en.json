@@ -894,7 +894,7 @@
       "title": "Event details",
       "eventLink": "Event link:",
       "duration": "Approximate duration: {duration}",
-      "createdBy": "Published by {name}"
+      "createdBy": "Published by <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Location",
