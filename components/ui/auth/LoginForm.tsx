@@ -64,10 +64,13 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     }
   };
 
-  // Best-effort recovery: posts the typed email to a backend endpoint and
-  // shows a localized confirmation inline. We treat any non-network result
-  // as "sent" to avoid revealing account existence (the same don't-reveal
-  // principle that drives the 4xx → invalid-credentials fallback).
+  // Recovery: posts the typed email to a backend endpoint and shows a
+  // localized confirmation inline. 4xx is treated as "sent" to avoid
+  // revealing account existence (the same don't-reveal principle that
+  // drives the 4xx → invalid-credentials fallback in the adapter). But
+  // 429 and 5xx are surfaced explicitly — pretending to have sent a
+  // recovery email when the backend was rate-limiting or down would leave
+  // the user waiting for an email that never arrives.
   const sendRecoveryAction = async (
     endpoint: string,
     type: "forgot" | "verification"
@@ -75,12 +78,23 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     if (!email) return;
     setAffordance({ kind: "pending" });
     try {
-      await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
         signal: AbortSignal.timeout(10_000),
       });
+      if (res.status === 429) {
+        setError("rate-limited");
+        setAffordance({ kind: "idle" });
+        return;
+      }
+      if (res.status >= 500) {
+        setError("server-error");
+        setAffordance({ kind: "idle" });
+        return;
+      }
+      // 2xx and other 4xx (e.g. unknown email): show the same confirmation.
       setAffordance({ kind: "sent", type });
     } catch {
       setError("network-error");

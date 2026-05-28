@@ -41,7 +41,12 @@ export async function POST() {
       );
     }
 
-    const unique = Array.from(new Set(slugs)).slice(0, MAX_FAVORITES);
+    // Cookie should already be capped at MAX_FAVORITES upstream, but if it
+    // ever isn't (older cookie, lowered cap), preserve the unattempted
+    // tail so they aren't silently lost on the cookie rewrite below.
+    const deduped = Array.from(new Set(slugs));
+    const unique = deduped.slice(0, MAX_FAVORITES);
+    const unattempted = deduped.slice(MAX_FAVORITES);
     let migrated = 0;
     let dropped = 0;
     const failedSlugs: string[] = [];
@@ -78,11 +83,11 @@ export async function POST() {
       }
     }
 
-    // Rewrite the cookie to hold only the transiently-failed slugs: migrated
-    // and dropped entries must not be retried next login (redundant API
-    // calls / re-adds), while failures are preserved for a future attempt.
-    // Empty → cookie deleted by persistFavoritesCookie.
-    await persistFavoritesCookie(failedSlugs);
+    // Rewrite the cookie to hold the transiently-failed slugs + any that
+    // we never got to (cookie > MAX_FAVORITES, defensive). Migrated and
+    // dropped entries must not be retried, but failures and unattempted
+    // slugs should survive for a future attempt. Empty → cookie deleted.
+    await persistFavoritesCookie([...failedSlugs, ...unattempted]);
 
     return NextResponse.json(
       { ok: true, migrated, dropped, failed: failedSlugs.length },
