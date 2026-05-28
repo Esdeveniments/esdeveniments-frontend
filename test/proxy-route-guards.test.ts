@@ -83,6 +83,22 @@ describe("isOriginAllowed", () => {
     expect(isOriginAllowed(req)).toBe(true);
   });
 
+  it("allows the Vercel branch-alias origin (VERCEL_BRANCH_URL)", () => {
+    // VERCEL_URL is the per-deployment hash URL, but the URL users click
+    // from the PR preview comment is the branch-alias VERCEL_BRANCH_URL.
+    // Without allowing it, every same-origin POST 403s on previews.
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+    process.env.VERCEL_URL = "esdeveniments-frontend-abc123.vercel.app";
+    process.env.VERCEL_BRANCH_URL =
+      "esdeveniments-frontend-git-feat-user-favor-9fe4b8.vercel.app";
+    const req = createRequest("/api/favorites", "POST", {
+      origin:
+        "https://esdeveniments-frontend-git-feat-user-favor-9fe4b8.vercel.app",
+    });
+    expect(isOriginAllowed(req)).toBe(true);
+    delete process.env.VERCEL_BRANCH_URL;
+  });
+
   it("rejects host-like localhost origins in development", () => {
     const req = createRequest("/api/sponsors/checkout", "POST", {
       origin: "http://localhost.evil.test:3000",
