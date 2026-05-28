@@ -35,8 +35,20 @@ if ! command -v jq &>/dev/null; then
 fi
 
 if [ -z "$TEST_PASSWORD" ]; then
-  echo "❌ E2E_STAGING_PASSWORD is required. Run: E2E_STAGING_PASSWORD=<pass> $0"
-  exit 1
+  # No env var → prompt with hidden input. Falls back to the env-var
+  # instruction if stdin isn't a TTY (CI runs, piped invocations).
+  if [ -t 0 ]; then
+    printf "🔐 E2E_STAGING_PASSWORD for %s (input hidden): " "$TEST_EMAIL" >&2
+    IFS= read -rs TEST_PASSWORD
+    echo >&2
+    if [ -z "$TEST_PASSWORD" ]; then
+      echo "❌ No password provided. Aborting." >&2
+      exit 1
+    fi
+  else
+    echo "❌ E2E_STAGING_PASSWORD is required. Run: E2E_STAGING_PASSWORD=<pass> $0" >&2
+    exit 1
+  fi
 fi
 
 # ── HMAC helper ──
