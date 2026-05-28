@@ -103,6 +103,41 @@ test.describe("Auth flow (real adapter + mocked routes)", () => {
     });
   });
 
+  test("password show/hide toggle reveals and re-hides the password", async ({
+    page,
+  }) => {
+    await page.goto("/en/iniciar-sessio", {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+    await expect(page.getByTestId("login-form")).toBeVisible({
+      timeout: process.env.CI ? 60000 : 30000,
+    });
+
+    const passwordInput = page.locator("#login-password");
+    await passwordInput.fill("S3cret!Pass");
+
+    // Starts hidden.
+    await expect(passwordInput).toHaveAttribute("type", "password");
+    const toggle = page.getByRole("button", { name: /show password/i });
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+    // Click to reveal.
+    await toggle.click();
+    await expect(passwordInput).toHaveAttribute("type", "text");
+    await expect(
+      page.getByRole("button", { name: /hide password/i })
+    ).toHaveAttribute("aria-pressed", "true");
+
+    // Click again to hide.
+    await page.getByRole("button", { name: /hide password/i }).click();
+    await expect(passwordInput).toHaveAttribute("type", "password");
+
+    // The toggle must not submit the form (it's type="button").
+    // We're still on the login page after clicking it.
+    expect(page.url()).toContain("/iniciar-sessio");
+  });
+
   test("login with invalid credentials shows error", async ({ page }) => {
     await mockAuthRoutes(page, {
       loginStatus: 401,

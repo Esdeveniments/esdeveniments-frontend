@@ -1724,7 +1724,9 @@
     "fields": {
       "email": "Correu electrònic",
       "password": "Contrasenya",
-      "name": "Nom (opcional)"
+      "name": "Nom (opcional)",
+      "passwordShow": "Mostra la contrasenya",
+      "passwordHide": "Amaga la contrasenya"
     },
     "errors": {
       "invalid-credentials": "Correu o contrasenya incorrectes.",

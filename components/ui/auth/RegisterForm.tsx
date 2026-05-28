@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
+import PasswordInput from "@components/ui/auth/PasswordInput";
 import type { RegisterFormProps } from "types/props";
 import type { AuthErrorCode } from "types/auth";
 
@@ -140,20 +141,18 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
           <label className="label" htmlFor="register-password">
             {t("fields.password")}
           </label>
-          <input
+          <PasswordInput
             id="register-password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
               if (error) setError(null);
             }}
-            className="rounded-input"
-            aria-invalid={error === "weak-password" || undefined}
-            aria-describedby={
+            autoComplete="new-password"
+            required
+            minLength={8}
+            ariaInvalid={error === "weak-password"}
+            ariaDescribedby={
               error === "weak-password"
                 ? "register-password-error"
                 : "register-password-hint"

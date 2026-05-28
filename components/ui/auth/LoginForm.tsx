@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@i18n/routing";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@components/hooks/useAuth";
+import PasswordInput from "@components/ui/auth/PasswordInput";
 import { contactEmail } from "@config/index";
 import type {
   LoginFormProps,
@@ -202,17 +203,15 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           <label className="label" htmlFor="login-password">
             {t("fields.password")}
           </label>
-          <input
+          <PasswordInput
             id="login-password"
-            type="password"
-            required
-            autoComplete="current-password"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
               clearStaleFeedback();
             }}
-            className="rounded-input"
+            autoComplete="current-password"
+            required
           />
         </>
       )}

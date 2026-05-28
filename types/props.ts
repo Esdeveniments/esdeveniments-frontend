@@ -805,6 +805,24 @@ export interface LoginFormProps {
 }
 
 /**
+ * Props for the reusable PasswordInput (input + show/hide eye toggle).
+ * Mirrors the subset of native input attrs the auth forms use, plus a few
+ * a11y hooks. The toggle's own visibility state is internal to the component.
+ */
+export interface PasswordInputProps {
+  id: string;
+  value: string;
+  onChange: (e: import("react").ChangeEvent<HTMLInputElement>) => void;
+  autoComplete?: "current-password" | "new-password";
+  required?: boolean;
+  minLength?: number;
+  ariaInvalid?: boolean;
+  ariaDescribedby?: string;
+  className?: string;
+  dataTestid?: string;
+}
+
+/**
  * Recoverable-action state shown next to a login error message.
  * - idle: no recovery flow in progress.
  * - pending: the recovery request is in flight.

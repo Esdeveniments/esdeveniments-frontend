@@ -1721,7 +1721,9 @@
     "fields": {
       "email": "Email",
       "password": "Password",
-      "name": "Name (optional)"
+      "name": "Name (optional)",
+      "passwordShow": "Show password",
+      "passwordHide": "Hide password"
     },
     "errors": {
       "invalid-credentials": "Incorrect email or password.",

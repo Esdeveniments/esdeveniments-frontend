@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
+import PasswordInput from "@components/ui/auth/PasswordInput";
 import type { ResetPasswordStatus } from "types/auth";
 
 export default function ResetPasswordClient({ token }: { token: string | null }) {
@@ -113,29 +114,25 @@ export default function ResetPasswordClient({ token }: { token: string | null })
       <label className="label" htmlFor="reset-password">
         {t("resetPassword.newPassword")}
       </label>
-      <input
+      <PasswordInput
         id="reset-password"
-        type="password"
-        required
-        minLength={8}
-        autoComplete="new-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="rounded-input"
+        autoComplete="new-password"
+        required
+        minLength={8}
       />
 
       <label className="label" htmlFor="reset-confirm-password">
         {t("resetPassword.confirmPassword")}
       </label>
-      <input
+      <PasswordInput
         id="reset-confirm-password"
-        type="password"
-        required
-        minLength={8}
-        autoComplete="new-password"
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
-        className="rounded-input"
+        autoComplete="new-password"
+        required
+        minLength={8}
       />
 
       <p className="body-small text-foreground/40">{t("register.passwordHint")}</p>

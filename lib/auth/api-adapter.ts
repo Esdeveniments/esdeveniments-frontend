@@ -152,7 +152,10 @@ export function createApiAdapter(): AuthAdapter {
           return false;
         }
 
-        const json = await res.json();
+        // Tolerate non-JSON responses (e.g., a 502 HTML page from an
+        // upstream proxy). Without `.catch`, the parse error would mask the
+        // real HTTP status and surface as "network-error".
+        const json = await res.json().catch(() => ({}));
         // Fall back to 1-hour TTL if backend doesn't return expiresAt yet
         expiresAt = parseBackendDateAsUtcMs(json.expiresAt) ?? (Date.now() + REFRESH_FALLBACK_TTL_MS);
 
@@ -192,7 +195,10 @@ export function createApiAdapter(): AuthAdapter {
           signal: AbortSignal.timeout(10_000),
         });
 
-        const json = await res.json();
+        // Tolerate non-JSON responses (e.g., a 502 HTML page from an
+        // upstream proxy). Without `.catch`, the parse error would mask the
+        // real HTTP status and surface as "network-error".
+        const json = await res.json().catch(() => ({}));
 
         if (!res.ok) {
           let error = mapErrorCode(json?.error, res.status);
@@ -244,7 +250,10 @@ export function createApiAdapter(): AuthAdapter {
           signal: AbortSignal.timeout(10_000),
         });
 
-        const json = await res.json();
+        // Tolerate non-JSON responses (e.g., a 502 HTML page from an
+        // upstream proxy). Without `.catch`, the parse error would mask the
+        // real HTTP status and surface as "network-error".
+        const json = await res.json().catch(() => ({}));
 
         if (!res.ok) {
           return {
@@ -322,7 +331,10 @@ export function createApiAdapter(): AuthAdapter {
           return null;
         }
 
-        const json = await res.json();
+        // Tolerate non-JSON responses (e.g., a 502 HTML page from an
+        // upstream proxy). Without `.catch`, the parse error would mask the
+        // real HTTP status and surface as "network-error".
+        const json = await res.json().catch(() => ({}));
         const dto = parseAuthUser(json);
         if (!dto) {
           clearSession();
