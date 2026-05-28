@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
 import PasswordInput from "@components/ui/auth/PasswordInput";
+import AuthErrorAlert from "@components/ui/auth/AuthErrorAlert";
 import type { RegisterFormProps } from "types/props";
 import type { AuthErrorCode } from "types/auth";
 
@@ -115,9 +116,10 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
           renders as a field-level error directly under the password input
           (2026 best practice: place validation errors next to the input). */}
       {error && error !== "weak-password" && (
-        <div className="bg-error/10 text-error body-small rounded-lg px-4 py-3 border border-error/30" role="alert" data-testid="register-error">
-          {t(`errors.${error}`)}
-        </div>
+        <AuthErrorAlert
+          message={t(`errors.${error}`)}
+          testId="register-error"
+        />
       )}
 
       <label className="label" htmlFor="register-email">

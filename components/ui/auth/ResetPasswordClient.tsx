@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import PasswordInput from "@components/ui/auth/PasswordInput";
+import AuthErrorAlert from "@components/ui/auth/AuthErrorAlert";
 import type { ResetPasswordStatus } from "types/auth";
 
 export default function ResetPasswordClient({ token }: { token: string | null }) {
@@ -105,11 +106,7 @@ export default function ResetPasswordClient({ token }: { token: string | null })
         {t("resetPassword.subtitle")}
       </p>
 
-      {error && (
-        <div className="bg-error/10 text-error body-small rounded-lg px-4 py-3 border border-error/30" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <AuthErrorAlert message={error} />}
 
       <label className="label" htmlFor="reset-password">
         {t("resetPassword.newPassword")}

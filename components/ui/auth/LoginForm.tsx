@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@i18n/routing";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@components/hooks/useAuth";
 import PasswordInput from "@components/ui/auth/PasswordInput";
+import AuthErrorAlert from "@components/ui/auth/AuthErrorAlert";
 import { contactEmail } from "@config/index";
 import type {
   LoginFormProps,
@@ -64,43 +64,34 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     }
   };
 
-  // Best-effort password recovery: posts the typed email to the existing
-  // forgot-password endpoint and surfaces a localized confirmation inline.
-  // We treat any non-network result as "sent" to avoid revealing account
-  // existence (matches the don't-reveal pattern used elsewhere).
-  const requestPasswordReset = async () => {
+  // Best-effort recovery: posts the typed email to a backend endpoint and
+  // shows a localized confirmation inline. We treat any non-network result
+  // as "sent" to avoid revealing account existence (the same don't-reveal
+  // principle that drives the 4xx → invalid-credentials fallback).
+  const sendRecoveryAction = async (
+    endpoint: string,
+    type: "forgot" | "verification"
+  ) => {
     if (!email) return;
     setAffordance({ kind: "pending" });
     try {
-      await fetch("/api/auth/password/forgot", {
+      await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
         signal: AbortSignal.timeout(10_000),
       });
-      setAffordance({ kind: "sent", type: "forgot" });
+      setAffordance({ kind: "sent", type });
     } catch {
       setError("network-error");
       setAffordance({ kind: "idle" });
     }
   };
 
-  const requestVerificationResend = async () => {
-    if (!email) return;
-    setAffordance({ kind: "pending" });
-    try {
-      await fetch("/api/auth/verification/resend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-        signal: AbortSignal.timeout(10_000),
-      });
-      setAffordance({ kind: "sent", type: "verification" });
-    } catch {
-      setError("network-error");
-      setAffordance({ kind: "idle" });
-    }
-  };
+  const requestPasswordReset = () =>
+    sendRecoveryAction("/api/auth/password/forgot", "forgot");
+  const requestVerificationResend = () =>
+    sendRecoveryAction("/api/auth/verification/resend", "verification");
 
   if (isLoading) {
     return <div className="animate-pulse h-64 bg-border/40 rounded-lg" />;
@@ -120,21 +111,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       <p className="body-normal text-foreground/80">{t("login.subtitle")}</p>
 
       {error && (
-        <div
-          className="bg-error/10 text-error body-small rounded-lg px-4 py-3 flex items-start gap-3 border border-error/30"
-          role="alert"
-          data-testid="login-error"
-        >
-          <ExclamationCircleIcon
-            className="h-5 w-5 shrink-0 mt-0.5"
-            aria-hidden="true"
-          />
-          <div className="flex flex-col gap-2 flex-1 min-w-0">
-            <p className="font-medium">{t(`errors.${error}`)}</p>
-
-            {/* Inline recovery affordances — recoverable errors get an
-                action, not just blame. Buttons require the email field. */}
-            {error === "invalid-credentials" && affordance.kind !== "sent" && (
+        <AuthErrorAlert message={t(`errors.${error}`)} testId="login-error">
+          {/* Inline recovery affordances — recoverable errors get an
+              action, not just blame. Buttons require the email field. */}
+          {error === "invalid-credentials" && affordance.kind !== "sent" && (
             <button
               type="button"
               onClick={requestPasswordReset}
@@ -168,18 +148,17 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
             </a>
           )}
 
-            {affordance.kind === "sent" && (
-              <p className="text-foreground/80" data-testid="affordance-sent">
-                {t(
-                  affordance.type === "forgot"
-                    ? "actions.forgotPasswordSent"
-                    : "actions.verificationSent",
-                  { email }
-                )}
-              </p>
-            )}
-          </div>
-        </div>
+          {affordance.kind === "sent" && (
+            <p className="text-foreground/80" data-testid="affordance-sent">
+              {t(
+                affordance.type === "forgot"
+                  ? "actions.forgotPasswordSent"
+                  : "actions.verificationSent",
+                { email }
+              )}
+            </p>
+          )}
+        </AuthErrorAlert>
       )}
 
       <label className="label" htmlFor="login-email">
