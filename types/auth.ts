@@ -27,9 +27,11 @@ export interface AuthState {
 
 export type AuthErrorCode =
   | "invalid-credentials"
+  | "invalid-email"
   | "email-taken"
   | "weak-password"
   | "network-error"
+  | "server-error"
   | "not-configured"
   | "rate-limited"
   | "email-not-verified"

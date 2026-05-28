@@ -96,6 +96,33 @@ describe("createApiAdapter (cookie-based auth)", () => {
       expect(result.error).toBe("invalid-credentials");
     });
 
+    it("maps the new auth error codes from the backend", async () => {
+      const cases: Array<{
+        backend: string;
+        status: number;
+        expected: string;
+      }> = [
+        { backend: "email-not-verified", status: 403, expected: "email-not-verified" },
+        { backend: "account-locked", status: 423, expected: "account-locked" },
+        { backend: "invalid-email", status: 400, expected: "invalid-email" },
+      ];
+      for (const c of cases) {
+        mockFetch.mockResolvedValueOnce(jsonResponse({ error: c.backend }, c.status));
+        const result = await createApiAdapter().login({ email: "a@b.com", password: "p" });
+        expect(result.error).toBe(c.expected);
+      }
+    });
+
+    it("falls back to server-error on 5xx, rate-limited on 429 (no enum collapse)", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ error: "boom" }, 503));
+      let result = await createApiAdapter().login({ email: "a@b.com", password: "p" });
+      expect(result.error).toBe("server-error");
+
+      mockFetch.mockResolvedValueOnce(jsonResponse({ error: "slow_down" }, 429));
+      result = await createApiAdapter().login({ email: "a@b.com", password: "p" });
+      expect(result.error).toBe("rate-limited");
+    });
+
     it("returns network-error on exception", async () => {
       mockFetch.mockRejectedValue(new Error("fetch failed"));
 

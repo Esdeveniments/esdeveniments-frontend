@@ -1726,13 +1726,25 @@
       "name": "Nombre (opcional)"
     },
     "errors": {
-      "invalid-credentials": "Correo o contraseña incorrectos",
-      "email-taken": "Ya existe una cuenta con este correo",
-      "weak-password": "La contraseña debe tener mínimo 8 caracteres",
-      "network-error": "Error de conexión. Inténtalo de nuevo.",
-      "not-configured": "La autenticación aún no está configurada",
-      "rate-limited": "Demasiados intentos. Espera un momento.",
-      "unknown": "Algo ha salido mal. Inténtalo de nuevo."
+      "invalid-credentials": "Correo o contraseña incorrectos.",
+      "invalid-email": "Ese correo no parece válido.",
+      "email-taken": "Ya existe una cuenta con este correo.",
+      "weak-password": "La contraseña debe tener al menos 8 caracteres.",
+      "network-error": "Parece que no tienes conexión. Compruébala e inténtalo de nuevo.",
+      "server-error": "El servicio no está disponible ahora mismo. Inténtalo en unos momentos.",
+      "not-configured": "La autenticación aún no está configurada.",
+      "rate-limited": "Demasiados intentos. Espera un momento antes de volver a intentarlo.",
+      "rate-limited-seconds": "Demasiados intentos. Inténtalo de nuevo en {seconds}s.",
+      "email-not-verified": "Debes verificar tu correo antes de iniciar sesión.",
+      "account-locked": "Tu cuenta está bloqueada. Contacta con soporte.",
+      "unknown": "No hemos podido completar la acción. Inténtalo de nuevo."
+    },
+    "actions": {
+      "forgotPassword": "¿Has olvidado la contraseña?",
+      "forgotPasswordSent": "Te hemos enviado un correo para restablecerla a {email}.",
+      "resendVerification": "Reenviar correo de verificación",
+      "verificationSent": "Correo de verificación reenviado a {email}.",
+      "contactSupport": "Contacta con soporte"
     },
     "meta": {
       "loginTitle": "Iniciar sesión | Esdeveniments.cat",

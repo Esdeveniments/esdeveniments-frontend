@@ -110,8 +110,11 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       <h1 className="heading-2 text-foreground">{t("register.title")}</h1>
       <p className="body-normal text-foreground/80">{t("register.subtitle")}</p>
 
-      {error && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
+      {/* Form-level alert covers everything except weak-password — that one
+          renders as a field-level error directly under the password input
+          (2026 best practice: place validation errors next to the input). */}
+      {error && error !== "weak-password" && (
+        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert" data-testid="register-error">
           {t(`errors.${error}`)}
         </div>
       )}
@@ -143,8 +146,27 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="rounded-input"
+            aria-invalid={error === "weak-password" || undefined}
+            aria-describedby={
+              error === "weak-password"
+                ? "register-password-error"
+                : "register-password-hint"
+            }
           />
-          <p className="body-small text-foreground/40">{t("register.passwordHint")}</p>
+          {error === "weak-password" ? (
+            <p
+              id="register-password-error"
+              className="body-small text-destructive"
+              role="alert"
+              data-testid="register-password-error"
+            >
+              {t("errors.weak-password")}
+            </p>
+          ) : (
+            <p id="register-password-hint" className="body-small text-foreground/40">
+              {t("register.passwordHint")}
+            </p>
+          )}
         </>
       )}
 

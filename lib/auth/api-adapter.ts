@@ -39,20 +39,40 @@ function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
   };
 }
 
-/** Map backend error strings to AuthErrorCode */
+/**
+ * Map a backend error code + HTTP status to the user-facing AuthErrorCode.
+ * Falls back to `server-error` for 5xx (so the user is told the service is
+ * down, not that "something went wrong"), `rate-limited` for 429, and
+ * `unknown` only as a true last resort. Unknown 4xx codes get logged so
+ * we can extend the enum if a new backend error shows up.
+ */
 function mapErrorCode(
-  error: string
+  error: string | undefined,
+  status?: number
 ): AuthResult["error"] {
   const errorMap: Record<string, AuthResult["error"]> = {
     "invalid-credentials": "invalid-credentials",
+    "invalid-email": "invalid-email",
     "email-taken": "email-taken",
     "weak-password": "weak-password",
     "email-not-verified": "email-not-verified",
     "account-locked": "account-locked",
     "rate-limited": "rate-limited",
     "network-error": "network-error",
+    "server-error": "server-error",
   };
-  return errorMap[error] ?? "unknown";
+  if (error && errorMap[error]) return errorMap[error];
+
+  // HTTP-status-based fallbacks before giving up on "unknown".
+  if (typeof status === "number") {
+    if (status === 429) return "rate-limited";
+    if (status >= 500) return "server-error";
+  }
+
+  if (error) {
+    console.warn(`api-adapter: unmapped backend error code "${error}"`);
+  }
+  return "unknown";
 }
 
 // Refresh tokens 5 minutes before expiry
@@ -177,7 +197,7 @@ export function createApiAdapter(): AuthAdapter {
         if (!res.ok) {
           return {
             success: false,
-            error: mapErrorCode(json.error ?? "unknown"),
+            error: mapErrorCode(json?.error, res.status),
           };
         }
 
@@ -223,7 +243,7 @@ export function createApiAdapter(): AuthAdapter {
         if (!res.ok) {
           return {
             success: false,
-            error: mapErrorCode(json.error ?? "unknown"),
+            error: mapErrorCode(json?.error, res.status),
           };
         }
 

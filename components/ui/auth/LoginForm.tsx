@@ -4,8 +4,14 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
+import { contactEmail } from "@config/index";
 import type { LoginFormProps } from "types/props";
 import type { AuthErrorCode } from "types/auth";
+
+type Affordance =
+  | { kind: "idle" }
+  | { kind: "pending" }
+  | { kind: "sent"; type: "forgot" | "verification" };
 
 export default function LoginForm({ redirectTo }: LoginFormProps) {
   const t = useTranslations("Auth");
@@ -17,6 +23,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   const [error, setError] = useState<AuthErrorCode | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [affordance, setAffordance] = useState<Affordance>({ kind: "idle" });
 
   const showPassword = supportedMethods.includes("credentials");
   const isMagicLink = supportedMethods.includes("magic-link") && !showPassword;
@@ -24,6 +31,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setAffordance({ kind: "idle" });
     setSubmitting(true);
 
     try {
@@ -41,6 +49,44 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       setError("unknown");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Best-effort password recovery: posts the typed email to the existing
+  // forgot-password endpoint and surfaces a localized confirmation inline.
+  // We treat any non-network result as "sent" to avoid revealing account
+  // existence (matches the don't-reveal pattern used elsewhere).
+  const requestPasswordReset = async () => {
+    if (!email) return;
+    setAffordance({ kind: "pending" });
+    try {
+      await fetch("/api/auth/password/forgot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      setAffordance({ kind: "sent", type: "forgot" });
+    } catch {
+      setError("network-error");
+      setAffordance({ kind: "idle" });
+    }
+  };
+
+  const requestVerificationResend = async () => {
+    if (!email) return;
+    setAffordance({ kind: "pending" });
+    try {
+      await fetch("/api/auth/verification/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      setAffordance({ kind: "sent", type: "verification" });
+    } catch {
+      setError("network-error");
+      setAffordance({ kind: "idle" });
     }
   };
 
@@ -62,8 +108,59 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       <p className="body-normal text-foreground/80">{t("login.subtitle")}</p>
 
       {error && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
-          {t(`errors.${error}`)}
+        <div
+          className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3 flex flex-col gap-2"
+          role="alert"
+          data-testid="login-error"
+        >
+          <p>{t(`errors.${error}`)}</p>
+
+          {/* Inline recovery affordances — recoverable errors get an action,
+              not just blame. Buttons require the email field to be filled. */}
+          {error === "invalid-credentials" && affordance.kind !== "sent" && (
+            <button
+              type="button"
+              onClick={requestPasswordReset}
+              disabled={!email || affordance.kind === "pending"}
+              className="text-primary font-semibold hover:underline disabled:opacity-50 text-left"
+              data-testid="forgot-password-btn"
+            >
+              {t("actions.forgotPassword")}
+            </button>
+          )}
+
+          {error === "email-not-verified" && affordance.kind !== "sent" && (
+            <button
+              type="button"
+              onClick={requestVerificationResend}
+              disabled={!email || affordance.kind === "pending"}
+              className="text-primary font-semibold hover:underline disabled:opacity-50 text-left"
+              data-testid="resend-verification-btn"
+            >
+              {t("actions.resendVerification")}
+            </button>
+          )}
+
+          {error === "account-locked" && (
+            <a
+              href={`mailto:${contactEmail}`}
+              className="text-primary font-semibold hover:underline"
+              data-testid="contact-support-link"
+            >
+              {t("actions.contactSupport")}
+            </a>
+          )}
+
+          {affordance.kind === "sent" && (
+            <p className="text-foreground/80" data-testid="affordance-sent">
+              {t(
+                affordance.type === "forgot"
+                  ? "actions.forgotPasswordSent"
+                  : "actions.verificationSent",
+                { email }
+              )}
+            </p>
+          )}
         </div>
       )}
 
