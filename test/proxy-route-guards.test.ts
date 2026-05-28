@@ -29,6 +29,7 @@ const matchesPublicApi = (pathname: string) =>
 describe("isOriginAllowed", () => {
   const originalEnv = process.env.NEXT_PUBLIC_SITE_URL;
   const originalVercelUrl = process.env.VERCEL_URL;
+  const originalVercelBranchUrl = process.env.VERCEL_BRANCH_URL;
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
@@ -44,6 +45,14 @@ describe("isOriginAllowed", () => {
       process.env.VERCEL_URL = originalVercelUrl;
     } else {
       delete process.env.VERCEL_URL;
+    }
+    // VERCEL_BRANCH_URL is set inside the branch-alias test; restoring it
+    // in afterEach (rather than at the end of the test body) keeps it from
+    // leaking into later tests if that test fails early.
+    if (originalVercelBranchUrl !== undefined) {
+      process.env.VERCEL_BRANCH_URL = originalVercelBranchUrl;
+    } else {
+      delete process.env.VERCEL_BRANCH_URL;
     }
   });
 
@@ -96,7 +105,6 @@ describe("isOriginAllowed", () => {
         "https://esdeveniments-frontend-git-feat-user-favor-9fe4b8.vercel.app",
     });
     expect(isOriginAllowed(req)).toBe(true);
-    delete process.env.VERCEL_BRANCH_URL;
   });
 
   it("rejects host-like localhost origins in development", () => {

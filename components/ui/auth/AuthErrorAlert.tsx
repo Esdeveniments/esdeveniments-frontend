@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import type { AuthErrorAlertProps } from "types/props";
 
 /**
  * The shared red-tinted error/alert box used across the auth forms.
@@ -18,11 +18,7 @@ export default function AuthErrorAlert({
   message,
   children,
   testId,
-}: {
-  message: string;
-  children?: ReactNode;
-  testId?: string;
-}) {
+}: AuthErrorAlertProps) {
   return (
     <div
       className="bg-error/10 text-error body-small rounded-lg px-4 py-3 flex items-start gap-3 border border-error/30"

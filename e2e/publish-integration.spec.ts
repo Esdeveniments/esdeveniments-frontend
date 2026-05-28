@@ -218,7 +218,9 @@ test.describe("Publish integration (staging)", () => {
       slugMatch,
       `expected to land on /e/{slug}, got: ${currentUrl}`
     ).not.toBeNull();
-    createdEventSlug = slugMatch![1];
+    // Guard explicitly so TypeScript narrows the type without `!`.
+    if (!slugMatch) throw new Error("unreachable: slug match guard");
+    createdEventSlug = slugMatch[1];
     console.log(`Created event slug: ${createdEventSlug}`);
 
     // ── Step 7: Verify the event detail page ──

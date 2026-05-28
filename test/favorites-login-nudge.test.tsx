@@ -13,6 +13,7 @@ vi.mock("@i18n/routing", () => ({
   Link: ({ children, ...props }: { children: ReactNode }) => (
     <a {...props}>{children}</a>
   ),
+  usePathname: () => "/ca",
 }));
 
 vi.mock("@components/hooks/useAuth", () => ({

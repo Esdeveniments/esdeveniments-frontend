@@ -4,12 +4,10 @@ import {
   parseFavoriteEventsPage,
   parseFavoriteStatus,
 } from "@lib/validation/favorites";
-import type { FavoriteEventsPageDTO } from "types/api/favorites";
-
-interface MutationResult {
-  ok: boolean;
-  status: number;
-}
+import type {
+  FavoriteEventsPageDTO,
+  MutationResultDTO,
+} from "types/api/favorites";
 
 function authHeaders(accessToken: string): Record<string, string> {
   return { Authorization: `Bearer ${accessToken}` };
@@ -83,7 +81,7 @@ export async function isFavoriteEventExternal(
 export async function addFavoriteEventExternal(
   accessToken: string,
   eventId: string
-): Promise<MutationResult> {
+): Promise<MutationResultDTO> {
   if (!eventId || !eventId.trim()) return { ok: false, status: 0 };
   const base = favoritesBaseUrl();
   if (!base) return { ok: false, status: 0 };
@@ -110,7 +108,7 @@ export async function addFavoriteEventExternal(
 export async function removeFavoriteEventExternal(
   accessToken: string,
   eventId: string
-): Promise<MutationResult> {
+): Promise<MutationResultDTO> {
   if (!eventId || !eventId.trim()) return { ok: false, status: 0 };
   const base = favoritesBaseUrl();
   if (!base) return { ok: false, status: 0 };

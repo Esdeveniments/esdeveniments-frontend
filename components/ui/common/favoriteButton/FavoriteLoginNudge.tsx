@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@i18n/routing";
+import { Link, usePathname } from "@i18n/routing";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { useAuth } from "@components/hooks/useAuth";
@@ -37,6 +37,7 @@ function markShown(): void {
 export default function FavoriteLoginNudge() {
   const t = useTranslations("Components.FavoritesLoginNudge");
   const { isAuthenticated } = useAuth();
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -84,7 +85,11 @@ export default function FavoriteLoginNudge() {
           {t("message")}
         </p>
         <Link
-          href="/iniciar-sessio"
+          href={
+            pathname && pathname !== "/iniciar-sessio"
+              ? `/iniciar-sessio?redirect=${encodeURIComponent(pathname)}`
+              : "/iniciar-sessio"
+          }
           className="btn-primary btn-sm whitespace-nowrap"
           onClick={dismiss}
           data-analytics-action="favorites_nudge_login"

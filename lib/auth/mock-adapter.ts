@@ -10,12 +10,16 @@ import type {
 } from "types/auth";
 
 function slugifyUsername(name: string): string {
-  return name
+  const slug = name
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+  // Pure-diacritic or punctuation-only names would slugify to "", which
+  // would create an unroutable mock user (/perfil/) \u2014 fall back to a
+  // synthetic id so the preload doesn't quietly break.
+  return slug || `user-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 export function createMockAdapter(

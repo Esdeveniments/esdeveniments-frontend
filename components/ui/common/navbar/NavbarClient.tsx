@@ -275,7 +275,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     </p>
                     {user.username && (
                       <ActiveLink
-                        href={`/perfil/${user.username}`}
+                        href={`/perfil/${encodeURIComponent(user.username)}`}
                         className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
                       >
                         {labels.myProfile}

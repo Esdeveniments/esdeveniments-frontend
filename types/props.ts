@@ -822,6 +822,18 @@ export interface PasswordInputProps {
   dataTestid?: string;
 }
 
+/** Props for the shared red-tinted auth error alert. */
+export interface AuthErrorAlertProps {
+  message: string;
+  children?: import("react").ReactNode;
+  testId?: string;
+}
+
+/** Props for the password reset flow's client component. */
+export interface ResetPasswordClientProps {
+  token: string | null;
+}
+
 /**
  * Recoverable-action state shown next to a login error message.
  * - idle: no recovery flow in progress.

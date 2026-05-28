@@ -6,8 +6,9 @@ import { Link } from "@i18n/routing";
 import PasswordInput from "@components/ui/auth/PasswordInput";
 import AuthErrorAlert from "@components/ui/auth/AuthErrorAlert";
 import type { ResetPasswordStatus } from "types/auth";
+import type { ResetPasswordClientProps } from "types/props";
 
-export default function ResetPasswordClient({ token }: { token: string | null }) {
+export default function ResetPasswordClient({ token }: ResetPasswordClientProps) {
   const t = useTranslations("Auth");
   const [status, setStatus] = useState<ResetPasswordStatus>("form");
   const [password, setPassword] = useState("");
