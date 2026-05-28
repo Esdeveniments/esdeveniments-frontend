@@ -128,7 +128,10 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
         required
         autoComplete="email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          if (error) setError(null);
+        }}
         className="rounded-input"
       />
 
@@ -144,7 +147,10 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
             minLength={8}
             autoComplete="new-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (error) setError(null);
+            }}
             className="rounded-input"
             aria-invalid={error === "weak-password" || undefined}
             aria-describedby={
@@ -178,7 +184,10 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
         type="text"
         autoComplete="name"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => {
+          setName(e.target.value);
+          if (error) setError(null);
+        }}
         className="rounded-input"
       />
 

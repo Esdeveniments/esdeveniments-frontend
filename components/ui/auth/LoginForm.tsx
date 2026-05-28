@@ -26,6 +26,16 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     kind: "idle",
   });
 
+  // Editing the email or password makes any previous error and any "we sent
+  // a reset link to <email>" confirmation stale — clear them so the user
+  // sees a fresh state on the next submit attempt. Standard pattern (Linear,
+  // Stripe, Clerk): clear form-level errors the moment the offending field
+  // is touched.
+  const clearStaleFeedback = () => {
+    if (error) setError(null);
+    if (affordance.kind !== "idle") setAffordance({ kind: "idle" });
+  };
+
   const showPassword = supportedMethods.includes("credentials");
   const isMagicLink = supportedMethods.includes("magic-link") && !showPassword;
 
@@ -180,7 +190,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         required
         autoComplete="email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          clearStaleFeedback();
+        }}
         className="rounded-input"
       />
 
@@ -195,7 +208,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
             required
             autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              clearStaleFeedback();
+            }}
             className="rounded-input"
           />
         </>
