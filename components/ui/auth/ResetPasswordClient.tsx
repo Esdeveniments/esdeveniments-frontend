@@ -105,7 +105,7 @@ export default function ResetPasswordClient({ token }: { token: string | null })
       </p>
 
       {error && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
+        <div className="bg-error/10 text-error body-small rounded-lg px-4 py-3 border border-error/30" role="alert">
           {error}
         </div>
       )}

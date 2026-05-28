@@ -195,10 +195,16 @@ export function createApiAdapter(): AuthAdapter {
         const json = await res.json();
 
         if (!res.ok) {
-          return {
-            success: false,
-            error: mapErrorCode(json?.error, res.status),
-          };
+          let error = mapErrorCode(json?.error, res.status);
+          // Login-only safety net: if the backend returned a 4xx with a code
+          // we don't recognize, show "incorrect email or password" instead
+          // of a vague "we couldn't complete that". Also matches the
+          // don't-reveal-account-existence principle (NIST 800-63B): an
+          // unregistered email should look identical to a wrong password.
+          if (error === "unknown" && res.status >= 400 && res.status < 500) {
+            error = "invalid-credentials";
+          }
+          return { success: false, error };
         }
 
         // Server sets HttpOnly cookies — we only get user data + expiresAt

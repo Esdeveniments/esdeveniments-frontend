@@ -114,7 +114,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
           renders as a field-level error directly under the password input
           (2026 best practice: place validation errors next to the input). */}
       {error && error !== "weak-password" && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert" data-testid="register-error">
+        <div className="bg-error/10 text-error body-small rounded-lg px-4 py-3 border border-error/30" role="alert" data-testid="register-error">
           {t(`errors.${error}`)}
         </div>
       )}
@@ -156,7 +156,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
           {error === "weak-password" ? (
             <p
               id="register-password-error"
-              className="body-small text-destructive"
+              className="body-small text-error"
               role="alert"
               data-testid="register-password-error"
             >

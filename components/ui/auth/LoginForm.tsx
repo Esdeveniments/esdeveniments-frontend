@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@i18n/routing";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@components/hooks/useAuth";
 import { contactEmail } from "@config/index";
 import type {
@@ -109,15 +110,20 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
       {error && (
         <div
-          className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3 flex flex-col gap-2"
+          className="bg-error/10 text-error body-small rounded-lg px-4 py-3 flex items-start gap-3 border border-error/30"
           role="alert"
           data-testid="login-error"
         >
-          <p>{t(`errors.${error}`)}</p>
+          <ExclamationCircleIcon
+            className="h-5 w-5 shrink-0 mt-0.5"
+            aria-hidden="true"
+          />
+          <div className="flex flex-col gap-2 flex-1 min-w-0">
+            <p className="font-medium">{t(`errors.${error}`)}</p>
 
-          {/* Inline recovery affordances — recoverable errors get an action,
-              not just blame. Buttons require the email field to be filled. */}
-          {error === "invalid-credentials" && affordance.kind !== "sent" && (
+            {/* Inline recovery affordances — recoverable errors get an
+                action, not just blame. Buttons require the email field. */}
+            {error === "invalid-credentials" && affordance.kind !== "sent" && (
             <button
               type="button"
               onClick={requestPasswordReset}
@@ -151,16 +157,17 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
             </a>
           )}
 
-          {affordance.kind === "sent" && (
-            <p className="text-foreground/80" data-testid="affordance-sent">
-              {t(
-                affordance.type === "forgot"
-                  ? "actions.forgotPasswordSent"
-                  : "actions.verificationSent",
-                { email }
-              )}
-            </p>
-          )}
+            {affordance.kind === "sent" && (
+              <p className="text-foreground/80" data-testid="affordance-sent">
+                {t(
+                  affordance.type === "forgot"
+                    ? "actions.forgotPasswordSent"
+                    : "actions.verificationSent",
+                  { email }
+                )}
+              </p>
+            )}
+          </div>
         </div>
       )}
 

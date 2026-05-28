@@ -113,6 +113,20 @@ describe("createApiAdapter (cookie-based auth)", () => {
       }
     });
 
+    it("falls back to invalid-credentials on unmapped 4xx (don't reveal account existence)", async () => {
+      // Backend returned a 401 with a code we don't recognize. Showing the
+      // user "Incorrect email or password" is the better UX *and* doesn't
+      // leak whether the email is registered.
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ error: "user_not_found" }, 401)
+      );
+      const result = await createApiAdapter().login({
+        email: "ghost@example.com",
+        password: "anything",
+      });
+      expect(result.error).toBe("invalid-credentials");
+    });
+
     it("falls back to server-error on 5xx, rate-limited on 429 (no enum collapse)", async () => {
       mockFetch.mockResolvedValueOnce(jsonResponse({ error: "boom" }, 503));
       let result = await createApiAdapter().login({ email: "a@b.com", password: "p" });
