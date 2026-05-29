@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
-import type { LoginFormProps } from "types/props";
+import PasswordInput from "@components/ui/auth/PasswordInput";
+import AuthErrorAlert from "@components/ui/auth/AuthErrorAlert";
+import { contactEmail } from "@config/index";
+import type {
+  LoginFormProps,
+  LoginRecoveryAffordance,
+} from "types/props";
 import type { AuthErrorCode } from "types/auth";
 
 export default function LoginForm({ redirectTo }: LoginFormProps) {
@@ -17,6 +23,19 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   const [error, setError] = useState<AuthErrorCode | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [affordance, setAffordance] = useState<LoginRecoveryAffordance>({
+    kind: "idle",
+  });
+
+  // Editing the email or password makes any previous error and any "we sent
+  // a reset link to <email>" confirmation stale — clear them so the user
+  // sees a fresh state on the next submit attempt. Standard pattern (Linear,
+  // Stripe, Clerk): clear form-level errors the moment the offending field
+  // is touched.
+  const clearStaleFeedback = () => {
+    if (error) setError(null);
+    if (affordance.kind !== "idle") setAffordance({ kind: "idle" });
+  };
 
   const showPassword = supportedMethods.includes("credentials");
   const isMagicLink = supportedMethods.includes("magic-link") && !showPassword;
@@ -24,6 +43,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setAffordance({ kind: "idle" });
     setSubmitting(true);
 
     try {
@@ -44,6 +64,49 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     }
   };
 
+  // Recovery: posts the typed email to a backend endpoint and shows a
+  // localized confirmation inline. 4xx is treated as "sent" to avoid
+  // revealing account existence (the same don't-reveal principle that
+  // drives the 4xx → invalid-credentials fallback in the adapter). But
+  // 429 and 5xx are surfaced explicitly — pretending to have sent a
+  // recovery email when the backend was rate-limiting or down would leave
+  // the user waiting for an email that never arrives.
+  const sendRecoveryAction = async (
+    endpoint: string,
+    type: "forgot" | "verification"
+  ) => {
+    if (!email) return;
+    setAffordance({ kind: "pending" });
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (res.status === 429) {
+        setError("rate-limited");
+        setAffordance({ kind: "idle" });
+        return;
+      }
+      if (res.status >= 500) {
+        setError("server-error");
+        setAffordance({ kind: "idle" });
+        return;
+      }
+      // 2xx and other 4xx (e.g. unknown email): show the same confirmation.
+      setAffordance({ kind: "sent", type });
+    } catch {
+      setError("network-error");
+      setAffordance({ kind: "idle" });
+    }
+  };
+
+  const requestPasswordReset = () =>
+    sendRecoveryAction("/api/auth/password/forgot", "forgot");
+  const requestVerificationResend = () =>
+    sendRecoveryAction("/api/auth/verification/resend", "verification");
+
   if (isLoading) {
     return <div className="animate-pulse h-64 bg-border/40 rounded-lg" />;
   }
@@ -62,9 +125,54 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       <p className="body-normal text-foreground/80">{t("login.subtitle")}</p>
 
       {error && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
-          {t(`errors.${error}`)}
-        </div>
+        <AuthErrorAlert message={t(`errors.${error}`)} testId="login-error">
+          {/* Inline recovery affordances — recoverable errors get an
+              action, not just blame. Buttons require the email field. */}
+          {error === "invalid-credentials" && affordance.kind !== "sent" && (
+            <button
+              type="button"
+              onClick={requestPasswordReset}
+              disabled={!email || affordance.kind === "pending"}
+              className="text-primary font-semibold hover:underline disabled:opacity-50 text-left"
+              data-testid="forgot-password-btn"
+            >
+              {t("actions.forgotPassword")}
+            </button>
+          )}
+
+          {error === "email-not-verified" && affordance.kind !== "sent" && (
+            <button
+              type="button"
+              onClick={requestVerificationResend}
+              disabled={!email || affordance.kind === "pending"}
+              className="text-primary font-semibold hover:underline disabled:opacity-50 text-left"
+              data-testid="resend-verification-btn"
+            >
+              {t("actions.resendVerification")}
+            </button>
+          )}
+
+          {error === "account-locked" && (
+            <a
+              href={`mailto:${contactEmail}`}
+              className="text-primary font-semibold hover:underline"
+              data-testid="contact-support-link"
+            >
+              {t("actions.contactSupport")}
+            </a>
+          )}
+
+          {affordance.kind === "sent" && (
+            <p className="text-foreground/80" data-testid="affordance-sent">
+              {t(
+                affordance.type === "forgot"
+                  ? "actions.forgotPasswordSent"
+                  : "actions.verificationSent",
+                { email }
+              )}
+            </p>
+          )}
+        </AuthErrorAlert>
       )}
 
       <label className="label" htmlFor="login-email">
@@ -76,7 +184,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
         required
         autoComplete="email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          clearStaleFeedback();
+        }}
         className="rounded-input"
       />
 
@@ -85,14 +196,15 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           <label className="label" htmlFor="login-password">
             {t("fields.password")}
           </label>
-          <input
+          <PasswordInput
             id="login-password"
-            type="password"
-            required
-            autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-input"
+            onChange={(e) => {
+              setPassword(e.target.value);
+              clearStaleFeedback();
+            }}
+            autoComplete="current-password"
+            required
           />
         </>
       )}

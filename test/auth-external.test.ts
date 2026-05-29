@@ -40,6 +40,7 @@ describe("auth-external", () => {
             id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "Alice",
+            username: "alice",
             role: "USER",
             emailVerified: true,
           },
@@ -62,6 +63,7 @@ describe("auth-external", () => {
             id: "550e8400-e29b-41d4-a716-446655440001",
             email: "a@b.com",
             name: "A",
+            username: "a",
             role: "USER",
             emailVerified: true,
           },
@@ -134,6 +136,7 @@ describe("auth-external", () => {
           id: "550e8400-e29b-41d4-a716-446655440001",
           email: "a@b.com",
           name: "Alice",
+          username: "alice",
           role: "USER",
           emailVerified: true,
         })
@@ -150,6 +153,7 @@ describe("auth-external", () => {
           id: "550e8400-e29b-41d4-a716-446655440001",
           email: "a@b.com",
           name: "A",
+          username: "a",
           role: "USER",
           emailVerified: true,
         })

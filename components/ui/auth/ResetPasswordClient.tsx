@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
+import PasswordInput from "@components/ui/auth/PasswordInput";
+import AuthErrorAlert from "@components/ui/auth/AuthErrorAlert";
 import type { ResetPasswordStatus } from "types/auth";
+import type { ResetPasswordClientProps } from "types/props";
 
-export default function ResetPasswordClient({ token }: { token: string | null }) {
+export default function ResetPasswordClient({ token }: ResetPasswordClientProps) {
   const t = useTranslations("Auth");
   const [status, setStatus] = useState<ResetPasswordStatus>("form");
   const [password, setPassword] = useState("");
@@ -104,38 +107,30 @@ export default function ResetPasswordClient({ token }: { token: string | null })
         {t("resetPassword.subtitle")}
       </p>
 
-      {error && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <AuthErrorAlert message={error} />}
 
       <label className="label" htmlFor="reset-password">
         {t("resetPassword.newPassword")}
       </label>
-      <input
+      <PasswordInput
         id="reset-password"
-        type="password"
-        required
-        minLength={8}
-        autoComplete="new-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="rounded-input"
+        autoComplete="new-password"
+        required
+        minLength={8}
       />
 
       <label className="label" htmlFor="reset-confirm-password">
         {t("resetPassword.confirmPassword")}
       </label>
-      <input
+      <PasswordInput
         id="reset-confirm-password"
-        type="password"
-        required
-        minLength={8}
-        autoComplete="new-password"
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
-        className="rounded-input"
+        autoComplete="new-password"
+        required
+        minLength={8}
       />
 
       <p className="body-small text-foreground/40">{t("register.passwordHint")}</p>

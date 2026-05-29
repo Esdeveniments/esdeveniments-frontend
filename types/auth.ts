@@ -10,9 +10,9 @@ export type AuthRole = "USER" | "ADMIN" | "ORGANIZATION";
 export interface AuthUser {
   id: string;
   email: string;
-  displayName?: string;
+  name: string;
+  username: string;
   avatarUrl?: string;
-  profileSlug?: string;
   role?: AuthRole;
   emailVerified?: boolean;
 }
@@ -27,9 +27,11 @@ export interface AuthState {
 
 export type AuthErrorCode =
   | "invalid-credentials"
+  | "invalid-email"
   | "email-taken"
   | "weak-password"
   | "network-error"
+  | "server-error"
   | "not-configured"
   | "rate-limited"
   | "email-not-verified"
@@ -48,7 +50,7 @@ export interface LoginCredentials {
 export interface RegisterCredentials {
   email: string;
   password?: string;
-  displayName?: string;
+  name?: string;
 }
 
 export interface ForgotPasswordCredentials {
@@ -94,8 +96,8 @@ export interface MockAdapterOptions {
   preloadUsers?: Array<{
     email: string;
     password: string;
-    displayName?: string;
-    profileSlug?: string;
+    name?: string;
+    username?: string;
   }>;
 }
 

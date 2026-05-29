@@ -5,12 +5,12 @@ import { useTranslations } from "next-intl";
 import type { ProfileOwnerActionsProps } from "types/props";
 
 export default function ProfileOwnerActions({
-  profileSlug,
+  username,
 }: ProfileOwnerActionsProps) {
   const { user } = useAuth();
   const t = useTranslations("Components.Profile");
 
-  if (user?.profileSlug !== profileSlug) return null;
+  if (user?.username !== username) return null;
 
   return (
     <button

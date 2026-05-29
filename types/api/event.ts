@@ -77,6 +77,9 @@ export interface EventCreatorResponseDTO {
   id: string;
   email: string;
   name: string;
+  /** Server-slugified handle (e.g. "Gerard Rovellat" → "gerard-rovellat").
+   *  Always present per the backend swagger; used to link to /perfil/{username}. */
+  username: string;
 }
 
 // Detail endpoint always includes location fields

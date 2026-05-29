@@ -182,9 +182,21 @@ function getAllowedOriginHosts(): Set<string> {
       (isDev ? "http://localhost:3000" : "https://www.esdeveniments.cat"),
   );
 
-  const vercelUrl = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
-  if (vercelUrl) {
-    addAllowedOriginHost(hosts, vercelUrl);
+  // Vercel exposes several runtime URLs that all serve the same deployment:
+  //   VERCEL_URL                       — per-deployment hash URL
+  //   VERCEL_BRANCH_URL                — stable branch-alias URL (what users
+  //                                       click on the PR preview comment)
+  //   VERCEL_PROJECT_PRODUCTION_URL    — the project's prod domain
+  // Origin must match whichever one the browser is hitting, otherwise the
+  // CSRF guard 403s every POST/PUT/DELETE on the preview. Allow them all.
+  for (const candidate of [
+    process.env.VERCEL_URL,
+    process.env.NEXT_PUBLIC_VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  ]) {
+    if (candidate) addAllowedOriginHost(hosts, candidate);
   }
 
   if (isDev) {
@@ -259,6 +271,10 @@ export const PUBLIC_API_EXACT_PATHS = [
   // Favorites cookie endpoints (browser-initiated)
   "/api/favorites",
   "/api/favorites/prune",
+  // Migrates guest-cookie favorites into the user's server-side favorites
+  // (browser-initiated; auth enforced by the route handler reading the
+  // HttpOnly auth_token cookie).
+  "/api/favorites/migrate",
   // DISABLED: Restaurant promotions feature is currently disabled
   // "/api/cloudinary/sign",
   // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)

@@ -19,6 +19,7 @@ function parseAuthUser(data: unknown): AuthenticatedUserDTO | null {
     typeof (data as Record<string, unknown>).id !== "string" ||
     typeof (data as Record<string, unknown>).email !== "string" ||
     typeof (data as Record<string, unknown>).name !== "string" ||
+    typeof (data as Record<string, unknown>).username !== "string" ||
     typeof (data as Record<string, unknown>).role !== "string" ||
     typeof (data as Record<string, unknown>).emailVerified !== "boolean"
   )
@@ -31,26 +32,47 @@ function mapDtoToUser(dto: AuthenticatedUserDTO): AuthUser {
   return {
     id: dto.id,
     email: dto.email,
-    displayName: dto.name,
+    name: dto.name,
+    username: dto.username,
     role: dto.role,
     emailVerified: dto.emailVerified,
   };
 }
 
-/** Map backend error strings to AuthErrorCode */
+/**
+ * Map a backend error code + HTTP status to the user-facing AuthErrorCode.
+ * Falls back to `server-error` for 5xx (so the user is told the service is
+ * down, not that "something went wrong"), `rate-limited` for 429, and
+ * `unknown` only as a true last resort. Unknown 4xx codes get logged so
+ * we can extend the enum if a new backend error shows up.
+ */
 function mapErrorCode(
-  error: string
+  error: string | undefined,
+  status?: number
 ): AuthResult["error"] {
   const errorMap: Record<string, AuthResult["error"]> = {
     "invalid-credentials": "invalid-credentials",
+    "invalid-email": "invalid-email",
     "email-taken": "email-taken",
     "weak-password": "weak-password",
     "email-not-verified": "email-not-verified",
     "account-locked": "account-locked",
     "rate-limited": "rate-limited",
     "network-error": "network-error",
+    "server-error": "server-error",
   };
-  return errorMap[error] ?? "unknown";
+  if (error && errorMap[error]) return errorMap[error];
+
+  // HTTP-status-based fallbacks before giving up on "unknown".
+  if (typeof status === "number") {
+    if (status === 429) return "rate-limited";
+    if (status >= 500) return "server-error";
+  }
+
+  if (error) {
+    console.warn(`api-adapter: unmapped backend error code "${error}"`);
+  }
+  return "unknown";
 }
 
 // Refresh tokens 5 minutes before expiry
@@ -130,7 +152,10 @@ export function createApiAdapter(): AuthAdapter {
           return false;
         }
 
-        const json = await res.json();
+        // Tolerate non-JSON responses (e.g., a 502 HTML page from an
+        // upstream proxy). Without `.catch`, the parse error would mask the
+        // real HTTP status and surface as "network-error".
+        const json = await res.json().catch(() => ({}));
         // Fall back to 1-hour TTL if backend doesn't return expiresAt yet
         expiresAt = parseBackendDateAsUtcMs(json.expiresAt) ?? (Date.now() + REFRESH_FALLBACK_TTL_MS);
 
@@ -170,13 +195,22 @@ export function createApiAdapter(): AuthAdapter {
           signal: AbortSignal.timeout(10_000),
         });
 
-        const json = await res.json();
+        // Tolerate non-JSON responses (e.g., a 502 HTML page from an
+        // upstream proxy). Without `.catch`, the parse error would mask the
+        // real HTTP status and surface as "network-error".
+        const json = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          return {
-            success: false,
-            error: mapErrorCode(json.error ?? "unknown"),
-          };
+          let error = mapErrorCode(json?.error, res.status);
+          // Login-only safety net: if the backend returned a 4xx with a code
+          // we don't recognize, show "incorrect email or password" instead
+          // of a vague "we couldn't complete that". Also matches the
+          // don't-reveal-account-existence principle (NIST 800-63B): an
+          // unregistered email should look identical to a wrong password.
+          if (error === "unknown" && res.status >= 400 && res.status < 500) {
+            error = "invalid-credentials";
+          }
+          return { success: false, error };
         }
 
         // Server sets HttpOnly cookies — we only get user data + expiresAt
@@ -211,17 +245,20 @@ export function createApiAdapter(): AuthAdapter {
           body: JSON.stringify({
             email: credentials.email,
             password: credentials.password,
-            name: credentials.displayName ?? credentials.email.split("@")[0],
+            name: credentials.name ?? credentials.email.split("@")[0],
           }),
           signal: AbortSignal.timeout(10_000),
         });
 
-        const json = await res.json();
+        // Tolerate non-JSON responses (e.g., a 502 HTML page from an
+        // upstream proxy). Without `.catch`, the parse error would mask the
+        // real HTTP status and surface as "network-error".
+        const json = await res.json().catch(() => ({}));
 
         if (!res.ok) {
           return {
             success: false,
-            error: mapErrorCode(json.error ?? "unknown"),
+            error: mapErrorCode(json?.error, res.status),
           };
         }
 
@@ -294,7 +331,10 @@ export function createApiAdapter(): AuthAdapter {
           return null;
         }
 
-        const json = await res.json();
+        // Tolerate non-JSON responses (e.g., a 502 HTML page from an
+        // upstream proxy). Without `.catch`, the parse error would mask the
+        // real HTTP status and surface as "network-error".
+        const json = await res.json().catch(() => ({}));
         const dto = parseAuthUser(json);
         if (!dto) {
           clearSession();

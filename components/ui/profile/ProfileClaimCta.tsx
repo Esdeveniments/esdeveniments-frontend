@@ -6,7 +6,7 @@ import { Link } from "@i18n/routing";
 import type { ProfileClaimCtaProps } from "types/props";
 
 export default function ProfileClaimCta({
-  profileSlug,
+  username,
 }: ProfileClaimCtaProps) {
   const { status } = useAuth();
   const t = useTranslations("Components.Profile");
@@ -17,7 +17,7 @@ export default function ProfileClaimCta({
     <p className="body-small text-foreground/60 mb-element-gap">
       {t("claimQuestion")}{" "}
       <Link
-        href={`/iniciar-sessio?redirect=/perfil/${encodeURIComponent(profileSlug)}`}
+        href={`/iniciar-sessio?redirect=/perfil/${encodeURIComponent(username)}`}
         className="text-primary font-semibold"
       >
         {t("claimLogin")}

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
+import PasswordInput from "@components/ui/auth/PasswordInput";
+import AuthErrorAlert from "@components/ui/auth/AuthErrorAlert";
 import type { RegisterFormProps } from "types/props";
 import type { AuthErrorCode } from "types/auth";
 
@@ -13,7 +15,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState<AuthErrorCode | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [registered, setRegistered] = useState(false);
@@ -36,7 +38,7 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       const result = await register({
         email,
         password: showPassword ? password : undefined,
-        displayName: displayName || undefined,
+        name: name || undefined,
       });
       if (result.success) {
         setRegistered(true);
@@ -110,10 +112,14 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
       <h1 className="heading-2 text-foreground">{t("register.title")}</h1>
       <p className="body-normal text-foreground/80">{t("register.subtitle")}</p>
 
-      {error && (
-        <div className="bg-destructive/10 text-destructive body-small rounded-lg px-4 py-3" role="alert">
-          {t(`errors.${error}`)}
-        </div>
+      {/* Form-level alert covers everything except weak-password — that one
+          renders as a field-level error directly under the password input
+          (2026 best practice: place validation errors next to the input). */}
+      {error && error !== "weak-password" && (
+        <AuthErrorAlert
+          message={t(`errors.${error}`)}
+          testId="register-error"
+        />
       )}
 
       <label className="label" htmlFor="register-email">
@@ -125,7 +131,10 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
         required
         autoComplete="email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          if (error) setError(null);
+        }}
         className="rounded-input"
       />
 
@@ -134,29 +143,52 @@ export default function RegisterForm({ redirectTo }: RegisterFormProps) {
           <label className="label" htmlFor="register-password">
             {t("fields.password")}
           </label>
-          <input
+          <PasswordInput
             id="register-password"
-            type="password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (error) setError(null);
+            }}
+            autoComplete="new-password"
             required
             minLength={8}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-input"
+            ariaInvalid={error === "weak-password"}
+            ariaDescribedby={
+              error === "weak-password"
+                ? "register-password-error"
+                : "register-password-hint"
+            }
           />
-          <p className="body-small text-foreground/40">{t("register.passwordHint")}</p>
+          {error === "weak-password" ? (
+            <p
+              id="register-password-error"
+              className="body-small text-error"
+              role="alert"
+              data-testid="register-password-error"
+            >
+              {t("errors.weak-password")}
+            </p>
+          ) : (
+            <p id="register-password-hint" className="body-small text-foreground/40">
+              {t("register.passwordHint")}
+            </p>
+          )}
         </>
       )}
 
       <label className="label" htmlFor="register-name">
-        {t("fields.displayName")}
+        {t("fields.name")}
       </label>
       <input
         id="register-name"
         type="text"
         autoComplete="name"
-        value={displayName}
-        onChange={(e) => setDisplayName(e.target.value)}
+        value={name}
+        onChange={(e) => {
+          setName(e.target.value);
+          if (error) setError(null);
+        }}
         className="rounded-input"
       />
 

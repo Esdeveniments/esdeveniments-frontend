@@ -35,8 +35,20 @@ if ! command -v jq &>/dev/null; then
 fi
 
 if [ -z "$TEST_PASSWORD" ]; then
-  echo "❌ E2E_STAGING_PASSWORD is required. Run: E2E_STAGING_PASSWORD=<pass> $0"
-  exit 1
+  # No env var → prompt with hidden input. Falls back to the env-var
+  # instruction if stdin isn't a TTY (CI runs, piped invocations).
+  if [ -t 0 ]; then
+    printf "🔐 E2E_STAGING_PASSWORD for %s (input hidden): " "$TEST_EMAIL" >&2
+    IFS= read -rs TEST_PASSWORD
+    echo >&2
+    if [ -z "$TEST_PASSWORD" ]; then
+      echo "❌ No password provided. Aborting." >&2
+      exit 1
+    fi
+  else
+    echo "❌ E2E_STAGING_PASSWORD is required. Run: E2E_STAGING_PASSWORD=<pass> $0" >&2
+    exit 1
+  fi
 fi
 
 # ── HMAC helper ──
@@ -106,26 +118,37 @@ else
   exit 1
 fi
 
-# ── Step 3: Set GitHub secrets ──
+# ── Step 3: Set GitHub secrets on the `staging` environment ──
+# The e2e-integration workflow reads secrets from environment: staging
+# (Settings → Environments → staging), NOT from repo-level secrets. Using
+# --env keeps the test creds scoped to the one workflow that needs them.
 echo ""
-echo "🔑 Setting GitHub secrets..."
+echo "🔑 Setting GitHub secrets on the staging environment..."
 if command -v gh &>/dev/null; then
-  echo "$TEST_EMAIL" | gh secret set E2E_STAGING_EMAIL 2>/dev/null && echo "   ✅ E2E_STAGING_EMAIL set" || echo "   ⚠️ Failed to set E2E_STAGING_EMAIL"
-  echo "$TEST_PASSWORD" | gh secret set E2E_STAGING_PASSWORD 2>/dev/null && echo "   ✅ E2E_STAGING_PASSWORD set" || echo "   ⚠️ Failed to set E2E_STAGING_PASSWORD"
+  printf '%s' "$TEST_EMAIL"    | gh secret set E2E_STAGING_EMAIL    --env staging >/dev/null 2>&1 && echo "   ✅ E2E_STAGING_EMAIL set on staging"    || echo "   ⚠️  Failed to set E2E_STAGING_EMAIL (need repo admin?)"
+  printf '%s' "$TEST_PASSWORD" | gh secret set E2E_STAGING_PASSWORD --env staging >/dev/null 2>&1 && echo "   ✅ E2E_STAGING_PASSWORD set on staging" || echo "   ⚠️  Failed to set E2E_STAGING_PASSWORD (need repo admin?)"
 else
-  echo "   ⚠️ gh CLI not found — set secrets manually:"
-  echo "   gh secret set E2E_STAGING_EMAIL   (value: $TEST_EMAIL)"
-  echo "   gh secret set E2E_STAGING_PASSWORD (value: ****)"
+  echo "   ⚠️ gh CLI not found — set the staging-environment secrets manually:"
+  echo "     gh secret set E2E_STAGING_EMAIL    --env staging   (value: $TEST_EMAIL)"
+  echo "     gh secret set E2E_STAGING_PASSWORD --env staging   (value: ****)"
 fi
 
-# ── Step 4: Create .env.development ──
+# ── Step 4: Ensure .env.development has what we need (don't clobber) ──
+# An existing .env.development may carry many local-dev values (HMAC_SECRET,
+# Sentry, debug flags, etc.). Overwriting would silently destroy them, so
+# only write the file if it doesn't already exist.
 echo ""
 echo "📄 Setting up .env.development..."
-cat > .env.development <<EOF
+if [ -f .env.development ]; then
+  echo "   ℹ️  .env.development already exists — leaving it untouched."
+  echo "      Make sure it has HMAC_SECRET + NEXT_PUBLIC_API_URL set to preproduction."
+else
+  cat > .env.development <<EOF
 HMAC_SECRET=$HMAC_SECRET
 NEXT_PUBLIC_API_URL=${API_URL}/api
 EOF
-echo "   ✅ .env.development created"
+  echo "   ✅ .env.development created"
+fi
 
 # ── Step 5: Run E2E test ──
 echo ""

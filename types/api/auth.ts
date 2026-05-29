@@ -27,6 +27,7 @@ export interface AuthenticatedUserDTO {
   id: string;
   email: string;
   name: string;
+  username: string;
   role: AuthRole;
   emailVerified: boolean;
 }

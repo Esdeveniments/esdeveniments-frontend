@@ -9,6 +9,19 @@ import type {
   MockAdapterOptions,
 } from "types/auth";
 
+function slugifyUsername(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  // Pure-diacritic or punctuation-only names would slugify to "", which
+  // would create an unroutable mock user (/perfil/) \u2014 fall back to a
+  // synthetic id so the preload doesn't quietly break.
+  return slug || `user-${crypto.randomUUID().slice(0, 8)}`;
+}
+
 export function createMockAdapter(
   options: MockAdapterOptions = {}
 ): AuthAdapter {
@@ -23,13 +36,14 @@ export function createMockAdapter(
   let currentUser: AuthUser | null = null;
 
   for (const u of preloadUsers) {
+    const name = u.name ?? u.email.split("@")[0];
     users.set(u.email, {
       password: u.password,
       user: {
         id: crypto.randomUUID(),
         email: u.email,
-        displayName: u.displayName,
-        profileSlug: u.profileSlug,
+        name,
+        username: u.username ?? slugifyUsername(name),
       },
     });
   }
@@ -59,10 +73,12 @@ export function createMockAdapter(
       if (users.has(credentials.email)) {
         return { success: false, error: "email-taken" };
       }
+      const name = credentials.name ?? credentials.email.split("@")[0];
       const user: AuthUser = {
         id: crypto.randomUUID(),
         email: credentials.email,
-        displayName: credentials.displayName,
+        name,
+        username: slugifyUsername(name),
       };
       users.set(credentials.email, {
         password: credentials.password ?? "",

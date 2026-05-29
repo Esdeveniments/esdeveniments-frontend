@@ -17,6 +17,7 @@ describe("lib/validation/auth", () => {
           id: "550e8400-e29b-41d4-a716-446655440001",
           email: "a@b.com",
           name: "Alice",
+          username: "alice",
           role: "USER",
           emailVerified: true,
         },
@@ -37,6 +38,7 @@ describe("lib/validation/auth", () => {
           id: "550e8400-e29b-41d4-a716-446655440002",
           email: "b@c.com",
           name: "Bob",
+          username: "bob",
           role: "ADMIN",
           emailVerified: false,
         },
@@ -59,17 +61,19 @@ describe("lib/validation/auth", () => {
         id: "550e8400-e29b-41d4-a716-446655440001",
         email: "a@b.com",
         name: "Alice",
+        username: "alice",
         role: "USER",
         emailVerified: true,
       });
       expect(result).not.toBeNull();
       expect(result?.id).toBe("550e8400-e29b-41d4-a716-446655440001");
       expect(result?.name).toBe("Alice");
+      expect(result?.username).toBe("alice");
     });
 
     it("returns null for missing required fields", () => {
-      expect(parseAuthUser({ id: 1 })).toBeNull();
-      expect(parseAuthUser({ id: 1, email: "a@b.com" })).toBeNull();
+      expect(parseAuthUser({ id: "u1" })).toBeNull();
+      expect(parseAuthUser({ id: "u1", email: "a@b.com" })).toBeNull();
     });
   });
 

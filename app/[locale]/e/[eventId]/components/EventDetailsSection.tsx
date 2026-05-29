@@ -3,6 +3,7 @@ import { GlobeAltIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
 const GlobeIcon = GlobeAltIcon;
 import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { Link } from "@i18n/routing";
 import { useTranslations } from "next-intl";
 
 /**
@@ -57,9 +58,30 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
           )}
 
           {createdByUser && (
-            <div className="body-small flex items-center gap-element-gap text-foreground-strong/70">
+            <div
+              className="body-small flex items-center gap-element-gap text-foreground-strong/70"
+              data-testid="event-created-by"
+            >
               <UserIcon className="w-4 h-4" />
-              {t("createdBy", { name: createdByUser.name })}
+              <span>
+                {t.rich("createdBy", {
+                  name: createdByUser.name,
+                  link: (chunks) =>
+                    createdByUser.username ? (
+                      <Link
+                        href={`/perfil/${encodeURIComponent(
+                          createdByUser.username
+                        )}`}
+                        className="text-primary hover:underline font-medium"
+                        data-testid="event-created-by-link"
+                      >
+                        {chunks}
+                      </Link>
+                    ) : (
+                      <span className="font-medium">{chunks}</span>
+                    ),
+                })}
+              </span>
             </div>
           )}
 

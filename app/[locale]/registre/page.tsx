@@ -2,6 +2,7 @@ import RegisterForm from "@components/ui/auth/RegisterForm";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { getSafeRedirect } from "@utils/safe-redirect";
 
 export async function generateMetadata() {
   const [locale, t] = await Promise.all([
@@ -24,13 +25,7 @@ export default async function RegisterPage({
   searchParams: Promise<{ redirect?: string }>;
 }) {
   const params = await searchParams;
-  const redirectParam =
-    typeof params.redirect === "string" ? params.redirect : undefined;
-  // Only allow safe relative paths to prevent open redirect attacks
-  const redirectTo =
-    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
-      ? redirectParam
-      : undefined;
+  const redirectTo = getSafeRedirect(params.redirect);
 
   return (
     <div className="container flex-center pt-[6rem] pb-section-y">

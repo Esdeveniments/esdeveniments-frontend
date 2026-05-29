@@ -19,6 +19,7 @@ function loginResponse(overrides?: Record<string, unknown>) {
       id: UUID,
       email: "a@b.com",
       name: "Alice",
+      username: "alice",
       role: "USER",
       emailVerified: true,
     },
@@ -53,7 +54,7 @@ describe("createApiAdapter (cookie-based auth)", () => {
 
       expect(result.success).toBe(true);
       expect(result.user?.email).toBe("a@b.com");
-      expect(result.user?.displayName).toBe("Alice");
+      expect(result.user?.name).toBe("Alice");
       expect(result.user?.id).toBe(UUID);
     });
 
@@ -95,6 +96,47 @@ describe("createApiAdapter (cookie-based auth)", () => {
       expect(result.error).toBe("invalid-credentials");
     });
 
+    it("maps the new auth error codes from the backend", async () => {
+      const cases: Array<{
+        backend: string;
+        status: number;
+        expected: string;
+      }> = [
+        { backend: "email-not-verified", status: 403, expected: "email-not-verified" },
+        { backend: "account-locked", status: 423, expected: "account-locked" },
+        { backend: "invalid-email", status: 400, expected: "invalid-email" },
+      ];
+      for (const c of cases) {
+        mockFetch.mockResolvedValueOnce(jsonResponse({ error: c.backend }, c.status));
+        const result = await createApiAdapter().login({ email: "a@b.com", password: "p" });
+        expect(result.error).toBe(c.expected);
+      }
+    });
+
+    it("falls back to invalid-credentials on unmapped 4xx (don't reveal account existence)", async () => {
+      // Backend returned a 401 with a code we don't recognize. Showing the
+      // user "Incorrect email or password" is the better UX *and* doesn't
+      // leak whether the email is registered.
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ error: "user_not_found" }, 401)
+      );
+      const result = await createApiAdapter().login({
+        email: "ghost@example.com",
+        password: "anything",
+      });
+      expect(result.error).toBe("invalid-credentials");
+    });
+
+    it("falls back to server-error on 5xx, rate-limited on 429 (no enum collapse)", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ error: "boom" }, 503));
+      let result = await createApiAdapter().login({ email: "a@b.com", password: "p" });
+      expect(result.error).toBe("server-error");
+
+      mockFetch.mockResolvedValueOnce(jsonResponse({ error: "slow_down" }, 429));
+      result = await createApiAdapter().login({ email: "a@b.com", password: "p" });
+      expect(result.error).toBe("rate-limited");
+    });
+
     it("returns network-error on exception", async () => {
       mockFetch.mockRejectedValue(new Error("fetch failed"));
 
@@ -127,7 +169,7 @@ describe("createApiAdapter (cookie-based auth)", () => {
       const result = await adapter.register({
         email: "new@b.com",
         password: "pass123",
-        displayName: "New User",
+        name: "New User",
       });
 
       expect(result.success).toBe(true);
@@ -135,17 +177,17 @@ describe("createApiAdapter (cookie-based auth)", () => {
       expect(result.requiresVerification).toBe(true);
     });
 
-    it("sends displayName as 'name' field", async () => {
+    it("sends name as 'name' field", async () => {
       mockFetch.mockResolvedValue(jsonResponse({ message: "ok" }));
 
       const adapter = createApiAdapter();
-      await adapter.register({ email: "x@y.com", password: "p", displayName: "Xavi" });
+      await adapter.register({ email: "x@y.com", password: "p", name: "Xavi" });
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(body.name).toBe("Xavi");
     });
 
-    it("falls back to email prefix when no displayName", async () => {
+    it("falls back to email prefix when no name", async () => {
       mockFetch.mockResolvedValue(jsonResponse({ message: "ok" }));
 
       const adapter = createApiAdapter();
@@ -173,6 +215,7 @@ describe("createApiAdapter (cookie-based auth)", () => {
           id: UUID,
           email: "a@b.com",
           name: "A",
+          username: "alice",
           role: "USER",
           emailVerified: true,
         })
@@ -222,6 +265,7 @@ describe("createApiAdapter (cookie-based auth)", () => {
           id: UUID,
           email: "a@b.com",
           name: "A",
+          username: "alice",
           role: "USER",
           emailVerified: true,
         })
@@ -329,6 +373,7 @@ describe("createApiAdapter (cookie-based auth)", () => {
           id: UUID,
           email: "a@b.com",
           name: "Alice",
+          username: "alice",
           role: "USER",
           emailVerified: true,
         })

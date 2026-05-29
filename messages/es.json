@@ -80,7 +80,9 @@
       "subtitle": "Solo se muestran eventos futuros. Cuando un evento termina, se elimina automáticamente de favoritos.",
       "countLabel": "{count}/{max} guardados",
       "emptyTitle": "Aún no tienes eventos futuros guardados",
-      "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos."
+      "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos.",
+      "errorTitle": "No hemos podido cargar tus favoritos",
+      "errorDescription": "Inténtalo de nuevo en un momento. Tus favoritos están a salvo."
     },
     "About": {
       "metaTitle": "Quiénes somos - Agenda cultural de Cataluña | Esdeveniments.cat",
@@ -231,6 +233,13 @@
       "description": "Las últimas noticias y recomendaciones culturales de Cataluña"
     },
     "Publish": {
+      "authGate": {
+        "title": "Inicia sesión para publicar",
+        "description": "Crea una cuenta o inicia sesión para añadir tu evento. Es rápido y después podrás gestionar tus eventos.",
+        "login": "Iniciar sesión",
+        "noAccount": "¿No tienes cuenta?",
+        "register": "Regístrate"
+      },
       "heading": "Publica tu evento en Cataluña",
       "subheading": "Añade tu concierto, exposición, teatro, taller o actividad cultural a la agenda más grande de Cataluña. ¡Es gratis!",
       "sponsorTitle": "¿Tienes un negocio local?",
@@ -417,6 +426,11 @@
     },
     "FavoriteButton": {
       "maxReached": "Has alcanzado el límite de {max} favoritos. Elimina uno para añadir más."
+    },
+    "FavoritesLoginNudge": {
+      "message": "¡Guardado! Inicia sesión para sincronizar tus favoritos entre dispositivos.",
+      "login": "Iniciar sesión",
+      "dismiss": "Cerrar"
     },
     "EventNotifications": {
       "thankYou": "¡Gracias por ayudar a mejorar el contenido de Esdeveniments.cat! En menos de 24 horas el cambio estará disponible."
@@ -880,7 +894,7 @@
       "title": "Detalles del evento",
       "eventLink": "Enlace al evento:",
       "duration": "Duración aproximada: {duration}",
-      "createdBy": "Publicado por {name}"
+      "createdBy": "Publicado por <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicación",
@@ -1709,16 +1723,30 @@
     "fields": {
       "email": "Correo electrónico",
       "password": "Contraseña",
-      "displayName": "Nombre (opcional)"
+      "name": "Nombre (opcional)",
+      "passwordShow": "Mostrar la contraseña",
+      "passwordHide": "Ocultar la contraseña"
     },
     "errors": {
-      "invalid-credentials": "Correo o contraseña incorrectos",
-      "email-taken": "Ya existe una cuenta con este correo",
-      "weak-password": "La contraseña debe tener mínimo 8 caracteres",
-      "network-error": "Error de conexión. Inténtalo de nuevo.",
-      "not-configured": "La autenticación aún no está configurada",
-      "rate-limited": "Demasiados intentos. Espera un momento.",
-      "unknown": "Algo ha salido mal. Inténtalo de nuevo."
+      "invalid-credentials": "Correo o contraseña incorrectos.",
+      "invalid-email": "Ese correo no parece válido.",
+      "email-taken": "Ya existe una cuenta con este correo.",
+      "weak-password": "La contraseña debe tener al menos 8 caracteres.",
+      "network-error": "Parece que no tienes conexión. Compruébala e inténtalo de nuevo.",
+      "server-error": "El servicio no está disponible ahora mismo. Inténtalo en unos momentos.",
+      "not-configured": "La autenticación aún no está configurada.",
+      "rate-limited": "Demasiados intentos. Espera un momento antes de volver a intentarlo.",
+      "rate-limited-seconds": "Demasiados intentos. Inténtalo de nuevo en {seconds}s.",
+      "email-not-verified": "Debes verificar tu correo antes de iniciar sesión.",
+      "account-locked": "Tu cuenta está bloqueada. Contacta con soporte.",
+      "unknown": "No hemos podido completar la acción. Inténtalo de nuevo."
+    },
+    "actions": {
+      "forgotPassword": "¿Has olvidado la contraseña?",
+      "forgotPasswordSent": "Te hemos enviado un correo para restablecerla a {email}.",
+      "resendVerification": "Reenviar correo de verificación",
+      "verificationSent": "Correo de verificación reenviado a {email}.",
+      "contactSupport": "Contacta con soporte"
     },
     "meta": {
       "loginTitle": "Iniciar sesión | Esdeveniments.cat",

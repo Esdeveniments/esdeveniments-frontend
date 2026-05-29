@@ -60,6 +60,28 @@ export function AuthProvider({
       const result = await adapter.login(credentials);
       if (result.success && result.user) {
         setUser(result.user);
+        // Migrate any guest-cookie favorites to the user's server-side list
+        // before login resolves, so /preferits (server-rendered) and any
+        // mounted FavoriteButtons (SWR-backed) see the synced state on the
+        // very next render — no empty-list flash. The endpoint short-circuits
+        // in ~50ms when the cookie is empty, so the cost is only paid by
+        // users who actually saved favorites as a guest. Errors are caught
+        // so a flaky migrate never blocks a successful login.
+        try {
+          const res = await fetch("/api/favorites/migrate", {
+            method: "POST",
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (res.ok) {
+            // Also refresh the shared favorites SWR cache for any
+            // already-mounted FavoriteButton.
+            const { mutate } = await import("swr");
+            await mutate("favorites:list");
+          }
+        } catch {
+          // Best-effort: leftover cookie favorites are migrated on the next
+          // login (the route re-queues only failed slugs).
+        }
       } else if (result.error) {
         setError(result.error);
       }
