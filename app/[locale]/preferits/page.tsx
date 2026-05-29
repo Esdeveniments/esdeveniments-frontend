@@ -132,9 +132,9 @@ export default async function PreferitsPage() {
     // Server-side store has no stale slugs to prune.
     slugsToRemove = [];
   } else {
-    const favoriteSlugs = [...(await getFavoritesFromCookies())].reverse();
-    uniqueFavoritesCount = new Set(favoriteSlugs).size;
-    const fetched = await fetchFavoritesEvents(favoriteSlugs);
+    const cookieSlugs = [...(await getFavoritesFromCookies())].reverse();
+    uniqueFavoritesCount = new Set(cookieSlugs).size;
+    const fetched = await fetchFavoritesEvents(cookieSlugs);
     events = fetched.events;
 
     const expiredSlugs = events.flatMap((event) => {
