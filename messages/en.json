@@ -539,6 +539,7 @@
     "SocialFollowPopup": {
       "headline": "Let the plans find you",
       "subtext": "Every day we share the best events on social media. Follow us and never miss out.",
+      "followLabel": "Follow us",
       "installEnable": "Install app",
       "installEnabling": "Opening install prompt...",
       "installIosHelp": "To install on iPhone: tap Share and then \"Add to Home Screen\".",

@@ -493,7 +493,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-center gap-1.5 px-3 py-2.5 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-all duration-normal text-foreground body-small font-medium no-underline"
-                  title={social.label}
+                  aria-label={social.label}
                 >
                   <span className="text-primary">
                     <SocialIcon platform={social.platform} className="w-5 h-5" />
