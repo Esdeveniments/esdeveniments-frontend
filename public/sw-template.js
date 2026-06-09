@@ -341,4 +341,47 @@ if (!self.workbox) {
       })()
     );
   });
+
+  // --- 5. Web Push Notifications ---
+  // Receives encrypted push messages from the server (via web-push / VAPID).
+  // Runs even when the app is closed. Browsers require that every push event
+  // either shows a notification or responds with a waitUntil promise; otherwise
+  // the browser may throttle or block future pushes.
+  self.addEventListener("push", (event) => {
+    let data = { title: "Esdeveniments", body: "", url: "/", icon: "/static/icons/icon-192x192.png" };
+    if (event.data) {
+      try {
+        data = { ...data, ...event.data.json() };
+      } catch {
+        data.body = event.data.text();
+      }
+    }
+    event.waitUntil(
+      self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: data.icon,
+        badge: "/static/icons/icon-192x192.png",
+        data: { url: data.url },
+      })
+    );
+  });
+
+  // Open the target URL when the user taps the notification.
+  // Focuses an existing window on that URL if one is open; otherwise opens a new one.
+  self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const targetUrl = (event.notification.data && event.notification.data.url) || "/";
+    event.waitUntil(
+      self.clients
+        .matchAll({ type: "window", includeUncontrolled: true })
+        .then((clientList) => {
+          for (const client of clientList) {
+            if (client.url === targetUrl && "focus" in client) {
+              return client.focus();
+            }
+          }
+          return self.clients.openWindow(targetUrl);
+        })
+    );
+  });
 } // End of Workbox-available block

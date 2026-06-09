@@ -547,6 +547,10 @@
     "SocialFollowPopup": {
       "headline": "Que els plans et trobin a tu",
       "subtext": "Cada dia compartim els millors esdeveniments a les xarxes. Segueix-nos i no et perdis res!",
+      "pushEnable": "Activa notificacions",
+      "pushEnabling": "Activant notificacions...",
+      "pushEnabled": "Notificacions activades",
+      "pushBlockedHelp": "Tens les notificacions bloquejades. Pots activar-les des de la configuració del navegador del lloc.",
       "close": "Ara no",
       "aria": "Segueix-nos a les xarxes socials"
     },

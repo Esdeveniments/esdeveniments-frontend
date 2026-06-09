@@ -2,14 +2,18 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: "Esdeveniments.cat",
     short_name: "Esdeveniments",
     description: "Descobreix els millors esdeveniments culturals de Catalunya",
     start_url: "/",
+    scope: "/",
     display: "standalone",
+    display_override: ["standalone"],
     background_color: "#ffffff",
     theme_color: "#000000",
     orientation: "portrait-primary",
+    prefer_related_applications: false,
     categories: ["entertainment", "lifestyle", "culture"],
     lang: "ca",
     dir: "ltr",
@@ -21,26 +25,38 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
+        src: "/static/icons/icon-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
         src: "/static/icons/icon-512x512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
+      {
+        src: "/static/icons/icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
     ],
     screenshots: [
       {
-        src: "/static/icons/icon-512x512.png",
-        sizes: "512x512",
+        src: "/static/icons/screenshot-narrow.png",
+        sizes: "780x1688",
         type: "image/png",
         form_factor: "narrow",
-        label: "Mobile view of Esdeveniments.cat",
+        label: "Esdeveniments culturals a Catalunya en mòbil",
       },
       {
-        src: "/static/icons/icon-512x512.png",
-        sizes: "512x512",
+        src: "/static/icons/screenshot-wide.png",
+        sizes: "2560x1600",
         type: "image/png",
         form_factor: "wide",
-        label: "Desktop view of Esdeveniments.cat",
+        label: "Esdeveniments culturals a Catalunya en escriptori",
       },
     ],
     shortcuts: [

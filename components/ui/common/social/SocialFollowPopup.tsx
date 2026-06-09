@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
+import { usePushNotifications } from "@components/hooks/usePushNotifications";
+import { sendGoogleEvent } from "@utils/analytics";
 import { SocialIcon } from "./icons";
 import type { SocialPopupState } from "types/props";
 import { socialLinks } from "@config/index";
@@ -89,9 +91,15 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const t = useTranslations("Components.SocialFollowPopup");
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isSubscribingPush, setIsSubscribingPush] = useState(false);
   const hasTriggeredRef = useRef(false);
+  const hasTrackedOfferRef = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const isMobile = useCheckMobileScreen();
+  const {
+    state: pushState,
+    subscribe: subscribeToPush,
+  } = usePushNotifications();
 
   const dismiss = useCallback(() => {
     setIsClosing(true);
@@ -106,6 +114,31 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       });
     }, 300);
   }, []);
+
+  const handleSubscribePush = useCallback(async () => {
+    sendGoogleEvent("push_optin_click", {
+      source: "social_follow_popup",
+      device: isMobile ? "mobile" : "desktop",
+    });
+    setIsSubscribingPush(true);
+    try {
+      const ok = await subscribeToPush();
+      if (ok) {
+        sendGoogleEvent("push_optin_success", {
+          source: "social_follow_popup",
+          device: isMobile ? "mobile" : "desktop",
+        });
+      } else {
+        sendGoogleEvent("push_optin_failed", {
+          source: "social_follow_popup",
+          device: isMobile ? "mobile" : "desktop",
+          permission: Notification.permission,
+        });
+      }
+    } finally {
+      setIsSubscribingPush(false);
+    }
+  }, [subscribeToPush, isMobile]);
 
   // Escape key + focus trap for desktop modal (WAI-ARIA dialog pattern)
   useEffect(() => {
@@ -201,6 +234,16 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     // Re-evaluate on route change so page-view count can reach MIN_PAGE_VIEWS
   }, [pathname]);
 
+  useEffect(() => {
+    if (!isVisible || hasTrackedOfferRef.current) return;
+    hasTrackedOfferRef.current = true;
+    sendGoogleEvent("push_optin_offer_view", {
+      source: "social_follow_popup",
+      device: isMobile ? "mobile" : "desktop",
+      state: pushState,
+    });
+  }, [isVisible, isMobile, pushState]);
+
   if (!isVisible) return null;
 
   /* ------------------------------------------------------------------ */
@@ -255,6 +298,25 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
                 </a>
               ))}
             </div>
+
+            {pushState === "unsubscribed" ? (
+              <button
+                onClick={handleSubscribePush}
+                disabled={isSubscribingPush}
+                className="btn-primary w-full"
+                aria-label={t("pushEnable")}
+              >
+                {isSubscribingPush ? t("pushEnabling") : t("pushEnable")}
+              </button>
+            ) : null}
+
+            {pushState === "denied" ? (
+              <p className="body-small text-foreground/70">{t("pushBlockedHelp")}</p>
+            ) : null}
+
+            {pushState === "subscribed" ? (
+              <p className="body-small text-primary">{t("pushEnabled")}</p>
+            ) : null}
 
             <button
               onClick={dismiss}
@@ -341,6 +403,25 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
               </a>
             ))}
           </div>
+
+          {pushState === "unsubscribed" ? (
+            <button
+              onClick={handleSubscribePush}
+              disabled={isSubscribingPush}
+              className="btn-primary w-full"
+              aria-label={t("pushEnable")}
+            >
+              {isSubscribingPush ? t("pushEnabling") : t("pushEnable")}
+            </button>
+          ) : null}
+
+          {pushState === "denied" ? (
+            <p className="body-small text-foreground/70">{t("pushBlockedHelp")}</p>
+          ) : null}
+
+          {pushState === "subscribed" ? (
+            <p className="body-small text-primary">{t("pushEnabled")}</p>
+          ) : null}
 
           {/* Dismiss text */}
           <button

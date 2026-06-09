@@ -281,6 +281,9 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/publish",
   "/api/tiktok/upload",
   "/api/tiktok/status",
+  // Web Push subscription (browser-initiated; VAPID send route protects itself with REVALIDATE_SECRET)
+  "/api/push/subscribe",
+  "/api/push/send",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
 ];

@@ -539,6 +539,10 @@
     "SocialFollowPopup": {
       "headline": "Que los planes te encuentren a ti",
       "subtext": "Cada día compartimos los mejores eventos en redes. Síguenos y no te pierdas nada.",
+      "pushEnable": "Activar notificaciones",
+      "pushEnabling": "Activando notificaciones...",
+      "pushEnabled": "Notificaciones activadas",
+      "pushBlockedHelp": "Tienes las notificaciones bloqueadas. Puedes activarlas desde la configuración del navegador para este sitio.",
       "close": "Ahora no",
       "aria": "Síguenos en las redes sociales"
     },
