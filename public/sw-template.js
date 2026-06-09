@@ -368,6 +368,7 @@ if (!self.workbox) {
 
   // Open the target URL when the user taps the notification.
   // Focuses an existing window on that URL if one is open; otherwise opens a new one.
+  // Prevents duplicate tabs by carefully comparing URLs (including locale, pathname, search).
   self.addEventListener("notificationclick", (event) => {
     event.notification.close();
     const rawTargetUrl = (event.notification.data && event.notification.data.url) || "/";
@@ -377,17 +378,30 @@ if (!self.workbox) {
       self.clients
         .matchAll({ type: "window", includeUncontrolled: true })
         .then((clientList) => {
+          // Try to find an existing window with the same URL
           for (const client of clientList) {
-            const clientUrl = new URL(client.url);
-            if (
-              clientUrl.origin === targetUrl.origin &&
-              clientUrl.pathname === targetUrl.pathname &&
-              clientUrl.search === targetUrl.search &&
-              "focus" in client
-            ) {
-              return client.focus();
+            try {
+              const clientUrl = new URL(client.url);
+              // Normalize and compare: origin, pathname, and search should match
+              // For i18n apps, the full pathname including locale must match
+              const pathMatches = clientUrl.pathname === targetUrl.pathname;
+              const searchMatches = clientUrl.search === targetUrl.search;
+              const originMatches = clientUrl.origin === targetUrl.origin;
+
+              if (
+                originMatches &&
+                pathMatches &&
+                searchMatches &&
+                "focus" in client
+              ) {
+                return client.focus();
+              }
+            } catch (e) {
+              // Ignore errors parsing client URLs
+              continue;
             }
           }
+          // No matching window found, open a new one
           return self.clients.openWindow(targetUrl.href);
         })
     );

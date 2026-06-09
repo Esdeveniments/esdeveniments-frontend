@@ -26,34 +26,47 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
  *   const { state, subscribe, unsubscribe } = usePushNotifications();
  */
 export function usePushNotifications() {
-  const [state, setState] = useState<PushState>(() => {
-    if (typeof window === "undefined") return "unsupported";
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      return "unsupported";
+  // Initialize with unsupported to avoid hydration mismatch
+  const [state, setState] = useState<PushState>("unsupported");
+
+  // Move all browser-specific detection to useEffect to prevent hydration mismatches
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Check browser capabilities first
+    // (Sync setState calls for feature detection; no cascading renders)
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC_KEY) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState("unsupported");
+      return;
     }
-    if (!VAPID_PUBLIC_KEY) return "unsupported";
 
     const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const isStandalone =
       window.matchMedia?.("(display-mode: standalone)")?.matches ||
       ("standalone" in navigator &&
         (navigator as { standalone?: boolean }).standalone === true);
-    if (isIos && !isStandalone) return "unsupported";
 
-    if (Notification.permission === "denied") return "denied";
-    return "unsubscribed";
-  });
+    if (isIos && !isStandalone) {
+       
+      setState("unsupported");
+      return;
+    }
 
-  useEffect(() => {
-    if (state !== "unsubscribed") return;
+    if (Notification.permission === "denied") {
+       
+      setState("denied");
+      return;
+    }
 
+    // Check for existing subscription async, only call setState once with result
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => {
         setState(sub ? "subscribed" : "unsubscribed");
       })
       .catch(() => setState("unsubscribed"));
-  }, [state]);
+  }, []);
 
   const subscribe = useCallback(async (): Promise<boolean> => {
     if (!VAPID_PUBLIC_KEY) return false;

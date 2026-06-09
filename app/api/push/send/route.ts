@@ -79,6 +79,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, sent: 0 }, { headers: NO_STORE });
   }
 
+  // Validate endpoints to prevent SSRF attacks — must be https://
+  const validSubscriptions = subscriptions.filter((sub) => {
+    try {
+      const url = new URL(sub.endpoint);
+      // Only allow https:// endpoints from push services
+      return url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  });
+
+  if (validSubscriptions.length === 0) {
+    return NextResponse.json({ ok: true, sent: 0 }, { headers: NO_STORE });
+  }
+
   const payload = JSON.stringify({
     title: parsed.data.title,
     body: parsed.data.body,
@@ -86,48 +101,68 @@ export async function POST(request: Request) {
     icon: parsed.data.icon,
   });
 
-  const results = await Promise.allSettled(
-    subscriptions.map((sub) =>
-      webpush.sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: { p256dh: sub.p256dh, auth: sub.auth },
-        },
-        payload,
-        { TTL: 60 * 60 * 24 }, // 24h TTL — push service queues it if device offline
+  // Add concurrency control with chunking to avoid overwhelming push services
+  const CHUNK_SIZE = 100; // Send 100 notifications per chunk
+  const CHUNK_DELAY = 1000; // Wait 1 second between chunks
+  let totalSent = 0;
+  let totalFailed = 0;
+  const allInvalidSubscriptions: string[] = [];
+
+  for (let i = 0; i < validSubscriptions.length; i += CHUNK_SIZE) {
+    const chunk = validSubscriptions.slice(i, i + CHUNK_SIZE);
+
+    const results = await Promise.allSettled(
+      chunk.map((sub) =>
+        webpush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: { p256dh: sub.p256dh, auth: sub.auth },
+          },
+          payload,
+          { TTL: 60 * 60 * 24 }, // 24h TTL — push service queues it if device offline
+        ),
       ),
-    ),
-  );
+    );
 
-  const sent = results.filter((r) => r.status === "fulfilled").length;
-  const failed = results.filter((r) => r.status === "rejected").length;
+    totalSent += results.filter((r) => r.status === "fulfilled").length;
+    totalFailed += results.filter((r) => r.status === "rejected").length;
 
-  const invalidSubscriptions = results
-    .map((result, index) => {
-      if (result.status !== "rejected") return null;
-      const statusCode =
-        typeof result.reason === "object" &&
-        result.reason !== null &&
-        "statusCode" in result.reason
-          ? result.reason.statusCode
-          : null;
-      if (statusCode !== 404 && statusCode !== 410) return null;
-      return subscriptions[index]?.endpoint ?? null;
-    })
-    .filter((endpoint): endpoint is string => Boolean(endpoint));
+    // Collect invalid subscriptions (404/410) for batch deletion
+    const invalidInChunk = results
+      .map((result, index) => {
+        if (result.status !== "rejected") return null;
+        const statusCode =
+          typeof result.reason === "object" &&
+          result.reason !== null &&
+          "statusCode" in result.reason
+            ? result.reason.statusCode
+            : null;
+        if (statusCode !== 404 && statusCode !== 410) return null;
+        return chunk[index]?.endpoint ?? null;
+      })
+      .filter((endpoint): endpoint is string => Boolean(endpoint));
 
-  if (invalidSubscriptions.length > 0) {
+    allInvalidSubscriptions.push(...invalidInChunk);
+
+    // Add delay between chunks to avoid overwhelming push services
+    if (i + CHUNK_SIZE < validSubscriptions.length) {
+      await new Promise((resolve) => setTimeout(resolve, CHUNK_DELAY));
+    }
+  }
+
+  // Batch delete invalid subscriptions
+  if (allInvalidSubscriptions.length > 0) {
     await Promise.allSettled(
-      invalidSubscriptions.map((endpoint) => deleteSubscription(endpoint)),
+      allInvalidSubscriptions.map((endpoint) => deleteSubscription(endpoint)),
     );
   }
 
-  if (failed > 0) {
+  if (totalFailed > 0) {
     captureException(
-      new Error(`Push send: ${failed}/${subscriptions.length} failed`),
+      new Error(`Push send: ${totalFailed}/${validSubscriptions.length} failed`),
       { tags: { feature: "push", route: "/api/push/send" } },
     );
   }
 
-  return NextResponse.json({ ok: true, sent, failed }, { headers: NO_STORE });
+  return NextResponse.json({ ok: true, sent: totalSent, failed: totalFailed }, { headers: NO_STORE });
 }

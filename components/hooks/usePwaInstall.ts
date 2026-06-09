@@ -27,17 +27,36 @@ function detectIosManualInstall(): boolean {
  * - iOS Safari: exposes manual install guidance state.
  */
 export function usePwaInstall() {
-  const [installState, setInstallState] = useState<PwaInstallState>(() => {
-    if (typeof window === "undefined") return "not-available";
-    if (detectInstalledMode()) return "installed";
-    if (detectIosManualInstall()) return "ios-manual";
-    return "not-available";
-  });
+  // Initialize with not-available to avoid hydration mismatch
+  const [installState, setInstallState] = useState<PwaInstallState>("not-available");
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
 
+  // Move all browser-specific detection to useEffect to prevent hydration mismatches
   useEffect(() => {
-    if (installState === "installed") return;
+    if (typeof window === "undefined") return;
+
+    // Check if already installed
+    if (detectInstalledMode()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInstallState("installed");
+      return;
+    }
+
+    // Check if iOS manual install needed
+    if (detectIosManualInstall()) {
+       
+      setInstallState("ios-manual");
+      return;
+    }
+
+     
+    setInstallState("not-available");
+  }, []);
+
+  // Separate effect for event listeners
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
     const onBeforeInstallPrompt = (event: Event) => {
       const promptEvent = event as BeforeInstallPromptEvent;
