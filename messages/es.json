@@ -539,6 +539,9 @@
     "SocialFollowPopup": {
       "headline": "Que los planes te encuentren a ti",
       "subtext": "Cada día compartimos los mejores eventos en redes. Síguenos y no te pierdas nada.",
+      "installEnable": "Instalar app",
+      "installEnabling": "Abriendo instalación...",
+      "installIosHelp": "Para instalarla en iPhone: toca Compartir y luego \"Añadir a pantalla de inicio\".",
       "pushEnable": "Activar notificaciones",
       "pushEnabling": "Activando notificaciones...",
       "pushEnabled": "Notificaciones activadas",

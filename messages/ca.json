@@ -547,6 +547,9 @@
     "SocialFollowPopup": {
       "headline": "Que els plans et trobin a tu",
       "subtext": "Cada dia compartim els millors esdeveniments a les xarxes. Segueix-nos i no et perdis res!",
+      "installEnable": "Instal·la l'app",
+      "installEnabling": "Obrint instal·lació...",
+      "installIosHelp": "Per instal·lar-la a l'iPhone: toca Compartir i després \"Afegir a la pantalla d'inici\".",
       "pushEnable": "Activa notificacions",
       "pushEnabling": "Activant notificacions...",
       "pushEnabled": "Notificacions activades",

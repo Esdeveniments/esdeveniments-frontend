@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { usePushNotifications } from "@components/hooks/usePushNotifications";
+import { usePwaInstall } from "@components/hooks/usePwaInstall";
 import { sendGoogleEvent } from "@utils/analytics";
 import { SocialIcon } from "./icons";
 import type { SocialPopupState } from "types/props";
@@ -92,6 +93,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isSubscribingPush, setIsSubscribingPush] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
   const hasTriggeredRef = useRef(false);
   const hasTrackedOfferRef = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -100,6 +102,17 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     state: pushState,
     subscribe: subscribeToPush,
   } = usePushNotifications();
+  const {
+    installState,
+    isInstalled,
+    canPromptInstall,
+    showIosInstructions,
+    promptInstall,
+  } = usePwaInstall();
+
+  const shouldShowPushCta =
+    (isInstalled || installState === "not-available") &&
+    pushState !== "unsupported";
 
   const dismiss = useCallback(() => {
     setIsClosing(true);
@@ -139,6 +152,26 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       setIsSubscribingPush(false);
     }
   }, [subscribeToPush, isMobile]);
+
+  const handleInstall = useCallback(async () => {
+    if (!canPromptInstall) return;
+    sendGoogleEvent("pwa_install_click", {
+      source: "social_follow_popup",
+      device: isMobile ? "mobile" : "desktop",
+    });
+
+    setIsInstalling(true);
+    try {
+      const outcome = await promptInstall();
+      sendGoogleEvent("pwa_install_result", {
+        source: "social_follow_popup",
+        device: isMobile ? "mobile" : "desktop",
+        outcome,
+      });
+    } finally {
+      setIsInstalling(false);
+    }
+  }, [canPromptInstall, isMobile, promptInstall]);
 
   // Escape key + focus trap for desktop modal (WAI-ARIA dialog pattern)
   useEffect(() => {
@@ -241,8 +274,9 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       source: "social_follow_popup",
       device: isMobile ? "mobile" : "desktop",
       state: pushState,
+      install_state: installState,
     });
-  }, [isVisible, isMobile, pushState]);
+  }, [isVisible, isMobile, pushState, installState]);
 
   if (!isVisible) return null;
 
@@ -299,7 +333,22 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
               ))}
             </div>
 
-            {pushState === "unsubscribed" ? (
+            {canPromptInstall ? (
+              <button
+                onClick={handleInstall}
+                disabled={isInstalling}
+                className="btn-primary w-full"
+                aria-label={t("installEnable")}
+              >
+                {isInstalling ? t("installEnabling") : t("installEnable")}
+              </button>
+            ) : null}
+
+            {showIosInstructions ? (
+              <p className="body-small text-foreground/70">{t("installIosHelp")}</p>
+            ) : null}
+
+            {shouldShowPushCta && pushState === "unsubscribed" ? (
               <button
                 onClick={handleSubscribePush}
                 disabled={isSubscribingPush}
@@ -310,11 +359,11 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
               </button>
             ) : null}
 
-            {pushState === "denied" ? (
+            {shouldShowPushCta && pushState === "denied" ? (
               <p className="body-small text-foreground/70">{t("pushBlockedHelp")}</p>
             ) : null}
 
-            {pushState === "subscribed" ? (
+            {shouldShowPushCta && pushState === "subscribed" ? (
               <p className="body-small text-primary">{t("pushEnabled")}</p>
             ) : null}
 
@@ -404,7 +453,22 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             ))}
           </div>
 
-          {pushState === "unsubscribed" ? (
+          {canPromptInstall ? (
+            <button
+              onClick={handleInstall}
+              disabled={isInstalling}
+              className="btn-primary w-full"
+              aria-label={t("installEnable")}
+            >
+              {isInstalling ? t("installEnabling") : t("installEnable")}
+            </button>
+          ) : null}
+
+          {showIosInstructions ? (
+            <p className="body-small text-foreground/70">{t("installIosHelp")}</p>
+          ) : null}
+
+          {shouldShowPushCta && pushState === "unsubscribed" ? (
             <button
               onClick={handleSubscribePush}
               disabled={isSubscribingPush}
@@ -415,11 +479,11 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             </button>
           ) : null}
 
-          {pushState === "denied" ? (
+          {shouldShowPushCta && pushState === "denied" ? (
             <p className="body-small text-foreground/70">{t("pushBlockedHelp")}</p>
           ) : null}
 
-          {pushState === "subscribed" ? (
+          {shouldShowPushCta && pushState === "subscribed" ? (
             <p className="body-small text-primary">{t("pushEnabled")}</p>
           ) : null}
 
