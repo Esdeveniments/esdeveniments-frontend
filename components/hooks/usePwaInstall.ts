@@ -61,14 +61,19 @@ export function usePwaInstall() {
 
   const promptInstall = useCallback(async (): Promise<"accepted" | "dismissed" | "unavailable"> => {
     if (!deferredPrompt) return "unavailable";
-    await deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    if (choice.outcome === "accepted") {
-      setDeferredPrompt(null);
-      setInstallState("installed");
-      return "accepted";
+
+    try {
+      await deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === "accepted") {
+        setDeferredPrompt(null);
+        setInstallState("installed");
+        return "accepted";
+      }
+      return "dismissed";
+    } catch {
+      return "unavailable";
     }
-    return "dismissed";
   }, [deferredPrompt]);
 
   return {

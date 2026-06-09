@@ -71,7 +71,7 @@ export function usePushNotifications() {
       });
 
       const json = sub.toJSON();
-      await fetch("/api/push/subscribe", {
+      const response = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -79,6 +79,12 @@ export function usePushNotifications() {
           keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
         }),
       });
+
+      if (!response.ok) {
+        await sub.unsubscribe();
+        setState("unsubscribed");
+        return false;
+      }
 
       setState("subscribed");
       return true;
@@ -96,11 +102,13 @@ export function usePushNotifications() {
         return true;
       }
 
-      await fetch("/api/push/subscribe", {
+      const response = await fetch("/api/push/subscribe", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ endpoint: sub.endpoint }),
       });
+
+      if (!response.ok) return false;
 
       await sub.unsubscribe();
       setState("unsubscribed");

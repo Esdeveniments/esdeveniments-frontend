@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import webpush from "web-push";
 import { captureException } from "@sentry/nextjs";
-import { getAllSubscriptions } from "@lib/db/push-subscriptions";
+import {
+  deleteSubscription,
+  getAllSubscriptions,
+} from "@lib/db/push-subscriptions";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -98,6 +101,26 @@ export async function POST(request: Request) {
 
   const sent = results.filter((r) => r.status === "fulfilled").length;
   const failed = results.filter((r) => r.status === "rejected").length;
+
+  const invalidSubscriptions = results
+    .map((result, index) => {
+      if (result.status !== "rejected") return null;
+      const statusCode =
+        typeof result.reason === "object" &&
+        result.reason !== null &&
+        "statusCode" in result.reason
+          ? result.reason.statusCode
+          : null;
+      if (statusCode !== 404 && statusCode !== 410) return null;
+      return subscriptions[index]?.endpoint ?? null;
+    })
+    .filter((endpoint): endpoint is string => Boolean(endpoint));
+
+  if (invalidSubscriptions.length > 0) {
+    await Promise.allSettled(
+      invalidSubscriptions.map((endpoint) => deleteSubscription(endpoint)),
+    );
+  }
 
   if (failed > 0) {
     captureException(

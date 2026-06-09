@@ -370,17 +370,25 @@ if (!self.workbox) {
   // Focuses an existing window on that URL if one is open; otherwise opens a new one.
   self.addEventListener("notificationclick", (event) => {
     event.notification.close();
-    const targetUrl = (event.notification.data && event.notification.data.url) || "/";
+    const rawTargetUrl = (event.notification.data && event.notification.data.url) || "/";
+    const targetUrl = new URL(rawTargetUrl, self.location.origin);
+
     event.waitUntil(
       self.clients
         .matchAll({ type: "window", includeUncontrolled: true })
         .then((clientList) => {
           for (const client of clientList) {
-            if (client.url === targetUrl && "focus" in client) {
+            const clientUrl = new URL(client.url);
+            if (
+              clientUrl.origin === targetUrl.origin &&
+              clientUrl.pathname === targetUrl.pathname &&
+              clientUrl.search === targetUrl.search &&
+              "focus" in client
+            ) {
               return client.focus();
             }
           }
-          return self.clients.openWindow(targetUrl);
+          return self.clients.openWindow(targetUrl.href);
         })
     );
   });
