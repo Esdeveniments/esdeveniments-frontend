@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import type { BeforeInstallPromptEvent, PwaInstallState } from "types/pwa";
 
 function detectInstalledMode(): boolean {
-  const inDisplayMode = window.matchMedia("(display-mode: standalone)").matches;
+  const inDisplayMode =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(display-mode: standalone)").matches;
   const iosStandalone =
     "standalone" in navigator &&
     (navigator as { standalone?: boolean }).standalone === true;
