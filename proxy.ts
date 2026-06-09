@@ -297,6 +297,7 @@ export const ORIGIN_CHECK_EXEMPT = new Set([
   "/api/sponsors/webhook", // Stripe webhook (server-to-server)
   "/api/revalidate", // External revalidation trigger (has own secret)
   "/api/health", // Monitoring probes
+  "/api/push/send", // Push broadcast (server-to-server, protected by REVALIDATE_SECRET)
 ]);
 
 /**

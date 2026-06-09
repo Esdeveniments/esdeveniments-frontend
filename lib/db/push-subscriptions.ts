@@ -55,7 +55,9 @@ export async function upsertSubscription(
  * Remove a push subscription by endpoint.
  */
 export async function deleteSubscription(endpoint: string): Promise<void> {
-  if (!isDbConfigured()) return;
+  if (!isDbConfigured()) {
+    throw new Error("Turso DB not configured");
+  }
   await ensureSchema();
   await execute(
     "DELETE FROM push_subscriptions WHERE endpoint = ?",

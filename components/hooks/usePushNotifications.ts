@@ -35,7 +35,7 @@ export function usePushNotifications() {
 
     const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia?.("(display-mode: standalone)")?.matches ||
       ("standalone" in navigator &&
         (navigator as { standalone?: boolean }).standalone === true);
     if (isIos && !isStandalone) return "unsupported";
