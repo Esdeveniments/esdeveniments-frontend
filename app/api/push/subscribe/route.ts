@@ -6,16 +6,30 @@ import {
   deleteSubscription,
 } from "@lib/db/push-subscriptions";
 
+/**
+ * Push-service endpoint: must be https (the send route refuses anything
+ * else, so persisting http/other schemes only inflates the DB) and capped
+ * in length. Real push endpoints (FCM, APNs, Mozilla, WNS) are well under
+ * 2 KB; the keys are base64url strings far below the caps.
+ */
+const pushEndpoint = z
+  .string()
+  .max(2048)
+  .url()
+  .refine((v) => v.startsWith("https://"), {
+    message: "endpoint must be https",
+  });
+
 const SubscribeSchema = z.object({
-  endpoint: z.string().url(),
+  endpoint: pushEndpoint,
   keys: z.object({
-    p256dh: z.string().min(1),
-    auth: z.string().min(1),
+    p256dh: z.string().min(1).max(256),
+    auth: z.string().min(1).max(128),
   }),
 });
 
 const UnsubscribeSchema = z.object({
-  endpoint: z.string().url(),
+  endpoint: pushEndpoint,
 });
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;

@@ -9,12 +9,24 @@ import {
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
+/**
+ * Same-origin relative path: must start with a single "/" ("//host" is a
+ * protocol-relative URL and would let a notification open an external site).
+ * The service worker also enforces same-origin as defense in depth.
+ */
+const relativePath = (field: string) =>
+  z
+    .string()
+    .max(2048)
+    .refine((v) => v.startsWith("/") && !v.startsWith("//"), {
+      message: `${field} must be a same-origin relative path`,
+    });
+
 const SendSchema = z.object({
   title: z.string().min(1).max(100),
   body: z.string().min(1).max(300),
-  url: z.string().optional().default("/"),
-  icon: z
-    .string()
+  url: relativePath("url").optional().default("/"),
+  icon: relativePath("icon")
     .optional()
     .default("/static/icons/icon-192x192.png"),
 });
@@ -32,9 +44,12 @@ function getVapidConfig(): {
 }
 
 export async function POST(request: Request) {
-  // Protect with REVALIDATE_SECRET — same pattern as /api/revalidate
+  // Dedicated secret — deliberately NOT REVALIDATE_SECRET. Reusing the
+  // revalidation credential would let a leaked cache-purge token broadcast
+  // push notifications to every subscriber (and vice versa). If unset, the
+  // route stays safely disabled (401 for everyone).
   const authHeader = request.headers.get("authorization");
-  const secret = process.env.REVALIDATE_SECRET;
+  const secret = process.env.PUSH_SEND_SECRET;
   if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json(
       { ok: false, error: "UNAUTHORIZED" },

@@ -347,6 +347,20 @@ if (!self.workbox) {
   // Runs even when the app is closed. Browsers require that every push event
   // either shows a notification or responds with a waitUntil promise; otherwise
   // the browser may throttle or block future pushes.
+  // Defense in depth: only accept same-origin relative paths from the push
+  // payload (the send route validates too, but the SW must not trust input).
+  // "//host" is protocol-relative and would resolve to an external origin.
+  const sanitizeRelativePath = (value, fallback) => {
+    if (
+      typeof value === "string" &&
+      value.startsWith("/") &&
+      !value.startsWith("//")
+    ) {
+      return value;
+    }
+    return fallback;
+  };
+
   self.addEventListener("push", (event) => {
     let data = { title: "Esdeveniments", body: "", url: "/", icon: "/static/icons/icon-192x192.png" };
     if (event.data) {
@@ -359,9 +373,9 @@ if (!self.workbox) {
     event.waitUntil(
       self.registration.showNotification(data.title, {
         body: data.body,
-        icon: data.icon,
+        icon: sanitizeRelativePath(data.icon, "/static/icons/icon-192x192.png"),
         badge: "/static/icons/icon-192x192.png",
-        data: { url: data.url },
+        data: { url: sanitizeRelativePath(data.url, "/") },
       })
     );
   });
@@ -371,8 +385,22 @@ if (!self.workbox) {
   // Prevents duplicate tabs by carefully comparing URLs (including locale, pathname, search).
   self.addEventListener("notificationclick", (event) => {
     event.notification.close();
-    const rawTargetUrl = (event.notification.data && event.notification.data.url) || "/";
-    const targetUrl = new URL(rawTargetUrl, self.location.origin);
+    const rawTargetUrl = sanitizeRelativePath(
+      event.notification.data && event.notification.data.url,
+      "/"
+    );
+
+    let targetUrl;
+    try {
+      targetUrl = new URL(rawTargetUrl, self.location.origin);
+    } catch {
+      targetUrl = new URL("/", self.location.origin);
+    }
+    // Never navigate off-origin from a notification, even if a malformed
+    // payload slips through sanitization.
+    if (targetUrl.origin !== self.location.origin) {
+      targetUrl = new URL("/", self.location.origin);
+    }
 
     event.waitUntil(
       self.clients
@@ -394,7 +422,18 @@ if (!self.workbox) {
                 searchMatches &&
                 "focus" in client
               ) {
-                return client.focus();
+                // Same page — focus it, and if the target carries a different
+                // hash (in-page deep link), navigate so the fragment applies.
+                return Promise.resolve(client.focus()).then((focused) => {
+                  const target = focused || client;
+                  if (
+                    clientUrl.hash !== targetUrl.hash &&
+                    "navigate" in target
+                  ) {
+                    return target.navigate(targetUrl.href).catch(() => target);
+                  }
+                  return target;
+                });
               }
             } catch (e) {
               // Ignore errors parsing client URLs

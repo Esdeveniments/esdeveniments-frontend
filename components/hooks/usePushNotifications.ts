@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { captureException } from "@sentry/nextjs";
+import { safeFetch } from "@utils/safe-fetch";
 import type { PushState } from "types/push";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
@@ -84,16 +86,20 @@ export function usePushNotifications() {
       });
 
       const json = sub.toJSON();
-      const response = await fetch("/api/push/subscribe", {
+      // safeFetch: 5s timeout + Sentry capture with response body on failure
+      const { error } = await safeFetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           endpoint: sub.endpoint,
           keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
         }),
+        context: { tags: { feature: "push", action: "subscribe" } },
       });
 
-      if (!response.ok) {
+      if (error) {
+        // Server didn't store it — roll back the browser subscription so
+        // client and server state stay consistent.
         await sub.unsubscribe();
         setState("unsubscribed");
         return false;
@@ -101,7 +107,10 @@ export function usePushNotifications() {
 
       setState("subscribed");
       return true;
-    } catch {
+    } catch (error) {
+      captureException(error, {
+        tags: { feature: "push", action: "subscribe" },
+      });
       return false;
     }
   }, []);
@@ -115,18 +124,22 @@ export function usePushNotifications() {
         return true;
       }
 
-      const response = await fetch("/api/push/subscribe", {
+      const { error } = await safeFetch("/api/push/subscribe", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ endpoint: sub.endpoint }),
+        context: { tags: { feature: "push", action: "unsubscribe" } },
       });
 
-      if (!response.ok) return false;
+      if (error) return false;
 
       await sub.unsubscribe();
       setState("unsubscribed");
       return true;
-    } catch {
+    } catch (error) {
+      captureException(error, {
+        tags: { feature: "push", action: "unsubscribe" },
+      });
       return false;
     }
   }, []);

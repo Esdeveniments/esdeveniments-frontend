@@ -281,7 +281,7 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/publish",
   "/api/tiktok/upload",
   "/api/tiktok/status",
-  // Web Push subscription (browser-initiated; VAPID send route protects itself with REVALIDATE_SECRET)
+  // Web Push subscription (browser-initiated; VAPID send route protects itself with PUSH_SEND_SECRET)
   "/api/push/subscribe",
   "/api/push/send",
   // API-scoped llms.txt (public, machine-readable)
@@ -297,7 +297,7 @@ export const ORIGIN_CHECK_EXEMPT = new Set([
   "/api/sponsors/webhook", // Stripe webhook (server-to-server)
   "/api/revalidate", // External revalidation trigger (has own secret)
   "/api/health", // Monitoring probes
-  "/api/push/send", // Push broadcast (server-to-server, protected by REVALIDATE_SECRET)
+  "/api/push/send", // Push broadcast (server-to-server, protected by PUSH_SEND_SECRET)
 ]);
 
 /**

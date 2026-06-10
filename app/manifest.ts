@@ -25,7 +25,9 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
-        src: "/static/icons/icon-192x192.png",
+        // Dedicated maskable variant: opaque background, logo fitted to the
+        // 40%-radius safe zone so Android mask shapes don't crop it.
+        src: "/static/icons/icon-192x192-maskable.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "maskable",
@@ -37,7 +39,7 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
-        src: "/static/icons/icon-512x512.png",
+        src: "/static/icons/icon-512x512-maskable.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",

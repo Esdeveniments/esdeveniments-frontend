@@ -17,6 +17,8 @@ export const DELAY_MS = 10_000;
 export const COOLDOWN_DAYS = 30;
 export const MAX_DISMISSALS = 3;
 export const MIN_PAGE_VIEWS = 2;
+/** How long the push success state stays visible before auto-closing. */
+export const SUCCESS_AUTO_CLOSE_MS = 2_500;
 
 function getPopupState(): SocialPopupState | null {
   try {
@@ -85,6 +87,286 @@ const SOCIAL_LINKS = [
   { platform: "mastodon", label: "Mastodon", href: socialLinks.mastodon },
 ] as const;
 
+/* ------------------------------------------------------------------ */
+/*  Shared sections (single source of truth for mobile + desktop)      */
+/* ------------------------------------------------------------------ */
+
+function CloseIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-5 h-5"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+/**
+ * iOS "Add to Home Screen" instruction sheet, following the de-facto
+ * standard pattern (react-ios-pwa-prompt, Progressier): app identity row
+ * matching the native A2HS preview, then numbered steps with the real iOS
+ * glyphs so users pattern-match icons instead of translating words.
+ */
+function IosInstallSteps({
+  isIpad,
+  t,
+}: {
+  isIpad: boolean;
+  t: ReturnType<typeof useTranslations<"Components.SocialFollowPopup">>;
+}) {
+  return (
+    <div className="flex flex-col">
+      {/* Identity row: mirrors what iOS shows in the A2HS dialog */}
+      <div className="flex items-center gap-3 pb-3">
+        {/* eslint-disable-next-line @next/next/no-img-element -- 40px static
+            asset already precached by the SW; next/image adds no value */}
+        <img
+          src="/static/icons/icon-192x192.png"
+          alt=""
+          aria-hidden="true"
+          width={40}
+          height={40}
+          className="rounded-lg border border-border/60 bg-background"
+        />
+        <div className="text-left">
+          <p className="body-small font-semibold text-foreground-strong leading-tight">
+            Esdeveniments
+          </p>
+          <p className="body-small text-foreground/60 leading-tight">
+            esdeveniments.cat
+          </p>
+        </div>
+      </div>
+
+      <ol className="flex flex-col" aria-label={t("installEnable")}>
+        <li className="flex items-center gap-3 py-2.5 border-t border-border/40">
+          <span className="body-small text-foreground/50 w-4 text-center flex-shrink-0">
+            1
+          </span>
+          {/* iOS share glyph; #007AFF replicates the system tint so users
+              can pattern-match the real button (semantic tokens would
+              defeat the recognition purpose) */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#007AFF"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-5 h-5 flex-shrink-0"
+            aria-hidden="true"
+          >
+            <path d="M12 3v12M8 7l4-4 4 4" />
+            <path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" />
+          </svg>
+          <span className="body-small text-foreground text-left">
+            {isIpad ? t("installStepShareIpad") : t("installStepShare")}
+          </span>
+        </li>
+        <li className="flex items-center gap-3 py-2.5 border-t border-border/40">
+          <span className="body-small text-foreground/50 w-4 text-center flex-shrink-0">
+            2
+          </span>
+          {/* iOS "Add to Home Screen" plus-square glyph */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-5 h-5 flex-shrink-0 text-foreground"
+            aria-hidden="true"
+          >
+            <rect x="4" y="4" width="16" height="16" rx="4" />
+            <path d="M12 8.5v7M8.5 12h7" />
+          </svg>
+          <span className="body-small text-foreground text-left">
+            {t("installStepAdd")}
+          </span>
+        </li>
+      </ol>
+    </div>
+  );
+}
+
+function InstallSection({
+  canPromptInstall,
+  showIosInstructions,
+  showOpenInSafariHint,
+  isIpad,
+  isInstalling,
+  onInstall,
+  t,
+}: {
+  canPromptInstall: boolean;
+  showIosInstructions: boolean;
+  showOpenInSafariHint: boolean;
+  isIpad: boolean;
+  isInstalling: boolean;
+  onInstall: () => void;
+  t: ReturnType<typeof useTranslations<"Components.SocialFollowPopup">>;
+}) {
+  if (!canPromptInstall && !showIosInstructions && !showOpenInSafariHint) {
+    return null;
+  }
+  return (
+    <div className="flex flex-col gap-2.5 bg-primary/5 border border-primary/20 rounded-card p-4">
+      {canPromptInstall ? (
+        <button
+          onClick={onInstall}
+          disabled={isInstalling}
+          className="btn-primary w-full justify-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            className="w-4 h-4"
+            aria-hidden="true"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+          {isInstalling ? t("installEnabling") : t("installEnable")}
+        </button>
+      ) : null}
+      {showIosInstructions ? <IosInstallSteps isIpad={isIpad} t={t} /> : null}
+      {showOpenInSafariHint ? (
+        <p className="body-small text-foreground/70 text-center leading-relaxed">
+          {t("installInAppHelp")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function PushSection({
+  pushState,
+  isSubscribing,
+  onSubscribe,
+  t,
+}: {
+  pushState: ReturnType<typeof usePushNotifications>["state"];
+  isSubscribing: boolean;
+  onSubscribe: () => void;
+  t: ReturnType<typeof useTranslations<"Components.SocialFollowPopup">>;
+}) {
+  return (
+    <div className="flex flex-col gap-2.5 bg-muted/60 border border-border/40 rounded-card p-4">
+      {pushState === "unsubscribed" ? (
+        <button
+          onClick={onSubscribe}
+          disabled={isSubscribing}
+          className="btn-primary w-full justify-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            className="w-4 h-4"
+            aria-hidden="true"
+          >
+            <path d="M18 8h1a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V12a4 4 0 0 1 4-4h1V6a4 4 0 0 1 8 0v2zM10 19v-6m4 6v-6" />
+          </svg>
+          {isSubscribing ? t("pushEnabling") : t("pushEnable")}
+        </button>
+      ) : null}
+      {pushState === "denied" ? (
+        <p className="body-small text-foreground/70 text-center">
+          {t("pushBlockedHelp")}
+        </p>
+      ) : null}
+      {pushState === "subscribed" ? (
+        <div className="flex items-center justify-center gap-2 py-1">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="w-5 h-5 text-success"
+            aria-hidden="true"
+          >
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+          </svg>
+          <p className="body-small text-success font-medium">
+            {t("pushEnabled")}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SocialLinksSection({
+  variant,
+  t,
+}: {
+  variant: "mobile" | "desktop";
+  t: ReturnType<typeof useTranslations<"Components.SocialFollowPopup">>;
+}) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      <p className="body-small font-semibold text-foreground/60 text-center uppercase tracking-wide">
+        {t("followLabel")}
+      </p>
+      {variant === "mobile" ? (
+        /* Horizontal scroll row. The inner `w-max mx-auto` wrapper centers
+           the chips when they fit and keeps the row left-anchored (fully
+           scrollable) when they overflow — `justify-center` on an
+           overflowing flex container clips its start edge unreachably. */
+        <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
+          <div className="flex w-max mx-auto gap-1.5">
+            {SOCIAL_LINKS.map((social) => (
+              <a
+                key={social.platform}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-center gap-1.5 px-3.5 py-2 rounded-full border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-all duration-normal text-foreground body-small font-medium no-underline flex-shrink-0"
+                aria-label={social.label}
+              >
+                <span className="text-primary">
+                  <SocialIcon platform={social.platform} className="w-4 h-4" />
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          {SOCIAL_LINKS.map((social) => (
+            <a
+              key={social.platform}
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-center gap-1.5 px-3 py-2.5 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-all duration-normal text-foreground body-small font-medium no-underline"
+              aria-label={social.label}
+            >
+              <span className="text-primary">
+                <SocialIcon platform={social.platform} className="w-5 h-5" />
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const t = useTranslations("Components.SocialFollowPopup");
   const [isVisible, setIsVisible] = useState(false);
@@ -94,24 +376,34 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const hasTriggeredRef = useRef(false);
   const hasTrackedOfferRef = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useCheckMobileScreen();
-  const {
-    state: pushState,
-    subscribe: subscribeToPush,
-  } = usePushNotifications();
+  const { state: pushState, subscribe: subscribeToPush } =
+    usePushNotifications();
   const {
     installState,
     isInstalled,
     canPromptInstall,
     showIosInstructions,
+    showOpenInSafariHint,
+    isIpad,
     promptInstall,
   } = usePwaInstall();
 
+  // Show the push CTA once there's no pending install path: app installed,
+  // or no install prompt available (incl. after the user dismissed the
+  // native prompt — push still works in-browser on desktop/Android).
   const shouldShowPushCta =
     (isInstalled || installState === "not-available") &&
     pushState !== "unsupported";
 
-  const dismiss = useCallback(() => {
+  /**
+   * Close the popup.
+   * @param countAsDismissal When false (post-success auto-close), the
+   *   30-day cooldown still starts but the dismissal budget isn't burned.
+   */
+  const dismiss = useCallback((countAsDismissal: boolean = true) => {
     setIsClosing(true);
     setTimeout(() => {
       setIsVisible(false);
@@ -119,7 +411,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
 
       const current = getPopupState();
       savePopupState({
-        dismissCount: (current?.dismissCount ?? 0) + 1,
+        dismissCount: (current?.dismissCount ?? 0) + (countAsDismissal ? 1 : 0),
         lastDismissedAt: Date.now(),
       });
     }, 300);
@@ -138,17 +430,26 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
           source: "social_follow_popup",
           device: isMobile ? "mobile" : "desktop",
         });
+        // Goal reached: show the success state briefly, then close without
+        // burning a dismissal (closing after success isn't a rejection).
+        autoCloseTimerRef.current = setTimeout(
+          () => dismiss(false),
+          SUCCESS_AUTO_CLOSE_MS,
+        );
       } else {
         sendGoogleEvent("push_optin_failed", {
           source: "social_follow_popup",
           device: isMobile ? "mobile" : "desktop",
-          permission: Notification.permission,
+          permission:
+            typeof Notification !== "undefined"
+              ? Notification.permission
+              : "unsupported",
         });
       }
     } finally {
       setIsSubscribingPush(false);
     }
-  }, [subscribeToPush, isMobile]);
+  }, [subscribeToPush, isMobile, dismiss]);
 
   const handleInstall = useCallback(async () => {
     if (!canPromptInstall) return;
@@ -165,12 +466,22 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         device: isMobile ? "mobile" : "desktop",
         outcome,
       });
+      // Stay open on "accepted": the install section disappears and the
+      // push CTA takes its place — the second step of the funnel.
     } finally {
       setIsInstalling(false);
     }
   }, [canPromptInstall, isMobile, promptInstall]);
 
-  // Escape key + focus trap for desktop modal (WAI-ARIA dialog pattern)
+  // Clear any pending auto-close timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+    };
+  }, []);
+
+  // Escape key + focus trap for desktop modal (WAI-ARIA dialog pattern),
+  // plus body scroll lock and focus restore.
   useEffect(() => {
     if (!isVisible) return;
 
@@ -202,16 +513,33 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       }
     };
 
-    // Move focus into the dialog on open (desktop only)
+    let previousBodyOverflow: string | null = null;
     if (!isMobile) {
+      // Remember the focused element, move focus into the dialog, and lock
+      // background scroll while the modal is open (desktop only — the
+      // mobile toast is intentionally nonmodal).
+      previousFocusRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
       const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
         'a[href], button:not([disabled])',
       );
       firstFocusable?.focus();
+
+      previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (!isMobile) {
+        document.body.style.overflow = previousBodyOverflow ?? "";
+        previousFocusRef.current?.focus?.();
+        previousFocusRef.current = null;
+      }
+    };
   }, [isVisible, isMobile, dismiss]);
 
   useEffect(() => {
@@ -278,14 +606,15 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   if (!isVisible) return null;
 
   /* ------------------------------------------------------------------ */
-  /*  Mobile: nonmodal bottom toast (less intrusive, avoids Google       */
+  /*  Mobile: nonmodal bottom toast (less intrusive, avoids Google      */
   /*  mobile interstitial penalty).                                     */
   /* ------------------------------------------------------------------ */
   if (isMobile) {
     return (
       <div
-        className={`fixed bottom-16 inset-x-0 z-modal p-4 pb-safe ${isClosing ? "animate-slide-down" : "animate-slide-up"
-          }`}
+        className={`fixed bottom-16 inset-x-0 z-modal p-4 ${
+          isClosing ? "animate-slide-down" : "animate-slide-up"
+        }`}
         role="complementary"
         aria-label={t("aria")}
       >
@@ -296,14 +625,11 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
           <div className="p-card-padding flex flex-col gap-element-gap-sm">
             {/* Close button */}
             <button
-              onClick={dismiss}
+              onClick={() => dismiss()}
               className="absolute top-4 right-4 p-1 rounded-full text-foreground/60 hover:text-foreground hover:bg-muted transition-all duration-fast"
               aria-label={t("close")}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <CloseIcon />
             </button>
 
             {/* Header */}
@@ -311,80 +637,33 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
               <h2 className="heading-3 text-foreground-strong mb-2">
                 {t("headline")}
               </h2>
-              <p className="body-small text-foreground/75">
-                {t("subtext")}
-              </p>
+              <p className="body-small text-foreground/75">{t("subtext")}</p>
             </div>
 
-            {/* Install section */}
-            {canPromptInstall || showIosInstructions ? (
-              <div className="bg-primary/5 border border-primary/20 rounded-card p-3.5 flex flex-col gap-2.5">
-                {canPromptInstall ? (
-                  <button
-                    onClick={handleInstall}
-                    disabled={isInstalling}
-                    className="btn-primary w-full text-sm"
-                    aria-label={t("installEnable")}
-                  >
-                    {isInstalling ? t("installEnabling") : t("installEnable")}
-                  </button>
-                ) : null}
-                {showIosInstructions ? (
-                  <p className="body-small text-foreground/70 text-center leading-relaxed">
-                    {t("installIosHelp")}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
+            <InstallSection
+              canPromptInstall={canPromptInstall}
+              showIosInstructions={showIosInstructions}
+              showOpenInSafariHint={showOpenInSafariHint}
+              isIpad={isIpad}
+              isInstalling={isInstalling}
+              onInstall={handleInstall}
+              t={t}
+            />
 
-            {/* Push section */}
             {shouldShowPushCta ? (
-              <div className="bg-surface-muted/40 rounded-card p-3.5 flex flex-col gap-2.5">
-                {pushState === "unsubscribed" ? (
-                  <button
-                    onClick={handleSubscribePush}
-                    disabled={isSubscribingPush}
-                    className="btn-primary w-full text-sm"
-                    aria-label={t("pushEnable")}
-                  >
-                    {isSubscribingPush ? t("pushEnabling") : t("pushEnable")}
-                  </button>
-                ) : null}
-                {pushState === "denied" ? (
-                  <p className="body-small text-foreground/70 text-center">{t("pushBlockedHelp")}</p>
-                ) : null}
-                {pushState === "subscribed" ? (
-                  <p className="body-small text-primary font-medium text-center">{t("pushEnabled")}</p>
-                ) : null}
-              </div>
+              <PushSection
+                pushState={pushState}
+                isSubscribing={isSubscribingPush}
+                onSubscribe={handleSubscribePush}
+                t={t}
+              />
             ) : null}
 
-            {/* Social links */}
-            <div className="flex flex-col gap-2">
-              <p className="body-small font-semibold text-foreground/70 text-center uppercase tracking-wide">
-                {t("followLabel")}
-              </p>
-              <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 no-scrollbar justify-center">
-                {SOCIAL_LINKS.map((social) => (
-                  <a
-                    key={social.platform}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-center gap-1.5 px-3.5 py-2 rounded-full border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-all duration-normal text-foreground body-small font-medium no-underline flex-shrink-0"
-                    aria-label={social.label}
-                  >
-                    <span className="text-primary">
-                      <SocialIcon platform={social.platform} className="w-4 h-4" />
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </div>
+            <SocialLinksSection variant="mobile" t={t} />
 
             {/* Dismiss */}
             <button
-              onClick={dismiss}
+              onClick={() => dismiss()}
               className="body-small text-foreground/50 hover:text-foreground/70 transition-colors duration-fast py-1.5"
             >
               {t("close")}
@@ -401,8 +680,9 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   return (
     <div
       ref={dialogRef}
-      className={`fixed inset-0 z-modal flex-center p-4 ${isClosing ? "animate-disappear" : "animate-appear"
-        }`}
+      className={`fixed inset-0 z-modal flex-center p-4 ${
+        isClosing ? "animate-disappear" : "animate-appear"
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label={t("aria")}
@@ -410,28 +690,26 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-foreground/50 backdrop-blur-sm"
-        onClick={dismiss}
+        onClick={() => dismiss()}
         aria-hidden="true"
       />
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-md bg-background rounded-card border border-border shadow-2xl overflow-hidden transition-transform duration-slower ${isClosing ? "scale-95" : "scale-100"
-          }`}
+        className={`relative w-full max-w-md bg-background rounded-card border border-border shadow-2xl overflow-hidden transition-transform duration-slower ${
+          isClosing ? "scale-95" : "scale-100"
+        }`}
       >
         {/* Gradient accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-primary via-primary to-primary/70" />
 
         {/* Close button */}
         <button
-          onClick={dismiss}
+          onClick={() => dismiss()}
           className="absolute top-4 right-4 z-10 p-1 rounded-full text-foreground/60 hover:text-foreground hover:bg-muted transition-all duration-fast"
           aria-label={t("close")}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <CloseIcon />
         </button>
 
         {/* Content */}
@@ -440,8 +718,20 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
           <div className="flex flex-col gap-3 text-center">
             {/* Icon accent */}
             <div className="w-12 h-12 rounded-full bg-primary/10 flex-center mx-auto">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-6 h-6 text-primary">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                className="w-6 h-6 text-primary"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                />
               </svg>
             </div>
 
@@ -456,86 +746,30 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             </p>
           </div>
 
-          {/* Install section */}
-          {canPromptInstall || showIosInstructions ? (
-            <div className="flex flex-col gap-3 bg-primary/5 border border-primary/20 rounded-card p-4">
-              {canPromptInstall ? (
-                <button
-                  onClick={handleInstall}
-                  disabled={isInstalling}
-                  className="btn-primary w-full justify-center"
-                  aria-label={t("installEnable")}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                  </svg>
-                  {isInstalling ? t("installEnabling") : t("installEnable")}
-                </button>
-              ) : null}
-              {showIosInstructions ? (
-                <p className="body-small text-foreground/70 text-center leading-relaxed">
-                  {t("installIosHelp")}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
+          <InstallSection
+            canPromptInstall={canPromptInstall}
+            showIosInstructions={showIosInstructions}
+            showOpenInSafariHint={showOpenInSafariHint}
+            isIpad={isIpad}
+            isInstalling={isInstalling}
+            onInstall={handleInstall}
+            t={t}
+          />
 
-          {/* Social links */}
-          <div className="flex flex-col gap-3">
-            <p className="body-small font-semibold text-foreground/60 text-center uppercase tracking-wide">
-              {t("followLabel")}
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {SOCIAL_LINKS.map((social) => (
-                <a
-                  key={social.platform}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-center gap-1.5 px-3 py-2.5 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-all duration-normal text-foreground body-small font-medium no-underline"
-                  aria-label={social.label}
-                >
-                  <span className="text-primary">
-                    <SocialIcon platform={social.platform} className="w-5 h-5" />
-                  </span>
-                </a>
-              ))}
-            </div>
-          </div>
+          <SocialLinksSection variant="desktop" t={t} />
 
-          {/* Push notification section */}
           {shouldShowPushCta ? (
-            <div className="flex flex-col gap-3 bg-surface-muted/40 border border-border/40 rounded-card p-4">
-              {pushState === "unsubscribed" ? (
-                <button
-                  onClick={handleSubscribePush}
-                  disabled={isSubscribingPush}
-                  className="btn-primary w-full justify-center"
-                  aria-label={t("pushEnable")}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-                    <path d="M18 8h1a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V12a4 4 0 0 1 4-4h1V6a4 4 0 0 1 8 0v2zM10 19v-6m4 6v-6" />
-                  </svg>
-                  {isSubscribingPush ? t("pushEnabling") : t("pushEnable")}
-                </button>
-              ) : null}
-              {pushState === "denied" ? (
-                <p className="body-small text-foreground/70 text-center">{t("pushBlockedHelp")}</p>
-              ) : null}
-              {pushState === "subscribed" ? (
-                <div className="flex items-center justify-center gap-2 py-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-success">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
-                  <p className="body-small text-success font-medium">{t("pushEnabled")}</p>
-                </div>
-              ) : null}
-            </div>
+            <PushSection
+              pushState={pushState}
+              isSubscribing={isSubscribingPush}
+              onSubscribe={handleSubscribePush}
+              t={t}
+            />
           ) : null}
 
           {/* Dismiss button */}
           <button
-            onClick={dismiss}
+            onClick={() => dismiss()}
             className="body-small text-foreground/50 hover:text-foreground/70 transition-colors duration-fast py-2"
           >
             {t("close")}
