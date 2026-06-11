@@ -67,6 +67,7 @@ export default async function LatestNewsSection({
             placeSlug={placeSlug}
             placeLabel={placeLabel}
             variant="hero"
+            priority={false}
           />
           {/* Remaining cards — 2-column grid on desktop */}
           {latestNews.length > 1 && (

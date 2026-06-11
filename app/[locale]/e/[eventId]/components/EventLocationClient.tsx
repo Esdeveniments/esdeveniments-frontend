@@ -6,6 +6,7 @@ import {
   ChevronDownIcon,
   ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
+  MapIcon,
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
@@ -22,33 +23,11 @@ export default function EventLocationClient({
 }: Pick<EventLocationProps, "location" | "cityName" | "regionName" | "compact">) {
   const t = useTranslations("Components.EventLocation");
   const tPage = useTranslations("Components.EventPage");
-  const [showMap, setShowMap] = useState(compact); // Auto-show in compact mode
+  // Click-to-load: never auto-show. User must explicitly request the embed
+  // to avoid loading the Google Maps iframe on every detail-page view.
+  const [showMap, setShowMap] = useState(false);
   const [isMapsVisible, setIsMapsVisible] = useState(false);
-  const [hasAutoExpanded, setHasAutoExpanded] = useState(compact);
   const sectionRef = useRef<HTMLDivElement | null>(null);
-
-  // Auto-expand map when the location section scrolls into view.
-  // Uses the free Maps Embed API (no usage limits / cost).
-  // The iframe only loads once visible, so no impact on initial page load.
-  useEffect(() => {
-    if (hasAutoExpanded) return;
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShowMap(true);
-          setHasAutoExpanded(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasAutoExpanded]);
 
   const handleShowMap = useCallback(() => {
     setShowMap((prev) => {
@@ -88,12 +67,24 @@ export default function EventLocationClient({
   const handleDirectionsClick = () => openGoogleMaps("maps_directions");
   const handleOpenInMaps = () => openGoogleMaps("maps_open");
 
-  // Compact mode: auto-show map, no toggle, just map + "Open in Maps" link
+  // Compact mode: click-to-load placeholder, then map + "Open in Maps" link
   if (compact) {
     return (
       <div ref={sectionRef} className="w-full flex flex-col gap-2">
         <div className="w-full h-[400px] rounded-card overflow-hidden bg-muted">
-          {isMapsVisible && <Maps location={location} cityName={cityName} regionName={regionName} />}
+          {showMap ? (
+            isMapsVisible && <Maps location={location} cityName={cityName} regionName={regionName} />
+          ) : (
+            <button
+              type="button"
+              onClick={handleShowMap}
+              className="w-full h-full flex flex-col items-center justify-center gap-2 text-foreground/80 hover:text-foreground-strong hover:bg-muted/80 transition-colors"
+              aria-label={t("showMap")}
+            >
+              <MapIcon className="h-8 w-8" aria-hidden="true" />
+              <span className="body-small font-medium">{t("showMap")}</span>
+            </button>
+          )}
         </div>
         <button
           onClick={handleOpenInMaps}

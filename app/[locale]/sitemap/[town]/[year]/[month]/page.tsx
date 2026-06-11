@@ -38,9 +38,20 @@ import {
   MAX_VALID_YEAR,
 } from "@utils/constants";
 import { connection } from "next/server";
+import { cache } from "react";
 
 const NoEventsFound = dynamic(
   () => import("@components/ui/common/noEventsFound")
+);
+
+// React cache() keys on argument identity. generateMetadata and Page each
+// create their own {place, from, to, size} object literal, so wrapping
+// fetchEvents directly would NOT dedupe. This primitive-keyed wrapper solves
+// it: identical (place, from, to) tuples produce a single cache entry.
+const MAX_EVENTS_PER_PAGE = 100;
+const fetchMonthEvents = cache(
+  async (place: string, from: string, to: string) =>
+    fetchEvents({ place, from, to, size: MAX_EVENTS_PER_PAGE })
 );
 
 export async function generateMetadata({
@@ -85,7 +96,10 @@ export async function generateMetadata({
   const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
   const monthLabel =
     monthLabels[monthIndex] || normalizeMonthParam(canonicalMonthSlug).label;
-  const place = await getPlaceBySlug(town);
+  // Tolerate backend 5xx for place lookup (cosmetic; town slug is an acceptable
+  // fallback). Prevents archive 500s from intermittent backend errors — the
+  // main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
+  const place = await getPlaceBySlug(town).catch(() => null);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
@@ -95,6 +109,23 @@ export async function generateMetadata({
     locale,
     false
   );
+
+  // Probe events to set robots policy: noindex empty months so GSC stops
+  // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
+  // primitive-keyed fetchMonthEvents wrapper so Page reuses the same response.
+  const { from, until } = getHistoricDates(
+    canonicalMonthSlug,
+    Number(year),
+    DEFAULT_MONTHS_URL
+  );
+  const fromStr = from.toISOString().split("T")[0];
+  const toStr = until.toISOString().split("T")[0];
+  const events = await fetchMonthEvents(town, fromStr, toStr);
+  const realEventCount = Array.isArray(events.content)
+    ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
+      .length
+    : 0;
+  const robotsOverride = realEventCount === 0 ? "noindex, follow" : undefined;
 
   return buildPageMeta({
     title: t("metaTitle", { town: townLabel, month: monthLabel, year }),
@@ -106,6 +137,7 @@ export async function generateMetadata({
     }),
     canonical: `${siteUrl}/sitemap/${town}/${year}/${canonicalMonthSlug}`,
     locale,
+    robotsOverride,
   });
 }
 
@@ -158,20 +190,14 @@ export default async function Page({
     DEFAULT_MONTHS_URL
   );
 
-  // Limit to 100 events per page to keep response sizes manageable
-  // Archive pages are for SEO/discoverability; users can click through to event detail pages
-  const MAX_EVENTS_PER_PAGE = 100;
   // Limit JSON-LD to top 50 events to reduce payload size while maintaining SEO value
   const MAX_EVENTS_FOR_JSON_LD = 50;
 
+  const fromStr = from.toISOString().split("T")[0];
+  const toStr = until.toISOString().split("T")[0];
   const [events, place] = await Promise.all([
-    fetchEvents({
-      place: town,
-      from: from.toISOString().split("T")[0],
-      to: until.toISOString().split("T")[0],
-      size: MAX_EVENTS_PER_PAGE,
-    }),
-    getPlaceBySlug(town),
+    fetchMonthEvents(town, fromStr, toStr),
+    getPlaceBySlug(town).catch(() => null),
   ]);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
