@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { EventDetailResponseDTO } from "types/api/event";
+import type { ClientEventClientProps } from "types/props";
 
 const EventClientDynamic = dynamic(() => import("../EventClient"), {
   ssr: false,
@@ -10,9 +10,7 @@ const EventClientDynamic = dynamic(() => import("../EventClient"), {
 
 export default function ClientEventClient({
   event,
-}: {
-  event: EventDetailResponseDTO;
-}) {
+}: ClientEventClientProps) {
   return <EventClientDynamic event={event} />;
 }
 

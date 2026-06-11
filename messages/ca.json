@@ -699,7 +699,8 @@
     },
     "WhereToEatSection": {
       "title": "On pots menjar",
-      "promote": "Promociona el teu restaurant"
+      "promote": "Promociona el teu restaurant",
+      "showPhoto": "Veure foto"
     },
     "FeaturedPlaceSection": {
       "seeMore": "Veure més",
