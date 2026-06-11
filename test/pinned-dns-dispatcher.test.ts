@@ -2,18 +2,20 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { createServer, type Server } from "node:http";
 import { fetch } from "undici";
-import { buildPinnedDnsDispatcher } from "../utils/pinned-dns-dispatcher";
+import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
 
 let server: Server | undefined;
 
 function startLoopbackServer(): Promise<number> {
-  return new Promise((resolve) => {
-    server = createServer((_req, res) => {
+  return new Promise((resolve, reject) => {
+    const srv = createServer((_req, res) => {
       res.writeHead(200, { "content-type": "text/plain" });
       res.end("ok");
     });
-    server.listen(0, "127.0.0.1", () => {
-      const address = server?.address();
+    server = srv;
+    srv.on("error", reject);
+    srv.listen(0, "127.0.0.1", () => {
+      const address = srv.address();
       resolve(typeof address === "object" && address ? address.port : 0);
     });
   });
@@ -23,6 +25,8 @@ afterEach(
   () =>
     new Promise<void>((resolve) => {
       if (!server) return resolve();
+      // Destroy any kept-alive sockets so close() doesn't hang the suite.
+      server.closeAllConnections?.();
       server.close(() => {
         server = undefined;
         resolve();

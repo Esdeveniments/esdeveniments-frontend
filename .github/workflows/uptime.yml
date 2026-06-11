@@ -39,9 +39,16 @@ jobs:
           PROXY="https://www.esdeveniments.cat/api/image-proxy?url=$(printf '%s' "$IMG" | sed 's/:/%3A/g; s|/|%2F|g')&w=64&q=50"
           proxy_ok=""
           for attempt in 1 2 3; do
-            code=$(curl -s -D /tmp/proxy.head -o /dev/null -w "%{http_code}" \
-              -H "Accept: image/webp,image/*" --max-time 20 "$PROXY")
-            ctype=$(grep -i '^content-type:' /tmp/proxy.head | tail -1 | tr -d '\r')
+            # The step runs under `bash -eo pipefail`, so guard curl and grep:
+            # a transport failure (curl exits non-zero) or an empty header file
+            # (grep finds nothing) would otherwise abort the step before the
+            # retry/fallback runs, defeating the whole loop.
+            : > /tmp/proxy.head
+            if ! code=$(curl -s -D /tmp/proxy.head -o /dev/null -w "%{http_code}" \
+              -H "Accept: image/webp,image/*" --max-time 20 "$PROXY"); then
+              code="000"
+            fi
+            ctype=$(grep -i '^content-type:' /tmp/proxy.head | tail -1 | tr -d '\r' || true)
             if [ "$code" = "200" ] && echo "$ctype" | grep -qi 'image/'; then
               proxy_ok="yes"
               break

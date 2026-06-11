@@ -30,6 +30,8 @@ async function getProxiedImage(
 ): Promise<APIResponse> {
   let response!: APIResponse;
   for (let attempt = 0; attempt < PROXY_502_RETRIES; attempt++) {
+    // Back off between attempts so a brief upstream hiccup can recover.
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 500));
     response = await request.get(proxyUrl, init);
     if (response.status() !== 502) break;
   }

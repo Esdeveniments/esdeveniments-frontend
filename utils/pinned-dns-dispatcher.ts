@@ -26,7 +26,7 @@ export function buildPinnedDnsDispatcher(
         // ARRAY of { address, family } records. Always answering with the
         // single-address signature made every connection fail with
         // "Invalid IP address: undefined" -> all image fetches 502'd.
-        if (options.all) {
+        if (options?.all) {
           callback(
             null,
             dnsRecords.map(({ address, family }) => ({ address, family })),
