@@ -28,12 +28,26 @@ async function getProxiedImage(
   proxyUrl: string,
   init?: Parameters<APIRequestContext["get"]>[1],
 ): Promise<APIResponse> {
-  let response!: APIResponse;
+  let response: APIResponse | undefined;
+  let lastError: unknown;
   for (let attempt = 0; attempt < PROXY_502_RETRIES; attempt++) {
     // Back off between attempts so a brief upstream hiccup can recover.
     if (attempt > 0) await new Promise((r) => setTimeout(r, 500));
-    response = await request.get(proxyUrl, init);
-    if (response.status() !== 502) break;
+    try {
+      response = await request.get(proxyUrl, init);
+      if (response.status() !== 502) break;
+    } catch (err) {
+      // A network-level failure (timeout, connection reset) is transient too —
+      // retry it instead of failing the test on the first blip.
+      lastError = err;
+    }
+  }
+  if (!response) {
+    throw lastError instanceof Error
+      ? lastError
+      : new Error(
+          `image-proxy fetch failed for ${proxyUrl} after ${PROXY_502_RETRIES} attempts`,
+        );
   }
   expect(
     response.status(),
