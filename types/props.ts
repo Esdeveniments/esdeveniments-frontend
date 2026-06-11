@@ -500,13 +500,6 @@ export interface HybridEventsListProps {
   category?: string;
   date?: string;
   serverHasMore?: boolean; // Add server pagination info
-  /**
-   * Page size used for the SSR fetch. Forwarded to the client SWR hook so
-   * subsequent "Load more" requests start AFTER the SSR window instead of
-   * refetching events already on screen (e.g. SSR size 30 + client size 10
-   * would refetch events 10–19 and append 0 new items).
-   */
-  ssrPageSize?: number;
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // totalServerEvents removed - SWR hook manages this via API response
 }
@@ -525,8 +518,6 @@ export interface PlacePageEventsResult {
   events: ListEvent[];
   noEventsFound: boolean;
   serverHasMore: boolean;
-  /** Page size used for the initial SSR fetch (threaded to SWR initialSize) */
-  ssrPageSize: number;
   structuredScripts?: JsonLdScript[];
 }
 
@@ -661,7 +652,6 @@ export interface NewsCardProps {
   placeSlug: string;
   placeLabel?: string;
   variant?: "default" | "hero";
-  priority?: boolean;
 }
 
 export interface NewsArticleDetailProps {
@@ -780,15 +770,6 @@ export interface PlacePageExploreNavProps {
   category?: string;
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
-  /**
-   * Whether this place has enough event depth to warrant filter URLs
-   * (mirrors the sitemap policy). When false, the explore nav renders
-   * nothing — internal linking to /[place]/[date] and /[place]/[category]
-   * stays consistent with the sitemap's omission of those URLs.
-   * Defaults to true so behaviour for callers that don't pass the flag
-   * is unchanged.
-   */
-  expandable?: boolean;
 }
 
 export interface CategoryQuicklinksProps {
@@ -817,23 +798,6 @@ export interface EventStickyCTAProps {
     favoriteRemove: string;
   };
 }
-
-export interface EventClientPayload {
-  id: EventSummaryResponseDTO["id"];
-  slug: EventSummaryResponseDTO["slug"];
-  title: EventSummaryResponseDTO["title"];
-  endDate: EventSummaryResponseDTO["endDate"];
-  categorySlug?: CategorySummaryResponseDTO["slug"];
-  placeSlug?: string;
-  hasImage: boolean;
-  origin: EventSummaryResponseDTO["origin"];
-}
-
-export interface EventClientProps {
-  event: EventClientPayload;
-}
-
-export type ClientEventClientProps = EventClientProps;
 
 // Collapsible description wrapper (mobile)
 export interface CollapsibleDescriptionProps {

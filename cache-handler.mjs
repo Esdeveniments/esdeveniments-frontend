@@ -35,7 +35,7 @@ const RETRY_COOLDOWN_MS = 30_000;
 /** Shared LRU fallback — created once, reused across all requests and cooldown periods. */
 const lruFallbackConfig = { handlers: [createLruHandler()] };
 
-CacheHandler.onCreation(({ buildId } = {}) => {
+CacheHandler.onCreation(() => {
   // If a previous failure occurred, check whether the cooldown has elapsed.
   // If so, clear the fallback config to allow a reconnection attempt below.
   if (globalThis.__cacheHandlerLastFailure) {
@@ -106,11 +106,9 @@ CacheHandler.onCreation(({ buildId } = {}) => {
       return lruFallbackConfig;
     }
 
-    const cacheKeyPrefix = buildId ? `next:cache:${buildId}:` : "next:cache:";
-
     const redisHandler = createRedisHandler({
       client: redisClient,
-      keyPrefix: cacheKeyPrefix,
+      keyPrefix: "next:cache:",
     });
 
     globalThis.__cacheHandlerConfigPromise = null;

@@ -144,16 +144,6 @@ async function EventPageContent({
       ? [regionSlug].filter((p) => p !== primaryPlaceSlug)
       : undefined;
   const primaryCategorySlug = event.categories?.[0]?.slug;
-  const clientEvent = {
-    id: event.id,
-    slug: event.slug,
-    title: event.title,
-    endDate: event.endDate,
-    categorySlug: primaryCategorySlug,
-    placeSlug: citySlug ?? regionSlug,
-    hasImage: Boolean(event.imageUrl),
-    origin: event.origin,
-  };
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug
     ? `/${primaryPlaceSlug}/${primaryCategorySlug}`
@@ -527,7 +517,7 @@ async function EventPageContent({
                 </Suspense>
 
                 {/* Client-side ad + notifications */}
-                <ClientEventClient event={clientEvent} />
+                <ClientEventClient event={event} />
               </div>
 
               {/* ========== STICKY SIDEBAR (desktop only) ========== */}

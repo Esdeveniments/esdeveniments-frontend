@@ -43,7 +43,6 @@ function HybridEventsListClientContent({
   category,
   date,
   serverHasMore = false,
-  ssrPageSize,
   pageData,
 }: HybridEventsListClientProps): ReactElement | null {
   const parsed = useSharedUrlFilters();
@@ -80,12 +79,7 @@ function HybridEventsListClientContent({
       to,
       lat,
       lon,
-      // Match client page size to the SSR page size so the next page request
-      // starts AFTER the SSR-rendered events. If the client used a smaller
-      // page (e.g. 10) while the server pre-rendered 30, the first "Load
-      // more" would refetch events 10–19 (already on screen) and dedupe to 0
-      // new items, making the button a no-op.
-      initialSize: ssrPageSize ?? (realInitialEvents.length || 10),
+      initialSize: 10,
       fallbackData: realInitialEvents,
       serverHasMore,
     });

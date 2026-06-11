@@ -29,22 +29,7 @@ export const SITEMAP_PLACES_PER_CHUNK = 100;
 // Minimum event count for a place to get full date/category expansion in sitemap.
 // Places below this threshold only get the base /[place] URL to avoid
 // submitting thin/empty filtered pages that waste crawl budget.
-//
-// Tuned 2026-05-18 (10 → 40) from empirical GSC URL Inspection data:
-// places with 11–13 events expanded into filter pages that Google refused as
-// near-duplicates (69–100% event overlap with parent), bucketing them as
-// "Crawled — currently not indexed". With parent page-size=12, only places
-// with ≥40 events have enough depth for date/category filters to render a
-// distinct subset of the parent.
-export const SITEMAP_MIN_EVENTS_FOR_EXPANSION = 40;
-// SSR page size for place listings. Expandable places (regions, catalunya,
-// towns >= SITEMAP_MIN_EVENTS_FOR_EXPANSION) ship a richer first page so
-// Googlebot indexes substantively unique content; thin places stay small to
-// avoid amplifying fallback-content duplication. Used by app/[locale]/[place]/
-// (and its [byDate]/[category] sub-pages) and matched by client pagination
-// initialSize so "Load more" doesn't refetch already-rendered events.
-export const SSR_EVENTS_SIZE_EXPANDABLE = 30;
-export const SSR_EVENTS_SIZE_THIN = 12;
+export const SITEMAP_MIN_EVENTS_FOR_EXPANSION = 10;
 // Number of top categories to include in place sitemap expansion
 export const SITEMAP_TOP_CATEGORIES_COUNT = 5;
 export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =

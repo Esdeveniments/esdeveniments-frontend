@@ -1,40 +1,14 @@
 import { getSiteUrlFromRequest } from "@config/index";
-import { fetchPlaces } from "@lib/api/places";
 import { buildSitemapIndex } from "@utils/sitemap";
-import { SITEMAP_PLACES_PER_CHUNK } from "@utils/constants";
 import { NextRequest } from "next/server";
 
-// Event chunk count is stable (capped by event-count threshold) — keep static.
+// Chunk counts must match the corresponding sitemap routes
 const EVENT_CHUNKS = 5; // Matches server-sitemap.xml
-// Fallback place chunk count when the place inventory cannot be fetched.
-// Picked to match the typical inventory at ~5 chunks of SITEMAP_PLACES_PER_CHUNK
-// each. Keeping a non-zero fallback ensures the sitemap index still references
-// existing /sitemap-places/N.xml chunks during transient API failures, instead
-// of collapsing to a single /sitemap-places/1.xml entry that drops the rest
-// from discovery.
-const PLACE_CHUNKS_FALLBACK = 5;
+const PLACE_CHUNKS = 5; // Matches server-place-sitemap.xml
 
 export async function GET(request: NextRequest) {
   // Get site URL from request (prefers request host, falls back to env-based detection)
   const siteUrl = getSiteUrlFromRequest(request);
-
-  // Place chunk count is derived from actual place count to avoid listing
-  // chunks that don't exist (which would 404 and surface as sitemap errors
-  // in Google Search Console). Mirrors server-place-sitemap.xml/route.ts.
-  // Fail-open ONLY on a thrown error: a successful response of [] is a real
-  // "no places" signal and should publish zero place chunks. If we used the
-  // fallback there, the index would advertise /sitemap-places/1..5.xml URLs
-  // that 404 (the route 404s when the requested chunk is out of range).
-  let placeChunks = PLACE_CHUNKS_FALLBACK;
-  try {
-    const places = await fetchPlaces();
-    placeChunks = Math.ceil(places.length / SITEMAP_PLACES_PER_CHUNK);
-  } catch (error) {
-    console.error(
-      "sitemap.xml: fetchPlaces failed, using fallback chunk count",
-      error,
-    );
-  }
 
   // Build sitemap index referencing all sitemaps
   // IMPORTANT: Sitemap indexes cannot reference other sitemap indexes (nested indexes not allowed)
@@ -46,9 +20,9 @@ export async function GET(request: NextRequest) {
       { length: EVENT_CHUNKS },
       (_, i) => `${siteUrl}/sitemap-events/${i + 1}.xml`
     ),
-    // Place sitemaps (chunk count derived from current place inventory)
+    // Place sitemaps (chunked to stay under 6MB response limit)
     ...Array.from(
-      { length: placeChunks },
+      { length: PLACE_CHUNKS },
       (_, i) => `${siteUrl}/sitemap-places/${i + 1}.xml`
     ),
     `${siteUrl}/server-news-sitemap.xml`,

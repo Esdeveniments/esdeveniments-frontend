@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 // import useOnScreen from "components/hooks/useOnScreen";
 import { sendGoogleEvent } from "@utils/analytics";
 
-import type { EventClientProps } from "types/props";
+import type { EventDetailResponseDTO } from "types/api/event";
 import EventNotifications from "./components/EventNotifications";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
@@ -20,7 +20,9 @@ import { useTranslations } from "next-intl";
 
 export default function EventClient({
   event,
-}: EventClientProps) {
+}: {
+  event: EventDetailResponseDTO;
+}) {
   const t = useTranslations("Components.EventPage");
   // const editModalRef = useRef<HTMLDivElement>(null);
 
@@ -55,21 +57,13 @@ export default function EventClient({
     sendGoogleEvent("view_event_page", {
       event_id: event.id,
       event_slug: event.slug ?? "",
-      category_slug: event.categorySlug ?? "",
-      place_slug: event.placeSlug ?? "",
-      has_image: event.hasImage,
+      category_slug: event.categories?.[0]?.slug ?? "",
+      place_slug: event.city?.slug ?? event.region?.slug ?? "",
+      has_image: Boolean(event.imageUrl),
       is_past: isPast,
       origin: event.origin,
     });
-  }, [
-    event.categorySlug,
-    event.endDate,
-    event.hasImage,
-    event.id,
-    event.origin,
-    event.placeSlug,
-    event.slug,
-  ]);
+  }, []);
 
 
   const slug = event.slug ?? "";

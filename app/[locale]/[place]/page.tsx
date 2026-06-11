@@ -35,11 +35,6 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getPlaceExpandability } from "@lib/seo/place-expandability";
-import {
-  SSR_EVENTS_SIZE_EXPANDABLE,
-  SSR_EVENTS_SIZE_THIN,
-} from "@utils/constants";
 
 // Note: This page is fully dynamic (on-demand ISR). Server renders canonical, query-agnostic HTML.
 // All query filters (search, distance, lat, lon) are handled client-side.
@@ -223,19 +218,10 @@ export async function buildPlaceEventsPromise({
   place: string;
   locale?: AppLocale;
 }): Promise<PlacePageEventsResult> {
-  // Both helpers are React cache()-wrapped, so duplicate calls in the same
-  // request (e.g. from PlacePageShell/generateMetadata) are deduplicated.
-  const placeTypeLabel = await getPlaceTypeAndLabelCached(place);
-  const expandable = await getPlaceExpandability(
-    place,
-    placeTypeLabel.type
-  );
-
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: expandable ? SSR_EVENTS_SIZE_EXPANDABLE : SSR_EVENTS_SIZE_THIN,
+    size: 12,
   };
-  const ssrPageSize = fetchParams.size as number;
 
   if (place !== "catalunya") {
     fetchParams.place = place;
@@ -284,7 +270,6 @@ export async function buildPlaceEventsPromise({
     events: eventsWithAds,
     noEventsFound,
     serverHasMore,
-    ssrPageSize,
     structuredScripts,
   };
 }

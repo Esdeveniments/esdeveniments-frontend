@@ -14,15 +14,6 @@ vi.mock("../../config/index", async () => {
   };
 });
 
-// Mock fetchPlaces so the route doesn't try to hit a real API during tests.
-// The place chunk count in sitemap.xml is derived from places.length.
-vi.mock("../../lib/api/places", () => ({
-  fetchPlaces: vi.fn().mockResolvedValue(
-    // Default: 250 places → 3 chunks at 100/chunk
-    Array.from({ length: 250 }, (_, i) => ({ slug: `place-${i}` })),
-  ),
-}));
-
 describe("app/sitemap.xml/route", () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
@@ -85,10 +76,6 @@ describe("app/sitemap.xml/route", () => {
     expect(text).toContain("/sitemap-events/5.xml");
     // Chunked place sitemaps - dynamically generated based on place count
     expect(text).toContain("/sitemap-places/1.xml");
-    // 250 places at 100/chunk → 3 chunks. Chunks 4-5 must NOT appear (they 404).
-    expect(text).toContain("/sitemap-places/3.xml");
-    expect(text).not.toContain("/sitemap-places/4.xml");
-    expect(text).not.toContain("/sitemap-places/5.xml");
     // News sitemaps
     expect(text).toContain("/server-news-sitemap.xml");
     expect(text).toContain("/server-google-news-sitemap.xml");

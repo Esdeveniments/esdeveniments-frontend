@@ -45,11 +45,6 @@ import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getPlaceExpandability } from "@lib/seo/place-expandability";
-import {
-  SSR_EVENTS_SIZE_EXPANDABLE,
-  SSR_EVENTS_SIZE_THIN,
-} from "@utils/constants";
 
 // page-level ISR not set here; fetch-level caching applies
 
@@ -112,21 +107,11 @@ export async function generateMetadata({
     search: parsed.queryParams.search,
     locale,
   });
-
-  // Noindex thin filter sub-pages for non-expandable places (< SITEMAP_MIN_EVENTS_FOR_EXPANSION).
-  // Mirrors sitemap policy: if the URL is excluded from the sitemap, it should also be
-  // excluded from the index. Prevents Google from accumulating ~30K near-duplicate filter
-  // URLs in "Crawled — currently not indexed" (Dec 2025–May 2026 GSC drop).
-  // Reversible: when inventory grows past the threshold, the meta tag stops being emitted
-  // and the URL re-enters the sitemap on the same signal — Google re-indexes on next crawl.
-  const expandable = await getPlaceExpandability(place, placeTypeLabel.type);
-
   return buildPageMeta({
     title: pageData.metaTitle,
     description: pageData.metaDescription,
     canonical: pageData.canonical,
     locale,
-    robotsOverride: expandable ? undefined : "noindex, follow",
   });
 }
 
@@ -205,20 +190,9 @@ export default async function ByDatePage({
   // Since we don't read searchParams (to keep pages static), category comes from URL path only
   const finalCategory = actualCategory;
 
-  // Match SSR depth to indexability: expandable places get a richer first page;
-  // thin places stay small. Both helpers are React cache()-wrapped, so duplicate
-  // calls from generateMetadata/PlacePageShell in the same request are deduped.
-  const pageTypeLabelForFetch = await getPlaceTypeAndLabelCached(place);
-  const isExpandableForFetch = await getPlaceExpandability(
-    place,
-    pageTypeLabelForFetch.type
-  );
-
   const paramsForFetch: FetchEventsParams = {
     page: 0,
-    size: isExpandableForFetch
-      ? SSR_EVENTS_SIZE_EXPANDABLE
-      : SSR_EVENTS_SIZE_THIN,
+    size: 12,
   };
 
   // Only add date filters if actualDate is not "tots"
@@ -476,7 +450,6 @@ async function buildPlaceByDateEventsPromise({
     events: eventsWithAds,
     noEventsFound,
     serverHasMore,
-    ssrPageSize: paramsForFetch.size as number,
     structuredScripts: structuredScripts.length
       ? structuredScripts
       : undefined,
