@@ -17,3 +17,11 @@ Production runs on Coolify/Docker/Node 22; Vercel previews are a different runti
 ## Image-proxy/dispatcher bugs only surface through a real socket
 
 `buildPinnedDnsDispatcher`'s `lookup` callback runs only when undici opens a real connection — autoSelectFamily (Happy Eyeballs, default since Node 20) calls it with `{ all: true }` and expects an array of records. Mocked-fetch unit tests never reach it. `test/pinned-dns-dispatcher.test.ts` fetches through a loopback server to exercise the real path; keep that style for any proxy or dispatcher change.
+
+## Back-merge main hotfixes into develop the same day
+
+main and develop diverge. A fix that lands directly on main (a hotfix) does not reach develop on its own, so develop can re-ship a bug main already fixed — and merging develop→main can even revert main's fix. This caused the Jun 11 2026 incident: `097e1275 fix(cache): scope Redis entries by build id` sat on main for weeks while develop kept the broken handler. The `branch-drift` CI workflow flags when main is ahead of develop on infra files (`cache-handler.mjs`, `next.config.js`, `Dockerfile`, `proxy.ts`). When you see that warning, back-merge before promoting.
+
+## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
+
+`next.config.js` enables the Redis `cacheHandler` only off-Vercel (`isVercel ? {} : { cacheHandler }`). So localhost and Vercel can never reproduce cache-handler bugs; only Coolify (persistent Redis across deploys) can. Keys are scoped by `buildId` so a new build never reads a previous build's prerendered shell — a stale shell makes React's resume mismatch (`Expected the resume to render ...`), fall back to client rendering, and emit HTML with no SSR `<title>`/description/canonical. The page still returns 200, so assert metadata in the **raw** HTML, not the status code. See [docs/incidents/2026-06-11-coolify-redis-stale-prerender.md](docs/incidents/2026-06-11-coolify-redis-stale-prerender.md).
