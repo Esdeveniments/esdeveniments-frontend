@@ -1,0 +1,111 @@
+name: Prod-arch smoke
+
+# Item #5 from the Jun 11 2026 incident response: gate PRs on production
+# architecture, not just Vercel. Three incidents (Feb Sharp, Apr empty-HTML,
+# Jun stale-prerender) all passed on Vercel/localhost and broke only on
+# self-hosted (Docker + Redis cacheHandler + Sharp). This job builds the app
+# and runs it against a real Redis service container — the only setup that
+# exercises the cacheHandler — then asserts the things that have broken:
+# health, server-rendered metadata, and the image proxy.
+
+on:
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  prod-arch-smoke:
+    name: Build + Redis + smoke (prod architecture)
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate service worker and robots.txt (prebuild)
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+        run: yarn prebuild
+
+      - name: Build Next.js application
+        env:
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: yarn build
+
+      - name: Start server against Redis (background)
+        env:
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          # Activates the Redis cacheHandler — the self-hosted path that
+          # Vercel and local dev never exercise. This is the whole point.
+          REDIS_URL: redis://localhost:6379
+        run: |
+          yarn start &
+          echo $! > /tmp/next.pid
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000/api/health --timeout 90000
+
+      - name: Assert health, SSR metadata, and image proxy
+        run: |
+          fail() { echo "❌ $1"; exit 1; }
+
+          # 1) Health endpoint
+          curl -fsS -o /dev/null http://localhost:3000/api/health \
+            || fail "/api/health did not return 2xx"
+
+          # 2) Server-rendered metadata in the RAW homepage HTML. A stale-cache
+          #    resume fallback returns 200 with an empty <head>, so check the
+          #    actual tags, not the status code.
+          html="$(curl -fsSL http://localhost:3000/)" || fail "homepage fetch failed"
+          echo "$html" | grep -qi '<title[^>]*>[^<]\+</title>' || fail "homepage has no <title> (resume fallback / metadata loss)"
+          echo "$html" | grep -qi 'name="description"' || fail "homepage has no meta description"
+          echo "$html" | grep -qi 'rel="canonical"' || fail "homepage has no canonical link"
+
+          # 3) Image proxy: exercises Sharp + the pinned-DNS dispatcher in a
+          #    production runtime. Proxy a first-party static asset.
+          IMG="https://www.esdeveniments.cat/static/icons/icon-512x512.png"
+          PROXY="http://localhost:3000/api/image-proxy?url=$(printf '%s' "$IMG" | sed 's/:/%3A/g; s|/|%2F|g')&w=64&q=50"
+          : > /tmp/proxy.head
+          if ! code=$(curl -s -D /tmp/proxy.head -o /dev/null -w "%{http_code}" \
+            -H "Accept: image/webp,image/*" --max-time 30 "$PROXY"); then
+            code="000"
+          fi
+          ctype=$(grep -i '^content-type:' /tmp/proxy.head | tail -1 | tr -d '\r' || true)
+          { [ "$code" = "200" ] && echo "$ctype" | grep -qi 'image/'; } \
+            || fail "image-proxy returned HTTP $code ($ctype) for a first-party image"
+
+          echo "✅ Prod-arch smoke passed: health, SSR metadata, and image proxy all good."
+
+      - name: Stop server
+        if: always()
+        run: kill "$(cat /tmp/next.pid)" 2>/dev/null || true
