@@ -11857,6 +11857,7 @@ __metadata:
     swr: "npm:^2.2.5"
     tailwindcss: "npm:3.3.6"
     typescript: "npm:5.9.3"
+    undici: "npm:^7.25.0"
     vite-tsconfig-paths: "npm:^4.3.0"
     vitest: "npm:4.1.7"
     web-vitals: "npm:^5.2.0"

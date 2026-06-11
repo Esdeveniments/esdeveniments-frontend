@@ -106,6 +106,12 @@ CacheHandler.onCreation(({ buildId } = {}) => {
       return lruFallbackConfig;
     }
 
+    // Scope cache keys by build id so a new deploy never reads prerendered
+    // shells written by a previous build. Without this, Coolify's Redis serves
+    // a stale shell whose React tree no longer matches the new build's resume
+    // ("Expected the resume to render ..."), so SSR falls back to client
+    // rendering and the page ships without its <title>/meta. Vercel/localhost
+    // don't use this handler, which is why only self-hosted builds broke.
     const cacheKeyPrefix = buildId ? `next:cache:${buildId}:` : "next:cache:";
 
     const redisHandler = createRedisHandler({
