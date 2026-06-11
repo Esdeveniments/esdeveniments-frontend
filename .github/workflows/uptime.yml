@@ -55,7 +55,22 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Site is up, content is valid, and image proxy is serving images"
+          # Assert server-rendered metadata is present in the RAW HTML (not
+          # after JS). On Jun 11 2026 a stale Redis prerender shell made React
+          # fall back to client rendering, dropping <title>/description/canonical
+          # from SSR — invisible to a status-code check but an SEO hard-fail.
+          # /tmp/response.html is the already-fetched homepage.
+          missing=""
+          grep -qi '<title[^>]*>[^<]\+</title>' /tmp/response.html || missing="$missing <title>"
+          grep -qi 'name="description"' /tmp/response.html || missing="$missing meta-description"
+          grep -qi 'rel="canonical"' /tmp/response.html || missing="$missing canonical"
+          if [ -n "$missing" ]; then
+            echo "❌ Homepage server HTML is missing SSR metadata:$missing"
+            echo "error_message=Homepage SSR metadata missing ($missing) — likely a prerender/resume fallback to client rendering. SEO-critical." >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "✅ Site is up, content is valid, image proxy works, and SSR metadata is present"
 
       - name: Send email notification on failure
         if: failure()

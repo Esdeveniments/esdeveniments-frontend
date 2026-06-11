@@ -1,0 +1,58 @@
+name: Branch drift guard
+
+# Surfaces the root cause of the Jun 11 2026 incident: a hotfix landed on main
+# (097e1275 "scope Redis entries by build id") and was never back-merged to
+# develop, so develop shipped a self-hosted cache bug main had already fixed.
+# This flags when main is AHEAD of develop on infra-critical files, so the
+# divergence is impossible to miss before merging develop into main.
+#
+# Non-blocking by design (annotation + job summary). Flip the final `exit 0`
+# to `exit 1` if you want it to hard-block PRs until a back-merge happens.
+
+on:
+  pull_request:
+    branches: [develop, main]
+  schedule:
+    - cron: "0 7 * * 1" # Mondays 07:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-infra-drift:
+    name: Detect main→develop infra drift
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compare infra-critical files (main vs develop)
+        run: |
+          git fetch --quiet origin main develop
+
+          # Files where "main ahead of develop" has historically meant a
+          # production-only regression waiting to ship. Keep this list tight to
+          # avoid false positives from files that legitimately diverge.
+          INFRA_FILES="cache-handler.mjs next.config.js Dockerfile proxy.ts"
+
+          drift=$(git log --oneline origin/develop..origin/main -- $INFRA_FILES)
+
+          if [ -n "$drift" ]; then
+            {
+              echo "## ⚠️ main is ahead of develop on infra-critical files"
+              echo ""
+              echo "The following commits touch \`$INFRA_FILES\` and exist on **main** but not **develop**:"
+              echo ""
+              echo '```'
+              echo "$drift"
+              echo '```'
+              echo ""
+              echo "Back-merge main into develop before merging develop → main, or a fix already on prod could be reverted (see docs/incidents/2026-06-11-coolify-redis-stale-prerender.md)."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=Branch drift::main has infra commits not in develop — back-merge before promoting develop."
+          else
+            echo "✅ No infra-critical drift: develop has every main commit touching $INFRA_FILES."
+          fi
+
+          # Non-blocking: surface, don't block. Change to `exit 1` to enforce.
+          exit 0
