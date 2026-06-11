@@ -61,13 +61,23 @@ export function usePushNotifications() {
       return;
     }
 
-    // Check for existing subscription async, only call setState once with result
+    // Check for existing subscription async; the active flag cancels the
+    // pending state update if the component unmounts first (StrictMode
+    // double-mount safe).
+    let active = true;
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => {
+        if (!active) return;
         setState(sub ? "subscribed" : "unsubscribed");
       })
-      .catch(() => setState("unsubscribed"));
+      .catch(() => {
+        if (active) setState("unsubscribed");
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const subscribe = useCallback(async (): Promise<boolean> => {
@@ -86,13 +96,26 @@ export function usePushNotifications() {
       });
 
       const json = sub.toJSON();
+      // Defensive: encryption keys should always be present, but if the
+      // browser returns a malformed subscription, roll it back instead of
+      // sending a payload that will fail server validation and leave a
+      // dangling browser-side subscription.
+      if (!json.keys?.p256dh || !json.keys?.auth) {
+        captureException(new Error("Push subscription missing keys"), {
+          tags: { feature: "push", action: "subscribe" },
+        });
+        await sub.unsubscribe();
+        setState("unsubscribed");
+        return false;
+      }
+
       // safeFetch: 5s timeout + Sentry capture with response body on failure
       const { error } = await safeFetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           endpoint: sub.endpoint,
-          keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
+          keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
         }),
         context: { tags: { feature: "push", action: "subscribe" } },
       });

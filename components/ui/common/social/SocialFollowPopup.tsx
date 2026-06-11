@@ -115,13 +115,8 @@ function CloseIcon() {
  * matching the native A2HS preview, then numbered steps with the real iOS
  * glyphs so users pattern-match icons instead of translating words.
  */
-function IosInstallSteps({
-  isIpad,
-  t,
-}: {
-  isIpad: boolean;
-  t: ReturnType<typeof useTranslations<"Components.SocialFollowPopup">>;
-}) {
+function IosInstallSteps({ isIpad }: { isIpad: boolean }) {
+  const t = useTranslations("Components.SocialFollowPopup");
   return (
     <div className="flex flex-col">
       {/* Identity row: mirrors what iOS shows in the A2HS dialog */}
@@ -207,7 +202,6 @@ function InstallSection({
   isIpad,
   isInstalling,
   onInstall,
-  t,
 }: {
   canPromptInstall: boolean;
   showIosInstructions: boolean;
@@ -215,8 +209,8 @@ function InstallSection({
   isIpad: boolean;
   isInstalling: boolean;
   onInstall: () => void;
-  t: ReturnType<typeof useTranslations<"Components.SocialFollowPopup">>;
 }) {
+  const t = useTranslations("Components.SocialFollowPopup");
   if (!canPromptInstall && !showIosInstructions && !showOpenInSafariHint) {
     return null;
   }
@@ -242,7 +236,7 @@ function InstallSection({
           {isInstalling ? t("installEnabling") : t("installEnable")}
         </button>
       ) : null}
-      {showIosInstructions ? <IosInstallSteps isIpad={isIpad} t={t} /> : null}
+      {showIosInstructions ? <IosInstallSteps isIpad={isIpad} /> : null}
       {showOpenInSafariHint ? (
         <p className="body-small text-foreground/70 text-center leading-relaxed">
           {t("installInAppHelp")}
@@ -256,13 +250,12 @@ function PushSection({
   pushState,
   isSubscribing,
   onSubscribe,
-  t,
 }: {
   pushState: ReturnType<typeof usePushNotifications>["state"];
   isSubscribing: boolean;
   onSubscribe: () => void;
-  t: ReturnType<typeof useTranslations<"Components.SocialFollowPopup">>;
 }) {
+  const t = useTranslations("Components.SocialFollowPopup");
   return (
     <div className="flex flex-col gap-2.5 bg-muted/60 border border-border/40 rounded-card p-4">
       {pushState === "unsubscribed" ? (
@@ -310,13 +303,8 @@ function PushSection({
   );
 }
 
-function SocialLinksSection({
-  variant,
-  t,
-}: {
-  variant: "mobile" | "desktop";
-  t: ReturnType<typeof useTranslations<"Components.SocialFollowPopup">>;
-}) {
+function SocialLinksSection({ variant }: { variant: "mobile" | "desktop" }) {
+  const t = useTranslations("Components.SocialFollowPopup");
   return (
     <div className="flex flex-col gap-2.5">
       <p className="body-small font-semibold text-foreground/60 text-center uppercase tracking-wide">
@@ -647,7 +635,6 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
               isIpad={isIpad}
               isInstalling={isInstalling}
               onInstall={handleInstall}
-              t={t}
             />
 
             {shouldShowPushCta ? (
@@ -655,11 +642,10 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
                 pushState={pushState}
                 isSubscribing={isSubscribingPush}
                 onSubscribe={handleSubscribePush}
-                t={t}
               />
             ) : null}
 
-            <SocialLinksSection variant="mobile" t={t} />
+            <SocialLinksSection variant="mobile" />
 
             {/* Dismiss */}
             <button
@@ -753,17 +739,15 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             isIpad={isIpad}
             isInstalling={isInstalling}
             onInstall={handleInstall}
-            t={t}
           />
 
-          <SocialLinksSection variant="desktop" t={t} />
+          <SocialLinksSection variant="desktop" />
 
           {shouldShowPushCta ? (
             <PushSection
               pushState={pushState}
               isSubscribing={isSubscribingPush}
               onSubscribe={handleSubscribePush}
-              t={t}
             />
           ) : null}
 

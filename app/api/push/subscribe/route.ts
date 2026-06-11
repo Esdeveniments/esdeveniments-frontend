@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { captureException } from "@sentry/nextjs";
+import { isSafePublicFetchUrl } from "@utils/public-fetch-safety";
 import {
   upsertSubscription,
   deleteSubscription,
@@ -49,6 +50,18 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json(
       { ok: false, error: "INVALID_BODY" },
+      { status: 400, headers: NO_STORE },
+    );
+  }
+
+  // SSRF guard: resolve the endpoint host and reject loopback/private/
+  // link-local targets so the broadcast route can never be steered at
+  // internal services. Runs once here (persist-time) — the send route
+  // only re-checks literals to avoid per-broadcast DNS lookups.
+  const isSafe = await isSafePublicFetchUrl(parsed.data.endpoint, false);
+  if (!isSafe) {
+    return NextResponse.json(
+      { ok: false, error: "INVALID_ENDPOINT" },
       { status: 400, headers: NO_STORE },
     );
   }

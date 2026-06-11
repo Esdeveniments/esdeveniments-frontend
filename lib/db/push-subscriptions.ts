@@ -66,6 +66,29 @@ export async function deleteSubscription(endpoint: string): Promise<void> {
 }
 
 /**
+ * Batch-delete push subscriptions by endpoint (chunked IN clauses).
+ * Used by the send route to clean up expired (404/410) subscriptions
+ * without issuing N concurrent single-row deletes.
+ */
+export async function deleteSubscriptions(endpoints: string[]): Promise<void> {
+  if (endpoints.length === 0) return;
+  if (!isDbConfigured()) {
+    throw new Error("Turso DB not configured");
+  }
+  await ensureSchema();
+
+  const CHUNK_SIZE = 100;
+  for (let i = 0; i < endpoints.length; i += CHUNK_SIZE) {
+    const chunk = endpoints.slice(i, i + CHUNK_SIZE);
+    const placeholders = chunk.map(() => "?").join(",");
+    await execute(
+      `DELETE FROM push_subscriptions WHERE endpoint IN (${placeholders})`,
+      chunk,
+    );
+  }
+}
+
+/**
  * Fetch all stored subscriptions for fan-out sending.
  * Returns an empty array if the DB is not configured.
  */

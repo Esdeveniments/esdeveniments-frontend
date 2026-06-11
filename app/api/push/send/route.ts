@@ -3,9 +3,16 @@ import { z } from "zod";
 import webpush from "web-push";
 import { captureException } from "@sentry/nextjs";
 import {
-  deleteSubscription,
+  deleteSubscriptions,
   getAllSubscriptions,
 } from "@lib/db/push-subscriptions";
+import { isInternalHost } from "@config/index";
+import { normalizeHost } from "@utils/host-validation";
+
+// Only relevant on Vercel preview deploys (production runs a persistent
+// Node server on Coolify where route duration is unbounded). Keeps the
+// chunked broadcast loop from being killed at the default timeout.
+export const maxDuration = 60;
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -94,12 +101,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, sent: 0 }, { headers: NO_STORE });
   }
 
-  // Validate endpoints to prevent SSRF attacks — must be https://
+  // SSRF re-filter: https only, and reject literal internal/loopback IPs.
+  // The full DNS-resolving check (getPublicFetchSafety) runs once at
+  // subscribe time so bad endpoints never persist; repeating DNS lookups
+  // for every subscription on every broadcast would be wasteful.
   const validSubscriptions = subscriptions.filter((sub) => {
     try {
       const url = new URL(sub.endpoint);
-      // Only allow https:// endpoints from push services
-      return url.protocol === "https:";
+      if (url.protocol !== "https:") return false;
+      // isInternalHost catches loopback/private/link-local literals and
+      // known internal hostnames (no DNS resolution at send time).
+      return !isInternalHost(normalizeHost(url.hostname));
     } catch {
       return false;
     }
@@ -165,11 +177,16 @@ export async function POST(request: Request) {
     }
   }
 
-  // Batch delete invalid subscriptions
+  // Batch-delete expired subscriptions in chunked IN clauses (single
+  // roundtrips instead of N concurrent deletes), logging failures.
   if (allInvalidSubscriptions.length > 0) {
-    await Promise.allSettled(
-      allInvalidSubscriptions.map((endpoint) => deleteSubscription(endpoint)),
-    );
+    try {
+      await deleteSubscriptions(allInvalidSubscriptions);
+    } catch (err) {
+      captureException(err, {
+        tags: { feature: "push", action: "batchDeleteInvalid" },
+      });
+    }
   }
 
   if (totalFailed > 0) {
