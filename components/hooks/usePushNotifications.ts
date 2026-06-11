@@ -7,15 +7,17 @@ import type { PushState } from "types/push";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
-/** Convert a VAPID base64url public key to a Uint8Array for the browser API. */
-function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+/** Convert a VAPID base64url public key to a Uint8Array for the browser API.
+ *  The explicit Uint8Array<ArrayBuffer> generic is required: TS 5.9 narrows
+ *  BufferSource to ArrayBufferView<ArrayBuffer>, and a bare Uint8Array
+ *  (= Uint8Array<ArrayBufferLike>) fails the applicationServerKey check. */
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = atob(base64);
-  const buffer = new ArrayBuffer(raw.length);
-  const view = new Uint8Array(buffer);
+  const view = new Uint8Array(raw.length);
   for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i);
-  return buffer;
+  return view;
 }
 
 /**

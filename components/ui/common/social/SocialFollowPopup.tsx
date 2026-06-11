@@ -392,6 +392,12 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
    *   30-day cooldown still starts but the dismissal budget isn't burned.
    */
   const dismiss = useCallback((countAsDismissal: boolean = true) => {
+    // Cancel a pending post-success auto-close so a manual dismissal
+    // doesn't trigger a second close cycle after the timer fires.
+    if (autoCloseTimerRef.current) {
+      clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = null;
+    }
     setIsClosing(true);
     setTimeout(() => {
       setIsVisible(false);
@@ -501,6 +507,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       }
     };
 
+    let didLock = false;
     let previousBodyOverflow: string | null = null;
     if (!isMobile) {
       // Remember the focused element, move focus into the dialog, and lock
@@ -517,12 +524,15 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
 
       previousBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
+      didLock = true;
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      if (!isMobile) {
+      // Restore based on whether this effect run actually locked, not on
+      // the (correct but indirect) isMobile closure value.
+      if (didLock) {
         document.body.style.overflow = previousBodyOverflow ?? "";
         previousFocusRef.current?.focus?.();
         previousFocusRef.current = null;

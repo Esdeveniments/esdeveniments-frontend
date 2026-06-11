@@ -365,7 +365,14 @@ if (!self.workbox) {
     let data = { title: "Esdeveniments", body: "", url: "/", icon: "/static/icons/icon-192x192.png" };
     if (event.data) {
       try {
-        data = { ...data, ...event.data.json() };
+        // Only spread plain objects — a payload that parses to a string,
+        // number, or array would pollute `data` with index keys.
+        const parsed = event.data.json();
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          data = { ...data, ...parsed };
+        } else {
+          data.body = event.data.text();
+        }
       } catch {
         data.body = event.data.text();
       }
