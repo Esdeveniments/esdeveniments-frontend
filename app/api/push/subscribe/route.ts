@@ -58,7 +58,21 @@ export async function POST(request: Request) {
   // link-local targets so the broadcast route can never be steered at
   // internal services. Runs once here (persist-time) — the send route
   // only re-checks literals to avoid per-broadcast DNS lookups.
-  const isSafe = await isSafePublicFetchUrl(parsed.data.endpoint, false);
+  // The helper try/catches internally, but keep the await inside an
+  // error boundary so an unexpected throw still honors the structured
+  // JSON error contract instead of leaking a raw 500.
+  let isSafe = false;
+  try {
+    isSafe = await isSafePublicFetchUrl(parsed.data.endpoint, false);
+  } catch (error) {
+    captureException(error, {
+      tags: { feature: "push", route: "/api/push/subscribe", action: "ssrf-check" },
+    });
+    return NextResponse.json(
+      { ok: false, error: "INTERNAL" },
+      { status: 500, headers: NO_STORE },
+    );
+  }
   if (!isSafe) {
     return NextResponse.json(
       { ok: false, error: "INVALID_ENDPOINT" },
