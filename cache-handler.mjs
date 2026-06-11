@@ -35,7 +35,7 @@ const RETRY_COOLDOWN_MS = 30_000;
 /** Shared LRU fallback — created once, reused across all requests and cooldown periods. */
 const lruFallbackConfig = { handlers: [createLruHandler()] };
 
-CacheHandler.onCreation(() => {
+CacheHandler.onCreation(({ buildId } = {}) => {
   // If a previous failure occurred, check whether the cooldown has elapsed.
   // If so, clear the fallback config to allow a reconnection attempt below.
   if (globalThis.__cacheHandlerLastFailure) {
@@ -106,9 +106,17 @@ CacheHandler.onCreation(() => {
       return lruFallbackConfig;
     }
 
+    // Scope cache keys by build id so a new deploy never reads prerendered
+    // shells written by a previous build. Without this, Coolify's Redis serves
+    // a stale shell whose React tree no longer matches the new build's resume
+    // ("Expected the resume to render ..."), so SSR falls back to client
+    // rendering and the page ships without its <title>/meta. Vercel/localhost
+    // don't use this handler, which is why only self-hosted builds broke.
+    const cacheKeyPrefix = buildId ? `next:cache:${buildId}:` : "next:cache:";
+
     const redisHandler = createRedisHandler({
       client: redisClient,
-      keyPrefix: "next:cache:",
+      keyPrefix: cacheKeyPrefix,
     });
 
     globalThis.__cacheHandlerConfigPromise = null;
