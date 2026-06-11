@@ -38,7 +38,9 @@ async function getProxiedImage(
       if (response.status() !== 502) break;
     } catch (err) {
       // A network-level failure (timeout, connection reset) is transient too —
-      // retry it instead of failing the test on the first blip.
+      // retry it instead of failing the test on the first blip. Clear any
+      // stale response so a 502 from an earlier attempt can't mask this error.
+      response = undefined;
       lastError = err;
     }
   }
