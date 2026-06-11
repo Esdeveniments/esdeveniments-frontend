@@ -70,8 +70,20 @@ function buildPinnedDnsDispatcher(
     connect: {
       keepAlive: false,
       rejectUnauthorized,
-      lookup(_hostname, _options, callback) {
-        callback(null, firstRecord.address, firstRecord.family);
+      lookup(_hostname, options, callback) {
+        // Node's net.connect uses autoSelectFamily (Happy Eyeballs, default
+        // since Node 20) and calls lookup with { all: true }, expecting an
+        // ARRAY of { address, family } records. Always answering with the
+        // single-address signature made every connection fail with
+        // "Invalid IP address: undefined" -> all image fetches 502'd.
+        if (options.all) {
+          callback(
+            null,
+            dnsRecords.map(({ address, family }) => ({ address, family })),
+          );
+        } else {
+          callback(null, firstRecord.address, firstRecord.family);
+        }
       },
     },
   });
