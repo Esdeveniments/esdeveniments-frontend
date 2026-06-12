@@ -14,13 +14,10 @@ import { render } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 
+// next-intl/server is already mocked globally in test/setup.ts via
+// test/mocks/next-intl-server.ts — no local override needed.
 vi.mock("@utils/i18n-seo", () => ({
   getLocaleSafely: async () => "ca",
-}));
-
-// Return the key itself so assertions never depend on message content.
-vi.mock("next-intl/server", () => ({
-  getTranslations: async () => (key: string) => key,
 }));
 
 // Stub the children to identifiable markers — their own rendering (links,
