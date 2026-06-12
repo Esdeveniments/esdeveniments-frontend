@@ -1,6 +1,9 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { renderHook, act } from "@testing-library/react";
 import { usePwaInstall } from "components/hooks/usePwaInstall";
+import type { BeforeInstallPromptEvent } from "types/pwa";
+
+vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
 /**
  * These tests pin the UA-classification that decides which install guidance
@@ -94,5 +97,72 @@ describe("usePwaInstall — install guidance by browser", () => {
     expect(result.current.showIosInstructions).toBe(false);
     expect(result.current.showOpenInSafariHint).toBe(false);
     expect(result.current.installState).toBe("not-available");
+  });
+});
+
+describe("usePwaInstall — promptInstall flow", () => {
+  function makePrompt(outcome: "accepted" | "dismissed") {
+    return {
+      prompt: vi.fn().mockResolvedValue(undefined),
+      userChoice: Promise.resolve({ outcome, platform: "web" }),
+    } as unknown as BeforeInstallPromptEvent;
+  }
+
+  afterEach(() => {
+    window.__pwaDeferredPrompt = null;
+  });
+
+  it("returns 'accepted' and marks the app installed when the user accepts", async () => {
+    window.__pwaDeferredPrompt = makePrompt("accepted");
+    const { result } = renderHook(() => usePwaInstall());
+    expect(result.current.canPromptInstall).toBe(true);
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.promptInstall();
+    });
+
+    expect(outcome).toBe("accepted");
+    expect(result.current.installState).toBe("installed");
+  });
+
+  it("returns 'dismissed' and falls back to not-available when the user declines", async () => {
+    window.__pwaDeferredPrompt = makePrompt("dismissed");
+    const { result } = renderHook(() => usePwaInstall());
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.promptInstall();
+    });
+
+    expect(outcome).toBe("dismissed");
+    expect(result.current.installState).toBe("not-available");
+  });
+
+  it("returns 'unavailable' and recovers when the native prompt throws", async () => {
+    window.__pwaDeferredPrompt = {
+      prompt: vi.fn().mockRejectedValue(new Error("prompt failed")),
+      userChoice: Promise.resolve({ outcome: "accepted", platform: "web" }),
+    } as unknown as BeforeInstallPromptEvent;
+    const { result } = renderHook(() => usePwaInstall());
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.promptInstall();
+    });
+
+    expect(outcome).toBe("unavailable");
+    expect(result.current.installState).toBe("not-available");
+  });
+
+  it("returns 'unavailable' when there is no deferred prompt to fire", async () => {
+    const { result } = renderHook(() => usePwaInstall());
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.promptInstall();
+    });
+
+    expect(outcome).toBe("unavailable");
   });
 });
