@@ -17,6 +17,7 @@ import {
 import { getFormattedDate } from "@utils/helpers";
 import { isProductionSiteUrl } from "@utils/production-host";
 import { parseDateFromIso } from "@utils/schema-helpers";
+import { isMalformedEventSlug } from "@utils/event-slug-quality";
 
 // Days after event end date before we noindex it to save crawl budget
 export const EXPIRED_EVENT_NOINDEX_DAYS = 60;
@@ -222,6 +223,15 @@ export function generateEventMetadata(
         isKnownNonProd
       ) {
         return "noindex, nofollow";
+      }
+      // Noindex events with slugs corrupted by upstream RSS/XML feed imports.
+      // Pattern: backend generated slugs from titles containing inline HTML
+      // (<link>https://...</link>, <description><![CDATA[...]]>) producing
+      // tokens like "linkhttps", "linkdescription", "cdata". GSC reported
+      // ~1,127 such 404/soft-404 entries in April 2026. Until the backend
+      // slug generator is fixed, mark these noindex so Google drops them.
+      if (isMalformedEventSlug(event.slug)) {
+        return { index: false, follow: true };
       }
       // Noindex events that ended more than 60 days ago to save crawl budget.
       const endDateTime = parseDateFromIso(event.endDate, true);

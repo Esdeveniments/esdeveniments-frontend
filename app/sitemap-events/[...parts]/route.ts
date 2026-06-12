@@ -5,6 +5,7 @@ import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
 import { EXPIRED_EVENT_NOINDEX_DAYS } from "@lib/meta";
+import { isMalformedEventSlug } from "@utils/event-slug-quality";
 import type { SitemapPartsRouteContext } from "types/props";
 
 // Chunk size chosen to keep response sizes manageable
@@ -73,6 +74,7 @@ export async function GET(
 
   const fields: SitemapField[] = normalizedEvents
     .filter((event) => !event.isAd)
+    .filter((event) => !isMalformedEventSlug(event.slug))
     .filter((event) => {
       const end = event.endDate || event.startDate;
       if (!end) return true;
