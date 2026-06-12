@@ -25,3 +25,11 @@ main and develop diverge. A fix that lands directly on main (a hotfix) does not 
 ## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
 
 `next.config.js` enables the Redis `cacheHandler` only off-Vercel (`isVercel ? {} : { cacheHandler }`). So localhost and Vercel can never reproduce cache-handler bugs; only Coolify (persistent Redis across deploys) can. Keys are scoped by `buildId` so a new build never reads a previous build's prerendered shell — a stale shell makes React's resume mismatch (`Expected the resume to render ...`), fall back to client rendering, and emit HTML with no SSR `<title>`/description/canonical. The page still returns 200, so assert metadata in the **raw** HTML, not the status code. See [docs/incidents/2026-06-11-coolify-redis-stale-prerender.md](docs/incidents/2026-06-11-coolify-redis-stale-prerender.md).
+
+## Don't assert data-conditional UI in an e2e against uncontrolled live data
+
+`place-page-explore-nav.spec.ts` asserted the place explore nav on `/barcelona` against whatever the backend held. Once #313 gated that nav on a place having `>= SITEMAP_MIN_EVENTS_FOR_EXPANSION` events, the e2e broke in any test-data environment (a place can legitimately fall below the threshold) and rotted as test events aged past "upcoming". A page that fetches its gating data **server-side** can't be made deterministic with Playwright route interception either (that only mocks browser requests). Test such logic at the layer that owns its inputs: a component test with controlled props (see `test/components/ui/placePageExploreNav.test.tsx`). Reserve e2e for critical journeys against **seeded** data.
+
+## Never lower preview/test-env fidelity to make a test pass
+
+It's tempting to drop a threshold (e.g. `SITEMAP_MIN_EVENTS_FOR_EXPANSION`) or relax gating in non-prod so a flaky test goes green. Don't: that makes the preview behave differently from production, which is the exact parity gap that caused the cache and image-proxy incidents. Fix the mis-layered test, not the environment. Environment parity is the asset.

@@ -23,6 +23,12 @@ export const SENTRY_IGNORE_ERRORS: Array<string | RegExp> = [
   // React PPR resumption mismatch — happens during deployment transitions when
   // the server serves stale postponed metadata. Not a code bug.
   "Couldn't find all resumable slots",
+  // Upstream Next.js PPR + cacheComponents bug (vercel/next.js#93401): the static
+  // PPR shell is built with the streaming-metadata wrapper, but bot UAs in
+  // `htmlLimitedBots` get blocking metadata at runtime → resume tree-shape mismatch.
+  // Fires only for Googlebot/Bingbot/GoogleOther/etc.; React falls back to client
+  // render so users are unaffected. Remove once the upstream bug is fixed.
+  /Expected the resume to render <(div|Fragment)> in this slot but instead it rendered <(__next_metadata_boundary__|script)>/,
 ];
 
 /**
