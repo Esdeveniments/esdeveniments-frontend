@@ -39,7 +39,14 @@ export function usePushNotifications() {
 
     // Check browser capabilities first
     // (Sync setState calls for feature detection; no cascading renders)
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC_KEY) {
+    // Notification can be absent even when PushManager exists (some iOS
+    // webviews), so guard it here before reading Notification.permission below.
+    if (
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window) ||
+      !("Notification" in window) ||
+      !VAPID_PUBLIC_KEY
+    ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setState("unsupported");
       return;

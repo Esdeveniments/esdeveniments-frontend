@@ -658,7 +658,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         role="complementary"
         aria-label={canInstall ? t("ariaInstall") : t("aria")}
       >
-        <div className="relative w-full bg-background rounded-card border border-border shadow-2xl overflow-hidden">
+        <div className="relative w-full max-h-[80vh] overflow-y-auto bg-background rounded-card border border-border shadow-2xl">
           {/* Gradient accent bar */}
           <div className="h-1 bg-gradient-to-r from-primary via-primary to-primary/70" />
 
@@ -735,7 +735,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-md bg-background rounded-card border border-border shadow-2xl overflow-hidden transition-transform duration-slower ${
+        className={`relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-background rounded-card border border-border shadow-2xl transition-transform duration-slower ${
           isClosing ? "scale-95" : "scale-100"
         }`}
       >
