@@ -4,7 +4,8 @@ import webpush from "web-push";
 import { captureException } from "@sentry/nextjs";
 import {
   deleteSubscriptions,
-  getAllSubscriptions,
+  getSubscriptionsPage,
+  PUSH_PAGE_SIZE,
 } from "@lib/db/push-subscriptions";
 import { isInternalHost } from "@config/index";
 import { normalizeHost } from "@utils/host-validation";
@@ -96,31 +97,6 @@ export async function POST(request: Request) {
     vapid.privateKey,
   );
 
-  const subscriptions = await getAllSubscriptions();
-  if (subscriptions.length === 0) {
-    return NextResponse.json({ ok: true, sent: 0 }, { headers: NO_STORE });
-  }
-
-  // SSRF re-filter: https only, and reject literal internal/loopback IPs.
-  // The full DNS-resolving check (getPublicFetchSafety) runs once at
-  // subscribe time so bad endpoints never persist; repeating DNS lookups
-  // for every subscription on every broadcast would be wasteful.
-  const validSubscriptions = subscriptions.filter((sub) => {
-    try {
-      const url = new URL(sub.endpoint);
-      if (url.protocol !== "https:") return false;
-      // isInternalHost catches loopback/private/link-local literals and
-      // known internal hostnames (no DNS resolution at send time).
-      return !isInternalHost(normalizeHost(url.hostname));
-    } catch {
-      return false;
-    }
-  });
-
-  if (validSubscriptions.length === 0) {
-    return NextResponse.json({ ok: true, sent: 0 }, { headers: NO_STORE });
-  }
-
   const payload = JSON.stringify({
     title: parsed.data.title,
     body: parsed.data.body,
@@ -128,53 +104,85 @@ export async function POST(request: Request) {
     icon: parsed.data.icon,
   });
 
-  // Add concurrency control with chunking to avoid overwhelming push services
-  const CHUNK_SIZE = 100; // Send 100 notifications per chunk
-  const CHUNK_DELAY = 1000; // Wait 1 second between chunks
+  // Max push requests in flight at once. The awaited batch is the real
+  // backpressure (never more than this outstanding), so no artificial delay
+  // is needed — an inter-batch sleep only multiplies wall-clock time and
+  // risks gateway timeouts as the subscriber base grows.
+  const SEND_CONCURRENCY = 100;
+
+  let cursor = 0;
   let totalSent = 0;
   let totalFailed = 0;
+  let totalValid = 0;
   const allInvalidSubscriptions: string[] = [];
 
-  for (let i = 0; i < validSubscriptions.length; i += CHUNK_SIZE) {
-    const chunk = validSubscriptions.slice(i, i + CHUNK_SIZE);
+  // Stream subscriptions a page at a time (keyset on id) so memory stays flat
+  // regardless of table size. On a DB error mid-broadcast, report what was
+  // sent rather than failing the whole request.
+  try {
+    for (;;) {
+      const page = await getSubscriptionsPage(cursor, PUSH_PAGE_SIZE);
+      if (page.length === 0) break;
+      cursor = page[page.length - 1].id;
 
-    const results = await Promise.allSettled(
-      chunk.map((sub) =>
-        webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: { p256dh: sub.p256dh, auth: sub.auth },
-          },
-          payload,
-          { TTL: 60 * 60 * 24 }, // 24h TTL — push service queues it if device offline
-        ),
-      ),
-    );
+      // SSRF re-filter: https only, reject literal internal/loopback hosts.
+      // The full DNS-resolving check runs once at subscribe time; re-resolving
+      // every endpoint on every broadcast would be wasteful.
+      const validSubscriptions = page.filter((sub) => {
+        try {
+          const url = new URL(sub.endpoint);
+          if (url.protocol !== "https:") return false;
+          return !isInternalHost(normalizeHost(url.hostname));
+        } catch {
+          return false;
+        }
+      });
+      totalValid += validSubscriptions.length;
 
-    totalSent += results.filter((r) => r.status === "fulfilled").length;
-    totalFailed += results.filter((r) => r.status === "rejected").length;
+      for (let i = 0; i < validSubscriptions.length; i += SEND_CONCURRENCY) {
+        const batch = validSubscriptions.slice(i, i + SEND_CONCURRENCY);
 
-    // Collect invalid subscriptions (404/410) for batch deletion
-    const invalidInChunk = results
-      .map((result, index) => {
-        if (result.status !== "rejected") return null;
-        const statusCode =
-          typeof result.reason === "object" &&
-          result.reason !== null &&
-          "statusCode" in result.reason
-            ? result.reason.statusCode
-            : null;
-        if (statusCode !== 404 && statusCode !== 410) return null;
-        return chunk[index]?.endpoint ?? null;
-      })
-      .filter((endpoint): endpoint is string => Boolean(endpoint));
+        const results = await Promise.allSettled(
+          batch.map((sub) =>
+            webpush.sendNotification(
+              {
+                endpoint: sub.endpoint,
+                keys: { p256dh: sub.p256dh, auth: sub.auth },
+              },
+              payload,
+              { TTL: 60 * 60 * 24 }, // 24h TTL — queued if device offline
+            ),
+          ),
+        );
 
-    allInvalidSubscriptions.push(...invalidInChunk);
+        totalSent += results.filter((r) => r.status === "fulfilled").length;
+        totalFailed += results.filter((r) => r.status === "rejected").length;
 
-    // Add delay between chunks to avoid overwhelming push services
-    if (i + CHUNK_SIZE < validSubscriptions.length) {
-      await new Promise((resolve) => setTimeout(resolve, CHUNK_DELAY));
+        // Collect expired subscriptions (404/410) for batch deletion.
+        const invalidInBatch = results
+          .map((result, index) => {
+            if (result.status !== "rejected") return null;
+            const statusCode =
+              typeof result.reason === "object" &&
+              result.reason !== null &&
+              "statusCode" in result.reason
+                ? result.reason.statusCode
+                : null;
+            if (statusCode !== 404 && statusCode !== 410) return null;
+            return batch[index]?.endpoint ?? null;
+          })
+          .filter((endpoint): endpoint is string => Boolean(endpoint));
+
+        allInvalidSubscriptions.push(...invalidInBatch);
+      }
+
+      if (page.length < PUSH_PAGE_SIZE) break;
     }
+  } catch (err) {
+    captureException(err, {
+      tags: { feature: "push", action: "broadcast" },
+    });
+    // Fall through: clean up and return partial counts below.
   }
 
   // Batch-delete expired subscriptions in chunked IN clauses (single
@@ -191,10 +199,13 @@ export async function POST(request: Request) {
 
   if (totalFailed > 0) {
     captureException(
-      new Error(`Push send: ${totalFailed}/${validSubscriptions.length} failed`),
+      new Error(`Push send: ${totalFailed}/${totalValid} failed`),
       { tags: { feature: "push", route: "/api/push/send" } },
     );
   }
 
-  return NextResponse.json({ ok: true, sent: totalSent, failed: totalFailed }, { headers: NO_STORE });
+  return NextResponse.json(
+    { ok: true, sent: totalSent, failed: totalFailed },
+    { headers: NO_STORE },
+  );
 }

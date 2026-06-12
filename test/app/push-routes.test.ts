@@ -17,8 +17,9 @@ vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 const db = vi.hoisted(() => ({
   upsertSubscription: vi.fn(),
   deleteSubscription: vi.fn(),
-  getAllSubscriptions: vi.fn(),
+  getSubscriptionsPage: vi.fn(),
   deleteSubscriptions: vi.fn(),
+  PUSH_PAGE_SIZE: 500,
 }));
 vi.mock("@lib/db/push-subscriptions", () => db);
 
@@ -54,10 +55,13 @@ function postJson(
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  // resetAllMocks (not clearAllMocks) so leftover mockResolvedValueOnce queues
+  // don't leak between tests; the defaults below re-establish each mock.
+  vi.resetAllMocks();
   safety.isSafePublicFetchUrl.mockResolvedValue(true);
   db.upsertSubscription.mockResolvedValue(undefined);
-  db.getAllSubscriptions.mockResolvedValue([]);
+  db.getSubscriptionsPage.mockResolvedValue([]);
+  db.PUSH_PAGE_SIZE = 500;
   db.deleteSubscriptions.mockResolvedValue(undefined);
   webpush.sendNotification.mockResolvedValue(undefined);
 
@@ -182,11 +186,14 @@ describe("POST /api/push/send", () => {
   });
 
   it("filters internal-IP endpoints and only sends to public ones", async () => {
-    db.getAllSubscriptions.mockResolvedValue([
-      { endpoint: "https://127.0.0.1/fcm/send/x", p256dh: "k1", auth: "a1" },
-      { endpoint: "https://192.168.1.10/fcm/send/y", p256dh: "k2", auth: "a2" },
-      { endpoint: VALID_ENDPOINT, p256dh: "k3", auth: "a3" },
-    ]);
+    // One page of rows, then an empty page to end the keyset pagination loop.
+    db.getSubscriptionsPage
+      .mockResolvedValueOnce([
+        { id: 1, endpoint: "https://127.0.0.1/fcm/send/x", p256dh: "k1", auth: "a1" },
+        { id: 2, endpoint: "https://192.168.1.10/fcm/send/y", p256dh: "k2", auth: "a2" },
+        { id: 3, endpoint: VALID_ENDPOINT, p256dh: "k3", auth: "a3" },
+      ])
+      .mockResolvedValueOnce([]);
 
     const res = await sendPOST(
       postJson("https://app.test/api/push/send", validBody, AUTH),
@@ -198,5 +205,29 @@ describe("POST /api/push/send", () => {
     expect(webpush.sendNotification.mock.calls[0][0].endpoint).toBe(
       VALID_ENDPOINT,
     );
+  });
+
+  it("paginates across pages, advancing the cursor by last id, until a short page", async () => {
+    db.PUSH_PAGE_SIZE = 2; // small page size to force a second fetch
+    db.getSubscriptionsPage
+      .mockResolvedValueOnce([
+        { id: 10, endpoint: "https://fcm.googleapis.com/fcm/send/a", p256dh: "k", auth: "a" },
+        { id: 11, endpoint: "https://fcm.googleapis.com/fcm/send/b", p256dh: "k", auth: "a" },
+      ])
+      .mockResolvedValueOnce([
+        { id: 12, endpoint: "https://fcm.googleapis.com/fcm/send/c", p256dh: "k", auth: "a" },
+      ]);
+
+    const res = await sendPOST(
+      postJson("https://app.test/api/push/send", validBody, AUTH),
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ ok: true, sent: 3 });
+    // Two fetches: full page (==PUSH_PAGE_SIZE) then a short page ends the loop.
+    expect(db.getSubscriptionsPage).toHaveBeenCalledTimes(2);
+    expect(db.getSubscriptionsPage.mock.calls[0][0]).toBe(0); // first cursor
+    expect(db.getSubscriptionsPage.mock.calls[1][0]).toBe(11); // last id of page 1
+    expect(webpush.sendNotification).toHaveBeenCalledTimes(3);
   });
 });

@@ -1,6 +1,5 @@
 import "server-only";
 
-import { captureException } from "@sentry/nextjs";
 import { isDbConfigured, execute } from "./turso";
 import { PUSH_SUBSCRIPTIONS_SCHEMA, PUSH_SUBSCRIPTIONS_INDEXES } from "./push-schema";
 import type { PushSubscriptionRow } from "types/push";
@@ -88,20 +87,27 @@ export async function deleteSubscriptions(endpoints: string[]): Promise<void> {
   }
 }
 
+/** Page size for fan-out reads — bounds memory regardless of table size. */
+export const PUSH_PAGE_SIZE = 500;
+
 /**
- * Fetch all stored subscriptions for fan-out sending.
- * Returns an empty array if the DB is not configured.
+ * Keyset-paginated fetch for fan-out sending. Returns up to `limit` rows with
+ * id > afterId, ordered by id (the PK, so the read is index-driven and stable
+ * under concurrent inserts — no OFFSET drift). Pass the last row's id as the
+ * next afterId; an empty result means the end. Avoids loading the entire table
+ * into memory on every broadcast. Throws on DB error so the caller can decide
+ * whether to abort or send what it already has.
  */
-export async function getAllSubscriptions(): Promise<PushSubscriptionRow[]> {
+export async function getSubscriptionsPage(
+  afterId: number,
+  limit: number = PUSH_PAGE_SIZE,
+): Promise<PushSubscriptionRow[]> {
   if (!isDbConfigured()) return [];
-  try {
-    await ensureSchema();
-    const result = await execute(
-      "SELECT endpoint, p256dh, auth FROM push_subscriptions",
-    );
-    return result.rows as unknown as PushSubscriptionRow[];
-  } catch (err) {
-    captureException(err, { tags: { feature: "push", action: "getAll" } });
-    return [];
-  }
+  await ensureSchema();
+  const result = await execute(
+    `SELECT id, endpoint, p256dh, auth FROM push_subscriptions
+     WHERE id > ? ORDER BY id LIMIT ?`,
+    [afterId, limit],
+  );
+  return result.rows as unknown as PushSubscriptionRow[];
 }

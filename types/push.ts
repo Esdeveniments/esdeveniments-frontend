@@ -4,6 +4,7 @@
 
 /** A row from the push_subscriptions Turso table. */
 export interface PushSubscriptionRow {
+  id: number;
   endpoint: string;
   p256dh: string;
   auth: string;
