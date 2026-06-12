@@ -40,7 +40,8 @@ function isIosDevice(): boolean {
  * Home Screen on iOS — the user must open the page in Safari first. Most of
  * this popup's audience arrives from social links, and WhatsApp is the
  * dominant sharing channel for this Catalan audience, so this path matters.
- * TikTok's UA carries `musical_ly`/`trill`, never "tiktok".
+ * TikTok's UA carries `musical_ly`/`trill`; the literal `tiktok` is kept as
+ * a defensive catch-all for any variant that does spell it out.
  */
 function isInAppBrowser(): boolean {
   const ua = navigator.userAgent;

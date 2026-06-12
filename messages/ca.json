@@ -562,7 +562,8 @@
       "pushEnabled": "Notificacions activades",
       "pushBlockedHelp": "Tens les notificacions bloquejades. Pots activar-les des de la configuració del navegador del lloc.",
       "close": "Ara no",
-      "aria": "Segueix-nos a les xarxes socials"
+      "aria": "Segueix-nos a les xarxes socials",
+      "ariaInstall": "Instal·la l'app d'Esdeveniments"
     },
     "RestaurantPromotionForm": {
       "heading": "Promociona el teu restaurant",

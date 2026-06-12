@@ -656,7 +656,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
           isClosing ? "animate-slide-down" : "animate-slide-up"
         }`}
         role="complementary"
-        aria-label={t("aria")}
+        aria-label={canInstall ? t("ariaInstall") : t("aria")}
       >
         <div className="relative w-full bg-background rounded-card border border-border shadow-2xl overflow-hidden">
           {/* Gradient accent bar */}
@@ -724,7 +724,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={t("aria")}
+      aria-label={canInstall ? t("ariaInstall") : t("aria")}
     >
       {/* Backdrop */}
       <div

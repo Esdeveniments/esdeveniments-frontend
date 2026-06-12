@@ -554,7 +554,8 @@
       "pushEnabled": "Notifications enabled",
       "pushBlockedHelp": "Notifications are blocked. You can enable them in this site's browser settings.",
       "close": "Not now",
-      "aria": "Follow us on social media"
+      "aria": "Follow us on social media",
+      "ariaInstall": "Install the Esdeveniments app"
     },
     "RestaurantPromotionForm": {
       "heading": "Promote your restaurant",

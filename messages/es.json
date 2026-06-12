@@ -554,7 +554,8 @@
       "pushEnabled": "Notificaciones activadas",
       "pushBlockedHelp": "Tienes las notificaciones bloqueadas. Puedes activarlas desde la configuración del navegador para este sitio.",
       "close": "Ahora no",
-      "aria": "Síguenos en las redes sociales"
+      "aria": "Síguenos en las redes sociales",
+      "ariaInstall": "Instala la app de Esdeveniments"
     },
     "RestaurantPromotionForm": {
       "heading": "Promociona tu restaurante",

@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { usePwaInstall } from "components/hooks/usePwaInstall";
 import type { BeforeInstallPromptEvent } from "types/pwa";
+import { captureException } from "@sentry/nextjs";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
@@ -153,6 +154,13 @@ describe("usePwaInstall — promptInstall flow", () => {
 
     expect(outcome).toBe("unavailable");
     expect(result.current.installState).toBe("not-available");
+    // The failure is reported, not swallowed silently.
+    expect(captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        tags: expect.objectContaining({ feature: "pwa" }),
+      }),
+    );
   });
 
   it("returns 'unavailable' when there is no deferred prompt to fire", async () => {
