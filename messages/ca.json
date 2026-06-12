@@ -552,6 +552,7 @@
       "installEnabling": "Obrint instal·lació...",
       "installStepShare": "Toca Compartir a la barra inferior",
       "installStepShareIpad": "Toca Compartir, a dalt a la dreta",
+      "installStepShareMenu": "Obre el menú ⋯ i toca Comparteix",
       "installStepAdd": "Tria \"Afegir a la pantalla d'inici\"",
       "installInAppHelp": "Per instal·lar l'app, obre aquesta pàgina a Safari (toca ⋯ i \"Obrir al navegador\").",
       "pushEnable": "Activa notificacions",

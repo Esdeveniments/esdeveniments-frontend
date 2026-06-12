@@ -36,15 +36,30 @@ function isIosDevice(): boolean {
 }
 
 /**
- * In-app webviews (Instagram, Facebook, TikTok, …) cannot Add to Home
- * Screen on iOS — the user must open the page in Safari first. Most of
- * this popup's audience arrives from social links, so this path matters.
+ * In-app webviews (WhatsApp, Instagram, Facebook, TikTok, …) cannot Add to
+ * Home Screen on iOS — the user must open the page in Safari first. Most of
+ * this popup's audience arrives from social links, and WhatsApp is the
+ * dominant sharing channel for this Catalan audience, so this path matters.
+ * TikTok's UA carries `musical_ly`/`trill`, never "tiktok".
  */
 function isInAppBrowser(): boolean {
   const ua = navigator.userAgent;
-  return /instagram|fban|fbav|fb_iab|line\/|musical_ly|bytedancewebview|tiktok|snapchat|linkedinapp|pinterest|twitter|gsa\//i.test(
+  return /whatsapp|instagram|fban|fbav|fb_iab|line\/|musical_ly|trill|bytedancewebview|tiktok|snapchat|linkedinapp|pinterest|twitter|micromessenger|gsa\//i.test(
     ua,
   );
+}
+
+/**
+ * Where the Share action lives on the current iOS browser. Safari surfaces
+ * it in the bottom toolbar (iPhone) / top-right (iPad); third-party iOS
+ * browsers bury it in the ⋯ overflow menu (Chrome=CriOS, Firefox=FxiOS,
+ * Edge=EdgiOS, Opera=OPiOS). Since iOS 16.4 all of them can Add to Home
+ * Screen, so guidance stays in-browser — only the share-step copy differs.
+ */
+function detectIosShareLocation(): "safari" | "menu" {
+  return /crios|fxios|edgios|opios/i.test(navigator.userAgent)
+    ? "menu"
+    : "safari";
 }
 
 function detectIosInstallState(): PwaInstallState | null {
@@ -75,6 +90,9 @@ export function usePwaInstall() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isIpad, setIsIpad] = useState(false);
+  const [iosShareLocation, setIosShareLocation] = useState<"safari" | "menu">(
+    "safari",
+  );
 
   // All browser-specific detection runs in an effect to prevent hydration
   // mismatches. Runs once; later transitions arrive via the capture-script
@@ -98,6 +116,7 @@ export function usePwaInstall() {
       if (iosState) {
         setInstallState(iosState);
         setIsIpad(isIpadDevice());
+        setIosShareLocation(detectIosShareLocation());
       }
     }
 
@@ -161,6 +180,11 @@ export function usePwaInstall() {
     showOpenInSafariHint: installState === "ios-in-app",
     /** Safari's share button is top-right on iPad, bottom toolbar on iPhone. */
     isIpad,
+    /**
+     * "safari" → share lives in the toolbar; "menu" → behind the ⋯ overflow
+     * (Chrome/Firefox/Edge/Opera on iOS). Drives the share-step copy.
+     */
+    iosShareLocation,
     promptInstall,
   };
 }

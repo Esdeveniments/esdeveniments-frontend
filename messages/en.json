@@ -544,6 +544,7 @@
       "installEnabling": "Opening install prompt...",
       "installStepShare": "Tap Share in the bottom bar",
       "installStepShareIpad": "Tap Share at the top right",
+      "installStepShareMenu": "Open the ⋯ menu and tap Share",
       "installStepAdd": "Choose \"Add to Home Screen\"",
       "installInAppHelp": "To install the app, open this page in Safari (tap ⋯ then \"Open in browser\").",
       "pushEnable": "Enable notifications",
