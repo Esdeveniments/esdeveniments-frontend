@@ -547,6 +547,8 @@
     "SocialFollowPopup": {
       "headline": "Que els plans et trobin a tu",
       "subtext": "Cada dia compartim els millors esdeveniments a les xarxes. Segueix-nos i no et perdis res!",
+      "installHeadline": "Tingues els plans sempre a mà",
+      "installSubtext": "Instal·la l'app i tindràs els esdeveniments a la pantalla d'inici, amb accés ràpid i sense connexió.",
       "followLabel": "Segueix-nos",
       "installEnable": "Instal·la l'app",
       "installEnabling": "Obrint instal·lació...",

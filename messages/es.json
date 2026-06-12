@@ -539,6 +539,8 @@
     "SocialFollowPopup": {
       "headline": "Que los planes te encuentren a ti",
       "subtext": "Cada día compartimos los mejores eventos en redes. Síguenos y no te pierdas nada.",
+      "installHeadline": "Ten los planes siempre a mano",
+      "installSubtext": "Instala la app y tendrás los eventos en la pantalla de inicio, con acceso rápido y sin conexión.",
       "followLabel": "Síguenos",
       "installEnable": "Instalar app",
       "installEnabling": "Abriendo instalación...",

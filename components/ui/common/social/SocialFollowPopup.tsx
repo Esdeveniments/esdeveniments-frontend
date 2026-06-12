@@ -419,6 +419,15 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     (isInstalled || installState === "not-available") &&
     pushState !== "unsupported";
 
+  // Lead with install copy only when there's an actionable path (one-click
+  // prompt, iOS steps, or the open-in-Safari hint). Without one — no-path
+  // browsers, or already installed — fall back to the social headline so we
+  // never promise an app the user can't get from here.
+  const canInstall =
+    canPromptInstall || showIosInstructions || showOpenInSafariHint;
+  const headlineText = canInstall ? t("installHeadline") : t("headline");
+  const subtextText = canInstall ? t("installSubtext") : t("subtext");
+
   /**
    * Close the popup.
    * @param countAsDismissal When false (post-success auto-close), the
@@ -666,9 +675,9 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             {/* Header */}
             <div className="text-center">
               <h2 className="heading-3 text-foreground-strong mb-2">
-                {t("headline")}
+                {headlineText}
               </h2>
-              <p className="body-small text-foreground/75">{t("subtext")}</p>
+              <p className="body-small text-foreground/75">{subtextText}</p>
             </div>
 
             <InstallSection
@@ -767,12 +776,12 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
 
             {/* Headline */}
             <h2 className="heading-2 text-foreground-strong">
-              {t("headline")}
+              {headlineText}
             </h2>
 
             {/* Subtext */}
             <p className="body-normal text-foreground/75 leading-relaxed">
-              {t("subtext")}
+              {subtextText}
             </p>
           </div>
 
