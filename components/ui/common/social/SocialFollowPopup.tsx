@@ -412,6 +412,15 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     promptInstall,
   } = usePwaInstall();
 
+  // Mirror latest values into refs so `dismiss` can stay referentially stable.
+  // Its identity feeds the focus-trap/scroll-lock effect; if it changed when
+  // installState resolves, that effect would tear down and re-run mid-popup
+  // (stealing focus / toggling the scroll lock).
+  const isMobileRef = useRef(isMobile);
+  isMobileRef.current = isMobile;
+  const installStateRef = useRef(installState);
+  installStateRef.current = installState;
+
   // Show the push CTA once there's no pending install path: app installed,
   // or no install prompt available (incl. after the user dismissed the
   // native prompt — push still works in-browser on desktop/Android).
@@ -439,8 +448,8 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       // keep both so decline rate = dismisses where counted is true.
       sendGoogleEvent("push_optin_dismiss", {
         source: "social_follow_popup",
-        device: isMobile ? "mobile" : "desktop",
-        install_state: installState,
+        device: isMobileRef.current ? "mobile" : "desktop",
+        install_state: installStateRef.current,
         counted: countAsDismissal,
       });
       // Cancel a pending post-success auto-close so a manual dismissal
@@ -460,9 +469,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         lastDismissedAt: Date.now(),
       });
     }, 300);
-    },
-    [isMobile, installState],
-  );
+  }, []);
 
   const handleSubscribePush = useCallback(async () => {
     sendGoogleEvent("push_optin_click", {

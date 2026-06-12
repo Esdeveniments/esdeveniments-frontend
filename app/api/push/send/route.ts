@@ -114,7 +114,6 @@ export async function POST(request: Request) {
   let totalSent = 0;
   let totalFailed = 0;
   let totalValid = 0;
-  const allInvalidSubscriptions: string[] = [];
 
   // Stream subscriptions a page at a time (keyset on id) so memory stays flat
   // regardless of table size. On a DB error mid-broadcast, report what was
@@ -138,6 +137,10 @@ export async function POST(request: Request) {
         }
       });
       totalValid += validSubscriptions.length;
+
+      // Per-page accumulator so memory stays bounded by page size even when
+      // a large share of subscriptions are expired (flushed below per page).
+      const invalidInPage: string[] = [];
 
       for (let i = 0; i < validSubscriptions.length; i += SEND_CONCURRENCY) {
         const batch = validSubscriptions.slice(i, i + SEND_CONCURRENCY);
@@ -173,7 +176,19 @@ export async function POST(request: Request) {
           })
           .filter((endpoint): endpoint is string => Boolean(endpoint));
 
-        allInvalidSubscriptions.push(...invalidInBatch);
+        invalidInPage.push(...invalidInBatch);
+      }
+
+      // Flush this page's expired (404/410) subscriptions — chunked IN
+      // deletes inside the helper, failures logged but non-fatal.
+      if (invalidInPage.length > 0) {
+        try {
+          await deleteSubscriptions(invalidInPage);
+        } catch (err) {
+          captureException(err, {
+            tags: { feature: "push", action: "batchDeleteInvalid" },
+          });
+        }
       }
 
       if (page.length < PUSH_PAGE_SIZE) break;
@@ -182,19 +197,7 @@ export async function POST(request: Request) {
     captureException(err, {
       tags: { feature: "push", action: "broadcast" },
     });
-    // Fall through: clean up and return partial counts below.
-  }
-
-  // Batch-delete expired subscriptions in chunked IN clauses (single
-  // roundtrips instead of N concurrent deletes), logging failures.
-  if (allInvalidSubscriptions.length > 0) {
-    try {
-      await deleteSubscriptions(allInvalidSubscriptions);
-    } catch (err) {
-      captureException(err, {
-        tags: { feature: "push", action: "batchDeleteInvalid" },
-      });
-    }
+    // Fall through: report partial counts below.
   }
 
   if (totalFailed > 0) {
