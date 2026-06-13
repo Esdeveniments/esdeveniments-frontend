@@ -10,6 +10,7 @@ import {
   isApiUrlConfigured,
 } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
+import { eventsTag, eventTag } from "@lib/cache/tags";
 import {
   parseEventDetail,
   parsePagedEvents,
@@ -163,6 +164,7 @@ export const fetchEvents = cache(fetchEventsInternal);
 
 export async function fetchEventBySlug(
   fullSlug: string,
+  options: { preferConfiguredOrigin?: boolean } = {},
 ): Promise<EventDetailResponseDTO | null> {
   if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
     return e2eEventsStore.get(fullSlug) ?? null;
@@ -170,11 +172,13 @@ export async function fetchEventBySlug(
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
     // Use getInternalApiUrl which resolves the correct internal origin
-    const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`);
+    const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`, {
+      preferConfiguredOrigin: options.preferConfiguredOrigin,
+    });
 
     const res = await fetch(internalApiUrl, {
       headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
+      next: { revalidate: 1800, tags: [eventsTag, eventTag(fullSlug)] },
     });
 
     if (res.status === 404) {
@@ -214,7 +218,7 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
 
     const res = await fetch(internalApiUrl, {
       headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 1800, tags: ["events", `event:${fullSlug}`] },
+      next: { revalidate: 1800, tags: [eventsTag, eventTag(fullSlug)] },
     });
 
     if (res.status === 404) {
@@ -243,9 +247,19 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
   }
 }
 
-// Cached wrapper to deduplicate event fetches within the same request
-// Used by both generateMetadata and the page component
+// Cached wrapper to deduplicate event fetches within the same request.
+// Used by the page component (which is explicitly dynamic via connection()).
 export const getEventBySlug = cache(fetchEventBySlug);
+
+// Metadata-only reader: resolves the API origin from configuration instead of
+// request headers(), so generateMetadata stays prerenderable under
+// cacheComponents. Reading headers() there would make the metadata boundary
+// dynamic and mismatch the static shell ("Expected the resume to render <div>
+// ... but instead it rendered <__next_metadata_boundary__>").
+export const getEventBySlugForMetadata = cache(
+  (slug: string): Promise<EventDetailResponseDTO | null> =>
+    fetchEventBySlug(slug, { preferConfiguredOrigin: true }),
+);
 
 export async function updateEventById(
   uuid: string,
