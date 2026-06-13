@@ -1,18 +1,23 @@
 import { describe, it, expect } from "vitest";
+// cache-handler.mjs is a plain JS module without bundled type declarations; the
+// purge helper is exercised here for behavior, so an untyped import is fine.
+// @ts-expect-error -- no type declarations shipped for this .mjs entry point
 import { purgeStaleBuildCaches } from "../cache-handler.mjs";
 
 /**
- * Minimal node-redis stand-in: paginates SCAN through `keys` and records every
- * UNLINK so we can assert exactly which keys were removed.
+ * Minimal node-redis (v5) stand-in. Crucially it returns the SCAN cursor as a
+ * STRING ("0" when done), mirroring the real client — a numeric cursor would
+ * hide loop-termination bugs. It also ignores MATCH (returns every stored key)
+ * so the production-side namespace guard is what must filter out foreign keys.
  */
 function createFakeRedis(keys: string[], { pageSize = 2 } = {}) {
   const unlinked: string[] = [];
   return {
     unlinked,
-    scan(cursor: number) {
-      const start = cursor;
+    scan(cursor: number | string, _options?: { MATCH?: string; COUNT?: number }) {
+      const start = Number(cursor);
       const page = keys.slice(start, start + pageSize);
-      const next = start + pageSize >= keys.length ? 0 : start + pageSize;
+      const next = start + pageSize >= keys.length ? "0" : String(start + pageSize);
       return Promise.resolve({ cursor: next, keys: page });
     },
     unlink(arg: string | string[]) {
@@ -47,7 +52,23 @@ describe("purgeStaleBuildCaches", () => {
     expect(client.unlinked).not.toContain("next:cache:buildB:/");
   });
 
-  it("paginates across multiple SCAN cursors", async () => {
+  it("never touches keys outside the cache namespace (defense-in-depth)", async () => {
+    const client = createFakeRedis([
+      "next:cache:old:/",
+      "session:abc123",
+      "user:42:profile",
+      "next:cache:new:/",
+    ]);
+
+    const removed = await purgeStaleBuildCaches({ client, keyPrefix: "next:cache:new:" });
+
+    expect(removed).toBe(1);
+    expect(client.unlinked).toEqual(["next:cache:old:/"]);
+    expect(client.unlinked).not.toContain("session:abc123");
+    expect(client.unlinked).not.toContain("user:42:profile");
+  });
+
+  it("paginates across multiple SCAN cursors and terminates on string '0'", async () => {
     const client = createFakeRedis(
       Array.from({ length: 7 }, (_, i) => `next:cache:old:k${i}`),
       { pageSize: 2 },

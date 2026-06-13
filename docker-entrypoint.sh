@@ -35,7 +35,11 @@ if [ -z "${NODE_OPTIONS:-}" ] || ! printf '%s' "$NODE_OPTIONS" | grep -q 'max-ol
 
   # Treat anything above 64 GiB as "effectively no limit" → use Node defaults.
   if [ -n "$limit_bytes" ] && [ "$limit_bytes" -le 68719476736 ]; then
-    heap_mb=$(( limit_bytes * HEAP_PERCENT / 100 / 1024 / 1024 ))
+    # Convert to MiB before scaling so the intermediate stays small (no overflow
+    # on 32-bit shells); sub-MiB precision loss is irrelevant for a heap size.
+    # shellcheck disable=SC2017
+    limit_mib=$(( limit_bytes / 1024 / 1024 ))
+    heap_mb=$(( limit_mib * HEAP_PERCENT / 100 ))
     # Skip absurdly small caps where a forced heap would do more harm than good.
     if [ "$heap_mb" -ge 256 ]; then
       export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=${heap_mb}"

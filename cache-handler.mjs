@@ -76,12 +76,20 @@ export async function purgeStaleBuildCaches({ client, keyPrefix, scanCount = 500
       COUNT: scanCount,
     });
     cursor = next;
-    const stale = keys.filter((key) => !key.startsWith(keyPrefix));
+    // Defense-in-depth: confirm the namespace prefix in JS rather than trusting
+    // SCAN's MATCH alone, so a misbehaving client/proxy can never delete keys
+    // outside the cache namespace (e.g. sessions, other apps' data).
+    const stale = keys.filter(
+      (key) => key.startsWith(GLOBAL_CACHE_KEY_PREFIX) && !key.startsWith(keyPrefix),
+    );
     if (stale.length > 0) {
       await client.unlink(stale);
       removed += stale.length;
     }
-  } while (cursor !== 0);
+    // node-redis v5 returns the cursor as a string ("0" when done); Number()
+    // also handles clients that return a numeric cursor. Comparing to 0 (not
+    // "0") avoids an infinite rescan loop.
+  } while (Number(cursor) !== 0);
 
   return removed;
 }
@@ -178,6 +186,10 @@ CacheHandler.onCreation(({ buildId } = {}) => {
         })
         .catch((error) => {
           console.warn("[cache-handler] Stale cache purge failed:", error.message);
+          // Allow a retry on the next healthy connection — the Redis error
+          // listener clears the config and forces re-init, so without this a
+          // transient failure would skip the purge for the rest of the process.
+          globalThis.__cacheHandlerPurgeStarted = false;
         });
     }
 
