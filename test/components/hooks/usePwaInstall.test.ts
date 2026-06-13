@@ -1,10 +1,14 @@
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { usePwaInstall } from "components/hooks/usePwaInstall";
 import type { BeforeInstallPromptEvent } from "types/pwa";
 import { captureException } from "@sentry/nextjs";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 /**
  * These tests pin the UA-classification that decides which install guidance

@@ -22,9 +22,12 @@ const NO_STORE = { "Cache-Control": "no-store" } as const;
  * Constant-time string compare for the bearer secret. A length mismatch
  * short-circuits (the only thing it leaks is length), and equal-length
  * inputs are compared without an early-exit byte loop, so response time
- * doesn't reveal how many bytes matched.
+ * doesn't reveal how many bytes matched. The 512-char cap rejects oversized
+ * Authorization headers before allocating a Buffer (a valid `Bearer <secret>`
+ * is well under that), avoiding attacker-controlled large allocations.
  */
 function safeEqual(a: string, b: string): boolean {
+  if (a.length > 512) return false;
   const ab = Buffer.from(a);
   const bb = Buffer.from(b);
   if (ab.length !== bb.length) return false;
@@ -34,12 +37,14 @@ function safeEqual(a: string, b: string): boolean {
 /**
  * Same-origin relative path: must start with a single "/" ("//host" is a
  * protocol-relative URL and would let a notification open an external site).
- * The service worker also enforces same-origin as defense in depth.
+ * The service worker also enforces same-origin as defense in depth. Capped at
+ * 512 (well above any real same-origin path) so url + icon can't push the
+ * JSON payload past the Web Push ~4 KB limit and silently fail delivery.
  */
 const relativePath = (field: string) =>
   z
     .string()
-    .max(2048)
+    .max(512)
     .refine((v) => v.startsWith("/") && !v.startsWith("//"), {
       message: `${field} must be a same-origin relative path`,
     });
