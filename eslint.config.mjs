@@ -108,9 +108,9 @@ export default [
           // boundary into the resume tree and breaks PPR. Covers declaration and
           // arrow/expression forms. See docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md
           selector:
-            ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug)$/]",
+            ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug|fetchEventBySlug|fetchNewsBySlug)$/]",
           message:
-            "Do not call getEventBySlug/getNewsBySlug inside generateMetadata — they read headers() and make metadata dynamic under cacheComponents, breaking PPR. Use getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
+            "Do not call getEventBySlug/getNewsBySlug/fetchEventBySlug/fetchNewsBySlug inside generateMetadata — they read headers() and make metadata dynamic under cacheComponents, breaking PPR. Use getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
         },
       ],
     },
