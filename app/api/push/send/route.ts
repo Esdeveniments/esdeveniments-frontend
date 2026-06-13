@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import webpush from "web-push";
@@ -16,6 +17,19 @@ import { normalizeHost } from "@utils/host-validation";
 export const maxDuration = 60;
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
+
+/**
+ * Constant-time string compare for the bearer secret. A length mismatch
+ * short-circuits (the only thing it leaks is length), and equal-length
+ * inputs are compared without an early-exit byte loop, so response time
+ * doesn't reveal how many bytes matched.
+ */
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
 
 /**
  * Same-origin relative path: must start with a single "/" ("//host" is a
@@ -58,7 +72,7 @@ export async function POST(request: Request) {
   // route stays safely disabled (401 for everyone).
   const authHeader = request.headers.get("authorization");
   const secret = process.env.PUSH_SEND_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+  if (!secret || !authHeader || !safeEqual(authHeader, `Bearer ${secret}`)) {
     return NextResponse.json(
       { ok: false, error: "UNAUTHORIZED" },
       { status: 401, headers: NO_STORE },
