@@ -210,15 +210,18 @@ export default [
   // CRITICAL: Prevent searchParams in listing pages to avoid cache explosion
   // Reading searchParams makes pages dynamic, creating a separate cache entry per unique URL+query
   // See: Dec 28, 2025 incident - 200M cache writes = $307 cost
+  // NOTE: glob targets the locale-nested route (app/[locale]/[place]/**). The
+  // previous `app/[place]/**` glob matched no files after the next-intl [locale]
+  // segment was added, silently disabling this guard.
   {
-    files: ["app/\\[place\\]/**/*.tsx", "app/\\[place\\]/**/*.ts"],
+    files: ["app/\\[locale\\]/\\[place\\]/**/*.tsx", "app/\\[locale\\]/\\[place\\]/**/*.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",
         {
           selector: "Identifier[name='searchParams']",
           message:
-            "⚠️ COST ALERT: Do NOT use searchParams in app/[place]/* pages! This makes pages dynamic and creates millions of cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
+            "⚠️ COST ALERT: Do NOT use searchParams in app/[locale]/[place]/* pages! This makes pages dynamic and creates millions of cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
         },
       ],
     },
