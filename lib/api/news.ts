@@ -15,6 +15,7 @@ import {
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
 import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cache";
+import type { InternalOriginOptions } from "types/api/internal";
 
 // Re-export for backward compatibility
 export type { FetchNewsParams } from "types/api/news";
@@ -60,7 +61,7 @@ export async function fetchNews(
 
 export async function fetchNewsBySlug(
   slug: string,
-  options: { preferConfiguredOrigin?: boolean } = {}
+  options: InternalOriginOptions = {}
 ): Promise<NewsDetailResponseDTO | null> {
   // Internal route
   try {

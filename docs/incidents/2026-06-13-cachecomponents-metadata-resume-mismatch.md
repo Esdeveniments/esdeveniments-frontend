@@ -78,9 +78,10 @@ site, with no length guard.
   `*ForMetadata` reader (request-independent), never a `headers()`-bound fetch.
   Listing pages already use cached readers, so only the two detail pages were
   affected.
-- **Lint guard:** `eslint.config.mjs` flags calls to the header-aware readers
-  (`getEventBySlug`/`getNewsBySlug`/`getInternalApiUrl`) inside a `generateMetadata`
-  function, pointing at the `*ForMetadata` alternative.
+- **Lint guard:** `eslint.config.mjs` flags calls to the header-aware event/news
+  readers (`getEventBySlug`, `getNewsBySlug`, `fetchEventBySlug`,
+  `fetchEventBySlugWithStatus`, `fetchNewsBySlug`, `fetchNews`, `fetchNewsCities`)
+  inside a `generateMetadata` function, pointing at the `*ForMetadata` alternative.
 - **Tags:** never interpolate a slug into a tag inline — always go through the
   `lib/cache/tags.ts` builders, which enforce the 256-char limit. Covered by
   `test/cache-tags.test.ts`.

@@ -11,6 +11,7 @@ import {
 } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import { eventsTag, eventTag } from "@lib/cache/tags";
+import type { InternalOriginOptions } from "types/api/internal";
 import {
   parseEventDetail,
   parsePagedEvents,
@@ -164,7 +165,7 @@ export const fetchEvents = cache(fetchEventsInternal);
 
 export async function fetchEventBySlug(
   fullSlug: string,
-  options: { preferConfiguredOrigin?: boolean } = {},
+  options: InternalOriginOptions = {},
 ): Promise<EventDetailResponseDTO | null> {
   if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
     return e2eEventsStore.get(fullSlug) ?? null;

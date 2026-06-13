@@ -9,6 +9,7 @@ import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
+import type { InternalOriginOptions } from "types/api/internal";
 
 /** Default API URL used as fallback when NEXT_PUBLIC_API_URL is not set. */
 const DEFAULT_API_URL = apiDefaults.apiUrl;
@@ -98,7 +99,7 @@ export function getVercelProtectionBypassHeaders(): Record<string, string> {
  */
 export async function getInternalApiUrl(
   path: string,
-  options: { preferConfiguredOrigin?: boolean } = {},
+  options: InternalOriginOptions = {},
 ): Promise<string> {
   const normalized = path.startsWith("/") ? path : `/${path}`;
 
