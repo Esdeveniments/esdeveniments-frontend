@@ -19,7 +19,6 @@ import {
 import {
   fetchCategorizedEventsExternal,
   fetchEventsExternal,
-  fetchEventBySlug as fetchEventBySlugExternal,
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
@@ -169,14 +168,6 @@ export async function fetchEventBySlug(
 ): Promise<EventDetailResponseDTO | null> {
   if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
     return e2eEventsStore.get(fullSlug) ?? null;
-  }
-  // During build/SSG the internal /api/* routes aren't served, so read the
-  // backend directly (matches the list fetchers' isBuildPhase behavior; also
-  // no-store, avoiding the build-time fetch-cache explosion). Relevant if a
-  // future generateStaticParams prerenders event slugs — generateMetadata uses
-  // this path via getEventBySlugForMetadata.
-  if (isBuildPhase) {
-    return fetchEventBySlugExternal(fullSlug);
   }
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)

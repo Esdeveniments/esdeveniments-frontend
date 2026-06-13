@@ -101,6 +101,17 @@ export default [
           message:
             "Do not declare interfaces outside of the /types directory. Centralize all interfaces in /types.",
         },
+        {
+          // Prevent dynamic metadata under cacheComponents (PPR): generateMetadata
+          // must not call request-bound readers (getEventBySlug/getNewsBySlug read
+          // headers()), which makes metadata runtime-dynamic, pushes the metadata
+          // boundary into the resume tree and breaks PPR. Covers declaration and
+          // arrow/expression forms. See docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md
+          selector:
+            ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug)$/]",
+          message:
+            "Do not call getEventBySlug/getNewsBySlug inside generateMetadata — they read headers() and make metadata dynamic under cacheComponents, breaking PPR. Use getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
+        },
       ],
     },
   },
@@ -250,27 +261,6 @@ export default [
                 "Prefer importing Link from '@i18n/routing' for automatic locale handling. Use next/link only for external URLs or in primitives with manual locale handling.",
             },
           ],
-        },
-      ],
-    },
-  },
-  // Prevent dynamic metadata under cacheComponents (PPR).
-  // generateMetadata must not fetch via request-bound readers: getEventBySlug /
-  // getNewsBySlug resolve the origin from headers(), which makes metadata
-  // runtime-dynamic, pushes the metadata boundary into the resume tree and
-  // breaks PPR ("Expected the resume to render <div> ... <__next_metadata_boundary__>").
-  // Use the request-independent *ForMetadata readers instead.
-  // See docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md
-  {
-    files: ["app/**/e/**/page.tsx", "app/**/noticies/**/page.tsx"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector:
-            "FunctionDeclaration[id.name='generateMetadata'] CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug)$/]",
-          message:
-            "Do not call getEventBySlug/getNewsBySlug inside generateMetadata — they read headers() and make metadata dynamic under cacheComponents, breaking PPR. Use getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
         },
       ],
     },

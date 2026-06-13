@@ -15,8 +15,6 @@ import {
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
 import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cache";
-import { isBuildPhase } from "@utils/constants";
-import { fetchNewsBySlugExternal } from "./news-external";
 
 // Re-export for backward compatibility
 export type { FetchNewsParams } from "types/api/news";
@@ -64,13 +62,6 @@ export async function fetchNewsBySlug(
   slug: string,
   options: { preferConfiguredOrigin?: boolean } = {}
 ): Promise<NewsDetailResponseDTO | null> {
-  // During build/SSG the internal /api/* routes aren't served — read the
-  // backend directly (no-store, avoiding the build-time fetch-cache explosion).
-  // Relevant if a future generateStaticParams prerenders slugs;
-  // generateMetadata uses this path via getNewsBySlugForMetadata.
-  if (isBuildPhase) {
-    return fetchNewsBySlugExternal(slug);
-  }
   // Internal route
   try {
     const url = await getInternalApiUrl(`/api/news/${slug}`, {
