@@ -59,14 +59,10 @@ export async function generateMetadata(props: {
   const locale = (await rootLocale()) as AppLocale;
   // Use the request-independent reader: reading headers() here would make
   // metadata dynamic under cacheComponents and mismatch the prerendered shell.
-  // It throws on transient errors (so they aren't cached) — fall back to a
-  // minimal title for this request; the next request retries.
-  let event: Awaited<ReturnType<typeof getEventBySlugForMetadata>>;
-  try {
-    event = await getEventBySlugForMetadata(slug);
-  } catch {
-    return { title: "No event found" };
-  }
+  // It throws on transient errors — let that bubble so Next does NOT cache a
+  // broken render (SWR keeps the previous good page); only a genuine 404
+  // returns null below.
+  const event = await getEventBySlugForMetadata(slug);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.
