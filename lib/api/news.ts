@@ -79,6 +79,11 @@ export async function fetchNewsBySlug(
     return addCacheKeyToNewsDetail(data);
   } catch (e) {
     console.error("Error fetching news by slug:", e);
+    // Transient failure: re-throw for cached metadata readers so the error is
+    // not cached as a null (a real 404 returned above, which is fine to cache).
+    if (options.throwOnError) {
+      throw e instanceof Error ? e : new Error(String(e));
+    }
     return null;
   }
 }
@@ -136,5 +141,8 @@ export async function getNewsBySlugForMetadata(
   // metadata prerenderable under cacheComponents.
   cacheLife("hours");
   cacheTag(newsTag, newsSlugTag(slug));
-  return fetchNewsBySlug(slug, { preferConfiguredOrigin: true });
+  return fetchNewsBySlug(slug, {
+    preferConfiguredOrigin: true,
+    throwOnError: true,
+  });
 }

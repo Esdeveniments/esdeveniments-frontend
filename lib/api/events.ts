@@ -203,6 +203,11 @@ export async function fetchEventBySlug(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
       errorMessage,
     );
+    // Transient failure: re-throw for cached metadata readers so the error is
+    // not cached as a null (a real 404 returned above, which is fine to cache).
+    if (options.throwOnError) {
+      throw error instanceof Error ? error : new Error(errorMessage);
+    }
     return null;
   }
 }
@@ -268,7 +273,10 @@ export async function getEventBySlugForMetadata(
   // marks it cached; preferConfiguredOrigin keeps headers() out (forbidden here).
   cacheLife("hours");
   cacheTag(eventsTag, eventTag(slug));
-  return fetchEventBySlug(slug, { preferConfiguredOrigin: true });
+  return fetchEventBySlug(slug, {
+    preferConfiguredOrigin: true,
+    throwOnError: true,
+  });
 }
 
 export async function updateEventById(
