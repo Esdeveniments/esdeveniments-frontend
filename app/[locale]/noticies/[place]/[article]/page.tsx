@@ -1,7 +1,7 @@
 // No headers/nonce needed with relaxed CSP
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getNewsBySlug } from "@lib/api/news";
+import { getNewsBySlug, getNewsBySlugForMetadata } from "@lib/api/news";
 import type { NewsDetailResponseDTO } from "types/api/news";
 import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
@@ -53,7 +53,9 @@ export async function generateMetadata({
   const { place, article } = await params;
   let detail: NewsDetailResponseDTO | null = null;
   try {
-    detail = await getNewsBySlug(article);
+    // Request-independent reader: headers() here would make metadata dynamic
+    // under cacheComponents and mismatch the prerendered shell.
+    detail = await getNewsBySlugForMetadata(article);
   } catch (error) {
     reportNewsDetailError("generateMetadata", error, { place, article });
   }

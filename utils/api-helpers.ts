@@ -9,6 +9,7 @@ import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
+import type { InternalOriginOptions } from "types/api/internal";
 
 /** Default API URL used as fallback when NEXT_PUBLIC_API_URL is not set. */
 const DEFAULT_API_URL = apiDefaults.apiUrl;
@@ -96,12 +97,19 @@ export function getVercelProtectionBypassHeaders(): Record<string, string> {
  * In Vercel preview deployments, this function will use the request host header
  * when available to ensure the correct preview URL is used.
  */
-export async function getInternalApiUrl(path: string): Promise<string> {
+export async function getInternalApiUrl(
+  path: string,
+  options: InternalOriginOptions = {},
+): Promise<string> {
   const normalized = path.startsWith("/") ? path : `/${path}`;
 
   // Priority 1: Try to get host from request headers (works in server components)
-  // This ensures Vercel preview URLs are correctly resolved
-  if (headersFn) {
+  // This ensures Vercel preview URLs are correctly resolved.
+  // Skipped when preferConfiguredOrigin is set: reading headers() makes the
+  // caller dynamic, which under cacheComponents must be avoided in
+  // generateMetadata (otherwise the metadata boundary lands in the resume tree
+  // and mismatches the static shell). Metadata uses the configured origin below.
+  if (headersFn && !options.preferConfiguredOrigin) {
     try {
       const headersList = await headersFn();
       const host = headersList.get("host");
