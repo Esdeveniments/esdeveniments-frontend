@@ -271,12 +271,20 @@ export async function getEventBySlugForMetadata(
   // cache() is only request memoization, so a revalidated fetch under it still
   // counts as runtime I/O → no static shell → PPR resume mismatch. "use cache"
   // marks it cached; preferConfiguredOrigin keeps headers() out (forbidden here).
-  cacheLife("hours");
   cacheTag(eventsTag, eventTag(slug));
-  return fetchEventBySlug(slug, {
+  const event = await fetchEventBySlug(slug, {
     preferConfiguredOrigin: true,
     throwOnError: true,
   });
+  if (!event) {
+    // Genuine 404: cache briefly so a newly-created event isn't stuck on
+    // "not found" metadata for hours. "minutes" not "seconds" — seconds is a
+    // PPR dynamic hole and would re-break the static shell.
+    cacheLife("minutes");
+    return null;
+  }
+  cacheLife("hours");
+  return event;
 }
 
 export async function updateEventById(

@@ -139,10 +139,18 @@ export async function getNewsBySlugForMetadata(
   "use cache";
   // See getEventBySlugForMetadata: "use cache" (not React cache) is what makes
   // metadata prerenderable under cacheComponents.
-  cacheLife("hours");
   cacheTag(newsTag, newsSlugTag(slug));
-  return fetchNewsBySlug(slug, {
+  const detail = await fetchNewsBySlug(slug, {
     preferConfiguredOrigin: true,
     throwOnError: true,
   });
+  if (!detail) {
+    // Genuine 404: cache briefly so a newly-published article isn't stuck on
+    // "not found" metadata for hours. "minutes" not "seconds" — seconds is a
+    // PPR dynamic hole and would re-break the static shell.
+    cacheLife("minutes");
+    return null;
+  }
+  cacheLife("hours");
+  return detail;
 }
