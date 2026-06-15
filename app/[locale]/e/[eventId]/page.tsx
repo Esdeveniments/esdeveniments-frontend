@@ -2,7 +2,7 @@ import { Suspense, use } from "react";
 import type { JSX } from "react";
 import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
-import { getEventBySlug } from "@lib/api/events";
+import { getEventBySlug, getEventBySlugForMetadata } from "@lib/api/events";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "@lib/meta";
@@ -57,7 +57,9 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
   const locale = (await rootLocale()) as AppLocale;
-  const event = await getEventBySlug(slug);
+  // Use the request-independent reader: reading headers() here would make
+  // metadata dynamic under cacheComponents and mismatch the prerendered shell.
+  const event = await getEventBySlugForMetadata(slug);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.

@@ -71,6 +71,10 @@ COPY --chown=nextjs:nodejs --from=builder /app/.next/standalone ./
 COPY --chown=nextjs:nodejs --from=builder /app/.next/static ./.next/static
 COPY --chown=nextjs:nodejs --from=builder /app/public ./public
 COPY --chown=nextjs:nodejs --from=builder /app/cache-handler.mjs ./cache-handler.mjs
+# Entrypoint caps V8's heap to a fraction of the container memory limit so the
+# GC runs before the kernel OOM-kills the container (see docker-entrypoint.sh).
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 EXPOSE 3000
 ENV PORT=3000
@@ -81,4 +85,4 @@ USER nextjs
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["node", "server.js"]
+CMD ["./docker-entrypoint.sh"]
