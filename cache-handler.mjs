@@ -32,8 +32,67 @@ function getRedisUrl() {
 /** Cooldown period (ms) before retrying Redis after a failure — prevents log spam during outages. */
 const RETRY_COOLDOWN_MS = 30_000;
 
+/** Global namespace shared by every build's cache keys (see cacheKeyPrefix below). */
+const GLOBAL_CACHE_KEY_PREFIX = "next:cache:";
+
+/**
+ * In-process LRU ceiling. The library's `maxItemSizeBytes` is actually the
+ * cache's TOTAL `maxSize` (the lib naming is misleading); its default is 100 MB.
+ * Halve it to bound per-container RAM on the shared self-hosted box — evicted
+ * entries simply fall through to Redis on the same host, which is cheap.
+ */
+const LRU_MAX_TOTAL_BYTES = 50 * 1024 * 1024;
+
 /** Shared LRU fallback — created once, reused across all requests and cooldown periods. */
-const lruFallbackConfig = { handlers: [createLruHandler()] };
+const lruFallbackConfig = {
+  handlers: [createLruHandler({ maxItemSizeBytes: LRU_MAX_TOTAL_BYTES })],
+};
+
+/**
+ * Remove cache entries written by previous deploys.
+ *
+ * Every key is namespaced `next:cache:<buildId>:` (see cacheKeyPrefix below).
+ * Entries with a `revalidate` lifespan get a Redis TTL, but fully-static entries
+ * never expire, so each deploy leaves the prior build's keys behind and Redis
+ * grows without bound. On a fresh, healthy connection we SCAN the namespace and
+ * UNLINK anything that doesn't belong to the current build.
+ *
+ * Safe during rolling deploys: a still-running old container that loses its keys
+ * just regenerates them on the next request — a cache miss, never wrong data.
+ * Uses SCAN + UNLINK (non-blocking) so it never stalls Redis.
+ *
+ * @returns {Promise<number>} count of keys removed
+ */
+export async function purgeStaleBuildCaches({ client, keyPrefix, scanCount = 500 }) {
+  // Only safe when scoped to a specific build. Without a build id the prefix is
+  // the global namespace itself, so current and stale are indistinguishable — skip.
+  if (!keyPrefix || keyPrefix === GLOBAL_CACHE_KEY_PREFIX) return 0;
+
+  let cursor = 0;
+  let removed = 0;
+  do {
+    const { cursor: next, keys } = await client.scan(cursor, {
+      MATCH: `${GLOBAL_CACHE_KEY_PREFIX}*`,
+      COUNT: scanCount,
+    });
+    cursor = next;
+    // Defense-in-depth: confirm the namespace prefix in JS rather than trusting
+    // SCAN's MATCH alone, so a misbehaving client/proxy can never delete keys
+    // outside the cache namespace (e.g. sessions, other apps' data).
+    const stale = keys.filter(
+      (key) => key.startsWith(GLOBAL_CACHE_KEY_PREFIX) && !key.startsWith(keyPrefix),
+    );
+    if (stale.length > 0) {
+      await client.unlink(stale);
+      removed += stale.length;
+    }
+    // node-redis v5 returns the cursor as a string ("0" when done); Number()
+    // also handles clients that return a numeric cursor. Comparing to 0 (not
+    // "0") avoids an infinite rescan loop.
+  } while (Number(cursor) !== 0);
+
+  return removed;
+}
 
 CacheHandler.onCreation(({ buildId } = {}) => {
   // If a previous failure occurred, check whether the cooldown has elapsed.
@@ -106,12 +165,33 @@ CacheHandler.onCreation(({ buildId } = {}) => {
       return lruFallbackConfig;
     }
 
-    const cacheKeyPrefix = buildId ? `next:cache:${buildId}:` : "next:cache:";
+    const cacheKeyPrefix = buildId
+      ? `${GLOBAL_CACHE_KEY_PREFIX}${buildId}:`
+      : GLOBAL_CACHE_KEY_PREFIX;
 
     const redisHandler = createRedisHandler({
       client: redisClient,
       keyPrefix: cacheKeyPrefix,
     });
+
+    // Fire-and-forget: drop previous deploys' cache keys so Redis can't grow
+    // unbounded across builds. Never block first-request serving on this; run once.
+    if (!globalThis.__cacheHandlerPurgeStarted) {
+      globalThis.__cacheHandlerPurgeStarted = true;
+      purgeStaleBuildCaches({ client: redisClient, keyPrefix: cacheKeyPrefix })
+        .then((removed) => {
+          if (removed > 0) {
+            console.info(`[cache-handler] Purged ${removed} stale build cache key(s).`);
+          }
+        })
+        .catch((error) => {
+          console.warn("[cache-handler] Stale cache purge failed:", error.message);
+          // Allow a retry on the next healthy connection — the Redis error
+          // listener clears the config and forces re-init, so without this a
+          // transient failure would skip the purge for the rest of the process.
+          globalThis.__cacheHandlerPurgeStarted = false;
+        });
+    }
 
     globalThis.__cacheHandlerConfigPromise = null;
     globalThis.__cacheHandlerConfig = { handlers: [redisHandler, lruFallbackConfig.handlers[0]] };
