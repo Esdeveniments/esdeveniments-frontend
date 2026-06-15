@@ -16,6 +16,7 @@ import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
 import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cache";
 import type { InternalOriginOptions } from "types/api/internal";
+import { cacheLife, cacheTag } from "next/cache";
 
 // Re-export for backward compatibility
 export type { FetchNewsParams } from "types/api/news";
@@ -127,7 +128,13 @@ export const getNewsBySlug = cache(fetchNewsBySlug);
 // request headers(), so generateMetadata stays prerenderable under
 // cacheComponents (reading headers() would make the metadata boundary dynamic
 // and mismatch the static shell). Mirrors getEventBySlugForMetadata.
-export const getNewsBySlugForMetadata = cache(
-  (slug: string): Promise<NewsDetailResponseDTO | null> =>
-    fetchNewsBySlug(slug, { preferConfiguredOrigin: true }),
-);
+export async function getNewsBySlugForMetadata(
+  slug: string,
+): Promise<NewsDetailResponseDTO | null> {
+  "use cache";
+  // See getEventBySlugForMetadata: "use cache" (not React cache) is what makes
+  // metadata prerenderable under cacheComponents.
+  cacheLife("hours");
+  cacheTag(newsTag, newsSlugTag(slug));
+  return fetchNewsBySlug(slug, { preferConfiguredOrigin: true });
+}
