@@ -12,6 +12,7 @@ import {
 import { slugifySegment } from "@utils/string-helpers";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import type { InternalOriginOptions } from "types/api/internal";
+import { cacheLife, cacheTag } from "next/cache";
 import {
   parseEventDetail,
   parsePagedEvents,
@@ -257,10 +258,18 @@ export const getEventBySlug = cache(fetchEventBySlug);
 // cacheComponents. Reading headers() there would make the metadata boundary
 // dynamic and mismatch the static shell ("Expected the resume to render <div>
 // ... but instead it rendered <__next_metadata_boundary__>").
-export const getEventBySlugForMetadata = cache(
-  (slug: string): Promise<EventDetailResponseDTO | null> =>
-    fetchEventBySlug(slug, { preferConfiguredOrigin: true }),
-);
+export async function getEventBySlugForMetadata(
+  slug: string,
+): Promise<EventDetailResponseDTO | null> {
+  "use cache";
+  // cacheComponents: metadata must read CACHED data to be prerenderable. React
+  // cache() is only request memoization, so a revalidated fetch under it still
+  // counts as runtime I/O → no static shell → PPR resume mismatch. "use cache"
+  // marks it cached; preferConfiguredOrigin keeps headers() out (forbidden here).
+  cacheLife("hours");
+  cacheTag(eventsTag, eventTag(slug));
+  return fetchEventBySlug(slug, { preferConfiguredOrigin: true });
+}
 
 export async function updateEventById(
   uuid: string,
