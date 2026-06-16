@@ -57,33 +57,47 @@ export async function GET() {
     publicationDate: string;
   }[] = [];
 
-  for (const hub of NEWS_HUBS) {
-    try {
-      const res = await fetchNews({ page: 0, size: 20, place: hub.slug });
-      const items = Array.isArray(res.content) ? res.content : [];
-      for (const item of items) {
-        // Fetch detail to get accurate publication datetime
-        const detail = await fetchNewsBySlug(item.slug);
-        if (!detail || !detail.createdAt) continue;
-        const pubMs = Date.parse(detail.createdAt);
-        if (isNaN(pubMs) || now - pubMs > cutoffMs) continue;
-        const basePath = `/noticies/${hub.slug}/${item.slug}`;
-        const localizedUrls = buildLocalizedUrls(basePath);
-
-        SUPPORTED_LOCALES.forEach((locale) => {
-          const loc = localizedUrls[locale] ?? `${siteUrl}${basePath}`;
-          candidates.push({
-            loc,
-            publicationName: "Esdeveniments.cat",
-            language: localeToHrefLang[locale as AppLocale] ?? locale,
-            title: detail.title,
-            publicationDate: new Date(pubMs).toISOString(),
-          });
-        });
+  // Fetch hubs and their per-article details IN PARALLEL. The previous nested
+  // sequential awaits (hubs x ~20 detail fetches) blew past the 60s build-export
+  // limit when the API was slow. NEWS_HUBS is small, so an unbounded Promise.all
+  // is fine — add a concurrency cap if it ever grows large.
+  const perHub = await Promise.all(
+    NEWS_HUBS.map(async (hub) => {
+      try {
+        const res = await fetchNews({ page: 0, size: 20, place: hub.slug });
+        const items = Array.isArray(res.content) ? res.content : [];
+        return await Promise.all(
+          items.map(async (item) => ({
+            hub,
+            item,
+            // Detail fetch gives the accurate publication datetime
+            detail: await fetchNewsBySlug(item.slug),
+          }))
+        );
+      } catch (e) {
+        console.error("google-news-sitemap: error fetching hub", hub.slug, e);
+        return [];
       }
-    } catch (e) {
-      console.error("google-news-sitemap: error fetching hub", hub.slug, e);
-    }
+    })
+  );
+
+  for (const { hub, item, detail } of perHub.flat()) {
+    if (!detail || !detail.createdAt) continue;
+    const pubMs = Date.parse(detail.createdAt);
+    if (isNaN(pubMs) || now - pubMs > cutoffMs) continue;
+    const basePath = `/noticies/${hub.slug}/${item.slug}`;
+    const localizedUrls = buildLocalizedUrls(basePath);
+
+    SUPPORTED_LOCALES.forEach((locale) => {
+      const loc = localizedUrls[locale] ?? `${siteUrl}${basePath}`;
+      candidates.push({
+        loc,
+        publicationName: "Esdeveniments.cat",
+        language: localeToHrefLang[locale as AppLocale] ?? locale,
+        title: detail.title,
+        publicationDate: new Date(pubMs).toISOString(),
+      });
+    });
   }
 
   // Google News sitemaps must contain at least one URL
