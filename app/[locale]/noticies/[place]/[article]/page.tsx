@@ -51,13 +51,17 @@ export async function generateMetadata({
   params: Promise<{ place: string; article: string }>;
 }): Promise<Metadata> {
   const { place, article } = await params;
+  // Request-independent reader: headers() here would make metadata dynamic
+  // under cacheComponents and mismatch the prerendered shell. It throws on
+  // transient errors — report with context, then re-throw so Next does NOT
+  // cache a broken render (SWR keeps the previous good page); a genuine 404
+  // returns null below.
   let detail: NewsDetailResponseDTO | null = null;
   try {
-    // Request-independent reader: headers() here would make metadata dynamic
-    // under cacheComponents and mismatch the prerendered shell.
     detail = await getNewsBySlugForMetadata(article);
   } catch (error) {
     reportNewsDetailError("generateMetadata", error, { place, article });
+    throw error;
   }
   const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
   const placeType = await getPlaceTypeAndLabelCached(place);

@@ -79,6 +79,11 @@ export async function fetchNewsBySlug(
     return addCacheKeyToNewsDetail(data);
   } catch (e) {
     console.error("Error fetching news by slug:", e);
+    // Transient failure: re-throw for cached metadata readers so the error is
+    // not cached as a null (a real 404 returned above, which is fine to cache).
+    if (options.throwOnError) {
+      throw e instanceof Error ? e : new Error(String(e));
+    }
     return null;
   }
 }
@@ -134,7 +139,18 @@ export async function getNewsBySlugForMetadata(
   "use cache";
   // See getEventBySlugForMetadata: "use cache" (not React cache) is what makes
   // metadata prerenderable under cacheComponents.
-  cacheLife("hours");
   cacheTag(newsTag, newsSlugTag(slug));
-  return fetchNewsBySlug(slug, { preferConfiguredOrigin: true });
+  const detail = await fetchNewsBySlug(slug, {
+    preferConfiguredOrigin: true,
+    throwOnError: true,
+  });
+  if (!detail) {
+    // Genuine 404: cache briefly so a newly-published article isn't stuck on
+    // "not found" metadata for hours. "minutes" not "seconds" — seconds is a
+    // PPR dynamic hole and would re-break the static shell.
+    cacheLife("minutes");
+    return null;
+  }
+  cacheLife("hours");
+  return detail;
 }
