@@ -16,6 +16,7 @@ import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
 import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cache";
 import type { InternalOriginOptions } from "types/api/internal";
+import { cacheLife, cacheTag } from "next/cache";
 
 // Re-export for backward compatibility
 export type { FetchNewsParams } from "types/api/news";
@@ -78,6 +79,11 @@ export async function fetchNewsBySlug(
     return addCacheKeyToNewsDetail(data);
   } catch (e) {
     console.error("Error fetching news by slug:", e);
+    // Transient failure: re-throw for cached metadata readers so the error is
+    // not cached as a null (a real 404 returned above, which is fine to cache).
+    if (options.throwOnError) {
+      throw e instanceof Error ? e : new Error(String(e));
+    }
     return null;
   }
 }
@@ -127,7 +133,24 @@ export const getNewsBySlug = cache(fetchNewsBySlug);
 // request headers(), so generateMetadata stays prerenderable under
 // cacheComponents (reading headers() would make the metadata boundary dynamic
 // and mismatch the static shell). Mirrors getEventBySlugForMetadata.
-export const getNewsBySlugForMetadata = cache(
-  (slug: string): Promise<NewsDetailResponseDTO | null> =>
-    fetchNewsBySlug(slug, { preferConfiguredOrigin: true }),
-);
+export async function getNewsBySlugForMetadata(
+  slug: string,
+): Promise<NewsDetailResponseDTO | null> {
+  "use cache";
+  // See getEventBySlugForMetadata: "use cache" (not React cache) is what makes
+  // metadata prerenderable under cacheComponents.
+  cacheTag(newsTag, newsSlugTag(slug));
+  const detail = await fetchNewsBySlug(slug, {
+    preferConfiguredOrigin: true,
+    throwOnError: true,
+  });
+  if (!detail) {
+    // Genuine 404: cache briefly so a newly-published article isn't stuck on
+    // "not found" metadata for hours. "minutes" not "seconds" — seconds is a
+    // PPR dynamic hole and would re-break the static shell.
+    cacheLife("minutes");
+    return null;
+  }
+  cacheLife("hours");
+  return detail;
+}

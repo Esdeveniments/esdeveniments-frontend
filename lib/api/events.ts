@@ -12,6 +12,7 @@ import {
 import { slugifySegment } from "@utils/string-helpers";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import type { InternalOriginOptions } from "types/api/internal";
+import { cacheLife, cacheTag } from "next/cache";
 import {
   parseEventDetail,
   parsePagedEvents,
@@ -202,6 +203,11 @@ export async function fetchEventBySlug(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
       errorMessage,
     );
+    // Transient failure: re-throw for cached metadata readers so the error is
+    // not cached as a null (a real 404 returned above, which is fine to cache).
+    if (options.throwOnError) {
+      throw error instanceof Error ? error : new Error(errorMessage);
+    }
     return null;
   }
 }
@@ -257,10 +263,29 @@ export const getEventBySlug = cache(fetchEventBySlug);
 // cacheComponents. Reading headers() there would make the metadata boundary
 // dynamic and mismatch the static shell ("Expected the resume to render <div>
 // ... but instead it rendered <__next_metadata_boundary__>").
-export const getEventBySlugForMetadata = cache(
-  (slug: string): Promise<EventDetailResponseDTO | null> =>
-    fetchEventBySlug(slug, { preferConfiguredOrigin: true }),
-);
+export async function getEventBySlugForMetadata(
+  slug: string,
+): Promise<EventDetailResponseDTO | null> {
+  "use cache";
+  // cacheComponents: metadata must read CACHED data to be prerenderable. React
+  // cache() is only request memoization, so a revalidated fetch under it still
+  // counts as runtime I/O → no static shell → PPR resume mismatch. "use cache"
+  // marks it cached; preferConfiguredOrigin keeps headers() out (forbidden here).
+  cacheTag(eventsTag, eventTag(slug));
+  const event = await fetchEventBySlug(slug, {
+    preferConfiguredOrigin: true,
+    throwOnError: true,
+  });
+  if (!event) {
+    // Genuine 404: cache briefly so a newly-created event isn't stuck on
+    // "not found" metadata for hours. "minutes" not "seconds" — seconds is a
+    // PPR dynamic hole and would re-break the static shell.
+    cacheLife("minutes");
+    return null;
+  }
+  cacheLife("hours");
+  return event;
+}
 
 export async function updateEventById(
   uuid: string,
