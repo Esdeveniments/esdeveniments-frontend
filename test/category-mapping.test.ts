@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { isValidCategorySlugFormat } from "../utils/category-mapping";
-import { DEFAULT_FILTER_VALUE } from "../utils/constants";
+import { isValidCategorySlugFormat } from "@utils/category-mapping";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 
 describe("category-mapping: isValidCategorySlugFormat", () => {
   describe("valid format", () => {
