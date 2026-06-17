@@ -20,31 +20,40 @@ export async function GET() {
 
   const articleEntries: SitemapField[] = [];
 
-  // Fetch a limited number of recent articles per hub to avoid oversized sitemap
-  for (const hub of NEWS_HUBS) {
-    try {
-      const res = await fetchNews({ page: 0, size: 20, place: hub.slug });
-      const items = Array.isArray(res.content) ? res.content : [];
-      for (const item of items) {
-        const lastDate = item.endDate || item.startDate;
-        if (!item.slug || !lastDate) continue;
-        const loc = `${siteUrl}/noticies/${hub.slug}/${item.slug}`;
-        articleEntries.push({
-          loc,
-          lastmod: new Date(lastDate).toISOString(),
-          changefreq: "daily",
-          priority: 0.7,
-          alternates: buildAlternateLinks(loc),
-        });
+  // Fetch recent articles per hub IN PARALLEL. Sequential awaits blew past the
+  // 60s build-export limit when the API was slow. NEWS_HUBS is small, so an
+  // unbounded Promise.all is fine — add a concurrency cap if it ever grows.
+  const perHub = await Promise.all(
+    NEWS_HUBS.map(async (hub) => {
+      try {
+        const res = await fetchNews({ page: 0, size: 20, place: hub.slug });
+        return (Array.isArray(res.content) ? res.content : []).map((item) => ({
+          hub,
+          item,
+        }));
+      } catch (e) {
+        // Continue gracefully on a hub failure
+        console.error(
+          "server-news-sitemap: error fetching news for hub",
+          hub.slug,
+          e
+        );
+        return [];
       }
-    } catch (e) {
-      // Continue gracefully on a hub failure
-      console.error(
-        "server-news-sitemap: error fetching news for hub",
-        hub.slug,
-        e
-      );
-    }
+    })
+  );
+
+  for (const { hub, item } of perHub.flat()) {
+    const lastDate = item.endDate || item.startDate;
+    if (!item.slug || !lastDate) continue;
+    const loc = `${siteUrl}/noticies/${hub.slug}/${item.slug}`;
+    articleEntries.push({
+      loc,
+      lastmod: new Date(lastDate).toISOString(),
+      changefreq: "daily",
+      priority: 0.7,
+      alternates: buildAlternateLinks(loc),
+    });
   }
 
   const xml = buildSitemap([...listEntries, ...articleEntries], {});
