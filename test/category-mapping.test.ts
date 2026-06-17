@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  isValidCategorySlugFormat,
-  isValidCategorySlug,
-} from "../utils/category-mapping";
+import { isValidCategorySlugFormat } from "../utils/category-mapping";
 import { DEFAULT_FILTER_VALUE } from "../utils/constants";
 
 describe("category-mapping: isValidCategorySlugFormat", () => {
@@ -186,31 +183,5 @@ describe("category-mapping: isValidCategorySlugFormat", () => {
         expect(isValidCategorySlugFormat(slug)).toBe(true);
       });
     });
-  });
-});
-
-describe("category-mapping: isValidCategorySlug (deprecated)", () => {
-  it("accepts valid format slugs (up to 64 characters)", () => {
-    expect(isValidCategorySlug("concerts")).toBe(true);
-    expect(isValidCategorySlug("fires-i-festes")).toBe(true);
-    // Should accept slugs up to 64 characters (security limit)
-    const maxLengthSlug = "a".repeat(64);
-    expect(isValidCategorySlug(maxLengthSlug)).toBe(true);
-    // Should reject slugs longer than 64 characters
-    const tooLongSlug = "a".repeat(65);
-    expect(isValidCategorySlug(tooLongSlug)).toBe(false);
-  });
-
-  it("rejects invalid format slugs", () => {
-    expect(isValidCategorySlug("Concerts")).toBe(false);
-    expect(isValidCategorySlug("concerts!")).toBe(false);
-    expect(isValidCategorySlug("")).toBe(false);
-  });
-
-  it("maintains backward compatibility", () => {
-    // Should work the same as before for valid formats
-    expect(isValidCategorySlug(DEFAULT_FILTER_VALUE)).toBe(true);
-    expect(isValidCategorySlug("teatre")).toBe(true);
-    expect(isValidCategorySlug("category-123")).toBe(true);
   });
 });

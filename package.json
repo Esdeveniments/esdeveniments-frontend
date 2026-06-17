@@ -104,7 +104,6 @@
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/coverage-v8": "^4.1.7",
     "babel-plugin-react-compiler": "^19.1.0-rc.1",
-    "baseline-browser-mapping": "^2.10.33",
     "cheerio": "^1.2.0",
     "cross-env": "^10.1.0",
     "env-cmd": "^10.1.0",
