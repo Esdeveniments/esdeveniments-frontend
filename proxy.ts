@@ -187,6 +187,16 @@ function getAllowedOriginHosts(): Set<string> {
     addAllowedOriginHost(hosts, vercelUrl);
   }
 
+  // Branch-preview alias (project-git-branch-team.vercel.app). Vercel sets
+  // VERCEL_BRANCH_URL per deployment; VERCEL_URL is the hash deployment URL,
+  // not the alias users actually open. Without this, every browser-initiated
+  // POST (push subscribe, favorites, sponsor checkout) 403s on branch previews.
+  const vercelBranchUrl =
+    process.env.VERCEL_BRANCH_URL || process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL;
+  if (vercelBranchUrl) {
+    addAllowedOriginHost(hosts, vercelBranchUrl);
+  }
+
   if (isDev) {
     hosts.add("localhost:3000");
     hosts.add("127.0.0.1:3000");
@@ -281,6 +291,9 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/publish",
   "/api/tiktok/upload",
   "/api/tiktok/status",
+  // Web Push subscription (browser-initiated; VAPID send route protects itself with PUSH_SEND_SECRET)
+  "/api/push/subscribe",
+  "/api/push/send",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
 ];
@@ -294,6 +307,7 @@ export const ORIGIN_CHECK_EXEMPT = new Set([
   "/api/sponsors/webhook", // Stripe webhook (server-to-server)
   "/api/revalidate", // External revalidation trigger (has own secret)
   "/api/health", // Monitoring probes
+  "/api/push/send", // Push broadcast (server-to-server, protected by PUSH_SEND_SECRET)
 ]);
 
 /**
