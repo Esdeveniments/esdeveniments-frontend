@@ -28,6 +28,25 @@ Most are already repo-level secrets. Add the gaps:
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = copy from the Coolify staging app env
 - Any other `NEXT_PUBLIC_*` that differs from prod for staging.
 
+**Clear the prod tracking IDs on staging (important).** A GitHub *environment*
+secret falls back to the repo-level secret when unset. The repo-level values are
+**prod**, so if the `staging` environment doesn't override the analytics keys,
+the staging image inlines prod tracking and staging traffic pollutes prod
+analytics. Today staging's Coolify app simply omits these (builds empty), so
+this is a regression the migration would introduce. Set them to empty strings in
+the `staging` environment:
+
+```bash
+gh secret set NEXT_PUBLIC_GOOGLE_ANALYTICS        --env staging --body ""
+gh secret set NEXT_PUBLIC_GOOGLE_ADS              --env staging --body ""
+gh secret set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION --env staging --body ""
+gh secret set NEXT_PUBLIC_TIKTOK_CLIENT_KEY       --env staging --body ""
+gh secret set NEXT_PUBLIC_TIKTOK_REDIRECT_URI     --env staging --body ""
+```
+
+Then re-trigger a `develop` build so the `:develop` image is rebuilt without the
+prod IDs **before** flipping Coolify staging to the prebuilt image.
+
 `NEXT_PUBLIC_CONTACT_EMAIL` is not set anywhere today (builds empty); add it if
 you want it inlined.
 
@@ -52,8 +71,14 @@ For each frontend app (prod `ohrtinmo1t8sz798wrq1gav3`, staging
 3. **Remove `BUILD_VERSION` from the app's runtime env vars.** The image bakes
    `BUILD_VERSION=<git sha>` at build time, and a runtime override would shadow
    it, breaking the `/api/health` version gate the deploy workflow waits on.
-4. Keep the existing deploy webhook. It now triggers a pull-and-redeploy of the
-   new tag instead of an on-host build.
+4. Deploy trigger: a **Docker Image** app does not auto-deploy from git pushes
+   the way a Dockerfile/GitHub app does, so confirm the workflow's
+   `COOLIFY_WEBHOOK_URL` is this app's **Deploy Webhook** (Coolify → app →
+   Webhooks). The deploy job POSTs it explicitly, which makes Coolify re-pull
+   the moving tag (`:main` / `:develop`) and swap the container. After the first
+   prebuilt deploy, verify `/api/health` reports the new commit — if the tag
+   didn't re-pull, enable "force pull" / check the webhook points at the right
+   app.
 
 ## How it flows after migration
 
