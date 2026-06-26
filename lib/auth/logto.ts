@@ -1,10 +1,16 @@
 // Server-only Logto OIDC client. We integrate via the standard OAuth 2.0 /
 // OpenID Connect endpoints directly (no @logto/* SDK) to keep the client
 // bundle untouched. Endpoints are fixed for Logto, so no network discovery.
-import { createHash, randomBytes } from "node:crypto";
+import {
+  createHash,
+  createPublicKey,
+  randomBytes,
+  verify as cryptoVerify,
+} from "node:crypto";
 import type {
   AuthRole,
   AuthUser,
+  Jwk,
   LogtoConfig,
   LogtoIdTokenClaims,
   LogtoTokenResponse,
@@ -199,6 +205,63 @@ function decodeJwtPayload(jwt: string): LogtoIdTokenClaims {
   return JSON.parse(
     Buffer.from(part, "base64url").toString("utf8"),
   ) as LogtoIdTokenClaims;
+}
+
+// Cache the issuer's JWKS briefly; refetch on a kid miss to handle rotation.
+let jwksCache: { keys: Jwk[]; fetchedAt: number } | null = null;
+const JWKS_TTL_MS = 10 * 60 * 1000;
+
+async function getJwks(config: LogtoConfig, force = false): Promise<Jwk[]> {
+  if (jwksCache && !force && Date.now() - jwksCache.fetchedAt < JWKS_TTL_MS) {
+    return jwksCache.keys;
+  }
+  const res = await fetch(`${config.issuer}/jwks`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`Logto JWKS ${res.status}`);
+  const data = (await res.json()) as { keys: Jwk[] };
+  jwksCache = { keys: data.keys ?? [], fetchedAt: Date.now() };
+  return jwksCache.keys;
+}
+
+/**
+ * Verify the id_token's RS256 signature against the issuer's JWKS. Defense in
+ * depth on top of the back-channel TLS to the token endpoint: a forged/replaced
+ * token response can't impersonate a user without the issuer's private key.
+ */
+export async function verifyIdToken(
+  config: LogtoConfig,
+  idToken: string,
+  expectedNonce: string,
+): Promise<LogtoIdTokenClaims> {
+  const [headerB64, payloadB64, signatureB64] = idToken.split(".");
+  if (!headerB64 || !payloadB64 || !signatureB64) {
+    throw new Error("Malformed id_token");
+  }
+  const header = JSON.parse(
+    Buffer.from(headerB64, "base64url").toString("utf8"),
+  ) as { alg?: string; kid?: string };
+  if (header.alg !== "RS256") {
+    throw new Error(`Unsupported id_token alg: ${header.alg}`);
+  }
+
+  const findKey = (keys: Jwk[]) =>
+    keys.find((k) => k.kty === "RSA" && (!header.kid || k.kid === header.kid));
+  let jwk = findKey(await getJwks(config));
+  if (!jwk) jwk = findKey(await getJwks(config, true)); // refetch on rotation
+  if (!jwk) throw new Error("No matching JWKS key for id_token");
+
+  const publicKey = createPublicKey({ key: jwk, format: "jwk" });
+  const ok = cryptoVerify(
+    "RSA-SHA256",
+    Buffer.from(`${headerB64}.${payloadB64}`),
+    publicKey,
+    Buffer.from(signatureB64, "base64url"),
+  );
+  if (!ok) throw new Error("id_token signature verification failed");
+
+  return validateIdTokenClaims(config, idToken, expectedNonce);
 }
 
 /**

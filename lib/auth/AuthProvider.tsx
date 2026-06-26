@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setHydrated(true);
     };
     const timeout = setTimeout(() => controller.abort(), 10_000);
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     // /api/auth/me returns 503 on a transient Logto outage while preserving the
     // session cookies. Retry once before resolving to unauthenticated so a brief
     // blip doesn't flip the UI to logged-out.
@@ -45,7 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             signal: controller.signal,
           });
           if (res.status === 503 && attempt === 0) {
-            await new Promise((r) => setTimeout(r, 1500));
+            // Delay before retry. The timer is cleared on unmount (below), so
+            // it can't run after the component is gone; the 1.5s wait is well
+            // inside the 10s abort window.
+            await new Promise<void>((resolve) => {
+              retryTimer = setTimeout(resolve, 1500);
+            });
+            if (controller.signal.aborted) {
+              finish(null);
+              return;
+            }
             continue;
           }
           const data = res.ok ? await res.json() : null;
@@ -62,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       settled = true;
       clearTimeout(timeout);
+      if (retryTimer) clearTimeout(retryTimer);
       controller.abort();
     };
   }, []);

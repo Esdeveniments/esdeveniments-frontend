@@ -41,8 +41,19 @@ const baseOptions = {
 
 // ── At-rest encryption (optional) ─────────────────────────────
 const ENC_PREFIX = "v1.";
-const encKey = process.env.LOGTO_COOKIE_SECRET
-  ? createHash("sha256").update(process.env.LOGTO_COOKIE_SECRET).digest()
+const cookieSecret = process.env.LOGTO_COOKIE_SECRET;
+// Require a strong operator secret rather than stretching a weak one: a
+// >=32-char random secret keyed via SHA-256 to a 32-byte AES key is sufficient.
+if (cookieSecret && cookieSecret.length < 32) {
+  throw new Error("LOGTO_COOKIE_SECRET must be at least 32 characters");
+}
+if (!cookieSecret && IS_PRODUCTION) {
+  console.warn(
+    "[auth-cookies] LOGTO_COOKIE_SECRET is not set — session tokens are stored unencrypted",
+  );
+}
+const encKey = cookieSecret
+  ? createHash("sha256").update(cookieSecret).digest()
   : null;
 
 function encrypt(plaintext: string): string {
@@ -56,8 +67,13 @@ function encrypt(plaintext: string): string {
 
 function decrypt(value: string | undefined): string | null {
   if (!value) return null;
-  // Not an encrypted blob (no secret configured, or written before rollout).
-  if (!encKey || !value.startsWith(ENC_PREFIX)) return value;
+  if (!encKey) {
+    // A v1.* envelope with no key configured means the secret was removed or
+    // mistyped — don't pass the encrypted blob through as a bearer token.
+    return value.startsWith(ENC_PREFIX) ? null : value;
+  }
+  // Legacy plaintext cookie written before the secret was introduced.
+  if (!value.startsWith(ENC_PREFIX)) return value;
   try {
     const buf = Buffer.from(value.slice(ENC_PREFIX.length), "base64url");
     const iv = buf.subarray(0, 12);

@@ -12,7 +12,7 @@ export interface AuthUser {
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
-export type { LogtoTokenResponse, LogtoUserInfo, LogtoIdTokenClaims } from "./api/auth";
+export type { LogtoTokenResponse, LogtoUserInfo, LogtoIdTokenClaims, Jwk } from "./api/auth";
 
 /** Resolved Logto OIDC endpoints + client credentials. */
 export interface LogtoConfig {

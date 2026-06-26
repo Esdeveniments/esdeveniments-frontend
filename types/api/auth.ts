@@ -25,6 +25,15 @@ export interface LogtoUserInfo {
   custom_data?: Record<string, unknown> | null;
 }
 
+/** A single JSON Web Key from the issuer's JWKS (RSA keys for RS256). */
+export interface Jwk {
+  kid?: string;
+  kty: string;
+  alg?: string;
+  n?: string;
+  e?: string;
+}
+
 /** Decoded id_token payload claims we validate. */
 export interface LogtoIdTokenClaims {
   iss: string;

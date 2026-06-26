@@ -23,10 +23,6 @@ export async function GET(request: NextRequest): Promise<Response> {
   const accessToken = readTokenFromRequest(request, ACCESS_TOKEN_COOKIE);
   const refreshToken = readTokenFromRequest(request, REFRESH_TOKEN_COOKIE);
 
-  if (!accessToken && !refreshToken) {
-    return NextResponse.json({ user: null }, { status: 401, headers: NO_STORE });
-  }
-
   const unauthorized = (): Response => {
     const response = NextResponse.json(
       { user: null },
@@ -35,6 +31,17 @@ export async function GET(request: NextRequest): Promise<Response> {
     clearTokenCookies(response);
     return response;
   };
+
+  if (!accessToken && !refreshToken) {
+    // If raw cookies exist but couldn't be decrypted (rotated/corrupted
+    // secret), clear them so the client isn't stuck resending broken cookies.
+    const hasRawCookie =
+      request.cookies.has(ACCESS_TOKEN_COOKIE) ||
+      request.cookies.has(REFRESH_TOKEN_COOKIE);
+    return hasRawCookie
+      ? unauthorized()
+      : NextResponse.json({ user: null }, { status: 401, headers: NO_STORE });
+  }
 
   try {
     const config = getLogtoConfig();

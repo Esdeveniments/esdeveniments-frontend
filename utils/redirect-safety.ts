@@ -7,13 +7,14 @@
  * the login entry point and the sign-in route sanitize identically.
  */
 // Cap length so a huge ?redirect= can't produce an oversized Set-Cookie header.
-const MAX_RETURN_TO_LENGTH = 2048;
+// Measured in encoded bytes (non-ASCII paths can exceed the per-cookie limit).
+const MAX_RETURN_TO_BYTES = 2048;
 
 export function sanitizeReturnTo(
   value: string | null | undefined,
 ): string | null {
   if (typeof value !== "string") return null;
-  if (value.length > MAX_RETURN_TO_LENGTH) return null;
+  if (new TextEncoder().encode(value).length > MAX_RETURN_TO_BYTES) return null;
   if (!value.startsWith("/")) return null;
   if (value.startsWith("//") || value.startsWith("/\\")) return null;
   if (value.includes("\\")) return null;

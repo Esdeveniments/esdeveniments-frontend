@@ -382,14 +382,22 @@ export default async function proxy(request: NextRequest) {
   // otherwise prerender the page's redirect() into a meta-refresh. Preserves a
   // safe local ?redirect= target (no protocol-relative or backslash tricks).
   const loginMatch = pathname.match(LOGIN_ENTRY_PATTERN);
-  if (loginMatch) {
-    const safe = sanitizeReturnTo(request.nextUrl.searchParams.get("redirect"));
+  if (loginMatch && (request.method === "GET" || request.method === "HEAD")) {
+    const locale = loginMatch[1] ?? DEFAULT_LOCALE;
+    // Default the post-login destination to the localized home so a user
+    // browsing in es/en isn't bounced to the default locale.
+    const localizedHome = locale === DEFAULT_LOCALE ? "/" : `/${locale}`;
+    const safe =
+      sanitizeReturnTo(request.nextUrl.searchParams.get("redirect")) ??
+      localizedHome;
     const target = new URL("/api/auth/sign-in", request.nextUrl.origin);
-    if (safe) target.searchParams.set("redirect", safe);
-    // Preserve the locale prefix (default ca) so Logto renders its hosted
-    // sign-in page in the user's language via ui_locales.
-    target.searchParams.set("locale", loginMatch[1] ?? "ca");
-    return NextResponse.redirect(target, 307);
+    target.searchParams.set("redirect", safe);
+    // Preserve the locale so Logto renders its hosted page via ui_locales.
+    target.searchParams.set("locale", locale);
+    const response = NextResponse.redirect(target, 307);
+    // This route used to be a noindex page; keep it out of search results.
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
   }
 
   if (pathname.startsWith("/api/")) {
