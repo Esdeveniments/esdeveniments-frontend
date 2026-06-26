@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { waitForFavoritesReady } from "./helpers/events";
+import { waitForFavoritesReady, waitForFavoriteWrite } from "./helpers/events";
 
 function decodeCookieValue(raw: string): string {
   try {
@@ -92,7 +92,12 @@ test.describe("Favorites flow", () => {
     // Ensure the button has hydrated and SWR has settled before toggling, so
     // the click isn't dropped and a late GET can't reset the optimistic state.
     await favoritesReady;
+    // Await the mutation write too: a second SWR revalidation GET can still
+    // resolve after the click and reset the optimistic state before the POST
+    // makes it authoritative. Assert aria-pressed only once the write settles.
+    const favoriteWrite = waitForFavoriteWrite(page);
     await favButton.click();
+    await favoriteWrite;
     await expect(favButton).toHaveAttribute("aria-pressed", "true");
 
     await expect
@@ -166,7 +171,9 @@ test.describe("Favorites flow", () => {
     // Ensure hydration + SWR settle before toggling (see the add-favorite test).
     await favoritesReady;
     // Toggle ON
+    const favoriteWriteOn = waitForFavoriteWrite(page);
     await favButton.click();
+    await favoriteWriteOn;
     await expect(favButton).toHaveAttribute("aria-pressed", "true");
 
     // In CI the server action can keep the button disabled briefly.
@@ -175,7 +182,9 @@ test.describe("Favorites flow", () => {
     });
 
     // Toggle OFF
+    const favoriteWriteOff = waitForFavoriteWrite(page);
     await favButton.click();
+    await favoriteWriteOff;
     await expect(favButton).toHaveAttribute("aria-pressed", "false");
 
     // Wait for the server action to finish; navigating too early can abort the request.
