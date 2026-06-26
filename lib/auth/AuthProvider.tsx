@@ -34,13 +34,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setHydrated(true);
     };
     const timeout = setTimeout(() => controller.abort(), 10_000);
-    fetch("/api/auth/me", {
-      credentials: "include",
-      signal: controller.signal,
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => finish((data?.user as AuthUser | null) ?? null))
-      .catch(() => finish(null));
+    // /api/auth/me returns 503 on a transient Logto outage while preserving the
+    // session cookies. Retry once before resolving to unauthenticated so a brief
+    // blip doesn't flip the UI to logged-out.
+    const load = async () => {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch("/api/auth/me", {
+            credentials: "include",
+            signal: controller.signal,
+          });
+          if (res.status === 503 && attempt === 0) {
+            await new Promise((r) => setTimeout(r, 1500));
+            continue;
+          }
+          const data = res.ok ? await res.json() : null;
+          finish((data?.user as AuthUser | null) ?? null);
+          return;
+        } catch {
+          finish(null);
+          return;
+        }
+      }
+      finish(null);
+    };
+    void load();
     return () => {
       settled = true;
       clearTimeout(timeout);

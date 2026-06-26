@@ -64,6 +64,9 @@ describe("sanitizeReturnTo", () => {
     expect(sanitizeReturnTo("/foo%0d%0aSet-Cookie:x")).toBeNull();
     expect(sanitizeReturnTo("/foo%09bar")).toBeNull();
   });
+  it("rejects over-long paths to bound the Set-Cookie size", () => {
+    expect(sanitizeReturnTo("/" + "a".repeat(3000))).toBeNull();
+  });
 });
 
 describe("buildAuthorizationUrl", () => {
@@ -95,6 +98,20 @@ describe("buildAuthorizationUrl", () => {
       }),
     );
     expect(withResource.searchParams.get("resource")).toBe("https://api.test");
+  });
+
+  it("sets ui_locales when a locale is provided", () => {
+    const url = new URL(
+      buildAuthorizationUrl({
+        config,
+        redirectUri: "https://app.test/cb",
+        state: "s",
+        nonce: "n",
+        codeChallenge: "c",
+        locale: "ca",
+      }),
+    );
+    expect(url.searchParams.get("ui_locales")).toBe("ca");
   });
 });
 

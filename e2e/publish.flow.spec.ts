@@ -24,22 +24,9 @@ test.describe("Publish event flow", () => {
   });
 
   test("authenticated users see the form", async ({ page }) => {
+    // Logto hosts sign-in; the session is established via the /api/auth/me mock,
+    // so navigate straight to the gated page rather than driving a login form.
     await mockAuthenticatedUser(page);
-
-    await page.goto("/en/iniciar-sessio", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-    await expect(page.getByTestId("login-form")).toBeVisible({
-      timeout: 30000,
-    });
-    await page.getByLabel(/email/i).fill("test@example.com");
-    await page.getByLabel(/password/i).fill("Password123!");
-    await page
-      .getByTestId("login-form")
-      .getByRole("button", { name: /log in/i })
-      .click();
-    await page.waitForURL("**/en", { timeout: 15000 });
 
     await page.goto("/en/publica", {
       waitUntil: "domcontentloaded",

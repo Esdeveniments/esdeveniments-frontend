@@ -77,8 +77,9 @@ export function buildAuthorizationUrl(params: {
   state: string;
   nonce: string;
   codeChallenge: string;
+  locale?: string;
 }): string {
-  const { config, redirectUri, state, nonce, codeChallenge } = params;
+  const { config, redirectUri, state, nonce, codeChallenge, locale } = params;
   const url = new URL(config.authorizationEndpoint);
   const search = new URLSearchParams({
     client_id: config.appId,
@@ -92,6 +93,8 @@ export function buildAuthorizationUrl(params: {
   });
   // Request a JWT access token for the backend API resource when configured.
   if (config.apiResource) search.set("resource", config.apiResource);
+  // Render Logto's hosted sign-in page in the user's language.
+  if (locale) search.set("ui_locales", locale);
   url.search = search.toString();
   return url.toString();
 }

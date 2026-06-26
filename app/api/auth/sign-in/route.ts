@@ -20,6 +20,9 @@ export async function GET(request: NextRequest): Promise<Response> {
 
     const returnTo =
       sanitizeReturnTo(request.nextUrl.searchParams.get("redirect")) ?? "/";
+    // Only forward a locale of the form "xx" to ui_locales (no header smuggling).
+    const localeParam = request.nextUrl.searchParams.get("locale");
+    const locale = localeParam && /^[a-z]{2}$/.test(localeParam) ? localeParam : undefined;
     const { codeVerifier, codeChallenge } = generatePkce();
     const state = randomToken();
     const nonce = randomToken();
@@ -30,6 +33,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       state,
       nonce,
       codeChallenge,
+      locale,
     });
 
     const response = NextResponse.redirect(authUrl);

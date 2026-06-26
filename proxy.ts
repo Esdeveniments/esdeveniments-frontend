@@ -330,8 +330,8 @@ export const PUBLIC_API_GET_EXACT_PATHS = [
 export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
 
 // Localized sign-in entry route (with or without a locale prefix), e.g.
-// /iniciar-sessio, /ca/iniciar-sessio, /es/iniciar-sessio.
-export const LOGIN_ENTRY_PATTERN = /^\/(?:[a-z]{2}\/)?iniciar-sessio\/?$/;
+// /iniciar-sessio, /ca/iniciar-sessio, /es/iniciar-sessio. Captures the locale.
+export const LOGIN_ENTRY_PATTERN = /^\/(?:([a-z]{2})\/)?iniciar-sessio\/?$/;
 
 // Routes exempt from Origin check (server-to-server callbacks that won't have
 // a browser Origin header):
@@ -381,10 +381,14 @@ export default async function proxy(request: NextRequest) {
   // Logto OIDC flow. Done here (not in the page) because cacheComponents would
   // otherwise prerender the page's redirect() into a meta-refresh. Preserves a
   // safe local ?redirect= target (no protocol-relative or backslash tricks).
-  if (LOGIN_ENTRY_PATTERN.test(pathname)) {
+  const loginMatch = pathname.match(LOGIN_ENTRY_PATTERN);
+  if (loginMatch) {
     const safe = sanitizeReturnTo(request.nextUrl.searchParams.get("redirect"));
     const target = new URL("/api/auth/sign-in", request.nextUrl.origin);
     if (safe) target.searchParams.set("redirect", safe);
+    // Preserve the locale prefix (default ca) so Logto renders its hosted
+    // sign-in page in the user's language via ui_locales.
+    target.searchParams.set("locale", loginMatch[1] ?? "ca");
     return NextResponse.redirect(target, 307);
   }
 
