@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForFavoritesReady } from "./helpers/events";
 
 function decodeCookieValue(raw: string): string {
   try {
@@ -59,6 +60,7 @@ test.describe("Favorites flow", () => {
   test("add favorite, see it on /preferits, persists after reload", async ({
     page,
   }) => {
+    const favoritesReady = waitForFavoritesReady(page);
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     const firstEventLink = page
@@ -87,6 +89,9 @@ test.describe("Favorites flow", () => {
     });
     await expect(favButton).toHaveAttribute("aria-pressed", "false");
 
+    // Ensure the button has hydrated and SWR has settled before toggling, so
+    // the click isn't dropped and a late GET can't reset the optimistic state.
+    await favoritesReady;
     await favButton.click();
     await expect(favButton).toHaveAttribute("aria-pressed", "true");
 
@@ -131,6 +136,7 @@ test.describe("Favorites flow", () => {
   test("remove favorite, /preferits becomes empty state after reload", async ({
     page,
   }) => {
+    const favoritesReady = waitForFavoritesReady(page);
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
     const firstEventLink = page
@@ -157,6 +163,8 @@ test.describe("Favorites flow", () => {
       timeout: process.env.CI ? 60000 : 30000,
     });
 
+    // Ensure hydration + SWR settle before toggling (see the add-favorite test).
+    await favoritesReady;
     // Toggle ON
     await favButton.click();
     await expect(favButton).toHaveAttribute("aria-pressed", "true");

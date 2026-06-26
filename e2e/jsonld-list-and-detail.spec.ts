@@ -1,12 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
-
-async function fetchAnyEventSlug(page: Page): Promise<string | undefined> {
-  // Go through internal API proxy so server signs with HMAC
-  const res = await page.request.get(`/api/events?size=1`);
-  const data = (await res.json()) as { content?: Array<{ slug?: string }> };
-  const slug = data?.content?.[0]?.slug;
-  return slug ?? undefined;
-}
+import { test, expect } from "@playwright/test";
+import { gotoFirstResolvableEvent } from "./helpers/events";
 
 test.describe("JSON-LD presence", () => {
   test("List page exposes JSON-LD (ItemList or Event)", async ({ page }) => {
@@ -58,12 +51,8 @@ test.describe("JSON-LD presence", () => {
   });
 
   test("Event detail page exposes Event JSON-LD", async ({ page }) => {
-    const slug = await fetchAnyEventSlug(page);
-    if (!slug) test.skip(true, "No events returned from API");
-    await page.goto(`/e/${slug}`, {
-      waitUntil: "domcontentloaded",
-      timeout: 90000,
-    });
+    const slug = await gotoFirstResolvableEvent(page);
+    test.skip(slug === null, "No resolvable event returned from API");
     // Use auto-waiting assertion instead of waitForSelector (longer timeout for remote URLs)
     await expect(
       page.locator('script[type="application/ld+json"]').first()
