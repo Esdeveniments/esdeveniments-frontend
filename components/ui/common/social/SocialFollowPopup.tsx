@@ -294,6 +294,16 @@ function PushSection({
   const t = useTranslations("Components.SocialFollowPopup");
   return (
     <div className="flex flex-col gap-2.5 bg-muted/60 border border-border/40 rounded-card p-4">
+      {/* Persistent live region: must exist in the DOM before its content
+          changes for screen readers to announce it. sr-only (position:absolute)
+          so it adds no layout; the rows below render the same state visually. */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {pushState === "subscribed"
+          ? t("pushEnabled")
+          : pushState === "denied"
+            ? t("pushBlockedHelp")
+            : ""}
+      </div>
       {pushState === "unsubscribed" ? (
         <button
           onClick={onSubscribe}
@@ -315,12 +325,12 @@ function PushSection({
         </button>
       ) : null}
       {pushState === "denied" ? (
-        <p className="body-small text-foreground/70 text-center" role="status">
+        <p className="body-small text-foreground/70 text-center">
           {t("pushBlockedHelp")}
         </p>
       ) : null}
       {pushState === "subscribed" ? (
-        <div className="flex items-center justify-center gap-2 py-1" role="status">
+        <div className="flex items-center justify-center gap-2 py-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
