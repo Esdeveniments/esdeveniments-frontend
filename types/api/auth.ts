@@ -1,57 +1,35 @@
-import type { AuthRole } from "types/auth";
+// OIDC token + userinfo shapes returned by the Logto identity provider.
+// We talk to Logto's OIDC endpoints directly (no SDK), so these mirror the
+// standard OAuth 2.0 / OpenID Connect responses.
 
-/** Backend DTO: request body for POST /api/auth/login */
-export interface LoginRequestDTO {
-  email: string;
-  password: string;
+/** Response from the token endpoint (authorization_code and refresh_token grants). */
+export interface LogtoTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope?: string;
+  id_token: string;
+  refresh_token?: string;
 }
 
-/** Backend DTO: request body for POST /api/auth/register */
-export interface RegisterRequestDTO {
-  email: string;
-  password: string;
-  name: string;
+/** Claims returned by the userinfo endpoint (/oidc/me) and inside the id_token. */
+export interface LogtoUserInfo {
+  sub: string;
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+  username?: string;
+  picture?: string;
+  roles?: string[];
+  custom_data?: Record<string, unknown> | null;
 }
 
-/** Backend DTO: what POST /api/auth/login returns */
-export interface AuthResponseDTO {
-  accessToken: string;
-  refreshToken?: string;
-  tokenType: string;
-  expiresAt: string;
-  user: AuthenticatedUserDTO;
-}
-
-/** Backend DTO: what GET /api/auth/me returns */
-export interface AuthenticatedUserDTO {
-  id: string;
-  email: string;
-  name: string;
-  username: string;
-  role: AuthRole;
-  emailVerified: boolean;
-}
-
-/** Backend DTO: request body for POST /api/auth/refresh */
-export interface RefreshTokenRequestDTO {
-  refreshToken: string;
-}
-
-/** Backend DTO: what POST /api/auth/refresh returns */
-export interface RefreshTokenResponseDTO {
-  accessToken: string;
-  refreshToken?: string;
-  tokenType: string;
-  expiresAt: string;
-}
-
-/** Backend DTO: message-only responses (register, forgot, reset, verify) */
-export interface AuthMessageResponseDTO {
-  message: string;
-}
-
-/** Backend DTO: error responses */
-export interface AuthErrorDTO {
-  error: string;
-  message?: string;
+/** Decoded id_token payload claims we validate. */
+export interface LogtoIdTokenClaims {
+  iss: string;
+  aud: string | string[];
+  exp: number;
+  iat?: number;
+  sub: string;
+  nonce?: string;
 }

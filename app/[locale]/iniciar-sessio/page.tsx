@@ -1,37 +1,26 @@
-import LoginForm from "@components/ui/auth/LoginForm";
-import { buildPageMeta } from "@components/partials/seo-meta";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
-import { getSafeRedirect } from "@utils/safe-redirect";
+import { redirect } from "next/navigation";
 
-export async function generateMetadata() {
-  const [locale, t] = await Promise.all([
-    getLocaleSafely(),
-    getTranslations("Auth.meta"),
-  ]);
-
-  return buildPageMeta({
-    title: t("loginTitle"),
-    description: t("loginDescription"),
-    canonical: toLocalizedUrl("/iniciar-sessio", locale),
-    locale,
-    robotsOverride: "noindex, nofollow",
-  });
-}
-
+// Sign-in is handled by Logto's hosted pages. This locale-prefixed route stays
+// as the public entry point (navbar, deep links) and forwards into the OIDC
+// flow, preserving any ?redirect= target.
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ redirect?: string }>;
 }) {
   const params = await searchParams;
-  const redirectTo = getSafeRedirect(params.redirect);
+  const redirectParam =
+    typeof params.redirect === "string" ? params.redirect : undefined;
+  const safe =
+    redirectParam &&
+    redirectParam.startsWith("/") &&
+    !redirectParam.startsWith("//")
+      ? redirectParam
+      : undefined;
 
-  return (
-    <div className="container flex-center pt-[6rem] pb-section-y">
-      <div className="w-full max-w-md">
-        <LoginForm redirectTo={redirectTo} />
-      </div>
-    </div>
+  redirect(
+    safe
+      ? `/api/auth/sign-in?redirect=${encodeURIComponent(safe)}`
+      : "/api/auth/sign-in",
   );
 }

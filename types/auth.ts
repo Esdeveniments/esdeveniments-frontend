@@ -1,10 +1,3 @@
-export type AuthMethod =
-  | "credentials"
-  | "magic-link"
-  | "oauth-google"
-  | "oauth-github"
-  | "passwordless";
-
 export type AuthRole = "USER" | "ADMIN" | "ORGANIZATION";
 
 export interface AuthUser {
@@ -19,96 +12,42 @@ export interface AuthUser {
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
-export interface AuthState {
-  status: AuthStatus;
-  user: AuthUser | null;
-  error: AuthErrorCode | null;
+export type { LogtoTokenResponse, LogtoUserInfo, LogtoIdTokenClaims } from "./api/auth";
+
+/** Resolved Logto OIDC endpoints + client credentials. */
+export interface LogtoConfig {
+  endpoint: string;
+  issuer: string;
+  appId: string;
+  appSecret: string;
+  authorizationEndpoint: string;
+  tokenEndpoint: string;
+  userinfoEndpoint: string;
+  endSessionEndpoint: string;
+  scope: string;
 }
 
-export type AuthErrorCode =
-  | "invalid-credentials"
-  | "invalid-email"
-  | "email-taken"
-  | "weak-password"
-  | "network-error"
-  | "server-error"
-  | "not-configured"
-  | "rate-limited"
-  | "email-not-verified"
-  | "account-locked"
-  | "unknown";
-
-export type VerifyEmailStatus = "loading" | "success" | "error";
-
-export type ResetPasswordStatus = "form" | "submitting" | "success" | "error";
-
-export interface LoginCredentials {
-  email: string;
-  password?: string;
+/** PKCE verifier/challenge pair (RFC 7636, S256). */
+export interface Pkce {
+  codeVerifier: string;
+  codeChallenge: string;
 }
 
-export interface RegisterCredentials {
-  email: string;
-  password?: string;
-  name?: string;
-}
-
-export interface ForgotPasswordCredentials {
-  email: string;
-}
-
-export interface ResetPasswordCredentials {
-  token: string;
-  newPassword: string;
-}
-
-export interface AuthResult {
-  success: boolean;
-  user?: AuthUser;
-  error?: AuthErrorCode;
-  message?: string;
-  requiresVerification?: boolean;
-}
-
-export type { AuthResponseDTO, AuthenticatedUserDTO, AuthMessageResponseDTO, RefreshTokenRequestDTO, RefreshTokenResponseDTO } from "./api/auth";
-
-export type AuthUnsubscribe = () => void;
-
-export interface AuthAdapter {
-  readonly supportedMethods: readonly AuthMethod[];
-  login(credentials: LoginCredentials): Promise<AuthResult>;
-  register(credentials: RegisterCredentials): Promise<AuthResult>;
-  logout(): Promise<void>;
-  getSession(): Promise<AuthUser | null>;
-  onAuthStateChange(
-    callback: (user: AuthUser | null) => void
-  ): AuthUnsubscribe;
-}
-
-export interface MockAuthUser {
-  password: string;
-  user: AuthUser;
-}
-
-export interface MockAdapterOptions {
-  supportedMethods?: AuthMethod[];
-  delay?: number;
-  preloadUsers?: Array<{
-    email: string;
-    password: string;
-    name?: string;
-    username?: string;
-  }>;
+/** Short-lived per-request state carried through the OIDC redirect, in cookies. */
+export interface FlowState {
+  state: string;
+  codeVerifier: string;
+  nonce: string;
+  returnTo: string;
 }
 
 export interface AuthContextValue {
   status: AuthStatus;
   user: AuthUser | null;
-  error: AuthErrorCode | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  supportedMethods: readonly AuthMethod[];
-  login(credentials: LoginCredentials): Promise<AuthResult>;
-  register(credentials: RegisterCredentials): Promise<AuthResult>;
-  logout(): Promise<void>;
+  /** Redirect the browser to start the Logto sign-in flow. */
+  signIn(redirectTo?: string): void;
+  /** Redirect the browser to clear the session and end the Logto session. */
+  logout(): void;
 }

@@ -1,79 +1,105 @@
+// HttpOnly cookie storage for the Logto OIDC session. Tokens never reach
+// client JS. The access token keeps the `auth_token` cookie name so existing
+// consumers (favorites, events, preferits) read the session unchanged via
+// getAccessTokenFromCookies().
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import { parseBackendDateAsUtcMs } from "@utils/date-helpers";
+import type { NextRequest, NextResponse } from "next/server";
+import type { FlowState, LogtoTokenResponse } from "types/auth";
 
-export const AUTH_TOKEN_COOKIE = "auth_token";
+export const ACCESS_TOKEN_COOKIE = "auth_token";
 export const REFRESH_TOKEN_COOKIE = "auth_refresh_token";
+export const ID_TOKEN_COOKIE = "logto_id_token";
+
+export const STATE_COOKIE = "logto_state";
+export const CODE_VERIFIER_COOKIE = "logto_code_verifier";
+export const NONCE_COOKIE = "logto_nonce";
+export const RETURN_TO_COOKIE = "logto_return_to";
+
+// Refresh token / id_token outlive the access token; cap session length here.
+const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const FLOW_MAX_AGE = 60 * 10; // 10 minutes
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
-// Access token: 1h default, sent with all same-origin requests
-const ACCESS_TOKEN_MAX_AGE = 60 * 60;
+const baseOptions = {
+  httpOnly: true,
+  secure: IS_PRODUCTION,
+  // Lax so cookies are sent on Logto's top-level GET redirect back to /callback.
+  sameSite: "lax" as const,
+};
 
-// Refresh token: 30 days, scoped to /api/auth paths only
-const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 30;
+/** Read access token from incoming request cookies (server components + routes). */
+export async function getAccessTokenFromCookies(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get(ACCESS_TOKEN_COOKIE)?.value ?? null;
+}
 
-/**
- * Set auth cookies on a NextResponse.
- * Access token is available to all /api routes; refresh token is scoped to /api/auth.
- */
-export function setAuthCookies(
+export function setTokenCookies(
   response: NextResponse,
-  accessToken: string,
-  expiresAt: string,
-  refreshToken?: string
+  tokens: LogtoTokenResponse,
 ): void {
-  const expiry = parseBackendDateAsUtcMs(expiresAt);
-  const maxAge = expiry === null
-    ? ACCESS_TOKEN_MAX_AGE
-    : Math.max(0, Math.floor((expiry - Date.now()) / 1000));
-
-  response.cookies.set(AUTH_TOKEN_COOKIE, accessToken, {
-    httpOnly: true,
-    secure: IS_PRODUCTION,
-    sameSite: "lax",
+  response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.access_token, {
+    ...baseOptions,
     path: "/",
-    maxAge,
+    maxAge: tokens.expires_in,
   });
-
-  if (refreshToken) {
-    response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
-      httpOnly: true,
-      secure: IS_PRODUCTION,
-      sameSite: "lax",
+  response.cookies.set(ID_TOKEN_COOKIE, tokens.id_token, {
+    ...baseOptions,
+    path: "/",
+    maxAge: SESSION_MAX_AGE,
+  });
+  if (tokens.refresh_token) {
+    response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token, {
+      ...baseOptions,
       path: "/api/auth",
-      maxAge: REFRESH_TOKEN_MAX_AGE,
+      maxAge: SESSION_MAX_AGE,
     });
   }
 }
 
-/** Clear auth cookies on a NextResponse. */
-export function clearAuthCookies(response: NextResponse): void {
-  response.cookies.set(AUTH_TOKEN_COOKIE, "", {
-    httpOnly: true,
-    secure: IS_PRODUCTION,
-    sameSite: "lax",
+export function clearTokenCookies(response: NextResponse): void {
+  response.cookies.set(ACCESS_TOKEN_COOKIE, "", {
+    ...baseOptions,
     path: "/",
     maxAge: 0,
   });
-
+  response.cookies.set(ID_TOKEN_COOKIE, "", {
+    ...baseOptions,
+    path: "/",
+    maxAge: 0,
+  });
   response.cookies.set(REFRESH_TOKEN_COOKIE, "", {
-    httpOnly: true,
-    secure: IS_PRODUCTION,
-    sameSite: "lax",
+    ...baseOptions,
     path: "/api/auth",
     maxAge: 0,
   });
 }
 
-/** Read access token from incoming request cookies (server-side only). */
-export async function getAccessTokenFromCookies(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(AUTH_TOKEN_COOKIE)?.value ?? null;
+export function setFlowCookies(response: NextResponse, flow: FlowState): void {
+  const opts = { ...baseOptions, path: "/api/auth", maxAge: FLOW_MAX_AGE };
+  response.cookies.set(STATE_COOKIE, flow.state, opts);
+  response.cookies.set(CODE_VERIFIER_COOKIE, flow.codeVerifier, opts);
+  response.cookies.set(NONCE_COOKIE, flow.nonce, opts);
+  response.cookies.set(RETURN_TO_COOKIE, flow.returnTo, opts);
 }
 
-/** Read refresh token from incoming request cookies (server-side only). */
-export async function getRefreshTokenFromCookies(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(REFRESH_TOKEN_COOKIE)?.value ?? null;
+export function clearFlowCookies(response: NextResponse): void {
+  const opts = { ...baseOptions, path: "/api/auth", maxAge: 0 };
+  for (const name of [
+    STATE_COOKIE,
+    CODE_VERIFIER_COOKIE,
+    NONCE_COOKIE,
+    RETURN_TO_COOKIE,
+  ]) {
+    response.cookies.set(name, "", opts);
+  }
+}
+
+export function readFlowCookies(request: NextRequest): Partial<FlowState> {
+  return {
+    state: request.cookies.get(STATE_COOKIE)?.value,
+    codeVerifier: request.cookies.get(CODE_VERIFIER_COOKIE)?.value,
+    nonce: request.cookies.get(NONCE_COOKIE)?.value,
+    returnTo: request.cookies.get(RETURN_TO_COOKIE)?.value,
+  };
 }
