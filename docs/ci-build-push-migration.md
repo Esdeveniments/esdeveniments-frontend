@@ -28,24 +28,14 @@ Most are already repo-level secrets. Add the gaps:
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = copy from the Coolify staging app env
 - Any other `NEXT_PUBLIC_*` that differs from prod for staging.
 
-**Clear the prod tracking IDs on staging (important).** A GitHub *environment*
-secret falls back to the repo-level secret when unset. The repo-level values are
-**prod**, so if the `staging` environment doesn't override the analytics keys,
-the staging image inlines prod tracking and staging traffic pollutes prod
-analytics. Today staging's Coolify app simply omits these (builds empty), so
-this is a regression the migration would introduce. Set them to empty strings in
-the `staging` environment:
-
-```bash
-gh secret set NEXT_PUBLIC_GOOGLE_ANALYTICS        --env staging --body ""
-gh secret set NEXT_PUBLIC_GOOGLE_ADS              --env staging --body ""
-gh secret set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION --env staging --body ""
-gh secret set NEXT_PUBLIC_TIKTOK_CLIENT_KEY       --env staging --body ""
-gh secret set NEXT_PUBLIC_TIKTOK_REDIRECT_URI     --env staging --body ""
-```
-
-Then re-trigger a `develop` build so the `:develop` image is rebuilt without the
-prod IDs **before** flipping Coolify staging to the prebuilt image.
+**Analytics on non-prod:** a GitHub *environment* secret falls back to the
+repo-level (prod) secret when unset, so the staging image inlines the prod
+analytics IDs. That no longer pollutes prod analytics, because GA and Auto Ads
+are gated to the production host at runtime (see `app/GoogleScripts.tsx`, PR
+#374): they only fire on `www.esdeveniments.cat`, never on staging or previews.
+So you do not need to clear those IDs in the staging environment. (Setting a
+GitHub secret to an empty string isn't even possible — the API rejects it with
+HTTP 422.)
 
 `NEXT_PUBLIC_CONTACT_EMAIL` is not set anywhere today (builds empty); add it if
 you want it inlined.
