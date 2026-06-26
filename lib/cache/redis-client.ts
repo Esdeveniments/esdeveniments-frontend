@@ -41,14 +41,17 @@ function getRedisUrl(): string | null {
 }
 
 async function getClient(): Promise<ReturnType<typeof createClient> | null> {
-  if (globalForRedis.__appRedis) return globalForRedis.__appRedis;
-
+  // Fail open during the cooldown after any failure — checked before reusing a
+  // cached client, so a client that errored *after* connecting is skipped too
+  // (otherwise the cached promise would always short-circuit this check).
   if (
     globalForRedis.__appRedisFailedAt &&
     Date.now() - globalForRedis.__appRedisFailedAt < FAILURE_COOLDOWN_MS
   ) {
     return null;
   }
+
+  if (globalForRedis.__appRedis) return globalForRedis.__appRedis;
 
   const url = getRedisUrl();
   if (!url) return null;
@@ -60,6 +63,9 @@ async function getClient(): Promise<ReturnType<typeof createClient> | null> {
       const client = createClient({
         url,
         pingInterval: 10_000,
+        // Fail fast instead of queueing commands while disconnected, so a Redis
+        // outage falls through to the origin immediately rather than hanging.
+        disableOfflineQueue: true,
         socket: isTls
           ? { tls: true, rejectUnauthorized: false, connectTimeout: 2_000 }
           : { connectTimeout: 2_000 },
