@@ -102,6 +102,7 @@ function CloseIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
       className="w-5 h-5"
+      aria-hidden="true"
     >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
@@ -144,10 +145,13 @@ function IosInstallSteps({
           className="rounded-lg border border-border/60 bg-background"
         />
         <div className="text-left">
-          <p className="body-small font-semibold text-foreground-strong leading-tight">
+          <p
+            className="body-small font-semibold text-foreground-strong leading-tight"
+            translate="no"
+          >
             Esdeveniments
           </p>
-          <p className="body-small text-foreground/60 leading-tight">
+          <p className="body-small text-foreground/60 leading-tight" translate="no">
             esdeveniments.cat
           </p>
         </div>
@@ -245,7 +249,7 @@ function InstallSection({
     return null;
   }
   return (
-    <div className="flex flex-col gap-2.5 bg-primary/5 border border-primary/20 rounded-card p-4">
+    <div className="flex flex-col gap-2.5">
       {canPromptInstall ? (
         <button
           onClick={onInstall}
@@ -289,7 +293,11 @@ function PushSection({
 }) {
   const t = useTranslations("Components.SocialFollowPopup");
   return (
-    <div className="flex flex-col gap-2.5 bg-muted/60 border border-border/40 rounded-card p-4">
+    <div
+      className="flex flex-col gap-2.5 bg-muted/60 border border-border/40 rounded-card p-4"
+      role="status"
+      aria-live="polite"
+    >
       {pushState === "unsubscribed" ? (
         <button
           onClick={onSubscribe}
@@ -355,7 +363,7 @@ function SocialLinksSection({ variant }: { variant: "mobile" | "desktop" }) {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-center gap-1.5 px-3.5 py-2 rounded-full border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-all duration-normal text-foreground body-small font-medium no-underline flex-shrink-0"
+                className="flex-center gap-1.5 px-3.5 py-2 rounded-full border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-[transform,background-color,border-color] duration-normal text-foreground body-small font-medium no-underline flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 aria-label={social.label}
               >
                 <span className="text-primary">
@@ -373,7 +381,7 @@ function SocialLinksSection({ variant }: { variant: "mobile" | "desktop" }) {
               href={social.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-center gap-1.5 px-3 py-2.5 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-all duration-normal text-foreground body-small font-medium no-underline"
+              className="flex-center gap-1.5 px-3 py-2.5 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-[transform,background-color,border-color] duration-normal text-foreground body-small font-medium no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               aria-label={social.label}
             >
               <span className="text-primary">
@@ -676,15 +684,15 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         role="complementary"
         aria-label={canInstall ? t("ariaInstall") : t("aria")}
       >
-        <div className="relative w-full max-h-[80vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-2xl">
+        <div className="relative w-full max-h-[80vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-lg">
           {/* Gradient accent bar */}
           <div className="h-1 bg-gradient-to-r from-primary via-primary to-primary/70" />
 
-          <div className="p-card-padding flex flex-col gap-element-gap-sm overflow-y-auto min-h-0">
+          <div className="p-card-padding flex flex-col gap-element-gap-sm overflow-y-auto overscroll-contain min-h-0">
             {/* Close button */}
             <button
               onClick={() => dismiss()}
-              className="absolute top-4 right-4 p-1 rounded-full text-foreground/60 hover:text-foreground hover:bg-muted transition-all duration-fast"
+              className="absolute top-4 right-4 p-1 rounded-full text-foreground/60 hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               aria-label={t("close")}
             >
               <CloseIcon />
@@ -692,10 +700,10 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
 
             {/* Header */}
             <div className="text-center">
-              <h2 className="heading-3 text-foreground-strong mb-2">
+              <h2 className="heading-3 text-foreground-strong mb-2 text-balance">
                 {headlineText}
               </h2>
-              <p className="body-small text-foreground/75">{subtextText}</p>
+              <p className="body-small text-foreground/75 text-pretty">{subtextText}</p>
             </div>
 
             <InstallSection
@@ -721,7 +729,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             {/* Dismiss */}
             <button
               onClick={() => dismiss()}
-              className="body-small text-foreground/50 hover:text-foreground/70 transition-colors duration-fast py-1.5"
+              className="body-small text-foreground/50 hover:text-foreground/70 transition-colors duration-fast py-1.5 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {t("close")}
             </button>
@@ -746,14 +754,14 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-foreground/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-foreground/50"
         onClick={() => dismiss()}
         aria-hidden="true"
       />
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-2xl transition-transform duration-slower ${
+        className={`relative w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-lg transition-transform duration-slower ${
           isClosing ? "scale-95" : "scale-100"
         }`}
       >
@@ -763,14 +771,14 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         {/* Close button */}
         <button
           onClick={() => dismiss()}
-          className="absolute top-4 right-4 z-10 p-1 rounded-full text-foreground/60 hover:text-foreground hover:bg-muted transition-all duration-fast"
+          className="absolute top-4 right-4 z-10 p-1 rounded-full text-foreground/60 hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           aria-label={t("close")}
         >
           <CloseIcon />
         </button>
 
         {/* Content (scrolls; panel stays put so the close button is pinned) */}
-        <div className="p-6 sm:p-8 flex flex-col gap-6 overflow-y-auto min-h-0">
+        <div className="p-6 sm:p-8 flex flex-col gap-6 overflow-y-auto overscroll-contain min-h-0">
           {/* Header section */}
           <div className="flex flex-col gap-3 text-center">
             {/* Icon accent */}
@@ -793,12 +801,12 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             </div>
 
             {/* Headline */}
-            <h2 className="heading-2 text-foreground-strong">
+            <h2 className="heading-2 text-foreground-strong text-balance">
               {headlineText}
             </h2>
 
             {/* Subtext */}
-            <p className="body-normal text-foreground/75 leading-relaxed">
+            <p className="body-normal text-foreground/75 leading-relaxed text-pretty">
               {subtextText}
             </p>
           </div>
@@ -826,7 +834,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
           {/* Dismiss button */}
           <button
             onClick={() => dismiss()}
-            className="body-small text-foreground/50 hover:text-foreground/70 transition-colors duration-fast py-2"
+            className="body-small text-foreground/50 hover:text-foreground/70 transition-colors duration-fast py-2 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             {t("close")}
           </button>
