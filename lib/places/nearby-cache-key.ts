@@ -11,7 +11,7 @@
  * function of distinct locations, not of traffic.
  */
 
-/** 2 decimal places ≈ 1.1 km. */
+/** 2 decimal places: about 1.1 km of latitude (~0.8 km of longitude at Catalan latitudes), both well inside the 5 km search radius. */
 export const NEARBY_GRID = 100;
 
 /**

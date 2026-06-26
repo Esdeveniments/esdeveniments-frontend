@@ -345,12 +345,14 @@ export async function GET(request: NextRequest) {
   const NEARBY_TTL_SECONDS = 60 * 60 * 12; // 12h — opening hours rarely change
 
   try {
-    // Treat a corrupted / non-array cached value as a miss (re-fetch) so a
-    // poisoned entry can't make `.filter` throw and turn into a 500.
+    // Treat a corrupted cached value (not an array, or with null/non-object
+    // elements from a partial write) as a miss (re-fetch) so it can't make
+    // `.filter` throw and turn into a 500.
     const cached = await cacheGetJson<GooglePlaceResponse[]>(cacheKey);
-    let places: GooglePlaceResponse[] | null = Array.isArray(cached)
-      ? cached
-      : null;
+    let places: GooglePlaceResponse[] | null =
+      Array.isArray(cached) && cached.every((p) => p && typeof p === "object")
+        ? cached
+        : null;
 
     if (places === null) {
       const fields = [
