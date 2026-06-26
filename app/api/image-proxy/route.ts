@@ -111,7 +111,8 @@ async function fetchWithTimeout(
     const pinnedDnsDispatcher = targetSafety.dnsRecords
       ? buildPinnedDnsDispatcher(targetSafety.dnsRecords, !bypassTls)
       : null;
-    const init: RequestInit & { dispatcher?: unknown } = {
+    // Typed as undici's own request init so `dispatcher` is properly typed.
+    const init: NonNullable<Parameters<typeof undiciFetch>[1]> = {
       signal: controller.signal,
       redirect: "manual",
     };
@@ -126,10 +127,7 @@ async function fetchWithTimeout(
     // undici) mismatches internal symbols and throws
     // "controller[kState].transformAlgorithm is not a function" when decoding
     // compressed upstream responses.
-    const response = (await undiciFetch(
-      url,
-      init as Parameters<typeof undiciFetch>[1],
-    )) as unknown as Response;
+    const response = (await undiciFetch(url, init)) as unknown as Response;
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       await response.body?.cancel();
