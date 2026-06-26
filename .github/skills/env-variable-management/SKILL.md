@@ -168,6 +168,15 @@ NEXT_PUBLIC_API_URL=https://api.esdeveniments.cat/api
 - [ ] Correct prefix: `NEXT_PUBLIC_` only for public values?
 - [ ] Documented in this skill file (if persistent)?
 
+## Auth (Logto) env vars
+
+`LOGTO_*` are runtime auth secrets. Per-environment secrets use the `_STAGING`
+suffix in GitHub (e.g. `LOGTO_APP_SECRET_STAGING`), matching the existing
+`COOLIFY_TOKEN` / `COOLIFY_TOKEN_STAGING` convention. Best practice is one
+Logto **instance** per environment (not per-env apps in one instance). Full
+setup, the var table, and the CI guard are in
+[docs/logto-auth-setup.md](../../../docs/logto-auth-setup.md).
+
 ## Files to Reference
 
 - `.env.development`, `.env.staging`, `.env.production` — local/CI builds via `env-cmd`
