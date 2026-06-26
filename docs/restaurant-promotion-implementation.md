@@ -6,7 +6,7 @@ This document describes the complete implementation of the restaurant promotion 
 
 The system allows restaurants to promote themselves on event pages through a paid promotion system. It includes:
 
-1. **SSR "Where to eat" section** - Shows top 3 nearby restaurants via Google Places API
+1. **SSR "Where to eat" section** - Shows top 2 nearby restaurants via Google Places API
 2. **Restaurant promotion form** - Allows restaurants to create paid promotions
 3. **Stripe Checkout integration** - Handles payment processing
 4. **Webhook system** - Activates promotions after successful payment
@@ -41,9 +41,12 @@ The system allows restaurants to promote themselves on event pages through a pai
 **File**: `app/api/places/nearby/route.ts`
 
 - Proxies Google Places Nearby Search API
-- Fetches top 3 restaurants near event location
+- Fetches up to 2 restaurants near event location
 - Uses minimal field mask for performance
-- Implements proper caching with Next.js revalidate
+- Caches results in Redis keyed by ~1.1km-snapped coordinates (deploy-independent,
+  12h TTL) so cost scales with distinct event areas, not traffic. See
+  [the cost incident](./incidents/2026-06-26-places-api-cost.md) and `lib/cache/redis-client.ts`
+- Fails soft (200 + empty result) on any upstream error; the section hides
 - Shows required Google attribution
 - Only stores `place_id` indefinitely, `lat/lng` for max 30 days
 

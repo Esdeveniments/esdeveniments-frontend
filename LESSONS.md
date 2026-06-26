@@ -33,3 +33,17 @@ main and develop diverge. A fix that lands directly on main (a hotfix) does not 
 ## Never lower preview/test-env fidelity to make a test pass
 
 It's tempting to drop a threshold (e.g. `SITEMAP_MIN_EVENTS_FOR_EXPANSION`) or relax gating in non-prod so a flaky test goes green. Don't: that makes the preview behave differently from production, which is the exact parity gap that caused the cache and image-proxy incidents. Fix the mis-layered test, not the environment. Environment parity is the asset.
+
+## Places API cost is controlled in three layers — two of them are NOT in this repo
+
+`/api/places/nearby` (Google `searchNearby`, billed per request) has its cost held down by three controls, and only the first lives in git:
+
+1. **Code** — `lib/cache/redis-client.ts` + `lib/places/nearby-cache-key.ts` cache results in Redis keyed by `~1.1km-snapped` coordinates. This is a **separate Redis layer from `cache-handler.mjs`** on purpose: the Next handler scopes keys by `buildId` and wipes them every deploy, which is wrong for data that should outlive deploys. The app cache is deploy-independent (12h TTL) and fails open.
+2. **Cloudflare WAF** (dashboard, zone `esdeveniments.cat`) — managed-challenge for SG/JP/CN bot traffic + a per-IP rate-limit on the endpoint.
+3. **GCP quota** (`places.googleapis.com/SearchNearbyRequest`, project `esdeveniments-3`) — **50/day** consumer override. This is the hard ceiling. The €10 "budget" is only an alert, never a cap.
+
+So if restaurants suddenly stop showing, or a request 429s, the cause may be the WAF or the quota — not the code. See [docs/incidents/2026-06-26-places-api-cost.md](docs/incidents/2026-06-26-places-api-cost.md).
+
+## Never block DE / Hetzner / datacenter ASNs at the Cloudflare edge — that's the own origin
+
+~40% of Cloudflare traffic shows country **DE** hitting `api.esdeveniments.cat` on SSR data paths (`/api/events`, `/api/places/regions/options`, …). That is **not** a bot — it's the Coolify box on **Hetzner** (ASN 24940, Germany) calling its own backend through Cloudflare on every render. A disabled "block non-ES" WAF rule already exists from a past attempt, and a Cloudflare AI assistant will recommend challenging datacenter ASNs (incl. 24940 / AWS). Applying either takes down SSR. Use *managed challenge* on named bot-source countries (SG/JP/CN), never *block* by geography/ASN, and always verify origin egress before any country/ASN edge rule.

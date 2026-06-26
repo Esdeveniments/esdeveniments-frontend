@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-04-21T18:45:00+00:00",
+  "lastUpdated": "2026-06-26T00:00:00+00:00",
   "clientTotalBytes": 2283119,
   "thresholds": {
     "warning": {
@@ -118,7 +118,7 @@
       "fileCount": 8
     },
     "/api/places": {
-      "serverBytes": 95812,
+      "serverBytes": 142830,
       "fileCount": 24
     },
     "/api/events": {
@@ -170,7 +170,7 @@
       "fileCount": 6
     },
     "/api/places/nearby": {
-      "serverBytes": 24413,
+      "serverBytes": 70288,
       "fileCount": 6
     },
     "/api/news/[slug]": {

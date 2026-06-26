@@ -40,7 +40,6 @@ export default function RestaurantPromotionSection({
   // All hooks must be called at the top level before any conditional returns
   const [placesResp, setPlacesResp] = useState<PlacesResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [openPromoInfo, setOpenPromoInfo] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const isVisible = useOnScreen(sectionRef as React.RefObject<Element>, {
@@ -112,7 +111,6 @@ export default function RestaurantPromotionSection({
 
     const fetchPlaces = async () => {
       setIsLoading(true);
-      setError(null);
 
       try {
         let dateParam = "";
@@ -128,12 +126,11 @@ export default function RestaurantPromotionSection({
         if (res.ok) {
           const data = await res.json();
           setPlacesResp(data);
-        } else {
-          setError("Failed to fetch places");
         }
+        // On failure, leave the section hidden — it's a non-critical widget,
+        // not worth showing the user an error.
       } catch (err) {
         console.error("Error fetching places", err);
-        setError("Error fetching places");
       } finally {
         setIsLoading(false);
       }
@@ -170,13 +167,6 @@ export default function RestaurantPromotionSection({
             setOpenPromoInfo(true);
           }}
         />
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="body-small text-error">{error}</p>
-        </div>
       )}
 
       {/* Active Promotion (if any) */}
