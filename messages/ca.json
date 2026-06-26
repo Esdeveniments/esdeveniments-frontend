@@ -547,8 +547,23 @@
     "SocialFollowPopup": {
       "headline": "Que els plans et trobin a tu",
       "subtext": "Cada dia compartim els millors esdeveniments a les xarxes. Segueix-nos i no et perdis res!",
+      "installHeadline": "Tingues els plans sempre a mà",
+      "installSubtext": "Instal·la l'app i tindràs els esdeveniments a la pantalla d'inici, amb accés ràpid i sense connexió.",
+      "followLabel": "Segueix-nos",
+      "installEnable": "Instal·la l'app",
+      "installEnabling": "Obrint instal·lació...",
+      "installStepShare": "Toca Compartir a la barra inferior",
+      "installStepShareIpad": "Toca Compartir, a dalt a la dreta",
+      "installStepShareMenu": "Obre el menú ⋯ i toca Comparteix",
+      "installStepAdd": "Tria \"Afegir a la pantalla d'inici\"",
+      "installInAppHelp": "Per instal·lar l'app, obre aquesta pàgina a Safari (toca ⋯ i \"Obrir al navegador\").",
+      "pushEnable": "Activa notificacions",
+      "pushEnabling": "Activant notificacions...",
+      "pushEnabled": "Notificacions activades",
+      "pushBlockedHelp": "Tens les notificacions bloquejades. Pots activar-les des de la configuració del navegador del lloc.",
       "close": "Ara no",
-      "aria": "Segueix-nos a les xarxes socials"
+      "aria": "Segueix-nos a les xarxes socials",
+      "ariaInstall": "Instal·la l'app d'Esdeveniments"
     },
     "RestaurantPromotionForm": {
       "heading": "Promociona el teu restaurant",

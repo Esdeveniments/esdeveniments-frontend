@@ -83,6 +83,18 @@ describe("isOriginAllowed", () => {
     expect(isOriginAllowed(req)).toBe(true);
   });
 
+  it("allows the Vercel branch-preview alias (VERCEL_BRANCH_URL)", () => {
+    // The hash-based VERCEL_URL is not the alias users actually open; the
+    // git-branch alias must be allowed or browser POSTs 403 on previews.
+    process.env.VERCEL_URL = "preview-hash-123.vercel.app";
+    process.env.VERCEL_BRANCH_URL = "myapp-git-feat-branch-team.vercel.app";
+    const req = createRequest("/api/push/subscribe", "POST", {
+      origin: "https://myapp-git-feat-branch-team.vercel.app",
+    });
+    expect(isOriginAllowed(req)).toBe(true);
+    delete process.env.VERCEL_BRANCH_URL;
+  });
+
   it("rejects host-like localhost origins in development", () => {
     const req = createRequest("/api/sponsors/checkout", "POST", {
       origin: "http://localhost.evil.test:3000",
