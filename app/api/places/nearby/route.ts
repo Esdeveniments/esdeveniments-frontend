@@ -13,7 +13,7 @@ import {
 import { handleApiError } from "@utils/api-error-handler";
 import {
   buildNearbyCacheKey,
-  snapCoordinate,
+  nearbySearchCenter,
 } from "@lib/places/nearby-cache-key";
 import { cacheGetJson, cacheSetJson } from "@lib/cache/redis-client";
 
@@ -369,17 +369,18 @@ export async function GET(request: NextRequest) {
       const url = new URL(
         "https://places.googleapis.com/v1/places:searchNearby"
       );
-      const requestedCount = Math.min(Math.max(limit * 3, 12), 20);
+      // Always request the max: searchNearby is billed per request, not per
+      // result, and the cache key omits `limit`, so caching the largest set
+      // lets one entry serve any limit without underfilling after filtering.
+      const requestedCount = 20;
 
+      const center = nearbySearchCenter(lat, lng, radius);
       const requestBody: GooglePlacesNearbyRequest = {
         includedTypes: ["restaurant"],
         maxResultCount: requestedCount,
         locationRestriction: {
           circle: {
-            center: {
-              latitude: snapCoordinate(lat),
-              longitude: snapCoordinate(lng),
-            },
+            center: { latitude: center.lat, longitude: center.lng },
             radius,
           },
         },
@@ -387,34 +388,44 @@ export async function GET(request: NextRequest) {
         languageCode: "ca",
       };
 
-      // We cache the result ourselves, so opt the fetch out of Next's
-      // buildId-scoped data cache to avoid storing the same payload twice.
-      const response = await fetch(url.toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": apiKey,
-          "X-Goog-FieldMask": fields,
-        },
-        body: JSON.stringify(requestBody),
-        cache: "no-store",
-      });
-
-      const data: GooglePlacesSearchNearbyRawResponse = await response.json();
-
-      if (!response.ok) {
-        console.error("Google Places API error:", response.status, data);
-        // Fail soft: this is a non-critical widget. Return an empty result so
-        // the section just hides instead of erroring, and don't cache failures.
-        return NextResponse.json(
+      // Fail soft: this is a non-critical widget. Any upstream failure — non-OK
+      // status, non-JSON body, or a network/DNS error — returns an empty result
+      // so the section just hides (never a 500 to the user) and we don't cache
+      // the failure. We cache the result ourselves, so the fetch opts out of
+      // Next's buildId-scoped data cache to avoid storing the payload twice.
+      const failSoftEmpty = () =>
+        NextResponse.json(
           { results: [], status: "OK", attribution: "Powered by Google" },
           { status: 200, headers: { "Cache-Control": "no-store" } }
         );
-      }
 
-      places = Array.isArray(data.places) ? data.places : [];
-      // Cache even an empty array: a barren area shouldn't be re-queried per hit.
-      await cacheSetJson(cacheKey, places, NEARBY_TTL_SECONDS);
+      try {
+        const response = await fetch(url.toString(), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": fields,
+          },
+          body: JSON.stringify(requestBody),
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          const errText = await response.text().catch(() => "");
+          console.error("Google Places API error:", response.status, errText);
+          return failSoftEmpty();
+        }
+
+        const data: GooglePlacesSearchNearbyRawResponse =
+          await response.json();
+        places = Array.isArray(data.places) ? data.places : [];
+        // Cache even an empty array: a barren area shouldn't be re-queried per hit.
+        await cacheSetJson(cacheKey, places, NEARBY_TTL_SECONDS);
+      } catch (fetchError) {
+        console.error("Google Places API fetch/parse error:", fetchError);
+        return failSoftEmpty();
+      }
     }
 
     const filtered = places.filter((place: GooglePlaceResponse) => {

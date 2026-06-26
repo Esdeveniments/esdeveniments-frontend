@@ -71,10 +71,13 @@ async function getClient(): Promise<ReturnType<typeof createClient> | null> {
           : { connectTimeout: 2_000 },
       });
       // node-redis needs a persistent error listener or it throws on errors.
-      // node-redis reconnects on its own; we just record the last failure so
-      // getClient() can back off if the connection never recovers.
+      // Drop the client on error (matching cache-handler.mjs) so that once the
+      // cooldown elapses getClient() builds a fresh one, instead of handing
+      // back a permanently-broken connection that can never recover.
       client.on("error", () => {
         globalForRedis.__appRedisFailedAt = Date.now();
+        client.disconnect().catch(() => {});
+        globalForRedis.__appRedis = undefined;
       });
       await client.connect();
       return client;
@@ -110,7 +113,9 @@ export async function cacheSetJson(
     // SETEX (dedicated helper) avoids the deprecated { EX } option and is
     // stable across redis v5/v6.
     await client.setEx(key, ttlSeconds, JSON.stringify(value));
-  } catch {
-    // best-effort: a failed cache write must never fail the request
+  } catch (error) {
+    // best-effort: a failed cache write must never fail the request, but log
+    // it so write failures aren't silently swallowed.
+    console.warn("[redis-cache] set failed:", error);
   }
 }
