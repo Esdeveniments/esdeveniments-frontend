@@ -133,14 +133,25 @@ describe("validateIdTokenClaims", () => {
     ).toThrow(/nonce/);
   });
 
-  it("rejects expired tokens", () => {
+  it("rejects tokens expired beyond the clock-skew tolerance", () => {
     expect(() =>
+      validateIdTokenClaims(
+        config,
+        fakeIdToken({ ...valid, exp: Math.floor(Date.now() / 1000) - 120 }),
+        "expected",
+      ),
+    ).toThrow(/expired/);
+  });
+
+  it("accepts a token within the clock-skew tolerance", () => {
+    // Expired 10s ago but inside the 60s skew window — still valid.
+    expect(
       validateIdTokenClaims(
         config,
         fakeIdToken({ ...valid, exp: Math.floor(Date.now() / 1000) - 10 }),
         "expected",
-      ),
-    ).toThrow(/expired/);
+      ).sub,
+    ).toBe("user-1");
   });
 });
 

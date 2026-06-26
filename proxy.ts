@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiOrigin } from "@utils/api-helpers";
+import { sanitizeReturnTo } from "@utils/redirect-safety";
 import {
   validateTimestamp,
   buildStringToSign,
@@ -381,14 +382,7 @@ export default async function proxy(request: NextRequest) {
   // otherwise prerender the page's redirect() into a meta-refresh. Preserves a
   // safe local ?redirect= target (no protocol-relative or backslash tricks).
   if (LOGIN_ENTRY_PATTERN.test(pathname)) {
-    const redirectParam = request.nextUrl.searchParams.get("redirect");
-    const safe =
-      redirectParam &&
-      redirectParam.startsWith("/") &&
-      !redirectParam.startsWith("//") &&
-      !redirectParam.includes("\\")
-        ? redirectParam
-        : null;
+    const safe = sanitizeReturnTo(request.nextUrl.searchParams.get("redirect"));
     const target = new URL("/api/auth/sign-in", request.nextUrl.origin);
     if (safe) target.searchParams.set("redirect", safe);
     return NextResponse.redirect(target, 307);

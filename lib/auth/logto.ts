@@ -60,26 +60,8 @@ export function randomToken(): string {
   return randomBytes(16).toString("base64url");
 }
 
-/**
- * Only allow safe relative paths to prevent open-redirect attacks. Rejects
- * protocol-relative (`//`), backslash tricks (`/\`) that browsers normalize to
- * `//`, control characters, and percent-encoded leading slashes (`/%2f`) that
- * decode to `//`.
- */
-export function sanitizeReturnTo(value: string | null | undefined): string | null {
-  if (typeof value !== "string") return null;
-  if (!value.startsWith("/")) return null;
-  if (value.startsWith("//") || value.startsWith("/\\")) return null;
-  if (value.includes("\\")) return null;
-  // Reject percent-encoded slashes/backslashes (%2f, %5c) and encoded control
-  // chars (%0d, %0a, %09) that browsers normalize into // or header injection.
-  if (/%2[fF]|%5[cC]|%0[9aAdD]/.test(value)) return null;
-  // Reject raw control characters (newlines, etc.) in the path.
-  for (let i = 0; i < value.length; i++) {
-    if (value.charCodeAt(i) < 0x20) return null;
-  }
-  return value;
-}
+// Shared open-redirect-safe path check (crypto-free so middleware can use it).
+export { sanitizeReturnTo } from "@utils/redirect-safety";
 
 export function buildAuthorizationUrl(params: {
   config: LogtoConfig;
@@ -121,7 +103,13 @@ async function postToken(
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Logto token endpoint ${res.status}: ${text.slice(0, 200)}`);
+    // Attach the status so callers can tell a definitive auth failure
+    // (400 invalid_grant) from a transient outage (5xx) and avoid logging the
+    // user out on the latter.
+    throw Object.assign(
+      new Error(`Logto token endpoint ${res.status}: ${text.slice(0, 200)}`),
+      { status: res.status },
+    );
   }
   return (await res.json()) as LogtoTokenResponse;
 }
@@ -151,7 +139,11 @@ export function refreshAccessToken(
   });
 }
 
-/** Fetch userinfo. Returns null on a non-OK response (e.g. expired token). */
+/**
+ * Fetch userinfo. Returns null only on a definitive auth failure (401/403, i.e.
+ * the access token is expired/invalid). Throws with a `status` on transient
+ * errors (5xx, network) so callers don't treat a Logto outage as a logout.
+ */
 export async function fetchUserInfo(
   config: LogtoConfig,
   accessToken: string,
@@ -161,7 +153,12 @@ export async function fetchUserInfo(
     cache: "no-store",
     signal: AbortSignal.timeout(10_000),
   });
-  if (!res.ok) return null;
+  if (res.status === 401 || res.status === 403) return null;
+  if (!res.ok) {
+    throw Object.assign(new Error(`Logto userinfo ${res.status}`), {
+      status: res.status,
+    });
+  }
   return (await res.json()) as LogtoUserInfo;
 }
 
@@ -211,7 +208,12 @@ export function validateIdTokenClaims(
   if (aud.length > 1 && claims.azp !== config.appId) {
     throw new Error("id_token azp mismatch");
   }
-  if (typeof claims.exp !== "number" || claims.exp * 1000 <= Date.now()) {
+  // Allow a small clock-skew tolerance for minor IdP/server clock drift.
+  const CLOCK_SKEW_MS = 60_000;
+  if (
+    typeof claims.exp !== "number" ||
+    claims.exp * 1000 + CLOCK_SKEW_MS <= Date.now()
+  ) {
     throw new Error("id_token expired");
   }
   if (claims.nonce !== expectedNonce) {
