@@ -7,7 +7,7 @@
  */
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { Agent } from "undici";
+import { Agent, fetch as undiciFetch } from "undici";
 import {
   normalizeExternalImageUrl,
   isLegacyFileHandler,
@@ -120,7 +120,16 @@ async function fetchWithTimeout(
       init.dispatcher = pinnedDnsDispatcher ?? insecureTlsDispatcher;
     }
 
-    const response = await fetch(url, init as RequestInit);
+    // Use undici's own fetch (not the global one) so the response-body
+    // plumbing comes from the SAME undici copy as the dispatcher Agent above.
+    // Feeding a standalone-undici Agent into Node's global fetch (bundled
+    // undici) mismatches internal symbols and throws
+    // "controller[kState].transformAlgorithm is not a function" when decoding
+    // compressed upstream responses.
+    const response = (await undiciFetch(
+      url,
+      init as Parameters<typeof undiciFetch>[1],
+    )) as unknown as Response;
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       await response.body?.cancel();
