@@ -29,8 +29,55 @@ jobs:
             echo "error_message=Keyword 'esdeveniments.cat' not found in page content" >> $GITHUB_OUTPUT
             exit 1
           fi
-          
-          echo "✅ Site is up and content is valid"
+
+          # Probe the image proxy with a first-party static asset. A May 2026
+          # dispatcher regression 502'd every proxied image while the homepage
+          # stayed 200, so a homepage-only check would have missed it. Using our
+          # own static image (not a third party) means a failure here is our
+          # proxy, not a flaky upstream. Retry to absorb transient blips.
+          IMG="https://www.esdeveniments.cat/static/icons/icon-512x512.png"
+          PROXY="https://www.esdeveniments.cat/api/image-proxy?url=$(printf '%s' "$IMG" | sed 's/:/%3A/g; s|/|%2F|g')&w=64&q=50"
+          proxy_ok=""
+          for attempt in 1 2 3; do
+            # The step runs under `bash -eo pipefail`, so guard curl and grep:
+            # a transport failure (curl exits non-zero) or an empty header file
+            # (grep finds nothing) would otherwise abort the step before the
+            # retry/fallback runs, defeating the whole loop.
+            : > /tmp/proxy.head
+            if ! code=$(curl -s -D /tmp/proxy.head -o /dev/null -w "%{http_code}" \
+              -H "Accept: image/webp,image/*" --max-time 20 "$PROXY"); then
+              code="000"
+            fi
+            ctype=$(grep -i '^content-type:' /tmp/proxy.head | tail -1 | tr -d '\r' || true)
+            if [ "$code" = "200" ] && echo "$ctype" | grep -qi 'image/'; then
+              proxy_ok="yes"
+              break
+            fi
+            echo "⚠️ image-proxy attempt $attempt: HTTP $code, $ctype"
+            sleep 5
+          done
+          if [ -z "$proxy_ok" ]; then
+            echo "❌ Image proxy is broken (last: HTTP $code, $ctype)"
+            echo "error_message=Image proxy returned HTTP $code ($ctype) for a known-good first-party image — the proxy is broken" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Assert server-rendered metadata is present in the RAW HTML (not
+          # after JS). On Jun 11 2026 a stale Redis prerender shell made React
+          # fall back to client rendering, dropping <title>/description/canonical
+          # from SSR — invisible to a status-code check but an SEO hard-fail.
+          # /tmp/response.html is the already-fetched homepage.
+          missing=""
+          grep -qi '<title[^>]*>[^<]\+</title>' /tmp/response.html || missing="$missing <title>"
+          grep -qi 'name="description"' /tmp/response.html || missing="$missing meta-description"
+          grep -qi 'rel="canonical"' /tmp/response.html || missing="$missing canonical"
+          if [ -n "$missing" ]; then
+            echo "❌ Homepage server HTML is missing SSR metadata:$missing"
+            echo "error_message=Homepage SSR metadata missing ($missing) — likely a prerender/resume fallback to client rendering. SEO-critical." >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "✅ Site is up, content is valid, image proxy works, and SSR metadata is present"
 
       - name: Send email notification on failure
         if: failure()

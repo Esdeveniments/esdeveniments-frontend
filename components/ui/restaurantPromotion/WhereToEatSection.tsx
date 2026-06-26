@@ -12,7 +12,6 @@ import {
 } from "@utils/place-format";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { withImageCacheKey } from "@utils/image-cache";
-import { siteUrl } from "@config/index";
 import { useTranslations } from "next-intl";
 import { sendGoogleEvent } from "@utils/analytics";
 
@@ -23,7 +22,7 @@ function getPhotoUrl(place: GooglePlace): string | null {
   const basePath = `/api/places/photo?name=${encodeURIComponent(
     photo.name
   )}&w=160`;
-  return `${siteUrl}${basePath}`;
+  return basePath;
 }
 
 export default function WhereToEatSection({

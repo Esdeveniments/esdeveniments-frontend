@@ -11,11 +11,16 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { TikTokCreatorInfo, ShareTikTokState } from "types/tiktok";
+import {
+  isTikTokCallbackPayload,
+  type TikTokCreatorInfo,
+  type ShareTikTokState,
+} from "types/tiktok";
 import TikTokPostForm from "./TikTokPostForm";
 import TikTokStatusCheck from "./TikTokStatusCheck";
 
 const TIKTOK_AUTH_URL = "https://www.tiktok.com/v2/auth/authorize/";
+const TIKTOK_OAUTH_STATE_KEY = "tiktok_oauth_state";
 
 /** Generate PKCE code_verifier and code_challenge (S256) */
 async function generatePkce() {
@@ -45,6 +50,7 @@ export default function ShareTikTok() {
   const [publishId, setPublishId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const codeVerifierRef = useRef<string | null>(null);
+  const oauthStateRef = useRef<string | null>(null);
 
   const clientKey = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY;
   const redirectUri =
@@ -94,12 +100,15 @@ export default function ShareTikTok() {
         );
       }
       setCreatorInfo(info);
+      codeVerifierRef.current = null;
+      oauthStateRef.current = null;
+      sessionStorage.removeItem(TIKTOK_OAUTH_STATE_KEY);
       setState("authenticated");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Authentication failed");
       setState("error");
     }
-  }, []);
+  }, [redirectUri]);
 
   // Listen for OAuth callback from popup window
   useEffect(() => {
@@ -113,8 +122,21 @@ export default function ShareTikTok() {
       ) {
         return;
       }
-      const data = event.data as { type?: string; code?: string } | undefined;
+      const data = isTikTokCallbackPayload(event.data) ? event.data : undefined;
       if (data?.type === "tiktok-auth" && data.code) {
+        const expectedState =
+          oauthStateRef.current || sessionStorage.getItem(TIKTOK_OAUTH_STATE_KEY);
+        if (!data.state || !expectedState) {
+          setError("OAuth state mismatch. Please try signing in again.");
+          setState("error");
+          codeVerifierRef.current = null;
+          oauthStateRef.current = null;
+          sessionStorage.removeItem(TIKTOK_OAUTH_STATE_KEY);
+          return;
+        }
+        if (data.state !== expectedState) {
+          return;
+        }
         void exchangeCode(data.code);
       }
     }
@@ -128,13 +150,16 @@ export default function ShareTikTok() {
       return;
     }
     const { verifier, challenge } = await generatePkce();
+    const oauthState = crypto.randomUUID();
     codeVerifierRef.current = verifier;
+    oauthStateRef.current = oauthState;
+    sessionStorage.setItem(TIKTOK_OAUTH_STATE_KEY, oauthState);
     const params = new URLSearchParams({
       client_key: clientKey,
       scope: "user.info.basic,video.publish",
       response_type: "code",
       redirect_uri: redirectUri,
-      state: crypto.randomUUID(),
+      state: oauthState,
       code_challenge: challenge,
       code_challenge_method: "S256",
     });
@@ -143,7 +168,7 @@ export default function ShareTikTok() {
       "tiktok-auth",
       "width=600,height=700",
     );
-  }, [clientKey]);
+  }, [clientKey, redirectUri]);
 
   if (!clientKey) {
     return (

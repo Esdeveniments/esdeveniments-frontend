@@ -1,0 +1,237 @@
+# Auto-route failing Dependabot PRs to GitHub Copilot coding agent.
+#
+# Flow:
+#   1. CI workflow finishes with conclusion=failure
+#   2. preflight job: resolve PR, gate on existing label, gate on major bump
+#   3. route job: label + assign Copilot + post failure context comment
+#
+# Major-version bumps are NEVER routed — they require human evaluation.
+# Pairs with `dependabot-auto-merge.yml` (which also excludes majors).
+#
+# REQUIRED SECRET: COPILOT_AUTOFIX_PAT
+#   GITHUB_TOKEN is an App installation token and CANNOT assign agents
+#   ("Assigning agents is not supported with GitHub App installation tokens").
+#   Create a fine-grained PAT (Pull requests: RW, Issues: RW, Metadata: R)
+#   and store as repo secret COPILOT_AUTOFIX_PAT. Without it, the workflow
+#   degrades to comment-only mode and asks the human to assign Copilot.
+#
+# Why title parsing instead of dependabot/fetch-metadata: the official action
+# reads PR context from the `pull_request` event payload, which is empty on
+# `workflow_run` triggers. We parse the PR title (dependabot's format is
+# stable: "bump X from A.B.C to D.E.F") and treat any major-number change
+# as needs-human-review. Grouped updates (no "from→to" in title) are treated
+# as non-major because dependabot only groups minor/patch by default.
+
+name: Dependabot AI fix
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+# Avoid duplicate routing if CI re-runs on the same branch.
+concurrency:
+  group: dependabot-ai-fix-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+      github.repository == 'Esdeveniments/esdeveniments-frontend'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      should_proceed: ${{ steps.decide.outputs.should_proceed }}
+      pr_number: ${{ steps.resolve.outputs.number }}
+      pr_node_id: ${{ steps.resolve.outputs.node_id }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Resolve PR for failed run
+        id: resolve
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER=$(gh api "repos/$REPO/actions/runs/$RUN_ID" \
+            --jq '.pull_requests[0].number // empty')
+          if [ -z "$PR_NUMBER" ]; then
+            # workflow_run sometimes omits pull_requests; fall back to branch lookup.
+            PR_NUMBER=$(gh pr list -R "$REPO" --head "$HEAD_BRANCH" --state open \
+              --json number --jq '.[0].number // empty')
+          fi
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No open PR found for run $RUN_ID (branch $HEAD_BRANCH); will skip."
+            echo "number=" >> "$GITHUB_OUTPUT"
+            echo "node_id=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          PR_NODE_ID=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '.node_id')
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "node_id=$PR_NODE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Check for existing ai-fix-requested label
+        if: steps.resolve.outputs.number != ''
+        id: label_check
+        env:
+          PR_NUMBER: ${{ steps.resolve.outputs.number }}
+        run: |
+          set -euo pipefail
+          HAS=$(gh pr view "$PR_NUMBER" -R "$REPO" \
+            --json labels --jq '[.labels[].name] | contains(["ai-fix-requested"])')
+          echo "has_label=$HAS" >> "$GITHUB_OUTPUT"
+
+      - name: Detect major-version bump
+        if: steps.resolve.outputs.number != '' && steps.label_check.outputs.has_label == 'false'
+        id: major
+        env:
+          PR_NUMBER: ${{ steps.resolve.outputs.number }}
+        run: |
+          set -euo pipefail
+          # Title is fetched via gh CLI — never interpolated from a workflow expression.
+          TITLE=$(gh pr view "$PR_NUMBER" -R "$REPO" --json title --jq '.title')
+          IS_MAJOR=false
+          # Dependabot title format: "bump <pkg> from <from-version> to <to-version>"
+          # Handles plain names, scoped pkgs (@scope/name), v-prefix, pre-releases.
+          # Grouped PRs ("bump the X group across N deps") have no from→to and are
+          # treated as non-major (dependabot only groups minor/patch by default).
+          if [[ "$TITLE" =~ from[[:space:]]+v?([0-9]+)\.[0-9]+\.[0-9]+.*[[:space:]]to[[:space:]]+v?([0-9]+)\.[0-9]+\.[0-9]+ ]]; then
+            FROM_MAJOR="${BASH_REMATCH[1]}"
+            TO_MAJOR="${BASH_REMATCH[2]}"
+            if [ "$FROM_MAJOR" != "$TO_MAJOR" ]; then
+              IS_MAJOR=true
+              echo "Major bump: $FROM_MAJOR -> $TO_MAJOR"
+            fi
+          fi
+          echo "is_major=$IS_MAJOR" >> "$GITHUB_OUTPUT"
+
+      - name: Tag major bump for human review
+        if: steps.major.outputs.is_major == 'true'
+        env:
+          PR_NUMBER: ${{ steps.resolve.outputs.number }}
+        run: |
+          set -euo pipefail
+          gh label create needs-human-review --color FBCA04 \
+            --description "Cannot be auto-merged — requires manual evaluation" \
+            -R "$REPO" 2>/dev/null || true
+          gh api "repos/$REPO/issues/$PR_NUMBER/labels" \
+            -f "labels[]=needs-human-review" >/dev/null
+          cat > /tmp/major-comment.md <<'EOF'
+          🛑 **Major version bump detected** — not auto-routed to Copilot.
+
+          Major upgrades carry breaking changes, bundle-size cost, and behavior shifts that need human evaluation:
+          - Is the new major's feature set worth the upgrade cost?
+          - Are there breaking API changes affecting our code?
+          - Does the bundle / runtime regress meaningfully?
+
+          Review manually. If approved for upgrade, assign `@copilot` yourself with explicit migration guidance.
+          EOF
+          gh pr comment "$PR_NUMBER" -R "$REPO" --body-file /tmp/major-comment.md
+
+      - name: Decide whether to proceed
+        id: decide
+        env:
+          PR_NUMBER: ${{ steps.resolve.outputs.number }}
+          HAS_LABEL: ${{ steps.label_check.outputs.has_label }}
+          IS_MAJOR: ${{ steps.major.outputs.is_major }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PR_NUMBER" ]; then
+            echo "Skip: no PR resolved."
+            echo "should_proceed=false" >> "$GITHUB_OUTPUT"
+          elif [ "$HAS_LABEL" = "true" ]; then
+            echo "Skip: ai-fix-requested already present."
+            echo "should_proceed=false" >> "$GITHUB_OUTPUT"
+          elif [ "$IS_MAJOR" = "true" ]; then
+            echo "Skip: major bump (routed to human review)."
+            echo "should_proceed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  route-to-copilot:
+    needs: preflight
+    if: needs.preflight.outputs.should_proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      PR_NUMBER: ${{ needs.preflight.outputs.pr_number }}
+      PR_NODE_ID: ${{ needs.preflight.outputs.pr_node_id }}
+      COPILOT_BOT_ID: BOT_kgDOC9w8XQ
+    steps:
+      - name: Apply ai-fix-requested label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh label create ai-fix-requested --color BFD4F2 \
+            --description "Routed to Copilot coding agent after CI failure" \
+            -R "$REPO" 2>/dev/null || true
+          gh api "repos/$REPO/issues/$PR_NUMBER/labels" \
+            -f "labels[]=ai-fix-requested" >/dev/null
+
+      - name: Assign Copilot coding agent
+        id: assign
+        env:
+          # PAT required: GitHub App installation tokens cannot assign agents.
+          GH_TOKEN: ${{ secrets.COPILOT_AUTOFIX_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          if OUT=$(gh api graphql \
+            -f query='mutation($assignableId:ID!,$actorIds:[ID!]!){ replaceActorsForAssignable(input:{assignableId:$assignableId, actorIds:$actorIds}){ clientMutationId } }' \
+            -F assignableId="$PR_NODE_ID" \
+            -F actorIds="$COPILOT_BOT_ID" 2>&1); then
+            echo "assigned=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$OUT"
+            if echo "$OUT" | grep -q "not supported with GitHub App installation tokens"; then
+              echo "::warning::COPILOT_AUTOFIX_PAT secret missing or invalid. Falling back to comment-only mode."
+              echo "assigned=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "::error::Unexpected error assigning Copilot."
+              exit 1
+            fi
+          fi
+
+      - name: Comment with failure context
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ASSIGNED: ${{ steps.assign.outputs.assigned }}
+        run: |
+          set -euo pipefail
+          if [ "$ASSIGNED" = "true" ]; then
+            ASSIGN_LINE="Copilot coding agent has been assigned and will start a session shortly."
+          else
+            ASSIGN_LINE="⚠️ Copilot was NOT auto-assigned (COPILOT_AUTOFIX_PAT secret missing or invalid). Please assign \`@copilot\` manually."
+          fi
+          cat > /tmp/ai-fix-body.md <<EOF
+          @copilot CI failed on this Dependabot PR. Please investigate and push a fix to the PR branch.
+
+          ${ASSIGN_LINE}
+
+          - Failed run: ${RUN_URL}
+          - Inspect logs: \`gh run view ${RUN_ID} -R ${REPO} --log-failed\`
+          - Branch: \`${HEAD_BRANCH}\`
+
+          Guidance:
+          - For lint/test/typecheck failures: fix in-place.
+          - For deps with codemods (Tailwind v4, Next.js, etc.): run the official codemod, then resolve remaining issues.
+          - For breaking API changes: update call sites; do not downgrade the dependency.
+          - Run \`yarn lint && yarn typecheck && yarn test\` locally before pushing.
+
+          Once green, the existing dependabot-auto-merge workflow will auto-merge patch/minor bumps. Majors still require human review.
+          EOF
+          gh pr comment "$PR_NUMBER" -R "$REPO" --body-file /tmp/ai-fix-body.md

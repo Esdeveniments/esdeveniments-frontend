@@ -444,6 +444,20 @@ p {
   .z-tooltip {
     @apply z-1000;
   }
+
+  /* ===================================== */
+  /* SCROLL UTILITIES */
+  /* ===================================== */
+
+  /* Hide scrollbars on horizontal scroll rows (icon chips, carousels)
+     while keeping the area scrollable. */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

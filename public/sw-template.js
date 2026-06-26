@@ -341,4 +341,115 @@ if (!self.workbox) {
       })()
     );
   });
+
+  // --- 5. Web Push Notifications ---
+  // Receives encrypted push messages from the server (via web-push / VAPID).
+  // Runs even when the app is closed. Browsers require that every push event
+  // either shows a notification or responds with a waitUntil promise; otherwise
+  // the browser may throttle or block future pushes.
+  // Defense in depth: only accept same-origin relative paths from the push
+  // payload (the send route validates too, but the SW must not trust input).
+  // "//host" is protocol-relative and would resolve to an external origin.
+  const sanitizeRelativePath = (value, fallback) => {
+    if (
+      typeof value === "string" &&
+      value.startsWith("/") &&
+      !value.startsWith("//")
+    ) {
+      return value;
+    }
+    return fallback;
+  };
+
+  self.addEventListener("push", (event) => {
+    let data = { title: "Esdeveniments", body: "", url: "/", icon: "/static/icons/icon-192x192.png" };
+    if (event.data) {
+      try {
+        // Only spread plain objects — a payload that parses to a string,
+        // number, or array would pollute `data` with index keys.
+        const parsed = event.data.json();
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          data = { ...data, ...parsed };
+        } else {
+          data.body = event.data.text();
+        }
+      } catch {
+        data.body = event.data.text();
+      }
+    }
+    event.waitUntil(
+      self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: sanitizeRelativePath(data.icon, "/static/icons/icon-192x192.png"),
+        badge: "/static/icons/icon-192x192.png",
+        data: { url: sanitizeRelativePath(data.url, "/") },
+      })
+    );
+  });
+
+  // Open the target URL when the user taps the notification.
+  // Focuses an existing window on that URL if one is open; otherwise opens a new one.
+  // Prevents duplicate tabs by carefully comparing URLs (including locale, pathname, search).
+  self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const rawTargetUrl = sanitizeRelativePath(
+      event.notification.data && event.notification.data.url,
+      "/"
+    );
+
+    let targetUrl;
+    try {
+      targetUrl = new URL(rawTargetUrl, self.location.origin);
+    } catch {
+      targetUrl = new URL("/", self.location.origin);
+    }
+    // Never navigate off-origin from a notification, even if a malformed
+    // payload slips through sanitization.
+    if (targetUrl.origin !== self.location.origin) {
+      targetUrl = new URL("/", self.location.origin);
+    }
+
+    event.waitUntil(
+      self.clients
+        .matchAll({ type: "window", includeUncontrolled: true })
+        .then((clientList) => {
+          // Try to find an existing window with the same URL
+          for (const client of clientList) {
+            try {
+              const clientUrl = new URL(client.url);
+              // Normalize and compare: origin, pathname, and search should match
+              // For i18n apps, the full pathname including locale must match
+              const pathMatches = clientUrl.pathname === targetUrl.pathname;
+              const searchMatches = clientUrl.search === targetUrl.search;
+              const originMatches = clientUrl.origin === targetUrl.origin;
+
+              if (
+                originMatches &&
+                pathMatches &&
+                searchMatches &&
+                "focus" in client
+              ) {
+                // Same page — focus it, and if the target carries a different
+                // hash (in-page deep link), navigate so the fragment applies.
+                return Promise.resolve(client.focus()).then((focused) => {
+                  const target = focused || client;
+                  if (
+                    clientUrl.hash !== targetUrl.hash &&
+                    "navigate" in target
+                  ) {
+                    return target.navigate(targetUrl.href).catch(() => target);
+                  }
+                  return target;
+                });
+              }
+            } catch (e) {
+              // Ignore errors parsing client URLs
+              continue;
+            }
+          }
+          // No matching window found, open a new one
+          return self.clients.openWindow(targetUrl.href);
+        })
+    );
+  });
 } // End of Workbox-available block

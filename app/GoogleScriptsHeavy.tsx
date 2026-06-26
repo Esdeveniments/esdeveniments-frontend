@@ -1,5 +1,5 @@
 "use client";
-/* eslint-disable @eslint-react/web-api/no-leaked-timeout -- 
+/* eslint-disable @eslint-react/web-api-no-leaked-timeout --
    Timeouts in this file are tracked in timeoutIds array and cleared on cleanup.
    The ESLint rule can't detect this pattern with nested async callbacks. */
 
@@ -340,6 +340,39 @@ export default function GoogleScriptsHeavy({
       window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
     };
+  }, []);
+
+  // Standalone (installed-app) launch tracking — fires once per session when
+  // the app runs from the home screen / installed window. This is the only
+  // install-success signal that works on iOS, where Add to Home Screen emits
+  // no JS event, so `pwa_installed` never fires there.
+  useEffect(() => {
+    if (isE2ETestMode) return;
+    const win = ensureGtag();
+    if (!win) return;
+
+    const SESSION_KEY = "pwa_standalone_tracked";
+    try {
+      if (sessionStorage.getItem(SESSION_KEY)) return;
+    } catch {
+      // sessionStorage unavailable (private mode / blocked) — skip dedupe.
+    }
+
+    const mediaStandalone =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(display-mode: standalone)").matches;
+    const iosStandalone =
+      (window.navigator as { standalone?: boolean }).standalone === true;
+    if (!mediaStandalone && !iosStandalone) return;
+
+    win.gtag("event", "pwa_standalone_launch", {
+      mode: iosStandalone ? "ios" : "standalone",
+    });
+    try {
+      sessionStorage.setItem(SESSION_KEY, "1");
+    } catch {
+      // ignore
+    }
   }, []);
 
   return null;

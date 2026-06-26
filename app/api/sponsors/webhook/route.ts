@@ -57,8 +57,14 @@ if (
 // Stripe signing secrets always start with "whsec_"
 if (WEBHOOK_SECRET && !WEBHOOK_SECRET.startsWith("whsec_")) {
   throw new Error(
-    "FATAL: STRIPE_WEBHOOK_SECRET has invalid format — must start with 'whsec_'. " +
-      `Got: "${WEBHOOK_SECRET.slice(0, 20)}..."`,
+    "FATAL: STRIPE_WEBHOOK_SECRET has invalid format - expected a 'whsec_' webhook signing secret.",
+  );
+}
+
+function isDuplicateSponsorInsert(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes(
+    "UNIQUE constraint failed: sponsors.stripe_session_id",
   );
 }
 
@@ -206,24 +212,37 @@ async function handleCheckoutCompleted(
   }
 
   // Save sponsor to Turso database
-  const sponsorId = await createSponsor({
-    businessName:
-      sponsorData.businessName || sponsorData.placeName || "Sponsor",
-    imageUrl: sponsorData.imageUrl,
-    targetUrl: sponsorData.targetUrl,
-    places,
-    geoScope,
-    startDate,
-    endDate,
-    status,
-    stripeSessionId: sponsorData.sessionId,
-    stripePaymentIntentId: sponsorData.paymentIntentId,
-    customerEmail: sponsorData.customerEmail,
-    amountPaid: sponsorData.amountPaid,
-    currency: sponsorData.currency,
-    duration: sponsorData.duration,
-    durationDays,
-  });
+  let sponsorId: string | null;
+  try {
+    sponsorId = await createSponsor({
+      businessName:
+        sponsorData.businessName || sponsorData.placeName || "Sponsor",
+      imageUrl: sponsorData.imageUrl,
+      targetUrl: sponsorData.targetUrl,
+      places,
+      geoScope,
+      startDate,
+      endDate,
+      status,
+      stripeSessionId: sponsorData.sessionId,
+      stripePaymentIntentId: sponsorData.paymentIntentId,
+      customerEmail: sponsorData.customerEmail,
+      amountPaid: sponsorData.amountPaid,
+      currency: sponsorData.currency,
+      duration: sponsorData.duration,
+      durationDays,
+    });
+  } catch (error) {
+    if (isDuplicateSponsorInsert(error)) {
+      console.log(`Sponsor already exists for session ${session.id} - skipping duplicate insert`);
+      return;
+    }
+    console.error("Failed to create sponsor record:", {
+      sessionId: session.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 
   // Treat DB write failure as a hard error so Stripe retries the webhook
   if (!sponsorId) {
@@ -253,7 +272,7 @@ function handlePaymentIntentSucceeded(
     id: paymentIntent.id,
     amount: paymentIntent.amount,
     currency: paymentIntent.currency,
-    metadata: paymentIntent.metadata,
+    metadataKeys: Object.keys(paymentIntent.metadata ?? {}),
   });
 
   // This is a secondary confirmation - main logic is in checkout.session.completed
