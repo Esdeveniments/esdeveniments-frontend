@@ -11,6 +11,11 @@ import {
   OpeningSegment,
 } from "types/api/restaurant";
 import { handleApiError } from "@utils/api-error-handler";
+import {
+  buildNearbyCacheKey,
+  snapCoordinate,
+} from "@lib/places/nearby-cache-key";
+import { cacheGetJson, cacheSetJson } from "@lib/cache/redis-client";
 
 export async function GET(request: NextRequest) {
   const t = await getTranslations("Api.PlacesNearby");
@@ -327,74 +332,90 @@ export async function GET(request: NextRequest) {
     return { info: { open_status: "unknown" }, weekdayText };
   }
 
-  // --- Main fetch + transform ---
+  // --- Cached fetch + transform ---
+  // Snap the search centre to a ~1.1km grid so every event in the same area
+  // shares one cache entry, and cache the raw upstream result in Redis under a
+  // build-independent key (unlike Next's fetch cache, which cache-handler.mjs
+  // scopes by buildId and wipes on every deploy). The Google request never
+  // depends on the event date — date handling is post-fetch — so one cached
+  // call serves the whole neighbourhood across every date. searchNearby is
+  // billed per request, so this is what bounds the Places bill by distinct
+  // locations instead of by traffic.
+  const cacheKey = buildNearbyCacheKey(lat, lng, radius);
+  const NEARBY_TTL_SECONDS = 60 * 60 * 12; // 12h — opening hours rarely change
+
   try {
-    const fields = [
-      "places.name",
-      "places.displayName",
-      "places.formattedAddress",
-      "places.rating",
-      "places.priceLevel",
-      "places.location",
-      "places.photos",
-      "places.businessStatus",
-      "places.currentOpeningHours",
-      "places.regularOpeningHours",
-      "places.utcOffsetMinutes",
-      "places.postalAddress.addressLines",
-      "places.postalAddress.locality",
-      "places.postalAddress.administrativeArea",
-      "places.postalAddress.postalCode",
-    ].join(",");
+    let places = await cacheGetJson<GooglePlaceResponse[]>(cacheKey);
 
-    const url = new URL("https://places.googleapis.com/v1/places:searchNearby");
-    const requestedCount = Math.min(Math.max(limit * 3, 12), 20);
+    if (places === null) {
+      const fields = [
+        "places.name",
+        "places.displayName",
+        "places.formattedAddress",
+        "places.rating",
+        "places.priceLevel",
+        "places.location",
+        "places.photos",
+        "places.businessStatus",
+        "places.currentOpeningHours",
+        "places.regularOpeningHours",
+        "places.utcOffsetMinutes",
+        "places.postalAddress.addressLines",
+        "places.postalAddress.locality",
+        "places.postalAddress.administrativeArea",
+        "places.postalAddress.postalCode",
+      ].join(",");
 
-    const requestBody: GooglePlacesNearbyRequest = {
-      includedTypes: ["restaurant"],
-      maxResultCount: requestedCount,
-      locationRestriction: {
-        circle: {
-          center: { latitude: lat, longitude: lng },
-          radius,
-        },
-      },
-      rankPreference: "DISTANCE",
-      languageCode: "ca",
-    };
-
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": fields,
-      },
-      body: JSON.stringify(requestBody),
-      next: {
-        revalidate: 3600,
-        tags: [
-          "places",
-          `places:${lat}:${lng}`,
-          eventDateISO ? `places:date:${eventDateISO}` : "places:date:none",
-        ],
-      },
-    });
-
-    const data: GooglePlacesSearchNearbyRawResponse = await response.json();
-
-    if (!response.ok) {
-      console.error("Google Places API error:", response.status, data);
-      return NextResponse.json(
-        { error: "Places API error", status: response.status, details: data },
-        {
-          status: 500,
-          headers: { "Cache-Control": "no-store" },
-        }
+      const url = new URL(
+        "https://places.googleapis.com/v1/places:searchNearby"
       );
-    }
+      const requestedCount = Math.min(Math.max(limit * 3, 12), 20);
 
-    const places = Array.isArray(data.places) ? data.places : [];
+      const requestBody: GooglePlacesNearbyRequest = {
+        includedTypes: ["restaurant"],
+        maxResultCount: requestedCount,
+        locationRestriction: {
+          circle: {
+            center: {
+              latitude: snapCoordinate(lat),
+              longitude: snapCoordinate(lng),
+            },
+            radius,
+          },
+        },
+        rankPreference: "DISTANCE",
+        languageCode: "ca",
+      };
+
+      // We cache the result ourselves, so opt the fetch out of Next's
+      // buildId-scoped data cache to avoid storing the same payload twice.
+      const response = await fetch(url.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": fields,
+        },
+        body: JSON.stringify(requestBody),
+        cache: "no-store",
+      });
+
+      const data: GooglePlacesSearchNearbyRawResponse = await response.json();
+
+      if (!response.ok) {
+        console.error("Google Places API error:", response.status, data);
+        // Fail soft: this is a non-critical widget. Return an empty result so
+        // the section just hides instead of erroring, and don't cache failures.
+        return NextResponse.json(
+          { results: [], status: "OK", attribution: "Powered by Google" },
+          { status: 200, headers: { "Cache-Control": "no-store" } }
+        );
+      }
+
+      places = Array.isArray(data.places) ? data.places : [];
+      // Cache even an empty array: a barren area shouldn't be re-queried per hit.
+      await cacheSetJson(cacheKey, places, NEARBY_TTL_SECONDS);
+    }
 
     const filtered = places.filter((place: GooglePlaceResponse) => {
       if (!isOperational(place)) return false;
