@@ -93,7 +93,7 @@ async function fetchWithTimeout(
   url: string,
   redirectsRemaining = MAX_REDIRECTS,
   deadline = Date.now() + TIMEOUT_MS,
-): Promise<Response> {
+): Promise<Awaited<ReturnType<typeof undiciFetch>>> {
   const targetSafety = await getPublicFetchSafety(url);
   if (!targetSafety.isSafe) {
     throw new Error("Blocked unsafe image upstream");
@@ -127,7 +127,7 @@ async function fetchWithTimeout(
     // undici) mismatches internal symbols and throws
     // "controller[kState].transformAlgorithm is not a function" when decoding
     // compressed upstream responses.
-    const response = (await undiciFetch(url, init)) as unknown as Response;
+    const response = await undiciFetch(url, init);
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       await response.body?.cancel();
