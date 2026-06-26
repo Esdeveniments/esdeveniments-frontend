@@ -1,18 +1,10 @@
-import { test, expect, type Page } from "@playwright/test";
-
-async function getFirstEventSlug(page: Page): Promise<string | undefined> {
-  // Use internal API so HMAC is handled server-side
-  const res = await page.request.get(`/api/events?size=1`);
-  const data = (await res.json()) as { content?: Array<{ slug?: string }> };
-  const slug = data?.content?.[0]?.slug;
-  return slug ?? undefined;
-}
+import { test, expect } from "@playwright/test";
+import { gotoFirstResolvableEvent } from "./helpers/events";
 
 test.describe("Add to calendar menu", () => {
   test("opens menu and shows calendar links", async ({ page }) => {
-    const slug = await getFirstEventSlug(page);
-    if (!slug) test.skip(true, "No events returned from API");
-    await page.goto(`/e/${slug}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    const slug = await gotoFirstResolvableEvent(page);
+    test.skip(slug === null, "No resolvable event returned from API");
 
     // Auto-waiting assertion - no need for manual waits
     const button = page.getByRole("button", { name: /Afegir al calendari/i });
