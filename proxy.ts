@@ -328,6 +328,10 @@ export const PUBLIC_API_GET_EXACT_PATHS = [
 // Event routes pattern (GET only): base, [slug], or /categorized
 export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
 
+// Localized sign-in entry route (with or without a locale prefix), e.g.
+// /iniciar-sessio, /ca/iniciar-sessio, /es/iniciar-sessio.
+export const LOGIN_ENTRY_PATTERN = /^\/(?:[a-z]{2}\/)?iniciar-sessio\/?$/;
+
 // Routes exempt from Origin check (server-to-server callbacks that won't have
 // a browser Origin header):
 export const ORIGIN_CHECK_EXEMPT = new Set([
@@ -371,6 +375,24 @@ export function isOriginAllowed(request: NextRequest): boolean {
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const search = request.nextUrl.search;
+
+  // Sign-in entry point: forward the localized /iniciar-sessio route into the
+  // Logto OIDC flow. Done here (not in the page) because cacheComponents would
+  // otherwise prerender the page's redirect() into a meta-refresh. Preserves a
+  // safe local ?redirect= target (no protocol-relative or backslash tricks).
+  if (LOGIN_ENTRY_PATTERN.test(pathname)) {
+    const redirectParam = request.nextUrl.searchParams.get("redirect");
+    const safe =
+      redirectParam &&
+      redirectParam.startsWith("/") &&
+      !redirectParam.startsWith("//") &&
+      !redirectParam.includes("\\")
+        ? redirectParam
+        : null;
+    const target = new URL("/api/auth/sign-in", request.nextUrl.origin);
+    if (safe) target.searchParams.set("redirect", safe);
+    return NextResponse.redirect(target, 307);
+  }
 
   if (pathname.startsWith("/api/")) {
     const isPublicApiRequest =
