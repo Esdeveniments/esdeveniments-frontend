@@ -429,8 +429,15 @@ export async function GET(request: NextRequest) {
 
         const data: GooglePlacesSearchNearbyRawResponse =
           await response.json();
-        places = Array.isArray(data.places) ? data.places : [];
-        // Cache even an empty array: a barren area shouldn't be re-queried per hit.
+        // A 200 carrying an `error` body (or a null/invalid parse) is a soft
+        // failure — fail soft without caching, so it isn't suppressed for the
+        // 12h TTL after the upstream recovers. A genuinely empty area omits
+        // `places` with no error, and we DO cache that as [] (don't re-query).
+        if (data?.error) {
+          console.error("Google Places API soft error:", data.error);
+          return failSoftEmpty();
+        }
+        places = Array.isArray(data?.places) ? data.places : [];
         await cacheSetJson(cacheKey, places, NEARBY_TTL_SECONDS);
       } catch (fetchError) {
         console.error("Google Places API fetch/parse error:", fetchError);
