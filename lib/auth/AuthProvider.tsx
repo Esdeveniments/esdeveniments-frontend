@@ -38,6 +38,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // /api/auth/me returns 503 on a transient Logto outage while preserving the
     // session cookies. Retry once before resolving to unauthenticated so a brief
     // blip doesn't flip the UI to logged-out.
+    // Delay before retry. The timer is cleared on unmount (below), so it can't
+    // run after the component is gone; the 1.5s wait is well inside the 10s
+    // abort window. Returns false if the wait was aborted.
+    const waitBeforeRetry = () =>
+      new Promise<boolean>((resolve) => {
+        retryTimer = setTimeout(() => resolve(true), 1500);
+      }).then((ok) => ok && !controller.signal.aborted);
+
     const load = async () => {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
@@ -45,23 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             credentials: "include",
             signal: controller.signal,
           });
+          // 503 = transient Logto outage (cookies preserved server-side).
           if (res.status === 503 && attempt === 0) {
-            // Delay before retry. The timer is cleared on unmount (below), so
-            // it can't run after the component is gone; the 1.5s wait is well
-            // inside the 10s abort window.
-            await new Promise<void>((resolve) => {
-              retryTimer = setTimeout(resolve, 1500);
-            });
-            if (controller.signal.aborted) {
-              finish(null);
-              return;
-            }
-            continue;
+            if (await waitBeforeRetry()) continue;
+            finish(null);
+            return;
           }
           const data = res.ok ? await res.json() : null;
           finish((data?.user as AuthUser | null) ?? null);
           return;
         } catch {
+          // Network blip / offline: retry once before giving up, but never
+          // after an abort (timeout or unmount).
+          if (attempt === 0 && !controller.signal.aborted) {
+            if (await waitBeforeRetry()) continue;
+          }
           finish(null);
           return;
         }

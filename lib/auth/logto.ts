@@ -1,6 +1,7 @@
 // Server-only Logto OIDC client. We integrate via the standard OAuth 2.0 /
 // OpenID Connect endpoints directly (no @logto/* SDK) to keep the client
 // bundle untouched. Endpoints are fixed for Logto, so no network discovery.
+import "server-only";
 import {
   createHash,
   createPublicKey,
@@ -32,11 +33,14 @@ function requireEnv(key: string): string {
  */
 export function getLogtoConfig(): LogtoConfig {
   const endpoint = requireEnv("LOGTO_ENDPOINT").replace(/\/+$/, "");
-  // Tokens and the client_secret travel to this endpoint — require HTTPS so a
-  // misconfigured http:// URL can't leak them. Allow http for local dev only.
-  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(endpoint);
-  if (!endpoint.startsWith("https://") && !isLocal) {
-    throw new Error("LOGTO_ENDPOINT must use https://");
+  // Tokens and the client_secret travel to this endpoint — require HTTPS in
+  // production so a misconfigured http:// URL can't leak them. Allow http in
+  // non-production for local/LAN/cross-device testing.
+  if (
+    !endpoint.startsWith("https://") &&
+    process.env.NODE_ENV === "production"
+  ) {
+    throw new Error("LOGTO_ENDPOINT must use https:// in production");
   }
   const issuer = `${endpoint}/oidc`;
   // offline_access → refresh token; custom_data/roles → profile mapping.
@@ -207,13 +211,15 @@ function decodeJwtPayload(jwt: string): LogtoIdTokenClaims {
   ) as LogtoIdTokenClaims;
 }
 
-// Cache the issuer's JWKS briefly; refetch on a kid miss to handle rotation.
-let jwksCache: { keys: Jwk[]; fetchedAt: number } | null = null;
+// Cache each issuer's JWKS briefly; refetch on a kid miss to handle rotation.
+// Keyed by issuer so multiple Logto configs in one process don't cross keys.
+const jwksCache = new Map<string, { keys: Jwk[]; fetchedAt: number }>();
 const JWKS_TTL_MS = 10 * 60 * 1000;
 
 async function getJwks(config: LogtoConfig, force = false): Promise<Jwk[]> {
-  if (jwksCache && !force && Date.now() - jwksCache.fetchedAt < JWKS_TTL_MS) {
-    return jwksCache.keys;
+  const cached = jwksCache.get(config.issuer);
+  if (cached && !force && Date.now() - cached.fetchedAt < JWKS_TTL_MS) {
+    return cached.keys;
   }
   const res = await fetch(`${config.issuer}/jwks`, {
     cache: "no-store",
@@ -221,8 +227,9 @@ async function getJwks(config: LogtoConfig, force = false): Promise<Jwk[]> {
   });
   if (!res.ok) throw new Error(`Logto JWKS ${res.status}`);
   const data = (await res.json()) as { keys: Jwk[] };
-  jwksCache = { keys: data.keys ?? [], fetchedAt: Date.now() };
-  return jwksCache.keys;
+  const keys = data.keys ?? [];
+  jwksCache.set(config.issuer, { keys, fetchedAt: Date.now() });
+  return keys;
 }
 
 /**
@@ -246,8 +253,16 @@ export async function verifyIdToken(
     throw new Error(`Unsupported id_token alg: ${header.alg}`);
   }
 
+  // Require usable RSA key material (n/e) so we never hand an incomplete JWK
+  // to createPublicKey.
   const findKey = (keys: Jwk[]) =>
-    keys.find((k) => k.kty === "RSA" && (!header.kid || k.kid === header.kid));
+    keys.find(
+      (k) =>
+        k.kty === "RSA" &&
+        Boolean(k.n) &&
+        Boolean(k.e) &&
+        (!header.kid || k.kid === header.kid),
+    );
   let jwk = findKey(await getJwks(config));
   if (!jwk) jwk = findKey(await getJwks(config, true)); // refetch on rotation
   if (!jwk) throw new Error("No matching JWKS key for id_token");

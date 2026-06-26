@@ -7,6 +7,7 @@
 // encrypted at rest with AES-256-GCM (Logto's SDK default). It's optional and
 // backwards-compatible: unset → plaintext; a legacy plaintext cookie is still
 // readable after the secret is introduced (graceful rollout).
+import "server-only";
 import { cookies } from "next/headers";
 import type { NextRequest, NextResponse } from "next/server";
 import {
@@ -41,22 +42,31 @@ const baseOptions = {
 
 // ── At-rest encryption (optional) ─────────────────────────────
 const ENC_PREFIX = "v1.";
-const cookieSecret = process.env.LOGTO_COOKIE_SECRET;
-// Require a strong operator secret rather than stretching a weak one: a
-// >=32-char random secret keyed via SHA-256 to a 32-byte AES key is sufficient.
-if (cookieSecret && cookieSecret.length < 32) {
-  throw new Error("LOGTO_COOKIE_SECRET must be at least 32 characters");
+
+// Resolve the AES key lazily on first cookie access (not at module load) so a
+// missing/short secret fails the request, not the whole build/import — this
+// module is imported app-wide. A >=32-char random secret keyed via SHA-256 to
+// a 32-byte AES key is sufficient (no stretching of a server-side secret).
+let encKeyCache: Buffer | null | undefined;
+function getEncKey(): Buffer | null {
+  if (encKeyCache !== undefined) return encKeyCache;
+  const cookieSecret = process.env.LOGTO_COOKIE_SECRET;
+  if (cookieSecret && cookieSecret.length < 32) {
+    throw new Error("LOGTO_COOKIE_SECRET must be at least 32 characters");
+  }
+  if (!cookieSecret && IS_PRODUCTION) {
+    console.warn(
+      "[auth-cookies] LOGTO_COOKIE_SECRET is not set — session tokens are stored unencrypted",
+    );
+  }
+  encKeyCache = cookieSecret
+    ? createHash("sha256").update(cookieSecret).digest()
+    : null;
+  return encKeyCache;
 }
-if (!cookieSecret && IS_PRODUCTION) {
-  console.warn(
-    "[auth-cookies] LOGTO_COOKIE_SECRET is not set — session tokens are stored unencrypted",
-  );
-}
-const encKey = cookieSecret
-  ? createHash("sha256").update(cookieSecret).digest()
-  : null;
 
 function encrypt(plaintext: string): string {
+  const encKey = getEncKey();
   if (!encKey) return plaintext;
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", encKey, iv);
@@ -67,6 +77,7 @@ function encrypt(plaintext: string): string {
 
 function decrypt(value: string | undefined): string | null {
   if (!value) return null;
+  const encKey = getEncKey();
   if (!encKey) {
     // A v1.* envelope with no key configured means the secret was removed or
     // mistyped — don't pass the encrypted blob through as a bearer token.

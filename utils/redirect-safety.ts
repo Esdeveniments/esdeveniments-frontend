@@ -20,7 +20,8 @@ export function sanitizeReturnTo(
   if (value.includes("\\")) return null;
   if (/%2[fF]|%5[cC]|%0[9aAdD]/.test(value)) return null;
   for (let i = 0; i < value.length; i++) {
-    if (value.charCodeAt(i) < 0x20) return null;
+    const code = value.charCodeAt(i);
+    if (code < 0x20 || code === 0x7f) return null; // C0 control chars + DEL
   }
   return value;
 }

@@ -67,6 +67,9 @@ describe("sanitizeReturnTo", () => {
   it("rejects over-long paths to bound the Set-Cookie size", () => {
     expect(sanitizeReturnTo("/" + "a".repeat(3000))).toBeNull();
   });
+  it("rejects the DEL control character", () => {
+    expect(sanitizeReturnTo("/foo\x7fbar")).toBeNull();
+  });
 });
 
 describe("buildAuthorizationUrl", () => {
