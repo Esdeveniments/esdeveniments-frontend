@@ -25,13 +25,18 @@ export interface LogtoUserInfo {
   custom_data?: Record<string, unknown> | null;
 }
 
-/** A single JSON Web Key from the issuer's JWKS (RSA keys for RS256). */
+/** A single JSON Web Key from the issuer's JWKS (EC for ES*, RSA for RS*). */
 export interface Jwk {
   kid?: string;
   kty: string;
   alg?: string;
+  // RSA key material
   n?: string;
   e?: string;
+  // EC key material
+  crv?: string;
+  x?: string;
+  y?: string;
 }
 
 /** Decoded id_token payload claims we validate. */
@@ -44,3 +49,10 @@ export interface LogtoIdTokenClaims {
   sub: string;
   nonce?: string;
 }
+
+/**
+ * Full id_token payload: the validated OIDC claims plus the user-profile claims
+ * (present with the profile/email/roles/custom_data scopes), so the session can
+ * be built from the id_token without a userinfo round-trip.
+ */
+export type IdTokenPayload = LogtoIdTokenClaims & LogtoUserInfo;

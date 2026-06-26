@@ -11,9 +11,9 @@ import {
 import type {
   AuthRole,
   AuthUser,
+  IdTokenPayload,
   Jwk,
   LogtoConfig,
-  LogtoIdTokenClaims,
   LogtoTokenResponse,
   LogtoUserInfo,
   Pkce,
@@ -165,29 +165,6 @@ export function refreshAccessToken(
   });
 }
 
-/**
- * Fetch userinfo. Returns null only on a definitive auth failure (401/403, i.e.
- * the access token is expired/invalid). Throws with a `status` on transient
- * errors (5xx, network) so callers don't treat a Logto outage as a logout.
- */
-export async function fetchUserInfo(
-  config: LogtoConfig,
-  accessToken: string,
-): Promise<LogtoUserInfo | null> {
-  const res = await fetch(config.userinfoEndpoint, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (res.status === 401 || res.status === 403) return null;
-  if (!res.ok) {
-    throw Object.assign(new Error(`Logto userinfo ${res.status}`), {
-      status: res.status,
-    });
-  }
-  return (await res.json()) as LogtoUserInfo;
-}
-
 export function buildEndSessionUrl(params: {
   config: LogtoConfig;
   idTokenHint?: string;
@@ -203,12 +180,12 @@ export function buildEndSessionUrl(params: {
   return url.toString();
 }
 
-function decodeJwtPayload(jwt: string): LogtoIdTokenClaims {
+function decodeJwtPayload(jwt: string): IdTokenPayload {
   const part = jwt.split(".")[1];
   if (!part) throw new Error("Malformed id_token");
   return JSON.parse(
     Buffer.from(part, "base64url").toString("utf8"),
-  ) as LogtoIdTokenClaims;
+  ) as IdTokenPayload;
 }
 
 // Cache each issuer's JWKS briefly; refetch on a kid miss to handle rotation.
@@ -232,16 +209,37 @@ async function getJwks(config: LogtoConfig, force = false): Promise<Jwk[]> {
   return keys;
 }
 
+// Supported JWS algs → the Node digest and the JWK key type they need. Logto
+// self-hosted signs with ES384 by default; RSA algs are kept for portability.
+const SIGNING_ALGS: Record<
+  string,
+  { hash: string; kty: "EC" | "RSA"; ecdsa: boolean }
+> = {
+  ES256: { hash: "SHA256", kty: "EC", ecdsa: true },
+  ES384: { hash: "SHA384", kty: "EC", ecdsa: true },
+  ES512: { hash: "SHA512", kty: "EC", ecdsa: true },
+  RS256: { hash: "SHA256", kty: "RSA", ecdsa: false },
+  RS384: { hash: "SHA384", kty: "RSA", ecdsa: false },
+  RS512: { hash: "SHA512", kty: "RSA", ecdsa: false },
+};
+
+function hasKeyMaterial(k: Jwk, kty: "EC" | "RSA"): boolean {
+  return kty === "EC"
+    ? Boolean(k.x) && Boolean(k.y) && Boolean(k.crv)
+    : Boolean(k.n) && Boolean(k.e);
+}
+
 /**
- * Verify the id_token's RS256 signature against the issuer's JWKS. Defense in
- * depth on top of the back-channel TLS to the token endpoint: a forged/replaced
- * token response can't impersonate a user without the issuer's private key.
+ * Verify the id_token signature against the issuer's JWKS (ES256/384/512 and
+ * RS256/384/512). Defense in depth on top of the back-channel TLS to the token
+ * endpoint: a forged/replaced token response can't impersonate a user without
+ * the issuer's private key.
  */
 export async function verifyIdToken(
   config: LogtoConfig,
   idToken: string,
-  expectedNonce: string,
-): Promise<LogtoIdTokenClaims> {
+  expectedNonce?: string,
+): Promise<IdTokenPayload> {
   const [headerB64, payloadB64, signatureB64] = idToken.split(".");
   if (!headerB64 || !payloadB64 || !signatureB64) {
     throw new Error("Malformed id_token");
@@ -249,18 +247,14 @@ export async function verifyIdToken(
   const header = JSON.parse(
     Buffer.from(headerB64, "base64url").toString("utf8"),
   ) as { alg?: string; kid?: string };
-  if (header.alg !== "RS256") {
-    throw new Error(`Unsupported id_token alg: ${header.alg}`);
-  }
+  const spec = header.alg ? SIGNING_ALGS[header.alg] : undefined;
+  if (!spec) throw new Error(`Unsupported id_token alg: ${header.alg}`);
 
-  // Require usable RSA key material (n/e) so we never hand an incomplete JWK
-  // to createPublicKey.
   const findKey = (keys: Jwk[]) =>
     keys.find(
       (k) =>
-        k.kty === "RSA" &&
-        Boolean(k.n) &&
-        Boolean(k.e) &&
+        k.kty === spec.kty &&
+        hasKeyMaterial(k, spec.kty) &&
         (!header.kid || k.kid === header.kid),
     );
   let jwk = findKey(await getJwks(config));
@@ -269,9 +263,10 @@ export async function verifyIdToken(
 
   const publicKey = createPublicKey({ key: jwk, format: "jwk" });
   const ok = cryptoVerify(
-    "RSA-SHA256",
+    spec.hash,
     Buffer.from(`${headerB64}.${payloadB64}`),
-    publicKey,
+    // JWS ECDSA signatures are raw r||s (IEEE P1363), not DER.
+    spec.ecdsa ? { key: publicKey, dsaEncoding: "ieee-p1363" } : publicKey,
     Buffer.from(signatureB64, "base64url"),
   );
   if (!ok) throw new Error("id_token signature verification failed");
@@ -288,8 +283,8 @@ export async function verifyIdToken(
 export function validateIdTokenClaims(
   config: LogtoConfig,
   idToken: string,
-  expectedNonce: string,
-): LogtoIdTokenClaims {
+  expectedNonce?: string,
+): IdTokenPayload {
   const claims = decodeJwtPayload(idToken);
   if (claims.iss !== config.issuer) {
     throw new Error("id_token issuer mismatch");
@@ -310,10 +305,17 @@ export function validateIdTokenClaims(
   ) {
     throw new Error("id_token expired");
   }
-  if (claims.nonce !== expectedNonce) {
+  // Nonce is checked only at the callback (where we hold the flow nonce). The
+  // /me path re-validates a stored id_token where nonce no longer applies.
+  if (expectedNonce !== undefined && claims.nonce !== expectedNonce) {
     throw new Error("id_token nonce mismatch");
   }
   return claims;
+}
+
+/** Build the session user from verified id_token claims (no userinfo call). */
+export function mapClaimsToAuthUser(claims: IdTokenPayload): AuthUser {
+  return mapUserInfoToAuthUser(claims);
 }
 
 function mapRole(roles: string[] | undefined): AuthRole | undefined {
