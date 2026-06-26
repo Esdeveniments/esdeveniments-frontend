@@ -28,6 +28,15 @@ Most are already repo-level secrets. Add the gaps:
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = copy from the Coolify staging app env
 - Any other `NEXT_PUBLIC_*` that differs from prod for staging.
 
+**Analytics on non-prod:** a GitHub *environment* secret falls back to the
+repo-level (prod) secret when unset, so the staging image inlines the prod
+analytics IDs. That no longer pollutes prod analytics, because GA and Auto Ads
+are gated to the production host at runtime (see `app/GoogleScripts.tsx`, PR
+#374): they only fire on `www.esdeveniments.cat`, never on staging or previews.
+So you do not need to clear those IDs in the staging environment. (Setting a
+GitHub secret to an empty string isn't even possible — the API rejects it with
+HTTP 422.)
+
 `NEXT_PUBLIC_CONTACT_EMAIL` is not set anywhere today (builds empty); add it if
 you want it inlined.
 
@@ -52,8 +61,14 @@ For each frontend app (prod `ohrtinmo1t8sz798wrq1gav3`, staging
 3. **Remove `BUILD_VERSION` from the app's runtime env vars.** The image bakes
    `BUILD_VERSION=<git sha>` at build time, and a runtime override would shadow
    it, breaking the `/api/health` version gate the deploy workflow waits on.
-4. Keep the existing deploy webhook. It now triggers a pull-and-redeploy of the
-   new tag instead of an on-host build.
+4. Deploy trigger: a **Docker Image** app does not auto-deploy from git pushes
+   the way a Dockerfile/GitHub app does, so confirm the workflow's
+   `COOLIFY_WEBHOOK_URL` is this app's **Deploy Webhook** (Coolify → app →
+   Webhooks). The deploy job POSTs it explicitly, which makes Coolify re-pull
+   the moving tag (`:main` / `:develop`) and swap the container. After the first
+   prebuilt deploy, verify `/api/health` reports the new commit — if the tag
+   didn't re-pull, enable "force pull" / check the webhook points at the right
+   app.
 
 ## How it flows after migration
 
