@@ -8,109 +8,63 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { noopAdapter } from "./adapter";
-import type {
-  AuthAdapter,
-  AuthContextValue,
-  AuthErrorCode,
-  AuthUser,
-  LoginCredentials,
-  RegisterCredentials,
-  AuthResult,
-} from "types/auth";
+import type { AuthContextValue, AuthUser } from "types/auth";
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined
+  undefined,
 );
 
-export function AuthProvider({
-  adapter = noopAdapter,
-  children,
-}: {
-  adapter?: AuthAdapter;
-  children: ReactNode;
-}) {
+// Hydrates the session from the HttpOnly cookie via /api/auth/me, then exposes
+// redirect-based sign-in / logout. Tokens live in cookies, never in JS.
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [error, setError] = useState<AuthErrorCode | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    adapter
-      .getSession()
-      .then((sessionUser) => {
-        setUser(sessionUser);
+    let active = true;
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active) setUser((data?.user as AuthUser | null) ?? null);
       })
-      .catch((err) => {
-        console.error("AuthProvider: getSession failed", err);
+      .catch(() => {
+        if (active) setUser(null);
       })
       .finally(() => {
-        setHydrated(true);
+        if (active) setHydrated(true);
       });
+    return () => {
+      active = false;
+    };
+  }, []);
 
-    const unsubscribe = adapter.onAuthStateChange((updatedUser) => {
-      setUser(updatedUser);
-    });
+  const signIn = useCallback((redirectTo?: string) => {
+    const query = redirectTo
+      ? `?redirect=${encodeURIComponent(redirectTo)}`
+      : "";
+    window.location.assign(`/api/auth/sign-in${query}`);
+  }, []);
 
-    return unsubscribe;
-  }, [adapter]);
-
-  const login = useCallback(
-    async (credentials: LoginCredentials): Promise<AuthResult> => {
-      setError(null);
-      const result = await adapter.login(credentials);
-      if (result.success && result.user) {
-        setUser(result.user);
-      } else if (result.error) {
-        setError(result.error);
-      }
-      return result;
-    },
-    [adapter]
-  );
-
-  const register = useCallback(
-    async (credentials: RegisterCredentials): Promise<AuthResult> => {
-      setError(null);
-      const result = await adapter.register(credentials);
-      if (result.success && result.user) {
-        setUser(result.user);
-      } else if (result.error) {
-        setError(result.error);
-      }
-      return result;
-    },
-    [adapter]
-  );
-
-  const logout = useCallback(async () => {
-    try {
-      await adapter.logout();
-    } catch (err) {
-      console.error("AuthProvider: logout failed", err);
-    }
-    setUser(null);
-    setError(null);
-  }, [adapter]);
+  const logout = useCallback(() => {
+    window.location.assign("/api/auth/sign-out");
+  }, []);
 
   const status = !hydrated
-    ? "loading" as const
+    ? ("loading" as const)
     : user
-      ? "authenticated" as const
-      : "unauthenticated" as const;
+      ? ("authenticated" as const)
+      : ("unauthenticated" as const);
 
-  const value: AuthContextValue = useMemo(
+  const value = useMemo<AuthContextValue>(
     () => ({
       status,
       user,
-      error,
       isAuthenticated: status === "authenticated",
       isLoading: status === "loading",
-      supportedMethods: adapter.supportedMethods,
-      login,
-      register,
+      signIn,
       logout,
     }),
-    [status, user, error, adapter.supportedMethods, login, register, logout]
+    [status, user, signIn, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

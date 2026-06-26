@@ -223,14 +223,17 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/status",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
-  // Auth routes (browser-initiated; backend HMAC handled by external wrapper)
-  "/api/auth/login",
-  "/api/auth/register",
+];
+
+// GET-only public exact paths. Gated to GET in isPublicApiRequest so a future
+// POST/PUT/DELETE handler on the same path fails closed (HMAC required).
+// Logto OIDC routes: browser-initiated redirects + session cookie reads, no
+// HMAC — they talk to the identity provider over their own TLS channel.
+export const PUBLIC_API_GET_EXACT_PATHS = [
+  "/api/auth/sign-in",
+  "/api/auth/callback",
+  "/api/auth/sign-out",
   "/api/auth/me",
-  "/api/auth/password/forgot",
-  "/api/auth/password/reset",
-  "/api/auth/verification/confirm",
-  "/api/auth/verification/resend",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
@@ -305,6 +308,9 @@ export default async function proxy(request: NextRequest) {
         PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname))) ||
       // Exact match routes
       PUBLIC_API_EXACT_PATHS.includes(pathname) ||
+      // GET-only exact routes (e.g. Logto OIDC): fail closed on other methods
+      (request.method === "GET" &&
+        PUBLIC_API_GET_EXACT_PATHS.includes(pathname)) ||
       // Event routes (GET only): base, [slug], or /categorized
       (request.method === "GET" && EVENTS_PATTERN.test(pathname)) ||
       // Image proxy (GET only): used by Next/Image to safely load external images
