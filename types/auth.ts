@@ -25,6 +25,10 @@ export interface LogtoConfig {
   userinfoEndpoint: string;
   endSessionEndpoint: string;
   scope: string;
+  // Optional API resource indicator. When set, Logto issues a JWT access token
+  // with aud=<resource> that a backend can validate (otherwise the token is
+  // userinfo-scoped only).
+  apiResource?: string;
 }
 
 /** PKCE verifier/challenge pair (RFC 7636, S256). */

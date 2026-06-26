@@ -33,6 +33,14 @@ export function getLogtoConfig(): LogtoConfig {
     throw new Error("LOGTO_ENDPOINT must use https://");
   }
   const issuer = `${endpoint}/oidc`;
+  // offline_access → refresh token; custom_data/roles → profile mapping.
+  const baseScope = "openid profile email offline_access custom_data roles";
+  const apiResource = process.env.LOGTO_API_RESOURCE?.trim() || undefined;
+  // When targeting a backend API resource, request its scopes too so the
+  // issued JWT carries them. Space-separated, e.g. "read:events write:favorites".
+  const apiScopes = apiResource
+    ? process.env.LOGTO_API_SCOPES?.trim()
+    : undefined;
   return {
     endpoint,
     issuer,
@@ -42,8 +50,8 @@ export function getLogtoConfig(): LogtoConfig {
     tokenEndpoint: `${issuer}/token`,
     userinfoEndpoint: `${issuer}/me`,
     endSessionEndpoint: `${issuer}/session/end`,
-    // offline_access → refresh token; custom_data/roles → profile mapping.
-    scope: "openid profile email offline_access custom_data roles",
+    scope: apiScopes ? `${baseScope} ${apiScopes}` : baseScope,
+    apiResource,
   };
 }
 
@@ -72,7 +80,7 @@ export function buildAuthorizationUrl(params: {
 }): string {
   const { config, redirectUri, state, nonce, codeChallenge } = params;
   const url = new URL(config.authorizationEndpoint);
-  url.search = new URLSearchParams({
+  const search = new URLSearchParams({
     client_id: config.appId,
     redirect_uri: redirectUri,
     response_type: "code",
@@ -81,7 +89,10 @@ export function buildAuthorizationUrl(params: {
     nonce,
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
-  }).toString();
+  });
+  // Request a JWT access token for the backend API resource when configured.
+  if (config.apiResource) search.set("resource", config.apiResource);
+  url.search = search.toString();
   return url.toString();
 }
 
@@ -97,6 +108,8 @@ async function postToken(
       ...body,
       client_id: config.appId,
       client_secret: config.appSecret,
+      // Bind the issued access token to the API resource when configured.
+      ...(config.apiResource ? { resource: config.apiResource } : {}),
     }).toString(),
     cache: "no-store",
     signal: AbortSignal.timeout(10_000),

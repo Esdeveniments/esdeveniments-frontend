@@ -9,6 +9,7 @@ import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   clearTokenCookies,
+  readTokenFromRequest,
   setTokenCookies,
 } from "@utils/auth-cookies";
 
@@ -19,8 +20,8 @@ const NO_STORE = { "Cache-Control": "no-store" } as const;
 // definitive auth failure (clear cookies → 401) from a transient Logto outage
 // (preserve cookies → 503) so a blip doesn't log everyone out.
 export async function GET(request: NextRequest): Promise<Response> {
-  const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
-  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+  const accessToken = readTokenFromRequest(request, ACCESS_TOKEN_COOKIE);
+  const refreshToken = readTokenFromRequest(request, REFRESH_TOKEN_COOKIE);
 
   if (!accessToken && !refreshToken) {
     return NextResponse.json({ user: null }, { status: 401, headers: NO_STORE });

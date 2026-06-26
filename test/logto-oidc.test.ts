@@ -84,6 +84,18 @@ describe("buildAuthorizationUrl", () => {
     expect(url.searchParams.get("code_challenge")).toBe("cc");
     expect(url.searchParams.get("scope")).toContain("offline_access");
   });
+
+  it("omits resource by default and includes it when apiResource is set", () => {
+    const base = { config, redirectUri: "https://app.test/cb", state: "s", nonce: "n", codeChallenge: "c" };
+    expect(new URL(buildAuthorizationUrl(base)).searchParams.has("resource")).toBe(false);
+    const withResource = new URL(
+      buildAuthorizationUrl({
+        ...base,
+        config: { ...config, apiResource: "https://api.test" },
+      }),
+    );
+    expect(withResource.searchParams.get("resource")).toBe("https://api.test");
+  });
 });
 
 describe("buildEndSessionUrl", () => {

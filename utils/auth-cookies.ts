@@ -2,8 +2,19 @@
 // client JS. The access token keeps the `auth_token` cookie name so existing
 // consumers (favorites, events, preferits) read the session unchanged via
 // getAccessTokenFromCookies().
+//
+// When LOGTO_COOKIE_SECRET is set, the token cookie *values* are additionally
+// encrypted at rest with AES-256-GCM (Logto's SDK default). It's optional and
+// backwards-compatible: unset → plaintext; a legacy plaintext cookie is still
+// readable after the secret is introduced (graceful rollout).
 import { cookies } from "next/headers";
 import type { NextRequest, NextResponse } from "next/server";
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+} from "node:crypto";
 import type { FlowState, LogtoTokenResponse } from "types/auth";
 
 export const ACCESS_TOKEN_COOKIE = "auth_token";
@@ -28,17 +39,59 @@ const baseOptions = {
   sameSite: "lax" as const,
 };
 
+// ── At-rest encryption (optional) ─────────────────────────────
+const ENC_PREFIX = "v1.";
+const encKey = process.env.LOGTO_COOKIE_SECRET
+  ? createHash("sha256").update(process.env.LOGTO_COOKIE_SECRET).digest()
+  : null;
+
+function encrypt(plaintext: string): string {
+  if (!encKey) return plaintext;
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", encKey, iv);
+  const enc = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return ENC_PREFIX + Buffer.concat([iv, tag, enc]).toString("base64url");
+}
+
+function decrypt(value: string | undefined): string | null {
+  if (!value) return null;
+  // Not an encrypted blob (no secret configured, or written before rollout).
+  if (!encKey || !value.startsWith(ENC_PREFIX)) return value;
+  try {
+    const buf = Buffer.from(value.slice(ENC_PREFIX.length), "base64url");
+    const iv = buf.subarray(0, 12);
+    const tag = buf.subarray(12, 28);
+    const enc = buf.subarray(28);
+    const decipher = createDecipheriv("aes-256-gcm", encKey, iv);
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(enc), decipher.final()]).toString(
+      "utf8",
+    );
+  } catch {
+    return null;
+  }
+}
+
 /** Read access token from incoming request cookies (server components + routes). */
 export async function getAccessTokenFromCookies(): Promise<string | null> {
   const cookieStore = await cookies();
-  return cookieStore.get(ACCESS_TOKEN_COOKIE)?.value ?? null;
+  return decrypt(cookieStore.get(ACCESS_TOKEN_COOKIE)?.value);
+}
+
+/** Read and decrypt a token cookie from a route handler's NextRequest. */
+export function readTokenFromRequest(
+  request: NextRequest,
+  name: string,
+): string | null {
+  return decrypt(request.cookies.get(name)?.value);
 }
 
 export function setTokenCookies(
   response: NextResponse,
   tokens: LogtoTokenResponse,
 ): void {
-  response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.access_token, {
+  response.cookies.set(ACCESS_TOKEN_COOKIE, encrypt(tokens.access_token), {
     ...baseOptions,
     path: "/",
     maxAge: tokens.expires_in,
@@ -46,14 +99,14 @@ export function setTokenCookies(
   // Refresh-token responses may omit id_token; keep the existing one rather
   // than overwriting it (the id_token_hint is needed for RP-initiated logout).
   if (tokens.id_token) {
-    response.cookies.set(ID_TOKEN_COOKIE, tokens.id_token, {
+    response.cookies.set(ID_TOKEN_COOKIE, encrypt(tokens.id_token), {
       ...baseOptions,
       path: "/",
       maxAge: SESSION_MAX_AGE,
     });
   }
   if (tokens.refresh_token) {
-    response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token, {
+    response.cookies.set(REFRESH_TOKEN_COOKIE, encrypt(tokens.refresh_token), {
       ...baseOptions,
       path: "/api/auth",
       maxAge: SESSION_MAX_AGE,
