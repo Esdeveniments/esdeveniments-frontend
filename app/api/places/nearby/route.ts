@@ -345,7 +345,12 @@ export async function GET(request: NextRequest) {
   const NEARBY_TTL_SECONDS = 60 * 60 * 12; // 12h — opening hours rarely change
 
   try {
-    let places = await cacheGetJson<GooglePlaceResponse[]>(cacheKey);
+    // Treat a corrupted / non-array cached value as a miss (re-fetch) so a
+    // poisoned entry can't make `.filter` throw and turn into a 500.
+    const cached = await cacheGetJson<GooglePlaceResponse[]>(cacheKey);
+    let places: GooglePlaceResponse[] | null = Array.isArray(cached)
+      ? cached
+      : null;
 
     if (places === null) {
       const fields = [

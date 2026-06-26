@@ -71,13 +71,13 @@ async function getClient(): Promise<ReturnType<typeof createClient> | null> {
           : { connectTimeout: 2_000 },
       });
       // node-redis needs a persistent error listener or it throws on errors.
-      // Drop the client on error (matching cache-handler.mjs) so that once the
-      // cooldown elapses getClient() builds a fresh one, instead of handing
-      // back a permanently-broken connection that can never recover.
-      client.on("error", () => {
+      // It reconnects on its own, so we don't disconnect/recreate here — doing
+      // that risked a late error from an old client wiping a newer one's
+      // promise. We just stamp the failure (the cooldown check above uses it to
+      // fail open) and log it so errors aren't silently swallowed.
+      client.on("error", (err) => {
         globalForRedis.__appRedisFailedAt = Date.now();
-        client.disconnect().catch(() => {});
-        globalForRedis.__appRedis = undefined;
+        console.warn("[redis-cache] client error:", err?.message ?? err);
       });
       await client.connect();
       return client;
