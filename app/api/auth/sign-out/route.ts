@@ -1,26 +1,28 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { buildEndSessionUrl, getLogtoConfig } from "@lib/auth/logto";
 import { clearTokenCookies, ID_TOKEN_COOKIE } from "@utils/auth-cookies";
-import { handleApiError } from "@utils/api-error-handler";
 
 // Clears the local session cookies and ends the Logto session (RP-initiated
 // logout), then returns the user to the site root.
 export async function GET(request: NextRequest): Promise<Response> {
-  try {
-    const config = getLogtoConfig();
-    const origin = request.nextUrl.origin;
-    const idTokenHint = request.cookies.get(ID_TOKEN_COOKIE)?.value;
+  const origin = request.nextUrl.origin;
+  const idTokenHint = request.cookies.get(ID_TOKEN_COOKIE)?.value;
 
-    const endSessionUrl = buildEndSessionUrl({
-      config,
+  // Always clear the local session and redirect, even if building the Logto
+  // end-session URL fails (e.g. misconfigured env) — never leave the user
+  // unable to log out.
+  let destination = `${origin}/`;
+  try {
+    destination = buildEndSessionUrl({
+      config: getLogtoConfig(),
       idTokenHint,
       postLogoutRedirectUri: `${origin}/`,
     });
-
-    const response = NextResponse.redirect(endSessionUrl);
-    clearTokenCookies(response);
-    return response;
   } catch (e) {
-    return handleApiError(e, "/api/auth/sign-out");
+    console.error("[/api/auth/sign-out] end-session URL build failed", e);
   }
+
+  const response = NextResponse.redirect(destination);
+  clearTokenCookies(response);
+  return response;
 }

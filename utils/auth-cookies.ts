@@ -43,11 +43,15 @@ export function setTokenCookies(
     path: "/",
     maxAge: tokens.expires_in,
   });
-  response.cookies.set(ID_TOKEN_COOKIE, tokens.id_token, {
-    ...baseOptions,
-    path: "/",
-    maxAge: SESSION_MAX_AGE,
-  });
+  // Refresh-token responses may omit id_token; keep the existing one rather
+  // than overwriting it (the id_token_hint is needed for RP-initiated logout).
+  if (tokens.id_token) {
+    response.cookies.set(ID_TOKEN_COOKIE, tokens.id_token, {
+      ...baseOptions,
+      path: "/",
+      maxAge: SESSION_MAX_AGE,
+    });
+  }
   if (tokens.refresh_token) {
     response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token, {
       ...baseOptions,

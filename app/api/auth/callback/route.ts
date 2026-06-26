@@ -51,6 +51,8 @@ export async function GET(request: NextRequest): Promise<Response> {
       codeVerifier: flow.codeVerifier,
       redirectUri: `${origin}/api/auth/callback`,
     });
+    // The authorization_code grant always returns an id_token (openid scope).
+    if (!tokens.id_token) throw new Error("Missing id_token in token response");
     validateIdTokenClaims(config, tokens.id_token, flow.nonce);
 
     const returnTo = sanitizeReturnTo(flow.returnTo) ?? "/";

@@ -58,6 +58,12 @@ describe("sanitizeReturnTo", () => {
     expect(sanitizeReturnTo("/%2Fevil.com")).toBeNull();
     expect(sanitizeReturnTo("/foo\nbar")).toBeNull();
   });
+  it("rejects percent-encoded backslash and CRLF bypasses", () => {
+    expect(sanitizeReturnTo("/%5cevil.com")).toBeNull();
+    expect(sanitizeReturnTo("/%5Cevil.com")).toBeNull();
+    expect(sanitizeReturnTo("/foo%0d%0aSet-Cookie:x")).toBeNull();
+    expect(sanitizeReturnTo("/foo%09bar")).toBeNull();
+  });
 });
 
 describe("buildAuthorizationUrl", () => {

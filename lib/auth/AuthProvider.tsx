@@ -22,21 +22,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const controller = new AbortController();
+    let settled = false;
+    // `settled` is set on unmount so we never setState after unmount; a timeout
+    // abort still resolves to unauthenticated (settled is false), so a hanging
+    // /me can't trap the UI in the loading state.
+    const finish = (next: AuthUser | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      setUser(next);
+      setHydrated(true);
+    };
+    const timeout = setTimeout(() => controller.abort(), 10_000);
     fetch("/api/auth/me", {
       credentials: "include",
       signal: controller.signal,
     })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        setUser((data?.user as AuthUser | null) ?? null);
-        setHydrated(true);
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return;
-        setUser(null);
-        setHydrated(true);
-      });
+      .then((data) => finish((data?.user as AuthUser | null) ?? null))
+      .catch(() => finish(null));
     return () => {
+      settled = true;
+      clearTimeout(timeout);
       controller.abort();
     };
   }, []);

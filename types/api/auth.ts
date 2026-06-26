@@ -8,7 +8,8 @@ export interface LogtoTokenResponse {
   token_type: string;
   expires_in: number;
   scope?: string;
-  id_token: string;
+  // Optional: the spec allows refresh-token responses to omit the id_token.
+  id_token?: string;
   refresh_token?: string;
 }
 
@@ -28,6 +29,7 @@ export interface LogtoUserInfo {
 export interface LogtoIdTokenClaims {
   iss: string;
   aud: string | string[];
+  azp?: string;
   exp: number;
   iat?: number;
   sub: string;

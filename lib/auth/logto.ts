@@ -26,6 +26,12 @@ function requireEnv(key: string): string {
  */
 export function getLogtoConfig(): LogtoConfig {
   const endpoint = requireEnv("LOGTO_ENDPOINT").replace(/\/+$/, "");
+  // Tokens and the client_secret travel to this endpoint — require HTTPS so a
+  // misconfigured http:// URL can't leak them. Allow http for local dev only.
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(endpoint);
+  if (!endpoint.startsWith("https://") && !isLocal) {
+    throw new Error("LOGTO_ENDPOINT must use https://");
+  }
   const issuer = `${endpoint}/oidc`;
   return {
     endpoint,
@@ -65,8 +71,10 @@ export function sanitizeReturnTo(value: string | null | undefined): string | nul
   if (!value.startsWith("/")) return null;
   if (value.startsWith("//") || value.startsWith("/\\")) return null;
   if (value.includes("\\")) return null;
-  if (/^\/%2[fF]/.test(value)) return null;
-  // Reject control characters (newlines, etc.) in the path.
+  // Reject percent-encoded slashes/backslashes (%2f, %5c) and encoded control
+  // chars (%0d, %0a, %09) that browsers normalize into // or header injection.
+  if (/%2[fF]|%5[cC]|%0[9aAdD]/.test(value)) return null;
+  // Reject raw control characters (newlines, etc.) in the path.
   for (let i = 0; i < value.length; i++) {
     if (value.charCodeAt(i) < 0x20) return null;
   }
@@ -198,6 +206,10 @@ export function validateIdTokenClaims(
   const aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
   if (!aud.includes(config.appId)) {
     throw new Error("id_token audience mismatch");
+  }
+  // With multiple audiences, OIDC requires azp to identify the intended client.
+  if (aud.length > 1 && claims.azp !== config.appId) {
+    throw new Error("id_token azp mismatch");
   }
   if (typeof claims.exp !== "number" || claims.exp * 1000 <= Date.now()) {
     throw new Error("id_token expired");
