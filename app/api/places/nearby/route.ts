@@ -416,6 +416,9 @@ export async function GET(request: NextRequest) {
           },
           body: JSON.stringify(requestBody),
           cache: "no-store",
+          // Bound the upstream call so a hung Google request can't tie up the
+          // worker; on timeout the fetch throws and we fail soft below.
+          signal: AbortSignal.timeout(5000),
         });
 
         if (!response.ok) {

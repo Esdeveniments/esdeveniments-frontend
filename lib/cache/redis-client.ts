@@ -60,8 +60,9 @@ async function getClient(): Promise<ReturnType<typeof createClient> | null> {
   const isTls = url.startsWith("rediss://");
 
   globalForRedis.__appRedis = (async () => {
+    let client: ReturnType<typeof createClient> | null = null;
     try {
-      const client = createClient({
+      client = createClient({
         url,
         pingInterval: 10_000,
         // Fail fast instead of queueing commands while disconnected, so a Redis
@@ -82,7 +83,13 @@ async function getClient(): Promise<ReturnType<typeof createClient> | null> {
       });
       await client.connect();
       return client;
-    } catch {
+    } catch (error) {
+      // Disconnect the failed client so it doesn't keep retrying in the
+      // background — without this, each cooldown cycle during a prolonged
+      // outage would orphan a new client. Log so a silent connect failure
+      // (= running uncached, more paid Places calls) is noticeable.
+      client?.disconnect().catch(() => {});
+      console.warn("[redis-cache] connect failed:", error);
       globalForRedis.__appRedis = undefined;
       globalForRedis.__appRedisFailedAt = Date.now();
       return null;
