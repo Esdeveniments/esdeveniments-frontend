@@ -21,8 +21,12 @@ export async function fetchEventSlugs(page: Page, size = 5): Promise<string[]> {
  * unconditionally, so the only way they go missing is a `notFound()` (a
  * CANCELLED event, or a transient cold-build SSR fetch miss). The list API can
  * surface such a slug, which made tests that blindly used `content[0].slug`
- * flaky. Trying the next candidate when a page 404s removes that dependency on
- * which event happens to be first.
+ * flaky. Trying the next candidate when a page resolves to "not found" removes
+ * that dependency on which event happens to be first.
+ *
+ * Note: the page returns HTTP 200 even for a missing event (PPR streams a shell,
+ * then the not-found boundary), so the response status can't distinguish them.
+ * `NoEventFound` renders `data-testid="no-event-found"`; a real event never does.
  */
 export async function gotoFirstResolvableEvent(
   page: Page,
@@ -30,11 +34,16 @@ export async function gotoFirstResolvableEvent(
 ): Promise<string | null> {
   const slugs = await fetchEventSlugs(page);
   for (const slug of slugs) {
-    const response = await page.goto(`${localePrefix}/e/${slug}`, {
+    await page.goto(`${localePrefix}/e/${slug}`, {
       waitUntil: "domcontentloaded",
       timeout: 90000,
     });
-    if (response?.ok()) return slug;
+    const isNotFound = await page
+      .getByTestId("no-event-found")
+      .waitFor({ state: "visible", timeout: 10000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!isNotFound) return slug;
   }
   return null;
 }
