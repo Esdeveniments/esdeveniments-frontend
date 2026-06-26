@@ -4,7 +4,6 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "../../../i18n/routing";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-// import { useGeolocation } from "@components/hooks/useGeolocation";
 import { LocationDiscoveryWidgetProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
 import {
@@ -81,50 +80,6 @@ export default function LocationDiscoveryWidget({
     },
     [allLocations, onLocationChange, router]
   );
-
-  // Handle current location
-  // const handleCurrentLocation = useCallback(async () => {
-  //   if (!regionsWithCities) {
-  //     console.error("Regions data not available");
-  //     return;
-  //   }
-
-  //   try {
-  //     const nearestCity = await requestLocation(regionsWithCities);
-
-  //     if (nearestCity) {
-  //       setCurrentLocation(nearestCity.label);
-  //       setIsOpen(false);
-
-  //       if (onLocationChange) {
-  //         onLocationChange(nearestCity);
-  //       }
-
-  //       // Send analytics event
-  //       sendGoogleEvent("location_selected", {
-  //         category: "location_discovery",
-  //         label: nearestCity.label,
-  //         value: nearestCity.value,
-  //       });
-
-  //       // Navigate to location
-  //       router.push(`/${nearestCity.value}`);
-  //     } else {
-  //       // If we couldn't find nearest city, just set as current location
-  //       setCurrentLocation("La meva ubicació actual");
-  //       setIsOpen(false);
-
-  //       // Send analytics event
-  //       sendGoogleEvent("location_selected", {
-  //         category: "location_discovery",
-  //         label: "La meva ubicació actual",
-  //         value: "current_location",
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error getting current location:", error);
-  //   }
-  // }, [regionsWithCities, requestLocation, onLocationChange, router]);
 
   const onDiscoverOtherEvents = useCallback(() => {
     //
