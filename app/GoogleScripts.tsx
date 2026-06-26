@@ -10,6 +10,14 @@ import { scheduleIdleCallback } from "@utils/browser";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
+// ponytail: canonical prod host. GA (pageviews + consent) and Auto Ads fire
+// ONLY on real production. Vercel previews, staging, and the app embedded in the
+// Coolify dashboard all inline the same prod measurement ID and would otherwise
+// pollute prod analytics. Checked at runtime (window.location), so it holds no
+// matter which build inlined the ID. The CMP/consent banner is intentionally
+// NOT gated (it must keep its beforeInteractive ordering on prod, and it sends
+// nothing to GA on its own). Add hosts here if production ever serves more.
+const PROD_HOST = "www.esdeveniments.cat";
 // FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
 const FUNDING_CHOICES_PUB_ID = ADS_CLIENT?.replace(/^ca-/, "") ?? "";
 const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
@@ -114,6 +122,14 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
 
+  // Gate all Google scripts to the production host. Resolved after mount so the
+  // first client render matches SSR (both render nothing) — no hydration
+  // mismatch — then GA loads only when actually served from prod.
+  const [isProdHost, setIsProdHost] = useState(false);
+  useEffect(() => {
+    setIsProdHost(window.location.hostname === PROD_HOST);
+  }, []);
+
   const [HeavyComponent, setHeavyComponent] = useState<
     React.ComponentType<{ adsAllowed: boolean }> | null
   >(null);
@@ -126,7 +142,7 @@ export default function GoogleScripts() {
   // because our TCF implementation (AdContext) provides a unified consent model.
   // This is intentional and aligns with our CMP's consent structure.
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestMode || !isProdHost) return;
     const win = ensureGtag();
     if (!win) return;
 
@@ -161,13 +177,14 @@ export default function GoogleScripts() {
     );
 
     return cleanup;
-  }, [adsAllowed]);
+  }, [adsAllowed, isProdHost]);
 
   // Load heavy tracking + Auto Ads only after hydration.
   // This prevents server/client HTML mismatches caused by client-only boundaries.
   useEffect(() => {
     if (!adsAllowed) return;
     if (isE2ETestMode) return;
+    if (!isProdHost) return;
     let cancelled = false;
 
     import("./GoogleScriptsHeavy")
@@ -182,12 +199,12 @@ export default function GoogleScripts() {
     return () => {
       cancelled = true;
     };
-  }, [adsAllowed]);
+  }, [adsAllowed, isProdHost]);
 
   return (
     <>
       {/* Google Analytics - Consent Mode v2 (defaults set inline to avoid race conditions) */}
-      {GA_MEASUREMENT_ID && !isE2ETestMode && (
+      {GA_MEASUREMENT_ID && !isE2ETestMode && isProdHost && (
         <>
           <Script id="google-analytics-consent" strategy="lazyOnload">
             {`
@@ -287,14 +304,14 @@ export default function GoogleScripts() {
       )}
 
       {/* Pageview tracking - wrapped in Suspense for useSearchParams */}
-      {GA_MEASUREMENT_ID && !isE2ETestMode && (
+      {GA_MEASUREMENT_ID && !isE2ETestMode && isProdHost && (
         <Suspense fallback={null}>
           <GoogleAnalyticsPageview adsAllowed={adsAllowed} />
         </Suspense>
       )}
 
       {/* Heavy tracking + Auto Ads: only load after consent */}
-      {!isE2ETestMode && adsAllowed && HeavyComponent && (
+      {!isE2ETestMode && isProdHost && adsAllowed && HeavyComponent && (
         <HeavyComponent adsAllowed={adsAllowed} />
       )}
     </>
