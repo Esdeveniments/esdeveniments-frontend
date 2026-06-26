@@ -24,6 +24,10 @@ ARG NEXT_PUBLIC_GOOGLE_MAPS
 ARG NEXT_PUBLIC_TIKTOK_CLIENT_KEY
 ARG NEXT_PUBLIC_TIKTOK_REDIRECT_URI
 ARG NEXT_PUBLIC_CONTACT_EMAIL
+# Web Push: public VAPID key is inlined into the client bundle at build time.
+# Without it, usePushNotifications reports "unsupported" and the push CTA
+# never renders in production.
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ARG HMAC_SECRET
 ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
@@ -41,6 +45,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_TIKTOK_CLIENT_KEY=$NEXT_PUBLIC_TIKTOK_CLIENT_KEY \
     NEXT_PUBLIC_TIKTOK_REDIRECT_URI=$NEXT_PUBLIC_TIKTOK_REDIRECT_URI \
     NEXT_PUBLIC_CONTACT_EMAIL=$NEXT_PUBLIC_CONTACT_EMAIL \
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY \
     HMAC_SECRET=$HMAC_SECRET \
     SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN \
     SENTRY_ORG=$SENTRY_ORG \
@@ -66,6 +71,10 @@ COPY --chown=nextjs:nodejs --from=builder /app/.next/standalone ./
 COPY --chown=nextjs:nodejs --from=builder /app/.next/static ./.next/static
 COPY --chown=nextjs:nodejs --from=builder /app/public ./public
 COPY --chown=nextjs:nodejs --from=builder /app/cache-handler.mjs ./cache-handler.mjs
+# Entrypoint caps V8's heap to a fraction of the container memory limit so the
+# GC runs before the kernel OOM-kills the container (see docker-entrypoint.sh).
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 EXPOSE 3000
 ENV PORT=3000
@@ -76,4 +85,4 @@ USER nextjs
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["node", "server.js"]
+CMD ["./docker-entrypoint.sh"]

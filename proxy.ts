@@ -199,6 +199,16 @@ function getAllowedOriginHosts(): Set<string> {
     if (candidate) addAllowedOriginHost(hosts, candidate);
   }
 
+  // Branch-preview alias (project-git-branch-team.vercel.app). Vercel sets
+  // VERCEL_BRANCH_URL per deployment; VERCEL_URL is the hash deployment URL,
+  // not the alias users actually open. Without this, every browser-initiated
+  // POST (push subscribe, favorites, sponsor checkout) 403s on branch previews.
+  const vercelBranchUrl =
+    process.env.VERCEL_BRANCH_URL || process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL;
+  if (vercelBranchUrl) {
+    addAllowedOriginHost(hosts, vercelBranchUrl);
+  }
+
   if (isDev) {
     hosts.add("localhost:3000");
     hosts.add("127.0.0.1:3000");
@@ -297,6 +307,9 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/tiktok/publish",
   "/api/tiktok/upload",
   "/api/tiktok/status",
+  // Web Push subscription (browser-initiated; VAPID send route protects itself with PUSH_SEND_SECRET)
+  "/api/push/subscribe",
+  "/api/push/send",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
   // Auth routes (browser-initiated; backend HMAC handled by external wrapper)
@@ -320,6 +333,7 @@ export const ORIGIN_CHECK_EXEMPT = new Set([
   "/api/sponsors/webhook", // Stripe webhook (server-to-server)
   "/api/revalidate", // External revalidation trigger (has own secret)
   "/api/health", // Monitoring probes
+  "/api/push/send", // Push broadcast (server-to-server, protected by PUSH_SEND_SECRET)
 ]);
 
 /**
@@ -758,9 +772,20 @@ export default async function proxy(request: NextRequest) {
   // Default-deny: anything not on the production allowlist is noindexed.
   const isNonProductionHost = !isProductionHost(request.headers.get("host"));
 
+  // SEO: 3-segment listing paths /[place]/[date]/[category] with a non-default
+  // date (avui|dema|setmana|cap-de-setmana) generate thin/duplicate content
+  // that GSC flags as "Crawled - currently not indexed". Mark noindex,follow
+  // so crawlers can still discover the canonical /[place]/[category] page.
+  // Note: /[place]/tots/[category] is already 301'd to /[place]/[category] by
+  // handleCanonicalRedirects above, so we only need to match non-tots dates.
+  const THREE_SEGMENT_NOINDEX_RE =
+    /^\/[a-z0-9-]+\/(?:avui|dema|setmana|cap-de-setmana)\/[a-z0-9-]+$/;
+  const pathToCheck = pathnameWithoutLocale || pathname;
+  const isThreeSegmentListing = THREE_SEGMENT_NOINDEX_RE.test(pathToCheck);
+
   if (isNonProductionHost || isNoindexPath) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
-  } else if (hasNonCanonicalParams) {
+  } else if (hasNonCanonicalParams || isThreeSegmentListing) {
     response.headers.set("X-Robots-Tag", "noindex, follow");
   }
 

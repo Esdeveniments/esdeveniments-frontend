@@ -14,7 +14,7 @@ import {
 } from "@utils/image-cache";
 import { isDevelopmentHost } from "@utils/host-validation";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
-import type { LookupAddress } from "node:dns";
+import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
@@ -58,24 +58,6 @@ const insecureTlsDispatcher = new Agent({
     rejectUnauthorized: false,
   },
 });
-
-function buildPinnedDnsDispatcher(
-  dnsRecords: LookupAddress[],
-  rejectUnauthorized: boolean,
-): Agent | null {
-  const firstRecord = dnsRecords[0];
-  if (!firstRecord) return null;
-
-  return new Agent({
-    connect: {
-      keepAlive: false,
-      rejectUnauthorized,
-      lookup(_hostname, _options, callback) {
-        callback(null, firstRecord.address, firstRecord.family);
-      },
-    },
-  });
-}
 
 function shouldBypassTlsVerification(candidateUrl: string): boolean {
   try {

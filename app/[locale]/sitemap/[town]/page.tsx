@@ -32,7 +32,10 @@ export async function generateMetadata({
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const { town } = await params;
-  const place = await getPlaceBySlug(town);
+  // Tolerate backend 5xx: getPlaceBySlug throws on non-200/404. Falling back
+  // to null lets the page render with the slug as the label instead of 500ing
+  // — fixes ~698 5xx errors flagged by GSC on /sitemap/<town>/...
+  const place = await getPlaceBySlug(town).catch(() => null);
   const label = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
@@ -84,7 +87,7 @@ async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) 
   });
 
   // Start fetch
-  const placePromise = getPlaceBySlug(town);
+  const placePromise = getPlaceBySlug(town).catch(() => null);
   const place = await placePromise;
   const townLabel = place?.name || town;
 

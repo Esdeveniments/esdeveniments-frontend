@@ -96,7 +96,11 @@ test.describe("Listing robots directives", () => {
     // (stripping "follow"), so we only verify the critical noindex directive
     expect(robotsHeader).toMatch(/noindex/i);
 
-    await assertCanonical(page, /\/barcelona\/avui\/musica$/);
+    // 3-segment URLs (/[place]/[date]/[category]) are noindex,follow because
+    // GSC flagged them as thin/duplicate. Canonical points to the 2-segment
+    // /[place]/[category] page that we DO want indexed (defense-in-depth:
+    // noindex drops the URL; canonical consolidates signals).
+    await assertCanonical(page, /\/barcelona\/musica$/);
   });
 
   test("Geo/distance listing URLs are noindex and canonical stays clean", async ({

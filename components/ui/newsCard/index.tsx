@@ -12,6 +12,7 @@ export default async function NewsCard({
   placeSlug,
   placeLabel,
   variant = "default",
+  priority,
 }: NewsCardProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.News" });
@@ -40,7 +41,7 @@ export default async function NewsCard({
               title={event.title}
               image={rawImage}
               alt={event.title}
-              priority
+              priority={priority ?? true}
               context="hero"
               cacheKey={event.updatedAt}
             />

@@ -20,6 +20,7 @@ async function HybridEventsList({
   date,
   profileSlug,
   serverHasMore = false,
+  ssrPageSize,
   categories,
 }: HybridEventsListProps): Promise<ReactElement> {
   const titleClass = place ? "heading-2" : "heading-1";
@@ -135,6 +136,7 @@ async function HybridEventsList({
         date={date}
         profileSlug={profileSlug}
         serverHasMore={serverHasMore}
+        ssrPageSize={ssrPageSize}
         categories={categories}
         pageData={pageData}
       />

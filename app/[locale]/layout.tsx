@@ -63,9 +63,16 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 
   return {
+    // Installed-app identity on iOS. apple-icon.png (app/) provides the
+    // apple-touch-icon via the Next.js file convention; without it, iOS
+    // falls back to a page screenshot for the Home Screen icon.
+    appleWebApp: {
+      capable: true,
+      title: "Esdeveniments",
+      statusBarStyle: "default",
+    },
     other: {
       "mobile-web-app-capable": "yes",
-      "apple-mobile-web-app-status-bar-style": "default",
     },
     alternates: {
       types: {
@@ -81,7 +88,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#000000",
+  themeColor: "#D6002F",
 };
 
 export function generateStaticParams() {
@@ -119,6 +126,27 @@ export default async function LocaleLayout({
         <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
         {/* MCP server discovery for AI agents (WebMCP + Streamable HTTP) */}
         <link rel="mcp-server-sse" href="/.well-known/mcp" />
+        {/* Early PWA install-prompt capture. Chromium fires `beforeinstallprompt`
+            once, often before lazy React chunks hydrate; if no listener exists
+            yet, the install CTA is lost for the whole session. This synchronous
+            inline script stashes the event so usePwaInstall (types/pwa.ts keeps
+            the event names in sync) can consume it whenever it mounts. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('beforeinstallprompt', function (e) {
+                e.preventDefault();
+                window.__pwaDeferredPrompt = e;
+                window.dispatchEvent(new Event('pwa:install-prompt-ready'));
+              });
+              window.addEventListener('appinstalled', function () {
+                window.__pwaDeferredPrompt = null;
+                window.__pwaInstalled = true;
+                window.dispatchEvent(new Event('pwa:installed'));
+              });
+            `,
+          }}
+        />
       </head>
       <body>
         <Script

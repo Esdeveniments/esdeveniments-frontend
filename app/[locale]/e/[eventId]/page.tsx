@@ -2,7 +2,7 @@ import { Suspense, use } from "react";
 import type { JSX } from "react";
 import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
-import { getEventBySlug } from "@lib/api/events";
+import { getEventBySlug, getEventBySlugForMetadata } from "@lib/api/events";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "@lib/meta";
@@ -57,7 +57,12 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const slug = (await props.params).eventId;
   const locale = (await rootLocale()) as AppLocale;
-  const event = await getEventBySlug(slug);
+  // Use the request-independent reader: reading headers() here would make
+  // metadata dynamic under cacheComponents and mismatch the prerendered shell.
+  // It throws on transient errors — let that bubble so Next does NOT cache a
+  // broken render (SWR keeps the previous good page); only a genuine 404
+  // returns null below.
+  const event = await getEventBySlugForMetadata(slug);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.
@@ -144,6 +149,16 @@ async function EventPageContent({
       ? [regionSlug].filter((p) => p !== primaryPlaceSlug)
       : undefined;
   const primaryCategorySlug = event.categories?.[0]?.slug;
+  const clientEvent = {
+    id: event.id,
+    slug: event.slug,
+    title: event.title,
+    endDate: event.endDate,
+    categorySlug: primaryCategorySlug,
+    placeSlug: citySlug ?? regionSlug,
+    hasImage: Boolean(event.imageUrl),
+    origin: event.origin,
+  };
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug
     ? `/${primaryPlaceSlug}/${primaryCategorySlug}`
@@ -518,7 +533,7 @@ async function EventPageContent({
                 </Suspense>
 
                 {/* Client-side ad + notifications */}
-                <ClientEventClient event={event} />
+                <ClientEventClient event={clientEvent} />
               </div>
 
               {/* ========== STICKY SIDEBAR (desktop only) ========== */}

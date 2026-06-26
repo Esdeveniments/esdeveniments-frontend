@@ -57,7 +57,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v6
@@ -89,7 +89,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v6
@@ -121,7 +121,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v6
@@ -221,9 +221,9 @@ jobs:
       (needs.quality.result == 'success' || needs.quality.result == 'skipped') &&
       (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'skipped') &&
       (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
-    # 15 min = 10 min MAX_WAIT for Coolify build (realistic for Next.js + Docker)
-    # + ~5 min for webhook trigger, smoke tests, and GitHub runner overhead.
-    timeout-minutes: 15
+    # 20 min = 15 min MAX_WAIT for Coolify build (prod Next.js + Docker rebuilds
+    # run ~12 min) + ~5 min for webhook trigger, smoke tests, and runner overhead.
+    timeout-minutes: 20
     # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
@@ -298,10 +298,10 @@ jobs:
           # Coolify dashboard → Application → Environment so /api/health
           # exposes the running commit SHA.
           #
-          # Next.js + Docker builds routinely take 5-8 minutes on Coolify.
-          # A short MAX_WAIT produced silent false-positive "successes" when
-          # the workflow exited before the container actually swapped.
-          MAX_WAIT=600  # 10 minutes — realistic upper bound for full rebuild
+          # Prod Next.js + Docker rebuilds on Coolify run ~12 minutes. Too-short
+          # a MAX_WAIT fails the step (and skips the CDN purge + smoke tests)
+          # even though the deploy then succeeds — a false negative.
+          MAX_WAIT=900  # 15 minutes — covers the ~12 min full rebuild with margin
           INTERVAL=10
           ELAPSED=0
           DEPLOY_CONFIRMED=0

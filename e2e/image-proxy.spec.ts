@@ -1,10 +1,63 @@
-import { test, expect, type Page } from "@playwright/test";
+import {
+  test,
+  expect,
+  type Page,
+  type APIRequestContext,
+  type APIResponse,
+} from "@playwright/test";
 
 /**
  * E2E tests for image proxy functionality
  * Verifies that external images are correctly proxied and optimized
  * across different page types and components
  */
+
+const PROXY_502_RETRIES = 3;
+
+/**
+ * GET a proxied image, retrying on 502.
+ *
+ * A single 502 can be a genuinely flaky upstream. A *persistent* 502 means our
+ * proxy itself is broken — e.g. the autoSelectFamily dispatcher regression that
+ * 502'd every image. We retry to absorb upstream blips, but FAIL (never skip)
+ * when every attempt returns 502. Skipping on 502 is exactly what let that
+ * outage ship green: a total proxy failure looked identical to a flaky service.
+ */
+async function getProxiedImage(
+  request: APIRequestContext,
+  proxyUrl: string,
+  init?: Parameters<APIRequestContext["get"]>[1],
+): Promise<APIResponse> {
+  let response: APIResponse | undefined;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < PROXY_502_RETRIES; attempt++) {
+    // Back off between attempts so a brief upstream hiccup can recover.
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 500));
+    try {
+      response = await request.get(proxyUrl, init);
+      if (response.status() !== 502) break;
+    } catch (err) {
+      // A network-level failure (timeout, connection reset) is transient too —
+      // retry it instead of failing the test on the first blip. Clear any
+      // stale response so a 502 from an earlier attempt can't mask this error.
+      response = undefined;
+      lastError = err;
+    }
+  }
+  if (!response) {
+    throw lastError instanceof Error
+      ? lastError
+      : new Error(
+          `image-proxy fetch failed for ${proxyUrl} after ${PROXY_502_RETRIES} attempts`,
+        );
+  }
+  expect(
+    response.status(),
+    `image-proxy returned 502 on all ${PROXY_502_RETRIES} attempts for ${proxyUrl} — ` +
+      "the proxy is broken, not a flaky upstream",
+  ).not.toBe(502);
+  return response;
+}
 
 test.describe("Image Proxy", () => {
   /**
@@ -134,13 +187,7 @@ test.describe("Image Proxy", () => {
         testImageUrl
       )}&w=200&q=50`;
 
-      const response = await request.get(proxyUrl);
-
-      // picsum.photos may redirect, accept 200 or skip if service is down
-      if (response.status() === 502) {
-        test.skip(true, "Test image service unavailable");
-        return;
-      }
+      const response = await getProxiedImage(request, proxyUrl);
 
       // Should return 200 OK
       expect(response.status()).toBe(200);
@@ -208,14 +255,9 @@ test.describe("Image Proxy", () => {
       )}&w=200&q=50`;
 
       // Request with AVIF preference
-      const avifResponse = await request.get(proxyUrl, {
+      const avifResponse = await getProxiedImage(request, proxyUrl, {
         headers: { Accept: "image/avif,image/webp,image/*" },
       });
-
-      if (avifResponse.status() === 502) {
-        test.skip(true, "Test image service unavailable");
-        return;
-      }
 
       if (avifResponse.status() === 200) {
         const contentType = avifResponse.headers()["content-type"];
@@ -241,14 +283,9 @@ test.describe("Image Proxy", () => {
         testImageUrl
       )}&w=400&q=60`;
 
-      const response = await request.get(proxyUrl, {
+      const response = await getProxiedImage(request, proxyUrl, {
         headers: { Accept: "image/avif,image/webp,image/*" },
       });
-
-      if (response.status() === 502) {
-        test.skip(true, "Test image service unavailable");
-        return;
-      }
 
       if (response.status() === 200) {
         const headers = response.headers();
@@ -290,14 +327,9 @@ test.describe("Image Proxy", () => {
         testImageUrl
       )}&w=400&q=50`;
 
-      const response = await request.get(proxyUrl, {
+      const response = await getProxiedImage(request, proxyUrl, {
         headers: { Accept: "image/webp,image/*" },
       });
-
-      if (response.status() === 502) {
-        test.skip(true, "Test image service unavailable");
-        return;
-      }
 
       expect(response.status()).toBe(200);
 

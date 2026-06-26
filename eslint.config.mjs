@@ -88,6 +88,17 @@ export default [
           message:
             "Do not declare interfaces outside of the /types directory. Centralize all interfaces in /types.",
         },
+        {
+          // Prevent dynamic metadata under cacheComponents (PPR): generateMetadata
+          // must not call request-bound readers (getEventBySlug/getNewsBySlug read
+          // headers()), which makes metadata runtime-dynamic, pushes the metadata
+          // boundary into the resume tree and breaks PPR. Covers declaration and
+          // arrow/expression forms. See docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md
+          selector:
+            ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug|fetchEvents|fetchEventBySlug|fetchEventBySlugWithStatus|fetchNews|fetchNewsBySlug|fetchNewsCities)$/]",
+          message:
+            "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
+        },
       ],
     },
   },
@@ -189,15 +200,18 @@ export default [
   // CRITICAL: Prevent searchParams in listing pages to avoid cache explosion
   // Reading searchParams makes pages dynamic, creating a separate cache entry per unique URL+query
   // See: Dec 28, 2025 incident - 200M cache writes = $307 cost
+  // NOTE: glob targets the locale-nested route (app/[locale]/[place]/**). The
+  // previous `app/[place]/**` glob matched no files after the next-intl [locale]
+  // segment was added, silently disabling this guard.
   {
-    files: ["app/\\[place\\]/**/*.tsx", "app/\\[place\\]/**/*.ts"],
+    files: ["app/\\[locale\\]/\\[place\\]/**/*.tsx", "app/\\[locale\\]/\\[place\\]/**/*.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",
         {
           selector: "Identifier[name='searchParams']",
           message:
-            "⚠️ COST ALERT: Do NOT use searchParams in app/[place]/* pages! This makes pages dynamic and creates millions of cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
+            "⚠️ COST ALERT: Do NOT use searchParams in app/[locale]/[place]/* pages! This makes pages dynamic and creates millions of cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
         },
       ],
     },
