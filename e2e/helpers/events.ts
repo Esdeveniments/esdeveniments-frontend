@@ -1,0 +1,60 @@
+import type { Page } from "@playwright/test";
+
+/**
+ * Fetch candidate event slugs from the internal API proxy (HMAC is signed
+ * server-side). Returns an empty array if the API is unreachable or empty.
+ */
+export async function fetchEventSlugs(page: Page, size = 5): Promise<string[]> {
+  const res = await page.request.get(`/api/events?size=${size}`);
+  if (!res.ok()) return [];
+  const data = (await res.json()) as { content?: Array<{ slug?: string }> };
+  return (data?.content ?? [])
+    .map((event) => event?.slug)
+    .filter((slug): slug is string => typeof slug === "string" && slug.length > 0);
+}
+
+/**
+ * Navigate to the detail page of the first event whose `/e/[slug]` actually
+ * resolves, returning the slug used (or `null` if none of the candidates do).
+ *
+ * The event detail page renders the calendar button and Event JSON-LD
+ * unconditionally, so the only way they go missing is a `notFound()` (a
+ * CANCELLED event, or a transient cold-build SSR fetch miss). The list API can
+ * surface such a slug, which made tests that blindly used `content[0].slug`
+ * flaky. Trying the next candidate when a page 404s removes that dependency on
+ * which event happens to be first.
+ */
+export async function gotoFirstResolvableEvent(
+  page: Page,
+  { localePrefix = "" }: { localePrefix?: string } = {}
+): Promise<string | null> {
+  const slugs = await fetchEventSlugs(page);
+  for (const slug of slugs) {
+    const response = await page.goto(`${localePrefix}/e/${slug}`, {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+    if (response?.ok()) return slug;
+  }
+  return null;
+}
+
+/**
+ * Wait for the `useSWR` GET `/api/favorites` that every favorite button fires
+ * on mount. Resolving this response means the button has hydrated (so a click
+ * won't be dropped before React attaches its handler) and SWR has settled (so a
+ * late GET won't overwrite the optimistic `aria-pressed` state after a click).
+ *
+ * Must be called as a promise set up *before* `page.goto`, then awaited after
+ * navigation — otherwise the request may fire before the listener is attached.
+ * Tolerates the request having already resolved (e.g. on a retry).
+ */
+export function waitForFavoritesReady(page: Page): Promise<unknown> {
+  return page
+    .waitForResponse(
+      (r) =>
+        r.url().includes("/api/favorites") && r.request().method() === "GET",
+      { timeout: 30000 }
+    )
+    .catch(() => null);
+}

@@ -1,20 +1,10 @@
-import { test, expect, type Page } from "@playwright/test";
-
-async function fetchAnyEventSlug(page: Page): Promise<string | undefined> {
-  const res = await page.request.get(`/api/events?size=1`);
-  const data = (await res.json()) as { content?: Array<{ slug?: string }> };
-  return data?.content?.[0]?.slug ?? undefined;
-}
+import { test, expect } from "@playwright/test";
+import { gotoFirstResolvableEvent } from "./helpers/events";
 
 test.describe("Localized SEO (hreflang + JSON-LD)", () => {
   test("/es/e/:slug has correct alternates and inLanguage", async ({ page }) => {
-    const slug = await fetchAnyEventSlug(page);
-    if (!slug) test.skip(true, "No events returned from API");
-
-    await page.goto(`/es/e/${slug}`, {
-      waitUntil: "domcontentloaded",
-      timeout: 90000,
-    });
+    const slug = await gotoFirstResolvableEvent(page, { localePrefix: "/es" });
+    test.skip(slug === null, "No resolvable event returned from API");
 
     // With PPR/cacheComponents, async generateMetadata delivers alternate links
     // via RSC flight data into the body (React 19 doesn't auto-hoist link[rel=alternate]
