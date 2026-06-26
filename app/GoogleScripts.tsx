@@ -6,18 +6,11 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
 import type { WindowWithGtag } from "types/common";
 import { isE2ETestMode } from "@utils/env";
+import { isProductionHost } from "@utils/production-host";
 import { scheduleIdleCallback } from "@utils/browser";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
-// ponytail: canonical prod host. GA (pageviews + consent) and Auto Ads fire
-// ONLY on real production. Vercel previews, staging, and the app embedded in the
-// Coolify dashboard all inline the same prod measurement ID and would otherwise
-// pollute prod analytics. Checked at runtime (window.location), so it holds no
-// matter which build inlined the ID. The CMP/consent banner is intentionally
-// NOT gated (it must keep its beforeInteractive ordering on prod, and it sends
-// nothing to GA on its own). Add hosts here if production ever serves more.
-const PROD_HOST = "www.esdeveniments.cat";
 // FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
 const FUNDING_CHOICES_PUB_ID = ADS_CLIENT?.replace(/^ca-/, "") ?? "";
 const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
@@ -122,12 +115,16 @@ function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
 
-  // Gate all Google scripts to the production host. Resolved after mount so the
-  // first client render matches SSR (both render nothing) — no hydration
-  // mismatch — then GA loads only when actually served from prod.
+  // Gate GA (pageviews + consent) and Auto Ads to the production host so they
+  // never fire on Vercel previews, staging, or the app embedded in the Coolify
+  // dashboard, all of which inline the same prod measurement ID. Reuses the
+  // existing prod-host allowlist (covers www + apex). Resolved after mount so
+  // the first client render matches SSR (both render nothing) — no hydration
+  // mismatch. The CMP/consent banner is intentionally NOT gated (it keeps its
+  // beforeInteractive ordering and sends nothing to GA on its own).
   const [isProdHost, setIsProdHost] = useState(false);
   useEffect(() => {
-    setIsProdHost(window.location.hostname === PROD_HOST);
+    setIsProdHost(isProductionHost(window.location.hostname));
   }, []);
 
   const [HeavyComponent, setHeavyComponent] = useState<
