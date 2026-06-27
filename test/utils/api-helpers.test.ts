@@ -53,6 +53,11 @@ describe("utils/api-helpers — API base resolution", () => {
       getApiUrl();
       expect(warn).toHaveBeenCalledTimes(1);
     });
+
+    it("trims surrounding whitespace from API_URL", () => {
+      process.env.API_URL = "  https://runtime.example.com/api  ";
+      expect(getApiUrl()).toBe("https://runtime.example.com/api");
+    });
   });
 
   describe("getApiOrigin", () => {

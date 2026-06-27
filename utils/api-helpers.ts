@@ -28,8 +28,9 @@ const DEFAULT_API_URL = apiDefaults.apiUrl;
  */
 function apiUrlCandidates(): Array<[string, string | undefined]> {
   return [
-    ["API_URL", process.env.API_URL],
-    ["NEXT_PUBLIC_API_URL", process.env.NEXT_PUBLIC_API_URL],
+    // .trim() guards against copy-paste whitespace in the deploy platform's env.
+    ["API_URL", process.env.API_URL?.trim()],
+    ["NEXT_PUBLIC_API_URL", process.env.NEXT_PUBLIC_API_URL?.trim()],
   ];
 }
 
@@ -52,7 +53,7 @@ function resolveApiUrl(): string {
       const warnKey = `${name}=${value}`;
       if (!_warnedApiUrls.has(warnKey)) {
         _warnedApiUrls.add(warnKey);
-        console.warn(`Invalid ${name} format:`, value);
+        console.warn(`[api-helpers] Invalid ${name} format:`, value);
       }
     }
   }
