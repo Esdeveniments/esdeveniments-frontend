@@ -517,7 +517,10 @@ jobs:
           # integration is broken (this is what the 2026-06-27 outage looked like).
           echo ""
           echo "Checking events API returns data..."
-          EVENTS_TOTAL=$(curl -s --max-time 10 "${SITE_URL}/api/events?size=1" | jq -r '.totalElements // 0' 2>/dev/null || echo 0)
+          # Cache-bust: /api/events sets s-maxage, so behind a CDN this probe could
+          # return a stale pre-deploy payload and pass on a broken build. A unique
+          # param + no-cache forces it to exercise the freshly deployed route.
+          EVENTS_TOTAL=$(curl -s --max-time 10 -H "Cache-Control: no-cache" "${SITE_URL}/api/events?size=1&_smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" | jq -r '.totalElements // 0' 2>/dev/null || echo 0)
           if [ "${EVENTS_TOTAL:-0}" -gt 0 ] 2>/dev/null; then
             echo "Events API: OK ($EVENTS_TOTAL events)"
           else

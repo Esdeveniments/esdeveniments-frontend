@@ -112,12 +112,15 @@ const nextConfig = {
 
   // --- Optimizations ---
   compiler: {
-    // Strip console.* in production to cut noise, but KEEP console.error: stripping
-    // it masked a silent events-blank outage (2026-06-27) whose only stdout signal
-    // would have been fetchEventsExternal's logged error. Errors stay in docker logs
-    // for debugging (Sentry captures them too).
+    // Strip console.* in production to cut noise, but KEEP console.error and
+    // console.warn: stripping them masked a silent events-blank outage (2026-06-27)
+    // whose only stdout signals would have been fetchEventsExternal's logged error
+    // and getApiOrigin's "invalid API URL" warning. Both stay in docker logs for
+    // debugging (Sentry captures errors too); warn also surfaces hydration/PPR issues.
     removeConsole:
-      process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
   },
 
   // --- Image Optimization ---

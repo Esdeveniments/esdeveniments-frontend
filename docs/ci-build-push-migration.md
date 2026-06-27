@@ -39,10 +39,11 @@ Most are already repo-level secrets. Add the gaps:
 > that inlining — Turbopack still folds it (verified: literal copies in
 > `.next/server`). So whatever these GitHub secrets hold **at build time** is what
 > ships; the matching Coolify env vars do nothing for the image app. Get one wrong
-> and it fails **silently** — `fetchEventsExternal` returns an empty list,
-> `removeConsole` strips the error, and PPR still returns HTTP 200. Two guards now
-> catch this: the post-deploy smoke test asserts `/api/events` returns data, and you
-> can inspect the baked value with
+> and it used to fail **silently** — `fetchEventsExternal` returns an empty list and
+> PPR still returns HTTP 200, and `removeConsole` stripped the error log too. Three
+> guards now catch this: `console.error`/`console.warn` are kept in production
+> (`removeConsole: { exclude: ['error', 'warn'] }`), the post-deploy smoke test
+> asserts `/api/events` returns data, and you can inspect the baked value with
 > `docker exec <container> sh -c "grep -rho 'https://api[^\"]*' /app/.next/server | sort -u"`.
 
 **Analytics on non-prod:** a GitHub *environment* secret falls back to the
