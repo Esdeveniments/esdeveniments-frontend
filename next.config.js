@@ -112,7 +112,12 @@ const nextConfig = {
 
   // --- Optimizations ---
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+    // Strip console.* in production to cut noise, but KEEP console.error: stripping
+    // it masked a silent events-blank outage (2026-06-27) whose only stdout signal
+    // would have been fetchEventsExternal's logged error. Errors stay in docker logs
+    // for debugging (Sentry captures them too).
+    removeConsole:
+      process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
   },
 
   // --- Image Optimization ---
