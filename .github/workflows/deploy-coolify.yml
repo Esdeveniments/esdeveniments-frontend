@@ -517,15 +517,22 @@ jobs:
           # integration is broken (this is what the 2026-06-27 outage looked like).
           echo ""
           echo "Checking events API returns data..."
-          # Cache-bust: /api/events sets s-maxage, so behind a CDN this probe could
-          # return a stale pre-deploy payload and pass on a broken build. A unique
-          # param + no-cache forces it to exercise the freshly deployed route.
-          EVENTS_RESP=$(curl -s --max-time 10 -H "Cache-Control: no-cache" "${SITE_URL}/api/events?size=1&_smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}") || EVENTS_RESP=""
-          EVENTS_TOTAL=$(printf '%s' "$EVENTS_RESP" | jq -r '.totalElements // 0' 2>/dev/null || echo 0)
+          # Cache-bust + retry: /api/events sets s-maxage (a CDN could serve a stale
+          # pre-deploy payload), and a cold-start blip during cutover can transiently
+          # return nothing. A unique param per attempt forces a fresh fetch; retry a
+          # few times so a transient hiccup doesn't fail an otherwise-healthy deploy.
+          EVENTS_TOTAL=0
+          EVENTS_RESP=""
+          for attempt in 1 2 3; do
+            EVENTS_RESP=$(curl -s --max-time 10 -H "Cache-Control: no-cache" "${SITE_URL}/api/events?size=1&_smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}") || EVENTS_RESP=""
+            EVENTS_TOTAL=$(printf '%s' "$EVENTS_RESP" | jq -r '.totalElements // 0' 2>/dev/null || echo 0)
+            [ "${EVENTS_TOTAL:-0}" -gt 0 ] 2>/dev/null && break
+            [ "$attempt" -lt 3 ] && { echo "  attempt $attempt: totalElements=$EVENTS_TOTAL — retrying in 5s"; sleep 5; }
+          done
           if [ "${EVENTS_TOTAL:-0}" -gt 0 ] 2>/dev/null; then
             echo "Events API: OK ($EVENTS_TOTAL events)"
           else
-            echo "::error::Events API returned no events (totalElements=$EVENTS_TOTAL) — NEXT_PUBLIC_API_URL/HMAC_SECRET likely misconfigured for this build/runtime"
+            echo "::error::Events API returned no events after 3 attempts (totalElements=$EVENTS_TOTAL) — NEXT_PUBLIC_API_URL/HMAC_SECRET likely misconfigured for this build/runtime"
             # Print the response on a normal line (not in the ::error:: command) and
             # strip CR/newlines so untrusted body content can't inject workflow commands.
             echo "Events API response (first 300 chars): $(printf '%s' "$EVENTS_RESP" | tr -d '\r' | tr '\n' ' ' | head -c 300)"
