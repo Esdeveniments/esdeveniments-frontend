@@ -63,18 +63,21 @@ try {
  * Edge runtime has limitations with environment variables
  */
 export function getApiOrigin(): string {
-  // Strategy 1: runtime API_URL wins (non-public → never inlined), then the
-  // build-time NEXT_PUBLIC_API_URL fallback.
-  const apiUrl = process.env.API_URL || process.env[_envKey];
-  if (apiUrl) {
+  // Try the runtime API_URL first (non-public → never inlined), then the
+  // build-time NEXT_PUBLIC_API_URL. Each candidate is parsed independently so an
+  // invalid value falls through to the next rather than skipping straight to the
+  // default — and the warning names which var was malformed.
+  for (const name of ["API_URL", _envKey]) {
+    const value = process.env[name];
+    if (!value) continue;
     try {
-      return new URL(apiUrl).origin;
+      return new URL(value).origin;
     } catch {
-      console.warn("Invalid API URL format:", apiUrl);
+      console.warn(`Invalid ${name} format:`, value);
     }
   }
 
-  // Strategy 2: Default fallback (single source of truth: config/api-defaults.json)
+  // Default fallback (single source of truth: config/api-defaults.json)
   return DEFAULT_API_ORIGIN;
 }
 
