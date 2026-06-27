@@ -93,3 +93,27 @@ git. No data is touched; this is all build/deploy plumbing.
   own repo.
 - Right-size the frontend container memory (currently 1.5 GB, OOM-prone) and
   consider moving staging + pre environments off the prod box.
+
+## Make the API base runtime-controlled (`API_URL`)
+
+`NEXT_PUBLIC_API_URL` is baked into the image at build time (Turbopack inlines it;
+the `getApiUrl` "indirect lookup" does not prevent this). So for a Docker-Image app
+the Coolify `NEXT_PUBLIC_API_URL` is ignored, and a wrong build value silently breaks
+data fetches (the 2026-06-27 outage).
+
+`getApiUrl`/`getApiOrigin` now prefer a **non-public `API_URL`**. Non-public vars are
+never inlined (same as `HMAC_SECRET`), so `API_URL` is read at runtime and the Coolify
+value always wins. Resolution order: `API_URL` (runtime) → `NEXT_PUBLIC_API_URL`
+(build-time fallback) → JSON default.
+
+To adopt:
+1. Set `API_URL` in each Coolify frontend app (runtime) to the backend base —
+   staging `https://api-preproduction.esdeveniments.cat/api`, prod
+   `https://api.esdeveniments.cat/api`.
+2. Leave `NEXT_PUBLIC_API_URL` as the build-time fallback (still used for build-time
+   ISR prerender).
+3. Verify: `docker exec <container> printenv API_URL` and confirm `/api/events`
+   returns data.
+
+This makes dynamic fetches immune to a wrong build value; the post-deploy smoke test
+still guards the build-time prerender path.

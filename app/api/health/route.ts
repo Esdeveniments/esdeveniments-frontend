@@ -123,9 +123,12 @@ export async function GET(request: NextRequest) {
   const redisReachable = redisConfigured ? await checkRedisConnectivity() : false;
   // Degrade status when Redis is expected but unreachable (cache layer is down)
   const isFullyHealthy = isHealthy && (!redisConfigured || redisReachable);
-  // Use indirect access for diagnostic display — avoids Turbopack inlining
+  // Reflect getApiUrl's resolution: the runtime API_URL (authoritative) or the
+  // build-time NEXT_PUBLIC_API_URL fallback. apiUrlKey stays indirect to match.
   const apiUrlKey = "NEXT_PUBLIC_API_URL";
-  const apiUrlConfigured = Boolean(process.env[apiUrlKey]);
+  const apiUrlConfigured = Boolean(
+    process.env.API_URL || process.env[apiUrlKey],
+  );
 
   return NextResponse.json(
     {

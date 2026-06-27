@@ -12,33 +12,37 @@ import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
 import type { InternalOriginOptions } from "types/api/internal";
 
-/** Default API URL used as fallback when NEXT_PUBLIC_API_URL is not set. */
+/** Default API URL used as fallback when neither API_URL nor NEXT_PUBLIC_API_URL is set. */
 const DEFAULT_API_URL = apiDefaults.apiUrl;
 
 /** Default API origin (scheme + host) for proxy/middleware use. */
 const DEFAULT_API_ORIGIN = new URL(DEFAULT_API_URL).origin;
 
 /**
- * Get the full external API URL (e.g. "https://api.esdeveniments.cat/api").
+ * Resolve the external API base (e.g. "https://api.esdeveniments.cat/api"),
+ * preferring the RUNTIME value.
  *
- * Uses indirect env access so Turbopack does NOT inline the value at build
- * time. This means the runtime value (set by Coolify / Docker ENV) is always
- * read, and when the var is genuinely absent the JSON default kicks in.
+ * `API_URL` (non-public) is the source of truth: like any non-`NEXT_PUBLIC_` var
+ * it is never inlined, so the value set in the container (Coolify) is read at
+ * request time and always wins. `NEXT_PUBLIC_API_URL` is a build-time fallback
+ * for older setups, but it is BAKED into the bundle — the indirect lookup does
+ * NOT stop Turbopack inlining it (a wrong build value caused a silent events
+ * outage on 2026-06-27), so it cannot be overridden at runtime. Prefer setting
+ * `API_URL` in the container; the JSON default is the last resort.
  */
 const _envKey = "NEXT_PUBLIC_API_URL";
 export function getApiUrl(): string {
-  return process.env[_envKey] || DEFAULT_API_URL;
+  return process.env.API_URL || process.env[_envKey] || DEFAULT_API_URL;
 }
 
 /**
- * Report whether NEXT_PUBLIC_API_URL is explicitly configured at runtime.
- * Uses the same indirect env lookup as getApiUrl() to avoid build-time
- * inlining. Callers use this to decide between hitting the default
- * production URL and taking a safe fallback path (e.g., throw for
- * mutations, return empty payload for read wrappers).
+ * Report whether the API base is explicitly configured — via the runtime
+ * `API_URL` or the build-time `NEXT_PUBLIC_API_URL`. Callers use this to decide
+ * between hitting the default production URL and taking a safe fallback path
+ * (e.g., throw for mutations, return empty payload for read wrappers).
  */
 export function isApiUrlConfigured(): boolean {
-  return Boolean(process.env[_envKey]);
+  return Boolean(process.env.API_URL || process.env[_envKey]);
 }
 
 // Conditionally import headers - only available in server components/route handlers
@@ -59,14 +63,14 @@ try {
  * Edge runtime has limitations with environment variables
  */
 export function getApiOrigin(): string {
-  // Strategy 1: Try environment variable (works in most cases).
-  // Use indirect lookup so Turbopack does NOT inline at build time.
-  const apiUrl = process.env[_envKey];
+  // Strategy 1: runtime API_URL wins (non-public → never inlined), then the
+  // build-time NEXT_PUBLIC_API_URL fallback.
+  const apiUrl = process.env.API_URL || process.env[_envKey];
   if (apiUrl) {
     try {
       return new URL(apiUrl).origin;
     } catch {
-      console.warn("Invalid NEXT_PUBLIC_API_URL format:", apiUrl);
+      console.warn("Invalid API URL format:", apiUrl);
     }
   }
 
