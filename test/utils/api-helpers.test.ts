@@ -58,6 +58,13 @@ describe("utils/api-helpers — API base resolution", () => {
       process.env.API_URL = "  https://runtime.example.com/api  ";
       expect(getApiUrl()).toBe("https://runtime.example.com/api");
     });
+
+    it("rejects a non-http(s) scheme and falls back", () => {
+      process.env.API_URL = "javascript:alert(1)";
+      process.env.NEXT_PUBLIC_API_URL = "https://build.example.com/api";
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      expect(getApiUrl()).toBe("https://build.example.com/api");
+    });
   });
 
   describe("getApiOrigin", () => {
@@ -101,6 +108,11 @@ describe("utils/api-helpers — API base resolution", () => {
 
     it("is false when only a malformed API_URL is set", () => {
       process.env.API_URL = "not a url";
+      expect(isApiUrlConfigured()).toBe(false);
+    });
+
+    it("is false for a non-http(s) scheme", () => {
+      process.env.API_URL = "ftp://example.com";
       expect(isApiUrlConfigured()).toBe(false);
     });
   });

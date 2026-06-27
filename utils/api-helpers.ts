@@ -35,26 +35,36 @@ function apiUrlCandidates(): Array<[string, string | undefined]> {
 }
 
 /**
- * First candidate that parses as a valid URL. Malformed values are skipped with a
- * warning that names the offending var, so a typo'd API_URL falls back to
- * NEXT_PUBLIC_API_URL instead of breaking every fetch; the JSON default is last.
+ * True only for a parseable http(s) URL. Non-HTTP schemes (e.g. `javascript:`,
+ * `ftp:`) are rejected: a non-special scheme makes `new URL(v).origin` return the
+ * string "null", which would break fetch and the CSP connect-src allowlist.
  */
+function isHttpUrl(value: string): boolean {
+  try {
+    const { protocol } = new URL(value);
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 // Warn at most once per unique (var, value): resolveApiUrl runs on the per-request
 // path, so a persistent misconfig would otherwise flood logs on every request.
 const _warnedApiUrls = new Set<string>();
 
+/**
+ * First candidate that is a valid http(s) URL. Invalid values are skipped with a
+ * warning that names the offending var, so a typo'd API_URL falls back to
+ * NEXT_PUBLIC_API_URL instead of breaking every fetch; the JSON default is last.
+ */
 function resolveApiUrl(): string {
   for (const [name, value] of apiUrlCandidates()) {
     if (!value) continue;
-    try {
-      new URL(value);
-      return value;
-    } catch {
-      const warnKey = `${name}=${value}`;
-      if (!_warnedApiUrls.has(warnKey)) {
-        _warnedApiUrls.add(warnKey);
-        console.warn(`[api-helpers] Invalid ${name} format:`, value);
-      }
+    if (isHttpUrl(value)) return value;
+    const warnKey = `${name}=${value}`;
+    if (!_warnedApiUrls.has(warnKey)) {
+      _warnedApiUrls.add(warnKey);
+      console.warn(`[api-helpers] Invalid ${name} format:`, value);
     }
   }
   return DEFAULT_API_URL;
@@ -71,15 +81,7 @@ export function getApiUrl(): string {
  * so callers take their safe fallback path instead of trusting a broken URL.
  */
 export function isApiUrlConfigured(): boolean {
-  return apiUrlCandidates().some(([, value]) => {
-    if (!value) return false;
-    try {
-      new URL(value);
-      return true;
-    } catch {
-      return false;
-    }
-  });
+  return apiUrlCandidates().some(([, value]) => !!value && isHttpUrl(value));
 }
 
 // Conditionally import headers - only available in server components/route handlers
