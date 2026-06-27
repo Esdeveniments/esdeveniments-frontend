@@ -67,3 +67,23 @@ export function waitForFavoritesReady(page: Page): Promise<unknown> {
     )
     .catch(() => null);
 }
+
+/**
+ * Wait for the favorites mutation (`POST /api/favorites`) a toggle click fires.
+ * `waitForFavoritesReady` only awaits the *first* mount GET, but SWR can fire a
+ * later revalidation GET that resolves after the click and resets the optimistic
+ * `aria-pressed`. Once this POST resolves, the button reflects the
+ * server-authoritative list (the handler calls `mutateFavorites(..., { revalidate:
+ * false })`), so no later GET can clobber it — assert `aria-pressed` after this.
+ *
+ * Set up as a promise *before* the click, then await it before asserting. Unlike
+ * `waitForFavoritesReady` (a tolerant readiness hint), this is an assertion
+ * target: it intentionally does NOT swallow a timeout, so a missing write throws
+ * a descriptive Playwright timeout error instead of a cryptic downstream failure.
+ */
+export function waitForFavoriteWrite(page: Page) {
+  return page.waitForResponse((r) => {
+    const url = new URL(r.url());
+    return url.pathname === "/api/favorites" && r.request().method() === "POST";
+  }, { timeout: 30000 });
+}
