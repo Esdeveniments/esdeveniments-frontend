@@ -198,15 +198,33 @@ async function getJwks(config: LogtoConfig, force = false): Promise<Jwk[]> {
   if (cached && !force && Date.now() - cached.fetchedAt < JWKS_TTL_MS) {
     return cached.keys;
   }
-  const res = await fetch(`${config.issuer}/jwks`, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!res.ok) throw new Error(`Logto JWKS ${res.status}`);
-  const data = (await res.json()) as { keys: Jwk[] };
-  const keys = data.keys ?? [];
-  jwksCache.set(config.issuer, { keys, fetchedAt: Date.now() });
-  return keys;
+  let res: Response;
+  try {
+    res = await fetch(`${config.issuer}/jwks`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    // Network/timeout — transient, never cache.
+    throw Object.assign(new Error("Logto JWKS fetch failed"), {
+      transient: true,
+    });
+  }
+  if (!res.ok) {
+    throw Object.assign(new Error(`Logto JWKS ${res.status}`), {
+      transient: res.status >= 500 || res.status === 429,
+    });
+  }
+  const data = (await res.json()) as { keys?: Jwk[]; error?: string };
+  // A 200 can still carry an error body or a malformed payload — don't cache it.
+  if (data.error || !Array.isArray(data.keys)) {
+    throw Object.assign(
+      new Error(`Logto JWKS malformed: ${data.error ?? "no keys array"}`),
+      { transient: true },
+    );
+  }
+  jwksCache.set(config.issuer, { keys: data.keys, fetchedAt: Date.now() });
+  return data.keys;
 }
 
 // Supported JWS algs → the Node digest and the JWK key type they need. Logto
@@ -235,10 +253,33 @@ function hasKeyMaterial(k: Jwk, kty: "EC" | "RSA"): boolean {
  * endpoint: a forged/replaced token response can't impersonate a user without
  * the issuer's private key.
  */
-export async function verifyIdToken(
+/**
+ * Callback path: verify signature + claims AND require the nonce to match the
+ * flow nonce. Use this for the authorization_code callback.
+ */
+export function verifyIdToken(
   config: LogtoConfig,
   idToken: string,
-  expectedNonce?: string,
+  expectedNonce: string,
+): Promise<IdTokenPayload> {
+  return verifyIdTokenInternal(config, idToken, expectedNonce);
+}
+
+/**
+ * Session path (/api/auth/me): verify a stored id_token's signature + claims
+ * without a nonce (the flow nonce is long gone). Never use this at the callback.
+ */
+export function verifyStoredIdToken(
+  config: LogtoConfig,
+  idToken: string,
+): Promise<IdTokenPayload> {
+  return verifyIdTokenInternal(config, idToken, null);
+}
+
+async function verifyIdTokenInternal(
+  config: LogtoConfig,
+  idToken: string,
+  expectedNonce: string | null,
 ): Promise<IdTokenPayload> {
   const [headerB64, payloadB64, signatureB64] = idToken.split(".");
   if (!headerB64 || !payloadB64 || !signatureB64) {
@@ -283,7 +324,9 @@ export async function verifyIdToken(
 export function validateIdTokenClaims(
   config: LogtoConfig,
   idToken: string,
-  expectedNonce?: string,
+  // string → require this nonce; null → explicitly skip (the /me re-validation
+  // path, where the flow nonce no longer exists).
+  expectedNonce: string | null,
 ): IdTokenPayload {
   const claims = decodeJwtPayload(idToken);
   if (claims.iss !== config.issuer) {
@@ -297,17 +340,20 @@ export function validateIdTokenClaims(
   if (aud.length > 1 && claims.azp !== config.appId) {
     throw new Error("id_token azp mismatch");
   }
-  // Allow a small clock-skew tolerance for minor IdP/server clock drift.
-  const CLOCK_SKEW_MS = 60_000;
-  if (
-    typeof claims.exp !== "number" ||
-    claims.exp * 1000 + CLOCK_SKEW_MS <= Date.now()
-  ) {
+  // Clock-skew tolerance for minor IdP/server clock drift.
+  const SKEW_MS = 60_000;
+  const now = Date.now();
+  if (typeof claims.exp !== "number" || claims.exp * 1000 + SKEW_MS <= now) {
     throw new Error("id_token expired");
   }
-  // Nonce is checked only at the callback (where we hold the flow nonce). The
-  // /me path re-validates a stored id_token where nonce no longer applies.
-  if (expectedNonce !== undefined && claims.nonce !== expectedNonce) {
+  // Reject tokens not yet valid / issued in the future (when those claims exist).
+  if (typeof claims.nbf === "number" && claims.nbf * 1000 - SKEW_MS > now) {
+    throw new Error("id_token not yet valid (nbf)");
+  }
+  if (typeof claims.iat === "number" && claims.iat * 1000 - SKEW_MS > now) {
+    throw new Error("id_token issued in the future (iat)");
+  }
+  if (expectedNonce !== null && claims.nonce !== expectedNonce) {
     throw new Error("id_token nonce mismatch");
   }
   return claims;
@@ -319,8 +365,9 @@ export function mapClaimsToAuthUser(claims: IdTokenPayload): AuthUser {
 }
 
 function mapRole(roles: string[] | undefined): AuthRole | undefined {
-  if (!roles?.length) return undefined;
-  const lower = roles.map((r) => r.toLowerCase());
+  // roles comes from untrusted JSON — guard against a non-array value.
+  if (!Array.isArray(roles) || roles.length === 0) return undefined;
+  const lower = roles.map((r) => String(r).toLowerCase());
   if (lower.includes("admin")) return "ADMIN";
   if (lower.includes("organization")) return "ORGANIZATION";
   return "USER";

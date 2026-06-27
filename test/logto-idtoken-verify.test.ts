@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { generateKeyPairSync, sign as cryptoSign } from "node:crypto";
-import { verifyIdToken } from "@lib/auth/logto";
+import { verifyIdToken, verifyStoredIdToken } from "@lib/auth/logto";
 import type { LogtoConfig } from "types/auth";
 
 const config: LogtoConfig = {
@@ -57,9 +57,9 @@ describe("verifyIdToken (ES384 / EC P-384)", () => {
     expect(claims.username).toBe("claudetest1");
   });
 
-  it("verifies without a nonce (the /me re-validation path)", async () => {
+  it("verifyStoredIdToken verifies without a nonce (the /me path)", async () => {
     mockJwks();
-    const claims = await verifyIdToken(config, signES384(validClaims));
+    const claims = await verifyStoredIdToken(config, signES384(validClaims));
     expect(claims.sub).toBe("user-1");
   });
 

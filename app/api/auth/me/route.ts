@@ -3,7 +3,7 @@ import {
   getLogtoConfig,
   mapClaimsToAuthUser,
   refreshAccessToken,
-  verifyIdToken,
+  verifyStoredIdToken,
 } from "@lib/auth/logto";
 import {
   ACCESS_TOKEN_COOKIE,
@@ -52,13 +52,16 @@ export async function GET(request: NextRequest): Promise<Response> {
     // Try the stored id_token first (signature + iss/aud/exp; no nonce here).
     if (idToken) {
       try {
-        const claims = await verifyIdToken(config, idToken);
+        const claims = await verifyStoredIdToken(config, idToken);
         return NextResponse.json(
           { user: mapClaimsToAuthUser(claims) },
           { status: 200, headers: NO_STORE },
         );
-      } catch {
-        // Fall through to refresh (likely expired id_token).
+      } catch (e) {
+        // A transient verification failure (JWKS unreachable) must NOT log the
+        // user out — let it bubble to the 503 path. Only definitive failures
+        // (expired/invalid token) fall through to a refresh attempt.
+        if ((e as { transient?: boolean })?.transient) throw e;
       }
     }
 
@@ -67,7 +70,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     // Refresh → new tokens (incl. a fresh id_token) → derive the user from it.
     const refreshed = await refreshAccessToken(config, refreshToken);
     if (!refreshed.id_token) return unauthorized();
-    const claims = await verifyIdToken(config, refreshed.id_token);
+    const claims = await verifyStoredIdToken(config, refreshed.id_token);
     const response = NextResponse.json(
       { user: mapClaimsToAuthUser(claims) },
       { status: 200, headers: NO_STORE },

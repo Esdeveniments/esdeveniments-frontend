@@ -382,13 +382,15 @@ export default async function proxy(request: NextRequest) {
   // otherwise prerender the page's redirect() into a meta-refresh. Preserves a
   // safe local ?redirect= target (no protocol-relative or backslash tricks).
   const loginMatch = pathname.match(LOGIN_ENTRY_PATTERN);
+  // The pattern captures any 2-letter prefix; only treat it as the login entry
+  // when the prefix is absent or a real locale — otherwise (e.g. /fr/...) fall
+  // through so Next 404s instead of 307-ing an invalid route into the flow.
+  const captured = loginMatch?.[1] as AppLocale | undefined;
+  const localeOk = !captured || supportedLocales.has(captured);
   // GET only: the 307 preserves the method, and /api/auth/sign-in is a
   // GET-only public route (HEAD/other methods would hit the HMAC guard).
-  if (loginMatch && request.method === "GET") {
-    // The pattern captures any 2-letter prefix; only trust supported locales.
-    const captured = loginMatch[1] as AppLocale | undefined;
-    const locale =
-      captured && supportedLocales.has(captured) ? captured : DEFAULT_LOCALE;
+  if (loginMatch && localeOk && request.method === "GET") {
+    const locale = captured ?? DEFAULT_LOCALE;
     // Default the post-login destination to the localized home so a user
     // browsing in es/en isn't bounced to the default locale.
     const localizedHome = locale === DEFAULT_LOCALE ? "/" : `/${locale}`;

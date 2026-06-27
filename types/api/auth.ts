@@ -46,6 +46,7 @@ export interface LogtoIdTokenClaims {
   azp?: string;
   exp: number;
   iat?: number;
+  nbf?: number;
   sub: string;
   nonce?: string;
 }

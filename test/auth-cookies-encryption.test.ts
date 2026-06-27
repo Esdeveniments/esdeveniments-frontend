@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 
-// encKey is computed at module load from LOGTO_COOKIE_SECRET, so stub the env
-// and re-import the module for each scenario.
+// The AES key is resolved lazily (getEncKey, first cookie access) and cached
+// per module instance, so stub LOGTO_COOKIE_SECRET and re-import the module
+// (vi.resetModules) for each scenario to get a fresh cache.
 async function loadCookies(secret?: string) {
   vi.resetModules();
   if (secret) vi.stubEnv("LOGTO_COOKIE_SECRET", secret);

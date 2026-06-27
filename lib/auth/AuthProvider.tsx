@@ -35,16 +35,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     const timeout = setTimeout(() => controller.abort(), 10_000);
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let resolveRetry: ((retry: boolean) => void) | undefined;
     // /api/auth/me returns 503 on a transient Logto outage while preserving the
     // session cookies. Retry once before resolving to unauthenticated so a brief
     // blip doesn't flip the UI to logged-out.
-    // Delay before retry. The timer is cleared on unmount (below), so it can't
-    // run after the component is gone; the 1.5s wait is well inside the 10s
-    // abort window. Returns false if the wait was aborted.
+    // Delay before retry. The cleanup below settles this (resolveRetry(false))
+    // on unmount so load() never hangs pending. Resolves true only if we should
+    // still retry (i.e. not aborted).
     const waitBeforeRetry = () =>
       new Promise<boolean>((resolve) => {
-        retryTimer = setTimeout(() => resolve(true), 1500);
-      }).then((ok) => ok && !controller.signal.aborted);
+        resolveRetry = resolve;
+        retryTimer = setTimeout(
+          () => resolve(!controller.signal.aborted),
+          1500,
+        );
+      });
 
     const load = async () => {
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -79,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       settled = true;
       clearTimeout(timeout);
       if (retryTimer) clearTimeout(retryTimer);
+      resolveRetry?.(false); // settle a pending retry wait so load() unwinds
       controller.abort();
     };
   }, []);
