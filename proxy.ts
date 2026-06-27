@@ -7,6 +7,7 @@ import {
 } from "@utils/hmac";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
 import { isProductionHost } from "@utils/production-host";
+import { isE2ETestMode } from "@utils/env";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -197,7 +198,11 @@ function getAllowedOriginHosts(): Set<string> {
     addAllowedOriginHost(hosts, vercelBranchUrl);
   }
 
-  if (isDev) {
+  // E2E runs a production build on localhost:3000, so isDev is false there and
+  // the same-origin localhost POST would be rejected. E2E_TEST_MODE is set only
+  // during E2E runs (never in prod), so this widens the allowlist for tests
+  // without touching the production Origin check.
+  if (isDev || isE2ETestMode) {
     hosts.add("localhost:3000");
     hosts.add("127.0.0.1:3000");
     hosts.add("[::1]:3000");
