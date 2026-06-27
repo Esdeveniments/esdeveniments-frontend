@@ -38,6 +38,10 @@ function apiUrlCandidates(): Array<[string, string | undefined]> {
  * warning that names the offending var, so a typo'd API_URL falls back to
  * NEXT_PUBLIC_API_URL instead of breaking every fetch; the JSON default is last.
  */
+// Warn at most once per unique (var, value): resolveApiUrl runs on the per-request
+// path, so a persistent misconfig would otherwise flood logs on every request.
+const _warnedApiUrls = new Set<string>();
+
 function resolveApiUrl(): string {
   for (const [name, value] of apiUrlCandidates()) {
     if (!value) continue;
@@ -45,7 +49,11 @@ function resolveApiUrl(): string {
       new URL(value);
       return value;
     } catch {
-      console.warn(`Invalid ${name} format:`, value);
+      const warnKey = `${name}=${value}`;
+      if (!_warnedApiUrls.has(warnKey)) {
+        _warnedApiUrls.add(warnKey);
+        console.warn(`Invalid ${name} format:`, value);
+      }
     }
   }
   return DEFAULT_API_URL;

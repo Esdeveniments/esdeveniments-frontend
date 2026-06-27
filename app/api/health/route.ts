@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createConnection } from "node:net";
 import { connect as tlsConnect } from "node:tls";
+import { isApiUrlConfigured } from "@utils/api-helpers";
 
 /**
  * Health check endpoint for monitoring runtime configuration.
@@ -123,12 +124,9 @@ export async function GET(request: NextRequest) {
   const redisReachable = redisConfigured ? await checkRedisConnectivity() : false;
   // Degrade status when Redis is expected but unreachable (cache layer is down)
   const isFullyHealthy = isHealthy && (!redisConfigured || redisReachable);
-  // Reflect getApiUrl's resolution: the runtime API_URL (authoritative) or the
-  // build-time NEXT_PUBLIC_API_URL fallback. apiUrlKey stays indirect to match.
-  const apiUrlKey = "NEXT_PUBLIC_API_URL";
-  const apiUrlConfigured = Boolean(
-    process.env.API_URL || process.env[apiUrlKey],
-  );
+  // Use the same validated resolution as the app: isApiUrlConfigured() treats a
+  // malformed URL as not configured, so diagnostics match runtime behavior.
+  const apiUrlConfigured = isApiUrlConfigured();
 
   return NextResponse.json(
     {

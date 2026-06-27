@@ -44,6 +44,15 @@ describe("utils/api-helpers — API base resolution", () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
       expect(getApiUrl()).toBe("https://build.example.com/api");
     });
+
+    it("warns only once for a repeated malformed value", () => {
+      process.env.API_URL = "not-a-url-dedup";
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      getApiUrl();
+      getApiUrl();
+      getApiUrl();
+      expect(warn).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("getApiOrigin", () => {
@@ -53,14 +62,15 @@ describe("utils/api-helpers — API base resolution", () => {
     });
 
     it("falls back to NEXT_PUBLIC_API_URL when API_URL is malformed (does not skip to default)", () => {
-      process.env.API_URL = "not a url";
+      // Distinct value per malformed test: the warn is deduped per (var, value).
+      process.env.API_URL = "not-a-url-origin";
       process.env.NEXT_PUBLIC_API_URL = "https://build.example.com/api";
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       expect(getApiOrigin()).toBe("https://build.example.com");
       // The warning must name the offending var so a misconfig is diagnosable.
       expect(warn).toHaveBeenCalledWith(
         expect.stringContaining("API_URL"),
-        "not a url",
+        "not-a-url-origin",
       );
     });
 
