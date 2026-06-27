@@ -525,7 +525,10 @@ jobs:
           if [ "${EVENTS_TOTAL:-0}" -gt 0 ] 2>/dev/null; then
             echo "Events API: OK ($EVENTS_TOTAL events)"
           else
-            echo "::error::Events API returned no events (totalElements=$EVENTS_TOTAL) — NEXT_PUBLIC_API_URL/HMAC_SECRET likely misconfigured. Response (first 300 chars): $(printf '%s' "$EVENTS_RESP" | head -c 300 | tr '\n' ' ')"
+            echo "::error::Events API returned no events (totalElements=$EVENTS_TOTAL) — NEXT_PUBLIC_API_URL/HMAC_SECRET likely misconfigured for this build/runtime"
+            # Print the response on a normal line (not in the ::error:: command) and
+            # strip CR/newlines so untrusted body content can't inject workflow commands.
+            echo "Events API response (first 300 chars): $(printf '%s' "$EVENTS_RESP" | tr -d '\r' | tr '\n' ' ' | head -c 300)"
             FAILED=1
           fi
 
