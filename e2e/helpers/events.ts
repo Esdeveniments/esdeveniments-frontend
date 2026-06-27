@@ -79,12 +79,11 @@ export function waitForFavoritesReady(page: Page): Promise<unknown> {
  * Set up as a promise *before* the click, then await it before asserting.
  * Tolerates a missing/timed-out write so it never hangs the test.
  */
-export function waitForFavoriteWrite(page: Page): Promise<unknown> {
+export function waitForFavoriteWrite(page: Page) {
   return page
-    .waitForResponse(
-      (r) =>
-        r.url().includes("/api/favorites") && r.request().method() === "POST",
-      { timeout: 30000 }
-    )
+    .waitForResponse((r) => {
+      const url = new URL(r.url());
+      return url.pathname === "/api/favorites" && r.request().method() === "POST";
+    }, { timeout: 30000 })
     .catch(() => null);
 }
