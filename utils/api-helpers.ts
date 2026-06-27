@@ -15,34 +15,62 @@ import type { InternalOriginOptions } from "types/api/internal";
 /** Default API URL used as fallback when neither API_URL nor NEXT_PUBLIC_API_URL is set. */
 const DEFAULT_API_URL = apiDefaults.apiUrl;
 
-/** Default API origin (scheme + host) for proxy/middleware use. */
-const DEFAULT_API_ORIGIN = new URL(DEFAULT_API_URL).origin;
-
 /**
- * Resolve the external API base (e.g. "https://api.esdeveniments.cat/api"),
- * preferring the RUNTIME value.
+ * API base candidates in priority order.
  *
- * `API_URL` (non-public) is the source of truth: like any non-`NEXT_PUBLIC_` var
- * it is never inlined, so the value set in the container (Coolify) is read at
- * request time and always wins. `NEXT_PUBLIC_API_URL` is a build-time fallback
- * for older setups, but it is BAKED into the bundle — the indirect lookup does
- * NOT stop Turbopack inlining it (a wrong build value caused a silent events
- * outage on 2026-06-27), so it cannot be overridden at runtime. Prefer setting
- * `API_URL` in the container; the JSON default is the last resort.
+ * `API_URL` (non-public) is read directly: on the Node server (route handlers /
+ * server components, where the event fetches run) it is read at request time, so
+ * the value set in the container (Coolify) wins without a rebuild.
+ * `NEXT_PUBLIC_API_URL` is accessed directly too so it stays inlined as the
+ * build-time fallback. (In Edge middleware env follows Edge semantics; this app
+ * runs middleware on the Node standalone server, so it reads runtime env there
+ * too — but don't assume runtime override in a generic Edge context.)
  */
-const _envKey = "NEXT_PUBLIC_API_URL";
-export function getApiUrl(): string {
-  return process.env.API_URL || process.env[_envKey] || DEFAULT_API_URL;
+function apiUrlCandidates(): Array<[string, string | undefined]> {
+  return [
+    ["API_URL", process.env.API_URL],
+    ["NEXT_PUBLIC_API_URL", process.env.NEXT_PUBLIC_API_URL],
+  ];
 }
 
 /**
- * Report whether the API base is explicitly configured — via the runtime
- * `API_URL` or the build-time `NEXT_PUBLIC_API_URL`. Callers use this to decide
- * between hitting the default production URL and taking a safe fallback path
- * (e.g., throw for mutations, return empty payload for read wrappers).
+ * First candidate that parses as a valid URL. Malformed values are skipped with a
+ * warning that names the offending var, so a typo'd API_URL falls back to
+ * NEXT_PUBLIC_API_URL instead of breaking every fetch; the JSON default is last.
+ */
+function resolveApiUrl(): string {
+  for (const [name, value] of apiUrlCandidates()) {
+    if (!value) continue;
+    try {
+      new URL(value);
+      return value;
+    } catch {
+      console.warn(`Invalid ${name} format:`, value);
+    }
+  }
+  return DEFAULT_API_URL;
+}
+
+/** Get the full external API base (e.g. "https://api.esdeveniments.cat/api"). */
+export function getApiUrl(): string {
+  return resolveApiUrl();
+}
+
+/**
+ * Report whether a VALID API base is explicitly configured (runtime `API_URL` or
+ * build-time `NEXT_PUBLIC_API_URL`). A malformed value counts as not configured,
+ * so callers take their safe fallback path instead of trusting a broken URL.
  */
 export function isApiUrlConfigured(): boolean {
-  return Boolean(process.env.API_URL || process.env[_envKey]);
+  return apiUrlCandidates().some(([, value]) => {
+    if (!value) return false;
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  });
 }
 
 // Conditionally import headers - only available in server components/route handlers
@@ -59,26 +87,12 @@ try {
 }
 
 /**
- * Get API origin with multiple fallback strategies for Edge Runtime
- * Edge runtime has limitations with environment variables
+ * API origin (scheme + host) — used for the CSP connect-src allowlist in
+ * middleware. Resolves the same way as getApiUrl (API_URL → NEXT_PUBLIC_API_URL →
+ * default); resolveApiUrl has already validated the value, so this never throws.
  */
 export function getApiOrigin(): string {
-  // Try the runtime API_URL first (non-public → never inlined), then the
-  // build-time NEXT_PUBLIC_API_URL. Each candidate is parsed independently so an
-  // invalid value falls through to the next rather than skipping straight to the
-  // default — and the warning names which var was malformed.
-  for (const name of ["API_URL", _envKey]) {
-    const value = process.env[name];
-    if (!value) continue;
-    try {
-      return new URL(value).origin;
-    } catch {
-      console.warn(`Invalid ${name} format:`, value);
-    }
-  }
-
-  // Default fallback (single source of truth: config/api-defaults.json)
-  return DEFAULT_API_ORIGIN;
+  return new URL(resolveApiUrl()).origin;
 }
 
 /**

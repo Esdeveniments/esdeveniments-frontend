@@ -37,6 +37,13 @@ describe("utils/api-helpers — API base resolution", () => {
     it("falls back to the JSON default when neither is set", () => {
       expect(getApiUrl()).toBe(apiDefaults.apiUrl);
     });
+
+    it("falls back to NEXT_PUBLIC_API_URL when API_URL is malformed", () => {
+      process.env.API_URL = "not a url";
+      process.env.NEXT_PUBLIC_API_URL = "https://build.example.com/api";
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      expect(getApiUrl()).toBe("https://build.example.com/api");
+    });
   });
 
   describe("getApiOrigin", () => {
@@ -50,7 +57,11 @@ describe("utils/api-helpers — API base resolution", () => {
       process.env.NEXT_PUBLIC_API_URL = "https://build.example.com/api";
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       expect(getApiOrigin()).toBe("https://build.example.com");
-      expect(warn).toHaveBeenCalled();
+      // The warning must name the offending var so a misconfig is diagnosable.
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining("API_URL"),
+        "not a url",
+      );
     });
 
     it("falls back to the default origin when neither is set", () => {
@@ -70,6 +81,11 @@ describe("utils/api-helpers — API base resolution", () => {
     });
 
     it("is false when neither is set", () => {
+      expect(isApiUrlConfigured()).toBe(false);
+    });
+
+    it("is false when only a malformed API_URL is set", () => {
+      process.env.API_URL = "not a url";
       expect(isApiUrlConfigured()).toBe(false);
     });
   });
