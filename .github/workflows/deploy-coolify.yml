@@ -520,11 +520,12 @@ jobs:
           # Cache-bust: /api/events sets s-maxage, so behind a CDN this probe could
           # return a stale pre-deploy payload and pass on a broken build. A unique
           # param + no-cache forces it to exercise the freshly deployed route.
-          EVENTS_TOTAL=$(curl -s --max-time 10 -H "Cache-Control: no-cache" "${SITE_URL}/api/events?size=1&_smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" | jq -r '.totalElements // 0' 2>/dev/null || echo 0)
+          EVENTS_RESP=$(curl -s --max-time 10 -H "Cache-Control: no-cache" "${SITE_URL}/api/events?size=1&_smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}") || EVENTS_RESP=""
+          EVENTS_TOTAL=$(printf '%s' "$EVENTS_RESP" | jq -r '.totalElements // 0' 2>/dev/null || echo 0)
           if [ "${EVENTS_TOTAL:-0}" -gt 0 ] 2>/dev/null; then
             echo "Events API: OK ($EVENTS_TOTAL events)"
           else
-            echo "::error::Events API returned no events (totalElements=$EVENTS_TOTAL) — NEXT_PUBLIC_API_URL/HMAC_SECRET likely misconfigured for this build/runtime"
+            echo "::error::Events API returned no events (totalElements=$EVENTS_TOTAL) — NEXT_PUBLIC_API_URL/HMAC_SECRET likely misconfigured. Response (first 300 chars): $(printf '%s' "$EVENTS_RESP" | head -c 300 | tr '\n' ' ')"
             FAILED=1
           fi
 

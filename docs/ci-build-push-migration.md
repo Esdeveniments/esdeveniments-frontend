@@ -44,7 +44,7 @@ Most are already repo-level secrets. Add the gaps:
 > guards now catch this: `console.error`/`console.warn` are kept in production
 > (`removeConsole: { exclude: ['error', 'warn'] }`), the post-deploy smoke test
 > asserts `/api/events` returns data, and you can inspect the baked value with
-> `docker exec <container> sh -c "grep -rho 'https://api[^\"]*' /app/.next/server | sort -u"`.
+> `docker exec <container> sh -c "grep -rhoE 'https://api[a-zA-Z0-9._/-]*' /app/.next/server | sort -u"`.
 
 **Analytics on non-prod:** a GitHub *environment* secret falls back to the
 repo-level (prod) secret when unset, so the staging image inlines the prod
