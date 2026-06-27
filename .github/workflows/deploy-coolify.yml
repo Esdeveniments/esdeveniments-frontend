@@ -525,7 +525,9 @@ jobs:
           EVENTS_RESP=""
           for attempt in 1 2 3; do
             EVENTS_RESP=$(curl -s --max-time 10 -H "Cache-Control: no-cache" "${SITE_URL}/api/events?size=1&_smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}") || EVENTS_RESP=""
-            EVENTS_TOTAL=$(printf '%s' "$EVENTS_RESP" | jq -r '.totalElements // 0' 2>/dev/null || echo 0)
+            # Coerce to a plain integer via jq so untrusted response data can't put
+            # control chars/newlines into EVENTS_TOTAL (used in ::error:: and -gt).
+            EVENTS_TOTAL=$(printf '%s' "$EVENTS_RESP" | jq -r 'if (.totalElements | type) == "number" then (.totalElements | floor) else 0 end' 2>/dev/null || echo 0)
             [ "${EVENTS_TOTAL:-0}" -gt 0 ] 2>/dev/null && break
             [ "$attempt" -lt 3 ] && { echo "  attempt $attempt: totalElements=$EVENTS_TOTAL — retrying in 5s"; sleep 5; }
           done
