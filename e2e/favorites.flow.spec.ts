@@ -98,7 +98,7 @@ test.describe("Favorites flow", () => {
     const favoriteWrite = waitForFavoriteWrite(page);
     await favButton.click();
     const response = await favoriteWrite;
-    expect(response?.ok()).toBe(true);
+    expect(response.ok()).toBe(true);
     await expect(favButton).toHaveAttribute("aria-pressed", "true");
 
     await expect
@@ -175,7 +175,7 @@ test.describe("Favorites flow", () => {
     const favoriteWriteOn = waitForFavoriteWrite(page);
     await favButton.click();
     const responseOn = await favoriteWriteOn;
-    expect(responseOn?.ok()).toBe(true);
+    expect(responseOn.ok()).toBe(true);
     await expect(favButton).toHaveAttribute("aria-pressed", "true");
 
     // In CI the server action can keep the button disabled briefly.
@@ -187,7 +187,7 @@ test.describe("Favorites flow", () => {
     const favoriteWriteOff = waitForFavoriteWrite(page);
     await favButton.click();
     const responseOff = await favoriteWriteOff;
-    expect(responseOff?.ok()).toBe(true);
+    expect(responseOff.ok()).toBe(true);
     await expect(favButton).toHaveAttribute("aria-pressed", "false");
 
     // Wait for the server action to finish; navigating too early can abort the request.

@@ -76,14 +76,14 @@ export function waitForFavoritesReady(page: Page): Promise<unknown> {
  * server-authoritative list (the handler calls `mutateFavorites(..., { revalidate:
  * false })`), so no later GET can clobber it — assert `aria-pressed` after this.
  *
- * Set up as a promise *before* the click, then await it before asserting.
- * Tolerates a missing/timed-out write so it never hangs the test.
+ * Set up as a promise *before* the click, then await it before asserting. Unlike
+ * `waitForFavoritesReady` (a tolerant readiness hint), this is an assertion
+ * target: it intentionally does NOT swallow a timeout, so a missing write throws
+ * a descriptive Playwright timeout error instead of a cryptic downstream failure.
  */
 export function waitForFavoriteWrite(page: Page) {
-  return page
-    .waitForResponse((r) => {
-      const url = new URL(r.url());
-      return url.pathname === "/api/favorites" && r.request().method() === "POST";
-    }, { timeout: 30000 })
-    .catch(() => null);
+  return page.waitForResponse((r) => {
+    const url = new URL(r.url());
+    return url.pathname === "/api/favorites" && r.request().method() === "POST";
+  }, { timeout: 30000 });
 }
