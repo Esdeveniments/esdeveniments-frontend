@@ -1,5 +1,7 @@
 {
+  "version": "1.0",
   "generatedAt": "2026-04-30T08:18:07.519Z",
+  "lastUpdated": "2026-06-26T00:00:00+00:00",
   "client": {
     "totalBytes": 2398193,
     "topBundles": [
@@ -104,6 +106,16 @@
         "type": "JS"
       }
     ]
+  },
+  "thresholds": {
+    "warning": {
+      "ratio": 0.05,
+      "bytes": 51200
+    },
+    "error": {
+      "ratio": 0.1,
+      "bytes": 102400
+    }
   },
   "routes": {
     "/[locale]": {
@@ -227,7 +239,7 @@
       "fileCount": 8
     },
     "/api/places": {
-      "serverBytes": 96154,
+      "serverBytes": 142830,
       "fileCount": 24
     },
     "/api/events": {
@@ -323,7 +335,7 @@
       "fileCount": 6
     },
     "/api/places/nearby": {
-      "serverBytes": 24413,
+      "serverBytes": 70288,
       "fileCount": 6
     },
     "/api/cities/[id]": {

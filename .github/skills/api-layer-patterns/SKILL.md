@@ -203,6 +203,8 @@ headers: {
 }
 ```
 
+**Per-request-billed upstreams (e.g. Google Places):** CDN headers aren't enough — on Cloudflare's Free plan `/api/*` isn't edge-cached, and the Next fetch cache is wiped every deploy (`cache-handler.mjs` scopes keys by `buildId`). For a paid upstream, read through the **deploy-independent** app Redis cache (`lib/cache/redis-client.ts`) with a coarse key, and cap cost at the provider (GCP quota). See `app/api/places/nearby/route.ts` and [the Places cost incident](../../../docs/incidents/2026-06-26-places-api-cost.md).
+
 ---
 
 ## Layer 3: External Wrappers
