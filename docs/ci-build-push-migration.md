@@ -18,15 +18,33 @@ The build inlines `NEXT_PUBLIC_*` at build time, so they must exist in GitHub.
 Most are already repo-level secrets. Add the gaps:
 
 **Repo-level** (`Settings → Secrets → Actions`):
+- `NEXT_PUBLIC_API_URL` = `https://api.esdeveniments.cat/api` — repo-level is the
+  **production** build value (there is no GitHub `production` environment, so the
+  `:main` build falls back to repo-level). It MUST be the prod API **with `/api`**.
+  Verify this before cutting prod over to the image, or prod goes silently
+  events-blank exactly like staging did on 2026-06-27.
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — copy from the Coolify prod app env. Without it
   the push CTA is missing in the image.
 
 **`staging` environment** (these override the repo-level prod values on the
 `develop` build, since `NEXT_PUBLIC_*` are baked per environment):
-- `NEXT_PUBLIC_API_URL` = `https://api-preproduction.esdeveniments.cat`
+- `NEXT_PUBLIC_API_URL` = `https://api-preproduction.esdeveniments.cat/api` — **must include the `/api` suffix** (the backend serves `/api/events`; bare `/events` → 500). Omitting it caused a silent events-blank outage on 2026-06-27 (see the warning below).
 - `NEXT_PUBLIC_SITE_URL` = `https://staging.esdeveniments.cat`
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = copy from the Coolify staging app env
 - Any other `NEXT_PUBLIC_*` that differs from prod for staging.
+
+> **⚠️ These are baked into the image at BUILD time — Coolify runtime values are ignored.**
+> `NEXT_PUBLIC_*` are inlined by the build, and the "indirect lookup" in
+> `utils/api-helpers.ts` (`getApiUrl`/`getApiOrigin`) does **not** actually escape
+> that inlining — Turbopack still folds it (verified: literal copies in
+> `.next/server`). So whatever these GitHub secrets hold **at build time** is what
+> ships; the matching Coolify env vars do nothing for the image app. Get one wrong
+> and it used to fail **silently** — `fetchEventsExternal` returns an empty list and
+> PPR still returns HTTP 200, and `removeConsole` stripped the error log too. Three
+> guards now catch this: `console.error`/`console.warn` are kept in production
+> (`removeConsole: { exclude: ['error', 'warn'] }`), the post-deploy smoke test
+> asserts `/api/events` returns data, and you can inspect the baked value with
+> `docker exec <container> sh -c "grep -rhoE 'https://api[a-zA-Z0-9._/-]*' /app/.next/server | sort -u"`.
 
 **Analytics on non-prod:** a GitHub *environment* secret falls back to the
 repo-level (prod) secret when unset, so the staging image inlines the prod
