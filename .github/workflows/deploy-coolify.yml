@@ -431,6 +431,27 @@ jobs:
             exit 1
           fi
 
+      - name: Smoke — OIDC redirect_uri uses the public host (not the container bind)
+        env:
+          SITE_URL: ${{ env.DEPLOY_URL }}
+        run: |
+          # Guards the Next-behind-Traefik gotcha: request.nextUrl.origin in a
+          # route handler is the container's internal bind (0.0.0.0:3000), which
+          # makes the OIDC redirect_uri unregisterable in Logto. The localhost
+          # build smoke can't see this — only a real proxied deploy can.
+          loc=$(curl -s -D - -o /dev/null --max-time 10 \
+            "${SITE_URL}/api/auth/sign-in" | grep -i '^location:' | tr -d '\r' || true)
+          echo "sign-in → ${loc:-<none>}"
+          case "$loc" in
+            *0.0.0.0*|*localhost*|*127.0.0.1*)
+              echo "::error::OIDC redirect_uri leaked an internal host — nextUrl.origin returned the container bind. Use getRequestOrigin() (x-forwarded-host)."
+              exit 1 ;;
+            *"/oidc/auth"*)
+              echo "✅ sign-in 307s to Logto with a public redirect_uri" ;;
+            *)
+              echo "::warning::sign-in did not redirect to Logto (auth env may be unset on this environment) — skipping the check." ;;
+          esac
+
       - name: Purge Cloudflare CDN cache
         if: github.ref_name == 'main'
         env:
