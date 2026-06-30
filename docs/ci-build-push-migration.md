@@ -18,15 +18,33 @@ The build inlines `NEXT_PUBLIC_*` at build time, so they must exist in GitHub.
 Most are already repo-level secrets. Add the gaps:
 
 **Repo-level** (`Settings → Secrets → Actions`):
+- `NEXT_PUBLIC_API_URL` = `https://api.esdeveniments.cat/api` — repo-level is the
+  **production** build value (there is no GitHub `production` environment, so the
+  `:main` build falls back to repo-level). It MUST be the prod API **with `/api`**.
+  Verify this before cutting prod over to the image, or prod goes silently
+  events-blank exactly like staging did on 2026-06-27.
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — copy from the Coolify prod app env. Without it
   the push CTA is missing in the image.
 
 **`staging` environment** (these override the repo-level prod values on the
 `develop` build, since `NEXT_PUBLIC_*` are baked per environment):
-- `NEXT_PUBLIC_API_URL` = `https://api-preproduction.esdeveniments.cat`
+- `NEXT_PUBLIC_API_URL` = `https://api-preproduction.esdeveniments.cat/api` — **must include the `/api` suffix** (the backend serves `/api/events`; bare `/events` → 500). Omitting it caused a silent events-blank outage on 2026-06-27 (see the warning below).
 - `NEXT_PUBLIC_SITE_URL` = `https://staging.esdeveniments.cat`
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = copy from the Coolify staging app env
 - Any other `NEXT_PUBLIC_*` that differs from prod for staging.
+
+> **⚠️ These are baked into the image at BUILD time — Coolify runtime values are ignored.**
+> `NEXT_PUBLIC_*` are inlined by the build, and the "indirect lookup" in
+> `utils/api-helpers.ts` (`getApiUrl`/`getApiOrigin`) does **not** actually escape
+> that inlining — Turbopack still folds it (verified: literal copies in
+> `.next/server`). So whatever these GitHub secrets hold **at build time** is what
+> ships; the matching Coolify env vars do nothing for the image app. Get one wrong
+> and it used to fail **silently** — `fetchEventsExternal` returns an empty list and
+> PPR still returns HTTP 200, and `removeConsole` stripped the error log too. Three
+> guards now catch this: `console.error`/`console.warn` are kept in production
+> (`removeConsole: { exclude: ['error', 'warn'] }`), the post-deploy smoke test
+> asserts `/api/events` returns data, and you can inspect the baked value with
+> `docker exec <container> sh -c "grep -rhoE 'https://api[a-zA-Z0-9._/-]*' /app/.next/server | sort -u"`.
 
 **Analytics on non-prod:** a GitHub *environment* secret falls back to the
 repo-level (prod) secret when unset, so the staging image inlines the prod
@@ -93,3 +111,27 @@ git. No data is touched; this is all build/deploy plumbing.
   own repo.
 - Right-size the frontend container memory (currently 1.5 GB, OOM-prone) and
   consider moving staging + pre environments off the prod box.
+
+## Make the API base runtime-controlled (`API_URL`)
+
+`NEXT_PUBLIC_API_URL` is baked into the image at build time (Turbopack inlines it;
+the `getApiUrl` "indirect lookup" does not prevent this). So for a Docker-Image app
+the Coolify `NEXT_PUBLIC_API_URL` is ignored, and a wrong build value silently breaks
+data fetches (the 2026-06-27 outage).
+
+`getApiUrl`/`getApiOrigin` now prefer a **non-public `API_URL`**. Non-public vars are
+never inlined (same as `HMAC_SECRET`), so `API_URL` is read at runtime and the Coolify
+value always wins. Resolution order: `API_URL` (runtime) → `NEXT_PUBLIC_API_URL`
+(build-time fallback) → JSON default.
+
+To adopt:
+1. Set `API_URL` in each Coolify frontend app (runtime) to the backend base —
+   staging `https://api-preproduction.esdeveniments.cat/api`, prod
+   `https://api.esdeveniments.cat/api`.
+2. Leave `NEXT_PUBLIC_API_URL` as the build-time fallback (still used for build-time
+   ISR prerender).
+3. Verify: `docker exec <container> printenv API_URL` and confirm `/api/events`
+   returns data.
+
+This makes dynamic fetches immune to a wrong build value; the post-deploy smoke test
+still guards the build-time prerender path.

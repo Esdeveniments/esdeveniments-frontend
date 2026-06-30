@@ -12,33 +12,76 @@ import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
 import type { InternalOriginOptions } from "types/api/internal";
 
-/** Default API URL used as fallback when NEXT_PUBLIC_API_URL is not set. */
+/** Default API URL used as fallback when neither API_URL nor NEXT_PUBLIC_API_URL is set. */
 const DEFAULT_API_URL = apiDefaults.apiUrl;
 
-/** Default API origin (scheme + host) for proxy/middleware use. */
-const DEFAULT_API_ORIGIN = new URL(DEFAULT_API_URL).origin;
-
 /**
- * Get the full external API URL (e.g. "https://api.esdeveniments.cat/api").
+ * API base candidates in priority order.
  *
- * Uses indirect env access so Turbopack does NOT inline the value at build
- * time. This means the runtime value (set by Coolify / Docker ENV) is always
- * read, and when the var is genuinely absent the JSON default kicks in.
+ * `API_URL` (non-public) is read directly: on the Node server (route handlers /
+ * server components, where the event fetches run) it is read at request time, so
+ * the value set in the container (Coolify) wins without a rebuild.
+ * `NEXT_PUBLIC_API_URL` is accessed directly too so it stays inlined as the
+ * build-time fallback. (In Edge middleware env follows Edge semantics; this app
+ * runs middleware on the Node standalone server, so it reads runtime env there
+ * too — but don't assume runtime override in a generic Edge context.)
  */
-const _envKey = "NEXT_PUBLIC_API_URL";
-export function getApiUrl(): string {
-  return process.env[_envKey] || DEFAULT_API_URL;
+function apiUrlCandidates(): Array<[string, string | undefined]> {
+  return [
+    // .trim() guards against copy-paste whitespace in the deploy platform's env.
+    ["API_URL", process.env.API_URL?.trim()],
+    ["NEXT_PUBLIC_API_URL", process.env.NEXT_PUBLIC_API_URL?.trim()],
+  ];
 }
 
 /**
- * Report whether NEXT_PUBLIC_API_URL is explicitly configured at runtime.
- * Uses the same indirect env lookup as getApiUrl() to avoid build-time
- * inlining. Callers use this to decide between hitting the default
- * production URL and taking a safe fallback path (e.g., throw for
- * mutations, return empty payload for read wrappers).
+ * True only for a parseable http(s) URL. Non-HTTP schemes (e.g. `javascript:`,
+ * `ftp:`) are rejected: a non-special scheme makes `new URL(v).origin` return the
+ * string "null", which would break fetch and the CSP connect-src allowlist.
+ */
+function isHttpUrl(value: string): boolean {
+  try {
+    const { protocol } = new URL(value);
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// Warn at most once per unique (var, value): resolveApiUrl runs on the per-request
+// path, so a persistent misconfig would otherwise flood logs on every request.
+const _warnedApiUrls = new Set<string>();
+
+/**
+ * First candidate that is a valid http(s) URL. Invalid values are skipped with a
+ * warning that names the offending var, so a typo'd API_URL falls back to
+ * NEXT_PUBLIC_API_URL instead of breaking every fetch; the JSON default is last.
+ */
+function resolveApiUrl(): string {
+  for (const [name, value] of apiUrlCandidates()) {
+    if (!value) continue;
+    if (isHttpUrl(value)) return value;
+    const warnKey = `${name}=${value}`;
+    if (!_warnedApiUrls.has(warnKey)) {
+      _warnedApiUrls.add(warnKey);
+      console.warn(`[api-helpers] Invalid ${name} format:`, value);
+    }
+  }
+  return DEFAULT_API_URL;
+}
+
+/** Get the full external API base (e.g. "https://api.esdeveniments.cat/api"). */
+export function getApiUrl(): string {
+  return resolveApiUrl();
+}
+
+/**
+ * Report whether a VALID API base is explicitly configured (runtime `API_URL` or
+ * build-time `NEXT_PUBLIC_API_URL`). A malformed value counts as not configured,
+ * so callers take their safe fallback path instead of trusting a broken URL.
  */
 export function isApiUrlConfigured(): boolean {
-  return Boolean(process.env[_envKey]);
+  return apiUrlCandidates().some(([, value]) => !!value && isHttpUrl(value));
 }
 
 // Conditionally import headers - only available in server components/route handlers
@@ -55,23 +98,12 @@ try {
 }
 
 /**
- * Get API origin with multiple fallback strategies for Edge Runtime
- * Edge runtime has limitations with environment variables
+ * API origin (scheme + host) — used for the CSP connect-src allowlist in
+ * middleware. Resolves the same way as getApiUrl (API_URL → NEXT_PUBLIC_API_URL →
+ * default); resolveApiUrl has already validated the value, so this never throws.
  */
 export function getApiOrigin(): string {
-  // Strategy 1: Try environment variable (works in most cases).
-  // Use indirect lookup so Turbopack does NOT inline at build time.
-  const apiUrl = process.env[_envKey];
-  if (apiUrl) {
-    try {
-      return new URL(apiUrl).origin;
-    } catch {
-      console.warn("Invalid NEXT_PUBLIC_API_URL format:", apiUrl);
-    }
-  }
-
-  // Strategy 2: Default fallback (single source of truth: config/api-defaults.json)
-  return DEFAULT_API_ORIGIN;
+  return new URL(resolveApiUrl()).origin;
 }
 
 /**
