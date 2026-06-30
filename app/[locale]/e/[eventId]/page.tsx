@@ -367,9 +367,7 @@ async function EventPageContent({
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
             {/* PWA back button — only renders in installed standalone mode */}
-            <div className="px-section-x pt-3">
-              <PwaBackButton fallbackHref="/" />
-            </div>
+            <PwaBackButton fallbackHref="/" />
             {/* Visible Breadcrumbs for internal linking — full width */}
             <Breadcrumbs
               items={[

@@ -158,9 +158,7 @@ export default async function NewsArticleDetail({
 
         <article className="w-full flex flex-col gap-section-y">
           {/* PWA back button — only renders in installed standalone mode */}
-          <div className="px-section-x pt-3">
-            <PwaBackButton fallbackHref="/noticies" />
-          </div>
+          <PwaBackButton fallbackHref="/noticies" />
           {/* Breadcrumbs */}
           <Breadcrumbs
             items={[
