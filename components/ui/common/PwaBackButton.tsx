@@ -7,12 +7,17 @@ import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import type { PwaBackButtonProps } from "types/props";
 
 const MQ = "(display-mode: standalone)";
+let _mq: MediaQueryList | null = null;
+function getMQ(): MediaQueryList {
+  if (!_mq) _mq = window.matchMedia(MQ);
+  return _mq;
+}
 function subscribeStandalone(cb: () => void) {
-  const mq = window.matchMedia(MQ);
+  const mq = getMQ();
   mq.addEventListener("change", cb);
   return () => mq.removeEventListener("change", cb);
 }
-const getSnapshot = () => window.matchMedia(MQ).matches;
+const getSnapshot = () => getMQ().matches;
 const getServerSnapshot = () => false;
 
 export default function PwaBackButton({ fallbackHref = "/" }: PwaBackButtonProps) {
