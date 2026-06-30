@@ -211,6 +211,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           REPO: ${{ github.repository }}
+          # Only accept previews from the team Vercel project. A duplicate
+          # esdeveniments-frontend project under a personal account was also
+          # building previews; those are auth-protected (302 on readiness) and
+          # the bypass secret doesn't open them, so CI silently skipped E2E.
+          # Match the team scope's host suffix; update if the scope/domain moves.
+          EXPECTED_PREVIEW_HOST_SUFFIX: "-esdeveniments.vercel.app"
         run: |
           set -e
           MAX_WAIT=900   # 15 minutes total wait budget
@@ -228,10 +234,18 @@ jobs:
               STATE=$(echo "$STATUS" | jq -r '.[0].state // empty')
               case "$STATE" in
                 success)
-                  URL=$(echo "$STATUS" | jq -r '.[0].environment_url // empty')
-                  if [ -n "$URL" ]; then
-                    break 2
-                  fi
+                  CANDIDATE=$(echo "$STATUS" | jq -r '.[0].environment_url // empty')
+                  case "$CANDIDATE" in
+                    *"$EXPECTED_PREVIEW_HOST_SUFFIX"*)
+                      URL="$CANDIDATE"
+                      break 2
+                      ;;
+                    "")
+                      ;;
+                    *)
+                      echo "  Ignoring preview from unexpected scope: $CANDIDATE"
+                      ;;
+                  esac
                   ;;
                 failure|error)
                   FAILED="$ID:$STATE"
