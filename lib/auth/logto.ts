@@ -242,11 +242,14 @@ async function getJwks(config: LogtoConfig, force = false): Promise<Jwk[]> {
       transient: res.status >= 500 || res.status === 429,
     });
   }
-  const data = (await res.json()) as { keys?: Jwk[]; error?: string };
-  // A 200 can still carry an error body or a malformed payload — don't cache it.
-  if (data.error || !Array.isArray(data.keys)) {
+  const data = (await res.json().catch(() => null)) as
+    | { keys?: Jwk[]; error?: string }
+    | null;
+  // A 200 can still carry a null/non-object body, an error body, or a malformed
+  // payload — don't read .error off null, and never cache any of these.
+  if (!data || typeof data !== "object" || data.error || !Array.isArray(data.keys)) {
     throw Object.assign(
-      new Error(`Logto JWKS malformed: ${data.error ?? "no keys array"}`),
+      new Error(`Logto JWKS malformed: ${data?.error ?? "no keys array"}`),
       { transient: true },
     );
   }

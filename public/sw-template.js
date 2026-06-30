@@ -63,13 +63,16 @@ if (!self.workbox) {
     },
   };
 
-  // Auth endpoints must NEVER be served from cache. Registered first so it
-  // wins over the navigation and catch-all /api/ routes below. A cached
-  // /api/auth/me kept the UI "logged in" after logout (the catch-all /api/
-  // SWR ignores no-store); a cached /api/auth/{sign-in,callback,sign-out}
-  // redirect would replay stale OIDC state.
+  // Session-dependent endpoints must NEVER be served from cache. Registered
+  // first so it wins over the navigation and catch-all /api/ routes below: the
+  // catch-all SWR caches by URL and ignores cookies + no-store, so a cached
+  // response both kept the UI "logged in" after logout (/api/auth/me) and
+  // could serve one user's data to another (/api/favorites). Any new
+  // per-user/auth endpoint must be added here.
   workbox.routing.registerRoute(
-    ({ url }) => url.pathname.startsWith("/api/auth/"),
+    ({ url }) =>
+      url.pathname.startsWith("/api/auth/") ||
+      url.pathname === "/api/favorites",
     new workbox.strategies.NetworkOnly()
   );
 

@@ -98,13 +98,15 @@ describe("service worker template", () => {
       expect(matches?.length).toBeGreaterThanOrEqual(3);
     });
 
-    it("never caches /api/auth/* — NetworkOnly, registered before the catch-all", () => {
+    it("never caches session-dependent endpoints — NetworkOnly, before the catch-all", () => {
       const contents = getContents();
-      // The auth route must use NetworkOnly so a cached /api/auth/me can't keep
-      // the UI logged in after logout.
+      // Auth and per-user endpoints must use NetworkOnly so a cached response
+      // can't keep the UI logged in after logout (/api/auth/me) or serve one
+      // user's data to another (/api/favorites).
       expect(contents).toMatch(
         /startsWith\("\/api\/auth\/"\)[\s\S]*?NetworkOnly\(\)/
       );
+      expect(contents).toContain('url.pathname === "/api/favorites"');
       // And it must register before the catch-all /api/ route, or Workbox's
       // first-match-wins ordering would route it to the SWR cache instead.
       const authIdx = contents.indexOf('startsWith("/api/auth/")');
