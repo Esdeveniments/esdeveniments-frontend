@@ -282,8 +282,9 @@ jobs:
               sleep $((2 ** RETRY))
             fi
           done
-          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Skipping E2E to avoid 30min timeout."
+          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Failing fast: a green E2E check must mean tests ran, not that they were skipped."
           echo "ready=false" >> $GITHUB_OUTPUT
+          exit 1
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' && steps.readiness.outputs.ready == 'true' }}
         env:
