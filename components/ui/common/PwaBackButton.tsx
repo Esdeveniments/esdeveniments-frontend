@@ -17,8 +17,13 @@ function getMQ(): MediaQueryList | null {
 function subscribeStandalone(cb: () => void) {
   const mq = getMQ();
   if (!mq) return () => {};
-  mq.addEventListener("change", cb);
-  return () => mq.removeEventListener("change", cb);
+  if (typeof mq.addEventListener === "function") {
+    mq.addEventListener("change", cb);
+    return () => mq.removeEventListener("change", cb);
+  }
+  // addListener fallback for iOS < 14 (deprecated but only option on older Safari)
+  mq.addListener(cb);
+  return () => mq.removeListener(cb);
 }
 // ponytail: navigator.standalone covers iOS 11–13 where display-mode: standalone is unreliable
 const getSnapshot = () =>
