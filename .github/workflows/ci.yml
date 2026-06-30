@@ -235,8 +235,12 @@ jobs:
               case "$STATE" in
                 success)
                   CANDIDATE=$(echo "$STATUS" | jq -r '.[0].environment_url // empty')
-                  case "$CANDIDATE" in
-                    *"$EXPECTED_PREVIEW_HOST_SUFFIX"*)
+                  # Match on the host only (ends-with), not anywhere in the URL,
+                  # so the suffix can't match inside a path or a lookalike domain.
+                  CANDIDATE_HOST="${CANDIDATE#*://}"
+                  CANDIDATE_HOST="${CANDIDATE_HOST%%/*}"
+                  case "$CANDIDATE_HOST" in
+                    *"$EXPECTED_PREVIEW_HOST_SUFFIX")
                       URL="$CANDIDATE"
                       break 2
                       ;;
