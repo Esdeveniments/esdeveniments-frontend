@@ -372,6 +372,29 @@ export function isOriginAllowed(request: NextRequest): boolean {
 
     if (getAllowedOriginHosts().has(originHost)) return true;
 
+    // Same-origin via the reverse proxy's x-forwarded-host. This is the
+    // scalable check: it allows a state-changing POST whenever the browser's
+    // Origin matches the public host the request actually arrived on, so it
+    // works on EVERY proxy-fronted deployment (production, staging, Coolify
+    // pr-* previews, Vercel previews) without enumerating hosts. Coolify/Traefik
+    // and Vercel set x-forwarded-host to the public hostname (verified on the
+    // pr-* preview), the same header getRequestOrigin trusts (see LESSONS.md).
+    //
+    // CSRF-safe: a cross-site browser request can't make these match — its
+    // Origin is the attacker's host, while x-forwarded-host is our host (the
+    // browser can't forge x-forwarded-host on a credentialed request: simple
+    // requests can't set it, and a custom-header request triggers a CORS
+    // preflight we never approve). We deliberately do NOT consult the Host
+    // header, which is not proxy-validated here — see the "does not trust
+    // Host" guard test.
+    const forwardedHost = (request.headers.get("x-forwarded-host") ?? "")
+      .split(",")[0]
+      .trim()
+      .toLowerCase();
+    if (forwardedHost && originHost.toLowerCase() === forwardedHost) {
+      return true;
+    }
+
     return false;
   } catch {
     return false;

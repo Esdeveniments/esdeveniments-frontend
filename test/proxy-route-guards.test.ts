@@ -131,6 +131,43 @@ describe("isOriginAllowed", () => {
     // which won't match "www.esdeveniments.cat"
     expect(isOriginAllowed(req)).toBe(false);
   });
+
+  it("allows same-origin via x-forwarded-host on a Coolify pr-* preview (not in the allowlist)", () => {
+    // The preview serves pr-375.esdeveniments.cat but NEXT_PUBLIC_SITE_URL is
+    // www and no VERCEL_* vars exist, so the static allowlist misses it. The
+    // proxy sets x-forwarded-host to the public host → same-origin POST passes.
+    const req = createRequest("/api/favorites", "POST", {
+      origin: "https://pr-375.esdeveniments.cat",
+      "x-forwarded-host": "pr-375.esdeveniments.cat",
+    });
+    expect(isOriginAllowed(req)).toBe(true);
+  });
+
+  it("allows same-origin via x-forwarded-host on staging (regardless of baked NEXT_PUBLIC_SITE_URL)", () => {
+    const req = createRequest("/api/favorites", "POST", {
+      origin: "https://staging.esdeveniments.cat",
+      "x-forwarded-host": "staging.esdeveniments.cat",
+    });
+    expect(isOriginAllowed(req)).toBe(true);
+  });
+
+  it("takes the first value of a comma-listed x-forwarded-host", () => {
+    const req = createRequest("/api/favorites", "POST", {
+      origin: "https://pr-9.esdeveniments.cat",
+      "x-forwarded-host": "pr-9.esdeveniments.cat, internal",
+    });
+    expect(isOriginAllowed(req)).toBe(true);
+  });
+
+  it("rejects a cross-site Origin even when x-forwarded-host is our real host", () => {
+    // The CSRF case: the proxy reports our host, the attacker's page reports
+    // its own Origin → mismatch → blocked.
+    const req = createRequest("/api/favorites", "POST", {
+      origin: "https://evil.com",
+      "x-forwarded-host": "www.esdeveniments.cat",
+    });
+    expect(isOriginAllowed(req)).toBe(false);
+  });
 });
 
 // ── GET-only restriction on pattern-based routes ─────────────
