@@ -17,6 +17,7 @@ import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
 import PastEventBanner from "./components/PastEventBanner";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
+import PwaBackButton from "@components/ui/common/PwaBackButton";
 import type { BreadcrumbNavItem } from "types/props";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
@@ -365,6 +366,10 @@ async function EventPageContent({
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
+            {/* PWA back button — only renders in installed standalone mode */}
+            <div className="px-section-x pt-3">
+              <PwaBackButton fallbackHref="/" />
+            </div>
             {/* Visible Breadcrumbs for internal linking — full width */}
             <Breadcrumbs
               items={[

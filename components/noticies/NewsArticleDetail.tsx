@@ -10,6 +10,7 @@ import NewsEventsSection from "@components/noticies/NewsEventsSection";
 import NewsCard from "@components/ui/newsCard";
 import NewsShareButtons from "@components/noticies/NewsShareButtons";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
+import PwaBackButton from "@components/ui/common/PwaBackButton";
 import { getFormattedDate } from "@utils/date-helpers";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { notFound } from "next/navigation";
@@ -156,6 +157,10 @@ export default async function NewsArticleDetail({
         <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
 
         <article className="w-full flex flex-col gap-section-y">
+          {/* PWA back button — only renders in installed standalone mode */}
+          <div className="px-section-x pt-3">
+            <PwaBackButton fallbackHref="/noticies" />
+          </div>
           {/* Breadcrumbs */}
           <Breadcrumbs
             items={[

@@ -438,7 +438,15 @@
         "Friday",
         "Saturday"
       ],
-      "daysShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      "daysShort": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
       "monthsShort": [
         "Jan",
         "Feb",
@@ -987,6 +995,10 @@
       "unavailable": "Location unavailable. Try selecting a town instead of using distance.",
       "timeout": "Timeout. Try again or select a town.",
       "genericError": "Error getting location. Try selecting a town instead of using distance."
+    },
+    "PwaBackButton": {
+      "label": "Back",
+      "ariaLabel": "Go back"
     }
   },
   "Partials": {
@@ -1361,7 +1373,10 @@
         "for the",
         "by the"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",

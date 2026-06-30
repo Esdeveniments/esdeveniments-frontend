@@ -446,7 +446,15 @@
         "Divendres",
         "Dissabte"
       ],
-      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
+      "daysShort": [
+        "Dg.",
+        "Dl.",
+        "Dt.",
+        "Dc.",
+        "Dj.",
+        "Dv.",
+        "Ds."
+      ],
       "monthsShort": [
         "gen.",
         "feb.",
@@ -986,6 +994,10 @@
       "unavailable": "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància.",
       "timeout": "Temps d'espera esgotat. Prova de nou o selecciona una població.",
       "genericError": "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
+    },
+    "PwaBackButton": {
+      "label": "Tornar",
+      "ariaLabel": "Tornar enrere"
     }
   },
   "Partials": {
@@ -1364,7 +1376,10 @@
         "pel",
         "pels"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",

@@ -865,3 +865,7 @@ export interface UrlFiltersProviderProps {
   children: ReactNode;
   categories?: CategorySummaryResponseDTO[];
 }
+
+export interface PwaBackButtonProps {
+  fallbackHref?: string;
+}
