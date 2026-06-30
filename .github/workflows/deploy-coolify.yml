@@ -431,17 +431,23 @@ jobs:
             exit 1
           fi
 
-      - name: Smoke — OIDC redirect_uri uses the public host (not the container bind)
+      - name: Smoke — OIDC sign-in redirects to Logto (guards public host + LOGTO_* env)
         env:
           SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
-          # Guards the Next-behind-Traefik gotcha: request.nextUrl.origin in a
-          # route handler is the container's internal bind (0.0.0.0:3000), which
-          # makes the OIDC redirect_uri unregisterable in Logto. The localhost
-          # build smoke can't see this — only a real proxied deploy can.
-          loc=$(curl -s -D - -o /dev/null --max-time 10 \
-            "${SITE_URL}/api/auth/sign-in" | grep -i '^location:' | tr -d '\r' || true)
-          echo "sign-in → ${loc:-<none>}"
+          # Two failure modes this guards on the REAL deployed env (the
+          # localhost build smoke can see neither):
+          #  1. Next-behind-Traefik: request.nextUrl.origin in a route handler
+          #     is the container bind (0.0.0.0:3000), making the OIDC
+          #     redirect_uri unregisterable in Logto → must use getRequestOrigin.
+          #  2. Missing LOGTO_* runtime env on this environment's Coolify app:
+          #     getLogtoConfig() throws → sign-in 500s with no Location. Auth is
+          #     mandatory since the Logto migration, so a non-redirect is a hard
+          #     failure — this is what stops a forgotten env var from shipping.
+          code=$(curl -s -D /tmp/signin-hdrs -o /dev/null -w '%{http_code}' \
+            --max-time 10 "${SITE_URL}/api/auth/sign-in" || echo "000")
+          loc=$(grep -i '^location:' /tmp/signin-hdrs | tr -d '\r' | tail -1 || true)
+          echo "sign-in → HTTP ${code} ${loc:-<no Location>}"
           case "$loc" in
             *0.0.0.0*|*localhost*|*127.0.0.1*)
               echo "::error::OIDC redirect_uri leaked an internal host — nextUrl.origin returned the container bind. Use getRequestOrigin() (x-forwarded-host)."
@@ -449,7 +455,8 @@ jobs:
             *"/oidc/auth"*)
               echo "✅ sign-in 307s to Logto with a public redirect_uri" ;;
             *)
-              echo "::warning::sign-in did not redirect to Logto (auth env may be unset on this environment) — skipping the check." ;;
+              echo "::error::sign-in did NOT redirect to Logto on ${SITE_URL} (HTTP ${code}). This almost always means the LOGTO_* runtime env is missing on this environment's Coolify app — set LOGTO_ENDPOINT, LOGTO_APP_ID and LOGTO_APP_SECRET in Coolify → Application → Environment, then redeploy."
+              exit 1 ;;
           esac
 
       - name: Purge Cloudflare CDN cache

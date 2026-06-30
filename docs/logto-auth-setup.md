@@ -74,7 +74,25 @@ preproduction instance.
 
 Logto requires **exact** redirect URIs (no wildcards), so Vercel preview
 deploys with dynamic `*.vercel.app` URLs can't complete the flow unless
-previews use a fixed domain.
+previews use a fixed domain. Production runs on Coolify/Docker, not Vercel
+(see `LESSONS.md`), so treat Vercel auth as opt-in: it needs a stable alias
+with its callback registered, the `LOGTO_*` env on the Vercel project, and
+the preview protection-bypass so the OIDC round-trip isn't 401-walled.
+
+### Origins to register, per environment
+
+The callback is derived from the request host (`getRequestOrigin`), so each
+host that serves the app needs its own exact entries in the instance's app:
+
+| Environment | Origin | Redirect URI | Post sign-out URI |
+| --- | --- | --- | --- |
+| Local dev | `http://localhost:3000` | `http://localhost:3000/api/auth/callback` | `http://localhost:3000/` |
+| PR preview | `https://pr-<id>.esdeveniments.cat` | `…/api/auth/callback` | `…/` |
+| Staging | `https://staging.esdeveniments.cat` | `…/api/auth/callback` | `…/` |
+| Production | `https://www.esdeveniments.cat` | `…/api/auth/callback` | `…/` (prod instance) |
+
+Forget a host's callback and that environment fails closed with Logto's
+`redirect_uri mismatch` — the single most common setup miss.
 
 ## The 5 secret locations (keep in sync)
 
@@ -88,9 +106,24 @@ Per `.github/skills/env-variable-management`, every `LOGTO_*` var must be set in
    asserts `/api/auth/sign-in` → 307, so a missing `LOGTO_*` fails CI.
 5. **GitHub Secrets** — `LOGTO_*_STAGING` (and `LOGTO_*` for prod once it exists).
 
-## CI guard
+## Guards — two layers so a missing env can't ship
 
-`prod-arch-smoke.yml` starts the app against Redis with the staging Logto env
-and asserts `/api/auth/sign-in` returns a 307 to `/oidc/auth`. Because
-`getLogtoConfig()` throws on any missing `LOGTO_*`, a forgotten or typo'd
-secret turns into a 500 and fails the PR before deploy.
+`getLogtoConfig()` throws on any missing `LOGTO_*`, which turns a sign-in into
+a 500 (no redirect). Two smokes assert sign-in 307s to `/oidc/auth`, so that
+500 is caught — once before merge, once on the live environment:
+
+1. **PR gate** — `prod-arch-smoke.yml` (PRs to `develop`/`main`) boots the app
+   against Redis with the `LOGTO_*_STAGING` GitHub secrets and asserts
+   `/api/auth/sign-in` → 307 `/oidc/auth`. A missing or typo'd **secret** fails
+   the PR. This proves the *code* boots; it can't see the target Coolify env.
+2. **Deploy gate** — `deploy-coolify.yml`, after the new container is live,
+   hits `${DEPLOY_URL}/api/auth/sign-in` and **hard-fails the deploy** if it
+   doesn't 307 to Logto (or if the `redirect_uri` carries an internal host).
+   This runs against the real runtime env, so a `LOGTO_*` var forgotten in
+   **Coolify → Application → Environment** turns the deploy red with a pointer
+   to fix it — it does not ship green.
+
+Consequence to know before merging: once auth is mandatory, the deploy gate
+will fail any environment whose Coolify app lacks `LOGTO_*`. Set staging's vars
+(and the `LOGTO_*_STAGING` GitHub secrets) before/with the merge to `develop`;
+set production's (against the prod instance) before promoting to `main`.
