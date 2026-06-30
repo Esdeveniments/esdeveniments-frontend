@@ -12,39 +12,17 @@ export const MOCK_USER = {
 };
 
 /**
- * Route-mock the auth endpoints so the app treats the session as logged in.
- * AuthProvider calls getSession() → GET /api/auth/me on mount, so mocking
- * /me alone is enough to satisfy auth gates without driving the login form.
- * Call before navigating to a gated page.
+ * Route-mock the session endpoint so the app treats the user as logged in.
+ * AuthProvider hydrates from GET /api/auth/me on mount, so mocking /me with the
+ * Logto-shaped `{ user }` payload is enough to satisfy auth gates without
+ * driving the OIDC redirect. Call before navigating to a gated page.
  */
 export async function mockAuthenticatedUser(page: Page): Promise<void> {
-  await page.route("**/api/auth/login", (route) => {
-    if (route.request().method() !== "POST") return route.fallback();
-    return route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        user: MOCK_USER,
-        expiresAt: new Date(Date.now() + 3600000).toISOString(),
-      }),
-    });
-  });
-
   await page.route("**/api/auth/me", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(MOCK_USER),
-    })
-  );
-
-  await page.route("**/api/auth/refresh", (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        expiresAt: new Date(Date.now() + 3600000).toISOString(),
-      }),
+      body: JSON.stringify({ user: MOCK_USER }),
     })
   );
 }

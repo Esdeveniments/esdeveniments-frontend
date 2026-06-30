@@ -29,26 +29,45 @@ const TEST_EVENT_TITLE = `Test Event ${UNIQUE_SUFFIX}`;
 // Store created event slug for cleanup
 let createdEventSlug: string | null = null;
 
-/** Login via the UI form */
+/**
+ * Log in through Logto's hosted sign-in page (reached via the OIDC redirect
+ * from /iniciar-sessio). Selectors target Logto's default sign-in experience
+ * and may need adjusting if the hosted UI is customized. Handles both
+ * single-step and identifier-then-password layouts.
+ */
 async function loginViaUI(page: Page) {
   await page.goto("/en/iniciar-sessio", {
     waitUntil: "domcontentloaded",
     timeout: 60_000,
   });
 
-  await expect(page.getByTestId("login-form")).toBeVisible({ timeout: 30_000 });
-
-  await page.getByLabel(/email/i).fill(email!);
-  await page.getByLabel(/password/i).fill(password!);
+  const identifier = page
+    .locator('input[name="identifier"], input[type="email"], input[type="text"]')
+    .first();
+  await identifier.waitFor({ timeout: 30_000 });
+  await identifier.fill(email!);
   await page
-    .getByTestId("login-form")
-    .getByRole("button", { name: /log in|iniciar|entra/i })
+    .getByRole("button", { name: /continue|sign in|log in|next|entra/i })
+    .first()
     .click();
 
-  // Wait for redirect away from login page after successful login
-  await page.waitForURL((url) => !url.pathname.includes("/iniciar-sessio"), {
-    timeout: 30_000,
-  });
+  // Password may be on a second step or the same form.
+  const password_ = page.locator('input[type="password"]').first();
+  await password_.waitFor({ timeout: 15_000 });
+  await password_.fill(password!);
+  await page
+    .getByRole("button", { name: /sign in|log in|continue|submit|entra/i })
+    .first()
+    .click();
+
+  // Wait until Logto redirects back to the app (off the auth domain / OIDC).
+  await page.waitForURL(
+    (url) =>
+      !/\/oidc\//.test(url.pathname) &&
+      !url.host.startsWith("auth-") &&
+      !url.pathname.includes("/iniciar-sessio"),
+    { timeout: 30_000 },
+  );
 }
 
 /** Delete event via API (direct fetch with cookies from browser context) */

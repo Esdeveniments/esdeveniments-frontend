@@ -8,131 +8,114 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { noopAdapter } from "./adapter";
-import type {
-  AuthAdapter,
-  AuthContextValue,
-  AuthErrorCode,
-  AuthUser,
-  LoginCredentials,
-  RegisterCredentials,
-  AuthResult,
-} from "types/auth";
+import type { AuthContextValue, AuthUser } from "types/auth";
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined
+  undefined,
 );
 
-export function AuthProvider({
-  adapter = noopAdapter,
-  children,
-}: {
-  adapter?: AuthAdapter;
-  children: ReactNode;
-}) {
+// Hydrates the session from the HttpOnly cookie via /api/auth/me, then exposes
+// redirect-based sign-in / logout. Tokens live in cookies, never in JS.
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [error, setError] = useState<AuthErrorCode | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    adapter
-      .getSession()
-      .then((sessionUser) => {
-        setUser(sessionUser);
-      })
-      .catch((err) => {
-        console.error("AuthProvider: getSession failed", err);
-      })
-      .finally(() => {
-        setHydrated(true);
+    const controller = new AbortController();
+    let settled = false;
+    // `settled` is set on unmount so we never setState after unmount; a timeout
+    // abort still resolves to unauthenticated (settled is false), so a hanging
+    // /me can't trap the UI in the loading state.
+    const finish = (next: AuthUser | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      setUser(next);
+      setHydrated(true);
+    };
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let resolveRetry: ((retry: boolean) => void) | undefined;
+    // /api/auth/me returns 503 on a transient Logto outage while preserving the
+    // session cookies. Retry once before resolving to unauthenticated so a brief
+    // blip doesn't flip the UI to logged-out.
+    // Delay before retry. The cleanup below settles this (resolveRetry(false))
+    // on unmount so load() never hangs pending. Resolves true only if we should
+    // still retry (i.e. not aborted).
+    const waitBeforeRetry = () =>
+      new Promise<boolean>((resolve) => {
+        resolveRetry = resolve;
+        retryTimer = setTimeout(
+          () => resolve(!controller.signal.aborted),
+          1500,
+        );
       });
 
-    const unsubscribe = adapter.onAuthStateChange((updatedUser) => {
-      setUser(updatedUser);
-    });
-
-    return unsubscribe;
-  }, [adapter]);
-
-  const login = useCallback(
-    async (credentials: LoginCredentials): Promise<AuthResult> => {
-      setError(null);
-      const result = await adapter.login(credentials);
-      if (result.success && result.user) {
-        setUser(result.user);
-        // Migrate any guest-cookie favorites to the user's server-side list
-        // before login resolves, so /preferits (server-rendered) and any
-        // mounted FavoriteButtons (SWR-backed) see the synced state on the
-        // very next render — no empty-list flash. The endpoint short-circuits
-        // in ~50ms when the cookie is empty, so the cost is only paid by
-        // users who actually saved favorites as a guest. Errors are caught
-        // so a flaky migrate never blocks a successful login.
+    const load = async () => {
+      for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const res = await fetch("/api/favorites/migrate", {
-            method: "POST",
-            signal: AbortSignal.timeout(10_000),
+          const res = await fetch("/api/auth/me", {
+            credentials: "include",
+            signal: controller.signal,
           });
-          if (res.ok) {
-            // Also refresh the shared favorites SWR cache for any
-            // already-mounted FavoriteButton.
-            const { mutate } = await import("swr");
-            await mutate("favorites:list");
+          // 503 = transient Logto outage (cookies preserved server-side).
+          if (res.status === 503 && attempt === 0) {
+            if (await waitBeforeRetry()) continue;
+            finish(null);
+            return;
           }
+          const data = res.ok ? await res.json() : null;
+          finish((data?.user as AuthUser | null) ?? null);
+          return;
         } catch {
-          // Best-effort: leftover cookie favorites are migrated on the next
-          // login (the route re-queues only failed slugs).
+          // Network blip / offline: retry once before giving up, but never
+          // after an abort (timeout or unmount).
+          if (attempt === 0 && !controller.signal.aborted) {
+            if (await waitBeforeRetry()) continue;
+          }
+          finish(null);
+          return;
         }
-      } else if (result.error) {
-        setError(result.error);
       }
-      return result;
-    },
-    [adapter]
-  );
+      finish(null);
+    };
+    void load();
+    return () => {
+      settled = true;
+      clearTimeout(timeout);
+      if (retryTimer) clearTimeout(retryTimer);
+      resolveRetry?.(false); // settle a pending retry wait so load() unwinds
+      controller.abort();
+    };
+  }, []);
 
-  const register = useCallback(
-    async (credentials: RegisterCredentials): Promise<AuthResult> => {
-      setError(null);
-      const result = await adapter.register(credentials);
-      if (result.success && result.user) {
-        setUser(result.user);
-      } else if (result.error) {
-        setError(result.error);
-      }
-      return result;
-    },
-    [adapter]
-  );
+  const signIn = useCallback((redirectTo?: string) => {
+    const query = redirectTo
+      ? `?redirect=${encodeURIComponent(redirectTo)}`
+      : "";
+    window.location.assign(`/api/auth/sign-in${query}`);
+  }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await adapter.logout();
-    } catch (err) {
-      console.error("AuthProvider: logout failed", err);
-    }
-    setUser(null);
-    setError(null);
-  }, [adapter]);
+  const logout = useCallback(() => {
+    window.location.assign("/api/auth/sign-out");
+  }, []);
 
   const status = !hydrated
-    ? "loading" as const
+    ? ("loading" as const)
     : user
-      ? "authenticated" as const
-      : "unauthenticated" as const;
+      ? ("authenticated" as const)
+      : ("unauthenticated" as const);
 
-  const value: AuthContextValue = useMemo(
+  const value = useMemo<AuthContextValue>(
     () => ({
       status,
       user,
-      error,
       isAuthenticated: status === "authenticated",
       isLoading: status === "loading",
-      supportedMethods: adapter.supportedMethods,
-      login,
-      register,
+      signIn,
       logout,
     }),
-    [status, user, error, adapter.supportedMethods, login, register, logout]
+    [status, user, signIn, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

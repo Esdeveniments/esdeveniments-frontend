@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiOrigin } from "@utils/api-helpers";
+import { sanitizeReturnTo } from "@utils/redirect-safety";
 import {
   validateTimestamp,
   buildStringToSign,
@@ -317,20 +318,25 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/push/send",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
-  // Auth routes (browser-initiated; backend HMAC handled by external wrapper)
-  "/api/auth/login",
-  "/api/auth/register",
+];
+
+// GET-only public exact paths. Gated to GET in isPublicApiRequest so a future
+// POST/PUT/DELETE handler on the same path fails closed (HMAC required).
+// Logto OIDC routes: browser-initiated redirects + session cookie reads, no
+// HMAC — they talk to the identity provider over their own TLS channel.
+export const PUBLIC_API_GET_EXACT_PATHS = [
+  "/api/auth/sign-in",
+  "/api/auth/callback",
+  "/api/auth/sign-out",
   "/api/auth/me",
-  "/api/auth/refresh",
-  "/api/auth/logout",
-  "/api/auth/password/forgot",
-  "/api/auth/password/reset",
-  "/api/auth/verification/confirm",
-  "/api/auth/verification/resend",
 ];
 
 // Event routes pattern (GET only): base, [slug], or /categorized
 export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
+
+// Localized sign-in entry route (with or without a locale prefix), e.g.
+// /iniciar-sessio, /ca/iniciar-sessio, /es/iniciar-sessio. Captures the locale.
+export const LOGIN_ENTRY_PATTERN = /^\/(?:([a-z]{2})\/)?iniciar-sessio\/?$/;
 
 // Routes exempt from Origin check (server-to-server callbacks that won't have
 // a browser Origin header):
@@ -376,6 +382,36 @@ export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const search = request.nextUrl.search;
 
+  // Sign-in entry point: forward the localized /iniciar-sessio route into the
+  // Logto OIDC flow. Done here (not in the page) because cacheComponents would
+  // otherwise prerender the page's redirect() into a meta-refresh. Preserves a
+  // safe local ?redirect= target (no protocol-relative or backslash tricks).
+  const loginMatch = pathname.match(LOGIN_ENTRY_PATTERN);
+  // The pattern captures any 2-letter prefix; only treat it as the login entry
+  // when the prefix is absent or a real locale — otherwise (e.g. /fr/...) fall
+  // through so Next 404s instead of 307-ing an invalid route into the flow.
+  const captured = loginMatch?.[1] as AppLocale | undefined;
+  const localeOk = !captured || supportedLocales.has(captured);
+  // GET only: the 307 preserves the method, and /api/auth/sign-in is a
+  // GET-only public route (HEAD/other methods would hit the HMAC guard).
+  if (loginMatch && localeOk && request.method === "GET") {
+    const locale = captured ?? DEFAULT_LOCALE;
+    // Default the post-login destination to the localized home so a user
+    // browsing in es/en isn't bounced to the default locale.
+    const localizedHome = locale === DEFAULT_LOCALE ? "/" : `/${locale}`;
+    const safe =
+      sanitizeReturnTo(request.nextUrl.searchParams.get("redirect")) ??
+      localizedHome;
+    const target = new URL("/api/auth/sign-in", request.nextUrl.origin);
+    target.searchParams.set("redirect", safe);
+    // Preserve the locale so Logto renders its hosted page via ui_locales.
+    target.searchParams.set("locale", locale);
+    const response = NextResponse.redirect(target, 307);
+    // This route used to be a noindex page; keep it out of search results.
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  }
+
   if (pathname.startsWith("/api/")) {
     const isPublicApiRequest =
       // Pattern-based routes (GET only): these only export GET handlers;
@@ -385,6 +421,9 @@ export default async function proxy(request: NextRequest) {
         PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname))) ||
       // Exact match routes
       PUBLIC_API_EXACT_PATHS.includes(pathname) ||
+      // GET-only exact routes (e.g. Logto OIDC): fail closed on other methods
+      (request.method === "GET" &&
+        PUBLIC_API_GET_EXACT_PATHS.includes(pathname)) ||
       // Event routes (GET only): base, [slug], or /categorized
       (request.method === "GET" && EVENTS_PATTERN.test(pathname)) ||
       // Image proxy (GET only): used by Next/Image to safely load external images
