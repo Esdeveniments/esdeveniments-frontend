@@ -91,6 +91,11 @@ host that serves the app needs its own exact entries in the instance's app:
 | Staging | `https://staging.esdeveniments.cat` | `…/api/auth/callback` | `…/` |
 | Production | `https://www.esdeveniments.cat` | `…/api/auth/callback` | `…/` (prod instance) |
 
+Production canonicalizes to `www`; the apex `esdeveniments.cat` redirects
+there at the edge, so `www`'s callback is the one to register. If the apex is
+ever served directly (not redirected), register `https://esdeveniments.cat/api/auth/callback`
+and post sign-out `https://esdeveniments.cat/` too.
+
 Forget a host's callback and that environment fails closed with Logto's
 `redirect_uri mismatch` — the single most common setup miss.
 
@@ -108,9 +113,11 @@ Per `.github/skills/env-variable-management`, every `LOGTO_*` var must be set in
 
 ## Guards — two layers so a missing env can't ship
 
-`getLogtoConfig()` throws on any missing `LOGTO_*`, which turns a sign-in into
-a 500 (no redirect). Two smokes assert sign-in 307s to `/oidc/auth`, so that
-500 is caught — once before merge, once on the live environment:
+`getLogtoConfig()` throws on any missing **required** `LOGTO_*` (`LOGTO_ENDPOINT`,
+`LOGTO_APP_ID`, `LOGTO_APP_SECRET`; the API-resource and cookie-secret vars are
+optional), which turns a sign-in into a 500 (no redirect). Two smokes assert
+sign-in 307s to `/oidc/auth`, so that 500 is caught — once before merge, once
+on the live environment:
 
 1. **PR gate** — `prod-arch-smoke.yml` (PRs to `develop`/`main`) boots the app
    against Redis with the `LOGTO_*_STAGING` GitHub secrets and asserts
