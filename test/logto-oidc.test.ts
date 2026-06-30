@@ -1,10 +1,12 @@
 import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
+import { NextRequest } from "next/server";
 import {
   buildAuthorizationUrl,
   buildEndSessionUrl,
   generatePkce,
   getLogtoConfig,
+  getRequestOrigin,
   mapUserInfoToAuthUser,
   sanitizeReturnTo,
   validateIdTokenClaims,
@@ -29,6 +31,37 @@ function fakeIdToken(payload: Record<string, unknown>): string {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   return `header.${body}.signature`;
 }
+
+describe("getRequestOrigin", () => {
+  const req = (headers: Record<string, string>) =>
+    new NextRequest("http://0.0.0.0:3000/api/auth/sign-in", { headers });
+
+  it("prefers x-forwarded-host/proto (behind a reverse proxy)", () => {
+    expect(
+      getRequestOrigin(
+        req({
+          "x-forwarded-host": "pr-375.esdeveniments.cat",
+          "x-forwarded-proto": "https",
+        }),
+      ),
+    ).toBe("https://pr-375.esdeveniments.cat");
+  });
+
+  it("takes the first value when headers are comma-listed", () => {
+    expect(
+      getRequestOrigin(
+        req({
+          "x-forwarded-host": "pr-375.esdeveniments.cat, internal",
+          "x-forwarded-proto": "https, http",
+        }),
+      ),
+    ).toBe("https://pr-375.esdeveniments.cat");
+  });
+
+  it("falls back to the request origin when no forwarded host", () => {
+    expect(getRequestOrigin(req({}))).toBe("http://0.0.0.0:3000");
+  });
+});
 
 describe("generatePkce", () => {
   it("derives the challenge as base64url(sha256(verifier))", () => {

@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { buildEndSessionUrl, getLogtoConfig } from "@lib/auth/logto";
+import {
+  buildEndSessionUrl,
+  getLogtoConfig,
+  getRequestOrigin,
+} from "@lib/auth/logto";
 import {
   clearTokenCookies,
   ID_TOKEN_COOKIE,
@@ -9,7 +13,7 @@ import {
 // Clears the local session cookies and ends the Logto session (RP-initiated
 // logout), then returns the user to the site root.
 export async function GET(request: NextRequest): Promise<Response> {
-  const origin = request.nextUrl.origin;
+  const origin = getRequestOrigin(request);
   const idTokenHint =
     readTokenFromRequest(request, ID_TOKEN_COOKIE) ?? undefined;
 

@@ -8,6 +8,7 @@ import {
   randomBytes,
   verify as cryptoVerify,
 } from "node:crypto";
+import type { NextRequest } from "next/server";
 import type {
   AuthRole,
   AuthUser,
@@ -18,6 +19,23 @@ import type {
   LogtoUserInfo,
   Pkce,
 } from "types/auth";
+
+/**
+ * Public origin of the request, honoring the reverse proxy. Behind Coolify /
+ * Traefik, request.nextUrl.origin is the container's internal bind
+ * (0.0.0.0:3000), so prefer x-forwarded-host/-proto. Used to build the OIDC
+ * redirect_uri and post-logout URI — both must match what's registered in
+ * Logto, and Logto's exact-match allowlist is what makes trusting the
+ * forwarded host safe.
+ */
+export function getRequestOrigin(request: NextRequest): string {
+  const host = request.headers.get("x-forwarded-host");
+  if (host) {
+    const proto = request.headers.get("x-forwarded-proto")?.split(",")[0].trim();
+    return `${proto || "https"}://${host.split(",")[0].trim()}`;
+  }
+  return request.nextUrl.origin;
+}
 
 function requireEnv(key: string): string {
   const value = process.env[key];

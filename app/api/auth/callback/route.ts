@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   exchangeAuthorizationCode,
   getLogtoConfig,
+  getRequestOrigin,
   sanitizeReturnTo,
   verifyIdToken,
 } from "@lib/auth/logto";
@@ -15,7 +16,7 @@ import {
 // the id_token, store tokens in HttpOnly cookies, and return the user to where
 // they started. On any failure, bounce to the login entry with an error flag.
 export async function GET(request: NextRequest): Promise<Response> {
-  const origin = request.nextUrl.origin;
+  const origin = getRequestOrigin(request);
   const params = request.nextUrl.searchParams;
   const flow = readFlowCookies(request);
 

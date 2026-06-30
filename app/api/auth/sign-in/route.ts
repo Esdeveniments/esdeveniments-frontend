@@ -3,6 +3,7 @@ import {
   buildAuthorizationUrl,
   generatePkce,
   getLogtoConfig,
+  getRequestOrigin,
   randomToken,
   sanitizeReturnTo,
 } from "@lib/auth/logto";
@@ -14,9 +15,9 @@ import { handleApiError } from "@utils/api-error-handler";
 export async function GET(request: NextRequest): Promise<Response> {
   try {
     const config = getLogtoConfig();
-    // Derive from the actual request origin so localhost/preview/prod each work
-    // without env juggling. Must byte-match the redirect_uri used at /callback.
-    const redirectUri = `${request.nextUrl.origin}/api/auth/callback`;
+    // Proxy-aware origin so localhost/preview/prod each work without env
+    // juggling. Must byte-match the redirect_uri used at /callback.
+    const redirectUri = `${getRequestOrigin(request)}/api/auth/callback`;
 
     const returnTo =
       sanitizeReturnTo(request.nextUrl.searchParams.get("redirect")) ?? "/";
