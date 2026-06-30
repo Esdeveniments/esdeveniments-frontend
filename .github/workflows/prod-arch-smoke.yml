@@ -116,7 +116,10 @@ jobs:
           # 4) Auth routes boot: /api/auth/sign-in must 307-redirect to Logto.
           #    getLogtoConfig fails fast on a missing LOGTO_* env, returning 500,
           #    so this catches a forgotten/typo'd auth secret before deploy.
-          code=$(curl -s -o /tmp/signin.head -D /tmp/signin.head -w "%{http_code}" \
+          # Body to /dev/null, headers to their own file — writing both to the
+          # same path clobbers the header dump, so the Location grep finds
+          # nothing and a correct 307 looks like a failure.
+          code=$(curl -s -o /dev/null -D /tmp/signin.head -w "%{http_code}" \
             "http://localhost:3000/api/auth/sign-in") || code="000"
           loc=$(grep -i '^location:' /tmp/signin.head | tail -1 | tr -d '\r' || true)
           # Must 307 to the *configured* issuer's /oidc/auth — not just any URL
