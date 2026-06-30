@@ -13,17 +13,6 @@ import { handleApiError } from "@utils/api-error-handler";
 // Starts the OIDC Authorization Code + PKCE flow: stash state/verifier/nonce in
 // short-lived HttpOnly cookies, then redirect the browser to Logto's sign-in.
 export async function GET(request: NextRequest): Promise<Response> {
-  // ponytail: temporary proxy-origin diagnostic — remove once the preview
-  // confirms the resolved origin. Echoes which headers the container sees.
-  if (request.nextUrl.searchParams.get("debug") === "origins") {
-    return NextResponse.json({
-      xForwardedHost: request.headers.get("x-forwarded-host"),
-      xForwardedProto: request.headers.get("x-forwarded-proto"),
-      host: request.headers.get("host"),
-      nextUrlOrigin: request.nextUrl.origin,
-      resolved: getRequestOrigin(request),
-    });
-  }
   try {
     const config = getLogtoConfig();
     // Proxy-aware origin so localhost/preview/prod each work without env

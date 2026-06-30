@@ -63,6 +63,16 @@ if (!self.workbox) {
     },
   };
 
+  // Auth endpoints must NEVER be served from cache. Registered first so it
+  // wins over the navigation and catch-all /api/ routes below. A cached
+  // /api/auth/me kept the UI "logged in" after logout (the catch-all /api/
+  // SWR ignores no-store); a cached /api/auth/{sign-in,callback,sign-out}
+  // redirect would replay stale OIDC state.
+  workbox.routing.registerRoute(
+    ({ url }) => url.pathname.startsWith("/api/auth/"),
+    new workbox.strategies.NetworkOnly()
+  );
+
   // Strategy for Pages (Network First)
   // This ensures users always get the latest content if they are online.
   // If they are offline, it will serve a cached version of the page *if they have visited it before*.

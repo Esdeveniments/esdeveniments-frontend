@@ -97,6 +97,21 @@ describe("service worker template", () => {
       const matches = contents.match(/statuses:\s*\[0,\s*200\]/g);
       expect(matches?.length).toBeGreaterThanOrEqual(3);
     });
+
+    it("never caches /api/auth/* — NetworkOnly, registered before the catch-all", () => {
+      const contents = getContents();
+      // The auth route must use NetworkOnly so a cached /api/auth/me can't keep
+      // the UI logged in after logout.
+      expect(contents).toMatch(
+        /startsWith\("\/api\/auth\/"\)[\s\S]*?NetworkOnly\(\)/
+      );
+      // And it must register before the catch-all /api/ route, or Workbox's
+      // first-match-wins ordering would route it to the SWR cache instead.
+      const authIdx = contents.indexOf('startsWith("/api/auth/")');
+      const catchAllIdx = contents.indexOf('!url.pathname.startsWith("/api/image-proxy")');
+      expect(authIdx).toBeGreaterThan(-1);
+      expect(authIdx).toBeLessThan(catchAllIdx);
+    });
   });
 
   describe("performance optimizations", () => {
