@@ -58,6 +58,19 @@ describe("getRequestOrigin", () => {
     ).toBe("https://pr-375.esdeveniments.cat");
   });
 
+  it("uses the Host header (defaulting https) when x-forwarded-host is absent", () => {
+    expect(getRequestOrigin(req({ host: "pr-375.esdeveniments.cat" }))).toBe(
+      "https://pr-375.esdeveniments.cat",
+    );
+  });
+
+  it("ignores an internal-bind Host and falls back to nextUrl.origin", () => {
+    // The container binds 0.0.0.0:3000 — never build a redirect_uri from it.
+    expect(getRequestOrigin(req({ host: "0.0.0.0:3000" }))).toBe(
+      "http://0.0.0.0:3000",
+    );
+  });
+
   it("falls back to the request origin when no forwarded host", () => {
     expect(getRequestOrigin(req({}))).toBe("http://0.0.0.0:3000");
   });

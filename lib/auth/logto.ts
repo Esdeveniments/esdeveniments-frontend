@@ -22,17 +22,26 @@ import type {
 
 /**
  * Public origin of the request, honoring the reverse proxy. Behind Coolify /
- * Traefik, request.nextUrl.origin is the container's internal bind
- * (0.0.0.0:3000), so prefer x-forwarded-host/-proto. Used to build the OIDC
- * redirect_uri and post-logout URI — both must match what's registered in
- * Logto, and Logto's exact-match allowlist is what makes trusting the
- * forwarded host safe.
+ * Traefik, request.nextUrl.origin in a route handler is the container's
+ * internal bind (https://0.0.0.0:3000), so derive the host from the proxy
+ * headers — x-forwarded-host first, then the preserved Host header — and only
+ * fall back to nextUrl.origin when those are absent or also internal. Used to
+ * build the OIDC redirect_uri + post-logout URI; Logto's exact-match redirect
+ * allowlist is what makes trusting the forwarded host safe.
  */
 export function getRequestOrigin(request: NextRequest): string {
-  const host = request.headers.get("x-forwarded-host");
-  if (host) {
-    const proto = request.headers.get("x-forwarded-proto")?.split(",")[0].trim();
-    return `${proto || "https"}://${host.split(",")[0].trim()}`;
+  const first = (h: string | null) => h?.split(",")[0].trim() || "";
+  const isInternal = (h: string) =>
+    !h ||
+    h.startsWith("0.0.0.0") ||
+    h.startsWith("localhost") ||
+    h.startsWith("127.0.0.1");
+  const host =
+    first(request.headers.get("x-forwarded-host")) ||
+    first(request.headers.get("host"));
+  if (!isInternal(host)) {
+    const proto = first(request.headers.get("x-forwarded-proto")) || "https";
+    return `${proto}://${host}`;
   }
   return request.nextUrl.origin;
 }
