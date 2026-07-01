@@ -2590,53 +2590,56 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@redis/bloom@npm:5.11.0":
-  version: 5.11.0
-  resolution: "@redis/bloom@npm:5.11.0"
+"@redis/bloom@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@redis/bloom@npm:6.0.0"
   peerDependencies:
-    "@redis/client": ^5.11.0
-  checksum: 10c0/83cae94cfbfda0be634b1a635be5ef225599e8be86967d761d1c5aa6d367bd9cda353237377b5bd028d73c079a175f497701b3e2a1bac0076c0843204f66094d
+    "@redis/client": ^6.0.0
+  checksum: 10c0/85570136bc522a330da6c8ae30a9d6899d9a4892ab366d9bbb09b7e23529b695497cacfd8072cb86e0be55d61bb737fc04c6e4c6027be7d4f6fda3271694cda1
   languageName: node
   linkType: hard
 
-"@redis/client@npm:5.11.0":
-  version: 5.11.0
-  resolution: "@redis/client@npm:5.11.0"
+"@redis/client@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@redis/client@npm:6.0.0"
   dependencies:
     cluster-key-slot: "npm:1.1.2"
   peerDependencies:
     "@node-rs/xxhash": ^1.1.0
+    "@opentelemetry/api": ">=1 <2"
   peerDependenciesMeta:
     "@node-rs/xxhash":
       optional: true
-  checksum: 10c0/4e31c67bd9572200a388888f75a814d15480862bf0ec729e2b06db9a5ba7e3ec6a18f80d00f24cf797e6fac3708eb9d1a97da7571d32f12336e7cd3c41bab62d
+    "@opentelemetry/api":
+      optional: true
+  checksum: 10c0/b56473e07abbbd92434d1d12f83fddeff2cd3c725485519e6a77048c4e6141485bbbcaf80e39b18f71675377714484e5f13d01be45215d0642b5ce10242f6480
   languageName: node
   linkType: hard
 
-"@redis/json@npm:5.11.0":
-  version: 5.11.0
-  resolution: "@redis/json@npm:5.11.0"
+"@redis/json@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@redis/json@npm:6.0.0"
   peerDependencies:
-    "@redis/client": ^5.11.0
-  checksum: 10c0/b53531d655a7f4d80c9bea29bfec7bbe652112da7753dde80258e5b8d32cf674ff20787348feca45ec8103a69b1890b76011cc97cc26bc29aa68c7c41bf80351
+    "@redis/client": ^6.0.0
+  checksum: 10c0/02c352f139376a38e3793864adf392aebf6a871188fdbbfe7dd1b094657982e974f9c9ef3c0c1d8c526a33e59efd09d3d059b066988cdd55e0b4da7704073bdb
   languageName: node
   linkType: hard
 
-"@redis/search@npm:5.11.0":
-  version: 5.11.0
-  resolution: "@redis/search@npm:5.11.0"
+"@redis/search@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@redis/search@npm:6.0.0"
   peerDependencies:
-    "@redis/client": ^5.11.0
-  checksum: 10c0/d843cbbfb7ec1a50c9b2149f6b220639eb11091f6d5bb00a86d441be5b8f2454aaa354e9549651623cc21ed4bffc20417a1530685adbaf7b219b1f88bf909b76
+    "@redis/client": ^6.0.0
+  checksum: 10c0/04e4f841ff23202a1660496e441cf2ac4b9827bf4a69c63ae24ab77bbb9c62213df77ac182f694f3d61adb25e0fd6a904a69ca054b62237c2c999827f02fcafb
   languageName: node
   linkType: hard
 
-"@redis/time-series@npm:5.11.0":
-  version: 5.11.0
-  resolution: "@redis/time-series@npm:5.11.0"
+"@redis/time-series@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@redis/time-series@npm:6.0.0"
   peerDependencies:
-    "@redis/client": ^5.11.0
-  checksum: 10c0/fcb33c39f4a93e21ff319dd2b5b977282476b0b998ef652d39180b4c0268cdbeb114544782715d2594e0d2fd335f442ca90f7139f91ee813c4af17f1e59ad208
+    "@redis/client": ^6.0.0
+  checksum: 10c0/996ae8de962e5dcad6c0a122aaa551295054ae1ed70236c811b7b1c1ffdb7875a9e482e30eaa506b517bd42ff8e819658ac498689474421c434b01b99f107ead
   languageName: node
   linkType: hard
 
@@ -11430,16 +11433,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redis@npm:^5.10.0":
-  version: 5.11.0
-  resolution: "redis@npm:5.11.0"
+"redis@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "redis@npm:6.0.0"
   dependencies:
-    "@redis/bloom": "npm:5.11.0"
-    "@redis/client": "npm:5.11.0"
-    "@redis/json": "npm:5.11.0"
-    "@redis/search": "npm:5.11.0"
-    "@redis/time-series": "npm:5.11.0"
-  checksum: 10c0/37c7d01d878d9dbe69ff61da06ebbe2ed1ca0dd987db4eb97df3368c99acbd73ff826a6a0a5560028f1a717eaabbe0f23d3db2559ce3fe43b091d4a2874fed76
+    "@redis/bloom": "npm:6.0.0"
+    "@redis/client": "npm:6.0.0"
+    "@redis/json": "npm:6.0.0"
+    "@redis/search": "npm:6.0.0"
+    "@redis/time-series": "npm:6.0.0"
+  checksum: 10c0/2cd2cba2bd5678c4c85f769b7134d9d4abcd6c18088f12798613cfe58080c9dde5a95017e31e51d89105a2d9e3d22cd39710616a337b23bfd987a81a867c1d46
   languageName: node
   linkType: hard
 
@@ -11900,7 +11903,7 @@ __metadata:
     react-dom: "npm:19.2.4"
     react-select: "npm:^5.7.0"
     react-share: "npm:^5.0.3"
-    redis: "npm:^5.10.0"
+    redis: "npm:^6.0.0"
     sharp: "npm:^0.34.5"
     swr: "npm:^2.2.5"
     tailwindcss: "npm:3.3.6"
