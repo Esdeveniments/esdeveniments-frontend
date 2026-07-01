@@ -34,6 +34,8 @@ import {
 } from "@utils/publica-analytics";
 
 import Modal from "@components/ui/common/modal";
+import { useAuth } from "@components/hooks/useAuth";
+import PublishAuthGate from "./PublishAuthGate";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 // Lazy load preview content (only shown in modal when user clicks preview)
@@ -112,7 +114,9 @@ const isCategoryOption = (
 const buildFileSignature = (file: File) =>
   `${file.name}-${file.size}-${file.lastModified}`;
 
-const Publica = () => {
+// The form body. Mounted only for authenticated users (see Publica below),
+// so its data hooks (regions/cities, categories) never fire for guests.
+const PublishForm = () => {
   const t = useTranslations("App.Publish");
   const tForm = useTranslations("Components.EventForm");
   const router = useRouter();
@@ -770,6 +774,32 @@ const Publica = () => {
       </div>
     </>
   );
+};
+
+/**
+ * Publishing creates a user-attributed event (the backend returns 401 for
+ * guests). Gate upfront so guests never fill the form only to fail at submit
+ * — and, by mounting PublishForm only when authenticated, its region/city
+ * and category data hooks never fire for guests either. A light skeleton
+ * holds while the session resolves so an authenticated user never sees the
+ * gate flash.
+ */
+const Publica = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="container flex-center pt-[6rem] pb-section-y">
+        <div className="w-full max-w-md h-80 rounded-lg bg-border/40 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <PublishAuthGate />;
+  }
+
+  return <PublishForm />;
 };
 
 export default Publica;
