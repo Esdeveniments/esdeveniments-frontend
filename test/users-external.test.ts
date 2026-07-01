@@ -10,6 +10,7 @@ vi.mock("../lib/api/fetch-wrapper", () => ({
 vi.mock("@utils/api-helpers", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@utils/api-helpers")>()),
   getApiUrl: () => "http://localhost:8080/api",
+  isApiUrlConfigured: () => true,
 }));
 
 const mockFetchWithHmac = vi.mocked(fetchWrapper.fetchWithHmac);
