@@ -64,6 +64,10 @@ Logout looked broken on the first Logto preview: after sign-out the navbar staye
 
 Fix: a `NetworkOnly` route for `/api/auth/*` registered **before** the navigation and catch-all `/api/` routes (Workbox is first-match-wins). Any future auth-state or per-user endpoint needs the same treatment — never let it fall into a caching strategy. `test/service-worker.test.ts` asserts the auth route exists and is ordered before the catch-all. Generated `public/sw.js` is gitignored; edit the template and run `yarn prebuild`.
 
+## The CSRF origin allowlist makes `/api/favorites` a localhost-only false green
+
+The favorites POST is CSRF-guarded by an origin allowlist that includes `localhost:3000` in dev. So on localhost the write passes; it only **403s on a non-localhost / non-www host** — i.e. a Coolify PR preview or staging. Same shape as the proxy-origin bug: the environment that's convenient to test on is exactly the one that can't reproduce the failure. Test any origin/CSRF-gated write (favorites, and future authed mutations) on the Coolify preview, and if a POST 403s only off-localhost, suspect the allowlist host set, not the client. Manual runbook: `docs/logto-auth-setup.md`.
+
 ## `NEXT_PUBLIC_*` are baked at build (from GitHub) — not read from Coolify at runtime
 
 The prebuilt-image deploy (PR #371) builds the image in GitHub Actions and runs it in Coolify, so env vars split in two: `NEXT_PUBLIC_*` are inlined **at build** from the **GitHub** environment secrets; runtime secrets (`HMAC_SECRET`, `REDIS_URL`, `STRIPE_*`, …) are read **at runtime** from **Coolify**. The `getApiUrl`/`getApiOrigin` "indirect lookup" in `utils/api-helpers.ts` was meant to keep `NEXT_PUBLIC_API_URL` runtime-readable, but it does **not** — Turbopack still inlines it (grep `/app/.next/server` and you'll find literal copies). So for a Docker-Image app the Coolify `NEXT_PUBLIC_*` values are dead; GitHub's are authoritative.

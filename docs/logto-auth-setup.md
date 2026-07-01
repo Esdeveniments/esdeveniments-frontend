@@ -134,3 +134,74 @@ Consequence to know before merging: once auth is mandatory, the deploy gate
 will fail any environment whose Coolify app lacks `LOGTO_*`. Set staging's vars
 (and the `LOGTO_*_STAGING` GitHub secrets) before/with the merge to `develop`;
 set production's (against the prod instance) before promoting to `main`.
+
+## Manual test procedure (agent-browser)
+
+**Test on the Coolify PR preview (`https://pr-<N>.esdeveniments.cat`), not
+localhost.** Localhost is a false green for this feature: the proxy-origin bug
+and the CSRF-403 below are both invisible there (see `LESSONS.md`). Use
+localhost only for `yarn typecheck && yarn lint && npx vitest run` and the
+happy-path login shape. Previews don't auto-rebuild on push — a Coolify
+"redeploy" re-runs the pinned commit; confirm the live build first:
+
+```bash
+curl -s "https://pr-<N>.esdeveniments.cat/sw.js" | grep -c 'api/auth/'   # >0 = new build
+```
+
+Login / sign-up round-trip (a fresh agent-browser session):
+
+```bash
+s=test
+agent-browser --session $s open "https://pr-<N>.esdeveniments.cat/iniciar-sessio"
+agent-browser --session $s wait --load networkidle   # → proxy.ts → /api/auth/sign-in → Logto hosted page
+agent-browser --session $s snapshot -i                # identifier textbox + "Sign in"
+agent-browser --session $s fill @e4 "<test-username>"
+agent-browser --session $s click @e1
+agent-browser --session $s wait --load networkidle
+agent-browser --session $s snapshot -i                # password step
+agent-browser --session $s fill @e5 "<test-password>"
+agent-browser --session $s click @e3                  # Continue → callback → lands logged in
+```
+
+Sign-up is the same via the "Create account" link (`/register`): username →
+password → straight back logged in. This Logto instance's sign-in is
+**phone + SMS by default** on some configs; if you only see a phone field you
+can't self-register headlessly — use an existing test account.
+
+Verify session (in-browser fetch — must be an async IIFE, no top-level await):
+
+```bash
+cat <<'EOF' | agent-browser --session $s eval --stdin
+(async()=>{const r=await fetch('/api/auth/me',{credentials:'include'});return{status:r.status,body:await r.json()};})()
+EOF
+# expect 200 {user:{username:"…",...}}; navbar shows the user menu
+```
+
+Logout must land back on **our** origin before the next check — after sign-out
+the browser sits on the Logto domain, so a relative `fetch('/api/auth/me')`
+would hit `auth-preproduction…` (404), not the app:
+
+```bash
+agent-browser --session $s click @eNN                 # LOG OUT (re-snapshot for the ref)
+agent-browser --session $s open "https://pr-<N>.esdeveniments.cat/en"
+cat <<'EOF' | agent-browser --session $s eval --stdin
+(async()=>{const r=await fetch('/api/auth/me?cb='+Date.now(),{credentials:'include',cache:'no-store'});return{status:r.status};})()
+EOF
+# expect 401. A stale 200 here = the service worker served it (see LESSONS.md);
+# the ?cb= param, or curl (no SW), tells the truth. cache:'no-store' does NOT bypass the SW.
+```
+
+Favorites (same eval POST, logged in and out):
+
+```bash
+cat <<'EOF' | agent-browser --session $s eval --stdin
+(async()=>{const r=await fetch('/api/favorites',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventSlug:'x',eventId:'1',shouldBeFavorite:true})});return{status:r.status,body:await r.text()};})()
+EOF
+```
+
+agent-browser gotchas (the ones a fresh agent trips on):
+- Quote every URL — a bare `?` breaks in zsh.
+- HttpOnly cookies aren't in `document.cookie`; dump them via
+  `agent-browser --session $s cookies get` (CDP), not JS.
+- To inspect what the SW cached: `eval` `caches.keys()` then
+  `caches.open(n).keys()` and grep the URLs.
