@@ -37,6 +37,7 @@ export const CLIENT_COMPONENT_KEYS = [
   "Navbar",
   "NoEventsFound",
   "Notification",
+  "PwaBackButton",
   "PromotionInfoModal",
   "Profile",
   "RestaurantPromotionForm",

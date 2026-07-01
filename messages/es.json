@@ -1036,6 +1036,10 @@
       "unavailable": "Localización no disponible. Prueba a seleccionar una población en lugar de usar la distancia.",
       "timeout": "Tiempo de espera agotado. Prueba de nuevo o selecciona una población.",
       "genericError": "Error obteniendo la localización. Prueba a seleccionar una población en lugar de usar la distancia."
+    },
+    "PwaBackButton": {
+      "label": "Volver",
+      "ariaLabel": "Volver atrás"
     }
   },
   "Partials": {
