@@ -210,6 +210,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           REPO: ${{ github.repository }}
+          # Only accept previews from the team Vercel project. A duplicate
+          # esdeveniments-frontend project under a personal account was also
+          # building previews; those are auth-protected (302 on readiness) and
+          # the bypass secret doesn't open them, so CI silently skipped E2E.
+          # Match the team scope's host suffix; update if the scope/domain moves.
+          EXPECTED_PREVIEW_HOST_SUFFIX: "-esdeveniments.vercel.app"
         run: |
           set -e
           MAX_WAIT=900   # 15 minutes total wait budget
@@ -227,10 +233,22 @@ jobs:
               STATE=$(echo "$STATUS" | jq -r '.[0].state // empty')
               case "$STATE" in
                 success)
-                  URL=$(echo "$STATUS" | jq -r '.[0].environment_url // empty')
-                  if [ -n "$URL" ]; then
-                    break 2
-                  fi
+                  CANDIDATE=$(echo "$STATUS" | jq -r '.[0].environment_url // empty')
+                  # Match on the host only (ends-with), not anywhere in the URL,
+                  # so the suffix can't match inside a path or a lookalike domain.
+                  CANDIDATE_HOST="${CANDIDATE#*://}"
+                  CANDIDATE_HOST="${CANDIDATE_HOST%%/*}"
+                  case "$CANDIDATE_HOST" in
+                    *"$EXPECTED_PREVIEW_HOST_SUFFIX")
+                      URL="$CANDIDATE"
+                      break 2
+                      ;;
+                    "")
+                      ;;
+                    *)
+                      echo "  Ignoring preview from unexpected scope: $CANDIDATE"
+                      ;;
+                  esac
                   ;;
                 failure|error)
                   FAILED="$ID:$STATE"
@@ -281,8 +299,9 @@ jobs:
               sleep $((2 ** RETRY))
             fi
           done
-          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Skipping E2E to avoid 30min timeout."
+          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Failing fast: a green E2E check must mean tests ran, not that they were skipped."
           echo "ready=false" >> $GITHUB_OUTPUT
+          exit 1
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' && steps.readiness.outputs.ready == 'true' }}
         env:
