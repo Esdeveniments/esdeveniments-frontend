@@ -23,6 +23,14 @@ vi.mock("@utils/favorites", () => ({
   getFavoritesFromCookies: vi.fn(async () => [] as string[]),
 }));
 
+vi.mock("@utils/auth-cookies", () => ({
+  getAccessTokenFromCookies: vi.fn(async () => null),
+}));
+
+vi.mock("@lib/api/favorites-external", () => ({
+  listFavoriteEventsExternal: vi.fn(async () => null),
+}));
+
 vi.mock("@utils/event-helpers", () => ({
   filterActiveEvents: vi.fn(
     (events: EventSummaryResponseDTO[] | ListEvent[]) =>

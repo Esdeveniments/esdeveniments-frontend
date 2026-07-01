@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiOrigin } from "@utils/api-helpers";
+import { sanitizeReturnTo } from "@utils/redirect-safety";
 import {
   validateTimestamp,
   buildStringToSign,
@@ -7,6 +8,7 @@ import {
 } from "@utils/hmac";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
 import { isProductionHost } from "@utils/production-host";
+import { isE2ETestMode } from "@utils/env";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -182,9 +184,21 @@ function getAllowedOriginHosts(): Set<string> {
       (isDev ? "http://localhost:3000" : "https://www.esdeveniments.cat"),
   );
 
-  const vercelUrl = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
-  if (vercelUrl) {
-    addAllowedOriginHost(hosts, vercelUrl);
+  // Vercel exposes several runtime URLs that all serve the same deployment:
+  //   VERCEL_URL                       — per-deployment hash URL
+  //   VERCEL_BRANCH_URL                — stable branch-alias URL (what users
+  //                                       click on the PR preview comment)
+  //   VERCEL_PROJECT_PRODUCTION_URL    — the project's prod domain
+  // Origin must match whichever one the browser is hitting, otherwise the
+  // CSRF guard 403s every POST/PUT/DELETE on the preview. Allow them all.
+  for (const candidate of [
+    process.env.VERCEL_URL,
+    process.env.NEXT_PUBLIC_VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  ]) {
+    if (candidate) addAllowedOriginHost(hosts, candidate);
   }
 
   // Branch-preview alias (project-git-branch-team.vercel.app). Vercel sets
@@ -197,7 +211,11 @@ function getAllowedOriginHosts(): Set<string> {
     addAllowedOriginHost(hosts, vercelBranchUrl);
   }
 
-  if (isDev) {
+  // E2E runs a production build on localhost:3000, so isDev is false there and
+  // the same-origin localhost POST would be rejected. E2E_TEST_MODE is set only
+  // during E2E runs (never in prod), so this widens the allowlist for tests
+  // without touching the production Origin check.
+  if (isDev || isE2ETestMode) {
     hosts.add("localhost:3000");
     hosts.add("127.0.0.1:3000");
     hosts.add("[::1]:3000");
@@ -269,6 +287,10 @@ export const PUBLIC_API_EXACT_PATHS = [
   // Favorites cookie endpoints (browser-initiated)
   "/api/favorites",
   "/api/favorites/prune",
+  // Migrates guest-cookie favorites into the user's server-side favorites
+  // (browser-initiated; auth enforced by the route handler reading the
+  // HttpOnly auth_token cookie).
+  "/api/favorites/migrate",
   // DISABLED: Restaurant promotions feature is currently disabled
   // "/api/cloudinary/sign",
   // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)
@@ -298,8 +320,23 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/llms.txt",
 ];
 
+// GET-only public exact paths. Gated to GET in isPublicApiRequest so a future
+// POST/PUT/DELETE handler on the same path fails closed (HMAC required).
+// Logto OIDC routes: browser-initiated redirects + session cookie reads, no
+// HMAC — they talk to the identity provider over their own TLS channel.
+export const PUBLIC_API_GET_EXACT_PATHS = [
+  "/api/auth/sign-in",
+  "/api/auth/callback",
+  "/api/auth/sign-out",
+  "/api/auth/me",
+];
+
 // Event routes pattern (GET only): base, [slug], or /categorized
 export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
+
+// Localized sign-in entry route (with or without a locale prefix), e.g.
+// /iniciar-sessio, /ca/iniciar-sessio, /es/iniciar-sessio. Captures the locale.
+export const LOGIN_ENTRY_PATTERN = /^\/(?:([a-z]{2})\/)?iniciar-sessio\/?$/;
 
 // Routes exempt from Origin check (server-to-server callbacks that won't have
 // a browser Origin header):
@@ -335,6 +372,29 @@ export function isOriginAllowed(request: NextRequest): boolean {
 
     if (getAllowedOriginHosts().has(originHost)) return true;
 
+    // Same-origin via the reverse proxy's x-forwarded-host. This is the
+    // scalable check: it allows a state-changing POST whenever the browser's
+    // Origin matches the public host the request actually arrived on, so it
+    // works on EVERY proxy-fronted deployment (production, staging, Coolify
+    // pr-* previews, Vercel previews) without enumerating hosts. Coolify/Traefik
+    // and Vercel set x-forwarded-host to the public hostname (verified on the
+    // pr-* preview), the same header getRequestOrigin trusts (see LESSONS.md).
+    //
+    // CSRF-safe: a cross-site browser request can't make these match — its
+    // Origin is the attacker's host, while x-forwarded-host is our host (the
+    // browser can't forge x-forwarded-host on a credentialed request: simple
+    // requests can't set it, and a custom-header request triggers a CORS
+    // preflight we never approve). We deliberately do NOT consult the Host
+    // header, which is not proxy-validated here — see the "does not trust
+    // Host" guard test.
+    const forwardedHost = (request.headers.get("x-forwarded-host") ?? "")
+      .split(",")[0]
+      .trim()
+      .toLowerCase();
+    if (forwardedHost && originHost.toLowerCase() === forwardedHost) {
+      return true;
+    }
+
     return false;
   } catch {
     return false;
@@ -345,6 +405,36 @@ export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const search = request.nextUrl.search;
 
+  // Sign-in entry point: forward the localized /iniciar-sessio route into the
+  // Logto OIDC flow. Done here (not in the page) because cacheComponents would
+  // otherwise prerender the page's redirect() into a meta-refresh. Preserves a
+  // safe local ?redirect= target (no protocol-relative or backslash tricks).
+  const loginMatch = pathname.match(LOGIN_ENTRY_PATTERN);
+  // The pattern captures any 2-letter prefix; only treat it as the login entry
+  // when the prefix is absent or a real locale — otherwise (e.g. /fr/...) fall
+  // through so Next 404s instead of 307-ing an invalid route into the flow.
+  const captured = loginMatch?.[1] as AppLocale | undefined;
+  const localeOk = !captured || supportedLocales.has(captured);
+  // GET only: the 307 preserves the method, and /api/auth/sign-in is a
+  // GET-only public route (HEAD/other methods would hit the HMAC guard).
+  if (loginMatch && localeOk && request.method === "GET") {
+    const locale = captured ?? DEFAULT_LOCALE;
+    // Default the post-login destination to the localized home so a user
+    // browsing in es/en isn't bounced to the default locale.
+    const localizedHome = locale === DEFAULT_LOCALE ? "/" : `/${locale}`;
+    const safe =
+      sanitizeReturnTo(request.nextUrl.searchParams.get("redirect")) ??
+      localizedHome;
+    const target = new URL("/api/auth/sign-in", request.nextUrl.origin);
+    target.searchParams.set("redirect", safe);
+    // Preserve the locale so Logto renders its hosted page via ui_locales.
+    target.searchParams.set("locale", locale);
+    const response = NextResponse.redirect(target, 307);
+    // This route used to be a noindex page; keep it out of search results.
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  }
+
   if (pathname.startsWith("/api/")) {
     const isPublicApiRequest =
       // Pattern-based routes (GET only): these only export GET handlers;
@@ -354,6 +444,9 @@ export default async function proxy(request: NextRequest) {
         PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname))) ||
       // Exact match routes
       PUBLIC_API_EXACT_PATHS.includes(pathname) ||
+      // GET-only exact routes (e.g. Logto OIDC): fail closed on other methods
+      (request.method === "GET" &&
+        PUBLIC_API_GET_EXACT_PATHS.includes(pathname)) ||
       // Event routes (GET only): base, [slug], or /categorized
       (request.method === "GET" && EVENTS_PATTERN.test(pathname)) ||
       // Image proxy (GET only): used by Next/Image to safely load external images
@@ -592,6 +685,24 @@ export default async function proxy(request: NextRequest) {
       persistLocaleCookie(redirectResponse, localeFromPath);
     }
     return redirectResponse;
+  }
+
+  // Redirect legacy /verify-email (backend email links) to /verificar-email
+  if (pathnameWithoutLocale === "/verify-email") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/verificar-email`
+      : "/verificar-email";
+    return NextResponse.redirect(url, 301);
+  }
+
+  // Redirect legacy /reset-password (backend email links) to /restablir-contrasenya
+  if (pathnameWithoutLocale === "/reset-password") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/restablir-contrasenya`
+      : "/restablir-contrasenya";
+    return NextResponse.redirect(url, 301);
   }
 
   const requestHeaders = new Headers(request.headers);

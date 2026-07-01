@@ -112,7 +112,15 @@ const nextConfig = {
 
   // --- Optimizations ---
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+    // Strip console.* in production to cut noise, but KEEP console.error and
+    // console.warn: stripping them masked a silent events-blank outage (2026-06-27)
+    // whose only stdout signals would have been fetchEventsExternal's logged error
+    // and getApiOrigin's "invalid API URL" warning. Both stay in docker logs for
+    // debugging (Sentry captures errors too); warn also surfaces hydration/PPR issues.
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
   },
 
   // --- Image Optimization ---

@@ -97,8 +97,12 @@ test.describe("Sponsor Landing Page (/patrocina)", () => {
 
     await backLink.click();
 
-    // Should navigate to home
-    await expect(page).toHaveURL("/");
+    // Should navigate to home. Allow a generous timeout: on a cold prod build
+    // the "/" navigation (and the default-locale 308 if the link is locale-
+    // prefixed) can take longer than the default expect timeout to commit.
+    await expect(page).toHaveURL("/", {
+      timeout: process.env.CI ? 30000 : 10000,
+    });
   });
 });
 

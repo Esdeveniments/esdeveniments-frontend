@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mockAuthenticatedUser } from "./helpers/auth";
 
 declare global {
   interface Window {
@@ -7,6 +8,11 @@ declare global {
 }
 
 test.describe("Publish wizard UX", () => {
+  // Publishing is gated behind auth — sign the session in before each test.
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
   test("step navigation enables Next after basics and shows location step", async ({
     page,
   }) => {

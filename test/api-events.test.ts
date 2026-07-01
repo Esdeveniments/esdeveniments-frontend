@@ -5,6 +5,14 @@ import * as fetchWrapper from "../lib/api/fetch-wrapper";
 vi.mock("next/server", () => ({
   connection: vi.fn().mockResolvedValue(undefined),
 }));
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(() =>
+    Promise.resolve({
+      get: vi.fn(() => ({ value: "mock-auth-token" })),
+    })
+  ),
+}));
 import {
   PagedResponseDTO,
   EventSummaryResponseDTO,

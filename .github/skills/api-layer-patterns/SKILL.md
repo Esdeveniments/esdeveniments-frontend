@@ -203,6 +203,8 @@ headers: {
 }
 ```
 
+**Per-request-billed upstreams (e.g. Google Places):** CDN headers aren't enough — on Cloudflare's Free plan `/api/*` isn't edge-cached, and the Next fetch cache is wiped every deploy (`cache-handler.mjs` scopes keys by `buildId`). For a paid upstream, read through the **deploy-independent** app Redis cache (`lib/cache/redis-client.ts`) with a coarse key, and cap cost at the provider (GCP quota). See `app/api/places/nearby/route.ts` and [the Places cost incident](../../../docs/incidents/2026-06-26-places-api-cost.md).
+
 ---
 
 ## Layer 3: External Wrappers
@@ -457,6 +459,27 @@ const signature = crypto.createHmac("sha256", secret).update(url).digest("hex");
 
 - `/api/visits` (POST)
 - `/api/events/*` (POST/PUT/DELETE)
+- `/api/auth/*` (POST — login, register, forgot/reset password, email verification)
+
+**IMPORTANT: `skipBodySigning: true` is required on all POST/PUT/DELETE calls.**
+The backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. Without this flag, mutation requests fail with 401 "Invalid HMAC".
+
+```typescript
+// ✅ Correct — always pass skipBodySigning for mutations
+const response = await fetchWithHmac(`${apiUrl}/auth/register`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password, name }),
+  skipBodySigning: true, // backend ignores body for signature
+});
+
+// ❌ Wrong — will fail with 401 "Invalid HMAC"
+const response = await fetchWithHmac(`${apiUrl}/auth/register`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password, name }),
+});
+```
 
 **Implementation**: `proxy.ts` allowlists public GET routes; all others require HMAC.
 
