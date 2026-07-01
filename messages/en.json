@@ -1036,6 +1036,10 @@
       "unavailable": "Location unavailable. Try selecting a town instead of using distance.",
       "timeout": "Timeout. Try again or select a town.",
       "genericError": "Error getting location. Try selecting a town instead of using distance."
+    },
+    "PwaBackButton": {
+      "label": "Back",
+      "ariaLabel": "Go back"
     }
   },
   "Partials": {

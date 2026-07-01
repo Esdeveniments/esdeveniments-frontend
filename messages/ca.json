@@ -1035,6 +1035,10 @@
       "unavailable": "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància.",
       "timeout": "Temps d'espera esgotat. Prova de nou o selecciona una població.",
       "genericError": "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
+    },
+    "PwaBackButton": {
+      "label": "Tornar",
+      "ariaLabel": "Tornar enrere"
     }
   },
   "Partials": {
