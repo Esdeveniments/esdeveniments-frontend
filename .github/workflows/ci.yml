@@ -229,32 +229,39 @@ jobs:
             IDS=$(echo "$DEPLOYMENTS" | jq -r '.[] | select(.creator.login == "vercel[bot]") | .id')
             FAILED=""
             for ID in $IDS; do
-              STATUS=$(gh api "repos/$REPO/deployments/$ID/statuses?per_page=1" 2>/dev/null || echo "[]")
-              STATE=$(echo "$STATUS" | jq -r '.[0].state // empty')
-              case "$STATE" in
-                success)
-                  CANDIDATE=$(echo "$STATUS" | jq -r '.[0].environment_url // empty')
-                  # Match on the host only (ends-with), not anywhere in the URL,
-                  # so the suffix can't match inside a path or a lookalike domain.
-                  CANDIDATE_HOST="${CANDIDATE#*://}"
-                  CANDIDATE_HOST="${CANDIDATE_HOST%%/*}"
-                  case "$CANDIDATE_HOST" in
-                    *"$EXPECTED_PREVIEW_HOST_SUFFIX")
-                      URL="$CANDIDATE"
-                      break 2
-                      ;;
-                    "")
-                      ;;
-                    *)
-                      echo "  Ignoring preview from unexpected scope: $CANDIDATE"
-                      ;;
-                  esac
-                  ;;
-                failure|error)
-                  FAILED="$ID:$STATE"
-                  ;;
-              esac
+              # per_page=20, not 1: a single GitHub deployment can carry
+              # several success statuses when both the team project and a
+              # duplicate personal-account project post to it. The personal
+              # status is posted a beat later, so it's newest — reading only
+              # .[0] always saw the personal URL and rejected it, masking the
+              # team preview sitting behind it. Scan every success status.
+              STATUS=$(gh api "repos/$REPO/deployments/$ID/statuses?per_page=20" 2>/dev/null || echo "[]")
+              SUCCESS_URLS=$(echo "$STATUS" | jq -r '.[] | select(.state == "success") | .environment_url // empty')
+              for CANDIDATE in $SUCCESS_URLS; do
+                # Match on the host only (ends-with), not anywhere in the URL,
+                # so the suffix can't match inside a path or a lookalike domain.
+                CANDIDATE_HOST="${CANDIDATE#*://}"
+                CANDIDATE_HOST="${CANDIDATE_HOST%%/*}"
+                case "$CANDIDATE_HOST" in
+                  *"$EXPECTED_PREVIEW_HOST_SUFFIX")
+                    URL="$CANDIDATE"
+                    break
+                    ;;
+                  *)
+                    echo "  Ignoring preview from unexpected scope: $CANDIDATE"
+                    ;;
+                esac
+              done
+              [ -n "$URL" ] && break
+              # Only treat this deployment as failed when nothing succeeded yet.
+              if [ -z "$SUCCESS_URLS" ]; then
+                STATE=$(echo "$STATUS" | jq -r '.[0].state // empty')
+                case "$STATE" in
+                  failure|error) FAILED="$ID:$STATE" ;;
+                esac
+              fi
             done
+            [ -n "$URL" ] && break
             if [ -n "$FAILED" ] && [ -z "$URL" ]; then
               # Vercel reports failure but no other deployment succeeded yet —
               # keep polling briefly in case the integration retries, but if
