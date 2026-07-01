@@ -174,6 +174,7 @@ export interface FetchEventsParams {
   to?: string; // End date
   type?: string; // Price filter: "FREE" | "PAID"
   isToday?: boolean;
+  profileSlug?: string; // Filter events by profile/venue slug
   // Note: API expects 'term' for search queries
 }
 
@@ -305,6 +306,7 @@ export interface EventLocationProps {
   regionName: string;
   citySlug?: string;
   regionSlug?: string;
+  profile?: import("types/api/profile").ProfileSummaryResponseDTO;
   compact?: boolean;
 }
 
@@ -355,6 +357,7 @@ export interface UseEventsOptions {
   to?: string; // Calendar date filter (YYYY-MM-DD)
   lat?: string; // Client-side latitude filter
   lon?: string; // Client-side longitude filter
+  profileSlug?: string; // Filter events by profile/venue slug
   initialSize?: number;
   fallbackData?: EventSummaryResponseDTO[];
   serverHasMore?: boolean; // Add server pagination info
