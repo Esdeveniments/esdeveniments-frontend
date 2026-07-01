@@ -2,6 +2,10 @@
 
 Repo-specific gotchas worth sharing. Read this during research on any task here.
 
+## Never `waitUntil: "networkidle"` in an e2e against a deployed build
+
+`load_more_with_filters.spec.ts` did `page.goto(..., { waitUntil: "networkidle" })`. Locally it passed; against the Vercel preview it timed out `page.goto` at 45s **every** retry, hard-failing the required E2E gate and blocking every develop PR — even a docs-only one. The cause isn't the test's data or mocks (that spec fully mocks `/api/events`): analytics, ads and Sentry keep the network busy on a deployed build, so "networkidle" (500ms of silence) never fires. Use `waitUntil: "domcontentloaded"` plus an explicit auto-waiting assertion for the element you need (`expect(getByTestId(...))`), the way `home.flow.spec.ts` does reliably. For a mid-test settle after an action, bound it: `page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {})`, never an unbounded wait. Grep `e2e/` for `networkidle` before trusting the gate.
+
 ## A test that skips on its own failure mode is worse than no test
 
 The image-proxy e2e tests skipped on any 502 (`test.skip("Test image service unavailable")`). When the dispatcher broke and 502'd every image, the suite read it as a flaky upstream and shipped green — for weeks (the May 2026 autoSelectFamily regression). If a test exists to catch failure X, it must **fail** on X, never skip. Retry to absorb genuine flakiness, then fail once retries are exhausted. Before trusting a green e2e run, grep for `if (status >= 500) test.skip` shapes.
