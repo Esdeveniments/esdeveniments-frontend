@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchProfileBySlugExternal } from "../lib/api/profiles-external";
+import {
+  fetchProfileBySlugExternal,
+  mapUserToProfile,
+} from "../lib/api/profiles-external";
 import { buildEventsQuery } from "../utils/api-helpers";
 
 const originalEnv = { ...process.env };
@@ -30,6 +33,35 @@ describe("lib/api/profiles-external", () => {
 
     const result = await fetchProfileBySlugExternal("nonexistent");
     expect(result).toBeNull();
+  });
+});
+
+describe("mapUserToProfile", () => {
+  it("maps the lean user DTO to the profile view model", () => {
+    const profile = mapUserToProfile({
+      id: "u1",
+      name: "Sala Apolo",
+      username: "sala-apolo",
+      pictureUrl: "https://img.example/x.jpg",
+      createdAt: "2024-03-01T00:00:00Z",
+    });
+    expect(profile.slug).toBe("sala-apolo");
+    expect(profile.name).toBe("Sala Apolo");
+    expect(profile.avatarUrl).toBe("https://img.example/x.jpg");
+    expect(profile.joinedDate).toBe("2024-03-01T00:00:00Z");
+    expect(profile.verified).toBe(false);
+    expect(profile.totalEvents).toBe(0);
+  });
+
+  it("defaults a missing picture to null", () => {
+    const profile = mapUserToProfile({
+      id: "u2",
+      name: "X",
+      username: "x",
+      pictureUrl: null,
+      createdAt: "",
+    });
+    expect(profile.avatarUrl).toBeNull();
   });
 });
 

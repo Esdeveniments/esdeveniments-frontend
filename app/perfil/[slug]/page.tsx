@@ -1,14 +1,13 @@
 import { Suspense, use } from "react";
 import { notFound } from "next/navigation";
 import { fetchProfileBySlug } from "@lib/api/profiles";
-import { fetchEvents, insertAds } from "@lib/api/events";
+import { fetchUserEvents, insertAds } from "@lib/api/events";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import ProfilePageShell from "@components/partials/ProfilePageShell";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
 import type { PageData } from "types/common";
-import type { FetchEventsParams } from "types/event";
 
 // No generateStaticParams — profile slugs are user-generated with infinite
 // cardinality. Pages render on first request and are cached automatically.
@@ -72,17 +71,18 @@ async function ProfilePageGate({ slug }: { slug: string }) {
     notFound();
   }
 
-  const fetchParams: FetchEventsParams = {
-    page: 0,
-    size: 10,
-    profileSlug: slug,
-  };
-
-  const eventsResponse = await fetchEvents(fetchParams);
+  const eventsResponse = await fetchUserEvents(slug, 0, 10);
   const events = eventsResponse.content;
   const noEventsFound = events.length === 0;
   const serverHasMore = !eventsResponse.last;
   const eventsWithAds = insertAds(events);
+
+  // Backend doesn't return totalEvents on the user DTO yet — derive it from
+  // the events listing so the header count is correct today.
+  const profileWithCount = {
+    ...profile,
+    totalEvents: eventsResponse.totalElements,
+  };
 
   const pageData: PageData = {
     title: t("title", { name: profile.name }),
@@ -96,7 +96,7 @@ async function ProfilePageGate({ slug }: { slug: string }) {
 
   return (
     <ProfilePageShell
-      profile={profile}
+      profile={profileWithCount}
       initialEvents={eventsWithAds}
       noEventsFound={noEventsFound}
       serverHasMore={serverHasMore}

@@ -65,6 +65,39 @@ export async function fetchEventsExternal(
   }
 }
 
+// Public listing of a user's events: GET /api/users/{username}/events.
+// Same paged shape as /events, but the backend endpoint only accepts
+// page & size (no place/category/date filters).
+export async function fetchUserEventsExternal(
+  username: string,
+  page = 0,
+  size = 12,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  const api = getApiUrl();
+  const empty: PagedResponseDTO<EventSummaryResponseDTO> = {
+    content: [],
+    currentPage: page,
+    pageSize: size,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  };
+  try {
+    const qs = new URLSearchParams({ page: String(page), size: String(size) });
+    const res = await fetchWithHmac(
+      `${api}/users/${encodeURIComponent(username)}/events?${qs.toString()}`,
+    );
+    if (!res.ok) {
+      console.error(`fetchUserEventsExternal: HTTP ${res.status}`);
+      return empty;
+    }
+    return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
+  } catch (error) {
+    console.error("fetchUserEventsExternal: failed", error);
+    return empty;
+  }
+}
+
 export async function fetchCategorizedEventsExternal(
   maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {

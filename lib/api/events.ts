@@ -18,6 +18,7 @@ import {
 import {
   fetchCategorizedEventsExternal,
   fetchEventsExternal,
+  fetchUserEventsExternal,
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
@@ -160,6 +161,41 @@ async function fetchEventsInternal(
 }
 
 export const fetchEvents = cache(fetchEventsInternal);
+
+async function fetchUserEventsInternal(
+  username: string,
+  page = 0,
+  size = 12,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  const fallback: PagedResponseDTO<EventSummaryResponseDTO> = {
+    content: [],
+    currentPage: page,
+    pageSize: size,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  };
+
+  try {
+    const validated = parsePagedEvents(
+      await fetchUserEventsExternal(username, page, size),
+    );
+    if (!validated) {
+      console.error("fetchUserEvents: validation failed");
+      return fallback;
+    }
+    return validated;
+  } catch (error) {
+    console.error("fetchUserEvents: failed", error);
+    captureException(error, {
+      tags: { section: "user-events-fetch" },
+      extra: { username, page, size },
+    });
+    return fallback;
+  }
+}
+
+export const fetchUserEvents = cache(fetchUserEventsInternal);
 
 export async function fetchEventBySlug(
   fullSlug: string,

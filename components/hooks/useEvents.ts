@@ -13,13 +13,17 @@ import {
 } from "types/event";
 import { captureException } from "@sentry/nextjs";
 
-// SWR fetcher function for events API (single page) via internal proxy
+// SWR fetcher function for events API (single page) via internal proxy.
+// A profile page fetches a user's events from the dedicated per-user endpoint
+// (which only takes page & size); everything else uses the filtered list.
 const pageFetcher = async (
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> => {
-  const qs = buildEventsQuery(params);
+  const url = params.profileSlug
+    ? `/api/users/${encodeURIComponent(params.profileSlug)}/events?page=${params.page ?? 0}&size=${params.size ?? 12}`
+    : `/api/events?${buildEventsQuery(params).toString()}`;
 
-  const res = await fetch(`/api/events?${qs.toString()}`);
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch events: ${res.status}`);
   }
