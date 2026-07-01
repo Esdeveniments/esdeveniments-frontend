@@ -1,5 +1,8 @@
 import { cache } from "react";
-import { getUserByUsernameExternal } from "./users-external";
+import {
+  getUserByUsernameExternal,
+  getUserEventsExternal,
+} from "./users-external";
 import type { ProfileDetailResponseDTO } from "types/api/profile";
 
 async function fetchProfileByUsernameInternal(
@@ -10,3 +13,7 @@ async function fetchProfileByUsernameInternal(
 
 export const fetchProfileBySlug = cache(fetchProfileByUsernameInternal);
 export const fetchUserByUsername = cache(fetchProfileByUsernameInternal);
+
+// Request-level dedupe facade so components fetch a user's events through
+// lib/api rather than importing the *-external helper directly.
+export const fetchUserEvents = cache(getUserEventsExternal);
