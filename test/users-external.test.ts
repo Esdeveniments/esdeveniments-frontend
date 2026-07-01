@@ -6,6 +6,12 @@ vi.mock("../lib/api/fetch-wrapper", () => ({
   fetchWithHmac: vi.fn(),
 }));
 
+// Pin the API URL so the test doesn't depend on env / api-defaults.json.
+vi.mock("@utils/api-helpers", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@utils/api-helpers")>()),
+  getApiUrl: () => "http://localhost:8080/api",
+}));
+
 const mockFetchWithHmac = vi.mocked(fetchWrapper.fetchWithHmac);
 
 function pagedResponse(
@@ -52,6 +58,18 @@ describe("getUserEventsExternal", () => {
 
   it("returns an empty page when the backend responds with an error", async () => {
     mockFetchWithHmac.mockResolvedValue(pagedResponse(null, 500));
+    const result = await getUserEventsExternal("sala-apolo");
+    expect(result.content).toEqual([]);
+    expect(result.last).toBe(true);
+  });
+
+  it("treats a malformed 200 payload as an empty page (no throw)", async () => {
+    // Backend returning 200 with a non-paged/error body must not surface as a
+    // crash or as fake data: parsePagedEvents rejects it → empty page, so the
+    // profile renders "no events" instead of throwing in a server component.
+    mockFetchWithHmac.mockResolvedValue(
+      pagedResponse({ error: "Internal Server Error" }, 200),
+    );
     const result = await getUserEventsExternal("sala-apolo");
     expect(result.content).toEqual([]);
     expect(result.last).toBe(true);
