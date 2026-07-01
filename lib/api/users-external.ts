@@ -1,14 +1,17 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseUserPublic } from "@lib/validation/user";
-import { getApiUrl } from "@utils/api-helpers";
+import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
 import type { UserPublicResponseDTO } from "types/api/user";
 
 export async function getUserByUsernameExternal(
   username: string
 ): Promise<UserPublicResponseDTO | null> {
   if (!username || !username.trim()) return null;
+  // Return null (no fetch) when the backend URL is genuinely unconfigured.
+  // getApiUrl() falls back to a hardcoded default, so guarding on its result
+  // is dead code and would fire a real request against the default host.
+  if (!isApiUrlConfigured()) return null;
   const apiUrl = getApiUrl();
-  if (!apiUrl) return null;
 
   try {
     const response = await fetchWithHmac(
