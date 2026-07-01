@@ -1,0 +1,110 @@
+name: E2E Integration (preproduction)
+
+# Opt-in, write-heavy E2E: the full publish → event-detail flow against a
+# REAL backend. Kept out of regular PR CI so it never creates events on
+# production. Runs manually (workflow_dispatch) and nightly.
+#
+# There is no separate "base URL": the workflow builds and runs THIS app
+# locally and points Playwright at localhost. Which backend it talks to is
+# just NEXT_PUBLIC_API_URL — the same knob you switch in Vercel/Coolify.
+# All environment-specific values come from the existing `staging` GitHub
+# Environment (Settings → Environments) — staging == preproduction here.
+# Mirrors how prod config lives in the hosting platform:
+#   vars.NEXT_PUBLIC_API_URL        → preproduction API (defaults below)
+#   secrets.HMAC_SECRET             → preproduction HMAC signing secret
+#                                     (falls back to the repo-level secret if
+#                                     the staging env doesn't define one)
+#   secrets.E2E_STAGING_EMAIL       → a dedicated, email-verified test user
+#   secrets.E2E_STAGING_PASSWORD    ↲
+# The publish-integration spec self-skips when the test-user secrets are
+# absent, so an unconfigured environment never turns this red.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *" # nightly at 03:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  # Serialize write-heavy runs against the shared preproduction backend.
+  group: e2e-integration
+  cancel-in-progress: false
+
+jobs:
+  publish-integration:
+    name: Publish → detail (preproduction)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: staging
+    env:
+      NODE_VERSION: "22"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Configure Yarn
+        run: yarn config set enableImmutableInstalls false
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Start app against preproduction (dev mode, real writes)
+        # dev mode (not E2E_TEST_MODE) so createEvent hits the real backend
+        # and the localhost origin is accepted for POST/PUT/DELETE.
+        # Secrets/vars are scoped to this step (the only one running the app).
+        run: |
+          yarn dev > /tmp/next-dev.log 2>&1 &
+          echo $! > .next-server.pid
+        env:
+          PORT: "3000"
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 90000
+
+      - name: Run publish → detail integration
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
+          E2E_STAGING_PASSWORD: ${{ secrets.E2E_STAGING_PASSWORD }}
+        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f .next-server.pid ]; then
+            kill "$(cat .next-server.pid)" || true
+            rm .next-server.pid
+          fi
+          pkill -f "next dev" || true
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-integration-report
+          path: playwright-report/
+          retention-days: 7
