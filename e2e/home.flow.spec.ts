@@ -5,7 +5,7 @@ test.describe("Home flow", () => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
     // Auto-waiting assertion - no need for manual waits
     await expect(page.getByTestId("search-input")).toBeVisible({
-      timeout: 30000,
+      timeout: process.env.CI ? 60000 : 30000,
     });
   });
 
@@ -14,7 +14,7 @@ test.describe("Home flow", () => {
 
     // Wait for search input to ensure page is loaded
     await expect(page.getByTestId("search-input")).toBeVisible({
-      timeout: 30000,
+      timeout: process.env.CI ? 60000 : 30000,
     });
 
     // Verify that categorized events are actually displayed

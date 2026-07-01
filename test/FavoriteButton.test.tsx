@@ -25,6 +25,10 @@ vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: sendGoogleEventMock,
 }));
 
+vi.mock("@components/hooks/useAuth", () => ({
+  useAuth: () => ({ isAuthenticated: false }),
+}));
+
 vi.mock("@heroicons/react/24/solid", () => ({
   HeartIcon: (props: SVGProps<SVGSVGElement>) => (
     <svg data-testid="heart-solid" {...props} />
