@@ -44,6 +44,7 @@ describe("getUserEventsExternal", () => {
 
     await getUserEventsExternal("sala-apolo", 2, 5);
 
+    expect(mockFetchWithHmac).toHaveBeenCalledTimes(1);
     const [url] = mockFetchWithHmac.mock.calls[0];
     expect(url).toContain("/users/sala-apolo/events");
     expect(url).toContain("page=2");
@@ -61,6 +62,12 @@ describe("getUserEventsExternal", () => {
     const result = await getUserEventsExternal("sala-apolo");
     expect(result.content).toEqual([]);
     expect(result.last).toBe(true);
+  });
+
+  it("treats a 404 (unknown user) as an empty page", async () => {
+    mockFetchWithHmac.mockResolvedValue(pagedResponse(null, 404));
+    const result = await getUserEventsExternal("ghost");
+    expect(result.content).toEqual([]);
   });
 
   it("treats a malformed 200 payload as an empty page (no throw)", async () => {

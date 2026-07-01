@@ -5,17 +5,15 @@ import List from "@components/ui/list";
 import CardServer from "@components/ui/card/CardServer";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
-import { getUserEventsExternal } from "@lib/api/users-external";
+import { fetchUserEvents } from "@lib/api/profiles";
 import { filterActiveEvents } from "@utils/event-helpers";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import type { BreadcrumbItem } from "types/common";
 import type { ProfilePageShellProps } from "types/props";
 
-// First-page size for the profile's event listing. Pagination ("load more")
-// is deferred — v1 shows the most recent page, matching the favourites page.
-// ponytail: add client pagination via /api/users/[username]/events when a
-// profile with many events actually needs it.
+// First page of the profile's event listing. Client pagination ("load more")
+// via /api/users/[username]/events is a follow-up; v1 renders the first page.
 const PROFILE_EVENTS_PAGE_SIZE = 20;
 
 export default async function ProfilePageShell({
@@ -25,7 +23,7 @@ export default async function ProfilePageShell({
   const tProfile = await getTranslations("Components.Profile");
   const locale = await getLocaleSafely();
 
-  const eventsResponse = await getUserEventsExternal(
+  const eventsResponse = await fetchUserEvents(
     profile.username,
     0,
     PROFILE_EVENTS_PAGE_SIZE,
@@ -69,10 +67,15 @@ export default async function ProfilePageShell({
 
         <section
           className="w-full mt-section-y"
-          aria-label={tProfile("events")}
+          aria-labelledby="profile-events-heading"
           data-testid="profile-events"
         >
-          <h2 className="heading-2 mb-element-gap">{tProfile("events")}</h2>
+          <h2
+            id="profile-events-heading"
+            className="heading-2 mb-element-gap"
+          >
+            {tProfile("events")}
+          </h2>
           {activeEvents.length === 0 ? (
             <NoEventsFound title={tProfile("noEvents")} />
           ) : (

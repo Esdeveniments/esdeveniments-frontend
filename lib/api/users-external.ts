@@ -50,15 +50,20 @@ export async function getUserEventsExternal(
     totalPages: 0,
     last: true,
   };
-  if (!username || !username.trim()) return empty;
+  const trimmed = username?.trim();
+  if (!trimmed) return empty;
   const apiUrl = getApiUrl();
   if (!apiUrl) return empty;
 
   try {
     const qs = new URLSearchParams({ page: String(page), size: String(size) });
+    // No `next: { revalidate }` here — external wrappers must stay no-store
+    // (repo cost rule). Matches getUserByUsernameExternal on the same page.
     const response = await fetchWithHmac(
-      `${apiUrl}/users/${encodeURIComponent(username)}/events?${qs.toString()}`,
+      `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
     );
+    // 404 = unknown user / no public events: a normal empty result, not an error.
+    if (response.status === 404) return empty;
     if (!response.ok) {
       console.error(`getUserEventsExternal: HTTP ${response.status}`);
       return empty;
