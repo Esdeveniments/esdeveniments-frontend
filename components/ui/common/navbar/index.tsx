@@ -27,6 +27,10 @@ export default async function Navbar() {
       publish: t("aria.publish"),
       news: t("aria.news"),
       mobilePublishLabel: t("mobilePublishLabel"),
+      login: t("auth.login"),
+      logout: t("auth.logout"),
+      userMenu: t("auth.userMenu"),
+      myProfile: t("auth.myProfile"),
     },
   };
 

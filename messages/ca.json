@@ -80,7 +80,9 @@
       "subtitle": "Només es mostren esdeveniments futurs. Quan un esdeveniment finalitza, s'elimina automàticament dels preferits.",
       "countLabel": "{count}/{max} desats",
       "emptyTitle": "Encara no tens esdeveniments futurs desats",
-      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits."
+      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits.",
+      "errorTitle": "No hem pogut carregar els teus preferits",
+      "errorDescription": "Torna-ho a provar en un moment. Els teus preferits estan segurs."
     },
     "About": {
       "metaTitle": "Qui som - Agenda cultural de Catalunya | Esdeveniments.cat",
@@ -231,6 +233,13 @@
       "description": "Les últimes notícies i recomanacions culturals de Catalunya"
     },
     "Publish": {
+      "authGate": {
+        "title": "Inicia sessió per publicar",
+        "description": "Crea un compte o inicia sessió per afegir el teu esdeveniment. És ràpid i després podràs gestionar els teus esdeveniments.",
+        "login": "Inicia sessió",
+        "noAccount": "No tens compte?",
+        "register": "Registra't"
+      },
       "heading": "Publica el teu esdeveniment a Catalunya",
       "subheading": "Afegeix el teu concert, exposició, teatre, taller o activitat cultural a l'agenda més gran de Catalunya. És gratuït!",
       "sponsorTitle": "Tens un negoci local?",
@@ -321,6 +330,24 @@
     "Breadcrumbs": {
       "home": "Inici"
     },
+    "Profile": {
+      "title": "{name} — Perfil",
+      "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+      "events": "Esdeveniments",
+      "verified": "Verificat",
+      "joinedDate": "Des de {date}",
+      "noEvents": "Encara no hi ha esdeveniments",
+      "website": "Lloc web",
+      "breadcrumbProfiles": "Perfils",
+      "totalEvents": "{count, plural, one {# esdeveniment} other {# esdeveniments}}",
+      "notFound": "Perfil no trobat",
+      "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
+      "backHome": "Tornar a l'inici",
+      "editProfile": "Editar perfil",
+      "comingSoon": "(properament)",
+      "claimQuestion": "És el teu local?",
+      "claimLogin": "Iniciar sessió"
+    },
     "Footer": {
       "navigation": {
         "home": "Inici",
@@ -333,7 +360,8 @@
         "contact": "Contacte",
         "archive": "Arxiu",
         "terms": "Termes de servei",
-        "privacy": "Privacitat"
+        "privacy": "Privacitat",
+        "login": "Iniciar sessió"
       },
       "sponsorCta": {
         "title": "Fes visible el teu negoci local",
@@ -373,7 +401,13 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publica"
+      "mobilePublishLabel": "Publica",
+      "auth": {
+        "login": "Iniciar sessió",
+        "logout": "Tanca sessió",
+        "userMenu": "Menú d'usuari",
+        "myProfile": "El meu perfil"
+      }
     },
     "NoEventsFound": {
       "cta": "Afegeix un esdeveniment",
@@ -392,6 +426,11 @@
     },
     "FavoriteButton": {
       "maxReached": "Has arribat al límit de {max} preferits. Elimina'n un per afegir-ne més."
+    },
+    "FavoritesLoginNudge": {
+      "message": "Desat! Inicia sessió per sincronitzar els teus preferits entre dispositius.",
+      "login": "Inicia sessió",
+      "dismiss": "Tanca"
     },
     "EventNotifications": {
       "thankYou": "Gràcies per contribuir a millorar el contingut de Esdeveniments.cat! En menys de 24 hores estarà disponible el canvi."
@@ -446,7 +485,15 @@
         "Divendres",
         "Dissabte"
       ],
-      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
+      "daysShort": [
+        "Dg.",
+        "Dl.",
+        "Dt.",
+        "Dc.",
+        "Dj.",
+        "Dv.",
+        "Ds."
+      ],
       "monthsShort": [
         "gen.",
         "feb.",
@@ -869,13 +916,15 @@
     "EventDetailsSection": {
       "title": "Detalls de l'esdeveniment",
       "eventLink": "Enllaç a l'esdeveniment:",
-      "duration": "Durada aproximada: {duration}"
+      "duration": "Durada aproximada: {duration}",
+      "createdBy": "Publicat per <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicació",
       "showMap": "Mostrar mapa",
       "hideMap": "Tancar mapa",
-      "getDirections": "Com arribar"
+      "getDirections": "Com arribar",
+      "profileLink": "Perfil de {name}"
     },
     "EventCalendar": {
       "title": "Data i hora"
@@ -986,6 +1035,10 @@
       "unavailable": "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància.",
       "timeout": "Temps d'espera esgotat. Prova de nou o selecciona una població.",
       "genericError": "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
+    },
+    "PwaBackButton": {
+      "label": "Tornar",
+      "ariaLabel": "Tornar enrere"
     }
   },
   "Partials": {
@@ -1364,7 +1417,10 @@
         "pel",
         "pels"
       ],
-      "feminineExceptions": ["gent gran", "dansa"],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
       "masculineExceptions": [
         "penedès",
         "alt penedès",
@@ -1667,5 +1723,87 @@
       "backHome": "Torna a l'inici"
     },
     "backToHome": "Torna a l'inici"
+  },
+  "Auth": {
+    "login": {
+      "title": "Iniciar sessió",
+      "subtitle": "Accedeix al teu compte per gestionar els teus esdeveniments",
+      "submit": "Iniciar sessió",
+      "noAccount": "No tens compte?",
+      "registerLink": "Crea'n un",
+      "magicLinkSent": "Revisa el teu correu per al link d'accés"
+    },
+    "register": {
+      "title": "Crear compte",
+      "subtitle": "Uneix-te a la comunitat i publica els teus esdeveniments",
+      "submit": "Crear compte",
+      "hasAccount": "Ja tens compte?",
+      "loginLink": "Inicia sessió",
+      "passwordHint": "Mínim 8 caràcters"
+    },
+    "fields": {
+      "email": "Correu electrònic",
+      "password": "Contrasenya",
+      "name": "Nom (opcional)",
+      "passwordShow": "Mostra la contrasenya",
+      "passwordHide": "Amaga la contrasenya"
+    },
+    "errors": {
+      "invalid-credentials": "Correu o contrasenya incorrectes.",
+      "invalid-email": "Aquest correu no sembla vàlid.",
+      "email-taken": "Ja existeix un compte amb aquest correu.",
+      "weak-password": "La contrasenya ha de tenir com a mínim 8 caràcters.",
+      "network-error": "Sense connexió. Comprova-la i torna a provar-ho.",
+      "server-error": "El servei no està disponible ara mateix. Torna-ho a provar en uns moments.",
+      "not-configured": "L'autenticació encara no està configurada.",
+      "rate-limited": "Massa intents. Espera uns moments abans de tornar-ho a provar.",
+      "rate-limited-seconds": "Massa intents. Torna-ho a provar d'aquí a {seconds}s.",
+      "email-not-verified": "Has de verificar el correu abans d'iniciar sessió.",
+      "account-locked": "El teu compte està bloquejat. Contacta amb el suport.",
+      "unknown": "No hem pogut completar l'acció. Torna-ho a provar."
+    },
+    "actions": {
+      "forgotPassword": "Has oblidat la contrasenya?",
+      "forgotPasswordSent": "T'hem enviat un correu per restablir-la a {email}.",
+      "resendVerification": "Reenvia el correu de verificació",
+      "verificationSent": "Correu de verificació reenviat a {email}.",
+      "contactSupport": "Contacta amb el suport"
+    },
+    "meta": {
+      "loginTitle": "Iniciar sessió | Esdeveniments.cat",
+      "loginDescription": "Inicia sessió al teu compte d'Esdeveniments.cat",
+      "registerTitle": "Crear compte | Esdeveniments.cat",
+      "registerDescription": "Crea el teu compte a Esdeveniments.cat per publicar esdeveniments",
+      "verifyEmailTitle": "Verificar correu | Esdeveniments.cat",
+      "verifyEmailDescription": "Verifica el teu correu electrònic per activar el teu compte d'Esdeveniments.cat",
+      "resetPasswordTitle": "Restablir contrasenya | Esdeveniments.cat",
+      "resetPasswordDescription": "Restableix la contrasenya del teu compte d'Esdeveniments.cat"
+    },
+    "verification": {
+      "checkEmailTitle": "Revisa el teu correu",
+      "checkEmailDescription": "Hem enviat un correu de verificació a {email}. Fes clic a l'enllaç per activar el teu compte.",
+      "resend": "Tornar a enviar el correu",
+      "resent": "Correu enviat!",
+      "successTitle": "Correu verificat!",
+      "successDescription": "El teu compte ha estat verificat correctament. Ja pots iniciar sessió.",
+      "errorTitle": "Error de verificació",
+      "errorDescription": "No hem pogut verificar el teu correu. L'enllaç pot haver caducat o ja ha estat utilitzat.",
+      "invalidToken": "Enllaç no vàlid",
+      "invalidTokenDescription": "L'enllaç de verificació no és vàlid. Torna a registrar-te o sol·licita un nou correu de verificació."
+    },
+    "resetPassword": {
+      "title": "Restablir contrasenya",
+      "subtitle": "Introdueix la teva nova contrasenya",
+      "newPassword": "Nova contrasenya",
+      "confirmPassword": "Confirma la contrasenya",
+      "submit": "Canviar contrasenya",
+      "passwordMismatch": "Les contrasenyes no coincideixen",
+      "successTitle": "Contrasenya canviada!",
+      "successDescription": "La teva contrasenya s'ha actualitzat correctament. Ja pots iniciar sessió.",
+      "errorTitle": "Error al restablir",
+      "errorDescription": "No hem pogut restablir la contrasenya. L'enllaç pot haver caducat o ja ha estat utilitzat.",
+      "invalidToken": "Enllaç no vàlid",
+      "invalidTokenDescription": "L'enllaç per restablir la contrasenya no és vàlid. Sol·licita'n un de nou."
+    }
   }
 }

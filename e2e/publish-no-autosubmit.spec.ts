@@ -1,10 +1,16 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
+import { mockAuthenticatedUser } from "./helpers/auth";
 
 // Note: Service workers are blocked globally via playwright.config.ts (serviceWorkers: 'block')
 // This allows Playwright's route handlers to intercept API requests for mocking
 
 test.describe("Publish wizard should not auto publish", () => {
+  // Publishing is gated behind auth — sign the session in before each test.
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
   test("does not publish when navigating back and forth and ignores implicit submits", async ({
     page,
   }) => {

@@ -44,6 +44,7 @@ export const useEvents = ({
   to: explicitTo,
   lat,
   lon,
+  profileSlug,
   initialSize = 12,
   fallbackData = [],
   serverHasMore = false,
@@ -51,7 +52,7 @@ export const useEvents = ({
   const [activationKey, setActivationKey] = useState<string | null>(null);
   const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
-  const currentKey = `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${initialSize}`;
+  const currentKey = `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${profileSlug}|${initialSize}`;
 
   const eventType = priceToType(price);
 
@@ -104,6 +105,7 @@ export const useEvents = ({
     radius: hasCoords && hasValidRadius ? radius : undefined,
     lat: hasCoords && hasValidRadius ? latNumber : undefined,
     lon: hasCoords && hasValidRadius ? lonNumber : undefined,
+    profileSlug,
   };
 
   const getKey = (
@@ -123,6 +125,7 @@ export const useEvents = ({
       baseParams.radius,
       baseParams.lat,
       baseParams.lon,
+      baseParams.profileSlug,
       pageIndex,
       baseParams.size,
     ] as const;
@@ -147,6 +150,7 @@ export const useEvents = ({
       radiusParam,
       latParam,
       lonParam,
+      profileSlugParam,
       pageIndex,
       sizeParam,
     ]) =>
@@ -163,6 +167,7 @@ export const useEvents = ({
         radius: radiusParam as number | undefined,
         lat: latParam as number | undefined,
         lon: lonParam as number | undefined,
+        profileSlug: profileSlugParam as string | undefined,
       }),
     {
       fallbackData:

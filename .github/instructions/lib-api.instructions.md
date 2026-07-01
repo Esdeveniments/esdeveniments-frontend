@@ -14,6 +14,7 @@ applyTo: "lib/api/**/*.ts"
 
 - Guard: if `!NEXT_PUBLIC_API_URL` → return safe fallback (empty array, null, etc.).
 - Use `fetchWithHmac` for all external calls (built-in 10s timeout, HMAC signing).
+- **CRITICAL: Always pass `skipBodySigning: true`** on POST/PUT/DELETE calls. The backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. Without this flag, all mutation requests fail with 401 "Invalid HMAC".
 - Parse responses with Zod schemas from `lib/validation/`.
 - Return safe fallback DTOs on error — never throw from read endpoints.
 - NEVER add `next: { revalidate, tags }` — this causes unbounded cache growth (one entry per unique URL).

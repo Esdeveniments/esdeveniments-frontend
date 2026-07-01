@@ -4,7 +4,6 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main, develop]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -211,6 +210,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           REPO: ${{ github.repository }}
+          # Only accept previews from the team Vercel project. A duplicate
+          # esdeveniments-frontend project under a personal account was also
+          # building previews; those are auth-protected (302 on readiness) and
+          # the bypass secret doesn't open them, so CI silently skipped E2E.
+          # Match the team scope's host suffix; update if the scope/domain moves.
+          EXPECTED_PREVIEW_HOST_SUFFIX: "-esdeveniments.vercel.app"
         run: |
           set -e
           MAX_WAIT=900   # 15 minutes total wait budget
@@ -224,20 +229,39 @@ jobs:
             IDS=$(echo "$DEPLOYMENTS" | jq -r '.[] | select(.creator.login == "vercel[bot]") | .id')
             FAILED=""
             for ID in $IDS; do
-              STATUS=$(gh api "repos/$REPO/deployments/$ID/statuses?per_page=1" 2>/dev/null || echo "[]")
-              STATE=$(echo "$STATUS" | jq -r '.[0].state // empty')
-              case "$STATE" in
-                success)
-                  URL=$(echo "$STATUS" | jq -r '.[0].environment_url // empty')
-                  if [ -n "$URL" ]; then
-                    break 2
-                  fi
-                  ;;
-                failure|error)
-                  FAILED="$ID:$STATE"
-                  ;;
-              esac
+              # per_page=20, not 1: a single GitHub deployment can carry
+              # several success statuses when both the team project and a
+              # duplicate personal-account project post to it. The personal
+              # status is posted a beat later, so it's newest — reading only
+              # .[0] always saw the personal URL and rejected it, masking the
+              # team preview sitting behind it. Scan every success status.
+              STATUS=$(gh api "repos/$REPO/deployments/$ID/statuses?per_page=20" 2>/dev/null || echo "[]")
+              SUCCESS_URLS=$(echo "$STATUS" | jq -r '.[] | select(.state == "success") | .environment_url // empty')
+              for CANDIDATE in $SUCCESS_URLS; do
+                # Match on the host only (ends-with), not anywhere in the URL,
+                # so the suffix can't match inside a path or a lookalike domain.
+                CANDIDATE_HOST="${CANDIDATE#*://}"
+                CANDIDATE_HOST="${CANDIDATE_HOST%%/*}"
+                case "$CANDIDATE_HOST" in
+                  *"$EXPECTED_PREVIEW_HOST_SUFFIX")
+                    URL="$CANDIDATE"
+                    break
+                    ;;
+                  *)
+                    echo "  Ignoring preview from unexpected scope: $CANDIDATE"
+                    ;;
+                esac
+              done
+              [ -n "$URL" ] && break
+              # Only treat this deployment as failed when nothing succeeded yet.
+              if [ -z "$SUCCESS_URLS" ]; then
+                STATE=$(echo "$STATUS" | jq -r '.[0].state // empty')
+                case "$STATE" in
+                  failure|error) FAILED="$ID:$STATE" ;;
+                esac
+              fi
             done
+            [ -n "$URL" ] && break
             if [ -n "$FAILED" ] && [ -z "$URL" ]; then
               # Vercel reports failure but no other deployment succeeded yet —
               # keep polling briefly in case the integration retries, but if
@@ -282,8 +306,9 @@ jobs:
               sleep $((2 ** RETRY))
             fi
           done
-          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Skipping E2E to avoid 30min timeout."
+          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Failing fast: a green E2E check must mean tests ran, not that they were skipped."
           echo "ready=false" >> $GITHUB_OUTPUT
+          exit 1
       - name: Run E2E tests (Playwright) against Vercel Preview
         if: ${{ env.PREVIEW_URL != '' && steps.readiness.outputs.ready == 'true' }}
         env:

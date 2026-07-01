@@ -29,6 +29,7 @@ const matchesPublicApi = (pathname: string) =>
 describe("isOriginAllowed", () => {
   const originalEnv = process.env.NEXT_PUBLIC_SITE_URL;
   const originalVercelUrl = process.env.VERCEL_URL;
+  const originalVercelBranchUrl = process.env.VERCEL_BRANCH_URL;
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
@@ -44,6 +45,14 @@ describe("isOriginAllowed", () => {
       process.env.VERCEL_URL = originalVercelUrl;
     } else {
       delete process.env.VERCEL_URL;
+    }
+    // VERCEL_BRANCH_URL is set inside the branch-alias test; restoring it
+    // in afterEach (rather than at the end of the test body) keeps it from
+    // leaking into later tests if that test fails early.
+    if (originalVercelBranchUrl !== undefined) {
+      process.env.VERCEL_BRANCH_URL = originalVercelBranchUrl;
+    } else {
+      delete process.env.VERCEL_BRANCH_URL;
     }
   });
 
@@ -83,16 +92,19 @@ describe("isOriginAllowed", () => {
     expect(isOriginAllowed(req)).toBe(true);
   });
 
-  it("allows the Vercel branch-preview alias (VERCEL_BRANCH_URL)", () => {
-    // The hash-based VERCEL_URL is not the alias users actually open; the
-    // git-branch alias must be allowed or browser POSTs 403 on previews.
-    process.env.VERCEL_URL = "preview-hash-123.vercel.app";
-    process.env.VERCEL_BRANCH_URL = "myapp-git-feat-branch-team.vercel.app";
-    const req = createRequest("/api/push/subscribe", "POST", {
-      origin: "https://myapp-git-feat-branch-team.vercel.app",
+  it("allows the Vercel branch-alias origin (VERCEL_BRANCH_URL)", () => {
+    // VERCEL_URL is the per-deployment hash URL, but the URL users click
+    // from the PR preview comment is the branch-alias VERCEL_BRANCH_URL.
+    // Without allowing it, every same-origin POST 403s on previews.
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+    process.env.VERCEL_URL = "esdeveniments-frontend-abc123.vercel.app";
+    process.env.VERCEL_BRANCH_URL =
+      "esdeveniments-frontend-git-feat-user-favor-9fe4b8.vercel.app";
+    const req = createRequest("/api/favorites", "POST", {
+      origin:
+        "https://esdeveniments-frontend-git-feat-user-favor-9fe4b8.vercel.app",
     });
     expect(isOriginAllowed(req)).toBe(true);
-    delete process.env.VERCEL_BRANCH_URL;
   });
 
   it("rejects host-like localhost origins in development", () => {
@@ -117,6 +129,43 @@ describe("isOriginAllowed", () => {
     });
     // Without NEXT_PUBLIC_SITE_URL, siteHost falls back to "localhost:3000"
     // which won't match "www.esdeveniments.cat"
+    expect(isOriginAllowed(req)).toBe(false);
+  });
+
+  it("allows same-origin via x-forwarded-host on a Coolify pr-* preview (not in the allowlist)", () => {
+    // The preview serves pr-375.esdeveniments.cat but NEXT_PUBLIC_SITE_URL is
+    // www and no VERCEL_* vars exist, so the static allowlist misses it. The
+    // proxy sets x-forwarded-host to the public host → same-origin POST passes.
+    const req = createRequest("/api/favorites", "POST", {
+      origin: "https://pr-375.esdeveniments.cat",
+      "x-forwarded-host": "pr-375.esdeveniments.cat",
+    });
+    expect(isOriginAllowed(req)).toBe(true);
+  });
+
+  it("allows same-origin via x-forwarded-host on staging (regardless of baked NEXT_PUBLIC_SITE_URL)", () => {
+    const req = createRequest("/api/favorites", "POST", {
+      origin: "https://staging.esdeveniments.cat",
+      "x-forwarded-host": "staging.esdeveniments.cat",
+    });
+    expect(isOriginAllowed(req)).toBe(true);
+  });
+
+  it("takes the first value of a comma-listed x-forwarded-host", () => {
+    const req = createRequest("/api/favorites", "POST", {
+      origin: "https://pr-9.esdeveniments.cat",
+      "x-forwarded-host": "pr-9.esdeveniments.cat, internal",
+    });
+    expect(isOriginAllowed(req)).toBe(true);
+  });
+
+  it("rejects a cross-site Origin even when x-forwarded-host is our real host", () => {
+    // The CSRF case: the proxy reports our host, the attacker's page reports
+    // its own Origin → mismatch → blocked.
+    const req = createRequest("/api/favorites", "POST", {
+      origin: "https://evil.com",
+      "x-forwarded-host": "www.esdeveniments.cat",
+    });
     expect(isOriginAllowed(req)).toBe(false);
   });
 });

@@ -33,6 +33,7 @@ export function createCache<T>(ttlMs: number): {
 export function createKeyedCache<T>(ttlMs: number): {
   cache: KeyedCacheFn<T>;
   clear: () => void;
+  delete: (key: string | number) => void;
 } {
   const cacheMap = new Map<string | number, { data: T; timestamp: number }>();
 
@@ -50,5 +51,9 @@ export function createKeyedCache<T>(ttlMs: number): {
     cacheMap.clear();
   };
 
-  return { cache, clear };
+  const deleteKey = (key: string | number) => {
+    cacheMap.delete(key);
+  };
+
+  return { cache, clear, delete: deleteKey };
 }

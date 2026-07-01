@@ -11,6 +11,11 @@ import {
   OpeningSegment,
 } from "types/api/restaurant";
 import { handleApiError } from "@utils/api-error-handler";
+import {
+  buildNearbyCacheKey,
+  nearbySearchCenter,
+} from "@lib/places/nearby-cache-key";
+import { cacheGetJson, cacheSetJson } from "@lib/cache/redis-client";
 
 export async function GET(request: NextRequest) {
   const t = await getTranslations("Api.PlacesNearby");
@@ -327,74 +332,118 @@ export async function GET(request: NextRequest) {
     return { info: { open_status: "unknown" }, weekdayText };
   }
 
-  // --- Main fetch + transform ---
+  // --- Cached fetch + transform ---
+  // Snap the search centre to a ~1.1km grid so every event in the same area
+  // shares one cache entry, and cache the raw upstream result in Redis under a
+  // build-independent key (unlike Next's fetch cache, which cache-handler.mjs
+  // scopes by buildId and wipes on every deploy). The Google request never
+  // depends on the event date — date handling is post-fetch — so one cached
+  // call serves the whole neighbourhood across every date. searchNearby is
+  // billed per request, so this is what bounds the Places bill by distinct
+  // locations instead of by traffic.
+  const cacheKey = buildNearbyCacheKey(lat, lng, radius);
+  const NEARBY_TTL_SECONDS = 60 * 60 * 12; // 12h — opening hours rarely change
+
   try {
-    const fields = [
-      "places.name",
-      "places.displayName",
-      "places.formattedAddress",
-      "places.rating",
-      "places.priceLevel",
-      "places.location",
-      "places.photos",
-      "places.businessStatus",
-      "places.currentOpeningHours",
-      "places.regularOpeningHours",
-      "places.utcOffsetMinutes",
-      "places.postalAddress.addressLines",
-      "places.postalAddress.locality",
-      "places.postalAddress.administrativeArea",
-      "places.postalAddress.postalCode",
-    ].join(",");
+    // Treat a corrupted cached value (not an array, or with null/non-object
+    // elements from a partial write) as a miss (re-fetch) so it can't make
+    // `.filter` throw and turn into a 500.
+    const cached = await cacheGetJson<GooglePlaceResponse[]>(cacheKey);
+    let places: GooglePlaceResponse[] | null =
+      Array.isArray(cached) && cached.every((p) => p && typeof p === "object")
+        ? cached
+        : null;
 
-    const url = new URL("https://places.googleapis.com/v1/places:searchNearby");
-    const requestedCount = Math.min(Math.max(limit * 3, 12), 20);
+    if (places === null) {
+      const fields = [
+        "places.name",
+        "places.displayName",
+        "places.formattedAddress",
+        "places.rating",
+        "places.priceLevel",
+        "places.location",
+        "places.photos",
+        "places.businessStatus",
+        "places.currentOpeningHours",
+        "places.regularOpeningHours",
+        "places.utcOffsetMinutes",
+        "places.postalAddress.addressLines",
+        "places.postalAddress.locality",
+        "places.postalAddress.administrativeArea",
+        "places.postalAddress.postalCode",
+      ].join(",");
 
-    const requestBody: GooglePlacesNearbyRequest = {
-      includedTypes: ["restaurant"],
-      maxResultCount: requestedCount,
-      locationRestriction: {
-        circle: {
-          center: { latitude: lat, longitude: lng },
-          radius,
-        },
-      },
-      rankPreference: "DISTANCE",
-      languageCode: "ca",
-    };
-
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": fields,
-      },
-      body: JSON.stringify(requestBody),
-      next: {
-        revalidate: 3600,
-        tags: [
-          "places",
-          `places:${lat}:${lng}`,
-          eventDateISO ? `places:date:${eventDateISO}` : "places:date:none",
-        ],
-      },
-    });
-
-    const data: GooglePlacesSearchNearbyRawResponse = await response.json();
-
-    if (!response.ok) {
-      console.error("Google Places API error:", response.status, data);
-      return NextResponse.json(
-        { error: "Places API error", status: response.status, details: data },
-        {
-          status: 500,
-          headers: { "Cache-Control": "no-store" },
-        }
+      const url = new URL(
+        "https://places.googleapis.com/v1/places:searchNearby"
       );
-    }
+      // Always request the max: searchNearby is billed per request, not per
+      // result, and the cache key omits `limit`, so caching the largest set
+      // lets one entry serve any limit without underfilling after filtering.
+      const requestedCount = 20;
 
-    const places = Array.isArray(data.places) ? data.places : [];
+      const center = nearbySearchCenter(lat, lng, radius);
+      const requestBody: GooglePlacesNearbyRequest = {
+        includedTypes: ["restaurant"],
+        maxResultCount: requestedCount,
+        locationRestriction: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius,
+          },
+        },
+        rankPreference: "DISTANCE",
+        languageCode: "ca",
+      };
+
+      // Fail soft: this is a non-critical widget. Any upstream failure — non-OK
+      // status, non-JSON body, or a network/DNS error — returns an empty result
+      // so the section just hides (never a 500 to the user) and we don't cache
+      // the failure. We cache the result ourselves, so the fetch opts out of
+      // Next's buildId-scoped data cache to avoid storing the payload twice.
+      const failSoftEmpty = () =>
+        NextResponse.json(
+          { results: [], status: "OK", attribution: "Powered by Google" },
+          { status: 200, headers: { "Cache-Control": "no-store" } }
+        );
+
+      try {
+        const response = await fetch(url.toString(), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": fields,
+          },
+          body: JSON.stringify(requestBody),
+          cache: "no-store",
+          // Bound the upstream call so a hung Google request can't tie up the
+          // worker; on timeout the fetch throws and we fail soft below.
+          signal: AbortSignal.timeout(5000),
+        });
+
+        if (!response.ok) {
+          const errText = await response.text().catch(() => "");
+          console.error("Google Places API error:", response.status, errText);
+          return failSoftEmpty();
+        }
+
+        const data: GooglePlacesSearchNearbyRawResponse =
+          await response.json();
+        // A 200 carrying an `error` body (or a null/invalid parse) is a soft
+        // failure — fail soft without caching, so it isn't suppressed for the
+        // 12h TTL after the upstream recovers. A genuinely empty area omits
+        // `places` with no error, and we DO cache that as [] (don't re-query).
+        if (data?.error) {
+          console.error("Google Places API soft error:", data.error);
+          return failSoftEmpty();
+        }
+        places = Array.isArray(data?.places) ? data.places : [];
+        await cacheSetJson(cacheKey, places, NEARBY_TTL_SECONDS);
+      } catch (fetchError) {
+        console.error("Google Places API fetch/parse error:", fetchError);
+        return failSoftEmpty();
+      }
+    }
 
     const filtered = places.filter((place: GooglePlaceResponse) => {
       if (!isOperational(place)) return false;

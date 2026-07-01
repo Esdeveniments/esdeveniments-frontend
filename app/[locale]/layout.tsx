@@ -13,6 +13,7 @@ import Script from "next/script";
 import { routing } from "@i18n/routing";
 import GoogleScripts from "../GoogleScripts";
 import { AdProvider } from "@lib/context/AdContext";
+import { AuthProvider } from "@lib/auth/AuthProvider";
 import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
@@ -182,13 +183,15 @@ export default async function LocaleLayout({
         >
           <Suspense fallback={null}>
             <AdProvider>
-              <WebsiteSchema locale={locale} />
-              <Suspense fallback={null}>
-                <GoogleScripts />
-              </Suspense>
-              <AnalyticsBootstrap />
-              <WebMcpTools locale={locale} />
-              <BaseLayout>{children}</BaseLayout>
+              <AuthProvider>
+                <WebsiteSchema locale={locale} />
+                <Suspense fallback={null}>
+                  <GoogleScripts />
+                </Suspense>
+                <AnalyticsBootstrap />
+                <WebMcpTools locale={locale} />
+                <BaseLayout>{children}</BaseLayout>
+              </AuthProvider>
             </AdProvider>
           </Suspense>
         </NextIntlClientProvider>

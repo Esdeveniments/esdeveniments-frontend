@@ -419,6 +419,10 @@ export interface NavbarLabels {
   publish: string;
   news: string;
   mobilePublishLabel: string;
+  login: string;
+  logout: string;
+  userMenu: string;
+  myProfile: string;
 }
 
 export interface NavbarClientProps {
@@ -491,6 +495,14 @@ export interface NavigationFiltersModalProps {
   categories?: CategorySummaryResponseDTO[];
 }
 
+export interface ProfileHeaderProps {
+  profile: import("types/api/profile").ProfileDetailResponseDTO;
+}
+
+export interface ProfilePageShellProps {
+  profile: import("types/api/profile").ProfileDetailResponseDTO;
+}
+
 export interface HybridEventsListProps {
   initialEvents: ListEvent[];
   placeTypeLabel?: PlaceTypeAndLabel;
@@ -499,6 +511,7 @@ export interface HybridEventsListProps {
   place: string;
   category?: string;
   date?: string;
+  profileSlug?: string; // Filter events by profile/venue slug
   serverHasMore?: boolean; // Add server pagination info
   /**
    * Page size used for the SSR fetch. Forwarded to the client SWR hook so
@@ -805,6 +818,16 @@ export interface ExploreNearbyProps {
   placeType: PlaceType;
 }
 
+// Profile owner actions client island props
+export interface ProfileOwnerActionsProps {
+  username: string;
+}
+
+// Profile claim CTA client island props
+export interface ProfileClaimCtaProps {
+  username: string;
+}
+
 // Sticky CTA bar for event detail page (mobile)
 export interface EventStickyCTAProps {
   eventUrl?: string;
@@ -864,4 +887,8 @@ export interface SocialProofCounterProps {
 export interface UrlFiltersProviderProps {
   children: ReactNode;
   categories?: CategorySummaryResponseDTO[];
+}
+
+export interface PwaBackButtonProps {
+  fallbackHref?: string;
 }

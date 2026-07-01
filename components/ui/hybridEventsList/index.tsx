@@ -18,6 +18,7 @@ async function HybridEventsList({
   place,
   category,
   date,
+  profileSlug,
   serverHasMore = false,
   ssrPageSize,
   categories,
@@ -133,6 +134,7 @@ async function HybridEventsList({
         place={place}
         category={category}
         date={date}
+        profileSlug={profileSlug}
         serverHasMore={serverHasMore}
         ssrPageSize={ssrPageSize}
         categories={categories}

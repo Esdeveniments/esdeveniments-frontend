@@ -7,12 +7,14 @@ import HeadingLayout from "@components/ui/hybridEventsList/HeadingLayout";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { fetchEventBySlugWithStatus } from "@lib/api/events";
+import { listFavoriteEventsExternal } from "@lib/api/favorites-external";
 import { captureException } from "@sentry/nextjs";
 import { filterActiveEvents, isEventActive } from "@utils/event-helpers";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
 import { MAX_FAVORITES } from "@utils/constants";
 import { getFavoritesFromCookies } from "@utils/favorites";
+import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import { getTranslations } from "next-intl/server";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import FavoritesAutoPrune from "./FavoritesAutoPrune";
@@ -104,18 +106,63 @@ export default async function PreferitsPage() {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.Favorites" });
 
-  const favoriteSlugs = [...(await getFavoritesFromCookies())].reverse();
-  const uniqueFavoritesCount = new Set(favoriteSlugs).size;
-  const { events, notFoundSlugs } = await fetchFavoritesEvents(favoriteSlugs);
+  const authToken = await getAccessTokenFromCookies();
+
+  let events: EventSummaryResponseDTO[];
+  let uniqueFavoritesCount: number;
+  let slugsToRemove: string[];
+  let backendUnavailable = false;
+
+  if (authToken) {
+    // Authed: backend is the source of truth. Returns fully populated event
+    // summaries, so we skip the slug-by-slug round trip the cookie path uses.
+    const page = await listFavoriteEventsExternal(authToken, 0, MAX_FAVORITES);
+    if (page === null) {
+      // Backend is unreachable; refuse to render an empty list (which would
+      // make the user think they have no favorites). Show an error state.
+      events = [];
+      uniqueFavoritesCount = 0;
+      backendUnavailable = true;
+    } else {
+      events = page.content ?? [];
+      uniqueFavoritesCount =
+        page.totalElements ??
+        new Set(events.map((e) => e?.slug).filter(Boolean)).size;
+    }
+    // Server-side store has no stale slugs to prune.
+    slugsToRemove = [];
+  } else {
+    const cookieSlugs = [...(await getFavoritesFromCookies())].reverse();
+    uniqueFavoritesCount = new Set(cookieSlugs).size;
+    const fetched = await fetchFavoritesEvents(cookieSlugs);
+    events = fetched.events;
+
+    const expiredSlugs = events.flatMap((event) => {
+      if (!event.slug) return [];
+      if (isEventActive(event)) return [];
+      return [event.slug];
+    });
+    slugsToRemove = Array.from(
+      new Set([...expiredSlugs, ...fetched.notFoundSlugs])
+    );
+  }
+
   const activeEvents = filterActiveEvents(events);
+  const favoriteSlugs = events.map((e) => e?.slug).filter(Boolean) as string[];
 
-  const expiredSlugs = events.flatMap((event) => {
-    if (!event.slug) return [];
-    if (isEventActive(event)) return [];
-    return [event.slug];
-  });
-
-  const slugsToRemove = Array.from(new Set([...expiredSlugs, ...notFoundSlugs]));
+  if (backendUnavailable) {
+    return (
+      <div
+        className="container py-section-y flex-col justify-center items-center"
+        data-testid="favorites-page-error"
+      >
+        <NoEventsFound
+          title={t("errorTitle")}
+          description={t("errorDescription")}
+        />
+      </div>
+    );
+  }
 
   if (favoriteSlugs.length === 0 || activeEvents.length === 0) {
     return (

@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { mockAuthenticatedUser } from "./helpers/auth";
 
 test.describe("Publish - Preview", () => {
+  // Publishing is gated behind auth — sign the session in before each test.
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
   test("shows preview modal with event details", async ({ page }) => {
     await page.goto("/publica", { waitUntil: "domcontentloaded" });
 

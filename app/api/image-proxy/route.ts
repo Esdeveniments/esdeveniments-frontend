@@ -7,7 +7,7 @@
  */
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { Agent } from "undici";
+import { Agent, fetch as undiciFetch } from "undici";
 import {
   normalizeExternalImageUrl,
   isLegacyFileHandler,
@@ -93,7 +93,7 @@ async function fetchWithTimeout(
   url: string,
   redirectsRemaining = MAX_REDIRECTS,
   deadline = Date.now() + TIMEOUT_MS,
-): Promise<Response> {
+): Promise<Awaited<ReturnType<typeof undiciFetch>>> {
   const targetSafety = await getPublicFetchSafety(url);
   if (!targetSafety.isSafe) {
     throw new Error("Blocked unsafe image upstream");
@@ -111,7 +111,8 @@ async function fetchWithTimeout(
     const pinnedDnsDispatcher = targetSafety.dnsRecords
       ? buildPinnedDnsDispatcher(targetSafety.dnsRecords, !bypassTls)
       : null;
-    const init: RequestInit & { dispatcher?: unknown } = {
+    // Typed as undici's own request init so `dispatcher` is properly typed.
+    const init: NonNullable<Parameters<typeof undiciFetch>[1]> = {
       signal: controller.signal,
       redirect: "manual",
     };
@@ -120,7 +121,13 @@ async function fetchWithTimeout(
       init.dispatcher = pinnedDnsDispatcher ?? insecureTlsDispatcher;
     }
 
-    const response = await fetch(url, init as RequestInit);
+    // Use undici's own fetch (not the global one) so the response-body
+    // plumbing comes from the SAME undici copy as the dispatcher Agent above.
+    // Feeding a standalone-undici Agent into Node's global fetch (bundled
+    // undici) mismatches internal symbols and throws
+    // "controller[kState].transformAlgorithm is not a function" when decoding
+    // compressed upstream responses.
+    const response = await undiciFetch(url, init);
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       await response.body?.cancel();
