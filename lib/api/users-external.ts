@@ -53,7 +53,6 @@ export async function getUserEventsExternal(
   const trimmed = username?.trim();
   if (!trimmed) return empty;
   const apiUrl = getApiUrl();
-  if (!apiUrl) return empty;
 
   try {
     const qs = new URLSearchParams({ page: String(page), size: String(size) });

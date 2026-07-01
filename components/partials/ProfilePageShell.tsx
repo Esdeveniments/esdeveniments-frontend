@@ -19,15 +19,12 @@ const PROFILE_EVENTS_PAGE_SIZE = 20;
 export default async function ProfilePageShell({
   profile,
 }: ProfilePageShellProps) {
-  const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
-  const tProfile = await getTranslations("Components.Profile");
-  const locale = await getLocaleSafely();
-
-  const eventsResponse = await fetchUserEvents(
-    profile.username,
-    0,
-    PROFILE_EVENTS_PAGE_SIZE,
-  );
+  const [tBreadcrumbs, tProfile, locale, eventsResponse] = await Promise.all([
+    getTranslations("Components.Breadcrumbs"),
+    getTranslations("Components.Profile"),
+    getLocaleSafely(),
+    fetchUserEvents(profile.username, 0, PROFILE_EVENTS_PAGE_SIZE),
+  ]);
   const activeEvents = filterActiveEvents(eventsResponse.content);
 
   const profileUrl = toLocalizedUrl(`/perfil/${profile.username}`, locale);
