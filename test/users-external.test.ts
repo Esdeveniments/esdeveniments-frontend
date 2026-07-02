@@ -26,6 +26,7 @@ function pagedResponse(
     ok: status >= 200 && status < 300,
     status,
     json: () => Promise.resolve(data),
+    text: () => Promise.resolve(JSON.stringify(data)),
   } as Response;
 }
 
@@ -138,5 +139,32 @@ describe("getAuthenticatedUserExternal", () => {
     );
     const result = await getAuthenticatedUserExternal("some-access-token");
     expect(result).toBeNull();
+  });
+
+  it("normalizes explicit nulls on optional fields to undefined", async () => {
+    // The backend serializes unset optional fields as `null`, not an omitted
+    // key — the schema must accept that shape, not just a missing key.
+    mockFetchWithHmac.mockResolvedValue(
+      pagedResponse({
+        ...authenticatedUserDTO,
+        pictureUrl: null,
+        pictureSource: null,
+        role: null,
+        lastLoginAt: null,
+      }),
+    );
+
+    const result = await getAuthenticatedUserExternal("some-access-token");
+
+    expect(result).toEqual({
+      id: authenticatedUserDTO.id,
+      email: authenticatedUserDTO.email,
+      name: authenticatedUserDTO.name,
+      username: authenticatedUserDTO.username,
+      pictureUrl: undefined,
+      pictureSource: undefined,
+      role: undefined,
+      lastLoginAt: undefined,
+    });
   });
 });

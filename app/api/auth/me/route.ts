@@ -21,7 +21,9 @@ const NO_STORE = { "Cache-Control": "no-store" } as const;
 // Layers the backend-owned profile (pictureUrl/pictureSource/role/lastLoginAt)
 // on top of the id_token-derived user. The backend call is best-effort: an
 // unreachable/misconfigured backend must not break login, since the
-// id_token alone is already a valid, verified session.
+// id_token alone is already a valid, verified session. Identity fields
+// (id/email/name/username) stay sourced from the verified id_token — the
+// backend call only ever adds fields the id_token can't carry.
 async function enrichWithBackendProfile(
   user: AuthUser,
   accessToken: string | null,
@@ -31,10 +33,6 @@ async function enrichWithBackendProfile(
   if (!backendUser) return user;
   return {
     ...user,
-    id: backendUser.id,
-    email: backendUser.email,
-    name: backendUser.name,
-    username: backendUser.username,
     avatarUrl: backendUser.pictureUrl ?? user.avatarUrl,
     pictureSource: backendUser.pictureSource,
     role: backendUser.role ?? user.role,
@@ -78,7 +76,12 @@ export async function GET(request: NextRequest): Promise<Response> {
     const config = getLogtoConfig();
 
     // Try the stored id_token first (signature + iss/aud/exp; no nonce here).
-    if (idToken) {
+    // Require accessToken too: if it's missing/expired (shorter-lived cookie
+    // than id_token) but idToken is still valid, fall through to the refresh
+    // block below rather than returning a session with no bearer — otherwise
+    // every other authed endpoint (favorites, backend enrichment) 401s until
+    // the id_token itself expires and forces a refresh.
+    if (idToken && accessToken) {
       try {
         const claims = await verifyStoredIdToken(config, idToken);
         const user = await enrichWithBackendProfile(

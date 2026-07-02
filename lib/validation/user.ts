@@ -23,10 +23,18 @@ export const AuthenticatedUserDTOSchema = z.object({
   email: z.string(),
   name: z.string(),
   username: z.string(),
-  pictureUrl: z.string().optional(),
-  pictureSource: z.enum(["LOGTO", "CUSTOM"]).optional(),
-  role: z.enum(["USER", "ADMIN", "ORGANIZATION"]).optional(),
-  lastLoginAt: z.string().optional(),
+  // .nullish() (not .optional()): the backend serializes unset fields as an
+  // explicit `null`, not an omitted key — .optional() alone rejects that.
+  pictureUrl: z.string().nullish().transform((v) => v ?? undefined),
+  pictureSource: z
+    .enum(["LOGTO", "CUSTOM"])
+    .nullish()
+    .transform((v) => v ?? undefined),
+  role: z
+    .enum(["USER", "ADMIN", "ORGANIZATION"])
+    .nullish()
+    .transform((v) => v ?? undefined),
+  lastLoginAt: z.string().nullish().transform((v) => v ?? undefined),
 });
 
 export function parseAuthenticatedUser(

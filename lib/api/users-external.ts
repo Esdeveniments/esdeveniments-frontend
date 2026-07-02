@@ -27,7 +27,10 @@ export async function getAuthenticatedUserExternal(
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!response.ok) {
-      console.error(`getAuthenticatedUserExternal: HTTP ${response.status}`);
+      const body = await response.text().catch(() => "<unreadable>");
+      console.error(
+        `getAuthenticatedUserExternal: HTTP ${response.status} — ${body}`
+      );
       return null;
     }
     return parseAuthenticatedUser(await response.json());
