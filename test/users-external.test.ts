@@ -133,6 +133,12 @@ describe("getAuthenticatedUserExternal", () => {
     expect(result).toBeNull();
   });
 
+  it("returns null (no throw) on a network failure", async () => {
+    mockFetchWithHmac.mockRejectedValueOnce(new Error("network failure"));
+    const result = await getAuthenticatedUserExternal("some-access-token");
+    expect(result).toBeNull();
+  });
+
   it("returns null on a malformed payload (no throw)", async () => {
     mockFetchWithHmac.mockResolvedValue(
       pagedResponse({ unexpected: "shape" }, 200),

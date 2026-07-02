@@ -1,3 +1,5 @@
+import type { AuthRole } from "../auth";
+
 /** Backend DTO: GET /api/users/{username} response */
 export interface UserPublicResponseDTO {
   id: string;
@@ -15,6 +17,6 @@ export interface AuthenticatedUserDTO {
   username: string;
   pictureUrl?: string;
   pictureSource?: PictureSource;
-  role?: "USER" | "ADMIN" | "ORGANIZATION";
+  role?: AuthRole;
   lastLoginAt?: string;
 }

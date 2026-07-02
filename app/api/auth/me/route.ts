@@ -24,7 +24,7 @@ const NO_STORE = { "Cache-Control": "no-store" } as const;
 // id_token alone is already a valid, verified session. Identity fields
 // (id/email/name/username) stay sourced from the verified id_token — the
 // backend call only ever adds fields the id_token can't carry.
-async function enrichWithBackendProfile(
+export async function enrichWithBackendProfile(
   user: AuthUser,
   accessToken: string | null,
 ): Promise<AuthUser> {
@@ -72,26 +72,33 @@ export async function GET(request: NextRequest): Promise<Response> {
       : NextResponse.json({ user: null }, { status: 401, headers: NO_STORE });
   }
 
+  // Set once a verified id_token yields a base user. A missing/failed refresh
+  // below must never log this session out if this is non-null — the id_token
+  // is already a valid, verified session on its own; a stale/absent access
+  // token only means enrichment (and access-token restoration) isn't possible
+  // right now.
+  let user: AuthUser | null = null;
+
   try {
     const config = getLogtoConfig();
 
     // Try the stored id_token first (signature + iss/aud/exp; no nonce here).
-    // Require accessToken too: if it's missing/expired (shorter-lived cookie
-    // than id_token) but idToken is still valid, fall through to the refresh
-    // block below rather than returning a session with no bearer — otherwise
-    // every other authed endpoint (favorites, backend enrichment) 401s until
-    // the id_token itself expires and forces a refresh.
-    if (idToken && accessToken) {
+    if (idToken) {
       try {
         const claims = await verifyStoredIdToken(config, idToken);
-        const user = await enrichWithBackendProfile(
-          mapClaimsToAuthUser(claims),
-          accessToken,
-        );
-        return NextResponse.json(
-          { user },
-          { status: 200, headers: NO_STORE },
-        );
+        user = mapClaimsToAuthUser(claims);
+        // accessToken may be missing/expired (shorter-lived cookie than
+        // id_token) even though the id_token itself is still valid — fall
+        // through to the refresh block to restore it instead of returning a
+        // session with no bearer, which would 401 every other authed
+        // endpoint (favorites, backend enrichment) until the id_token itself
+        // expires and forces a refresh.
+        if (accessToken) {
+          return NextResponse.json(
+            { user: await enrichWithBackendProfile(user, accessToken) },
+            { status: 200, headers: NO_STORE },
+          );
+        }
       } catch (e) {
         // A transient verification failure (JWKS unreachable) must NOT log the
         // user out — let it bubble to the 503 path. Only definitive failures
@@ -100,27 +107,35 @@ export async function GET(request: NextRequest): Promise<Response> {
       }
     }
 
-    if (!refreshToken) return unauthorized();
+    if (!refreshToken) {
+      if (user) return NextResponse.json({ user }, { status: 200, headers: NO_STORE });
+      return unauthorized();
+    }
 
     // Refresh → new tokens (incl. a fresh id_token) → derive the user from it.
     const refreshed = await refreshAccessToken(config, refreshToken);
-    if (!refreshed.id_token) return unauthorized();
+    if (!refreshed.id_token) {
+      if (user) return NextResponse.json({ user }, { status: 200, headers: NO_STORE });
+      return unauthorized();
+    }
     const claims = await verifyStoredIdToken(config, refreshed.id_token);
     // Use the freshly refreshed access token, not the (possibly stale) cookie.
-    const user = await enrichWithBackendProfile(
+    const refreshedUser = await enrichWithBackendProfile(
       mapClaimsToAuthUser(claims),
       refreshed.access_token,
     );
     const response = NextResponse.json(
-      { user },
+      { user: refreshedUser },
       { status: 200, headers: NO_STORE },
     );
     setTokenCookies(response, refreshed);
     return response;
   } catch (e) {
     const status = (e as { status?: number })?.status;
-    // Definitive auth failure (e.g. refresh token revoked/expired) → log out.
+    // Definitive auth failure (e.g. refresh token revoked/expired). Only log
+    // out if we never had a valid id_token-derived session to fall back on.
     if (status === 400 || status === 401 || status === 403) {
+      if (user) return NextResponse.json({ user }, { status: 200, headers: NO_STORE });
       return unauthorized();
     }
     // Transient (5xx, network, timeout): keep the session, signal retry.
