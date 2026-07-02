@@ -48,4 +48,18 @@ if [ -z "${NODE_OPTIONS:-}" ] || ! printf '%s' "$NODE_OPTIONS" | grep -q 'max-ol
   fi
 fi
 
+# Delete any 0-byte files left in the Next.js image-optimizer disk cache.
+#
+# A killed write (OOM kill, forced restart) can leave a 0-byte file under
+# .next/cache/images. On the next request that touches the disk cache,
+# Next.js reads that file's size as 0 and feeds it to its internal LRUCache,
+# which throws ("size must be > 0") and disables image caching for the rest
+# of the process's life (every image gets re-optimized from scratch instead
+# of served from cache). There is no volume mounted for .next/cache, so a
+# plain container restart (as opposed to a fresh image pull) reuses the same
+# writable layer and the leftover file re-triggers the bug immediately on
+# boot. Upstream bug, unfixed as of Next.js 16.2.10 / 16.3.0-canary.75:
+# https://github.com/vercel/next.js/issues/93757
+find .next/cache/images -type f -size 0 -delete 2>/dev/null || true
+
 exec node server.js
