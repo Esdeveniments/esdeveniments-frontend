@@ -5,6 +5,7 @@ import {
   refreshAccessToken,
   verifyStoredIdToken,
 } from "@lib/auth/logto";
+import { getAuthenticatedUserExternal } from "@lib/api/users-external";
 import {
   ACCESS_TOKEN_COOKIE,
   ID_TOKEN_COOKIE,
@@ -13,17 +14,44 @@ import {
   readTokenFromRequest,
   setTokenCookies,
 } from "@utils/auth-cookies";
+import type { AuthUser } from "types/auth";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
+
+// Layers the backend-owned profile (pictureUrl/pictureSource/role/lastLoginAt)
+// on top of the id_token-derived user. The backend call is best-effort: an
+// unreachable/misconfigured backend must not break login, since the
+// id_token alone is already a valid, verified session.
+async function enrichWithBackendProfile(
+  user: AuthUser,
+  accessToken: string | null,
+): Promise<AuthUser> {
+  if (!accessToken) return user;
+  const backendUser = await getAuthenticatedUserExternal(accessToken);
+  if (!backendUser) return user;
+  return {
+    ...user,
+    id: backendUser.id,
+    email: backendUser.email,
+    name: backendUser.name,
+    username: backendUser.username,
+    avatarUrl: backendUser.pictureUrl ?? user.avatarUrl,
+    pictureSource: backendUser.pictureSource,
+    role: backendUser.role ?? user.role,
+    lastLoginAt: backendUser.lastLoginAt,
+  };
+}
 
 // Returns the current user from the verified id_token cookie — no userinfo
 // round-trip, so it works even when the access token is bound to a backend API
 // resource (aud != userinfo). If the id_token has expired, transparently
 // refreshes via the refresh token. Distinguishes a definitive auth failure
 // (clear cookies → 401) from a transient Logto outage (preserve cookies → 503).
+// Backend-owned profile fields are layered on afterwards (enrichWithBackendProfile).
 export async function GET(request: NextRequest): Promise<Response> {
   const idToken = readTokenFromRequest(request, ID_TOKEN_COOKIE);
   const refreshToken = readTokenFromRequest(request, REFRESH_TOKEN_COOKIE);
+  const accessToken = readTokenFromRequest(request, ACCESS_TOKEN_COOKIE);
 
   const unauthorized = (): Response => {
     const response = NextResponse.json(
@@ -53,8 +81,12 @@ export async function GET(request: NextRequest): Promise<Response> {
     if (idToken) {
       try {
         const claims = await verifyStoredIdToken(config, idToken);
+        const user = await enrichWithBackendProfile(
+          mapClaimsToAuthUser(claims),
+          accessToken,
+        );
         return NextResponse.json(
-          { user: mapClaimsToAuthUser(claims) },
+          { user },
           { status: 200, headers: NO_STORE },
         );
       } catch (e) {
@@ -71,8 +103,13 @@ export async function GET(request: NextRequest): Promise<Response> {
     const refreshed = await refreshAccessToken(config, refreshToken);
     if (!refreshed.id_token) return unauthorized();
     const claims = await verifyStoredIdToken(config, refreshed.id_token);
+    // Use the freshly refreshed access token, not the (possibly stale) cookie.
+    const user = await enrichWithBackendProfile(
+      mapClaimsToAuthUser(claims),
+      refreshed.access_token,
+    );
     const response = NextResponse.json(
-      { user: mapClaimsToAuthUser(claims) },
+      { user },
       { status: 200, headers: NO_STORE },
     );
     setTokenCookies(response, refreshed);
