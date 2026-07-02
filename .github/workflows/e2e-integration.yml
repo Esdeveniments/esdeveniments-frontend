@@ -81,6 +81,15 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          # Logto OIDC config (preproduction app). Without these, /iniciar-sessio
+          # → /api/auth/sign-in throws in getLogtoConfig() and returns a 500,
+          # so the login step never reaches Logto's form. Sourced from the
+          # repo-level *_STAGING secrets set for preproduction.
+          LOGTO_ENDPOINT: ${{ secrets.LOGTO_ENDPOINT_STAGING }}
+          LOGTO_APP_ID: ${{ secrets.LOGTO_APP_ID_STAGING }}
+          LOGTO_APP_SECRET: ${{ secrets.LOGTO_APP_SECRET_STAGING }}
+          LOGTO_COOKIE_SECRET: ${{ secrets.LOGTO_COOKIE_SECRET_STAGING }}
+          LOGTO_API_RESOURCE: ${{ secrets.LOGTO_API_RESOURCE_STAGING }}
 
       - name: Wait for server
         run: npx wait-on http://localhost:3000 --timeout 90000
