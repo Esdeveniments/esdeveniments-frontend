@@ -1,3 +1,5 @@
+import type { PictureSource } from "./api/user";
+
 export type AuthRole = "USER" | "ADMIN" | "ORGANIZATION";
 
 export interface AuthUser {
@@ -8,6 +10,9 @@ export interface AuthUser {
   avatarUrl?: string;
   role?: AuthRole;
   emailVerified?: boolean;
+  // Backend-owned fields (GET /api/auth/me) — absent until enrichment succeeds.
+  pictureSource?: PictureSource;
+  lastLoginAt?: string;
 }
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";

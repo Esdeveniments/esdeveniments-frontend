@@ -1,12 +1,44 @@
 import { fetchWithHmac } from "./fetch-wrapper";
-import { parseUserPublic } from "@lib/validation/user";
+import { parseAuthenticatedUser, parseUserPublic } from "@lib/validation/user";
 import { parsePagedEvents } from "@lib/validation/event";
 import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
-import type { UserPublicResponseDTO } from "types/api/user";
+import type { AuthenticatedUserDTO, UserPublicResponseDTO } from "types/api/user";
 import type {
   EventSummaryResponseDTO,
   PagedResponseDTO,
 } from "types/api/event";
+
+/**
+ * Authenticated session profile: GET /api/auth/me. Backend-owned fields
+ * (pictureUrl/pictureSource/role/lastLoginAt) that the Logto id_token can't
+ * carry — the id_token has no concept of an in-app avatar upload or login
+ * audit trail. Returns null on any failure so the caller can fall back to
+ * the id_token-derived user rather than breaking the session.
+ */
+export async function getAuthenticatedUserExternal(
+  accessToken: string
+): Promise<AuthenticatedUserDTO | null> {
+  if (!accessToken) return null;
+  if (!isApiUrlConfigured()) return null;
+  const apiUrl = getApiUrl();
+
+  try {
+    const response = await fetchWithHmac(`${apiUrl}/auth/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      const body = await response.text().catch(() => "<unreadable>");
+      console.error(
+        `getAuthenticatedUserExternal: HTTP ${response.status} — ${body}`
+      );
+      return null;
+    }
+    return parseAuthenticatedUser(await response.json());
+  } catch (error) {
+    console.error("getAuthenticatedUserExternal: failed", error);
+    return null;
+  }
+}
 
 export async function getUserByUsernameExternal(
   username: string
