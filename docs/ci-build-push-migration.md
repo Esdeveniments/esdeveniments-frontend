@@ -10,6 +10,28 @@ the image and pushes it to GHCR (`build-and-push` job); Coolify deploys that
 prebuilt image instead of building on the host. The Dockerfile and
 `output: "standalone"` are unchanged.
 
+## Status (2026-07-03)
+
+- **Staging: cut over.** `esdeveniments-staging` (`nykpqplcbakwtuzezzuet80d`,
+  `build_pack: dockerfile`) is disabled. `staging.esdeveniments.cat` and
+  `COOLIFY_WEBHOOK_URL_STAGING` now point at the Docker Image app
+  `ic2hbmmww2c64e5ugmg6j27t`.
+- **Prod: half cut over, mind the gap.** `COOLIFY_WEBHOOK_URL` now points at
+  the Docker Image app `g110g13khtoev6lvlzwcxad3` (verified healthy, serving
+  real event data, `BUILD_VERSION` removed), but `www.esdeveniments.cat` still
+  resolves to the old `ohrtinmo1t8sz798wrq1gav3`.
+
+  **Until the domain moves too, every push to `main` will fail its CI health
+  gate.** The webhook now deploys the new app, but `deploy-coolify.yml` polls
+  `https://www.esdeveniments.cat/api/health` for the new commit SHA — which
+  lands on the new app, not on the domain the workflow checks. Expect a
+  `::error::Container did NOT swap` failure (after the ~15 min timeout) on the
+  next `main` push, skipping the Cloudflare purge + smoke tests, even though
+  the underlying deploy to the new app is fine. This resolves itself the
+  moment the domain moves over; until then, don't debug that failure as a real
+  incident. Move `www.esdeveniments.cat` to `g110g13khtoev6lvlzwcxad3` (and
+  disable `ohrtinmo1t8sz798wrq1gav3`) to finish the cutover and clear this.
+
 ## One-time setup (do these before merging the workflow)
 
 ### 1. GitHub secrets for the build
@@ -70,23 +92,42 @@ skip pull auth. Private is recommended.
 
 ### 3. Coolify app reconfiguration (prod and staging frontend apps)
 
-For each frontend app (prod `ohrtinmo1t8sz798wrq1gav3`, staging
-`nykpqplcbakwtuzezzuet80d`):
+This was done by standing up a **new** Docker Image app next to each old
+Dockerfile app rather than converting in place (staging: `ic2hbmmww2c64e5ugmg6j27t`
+replacing `nykpqplcbakwtuzezzuet80d`; prod: `g110g13khtoev6lvlzwcxad3` replacing
+`ohrtinmo1t8sz798wrq1gav3`). Either approach works; if you convert in place
+instead, the same steps apply to the existing app UUID.
+
 1. Change the source from **Dockerfile / GitHub** to **Docker Image**:
    - prod → `ghcr.io/esdeveniments/esdeveniments-frontend:main`
    - staging → `ghcr.io/esdeveniments/esdeveniments-frontend:develop`
 2. Add the GHCR pull credential (if the package is private).
-3. **Remove `BUILD_VERSION` from the app's runtime env vars.** The image bakes
-   `BUILD_VERSION=<git sha>` at build time, and a runtime override would shadow
-   it, breaking the `/api/health` version gate the deploy workflow waits on.
+3. Copy the old app's env vars over. **If you use Coolify's bulk copy/clone,
+   it also copies `BUILD_VERSION` — delete it afterward.** The image already
+   bakes `BUILD_VERSION=<git sha>` at build time, and a runtime copy shadows
+   it, breaking the `/api/health` version gate the deploy workflow polls. This
+   bit both the staging and prod cutovers on 2026-07-03; it's not excluded
+   automatically by any copy method.
 4. Deploy trigger: a **Docker Image** app does not auto-deploy from git pushes
    the way a Dockerfile/GitHub app does, so confirm the workflow's
    `COOLIFY_WEBHOOK_URL` is this app's **Deploy Webhook** (Coolify → app →
-   Webhooks). The deploy job POSTs it explicitly, which makes Coolify re-pull
-   the moving tag (`:main` / `:develop`) and swap the container. After the first
+   Webhooks, the "Deploy Webhook (auth required)" URL — not the app's public
+   FQDN, and not the "Manual Git Webhooks" section further down the same
+   page). The deploy job POSTs it explicitly, which makes Coolify re-pull the
+   moving tag (`:main` / `:develop`) and swap the container. After the first
    prebuilt deploy, verify `/api/health` reports the new commit — if the tag
    didn't re-pull, enable "force pull" / check the webhook points at the right
    app.
+5. Verify on the app's own sslip.io URL *before* moving the real domain over:
+   `/api/health` returns 200, `/api/events?size=1` returns real content (not
+   `[]`), and (once Logto is live on that branch) `/api/auth/sign-in` 307s to
+   the IdP. Only then move the domain and flip the webhook secret, so a bad
+   cutover never touches live traffic.
+6. If you're driving this via an AI agent against the Coolify MCP/API: the
+   token backing it may have read + env-var-write scope but lack `deploy` and
+   application `write` scope. Manual redeploys and domain/fqdn changes then
+   need to happen in the dashboard — the agent can prepare and verify
+   everything else.
 
 ## How it flows after migration
 

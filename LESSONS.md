@@ -74,6 +74,23 @@ The prebuilt-image deploy (PR #371) builds the image in GitHub Actions and runs 
 
 On 2026-06-27 the GitHub `staging` secret `NEXT_PUBLIC_API_URL` was missing the `/api` suffix → every fetch hit `/events` (→ 500) → `fetchEventsExternal` swallowed it into an empty list → blank events with HTTP 200 and **no logs** (`removeConsole` had stripped the error; now fixed to keep `console.error`). The Coolify-built (dockerfile) staging app was fine because its build bakes Coolify's own correct value, which hid the mismatch. Rules: GitHub secrets are the source of truth for `NEXT_PUBLIC_*` in image builds; `NEXT_PUBLIC_API_URL` must include `/api` (backend serves `/api/events`); the prod `:main` build uses **repo-level** secrets (there is no `production` GH environment) so verify `https://api.esdeveniments.cat/api` before cutover; confirm a baked value with `docker exec <c> sh -c "grep -rhoE 'https://api[a-zA-Z0-9._/-]*' /app/.next/server | sort -u"`. The post-deploy smoke test now asserts `/api/events` returns data so this can't ship silently again. See [docs/ci-build-push-migration.md](docs/ci-build-push-migration.md).
 
+## Cutting a Coolify app to Docker Image: `BUILD_VERSION` survives a naive env copy
+
+When standing up the new Docker Image apps (2026-07-03, both staging and prod),
+copying env vars over from the old Dockerfile app also copied `BUILD_VERSION` —
+no copy method excludes it automatically. Left in place, it shadows the value
+the image bakes at build time and silently breaks the `/api/health` version
+check `deploy-coolify.yml` polls after every deploy (the deploy job then times
+out waiting for a SHA that never appears, even though the container is
+actually healthy). After any env-var copy onto a Docker Image app, check for
+and delete `BUILD_VERSION` before wiring in the CI webhook. See
+[docs/ci-build-push-migration.md](docs/ci-build-push-migration.md).
+
+Also: Coolify's "Deploy Webhook" is a distinct URL from the app's public FQDN
+and from the "Manual Git Webhooks" section on the same page — grab it from the
+top of the app's Webhooks tab, it needs the `Authorization: Bearer` header the
+same way `COOLIFY_WEBHOOK_URL`/`_STAGING` are consumed in the workflow.
+
 ## A duplicate personal Vercel project posts a second preview status that can block the E2E gate
 
 There are two Vercel projects wired to this GitHub repo: the **team** one (`esdeveniments` scope, the correct one — its previews are opened by `VERCEL_AUTOMATION_BYPASS_SECRET`) and a leftover **personal** duplicate (`albertolives-projects` scope, auth-protected, the bypass secret does not open it). Both build every commit and both post a `success` status to the **same** `vercel[bot]` GitHub deployment, about a second apart. The personal status lands last, so it's the newest.
