@@ -84,6 +84,7 @@ async function loginViaUI(page: Page) {
           "verify the account exists and its email is verified in the preproduction Logto " +
           "tenant, and that the `staging` GitHub environment secret matches its password " +
           "(see scripts/e2e-staging-setup.sh).",
+        { cause: timeoutError },
       );
     }
     throw timeoutError;
