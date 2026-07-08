@@ -36,10 +36,19 @@ the container. No rebuild is needed when the Coolify limit changes.
 
 Frontend application → **Resource Limits**:
 
-- **Maximum Memory Limit (hard):** start at **1.5 GB** for prod (heap ≈ 1152 MB at
-  75%, the rest for `sharp`/buffers/RSS). Staging can be lower (e.g. 768 MB–1 GB).
-  The hard limit is what OOM-kills; pair it with a soft limit slightly below.
+- **Maximum Memory Limit (hard):** currently **2 GB** for prod (heap ≈ 1536 MB
+  at 75%, the rest for `sharp`/buffers/RSS). Staging is at 1 GB. The hard limit
+  is what OOM-kills; pair it with a soft limit slightly below.
 - **CPU:** 1–2 vCPU is plenty for the current traffic.
+- **Swappiness:** **avoid 10** — use **20–30** for prod. Both prod containers
+  crashed at `swappiness=10` (frontend Jul 7, backend Jul 2, 2026) because the
+  kernel aggressively pressured V8 into GC rather than swapping, producing
+  stop-the-world pauses that exceeded the Docker healthcheck timeout and
+  triggered a crash-loop. Neither staging container (swappiness 20–60) has
+  ever crash-looped. See incident
+  [2026-07-07](./incidents/2026-07-07-coolify-container-healthcheck-crash.md).
+  Swappiness=10 was set with the best intention (memory efficiency) but the
+  interaction with heap bounding + tight healthcheck timeouts made it lethal.
 
 Redis (`redis-pro`, `redis-pre`) → set a bound so a cache can't grow without limit:
 
