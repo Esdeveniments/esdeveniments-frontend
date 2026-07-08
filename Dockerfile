@@ -83,7 +83,13 @@ ENV HOSTNAME="0.0.0.0"
 
 USER nextjs
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
+# Timeout was 3s — too tight for a Node.js app under GC pressure. Under
+# memory stress the event loop stalls and /api/health can't respond within 3s
+# even though the process is alive, triggering false-unhealthy restarts.
+# 10s gives GC headroom; start-period 40s covers cold-start (entrypoint heap
+# sizing + 0-byte image cache cleanup + Redis connect + stale-cache purge).
+# See incident 2026-07-07.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["./docker-entrypoint.sh"]
