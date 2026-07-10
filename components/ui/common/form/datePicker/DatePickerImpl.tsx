@@ -222,7 +222,7 @@ export default function DatePickerImpl({
       const corrected =
         newEnd <= startDate
           ? setSeconds(
-              setMinutes(setHours(new Date(startDate), 23), 59),
+              setMinutes(setHours(startDate, 23), 59),
               59,
             )
           : setSeconds(
