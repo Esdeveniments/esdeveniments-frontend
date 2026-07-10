@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
@@ -44,7 +44,7 @@ function computeEndDate(
       : new Date(startingDate.getTime() + 60 * 60 * 1000);
 
   if (isAllDay) {
-    return setSeconds(setMinutes(setHours(startingDate, 23), 59), 59);
+    return setSeconds(setMinutes(setHours(endingDate, 23), 59), 59);
   }
 
   return endingDate;
@@ -81,27 +81,26 @@ function TimeSelector({
   );
 }
 
-function DateButton({
-  label,
-  value,
-  isOpen,
-  onClick,
-}: DateButtonProps) {
-  const accessibleLabel = value ? `${label}: ${value}` : label;
+const DateButton = forwardRef<HTMLButtonElement, DateButtonProps>(
+  ({ label, value, isOpen, onClick }, ref) => {
+    const accessibleLabel = value ? `${label}: ${value}` : label;
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={accessibleLabel}
-      aria-expanded={isOpen}
-      className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all flex items-center justify-between gap-2 ${isOpen ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
-    >
-      <span>{value || label}</span>
-      <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-    </button>
-  );
-}
+    return (
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        aria-label={accessibleLabel}
+        aria-expanded={isOpen}
+        className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all flex items-center justify-between gap-2 ${isOpen ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
+      >
+        <span>{value || label}</span>
+        <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+      </button>
+    );
+  }
+);
+DateButton.displayName = "DateButton";
 
 export default function DatePickerImpl({
   idPrefix = "date",
@@ -114,6 +113,7 @@ export default function DatePickerImpl({
   enableAllDayToggle = false,
   isAllDay = false,
   onToggleAllDay,
+  autoFocus,
 }: DatePickerComponentProps) {
   const t = useTranslations("Components.DatePicker");
   const locale = useLocale();
@@ -124,6 +124,42 @@ export default function DatePickerImpl({
   const minDateObj = minDate ? toDate(minDate) : undefined;
 
   const [activeField, setActiveField] = useState<"start" | "end" | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (autoFocus && startButtonRef.current) {
+      startButtonRef.current.focus();
+    }
+  }, [autoFocus]);
+
+  // Close calendar when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!activeField) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setActiveField(null);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveField(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeField]);
 
   const handleDaySelectStart = (day: Date | undefined) => {
     if (!day) return;
@@ -186,7 +222,7 @@ export default function DatePickerImpl({
   const endDisplay = formatDateDisplay(endDate, locale);
 
   return (
-    <div className={`w-full flex flex-col gap-4 ${className ?? ""}`}>
+    <div ref={wrapperRef} className={`w-full flex flex-col gap-4 ${className ?? ""}`}>
       <div className="flex justify-between items-center">
         <label className="form-label">{t("dateAndTime")}</label>
 
@@ -219,6 +255,7 @@ export default function DatePickerImpl({
             {t("start")}
           </span>
           <DateButton
+            ref={startButtonRef}
             label={t("start")}
             value={
               isAllDay

@@ -273,6 +273,7 @@ export interface DatePickerComponentProps {
   enableAllDayToggle?: boolean;
   isAllDay?: boolean;
   onToggleAllDay?: (isAllDayEvent: boolean) => void;
+  autoFocus?: boolean;
 }
 
 export interface TimeSelectorProps {
