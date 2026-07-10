@@ -12,6 +12,7 @@ import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { sanitize } from "@utils/sanitize-segment";
 import type { EventSidebarProps } from "types/props";
 
 /**
@@ -30,6 +31,13 @@ export default async function EventSidebar({
 }: EventSidebarProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
+
+  // Same fallback pattern as NavbarClient: use username directly when
+  // present, otherwise slugify the display name to avoid broken /perfil/ links.
+  const creatorSlug = event.createdByUser
+    ? event.createdByUser.username ||
+      sanitize(event.createdByUser.name || event.createdByUser.email)
+    : null;
 
   return (
     <aside
@@ -103,7 +111,7 @@ export default async function EventSidebar({
             )}
 
             {/* Creator / publisher profile link */}
-            {event.createdByUser && (
+            {event.createdByUser && creatorSlug && (
               <>
                 <hr className="border-border" />
                 <div className="flex flex-col gap-1">
@@ -111,14 +119,14 @@ export default async function EventSidebar({
                     {t("sidebarCreatedBy")}
                   </h3>
                   <Link
-                    href={`/perfil/${encodeURIComponent(event.createdByUser.username)}`}
+                    href={`/perfil/${encodeURIComponent(creatorSlug)}`}
                     className="inline-flex items-center gap-1.5 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
                   >
                     <UserIcon className="w-4 h-4 flex-shrink-0" />
                     {event.createdByUser.name}
                   </Link>
                   <Link
-                    href={`/perfil/${encodeURIComponent(event.createdByUser.username)}`}
+                    href={`/perfil/${encodeURIComponent(creatorSlug)}`}
                     className="body-small text-primary/70 hover:text-primary transition-colors"
                   >
                     {t("sidebarViewAllEvents")} →
