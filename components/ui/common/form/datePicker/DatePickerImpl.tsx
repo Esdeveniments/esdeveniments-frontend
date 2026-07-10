@@ -3,7 +3,15 @@
 import { useState, useRef, useEffect, forwardRef } from "react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import { setHours, setMinutes, setSeconds, addMinutes, addDays } from "date-fns";
+import {
+  setHours,
+  setMinutes,
+  setSeconds,
+  addMinutes,
+  addDays,
+  differenceInCalendarDays,
+  startOfDay,
+} from "date-fns";
 import { ca, es, enUS } from "date-fns/locale";
 import type { Locale } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
@@ -224,10 +232,7 @@ export default function DatePickerImpl({
       if (isAllDay) {
         const dayDiff = Math.max(
           0,
-          Math.round(
-            (endDate.getTime() - startDate.getTime()) /
-              (24 * 60 * 60 * 1000),
-          ),
+          differenceInCalendarDays(endDate, startDate),
         );
         const newEnd = addDays(newStart, dayDiff);
         const endOfDay = setSeconds(
@@ -299,6 +304,15 @@ export default function DatePickerImpl({
 
   const startDisplay = formatDateDisplay(startDate, locale);
   const endDisplay = formatDateDisplay(endDate, locale);
+
+  const today = startOfDay(new Date());
+  const isTodayValidForStart =
+    !minDateObj || today >= startOfDay(minDateObj);
+  const isTodayValidForEnd =
+    today >= startOfDay(startDate) &&
+    (!minDateObj || today >= startOfDay(minDateObj));
+  const isTodayValid =
+    activeField === "start" ? isTodayValidForStart : isTodayValidForEnd;
 
   return (
     <div
@@ -447,15 +461,19 @@ export default function DatePickerImpl({
                 <div className="mt-3 pt-3 border-t border-border flex justify-end">
                   <button
                     type="button"
+                    disabled={!isTodayValid}
                     onClick={() => {
-                      const today = new Date();
                       if (activeField === "start") {
                         handleDaySelectStart(today);
                       } else if (activeField === "end") {
                         handleDaySelectEnd(today);
                       }
                     }}
-                    className="text-sm font-medium text-primary hover:text-primary-dark hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+                    className={`text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm ${
+                      isTodayValid
+                        ? "text-primary hover:text-primary-dark hover:underline"
+                        : "text-muted-foreground cursor-not-allowed"
+                    }`}
                   >
                     {t("today")}
                   </button>
