@@ -869,6 +869,31 @@ video {
   outline: none !important;
 }
 
+.rdp-form-wrapper .rdp-button_previous,
+.rdp-form-wrapper .rdp-button_next {
+  color: #d6002f;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+}
+
+.rdp-form-wrapper .rdp-button_previous:hover,
+.rdp-form-wrapper .rdp-button_next:hover {
+  color: #a80025;
+  background-color: rgba(214, 0, 47, 0.06);
+}
+
+.rdp-form-wrapper .rdp-chevron {
+  width: 24px;
+  height: 24px;
+  fill: #d6002f;
+}
+
+.rdp-form-wrapper .rdp-button_previous:hover .rdp-chevron,
+.rdp-form-wrapper .rdp-button_next:hover .rdp-chevron {
+  fill: #a80025;
+}
+
 /* Keyboard focus: visible ring for form calendar accessibility */
 .rdp-form-wrapper .rdp-day_button:focus-visible,
 .rdp-form-wrapper .rdp-button_previous:focus-visible,
