@@ -330,7 +330,7 @@ export default function DatePickerImpl({
 
       {activeField && (
         <div className="relative">
-          <div className="rdp-form-wrapper absolute top-full left-0 z-10 mt-2 border border-border rounded-card p-3 bg-background shadow-lg">
+          <div className="rdp-form-wrapper absolute top-full left-0 z-50 mt-2 border border-border rounded-card p-3 bg-background shadow-lg">
           <DayPicker
             id={`${idPrefix}-${activeField}`}
             mode="single"
