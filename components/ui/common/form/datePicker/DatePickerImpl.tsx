@@ -141,9 +141,12 @@ export default function DatePickerImpl({
     if (!activeField) return;
 
     const handleClickOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
       if (
+        target &&
+        target.isConnected &&
         wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
+        !wrapperRef.current.contains(target)
       ) {
         setActiveField(null);
       }
@@ -219,16 +222,11 @@ export default function DatePickerImpl({
     newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
 
     if (isAllDay) {
-      const corrected =
-        newEnd <= startDate
-          ? setSeconds(
-              setMinutes(setHours(startDate, 23), 59),
-              59,
-            )
-          : setSeconds(
-              setMinutes(setHours(newEnd, 23), 59),
-              59,
-            );
+      const baseDate = newEnd <= startDate ? startDate : newEnd;
+      const corrected = setSeconds(
+        setMinutes(setHours(baseDate, 23), 59),
+        59,
+      );
       onChange("endDate", toISOStringLocalMinutes(corrected));
       setActiveField(null);
       return;
