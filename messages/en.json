@@ -950,7 +950,8 @@
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "All day (no end time)",
-      "allDayHelper": "If it lasts all day, we'll set the end to the same day."
+      "allDayHelper": "If it lasts all day, we'll set the end to the same day.",
+      "today": "Today"
     },
     "LoadMoreButton": {
       "loading": "Loading more events",

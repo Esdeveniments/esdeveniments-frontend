@@ -138,6 +138,9 @@ export default function DatePickerImpl({
   const minDateObj = minDate ? toDate(minDate) : undefined;
 
   const [activeField, setActiveField] = useState<"start" | "end" | null>(null);
+  const [renderedField, setRenderedField] = useState<"start" | "end" | null>(
+    null,
+  );
   const [isAnimating, setIsAnimating] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const startButtonRef = useRef<HTMLButtonElement>(null);
@@ -154,15 +157,20 @@ export default function DatePickerImpl({
 
   // Manage enter/leave animation for the calendar popup. We intentionally
   // drive the animation flag from the active field change so the popup stays
-  // mounted long enough to animate out.
+  // mounted long enough to animate out. renderedField keeps the content
+  // mounted during the exit animation so it doesn't disappear instantly.
   useEffect(() => {
     if (activeField) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- animation state is derived from activeField changes
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- renderedField mirrors activeField for exit animation
+      setRenderedField(activeField);
       setIsAnimating(true);
       return;
     }
 
-    const timer = setTimeout(() => setIsAnimating(false), 200);
+    const timer = setTimeout(() => {
+      setIsAnimating(false);
+      setRenderedField(null);
+    }, 200);
     return () => clearTimeout(timer);
   }, [activeField]);
 
@@ -311,8 +319,11 @@ export default function DatePickerImpl({
   const isTodayValidForEnd =
     today >= startOfDay(startDate) &&
     (!minDateObj || today >= startOfDay(minDateObj));
+  // renderedField lags one frame behind activeField on open (it's set in an
+  // effect), so fall back to activeField to avoid a brief empty popup.
+  const visibleField = renderedField ?? activeField;
   const isTodayValid =
-    activeField === "start" ? isTodayValidForStart : isTodayValidForEnd;
+    visibleField === "start" ? isTodayValidForStart : isTodayValidForEnd;
 
   return (
     <div
@@ -402,26 +413,30 @@ export default function DatePickerImpl({
             aria-hidden="true"
           />
           <div
+            aria-hidden={!activeField}
+            inert={!activeField ? true : undefined}
             className={`rdp-form-wrapper absolute top-full left-0 right-0 sm:left-0 sm:right-auto sm:w-fit z-50 mt-2 border border-border rounded-card p-3 bg-background shadow-lg transition-all duration-200 ease-smooth origin-top-left ${
               activeField
                 ? "opacity-100 scale-100 translate-y-0"
                 : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
             }`}
           >
-            {activeField && (
+            {visibleField && (
               <>
                 <DayPicker
-                  id={`${idPrefix}-${activeField}`}
+                  id={`${idPrefix}-${visibleField}`}
                   mode="single"
                   locale={dateFnsLocale}
-                  selected={activeField === "start" ? startDate : endDate}
+                  selected={
+                    visibleField === "start" ? startDate : endDate
+                  }
                   onSelect={
-                    activeField === "start"
+                    visibleField === "start"
                       ? handleDaySelectStart
                       : handleDaySelectEnd
                   }
                   disabled={
-                    activeField === "end"
+                    visibleField === "end"
                       ? {
                           before:
                             minDateObj && minDateObj > startDate
@@ -432,7 +447,9 @@ export default function DatePickerImpl({
                         ? { before: minDateObj }
                         : undefined
                   }
-                  defaultMonth={activeField === "start" ? startDate : endDate}
+                  defaultMonth={
+                    visibleField === "start" ? startDate : endDate
+                  }
                   showOutsideDays
                   fixedWeeks
                   required={required}
@@ -441,20 +458,22 @@ export default function DatePickerImpl({
                   <div className="mt-3 pt-3 border-t border-border">
                     <TimeSelector
                       value={formatTime(
-                        activeField === "start" ? startDate : endDate,
+                        visibleField === "start" ? startDate : endDate,
                       )}
                       onChange={
-                        activeField === "start"
+                        visibleField === "start"
                           ? handleStartTimeChange
                           : handleEndTimeChange
                       }
                       minTime={
-                        activeField === "end" &&
+                        visibleField === "end" &&
                           startDate.toDateString() === endDate.toDateString()
                           ? formatTime(startDate)
                           : undefined
                       }
-                      label={activeField === "start" ? t("start") : t("end")}
+                      label={
+                        visibleField === "start" ? t("start") : t("end")
+                      }
                     />
                   </div>
                 )}
@@ -463,9 +482,9 @@ export default function DatePickerImpl({
                     type="button"
                     disabled={!isTodayValid}
                     onClick={() => {
-                      if (activeField === "start") {
+                      if (visibleField === "start") {
                         handleDaySelectStart(today);
-                      } else if (activeField === "end") {
+                      } else if (visibleField === "end") {
                         handleDaySelectEnd(today);
                       }
                     }}
