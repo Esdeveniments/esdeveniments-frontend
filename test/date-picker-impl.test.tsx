@@ -417,7 +417,7 @@ describe("DatePickerImpl", () => {
       fireEvent.click(startButton);
       expect(screen.getByRole("grid")).toBeInTheDocument();
 
-      fireEvent.mouseDown(screen.getByTestId("outside"));
+      fireEvent.pointerDown(screen.getByTestId("outside"));
       expect(screen.queryByRole("grid")).not.toBeInTheDocument();
     });
 

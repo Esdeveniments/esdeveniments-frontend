@@ -25,7 +25,11 @@ export default function DatePickerComponent(props: DatePickerComponentProps) {
   }, []);
 
   return (
-    <div className="w-full" onPointerEnter={ensureLoaded} onFocus={ensureLoaded}>
+    <div
+      className="w-full"
+      onPointerEnter={shouldLoad ? undefined : ensureLoaded}
+      onFocus={shouldLoad ? undefined : ensureLoaded}
+    >
       {shouldLoad ? (
         <DatePickerImpl {...props} autoFocus={props.autoFocus || wasInteracted} />
       ) : (
