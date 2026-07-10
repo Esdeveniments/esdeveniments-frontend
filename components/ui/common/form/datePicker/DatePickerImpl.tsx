@@ -40,13 +40,13 @@ function computeEndDate(
     return setSeconds(setMinutes(setHours(baseDate, 23), 59), 59);
   }
 
-  const initialEndCandidate = initialEndDate
-    ? toDate(initialEndDate)
-    : new Date(startingDate.getTime() + 60 * 60 * 1000);
+  const defaultEndDate = new Date(startingDate.getTime() + 60 * 60 * 1000);
+  if (!initialEndDate) {
+    return defaultEndDate;
+  }
 
-  return initialEndCandidate > startingDate
-    ? initialEndCandidate
-    : new Date(startingDate.getTime() + 60 * 60 * 1000);
+  const candidate = toDate(initialEndDate);
+  return candidate > startingDate ? candidate : defaultEndDate;
 }
 
 function formatTime(d: Date): string {
