@@ -27,6 +27,7 @@ function formatJoinedDate(isoDate: string, locale: AppLocale): string {
   return new Intl.DateTimeFormat(locale, {
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   }).format(new Date(ms));
 }
 
