@@ -262,8 +262,8 @@ describe("DatePickerImpl", () => {
     it("calls onToggleAllDay when toggle is clicked", () => {
       render(<DatePickerImpl {...allDayProps} />);
 
-      const checkbox = screen.getByRole("checkbox");
-      fireEvent.click(checkbox);
+      const switchEl = screen.getByRole("switch");
+      fireEvent.click(switchEl);
       expect(allDayProps.onToggleAllDay).toHaveBeenCalledWith(true);
     });
   });

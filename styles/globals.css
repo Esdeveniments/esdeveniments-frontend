@@ -832,8 +832,8 @@ video {
   --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
   --rdp-selected-border: 0px solid transparent;
   --rdp-day_button-border-radius: 9999px;
-  --rdp-day_button-height: 36px;
-  --rdp-day_button-width: 36px;
+  --rdp-day_button-height: 44px;
+  --rdp-day_button-width: 44px;
 }
 
 .rdp-form-wrapper .rdp-root {

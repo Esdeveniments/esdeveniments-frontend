@@ -274,6 +274,7 @@ export interface DatePickerComponentProps {
   isAllDay?: boolean;
   onToggleAllDay?: (isAllDayEvent: boolean) => void;
   autoFocus?: boolean;
+  error?: boolean;
 }
 
 export interface TimeSelectorProps {
@@ -288,6 +289,7 @@ export interface DateButtonProps {
   value: string;
   isOpen: boolean;
   onClick: () => void;
+  error?: boolean;
 }
 
 export interface CalendarDatePickerProps {
