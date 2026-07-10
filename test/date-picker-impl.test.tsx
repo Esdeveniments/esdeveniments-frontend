@@ -428,7 +428,7 @@ describe("DatePickerImpl", () => {
       fireEvent.click(startButton);
       expect(screen.getByRole("grid")).toBeInTheDocument();
 
-      fireEvent.keyDown(document, { key: "Escape" });
+      fireEvent.keyDown(startButton, { key: "Escape" });
       expect(screen.queryByRole("grid")).not.toBeInTheDocument();
     });
   });

@@ -151,29 +151,31 @@ export default function DatePickerImpl({
       }
     };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        const field = activeField;
-        setActiveField(null);
-        // Restore focus to the button that opened the calendar
-        requestAnimationFrame(() => {
-          if (field === "start") {
-            startButtonRef.current?.focus();
-          } else if (field === "end") {
-            endButtonRef.current?.focus();
-          }
-        });
-      }
-    };
-
     document.addEventListener("pointerdown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.removeEventListener("pointerdown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [activeField]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape" && activeField) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      const field = activeField;
+      setActiveField(null);
+
+      // Restore focus to the button that opened the calendar
+      requestAnimationFrame(() => {
+        if (field === "start") {
+          startButtonRef.current?.focus();
+        } else if (field === "end") {
+          endButtonRef.current?.focus();
+        }
+      });
+    }
+  };
 
   const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
     // Only close the calendar when focus moves to a known element outside the
@@ -261,7 +263,12 @@ export default function DatePickerImpl({
   const endDisplay = formatDateDisplay(endDate, locale);
 
   return (
-    <div ref={wrapperRef} className={`w-full flex flex-col gap-4 ${className ?? ""}`} onBlur={handleBlur}>
+    <div
+      ref={wrapperRef}
+      className={`w-full flex flex-col gap-4 ${className ?? ""}`}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+    >
       <div className="flex justify-between items-center">
         <label className="form-label">{t("dateAndTime")}</label>
 
