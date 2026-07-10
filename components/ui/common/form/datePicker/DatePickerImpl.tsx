@@ -174,7 +174,10 @@ export default function DatePickerImpl({
   }, [activeField]);
 
   const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    if (!wrapperRef.current?.contains(event.relatedTarget as Node)) {
+    if (
+      event.relatedTarget &&
+      !wrapperRef.current?.contains(event.relatedTarget as Node)
+    ) {
       setActiveField(null);
     }
   };
