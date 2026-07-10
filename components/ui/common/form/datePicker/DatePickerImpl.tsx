@@ -126,9 +126,12 @@ export default function DatePickerImpl({
   const [activeField, setActiveField] = useState<"start" | "end" | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const startButtonRef = useRef<HTMLButtonElement>(null);
+  const endButtonRef = useRef<HTMLButtonElement>(null);
+  const hasAutoFocused = useRef(false);
 
   useEffect(() => {
-    if (autoFocus && startButtonRef.current) {
+    if (autoFocus && startButtonRef.current && !hasAutoFocused.current) {
+      hasAutoFocused.current = true;
       startButtonRef.current.focus();
     }
   }, [autoFocus]);
@@ -148,7 +151,16 @@ export default function DatePickerImpl({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        const field = activeField;
         setActiveField(null);
+        // Restore focus to the button that opened the calendar
+        requestAnimationFrame(() => {
+          if (field === "start") {
+            startButtonRef.current?.focus();
+          } else if (field === "end") {
+            endButtonRef.current?.focus();
+          }
+        });
       }
     };
 
@@ -285,6 +297,7 @@ export default function DatePickerImpl({
             {t("end")}
           </span>
           <DateButton
+            ref={endButtonRef}
             label={t("end")}
             value={
               isAllDay

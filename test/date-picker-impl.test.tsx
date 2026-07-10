@@ -79,7 +79,7 @@ describe("DatePickerImpl", () => {
     it("opens start calendar when start button is clicked", () => {
       render(<DatePickerImpl {...baseProps} />);
 
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 10:00/ });
       fireEvent.click(startButton);
 
       // Calendar grid should appear
@@ -91,7 +91,7 @@ describe("DatePickerImpl", () => {
     it("opens end calendar when end button is clicked", () => {
       render(<DatePickerImpl {...baseProps} />);
 
-      const endButton = screen.getByText(/07\/03\/2026\s+11:00/).closest("button")!;
+      const endButton = screen.getByRole("button", { name: /Final \*: 07\/03\/2026 11:00/ });
       fireEvent.click(endButton);
 
       expect(screen.getByRole("grid")).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe("DatePickerImpl", () => {
     it("closes calendar when the same button is clicked again", () => {
       render(<DatePickerImpl {...baseProps} />);
 
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 10:00/ });
       fireEvent.click(startButton);
       expect(screen.getByRole("grid")).toBeInTheDocument();
 
@@ -112,8 +112,8 @@ describe("DatePickerImpl", () => {
     it("switches from start to end when end button is clicked while start is open", () => {
       render(<DatePickerImpl {...baseProps} />);
 
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
-      const endButton = screen.getByText(/07\/03\/2026\s+11:00/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 10:00/ });
+      const endButton = screen.getByRole("button", { name: /Final \*: 07\/03\/2026 11:00/ });
 
       fireEvent.click(startButton);
       expect(screen.getByLabelText("Inici *")).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe("DatePickerImpl", () => {
       render(<DatePickerImpl {...baseProps} />);
 
       // Open start calendar
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 10:00/ });
       fireEvent.click(startButton);
       expect(screen.getByRole("grid")).toBeInTheDocument();
 
@@ -152,7 +152,7 @@ describe("DatePickerImpl", () => {
       render(<DatePickerImpl {...baseProps} />);
 
       // Open end calendar
-      const endButton = screen.getByText(/07\/03\/2026\s+11:00/).closest("button")!;
+      const endButton = screen.getByRole("button", { name: /Final \*: 07\/03\/2026 11:00/ });
       fireEvent.click(endButton);
       expect(screen.getByRole("grid")).toBeInTheDocument();
 
@@ -273,7 +273,7 @@ describe("DatePickerImpl", () => {
       render(<DatePickerImpl {...baseProps} />);
 
       // Open start calendar to reveal time input
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 10:00/ });
       fireEvent.click(startButton);
 
       const timeInput = screen.getByLabelText("Inici *");
@@ -287,7 +287,7 @@ describe("DatePickerImpl", () => {
       render(<DatePickerImpl {...baseProps} />);
 
       // Open end calendar to reveal time input
-      const endButton = screen.getByText(/07\/03\/2026\s+11:00/).closest("button")!;
+      const endButton = screen.getByRole("button", { name: /Final \*: 07\/03\/2026 11:00/ });
       fireEvent.click(endButton);
 
       const timeInput = screen.getByLabelText("Final *");
@@ -307,7 +307,7 @@ describe("DatePickerImpl", () => {
       render(<DatePickerImpl {...props} />);
 
       // Open start calendar
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 10:00/ });
       fireEvent.click(startButton);
 
       // Set start time past end time
@@ -360,7 +360,7 @@ describe("DatePickerImpl", () => {
       render(<DatePickerImpl {...props} />);
 
       // Open end calendar
-      const endButton = screen.getByText(/20\/03\/2026\s+11:00/).closest("button")!;
+      const endButton = screen.getByRole("button", { name: /Final \*: 20\/03\/2026 11:00/ });
       fireEvent.click(endButton);
 
       // Try to select a day before start (March 10)
@@ -380,7 +380,7 @@ describe("DatePickerImpl", () => {
       render(<DatePickerImpl {...props} />);
 
       // Open start calendar
-      const startButton = screen.getByText(/07\/03\/2026\s+14:30/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 14:30/ });
       fireEvent.click(startButton);
 
       // Select a different day
@@ -413,7 +413,7 @@ describe("DatePickerImpl", () => {
         </div>
       );
 
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 10:00/ });
       fireEvent.click(startButton);
       expect(screen.getByRole("grid")).toBeInTheDocument();
 
@@ -424,7 +424,7 @@ describe("DatePickerImpl", () => {
     it("closes the calendar when Escape key is pressed", () => {
       render(<DatePickerImpl {...baseProps} />);
 
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
+      const startButton = screen.getByRole("button", { name: /Inici \*: 07\/03\/2026 10:00/ });
       fireEvent.click(startButton);
       expect(screen.getByRole("grid")).toBeInTheDocument();
 

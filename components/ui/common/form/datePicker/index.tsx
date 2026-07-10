@@ -27,7 +27,7 @@ export default function DatePickerComponent(props: DatePickerComponentProps) {
   return (
     <div className="w-full" onPointerEnter={ensureLoaded} onFocus={ensureLoaded}>
       {shouldLoad ? (
-        <DatePickerImpl {...props} autoFocus={wasInteracted} />
+        <DatePickerImpl {...props} autoFocus={props.autoFocus || wasInteracted} />
       ) : (
         <div
           className="w-full flex flex-col gap-4"
