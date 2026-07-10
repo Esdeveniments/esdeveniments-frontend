@@ -205,6 +205,9 @@ export default function DatePickerImpl({
       );
       onChange("endDate", toISOStringLocalMinutes(endOfDay));
       setActiveField(null);
+      requestAnimationFrame(() => {
+        startButtonRef.current?.focus();
+      });
       return;
     }
 
@@ -230,6 +233,9 @@ export default function DatePickerImpl({
       );
       onChange("endDate", toISOStringLocalMinutes(corrected));
       setActiveField(null);
+      requestAnimationFrame(() => {
+        endButtonRef.current?.focus();
+      });
       return;
     }
 
@@ -265,7 +271,7 @@ export default function DatePickerImpl({
   return (
     <div
       ref={wrapperRef}
-      className={`w-full flex flex-col gap-4 ${className ?? ""}`}
+      className={`relative w-full flex flex-col gap-4 ${className ?? ""}`}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
     >
@@ -336,8 +342,7 @@ export default function DatePickerImpl({
       </div>
 
       {activeField && (
-        <div className="relative">
-          <div className="rdp-form-wrapper absolute top-full left-0 z-50 mt-2 border border-border rounded-card p-3 bg-background shadow-lg">
+        <div className="rdp-form-wrapper absolute top-full left-0 z-50 mt-2 border border-border rounded-card p-3 bg-background shadow-lg">
           <DayPicker
             id={`${idPrefix}-${activeField}`}
             mode="single"
@@ -386,7 +391,6 @@ export default function DatePickerImpl({
               />
             </div>
           )}
-          </div>
         </div>
       )}
     </div>
