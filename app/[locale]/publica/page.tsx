@@ -731,8 +731,25 @@ const PublishForm = () => {
             <p className="body-small text-foreground/60 mt-2">{t("requiredNote")}</p>
           </div>
           {error && (
-            <div className="w-full px-4 py-3 bg-destructive/10 border border-destructive rounded-lg">
-              <p className="text-sm text-destructive">{error}</p>
+            <div
+              className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg flex items-start gap-3"
+              role="alert"
+            >
+              <svg
+                className="w-5 h-5 text-error flex-shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="text-sm font-medium text-error">{error}</p>
             </div>
           )}
           <div className="w-full flex flex-col gap-y-4 pt-4">

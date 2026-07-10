@@ -951,12 +951,14 @@
     },
     "DatePicker": {
       "dateAndTime": "Data i hora *",
+      "selectDateAndTime": "Seleccionar data i hora",
       "start": "Inici *",
       "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "Tot el dia (sense hora de fi)",
-      "allDayHelper": "Si l'esdeveniment dura tot el dia, marcarem el final el mateix dia."
+      "allDayHelper": "Si l'esdeveniment dura tot el dia, marcarem el final el mateix dia.",
+      "today": "Avui"
     },
     "LoadMoreButton": {
       "loading": "Carregant més esdeveniments",

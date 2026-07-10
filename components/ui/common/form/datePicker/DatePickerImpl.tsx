@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import { setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
+import {
+  setHours,
+  setMinutes,
+  setSeconds,
+  addMinutes,
+  addDays,
+  differenceInCalendarDays,
+  startOfDay,
+} from "date-fns";
 import { ca, es, enUS } from "date-fns/locale";
 import type { Locale } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
@@ -34,20 +42,19 @@ function computeEndDate(
   initialEndDate: string | undefined,
   isAllDay: boolean,
 ): Date {
-  const initialEndCandidate = initialEndDate
-    ? toDate(initialEndDate)
-    : setMinutes(startingDate, startingDate.getMinutes() + 60);
-
-  const endingDate =
-    initialEndCandidate > startingDate
-      ? initialEndCandidate
-      : new Date(startingDate.getTime() + 60 * 60 * 1000);
-
   if (isAllDay) {
-    return setSeconds(setMinutes(setHours(startingDate, 23), 59), 59);
+    const candidate = initialEndDate ? toDate(initialEndDate) : startingDate;
+    const baseDate = candidate >= startingDate ? candidate : startingDate;
+    return setSeconds(setMinutes(setHours(baseDate, 23), 59), 59);
   }
 
-  return endingDate;
+  const defaultEndDate = new Date(startingDate.getTime() + 60 * 60 * 1000);
+  if (!initialEndDate) {
+    return defaultEndDate;
+  }
+
+  const candidate = toDate(initialEndDate);
+  return candidate > startingDate ? candidate : defaultEndDate;
 }
 
 function formatTime(d: Date): string {
@@ -76,32 +83,37 @@ function TimeSelector({
       min={minTime}
       onChange={(e) => onChange(e.target.value)}
       aria-label={label}
-      className="w-full px-3 py-2 border border-border rounded-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="input h-12 text-base"
     />
   );
 }
 
-function DateButton({
-  label,
-  value,
-  isOpen,
-  onClick,
-}: DateButtonProps) {
-  const accessibleLabel = value ? `${label}: ${value}` : label;
+const DateButton = forwardRef<HTMLButtonElement, DateButtonProps>(
+  ({ label, value, isOpen, onClick, error }, ref) => {
+    const accessibleLabel = value ? `${label}: ${value}` : label;
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={accessibleLabel}
-      aria-expanded={isOpen}
-      className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all flex items-center justify-between gap-2 ${isOpen ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
-    >
-      <span>{value || label}</span>
-      <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-    </button>
-  );
-}
+    return (
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        aria-label={accessibleLabel}
+        aria-expanded={isOpen}
+        className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 transition-all flex items-center justify-between gap-2 ${
+          isOpen
+            ? "border-primary ring-2 ring-primary/20 focus-visible:ring-primary/20"
+            : error
+              ? "border-error focus-visible:ring-error/40"
+              : "border-border focus-visible:ring-primary/20"
+        }`}
+      >
+        <span>{value || label}</span>
+        <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+      </button>
+    );
+  }
+);
+DateButton.displayName = "DateButton";
 
 export default function DatePickerImpl({
   idPrefix = "date",
@@ -114,6 +126,8 @@ export default function DatePickerImpl({
   enableAllDayToggle = false,
   isAllDay = false,
   onToggleAllDay,
+  autoFocus,
+  error,
 }: DatePickerComponentProps) {
   const t = useTranslations("Components.DatePicker");
   const locale = useLocale();
@@ -124,41 +138,155 @@ export default function DatePickerImpl({
   const minDateObj = minDate ? toDate(minDate) : undefined;
 
   const [activeField, setActiveField] = useState<"start" | "end" | null>(null);
+  const [renderedField, setRenderedField] = useState<"start" | "end" | null>(
+    null,
+  );
+  const [isAnimating, setIsAnimating] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+  const endButtonRef = useRef<HTMLButtonElement>(null);
+  const hasAutoFocusedRef = useRef(false);
+  const allDaySwitchId = `${idPrefix}-all-day-switch`;
 
-  const handleDaySelectStart = (day: Date | undefined) => {
-    if (!day) return;
-    const newStart = new Date(day);
-    newStart.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
+  useEffect(() => {
+    if (autoFocus && startButtonRef.current && !hasAutoFocusedRef.current) {
+      hasAutoFocusedRef.current = true;
+      startButtonRef.current.focus();
+    }
+  }, [autoFocus]);
 
-    onChange("startDate", toISOStringLocalMinutes(newStart));
-
-    if (isAllDay) {
-      const endOfDay = setSeconds(
-        setMinutes(setHours(newStart, 23), 59),
-        59,
-      );
-      onChange("endDate", toISOStringLocalMinutes(endOfDay));
-      setActiveField(null);
+  // Manage enter/leave animation for the calendar popup. We intentionally
+  // drive the animation flag from the active field change so the popup stays
+  // mounted long enough to animate out. renderedField keeps the content
+  // mounted during the exit animation so it doesn't disappear instantly.
+  useEffect(() => {
+    if (activeField) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- renderedField mirrors activeField for exit animation
+      setRenderedField(activeField);
+      setIsAnimating(true);
       return;
     }
 
-    const diff = endDate.getTime() - startDate.getTime();
-    const newEnd =
-      diff > 0
-        ? new Date(newStart.getTime() + diff)
-        : addMinutes(newStart, 60);
-    onChange("endDate", toISOStringLocalMinutes(newEnd));
-    // Keep calendar open so user can adjust the time without re-clicking
+    const timer = setTimeout(() => {
+      setIsAnimating(false);
+      setRenderedField(null);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [activeField]);
+
+  // Close calendar when clicking outside, pressing Escape, or moving focus out
+  useEffect(() => {
+    if (!activeField) return;
+
+    const handleClickOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (
+        target &&
+        target.isConnected &&
+        wrapperRef.current &&
+        !wrapperRef.current.contains(target)
+      ) {
+        setActiveField(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleClickOutside);
+    };
+  }, [activeField]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape" && activeField) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      const field = activeField;
+      setActiveField(null);
+
+      // Restore focus to the button that opened the calendar
+      requestAnimationFrame(() => {
+        if (field === "start") {
+          startButtonRef.current?.focus();
+        } else if (field === "end") {
+          endButtonRef.current?.focus();
+        }
+      });
+    }
   };
 
-  const handleDaySelectEnd = (day: Date | undefined) => {
-    if (!day) return;
-    const newEnd = new Date(day);
-    newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    // Only close the calendar when focus moves to a known element outside the
+    // wrapper (e.g. user pressed Tab). When clicking non-focusable elements
+    // inside the dropdown, relatedTarget is null and the existing mousedown
+    // listener already handles outside clicks, so we leave the calendar open.
+    if (
+      event.relatedTarget &&
+      wrapperRef.current &&
+      !wrapperRef.current.contains(event.relatedTarget as Node)
+    ) {
+      setActiveField(null);
+    }
+  };
 
-    const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
-    onChange("endDate", toISOStringLocalMinutes(corrected));
-    // Keep calendar open so user can adjust the time without re-clicking
+  const handleDaySelectStart = (day: Date | undefined): void => {
+    if (day) {
+      const newStart = new Date(day);
+      newStart.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
+
+      onChange("startDate", toISOStringLocalMinutes(newStart));
+
+      if (isAllDay) {
+        const dayDiff = Math.max(
+          0,
+          differenceInCalendarDays(endDate, startDate),
+        );
+        const newEnd = addDays(newStart, dayDiff);
+        const endOfDay = setSeconds(
+          setMinutes(setHours(newEnd, 23), 59),
+          59,
+        );
+        onChange("endDate", toISOStringLocalMinutes(endOfDay));
+        setActiveField(null);
+        requestAnimationFrame(() => {
+          startButtonRef.current?.focus();
+        });
+      } else {
+        const diff = endDate.getTime() - startDate.getTime();
+        const newEnd =
+          diff > 0
+            ? new Date(newStart.getTime() + diff)
+            : addMinutes(newStart, 60);
+        onChange("endDate", toISOStringLocalMinutes(newEnd));
+        // Keep calendar open so user can adjust the time without re-clicking
+      }
+    }
+  };
+
+  const handleDaySelectEnd = (day: Date | undefined): void => {
+    if (day) {
+      const newEnd = new Date(day);
+      newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
+
+      if (isAllDay) {
+        const baseDate = newEnd <= startDate ? startDate : newEnd;
+        const corrected = setSeconds(
+          setMinutes(setHours(baseDate, 23), 59),
+          59,
+        );
+        onChange("endDate", toISOStringLocalMinutes(corrected));
+        setActiveField(null);
+        requestAnimationFrame(() => {
+          endButtonRef.current?.focus();
+        });
+      } else {
+        const corrected =
+          newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
+        onChange("endDate", toISOStringLocalMinutes(corrected));
+        // Keep calendar open so user can adjust the time without re-clicking
+      }
+    }
   };
 
   const handleStartTimeChange = (time: string) => {
@@ -185,16 +313,40 @@ export default function DatePickerImpl({
   const startDisplay = formatDateDisplay(startDate, locale);
   const endDisplay = formatDateDisplay(endDate, locale);
 
+  const today = startOfDay(new Date());
+  const isTodayValidForStart =
+    !minDateObj || today >= startOfDay(minDateObj);
+  const isTodayValidForEnd =
+    today >= startOfDay(startDate) &&
+    (!minDateObj || today >= startOfDay(minDateObj));
+  // renderedField is kept during the exit animation so the popup content
+  // stays mounted while it fades out. While a field is actively open, prefer
+  // activeField so switching between Start and End updates immediately.
+  const visibleField = activeField ?? renderedField;
+  const isTodayValid =
+    visibleField === "start" ? isTodayValidForStart : isTodayValidForEnd;
+
   return (
-    <div className={`w-full flex flex-col gap-4 ${className ?? ""}`}>
+    <div
+      ref={wrapperRef}
+      className={`relative w-full flex flex-col gap-4 ${className ?? ""}`}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+    >
       <div className="flex justify-between items-center">
         <label className="form-label">{t("dateAndTime")}</label>
 
         {enableAllDayToggle && (
-          <label className="flex items-center gap-2 cursor-pointer select-none">
+          <label
+            htmlFor={allDaySwitchId}
+            className="flex items-center gap-2 cursor-pointer select-none"
+          >
             <div className="relative">
               <input
+                id={allDaySwitchId}
                 type="checkbox"
+                role="switch"
+                aria-checked={isAllDay}
                 className="sr-only"
                 checked={isAllDay}
                 onChange={(e) => onToggleAllDay?.(e.target.checked)}
@@ -219,6 +371,7 @@ export default function DatePickerImpl({
             {t("start")}
           </span>
           <DateButton
+            ref={startButtonRef}
             label={t("start")}
             value={
               isAllDay
@@ -229,6 +382,7 @@ export default function DatePickerImpl({
             onClick={() =>
               setActiveField((prev) => (prev === "start" ? null : "start"))
             }
+            error={error}
           />
         </div>
 
@@ -237,6 +391,7 @@ export default function DatePickerImpl({
             {t("end")}
           </span>
           <DateButton
+            ref={endButtonRef}
             label={t("end")}
             value={
               isAllDay
@@ -247,61 +402,106 @@ export default function DatePickerImpl({
             onClick={() =>
               setActiveField((prev) => (prev === "end" ? null : "end"))
             }
+            error={error}
           />
         </div>
       </div>
 
-      {activeField && (
-        <div className="rdp-form-wrapper border border-border rounded-card p-3 bg-background">
-          <DayPicker
-            id={`${idPrefix}-${activeField}`}
-            mode="single"
-            locale={dateFnsLocale}
-            selected={activeField === "start" ? startDate : endDate}
-            onSelect={
-              activeField === "start"
-                ? handleDaySelectStart
-                : handleDaySelectEnd
-            }
-            disabled={
-              activeField === "end"
-                ? {
-                    before:
-                      minDateObj && minDateObj > startDate
-                        ? minDateObj
-                        : startDate,
-                  }
-                : minDateObj
-                  ? { before: minDateObj }
-                  : undefined
-            }
-            defaultMonth={activeField === "start" ? startDate : endDate}
-            showOutsideDays
-            fixedWeeks
-            required={required}
+      {(activeField || isAnimating) && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/5 z-40 pointer-events-none"
+            aria-hidden="true"
           />
-          {!isAllDay && (
-            <div className="mt-3 pt-3 border-t border-border">
-              <TimeSelector
-                value={formatTime(
-                  activeField === "start" ? startDate : endDate,
+          <div
+            aria-hidden={!activeField}
+            inert={!activeField ? true : undefined}
+            className={`rdp-form-wrapper absolute top-full left-0 right-0 sm:left-0 sm:right-auto sm:w-fit z-50 mt-2 border border-border rounded-card p-3 bg-background shadow-lg transition-all duration-200 ease-smooth origin-top-left ${
+              activeField
+                ? "opacity-100 scale-100 translate-y-0"
+                : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+            }`}
+          >
+            {visibleField && (
+              <>
+                <DayPicker
+                  id={`${idPrefix}-${visibleField}`}
+                  mode="single"
+                  locale={dateFnsLocale}
+                  selected={
+                    visibleField === "start" ? startDate : endDate
+                  }
+                  onSelect={
+                    visibleField === "start"
+                      ? handleDaySelectStart
+                      : handleDaySelectEnd
+                  }
+                  disabled={
+                    visibleField === "end"
+                      ? {
+                          before:
+                            minDateObj && minDateObj > startDate
+                              ? minDateObj
+                              : startDate,
+                        }
+                      : minDateObj
+                        ? { before: minDateObj }
+                        : undefined
+                  }
+                  defaultMonth={
+                    visibleField === "start" ? startDate : endDate
+                  }
+                  showOutsideDays
+                  fixedWeeks
+                  required={required}
+                />
+                {!isAllDay && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <TimeSelector
+                      value={formatTime(
+                        visibleField === "start" ? startDate : endDate,
+                      )}
+                      onChange={
+                        visibleField === "start"
+                          ? handleStartTimeChange
+                          : handleEndTimeChange
+                      }
+                      minTime={
+                        visibleField === "end" &&
+                          startDate.toDateString() === endDate.toDateString()
+                          ? formatTime(startDate)
+                          : undefined
+                      }
+                      label={
+                        visibleField === "start" ? t("start") : t("end")
+                      }
+                    />
+                  </div>
                 )}
-                onChange={
-                  activeField === "start"
-                    ? handleStartTimeChange
-                    : handleEndTimeChange
-                }
-                minTime={
-                  activeField === "end" &&
-                    startDate.toDateString() === endDate.toDateString()
-                    ? formatTime(startDate)
-                    : undefined
-                }
-                label={activeField === "start" ? t("start") : t("end")}
-              />
-            </div>
-          )}
-        </div>
+                <div className="mt-3 pt-3 border-t border-border flex justify-end">
+                  <button
+                    type="button"
+                    disabled={!isTodayValid}
+                    onClick={() => {
+                      if (visibleField === "start") {
+                        handleDaySelectStart(today);
+                      } else if (visibleField === "end") {
+                        handleDaySelectEnd(today);
+                      }
+                    }}
+                    className={`text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm ${
+                      isTodayValid
+                        ? "text-primary hover:text-primary-dark hover:underline"
+                        : "text-muted-foreground cursor-not-allowed"
+                    }`}
+                  >
+                    {t("today")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

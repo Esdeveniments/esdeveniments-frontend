@@ -944,12 +944,14 @@
     },
     "DatePicker": {
       "dateAndTime": "Fecha y hora *",
+      "selectDateAndTime": "Seleccionar fecha y hora",
       "start": "Inicio *",
       "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "Todo el día (sin hora de fin)",
-      "allDayHelper": "Si dura todo el día, marcaremos el final en el mismo día."
+      "allDayHelper": "Si dura todo el día, marcaremos el final en el mismo día.",
+      "today": "Hoy"
     },
     "LoadMoreButton": {
       "loading": "Cargando más eventos",

@@ -832,8 +832,8 @@ video {
   --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
   --rdp-selected-border: 0px solid transparent;
   --rdp-day_button-border-radius: 9999px;
-  --rdp-day_button-height: 36px;
-  --rdp-day_button-width: 36px;
+  --rdp-day_button-height: 44px;
+  --rdp-day_button-width: 44px;
 }
 
 .rdp-form-wrapper .rdp-root {
@@ -867,6 +867,37 @@ video {
   background-color: rgba(214, 0, 47, 0.06);
   color: rgb(69, 69, 69);
   outline: none !important;
+}
+
+.rdp-form-wrapper .rdp-button_previous,
+.rdp-form-wrapper .rdp-button_next {
+  color: #d6002f;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+}
+
+.rdp-form-wrapper .rdp-button_previous:hover,
+.rdp-form-wrapper .rdp-button_next:hover {
+  color: #a80025;
+  background-color: rgba(214, 0, 47, 0.06);
+}
+
+.rdp-form-wrapper .rdp-chevron {
+  width: 24px;
+  height: 24px;
+  fill: #d6002f;
+}
+
+.rdp-form-wrapper .rdp-button_previous:hover .rdp-chevron,
+.rdp-form-wrapper .rdp-button_next:hover .rdp-chevron {
+  fill: #a80025;
+}
+
+/* Add breathing room to the right of the last column day numbers so they
+   don't sit flush against the popup edge. */
+.rdp-form-wrapper .rdp-week > .rdp-day:last-child {
+  padding-right: 0.5rem;
 }
 
 /* Keyboard focus: visible ring for form calendar accessibility */
