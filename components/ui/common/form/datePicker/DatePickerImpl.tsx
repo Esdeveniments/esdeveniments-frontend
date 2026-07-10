@@ -173,13 +173,18 @@ export default function DatePickerImpl({
     };
   }, [activeField]);
 
-  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    if (
-      event.relatedTarget &&
-      !wrapperRef.current?.contains(event.relatedTarget as Node)
-    ) {
-      setActiveField(null);
-    }
+  const handleBlur = () => {
+    // Defer the check to the next animation frame so Safari/Firefox have
+    // settled document.activeElement after interacting with non-focusable
+    // elements inside the calendar dropdown.
+    requestAnimationFrame(() => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(document.activeElement)
+      ) {
+        setActiveField(null);
+      }
+    });
   };
 
   const handleDaySelectStart = (day: Date | undefined) => {
@@ -213,13 +218,24 @@ export default function DatePickerImpl({
     const newEnd = new Date(day);
     newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
 
-    const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
-    onChange("endDate", toISOStringLocalMinutes(corrected));
-
     if (isAllDay) {
+      const corrected =
+        newEnd <= startDate
+          ? setSeconds(
+              setMinutes(setHours(new Date(startDate), 23), 59),
+              59,
+            )
+          : setSeconds(
+              setMinutes(setHours(newEnd, 23), 59),
+              59,
+            );
+      onChange("endDate", toISOStringLocalMinutes(corrected));
       setActiveField(null);
       return;
     }
+
+    const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
+    onChange("endDate", toISOStringLocalMinutes(corrected));
     // Keep calendar open so user can adjust the time without re-clicking
   };
 
