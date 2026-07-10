@@ -341,7 +341,28 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       {uploadMessage && (
         <p className="text-sm text-foreground/80 mt-2">{uploadMessage}</p>
       )}
-      {displayedError && <p className="text-primary text-sm mt-2">{displayedError}</p>}
+      {displayedError && (
+        <div
+          className="mt-3 px-4 py-3 bg-error/10 border border-error rounded-lg flex items-start gap-3"
+          role="alert"
+        >
+          <svg
+            className="w-5 h-5 text-error flex-shrink-0 mt-0.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <p className="text-sm font-medium text-error">{displayedError}</p>
+        </div>
+      )}
       {imgData && (imgData.startsWith("http") || imgData.startsWith("data:") || imgData.startsWith("/")) ? (
         <div className="flex justify-center items-start p-4">
           <button
