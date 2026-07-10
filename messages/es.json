@@ -841,7 +841,9 @@
       "readLess": "Leer menos",
       "durationLabel": "Duración: {duration}",
       "sidebarAriaLabel": "Detalles del evento",
-      "toolbarAriaLabel": "Acciones del evento"
+      "toolbarAriaLabel": "Acciones del evento",
+      "sidebarCreatedBy": "Publicado por",
+      "sidebarViewAllEvents": "Ver todos los eventos"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",

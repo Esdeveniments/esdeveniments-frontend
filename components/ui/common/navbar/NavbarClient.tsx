@@ -17,6 +17,7 @@ import Image from "next/image";
 import ActiveLink from "@components/ui/common/link";
 import PressableLink from "@components/ui/primitives/PressableLink";
 import { useAuth } from "@components/hooks/useAuth";
+import { sanitize } from "@utils/sanitize-segment";
 import type { NavbarClientProps } from "types/props";
 
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -28,6 +29,14 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const logoAlt = labels.logoAlt?.trim() || "Esdeveniments";
+
+  // Slugify the username (or fall back to the display name slugified) for the
+  // /perfil/{slug} URL. user.username is the server-slugified handle but can
+  // be empty when Logto doesn't populate it; sanitize() on user.name produces
+  // the same slug format the backend uses (e.g. "Gerard Rovellat" → "gerard-rovellat").
+  const profileSlug = user
+    ? user.username || sanitize(user.name || user.email)
+    : "";
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
 
@@ -111,51 +120,49 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 ))}
               </div>
 
-              {/* Desktop auth button / avatar dropdown */}
+              {/* Desktop auth: avatar dropdown with profile + logout */}
               {!isLoading && (
                 isAuthenticated && user ? (
                   <div className="relative" ref={userMenuRef}>
-                    <button
-                      type="button"
-                      onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                      className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive"
-                      aria-label={labels.userMenu}
-                      aria-expanded={isUserMenuOpen}
-                      data-testid="user-avatar-button"
-                    >
-                      {user.avatarUrl ? (
-                        <img
-                          src={user.avatarUrl}
-                          alt=""
-                          className="w-9 h-9 rounded-full object-cover"
-                        />
-                      ) : (
-                        (user.name || user.email).charAt(0).toUpperCase()
-                      )}
-                    </button>
-                    {isUserMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 card-bordered card-body shadow-md bg-background z-50 rounded-lg" data-testid="user-dropdown-menu">
-                        <p className="body-small text-foreground/60 truncate mb-2">
-                          {user.name || user.email}
-                        </p>
-                        {user.username && (
+                      <button
+                        type="button"
+                        onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                        className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive"
+                        aria-label={labels.userMenu}
+                        aria-expanded={isUserMenuOpen}
+                        data-testid="user-avatar-button"
+                      >
+                        {user.avatarUrl ? (
+                          <img
+                            src={user.avatarUrl}
+                            alt=""
+                            className="w-9 h-9 rounded-full object-cover"
+                          />
+                        ) : (
+                          (user.name || user.email).charAt(0).toUpperCase()
+                        )}
+                      </button>
+                      {isUserMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-48 card-bordered card-body shadow-md bg-background z-50 rounded-lg" data-testid="user-dropdown-menu">
+                          <p className="body-small text-foreground/60 truncate mb-2">
+                            {user.name || user.email}
+                          </p>
                           <ActiveLink
-                            href={`/perfil/${encodeURIComponent(user.username)}`}
+                            href={`/perfil/${encodeURIComponent(profileSlug)}`}
                             className="block w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
                           >
                             {labels.myProfile}
                           </ActiveLink>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => { logout(); setIsUserMenuOpen(false); }}
-                          className="w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
-                        >
-                          {labels.logout}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                          <button
+                            type="button"
+                            onClick={() => { logout(); setIsUserMenuOpen(false); }}
+                            className="w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
+                          >
+                            {labels.logout}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                 ) : (
                   <ActiveLink
                     href="/iniciar-sessio"
@@ -273,14 +280,12 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     <p className="body-small text-foreground/60 text-center truncate">
                       {user.name || user.email}
                     </p>
-                    {user.username && (
-                      <ActiveLink
-                        href={`/perfil/${encodeURIComponent(user.username)}`}
-                        className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
-                      >
-                        {labels.myProfile}
-                      </ActiveLink>
-                    )}
+                    <ActiveLink
+                      href={`/perfil/${encodeURIComponent(profileSlug)}`}
+                      className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
+                    >
+                      {labels.myProfile}
+                    </ActiveLink>
                     <button
                       type="button"
                       onClick={() => { logout(); setIsMenuOpen(false); }}

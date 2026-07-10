@@ -841,7 +841,9 @@
       "readLess": "Read less",
       "durationLabel": "Duration: {duration}",
       "sidebarAriaLabel": "Event details",
-      "toolbarAriaLabel": "Event actions"
+      "toolbarAriaLabel": "Event actions",
+      "sidebarCreatedBy": "Published by",
+      "sidebarViewAllEvents": "View all events"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",

@@ -1,5 +1,8 @@
 import ProfileOwnerActions from "@components/ui/profile/ProfileOwnerActions";
 import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { parseBackendDateAsUtcMs } from "@utils/date-helpers";
+import type { AppLocale } from "types/i18n";
 import type { ProfileHeaderProps } from "types/props";
 
 function AvatarFallback({ name }: { name: string }) {
@@ -15,8 +18,27 @@ function AvatarFallback({ name }: { name: string }) {
   );
 }
 
+/** Format a backend ISO date-time as a locale-aware month + year string.
+ *  Uses parseBackendDateAsUtcMs to handle timezone-naive strings the backend
+ *  may emit (e.g. "2023-01-15T10:30:00" without a Z suffix). */
+function formatJoinedDate(isoDate: string, locale: AppLocale): string {
+  const ms = parseBackendDateAsUtcMs(isoDate);
+  if (ms === null) return "";
+  return new Intl.DateTimeFormat(locale, {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(ms));
+}
+
 export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
-  const t = await getTranslations("Components.Profile");
+  const [t, locale] = await Promise.all([
+    getTranslations("Components.Profile"),
+    getLocaleSafely(),
+  ]);
+
+  const joinedDateText = profile.createdAt
+    ? formatJoinedDate(profile.createdAt, locale)
+    : "";
 
   return (
     <section
@@ -28,7 +50,16 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
 
       <div className="px-section-x py-element-gap -mt-10 relative">
         <div className="flex items-end gap-element-gap mb-element-gap">
-          <AvatarFallback name={profile.name} />
+          {profile.pictureUrl ? (
+            <img
+              src={profile.pictureUrl}
+              alt={profile.name}
+              className="w-20 h-20 rounded-full object-cover border-4 border-background shadow-md"
+              loading="eager"
+            />
+          ) : (
+            <AvatarFallback name={profile.name} />
+          )}
         </div>
 
         <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -36,7 +67,13 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
           <ProfileOwnerActions username={profile.username} />
         </div>
 
-        <p className="body-small text-foreground/60">@{profile.username}</p>
+        <p className="body-small text-foreground/60 mb-1">@{profile.username}</p>
+
+        {joinedDateText && (
+          <p className="body-small text-foreground/50">
+            {t("joinedDate", { date: joinedDateText })}
+          </p>
+        )}
       </div>
     </section>
   );

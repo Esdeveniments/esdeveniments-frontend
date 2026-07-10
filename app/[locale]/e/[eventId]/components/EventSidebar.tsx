@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   ClockIcon,
+  UserIcon,
 } from "@heroicons/react/24/outline";
+import { Link } from "@i18n/routing";
 import EventCalendar from "./EventCalendar";
 import EventLocation from "./EventLocation";
 import Weather from "components/ui/weather";
@@ -96,6 +98,31 @@ export default async function EventSidebar({
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                     {t("sidebarVisitWebsite")}
                   </PressableAnchor>
+                </div>
+              </>
+            )}
+
+            {/* Creator / publisher profile link */}
+            {event.createdByUser && (
+              <>
+                <hr className="border-border" />
+                <div className="flex flex-col gap-1">
+                  <h3 className="label font-semibold text-foreground-strong">
+                    {t("sidebarCreatedBy")}
+                  </h3>
+                  <Link
+                    href={`/perfil/${encodeURIComponent(event.createdByUser.username)}`}
+                    className="inline-flex items-center gap-1.5 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
+                  >
+                    <UserIcon className="w-4 h-4 flex-shrink-0" />
+                    {event.createdByUser.name}
+                  </Link>
+                  <Link
+                    href={`/perfil/${encodeURIComponent(event.createdByUser.username)}`}
+                    className="body-small text-primary/70 hover:text-primary transition-colors"
+                  >
+                    {t("sidebarViewAllEvents")} →
+                  </Link>
                 </div>
               </>
             )}

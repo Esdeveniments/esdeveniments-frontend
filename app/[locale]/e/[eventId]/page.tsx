@@ -48,6 +48,7 @@ import SocialProofCounter from "./components/SocialProofCounter";
 import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
 import DetailSectionTracker from "./components/DetailSectionTracker";
+import EventDetailsSection from "./components/EventDetailsSection";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -451,6 +452,12 @@ async function EventPageContent({
                       showTranslate={temporalStatus.state !== "past"}
                     />
                   </CollapsibleDescription>
+                </DetailSectionTracker>
+
+                {/* Event details: duration, external link, creator profile link.
+                    Mobile only — desktop shows these in EventSidebar to avoid duplication. */}
+                <DetailSectionTracker section="details" className="lg:hidden">
+                  <EventDetailsSection event={event} />
                 </DetailSectionTracker>
 
                 {/* Location — mobile only */}

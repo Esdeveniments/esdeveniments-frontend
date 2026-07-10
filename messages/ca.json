@@ -848,7 +848,9 @@
       "readLess": "Llegir menys",
       "durationLabel": "Durada: {duration}",
       "sidebarAriaLabel": "Detalls de l'esdeveniment",
-      "toolbarAriaLabel": "Accions de l'esdeveniment"
+      "toolbarAriaLabel": "Accions de l'esdeveniment",
+      "sidebarCreatedBy": "Publicat per",
+      "sidebarViewAllEvents": "Veure tots els esdeveniments"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
