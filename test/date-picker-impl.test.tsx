@@ -236,6 +236,29 @@ describe("DatePickerImpl", () => {
       expect(screen.queryByRole("grid")).not.toBeInTheDocument();
     });
 
+    it("closes calendar after end day selection when isAllDay is true", () => {
+      render(
+        <DatePickerImpl {...allDayProps} isAllDay={true} />
+      );
+
+      // Open end calendar
+      const buttons = screen.getAllByRole("button");
+      fireEvent.click(buttons[1]);
+      expect(screen.getByRole("grid")).toBeInTheDocument();
+
+      // Select a day
+      const grid = screen.getByRole("grid");
+      const day20 = within(grid).getByText("20");
+      fireEvent.click(day20);
+
+      // Calendar should close when isAllDay (no time to select)
+      expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+      expect(baseProps.onChange).toHaveBeenCalledWith(
+        "endDate",
+        expect.stringContaining("2026-03-20")
+      );
+    });
+
     it("calls onToggleAllDay when toggle is clicked", () => {
       render(<DatePickerImpl {...allDayProps} />);
 

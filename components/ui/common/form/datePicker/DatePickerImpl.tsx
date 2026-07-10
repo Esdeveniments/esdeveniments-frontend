@@ -133,7 +133,7 @@ export default function DatePickerImpl({
     }
   }, [autoFocus]);
 
-  // Close calendar when clicking outside or pressing Escape
+  // Close calendar when clicking outside, pressing Escape, or moving focus out
   useEffect(() => {
     if (!activeField) return;
 
@@ -160,6 +160,12 @@ export default function DatePickerImpl({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [activeField]);
+
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (!wrapperRef.current?.contains(event.relatedTarget as Node)) {
+      setActiveField(null);
+    }
+  };
 
   const handleDaySelectStart = (day: Date | undefined) => {
     if (!day) return;
@@ -194,6 +200,11 @@ export default function DatePickerImpl({
 
     const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
     onChange("endDate", toISOStringLocalMinutes(corrected));
+
+    if (isAllDay) {
+      setActiveField(null);
+      return;
+    }
     // Keep calendar open so user can adjust the time without re-clicking
   };
 
@@ -222,7 +233,7 @@ export default function DatePickerImpl({
   const endDisplay = formatDateDisplay(endDate, locale);
 
   return (
-    <div ref={wrapperRef} className={`w-full flex flex-col gap-4 ${className ?? ""}`}>
+    <div ref={wrapperRef} className={`w-full flex flex-col gap-4 ${className ?? ""}`} onBlur={handleBlur}>
       <div className="flex justify-between items-center">
         <label className="form-label">{t("dateAndTime")}</label>
 
@@ -289,7 +300,8 @@ export default function DatePickerImpl({
       </div>
 
       {activeField && (
-        <div className="rdp-form-wrapper border border-border rounded-card p-3 bg-background">
+        <div className="relative">
+          <div className="rdp-form-wrapper absolute top-full left-0 z-10 mt-2 border border-border rounded-card p-3 bg-background shadow-lg">
           <DayPicker
             id={`${idPrefix}-${activeField}`}
             mode="single"
@@ -338,6 +350,7 @@ export default function DatePickerImpl({
               />
             </div>
           )}
+          </div>
         </div>
       )}
     </div>
