@@ -34,20 +34,19 @@ function computeEndDate(
   initialEndDate: string | undefined,
   isAllDay: boolean,
 ): Date {
-  const initialEndCandidate = initialEndDate
-    ? toDate(initialEndDate)
-    : setMinutes(startingDate, startingDate.getMinutes() + 60);
-
-  const endingDate =
-    initialEndCandidate > startingDate
-      ? initialEndCandidate
-      : new Date(startingDate.getTime() + 60 * 60 * 1000);
-
   if (isAllDay) {
-    return setSeconds(setMinutes(setHours(endingDate, 23), 59), 59);
+    const candidate = initialEndDate ? toDate(initialEndDate) : startingDate;
+    const baseDate = candidate >= startingDate ? candidate : startingDate;
+    return setSeconds(setMinutes(setHours(baseDate, 23), 59), 59);
   }
 
-  return endingDate;
+  const initialEndCandidate = initialEndDate
+    ? toDate(initialEndDate)
+    : new Date(startingDate.getTime() + 60 * 60 * 1000);
+
+  return initialEndCandidate > startingDate
+    ? initialEndCandidate
+    : new Date(startingDate.getTime() + 60 * 60 * 1000);
 }
 
 function formatTime(d: Date): string {
