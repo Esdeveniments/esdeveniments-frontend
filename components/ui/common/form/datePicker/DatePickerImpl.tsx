@@ -173,18 +173,18 @@ export default function DatePickerImpl({
     };
   }, [activeField]);
 
-  const handleBlur = () => {
-    // Defer the check to the next animation frame so Safari/Firefox have
-    // settled document.activeElement after interacting with non-focusable
-    // elements inside the calendar dropdown.
-    requestAnimationFrame(() => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(document.activeElement)
-      ) {
-        setActiveField(null);
-      }
-    });
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    // Only close the calendar when focus moves to a known element outside the
+    // wrapper (e.g. user pressed Tab). When clicking non-focusable elements
+    // inside the dropdown, relatedTarget is null and the existing mousedown
+    // listener already handles outside clicks, so we leave the calendar open.
+    if (
+      event.relatedTarget &&
+      wrapperRef.current &&
+      !wrapperRef.current.contains(event.relatedTarget as Node)
+    ) {
+      setActiveField(null);
+    }
   };
 
   const handleDaySelectStart = (day: Date | undefined) => {
