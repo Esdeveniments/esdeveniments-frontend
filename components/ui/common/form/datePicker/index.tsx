@@ -11,7 +11,7 @@ const DatePickerImpl = dynamic(() => import("./DatePickerImpl"), {
 
 export default function DatePickerComponent(props: DatePickerComponentProps) {
   const t = useTranslations("Components.DatePicker");
-  const [shouldLoad, setShouldLoad] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(() => Boolean(props.autoFocus));
   const [wasInteracted, setWasInteracted] = useState(false);
 
   const ensureLoaded = useCallback((e?: React.SyntheticEvent) => {

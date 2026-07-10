@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, forwardRef } from "react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import { setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
+import { setHours, setMinutes, setSeconds, addMinutes, addDays } from "date-fns";
 import { ca, es, enUS } from "date-fns/locale";
 import type { Locale } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
@@ -91,12 +91,12 @@ const DateButton = forwardRef<HTMLButtonElement, DateButtonProps>(
         onClick={onClick}
         aria-label={accessibleLabel}
         aria-expanded={isOpen}
-        className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-all flex items-center justify-between gap-2 ${
+        className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 transition-all flex items-center justify-between gap-2 ${
           isOpen
-            ? "border-primary ring-2 ring-primary/20"
+            ? "border-primary ring-2 ring-primary/20 focus-visible:ring-primary/20"
             : error
               ? "border-error focus-visible:ring-error/40"
-              : "border-border"
+              : "border-border focus-visible:ring-primary/20"
         }`}
       >
         <span>{value || label}</span>
@@ -222,8 +222,16 @@ export default function DatePickerImpl({
       onChange("startDate", toISOStringLocalMinutes(newStart));
 
       if (isAllDay) {
+        const dayDiff = Math.max(
+          0,
+          Math.round(
+            (endDate.getTime() - startDate.getTime()) /
+              (24 * 60 * 60 * 1000),
+          ),
+        );
+        const newEnd = addDays(newStart, dayDiff);
         const endOfDay = setSeconds(
-          setMinutes(setHours(newStart, 23), 59),
+          setMinutes(setHours(newEnd, 23), 59),
           59,
         );
         onChange("endDate", toISOStringLocalMinutes(endOfDay));
