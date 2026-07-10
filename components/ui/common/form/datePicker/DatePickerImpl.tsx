@@ -319,9 +319,10 @@ export default function DatePickerImpl({
   const isTodayValidForEnd =
     today >= startOfDay(startDate) &&
     (!minDateObj || today >= startOfDay(minDateObj));
-  // renderedField lags one frame behind activeField on open (it's set in an
-  // effect), so fall back to activeField to avoid a brief empty popup.
-  const visibleField = renderedField ?? activeField;
+  // renderedField is kept during the exit animation so the popup content
+  // stays mounted while it fades out. While a field is actively open, prefer
+  // activeField so switching between Start and End updates immediately.
+  const visibleField = activeField ?? renderedField;
   const isTodayValid =
     visibleField === "start" ? isTodayValidForStart : isTodayValidForEnd;
 
