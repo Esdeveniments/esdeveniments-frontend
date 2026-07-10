@@ -376,8 +376,7 @@ export default function DatePickerImpl({
       {(activeField || isAnimating) && (
         <>
           <div
-            className="fixed inset-0 bg-black/5 z-40"
-            onClick={() => setActiveField(null)}
+            className="fixed inset-0 bg-black/5 z-40 pointer-events-none"
             aria-hidden="true"
           />
           <div
