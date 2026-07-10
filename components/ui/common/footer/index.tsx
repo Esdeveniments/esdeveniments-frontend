@@ -66,7 +66,7 @@ export default async function Footer(): Promise<JSX.Element> {
     <footer className="w-full border-t border-border bg-gradient-to-b from-background to-muted/30">
       <div className="container flex flex-col items-center gap-section-y-sm pt-section-y pb-20 md:pb-section-y px-section-x">
         {/* Social Media Section */}
-        <div className="flex flex-col items-center gap-element-gap">
+        <div className="flex flex-col items-center gap-element-gap px-4 sm:px-0">
           <Social links={links} />
         </div>
 
