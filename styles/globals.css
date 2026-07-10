@@ -894,6 +894,12 @@ video {
   fill: #a80025;
 }
 
+/* Add breathing room to the right of the last column day numbers so they
+   don't sit flush against the popup edge. */
+.rdp-form-wrapper .rdp-week > .rdp-day:last-child {
+  padding-right: 0.5rem;
+}
+
 /* Keyboard focus: visible ring for form calendar accessibility */
 .rdp-form-wrapper .rdp-day_button:focus-visible,
 .rdp-form-wrapper .rdp-button_previous:focus-visible,
