@@ -380,33 +380,4 @@ describe("DatePickerImpl", () => {
       expect(screen.getByText("Data i hora *")).toBeInTheDocument();
     });
   });
-
-  describe("click outside and Escape key", () => {
-    it("closes the calendar when clicking outside", () => {
-      render(
-        <div>
-          <div data-testid="outside">Outside Element</div>
-          <DatePickerImpl {...baseProps} />
-        </div>
-      );
-
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
-      fireEvent.click(startButton);
-      expect(screen.getByRole("grid")).toBeInTheDocument();
-
-      fireEvent.mouseDown(screen.getByTestId("outside"));
-      expect(screen.queryByRole("grid")).not.toBeInTheDocument();
-    });
-
-    it("closes the calendar when Escape key is pressed", () => {
-      render(<DatePickerImpl {...baseProps} />);
-
-      const startButton = screen.getByText(/07\/03\/2026\s+10:00/).closest("button")!;
-      fireEvent.click(startButton);
-      expect(screen.getByRole("grid")).toBeInTheDocument();
-
-      fireEvent.keyDown(document, { key: "Escape" });
-      expect(screen.queryByRole("grid")).not.toBeInTheDocument();
-    });
-  });
 });

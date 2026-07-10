@@ -951,7 +951,6 @@
     },
     "DatePicker": {
       "dateAndTime": "Data i hora *",
-      "selectDateAndTime": "Seleccionar data i hora",
       "start": "Inici *",
       "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
