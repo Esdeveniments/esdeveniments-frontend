@@ -144,12 +144,14 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                           <p className="body-small text-foreground/60 truncate mb-2">
                             {user.name || user.email}
                           </p>
-                          <ActiveLink
-                            href={`/perfil/${encodeURIComponent(profileSlug)}`}
-                            className="block w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
-                          >
-                            {labels.myProfile}
-                          </ActiveLink>
+                          {profileSlug && (
+                            <ActiveLink
+                              href={`/perfil/${encodeURIComponent(profileSlug)}`}
+                              className="block w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
+                            >
+                              {labels.myProfile}
+                            </ActiveLink>
+                          )}
                           <button
                             type="button"
                             onClick={() => { logout(); setIsUserMenuOpen(false); }}
@@ -277,12 +279,14 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     <p className="body-small text-foreground/60 text-center truncate">
                       {user.name || user.email}
                     </p>
-                    <ActiveLink
-                      href={`/perfil/${encodeURIComponent(profileSlug)}`}
-                      className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
-                    >
-                      {labels.myProfile}
-                    </ActiveLink>
+                    {profileSlug && (
+                      <ActiveLink
+                        href={`/perfil/${encodeURIComponent(profileSlug)}`}
+                        className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
+                      >
+                        {labels.myProfile}
+                      </ActiveLink>
+                    )}
                     <button
                       type="button"
                       onClick={() => { logout(); setIsMenuOpen(false); }}

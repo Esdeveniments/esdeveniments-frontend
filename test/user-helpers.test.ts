@@ -17,7 +17,7 @@ describe("getProfileSlug", () => {
     expect(getProfileSlug({ ...baseUser, username: "" })).toBe("joan-doe");
   });
 
-  it("falls back to user id when name is an email", () => {
+  it("falls back to empty string when name is an email", () => {
     expect(
       getProfileSlug({
         id: "user-123",
@@ -25,10 +25,10 @@ describe("getProfileSlug", () => {
         username: "",
         email: "esdevenimentscatalunyacat@gmail.com",
       }),
-    ).toBe("user-123");
+    ).toBe("");
   });
 
-  it("falls back to user id when name equals the user's email", () => {
+  it("falls back to empty string when name equals the user's email", () => {
     expect(
       getProfileSlug({
         id: "user-456",
@@ -36,10 +36,10 @@ describe("getProfileSlug", () => {
         username: "",
         email: "joan@example.com",
       }),
-    ).toBe("user-456");
+    ).toBe("");
   });
 
-  it("falls back to user id when name is empty", () => {
+  it("falls back to empty string when name is empty", () => {
     expect(
       getProfileSlug({
         id: "user-789",
@@ -47,10 +47,10 @@ describe("getProfileSlug", () => {
         username: "",
         email: "joan@example.com",
       }),
-    ).toBe("user-789");
+    ).toBe("");
   });
 
-  it("falls back to user id when username is an email", () => {
+  it("falls back to empty string when username is an email", () => {
     expect(
       getProfileSlug({
         id: "user-abc",
@@ -58,7 +58,7 @@ describe("getProfileSlug", () => {
         username: "joan@example.com",
         email: "joan@example.com",
       }),
-    ).toBe("user-abc");
+    ).toBe("");
   });
 
   it("trims whitespace from username before using it", () => {

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
 import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
 import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
+import { eventTag } from "@lib/cache/tags";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 import type { EventDetailResponseDTO } from "types/api/event";
 
@@ -55,9 +56,21 @@ export async function DELETE(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
+    // Fail fast if the session does not belong to the event creator. The
+    // backend also enforces this, but checking here avoids issuing a mutation
+    // for events the caller does not own.
+    const isCreator =
+      Boolean(currentUser.id) &&
+      currentUser.id === event.createdByUser?.id;
+    if (!isCreator) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     await deleteEventById(event.id);
     // Clear in-memory cache so next GET doesn't serve stale data
     deleteEventDetailCache(slug);
+    // Purge Next.js fetch Data Cache (tagged by lib/api/events.ts)
+    revalidateTag(eventTag(slug), { expire: 0 });
     // Purge Next.js Data Cache for all locales of the event detail page.
     // Default locale (ca) has no prefix; non-default locales get a prefix path.
     try {

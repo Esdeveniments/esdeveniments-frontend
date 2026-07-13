@@ -35,13 +35,17 @@ export async function enrichWithBackendProfile(
 
   // Logto sometimes returns the email as the user's name. Prefer the
   // backend-owned display name and username so the navbar links to the same
-  // public profile slug as event pages do.
+  // public profile slug as event pages do. Reject any value that looks like
+  // an email address to avoid exposing it in the UI or URLs.
   const backendNameIsBetter =
     backendUser.name &&
     backendUser.name !== user.email &&
-    backendUser.name !== user.name;
+    backendUser.name !== user.name &&
+    !backendUser.name.includes("@");
   const backendUsernameIsBetter =
-    backendUser.username && backendUser.username !== user.username;
+    backendUser.username &&
+    backendUser.username !== user.username &&
+    !backendUser.username.includes("@");
 
   return {
     ...user,
