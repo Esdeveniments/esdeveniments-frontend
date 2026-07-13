@@ -50,10 +50,11 @@ export async function fetchUserBySlug(
   return parseUserPublic(await res.json());
 }
 
-// Cached reader for generateMetadata and the page Suspense gate. "use cache"
-// is required under cacheComponents so the profile can be prerendered outside
-// a Suspense boundary without "Uncached data was accessed outside of <Suspense>".
-export async function getUserByUsernameForMetadata(
+// Cached reader used by generateMetadata and the page Suspense gate.
+// "use cache" is required under cacheComponents so the profile can be
+// prerendered outside a Suspense boundary without "Uncached data was accessed
+// outside of <Suspense>".
+export async function getUserByUsernameCached(
   username: string
 ): Promise<ProfileDetailResponseDTO | null> {
   "use cache";

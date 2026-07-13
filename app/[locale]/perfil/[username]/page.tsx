@@ -1,6 +1,6 @@
 import { Suspense, use } from "react";
 import { notFound } from "next/navigation";
-import { getUserByUsernameForMetadata } from "@lib/api/profiles";
+import { getUserByUsernameCached } from "@lib/api/profiles";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import ProfilePageShell from "@components/partials/ProfilePageShell";
 import { getTranslations } from "next-intl/server";
@@ -17,7 +17,7 @@ export async function generateMetadata({
 }) {
   const { username } = await params;
   const [profile, locale, t] = await Promise.all([
-    getUserByUsernameForMetadata(username),
+    getUserByUsernameCached(username),
     getLocaleSafely(),
     getTranslations("Components.Profile"),
   ]);
@@ -55,7 +55,7 @@ export default function ProfilePage({
 }
 
 async function ProfilePageGate({ username }: { username: string }) {
-  const profile = await getUserByUsernameForMetadata(username);
+  const profile = await getUserByUsernameCached(username);
 
   if (!profile) {
     notFound();
