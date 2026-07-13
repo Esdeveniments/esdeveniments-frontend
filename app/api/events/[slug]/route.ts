@@ -49,16 +49,21 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { slug: id } = await context.params;
-    await deleteEventById(id);
+    const { slug } = await context.params;
+    const event = await fetchExternalEvent(slug);
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    await deleteEventById(event.id);
     // Clear in-memory cache so next GET doesn't serve stale data
-    deleteEventDetailCache(id);
+    deleteEventDetailCache(slug);
     // Purge Next.js Data Cache for all locales of the event detail page.
     // Default locale (ca) has no prefix; non-default locales get a prefix path.
     try {
       for (const locale of SUPPORTED_LOCALES) {
         const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-        revalidatePath(`${prefix}/e/${id}`);
+        revalidatePath(`${prefix}/e/${slug}`);
       }
     } catch {
       // revalidatePath is a no-op outside of a render context in some environments
