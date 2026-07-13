@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "@i18n/routing";
 import { useState, useMemo, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";
 import { editEvent } from "./actions";
@@ -19,6 +20,7 @@ export default function EditEventClient({
   event: EventDetailResponseDTO;
   regions: RegionsGroupedByCitiesResponseDTO[] | null;
 }) {
+  const t = useTranslations("Components.EventPage");
   const router = useRouter();
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
   const [imageToUpload, setImageToUpload] = useState<string | null>(
@@ -97,18 +99,18 @@ export default function EditEventClient({
         if (result && result.success) {
           router.push(`/e/${result.newSlug}`);
         } else {
-          setSubmitError(result?.error ?? "Error updating event");
+          setSubmitError(result?.error ?? t("editError"));
         }
       } catch (error) {
         console.error("Error updating event:", error);
-        setSubmitError("Error updating event");
+        setSubmitError(t("editError"));
       }
     });
   }
 
   return (
     <div>
-      <h1 className="heading-2">Edita: {event.title}</h1>
+      <h1 className="heading-2">{t("editTitle", { title: event.title })}</h1>
       {submitError && (
         <div className="rounded-card border border-error bg-error/10 p-4 text-error" role="alert">
           {submitError}
@@ -117,7 +119,7 @@ export default function EditEventClient({
       <EventForm
         form={form}
         onSubmit={onSubmit}
-        submitLabel="Desa canvis"
+        submitLabel={t("editSave")}
         isEditMode={true}
         isLoading={isPending}
         cityOptions={cityOptions}

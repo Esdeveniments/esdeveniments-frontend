@@ -834,6 +834,9 @@
     "EventPage": {
       "sponsored": "Contingut patrocinat",
       "editEvent": "Editar esdeveniment",
+      "editTitle": "Edita: {title}",
+      "editError": "Error en actualitzar l'esdeveniment",
+      "editSave": "Desa canvis",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "stickyMoreInfo": "Més info",
       "stickyCalendar": "Calendari",

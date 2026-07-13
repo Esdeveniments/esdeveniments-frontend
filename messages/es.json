@@ -827,6 +827,9 @@
     "EventPage": {
       "sponsored": "Contenido patrocinado",
       "editEvent": "Editar evento",
+      "editTitle": "Editar: {title}",
+      "editError": "Error al actualizar el evento",
+      "editSave": "Guardar cambios",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
       "stickyMoreInfo": "Más info",
       "stickyCalendar": "Calendario",
