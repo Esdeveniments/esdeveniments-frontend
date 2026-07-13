@@ -1,10 +1,5 @@
+import type { ProfileSlugUser } from "types/api/user";
 import { sanitize } from "@utils/sanitize-segment";
-
-interface ProfileSlugUser {
-  id: string;
-  name: string;
-  username: string;
-}
 
 /**
  * Build a URL-safe profile slug for a user.

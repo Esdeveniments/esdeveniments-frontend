@@ -11,6 +11,13 @@ export interface UserPublicResponseDTO {
   createdAt?: string; // ISO date-time
 }
 
+/** Minimal user shape needed to build a public profile slug. */
+export interface ProfileSlugUser {
+  id: string;
+  name: string;
+  username: string;
+}
+
 export type PictureSource = "LOGTO" | "CUSTOM";
 
 /** Backend DTO: GET /api/auth/me response (authenticated session profile). */
