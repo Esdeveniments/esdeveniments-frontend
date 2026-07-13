@@ -15,6 +15,10 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@utils/auth-cookies", () => ({
   ID_TOKEN_COOKIE: "logto_id_token",
+  getIdTokenFromCookies: vi.fn(() => {
+    const value = mockCookieStore.get("logto_id_token");
+    return Promise.resolve(value ?? null);
+  }),
 }));
 
 const mockGetLogtoConfig = vi.fn();

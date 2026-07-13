@@ -30,7 +30,13 @@ export async function editEvent(
     };
   }
 
-  const isCreator = event.createdByUser?.id === currentUser?.id;
+  // Require both IDs to be defined and match. A missing creator on a legacy
+  // event must not match a logged-out user (undefined === undefined).
+  const isCreator = Boolean(
+    currentUser?.id &&
+      event.createdByUser?.id &&
+      currentUser.id === event.createdByUser.id,
+  );
   if (!isCreator) {
     return {
       success: false,

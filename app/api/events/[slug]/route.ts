@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
 import { deleteEventById } from "@lib/api/events";
+import { getCurrentUser } from "@lib/auth/session";
 import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
@@ -36,12 +37,18 @@ export async function GET(
   }
 }
 
-// DELETE /api/events/[slug] - delete event by id (requires auth cookie)
+// DELETE /api/events/[slug] - delete event by slug (requires auth cookie).
+// The backend enforces the creator check; we fail fast if no session exists.
 export async function DELETE(
   _request: Request,
   context: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { slug: id } = await context.params;
     await deleteEventById(id);
     // Clear in-memory cache so next GET doesn't serve stale data

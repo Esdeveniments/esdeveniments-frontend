@@ -451,6 +451,9 @@ export default async function proxy(request: NextRequest) {
         PUBLIC_API_GET_EXACT_PATHS.includes(pathname)) ||
       // Event routes (GET only): base, [slug], or /categorized
       (request.method === "GET" && EVENTS_PATTERN.test(pathname)) ||
+      // Browser-initiated event deletion (relies on cookie auth + backend creator check)
+      (request.method === "DELETE" &&
+        /^\/api\/events\/(?!categorized$)[^/]+$/.test(pathname)) ||
       // Image proxy (GET only): used by Next/Image to safely load external images
       (pathname === "/api/image-proxy" && request.method === "GET");
 

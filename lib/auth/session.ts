@@ -1,11 +1,10 @@
 import "server-only";
-import { cookies } from "next/headers";
 import {
   getLogtoConfig,
   mapClaimsToAuthUser,
   verifyStoredIdToken,
 } from "@lib/auth/logto";
-import { ID_TOKEN_COOKIE } from "@utils/auth-cookies";
+import { getIdTokenFromCookies } from "@utils/auth-cookies";
 import type { AuthUser } from "types/auth";
 
 /**
@@ -20,8 +19,7 @@ import type { AuthUser } from "types/auth";
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
-    const cookieStore = await cookies();
-    const idToken = cookieStore.get(ID_TOKEN_COOKIE)?.value;
+    const idToken = await getIdTokenFromCookies();
     if (!idToken) return null;
 
     const config = getLogtoConfig();
