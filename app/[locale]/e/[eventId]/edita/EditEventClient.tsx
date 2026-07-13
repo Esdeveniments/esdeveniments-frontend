@@ -97,7 +97,7 @@ export default function EditEventClient({
         });
         const result = await editEvent(event.id, event.slug, data);
         if (result && result.success) {
-          router.push(`/e/${result.newSlug}`);
+          router.push(`/e/${result.newSlug || event.slug}`);
         } else {
           setSubmitError(result?.error ?? t("editError"));
         }

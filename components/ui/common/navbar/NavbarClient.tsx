@@ -32,7 +32,8 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
 
   // Build a URL-safe slug for the /perfil/{slug} URL. Prefer the
   // server-slugified username, fall back to a slugified display name, and
-  // finally to the user id. Never expose email addresses.
+  // return an empty string when no safe slug is available. Never expose
+  // email addresses or raw UUIDs.
   const profileSlug = getProfileSlug(user);
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);

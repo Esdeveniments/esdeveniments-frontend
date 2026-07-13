@@ -40,8 +40,10 @@ export default async function EditaPage({
 
   // Only the event creator may edit. Treat missing/unknown ownership as 404
   // to avoid leaking the existence of the edit page.
+  const currentUserId = currentUser?.id;
   const isCreator =
-    currentUser && event?.createdByUser?.id === currentUser.id;
+    Boolean(currentUserId) &&
+    currentUserId === event?.createdByUser?.id;
   if (!event || !isCreator) return notFound();
 
   // Fetch region data only after confirming the user is the creator.
