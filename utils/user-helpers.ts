@@ -8,5 +8,15 @@ import { sanitize } from "@utils/sanitize-segment";
  */
 export function getProfileSlug(user: ProfileSlugUser | null | undefined): string {
   if (!user) return "";
-  return user.username || (user.name ? sanitize(user.name) : user.id);
+  if (user.username) return user.username;
+
+  // Some identity providers set `name` to the email address when no display
+  // name is configured. Sanitizing that would still expose the email in the
+  // URL, so fall back to the user id instead.
+  const name = user.name?.trim();
+  if (name && !name.includes("@") && name !== user.email) {
+    return sanitize(name);
+  }
+
+  return user.id;
 }

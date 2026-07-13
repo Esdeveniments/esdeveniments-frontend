@@ -16,6 +16,7 @@ export interface ProfileSlugUser {
   id: string;
   name: string;
   username: string;
+  email?: string;
 }
 
 export type PictureSource = "LOGTO" | "CUSTOM";
