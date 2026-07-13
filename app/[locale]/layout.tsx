@@ -18,6 +18,7 @@ import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
 import WebMcpTools from "@components/partials/WebMcpTools";
+import AppShellSkeleton from "@components/ui/common/skeletons/AppShellSkeleton";
 import type { AppLocale } from "types/i18n";
 import {
   CLIENT_APP_KEYS,
@@ -25,6 +26,27 @@ import {
   CLIENT_UTILS_KEYS,
   CLIENT_FULL_TOP_LEVEL,
 } from "@lib/i18n/client-namespaces";
+
+async function I18nProvider({
+  locale,
+  children,
+}: {
+  locale: AppLocale;
+  children: ReactNode;
+}) {
+  const messages = await getMessages();
+  const clientMessages = pickClientMessages(messages);
+
+  return (
+    <NextIntlClientProvider
+      key={locale}
+      messages={clientMessages}
+      locale={locale}
+    >
+      {children}
+    </NextIntlClientProvider>
+  );
+}
 
 function pickNamespace<T extends Record<string, unknown>>(
   source: T | undefined,
@@ -53,27 +75,6 @@ function pickClientMessages(
     if (m[key] !== undefined) picked[key] = m[key];
   }
   return picked as Partial<typeof messages>;
-}
-
-async function I18nProvider({
-  locale,
-  children,
-}: {
-  locale: AppLocale;
-  children: ReactNode;
-}) {
-  const messages = await getMessages();
-  const clientMessages = pickClientMessages(messages);
-
-  return (
-    <NextIntlClientProvider
-      key={locale}
-      messages={clientMessages}
-      locale={locale}
-    >
-      {children}
-    </NextIntlClientProvider>
-  );
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -194,7 +195,7 @@ export default async function LocaleLayout({
             `,
           }}
         />
-        <Suspense fallback={null}>
+        <Suspense fallback={<AppShellSkeleton />}>
           <I18nProvider locale={locale}>
             <AdProvider>
               <AuthProvider>
