@@ -26,6 +26,7 @@ export default function EditEventClient({
   );
   const [progress] = useState<number>(0);
   const [isPending, startTransition] = useTransition();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Fetch categories
   const { categories, isLoading: isLoadingCategories } = useCategories();
@@ -83,6 +84,7 @@ export default function EditEventClient({
   async function onSubmit() {
     // The EventForm component will handle validation internally
     // This will only be called if validation passes
+    setSubmitError(null);
     startTransition(async () => {
       try {
         if (!event) return;
@@ -95,10 +97,11 @@ export default function EditEventClient({
         if (result && result.success) {
           router.push(`/e/${result.newSlug}`);
         } else {
-          console.error("Error updating event");
+          setSubmitError(result?.error ?? "Error updating event");
         }
       } catch (error) {
         console.error("Error updating event:", error);
+        setSubmitError("Error updating event");
       }
     });
   }
@@ -106,6 +109,11 @@ export default function EditEventClient({
   return (
     <div>
       <h1 className="heading-2">Edita: {event.title}</h1>
+      {submitError && (
+        <div className="rounded-card border border-error bg-error/10 p-4 text-error" role="alert">
+          {submitError}
+        </div>
+      )}
       <EventForm
         form={form}
         onSubmit={onSubmit}

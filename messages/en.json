@@ -826,6 +826,7 @@
     },
     "EventPage": {
       "sponsored": "Sponsored content",
+      "editEvent": "Edit event",
       "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "stickyMoreInfo": "More info",
       "stickyCalendar": "Calendar",

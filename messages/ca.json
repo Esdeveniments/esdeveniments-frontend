@@ -833,6 +833,7 @@
     },
     "EventPage": {
       "sponsored": "Contingut patrocinat",
+      "editEvent": "Editar esdeveniment",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "stickyMoreInfo": "Més info",
       "stickyCalendar": "Calendari",

@@ -7,6 +7,7 @@ import { withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { fetchEventBySlug } from "lib/api/events";
 import { fetchRegionsWithCities } from "lib/api/regions";
+import { getCurrentUser } from "@lib/auth/session";
 import EditEventClient from "./EditEventClient";
 
 export async function generateMetadata({
@@ -32,10 +33,20 @@ export default async function EditaPage({
   params: Promise<{ eventId: string }>;
 }) {
   const slug = (await params).eventId;
-  const event = await fetchEventBySlug(slug);
-  const regionsWithCities = await fetchRegionsWithCities();
+  const [event, currentUser] = await Promise.all([
+    fetchEventBySlug(slug),
+    getCurrentUser(),
+  ]);
 
-  if (!event || !regionsWithCities) return notFound();
+  // Only the event creator may edit. Treat missing/unknown ownership as 404
+  // to avoid leaking the existence of the edit page.
+  const isCreator =
+    currentUser && event?.createdByUser?.id === currentUser.id;
+  if (!event || !isCreator) return notFound();
+
+  // Fetch region data only after confirming the user is the creator.
+  const regionsWithCities = await fetchRegionsWithCities();
+  if (!regionsWithCities) return notFound();
 
   return <EditEventClient event={event} regions={regionsWithCities} />;
 }

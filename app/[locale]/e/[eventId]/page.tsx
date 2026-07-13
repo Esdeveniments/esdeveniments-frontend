@@ -160,6 +160,7 @@ async function EventPageContent({
     placeSlug: citySlug ?? regionSlug,
     hasImage: Boolean(event.imageUrl),
     origin: event.origin,
+    createdByUserId: event.createdByUser?.id,
   };
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug

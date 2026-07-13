@@ -853,6 +853,8 @@ export interface EventClientPayload {
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
+  /** Event creator id, used to conditionally show owner-only actions. */
+  createdByUserId?: string;
 }
 
 export interface EventClientProps {
