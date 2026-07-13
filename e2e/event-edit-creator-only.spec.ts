@@ -55,9 +55,10 @@ async function publishTestEvent(page: Page) {
 
   const categoriesSelect = page.locator("#categories").locator("..");
   await categoriesSelect.click();
-  await page.waitForTimeout(500);    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
-    await page.keyboard.press("Escape");
+  await page.waitForTimeout(500);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Escape");
 
   await page.getByTestId("next-button").click();
 
