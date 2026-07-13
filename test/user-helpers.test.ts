@@ -50,6 +50,39 @@ describe("getProfileSlug", () => {
     ).toBe("user-789");
   });
 
+  it("falls back to user id when username is an email", () => {
+    expect(
+      getProfileSlug({
+        id: "user-abc",
+        name: "",
+        username: "joan@example.com",
+        email: "joan@example.com",
+      }),
+    ).toBe("user-abc");
+  });
+
+  it("trims whitespace from username before using it", () => {
+    expect(
+      getProfileSlug({
+        id: "user-def",
+        name: "",
+        username: "  joan-doe  ",
+        email: "joan@example.com",
+      }),
+    ).toBe("joan-doe");
+  });
+
+  it("trims whitespace from name before using it", () => {
+    expect(
+      getProfileSlug({
+        id: "user-ghi",
+        name: "  Joan Doe  ",
+        username: "",
+        email: "joan@example.com",
+      }),
+    ).toBe("joan-doe");
+  });
+
   it("returns an empty string for a null/undefined user", () => {
     expect(getProfileSlug(null)).toBe("");
     expect(getProfileSlug(undefined)).toBe("");
