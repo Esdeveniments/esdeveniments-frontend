@@ -17,7 +17,7 @@ import Image from "next/image";
 import ActiveLink from "@components/ui/common/link";
 import PressableLink from "@components/ui/primitives/PressableLink";
 import { useAuth } from "@components/hooks/useAuth";
-import { sanitize } from "@utils/sanitize-segment";
+import { getProfileSlug } from "@utils/user-helpers";
 import type { NavbarClientProps } from "types/props";
 
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -30,13 +30,10 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const logoAlt = labels.logoAlt?.trim() || "Esdeveniments";
 
-  // Slugify the username (or fall back to the display name slugified) for the
-  // /perfil/{slug} URL. user.username is the server-slugified handle but can
-  // be empty when Logto doesn't populate it; sanitize() on user.name produces
-  // the same slug format the backend uses (e.g. "Gerard Rovellat" → "gerard-rovellat").
-  const profileSlug = user
-    ? user.username || sanitize(user.name || user.email)
-    : "";
+  // Build a URL-safe slug for the /perfil/{slug} URL. Prefer the
+  // server-slugified username, fall back to a slugified display name, and
+  // finally to the user id. Never expose email addresses.
+  const profileSlug = getProfileSlug(user);
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
 

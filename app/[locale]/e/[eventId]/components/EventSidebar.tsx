@@ -12,7 +12,7 @@ import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
-import { sanitize } from "@utils/sanitize-segment";
+import { getProfileSlug } from "@utils/user-helpers";
 import type { EventSidebarProps } from "types/props";
 
 /**
@@ -32,11 +32,9 @@ export default async function EventSidebar({
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
 
-  // Same fallback pattern as NavbarClient: use username directly when
-  // present, otherwise slugify the display name to avoid broken /perfil/ links.
+  // Build a URL-safe slug for the creator profile link.
   const creatorSlug = event.createdByUser
-    ? event.createdByUser.username ||
-      sanitize(event.createdByUser.name || event.createdByUser.email)
+    ? getProfileSlug(event.createdByUser)
     : null;
 
   return (
