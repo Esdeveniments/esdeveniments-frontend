@@ -18,12 +18,13 @@ import type { AuthUser } from "types/auth";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
-// Layers the backend-owned profile (pictureUrl/pictureSource/role/lastLoginAt)
-// on top of the id_token-derived user. The backend call is best-effort: an
-// unreachable/misconfigured backend must not break login, since the
-// id_token alone is already a valid, verified session. Identity fields
-// (id/email/name/username) stay sourced from the verified id_token — the
-// backend call only ever adds fields the id_token can't carry.
+// Layers the backend-owned profile on top of the id_token-derived user. The
+// backend call is best-effort: an unreachable/misconfigured backend must not
+// break login, since the id_token alone is already a valid, verified session.
+// Core identity fields (id/email) stay sourced from the verified id_token.
+// Display fields (name/username) are replaced when the backend provides a
+// better value (e.g. Logto returns the email as name). Backend-only fields
+// (pictureUrl/pictureSource/role/lastLoginAt) are always layered on.
 export async function enrichWithBackendProfile(
   user: AuthUser,
   accessToken: string | null,
@@ -31,8 +32,21 @@ export async function enrichWithBackendProfile(
   if (!accessToken) return user;
   const backendUser = await getAuthenticatedUserExternal(accessToken);
   if (!backendUser) return user;
+
+  // Logto sometimes returns the email as the user's name. Prefer the
+  // backend-owned display name and username so the navbar links to the same
+  // public profile slug as event pages do.
+  const backendNameIsBetter =
+    backendUser.name &&
+    backendUser.name !== user.email &&
+    backendUser.name !== user.name;
+  const backendUsernameIsBetter =
+    backendUser.username && backendUser.username !== user.username;
+
   return {
     ...user,
+    name: backendNameIsBetter ? backendUser.name : user.name,
+    username: backendUsernameIsBetter ? backendUser.username : user.username,
     avatarUrl: backendUser.pictureUrl ?? user.avatarUrl,
     pictureSource: backendUser.pictureSource,
     role: backendUser.role ?? user.role,
