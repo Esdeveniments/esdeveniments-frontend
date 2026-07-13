@@ -55,6 +55,27 @@ function pickClientMessages(
   return picked as Partial<typeof messages>;
 }
 
+async function I18nProvider({
+  locale,
+  children,
+}: {
+  locale: AppLocale;
+  children: ReactNode;
+}) {
+  const messages = await getMessages();
+  const clientMessages = pickClientMessages(messages);
+
+  return (
+    <NextIntlClientProvider
+      key={locale}
+      messages={clientMessages}
+      locale={locale}
+    >
+      {children}
+    </NextIntlClientProvider>
+  );
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({
@@ -109,9 +130,6 @@ export default async function LocaleLayout({
 
   // Distribute the locale to all server components in this request
   setRequestLocale(locale);
-
-  const messages = await getMessages();
-  const clientMessages = pickClientMessages(messages);
 
   return (
     <html lang={locale}>
@@ -176,12 +194,8 @@ export default async function LocaleLayout({
             `,
           }}
         />
-        <NextIntlClientProvider
-          key={locale}
-          messages={clientMessages}
-          locale={locale}
-        >
-          <Suspense fallback={null}>
+        <Suspense fallback={null}>
+          <I18nProvider locale={locale}>
             <AdProvider>
               <AuthProvider>
                 <WebsiteSchema locale={locale} />
@@ -193,8 +207,8 @@ export default async function LocaleLayout({
                 <BaseLayout>{children}</BaseLayout>
               </AuthProvider>
             </AdProvider>
-          </Suspense>
-        </NextIntlClientProvider>
+          </I18nProvider>
+        </Suspense>
       </body>
     </html>
   );
