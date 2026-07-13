@@ -40,6 +40,13 @@ export default function EventClient({
     user?.id && event.createdByUserId && user.id === event.createdByUserId
   );
 
+
+  console.log("EventClient render", {
+    userId: user?.id,
+    eventCreatedByUserId: event.createdByUserId,
+    isCreator,
+  });
+
   // const {
   //   openModal,
   //   setOpenModal,

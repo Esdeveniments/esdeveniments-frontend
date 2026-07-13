@@ -54,6 +54,8 @@ describe("enrichWithBackendProfile", () => {
 
     expect(result).toEqual({
       ...idTokenUser,
+      id: "backend-uuid",
+      logtoId: "logto-sub",
       name: "Backend Name",
       username: "backend_username",
       avatarUrl: "https://cdn.example.com/avatar.png",
@@ -118,5 +120,19 @@ describe("enrichWithBackendProfile", () => {
     expect(result.role).toBe(idTokenUser.role);
     expect(result.pictureSource).toBeUndefined();
     expect(result.lastLoginAt).toBeUndefined();
+  });
+
+  it("uses the backend id as the canonical user id and preserves the Logto sub as logtoId", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "backend_username",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.id).toBe("backend-uuid");
+    expect(result.logtoId).toBe("logto-sub");
   });
 });

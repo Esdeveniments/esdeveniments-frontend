@@ -49,6 +49,10 @@ export async function enrichWithBackendProfile(
 
   return {
     ...user,
+    // Use the backend UUID as the canonical user id so client-side ownership
+    // checks (e.g., event creator) match the ids stored in backend records.
+    id: backendUser.id ?? user.id,
+    logtoId: user.id,
     name: backendNameIsBetter ? backendUser.name : user.name,
     username: backendUsernameIsBetter ? backendUser.username : user.username,
     avatarUrl: backendUser.pictureUrl ?? user.avatarUrl,
