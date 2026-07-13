@@ -11,14 +11,26 @@ export async function editEvent(
   slug: string,
   data: EventUpdateRequestDTO
 ): Promise<EditEventResult> {
-  // 1. Verify the current user is the event creator before mutating.
+  // 1. Resolve the event by slug and verify the caller-provided id matches.
+  // This prevents a mismatch where a malicious client passes a slug they own
+  // alongside an different eventId.
   const [currentUser, event] = await Promise.all([
     getCurrentUser(),
     fetchEventBySlug(slug),
   ]);
 
-  const isCreator =
-    currentUser && event?.createdByUser?.id === currentUser.id;
+  if (!event) {
+    return { success: false, error: "Event not found" };
+  }
+
+  if (event.id !== eventId) {
+    return {
+      success: false,
+      error: "Unauthorized: only the event creator can edit this event",
+    };
+  }
+
+  const isCreator = event.createdByUser?.id === currentUser?.id;
   if (!isCreator) {
     return {
       success: false,
@@ -26,8 +38,8 @@ export async function editEvent(
     };
   }
 
-  // 2. Update the event in your backend
-  const updatedEvent = await updateEventById(eventId, data);
+  // 2. Update the event in your backend using the resolved event id
+  const updatedEvent = await updateEventById(event.id, data);
 
   // 2. Immediately expire cache tags for event lists and the specific event
   // This ensures read-your-own-writes: the updated event appears immediately

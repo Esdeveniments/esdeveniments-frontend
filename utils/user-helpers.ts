@@ -8,7 +8,13 @@ import { sanitize } from "@utils/sanitize-segment";
  */
 export function getProfileSlug(user: ProfileSlugUser | null | undefined): string {
   if (!user) return "";
-  if (user.username) return user.username;
+
+  // Never expose email addresses in profile URLs. If the server ever returns an
+  // email as a username, fall back to the user id.
+  const username = user.username?.trim();
+  if (username && !username.includes("@")) {
+    return username;
+  }
 
   // Some identity providers set `name` to the email address when no display
   // name is configured. Sanitizing that would still expose the email in the

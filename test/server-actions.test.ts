@@ -297,6 +297,33 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockRefresh).toHaveBeenCalledTimes(1);
     });
 
+    it("returns a not-found result when the event does not exist", async () => {
+      mockFetchEventBySlug.mockResolvedValue(null);
+
+      const updateData: EventUpdateRequestDTO = {
+        title: "Updated Event",
+        type: "FREE",
+        url: "https://test.com",
+        description: "Updated description",
+        imageUrl: "",
+        regionId: 1,
+        cityId: 1,
+        startDate: "2025-06-15",
+        startTime: "",
+        endDate: "2025-06-15",
+        endTime: "",
+        location: "Updated Location",
+        categories: [],
+      };
+
+      const result = await editEvent("test-id", "missing-event", updateData);
+
+      expect(result).toEqual({ success: false, error: "Event not found" });
+      expect(mockUpdateEventById).not.toHaveBeenCalled();
+      expect(mockUpdateTag).not.toHaveBeenCalled();
+      expect(mockRefresh).not.toHaveBeenCalled();
+    });
+
     it("returns an unauthorized result when the current user is not the creator", async () => {
       mockGetCurrentUser.mockResolvedValue(otherUser);
 
@@ -353,6 +380,8 @@ describe("Server Actions - Next.js 16 caching", () => {
         error: "Unauthorized: only the event creator can edit this event",
       });
       expect(mockUpdateEventById).not.toHaveBeenCalled();
+      expect(mockUpdateTag).not.toHaveBeenCalled();
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
 
     it("returns an unauthorized result when the event has no creator info", async () => {

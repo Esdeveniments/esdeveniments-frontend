@@ -13,14 +13,12 @@ export async function GET(
     const user: UserPublicResponseDTO | null =
       await getUserByUsernameExternal(username);
 
-    const headers: Record<string, string> = {};
-    if (user) {
-      headers["Cache-Control"] =
-        "public, s-maxage=1800, stale-while-revalidate=1800";
-    } else {
-      // Don't let CDNs or browsers cache a "User not found" response.
-      headers["Cache-Control"] = "no-store";
-    }
+    // Avoid CDN/browser caching for user data: profiles can change (avatar,
+    // join date, etc.) and this is a low-traffic endpoint, so freshness beats
+    // cache hit rate.
+    const headers: Record<string, string> = {
+      "Cache-Control": "no-store",
+    };
 
     return NextResponse.json(user ?? null, {
       status: user ? 200 : 404,
