@@ -17,6 +17,9 @@ export async function GET(
     if (user) {
       headers["Cache-Control"] =
         "public, s-maxage=1800, stale-while-revalidate=1800";
+    } else {
+      // Don't let CDNs or browsers cache a "User not found" response.
+      headers["Cache-Control"] = "no-store";
     }
 
     return NextResponse.json(user ?? null, {

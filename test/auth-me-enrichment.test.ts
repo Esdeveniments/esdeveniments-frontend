@@ -38,7 +38,7 @@ describe("enrichWithBackendProfile", () => {
     expect(result).toEqual(idTokenUser);
   });
 
-  it("keeps id/email/name/username from the verified id_token, layers backend-owned fields", async () => {
+  it("layers backend-owned fields and prefers backend name/username when better", async () => {
     mockGetAuthenticatedUserExternal.mockResolvedValue({
       id: "backend-uuid",
       email: "backend@example.com",
@@ -54,11 +54,54 @@ describe("enrichWithBackendProfile", () => {
 
     expect(result).toEqual({
       ...idTokenUser,
+      name: "Backend Name",
+      username: "backend_username",
       avatarUrl: "https://cdn.example.com/avatar.png",
       pictureSource: "CUSTOM",
       role: "ADMIN",
       lastLoginAt: "2026-07-02T10:00:00Z",
     });
+  });
+
+  it("keeps id_token name/username when the backend values are not better", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: idTokenUser.name,
+      username: idTokenUser.username,
+      pictureUrl: "https://cdn.example.com/avatar.png",
+      pictureSource: "CUSTOM",
+      role: "ADMIN",
+      lastLoginAt: "2026-07-02T10:00:00Z",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.name).toBe(idTokenUser.name);
+    expect(result.username).toBe(idTokenUser.username);
+    expect(result.avatarUrl).toBe("https://cdn.example.com/avatar.png");
+  });
+
+  it("prefers backend name when id_token name is the user's email", async () => {
+    const userWithEmailAsName: AuthUser = {
+      ...idTokenUser,
+      name: idTokenUser.email,
+    };
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "backend_username",
+      pictureUrl: "https://cdn.example.com/avatar.png",
+      pictureSource: "CUSTOM",
+      role: "ADMIN",
+      lastLoginAt: "2026-07-02T10:00:00Z",
+    });
+
+    const result = await enrichWithBackendProfile(userWithEmailAsName, "token");
+
+    expect(result.name).toBe("Backend Name");
+    expect(result.username).toBe("backend_username");
   });
 
   it("falls back to the id_token's avatarUrl/role when the backend omits them", async () => {
