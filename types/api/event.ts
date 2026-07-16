@@ -125,9 +125,14 @@ export interface EventBaseRequestDTO {
   categories: number[];
 }
 
-// Aliases kept for semantic clarity and potential future divergence
+// `indexed` is required by the backend's UpdateEventRequestDTO (PUT /events/{uuid}).
+// The create endpoint (POST /events) does not declare it, so we keep it separate
+// to avoid sending an unknown field that could 400 if FAIL_ON_UNKNOWN_PROPERTIES=true.
+export interface EventUpdateRequestDTO extends EventBaseRequestDTO {
+  indexed: boolean;
+}
+
 export type EventCreateRequestDTO = EventBaseRequestDTO;
-export type EventUpdateRequestDTO = EventBaseRequestDTO;
 
 // --- E2E Testing Types ---
 export type E2EEventExtras = {

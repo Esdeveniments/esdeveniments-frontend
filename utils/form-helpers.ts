@@ -1,7 +1,6 @@
 import type { Option } from "types/common";
 import type {
-  EventCreateRequestDTO,
-  EventUpdateRequestDTO,
+  EventBaseRequestDTO,
   EventDetailResponseDTO,
 } from "types/api/event";
 import type { FormData } from "types/event";
@@ -28,7 +27,7 @@ export function getTownValue(
 
 export function formDataToBackendDTO(
   form: FormData
-): EventCreateRequestDTO | EventUpdateRequestDTO {
+): EventBaseRequestDTO {
   // Extract date and time from datetime strings
   const startDateTime = new Date(form.startDate);
   const endDateTime = new Date(form.endDate);

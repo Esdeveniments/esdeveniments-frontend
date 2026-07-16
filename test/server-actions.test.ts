@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createEventAction } from "../app/[locale]/publica/actions";
 import { editEvent } from "../app/[locale]/e/[eventId]/edita/actions";
-import type { EventCreateRequestDTO, EventUpdateRequestDTO } from "types/api/event";
+import type { EventCreateRequestDTO, EventBaseRequestDTO, EventUpdateRequestDTO } from "types/api/event";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { AuthUser } from "types/auth";
 
@@ -192,7 +192,7 @@ describe("Server Actions - Next.js 16 caching", () => {
   });
 
   describe("editEvent", () => {
-    it("calls updateTag for events and the specific event tag", async () => {
+    it("calls updateTag for events and the specific event tag, with indexed: true injected server-side", async () => {
       const mockUpdatedEvent = buildEvent({
         slug: "updated-event",
         title: "Updated Event",
@@ -202,7 +202,7 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       mockUpdateEventById.mockResolvedValue(mockUpdatedEvent);
 
-      const updateData: EventUpdateRequestDTO = {
+      const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
         type: "FREE",
         url: "https://test.com",
@@ -220,7 +220,11 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const result = await editEvent("test-id", "old-event", updateData);
 
-      expect(mockUpdateEventById).toHaveBeenCalledWith("test-id", updateData);
+      // editEvent injects `indexed: true` server-side before calling updateEventById
+      expect(mockUpdateEventById).toHaveBeenCalledWith("test-id", {
+        ...updateData,
+        indexed: true,
+      });
       expect(mockUpdateTag).toHaveBeenCalledWith("events");
       expect(mockUpdateTag).toHaveBeenCalledWith("event:old-event");
       expect(mockUpdateTag).toHaveBeenCalledWith("event:updated-event");
@@ -238,7 +242,7 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       mockUpdateEventById.mockResolvedValue(mockUpdatedEvent);
 
-      const updateData: EventUpdateRequestDTO = {
+      const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
         type: "FREE",
         url: "https://test.com",
@@ -273,7 +277,7 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       mockUpdateEventById.mockResolvedValue(mockUpdatedEvent);
 
-      const updateData: EventUpdateRequestDTO = {
+      const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
         type: "FREE",
         url: "https://test.com",
@@ -300,7 +304,7 @@ describe("Server Actions - Next.js 16 caching", () => {
     it("returns a not-found result when the event does not exist", async () => {
       mockFetchEventBySlug.mockResolvedValue(null);
 
-      const updateData: EventUpdateRequestDTO = {
+      const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
         type: "FREE",
         url: "https://test.com",
@@ -327,7 +331,7 @@ describe("Server Actions - Next.js 16 caching", () => {
     it("returns an unauthorized result when the current user is not the creator", async () => {
       mockGetCurrentUser.mockResolvedValue(otherUser);
 
-      const updateData: EventUpdateRequestDTO = {
+      const updateData: EventBaseRequestDTO = {
         title: "Hacked Event",
         type: "FREE",
         url: "https://test.com",
@@ -357,7 +361,7 @@ describe("Server Actions - Next.js 16 caching", () => {
     it("returns an unauthorized result when the user is not logged in", async () => {
       mockGetCurrentUser.mockResolvedValue(null);
 
-      const updateData: EventUpdateRequestDTO = {
+      const updateData: EventBaseRequestDTO = {
         title: "Hacked Event",
         type: "FREE",
         url: "https://test.com",
@@ -387,7 +391,7 @@ describe("Server Actions - Next.js 16 caching", () => {
     it("returns an unauthorized result when the event has no creator info", async () => {
       mockFetchEventBySlug.mockResolvedValue(buildEvent({ createdByUser: undefined }));
 
-      const updateData: EventUpdateRequestDTO = {
+      const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
         type: "FREE",
         url: "https://test.com",

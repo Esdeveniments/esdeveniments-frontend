@@ -1,7 +1,7 @@
 "use server";
 import { updateTag, refresh } from "next/cache";
 import { updateEventById, fetchEventBySlug } from "@lib/api/events";
-import type { EventUpdateRequestDTO } from "types/api/event";
+import type { EventBaseRequestDTO, EventUpdateRequestDTO } from "types/api/event";
 import type { EditEventResult } from "types/event";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import { getCurrentUser } from "@lib/auth/session";
@@ -9,7 +9,7 @@ import { getCurrentUser } from "@lib/auth/session";
 export async function editEvent(
   eventId: string,
   slug: string,
-  data: EventUpdateRequestDTO
+  data: EventBaseRequestDTO
 ): Promise<EditEventResult> {
   // 1. Resolve the event by slug and verify the caller-provided id matches.
   // This prevents a mismatch where a malicious client passes a slug they own
@@ -44,8 +44,12 @@ export async function editEvent(
     };
   }
 
-  // 2. Update the event in your backend using the resolved event id
-  const updatedEvent = await updateEventById(event.id, data);
+  // 2. Update the event in your backend using the resolved event id.
+  // `indexed` is required by the backend's UpdateEventRequestDTO but not part
+  // of the client-facing form data — add it server-side so the client can't
+  // accidentally (or maliciously) set it to false.
+  const updatePayload: EventUpdateRequestDTO = { ...data, indexed: true };
+  const updatedEvent = await updateEventById(event.id, updatePayload);
 
   // 2. Immediately expire cache tags for event lists and the specific event
   // This ensures read-your-own-writes: the updated event appears immediately
