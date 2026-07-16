@@ -87,4 +87,37 @@ describe("getProfileSlug", () => {
     expect(getProfileSlug(null)).toBe("");
     expect(getProfileSlug(undefined)).toBe("");
   });
+
+  it("returns empty string when username is a raw UUID", () => {
+    expect(
+      getProfileSlug({
+        id: "user-uuid",
+        name: "Joan Doe",
+        username: "550e8400-e29b-41d4-a716-446655440000",
+        email: "joan@example.com",
+      }),
+    ).toBe("joan-doe"); // falls back to sanitized name
+  });
+
+  it("returns empty string when both username and name are UUIDs", () => {
+    expect(
+      getProfileSlug({
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        name: "550e8400-e29b-41d4-a716-446655440000",
+        username: "550e8400-e29b-41d4-a716-446655440000",
+        email: "joan@example.com",
+      }),
+    ).toBe("");
+  });
+
+  it("returns empty string when name sanitizes to the n-a fallback", () => {
+    expect(
+      getProfileSlug({
+        id: "user-xyz",
+        name: "!!!",
+        username: "",
+        email: "joan@example.com",
+      }),
+    ).toBe("");
+  });
 });

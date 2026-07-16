@@ -44,6 +44,7 @@ export async function enrichWithBackendProfile(
     !backendUser.name.includes("@");
   const backendUsernameIsBetter =
     backendUser.username &&
+    backendUser.username.trim() !== "" &&
     backendUser.username !== user.username &&
     !backendUser.username.includes("@");
 

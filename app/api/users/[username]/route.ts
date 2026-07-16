@@ -13,11 +13,12 @@ export async function GET(
     const user: UserPublicResponseDTO | null =
       await getUserByUsernameExternal(username);
 
-    // Avoid CDN/browser caching for user data: profiles can change (avatar,
-    // join date, etc.) and this is a low-traffic endpoint, so freshness beats
-    // cache hit rate.
+    // Short TTL with stale-while-revalidate so the internal fetch in
+    // fetchUserBySlug (next: { revalidate }) can cache. Profiles can change
+    // (avatar, join date) so we keep the TTL short (5 min) and allow stale
+    // serving for up to 30 min while revalidating.
     const headers: Record<string, string> = {
-      "Cache-Control": "no-store",
+      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=1800",
     };
 
     return NextResponse.json(user ?? null, {

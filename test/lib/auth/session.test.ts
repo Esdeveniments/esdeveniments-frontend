@@ -4,15 +4,6 @@ import type { AuthUser, IdTokenPayload } from "types/auth";
 
 const mockCookieStore = new Map<string, string>();
 
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(() => Promise.resolve({
-    get: (name: string) => {
-      const value = mockCookieStore.get(name);
-      return value ? { value } : undefined;
-    },
-  })),
-}));
-
 vi.mock("@utils/auth-cookies", () => ({
   ID_TOKEN_COOKIE: "logto_id_token",
   getIdTokenFromCookies: vi.fn(() => {

@@ -5,7 +5,7 @@ import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
 import { handleApiError } from "@utils/api-error-handler";
 import { createKeyedCache } from "@lib/api/cache";
-import { eventTag } from "@lib/cache/tags";
+import { eventTag, eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 import type { EventDetailResponseDTO } from "types/api/event";
 
@@ -69,8 +69,11 @@ export async function DELETE(
     await deleteEventById(event.id);
     // Clear in-memory cache so next GET doesn't serve stale data
     deleteEventDetailCache(slug);
-    // Purge Next.js fetch Data Cache (tagged by lib/api/events.ts)
+    // Purge Next.js fetch Data Cache for the specific event and all event
+    // lists so deleted events don't remain in cached listing pages.
     revalidateTag(eventTag(slug), { expire: 0 });
+    revalidateTag(eventsTag, { expire: 0 });
+    revalidateTag(eventsCategorizedTag, { expire: 0 });
     // Purge Next.js Data Cache for all locales of the event detail page.
     // Default locale (ca) has no prefix; non-default locales get a prefix path.
     try {

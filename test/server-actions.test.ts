@@ -410,6 +410,8 @@ describe("Server Actions - Next.js 16 caching", () => {
         error: "Unauthorized: only the event creator can edit this event",
       });
       expect(mockUpdateEventById).not.toHaveBeenCalled();
+      expect(mockUpdateTag).not.toHaveBeenCalled();
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
   });
 });
