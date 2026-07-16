@@ -35,9 +35,16 @@ async function getCurrentUserInternal(): Promise<AuthUser | null> {
     const user = mapClaimsToAuthUser(claims);
 
     // Enrich with the backend UUID so creator-ownership checks match.
-    // Best-effort: returns the id_token-only user on failure.
-    const accessToken = await getAccessTokenFromCookies();
-    return enrichWithBackendProfile(user, accessToken);
+    // Best-effort: returns the id_token-only user on failure. Wrap in a
+    // local try-catch so an enrichment rejection doesn't propagate to the
+    // outer catch and treat the user as fully logged out.
+    try {
+      const accessToken = await getAccessTokenFromCookies();
+      return await enrichWithBackendProfile(user, accessToken);
+    } catch (enrichError) {
+      console.error("getCurrentUser: enrichment failed, returning id_token-only user", enrichError);
+      return user;
+    }
   } catch {
     // Any failure to read/verify the session is treated as unauthenticated.
     return null;

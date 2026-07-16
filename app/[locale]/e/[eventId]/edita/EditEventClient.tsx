@@ -2,6 +2,7 @@
 import { useRouter, Link } from "@i18n/routing";
 import { useState, useMemo, useTransition } from "react";
 import { useTranslations } from "next-intl";
+import { getProfileSlug } from "@utils/user-helpers";
 import EventForm from "@components/ui/EventForm";
 import type { FormData } from "types/event";
 import { editEvent } from "./actions";
@@ -24,7 +25,7 @@ export default function EditEventClient({
   const t = useTranslations("Components.EventPage");
   const tEdit = useTranslations("App.EventEdit");
   const router = useRouter();
-  const createdByUsername = event.createdByUser?.username;
+  const creatorSlug = event.createdByUser ? getProfileSlug(event.createdByUser) : null;
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
   const [imageToUpload, setImageToUpload] = useState<string | null>(
     form.imageUrl
@@ -138,9 +139,9 @@ export default function EditEventClient({
             <ArrowLeftIcon className="w-4 h-4" aria-hidden="true" />
             {tEdit("backToEvent")}
           </Link>
-          {createdByUsername && (
+          {creatorSlug && (
             <Link
-              href={`/perfil/${createdByUsername}`}
+              href={`/perfil/${encodeURIComponent(creatorSlug)}`}
               className="inline-flex items-center gap-2 btn-ghost btn-sm w-full sm:w-auto justify-center"
             >
               {tEdit("myEvents")}
