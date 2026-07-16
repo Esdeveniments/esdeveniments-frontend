@@ -4,16 +4,9 @@ import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external
 import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
 import { handleApiError } from "@utils/api-error-handler";
-import { createKeyedCache } from "@lib/api/cache";
+import { eventDetailCache, deleteEventDetailCache } from "@lib/cache/event-detail-cache";
 import { eventTag, eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
-import type { EventDetailResponseDTO } from "types/api/event";
-
-// Cache event detail by slug to avoid hitting backend on every refresh (which increments visits).
-// TTL aligns with Cache-Control s-maxage for consistency.
-const EVENT_DETAIL_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const { cache: eventDetailCache, delete: deleteEventDetailCache } =
-  createKeyedCache<EventDetailResponseDTO | null>(EVENT_DETAIL_TTL_MS);
 
 // GET /api/events/[slug] - server-only proxy with server-side HMAC and stable caching
 export async function GET(

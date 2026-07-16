@@ -1,10 +1,12 @@
 "use server";
-import { updateTag, refresh } from "next/cache";
+import { updateTag, refresh, revalidatePath } from "next/cache";
 import { updateEventById, fetchEventBySlug } from "@lib/api/events";
 import type { EventBaseRequestDTO, EventUpdateRequestDTO } from "types/api/event";
 import type { EditEventResult } from "types/event";
 import { eventsTag, eventTag } from "@lib/cache/tags";
+import { deleteEventDetailCache } from "@lib/cache/event-detail-cache";
 import { getCurrentUser } from "@lib/auth/session";
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 
 export async function editEvent(
   eventId: string,
@@ -57,8 +59,26 @@ export async function editEvent(
   // If slug changed, also expire the old event tag
   if (updatedEvent.slug !== slug) {
     updateTag(eventTag(slug));
+    deleteEventDetailCache(slug);
   }
   updateTag(eventTag(updatedEvent.slug));
+  // Clear the in-memory keyed cache so the internal API route does not serve
+  // stale data on the next GET (the 30-min TTL would otherwise keep the
+  // pre-edit event for up to 30 minutes, even after updateTag/refresh).
+  deleteEventDetailCache(updatedEvent.slug);
+  // Revalidate the HTML page for all locales so the user sees changes on
+  // both the old and new slug (if the slug changed from the title update).
+  try {
+    for (const locale of SUPPORTED_LOCALES) {
+      const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+      revalidatePath(`${prefix}/e/${updatedEvent.slug}`);
+      if (updatedEvent.slug !== slug) {
+        revalidatePath(`${prefix}/e/${slug}`);
+      }
+    }
+  } catch {
+    // revalidatePath is a no-op outside of a render context in some environments
+  }
   // Refresh the current request to reflect changes
   refresh();
 

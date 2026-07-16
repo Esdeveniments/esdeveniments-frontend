@@ -8,10 +8,12 @@ import type { AuthUser } from "types/auth";
 // Mock next/cache
 const mockUpdateTag = vi.fn();
 const mockRefresh = vi.fn();
+const mockRevalidatePath = vi.fn();
 
 vi.mock("next/cache", () => ({
   updateTag: (tag: string) => mockUpdateTag(tag),
   refresh: () => mockRefresh(),
+  revalidatePath: (path: string) => mockRevalidatePath(path),
 }));
 
 // Mock next/server
@@ -42,6 +44,13 @@ const mockGetCurrentUser = vi.fn();
 
 vi.mock("@lib/auth/session", () => ({
   getCurrentUser: () => mockGetCurrentUser(),
+}));
+
+// Mock lib/cache/event-detail-cache
+const mockDeleteEventDetailCache = vi.fn();
+
+vi.mock("@lib/cache/event-detail-cache", () => ({
+  deleteEventDetailCache: (slug: string) => mockDeleteEventDetailCache(slug),
 }));
 
 const CREATOR_ID = "creator-uuid";
@@ -228,6 +237,9 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockUpdateTag).toHaveBeenCalledWith("events");
       expect(mockUpdateTag).toHaveBeenCalledWith("event:old-event");
       expect(mockUpdateTag).toHaveBeenCalledWith("event:updated-event");
+      // In-memory cache should be cleared for both old and new slug
+      expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("old-event");
+      expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("updated-event");
       expect(mockRefresh).toHaveBeenCalledTimes(1);
       expect(result).toEqual({ success: true, newSlug: "updated-event" });
     });
@@ -264,6 +276,8 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockUpdateTag).toHaveBeenCalledWith("event:same-event");
       // Should not call updateTag for old slug when slug is unchanged
       expect(mockUpdateTag).not.toHaveBeenCalledWith("event:old-event");
+      // In-memory cache should be cleared for the (unchanged) slug
+      expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("same-event");
       expect(mockRefresh).toHaveBeenCalledTimes(1);
     });
 
