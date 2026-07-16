@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { loginViaUI } from "./helpers/login";
 
 /**
- * E2E: Creator-only edit access
+ * E2E: Creator-only edit access + form submission
  *
  * Requires the same staging credentials as publish-integration.spec.ts:
  *   - E2E_STAGING_EMAIL
@@ -11,6 +11,8 @@ import { loginViaUI } from "./helpers/login";
  * The flow publishes an event, then verifies that:
  *   - The creator sees the "Edit event" button on the detail page.
  *   - The creator can navigate to /e/{slug}/edita.
+ *   - The creator can submit the edit form and the update succeeds (no 500).
+ *   - The updated title appears on the event detail page after redirect.
  *   - A non-creator (mocked via /api/auth/me) does not see the edit button.
  *   - A logged-out user gets a 404 from /e/{slug}/edita.
  */
@@ -21,6 +23,7 @@ const hasCredentials = Boolean(email && password);
 
 const UNIQUE_SUFFIX = `e2e-edit-${Date.now()}`;
 const TEST_EVENT_TITLE = `Edit Test Event ${UNIQUE_SUFFIX}`;
+const EDITED_TITLE = `Edited ${UNIQUE_SUFFIX}`;
 
 let createdEventSlug: string | null = null;
 
@@ -167,6 +170,62 @@ test.describe("Creator-only edit access (staging)", () => {
       timeout: 30_000,
     });
     await expect(page.getByTestId("event-form")).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("creator can submit the edit form and the update succeeds", async ({ page }) => {
+    await loginViaUI(page, email!, password!);
+
+    // Navigate directly to the edit page
+    await page.goto(`/en/e/${createdEventSlug}/edita`, {
+      waitUntil: "domcontentloaded",
+      timeout: 60_000,
+    });
+
+    const form = page.getByTestId("event-form");
+    await expect(form).toBeVisible({ timeout: 30_000 });
+    await expect(form).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30_000,
+    });
+
+    // Step 0: Update the title
+    const titleInput = page.locator("#title");
+    await expect(titleInput).toBeVisible({ timeout: 15_000 });
+    await titleInput.fill(EDITED_TITLE);
+
+    // Navigate to the last step to find the submit button
+    // Step 1: location (just click Next, fields are pre-filled)
+    await page.getByTestId("next-button").click();
+    // Wait for step 1 content to appear before advancing
+    await expect(page.getByTestId("town-select")).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId("next-button").click();
+
+    // Now we should be on the last step with the submit button
+    const submitButton = page.getByTestId("publish-button");
+    await expect(submitButton).toBeVisible({ timeout: 15_000 });
+    await expect(submitButton).toBeEnabled({ timeout: 10_000 });
+
+    // Wait for the publish button to arm (canPublishRef has a 250ms delay
+    // after step change to prevent accidental submits during transition)
+    await page.waitForTimeout(500);
+
+    // Submit the form — this must not 500 (the `indexed` bug)
+    await submitButton.click();
+
+    // Wait for redirect back to the event detail page
+    await page.waitForURL(
+      (url) => url.pathname.includes("/e/") && !url.pathname.includes("/edita"),
+      { timeout: 60_000 }
+    );
+
+    // Update createdEventSlug in case the title change caused a slug change
+    // (so afterAll cleanup deletes the right event)
+    const newSlugMatch = page.url().match(/\/e\/([^/?#]+)/);
+    if (newSlugMatch) createdEventSlug = newSlugMatch[1];
+
+    // Verify the updated title appears on the detail page
+    await expect(page.getByText(EDITED_TITLE).first()).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("non-creator does not see the edit button", async ({ page }) => {
