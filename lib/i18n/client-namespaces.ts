@@ -11,7 +11,7 @@
  * namespace is missing from these lists. Update both places together.
  */
 
-export const CLIENT_APP_KEYS = ["Error", "NotFound", "Publish"] as const;
+export const CLIENT_APP_KEYS = ["Error", "EventEdit", "NotFound", "Publish"] as const;
 
 export const CLIENT_COMPONENT_KEYS = [
   "AdBoard",

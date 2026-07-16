@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   ClockIcon,
+  UserIcon,
 } from "@heroicons/react/24/outline";
+import { Link } from "@i18n/routing";
 import EventCalendar from "./EventCalendar";
 import EventLocation from "./EventLocation";
 import Weather from "components/ui/weather";
@@ -10,6 +12,7 @@ import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { getProfileSlug } from "@utils/user-helpers";
 import type { EventSidebarProps } from "types/props";
 
 /**
@@ -28,6 +31,11 @@ export default async function EventSidebar({
 }: EventSidebarProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
+
+  // Build a URL-safe slug for the creator profile link.
+  const creatorSlug = event.createdByUser
+    ? getProfileSlug(event.createdByUser)
+    : null;
 
   return (
     <aside
@@ -96,6 +104,30 @@ export default async function EventSidebar({
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                     {t("sidebarVisitWebsite")}
                   </PressableAnchor>
+                </div>
+              </>
+            )}
+
+            {/* Creator / publisher profile link */}
+            {event.createdByUser && creatorSlug && (
+              <>
+                <hr className="border-border" />
+                <div className="flex flex-col gap-1">
+                  <h3 className="label font-semibold text-foreground-strong">
+                    {t("sidebarCreatedBy")}
+                  </h3>
+                  <Link
+                    href={`/perfil/${encodeURIComponent(creatorSlug)}`}
+                    className="flex flex-col gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <UserIcon className="w-4 h-4 flex-shrink-0" />
+                      {event.createdByUser.name}
+                    </span>
+                    <span className="font-normal text-primary/70">
+                      {t("sidebarViewAllEvents")} →
+                    </span>
+                  </Link>
                 </div>
               </>
             )}

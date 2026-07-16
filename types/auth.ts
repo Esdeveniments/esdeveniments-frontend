@@ -13,6 +13,8 @@ export interface AuthUser {
   // Backend-owned fields (GET /api/auth/me) — absent until enrichment succeeds.
   pictureSource?: PictureSource;
   lastLoginAt?: string;
+  // Original Logto subject identifier, preserved for debugging/auditing.
+  logtoId?: string;
 }
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";

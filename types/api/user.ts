@@ -1,10 +1,22 @@
 import type { AuthRole } from "../auth";
 
-/** Backend DTO: GET /api/users/{username} response */
+/** Backend DTO: GET /api/users/{username} response.
+ *  `pictureUrl` and `createdAt` are sent by the backend but were previously
+ *  stripped by the Zod schema — now parsed and forwarded to the profile UI. */
 export interface UserPublicResponseDTO {
   id: string;
   name: string;
   username: string;
+  pictureUrl?: string;
+  createdAt?: string; // ISO date-time
+}
+
+/** Minimal user shape needed to build a public profile slug. */
+export interface ProfileSlugUser {
+  id: string;
+  name: string;
+  username: string;
+  email?: string;
 }
 
 export type PictureSource = "LOGTO" | "CUSTOM";

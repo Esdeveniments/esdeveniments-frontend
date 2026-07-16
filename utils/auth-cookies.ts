@@ -106,6 +106,12 @@ export async function getAccessTokenFromCookies(): Promise<string | null> {
   return decrypt(cookieStore.get(ACCESS_TOKEN_COOKIE)?.value);
 }
 
+/** Read id_token from incoming request cookies (server components + routes). */
+export async function getIdTokenFromCookies(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return decrypt(cookieStore.get(ID_TOKEN_COOKIE)?.value);
+}
+
 /** Read and decrypt a token cookie from a route handler's NextRequest. */
 export function readTokenFromRequest(
   request: NextRequest,

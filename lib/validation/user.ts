@@ -5,6 +5,10 @@ export const UserPublicResponseDTOSchema = z.object({
   id: z.string(),
   name: z.string(),
   username: z.string(),
+  // .nullish() because the backend serializes unset fields as explicit `null`
+  // rather than omitting the key.
+  pictureUrl: z.string().nullish().transform((v) => v ?? undefined),
+  createdAt: z.string().nullish().transform((v) => v ?? undefined),
 });
 
 export function parseUserPublic(

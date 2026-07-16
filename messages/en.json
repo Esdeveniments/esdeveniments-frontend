@@ -194,7 +194,12 @@
     },
     "EventEdit": {
       "title": "Edit event",
-      "description": "Secure panel to edit Esdeveniments.cat events."
+      "description": "Secure panel to edit Esdeveniments.cat events.",
+      "heading": "Edit your event",
+      "subheading": "Update the details, location, or image of your event.",
+      "backToEvent": "Back to event",
+      "myEvents": "My events",
+      "requiredNote": "* required fields"
     },
     "PublishPage": {
       "metaTitle": "Publish your event for free in Catalonia | Cultural agenda - Esdeveniments.cat",
@@ -826,6 +831,10 @@
     },
     "EventPage": {
       "sponsored": "Sponsored content",
+      "editEvent": "Edit event",
+      "editTitle": "Edit: {title}",
+      "editError": "Error updating event",
+      "editSave": "Save changes",
       "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "stickyMoreInfo": "More info",
       "stickyCalendar": "Calendar",
@@ -841,7 +850,9 @@
       "readLess": "Read less",
       "durationLabel": "Duration: {duration}",
       "sidebarAriaLabel": "Event details",
-      "toolbarAriaLabel": "Event actions"
+      "toolbarAriaLabel": "Event actions",
+      "sidebarCreatedBy": "Published by",
+      "sidebarViewAllEvents": "View all events"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",

@@ -194,7 +194,12 @@
     },
     "EventEdit": {
       "title": "Editar esdeveniment",
-      "description": "Panell segur per editar esdeveniments d'Esdeveniments.cat."
+      "description": "Panell segur per editar esdeveniments d'Esdeveniments.cat.",
+      "heading": "Edita el teu esdeveniment",
+      "subheading": "Actualitza els detalls, la ubicació o la imatge del teu esdeveniment.",
+      "backToEvent": "Tornar a l'esdeveniment",
+      "myEvents": "Els meus esdeveniments",
+      "requiredNote": "* camps obligatoris"
     },
     "PublishPage": {
       "metaTitle": "Publica el teu esdeveniment gratis a Catalunya | Agenda cultural - Esdeveniments.cat",
@@ -833,6 +838,10 @@
     },
     "EventPage": {
       "sponsored": "Contingut patrocinat",
+      "editEvent": "Editar esdeveniment",
+      "editTitle": "Edita: {title}",
+      "editError": "Error en actualitzar l'esdeveniment",
+      "editSave": "Desa canvis",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "stickyMoreInfo": "Més info",
       "stickyCalendar": "Calendari",
@@ -848,7 +857,9 @@
       "readLess": "Llegir menys",
       "durationLabel": "Durada: {duration}",
       "sidebarAriaLabel": "Detalls de l'esdeveniment",
-      "toolbarAriaLabel": "Accions de l'esdeveniment"
+      "toolbarAriaLabel": "Accions de l'esdeveniment",
+      "sidebarCreatedBy": "Publicat per",
+      "sidebarViewAllEvents": "Veure tots els esdeveniments"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",

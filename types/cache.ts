@@ -31,7 +31,9 @@ export type CacheTag =
   | "promotions"
   | "news"
   | `news:place:${string}`
-  | `news:${string}`;
+  | `news:${string}`
+  | "users"
+  | `user:${string}`;
 
 /**
  * Subset of cache tags that can be revalidated via the /api/revalidate endpoint.

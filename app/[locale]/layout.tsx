@@ -18,6 +18,7 @@ import { BaseLayout } from "@components/ui/layout";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
 import WebMcpTools from "@components/partials/WebMcpTools";
+import AppShellSkeleton from "@components/ui/common/skeletons/AppShellSkeleton";
 import type { AppLocale } from "types/i18n";
 import {
   CLIENT_APP_KEYS,
@@ -25,6 +26,27 @@ import {
   CLIENT_UTILS_KEYS,
   CLIENT_FULL_TOP_LEVEL,
 } from "@lib/i18n/client-namespaces";
+
+async function I18nProvider({
+  locale,
+  children,
+}: {
+  locale: AppLocale;
+  children: ReactNode;
+}) {
+  const messages = await getMessages();
+  const clientMessages = pickClientMessages(messages);
+
+  return (
+    <NextIntlClientProvider
+      key={locale}
+      messages={clientMessages}
+      locale={locale}
+    >
+      {children}
+    </NextIntlClientProvider>
+  );
+}
 
 function pickNamespace<T extends Record<string, unknown>>(
   source: T | undefined,
@@ -110,9 +132,6 @@ export default async function LocaleLayout({
   // Distribute the locale to all server components in this request
   setRequestLocale(locale);
 
-  const messages = await getMessages();
-  const clientMessages = pickClientMessages(messages);
-
   return (
     <html lang={locale}>
       <head>
@@ -176,12 +195,8 @@ export default async function LocaleLayout({
             `,
           }}
         />
-        <NextIntlClientProvider
-          key={locale}
-          messages={clientMessages}
-          locale={locale}
-        >
-          <Suspense fallback={null}>
+        <Suspense fallback={<AppShellSkeleton />}>
+          <I18nProvider locale={locale}>
             <AdProvider>
               <AuthProvider>
                 <WebsiteSchema locale={locale} />
@@ -193,8 +208,8 @@ export default async function LocaleLayout({
                 <BaseLayout>{children}</BaseLayout>
               </AuthProvider>
             </AdProvider>
-          </Suspense>
-        </NextIntlClientProvider>
+          </I18nProvider>
+        </Suspense>
       </body>
     </html>
   );

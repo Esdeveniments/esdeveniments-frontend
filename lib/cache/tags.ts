@@ -72,3 +72,8 @@ export const newsPlaceTag = (slug: string): `news:place:${string}` =>
 export const newsSlugTag = (slug: string): `news:${string}` =>
   boundedTag("news", slug);
 
+// User / profile tags
+export const usersTag = "users" as const satisfies CacheTag;
+export const userTag = (username: string): `user:${string}` =>
+  boundedTag("user", username);
+

@@ -346,6 +346,13 @@ export interface EventFormProps {
   imageUrlValue?: string | null;
 }
 
+/** Result returned by the editEvent server action. */
+export interface EditEventResult {
+  success: boolean;
+  newSlug?: string;
+  error?: string;
+}
+
 export interface UseEventsOptions {
   place?: string;
   category?: string;
