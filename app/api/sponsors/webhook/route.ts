@@ -40,7 +40,12 @@ import { MS_PER_DAY } from "@utils/constants";
  */
 export const maxDuration = 30;
 
-const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+// Read at call time (not module load) so tests can stub env vars in beforeEach.
+// Module-level capture would freeze the value from .env.development before
+// vi.stubEnv can override it.
+function getWebhookSecret(): string | undefined {
+  return process.env.STRIPE_WEBHOOK_SECRET;
+}
 
 // Fail-fast: Prevent accidental misconfiguration in production
 // This check runs once at module load, crashing the app immediately on deploy
@@ -55,7 +60,11 @@ if (
 
 // Fail-fast: Catch misconfigured webhook secret (e.g. URL pasted instead of whsec_...)
 // Stripe signing secrets always start with "whsec_"
-if (WEBHOOK_SECRET && !WEBHOOK_SECRET.startsWith("whsec_")) {
+// Check at module load for the fail-fast, but also re-check at call time for tests
+if (
+  process.env.STRIPE_WEBHOOK_SECRET &&
+  !process.env.STRIPE_WEBHOOK_SECRET.startsWith("whsec_")
+) {
   throw new Error(
     "FATAL: STRIPE_WEBHOOK_SECRET has invalid format - expected a 'whsec_' webhook signing secret.",
   );
@@ -329,10 +338,12 @@ export async function POST(request: NextRequest) {
     // This prevents accidental bypass in misconfigured deployments
     // For local dev with signature verification, use Stripe CLI:
     //   stripe listen --forward-to localhost:3000/api/sponsors/webhook
+    const webhookSecret = getWebhookSecret();
+
     const allowUnsafeBypass =
       process.env.NODE_ENV === "development" &&
       process.env.STRIPE_WEBHOOK_SKIP_VERIFY === "true" &&
-      !WEBHOOK_SECRET;
+      !webhookSecret;
 
     if (allowUnsafeBypass) {
       console.warn(
@@ -351,7 +362,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!WEBHOOK_SECRET) {
+    if (!webhookSecret) {
       console.error("STRIPE_WEBHOOK_SECRET is not configured");
       return NextResponse.json(
         { error: "Webhook secret not configured" },
@@ -369,7 +380,7 @@ export async function POST(request: NextRequest) {
     // Verify signature and validate payload with Zod schema
     let event: StripeWebhookEvent;
     try {
-      event = constructEvent(payload, signature, WEBHOOK_SECRET);
+      event = constructEvent(payload, signature, webhookSecret);
     } catch (error) {
       console.error(
         "Webhook verification/validation failed:",

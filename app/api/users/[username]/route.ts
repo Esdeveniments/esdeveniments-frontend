@@ -13,13 +13,14 @@ export async function GET(
     const user: UserPublicResponseDTO | null =
       await getUserByUsernameExternal(username);
 
-    // Short TTL with stale-while-revalidate so the internal fetch in
-    // fetchUserBySlug (next: { revalidate }) can cache. Profiles can change
-    // (avatar, join date) so we keep the TTL short (5 min) and allow stale
-    // serving for up to 30 min while revalidating.
-    const headers: Record<string, string> = {
-      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=1800",
-    };
+    // Cache successful 200 responses with a short TTL so the internal fetch
+    // in fetchUserBySlug (next: { revalidate }) can cache. 404s use no-store
+    // to avoid negative caching — a newly registered user would otherwise see
+    // a cached 404 for up to 30 min.
+    const headers: Record<string, string> =
+      user
+        ? { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=1800" }
+        : { "Cache-Control": "no-store" };
 
     return NextResponse.json(user ?? null, {
       status: user ? 200 : 404,
