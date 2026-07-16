@@ -194,7 +194,12 @@
     },
     "EventEdit": {
       "title": "Editar evento",
-      "description": "Panel seguro para editar eventos de Esdeveniments.cat."
+      "description": "Panel seguro para editar eventos de Esdeveniments.cat.",
+      "heading": "Edita tu evento",
+      "subheading": "Actualiza los detalles, la ubicación o la imagen de tu evento.",
+      "backToEvent": "Volver al evento",
+      "myEvents": "Mis eventos",
+      "requiredNote": "* campos obligatorios"
     },
     "PublishPage": {
       "metaTitle": "Publica tu evento gratis en Cataluña | Agenda cultural - Esdeveniments.cat",

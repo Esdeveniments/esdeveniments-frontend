@@ -194,7 +194,12 @@
     },
     "EventEdit": {
       "title": "Edit event",
-      "description": "Secure panel to edit Esdeveniments.cat events."
+      "description": "Secure panel to edit Esdeveniments.cat events.",
+      "heading": "Edit your event",
+      "subheading": "Update the details, location, or image of your event.",
+      "backToEvent": "Back to event",
+      "myEvents": "My events",
+      "requiredNote": "* required fields"
     },
     "PublishPage": {
       "metaTitle": "Publish your event for free in Catalonia | Cultural agenda - Esdeveniments.cat",
