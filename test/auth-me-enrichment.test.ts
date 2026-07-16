@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as usersExternal from "@lib/api/users-external";
-import { enrichWithBackendProfile } from "@app/api/auth/me/route";
+import { enrichWithBackendProfile } from "@lib/auth/enrichment";
 import type { AuthUser } from "types/auth";
 
 vi.mock("@lib/api/users-external", () => ({
