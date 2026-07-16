@@ -135,4 +135,35 @@ describe("enrichWithBackendProfile", () => {
     expect(result.id).toBe("backend-uuid");
     expect(result.logtoId).toBe("logto-sub");
   });
+
+  it("keeps id_token username when backend username is whitespace-only", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "   ",
+      pictureUrl: "https://cdn.example.com/avatar.png",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    // Whitespace-only username should not replace the valid id_token username
+    expect(result.username).toBe(idTokenUser.username);
+    // Backend name is still better (id_token name is not the email here)
+    expect(result.name).toBe("Backend Name");
+  });
+
+  it("keeps id_token username when backend username is an empty string", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "",
+      pictureUrl: "https://cdn.example.com/avatar.png",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.username).toBe(idTokenUser.username);
+  });
 });
