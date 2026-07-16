@@ -777,7 +777,12 @@ export default async function proxy(request: NextRequest) {
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
     const normalizedPath = pathnameWithoutLocale || pathname;
     const isFavoritesPage = normalizedPath === "/preferits";
-    const isPersonalizedHtml = isFavoritesPage;
+    // Edit pages are auth-gated (creator-only) and must never be CDN-cached.
+    // Without this, a non-creator's 404 could be cached and served to the
+    // actual creator for up to 30 min (s-maxage=1800), and a creator's edit
+    // form HTML could leak to other users via the CDN edge cache.
+    const isEditPage = normalizedPath.includes("/edita");
+    const isPersonalizedHtml = isFavoritesPage || isEditPage;
 
     // AI bot requests must not pollute or be served from the shared CDN cache:
     // - Origin renders a different (fully-SSR) HTML for bots (see Slurp trick
