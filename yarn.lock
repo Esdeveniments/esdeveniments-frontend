@@ -5241,12 +5241,12 @@ __metadata:
   linkType: hard
 
 "brace-expansion@npm:^1.1.7":
-  version: 1.1.15
-  resolution: "brace-expansion@npm:1.1.15"
+  version: 1.1.16
+  resolution: "brace-expansion@npm:1.1.16"
   dependencies:
     balanced-match: "npm:^1.0.0"
     concat-map: "npm:0.0.1"
-  checksum: 10c0/648e273f57cfa9ed67d8a77bdb15b408205465d33da9331808ee3c188d8b55674c9cdbf1f320b65bc562e485e1263360ae62ad355e128e0435891f6430e795d7
+  checksum: 10c0/b2a915bbedbf4e45840d1fb9a4d391bbf26a79475bd134714d3cee34f1f0edb0ce982738028843be5fbaf8039429f71fa487df8c915b6065ced542c83e58fae6
   languageName: node
   linkType: hard
 
@@ -11123,6 +11123,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss@npm:^8.5.16":
+  version: 8.5.16
+  resolution: "postcss@npm:8.5.16"
+  dependencies:
+    nanoid: "npm:^3.3.12"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c0/625de7a02f662f3a340964d14b487bd5097adf16f5f171e257d19005ba37aea8768ee446557500e88e91ca46b4d14d6cb4a0bf033c6ec0c8c0b660d85719f1ef
+  languageName: node
+  linkType: hard
+
 "postgres-array@npm:~2.0.0":
   version: 2.0.0
   resolution: "postgres-array@npm:2.0.0"
@@ -11911,7 +11922,7 @@ __metadata:
     next: "npm:16.2.6"
     next-intl: "npm:^4.9.2"
     next-sitemap: "npm:^4.2.3"
-    postcss: "npm:^8.5.15"
+    postcss: "npm:^8.5.16"
     react: "npm:19.2.4"
     react-day-picker: "npm:^10.0.1"
     react-dom: "npm:19.2.4"
@@ -11922,7 +11933,7 @@ __metadata:
     swr: "npm:^2.2.5"
     tailwindcss: "npm:3.3.6"
     typescript: "npm:5.9.3"
-    undici: "npm:^8.5.0"
+    undici: "npm:^8.6.0"
     vite-tsconfig-paths: "npm:^4.3.0"
     vitest: "npm:4.1.9"
     web-push: "npm:^3.6.7"
@@ -13422,10 +13433,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^8.5.0":
-  version: 8.5.0
-  resolution: "undici@npm:8.5.0"
-  checksum: 10c0/7c25fd96a4dcc607b905995f6feec948f74a6759cadbea4c6eb9402517aab4887987c8001c80d482297d04f975f44a383325b89577ac21e587983ed088408065
+"undici@npm:^8.6.0":
+  version: 8.6.0
+  resolution: "undici@npm:8.6.0"
+  checksum: 10c0/1d3c72ab9712fe242e30dadcf539aa990b3848308af360f3a09336d1d27f8c8e896db3c5483ac002494f609f17976bc83bb4eaf5bbb5eb7878d801219ec1ae15
   languageName: node
   linkType: hard
 
@@ -14134,8 +14145,8 @@ __metadata:
   linkType: hard
 
 "ws@npm:^7.0.0, ws@npm:^7.3.1":
-  version: 7.5.11
-  resolution: "ws@npm:7.5.11"
+  version: 7.5.13
+  resolution: "ws@npm:7.5.13"
   peerDependencies:
     bufferutil: ^4.0.1
     utf-8-validate: ^5.0.2
@@ -14144,7 +14155,7 @@ __metadata:
       optional: true
     utf-8-validate:
       optional: true
-  checksum: 10c0/7972670b676fb1ccba73b0899ca3c2e04e8c2075629c2614cced7f556536f96a672bbf4619fc5a06c8b8720bb839a47ca88c69c95dc14c9c61a99fbecba1c866
+  checksum: 10c0/e223726bbda5768ed58ec9252d04eda7018ef380ea122bb94e595a4d7a02b5baeb423933936576fddb8fa51b642375f7ae814bf0f6f5d9a3ce290566578a8c5a
   languageName: node
   linkType: hard
 
