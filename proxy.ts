@@ -442,6 +442,30 @@ export default async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/api/")) {
+    // Edge-level multipart allowlist. Rejects multipart requests to any
+    // non-allowlisted path BEFORE the public-API gate, so that even when a
+    // path is also a public-API entry, it still has to pass the same
+    // narrow multipart allowlist.
+    //
+    // Why only /api/users/me/avatar? That route carries the bearer inside an
+    // HttpOnly cookie (read by the route handler) and the multipart body
+    // can't be HMAC-re-signed from a server-cloned stream. See
+    // `app/api/users/me/avatar/route.ts` for the auth model + 2-layer size
+    // guard. Every other path must use a JSON body that HMAC can re-sign.
+    const requestContentType = (
+      request.headers.get("content-type") || ""
+    ).toLowerCase();
+    if (requestContentType.startsWith("multipart/form-data")) {
+      const isMultipartAllowlisted =
+        pathname === "/api/users/me/avatar";
+      if (!isMultipartAllowlisted) {
+        return NextResponse.json(
+          { error: "Unsupported media type" },
+          { status: 415 },
+        );
+      }
+    }
+
     const isPublicApiRequest =
       // Pattern-based routes (GET only): these only export GET handlers;
       // restricting at middleware level prevents accidental exposure if a
@@ -505,7 +529,6 @@ export default async function proxy(request: NextRequest) {
     }
     const hmac = request.headers.get("x-hmac");
     const timestamp = request.headers.get("x-timestamp");
-    const contentType = request.headers.get("content-type") || "";
     let requestBody = "";
 
     if (!process.env.HMAC_SECRET) {
@@ -513,22 +536,11 @@ export default async function proxy(request: NextRequest) {
       return new NextResponse("Internal Server Error", { status: 500 });
     }
 
-    if (contentType.toLowerCase().startsWith("multipart/form-data")) {
-      // /api/users/me/avatar carries the bearer inside the HttpOnly cookie
-      // (read by the route handler), so it does not need HMAC over a body.
-      // Supporting multipart here keeps the upload off the HMAC requestBody
-      // stream (which would otherwise budget a full body clone + 415 trip,
-      // and can't re-sign a streamed multipart). Narrow allowlist: only the
-      // exact avatar path is permitted.
-      const isMultipartAllowlisted =
-        pathname === "/api/users/me/avatar";
-      if (!isMultipartAllowlisted) {
-        return NextResponse.json(
-          { error: "Unsupported media type" },
-          { status: 415 },
-        );
-      }
-    }
+    // Multipart is handled at the edge of the /api/ branch above (see the
+    // narrow allowlist right after `pathname.startsWith("/api/")`). Doing
+    // it there means a multipart POST still has to satisfy HMAC unless the
+    // path itself is in PUBLIC_API_EXACT_PATHS, AND additionally has to
+    // pass the multipart allowlist. Both gates are required.
 
     try {
       requestBody = await request.clone().text();

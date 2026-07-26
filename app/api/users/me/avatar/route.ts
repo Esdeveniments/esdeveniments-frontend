@@ -40,8 +40,15 @@ export async function POST(request: NextRequest): Promise<Response> {
   const auth = await requireAuthCookie();
   if (!auth.ok) return auth.response;
 
-  // Boundary / size guard at the edge so a giant blob never allocates a
-  // multipart parser and a wrong file type never wastes a backend round-trip.
+  // Defense-in-depth size guard (two layers):
+  //   1. Content-Length precheck (cheap, rejects most oversized requests
+  //      before the multipart parser is invoked at all).
+  //   2. file.size post-check after parsing (binding — catches clients that
+  //      lie about Content-Length, or omit it entirely).
+  // Either layer alone is insufficient: a malicious client can spoof
+  // Content-Length to a small value; only the parsed file.size is the
+  // truth, but only AFTER formData() has already buffered the body. Both
+  // are required.
   const contentLengthHeader = Number(
     request.headers.get("content-length") ?? "0",
   );
@@ -49,6 +56,19 @@ export async function POST(request: NextRequest): Promise<Response> {
     return NextResponse.json(
       { error: "Avatar too large (max 2 MB)" },
       { status: 413, headers: NO_STORE },
+    );
+  }
+  // Require a well-formed multipart Content-Type with a boundary parameter;
+  // an empty / malformed request that bypasses the multipart parser would
+  // otherwise fall through to formData() and surface as a generic 400.
+  const declaredContentType = (request.headers.get("content-type") ?? "").toLowerCase();
+  if (
+    !declaredContentType.startsWith("multipart/form-data") ||
+    !declaredContentType.includes("boundary=")
+  ) {
+    return NextResponse.json(
+      { error: "Expected multipart/form-data with a boundary" },
+      { status: 415, headers: NO_STORE },
     );
   }
 

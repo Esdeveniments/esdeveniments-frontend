@@ -12,9 +12,15 @@ import type { UsernameValidationResult } from "types/api/auth-validation";
  * Rule literals (MATCH_USERNAME_RE, RESERVED_USER_PREFIX) are imported
  * from `lib/validation/username.ts` so client-side realtime feedback
  * never drifts from the Zod schema (or from the backend).
+ *
+ * Note: we deliberately do NOT lowercase the input before validation,
+ * so client and `usernameSchema` semantics match exactly. The lowercase
+ * regex (`MATCH_USERNAME_RE`) already rejects uppercase characters, so
+ * accepting them here would lead to a client "ok" verdict that the
+ * backend then 400s on save.
  */
 export function validateUsername(raw: string): UsernameValidationResult {
-  const value = (raw ?? "").trim().toLowerCase();
+  const value = (raw ?? "").trim();
 
   if (value.length < 3) {
     return { ok: false, code: "usernameTooShort" };
