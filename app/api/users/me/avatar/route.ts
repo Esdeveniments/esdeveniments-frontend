@@ -40,19 +40,47 @@ export async function POST(request: NextRequest): Promise<Response> {
   const auth = await requireAuthCookie();
   if (!auth.ok) return auth.response;
 
-  // Defense-in-depth size guard (two layers):
-  //   1. Content-Length precheck (cheap, rejects most oversized requests
-  //      before the multipart parser is invoked at all).
-  //   2. file.size post-check after parsing (binding — catches clients that
-  //      lie about Content-Length, or omit it entirely).
-  // Either layer alone is insufficient: a malicious client can spoof
-  // Content-Length to a small value; only the parsed file.size is the
-  // truth, but only AFTER formData() has already buffered the body. Both
-  // are required.
-  const contentLengthHeader = Number(
-    request.headers.get("content-length") ?? "0",
-  );
-  if (Number.isFinite(contentLengthHeader) && contentLengthHeader > MAX_AVATAR_BYTES) {
+  // Defense-in-depth size guard (three layers):
+  //   1. Reject Transfer-Encoding: chunked + require a well-formed
+  //      Content-Length so signatures on Content-Length actually constrain
+  //      the body. Without these, an attacker can stream chunks up to the
+  //      upstream proxy's max (Cloudflare free tier = 100 MB) and force
+  //      formData() to buffer it all before our file.size check runs.
+  //   2. Content-Length upper bound (cheap, rejects obviously oversized
+  //      requests before the multipart parser is invoked).
+  //   3. file.size post-check after parsing (binding — catches clients that
+  //      spoof Content-Length while obeying the framing rules: the only
+  //      honest over-limit case is a client that's interleaved framing
+  //      tricks with a body larger than declared).
+  //
+  // TODO(ops): pair this with a Cloudflare "Max Upload Size" zone setting
+  // (suggested 25 MB) so even chunked/stale-framed requests stop at the
+  // edge and never reach Traefik/Coolify bandwidth. See docs/incidents
+  // search: "body-size" for related context. Until that is configured,
+  // layer 1 below is the only thing standing between an attacker and the
+  // Node multipart parser.
+  const transferEncoding = (
+    request.headers.get("transfer-encoding") ?? ""
+  ).toLowerCase();
+  if (transferEncoding.includes("chunked")) {
+    return NextResponse.json(
+      { error: "Chunked transfer encoding is not supported" },
+      { status: 411, headers: NO_STORE },
+    );
+  }
+  const rawContentLength = request.headers.get("content-length");
+  if (!rawContentLength) {
+    return NextResponse.json(
+      { error: "Content-Length header is required" },
+      { status: 411, headers: NO_STORE },
+    );
+  }
+  const contentLengthHeader = Number(rawContentLength);
+  if (
+    !Number.isFinite(contentLengthHeader) ||
+    contentLengthHeader < 0 ||
+    contentLengthHeader > MAX_AVATAR_BYTES
+  ) {
     return NextResponse.json(
       { error: "Avatar too large (max 2 MB)" },
       { status: 413, headers: NO_STORE },

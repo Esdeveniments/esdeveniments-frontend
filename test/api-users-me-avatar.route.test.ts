@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DELETE } from "../app/api/users/me/avatar/route";
+import { DELETE, POST } from "../app/api/users/me/avatar/route";
 import * as authCookies from "../utils/auth-cookies";
 import * as usersExternal from "../lib/api/users-external";
 
@@ -40,13 +40,78 @@ function buildDeleteRequest() {
   });
 }
 
-// POST multipart is covered by e2e/api-users-me.spec.ts (Pagewright
-// request fixture against a real dev server). jsdom + Request+FormData
-// is historically broken at the constructor level — see the route-level
-// tests in lib/api/users-external-new.test.ts for the wrapper-side
-// coverage of uploadUserAvatarExternal.
+// POST multipart happy-path is covered by e2e/api-users-me.spec.ts
+// (Playwright request fixture against a real dev server). jsdom +
+// Request+FormData is historically broken at the constructor level —
+// see route-level tests in test/lib-api-users-external-new.test.ts for
+// the wrapper-side coverage of uploadUserAvatarExternal.
+//
+// The framing-guard tests below cover the cheap, header-only branches
+// that fire BEFORE formData() ever runs — the branches that bound the
+// worst-case memory/CPU burn from chunked / stale-framed uploads. They
+// compose cleanly with jsdom's Request because they don't construct a
+// FormData body.
 //
 // DELETE has no body, so it composes cleanly with jsdom's Request.
+
+describe("POST /api/users/me/avatar (framing guards)", () => {
+  it("returns 411 when Transfer-Encoding: chunked is set (can bypass Content-Length)", async () => {
+    getCookie.mockResolvedValue("tok");
+    const req = new Request("http://localhost/api/users/me/avatar", {
+      method: "POST",
+      headers: {
+        "content-type": "multipart/form-data; boundary=---abc",
+        // Node's WHATWG Request strips any redundant Content-Length when
+        // chunked is set, so we deliberately don't set it here — the
+        // chunked branch must reject on TE alone.
+        "transfer-encoding": "chunked",
+      },
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(411);
+  });
+
+  it("returns 411 when Content-Length header is missing (chunked-allowlist prevention)", async () => {
+    getCookie.mockResolvedValue("tok");
+    const req = new Request("http://localhost/api/users/me/avatar", {
+      method: "POST",
+      headers: {
+        "content-type": "multipart/form-data; boundary=---abc",
+        // No Content-Length set.
+      },
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(411);
+  });
+
+  it("returns 413 when Content-Length exceeds MAX_AVATAR_BYTES (cheap precheck before parser)", async () => {
+    getCookie.mockResolvedValue("tok");
+    const req = new Request("http://localhost/api/users/me/avatar", {
+      method: "POST",
+      headers: {
+        "content-type": "multipart/form-data; boundary=---abc",
+        // 3 MB > 2 MB cap.
+        "content-length": String(3 * 1024 * 1024),
+      },
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(413);
+  });
+
+  it("returns 415 when Content-Type lacks the boundary parameter (defense vs malformed multipart)", async () => {
+    getCookie.mockResolvedValue("tok");
+    const req = new Request("http://localhost/api/users/me/avatar", {
+      method: "POST",
+      headers: {
+        "content-type": "multipart/form-data",
+        "content-length": "1234",
+        // No boundary.
+      },
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(415);
+  });
+});
 
 describe("DELETE /api/users/me/avatar", () => {
   it("returns 401 when no access token cookie is present", async () => {
