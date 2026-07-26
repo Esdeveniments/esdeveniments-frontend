@@ -65,7 +65,10 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
               <UserIcon className="w-4 h-4" />
               <span>
                 {t.rich("createdBy", {
-                  name: createdByUser.name,
+                  name:
+                    createdByUser.displayName ??
+                    createdByUser.username ??
+                    "",
                   link: (chunks) =>
                     createdByUser.username ? (
                       <Link

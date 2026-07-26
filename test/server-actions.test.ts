@@ -95,9 +95,10 @@ function buildEvent(overrides: Partial<EventDetailResponseDTO> = {}): EventDetai
     origin: "MANUAL",
     createdByUser: {
       id: CREATOR_ID,
-      email: "creator@example.com",
-      name: "Creator",
+      displayName: "Creator",
       username: "creator",
+      avatarUrl: null,
+      organizerVerified: false,
     },
     city: {
       id: 1,

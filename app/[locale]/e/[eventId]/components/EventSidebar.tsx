@@ -119,11 +119,12 @@ export default async function EventSidebar({
                   <Link
                     href={`/perfil/${encodeURIComponent(creatorSlug)}`}
                     className="flex flex-col gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      <UserIcon className="w-4 h-4 flex-shrink-0" />
-                      {event.createdByUser.name}
-                    </span>
+                  >                      <span className="inline-flex items-center gap-1.5">
+                        <UserIcon className="w-4 h-4 flex-shrink-0" />
+                        {event.createdByUser.displayName ??
+                          event.createdByUser.username ??
+                          ""}
+                      </span>
                     <span className="font-normal text-primary/70">
                       {t("sidebarViewAllEvents")} →
                     </span>

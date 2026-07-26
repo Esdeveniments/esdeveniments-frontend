@@ -320,6 +320,10 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/push/send",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
+  // Authenticated user-self mutation routes (Bearer comes from HttpOnly cookie
+  // inside the route handler; Origin check below is the CSRF guard).
+  "/api/users/me/profile",
+  "/api/users/me/avatar",
 ];
 
 // GET-only public exact paths. Gated to GET in isPublicApiRequest so a future
@@ -510,10 +514,20 @@ export default async function proxy(request: NextRequest) {
     }
 
     if (contentType.toLowerCase().startsWith("multipart/form-data")) {
-      return NextResponse.json(
-        { error: "Unsupported media type" },
-        { status: 415 },
-      );
+      // /api/users/me/avatar carries the bearer inside the HttpOnly cookie
+      // (read by the route handler), so it does not need HMAC over a body.
+      // Supporting multipart here keeps the upload off the HMAC requestBody
+      // stream (which would otherwise budget a full body clone + 415 trip,
+      // and can't re-sign a streamed multipart). Narrow allowlist: only the
+      // exact avatar path is permitted.
+      const isMultipartAllowlisted =
+        pathname === "/api/users/me/avatar";
+      if (!isMultipartAllowlisted) {
+        return NextResponse.json(
+          { error: "Unsupported media type" },
+          { status: 415 },
+        );
+      }
     }
 
     try {
@@ -606,6 +620,12 @@ export default async function proxy(request: NextRequest) {
   if (trustTarget) {
     return NextResponse.redirect(new URL(trustTarget, request.url), 301);
   }
+
+  // /usuarios/<user> -> /perfil/<user> rewrite deferred to followup.
+  // The proxy.ts rewrite needs to run AFTER stripLocalePrefix(pathname)
+  // is in scope so /es/usuarios/alex is resolved correctly. Tracking
+  // in PR review checklist item 3.
+
 
   // OpenAPI spec: bypass locale handling so route handler is used
   if (pathname === "/openapi") {

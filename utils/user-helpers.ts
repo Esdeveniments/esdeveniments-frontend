@@ -1,7 +1,7 @@
-import type { ProfileSlugUser } from "types/api/user";
 import { sanitize } from "@utils/sanitize-segment";
+import type { ProfileSlugSource } from "types/api/auth-validation";
 
-/** Matches standard hyphenated UUID formats (v1–v5). */
+/** Matches standard hyphenated UUID formats (v1\u2013v5). */
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -16,7 +16,9 @@ function isUuid(value: string): boolean {
  * name, and returns an empty string when no safe slug is available. Never
  * exposes email addresses or raw UUIDs.
  */
-export function getProfileSlug(user: ProfileSlugUser | null | undefined): string {
+export function getProfileSlug(
+  user: ProfileSlugSource | null | undefined,
+): string {
   if (!user) return "";
 
   // Never expose email addresses or raw UUIDs in profile URLs. If the server
