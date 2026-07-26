@@ -61,7 +61,7 @@ describe("PATCH /api/users/me/profile", () => {
     expect(patchExternal).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when Zod safeParse fails (missing required fields)", async () => {
+  it("returns 400 when Zod safeParse fails (invalid field values)", async () => {
     getCookie.mockResolvedValue("tok");
     const res = await PATCH(
       buildPatchRequest({ username: "ab", displayName: "" }) as never,
@@ -131,6 +131,16 @@ describe("PATCH /api/users/me/profile", () => {
       buildPatchRequest({ username: "alex91", displayName: "Alex" }) as never,
     );
     expect(res.status).toBe(400);
+  });
+
+  it("propagates backend 403 via handleApiError", async () => {
+    getCookie.mockResolvedValue("tok");
+    const err = Object.assign(new Error("session expired"), { status: 403 });
+    patchExternal.mockRejectedValue(err);
+    const res = await PATCH(
+      buildPatchRequest({ username: "alex91", displayName: "Alex" }) as never,
+    );
+    expect(res.status).toBe(403);
   });
 
   it("returns 502 when wrapper returns null (backend parsing failure)", async () => {

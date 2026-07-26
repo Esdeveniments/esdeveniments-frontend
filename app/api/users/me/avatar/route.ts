@@ -76,10 +76,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
   const contentLengthHeader = Number(rawContentLength);
+  // +8192 envelope allowance: a multipart body needs ~200–400 bytes of
+  // boundary + part headers + CRLFs around the file bytes. Without this, a
+  // legitimate 2 MB file produces Content-Length ≈ 2.0003 MB and would 413
+  // here even though the file.size post-check below would have allowed it.
+  // The 8 KB slack is well under the Cloudflare free-tier 100 MB ceiling
+  // (see the TODO(ops) note above) and gives the file-size postcheck the
+  // final say on the actual payload. PR review thread 121V was the trigger.
+  const MAX_AVATAR_REQUEST_BYTES = MAX_AVATAR_BYTES + 8192;
   if (
     !Number.isFinite(contentLengthHeader) ||
     contentLengthHeader < 0 ||
-    contentLengthHeader > MAX_AVATAR_BYTES
+    contentLengthHeader > MAX_AVATAR_REQUEST_BYTES
   ) {
     return NextResponse.json(
       { error: "Avatar too large (max 2 MB)" },

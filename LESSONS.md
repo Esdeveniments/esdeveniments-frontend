@@ -96,3 +96,15 @@ same way `COOLIFY_WEBHOOK_URL`/`_STAGING` are consumed in the workflow.
 There are two Vercel projects wired to this GitHub repo: the **team** one (`esdeveniments` scope, the correct one — its previews are opened by `VERCEL_AUTOMATION_BYPASS_SECRET`) and a leftover **personal** duplicate (`albertolives-projects` scope, auth-protected, the bypass secret does not open it). Both build every commit and both post a `success` status to the **same** `vercel[bot]` GitHub deployment, about a second apart. The personal status lands last, so it's the newest.
 
 The E2E "Wait for Vercel preview" step must use the **team** preview, never the personal one. It read statuses with `per_page=1` and inspected only `.[0]` (newest) — always the personal URL — rejected it as an unexpected scope, and timed out at 900s without ever looking at the team status behind it. This wasn't flaky: it blocked *every* PR deterministically once #388 added the fail-closed scope filter. Fix (this PR): fetch `per_page=20` and scan **all** success statuses for the one whose host ends with `-esdeveniments.vercel.app`. The real cleanup is to disconnect the personal project's Git integration in Vercel so it stops building/posting at all; until then the CI scan is the safety net. If the team scope/domain ever moves, update `EXPECTED_PREVIEW_HOST_SUFFIX` in `.github/workflows/ci.yml`.
+
+## PR review-loop must wait for AI bot re-reviews to settle before declaring convergence
+After a push that should re-trigger bots, the GitHub review-thread stream
+arrives over a few minutes (Copilot + CodeRabbit + Greptile + Cubic + Gemini
+each have their own polling cadence). A single `gh api graphql` filtered
+list at time T is conclusive evidence of *that instant*, not the eventual
+stable state. Round 2 on PR #426 fetched 1 unresolved thread and declared
+convergence; another 12 landed within ten minutes, including two P1
+regressions the same PR's round-1 commit had introduced. Rule: poll twice,
+≥ 4 min apart, and only call convergence when `totalCount` is stable AND
+`unresolved == 0` (or new threads are declines of previously-declined
+items). See `docs/incidents/2026-07-26-pr-review-loop-missed-threads.md`.

@@ -42,12 +42,3 @@ export const usernameSchema = z
     message: "usernameReserved",
   });
 
-export const USERNAME_FIELD_LABELS = {
-  usernameTooShort: "Massa curt (mínim 3 caràcters)",
-  usernameTooLong: "Massa llarg (màxim 30 caràcters)",
-  usernameInvalidChars: "Només minúscules, números i guions",
-  usernameReservedPrefix: "No pot començar per 'user-'",
-  usernameReserved: "Aquest nom no està disponible",
-  usernameTaken: "Aquest nom ja està en ús",
-  usernameInvalid: "Nom no vàlid",
-} as const;

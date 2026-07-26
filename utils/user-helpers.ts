@@ -35,11 +35,16 @@ export function getProfileSlug(
   // The 2026-07-25 backend shape (OwnerSummaryDTO) carries displayName
   // instead of name; read it as a fallback for the new shape.
   //
-  // Intentional `||` (not `??`): if `name` trims to an empty string,
-  // treat the slot as absent and fall through to `displayName`. `??`
-  // would only coalesce null/undefined, leaving the empty-string case to
-  // the downstream `if (name && ...)` rejection — same observable
-  // behavior either way, but `||` makes the fall-through explicit.
+  // Intentional `||` (not `??`): when `name` trims to `""` (whitespace-only
+  // input from the identity provider), fall through to `displayName`
+  // rather than binding an empty string here. `??` would only coalesce
+  // null/undefined; an empty string left bound would be rejected by the
+  // downstream `if (name && ...)` guard and the call would fall through
+  // to `return user.username` or `""` instead of `displayName`. Using
+  // `||` makes the empty-string fall-through explicit (and produces a
+  // useful slug from `displayName` when one is available). PR review
+  // thread 121i flagged the previous comment as inaccurate; this is the
+  // corrected version.
   const name = (user.name?.trim() || user.displayName?.trim());
   if (name && !name.includes("@") && name !== user.email && !isUuid(name)) {
     const slug = sanitize(name);

@@ -43,10 +43,18 @@ describe("usernameSchema (Zod)", () => {
     }
   });
 
-  it("rejects reserved usernames (case-insensitive)", () => {
-    for (const reserved of ["Admin", "ADMIN", "api", "Me"]) {
+  it("rejects reserved usernames (reserved-list refinement)", () => {
+    // Inputs must pass length (>=3) AND regex [a-z0-9-] first so the
+    // reserved-list refinement is the one that fires. Old loop values
+    // ("Me" 2 chars length-fails; "Admin"/"ADMIN" uppercase regex-fails
+    // before the refine) hit earlier branches and never exercised the
+    // reserved code path. PR review thread 121c was the trigger.
+    for (const reserved of ["admin", "api", "auth", "login", "logout"]) {
       const r = usernameSchema.safeParse(reserved);
       expect(r.success).toBe(false);
+      if (!r.success) {
+        expect(r.error.issues[0].message).toBe("usernameReserved");
+      }
     }
   });
 

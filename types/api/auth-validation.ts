@@ -6,17 +6,6 @@
 // existing import paths (`import type { … } from "lib/…"` and
 // `import type { … } from "utils/…"`) continue to work.
 
-/**
- * Mirrors `profileUpdateSchema` in `lib/validation/auth.ts`. Defined as
- * an explicit interface (not `z.infer<typeof profileUpdateSchema>`) so the
- * /types/ tree doesn't have to depend on a lib/ Zod schema.
- */
-export interface ProfileUpdateInput {
-  username: string;
-  displayName: string;
-  bio?: string | null;
-}
-
 /** Error codes raised by the username validator (utils/username-validation.ts). */
 export type UsernameErrorCode =
   | "usernameTooShort"

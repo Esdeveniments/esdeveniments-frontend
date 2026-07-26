@@ -447,18 +447,25 @@ export default async function proxy(request: NextRequest) {
     // path is also a public-API entry, it still has to pass the same
     // narrow multipart allowlist.
     //
-    // Why only /api/users/me/avatar? That route carries the bearer inside an
-    // HttpOnly cookie (read by the route handler) and the multipart body
-    // can't be HMAC-re-signed from a server-cloned stream. See
-    // `app/api/users/me/avatar/route.ts` for the auth model + 2-layer size
-    // guard. Every other path must use a JSON body that HMAC can re-sign.
+    // Why these three? Each carries a multipart body that the HMAC middleware
+    // can't re-sign from a server-cloned stream (multipart binaries can't be
+    // re-derived from a server-cloned body without losing boundaries). The
+    // three flows use multipart for browser-uploaded images / files:
+    //   - /api/users/me/avatar        — HttpOnly cookie auth (avatar)
+    //   - /api/publica/image-upload   — IP rate limit + Origin (event image)
+    //   - /api/sponsors/image-upload  — Stripe session paid-status guard
+    // Every other /api/ path is required to use a JSON body that HMAC can
+    // re-sign. PR review thread 121G expanded the allowlist from 1 to 3.
+    const MULTIPART_ALLOWLIST = new Set([
+      "/api/users/me/avatar",
+      "/api/publica/image-upload",
+      "/api/sponsors/image-upload",
+    ]);
     const requestContentType = (
       request.headers.get("content-type") || ""
     ).toLowerCase();
     if (requestContentType.startsWith("multipart/form-data")) {
-      const isMultipartAllowlisted =
-        pathname === "/api/users/me/avatar";
-      if (!isMultipartAllowlisted) {
+      if (!MULTIPART_ALLOWLIST.has(pathname)) {
         return NextResponse.json(
           { error: "Unsupported media type" },
           { status: 415 },

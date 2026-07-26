@@ -132,7 +132,7 @@ describe("DELETE /api/users/me/avatar", () => {
     expect(deleteMock).toHaveBeenCalledWith("tok");
   });
 
-  it("returns 502 when the wrapper returns false (backend parse/upload failed)", async () => {
+  it("returns 502 when the wrapper returns false (backend delete failed)", async () => {
     getCookie.mockResolvedValue("tok");
     deleteMock.mockResolvedValue(false);
     const res = await DELETE(buildDeleteRequest() as never);
