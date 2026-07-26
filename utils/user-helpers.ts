@@ -32,7 +32,15 @@ export function getProfileSlug(
   // name is configured. Sanitizing that would still expose the email in the
   // URL, so treat it as unavailable. Also reject UUIDs and the fallback slug
   // "n-a" produced by sanitize() when no slug-safe characters remain.
-  const name = user.name?.trim();
+  // The 2026-07-25 backend shape (OwnerSummaryDTO) carries displayName
+  // instead of name; read it as a fallback for the new shape.
+  //
+  // Intentional `||` (not `??`): if `name` trims to an empty string,
+  // treat the slot as absent and fall through to `displayName`. `??`
+  // would only coalesce null/undefined, leaving the empty-string case to
+  // the downstream `if (name && ...)` rejection — same observable
+  // behavior either way, but `||` makes the fall-through explicit.
+  const name = (user.name?.trim() || user.displayName?.trim());
   if (name && !name.includes("@") && name !== user.email && !isUuid(name)) {
     const slug = sanitize(name);
     if (slug && slug !== "n-a") return slug;

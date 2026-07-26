@@ -120,4 +120,58 @@ describe("getProfileSlug", () => {
       }),
     ).toBe("");
   });
+
+  // ── 2026-07-25 backend shape (OwnerSummaryDTO) — no email, no name ──
+  //
+  // The new event-creator payload drops `email` and `name`. getProfileSlug
+  // should still produce the username URL safely from the new shape.
+
+  it("accepts the new owner shape and prefers username", () => {
+    expect(
+      getProfileSlug({
+        id: "orqbhkjfs6re",
+        displayName: "Alex García",
+        username: "alex91",
+        avatarUrl: null,
+        organizerVerified: true,
+      }),
+    ).toBe("alex91");
+  });
+
+  it("falls back to a sanitized displayName for the new owner shape", () => {
+    expect(
+      getProfileSlug({
+        id: "orqbhkjfs6re",
+        displayName: "Alex García",
+        username: "",
+        avatarUrl: null,
+        organizerVerified: false,
+      }),
+    ).toBe("alex-garcia");
+  });
+
+  it("returns empty string when the new owner shape has unsafe username + unsafe displayName", () => {
+    // UUID-like username + special-char displayName → no safe slug.
+    expect(
+      getProfileSlug({
+        id: "orqbhkjfs6re",
+        displayName: "!!!",
+        username: "550e8400-e29b-41d4-a716-446655440000",
+        avatarUrl: null,
+        organizerVerified: false,
+      }),
+    ).toBe("");
+  });
+
+  it("returns empty string when the new owner shape has a null username and empty displayName", () => {
+    expect(
+      getProfileSlug({
+        id: "orqbhkjfs6re",
+        displayName: null,
+        username: null,
+        avatarUrl: null,
+        organizerVerified: false,
+      }),
+    ).toBe("");
+  });
 });
