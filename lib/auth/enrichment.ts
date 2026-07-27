@@ -104,5 +104,7 @@ export async function enrichWithBackendProfile(
     pictureSource: backendUser.pictureSource,
     role: backendUser.role ?? user.role,
     lastLoginAt: backendUser.lastLoginAt,
+    profileCompleted: backendUser.profileCompleted,
+    bio: backendUser.bio,
   };
 }

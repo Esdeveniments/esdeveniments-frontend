@@ -13,6 +13,18 @@ export interface AuthUser {
   // Backend-owned fields (GET /api/auth/me) — absent until enrichment succeeds.
   pictureSource?: PictureSource;
   lastLoginAt?: string;
+  /**
+   * True once username + displayName are set. `POST /api/events` 403s while
+   * this is false — `/publica` gates on it to send the user to complete
+   * their profile before they fill out the whole event form.
+   */
+  profileCompleted?: boolean;
+  /**
+   * Not derivable from the public `GET /api/users/{username}` endpoint (it
+   * 404s for incomplete/temporary profiles — the exact case the edit-profile
+   * page needs to prefill), so it's carried on the session user instead.
+   */
+  bio?: string;
   // Original Logto subject identifier, preserved for debugging/auditing.
   logtoId?: string;
   /**
@@ -72,4 +84,12 @@ export interface AuthContextValue {
   signIn(redirectTo?: string): void;
   /** Redirect the browser to clear the session and end the Logto session. */
   logout(): void;
+  /**
+   * Re-fetches `/api/auth/me` and replaces `user` with the result. Call this
+   * after a successful profile/avatar mutation — the client session is
+   * hydrated once on mount and nothing else keeps it in sync, so without an
+   * explicit refetch, `profileCompleted`/`username`/`avatarUrl` stay stale
+   * until a full page reload.
+   */
+  refetchUser(): Promise<void>;
 }

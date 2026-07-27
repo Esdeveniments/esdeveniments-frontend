@@ -36,6 +36,7 @@ import {
 import Modal from "@components/ui/common/modal";
 import { useAuth } from "@components/hooks/useAuth";
 import PublishAuthGate from "./PublishAuthGate";
+import CompleteProfileGate from "./CompleteProfileGate";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 // Lazy load preview content (only shown in modal when user clicks preview)
@@ -802,7 +803,7 @@ const PublishForm = () => {
  * gate flash.
  */
 const Publica = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -814,6 +815,14 @@ const Publica = () => {
 
   if (!isAuthenticated) {
     return <PublishAuthGate />;
+  }
+
+  // Strict `=== false` (not `!user?.profileCompleted`): the field is absent
+  // during a brief enrichment-failure/loading window, and we'd rather fail
+  // open than block publishing on ambiguous state — the backend's own 403
+  // (caught in createEventAction) is the authoritative fallback.
+  if (user?.profileCompleted === false) {
+    return <CompleteProfileGate redirectTo="/publica" />;
   }
 
   return <PublishForm />;

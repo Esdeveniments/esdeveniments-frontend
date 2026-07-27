@@ -56,9 +56,3 @@ export function parseProfileUpdateResponse(
   }
   return result.data;
 }
-
-export const PROFILE_FIELD_LABELS = {
-  displayNameRequired: "El nom visible és obligatori",
-  displayNameTooLong: "Massa llarg (màxim 80 caràcters)",
-  bioTooLong: "Massa llarg (màxim 500 caràcters)",
-} as const;

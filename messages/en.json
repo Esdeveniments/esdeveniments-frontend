@@ -208,6 +208,52 @@
       "schemaDescription": "Official form to add concerts, exhibitions, theatre and cultural activities to the collaborative Catalonia agenda.",
       "schemaAction": "Publish cultural event"
     },
+    "EditProfile": {
+      "title": "Edit your profile",
+      "description": "Update your name, username, bio and profile photo.",
+      "heading": "Edit your profile",
+      "subheading": "This information is public and will appear on your profile.",
+      "submitLabel": "Save changes",
+      "savingLabel": "Saving...",
+      "success": "Profile updated successfully.",
+      "fields": {
+        "username": "Username",
+        "displayName": "Display name",
+        "bio": "Bio"
+      },
+      "usernameErrors": {
+        "usernameTooShort": "Must be at least 3 characters.",
+        "usernameTooLong": "Must be at most 30 characters.",
+        "usernameInvalidChars": "Lowercase letters, numbers and hyphens only, no consecutive or leading/trailing hyphens.",
+        "usernameReservedPrefix": "Can't start with \"user-\".",
+        "usernameReserved": "This username is reserved."
+      },
+      "errors": {
+        "displayNameRequired": "Display name is required.",
+        "displayNameTooLong": "Too long (max 80 characters).",
+        "bioTooLong": "Too long (max 500 characters).",
+        "usernameTaken": "This username is already taken.",
+        "sessionExpired": "Your session expired. Please log in again.",
+        "generic": "Couldn't save your profile. Please try again."
+      },
+      "avatar": {
+        "label": "Profile photo",
+        "uploadButton": "Upload photo",
+        "removeButton": "Remove photo",
+        "uploading": "Uploading...",
+        "removing": "Removing...",
+        "altPreview": "Profile photo",
+        "errorUnsupported": "Unsupported format. Use JPG, PNG or WEBP.",
+        "errorTooLarge": "Image exceeds the 2 MB limit.",
+        "errorUploadFailed": "Couldn't upload the photo. Please try again.",
+        "errorRemoveFailed": "Couldn't remove the photo. Please try again."
+      },
+      "authGate": {
+        "title": "Log in to edit your profile",
+        "description": "You need to log in to complete or edit your profile.",
+        "login": "Log in"
+      }
+    },
     "PlacesNearby": {
       "invalidNumber": "Invalid coordinates: lat,lng must be numbers",
       "invalidRange": "Invalid coordinates: lat ∈ [-90,90], lng ∈ [-180,180]",
@@ -244,6 +290,11 @@
         "login": "Sign in",
         "noAccount": "Don't have an account?",
         "register": "Sign up"
+      },
+      "completeProfileGate": {
+        "title": "Complete your profile",
+        "description": "Before publishing an event, choose a username and a display name.",
+        "cta": "Complete profile"
       },
       "heading": "Publish your event in Catalonia",
       "subheading": "Add your concert, exhibition, theatre, workshop or cultural activity to Catalonia's largest agenda. It's free!",
@@ -349,7 +400,6 @@
       "notFoundDescription": "The profile you're looking for doesn't exist or has been removed.",
       "backHome": "Back to home",
       "editProfile": "Edit profile",
-      "comingSoon": "(coming soon)",
       "claimQuestion": "Is this your venue?",
       "claimLogin": "Log in"
     },

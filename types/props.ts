@@ -838,6 +838,28 @@ export interface ProfileClaimCtaProps {
   username: string;
 }
 
+// /perfil/edita — shown to anonymous visitors, mirrors PublishAuthGate
+export interface EditProfileAuthGateProps {
+  redirectTo?: string;
+}
+
+// /perfil/edita — the signed-in profile-completion / edit form
+export interface EditProfileFormProps {
+  redirectTo?: string;
+}
+
+// /perfil/edita — avatar upload/remove section, self-contained (reads
+// useAuth() directly for the current avatarUrl/name and to refetch after a
+// successful mutation)
+export interface EditProfileAvatarProps {
+  className?: string;
+}
+
+// /publica — shown to signed-in users whose profileCompleted is false
+export interface CompleteProfileGateProps {
+  redirectTo: string;
+}
+
 // Sticky CTA bar for event detail page (mobile)
 export interface EventStickyCTAProps {
   eventUrl?: string;

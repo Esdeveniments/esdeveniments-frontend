@@ -208,6 +208,52 @@
       "schemaDescription": "Formulari oficial per afegir concerts, exposicions, teatre i activitats culturals a l'agenda col·laborativa de Catalunya.",
       "schemaAction": "Publicar esdeveniment cultural"
     },
+    "EditProfile": {
+      "title": "Edita el teu perfil",
+      "description": "Actualitza el teu nom, nom d'usuari, biografia i foto de perfil.",
+      "heading": "Edita el teu perfil",
+      "subheading": "Aquesta informació és pública i apareixerà al teu perfil.",
+      "submitLabel": "Desar canvis",
+      "savingLabel": "Desant...",
+      "success": "Perfil actualitzat correctament.",
+      "fields": {
+        "username": "Nom d'usuari",
+        "displayName": "Nom visible",
+        "bio": "Biografia"
+      },
+      "usernameErrors": {
+        "usernameTooShort": "Ha de tenir com a mínim 3 caràcters.",
+        "usernameTooLong": "Ha de tenir com a màxim 30 caràcters.",
+        "usernameInvalidChars": "Només minúscules, números i guions, sense guions consecutius ni a l'inici o final.",
+        "usernameReservedPrefix": "No pot començar per \"user-\".",
+        "usernameReserved": "Aquest nom d'usuari està reservat."
+      },
+      "errors": {
+        "displayNameRequired": "El nom visible és obligatori.",
+        "displayNameTooLong": "Massa llarg (màxim 80 caràcters).",
+        "bioTooLong": "Massa llarga (màxim 500 caràcters).",
+        "usernameTaken": "Aquest nom d'usuari ja està en ús.",
+        "sessionExpired": "La sessió ha caducat. Torna a iniciar sessió.",
+        "generic": "No s'ha pogut desar el perfil. Torna-ho a intentar."
+      },
+      "avatar": {
+        "label": "Foto de perfil",
+        "uploadButton": "Pujar foto",
+        "removeButton": "Eliminar foto",
+        "uploading": "Pujant...",
+        "removing": "Eliminant...",
+        "altPreview": "Foto de perfil",
+        "errorUnsupported": "Format no admès. Utilitza JPG, PNG o WEBP.",
+        "errorTooLarge": "La imatge supera el límit de 2 MB.",
+        "errorUploadFailed": "No s'ha pogut pujar la foto. Torna-ho a intentar.",
+        "errorRemoveFailed": "No s'ha pogut eliminar la foto. Torna-ho a intentar."
+      },
+      "authGate": {
+        "title": "Inicia sessió per editar el perfil",
+        "description": "Cal iniciar sessió per completar o editar el teu perfil.",
+        "login": "Inicia sessió"
+      }
+    },
     "PlacesNearby": {
       "invalidNumber": "Coordenades no vàlides: lat,lng han de ser nombres",
       "invalidRange": "Coordenades no vàlides: lat ∈ [-90,90], lng ∈ [-180,180]",
@@ -244,6 +290,11 @@
         "login": "Inicia sessió",
         "noAccount": "No tens compte?",
         "register": "Registra't"
+      },
+      "completeProfileGate": {
+        "title": "Completa el teu perfil",
+        "description": "Abans de publicar un esdeveniment, cal que triïs un nom d'usuari i un nom visible.",
+        "cta": "Completar perfil"
       },
       "heading": "Publica el teu esdeveniment a Catalunya",
       "subheading": "Afegeix el teu concert, exposició, teatre, taller o activitat cultural a l'agenda més gran de Catalunya. És gratuït!",
@@ -349,7 +400,6 @@
       "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
       "backHome": "Tornar a l'inici",
       "editProfile": "Editar perfil",
-      "comingSoon": "(properament)",
       "claimQuestion": "És el teu local?",
       "claimLogin": "Iniciar sessió"
     },

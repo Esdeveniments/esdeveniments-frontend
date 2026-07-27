@@ -208,6 +208,52 @@
       "schemaDescription": "Formulario oficial para añadir conciertos, exposiciones, teatro y actividades culturales a la agenda colaborativa de Cataluña.",
       "schemaAction": "Publicar evento cultural"
     },
+    "EditProfile": {
+      "title": "Edita tu perfil",
+      "description": "Actualiza tu nombre, nombre de usuario, biografía y foto de perfil.",
+      "heading": "Edita tu perfil",
+      "subheading": "Esta información es pública y aparecerá en tu perfil.",
+      "submitLabel": "Guardar cambios",
+      "savingLabel": "Guardando...",
+      "success": "Perfil actualizado correctamente.",
+      "fields": {
+        "username": "Nombre de usuario",
+        "displayName": "Nombre visible",
+        "bio": "Biografía"
+      },
+      "usernameErrors": {
+        "usernameTooShort": "Debe tener al menos 3 caracteres.",
+        "usernameTooLong": "Debe tener como máximo 30 caracteres.",
+        "usernameInvalidChars": "Solo minúsculas, números y guiones, sin guiones consecutivos ni al inicio o final.",
+        "usernameReservedPrefix": "No puede empezar por \"user-\".",
+        "usernameReserved": "Este nombre de usuario está reservado."
+      },
+      "errors": {
+        "displayNameRequired": "El nombre visible es obligatorio.",
+        "displayNameTooLong": "Demasiado largo (máximo 80 caracteres).",
+        "bioTooLong": "Demasiado larga (máximo 500 caracteres).",
+        "usernameTaken": "Este nombre de usuario ya está en uso.",
+        "sessionExpired": "La sesión ha caducado. Vuelve a iniciar sesión.",
+        "generic": "No se ha podido guardar el perfil. Inténtalo de nuevo."
+      },
+      "avatar": {
+        "label": "Foto de perfil",
+        "uploadButton": "Subir foto",
+        "removeButton": "Eliminar foto",
+        "uploading": "Subiendo...",
+        "removing": "Eliminando...",
+        "altPreview": "Foto de perfil",
+        "errorUnsupported": "Formato no admitido. Usa JPG, PNG o WEBP.",
+        "errorTooLarge": "La imagen supera el límite de 2 MB.",
+        "errorUploadFailed": "No se ha podido subir la foto. Inténtalo de nuevo.",
+        "errorRemoveFailed": "No se ha podido eliminar la foto. Inténtalo de nuevo."
+      },
+      "authGate": {
+        "title": "Inicia sesión para editar el perfil",
+        "description": "Debes iniciar sesión para completar o editar tu perfil.",
+        "login": "Iniciar sesión"
+      }
+    },
     "PlacesNearby": {
       "invalidNumber": "Coordenadas no válidas: lat,lng deben ser números",
       "invalidRange": "Coordenadas no válidas: lat ∈ [-90,90], lng ∈ [-180,180]",
@@ -244,6 +290,11 @@
         "login": "Iniciar sesión",
         "noAccount": "¿No tienes cuenta?",
         "register": "Regístrate"
+      },
+      "completeProfileGate": {
+        "title": "Completa tu perfil",
+        "description": "Antes de publicar un evento, elige un nombre de usuario y un nombre visible.",
+        "cta": "Completar perfil"
       },
       "heading": "Publica tu evento en Cataluña",
       "subheading": "Añade tu concierto, exposición, teatro, taller o actividad cultural a la agenda más grande de Cataluña. ¡Es gratis!",
@@ -349,7 +400,6 @@
       "notFoundDescription": "El perfil que buscas no existe o ha sido eliminado.",
       "backHome": "Volver al inicio",
       "editProfile": "Editar perfil",
-      "comingSoon": "(próximamente)",
       "claimQuestion": "¿Es tu local?",
       "claimLogin": "Iniciar sesión"
     },
