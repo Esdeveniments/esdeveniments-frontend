@@ -16,7 +16,7 @@ import {
   createHash,
   randomBytes,
 } from "node:crypto";
-import type { FlowState, LogtoTokenResponse } from "types/auth";
+import type { FlowState, LogtoTokenResponse, TokenCookieWrite } from "types/auth";
 
 export const ACCESS_TOKEN_COOKIE = "auth_token";
 export const REFRESH_TOKEN_COOKIE = "auth_refresh_token";
@@ -155,10 +155,10 @@ export function readTokenFromRequest(
   return decrypt(request.cookies.get(name)?.value);
 }
 
-export function setTokenCookies(
-  response: NextResponse,
-  tokens: LogtoTokenResponse,
-): void {
+// Shared by setTokenCookies (route handlers holding a NextResponse) and
+// getValidAccessToken (Server Actions / route handlers that only have the
+// cookies() API) so the two writers can't drift on maxAge/path/encryption.
+function buildTokenCookieWrites(tokens: LogtoTokenResponse): TokenCookieWrite[] {
   // 2026-07-26: defensively coerce `expires_in` to a positive integer. See
   // ACCESS_TOKEN_DEFAULT_MAX_AGE for the rationale (silent SSO path
   // produced a missing-auth_token state on 2026-07-26).
@@ -176,26 +176,91 @@ export function setTokenCookies(
   console.log(
     `[AUTH DIAGNOSTIC] setTokenCookies: expires_in=${rawExpiresIn} -> maxAge=${safeMaxAge}s; auth_token encrypted length=${encryptedAccessToken.length} bytes (browsers drop cookies > 4096 bytes)`,
   );
-  response.cookies.set(ACCESS_TOKEN_COOKIE, encryptedAccessToken, {
-    ...baseOptions,
-    path: "/",
-    maxAge: safeMaxAge,
-  });
+  const writes: TokenCookieWrite[] = [
+    {
+      name: ACCESS_TOKEN_COOKIE,
+      value: encryptedAccessToken,
+      options: { ...baseOptions, path: "/", maxAge: safeMaxAge },
+    },
+  ];
   // Refresh-token responses may omit id_token; keep the existing one rather
   // than overwriting it (the id_token_hint is needed for RP-initiated logout).
   if (tokens.id_token) {
-    response.cookies.set(ID_TOKEN_COOKIE, encrypt(tokens.id_token), {
-      ...baseOptions,
-      path: "/",
-      maxAge: SESSION_MAX_AGE,
+    writes.push({
+      name: ID_TOKEN_COOKIE,
+      value: encrypt(tokens.id_token),
+      options: { ...baseOptions, path: "/", maxAge: SESSION_MAX_AGE },
     });
   }
   if (tokens.refresh_token) {
-    response.cookies.set(REFRESH_TOKEN_COOKIE, encrypt(tokens.refresh_token), {
-      ...baseOptions,
-      path: "/api/auth",
-      maxAge: SESSION_MAX_AGE,
+    // path: "/" (not "/api/auth") — Server Actions bound to arbitrary pages
+    // (e.g. createEventAction on /publica) need this cookie to refresh an
+    // expired access token, and the browser only attaches a cookie to
+    // requests matching its path scope. Still HttpOnly + Secure + SameSite=
+    // Lax throughout; only our own same-origin server code ever reads it.
+    //
+    // Sessions from before this path moved from /api/auth to / still carry
+    // the old-scoped cookie in their browser; it stops being read/rotated
+    // but isn't actively harmful (a same-named cookie at a different path is
+    // a separate entry) and is fully cleared at next logout — see
+    // clearTokenCookies. Not cleared here too: NextResponse's cookie jar
+    // keys by name, so a second `.set()` for the same name in one response
+    // would silently replace this write instead of emitting a second
+    // Set-Cookie header.
+    writes.push({
+      name: REFRESH_TOKEN_COOKIE,
+      value: encrypt(tokens.refresh_token),
+      options: { ...baseOptions, path: "/", maxAge: SESSION_MAX_AGE },
     });
+  }
+  return writes;
+}
+
+export function setTokenCookies(
+  response: NextResponse,
+  tokens: LogtoTokenResponse,
+): void {
+  for (const write of buildTokenCookieWrites(tokens)) {
+    response.cookies.set(write.name, write.value, write.options);
+  }
+}
+
+/**
+ * Returns a usable access token for mutation call sites (Server Actions and
+ * Route Handlers), refreshing it via the refresh_token cookie when the
+ * (shorter-lived, ~1h) access_token cookie has expired.
+ *
+ * Without this, a session that's still fully valid (the 30-day id_token
+ * cookie is fine) 401s on every mutation once the access token ages out,
+ * while GETs/page loads look completely normal — the "still logged in, but
+ * Authentication required on submit" bug. `GET /api/auth/me` already refreshes
+ * transparently; this extends the same behavior to POST/PATCH/DELETE
+ * mutations (event create/update/delete, profile, avatar, favorites), which
+ * previously read the access token cookie directly and gave up immediately.
+ *
+ * Returns null (caller should 401) only when there's no refresh_token either,
+ * or the refresh itself fails (revoked/expired refresh token, Logto outage).
+ */
+export async function getValidAccessToken(): Promise<string | null> {
+  const existing = await getAccessTokenFromCookies();
+  if (existing) return existing;
+
+  const cookieStore = await cookies();
+  const refreshToken = decrypt(cookieStore.get(REFRESH_TOKEN_COOKIE)?.value);
+  if (!refreshToken) return null;
+
+  try {
+    const { getLogtoConfig, refreshAccessToken } = await import("@lib/auth/logto");
+    const refreshed = await refreshAccessToken(getLogtoConfig(), refreshToken);
+    if (!refreshed.access_token) return null;
+    const writableCookies = await cookies();
+    for (const write of buildTokenCookieWrites(refreshed)) {
+      writableCookies.set(write.name, write.value, write.options);
+    }
+    return refreshed.access_token;
+  } catch (err) {
+    console.error("getValidAccessToken: refresh failed", err);
+    return null;
   }
 }
 
@@ -210,9 +275,15 @@ export function clearTokenCookies(response: NextResponse): void {
     path: "/",
     maxAge: 0,
   });
+  // Sessions from before the refresh_token cookie moved from path=/api/auth
+  // to path=/ still carry the old-scoped cookie — it can't be cleared here
+  // too (NextResponse's cookie jar keys by name, so a second .set() for the
+  // same name would silently replace this one rather than emit a second
+  // Set-Cookie header), but it's inert: nothing reads or rotates it anymore,
+  // and it expires on its own within its original ~30-day maxAge.
   response.cookies.set(REFRESH_TOKEN_COOKIE, "", {
     ...baseOptions,
-    path: "/api/auth",
+    path: "/",
     maxAge: 0,
   });
 }

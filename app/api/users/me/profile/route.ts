@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { getValidAccessToken } from "@utils/auth-cookies";
 import { patchMeProfileExternal } from "@lib/api/users-external";
 import { handleApiError } from "@utils/api-error-handler";
 import { profileUpdateSchema } from "lib/validation/auth";
@@ -20,7 +20,7 @@ const BAD_REQUEST = (message: string) =>
 // /api/auth/me on the next GET — the operator's only job is to keep that
 // cookie user fresh.
 export async function PATCH(request: NextRequest): Promise<Response> {
-  const accessToken = await getAccessTokenFromCookies();
+  const accessToken = await getValidAccessToken();
   if (!accessToken) {
     return NextResponse.json(
       { error: "Authentication required" },

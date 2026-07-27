@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
-import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { getAccessTokenFromCookies, getValidAccessToken } from "@utils/auth-cookies";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { decodeSafeJwtClaims } from "./users-external";
 import {
@@ -61,7 +61,7 @@ async function requireMutationAuth(): Promise<{ apiUrl: string; authToken: strin
       "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
     );
   }
-  const authToken = await getAccessTokenFromCookies();
+  const authToken = await getValidAccessToken();
   if (!authToken) {
     const err = new Error("Authentication required");
     (err as Error & { status: number }).status = 401;

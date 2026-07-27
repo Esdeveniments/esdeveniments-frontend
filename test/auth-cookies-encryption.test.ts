@@ -53,4 +53,26 @@ describe("auth-cookies at-rest encryption", () => {
       tokens.access_token,
     );
   });
+
+  it("scopes the refresh_token cookie to path=/, not path=/api/auth", async () => {
+    // Server Actions bound to arbitrary pages (e.g. createEventAction on
+    // /publica) need this cookie to refresh an expired access token — a
+    // narrower path means the browser never sends it there at all.
+    const m = await loadCookies();
+    const res = NextResponse.json({});
+    m.setTokenCookies(res, tokens);
+
+    const value = res.cookies.get(m.REFRESH_TOKEN_COOKIE);
+    expect(value?.path).toBe("/");
+  });
+
+  it("clearTokenCookies clears the refresh_token cookie at path=/", async () => {
+    const m = await loadCookies();
+    const res = NextResponse.json({});
+    m.clearTokenCookies(res);
+
+    const value = res.cookies.get(m.REFRESH_TOKEN_COOKIE);
+    expect(value?.path).toBe("/");
+    expect(value?.maxAge).toBe(0);
+  });
 });

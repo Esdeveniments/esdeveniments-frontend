@@ -75,6 +75,24 @@ export interface FlowState {
   returnTo: string;
 }
 
+/**
+ * A single Set-Cookie write. Shared by setTokenCookies (route handlers
+ * holding a NextResponse) and getValidAccessToken (Server Actions / route
+ * handlers that only have the cookies() API), both in utils/auth-cookies.ts,
+ * so the two write paths can't drift on maxAge/path/encryption.
+ */
+export interface TokenCookieWrite {
+  name: string;
+  value: string;
+  options: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: "lax";
+    path: string;
+    maxAge: number;
+  };
+}
+
 export interface AuthContextValue {
   status: AuthStatus;
   user: AuthUser | null;
@@ -92,4 +110,19 @@ export interface AuthContextValue {
    * until a full page reload.
    */
   refetchUser(): Promise<void>;
+}
+
+/** A single Set-Cookie write, shared by NextResponse.cookies and the
+ * cookies() API so setTokenCookies/getValidAccessToken (utils/auth-cookies.ts)
+ * can't drift on maxAge/path/encryption between the two write paths. */
+export interface TokenCookieWrite {
+  name: string;
+  value: string;
+  options: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: "lax";
+    path: string;
+    maxAge: number;
+  };
 }

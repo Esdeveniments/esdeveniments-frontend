@@ -19,14 +19,14 @@ vi.mock("../utils/api-error-handler", () => ({
 }));
 
 vi.mock("../utils/auth-cookies", () => ({
-  getAccessTokenFromCookies: vi.fn(),
+  getValidAccessToken: vi.fn(),
 }));
 
 vi.mock("../lib/api/users-external", () => ({
   patchMeProfileExternal: vi.fn(),
 }));
 
-const getCookie = vi.mocked(authCookies.getAccessTokenFromCookies);
+const getCookie = vi.mocked(authCookies.getValidAccessToken);
 const patchExternal = vi.mocked(usersExternal.patchMeProfileExternal);
 
 beforeEach(() => {

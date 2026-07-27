@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { getValidAccessToken } from "@utils/auth-cookies";
 import {
   deleteUserAvatarExternal,
   uploadUserAvatarExternal,
@@ -19,7 +19,7 @@ const ALLOWED_AVATAR_TYPES = new Set([
 async function requireAuthCookie(): Promise<
   { ok: true; token: string } | { ok: false; response: Response }
 > {
-  const token = await getAccessTokenFromCookies();
+  const token = await getValidAccessToken();
   if (!token) {
     return {
       ok: false,
