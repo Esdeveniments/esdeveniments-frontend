@@ -145,7 +145,23 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                           <p className="body-small text-foreground/60 truncate mb-2">
                             {user.name || user.email}
                           </p>
-                          {profileSlug && (
+                          {/* Surface "incomplete session" when the id_token is
+                              valid but the backend rejected our Bearer (or was
+                              unreachable). Without this, the user sees an empty
+                              dropdown — no profile link, only logout — and
+                              can't tell why. Clicking logout re-enters the
+                              Logto flow and may fix a stale cookie. */}
+                          {user.profileEnrichmentFailed && (
+                            <p
+                              className="body-small text-error mb-1 py-1"
+                              data-testid="navbar-session-warning"
+                              role="status"
+                              aria-live="polite"
+                            >
+                              {labels.incompleteProfile}
+                            </p>
+                          )}
+                          {profileSlug && !user.profileEnrichmentFailed && (
                             <ActiveLink
                               href={`/perfil/${encodeURIComponent(profileSlug)}`}
                               className="block w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
@@ -280,7 +296,20 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     <p className="body-small text-foreground/60 text-center truncate">
                       {user.name || user.email}
                     </p>
-                    {profileSlug && (
+                    {/* Surface "incomplete session" inside the mobile panel too,
+                        so the warning is visible without opening the desktop
+                        dropdown. See desktop variant for rationale. */}
+                    {user.profileEnrichmentFailed && (
+                      <p
+                        className="body-small text-error text-center py-1"
+                        data-testid="navbar-session-warning-mobile"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        {labels.incompleteProfile}
+                      </p>
+                    )}
+                    {profileSlug && !user.profileEnrichmentFailed && (
                       <ActiveLink
                         href={`/perfil/${encodeURIComponent(profileSlug)}`}
                         className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"

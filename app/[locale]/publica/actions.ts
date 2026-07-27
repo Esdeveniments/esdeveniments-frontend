@@ -1,6 +1,7 @@
 "use server";
 import { updateTag, refresh } from "next/cache";
 import { after } from "next/server";
+import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
@@ -39,8 +40,38 @@ export async function createEventAction(
   data: EventCreateRequestDTO,
   e2eExtras?: E2EEventExtras
 ) {
-  // 1. Create the event in your backend
-  const created = await createEvent(data, e2eExtras);
+  // 2026-07-26 round-5: catch the mutation error path so we can distinguish
+  // 401 (likely stale Bearer — user should log out and back in) from 403
+  // (profileCompleted: false per backend spec — user should complete
+  // onboarding). Anything else is a real 5xx and rethrows. We log + tag
+  // Sentry with the next action so the form can render the right message.
+  let created;
+  try {
+    // 1. Create the event in your backend
+    created = await createEvent(data, e2eExtras);
+  } catch (err) {
+    const status = (err as { status?: number })?.status;
+    if (status === 401 || status === 403) {
+      const nextAction =
+        status === 401 ? "logout-and-relogin" : "complete-profile";
+      console.error(
+        `createEventAction: backend rejected with ${status} \u2014 ${status === 401 ? "Likely stale Bearer \u2014 user should log out and back in." : "Likely profileCompleted: false \u2014 user should complete profile onboarding."}`,
+      );
+      captureException(err, {
+        tags: {
+          section: "publica-create",
+          authStatus: String(status),
+          nextAction,
+        },
+        // Send only field names + truncated title to avoid leaking content.
+        extra: {
+          dataFields: Object.keys(data ?? {}),
+          titleHint: data?.title?.slice(0, 40),
+        },
+      });
+    }
+    throw err;
+  }
 
   // 2. Send email notification (fire-and-forget, non-blocking)
   // Uses `after` to ensure execution completes in serverless environments

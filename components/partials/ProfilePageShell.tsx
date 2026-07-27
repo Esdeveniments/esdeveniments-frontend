@@ -29,13 +29,22 @@ export default async function ProfilePageShell({
 
   const profileUrl = toLocalizedUrl(`/perfil/${profile.username}`, locale);
 
+  // 2026-07-25 backend migration: profile.displayName is canonical; profile.name
+  // is the legacy field; profile.username is the safety net. Breadcrumb
+  // schemas and the Person schema require string `name`, so coalesce.
+  const profileDisplayName =
+    profile.displayName?.trim() ||
+    profile.name?.trim() ||
+    profile.username?.trim() ||
+    "";
+
   const breadcrumbItems: BreadcrumbItem[] = [
     { name: tBreadcrumbs("home"), url: toLocalizedUrl("/", locale) },
     {
       name: tProfile("breadcrumbProfiles"),
       url: toLocalizedUrl("/perfil", locale),
     },
-    { name: profile.name, url: profileUrl },
+    { name: profileDisplayName, url: profileUrl },
   ];
 
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbItems);
@@ -43,7 +52,7 @@ export default async function ProfilePageShell({
   const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name: profile.name,
+    name: profileDisplayName,
     url: profileUrl,
     identifier: profile.username,
   };

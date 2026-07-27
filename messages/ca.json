@@ -411,7 +411,8 @@
         "login": "Iniciar sessió",
         "logout": "Tanca sessió",
         "userMenu": "Menú d'usuari",
-        "myProfile": "El meu perfil"
+        "myProfile": "El meu perfil",
+        "incompleteProfile": "⚠️ Sessió parcial — tanca sessió i torna a entrar per carregar el teu perfil."
       }
     },
     "NoEventsFound": {

@@ -411,7 +411,8 @@
         "login": "Log in",
         "logout": "Log out",
         "userMenu": "User menu",
-        "myProfile": "My profile"
+        "myProfile": "My profile",
+        "incompleteProfile": "⚠️ Incomplete session — log out and log in again to load your profile."
       }
     },
     "NoEventsFound": {

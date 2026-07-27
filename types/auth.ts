@@ -15,6 +15,17 @@ export interface AuthUser {
   lastLoginAt?: string;
   // Original Logto subject identifier, preserved for debugging/auditing.
   logtoId?: string;
+  /**
+   * Set when the id_token session is valid but the backend enrichment call
+   * (GET /api/auth/me with `Authorization: Bearer <access_token>`) was
+   * rejected — i.e. `4xx` (typically `401` because the audience or JWKS
+   * wiring is wrong). Surfaced in the navbar dropdown so users can tell
+   * apart "logged out" from "logged in but the backend doesn't accept me".
+   * Transient failures (5xx / network blip) are intentionally not flagged —
+   * returning the id_token-only user without this property keeps the session
+   * visually stable during a brief outage.
+   */
+  profileEnrichmentFailed?: "auth";
 }
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";

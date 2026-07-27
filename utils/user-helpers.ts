@@ -45,8 +45,22 @@ export function getProfileSlug(
   // useful slug from `displayName` when one is available). PR review
   // thread 121i flagged the previous comment as inaccurate; this is the
   // corrected version.
+  //
+  // 2026-07-26 round-5: also reject when `name === user.id`. Logto + Google
+  // SSO populates the id_token `name` claim with the Logto `sub` (an
+  // alphanumeric identifier like `a10mgbryoklh`) when the user has no
+  // configured display name. Without this guard, sanitize() lowercases
+  // that string and we linked the navbar to `/perfil/<sub>`, which the
+  // backend (keyed by UUID) could never resolve. The defence in depth
+  // here pairs with the NavbarClient guard `!user.profileEnrichmentFailed`.
   const name = (user.name?.trim() || user.displayName?.trim());
-  if (name && !name.includes("@") && name !== user.email && !isUuid(name)) {
+  if (
+    name &&
+    !name.includes("@") &&
+    name !== user.email &&
+    !isUuid(name) &&
+    name !== user.id
+  ) {
     const slug = sanitize(name);
     if (slug && slug !== "n-a") return slug;
   }

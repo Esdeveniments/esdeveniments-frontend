@@ -23,6 +23,32 @@ describe("service worker template", () => {
       expect(contents).toContain('type === "SKIP_WAITING"');
       expect(contents).toContain("self.skipWaiting()");
     });
+
+    it("calls self.skipWaiting() on install so SW fixes actually reach users with a stale SW", () => {
+      // 2026-07-26: Without this, the new SW stays in the WAITING state until
+      // every tab of the app closes, so any SW-side fix silently fails to
+      // reach users that already have the broken SW installed. See LESSONS.md.
+      const contents = getContents();
+      expect(contents).toContain('self.addEventListener("install"');
+      // The install listener must live BEFORE the message listener so the
+      // new SW is ready to skipWaiting as soon as it installs (then the
+      // manual SKIP_WAITING message handler still works for ad-hoc reloads).
+      const installIdx = contents.indexOf('self.addEventListener("install"');
+      const messageIdx = contents.indexOf('self.addEventListener("message"');
+      expect(installIdx).toBeGreaterThan(-1);
+      expect(messageIdx).toBeGreaterThan(-1);
+      expect(installIdx).toBeLessThan(messageIdx);
+    });
+
+    it("purges the hardcoded local-api-cache on activate (Workbox suffix bump alone can't reach it)", () => {
+      // 2026-07-26: The catch-all /api/ SWR route uses a literal cache name,
+      // so a Workbox suffix bump doesn't invalidate it. Users whose OLD SW
+      // poisoned it pre-logout need that specific cache explicitly deleted.
+      const contents = getContents();
+      expect(contents).toContain(
+        'caches.delete("esdeveniments-local-api-cache")',
+      );
+    });
   });
 
   describe("resilience", () => {

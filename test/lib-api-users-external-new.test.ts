@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
 import {
+  decodeSafeJwtClaims,
   deleteUserAvatarExternal,
   getUserEventsExternal,
   patchMeProfileExternal,
@@ -194,6 +195,62 @@ describe("deleteUserAvatarExternal", () => {
     const result = await deleteUserAvatarExternal("");
     expect(result).toBe(false);
     expect(mockFetchWithHmac).not.toHaveBeenCalled();
+  });
+});
+
+describe("decodeSafeJwtClaims", () => {
+  // Build a 3-part JWT (header.payload.signature) without verifying the
+  // signature — the helper intentionally skips verification.
+  const base64url = (o: unknown) =>
+    Buffer.from(JSON.stringify(o))
+      .toString("base64")
+      .replace(/=/g, "")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+
+  const makeJwt = (claims: Record<string, unknown>): string =>
+    `${base64url({ alg: "HS256", typ: "JWT" })}.${base64url(claims)}.sig`;
+
+  it("includes the `scope` claim in the redacted summary (2026-07-26 POST-vs-GET diagnostic)", () => {
+    const token = makeJwt({
+      iss: "https://example.test/oidc",
+      aud: "https://api.example.test",
+      exp: 1785074470,
+      sub: "user-a10mgbryoklh",
+      scope: "openid profile email offline_access events:write",
+    });
+    const summary = JSON.parse(decodeSafeJwtClaims(token));
+    expect(summary.iss).toBe("https://example.test/oidc");
+    expect(summary.aud).toBe("https://api.example.test");
+    expect(summary.exp).toBe(1785074470);
+    expect(summary.sub).toBe("user-a10mgbryoklh");
+    expect(summary.scope).toBe(
+      "openid profile email offline_access events:write",
+    );
+  });
+
+  it("returns undefined scope when the JWT omits it (older tokens)", () => {
+    const token = makeJwt({
+      iss: "https://example.test/oidc",
+      aud: "https://api.example.test",
+      exp: 1785074470,
+      sub: "user-1",
+    });
+    const summary = JSON.parse(decodeSafeJwtClaims(token));
+    expect(summary.scope).toBeUndefined();
+  });
+
+  it("caps scope at 200 chars so a misconfigured tenant can't bloat log lines", () => {
+    const longScope = "x".repeat(500);
+    const token = makeJwt({
+      iss: "i",
+      aud: "a",
+      exp: 1,
+      sub: "s",
+      scope: longScope,
+    });
+    const summary = JSON.parse(decodeSafeJwtClaims(token));
+    expect((summary.scope as string).length).toBe(200);
   });
 });
 

@@ -41,30 +41,36 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
     ? formatJoinedDate(profile.createdAt, locale)
     : "";
 
+  // 2026-07-25 backend moved to `displayName`/`avatarUrl`. Legacy fields
+  // come from older backend instances during the cut-over window.
+  const displayName =
+    profile.displayName?.trim() || profile.name?.trim() || profile.username;
+  const avatarSrc = profile.avatarUrl || profile.pictureUrl;
+
   return (
     <section
       className="card-bordered rounded-lg overflow-hidden mb-section-y w-full"
-      aria-label={t("title", { name: profile.name })}
+      aria-label={t("title", { name: displayName })}
       data-testid="profile-header"
     >
       <div className="h-40 sm:h-52 w-full bg-muted" />
 
       <div className="px-section-x py-element-gap -mt-10 relative">
         <div className="flex items-end gap-element-gap mb-element-gap">
-          {profile.pictureUrl ? (
+          {avatarSrc ? (
             <img
-              src={profile.pictureUrl}
-              alt={profile.name}
+              src={avatarSrc}
+              alt={displayName}
               className="w-20 h-20 rounded-full object-cover border-4 border-background shadow-md"
               loading="eager"
             />
           ) : (
-            <AvatarFallback name={profile.name} />
+            <AvatarFallback name={displayName} />
           )}
         </div>
 
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <h1 className="heading-1 text-foreground">{profile.name}</h1>
+          <h1 className="heading-1 text-foreground">{displayName}</h1>
           <ProfileOwnerActions username={profile.username} />
         </div>
 

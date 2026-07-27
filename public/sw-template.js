@@ -18,7 +18,7 @@ if (!self.workbox) {
   // Set a more descriptive name for your caches for easier debugging.
   workbox.core.setCacheNameDetails({
     prefix: "esdeveniments-app",
-    suffix: "v4",
+    suffix: "v5",
     precache: "precache",
     runtime: "runtime-cache",
   });
@@ -63,7 +63,7 @@ if (!self.workbox) {
     },
   };
 
-  // Session-dependent endpoints must NEVER be served from cache. Registered
+    // Session-dependent endpoints must NEVER be served from cache. Registered
   // first so it wins over the navigation and catch-all /api/ routes below: the
   // catch-all SWR caches by URL and ignores cookies + no-store, so a cached
   // response both kept the UI "logged in" after logout (/api/auth/me) and
@@ -329,6 +329,17 @@ if (!self.workbox) {
 
   // --- 4. Service Worker Lifecycle ---
   // This ensures that the new service worker activates immediately upon installation.
+  self.addEventListener("install", () => {
+    // Force the new SW past the WAITING state the moment it installs. Without
+    // this, a browser keeps the OLD SW running until every tab of the app
+    // closes, so any SW-side fix (e.g. the /api/auth/* NetworkOnly route added
+    // for logout correctness — see LESSONS.md) silently fails to reach users
+    // that already have a stale SW installed. Pairs with the explicit
+    // `caches.delete("esdeveniments-local-api-cache")` from `activate` below:
+    // skipWaiting alone takes over the tab; the cache purge invalidates the
+    // SWR entry that the OLD SW baked in before the fix landed.
+    self.skipWaiting();
+  });
   self.addEventListener("message", (event) => {
     if (event.data && event.data.type === "SKIP_WAITING") {
       self.skipWaiting();
@@ -346,6 +357,16 @@ if (!self.workbox) {
         await self.clients.claim();
         try {
           await caches.delete("esdeveniments-pages-cache");
+          // 2026-07-26: also purge the **hardcoded** "esdeveniments-local-api-cache"
+          // (the catch-all `/api/` SWR route uses a literal cache name, not the
+          // Workbox suffix, so a suffix bump alone doesn't invalidate it).
+          // Without this purge, a user whose OLD SW cached pre-logout
+          // `/api/auth/me` 200s would stay "logged in" after clearing cookies:
+          // the cached response wins until that specific cache is wiped, and
+          // the SW keeps serving it from the new SW's cache because the name
+          // is identical. See LESSONS.md (`The service worker must never cache
+          // /api/auth/*`) for the full story.
+          await caches.delete("esdeveniments-local-api-cache");
           // Images cache: only clear on version bump, not every activation
           // await caches.delete("esdeveniments-images-cache");
         } catch {

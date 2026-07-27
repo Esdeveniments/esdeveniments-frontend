@@ -174,4 +174,34 @@ describe("getProfileSlug", () => {
       }),
     ).toBe("");
   });
+
+  // ── 2026-07-26 round-5 regression: Logto + Google SSO populates the
+  // id_token `name` claim with the Logto `sub` (alphanumeric identifier
+  // like "a10mgbryoklh") when the user has no configured display name.
+  // Without `name !== user.id`, the navbar linked to `/perfil/<sub>` which
+  // the backend (keyed by UUID) could never resolve. So the fallback path
+  // must reject when name == id, regardless of how "valid" sanitize() finds
+  // the string on its own.
+
+  it("returns empty string when name equals user.id (Logto Google SSO sub fallback)", () => {
+    expect(
+      getProfileSlug({
+        id: "a10mgbryoklh",
+        name: "a10mgbryoklh",
+        username: "",
+        email: "esdeveniments.catalunya.cat@gmail.com",
+      }),
+    ).toBe("");
+  });
+
+  it("returns the sanitized name when name differs from user.id", () => {
+    expect(
+      getProfileSlug({
+        id: "a10mgbryoklh",
+        name: "Gerard Segarra",
+        username: "",
+        email: "gerard@example.com",
+      }),
+    ).toBe("gerard-segarra");
+  });
 });

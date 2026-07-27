@@ -426,6 +426,13 @@ export interface NavbarLabels {
   logout: string;
   userMenu: string;
   myProfile: string;
+  /**
+   * Shown inside the user dropdown when `AuthUser.profileEnrichmentFailed` is
+   * set — signals to the user that they're logged in (id_token verified) but
+   * the backend hasn't recognised their access_token, so the profile slug,
+   * nickname, etc. can't be shown.
+   */
+  incompleteProfile: string;
 }
 
 export interface NavbarClientProps {

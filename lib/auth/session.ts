@@ -35,14 +35,18 @@ async function getCurrentUserInternal(): Promise<AuthUser | null> {
     const user = mapClaimsToAuthUser(claims);
 
     // Enrich with the backend UUID so creator-ownership checks match.
-    // Best-effort: returns the id_token-only user on failure. Wrap in a
-    // local try-catch so an enrichment rejection doesn't propagate to the
-    // outer catch and treat the user as fully logged out.
+    // `enrichWithBackendProfile` handles its own throws for known paths
+    // (4xx Bearer rejection -> profileEnrichmentFailed: "auth"; 5xx /
+    // network blip -> silently swallowed so a transient outage doesn't
+    // visually look like a logout). The outer try-catch is a last-resort
+    // safety net for genuinely unforeseen throws (e.g. cookie read failed),
+    // where falling back to the bare id_token user is the correct degraded
+    // state.
     try {
       const accessToken = await getAccessTokenFromCookies();
       return await enrichWithBackendProfile(user, accessToken);
     } catch (enrichError) {
-      console.error("getCurrentUser: enrichment failed, returning id_token-only user", enrichError);
+      console.error("getCurrentUser: enrichment threw unexpectedly, returning id_token-only user", enrichError);
       return user;
     }
   } catch {

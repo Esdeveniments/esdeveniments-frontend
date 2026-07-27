@@ -1,3 +1,4 @@
+import "server-only";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseAuthenticatedUser, parseUserPublic } from "@lib/validation/user";
 import { parsePagedEvents } from "@lib/validation/event";
@@ -16,10 +17,22 @@ import type {
 
 /**
  * Authenticated session profile: GET /api/auth/me. Backend-owned fields
- * (pictureUrl/pictureSource/role/lastLoginAt) that the Logto id_token can't
+ * (avatarUrl/pictureSource/role/lastLoginAt) that the Logto id_token can't
  * carry — the id_token has no concept of an in-app avatar upload or login
- * audit trail. Returns null on any failure so the caller can fall back to
- * the id_token-derived user rather than breaking the session.
+ * audit trail.
+ *
+ * Throws with `.status` on non-OK so callers can distinguish:
+ *   - 4xx (Bearer rejected — `profileEnrichmentFailed = "auth"`): the backend
+ *     doesn't trust our access_token, so future Bearer calls will also 401
+ *     until the wiring is fixed.
+ *   - 5xx / network (transient): the session IS valid; we should keep the
+ *     id_token-only user rather than visually-logging the user out.
+ *   - 2xx: return the parsed AuthenticatedUserDTO, or null on Zod mismatch.
+ *
+ * Also decodes and logs the JWT payload (`iss`/`aud`/`exp`/`sub`) so a
+ * future log capture reveals the audience/issuer mismatch that causes
+ * the auth-rejection regression without redacting PII (email/name/picture
+ * are stripped before logging).
  */
 export async function getAuthenticatedUserExternal(
   accessToken: string
@@ -28,21 +41,86 @@ export async function getAuthenticatedUserExternal(
   if (!isApiUrlConfigured()) return null;
   const apiUrl = getApiUrl();
 
+  // Decode the access_token payload (no signature verification — that's the
+  // backend's job) and log iss/aud/exp/sub so a future ``getAuthenticatedUserExternal``
+  // crash dump exposes the audience/issuer that the backend probably
+  // doesn't trust. Email/name/picture claims are stripped before logging.
+  const safeClaims = decodeSafeJwtClaims(accessToken);
+
   try {
     const response = await fetchWithHmac(`${apiUrl}/auth/me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!response.ok) {
       const body = await response.text().catch(() => "<unreadable>");
+      // 2026-07-26 round-10 (mirror of createEvent / uploadEventImage): surface
+      // the WWW-Authenticate header so Spring's resource-server rejection
+      // reason (RFC 6750) is one-grep root-caused across all entry points.
+      // A bare `Bearer resource_metadata="..."` (no `error="..."` directive)
+      // indicates Spring didn't even attempt JWT decode — same shape as the
+      // shell-curl-with-no-Authorization response, which strongly suggests the
+      // request never reached the resource-server's bearer-token filter.
       console.error(
-        `getAuthenticatedUserExternal: HTTP ${response.status} — ${body}`
+        `getAuthenticatedUserExternal: HTTP ${response.status} \u2014 body=${body.slice(0, 200)} \u2014 www-authenticate=${response.headers.get("www-authenticate") ?? "<none>"} \u2014 access_token=${safeClaims}`,
       );
-      return null;
+      const err = Object.assign(
+        new Error(
+          `getAuthenticatedUserExternal: HTTP ${response.status}`,
+        ),
+        { status: response.status },
+      );
+      throw err;
     }
     return parseAuthenticatedUser(await response.json());
   } catch (error) {
-    console.error("getAuthenticatedUserExternal: failed", error);
+    if ((error as { status?: number })?.status) throw error;
+    console.error(
+      `getAuthenticatedUserExternal: failed (network/parse) \u2014 access_token=${safeClaims}`,
+      error,
+    );
     return null;
+  }
+}
+
+/**
+ * Decode the JWT payload of an access_token without verifying the signature.
+ * Returns a redacted summary suitable for inclusion in server logs:
+ * `{iss, aud, exp, scope, sub}` — email/name/picture claims are stripped
+ * because the production code has them elsewhere (AuthProvider) and a
+ * redacted summary is enough to diagnose `aud`/`iss`/`exp`/`scope` mismatches.
+ *
+ * `scope` is included (capped at 200 chars) because Logto issues the
+ * granted-permissions list as a space-separated string. Without it, the
+ * 2026-07-26 silent "GET /api/auth/me works, POST /api/events 401" pattern
+ * is indistinguishable between "wrong audience" and "missing resource
+ * scope" — the two are different fixes (one is a JWKS/aud config, the other
+ * is `LOGTO_API_SCOPES` not set). The string is not PII — it's the same
+ * scope list the `scope=` query parameter carries in the OAuth flow.
+ */
+export function decodeSafeJwtClaims(accessToken: string): string {
+  try {
+    const parts = accessToken.split(".");
+    if (parts.length < 2) return "<unparseable-short-token>";
+    const padded = parts[1]
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(parts[1].length + ((4 - (parts[1].length % 4)) % 4), "=");
+    const raw = Buffer.from(padded, "base64").toString("utf-8");
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    // Logto's `scope` is a space-separated string per RFC 6749 §3.3. Cap to
+    // 200 chars so a misconfigured tenant with thousands of scopes can't
+    // bloat log lines; the cap is well above any plausible real scope set.
+    const rawScope = typeof parsed.scope === "string" ? parsed.scope : undefined;
+    const summary: Record<string, unknown> = {
+      iss: parsed.iss,
+      aud: parsed.aud,
+      exp: parsed.exp,
+      scope: rawScope ? rawScope.slice(0, 200) : undefined,
+      sub: typeof parsed.sub === "string" ? parsed.sub.slice(0, 24) : undefined,
+    };
+    return JSON.stringify(summary);
+  } catch {
+    return "<unparseable-jwt>";
   }
 }
 

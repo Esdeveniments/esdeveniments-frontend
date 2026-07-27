@@ -64,6 +64,10 @@ Logout looked broken on the first Logto preview: after sign-out the navbar staye
 
 Fix: a `NetworkOnly` route for `/api/auth/*` registered **before** the navigation and catch-all `/api/` routes (Workbox is first-match-wins). Any future auth-state or per-user endpoint needs the same treatment — never let it fall into a caching strategy. `test/service-worker.test.ts` asserts the auth route exists and is ordered before the catch-all. Generated `public/sw.js` is gitignored; edit the template and run `yarn prebuild`.
 
+**Deploying the fix to existing users — the SW lifecycle trap (2026-07-26):** Adding `NetworkOnly` alone is not enough. Workbox-managed caches invalidate on a `suffix` bump or `cleanupOutdatedCaches()`, but the catch-all `/api/` route uses a **literal** `cacheName: "esdeveniments-local-api-cache"` outside Workbox's rename system, so the stale `/api/auth/me` 200 survives a suffix bump. Worse, Workbox's `CacheableResponsePlugin({ statuses: [0, 200] })` means an in-flight SWR update with a 401 will *not* overwrite the cached 200 — the SW keeps serving the pre-logout response until that exact cache key is wiped. Without `self.skipWaiting()` on `install`, the new SW stays in `WAITING` until every tab of the app closes, so any SW-side fix silently fails to reach users that already have the broken SW installed.
+
+Three things go together: (1) `self.addEventListener("install", () => self.skipWaiting())` so the new SW forces a takeover the moment it installs; (2) bump `suffix: "v4"` → `"v5"` so precache/runtime caches are renamed and `cleanupOutdatedCaches` prunes them; (3) `await caches.delete("esdeveniments-local-api-cache")` inside the `activate` handler so the hardcoded poison cache is explicitly purged. Skip any one and the bug returns.
+
 ## The CSRF origin allowlist makes `/api/favorites` a localhost-only false green
 
 The favorites POST is CSRF-guarded by an origin allowlist that includes `localhost:3000` in dev. So on localhost the write passes; it only **403s on a non-localhost / non-www host** — i.e. a Coolify PR preview or staging. Same shape as the proxy-origin bug: the environment that's convenient to test on is exactly the one that can't reproduce the failure. Test any origin/CSRF-gated write (favorites, and future authed mutations) on the Coolify preview, and if a POST 403s only off-localhost, suspect the allowlist host set, not the client. Manual runbook: `docs/logto-auth-setup.md`.
@@ -108,3 +112,19 @@ regressions the same PR's round-1 commit had introduced. Rule: poll twice,
 ≥ 4 min apart, and only call convergence when `totalCount` is stable AND
 `unresolved == 0` (or new threads are declines of previously-declined
 items). See `docs/incidents/2026-07-26-pr-review-loop-missed-threads.md`.
+
+## An enrichment wrapper that `return null`s on backend 401 masks every authenticated-session regression
+`lib/auth/enrichment.ts.enrichWithBackendProfile` used to call
+`getAuthenticatedUserExternal(accessToken)` and silently `return user` on any
+failure — so when the backend rejected the Bearer with 401 (audience
+mismatch, JWKS not imported in preprod, etc.), the session *looked* valid
+because the id_token was itself correct. The navbar then rendered with an
+empty `username` (`getProfileSlug(user) => ""`) and the profile menu item
+disappeared. Users reported "I can't see my profile in the menu" with no
+breadcrumb to the actual cause. Rule of thumb: any "best-effort" wrapper
+that can silently down-grade to a less-privileged user view MUST surface the
+failure mode on the result (here: `profileEnrichmentFailed: "auth" | "transient"`)
+so the UI can render an honest warning. Also: log JWT `iss`/`aud`/`exp` claim
+hints at the rejection site so the next log scrape immediately tells you
+whether the audience is wrong, the issuer is wrong, or the JWT expired —
+don't redact everything, just enough PII to stay safe.

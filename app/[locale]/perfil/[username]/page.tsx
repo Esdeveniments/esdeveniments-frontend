@@ -26,8 +26,12 @@ export async function generateMetadata({
     return { title: "Not Found" };
   }
 
-  const title = t("title", { name: profile.name });
-  const description = t("metaDescription", { name: profile.name });
+  // 2026-07-25 backend moved to `displayName`; keep `name` as a fallback
+  // during the cut-over window so SEO titles don't render as "undefined".
+  const displayName =
+    profile.displayName?.trim() || profile.name?.trim() || profile.username;
+  const title = t("title", { name: displayName });
+  const description = t("metaDescription", { name: displayName });
   const canonical = toLocalizedUrl(`/perfil/${username}`, locale);
 
   return buildPageMeta({
