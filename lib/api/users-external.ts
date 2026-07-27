@@ -2,7 +2,6 @@ import "server-only";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseAuthenticatedUser, parseUserPublic } from "@lib/validation/user";
 import { parsePagedEvents } from "@lib/validation/event";
-import { parseProfileUpdateResponse } from "lib/validation/auth";
 import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
 import type {
   AuthenticatedUserDTO,
@@ -152,9 +151,14 @@ export async function getUserByUsernameExternal(
 
 /**
  * Patch the signed-in user's profile (username/displayName/bio).
- * Returns the updated ProfileUpdateResponseDTO. Backend returns 409 (taken)
- * for collision, 400 for validation — we surface the real status via re-throw
- * so the route handler can map it correctly without going through Zod parse.
+ * Returns the updated ProfileUpdateResponseDTO — confirmed (2026-07-27)
+ * against the real backend to be the same shape `GET /api/users/{username}`
+ * returns, so it's parsed with `parseUserPublic`. It does NOT carry
+ * `profileCompleted`/`role`/`lastLoginAt`; callers that need the fresh
+ * `profileCompleted` must re-fetch `GET /api/auth/me` afterwards. Backend
+ * returns 409 (taken) for collision, 400 for validation — we surface the
+ * real status via re-throw so the route handler can map it correctly
+ * without going through Zod parse.
  */
 export async function patchMeProfileExternal(
   body: ProfileUpdateRequestDTO,
@@ -187,7 +191,7 @@ export async function patchMeProfileExternal(
       );
       throw err;
     }
-    return parseProfileUpdateResponse(await response.json());
+    return parseUserPublic(await response.json());
   } catch (error) {
     if ((error as { status?: number })?.status) throw error;
     console.error("patchMeProfileExternal: failed", error);

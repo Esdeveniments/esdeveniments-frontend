@@ -35,17 +35,19 @@ beforeEach(() => {
 });
 
 describe("patchMeProfileExternal", () => {
+  // Real backend shape (confirmed 2026-07-27 against preprod) — the same as
+  // GET /api/users/{username}, not GET /api/auth/me. It does NOT carry
+  // email/profileCompleted/role/lastLoginAt.
   const profileUpdateResponse = {
     id: "uuid-1",
-    email: "alex@example.com",
     displayName: "Alex García",
     username: "alex91",
     bio: "Concerts.",
     avatarUrl: null,
     organizerVerified: false,
-    profileCompleted: true,
-    role: "USER",
-    lastLoginAt: "2026-07-25T18:10:05Z",
+    eventCount: 0,
+    totalEventVisits: 0,
+    createdAt: "2026-07-25T18:10:05Z",
   };
 
   it("forwards body + Bearer + PATCH method", async () => {
@@ -83,7 +85,8 @@ describe("patchMeProfileExternal", () => {
       { username: "alex91", displayName: "Alex García" },
       "tok",
     );
-    expect(result).toEqual(profileUpdateResponse);
+    // parseUserPublic normalizes nullish fields to `undefined` at parse time.
+    expect(result).toEqual({ ...profileUpdateResponse, avatarUrl: undefined });
   });
 
   it("throws with .status = 409 (username taken) on conflict", async () => {

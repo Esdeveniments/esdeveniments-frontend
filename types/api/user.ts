@@ -81,8 +81,6 @@ export interface AuthenticatedUserDTO {
 // are unaffected; the new endpoints below use the new shapes exclusively.
 // ──────────────────────────────────────────────────────────────────────────────
 
-export type BackendUserRole = "USER" | "ADMIN";
-
 /** Request body for PATCH /api/users/me/profile. */
 export interface ProfileUpdateRequestDTO {
   username: string;
@@ -90,20 +88,17 @@ export interface ProfileUpdateRequestDTO {
   bio?: string | null;
 }
 
-/** Response body from PATCH /api/users/me/profile and the latest GET /api/auth/me. */
-export interface ProfileUpdateResponseDTO {
-  id: string;
-  email: string;
-  displayName: string | null;
-  username: string | null;
-  bio: string | null;
-  avatarUrl: string | null;
-  organizerVerified: boolean;
-  /** True when username + displayName are present and the user can publish. */
-  profileCompleted: boolean;
-  role: BackendUserRole;
-  lastLoginAt: string;
-}
+/**
+ * Response body from PATCH /api/users/me/profile — confirmed against the
+ * real backend (2026-07-27) to be the same shape as `GET /api/users/{username}`
+ * (`UserPublicResponseDTO`), NOT the `GET /api/auth/me` shape. An earlier,
+ * untested assumption that it mirrored `AuthenticatedUserDTO` (expecting
+ * `email`/`profileCompleted`/`role`/`lastLoginAt`) made every real profile
+ * save fail with a 502 (Zod rejected the response as missing those fields).
+ * Callers that need the fresh `profileCompleted` must re-fetch
+ * `GET /api/auth/me` afterwards (see `useAuth().refetchUser()`).
+ */
+export type ProfileUpdateResponseDTO = UserPublicResponseDTO;
 
 /** Response body from POST /api/users/me/avatar. */
 export interface AvatarUploadResponseDTO {

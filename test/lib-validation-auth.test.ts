@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  parseProfileUpdateResponse,
-  profileUpdateSchema,
-} from "../lib/validation/auth";
+import { profileUpdateSchema } from "../lib/validation/auth";
+import { parseUserPublic } from "../lib/validation/user";
 
 describe("profileUpdateSchema", () => {
   it("accepts a minimal valid payload", () => {
@@ -135,68 +133,50 @@ describe("profileUpdateSchema", () => {
   });
 });
 
-describe("parseProfileUpdateResponse", () => {
-  it("parses a valid backend payload", () => {
+// `patchMeProfileExternal` (lib/api/users-external.ts) parses the
+// PATCH /api/users/me/profile response with `parseUserPublic`, the same
+// parser as GET /api/users/{username}. This was confirmed against the real
+// preprod backend on 2026-07-27: an earlier, untested schema assumed the
+// PATCH response mirrored GET /api/auth/me (expecting email/profileCompleted/
+// role/lastLoginAt), which made every real profile save 502 — the actual
+// response never carries those fields.
+describe("parseUserPublic (PATCH /api/users/me/profile response shape)", () => {
+  it("parses the real backend payload observed 2026-07-27", () => {
     const payload = {
-      id: "uuid-1",
-      email: "alex@example.com",
-      displayName: "Alex García",
-      username: "alex91",
-      bio: "Concerts.",
+      id: "e10c6a5f-306c-487f-9e71-876f67c7bbb2",
+      displayName: "Esdeveniments Catalunya",
+      username: "esdeveniments-catalunya-cat",
+      bio: "Compte de prova QA agent-browser.",
       avatarUrl: null,
       organizerVerified: false,
-      profileCompleted: true,
-      role: "USER",
-      lastLoginAt: "2026-07-25T18:10:05Z",
+      eventCount: 4,
+      totalEventVisits: 21,
+      createdAt: "2026-07-10T16:00:27.49072",
     };
-    const result = parseProfileUpdateResponse(payload);
+    const result = parseUserPublic(payload);
     expect(result).not.toBeNull();
-    expect(result?.username).toBe("alex91");
-    expect(result?.profileCompleted).toBe(true);
+    expect(result?.username).toBe("esdeveniments-catalunya-cat");
+    expect(result?.bio).toBe("Compte de prova QA agent-browser.");
   });
 
-  it("returns null on a missing required field", () => {
-    const result = parseProfileUpdateResponse({
+  it("does NOT require email/profileCompleted/role/lastLoginAt", () => {
+    // The wrong, now-removed schema rejected this exact shape.
+    const result = parseUserPublic({
       id: "uuid-1",
-      email: "alex@example.com",
       displayName: "Alex García",
       username: "alex91",
       bio: null,
       avatarUrl: null,
       organizerVerified: false,
-      // profileCompleted missing → should reject
-      role: "USER",
-      lastLoginAt: "2026-07-25T18:10:05Z",
+      eventCount: 0,
+      totalEventVisits: 0,
+      createdAt: "2026-07-25T18:10:05Z",
     });
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
   });
 
   it("returns null for a completely invalid payload", () => {
-    expect(parseProfileUpdateResponse(null)).toBeNull();
-    expect(parseProfileUpdateResponse("not an object")).toBeNull();
-  });
-
-  it("preserves extra backend fields via .passthrough()", () => {
-    const payload = {
-      id: "uuid-1",
-      email: "alex@example.com",
-      displayName: "Alex García",
-      username: "alex91",
-      bio: null,
-      avatarUrl: null,
-      organizerVerified: false,
-      profileCompleted: true,
-      role: "USER",
-      lastLoginAt: "2026-07-25T18:10:05Z",
-      // Forwards-compatible field the backend might add later:
-      bioSummary: "Music lover",
-    };
-    const result = parseProfileUpdateResponse(payload);
-    expect(result).not.toBeNull();
-    // .passthrough() preserves the extra field at runtime; cast through
-    // unknown so TS accepts reading a non-typed property name without
-    // widening the public ProfileUpdateResponseDTO contract.
-    const raw = result as unknown as Record<string, unknown>;
-    expect(raw.bioSummary).toBe("Music lover");
+    expect(parseUserPublic(null)).toBeNull();
+    expect(parseUserPublic("not an object")).toBeNull();
   });
 });
