@@ -61,6 +61,13 @@ export function getProfileSlug(
   // sub, which by then differs from the (now backend-UUID) `id`, so the
   // `name !== user.id` check alone no longer catches it. Reject against
   // BOTH so this holds pre- and post-enrichment.
+  //
+  // 2026-07-27 (later): the actual source of the bad value is now fixed at
+  // mapUserInfoToAuthUser (lib/auth/logto.ts) — `name` can no longer equal
+  // the sub in the first place, since that's the single point every AuthUser
+  // is built from raw Logto claims. These id/logtoId checks are kept as
+  // cheap defense-in-depth, not the primary defense — don't remove them on
+  // the assumption the upstream fix makes them redundant.
   const name = (user.name?.trim() || user.displayName?.trim());
   if (
     name &&
