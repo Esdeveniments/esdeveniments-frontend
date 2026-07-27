@@ -46,20 +46,29 @@ export function getProfileSlug(
   // thread 121i flagged the previous comment as inaccurate; this is the
   // corrected version.
   //
-  // 2026-07-26 round-5: also reject when `name === user.id`. Logto + Google
-  // SSO populates the id_token `name` claim with the Logto `sub` (an
+  // 2026-07-26 round-5: also reject when `name === user.id`. Logto
+  // populates the id_token `name` claim with the Logto `sub` (an
   // alphanumeric identifier like `a10mgbryoklh`) when the user has no
   // configured display name. Without this guard, sanitize() lowercases
   // that string and we linked the navbar to `/perfil/<sub>`, which the
   // backend (keyed by UUID) could never resolve. The defence in depth
   // here pairs with the NavbarClient guard `!user.profileEnrichmentFailed`.
+  //
+  // 2026-07-27: `user.id` alone isn't enough once enrichment has run —
+  // enrichWithBackendProfile replaces `id` with the backend UUID and moves
+  // the original Logto sub to `logtoId`. A user whose backend record has no
+  // displayName yet (e.g. still mid-onboarding) keeps `name` at the Logto
+  // sub, which by then differs from the (now backend-UUID) `id`, so the
+  // `name !== user.id` check alone no longer catches it. Reject against
+  // BOTH so this holds pre- and post-enrichment.
   const name = (user.name?.trim() || user.displayName?.trim());
   if (
     name &&
     !name.includes("@") &&
     name !== user.email &&
     !isUuid(name) &&
-    name !== user.id
+    name !== user.id &&
+    name !== user.logtoId
   ) {
     const slug = sanitize(name);
     if (slug && slug !== "n-a") return slug;

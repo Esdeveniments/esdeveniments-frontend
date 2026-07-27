@@ -204,4 +204,22 @@ describe("getProfileSlug", () => {
       }),
     ).toBe("gerard-segarra");
   });
+
+  // ── 2026-07-27 regression: enrichWithBackendProfile replaces `id` with the
+  // backend UUID and moves the original Logto sub to `logtoId`. A user whose
+  // backend record has no displayName yet (mid-onboarding) keeps `name` at
+  // the Logto sub — by then it differs from the NEW `id`, so `name !==
+  // user.id` alone no longer catches it and the navbar linked to
+  // `/perfil/<sub>` again, post-enrichment this time.
+  it("returns empty string when name equals user.logtoId, even though it differs from the post-enrichment id", () => {
+    expect(
+      getProfileSlug({
+        id: "e10c6a5f-306c-487f-9e71-876f67c7bbb2", // backend UUID, post-enrichment
+        logtoId: "a10mgbryoklh", // original Logto sub, preserved separately
+        name: "a10mgbryoklh", // id_token name claim defaulted to the sub
+        username: "",
+        email: "esdeveniments.catalunya.cat@gmail.com",
+      }),
+    ).toBe("");
+  });
 });

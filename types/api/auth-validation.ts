@@ -30,6 +30,12 @@ export interface UsernameValidationResult {
  */
 export type ProfileSlugSource = {
   id?: string;
+  // Original Logto `sub` (types/auth.ts AuthUser.logtoId), preserved
+  // separately once enrichment replaces `id` with the backend UUID. Some
+  // Logto id_tokens default the `name` claim to the sub when no display
+  // name is configured — getProfileSlug must reject that against the
+  // ORIGINAL sub, not just the (now different, post-enrichment) `id`.
+  logtoId?: string;
   username?: string | null;
   // Legacy `ProfileSlugUser` fields (used when `username` is unsafe);
   // kept so never-unsafe legacy callers still type-check.
