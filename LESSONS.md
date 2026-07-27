@@ -128,3 +128,22 @@ so the UI can render an honest warning. Also: log JWT `iss`/`aud`/`exp` claim
 hints at the rejection site so the next log scrape immediately tells you
 whether the audience is wrong, the issuer is wrong, or the JWT expired —
 don't redact everything, just enough PII to stay safe.
+
+## `AuthProvider`'s client session is hydrated once — nothing keeps it in sync
+
+`lib/auth/AuthProvider.tsx` fetches `/api/auth/me` exactly once, in a
+`useEffect` on mount, and caches the result in React state for the tab's
+lifetime. `useAuth().user` never updates on its own again. A plan to fix the
+profile-completion onboarding (`/perfil/edita`, avatar upload) originally
+assumed `router.push()` / `router.refresh()` after a successful `PATCH
+/api/users/me/profile` would be enough to reflect the new
+`profileCompleted`/`username`/`avatarUrl` — it isn't: `router.refresh()`
+only re-runs Server Component data fetching, and `AuthProvider` sits above
+the navigating route segment so it never remounts. Without an explicit
+resync, the `/publica` profile-completion gate would re-check a stale
+`false` even after a successful save. Fix: `AuthProvider` now exposes
+`refetchUser(): Promise<void>` (extracted the mount-time fetch into a
+reusable `load()` so both paths share the retry/abort logic) — any client
+mutation that changes session-derived fields (profile PATCH, avatar
+upload/remove) must call it explicitly. `router.refresh()` alone is not
+enough for anything read from `useAuth()`.

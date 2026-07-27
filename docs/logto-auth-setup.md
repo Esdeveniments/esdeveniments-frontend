@@ -199,6 +199,49 @@ cat <<'EOF' | agent-browser --session $s eval --stdin
 EOF
 ```
 
+### Onboarding: profile completion + avatar (manual test)
+
+New as of the 2026-07 onboarding handoff: `profileCompleted` gates
+`POST /api/events` (backend 403s while false), so a fresh sign-up must
+complete `/perfil/edita` before `/publica` lets them submit. This is the one
+flow the backend team hadn't smoke-tested in pre as of this writing — verify
+the avatar endpoint here before trusting it in production.
+
+```bash
+agent-browser --session $s open "https://pr-<N>.esdeveniments.cat/perfil/edita"
+# fresh/temporary user → profileCompleted:false → form should be prefilled
+# with the auto-generated user-xxxx username, not blocked or blank
+agent-browser --session $s snapshot -i
+agent-browser --session $s fill @eNN "<test-username>"   # username field
+agent-browser --session $s fill @eNN "<Test Display Name>"  # displayName field
+agent-browser --session $s click @eNN                     # Save
+
+cat <<'EOF' | agent-browser --session $s eval --stdin
+(async()=>{const r=await fetch('/api/auth/me',{credentials:'include'});return{status:r.status,body:await r.json()};})()
+EOF
+# expect body.user.profileCompleted === true and .username === "<test-username>"
+```
+
+Avatar (multipart — eval can't build FormData with a real File, so drive the
+actual `<input type=file>` via the DOM instead of `eval`):
+
+```bash
+agent-browser --session $s open "https://pr-<N>.esdeveniments.cat/perfil/edita"
+agent-browser --session $s snapshot -i
+agent-browser --session $s upload @eNN "/path/to/test-avatar.jpg"  # the hidden file input
+# expect the avatar preview to update; confirm via:
+cat <<'EOF' | agent-browser --session $s eval --stdin
+(async()=>{const r=await fetch('/api/auth/me',{credentials:'include'});return{status:r.status,avatarUrl:(await r.json()).user?.avatarUrl};})()
+EOF
+# then exercise DELETE /api/users/me/avatar (the "remove photo" button) and
+# confirm avatarUrl goes back to null/undefined on the next /api/auth/me
+```
+
+`/publica` gate: with `profileCompleted:false`, `/publica` must show
+"complete your profile" (not the event form) and link to
+`/perfil/edita?redirect=/publica`; after saving, it should land back on
+`/publica` with the real form.
+
 agent-browser gotchas (the ones a fresh agent trips on):
 - Quote every URL — a bare `?` breaks in zsh.
 - HttpOnly cookies aren't in `document.cookie`; dump them via
