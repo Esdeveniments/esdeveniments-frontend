@@ -37,6 +37,7 @@ import Modal from "@components/ui/common/modal";
 import { useAuth } from "@components/hooks/useAuth";
 import PublishAuthGate from "./PublishAuthGate";
 import CompleteProfileGate from "./CompleteProfileGate";
+import AuthCheckSkeleton from "@components/ui/common/skeletons/AuthCheckSkeleton";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 // Lazy load preview content (only shown in modal when user clicks preview)
@@ -808,11 +809,7 @@ const Publica = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="container flex-center pt-[6rem] pb-section-y">
-        <div className="w-full max-w-md h-80 rounded-lg bg-border/40 animate-pulse" />
-      </div>
-    );
+    return <AuthCheckSkeleton />;
   }
 
   if (!isAuthenticated) {
