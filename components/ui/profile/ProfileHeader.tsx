@@ -50,8 +50,14 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
   // Cap runs of blank lines before rendering with whitespace-pre-line: the
   // 500-char limit alone doesn't stop a bio that's mostly newlines (e.g.
   // "\n" x200 plus a few words), which would otherwise blow up the page
-  // with empty vertical space for every visitor.
-  const bioText = profile.bio?.trim().replace(/\n{3,}/g, "\n\n");
+  // with empty vertical space for every visitor. Normalize CRLF/CR to LF
+  // first — otherwise a Windows-authored bio's "\r\n" runs slip past the
+  // \n{3,} check entirely (the \r characters break up the consecutive-\n
+  // count) and still produce the same wall of empty space.
+  const bioText = profile.bio
+    ?.trim()
+    .replace(/\r\n?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n");
 
   return (
     <section
@@ -83,7 +89,10 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
         <p className="body-small text-foreground/60 mb-1">@{profile.username}</p>
 
         {bioText && (
-          <p className="body-normal text-foreground/80 mb-element-gap whitespace-pre-line break-words">
+          <p
+            data-testid="profile-bio"
+            className="body-normal text-foreground/80 mb-element-gap whitespace-pre-line break-words"
+          >
             {bioText}
           </p>
         )}
