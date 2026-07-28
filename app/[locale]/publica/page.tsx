@@ -783,6 +783,7 @@ const PublishForm = () => {
               <Link
                 href="/patrocina"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="body-small text-primary hover:text-primary/80 transition-interactive pressable-inline focus-ring"
               >
                 {t("sponsorLink")}
