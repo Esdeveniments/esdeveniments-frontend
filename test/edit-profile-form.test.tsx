@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import type { AuthUser } from "types/auth";
 
-const authUser: AuthUser = {
+const baseUser: AuthUser = {
   id: "user-1",
   email: "alex@example.com",
   name: "Alex Garcia",
@@ -10,6 +10,8 @@ const authUser: AuthUser = {
   bio: "Organitzo concerts.",
   avatarUrl: undefined,
 };
+
+let authUser: AuthUser = baseUser;
 
 const mockRefetchUser = vi.fn();
 const mockPush = vi.fn();
@@ -34,6 +36,7 @@ import EditProfileForm from "@app/[locale]/perfil/edita/EditProfileForm";
 
 describe("EditProfileForm", () => {
   beforeEach(() => {
+    authUser = baseUser;
     mockRefetchUser.mockReset().mockResolvedValue(undefined);
     mockPush.mockReset();
     vi.stubGlobal("fetch", vi.fn());
@@ -48,6 +51,27 @@ describe("EditProfileForm", () => {
     expect(screen.getByLabelText("fields.bio")).toHaveValue(
       "Organitzo concerts.",
     );
+  });
+
+  it("shows the normal edit heading and no username hint by default", () => {
+    render(<EditProfileForm />);
+    expect(screen.getByRole("heading")).toHaveTextContent("heading");
+    expect(screen.queryByText("usernameHint")).toBeNull();
+  });
+
+  it("shows onboarding heading and a username hint when profileCompleted is false", () => {
+    authUser = { ...baseUser, username: "user-4b34dd41", profileCompleted: false };
+    render(<EditProfileForm />);
+    expect(screen.getByRole("heading")).toHaveTextContent("onboardingHeading");
+    expect(screen.getByText("onboardingSubheading")).toBeInTheDocument();
+    expect(screen.getByText("usernameHint")).toBeInTheDocument();
+  });
+
+  it("shows the normal heading when profileCompleted is undefined (transient enrichment blip)", () => {
+    authUser = { ...baseUser, profileCompleted: undefined };
+    render(<EditProfileForm />);
+    expect(screen.getByRole("heading")).toHaveTextContent("heading");
+    expect(screen.queryByText("usernameHint")).toBeNull();
   });
 
   it("rejects an invalid username without calling the API", async () => {

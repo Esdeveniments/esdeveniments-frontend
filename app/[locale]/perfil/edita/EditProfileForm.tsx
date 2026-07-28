@@ -15,6 +15,10 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
   const t = useTranslations("App.EditProfile");
   const { user, refetchUser } = useAuth();
   const router = useRouter();
+  // Matches the check in NavbarClient: `=== false`, not falsy, so a
+  // transient backend enrichment blip (profileCompleted undefined) doesn't
+  // wrongly show onboarding copy to an already-completed profile.
+  const isOnboarding = user?.profileCompleted === false;
 
   const [username, setUsername] = useState(user?.username ?? "");
   const [displayName, setDisplayName] = useState(user?.name ?? "");
@@ -112,8 +116,12 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
     <div className="container flex flex-col justify-center pt-6 pb-14">
       <div className="w-full max-w-md mx-auto flex flex-col gap-6 px-2 lg:px-0">
         <div className="flex flex-col gap-2 text-center">
-          <h1 className="heading-1 text-foreground-strong">{t("heading")}</h1>
-          <p className="body-normal text-foreground/80">{t("subheading")}</p>
+          <h1 className="heading-1 text-foreground-strong">
+            {t(isOnboarding ? "onboardingHeading" : "heading")}
+          </h1>
+          <p className="body-normal text-foreground/80">
+            {t(isOnboarding ? "onboardingSubheading" : "subheading")}
+          </p>
         </div>
 
         {submitError && (
@@ -142,6 +150,11 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
             <label htmlFor="username" className="form-label">
               {t("fields.username")}
             </label>
+            {isOnboarding && (
+              <p id="username-hint" className="helper-text">
+                {t("usernameHint")}
+              </p>
+            )}
             <div className="mt-2">
               <input
                 id="username"
@@ -152,7 +165,11 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
                 onBlur={validate}
                 className={`w-full rounded-xl border-border focus:border-foreground-strong text-base ${usernameError ? "input-error" : ""}`}
                 aria-invalid={usernameError ? "true" : "false"}
-                aria-describedby={usernameError ? "username-error" : undefined}
+                aria-describedby={
+                  [isOnboarding && "username-hint", usernameError && "username-error"]
+                    .filter(Boolean)
+                    .join(" ") || undefined
+                }
               />
               {usernameError && (
                 <p id="username-error" className="helper-text-error" role="alert">
