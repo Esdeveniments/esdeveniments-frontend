@@ -114,6 +114,16 @@ describe("ProfileHeader", () => {
     expect(screen.getByTestId("profile-header").querySelectorAll("p").length).toBe(1);
   });
 
+  it("caps runs of blank lines so a mostly-newline bio can't blow up the layout", async () => {
+    const profile: ProfileDetailResponseDTO = {
+      ...baseProfile,
+      bio: `Hola${"\n".repeat(200)}Adéu`,
+    };
+    await renderHeader(profile);
+    const bioParagraph = screen.getByText(/Hola/);
+    expect(bioParagraph.textContent).toBe("Hola\n\nAdéu");
+  });
+
   it("has the correct testid", async () => {
     await renderHeader(baseProfile);
     expect(screen.getByTestId("profile-header")).toBeInTheDocument();

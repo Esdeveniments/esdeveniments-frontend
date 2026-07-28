@@ -47,6 +47,12 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
     profile.displayName?.trim() || profile.name?.trim() || profile.username;
   const avatarSrc = profile.avatarUrl || profile.pictureUrl;
 
+  // Cap runs of blank lines before rendering with whitespace-pre-line: the
+  // 500-char limit alone doesn't stop a bio that's mostly newlines (e.g.
+  // "\n" x200 plus a few words), which would otherwise blow up the page
+  // with empty vertical space for every visitor.
+  const bioText = profile.bio?.trim().replace(/\n{3,}/g, "\n\n");
+
   return (
     <section
       className="card-bordered rounded-lg overflow-hidden mb-section-y w-full"
@@ -74,9 +80,9 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
 
         <p className="body-small text-foreground/60 mb-1">@{profile.username}</p>
 
-        {profile.bio?.trim() && (
+        {bioText && (
           <p className="body-normal text-foreground/80 mb-element-gap whitespace-pre-line">
-            {profile.bio}
+            {bioText}
           </p>
         )}
 
