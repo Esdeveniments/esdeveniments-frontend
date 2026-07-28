@@ -320,6 +320,10 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/push/send",
   // API-scoped llms.txt (public, machine-readable)
   "/api/llms.txt",
+  // Authenticated user-self mutation routes (Bearer comes from HttpOnly cookie
+  // inside the route handler; Origin check below is the CSRF guard).
+  "/api/users/me/profile",
+  "/api/users/me/avatar",
 ];
 
 // GET-only public exact paths. Gated to GET in isPublicApiRequest so a future
@@ -438,6 +442,37 @@ export default async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/api/")) {
+    // Edge-level multipart allowlist. Rejects multipart requests to any
+    // non-allowlisted path BEFORE the public-API gate, so that even when a
+    // path is also a public-API entry, it still has to pass the same
+    // narrow multipart allowlist.
+    //
+    // Why these three? Each carries a multipart body that the HMAC middleware
+    // can't re-sign from a server-cloned stream (multipart binaries can't be
+    // re-derived from a server-cloned body without losing boundaries). The
+    // three flows use multipart for browser-uploaded images / files:
+    //   - /api/users/me/avatar        — HttpOnly cookie auth (avatar)
+    //   - /api/publica/image-upload   — IP rate limit + Origin (event image)
+    //   - /api/sponsors/image-upload  — Stripe session paid-status guard
+    // Every other /api/ path is required to use a JSON body that HMAC can
+    // re-sign. PR review thread 121G expanded the allowlist from 1 to 3.
+    const MULTIPART_ALLOWLIST = new Set([
+      "/api/users/me/avatar",
+      "/api/publica/image-upload",
+      "/api/sponsors/image-upload",
+    ]);
+    const requestContentType = (
+      request.headers.get("content-type") || ""
+    ).toLowerCase();
+    if (requestContentType.startsWith("multipart/form-data")) {
+      if (!MULTIPART_ALLOWLIST.has(pathname)) {
+        return NextResponse.json(
+          { error: "Unsupported media type" },
+          { status: 415 },
+        );
+      }
+    }
+
     const isPublicApiRequest =
       // Pattern-based routes (GET only): these only export GET handlers;
       // restricting at middleware level prevents accidental exposure if a
@@ -501,7 +536,6 @@ export default async function proxy(request: NextRequest) {
     }
     const hmac = request.headers.get("x-hmac");
     const timestamp = request.headers.get("x-timestamp");
-    const contentType = request.headers.get("content-type") || "";
     let requestBody = "";
 
     if (!process.env.HMAC_SECRET) {
@@ -509,12 +543,11 @@ export default async function proxy(request: NextRequest) {
       return new NextResponse("Internal Server Error", { status: 500 });
     }
 
-    if (contentType.toLowerCase().startsWith("multipart/form-data")) {
-      return NextResponse.json(
-        { error: "Unsupported media type" },
-        { status: 415 },
-      );
-    }
+    // Multipart is handled at the edge of the /api/ branch above (see the
+    // narrow allowlist right after `pathname.startsWith("/api/")`). Doing
+    // it there means a multipart POST still has to satisfy HMAC unless the
+    // path itself is in PUBLIC_API_EXACT_PATHS, AND additionally has to
+    // pass the multipart allowlist. Both gates are required.
 
     try {
       requestBody = await request.clone().text();
@@ -606,6 +639,12 @@ export default async function proxy(request: NextRequest) {
   if (trustTarget) {
     return NextResponse.redirect(new URL(trustTarget, request.url), 301);
   }
+
+  // /usuarios/<user> -> /perfil/<user> rewrite deferred to followup.
+  // The proxy.ts rewrite needs to run AFTER stripLocalePrefix(pathname)
+  // is in scope so /es/usuarios/alex is resolved correctly. Tracking
+  // in PR review checklist item 3.
+
 
   // OpenAPI spec: bypass locale handling so route handler is used
   if (pathname === "/openapi") {

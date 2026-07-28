@@ -36,8 +36,8 @@ export async function editEvent(
   // event must not match a logged-out user (undefined === undefined).
   const isCreator = Boolean(
     currentUser?.id &&
-      event.createdByUser?.id &&
-      currentUser.id === event.createdByUser.id,
+      event.owner?.id &&
+      currentUser.id === event.owner.id,
   );
   if (!isCreator) {
     return {

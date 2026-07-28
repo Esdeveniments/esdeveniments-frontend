@@ -15,10 +15,10 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
 
   const hasValidUrl = !!event.url && /^https?:\/\//i.test(event.url);
-  const createdByUser = event.createdByUser;
+  const owner = event.owner;
 
   // Only render if there's something to show
-  if (!event.duration && !hasValidUrl && !createdByUser) return null;
+  if (!event.duration && !hasValidUrl && !owner) return null;
 
   return (
     <div className="w-full">
@@ -57,7 +57,7 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
             </div>
           )}
 
-          {createdByUser && (
+          {owner && (
             <div
               className="body-small flex items-center gap-element-gap text-foreground-strong/70"
               data-testid="event-created-by"
@@ -65,12 +65,15 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
               <UserIcon className="w-4 h-4" />
               <span>
                 {t.rich("createdBy", {
-                  name: createdByUser.name,
+                  name:
+                    owner.displayName ??
+                    owner.username ??
+                    "",
                   link: (chunks) =>
-                    createdByUser.username ? (
+                    owner.username ? (
                       <Link
                         href={`/perfil/${encodeURIComponent(
-                          createdByUser.username
+                          owner.username
                         )}`}
                         className="text-primary hover:underline font-medium"
                         data-testid="event-created-by-link"

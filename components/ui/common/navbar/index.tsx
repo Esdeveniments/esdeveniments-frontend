@@ -31,6 +31,7 @@ export default async function Navbar() {
       logout: t("auth.logout"),
       userMenu: t("auth.userMenu"),
       myProfile: t("auth.myProfile"),
+      incompleteProfile: t("auth.incompleteProfile"),
     },
   };
 

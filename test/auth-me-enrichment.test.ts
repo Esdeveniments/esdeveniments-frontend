@@ -65,6 +65,30 @@ describe("enrichWithBackendProfile", () => {
     });
   });
 
+  it("prefers the backend's emailVerified over the id_token claim", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      emailVerified: false,
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    // idTokenUser.emailVerified is true — the backend's false should win.
+    expect(result.emailVerified).toBe(false);
+  });
+
+  it("falls back to the id_token's emailVerified when the backend omits it", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.emailVerified).toBe(idTokenUser.emailVerified);
+  });
+
   it("keeps id_token name/username when the backend values are not better", async () => {
     mockGetAuthenticatedUserExternal.mockResolvedValue({
       id: "backend-uuid",

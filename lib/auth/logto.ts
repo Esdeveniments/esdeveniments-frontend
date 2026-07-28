@@ -404,10 +404,22 @@ function mapRole(roles: string[] | undefined): AuthRole | undefined {
 }
 
 export function mapUserInfoToAuthUser(info: LogtoUserInfo): AuthUser {
+  // Logto defaults the id_token `name` claim to the `sub` (e.g.
+  // "a10mgbryoklh") when the user has no configured display name. Reject it
+  // here, at the single point every AuthUser is built from raw claims
+  // (mapClaimsToAuthUser / getCurrentUser / GET /api/auth/me all funnel
+  // through this function), so no value derived from the sub ever enters
+  // `name` in the first place. Downstream consumers (navbar display text,
+  // avatar initials, getProfileSlug's URL guard) no longer each need their
+  // own defense against this one raw-claim quirk — getProfileSlug's
+  // `name !== user.id/.logtoId` checks stay as harmless backup, not the
+  // only line of defense.
+  const rawName = info.name ?? info.username ?? "";
+  const name = rawName && rawName !== info.sub ? rawName : "";
   return {
     id: info.sub,
     email: info.email ?? "",
-    name: info.name ?? info.username ?? "",
+    name,
     username: info.username ?? "",
     avatarUrl: info.picture ?? undefined,
     role: mapRole(info.roles),

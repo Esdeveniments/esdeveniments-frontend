@@ -43,7 +43,7 @@ export default async function EditaPage({
   const currentUserId = currentUser?.id;
   const isCreator =
     Boolean(currentUserId) &&
-    currentUserId === event?.createdByUser?.id;
+    currentUserId === event?.owner?.id;
   if (!event || !isCreator) return notFound();
 
   // Fetch region data only after confirming the user is the creator.

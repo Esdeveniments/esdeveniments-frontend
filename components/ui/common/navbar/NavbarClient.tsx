@@ -19,6 +19,7 @@ import PressableLink from "@components/ui/primitives/PressableLink";
 import { useAuth } from "@components/hooks/useAuth";
 import { getProfileSlug } from "@utils/user-helpers";
 import type { NavbarClientProps } from "types/props";
+import type { Href } from "types/common";
 
 import LanguageSwitcher from "./LanguageSwitcher";
 
@@ -35,6 +36,20 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
   // return an empty string when no safe slug is available. Never expose
   // email addresses or raw UUIDs.
   const profileSlug = getProfileSlug(user);
+
+  // Until onboarding is done, the backend has no public profile document
+  // under the fallback username yet, so /perfil/{slug} 404s. Send the user
+  // to the completion form instead (same target as CompleteProfileGate).
+  // Checked with `=== false`, not falsy: a transient backend enrichment
+  // blip (lib/auth/enrichment.ts) leaves profileCompleted `undefined` for
+  // an already-onboarded user too, and that must fall through to the
+  // normal profile link, not the onboarding form.
+  const profileHref: Href | null =
+    user?.profileCompleted === false
+      ? "/perfil/edita"
+      : profileSlug
+        ? `/perfil/${encodeURIComponent(profileSlug)}`
+        : null;
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
 
@@ -125,16 +140,20 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                       <button
                         type="button"
                         onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                        className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive"
+                        className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         aria-label={labels.userMenu}
                         aria-expanded={isUserMenuOpen}
                         data-testid="user-avatar-button"
                       >
                         {user.avatarUrl ? (
+                          // bg-background: the button behind this is bg-primary (for
+                          // the fallback-letter case). A transparent-background
+                          // upload (e.g. a logo) would otherwise let that red bleed
+                          // through instead of showing the actual image cleanly.
                           <img
                             src={user.avatarUrl}
                             alt=""
-                            className="w-9 h-9 rounded-full object-cover"
+                            className="w-9 h-9 rounded-full object-cover bg-background"
                           />
                         ) : (
                           (user.name || user.email).charAt(0).toUpperCase()
@@ -145,9 +164,25 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                           <p className="body-small text-foreground/60 truncate mb-2">
                             {user.name || user.email}
                           </p>
-                          {profileSlug && (
+                          {/* Surface "incomplete session" when the id_token is
+                              valid but the backend rejected our Bearer (or was
+                              unreachable). Without this, the user sees an empty
+                              dropdown — no profile link, only logout — and
+                              can't tell why. Clicking logout re-enters the
+                              Logto flow and may fix a stale cookie. */}
+                          {user.profileEnrichmentFailed && (
+                            <p
+                              className="body-small text-error mb-1 py-1"
+                              data-testid="navbar-session-warning"
+                              role="status"
+                              aria-live="polite"
+                            >
+                              {labels.incompleteProfile}
+                            </p>
+                          )}
+                          {profileHref && !user.profileEnrichmentFailed && (
                             <ActiveLink
-                              href={`/perfil/${encodeURIComponent(profileSlug)}`}
+                              href={profileHref}
                               className="block w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
                             >
                               {labels.myProfile}
@@ -280,9 +315,22 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     <p className="body-small text-foreground/60 text-center truncate">
                       {user.name || user.email}
                     </p>
-                    {profileSlug && (
+                    {/* Surface "incomplete session" inside the mobile panel too,
+                        so the warning is visible without opening the desktop
+                        dropdown. See desktop variant for rationale. */}
+                    {user.profileEnrichmentFailed && (
+                      <p
+                        className="body-small text-error text-center py-1"
+                        data-testid="navbar-session-warning-mobile"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        {labels.incompleteProfile}
+                      </p>
+                    )}
+                    {profileHref && !user.profileEnrichmentFailed && (
                       <ActiveLink
-                        href={`/perfil/${encodeURIComponent(profileSlug)}`}
+                        href={profileHref}
                         className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
                       >
                         {labels.myProfile}

@@ -16,7 +16,7 @@ import {
   createHash,
   randomBytes,
 } from "node:crypto";
-import type { FlowState, LogtoTokenResponse } from "types/auth";
+import type { FlowState, LogtoTokenResponse, TokenCookieWrite } from "types/auth";
 
 export const ACCESS_TOKEN_COOKIE = "auth_token";
 export const REFRESH_TOKEN_COOKIE = "auth_refresh_token";
@@ -30,6 +30,15 @@ export const RETURN_TO_COOKIE = "logto_return_to";
 // Refresh token / id_token outlive the access token; cap session length here.
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const FLOW_MAX_AGE = 60 * 10; // 10 minutes
+// 2026-07-26: Logto's default access_token lifetime is 3600s. We use this as
+// a defensive fallback when the token response omits `expires_in` or returns
+// a non-positive value. `response.cookies.set({ maxAge: 0 })` instantly
+// expires the cookie; `maxAge: undefined` makes it a session cookie that
+// browsers drop on close. Either way, the auth_token cookie disappears
+// while the id_token cookie (which uses SESSION_MAX_AGE hardcoded) survives
+// — producing the silent "logged in but 401 on every mutation" failure the
+// user hit after a silent SSO re-login on 2026-07-26.
+const ACCESS_TOKEN_DEFAULT_MAX_AGE = 60 * 60; // 1 hour
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
@@ -51,6 +60,12 @@ let encKeyCache: Buffer | null | undefined;
 function getEncKey(): Buffer | null {
   if (encKeyCache !== undefined) return encKeyCache;
   const cookieSecret = process.env.LOGTO_COOKIE_SECRET;
+  // 2026-07-26 round-9: log the secret length (never the value) once so a
+  // future "decrypt returns null but cookie is present" debug can tell from
+  // one grep whether the encryption key was actually initialised at all.
+  console.log(
+    `[AUTH DIAGNOSTIC] getEncKey initialized: secret length=${cookieSecret?.length ?? 0}`,
+  );
   if (cookieSecret && cookieSecret.length < 32) {
     throw new Error("LOGTO_COOKIE_SECRET must be at least 32 characters");
   }
@@ -76,15 +91,27 @@ function encrypt(plaintext: string): string {
 }
 
 function decrypt(value: string | undefined): string | null {
-  if (!value) return null;
+  // 2026-07-26 round-9 diagnostic: log every decrypt outcome so a
+  // "decrypt returns null but cookie is present" symptom (round-9 publish
+  // failure) can be root-caused in one grep. Never log the value itself.
+  if (!value) {
+    console.log("[AUTH DIAGNOSTIC] decrypt: cookie value is undefined");
+    return null;
+  }
   const encKey = getEncKey();
   if (!encKey) {
     // A v1.* envelope with no key configured means the secret was removed or
     // mistyped — don't pass the encrypted blob through as a bearer token.
+    console.log(
+      `[AUTH DIAGNOSTIC] decrypt: encKey is null at read-time, value prefix=${value.slice(0, ENC_PREFIX.length + 4)}`,
+    );
     return value.startsWith(ENC_PREFIX) ? null : value;
   }
   // Legacy plaintext cookie written before the secret was introduced.
-  if (!value.startsWith(ENC_PREFIX)) return value;
+  if (!value.startsWith(ENC_PREFIX)) {
+    console.log("[AUTH DIAGNOSTIC] decrypt: plaintext value, returning as-is");
+    return value;
+  }
   try {
     const buf = Buffer.from(value.slice(ENC_PREFIX.length), "base64url");
     const iv = buf.subarray(0, 12);
@@ -92,10 +119,18 @@ function decrypt(value: string | undefined): string | null {
     const enc = buf.subarray(28);
     const decipher = createDecipheriv("aes-256-gcm", encKey, iv);
     decipher.setAuthTag(tag);
-    return Buffer.concat([decipher.update(enc), decipher.final()]).toString(
+    const result = Buffer.concat([decipher.update(enc), decipher.final()]).toString(
       "utf8",
     );
-  } catch {
+    console.log("[AUTH DIAGNOSTIC] decrypt: SUCCESS");
+    return result;
+  } catch (err) {
+    // 2026-07-26 round-9: the round-9 hypothesis — encryption key rotation
+    // between write-time (login) and read-time (publish Server Action) —
+    // surfaces here. AES-256-GCM's tag mismatch is the symptom.
+    console.log(
+      `[AUTH DIAGNOSTIC] decrypt: FAILED (likely key mismatch between write & read) - ${err instanceof Error ? err.message : String(err)}`,
+    );
     return null;
   }
 }
@@ -120,30 +155,112 @@ export function readTokenFromRequest(
   return decrypt(request.cookies.get(name)?.value);
 }
 
+// Shared by setTokenCookies (route handlers holding a NextResponse) and
+// getValidAccessToken (Server Actions / route handlers that only have the
+// cookies() API) so the two writers can't drift on maxAge/path/encryption.
+function buildTokenCookieWrites(tokens: LogtoTokenResponse): TokenCookieWrite[] {
+  // 2026-07-26: defensively coerce `expires_in` to a positive integer. See
+  // ACCESS_TOKEN_DEFAULT_MAX_AGE for the rationale (silent SSO path
+  // produced a missing-auth_token state on 2026-07-26).
+  const rawExpiresIn = tokens.expires_in;
+  const safeMaxAge =
+    typeof rawExpiresIn === "number" && rawExpiresIn > 0
+      ? rawExpiresIn
+      : ACCESS_TOKEN_DEFAULT_MAX_AGE;
+  const encryptedAccessToken = encrypt(tokens.access_token);
+  // Diagnostic: log the chosen maxAge + encrypted payload length so a future
+  // "auth_token cookie missing" regression can be root-caused in one grep.
+  // Browsers drop cookies > 4096 bytes per cookie; if the encrypted
+  // access_token approaches that limit, the bug is JWT bloat, not the
+  // maxAge fallback.
+  console.log(
+    `[AUTH DIAGNOSTIC] setTokenCookies: expires_in=${rawExpiresIn} -> maxAge=${safeMaxAge}s; auth_token encrypted length=${encryptedAccessToken.length} bytes (browsers drop cookies > 4096 bytes)`,
+  );
+  const writes: TokenCookieWrite[] = [
+    {
+      name: ACCESS_TOKEN_COOKIE,
+      value: encryptedAccessToken,
+      options: { ...baseOptions, path: "/", maxAge: safeMaxAge },
+    },
+  ];
+  // Refresh-token responses may omit id_token; keep the existing one rather
+  // than overwriting it (the id_token_hint is needed for RP-initiated logout).
+  if (tokens.id_token) {
+    writes.push({
+      name: ID_TOKEN_COOKIE,
+      value: encrypt(tokens.id_token),
+      options: { ...baseOptions, path: "/", maxAge: SESSION_MAX_AGE },
+    });
+  }
+  if (tokens.refresh_token) {
+    // path: "/" (not "/api/auth") — Server Actions bound to arbitrary pages
+    // (e.g. createEventAction on /publica) need this cookie to refresh an
+    // expired access token, and the browser only attaches a cookie to
+    // requests matching its path scope. Still HttpOnly + Secure + SameSite=
+    // Lax throughout; only our own same-origin server code ever reads it.
+    //
+    // Sessions from before this path moved from /api/auth to / still carry
+    // the old-scoped cookie in their browser; it stops being read/rotated
+    // but isn't actively harmful (a same-named cookie at a different path is
+    // a separate entry) and is fully cleared at next logout — see
+    // clearTokenCookies. Not cleared here too: NextResponse's cookie jar
+    // keys by name, so a second `.set()` for the same name in one response
+    // would silently replace this write instead of emitting a second
+    // Set-Cookie header.
+    writes.push({
+      name: REFRESH_TOKEN_COOKIE,
+      value: encrypt(tokens.refresh_token),
+      options: { ...baseOptions, path: "/", maxAge: SESSION_MAX_AGE },
+    });
+  }
+  return writes;
+}
+
 export function setTokenCookies(
   response: NextResponse,
   tokens: LogtoTokenResponse,
 ): void {
-  response.cookies.set(ACCESS_TOKEN_COOKIE, encrypt(tokens.access_token), {
-    ...baseOptions,
-    path: "/",
-    maxAge: tokens.expires_in,
-  });
-  // Refresh-token responses may omit id_token; keep the existing one rather
-  // than overwriting it (the id_token_hint is needed for RP-initiated logout).
-  if (tokens.id_token) {
-    response.cookies.set(ID_TOKEN_COOKIE, encrypt(tokens.id_token), {
-      ...baseOptions,
-      path: "/",
-      maxAge: SESSION_MAX_AGE,
-    });
+  for (const write of buildTokenCookieWrites(tokens)) {
+    response.cookies.set(write.name, write.value, write.options);
   }
-  if (tokens.refresh_token) {
-    response.cookies.set(REFRESH_TOKEN_COOKIE, encrypt(tokens.refresh_token), {
-      ...baseOptions,
-      path: "/api/auth",
-      maxAge: SESSION_MAX_AGE,
-    });
+}
+
+/**
+ * Returns a usable access token for mutation call sites (Server Actions and
+ * Route Handlers), refreshing it via the refresh_token cookie when the
+ * (shorter-lived, ~1h) access_token cookie has expired.
+ *
+ * Without this, a session that's still fully valid (the 30-day id_token
+ * cookie is fine) 401s on every mutation once the access token ages out,
+ * while GETs/page loads look completely normal — the "still logged in, but
+ * Authentication required on submit" bug. `GET /api/auth/me` already refreshes
+ * transparently; this extends the same behavior to POST/PATCH/DELETE
+ * mutations (event create/update/delete, profile, avatar, favorites), which
+ * previously read the access token cookie directly and gave up immediately.
+ *
+ * Returns null (caller should 401) only when there's no refresh_token either,
+ * or the refresh itself fails (revoked/expired refresh token, Logto outage).
+ */
+export async function getValidAccessToken(): Promise<string | null> {
+  const existing = await getAccessTokenFromCookies();
+  if (existing) return existing;
+
+  const cookieStore = await cookies();
+  const refreshToken = decrypt(cookieStore.get(REFRESH_TOKEN_COOKIE)?.value);
+  if (!refreshToken) return null;
+
+  try {
+    const { getLogtoConfig, refreshAccessToken } = await import("@lib/auth/logto");
+    const refreshed = await refreshAccessToken(getLogtoConfig(), refreshToken);
+    if (!refreshed.access_token) return null;
+    const writableCookies = await cookies();
+    for (const write of buildTokenCookieWrites(refreshed)) {
+      writableCookies.set(write.name, write.value, write.options);
+    }
+    return refreshed.access_token;
+  } catch (err) {
+    console.error("getValidAccessToken: refresh failed", err);
+    return null;
   }
 }
 
@@ -160,9 +277,29 @@ export function clearTokenCookies(response: NextResponse): void {
   });
   response.cookies.set(REFRESH_TOKEN_COOKIE, "", {
     ...baseOptions,
-    path: "/api/auth",
+    path: "/",
     maxAge: 0,
   });
+  // Sessions from before the refresh_token cookie moved from path=/api/auth
+  // to path=/ still carry the old-scoped cookie too. It can't be cleared via
+  // a second response.cookies.set() call for the same name (NextResponse's
+  // cookie jar keys by name, so that would silently replace the path=/ clear
+  // above instead of emitting a second Set-Cookie header) — append the raw
+  // header directly instead. Without this, /api/auth/me matches both cookie
+  // paths, so a pre-rollout browser could still send the old, un-expired
+  // path=/api/auth cookie on its next hydration after logout and get
+  // silently refreshed back into a session.
+  response.headers.append(
+    "Set-Cookie",
+    [
+      `${REFRESH_TOKEN_COOKIE}=`,
+      "Path=/api/auth",
+      "Max-Age=0",
+      "HttpOnly",
+      "SameSite=Lax",
+      ...(IS_PRODUCTION ? ["Secure"] : []),
+    ].join("; "),
+  );
 }
 
 export function setFlowCookies(response: NextResponse, flow: FlowState): void {

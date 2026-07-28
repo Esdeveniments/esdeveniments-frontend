@@ -120,4 +120,106 @@ describe("getProfileSlug", () => {
       }),
     ).toBe("");
   });
+
+  // ── 2026-07-25 backend shape (OwnerSummaryDTO) — no email, no name ──
+  //
+  // The new event-creator payload drops `email` and `name`. getProfileSlug
+  // should still produce the username URL safely from the new shape.
+
+  it("accepts the new owner shape and prefers username", () => {
+    expect(
+      getProfileSlug({
+        id: "orqbhkjfs6re",
+        displayName: "Alex García",
+        username: "alex91",
+        avatarUrl: null,
+        organizerVerified: true,
+      }),
+    ).toBe("alex91");
+  });
+
+  it("falls back to a sanitized displayName for the new owner shape", () => {
+    expect(
+      getProfileSlug({
+        id: "orqbhkjfs6re",
+        displayName: "Alex García",
+        username: "",
+        avatarUrl: null,
+        organizerVerified: false,
+      }),
+    ).toBe("alex-garcia");
+  });
+
+  it("returns empty string when the new owner shape has unsafe username + unsafe displayName", () => {
+    // UUID-like username + special-char displayName → no safe slug.
+    expect(
+      getProfileSlug({
+        id: "orqbhkjfs6re",
+        displayName: "!!!",
+        username: "550e8400-e29b-41d4-a716-446655440000",
+        avatarUrl: null,
+        organizerVerified: false,
+      }),
+    ).toBe("");
+  });
+
+  it("returns empty string when the new owner shape has a null username and empty displayName", () => {
+    expect(
+      getProfileSlug({
+        id: "orqbhkjfs6re",
+        displayName: null,
+        username: null,
+        avatarUrl: null,
+        organizerVerified: false,
+      }),
+    ).toBe("");
+  });
+
+  // ── 2026-07-26 round-5 regression: Logto + Google SSO populates the
+  // id_token `name` claim with the Logto `sub` (alphanumeric identifier
+  // like "a10mgbryoklh") when the user has no configured display name.
+  // Without `name !== user.id`, the navbar linked to `/perfil/<sub>` which
+  // the backend (keyed by UUID) could never resolve. So the fallback path
+  // must reject when name == id, regardless of how "valid" sanitize() finds
+  // the string on its own.
+
+  it("returns empty string when name equals user.id (Logto Google SSO sub fallback)", () => {
+    expect(
+      getProfileSlug({
+        id: "a10mgbryoklh",
+        name: "a10mgbryoklh",
+        username: "",
+        email: "esdeveniments.catalunya.cat@gmail.com",
+      }),
+    ).toBe("");
+  });
+
+  it("returns the sanitized name when name differs from user.id", () => {
+    expect(
+      getProfileSlug({
+        id: "a10mgbryoklh",
+        name: "Gerard Segarra",
+        username: "",
+        email: "gerard@example.com",
+      }),
+    ).toBe("gerard-segarra");
+  });
+
+  // ── 2026-07-27 regression: enrichWithBackendProfile replaces `id` with the
+  // backend UUID and moves the original Logto sub to `logtoId`. A user whose
+  // backend record has no displayName yet (mid-onboarding) keeps `name` at
+  // the Logto sub — by then it differs from the NEW `id`, so `name !==
+  // user.id` alone no longer catches it and the navbar linked to
+  // `/perfil/<sub>` again, post-enrichment this time.
+  it("returns empty string when name equals user.logtoId, even though it differs from the post-enrichment id", () => {
+    expect(
+      getProfileSlug({
+        id: "e10c6a5f-306c-487f-9e71-876f67c7bbb2", // backend UUID, post-enrichment
+        logtoId: "a10mgbryoklh", // original Logto sub, preserved separately
+        name: "a10mgbryoklh", // id_token name claim defaulted to the sub
+        username: "",
+        email: "esdeveniments.catalunya.cat@gmail.com",
+      }),
+    ).toBe("");
+  });
 });

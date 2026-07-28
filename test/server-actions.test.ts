@@ -1,4 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
+
+import { captureException } from "@sentry/nextjs";
 import { createEventAction } from "../app/[locale]/publica/actions";
 import { editEvent } from "../app/[locale]/e/[eventId]/edita/actions";
 import type { EventCreateRequestDTO, EventBaseRequestDTO, EventUpdateRequestDTO } from "types/api/event";
@@ -93,11 +99,12 @@ function buildEvent(overrides: Partial<EventDetailResponseDTO> = {}): EventDetai
     location: "Test Location",
     visits: 0,
     origin: "MANUAL",
-    createdByUser: {
+    owner: {
       id: CREATOR_ID,
-      email: "creator@example.com",
-      name: "Creator",
+      displayName: "Creator",
       username: "creator",
+      avatarUrl: null,
+      organizerVerified: false,
     },
     city: {
       id: 1,
@@ -197,6 +204,85 @@ describe("Server Actions - Next.js 16 caching", () => {
       const updateTagCalls = mockUpdateTag.mock.calls.length;
       expect(updateTagCalls).toBeGreaterThan(0);
       expect(mockRefresh).toHaveBeenCalledTimes(1);
+    });
+
+    const buildEventData = (title: string): EventCreateRequestDTO => ({
+      title,
+      type: "FREE",
+      url: "https://test.com",
+      description: "Test description",
+      imageUrl: "",
+      regionId: 1,
+      cityId: 1,
+      startDate: "2025-06-15",
+      startTime: "",
+      endDate: "2025-06-15",
+      endTime: "",
+      location: "Test Location",
+      categories: [],
+    });
+
+    it("returns a profile-incomplete result on 403, instead of throwing", async () => {
+      // Server Actions redact thrown error messages/properties from the
+      // client in production — only a generic message + digest survive.
+      // A caught 401/403 must be *returned* so PublishForm can reliably act
+      // on it; a throw here would silently degrade to a generic error in
+      // production regardless of what property the error carries.
+      const rawBody = "field errors: title must not exceed 200 characters, got: <the actual submitted title text>";
+      const backendError = Object.assign(
+        new Error(`HTTP error! status: 403, body: ${rawBody}`),
+        { status: 403 },
+      );
+      mockCreateEvent.mockRejectedValue(backendError);
+
+      const eventData = buildEventData(
+        "A very sensitive event title nobody should see in Sentry",
+      );
+
+      const result = await createEventAction(eventData);
+      expect(result).toEqual({ success: false, reason: "profile-incomplete" });
+
+      expect(captureException).toHaveBeenCalledTimes(1);
+      const [reportedError, context] = vi.mocked(captureException).mock.calls[0];
+      expect((reportedError as Error).message).not.toContain(rawBody);
+      expect((reportedError as Error).message).not.toContain(eventData.title);
+      expect(JSON.stringify(context)).not.toContain(eventData.title);
+      expect(JSON.stringify(context)).not.toContain(rawBody);
+      expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
+        authStatus: "403",
+        nextAction: "complete-profile",
+      });
+    });
+
+    it("returns a stale-session result on 401, instead of throwing", async () => {
+      const backendError = Object.assign(
+        new Error("HTTP error! status: 401, body: unauthorized"),
+        { status: 401 },
+      );
+      mockCreateEvent.mockRejectedValue(backendError);
+
+      const result = await createEventAction(buildEventData("Test Event"));
+      expect(result).toEqual({ success: false, reason: "stale-session" });
+
+      expect(captureException).toHaveBeenCalledTimes(1);
+      const [, context] = vi.mocked(captureException).mock.calls[0];
+      expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
+        authStatus: "401",
+        nextAction: "logout-and-relogin",
+      });
+    });
+
+    it("still throws for a real 5xx — no actionable client-side reason to return", async () => {
+      const backendError = Object.assign(
+        new Error("HTTP error! status: 500, body: internal server error"),
+        { status: 500 },
+      );
+      mockCreateEvent.mockRejectedValue(backendError);
+
+      await expect(createEventAction(buildEventData("Test Event"))).rejects.toBe(
+        backendError,
+      );
+      expect(captureException).not.toHaveBeenCalled();
     });
   });
 
@@ -403,7 +489,7 @@ describe("Server Actions - Next.js 16 caching", () => {
     });
 
     it("returns an unauthorized result when the event has no creator info", async () => {
-      mockFetchEventBySlug.mockResolvedValue(buildEvent({ createdByUser: undefined }));
+      mockFetchEventBySlug.mockResolvedValue(buildEvent({ owner: undefined }));
 
       const updateData: EventBaseRequestDTO = {
         title: "Updated Event",

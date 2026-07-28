@@ -1,5 +1,6 @@
 import { CategorySummaryResponseDTO } from "./category";
 import type { CitySummaryResponseDTO } from "./city";
+import type { OwnerSummaryDTO } from "./user";
 import type { ProfileSummaryResponseDTO } from "./profile";
 
 export type EventType = "FREE" | "PAID";
@@ -72,15 +73,14 @@ export interface PagedResponseDTO<T> {
   last: boolean;
 }
 
-/** Backend DTO: event creator info (user who created the event) */
-export interface EventCreatorResponseDTO {
-  id: string;
-  email: string;
-  name: string;
-  /** Server-slugified handle (e.g. "Gerard Rovellat" → "gerard-rovellat").
-   *  Always present per the backend swagger; used to link to /perfil/{username}. */
-  username: string;
-}
+/**
+ * @deprecated Use `OwnerSummaryDTO` from `types/api/user`. The backend
+ * dropped `email` + `name` from the creator payload (privacy / anti-spam);
+ * any code that still reads those fields is reading a contract the backend
+ * no longer honours. This type remains as an alias for the new shape so
+ * existing imports compile during the migration.
+ */
+export type EventCreatorResponseDTO = OwnerSummaryDTO;
 
 // Detail endpoint always includes location fields
 export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
@@ -93,7 +93,13 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   relatedEvents?: EventSummaryResponseDTO[]; // Related events from list endpoint (no location fields)
   metaTitle?: string;
   metaDescription?: string;
-  createdByUser?: EventCreatorResponseDTO;
+  /**
+   * Public owner summary embedded in event detail. No email — the backend's
+   * latest auth handoff drops email from the creator payload, the UI must
+   * never read an email field here. The organizer badge is renderer-driven
+   * (only when organizerVerified === true).
+   */
+  owner?: OwnerSummaryDTO;
 }
 
 export type CategorizedEvents = {

@@ -426,6 +426,13 @@ export interface NavbarLabels {
   logout: string;
   userMenu: string;
   myProfile: string;
+  /**
+   * Shown inside the user dropdown when `AuthUser.profileEnrichmentFailed` is
+   * set — signals to the user that they're logged in (id_token verified) but
+   * the backend hasn't recognised their access_token, so the profile slug,
+   * nickname, etc. can't be shown.
+   */
+  incompleteProfile: string;
 }
 
 export interface NavbarClientProps {
@@ -831,6 +838,28 @@ export interface ProfileClaimCtaProps {
   username: string;
 }
 
+// /perfil/edita — shown to anonymous visitors, mirrors PublishAuthGate
+export interface EditProfileAuthGateProps {
+  redirectTo?: string;
+}
+
+// /perfil/edita — the signed-in profile-completion / edit form
+export interface EditProfileFormProps {
+  redirectTo?: string;
+}
+
+// /perfil/edita — avatar upload/remove section, self-contained (reads
+// useAuth() directly for the current avatarUrl/name and to refetch after a
+// successful mutation)
+export interface EditProfileAvatarProps {
+  className?: string;
+}
+
+// /publica — shown to signed-in users whose profileCompleted is false
+export interface CompleteProfileGateProps {
+  redirectTo: string;
+}
+
 // Sticky CTA bar for event detail page (mobile)
 export interface EventStickyCTAProps {
   eventUrl?: string;
@@ -853,8 +882,6 @@ export interface EventClientPayload {
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
-  /** Event creator id, used to conditionally show owner-only actions. */
-  createdByUserId?: string;
 }
 
 export interface EventClientProps {
@@ -880,6 +907,18 @@ export interface EventSidebarProps {
   regionName: string;
   primaryPlaceSlug: string;
   sponsorFallbackPlaces?: string[];
+}
+
+// Owner-only edit action, event detail sidebar client island
+export interface EventEditActionProps {
+  ownerId?: string;
+  slug: string;
+}
+
+// /e/[eventId]/edita client form
+export interface EditEventClientProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  regions: import("./api/region").RegionsGroupedByCitiesResponseDTO[] | null;
 }
 
 // Social proof counter

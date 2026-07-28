@@ -1,8 +1,9 @@
 import { cache } from "react";
 import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
-import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { getAccessTokenFromCookies, getValidAccessToken } from "@utils/auth-cookies";
 import { fetchWithHmac } from "./fetch-wrapper";
+import { decodeSafeJwtClaims } from "./users-external";
 import {
   getInternalApiUrl,
   buildEventsQuery,
@@ -60,7 +61,7 @@ async function requireMutationAuth(): Promise<{ apiUrl: string; authToken: strin
       "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
     );
   }
-  const authToken = await getAccessTokenFromCookies();
+  const authToken = await getValidAccessToken();
   if (!authToken) {
     const err = new Error("Authentication required");
     (err as Error & { status: number }).status = 401;
@@ -378,11 +379,43 @@ export async function createEvent(
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("createEvent: error response:", errorText);
-    throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`,
+    const errorText = await response.text().catch(() => "<unreadable>");
+    // 2026-07-26 round-5 diagnostic: mirror getAuthenticatedUserExternal so
+    // server-side logs (and Sentry) expose the redacted JWT iss/aud/exp/sub
+    // the backend actually rejected. Lets us tell "stale audience" (401) from
+    // "profile incomplete" (403) without a second round-trip.
+    const safeClaims = decodeSafeJwtClaims(authToken);
+    // The backend error body can echo back submitted event fields (title,
+    // description, url, ...) in validation messages, or leak internal
+    // details in an unexpected failure — keep the raw body in the
+    // server-side console.error below, but don't forward it to Sentry
+    // (a third-party service). Status + length are enough to diagnose from
+    // there; the full body is still one grep away in the app's own logs.
+    captureException(
+      new Error(`createEvent: HTTP ${response.status}`),
+      {
+        tags: { section: "events-mutation", endpoint: "createEvent" },
+        extra: {
+          status: response.status,
+          bodyLength: errorText.length,
+          accessTokenClaims: safeClaims,
+        },
+      },
     );
+    // 2026-07-26 round-10 (mirror of uploadEventImage): surface the
+    // WWW-Authenticate header so Spring's resource-server rejection reason
+    // (RFC 6750) is one-grep root-caused. The body's empty on resource-server
+    // failures; the header names invalid_token / insufficient_scope / etc.
+    console.error(
+      `createEvent: HTTP ${response.status} \u2014 body=${errorText.slice(0, 200)} \u2014 www-authenticate=${response.headers.get("www-authenticate") ?? "<none>"} \u2014 access_token=${safeClaims}`,
+    );
+    // Attach `.status` so callers (actions.ts) can distinguish 401 (stale
+    // Bearer) from 403 (profileCompleted gate) and route accordingly.
+    const err = Object.assign(
+      new Error(`HTTP error! status: ${response.status}, body: ${errorText}`),
+      { status: response.status },
+    );
+    throw err;
   }
   return response.json();
 }
@@ -430,8 +463,13 @@ export async function uploadEventImage(
     const errorText = await response
       .text()
       .catch(() => "Unable to read error response");
+    // 2026-07-26 round-10 diagnostic: surface the WWW-Authenticate header so
+    // Spring's resource-server rejection reason (RFC 6750) is visible in
+    // one grep. The 401 body is usually empty for Spring resource-server
+    // failures; the header is where the actual cause lives (e.g.
+    // invalid_token vs insufficient_scope vs missing cnf-binding).
     console.error(
-      `uploadEventImage: HTTP error! status: ${response.status}, body: ${errorText}`,
+      `uploadEventImage: HTTP ${response.status} -- body=${errorText} -- www-authenticate=${response.headers.get("www-authenticate") ?? "<none>"}`,
     );
     if (response.status === 413) {
       throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);

@@ -5,7 +5,7 @@ import {
   getFavoritesFromCookies,
   persistFavoritesCookie,
 } from "@utils/favorites";
-import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { getValidAccessToken } from "@utils/auth-cookies";
 import { fetchEventBySlugWithStatus } from "@lib/api/events";
 import { addFavoriteEventExternal } from "@lib/api/favorites-external";
 import type { FavoriteMigrationSlugResult } from "types/api/favorites";
@@ -25,7 +25,7 @@ const RESOLVE_CONCURRENCY = 5;
  */
 export async function POST() {
   try {
-    const authToken = await getAccessTokenFromCookies();
+    const authToken = await getValidAccessToken();
     if (!authToken) {
       return NextResponse.json(
         { ok: false, error: "UNAUTHENTICATED" },

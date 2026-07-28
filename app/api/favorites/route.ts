@@ -7,7 +7,7 @@ import {
   getFavoritesFromCookies,
   persistFavoritesCookie,
 } from "@utils/favorites";
-import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { getValidAccessToken } from "@utils/auth-cookies";
 import {
   addFavoriteEventExternal,
   listFavoriteEventsExternal,
@@ -39,7 +39,7 @@ async function backendFavoriteSlugs(
 
 export async function GET() {
   try {
-    const authToken = await getAccessTokenFromCookies();
+    const authToken = await getValidAccessToken();
 
     if (authToken) {
       const favorites = await backendFavoriteSlugs(authToken);
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     }
 
     const { eventSlug, eventId, shouldBeFavorite } = parsed.data;
-    const authToken = await getAccessTokenFromCookies();
+    const authToken = await getValidAccessToken();
 
     // Authenticated branch: backend is the source of truth.
     if (authToken) {

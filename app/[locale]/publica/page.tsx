@@ -36,6 +36,8 @@ import {
 import Modal from "@components/ui/common/modal";
 import { useAuth } from "@components/hooks/useAuth";
 import PublishAuthGate from "./PublishAuthGate";
+import CompleteProfileGate from "./CompleteProfileGate";
+import AuthCheckSkeleton from "@components/ui/common/skeletons/AuthCheckSkeleton";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 // Lazy load preview content (only shown in modal when user clicks preview)
@@ -125,6 +127,12 @@ const PublishForm = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // A submit-time 403 (profileCompleted: false) means the client's session
+  // state was stale/ambiguous when this form rendered — Publica's own
+  // top-level gate normally catches this before the form ever mounts. Show
+  // the same CompleteProfileGate here instead of a generic error, so the
+  // user has an actual way forward.
+  const [showCompleteProfileGate, setShowCompleteProfileGate] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
@@ -544,9 +552,34 @@ const PublishForm = () => {
         });
 
         const e2eExtras = buildE2EExtras();
-        const { success, event } = await createEventAction(eventData, e2eExtras);
+        const result = await createEventAction(eventData, e2eExtras);
 
-        if (!success || !event) {
+        if (!result.success) {
+          sendGoogleEvent("publish_error", {
+            ...buildPublishContext({
+              form,
+              imageFile,
+              uploadedImageUrl: resolvedImageUrl,
+            }),
+            source: "publica",
+            category:
+              result.reason === "profile-incomplete"
+                ? "profile-incomplete"
+                : "stale-session",
+          });
+          if (result.reason === "profile-incomplete") {
+            setShowCompleteProfileGate(true);
+          } else {
+            setError(t("errorStaleSession"));
+          }
+          return;
+        }
+
+        const { event } = result;
+        if (!event) {
+          // Defensive: the type guarantees `event` here, but a malformed
+          // backend response body could still resolve to something falsy
+          // at runtime despite what the type claims.
           sendGoogleEvent("publish_error", {
             ...buildPublishContext({
               form,
@@ -678,6 +711,10 @@ const PublishForm = () => {
 
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
 
+  if (showCompleteProfileGate) {
+    return <CompleteProfileGate redirectTo="/publica" />;
+  }
+
   return (
     <>
       {showPreview && previewEvent && (
@@ -781,6 +818,8 @@ const PublishForm = () => {
               {t("sponsorTitle")}{" "}
               <Link
                 href="/patrocina"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="body-small text-primary hover:text-primary/80 transition-interactive pressable-inline focus-ring"
               >
                 {t("sponsorLink")}
@@ -802,18 +841,22 @@ const PublishForm = () => {
  * gate flash.
  */
 const Publica = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="container flex-center pt-[6rem] pb-section-y">
-        <div className="w-full max-w-md h-80 rounded-lg bg-border/40 animate-pulse" />
-      </div>
-    );
+    return <AuthCheckSkeleton />;
   }
 
   if (!isAuthenticated) {
     return <PublishAuthGate />;
+  }
+
+  // Strict `=== false` (not `!user?.profileCompleted`): the field is absent
+  // during a brief enrichment-failure/loading window, and we'd rather fail
+  // open than block publishing on ambiguous state — the backend's own 403
+  // (caught in createEventAction) is the authoritative fallback.
+  if (user?.profileCompleted === false) {
+    return <CompleteProfileGate redirectTo="/publica" />;
   }
 
   return <PublishForm />;

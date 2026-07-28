@@ -41,34 +41,61 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
     ? formatJoinedDate(profile.createdAt, locale)
     : "";
 
+  // 2026-07-25 backend moved to `displayName`/`avatarUrl`. Legacy fields
+  // come from older backend instances during the cut-over window.
+  const displayName =
+    profile.displayName?.trim() || profile.name?.trim() || profile.username;
+  const avatarSrc = profile.avatarUrl || profile.pictureUrl;
+
+  // Cap runs of blank lines before rendering with whitespace-pre-line: the
+  // 500-char limit alone doesn't stop a bio that's mostly newlines (e.g.
+  // "\n" x200 plus a few words), which would otherwise blow up the page
+  // with empty vertical space for every visitor. Normalize CRLF/CR to LF
+  // first — otherwise a Windows-authored bio's "\r\n" runs slip past the
+  // \n{3,} check entirely (the \r characters break up the consecutive-\n
+  // count) and still produce the same wall of empty space.
+  const bioText = profile.bio
+    ?.trim()
+    .replace(/\r\n?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n");
+
   return (
     <section
       className="card-bordered rounded-lg overflow-hidden mb-section-y w-full"
-      aria-label={t("title", { name: profile.name })}
+      aria-label={t("title", { name: displayName })}
       data-testid="profile-header"
     >
-      <div className="h-40 sm:h-52 w-full bg-muted" />
-
-      <div className="px-section-x py-element-gap -mt-10 relative">
+      <div className="px-section-x py-element-gap relative">
         <div className="flex items-end gap-element-gap mb-element-gap">
-          {profile.pictureUrl ? (
+          {avatarSrc ? (
+            // bg-background: a transparent-background upload (e.g. a logo)
+            // should show against a neutral backdrop, not whatever's behind it.
             <img
-              src={profile.pictureUrl}
-              alt={profile.name}
-              className="w-20 h-20 rounded-full object-cover border-4 border-background shadow-md"
+              src={avatarSrc}
+              alt={displayName}
+              className="w-20 h-20 rounded-full object-cover bg-background border-4 border-background shadow-md"
               loading="eager"
             />
           ) : (
-            <AvatarFallback name={profile.name} />
+            <AvatarFallback name={displayName} />
           )}
         </div>
 
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <h1 className="heading-1 text-foreground">{profile.name}</h1>
+          <h1 className="heading-1 text-foreground">{displayName}</h1>
           <ProfileOwnerActions username={profile.username} />
         </div>
 
         <p className="body-small text-foreground/60 mb-1">@{profile.username}</p>
+
+        {bioText && (
+          <p
+            data-testid="profile-bio"
+            className="body-normal text-foreground/80 mb-element-gap whitespace-pre-line break-words"
+          >
+            {bioText}
+          </p>
+        )}
 
         {joinedDateText && (
           <p className="body-small text-foreground/50">

@@ -270,6 +270,27 @@ describe("mapUserInfoToAuthUser", () => {
     expect(user.username).toBe("bob");
     expect(user.role).toBeUndefined();
   });
+
+  // 2026-07-27: Logto defaults the id_token `name` claim to the `sub` when
+  // no display name is configured. Reject it at this single source instead
+  // of leaving every downstream consumer (getProfileSlug, navbar display
+  // text, avatar initials) to guard against it independently.
+  it("never lets name equal the sub, even when Logto's name claim defaults to it", () => {
+    const user = mapUserInfoToAuthUser({
+      sub: "a10mgbryoklh",
+      name: "a10mgbryoklh",
+      email: "esdeveniments.catalunya.cat@gmail.com",
+    });
+    expect(user.name).toBe("");
+  });
+
+  it("still falls back to username when name equals the sub but username differs", () => {
+    const user = mapUserInfoToAuthUser({
+      sub: "a10mgbryoklh",
+      username: "esdeveniments-catalunya-cat",
+    });
+    expect(user.name).toBe("esdeveniments-catalunya-cat");
+  });
 });
 
 describe("getLogtoConfig", () => {

@@ -25,6 +25,7 @@ function pagedResponse(
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: new Headers(),
     json: () => Promise.resolve(data),
     text: () => Promise.resolve(JSON.stringify(data)),
   } as Response;
@@ -127,10 +128,16 @@ describe("getAuthenticatedUserExternal", () => {
     expect(mockFetchWithHmac).not.toHaveBeenCalled();
   });
 
-  it("returns null when the backend responds with an error", async () => {
+  it("throws with .status when the backend responds with an error", async () => {
+    // Round 4 behavior change: instead of returning null on non-OK,
+    // getAuthenticatedUserExternal throws with `.status` so
+    // enrichWithBackendProfile can distinguish a 4xx Bearer rejection
+    // (which tags AuthUser.profileEnrichmentFailed = "auth") from a Zod
+    // miss / network failure (which returns null).
     mockFetchWithHmac.mockResolvedValue(pagedResponse(null, 500));
-    const result = await getAuthenticatedUserExternal("some-access-token");
-    expect(result).toBeNull();
+    await expect(
+      getAuthenticatedUserExternal("some-access-token"),
+    ).rejects.toMatchObject({ status: 500 });
   });
 
   it("returns null (no throw) on a network failure", async () => {

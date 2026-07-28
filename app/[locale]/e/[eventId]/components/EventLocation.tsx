@@ -41,6 +41,18 @@ export default function EventLocation({
     hidePlaceSegments: showPlaceLinks, // Hide city/region from the string if we show them as links below
   });
 
+  // 2026-07-25 backend migration: profile.displayName is canonical; profile.name
+  // is the legacy field; profile.username is the safety net. The profileLink
+  // translation expects a string, so we coalesce to "" rather than flow
+  // undefined through the i18n interpolation (different locales break
+  // differently on undefined).
+  const profileDisplayName = profile
+    ? profile.displayName?.trim() ||
+      profile.name?.trim() ||
+      profile.username?.trim() ||
+      ""
+    : "";
+
   if (compact) {
     return (
       <div className="w-full flex flex-col gap-2">
@@ -90,7 +102,7 @@ export default function EventLocation({
             className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
             variant="inline"
           >
-            {t("profileLink", { name: profile.name })}
+            {t("profileLink", { name: profileDisplayName })}
           </PressableAnchor>
         )}
       </div>
@@ -148,7 +160,7 @@ export default function EventLocation({
               <PressableAnchor
                 href={`/perfil/${encodeURIComponent(profile.username)}`}
               >
-                {t("profileLink", { name: profile.name })}
+                {t("profileLink", { name: profileDisplayName })}
               </PressableAnchor>
             )}
           </div>
