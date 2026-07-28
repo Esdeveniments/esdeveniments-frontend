@@ -40,11 +40,16 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
   // Until onboarding is done, the backend has no public profile document
   // under the fallback username yet, so /perfil/{slug} 404s. Send the user
   // to the completion form instead (same target as CompleteProfileGate).
-  const profileHref: Href | null = user?.profileCompleted
-    ? profileSlug
-      ? `/perfil/${encodeURIComponent(profileSlug)}`
-      : null
-    : "/perfil/edita";
+  // Checked with `=== false`, not falsy: a transient backend enrichment
+  // blip (lib/auth/enrichment.ts) leaves profileCompleted `undefined` for
+  // an already-onboarded user too, and that must fall through to the
+  // normal profile link, not the onboarding form.
+  const profileHref: Href | null =
+    user?.profileCompleted === false
+      ? "/perfil/edita"
+      : profileSlug
+        ? `/perfil/${encodeURIComponent(profileSlug)}`
+        : null;
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
 

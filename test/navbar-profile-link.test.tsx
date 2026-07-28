@@ -99,4 +99,22 @@ describe("NavbarClient profile link", () => {
       expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/alba");
     }
   });
+
+  it("links to /perfil/{username} when profileCompleted is undefined (transient enrichment blip)", () => {
+    authUser = {
+      id: OWNER_ID,
+      email: "a@b.com",
+      name: "A",
+      username: "alba",
+      profileCompleted: undefined,
+    };
+    render(<NavbarClient navigation={[]} labels={labels} />);
+    fireEvent.click(screen.getByTestId("user-avatar-button"));
+    fireEvent.click(screen.getByLabelText(labels.openMenu));
+
+    const links = screen.getAllByText("El meu perfil");
+    for (const link of links) {
+      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/alba");
+    }
+  });
 });
