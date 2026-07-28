@@ -38,10 +38,13 @@ async function getCurrentUserInternal(): Promise<AuthUser | null> {
     // `enrichWithBackendProfile` handles its own throws for known paths
     // (4xx Bearer rejection -> profileEnrichmentFailed: "auth"; 5xx /
     // network blip -> silently swallowed so a transient outage doesn't
-    // visually look like a logout). The outer try-catch is a last-resort
-    // safety net for genuinely unforeseen throws (e.g. cookie read failed),
-    // where falling back to the bare id_token user is the correct degraded
-    // state.
+    // visually look like a logout). This try-catch is a last-resort safety
+    // net for genuinely unforeseen throws around enrichment itself (e.g.
+    // getAccessTokenFromCookies() failing) — falling back to the bare
+    // id_token user here is the correct degraded state, since the id_token
+    // was already verified above. This is distinct from the function-level
+    // catch below, which covers failures reading/verifying the session
+    // itself (no id_token to fall back to) and treats those as unauthenticated.
     try {
       const accessToken = await getAccessTokenFromCookies();
       return await enrichWithBackendProfile(user, accessToken);
@@ -50,7 +53,8 @@ async function getCurrentUserInternal(): Promise<AuthUser | null> {
       return user;
     }
   } catch {
-    // Any failure to read/verify the session is treated as unauthenticated.
+    // Any failure to read/verify the session (before we'd have a valid
+    // id_token-derived user to fall back to) is treated as unauthenticated.
     return null;
   }
 }
