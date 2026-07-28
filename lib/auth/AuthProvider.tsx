@@ -102,13 +102,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [load]);
 
-  // Re-fetches /api/auth/me and replaces `user` with the result. No retry-503
-  // handling needed here (that's for the initial hydration race with a
-  // transient Logto outage) — a plain single attempt is enough for an
-  // on-demand refresh triggered right after a successful mutation.
+  // Re-fetches /api/auth/me and replaces `user` with the result, after a
+  // successful profile/avatar mutation. Shares `load()` with the hydration
+  // effect, so it inherits the same one-retry-on-503/network-blip behavior —
+  // not a deliberate choice for this call site, just what the shared
+  // function does. Mirrors the hydration effect's abort timeout too: without
+  // one, a stalled /api/auth/me here would leave `await refetchUser()`
+  // (e.g. EditProfileForm's onSubmit) pending forever, keeping its submit
+  // button stuck in "saving" state.
   const refetchUser = useCallback(async (): Promise<void> => {
     const controller = new AbortController();
-    await load((next) => setUser(next), controller.signal);
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    try {
+      await load((next) => setUser(next), controller.signal);
+    } finally {
+      clearTimeout(timeout);
+    }
   }, [load]);
 
   const signIn = useCallback((redirectTo?: string) => {
