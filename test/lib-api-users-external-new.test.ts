@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createHash } from "node:crypto";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
 import {
   decodeSafeJwtClaims,
@@ -226,10 +227,32 @@ describe("decodeSafeJwtClaims", () => {
     expect(summary.iss).toBe("https://example.test/oidc");
     expect(summary.aud).toBe("https://api.example.test");
     expect(summary.exp).toBe(1785074470);
-    expect(summary.sub).toBe("user-a10mgbryoklh");
+    expect(summary.sub).not.toBe("user-a10mgbryoklh"); // hashed, not raw — see below
     expect(summary.scope).toBe(
       "openid profile email offline_access events:write",
     );
+  });
+
+  it("hashes `sub` instead of logging the raw Logto subject identifier", () => {
+    const rawSub = "user-a10mgbryoklh";
+    const token = makeJwt({ iss: "i", aud: "a", exp: 1, sub: rawSub });
+    const summary = JSON.parse(decodeSafeJwtClaims(token));
+
+    expect(summary.sub).not.toContain(rawSub);
+    expect(summary.sub).toBe(
+      createHash("sha256").update(rawSub).digest("hex").slice(0, 12),
+    );
+
+    // Same sub always hashes the same, so log lines from the same user/
+    // session can still be correlated without exposing the real identifier.
+    const secondToken = makeJwt({ iss: "i2", aud: "a2", exp: 2, sub: rawSub });
+    const secondSummary = JSON.parse(decodeSafeJwtClaims(secondToken));
+    expect(secondSummary.sub).toBe(summary.sub);
+
+    // A different sub hashes to something else.
+    const otherToken = makeJwt({ iss: "i", aud: "a", exp: 1, sub: "user-other" });
+    const otherSummary = JSON.parse(decodeSafeJwtClaims(otherToken));
+    expect(otherSummary.sub).not.toBe(summary.sub);
   });
 
   it("returns undefined scope when the JWT omits it (older tokens)", () => {

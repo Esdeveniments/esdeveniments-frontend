@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseAuthenticatedUser, parseUserPublic } from "@lib/validation/user";
 import { parsePagedEvents } from "@lib/validation/event";
@@ -95,6 +96,12 @@ export async function getAuthenticatedUserExternal(
  * scope" — the two are different fixes (one is a JWKS/aud config, the other
  * is `LOGTO_API_SCOPES` not set). The string is not PII — it's the same
  * scope list the `scope=` query parameter carries in the OAuth flow.
+ *
+ * `sub` is the user's stable Logto subject identifier — unlike scope, it
+ * IS a persistent, per-user value that could sit in log aggregators
+ * indefinitely, so it's hashed rather than logged raw. The truncated hash
+ * still lets an engineer correlate multiple log lines back to the same
+ * session/user without exposing the actual identifier.
  */
 export function decodeSafeJwtClaims(accessToken: string): string {
   try {
@@ -115,7 +122,10 @@ export function decodeSafeJwtClaims(accessToken: string): string {
       aud: parsed.aud,
       exp: parsed.exp,
       scope: rawScope ? rawScope.slice(0, 200) : undefined,
-      sub: typeof parsed.sub === "string" ? parsed.sub.slice(0, 24) : undefined,
+      sub:
+        typeof parsed.sub === "string"
+          ? createHash("sha256").update(parsed.sub).digest("hex").slice(0, 12)
+          : undefined,
     };
     return JSON.stringify(summary);
   } catch {
