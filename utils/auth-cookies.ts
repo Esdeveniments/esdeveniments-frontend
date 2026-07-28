@@ -275,17 +275,31 @@ export function clearTokenCookies(response: NextResponse): void {
     path: "/",
     maxAge: 0,
   });
-  // Sessions from before the refresh_token cookie moved from path=/api/auth
-  // to path=/ still carry the old-scoped cookie — it can't be cleared here
-  // too (NextResponse's cookie jar keys by name, so a second .set() for the
-  // same name would silently replace this one rather than emit a second
-  // Set-Cookie header), but it's inert: nothing reads or rotates it anymore,
-  // and it expires on its own within its original ~30-day maxAge.
   response.cookies.set(REFRESH_TOKEN_COOKIE, "", {
     ...baseOptions,
     path: "/",
     maxAge: 0,
   });
+  // Sessions from before the refresh_token cookie moved from path=/api/auth
+  // to path=/ still carry the old-scoped cookie too. It can't be cleared via
+  // a second response.cookies.set() call for the same name (NextResponse's
+  // cookie jar keys by name, so that would silently replace the path=/ clear
+  // above instead of emitting a second Set-Cookie header) — append the raw
+  // header directly instead. Without this, /api/auth/me matches both cookie
+  // paths, so a pre-rollout browser could still send the old, un-expired
+  // path=/api/auth cookie on its next hydration after logout and get
+  // silently refreshed back into a session.
+  response.headers.append(
+    "Set-Cookie",
+    [
+      `${REFRESH_TOKEN_COOKIE}=`,
+      "Path=/api/auth",
+      "Max-Age=0",
+      "HttpOnly",
+      "SameSite=Lax",
+      ...(IS_PRODUCTION ? ["Secure"] : []),
+    ].join("; "),
+  );
 }
 
 export function setFlowCookies(response: NextResponse, flow: FlowState): void {

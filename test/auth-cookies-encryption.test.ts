@@ -75,4 +75,19 @@ describe("auth-cookies at-rest encryption", () => {
     expect(value?.path).toBe("/");
     expect(value?.maxAge).toBe(0);
   });
+
+  it("also expires a pre-rollout path=/api/auth refresh_token cookie, so it can't refresh a session back in after logout", async () => {
+    const m = await loadCookies();
+    const res = NextResponse.json({});
+    m.clearTokenCookies(res);
+
+    const setCookieHeaders = res.headers.getSetCookie();
+    const legacyClear = setCookieHeaders.find(
+      (header) =>
+        header.startsWith(`${m.REFRESH_TOKEN_COOKIE}=`) &&
+        header.includes("Path=/api/auth"),
+    );
+    expect(legacyClear).toBeDefined();
+    expect(legacyClear).toContain("Max-Age=0");
+  });
 });
