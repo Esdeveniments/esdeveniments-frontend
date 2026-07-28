@@ -16,16 +16,17 @@ import type { AuthUser } from "types/auth";
  * the actual cause.
  *
  * To fix: catch the thrown status, tag the result with
- * `profileEnrichmentFailed`, so the navbar can render an honest warning
- * ("⚠️ Session incomplete — log out and back in") instead of a missing
- * menu item. 5xx / network errors stay swallowed (the id_token IS valid),
- * but tagged `transient` so the same UI treatment kicks in for any
- * enrichment failure mode.
+ * `profileEnrichmentFailed: "auth"`, so the navbar can render an honest
+ * warning ("⚠️ Session incomplete — log out and back in") instead of a
+ * missing menu item. 5xx / network errors are handled differently: they're
+ * silently swallowed (the id_token IS valid on its own), returning `user`
+ * unchanged with no tag at all — the next successful enrichment call
+ * naturally recovers, so there's no separate "transient" state to represent.
  *
  * Successful enrichment: backend UUID replaces Logto `sub` as `id`, display
  * name/username are layered when they're an upgrade over the Logto
- * defaults, and avatarUrl/pictureSource/role/lastLoginAt come from the
- * backend.
+ * defaults, and avatarUrl/pictureSource/role/lastLoginAt/emailVerified come
+ * from the backend.
  */
 export async function enrichWithBackendProfile(
   user: AuthUser,
@@ -106,5 +107,8 @@ export async function enrichWithBackendProfile(
     lastLoginAt: backendUser.lastLoginAt,
     profileCompleted: backendUser.profileCompleted,
     bio: backendUser.bio,
+    // Backend is authoritative here too — falls back to the id_token claim
+    // only if the backend didn't send one.
+    emailVerified: backendUser.emailVerified ?? user.emailVerified,
   };
 }
