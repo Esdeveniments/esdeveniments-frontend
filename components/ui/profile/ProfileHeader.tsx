@@ -62,10 +62,12 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
       <div className="px-section-x py-element-gap relative">
         <div className="flex items-end gap-element-gap mb-element-gap">
           {avatarSrc ? (
+            // bg-background: a transparent-background upload (e.g. a logo)
+            // should show against a neutral backdrop, not whatever's behind it.
             <img
               src={avatarSrc}
               alt={displayName}
-              className="w-20 h-20 rounded-full object-cover border-4 border-background shadow-md"
+              className="w-20 h-20 rounded-full object-cover bg-background border-4 border-background shadow-md"
               loading="eager"
             />
           ) : (

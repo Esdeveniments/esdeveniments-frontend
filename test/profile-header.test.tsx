@@ -59,6 +59,15 @@ describe("ProfileHeader", () => {
     expect(screen.queryByText("S")).not.toBeInTheDocument();
   });
 
+  it("gives a transparent-background avatar a neutral backdrop", async () => {
+    const profile: ProfileDetailResponseDTO = {
+      ...baseProfile,
+      pictureUrl: "https://cdn.example.com/avatar.jpg",
+    };
+    await renderHeader(profile);
+    expect(screen.getByAltText("Sala Apolo").className).toContain("bg-background");
+  });
+
   it("does not render joined date when createdAt is absent", async () => {
     await renderHeader(baseProfile);
     // The profile section should exist but no joined-date paragraph

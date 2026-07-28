@@ -140,16 +140,20 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                       <button
                         type="button"
                         onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                        className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive"
+                        className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         aria-label={labels.userMenu}
                         aria-expanded={isUserMenuOpen}
                         data-testid="user-avatar-button"
                       >
                         {user.avatarUrl ? (
+                          // bg-background: the button behind this is bg-primary (for
+                          // the fallback-letter case). A transparent-background
+                          // upload (e.g. a logo) would otherwise let that red bleed
+                          // through instead of showing the actual image cleanly.
                           <img
                             src={user.avatarUrl}
                             alt=""
-                            className="w-9 h-9 rounded-full object-cover"
+                            className="w-9 h-9 rounded-full object-cover bg-background"
                           />
                         ) : (
                           (user.name || user.email).charAt(0).toUpperCase()
