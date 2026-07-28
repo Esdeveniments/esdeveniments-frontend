@@ -19,6 +19,7 @@ import PressableLink from "@components/ui/primitives/PressableLink";
 import { useAuth } from "@components/hooks/useAuth";
 import { getProfileSlug } from "@utils/user-helpers";
 import type { NavbarClientProps } from "types/props";
+import type { Href } from "types/common";
 
 import LanguageSwitcher from "./LanguageSwitcher";
 
@@ -35,6 +36,15 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
   // return an empty string when no safe slug is available. Never expose
   // email addresses or raw UUIDs.
   const profileSlug = getProfileSlug(user);
+
+  // Until onboarding is done, the backend has no public profile document
+  // under the fallback username yet, so /perfil/{slug} 404s. Send the user
+  // to the completion form instead (same target as CompleteProfileGate).
+  const profileHref: Href | null = user?.profileCompleted
+    ? profileSlug
+      ? `/perfil/${encodeURIComponent(profileSlug)}`
+      : null
+    : "/perfil/edita";
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
 
@@ -161,9 +171,9 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                               {labels.incompleteProfile}
                             </p>
                           )}
-                          {profileSlug && !user.profileEnrichmentFailed && (
+                          {profileHref && !user.profileEnrichmentFailed && (
                             <ActiveLink
-                              href={`/perfil/${encodeURIComponent(profileSlug)}`}
+                              href={profileHref}
                               className="block w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
                             >
                               {labels.myProfile}
@@ -309,9 +319,9 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                         {labels.incompleteProfile}
                       </p>
                     )}
-                    {profileSlug && !user.profileEnrichmentFailed && (
+                    {profileHref && !user.profileEnrichmentFailed && (
                       <ActiveLink
-                        href={`/perfil/${encodeURIComponent(profileSlug)}`}
+                        href={profileHref}
                         className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
                       >
                         {labels.myProfile}
