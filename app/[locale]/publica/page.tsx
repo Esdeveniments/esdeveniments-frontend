@@ -782,6 +782,7 @@ const PublishForm = () => {
               {t("sponsorTitle")}{" "}
               <Link
                 href="/patrocina"
+                target="_blank"
                 className="body-small text-primary hover:text-primary/80 transition-interactive pressable-inline focus-ring"
               >
                 {t("sponsorLink")}
