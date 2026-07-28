@@ -50,7 +50,7 @@ describe("EditProfileAvatar", () => {
   it("gives a transparent-background upload a neutral backdrop", () => {
     authUser = { ...baseUser, avatarUrl: "https://cdn.example.com/a.jpg" };
     render(<EditProfileAvatar />);
-    expect(screen.getByAltText("altPreview").className).toContain("bg-background");
+    expect(screen.getByAltText("altPreview")).toHaveClass("bg-background");
   });
 
   it("rejects an unsupported file type locally, without uploading", async () => {

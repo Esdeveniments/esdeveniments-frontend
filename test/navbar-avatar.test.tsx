@@ -74,13 +74,12 @@ describe("NavbarClient avatar", () => {
     render(<NavbarClient navigation={[]} labels={labels} />);
     const img = screen.getByAltText("");
     expect(img).toHaveAttribute("src", authUser.avatarUrl);
-    expect(img.className).toContain("bg-background");
+    expect(img).toHaveClass("bg-background");
   });
 
   it("gives the avatar toggle a visible focus ring, matching every other nav control", () => {
     render(<NavbarClient navigation={[]} labels={labels} />);
     const button = screen.getByTestId("user-avatar-button");
-    expect(button.className).toContain("focus-visible:ring-2");
-    expect(button.className).toContain("focus-visible:ring-primary");
+    expect(button).toHaveClass("focus-visible:ring-2", "focus-visible:ring-primary");
   });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { AuthUser } from "types/auth";
@@ -29,6 +29,10 @@ vi.mock("@components/hooks/useAuth", () => ({
 import EventEditAction from "@app/[locale]/e/[eventId]/components/EventEditAction";
 
 describe("EventEditAction", () => {
+  beforeEach(() => {
+    authUser = null;
+  });
+
   it("shows the edit link when the signed-in user owns the event", () => {
     authUser = { id: OWNER_ID, email: "a@b.com", name: "A", username: "a" };
     render(<EventEditAction ownerId={OWNER_ID} slug="my-event" />);

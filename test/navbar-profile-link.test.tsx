@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { AuthUser } from "types/auth";
@@ -64,6 +64,10 @@ const labels: NavbarLabels = {
 };
 
 describe("NavbarClient profile link", () => {
+  beforeEach(() => {
+    authUser = null;
+  });
+
   it("links to /perfil/edita when the profile isn't completed yet", () => {
     authUser = {
       id: OWNER_ID,

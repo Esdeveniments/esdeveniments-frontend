@@ -65,7 +65,7 @@ describe("ProfileHeader", () => {
       pictureUrl: "https://cdn.example.com/avatar.jpg",
     };
     await renderHeader(profile);
-    expect(screen.getByAltText("Sala Apolo").className).toContain("bg-background");
+    expect(screen.getByAltText("Sala Apolo")).toHaveClass("bg-background");
   });
 
   it("does not render joined date when createdAt is absent", async () => {
@@ -114,13 +114,13 @@ describe("ProfileHeader", () => {
 
   it("does not render a bio paragraph when bio is absent", async () => {
     await renderHeader(baseProfile);
-    expect(screen.getByTestId("profile-header").querySelectorAll("p").length).toBe(1); // just @username
+    expect(screen.queryByTestId("profile-bio")).not.toBeInTheDocument();
   });
 
   it("does not render a bio paragraph when bio is blank", async () => {
     const profile: ProfileDetailResponseDTO = { ...baseProfile, bio: "   " };
     await renderHeader(profile);
-    expect(screen.getByTestId("profile-header").querySelectorAll("p").length).toBe(1);
+    expect(screen.queryByTestId("profile-bio")).not.toBeInTheDocument();
   });
 
   it("caps runs of blank lines so a mostly-newline bio can't blow up the layout", async () => {
@@ -129,8 +129,16 @@ describe("ProfileHeader", () => {
       bio: `Hola${"\n".repeat(200)}Adéu`,
     };
     await renderHeader(profile);
-    const bioParagraph = screen.getByText(/Hola/);
-    expect(bioParagraph.textContent).toBe("Hola\n\nAdéu");
+    expect(screen.getByTestId("profile-bio").textContent).toBe("Hola\n\nAdéu");
+  });
+
+  it("caps runs of CRLF blank lines too, not just bare \\n", async () => {
+    const profile: ProfileDetailResponseDTO = {
+      ...baseProfile,
+      bio: `Hola${"\r\n".repeat(200)}Adéu`,
+    };
+    await renderHeader(profile);
+    expect(screen.getByTestId("profile-bio").textContent).toBe("Hola\n\nAdéu");
   });
 
   it("has the correct testid", async () => {
