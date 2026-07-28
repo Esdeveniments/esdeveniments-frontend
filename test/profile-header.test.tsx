@@ -92,6 +92,28 @@ describe("ProfileHeader", () => {
     expect(header).not.toHaveTextContent("Des de");
   });
 
+  it("renders the bio when present", async () => {
+    const profile: ProfileDetailResponseDTO = {
+      ...baseProfile,
+      bio: "Sala de concerts al Poble Sec.",
+    };
+    await renderHeader(profile);
+    expect(
+      screen.getByText("Sala de concerts al Poble Sec."),
+    ).toBeInTheDocument();
+  });
+
+  it("does not render a bio paragraph when bio is absent", async () => {
+    await renderHeader(baseProfile);
+    expect(screen.getByTestId("profile-header").querySelectorAll("p").length).toBe(1); // just @username
+  });
+
+  it("does not render a bio paragraph when bio is blank", async () => {
+    const profile: ProfileDetailResponseDTO = { ...baseProfile, bio: "   " };
+    await renderHeader(profile);
+    expect(screen.getByTestId("profile-header").querySelectorAll("p").length).toBe(1);
+  });
+
   it("has the correct testid", async () => {
     await renderHeader(baseProfile);
     expect(screen.getByTestId("profile-header")).toBeInTheDocument();

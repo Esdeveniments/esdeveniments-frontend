@@ -74,6 +74,12 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
 
         <p className="body-small text-foreground/60 mb-1">@{profile.username}</p>
 
+        {profile.bio?.trim() && (
+          <p className="body-normal text-foreground/80 mb-element-gap whitespace-pre-line">
+            {profile.bio}
+          </p>
+        )}
+
         {joinedDateText && (
           <p className="body-small text-foreground/50">
             {t("joinedDate", { date: joinedDateText })}
