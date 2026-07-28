@@ -53,9 +53,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
       aria-label={t("title", { name: displayName })}
       data-testid="profile-header"
     >
-      <div className="h-40 sm:h-52 w-full bg-muted" />
-
-      <div className="px-section-x py-element-gap -mt-10 relative">
+      <div className="px-section-x py-element-gap relative">
         <div className="flex items-end gap-element-gap mb-element-gap">
           {avatarSrc ? (
             <img
