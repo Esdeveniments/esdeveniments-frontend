@@ -11,8 +11,7 @@ export default function AuthCheckSkeleton() {
   return (
     <div
       className="container flex-center pt-[6rem] pb-section-y"
-      role="status"
-      aria-label="Loading"
+      aria-hidden="true"
     >
       <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-border" />
     </div>
