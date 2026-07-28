@@ -216,6 +216,7 @@
       "onboardingHeading": "Completa el teu perfil",
       "onboardingSubheading": "Per acabar de crear el teu compte, tria un nom d'usuari i un nom visible.",
       "usernameHint": "Nom d'usuari temporal generat automàticament — tria'n un de nou.",
+      "usernameLockedHint": "Un cop establert, el nom d'usuari no es pot tornar a canviar.",
       "submitLabel": "Desar canvis",
       "savingLabel": "Desant...",
       "success": "Perfil actualitzat correctament.",

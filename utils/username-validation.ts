@@ -39,3 +39,14 @@ export function validateUsername(raw: string): UsernameValidationResult {
   }
   return { ok: true };
 }
+
+/**
+ * True while `username` is still the backend's auto-generated fallback
+ * (the `user-<hash>` pattern assigned before onboarding). Centralizes the
+ * "has this account ever set a real username" check so every caller
+ * (onboarding copy, the one-time username lock) shares one definition
+ * instead of re-testing RESERVED_USER_PREFIX ad hoc.
+ */
+export function isPlaceholderUsername(username: string): boolean {
+  return RESERVED_USER_PREFIX.test(username);
+}

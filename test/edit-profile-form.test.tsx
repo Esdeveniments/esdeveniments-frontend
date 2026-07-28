@@ -82,6 +82,10 @@ describe("EditProfileForm", () => {
   });
 
   it("rejects an invalid username without calling the API", async () => {
+    // Username editing is only possible while it's still the placeholder
+    // (see the username-lock tests below) — use that state here so typing
+    // a new value is a realistic scenario, not one the UI would block.
+    authUser = { ...baseUser, username: "user-4b34dd41" };
     render(<EditProfileForm />);
     fireEvent.change(screen.getByLabelText("fields.username"), {
       target: { value: "ab" },
@@ -92,6 +96,36 @@ describe("EditProfileForm", () => {
       await screen.findByText("usernameErrors.usernameTooShort"),
     ).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("keeps the username field editable while it's still the placeholder", () => {
+    authUser = { ...baseUser, username: "user-4b34dd41" };
+    render(<EditProfileForm />);
+    expect(screen.getByLabelText("fields.username")).not.toHaveAttribute(
+      "readonly",
+    );
+    expect(screen.queryByText("usernameLockedHint")).toBeNull();
+  });
+
+  it("locks the username field once it already holds a real username", () => {
+    render(<EditProfileForm />); // baseUser.username is "alex91", not a placeholder
+    expect(screen.getByLabelText("fields.username")).toHaveAttribute(
+      "readonly",
+    );
+    expect(screen.getByText("usernameLockedHint")).toBeInTheDocument();
+  });
+
+  it("cannot be unlocked by typing: the saved username decides, not the live field value", () => {
+    // Defense in depth — the readonly attribute already prevents real typing,
+    // but confirm the lock itself is derived from the saved user, not from
+    // whatever the (memory-only) username state happens to hold.
+    render(<EditProfileForm />);
+    fireEvent.change(screen.getByLabelText("fields.username"), {
+      target: { value: "user-should-not-matter" },
+    });
+    expect(screen.getByLabelText("fields.username")).toHaveAttribute(
+      "readonly",
+    );
   });
 
   it("rejects an empty display name without calling the API", async () => {

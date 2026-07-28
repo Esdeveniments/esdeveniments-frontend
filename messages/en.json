@@ -216,6 +216,7 @@
       "onboardingHeading": "Complete your profile",
       "onboardingSubheading": "To finish setting up your account, choose a username and a display name.",
       "usernameHint": "Temporary auto-generated username — pick your own.",
+      "usernameLockedHint": "Once set, your username can't be changed again.",
       "submitLabel": "Save changes",
       "savingLabel": "Saving...",
       "success": "Profile updated successfully.",

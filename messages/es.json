@@ -216,6 +216,7 @@
       "onboardingHeading": "Completa tu perfil",
       "onboardingSubheading": "Para terminar de crear tu cuenta, elige un nombre de usuario y un nombre visible.",
       "usernameHint": "Nombre de usuario temporal generado automáticamente — elige uno propio.",
+      "usernameLockedHint": "Una vez establecido, el nombre de usuario no se puede volver a cambiar.",
       "submitLabel": "Guardar cambios",
       "savingLabel": "Guardando...",
       "success": "Perfil actualizado correctamente.",

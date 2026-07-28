@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateUsername } from "../utils/username-validation";
+import { validateUsername, isPlaceholderUsername } from "../utils/username-validation";
 
 describe("validateUsername (pure fn, client-side live feedback)", () => {
   it("accepts a valid lowercase username", () => {
@@ -134,5 +134,23 @@ describe("validateUsername (pure fn, client-side live feedback)", () => {
       ok: false,
       code: "usernameTooShort",
     });
+  });
+});
+
+describe("isPlaceholderUsername", () => {
+  it("returns true for the backend's auto-generated user- fallback", () => {
+    expect(isPlaceholderUsername("user-4b34dd41")).toBe(true);
+  });
+
+  it("returns false for a real, chosen username", () => {
+    expect(isPlaceholderUsername("alex91")).toBe(false);
+  });
+
+  it("returns false for an empty string", () => {
+    expect(isPlaceholderUsername("")).toBe(false);
+  });
+
+  it("only matches the prefix at the start of the string", () => {
+    expect(isPlaceholderUsername("power-user-91")).toBe(false);
   });
 });

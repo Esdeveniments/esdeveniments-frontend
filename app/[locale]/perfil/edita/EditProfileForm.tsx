@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
-import { validateUsername } from "@utils/username-validation";
-import { RESERVED_USER_PREFIX } from "lib/validation/username";
+import { validateUsername, isPlaceholderUsername } from "@utils/username-validation";
 import type { EditProfileFormProps } from "types/props";
 import EditProfileAvatar from "./EditProfileAvatar";
 
@@ -22,10 +21,13 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
   const isOnboarding = user?.profileCompleted === false;
 
   const [username, setUsername] = useState(user?.username ?? "");
-  // Only claim the field holds a placeholder while it actually still does —
-  // reuses the same regex the backend/Zod schema enforces (RESERVED_USER_PREFIX)
-  // rather than re-declaring the "user-" pattern here.
-  const showUsernameHint = isOnboarding && RESERVED_USER_PREFIX.test(username);
+  // Only claim the field holds a placeholder while it actually still does.
+  const showUsernameHint = isOnboarding && isPlaceholderUsername(username);
+  // Usernames feed indexed public URLs (/perfil/{username}), so the backend
+  // only allows setting a real one once. Checked against the saved value
+  // (not the live `username` state) since that's what determines whether
+  // the field should even be editable in the first place.
+  const usernameLocked = !isPlaceholderUsername(user?.username ?? "");
   const [displayName, setDisplayName] = useState(user?.name ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
   const [usernameError, setUsernameError] = useState<string | null>(null);
@@ -160,6 +162,11 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
                 {t("usernameHint")}
               </p>
             )}
+            {usernameLocked && (
+              <p id="username-locked-hint" className="helper-text">
+                {t("usernameLockedHint")}
+              </p>
+            )}
             <div className="mt-2">
               <input
                 id="username"
@@ -168,10 +175,15 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onBlur={validate}
-                className={`w-full rounded-xl border-border focus:border-foreground-strong text-base ${usernameError ? "input-error" : ""}`}
+                readOnly={usernameLocked}
+                className={`w-full rounded-xl border-border focus:border-foreground-strong text-base ${usernameLocked ? "input-readonly" : ""} ${usernameError ? "input-error" : ""}`}
                 aria-invalid={usernameError ? "true" : "false"}
                 aria-describedby={
-                  [showUsernameHint && "username-hint", usernameError && "username-error"]
+                  [
+                    showUsernameHint && "username-hint",
+                    usernameLocked && "username-locked-hint",
+                    usernameError && "username-error",
+                  ]
                     .filter(Boolean)
                     .join(" ") || undefined
                 }
