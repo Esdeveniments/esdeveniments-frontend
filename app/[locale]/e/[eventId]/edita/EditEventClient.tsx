@@ -8,20 +8,13 @@ import type { FormData } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
 import { normalizeUrl } from "@utils/string-helpers";
-import { EventDetailResponseDTO } from "types/api/event";
-import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { Option } from "types/common";
+import type { EditEventClientProps } from "types/props";
 import { useCategories } from "@components/hooks/useCategories";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 import { ArrowLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 
-export default function EditEventClient({
-  event,
-  regions,
-}: {
-  event: EventDetailResponseDTO;
-  regions: RegionsGroupedByCitiesResponseDTO[] | null;
-}) {
+export default function EditEventClient({ event, regions }: EditEventClientProps) {
   const t = useTranslations("Components.EventPage");
   const tEdit = useTranslations("App.EventEdit");
   const router = useRouter();

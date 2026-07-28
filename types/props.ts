@@ -915,6 +915,12 @@ export interface EventEditActionProps {
   slug: string;
 }
 
+// /e/[eventId]/edita client form
+export interface EditEventClientProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  regions: import("./api/region").RegionsGroupedByCitiesResponseDTO[] | null;
+}
+
 // Social proof counter
 export interface SocialProofCounterProps {
   visits: number;
