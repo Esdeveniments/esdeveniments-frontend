@@ -81,7 +81,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
         <p className="body-small text-foreground/60 mb-1">@{profile.username}</p>
 
         {bioText && (
-          <p className="body-normal text-foreground/80 mb-element-gap whitespace-pre-line">
+          <p className="body-normal text-foreground/80 mb-element-gap whitespace-pre-line break-words">
             {bioText}
           </p>
         )}
