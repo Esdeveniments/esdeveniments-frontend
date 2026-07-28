@@ -67,6 +67,13 @@ describe("EditProfileForm", () => {
     expect(screen.getByText("usernameHint")).toBeInTheDocument();
   });
 
+  it("shows onboarding heading but no username hint once the username is no longer the fallback", () => {
+    authUser = { ...baseUser, username: "alex91", profileCompleted: false };
+    render(<EditProfileForm />);
+    expect(screen.getByRole("heading")).toHaveTextContent("onboardingHeading");
+    expect(screen.queryByText("usernameHint")).toBeNull();
+  });
+
   it("shows the normal heading when profileCompleted is undefined (transient enrichment blip)", () => {
     authUser = { ...baseUser, profileCompleted: undefined };
     render(<EditProfileForm />);
