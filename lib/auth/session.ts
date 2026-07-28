@@ -17,7 +17,7 @@ import type { AuthUser } from "types/auth";
  *
  * The id_token yields the Logto `sub` as `user.id`. For creator-ownership
  * checks (e.g., "is this user the event creator?"), we need the **backend
- * UUID** — which is what `event.createdByUser.id` stores. When an access
+ * UUID** — which is what `event.owner.id` stores. When an access
  * token is available, we enrich via `GET /api/auth/me` to replace `id` with
  * the backend UUID (preserving the Logto sub as `logtoId`). The enrichment is
  * best-effort: if the backend is unreachable, the id_token-only user is

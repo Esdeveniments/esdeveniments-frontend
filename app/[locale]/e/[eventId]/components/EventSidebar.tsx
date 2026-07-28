@@ -13,6 +13,7 @@ import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { getProfileSlug } from "@utils/user-helpers";
+import EventEditAction from "./EventEditAction";
 import type { EventSidebarProps } from "types/props";
 
 /**
@@ -33,9 +34,7 @@ export default async function EventSidebar({
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
 
   // Build a URL-safe slug for the creator profile link.
-  const creatorSlug = event.createdByUser
-    ? getProfileSlug(event.createdByUser)
-    : null;
+  const creatorSlug = event.owner ? getProfileSlug(event.owner) : null;
 
   return (
     <aside
@@ -109,29 +108,31 @@ export default async function EventSidebar({
             )}
 
             {/* Creator / publisher profile link */}
-            {event.createdByUser && creatorSlug && (
+            {event.owner && creatorSlug && (
               <>
                 <hr className="border-border" />
                 <div className="flex flex-col gap-1">
                   <h3 className="label font-semibold text-foreground-strong">
                     {t("sidebarCreatedBy")}
                   </h3>
+                  <span className="inline-flex items-center gap-1.5 body-small font-semibold text-foreground-strong">
+                    <UserIcon className="w-4 h-4 flex-shrink-0" />
+                    {event.owner.displayName ?? event.owner.username ?? ""}
+                  </span>
                   <Link
                     href={`/perfil/${encodeURIComponent(creatorSlug)}`}
                     className="flex flex-col gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
-                  >                      <span className="inline-flex items-center gap-1.5">
-                        <UserIcon className="w-4 h-4 flex-shrink-0" />
-                        {event.createdByUser.displayName ??
-                          event.createdByUser.username ??
-                          ""}
-                      </span>
-                    <span className="font-normal text-primary/70">
+                  >
+                    <span className="font-normal text-primary">
                       {t("sidebarViewAllEvents")} →
                     </span>
                   </Link>
                 </div>
               </>
             )}
+
+            {/* Owner-only edit action */}
+            <EventEditAction ownerId={event.owner?.id} slug={event.slug ?? ""} />
 
           </div>
         </div>

@@ -54,7 +54,7 @@ export async function DELETE(
     // for events the caller does not own.
     const isCreator =
       Boolean(currentUser.id) &&
-      currentUser.id === event.createdByUser?.id;
+      currentUser.id === event.owner?.id;
     if (!isCreator) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

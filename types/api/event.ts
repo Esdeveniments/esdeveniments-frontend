@@ -100,8 +100,6 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
    * (only when organizerVerified === true).
    */
   owner?: OwnerSummaryDTO;
-  /** @deprecated Use `owner`; same shape. */
-  createdByUser?: OwnerSummaryDTO;
 }
 
 export type CategorizedEvents = {

@@ -9,12 +9,9 @@ import EventNotifications from "./components/EventNotifications";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
 import { MegaphoneIcon as SpeakerphoneIcon } from "@heroicons/react/24/outline";
-import { PencilIcon } from "@heroicons/react/24/outline";
 import AdArticle from "components/ui/adArticle";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { useTranslations } from "next-intl";
-import { useAuth } from "@components/hooks/useAuth";
-import { Link } from "@i18n/routing";
 
 // computeTemporalStatus now imported from utils/event-status for reuse & testability
 
@@ -35,10 +32,6 @@ export default function EventClient({
   const newEvent = searchParams.get("newEvent");
   const edit_suggested = searchParams.get("edit_suggested") === "true";
   const [showThankYouBanner, setShowThankYouBanner] = useState(edit_suggested);
-  const { user } = useAuth();
-  const isCreator = Boolean(
-    user?.id && event.createdByUserId && user.id === event.createdByUserId
-  );
 
   // const {
   //   openModal,
@@ -103,20 +96,6 @@ export default function EventClient({
           </div>
         </div>
       </div>
-
-      {/* Owner-only edit action */}
-      {isCreator && (
-        <div className="px-section-x">
-          <Link
-            href={`/e/${slug}/edita`}
-            className="inline-flex items-center gap-2 btn-outline btn-sm"
-            data-testid="event-edit-link"
-          >
-            <PencilIcon className="w-4 h-4" aria-hidden="true" />
-            {t("editEvent")}
-          </Link>
-        </div>
-      )}
 
       {/* Edit Button Section */}
 

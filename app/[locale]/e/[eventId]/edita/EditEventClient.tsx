@@ -25,7 +25,7 @@ export default function EditEventClient({
   const t = useTranslations("Components.EventPage");
   const tEdit = useTranslations("App.EventEdit");
   const router = useRouter();
-  const creatorSlug = event.createdByUser ? getProfileSlug(event.createdByUser) : null;
+  const creatorSlug = event.owner ? getProfileSlug(event.owner) : null;
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
   const [imageToUpload, setImageToUpload] = useState<string | null>(
     form.imageUrl

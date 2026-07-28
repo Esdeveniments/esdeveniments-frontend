@@ -882,8 +882,6 @@ export interface EventClientPayload {
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
-  /** Event creator id, used to conditionally show owner-only actions. */
-  createdByUserId?: string;
 }
 
 export interface EventClientProps {
@@ -909,6 +907,12 @@ export interface EventSidebarProps {
   regionName: string;
   primaryPlaceSlug: string;
   sponsorFallbackPlaces?: string[];
+}
+
+// Owner-only edit action, event detail sidebar client island
+export interface EventEditActionProps {
+  ownerId?: string;
+  slug: string;
 }
 
 // Social proof counter

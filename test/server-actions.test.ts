@@ -93,7 +93,7 @@ function buildEvent(overrides: Partial<EventDetailResponseDTO> = {}): EventDetai
     location: "Test Location",
     visits: 0,
     origin: "MANUAL",
-    createdByUser: {
+    owner: {
       id: CREATOR_ID,
       displayName: "Creator",
       username: "creator",
@@ -404,7 +404,7 @@ describe("Server Actions - Next.js 16 caching", () => {
     });
 
     it("returns an unauthorized result when the event has no creator info", async () => {
-      mockFetchEventBySlug.mockResolvedValue(buildEvent({ createdByUser: undefined }));
+      mockFetchEventBySlug.mockResolvedValue(buildEvent({ owner: undefined }));
 
       const updateData: EventBaseRequestDTO = {
         title: "Updated Event",

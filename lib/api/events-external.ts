@@ -25,18 +25,7 @@ export async function fetchEventBySlug(
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const json = await response.json();
-    const parsed = parseEventDetail(json);
-    // Normalize the 2026-07-25 `owner` field into the legacy `createdByUser`
-    // alias so the 11 frontend consumers (EventSidebar, EventDetailsSection,
-    // EditEventClient, edita/actions/page, api/events/[slug]/route.ts) keep
-    // working when the backend drops the legacy mirror. The reverse bind
-    // (`createdByUser ??= owner`) is safe: the two shapes are identical, and
-    // a malicious over-write can't reach this point because parseEventDetail
-    // zod-parses both. PR review thread 121M was the trigger.
-    if (parsed && !parsed.createdByUser && parsed.owner) {
-      parsed.createdByUser = parsed.owner;
-    }
-    return parsed;
+    return parseEventDetail(json);
   } catch (error) {
     console.error("Error fetching event by slug (external):", error);
     return null;

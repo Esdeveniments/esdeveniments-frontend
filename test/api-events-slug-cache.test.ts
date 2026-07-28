@@ -83,7 +83,7 @@ describe("/api/events/[slug] DELETE cache invalidation", () => {
     slug: "my-event",
     visits: 0,
     endDate: null,
-    createdByUser: { id: "creator-uuid", name: "C", username: "c", email: "c@e.com" },
+    owner: { id: "creator-uuid", name: "C", username: "c", email: "c@e.com" },
   };
 
   beforeEach(() => {
