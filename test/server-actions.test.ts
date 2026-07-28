@@ -264,6 +264,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       const result = await createEventAction(buildEventData("Test Event"));
       expect(result).toEqual({ success: false, reason: "stale-session" });
 
+      expect(captureException).toHaveBeenCalledTimes(1);
       const [, context] = vi.mocked(captureException).mock.calls[0];
       expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
         authStatus: "401",
