@@ -5,6 +5,7 @@ import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
+import type { CreateEventActionResult } from "types/event";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
 import { env } from "@utils/misc-helpers";
@@ -39,12 +40,22 @@ async function sendNewEventEmail(title: string, slug: string): Promise<void> {
 export async function createEventAction(
   data: EventCreateRequestDTO,
   e2eExtras?: E2EEventExtras
-) {
+): Promise<CreateEventActionResult> {
   // 2026-07-26 round-5: catch the mutation error path so we can distinguish
   // 401 (likely stale Bearer — user should log out and back in) from 403
   // (profileCompleted: false per backend spec — user should complete
   // onboarding). Anything else is a real 5xx and rethrows. We log + tag
   // Sentry with the next action so the form can render the right message.
+  //
+  // 401/403 are *returned* as a CreateEventActionResult, not re-thrown:
+  // Next.js redacts thrown Server Action error messages/properties in
+  // production (only a generic message + digest reach the client), so
+  // PublishForm would have no reliable way to tell these apart from a
+  // plain 5xx if we threw here. editEvent
+  // (app/[locale]/e/[eventId]/edita/actions.ts) already returns rather
+  // than throws for its own actionable failures — same convention.
+  // Anything else stays a throw: there's no more specific client action
+  // to take for a real 5xx anyway.
   let created;
   try {
     // 1. Create the event in your backend
@@ -75,6 +86,10 @@ export async function createEventAction(
           dataFields: Object.keys(data ?? {}),
         },
       });
+      return {
+        success: false,
+        reason: status === 401 ? "stale-session" : "profile-incomplete",
+      };
     }
     throw err;
   }

@@ -317,6 +317,7 @@
       "errorGeneric": "Hi ha hagut un error en publicar l'esdeveniment. Si us plau, torna-ho a intentar.",
       "errorFormParsing": "S'ha tallat la connexió mentre s'enviava el formulari. Recarrega la pàgina i torna-ho a provar.",
       "errorDuplicate": "Aquest esdeveniment ja existeix. Si creus que és un error, contacta amb nosaltres.",
+      "errorStaleSession": "La teva sessió sembla haver caducat. Tanca la sessió i torna a iniciar-la, i prova de publicar de nou.",
       "submitLabel": "Publicar",
       "imageTooLarge": "La imatge supera el límit permès de {limit} MB. Si us plau, tria una imatge més petita.",
       "uploadSuccess": "Imatge pujada correctament.",

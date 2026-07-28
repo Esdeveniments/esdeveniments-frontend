@@ -317,6 +317,7 @@
       "errorGeneric": "There was an error publishing the event. Please try again.",
       "errorFormParsing": "The connection was interrupted while sending the form. Reload the page and try again.",
       "errorDuplicate": "This event already exists. If you think this is an error, please contact us.",
+      "errorStaleSession": "Your session appears to have expired. Log out and back in, then try publishing again.",
       "submitLabel": "Publish",
       "imageTooLarge": "The image exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
       "uploadSuccess": "Image uploaded successfully.",

@@ -353,6 +353,19 @@ export interface EditEventResult {
   error?: string;
 }
 
+/**
+ * Result returned by the createEventAction server action. A discriminated
+ * union (not a thrown error) for the two failures the client can actually
+ * act on: Next.js redacts thrown Server Action error messages/properties in
+ * production, so a caught 401/403 must be returned, not re-thrown, for
+ * PublishForm to reliably tell "stale session" from "profile incomplete"
+ * apart from a generic failure. Mirrors editEvent's existing
+ * return-over-throw convention for actionable failures.
+ */
+export type CreateEventActionResult =
+  | { success: true; event: EventDetailResponseDTO }
+  | { success: false; reason: "profile-incomplete" | "stale-session" };
+
 export interface UseEventsOptions {
   place?: string;
   category?: string;

@@ -317,6 +317,7 @@
       "errorGeneric": "Ha habido un error al publicar el evento. Por favor, inténtalo de nuevo.",
       "errorFormParsing": "Se cortó la conexión mientras se enviaba el formulario. Recarga la página e inténtalo de nuevo.",
       "errorDuplicate": "Este evento ya existe. Si crees que es un error, contáctanos.",
+      "errorStaleSession": "Tu sesión parece haber caducado. Cierra sesión y vuelve a iniciarla, y prueba a publicar de nuevo.",
       "submitLabel": "Publicar",
       "imageTooLarge": "La imagen supera el límite permitido de {limit} MB. Por favor, elige una imagen más pequeña.",
       "uploadSuccess": "Imagen subida correctamente.",

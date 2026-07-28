@@ -206,7 +206,28 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockRefresh).toHaveBeenCalledTimes(1);
     });
 
-    it("reports a 401/403 rejection to Sentry without the raw backend body or the event title", async () => {
+    const buildEventData = (title: string): EventCreateRequestDTO => ({
+      title,
+      type: "FREE",
+      url: "https://test.com",
+      description: "Test description",
+      imageUrl: "",
+      regionId: 1,
+      cityId: 1,
+      startDate: "2025-06-15",
+      startTime: "",
+      endDate: "2025-06-15",
+      endTime: "",
+      location: "Test Location",
+      categories: [],
+    });
+
+    it("returns a profile-incomplete result on 403, instead of throwing", async () => {
+      // Server Actions redact thrown error messages/properties from the
+      // client in production — only a generic message + digest survive.
+      // A caught 401/403 must be *returned* so PublishForm can reliably act
+      // on it; a throw here would silently degrade to a generic error in
+      // production regardless of what property the error carries.
       const rawBody = "field errors: title must not exceed 200 characters, got: <the actual submitted title text>";
       const backendError = Object.assign(
         new Error(`HTTP error! status: 403, body: ${rawBody}`),
@@ -214,23 +235,12 @@ describe("Server Actions - Next.js 16 caching", () => {
       );
       mockCreateEvent.mockRejectedValue(backendError);
 
-      const eventData: EventCreateRequestDTO = {
-        title: "A very sensitive event title nobody should see in Sentry",
-        type: "FREE",
-        url: "https://test.com",
-        description: "Test description",
-        imageUrl: "",
-        regionId: 1,
-        cityId: 1,
-        startDate: "2025-06-15",
-        startTime: "",
-        endDate: "2025-06-15",
-        endTime: "",
-        location: "Test Location",
-        categories: [],
-      };
+      const eventData = buildEventData(
+        "A very sensitive event title nobody should see in Sentry",
+      );
 
-      await expect(createEventAction(eventData)).rejects.toBe(backendError);
+      const result = await createEventAction(eventData);
+      expect(result).toEqual({ success: false, reason: "profile-incomplete" });
 
       expect(captureException).toHaveBeenCalledTimes(1);
       const [reportedError, context] = vi.mocked(captureException).mock.calls[0];
@@ -242,6 +252,36 @@ describe("Server Actions - Next.js 16 caching", () => {
         authStatus: "403",
         nextAction: "complete-profile",
       });
+    });
+
+    it("returns a stale-session result on 401, instead of throwing", async () => {
+      const backendError = Object.assign(
+        new Error("HTTP error! status: 401, body: unauthorized"),
+        { status: 401 },
+      );
+      mockCreateEvent.mockRejectedValue(backendError);
+
+      const result = await createEventAction(buildEventData("Test Event"));
+      expect(result).toEqual({ success: false, reason: "stale-session" });
+
+      const [, context] = vi.mocked(captureException).mock.calls[0];
+      expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
+        authStatus: "401",
+        nextAction: "logout-and-relogin",
+      });
+    });
+
+    it("still throws for a real 5xx — no actionable client-side reason to return", async () => {
+      const backendError = Object.assign(
+        new Error("HTTP error! status: 500, body: internal server error"),
+        { status: 500 },
+      );
+      mockCreateEvent.mockRejectedValue(backendError);
+
+      await expect(createEventAction(buildEventData("Test Event"))).rejects.toBe(
+        backendError,
+      );
+      expect(captureException).not.toHaveBeenCalled();
     });
   });
 
