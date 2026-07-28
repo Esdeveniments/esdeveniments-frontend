@@ -1,4 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
+
+import { captureException } from "@sentry/nextjs";
 import { createEventAction } from "../app/[locale]/publica/actions";
 import { editEvent } from "../app/[locale]/e/[eventId]/edita/actions";
 import type { EventCreateRequestDTO, EventBaseRequestDTO, EventUpdateRequestDTO } from "types/api/event";
@@ -198,6 +204,44 @@ describe("Server Actions - Next.js 16 caching", () => {
       const updateTagCalls = mockUpdateTag.mock.calls.length;
       expect(updateTagCalls).toBeGreaterThan(0);
       expect(mockRefresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("reports a 401/403 rejection to Sentry without the raw backend body or the event title", async () => {
+      const rawBody = "field errors: title must not exceed 200 characters, got: <the actual submitted title text>";
+      const backendError = Object.assign(
+        new Error(`HTTP error! status: 403, body: ${rawBody}`),
+        { status: 403 },
+      );
+      mockCreateEvent.mockRejectedValue(backendError);
+
+      const eventData: EventCreateRequestDTO = {
+        title: "A very sensitive event title nobody should see in Sentry",
+        type: "FREE",
+        url: "https://test.com",
+        description: "Test description",
+        imageUrl: "",
+        regionId: 1,
+        cityId: 1,
+        startDate: "2025-06-15",
+        startTime: "",
+        endDate: "2025-06-15",
+        endTime: "",
+        location: "Test Location",
+        categories: [],
+      };
+
+      await expect(createEventAction(eventData)).rejects.toBe(backendError);
+
+      expect(captureException).toHaveBeenCalledTimes(1);
+      const [reportedError, context] = vi.mocked(captureException).mock.calls[0];
+      expect((reportedError as Error).message).not.toContain(rawBody);
+      expect((reportedError as Error).message).not.toContain(eventData.title);
+      expect(JSON.stringify(context)).not.toContain(eventData.title);
+      expect(JSON.stringify(context)).not.toContain(rawBody);
+      expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
+        authStatus: "403",
+        nextAction: "complete-profile",
+      });
     });
   });
 

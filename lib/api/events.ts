@@ -385,13 +385,19 @@ export async function createEvent(
     // the backend actually rejected. Lets us tell "stale audience" (401) from
     // "profile incomplete" (403) without a second round-trip.
     const safeClaims = decodeSafeJwtClaims(authToken);
+    // The backend error body can echo back submitted event fields (title,
+    // description, url, ...) in validation messages, or leak internal
+    // details in an unexpected failure — keep the raw body in the
+    // server-side console.error below, but don't forward it to Sentry
+    // (a third-party service). Status + length are enough to diagnose from
+    // there; the full body is still one grep away in the app's own logs.
     captureException(
       new Error(`createEvent: HTTP ${response.status}`),
       {
         tags: { section: "events-mutation", endpoint: "createEvent" },
         extra: {
           status: response.status,
-          body: errorText.slice(0, 200),
+          bodyLength: errorText.length,
           accessTokenClaims: safeClaims,
         },
       },

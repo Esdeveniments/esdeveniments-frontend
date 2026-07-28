@@ -57,16 +57,22 @@ export async function createEventAction(
       console.error(
         `createEventAction: backend rejected with ${status} \u2014 ${status === 401 ? "Likely stale Bearer \u2014 user should log out and back in." : "Likely profileCompleted: false \u2014 user should complete profile onboarding."}`,
       );
-      captureException(err, {
+      // Don't forward the caught `err` as-is: createEvent() embeds the raw
+      // backend response body in its .message, which would otherwise reach
+      // Sentry unredacted despite the extra.* fields below being carefully
+      // scrubbed. A short, fixed-shape message keeps the actual diagnosis
+      // (status/nextAction/field names) without the body's content. titleHint
+      // is dropped too \u2014 an event title has no diagnostic value for an
+      // auth/profile-completion failure, so there's no reason to send
+      // user-controlled content to a third-party service for it.
+      captureException(new Error(`createEvent rejected: ${status}`), {
         tags: {
           section: "publica-create",
           authStatus: String(status),
           nextAction,
         },
-        // Send only field names + truncated title to avoid leaking content.
         extra: {
           dataFields: Object.keys(data ?? {}),
-          titleHint: data?.title?.slice(0, 40),
         },
       });
     }
