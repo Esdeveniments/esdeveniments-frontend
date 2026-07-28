@@ -112,9 +112,9 @@ export default function EditProfileAvatar({
       <label className="form-label">{t("label")}</label>
       <div className="mt-2 flex items-center gap-element-gap">
         {avatarUrl ? (
-           
           // bg-background: a transparent-background upload (e.g. a logo) should
           // show against a neutral backdrop, not whatever's behind it.
+          // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not eligible for static optimization
           <img
             src={avatarUrl}
             alt={t("altPreview")}
