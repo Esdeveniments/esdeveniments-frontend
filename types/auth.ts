@@ -1,4 +1,5 @@
 import type { PictureSource } from "./api/user";
+import type { LogtoTokenResponse } from "./api/auth";
 
 export type AuthRole = "USER" | "ADMIN" | "ORGANIZATION";
 
@@ -41,6 +42,12 @@ export interface AuthUser {
 }
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
+
+/** Result of lib/auth/session.ts's resolveSession() session-state decision tree. */
+export type SessionResolution =
+  | { kind: "ok"; user: AuthUser; refreshedTokens?: LogtoTokenResponse }
+  | { kind: "unauthorized"; clearCookies: boolean }
+  | { kind: "transient" };
 
 export type { LogtoTokenResponse, LogtoUserInfo, LogtoIdTokenClaims, IdTokenPayload, Jwk } from "./api/auth";
 
