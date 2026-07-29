@@ -674,7 +674,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 {useLocationLabel}
               </button>
               {useCurrentLocationMode && (
-                <div className="text-xs text-border flex items-center gap-2">
+                <div className="animate-fade-in-fast text-xs text-border flex items-center gap-2">
                   {t("useLocation.active")}
                   <button
                     onClick={() => setUseCurrentLocationMode(false)}
@@ -685,7 +685,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 </div>
               )}
               {isRegionSelected && (
-                <div className="text-xs text-border bg-background border border-border rounded-md p-2">
+                <div className="animate-fade-in-fast text-xs text-border bg-background border border-border rounded-md p-2">
                   {t("useLocation.regionNotice")}
                 </div>
               )}
@@ -731,11 +731,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 </label>
               </div>
               {showCalendar && (
-                <CalendarDatePicker
-                  fromDate={localFromDate}
-                  toDate={localToDate}
-                  onChange={handleCalendarDateChange}
-                />
+                <div className="animate-fade-in-up w-full">
+                  <CalendarDatePicker
+                    fromDate={localFromDate}
+                    toDate={localToDate}
+                    onChange={handleCalendarDateChange}
+                  />
+                </div>
               )}
               {!showMoreDates ? (
                 <button
@@ -746,7 +748,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   {t("modal.viewMore")}
                 </button>
               ) : (
-                <>
+                <div className="animate-fade-in-up w-full flex flex-col gap-4">
                   <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
                     {BYDATES.slice(3).map(({ value, labelKey }) => (
                       <RadioInput
@@ -791,7 +793,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   >
                     {t("modal.viewLess")}
                   </button>
-                </>
+                </div>
               )}
             </fieldset>
             {categories.length > 0 && (
@@ -876,7 +878,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 )}
               </p>
               {shouldShowGeolocationFeedback && (
-                <div className="border-t border-border py-2">
+                <div className="animate-fade-in-fast border-t border-border py-2">
                   <div className="flex flex-col">
                     {userLocationLoading && (
                       <div className="text-sm text-border">
