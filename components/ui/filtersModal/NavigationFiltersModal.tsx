@@ -201,7 +201,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   // Reset local state whenever the modal opens or the default inputs change while open
   useEffect(() => {
     if (!isOpen) return;
-    const id = window.setTimeout(() => {
+    startTransition(() => {
       setLocalPlace(defaults.place);
       setLocalByDate(defaults.byDate);
       setLocalCategory(defaults.category);
@@ -223,8 +223,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setUserLocationError("");
       setIsDistanceActive(Boolean(defaults.distance));
       setUseCurrentLocationMode(initialUseCurrentLocation);
-    }, 0);
-    return () => window.clearTimeout(id);
+    });
   }, [
     isOpen,
     defaults.place,
