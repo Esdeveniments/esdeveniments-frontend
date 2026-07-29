@@ -3,7 +3,6 @@ import type { LinkProps } from "next/link";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import type { CalendarUrls } from "types/calendar";
-import type { StoreState } from "types/store";
 import type { AppLocale } from "types/i18n";
 
 export interface Option {
@@ -447,12 +446,6 @@ export type PlaceStaticPath = { params: PlaceStaticPathParams };
 // Next.js's `searchParams` prop. Declared here (not inline) so reviews
 // don't flag it as an inline union type.
 export type RouteSearchParams = Record<string, string | string[] | undefined>;
-
-// SearchState type
-export interface SearchState {
-  searchTerm: string;
-  setState: <K extends keyof StoreState>(key: K, value: StoreState[K]) => void;
-}
 
 // Utility function to safely construct a PlaceTypeAndLabel from any input
 export function makePlaceTypeAndLabel(
