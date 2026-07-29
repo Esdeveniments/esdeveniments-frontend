@@ -27,7 +27,11 @@ function getAllowedOriginHosts(): Set<string> {
   // Vercel exposes several runtime URLs that all serve the same deployment:
   //   VERCEL_URL                       — per-deployment hash URL
   //   VERCEL_BRANCH_URL                — stable branch-alias URL (what users
-  //                                       click on the PR preview comment)
+  //                                       click on the PR preview comment;
+  //                                       without this, every browser-initiated
+  //                                       POST — push subscribe, favorites,
+  //                                       sponsor checkout — 403s on branch
+  //                                       previews)
   //   VERCEL_PROJECT_PRODUCTION_URL    — the project's prod domain
   // Origin must match whichever one the browser is hitting, otherwise the
   // CSRF guard 403s every POST/PUT/DELETE on the preview. Allow them all.
@@ -39,16 +43,6 @@ function getAllowedOriginHosts(): Set<string> {
     process.env.VERCEL_PROJECT_PRODUCTION_URL,
   ]) {
     if (candidate) addAllowedOriginHost(hosts, candidate);
-  }
-
-  // Branch-preview alias (project-git-branch-team.vercel.app). Vercel sets
-  // VERCEL_BRANCH_URL per deployment; VERCEL_URL is the hash deployment URL,
-  // not the alias users actually open. Without this, every browser-initiated
-  // POST (push subscribe, favorites, sponsor checkout) 403s on branch previews.
-  const vercelBranchUrl =
-    process.env.VERCEL_BRANCH_URL || process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL;
-  if (vercelBranchUrl) {
-    addAllowedOriginHost(hosts, vercelBranchUrl);
   }
 
   // E2E runs a production build on localhost:3000, so isDev is false there and
