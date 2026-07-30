@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
 import {
   getAuthenticatedUserExternal,
+  getUserByUsernameExternal,
   getUserEventsExternal,
 } from "../lib/api/users-external";
 
@@ -75,10 +76,25 @@ describe("getUserEventsExternal", () => {
   });
 
   it("returns an empty page when the backend responds with an error", async () => {
-    mockFetchWithHmac.mockResolvedValue(pagedResponse(null, 500));
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue(
+      pagedResponse({ error: "distinctive_backend_marker_9f2a" }, 500)
+    );
     const result = await getUserEventsExternal("sala-apolo");
     expect(result.content).toEqual([]);
     expect(result.last).toBe(true);
+    // Non-404 failures must be greppable as distinct from "no events" —
+    // otherwise an auth/config failure looks identical to a normal empty
+    // profile in the logs. Assert the body preview is actually logged, not
+    // just the status: a test that only checked the status would still
+    // pass if the body logging were silently dropped.
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("non-404 upstream failure HTTP 500")
+    );
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("distinctive_backend_marker_9f2a")
+    );
+    errorSpy.mockRestore();
   });
 
   it("treats a 404 (unknown user) as an empty page", async () => {
@@ -97,6 +113,97 @@ describe("getUserEventsExternal", () => {
     const result = await getUserEventsExternal("sala-apolo");
     expect(result.content).toEqual([]);
     expect(result.last).toBe(true);
+  });
+});
+
+const userPublicDTO = {
+  id: "e10c6a5f-306c-487f-9e71-876f67c7bbb2",
+  displayName: "Esdeveniments Catalunya",
+  username: "esdeveniments-catalunya-cat",
+  avatarUrl: null,
+  organizerVerified: false,
+};
+
+function jsonResponse(data: unknown, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: new Headers(),
+    json: () => Promise.resolve(data),
+    text: () => Promise.resolve(JSON.stringify(data)),
+  } as Response;
+}
+
+describe("getUserByUsernameExternal", () => {
+  it("returns the parsed user on success", async () => {
+    mockFetchWithHmac.mockResolvedValue(jsonResponse(userPublicDTO));
+    const result = await getUserByUsernameExternal(
+      "esdeveniments-catalunya-cat"
+    );
+    expect(result?.username).toBe("esdeveniments-catalunya-cat");
+  });
+
+  it("returns null (no log) for a genuine 404", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue(jsonResponse(null, 404));
+    const result = await getUserByUsernameExternal("ghost");
+    expect(result).toBeNull();
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("returns null but logs a distinct, greppable message for a non-404 failure", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue(
+      jsonResponse({ error: "distinctive_backend_marker_7c1e" }, 401)
+    );
+    const result = await getUserByUsernameExternal("ajuntament-riudellots");
+    expect(result).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("non-404 upstream failure HTTP 401")
+    );
+    // A test that only checked the status would still pass if the body
+    // logging were silently dropped — assert the preview is actually there.
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("distinctive_backend_marker_7c1e")
+    );
+    errorSpy.mockRestore();
+  });
+
+  it("strips control characters from the logged body preview", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Includes ASCII controls (\n, \r, \x00), a C1 control (\x85, NEL), and
+    // the Unicode line/paragraph separators (\u2028, \u2029) some log
+    // viewers and JS engines also treat as line terminators.
+    mockFetchWithHmac.mockResolvedValue({
+      ok: false,
+      status: 500,
+      headers: new Headers(),
+      json: () => Promise.resolve(null),
+      text: () =>
+        Promise.resolve(
+          "line1\nline2\rline3\x00line4\x85line5\u2028line6\u2029marker_end"
+        ),
+    } as Response);
+    const result = await getUserByUsernameExternal("sala-apolo");
+    expect(result).toBeNull();
+    const loggedCall = errorSpy.mock.calls.find(([msg]) =>
+      typeof msg === "string" && msg.includes("marker_end")
+    );
+    expect(loggedCall?.[0]).not.toMatch(/[\n\r\x00\x85\u2028\u2029]/);
+    errorSpy.mockRestore();
+  });
+
+  it("returns null on a network failure", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockRejectedValue(new Error("network down"));
+    const result = await getUserByUsernameExternal("sala-apolo");
+    expect(result).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("getUserByUsernameExternal: failed"),
+      expect.any(Error)
+    );
+    errorSpy.mockRestore();
   });
 });
 

@@ -15,6 +15,16 @@ import type {
   PagedResponseDTO,
 } from "types/api/event";
 
+// Strip control characters (incl. newlines, C1 controls, and the Unicode
+// line/paragraph separators some log viewers and JS engines also treat as
+// line terminators) before logging an upstream error body, so a
+// malicious/broken backend response can't inject fake log lines into an
+// aggregator that parses on line breaks. Truncated to the same 200-char
+// bound `decodeSafeJwtClaims` below uses for logged summaries.
+function sanitizeLoggedBody(body: string): string {
+  return body.replace(/[\x00-\x1f\x7f-\x9f\u2028\u2029]/g, " ").slice(0, 200);
+}
+
 /**
  * Authenticated session profile: GET /api/auth/me. Backend-owned fields
  * (avatarUrl/pictureSource/role/lastLoginAt) that the Logto id_token can't
@@ -154,8 +164,18 @@ export async function getUserByUsernameExternal(
 /**
  * Shared shape for the "silent fallback" backend calls (public reads where a
  * 404/error should render as empty state, not surface as an error): fetch,
- * treat 404 as the fallback, log+fallback on any other non-OK or network
- * failure, parse on success and fall back if the payload doesn't validate.
+ * treat 404 as the fallback (the common, expected case, not an error), log +
+ * fallback on any other non-OK or network failure, parse on success and fall
+ * back if the payload doesn't validate.
+ *
+ * Anything other than 404 also falls back silently so callers render a clean
+ * empty/not-found state instead of crashing, but a bare status number here
+ * was indistinguishable from a genuine 404 in logs — a real "works locally,
+ * 404s on staging" report (2026-07-30) took a manual server-log correlation
+ * to rule out an auth/config failure masked as "doesn't exist" (it turned
+ * out to be a genuinely missing row, but the log line gave no way to tell
+ * without digging). Read the body and tag the log line so it's greppable as
+ * a non-404 upstream failure going forward.
  */
 async function fetchJsonWithFallback<T>(
   url: string,
@@ -167,7 +187,10 @@ async function fetchJsonWithFallback<T>(
     const response = await fetchWithHmac(url);
     if (response.status === 404) return fallback;
     if (!response.ok) {
-      console.error(`${label}: HTTP ${response.status}`);
+      const body = await response.text().catch(() => "<unreadable>");
+      console.error(
+        `${label}: non-404 upstream failure HTTP ${response.status} — body=${sanitizeLoggedBody(body)}`
+      );
       return fallback;
     }
     return parse(await response.json()) ?? fallback;
