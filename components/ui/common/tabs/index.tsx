@@ -10,7 +10,10 @@ export default function Tabs({ items, active, ariaLabel }: TabsProps) {
   return (
     <nav aria-label={ariaLabel} className="border-b border-border w-full">
       <HorizontalScroll ariaLabel={ariaLabel}>
-        <div className="flex w-full" role="list">
+        {/* HorizontalScroll's own scroller div already carries role="list";
+            adding a second one here would nest a list whose only child is
+            itself a list, not a listitem — a worse violation than a plain div. */}
+        <div className="flex w-full">
           {items.map((item) => {
             const isActive = item.id === active;
             return (
