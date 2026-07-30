@@ -77,15 +77,22 @@ describe("getUserEventsExternal", () => {
 
   it("returns an empty page when the backend responds with an error", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    mockFetchWithHmac.mockResolvedValue(pagedResponse(null, 500));
+    mockFetchWithHmac.mockResolvedValue(
+      pagedResponse({ error: "distinctive_backend_marker_9f2a" }, 500)
+    );
     const result = await getUserEventsExternal("sala-apolo");
     expect(result.content).toEqual([]);
     expect(result.last).toBe(true);
     // Non-404 failures must be greppable as distinct from "no events" —
     // otherwise an auth/config failure looks identical to a normal empty
-    // profile in the logs.
+    // profile in the logs. Assert the body preview is actually logged, not
+    // just the status: a test that only checked the status would still
+    // pass if the body logging were silently dropped.
     expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining("non-404 upstream failure HTTP 500")
+    );
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("distinctive_backend_marker_9f2a")
     );
     errorSpy.mockRestore();
   });
@@ -148,13 +155,36 @@ describe("getUserByUsernameExternal", () => {
   it("returns null but logs a distinct, greppable message for a non-404 failure", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockFetchWithHmac.mockResolvedValue(
-      jsonResponse({ error: "unauthorized" }, 401)
+      jsonResponse({ error: "distinctive_backend_marker_7c1e" }, 401)
     );
     const result = await getUserByUsernameExternal("ajuntament-riudellots");
     expect(result).toBeNull();
     expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining("non-404 upstream failure HTTP 401")
     );
+    // A test that only checked the status would still pass if the body
+    // logging were silently dropped — assert the preview is actually there.
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("distinctive_backend_marker_7c1e")
+    );
+    errorSpy.mockRestore();
+  });
+
+  it("strips control characters from the logged body preview", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue({
+      ok: false,
+      status: 500,
+      headers: new Headers(),
+      json: () => Promise.resolve(null),
+      text: () => Promise.resolve("line1\nline2\rline3\x00marker_end"),
+    } as Response);
+    const result = await getUserByUsernameExternal("sala-apolo");
+    expect(result).toBeNull();
+    const loggedCall = errorSpy.mock.calls.find(([msg]) =>
+      typeof msg === "string" && msg.includes("marker_end")
+    );
+    expect(loggedCall?.[0]).not.toMatch(/[\n\r\x00]/);
     errorSpy.mockRestore();
   });
 

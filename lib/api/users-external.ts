@@ -15,6 +15,15 @@ import type {
   PagedResponseDTO,
 } from "types/api/event";
 
+// Strip control characters (incl. newlines) before logging an upstream error
+// body, so a malicious/broken backend response can't inject fake log lines
+// into an aggregator that parses on newlines. Truncated to the same 200-char
+// bound `decodeSafeJwtClaims` below uses for logged summaries.
+function sanitizeLoggedBody(body: string): string {
+   
+  return body.replace(/[\x00-\x1f\x7f]/g, " ").slice(0, 200);
+}
+
 /**
  * Authenticated session profile: GET /api/auth/me. Backend-owned fields
  * (avatarUrl/pictureSource/role/lastLoginAt) that the Logto id_token can't
@@ -161,7 +170,7 @@ export async function getUserByUsernameExternal(
       // non-404 upstream failure going forward.
       const body = await response.text().catch(() => "<unreadable>");
       console.error(
-        `getUserByUsernameExternal: non-404 upstream failure HTTP ${response.status} — body=${body.slice(0, 200)}`
+        `getUserByUsernameExternal: non-404 upstream failure HTTP ${response.status} — body=${sanitizeLoggedBody(body)}`
       );
       return null;
     }
@@ -352,7 +361,7 @@ export async function getUserEventsExternal(
       // user just has no events" in the logs.
       const body = await response.text().catch(() => "<unreadable>");
       console.error(
-        `getUserEventsExternal: non-404 upstream failure HTTP ${response.status} — body=${body.slice(0, 200)}`
+        `getUserEventsExternal: non-404 upstream failure HTTP ${response.status} — body=${sanitizeLoggedBody(body)}`
       );
       return empty;
     }
