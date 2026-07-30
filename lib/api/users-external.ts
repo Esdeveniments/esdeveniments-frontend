@@ -143,19 +143,37 @@ export async function getUserByUsernameExternal(
   if (!isApiUrlConfigured()) return null;
   const apiUrl = getApiUrl();
 
+  return fetchJsonWithFallback(
+    `${apiUrl}/users/${encodeURIComponent(username)}`,
+    parseUserPublic,
+    null,
+    "getUserByUsernameExternal",
+  );
+}
+
+/**
+ * Shared shape for the "silent fallback" backend calls (public reads where a
+ * 404/error should render as empty state, not surface as an error): fetch,
+ * treat 404 as the fallback, log+fallback on any other non-OK or network
+ * failure, parse on success and fall back if the payload doesn't validate.
+ */
+async function fetchJsonWithFallback<T>(
+  url: string,
+  parse: (json: unknown) => T | null,
+  fallback: T,
+  label: string,
+): Promise<T> {
   try {
-    const response = await fetchWithHmac(
-      `${apiUrl}/users/${encodeURIComponent(username)}`
-    );
-    if (response.status === 404) return null;
+    const response = await fetchWithHmac(url);
+    if (response.status === 404) return fallback;
     if (!response.ok) {
-      console.error(`getUserByUsernameExternal: HTTP ${response.status}`);
-      return null;
+      console.error(`${label}: HTTP ${response.status}`);
+      return fallback;
     }
-    return parseUserPublic(await response.json());
+    return parse(await response.json()) ?? fallback;
   } catch (error) {
-    console.error("getUserByUsernameExternal: failed", error);
-    return null;
+    console.error(`${label}: failed`, error);
+    return fallback;
   }
 }
 
@@ -324,22 +342,13 @@ export async function getUserEventsExternal(
   if (!isApiUrlConfigured()) return empty;
   const apiUrl = getApiUrl();
 
-  try {
-    const qs = new URLSearchParams({ page: String(page), size: String(size) });
-    // No `next: { revalidate }` here — external wrappers must stay no-store
-    // (repo cost rule). Matches getUserByUsernameExternal on the same page.
-    const response = await fetchWithHmac(
-      `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
-    );
-    // 404 = unknown user / no public events: a normal empty result, not an error.
-    if (response.status === 404) return empty;
-    if (!response.ok) {
-      console.error(`getUserEventsExternal: HTTP ${response.status}`);
-      return empty;
-    }
-    return parsePagedEvents(await response.json()) ?? empty;
-  } catch (error) {
-    console.error("getUserEventsExternal: failed", error);
-    return empty;
-  }
+  // No `next: { revalidate }` here — external wrappers must stay no-store
+  // (repo cost rule). Matches getUserByUsernameExternal on the same page.
+  const qs = new URLSearchParams({ page: String(page), size: String(size) });
+  return fetchJsonWithFallback(
+    `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
+    parsePagedEvents,
+    empty,
+    "getUserEventsExternal",
+  );
 }

@@ -517,6 +517,10 @@ export interface ProfileHeaderProps {
   profile: import("types/api/profile").ProfileDetailResponseDTO;
 }
 
+export interface AvatarInitialsProps {
+  name: string;
+}
+
 export interface ProfilePageShellProps {
   profile: import("types/api/profile").ProfileDetailResponseDTO;
 }

@@ -123,7 +123,7 @@ export default function LocationDropdown({
 
       {/* Dropdown content */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-10 max-h-64 overflow-hidden">
+        <div className="animate-dropdown-in absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-10 max-h-64 overflow-hidden">
           {/* Search input */}
           <div className="p-3 border-b border-border border-opacity-30">
             <input

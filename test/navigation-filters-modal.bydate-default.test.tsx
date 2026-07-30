@@ -9,7 +9,7 @@
  * Fix: changed to `localByDate || DEFAULT_FILTER_VALUE`.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
 
@@ -75,13 +75,7 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
     window.history.pushState({}, "", "/catalunya/avui");
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it("applies DEFAULT_FILTER_VALUE ('tots') when no date is selected, not 'avui'", async () => {
-    vi.useFakeTimers();
-
     render(
       <NavigationFiltersModal
         isOpen
@@ -97,11 +91,6 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
       />,
     );
 
-    // Flush the setTimeout(0) that resets local state on open
-    await act(async () => {
-      vi.runOnlyPendingTimers();
-    });
-
     // Click "Apply" without selecting any date → localByDate = "" → should become "tots"
     fireEvent.click(screen.getByTestId("modal-action"));
 
@@ -116,8 +105,6 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
   });
 
   it("preserves selected date when one is chosen", async () => {
-    vi.useFakeTimers();
-
     // Start with date = "avui" so localByDate initialises to "avui"
     render(
       <NavigationFiltersModal
@@ -133,10 +120,6 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
         categories={[]}
       />,
     );
-
-    await act(async () => {
-      vi.runOnlyPendingTimers();
-    });
 
     // Apply with the existing "avui" date
     fireEvent.click(screen.getByTestId("modal-action"));
