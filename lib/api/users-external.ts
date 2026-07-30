@@ -15,13 +15,14 @@ import type {
   PagedResponseDTO,
 } from "types/api/event";
 
-// Strip control characters (incl. newlines) before logging an upstream error
-// body, so a malicious/broken backend response can't inject fake log lines
-// into an aggregator that parses on newlines. Truncated to the same 200-char
+// Strip control characters (incl. newlines, C1 controls, and the Unicode
+// line/paragraph separators some log viewers and JS engines also treat as
+// line terminators) before logging an upstream error body, so a
+// malicious/broken backend response can't inject fake log lines into an
+// aggregator that parses on line breaks. Truncated to the same 200-char
 // bound `decodeSafeJwtClaims` below uses for logged summaries.
 function sanitizeLoggedBody(body: string): string {
-   
-  return body.replace(/[\x00-\x1f\x7f]/g, " ").slice(0, 200);
+  return body.replace(/[\x00-\x1f\x7f-\x9f\u2028\u2029]/g, " ").slice(0, 200);
 }
 
 /**

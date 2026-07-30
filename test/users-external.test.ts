@@ -172,19 +172,25 @@ describe("getUserByUsernameExternal", () => {
 
   it("strips control characters from the logged body preview", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Includes ASCII controls (\n, \r, \x00), a C1 control (\x85, NEL), and
+    // the Unicode line/paragraph separators (\u2028, \u2029) some log
+    // viewers and JS engines also treat as line terminators.
     mockFetchWithHmac.mockResolvedValue({
       ok: false,
       status: 500,
       headers: new Headers(),
       json: () => Promise.resolve(null),
-      text: () => Promise.resolve("line1\nline2\rline3\x00marker_end"),
+      text: () =>
+        Promise.resolve(
+          "line1\nline2\rline3\x00line4\x85line5\u2028line6\u2029marker_end"
+        ),
     } as Response);
     const result = await getUserByUsernameExternal("sala-apolo");
     expect(result).toBeNull();
     const loggedCall = errorSpy.mock.calls.find(([msg]) =>
       typeof msg === "string" && msg.includes("marker_end")
     );
-    expect(loggedCall?.[0]).not.toMatch(/[\n\r\x00]/);
+    expect(loggedCall?.[0]).not.toMatch(/[\n\r\x00\x85\u2028\u2029]/);
     errorSpy.mockRestore();
   });
 
