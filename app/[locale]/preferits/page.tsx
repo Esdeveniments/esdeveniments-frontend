@@ -102,6 +102,18 @@ async function fetchFavoritesEvents(
   return { events: results, notFoundSlugs };
 }
 
+function collectExpiredEventKeys<K>(
+  events: EventSummaryResponseDTO[],
+  keyOf: (event: EventSummaryResponseDTO) => K | null | undefined
+): K[] {
+  return events.flatMap((event) => {
+    const key = keyOf(event);
+    if (!key) return [];
+    if (isEventActive(event)) return [];
+    return [key];
+  });
+}
+
 export default async function PreferitsPage() {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.Favorites" });
@@ -111,6 +123,7 @@ export default async function PreferitsPage() {
   let events: EventSummaryResponseDTO[];
   let uniqueFavoritesCount: number;
   let slugsToRemove: string[];
+  let eventIdsToRemove: string[];
   let backendUnavailable = false;
 
   if (authToken) {
@@ -129,22 +142,21 @@ export default async function PreferitsPage() {
         page.totalElements ??
         new Set(events.map((e) => e?.slug).filter(Boolean)).size;
     }
-    // Server-side store has no stale slugs to prune.
+    // No cookie slugs to prune, but expired favorites still linger in the
+    // backend store forever unless we tell it to remove them.
     slugsToRemove = [];
+    eventIdsToRemove = collectExpiredEventKeys(events, (e) => e.id);
   } else {
     const cookieSlugs = [...(await getFavoritesFromCookies())].reverse();
     uniqueFavoritesCount = new Set(cookieSlugs).size;
     const fetched = await fetchFavoritesEvents(cookieSlugs);
     events = fetched.events;
 
-    const expiredSlugs = events.flatMap((event) => {
-      if (!event.slug) return [];
-      if (isEventActive(event)) return [];
-      return [event.slug];
-    });
+    const expiredSlugs = collectExpiredEventKeys(events, (e) => e.slug);
     slugsToRemove = Array.from(
       new Set([...expiredSlugs, ...fetched.notFoundSlugs])
     );
+    eventIdsToRemove = [];
   }
 
   const activeEvents = filterActiveEvents(events);
@@ -167,7 +179,7 @@ export default async function PreferitsPage() {
   if (favoriteSlugs.length === 0 || activeEvents.length === 0) {
     return (
       <div className="container py-section-y flex-col justify-center items-center" data-testid="favorites-page-empty">
-        <FavoritesAutoPrune slugsToRemove={slugsToRemove} />
+        <FavoritesAutoPrune slugsToRemove={slugsToRemove} eventIdsToRemove={eventIdsToRemove} />
         <FavoritesPageTracker favoritesCount={uniqueFavoritesCount} activeCount={0} />
         <NoEventsFound title={t("emptyTitle")} description={t("emptyDescription")} />
       </div>
@@ -176,7 +188,7 @@ export default async function PreferitsPage() {
 
   return (
     <div className="container py-section-y flex-col justify-center items-center" data-testid="favorites-page">
-      <FavoritesAutoPrune slugsToRemove={slugsToRemove} />
+      <FavoritesAutoPrune slugsToRemove={slugsToRemove} eventIdsToRemove={eventIdsToRemove} />
       <FavoritesPageTracker favoritesCount={uniqueFavoritesCount} activeCount={activeEvents.length} />
       <div className="w-full">
         <HeadingLayout
