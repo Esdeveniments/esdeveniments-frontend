@@ -49,6 +49,14 @@ export type SessionResolution =
   | { kind: "unauthorized"; clearCookies: boolean }
   | { kind: "transient" };
 
+/** Input to lib/auth/session.ts's resolveSession() — the three decrypted token cookies plus whether an undecryptable raw cookie was present. */
+export interface ResolveSessionInput {
+  idToken: string | null;
+  refreshToken: string | null;
+  accessToken: string | null;
+  hasRawCookie: boolean;
+}
+
 export type { LogtoTokenResponse, LogtoUserInfo, LogtoIdTokenClaims, IdTokenPayload, Jwk } from "./api/auth";
 
 /** Resolved Logto OIDC endpoints + client credentials. */

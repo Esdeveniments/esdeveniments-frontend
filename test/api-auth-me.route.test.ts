@@ -127,4 +127,37 @@ describe("GET /api/auth/me (route mapping layer)", () => {
     const response = await GET(buildRequest());
     expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
+
+  it("passes the exact per-cookie token values and hasRawCookie through to resolveSession", async () => {
+    const mockReadTokenFromRequest = vi.mocked(authCookies.readTokenFromRequest);
+    mockReadTokenFromRequest.mockImplementation((_request, name: string) => {
+      if (name === "logto_id_token") return "the-id-token";
+      if (name === "auth_refresh_token") return "the-refresh-token";
+      if (name === "auth_token") return "the-access-token";
+      return null;
+    });
+    mockResolveSession.mockResolvedValue({ kind: "transient" });
+
+    const request = new NextRequest("http://localhost/api/auth/me", {
+      headers: { cookie: "logto_id_token=raw-encrypted-value" },
+    });
+    await GET(request);
+
+    expect(mockResolveSession).toHaveBeenCalledWith({
+      idToken: "the-id-token",
+      refreshToken: "the-refresh-token",
+      accessToken: "the-access-token",
+      hasRawCookie: true,
+    });
+  });
+
+  it("passes hasRawCookie:false when no auth cookie is present at all", async () => {
+    mockResolveSession.mockResolvedValue({ kind: "unauthorized", clearCookies: false });
+
+    await GET(buildRequest());
+
+    expect(mockResolveSession).toHaveBeenCalledWith(
+      expect.objectContaining({ hasRawCookie: false }),
+    );
+  });
 });

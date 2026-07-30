@@ -11,7 +11,7 @@ import {
   getAccessTokenFromCookies,
   getIdTokenFromCookies,
 } from "@utils/auth-cookies";
-import type { AuthUser, SessionResolution } from "types/auth";
+import type { AuthUser, ResolveSessionInput, SessionResolution } from "types/auth";
 
 /**
  * Resolve the current authenticated user from the verified id_token cookie.
@@ -86,12 +86,9 @@ export const getCurrentUser = cache(getCurrentUserInternal);
  * bad signature, wrong issuer/audience) instead falls through to the
  * refresh attempt below.
  */
-export async function resolveSession(input: {
-  idToken: string | null;
-  refreshToken: string | null;
-  accessToken: string | null;
-  hasRawCookie: boolean;
-}): Promise<SessionResolution> {
+export async function resolveSession(
+  input: ResolveSessionInput,
+): Promise<SessionResolution> {
   const { idToken, refreshToken, accessToken, hasRawCookie } = input;
 
   if (!idToken && !refreshToken) {
