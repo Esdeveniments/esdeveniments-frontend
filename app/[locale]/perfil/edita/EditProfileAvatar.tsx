@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@components/hooks/useAuth";
+import AvatarInitials from "@components/ui/common/AvatarInitials";
 import type { EditProfileAvatarProps } from "types/props";
 
 // Mirrors the caps enforced server-side in app/api/users/me/avatar/route.ts.
@@ -15,19 +16,6 @@ const ALLOWED_AVATAR_TYPES = new Set([
   "image/jpg",
   "image/webp",
 ]);
-
-function AvatarFallback({ name }: { name: string }) {
-  const initial = (name.trim().charAt(0) || "?").toUpperCase();
-  return (
-    <div
-      className="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold"
-      role="img"
-      aria-label={name}
-    >
-      {initial}
-    </div>
-  );
-}
 
 export default function EditProfileAvatar({
   className,
@@ -121,7 +109,7 @@ export default function EditProfileAvatar({
             className="w-20 h-20 rounded-full object-cover bg-background"
           />
         ) : (
-          <AvatarFallback name={displayName} />
+          <AvatarInitials name={displayName} />
         )}
         <div className="flex flex-col gap-2">
           <button

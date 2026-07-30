@@ -68,7 +68,7 @@ Use `/80`, `/70`, `/60` suffixes for opacity:
 
 ## Button Classes
 
-Use semantic button classes (component coming in Week 4):
+Use semantic button classes:
 
 | Class          | Usage                |
 | -------------- | -------------------- |
@@ -94,7 +94,6 @@ Use semantic button classes (component coming in Week 4):
 | `.card-bordered` | Border + subtle shadow     |
 | `.card-elevated` | Stronger shadow, no border |
 | `.card-body`     | Inner padding              |
-| `.card-header`   | Header section             |
 | `.card-footer`   | Footer section             |
 
 ```tsx
@@ -176,9 +175,7 @@ Use semantic tokens instead.
 
 ## Migration Context
 
-**Current Phase**: Week 0 - Foundation
-
-When modifying existing components:
+Semantic classes are already the established convention across the codebase (heading/body classes, `.btn-*`, `.card-*` all in active use). When modifying existing components:
 
 1. Prefer semantic classes over inline utilities
 2. Keep changes incremental
