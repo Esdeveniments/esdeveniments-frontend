@@ -149,3 +149,19 @@ reusable `load()` so both paths share the retry/abort logic) — any client
 mutation that changes session-derived fields (profile PATCH, avatar
 upload/remove) must call it explicitly. `router.refresh()` alone is not
 enough for anything read from `useAuth()`.
+
+## The profile Propers/Passats split ships frontend-first — the backend `status` param isn't live yet
+
+`lib/api/users-external.ts` `getUserEventsExternal` sends an optional
+`status=upcoming|past` query param to `/users/{username}/events`, and
+`ProfileEventsSection` relies on it entirely (no more client-side
+`filterActiveEvents`). Verified live against a real account with 6
+published-but-expired events (2026-07-30): both the Propers and Passats tabs
+render empty, because the backend silently ignores the unrecognized `status`
+param instead of filtering by it — it hasn't shipped Gerard's side of the
+contract yet (see `docs/plans/2026-07-30-profile-events-split.md`). This is
+expected, not a frontend regression: don't "fix" empty tabs here without
+first checking whether the backend has deployed `status` support. Same
+applies to `upcomingEventCount`/`pastEventCount` on `UserPublicResponseDTO`
+(`lib/validation/user.ts`) — both `.nullish()`, so they degrade to a
+label-only tab until the backend starts sending them.

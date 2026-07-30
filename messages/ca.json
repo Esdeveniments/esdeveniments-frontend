@@ -406,7 +406,16 @@
       "backHome": "Tornar a l'inici",
       "editProfile": "Editar perfil",
       "claimQuestion": "És el teu local?",
-      "claimLogin": "Iniciar sessió"
+      "claimLogin": "Iniciar sessió",
+      "tabUpcoming": "Propers",
+      "tabPast": "Passats",
+      "noUpcomingEvents": "Encara no hi ha esdeveniments propers",
+      "noPastEvents": "Encara no hi ha esdeveniments passats",
+      "statsPublished": "Publicats",
+      "statsUpcoming": "Propers",
+      "statsVisits": "Visites",
+      "pastTitle": "Esdeveniments passats de {name} — Perfil",
+      "pastMetaDescription": "Consulta els esdeveniments passats de {name}: concerts, exposicions i activitats que ja ha organitzat."
     },
     "Footer": {
       "navigation": {
@@ -824,7 +833,8 @@
     "CategoryEventsSection": {
       "heading": "L'agenda {categoryPhrase} a Catalunya",
       "seeMore": "Veure més",
-      "sponsored": "Contingut patrocinat"
+      "sponsored": "Contingut patrocinat",
+      "headingNoArticle": "TODO: Translate: Agenda en Cataluña · {categoryName}"
     },
     "Weather": {
       "title": "El temps",

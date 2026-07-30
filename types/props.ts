@@ -517,12 +517,28 @@ export interface ProfileHeaderProps {
   profile: import("types/api/profile").ProfileDetailResponseDTO;
 }
 
+// Route-based tab strip (e.g. profile/favourites Propers/Passats). Each item
+// is a navigable Link, not a client-side tabpanel switch — see components/ui/common/tabs.
+export interface TabItem {
+  id: string;
+  href: string;
+  label: string;
+  count?: number;
+}
+
+export interface TabsProps {
+  items: TabItem[];
+  active: string;
+  ariaLabel: string;
+}
+
 export interface AvatarInitialsProps {
   name: string;
 }
 
-export interface ProfilePageShellProps {
-  profile: import("types/api/profile").ProfileDetailResponseDTO;
+export interface ProfileEventsSectionProps {
+  username: string;
+  status: "upcoming" | "past";
 }
 
 export interface HybridEventsListProps {
@@ -843,6 +859,14 @@ export interface ExploreNearbyProps {
 // Profile owner actions client island props
 export interface ProfileOwnerActionsProps {
   username: string;
+}
+
+// Owner-only visits stat client island: totalEventVisits is public on the
+// DTO but reads worse than nothing to a non-owner ("12 visites" on a stranger's
+// profile), so it's gated behind the same owner check as ProfileOwnerActions.
+export interface ProfileVisitsStatProps {
+  username: string;
+  visits: number;
 }
 
 // Profile claim CTA client island props

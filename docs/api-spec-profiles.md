@@ -1,5 +1,10 @@
 # Profile API Spec (Backend)
 
+> **Stale (2026-07-30):** this describes a separate `Profile` entity with
+> `/api/v1/profiles/{slug}` that was never built. Profiles are served from
+> `/api/users/{username}` instead (see `lib/api/profiles.ts`,
+> `docs/plans/2026-07-30-profile-events-split.md`). Kept for historical context only.
+
 ## Endpoints
 
 | Endpoint | Method | Params | Response |

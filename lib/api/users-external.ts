@@ -338,7 +338,9 @@ export async function deleteUserAvatarExternal(
 
 /**
  * Public listing of a user's events: GET /api/users/{username}/events.
- * Same paged shape as /events; the endpoint only accepts page & size.
+ * Same paged shape as /events; the endpoint accepts page, size, and an
+ * optional status ("upcoming" | "past") that scopes the profile's Propers /
+ * Passats tabs. Omitting status keeps today's upcoming-only behaviour.
  * Default size is 20 — matches the backend handoff and the
  * /[place] listing page size, so a public profile with many events
  * renders at the same density as the home page.
@@ -349,6 +351,7 @@ export async function getUserEventsExternal(
   username: string,
   page = 0,
   size = 20,
+  status?: "upcoming" | "past",
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const empty: PagedResponseDTO<EventSummaryResponseDTO> = {
     content: [],
@@ -368,6 +371,7 @@ export async function getUserEventsExternal(
   // No `next: { revalidate }` here — external wrappers must stay no-store
   // (repo cost rule). Matches getUserByUsernameExternal on the same page.
   const qs = new URLSearchParams({ page: String(page), size: String(size) });
+  if (status) qs.set("status", status);
   return fetchJsonWithFallback(
     `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
     parsePagedEvents,

@@ -406,7 +406,16 @@
       "backHome": "Back to home",
       "editProfile": "Edit profile",
       "claimQuestion": "Is this your venue?",
-      "claimLogin": "Log in"
+      "claimLogin": "Log in",
+      "tabUpcoming": "Upcoming",
+      "tabPast": "Past",
+      "noUpcomingEvents": "No upcoming events yet",
+      "noPastEvents": "No past events yet",
+      "statsPublished": "Published",
+      "statsUpcoming": "Upcoming",
+      "statsVisits": "Visits",
+      "pastTitle": "{name}'s past events — Profile",
+      "pastMetaDescription": "Check out {name}'s past events: concerts, exhibitions and activities they've already organized."
     },
     "Footer": {
       "navigation": {

@@ -406,7 +406,16 @@
       "backHome": "Volver al inicio",
       "editProfile": "Editar perfil",
       "claimQuestion": "¿Es tu local?",
-      "claimLogin": "Iniciar sesión"
+      "claimLogin": "Iniciar sesión",
+      "tabUpcoming": "Próximos",
+      "tabPast": "Pasados",
+      "noUpcomingEvents": "Todavía no hay eventos próximos",
+      "noPastEvents": "Todavía no hay eventos pasados",
+      "statsPublished": "Publicados",
+      "statsUpcoming": "Próximos",
+      "statsVisits": "Visitas",
+      "pastTitle": "Eventos pasados de {name} — Perfil",
+      "pastMetaDescription": "Consulta los eventos pasados de {name}: conciertos, exposiciones y actividades que ya ha organizado."
     },
     "Footer": {
       "navigation": {

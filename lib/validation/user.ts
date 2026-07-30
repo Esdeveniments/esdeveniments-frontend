@@ -15,6 +15,8 @@ export const UserPublicResponseDTOSchema = z.object({
   organizerVerified: z.boolean().nullish().transform((v) => v ?? undefined),
   eventCount: z.number().nullish().transform((v) => v ?? undefined),
   totalEventVisits: z.number().nullish().transform((v) => v ?? undefined),
+  upcomingEventCount: z.number().nullish().transform((v) => v ?? undefined),
+  pastEventCount: z.number().nullish().transform((v) => v ?? undefined),
   // Legacy / transitional fields — relaxed to optional/nullish.
   name: z.string().nullish().transform((v) => v ?? undefined),
   // .nullish() because the backend serializes unset fields as explicit `null`

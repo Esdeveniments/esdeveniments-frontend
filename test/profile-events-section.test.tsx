@@ -4,34 +4,20 @@ import type {
   EventSummaryResponseDTO,
   PagedResponseDTO,
 } from "types/api/event";
-import type { ProfileDetailResponseDTO } from "types/api/profile";
 
 // Control the only data input (the user's events).
 vi.mock("@lib/api/profiles", () => ({
   fetchUserEvents: vi.fn(),
 }));
-// Hermetic locale helpers so the shell doesn't depend on root-params at runtime.
-vi.mock("@utils/i18n-seo", () => ({
-  getLocaleSafely: async () => "ca",
-  toLocalizedUrl: (path: string) => path,
-}));
 
-import ProfilePageShell from "components/partials/ProfilePageShell";
+import ProfileEventsSection from "components/partials/ProfileEventsSection";
 import { fetchUserEvents } from "@lib/api/profiles";
 import List from "@components/ui/list";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 
 const mockFetchUserEvents = vi.mocked(fetchUserEvents);
 
-const profile: ProfileDetailResponseDTO = {
-  id: "u1",
-  name: "Sala Apolo",
-  username: "sala-apolo",
-};
-
-function makeEvent(id: string): EventSummaryResponseDTO {
-  // Future dates so filterActiveEvents keeps it (it drops past events).
-  const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+function makeEvent(id: string, startDate: string): EventSummaryResponseDTO {
   return {
     id,
     hash: `hash-${id}`,
@@ -41,9 +27,9 @@ function makeEvent(id: string): EventSummaryResponseDTO {
     url: "https://example.com",
     description: "",
     imageUrl: "",
-    startDate: future,
+    startDate,
     startTime: null,
-    endDate: future,
+    endDate: startDate,
     endTime: null,
     location: "Barcelona",
     visits: 0,
@@ -83,43 +69,69 @@ function findAllByType(node: unknown, type: unknown): ReactElement[] {
   return acc;
 }
 
+const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+const past = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("ProfilePageShell events section", () => {
-  it("renders the events list when the user has upcoming events", async () => {
-    mockFetchUserEvents.mockResolvedValue(paged([makeEvent("1"), makeEvent("2")]));
+describe("ProfileEventsSection", () => {
+  it("passes status=upcoming to fetchUserEvents and renders whatever the backend returns", async () => {
+    mockFetchUserEvents.mockResolvedValue(
+      paged([makeEvent("1", future), makeEvent("2", future)])
+    );
 
-    const element = await ProfilePageShell({ profile });
+    const element = await ProfileEventsSection({
+      username: "sala-apolo",
+      status: "upcoming",
+    });
 
+    expect(mockFetchUserEvents).toHaveBeenCalledWith(
+      "sala-apolo",
+      0,
+      20,
+      "upcoming"
+    );
     const lists = findAllByType(element, List);
     expect(lists).toHaveLength(1);
     expect((lists[0].props as { events: unknown[] }).events).toHaveLength(2);
     expect(findAllByType(element, NoEventsFound)).toHaveLength(0);
-    expect(mockFetchUserEvents).toHaveBeenCalledWith("sala-apolo", 0, 20);
   });
 
-  it("renders the empty state when the user has no events", async () => {
-    mockFetchUserEvents.mockResolvedValue(paged([]));
+  it("passes status=past to fetchUserEvents and renders past events unfiltered", async () => {
+    // A past event would have been dropped by the old filterActiveEvents —
+    // the whole point of the split is that the backend, not the frontend,
+    // decides what belongs on this tab.
+    mockFetchUserEvents.mockResolvedValue(paged([makeEvent("old", past)]));
 
-    const element = await ProfilePageShell({ profile });
+    const element = await ProfileEventsSection({
+      username: "sala-apolo",
+      status: "past",
+    });
 
-    expect(findAllByType(element, NoEventsFound)).toHaveLength(1);
-    expect(findAllByType(element, List)).toHaveLength(0);
-  });
-
-  it("drops past events from the list (only upcoming render)", async () => {
-    const past = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const pastEvent = { ...makeEvent("old"), startDate: past, endDate: past };
-    mockFetchUserEvents.mockResolvedValue(paged([pastEvent, makeEvent("new")]));
-
-    const element = await ProfilePageShell({ profile });
-
+    expect(mockFetchUserEvents).toHaveBeenCalledWith(
+      "sala-apolo",
+      0,
+      20,
+      "past"
+    );
     const lists = findAllByType(element, List);
     expect(lists).toHaveLength(1);
     expect((lists[0].props as { events: { id: string }[] }).events).toEqual([
-      expect.objectContaining({ id: "new" }),
+      expect.objectContaining({ id: "old" }),
     ]);
+  });
+
+  it("renders the empty state when the backend returns no events", async () => {
+    mockFetchUserEvents.mockResolvedValue(paged([]));
+
+    const element = await ProfileEventsSection({
+      username: "sala-apolo",
+      status: "upcoming",
+    });
+
+    expect(findAllByType(element, NoEventsFound)).toHaveLength(1);
+    expect(findAllByType(element, List)).toHaveLength(0);
   });
 });
