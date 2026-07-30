@@ -1,22 +1,10 @@
 import ProfileOwnerActions from "@components/ui/profile/ProfileOwnerActions";
+import AvatarInitials from "@components/ui/common/AvatarInitials";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { parseBackendDateAsUtcMs } from "@utils/date-helpers";
 import type { AppLocale } from "types/i18n";
 import type { ProfileHeaderProps } from "types/props";
-
-function AvatarFallback({ name }: { name: string }) {
-  const initial = name.charAt(0).toUpperCase();
-  return (
-    <div
-      className="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold"
-      role="img"
-      aria-label={name}
-    >
-      {initial}
-    </div>
-  );
-}
 
 /** Format a backend ISO date-time as a locale-aware month + year string.
  *  Uses parseBackendDateAsUtcMs to handle timezone-naive strings the backend
@@ -77,7 +65,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
               loading="eager"
             />
           ) : (
-            <AvatarFallback name={displayName} />
+            <AvatarInitials name={displayName} />
           )}
         </div>
 

@@ -189,6 +189,14 @@ export interface FavoriteButtonProps {
   className?: string;
 }
 
+export interface FavoritesData {
+  events: EventSummaryResponseDTO[];
+  uniqueFavoritesCount: number;
+  slugsToRemove: string[];
+  eventIdsToRemove: string[];
+  backendUnavailable: boolean;
+}
+
 export interface NativeShareButtonProps {
   title: string;
   text?: string;
@@ -507,6 +515,10 @@ export interface NavigationFiltersModalProps {
 
 export interface ProfileHeaderProps {
   profile: import("types/api/profile").ProfileDetailResponseDTO;
+}
+
+export interface AvatarInitialsProps {
+  name: string;
 }
 
 export interface ProfilePageShellProps {

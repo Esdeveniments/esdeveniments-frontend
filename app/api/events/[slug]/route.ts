@@ -38,12 +38,14 @@ export async function DELETE(
   context: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
+    const [currentUser, { slug }] = await Promise.all([
+      getCurrentUser(),
+      context.params,
+    ]);
     if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { slug } = await context.params;
     const event = await fetchExternalEvent(slug);
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });

@@ -153,32 +153,50 @@ export async function getUserByUsernameExternal(
   if (!isApiUrlConfigured()) return null;
   const apiUrl = getApiUrl();
 
+  return fetchJsonWithFallback(
+    `${apiUrl}/users/${encodeURIComponent(username)}`,
+    parseUserPublic,
+    null,
+    "getUserByUsernameExternal",
+  );
+}
+
+/**
+ * Shared shape for the "silent fallback" backend calls (public reads where a
+ * 404/error should render as empty state, not surface as an error): fetch,
+ * treat 404 as the fallback (the common, expected case, not an error), log +
+ * fallback on any other non-OK or network failure, parse on success and fall
+ * back if the payload doesn't validate.
+ *
+ * Anything other than 404 also falls back silently so callers render a clean
+ * empty/not-found state instead of crashing, but a bare status number here
+ * was indistinguishable from a genuine 404 in logs — a real "works locally,
+ * 404s on staging" report (2026-07-30) took a manual server-log correlation
+ * to rule out an auth/config failure masked as "doesn't exist" (it turned
+ * out to be a genuinely missing row, but the log line gave no way to tell
+ * without digging). Read the body and tag the log line so it's greppable as
+ * a non-404 upstream failure going forward.
+ */
+async function fetchJsonWithFallback<T>(
+  url: string,
+  parse: (json: unknown) => T | null,
+  fallback: T,
+  label: string,
+): Promise<T> {
   try {
-    const response = await fetchWithHmac(
-      `${apiUrl}/users/${encodeURIComponent(username)}`
-    );
-    // 404 = genuinely no such user — the common, expected case, not an error.
-    if (response.status === 404) return null;
+    const response = await fetchWithHmac(url);
+    if (response.status === 404) return fallback;
     if (!response.ok) {
-      // Anything else (401/403/5xx/network) also resolves to null so the
-      // profile page renders a clean "not found" instead of crashing, but a
-      // bare status number here was indistinguishable from a genuine 404 in
-      // logs — a real "works locally, 404s on staging" report (2026-07-30)
-      // took a manual server-log correlation to rule out an auth/config
-      // failure masked as "user doesn't exist" (it turned out to be a
-      // genuinely missing row, but the log line gave no way to tell without
-      // digging). Read the body and tag the log line so it's greppable as a
-      // non-404 upstream failure going forward.
       const body = await response.text().catch(() => "<unreadable>");
       console.error(
-        `getUserByUsernameExternal: non-404 upstream failure HTTP ${response.status} — body=${sanitizeLoggedBody(body)}`
+        `${label}: non-404 upstream failure HTTP ${response.status} — body=${sanitizeLoggedBody(body)}`
       );
-      return null;
+      return fallback;
     }
-    return parseUserPublic(await response.json());
+    return parse(await response.json()) ?? fallback;
   } catch (error) {
-    console.error("getUserByUsernameExternal: failed", error);
-    return null;
+    console.error(`${label}: failed`, error);
+    return fallback;
   }
 }
 
@@ -347,28 +365,13 @@ export async function getUserEventsExternal(
   if (!isApiUrlConfigured()) return empty;
   const apiUrl = getApiUrl();
 
-  try {
-    const qs = new URLSearchParams({ page: String(page), size: String(size) });
-    // No `next: { revalidate }` here — external wrappers must stay no-store
-    // (repo cost rule). Matches getUserByUsernameExternal on the same page.
-    const response = await fetchWithHmac(
-      `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
-    );
-    // 404 = unknown user / no public events: a normal empty result, not an error.
-    if (response.status === 404) return empty;
-    if (!response.ok) {
-      // Same non-404-vs-404 distinction as getUserByUsernameExternal above —
-      // an auth/config failure here would otherwise look identical to "this
-      // user just has no events" in the logs.
-      const body = await response.text().catch(() => "<unreadable>");
-      console.error(
-        `getUserEventsExternal: non-404 upstream failure HTTP ${response.status} — body=${sanitizeLoggedBody(body)}`
-      );
-      return empty;
-    }
-    return parsePagedEvents(await response.json()) ?? empty;
-  } catch (error) {
-    console.error("getUserEventsExternal: failed", error);
-    return empty;
-  }
+  // No `next: { revalidate }` here — external wrappers must stay no-store
+  // (repo cost rule). Matches getUserByUsernameExternal on the same page.
+  const qs = new URLSearchParams({ page: String(page), size: String(size) });
+  return fetchJsonWithFallback(
+    `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
+    parsePagedEvents,
+    empty,
+    "getUserEventsExternal",
+  );
 }

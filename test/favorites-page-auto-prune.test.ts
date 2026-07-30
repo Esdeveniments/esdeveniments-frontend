@@ -8,7 +8,10 @@ import type {
   ListEvent,
 } from "types/api/event";
 
-const autoPruneProps: Array<{ slugsToRemove: string[] }> = [];
+const autoPruneProps: Array<{
+  slugsToRemove: string[];
+  eventIdsToRemove: string[];
+}> = [];
 
 vi.mock("@utils/i18n-seo", () => ({
   getLocaleSafely: vi.fn(async () => "ca"),
@@ -75,8 +78,14 @@ vi.mock("@components/partials/seo-meta", () => ({
 }));
 
 vi.mock("./../app/[locale]/preferits/FavoritesAutoPrune", () => ({
-  default: function FavoritesAutoPruneMock(props: { slugsToRemove: string[] }) {
-    autoPruneProps.push({ slugsToRemove: props.slugsToRemove });
+  default: function FavoritesAutoPruneMock(props: {
+    slugsToRemove: string[];
+    eventIdsToRemove?: string[];
+  }) {
+    autoPruneProps.push({
+      slugsToRemove: props.slugsToRemove,
+      eventIdsToRemove: props.eventIdsToRemove ?? [],
+    });
     return null;
   },
 }));
@@ -204,5 +213,52 @@ describe("Favorites page auto-prune", () => {
 
     expect(autoPruneProps).toHaveLength(1);
     expect(autoPruneProps[0].slugsToRemove).toEqual([]);
+  });
+
+  it("prunes expired favorites by event id for authenticated users", async () => {
+    const { getAccessTokenFromCookies } = await import("@utils/auth-cookies");
+    const { listFavoriteEventsExternal } = await import(
+      "@lib/api/favorites-external"
+    );
+    const { isEventActive, filterActiveEvents } = await import(
+      "@utils/event-helpers"
+    );
+
+    const activeSlug = "active-slug";
+    const expiredSlug = "expired-slug";
+    const activeEvent = createEventDetail(activeSlug);
+    const expiredEvent = createEventDetail(expiredSlug);
+
+    vi.mocked(getAccessTokenFromCookies).mockResolvedValue("token");
+    vi.mocked(listFavoriteEventsExternal).mockResolvedValue({
+      content: [activeEvent, expiredEvent],
+      currentPage: 0,
+      pageSize: 50,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    vi.mocked(isEventActive).mockImplementation((event: unknown) => {
+      const e = event as { slug?: string };
+      return e.slug === activeSlug;
+    });
+
+    vi.mocked(filterActiveEvents).mockImplementation(
+      (events: EventSummaryResponseDTO[] | ListEvent[]) => {
+        const candidates = events as EventSummaryResponseDTO[];
+        return candidates.filter((event) => event.slug === activeSlug);
+      }
+    );
+
+    const { default: PreferitsPage } = await import(
+      "@app/[locale]/preferits/page"
+    );
+    const element = await PreferitsPage();
+    renderToStaticMarkup(element);
+
+    expect(autoPruneProps).toHaveLength(1);
+    expect(autoPruneProps[0].slugsToRemove).toEqual([]);
+    expect(autoPruneProps[0].eventIdsToRemove).toEqual([expiredEvent.id]);
   });
 });
