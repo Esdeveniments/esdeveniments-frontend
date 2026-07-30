@@ -193,6 +193,35 @@ describe("/api/favorites/prune", () => {
       expect(captureExceptionMock).toHaveBeenCalledTimes(1);
     });
 
+    it("caps and dedupes event ids at MAX_FAVORITES", async () => {
+      const { MAX_FAVORITES } = await import("@utils/constants");
+      removeFavoriteEventExternalMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const uniqueIds = Array.from(
+        { length: MAX_FAVORITES + 5 },
+        (_, i) => `id-${i}`
+      );
+      const idsWithDuplicates = [...uniqueIds, "id-0", "id-1"];
+
+      const { POST } = await import("@app/api/favorites/prune/route");
+      const response = await POST(
+        new Request("http://localhost/api/favorites/prune", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventIdsToRemove: idsWithDuplicates }),
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ ok: true });
+      expect(removeFavoriteEventExternalMock).toHaveBeenCalledTimes(
+        MAX_FAVORITES
+      );
+    });
+
     it("does nothing when there are no event ids to remove", async () => {
       const { POST } = await import("@app/api/favorites/prune/route");
       const response = await POST(

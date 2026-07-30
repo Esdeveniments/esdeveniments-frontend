@@ -143,7 +143,12 @@ export default async function PreferitsPage() {
         new Set(events.map((e) => e?.slug).filter(Boolean)).size;
     }
     // No cookie slugs to prune, but expired favorites still linger in the
-    // backend store forever unless we tell it to remove them.
+    // backend store forever unless we tell it to remove them. Only page 0
+    // is fetched (MAX_FAVORITES-sized), so an account that already holds
+    // more than MAX_FAVORITES rows (pre-existing data from before the cap
+    // was enforced) can still have expired favorites beyond this page that
+    // never get pruned — accepted gap, not reachable going forward since
+    // the 409 cap blocks new accounts from ever exceeding MAX_FAVORITES.
     slugsToRemove = [];
     eventIdsToRemove = collectExpiredEventKeys(events, (e) => e.id);
   } else {

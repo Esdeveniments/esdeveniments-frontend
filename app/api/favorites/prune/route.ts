@@ -8,6 +8,7 @@ import {
 } from "@utils/favorites";
 import { getValidAccessToken } from "@utils/auth-cookies";
 import { removeFavoriteEventExternal } from "@lib/api/favorites-external";
+import { MAX_FAVORITES } from "@utils/constants";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -47,7 +48,12 @@ export async function POST(request: Request) {
     // Authed: backend is the source of truth, keyed by event id, not slug.
     // Cookie pruning doesn't apply here.
     if (authToken) {
-      const idsToRemove = parsed.data.eventIdsToRemove.filter(Boolean);
+      // Bound + dedupe: an account can never legitimately have more than
+      // MAX_FAVORITES stored, so cap here to stop a caller from turning one
+      // request into an unbounded fan-out of backend DELETEs.
+      const idsToRemove = Array.from(
+        new Set(parsed.data.eventIdsToRemove.filter(Boolean))
+      ).slice(0, MAX_FAVORITES);
       if (idsToRemove.length === 0) {
         return NextResponse.json({ ok: true }, { headers: NO_STORE });
       }
