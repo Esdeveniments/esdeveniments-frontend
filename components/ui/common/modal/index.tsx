@@ -47,12 +47,12 @@ export default function Modal({
           <Transition show={open} as={Fragment}>
             <Transition.Child
               as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0"
-              enterTo="opacity-70"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-70"
-              leaveTo="opacity-0"
+              enter="transition-modal"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0"
+              enterTo="opacity-70 translate-y-0"
+              leave="transition-modal"
+              leaveFrom="opacity-70 translate-y-0"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0"
             >
               <DialogPanel
                 className="flex justify-center items-center relative z-10 pointer-events-auto"

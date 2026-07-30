@@ -14,7 +14,7 @@ import { routing } from "@i18n/routing";
 import GoogleScripts from "../GoogleScripts";
 import { AdProvider } from "@lib/context/AdContext";
 import { AuthProvider } from "@lib/auth/AuthProvider";
-import { BaseLayout } from "@components/ui/layout";
+import BaseLayout from "@components/ui/layout/base";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
 import WebMcpTools from "@components/partials/WebMcpTools";

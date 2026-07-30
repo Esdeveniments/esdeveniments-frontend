@@ -76,8 +76,7 @@
     "undici": "^8.6.0",
     "web-push": "^3.6.7",
     "web-vitals": "^5.2.0",
-    "zod": "3.24.3",
-    "zustand": "^5.0.8"
+    "zod": "3.24.3"
   },
   "devDependencies": {
     "@eslint-react/eslint-plugin": "^5.16.1",
