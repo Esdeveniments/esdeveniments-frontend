@@ -195,9 +195,15 @@ describe("getUserByUsernameExternal", () => {
   });
 
   it("returns null on a network failure", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockFetchWithHmac.mockRejectedValue(new Error("network down"));
     const result = await getUserByUsernameExternal("sala-apolo");
     expect(result).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("getUserByUsernameExternal: failed"),
+      expect.any(Error)
+    );
+    errorSpy.mockRestore();
   });
 });
 
