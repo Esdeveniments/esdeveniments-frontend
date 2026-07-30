@@ -139,14 +139,10 @@ No tab component exists in the repo (no Radix; `@headlessui/react` is used in ex
 modal). DESIGN.md documents no tab pattern either, so we define one rather than inventing a
 variant per page.
 
-**`components/ui/common/tabs/index.tsx`** (client, ~40 lines; it needs `usePathname` to know
-the active tab, but has no state and fetches nothing).
+**`components/ui/common/tabs/index.tsx`** (server, ~40 lines; receives the active tab from the
+page as a prop instead of deriving it from `usePathname`, see below).
 
-```tsx
-// props live in types/props.ts
-type TabItem = { id: string; href: string; label: string; count?: number };
-type TabsProps = { items: TabItem[]; active: string; ariaLabel: string };
-```
+Props (`TabItem`, `TabsProps`) live in `types/props.ts`, not redeclared inline.
 
 - Renders `<nav>` containing `Link` from `@i18n/routing`, never `next/link`.
 - **Server component. The active tab is a parameter, not a discovery.** Each page renders the

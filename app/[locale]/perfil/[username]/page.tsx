@@ -79,12 +79,9 @@ export default async function ProfilePage({
     profile.username?.trim() ||
     "";
 
+  // No middle "Profiles" crumb: /perfil has no index route to link to.
   const breadcrumbItems: BreadcrumbItem[] = [
     { name: tBreadcrumbs("home"), url: toLocalizedUrl("/", locale) },
-    {
-      name: tProfile("breadcrumbProfiles"),
-      url: toLocalizedUrl("/perfil", locale),
-    },
     { name: profileDisplayName, url: profileUrl },
   ];
 

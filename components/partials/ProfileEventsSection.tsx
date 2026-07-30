@@ -21,27 +21,19 @@ export default async function ProfileEventsSection({
 
   const sectionLabel = t(status === "past" ? "tabPast" : "tabUpcoming");
 
-  if (eventsResponse.content.length === 0) {
-    return (
-      <section aria-label={sectionLabel} data-testid="profile-events">
+  return (
+    <section aria-label={sectionLabel} data-testid="profile-events">
+      {eventsResponse.content.length === 0 ? (
         <NoEventsFound
           title={t(status === "past" ? "noPastEvents" : "noUpcomingEvents")}
         />
-      </section>
-    );
-  }
-
-  return (
-    <section aria-label={sectionLabel} data-testid="profile-events">
-      <List events={eventsResponse.content}>
-        {(event, index) => (
-          <CardServer
-            key={`${event.id}-${index}`}
-            event={event}
-            isPriority={index === 0}
-          />
-        )}
-      </List>
+      ) : (
+        <List events={eventsResponse.content}>
+          {(event, index) => (
+            <CardServer event={event} isPriority={index === 0} />
+          )}
+        </List>
+      )}
     </section>
   );
 }

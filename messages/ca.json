@@ -399,7 +399,6 @@
       "joinedDate": "Des de {date}",
       "noEvents": "Encara no hi ha esdeveniments",
       "website": "Lloc web",
-      "breadcrumbProfiles": "Perfils",
       "totalEvents": "{count, plural, one {# esdeveniment} other {# esdeveniments}}",
       "notFound": "Perfil no trobat",
       "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
@@ -834,7 +833,7 @@
       "heading": "L'agenda {categoryPhrase} a Catalunya",
       "seeMore": "Veure més",
       "sponsored": "Contingut patrocinat",
-      "headingNoArticle": "TODO: Translate: Agenda en Cataluña · {categoryName}"
+      "headingNoArticle": "Agenda a Catalunya · {categoryName}"
     },
     "Weather": {
       "title": "El temps",

@@ -10,7 +10,7 @@ export default function Tabs({ items, active, ariaLabel }: TabsProps) {
   return (
     <nav aria-label={ariaLabel} className="border-b border-border w-full">
       <HorizontalScroll ariaLabel={ariaLabel}>
-        <div className="flex w-full">
+        <div className="flex w-full" role="list">
           {items.map((item) => {
             const isActive = item.id === active;
             return (
@@ -19,7 +19,7 @@ export default function Tabs({ items, active, ariaLabel }: TabsProps) {
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
                   className={[
-                    "flex flex-col items-center gap-1 border-b-2 -mb-px px-element-gap py-sm",
+                    "flex flex-col items-center gap-1 border-b-2 -mb-px px-element-gap py-sm focus-ring",
                     isActive
                       ? "border-primary text-foreground-strong"
                       : "border-transparent text-foreground/80",

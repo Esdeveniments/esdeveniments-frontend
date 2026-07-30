@@ -399,7 +399,6 @@
       "joinedDate": "Desde {date}",
       "noEvents": "Aún no hay eventos",
       "website": "Sitio web",
-      "breadcrumbProfiles": "Perfiles",
       "totalEvents": "{count, plural, one {# evento} other {# eventos}}",
       "notFound": "Perfil no encontrado",
       "notFoundDescription": "El perfil que buscas no existe o ha sido eliminado.",

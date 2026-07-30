@@ -1,9 +1,11 @@
 # Profile API Spec (Backend)
 
-> **Stale (2026-07-30):** this describes a separate `Profile` entity with
-> `/api/v1/profiles/{slug}` that was never built. Profiles are served from
-> `/api/users/{username}` instead (see `lib/api/profiles.ts`,
-> `docs/plans/2026-07-30-profile-events-split.md`). Kept for historical context only.
+> **Historical / unimplemented proposal — do not build against this.** The
+> `/api/v1/profiles/*` endpoints and the separate `Profile` entity below were
+> never built. The canonical, implemented contract is
+> `GET /api/users/{username}` (see `lib/api/profiles.ts` and
+> `docs/plans/2026-07-30-profile-events-split.md`). Everything past this
+> notice is kept only as a record of the original proposal.
 
 ## Endpoints
 
