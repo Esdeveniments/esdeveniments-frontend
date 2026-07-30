@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
 import {
   getAuthenticatedUserExternal,
+  getUserByUsernameExternal,
   getUserEventsExternal,
 } from "../lib/api/users-external";
 
@@ -75,10 +76,18 @@ describe("getUserEventsExternal", () => {
   });
 
   it("returns an empty page when the backend responds with an error", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockFetchWithHmac.mockResolvedValue(pagedResponse(null, 500));
     const result = await getUserEventsExternal("sala-apolo");
     expect(result.content).toEqual([]);
     expect(result.last).toBe(true);
+    // Non-404 failures must be greppable as distinct from "no events" —
+    // otherwise an auth/config failure looks identical to a normal empty
+    // profile in the logs.
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("non-404 upstream failure HTTP 500")
+    );
+    errorSpy.mockRestore();
   });
 
   it("treats a 404 (unknown user) as an empty page", async () => {
@@ -97,6 +106,62 @@ describe("getUserEventsExternal", () => {
     const result = await getUserEventsExternal("sala-apolo");
     expect(result.content).toEqual([]);
     expect(result.last).toBe(true);
+  });
+});
+
+const userPublicDTO = {
+  id: "e10c6a5f-306c-487f-9e71-876f67c7bbb2",
+  displayName: "Esdeveniments Catalunya",
+  username: "esdeveniments-catalunya-cat",
+  avatarUrl: null,
+  organizerVerified: false,
+};
+
+function jsonResponse(data: unknown, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: new Headers(),
+    json: () => Promise.resolve(data),
+    text: () => Promise.resolve(JSON.stringify(data)),
+  } as Response;
+}
+
+describe("getUserByUsernameExternal", () => {
+  it("returns the parsed user on success", async () => {
+    mockFetchWithHmac.mockResolvedValue(jsonResponse(userPublicDTO));
+    const result = await getUserByUsernameExternal(
+      "esdeveniments-catalunya-cat"
+    );
+    expect(result?.username).toBe("esdeveniments-catalunya-cat");
+  });
+
+  it("returns null (no log) for a genuine 404", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue(jsonResponse(null, 404));
+    const result = await getUserByUsernameExternal("ghost");
+    expect(result).toBeNull();
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("returns null but logs a distinct, greppable message for a non-404 failure", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue(
+      jsonResponse({ error: "unauthorized" }, 401)
+    );
+    const result = await getUserByUsernameExternal("ajuntament-riudellots");
+    expect(result).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("non-404 upstream failure HTTP 401")
+    );
+    errorSpy.mockRestore();
+  });
+
+  it("returns null on a network failure", async () => {
+    mockFetchWithHmac.mockRejectedValue(new Error("network down"));
+    const result = await getUserByUsernameExternal("sala-apolo");
+    expect(result).toBeNull();
   });
 });
 

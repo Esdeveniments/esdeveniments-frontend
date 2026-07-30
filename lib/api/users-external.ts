@@ -147,9 +147,22 @@ export async function getUserByUsernameExternal(
     const response = await fetchWithHmac(
       `${apiUrl}/users/${encodeURIComponent(username)}`
     );
+    // 404 = genuinely no such user — the common, expected case, not an error.
     if (response.status === 404) return null;
     if (!response.ok) {
-      console.error(`getUserByUsernameExternal: HTTP ${response.status}`);
+      // Anything else (401/403/5xx/network) also resolves to null so the
+      // profile page renders a clean "not found" instead of crashing, but a
+      // bare status number here was indistinguishable from a genuine 404 in
+      // logs — a real "works locally, 404s on staging" report (2026-07-30)
+      // took a manual server-log correlation to rule out an auth/config
+      // failure masked as "user doesn't exist" (it turned out to be a
+      // genuinely missing row, but the log line gave no way to tell without
+      // digging). Read the body and tag the log line so it's greppable as a
+      // non-404 upstream failure going forward.
+      const body = await response.text().catch(() => "<unreadable>");
+      console.error(
+        `getUserByUsernameExternal: non-404 upstream failure HTTP ${response.status} — body=${body.slice(0, 200)}`
+      );
       return null;
     }
     return parseUserPublic(await response.json());
@@ -334,7 +347,13 @@ export async function getUserEventsExternal(
     // 404 = unknown user / no public events: a normal empty result, not an error.
     if (response.status === 404) return empty;
     if (!response.ok) {
-      console.error(`getUserEventsExternal: HTTP ${response.status}`);
+      // Same non-404-vs-404 distinction as getUserByUsernameExternal above —
+      // an auth/config failure here would otherwise look identical to "this
+      // user just has no events" in the logs.
+      const body = await response.text().catch(() => "<unreadable>");
+      console.error(
+        `getUserEventsExternal: non-404 upstream failure HTTP ${response.status} — body=${body.slice(0, 200)}`
+      );
       return empty;
     }
     return parsePagedEvents(await response.json()) ?? empty;
