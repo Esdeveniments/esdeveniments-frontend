@@ -22,6 +22,8 @@ Production runs on Coolify/Docker/Node 22; Vercel previews are a different runti
 
 `buildPinnedDnsDispatcher`'s `lookup` callback runs only when undici opens a real connection — autoSelectFamily (Happy Eyeballs, default since Node 20) calls it with `{ all: true }` and expects an array of records. Mocked-fetch unit tests never reach it. `test/pinned-dns-dispatcher.test.ts` fetches through a loopback server to exercise the real path; keep that style for any proxy or dispatcher change.
 
+That real-socket design has a cost: it's a real HTTP server on a real (ephemeral) port, so it can flake under CPU/port contention rather than a code bug. It failed once in `yarn test --run` right after a `git push` (2213/2215) while a dev server and browser automation were still running in the background, then passed 3/3 in isolation and 2215/2215 once those processes were killed. Before "fixing" a failure here, rule out background load (`next dev`, headless browsers, other test runs) rather than touching the dispatcher code.
+
 ## Back-merge main hotfixes into develop the same day
 
 main and develop diverge. A fix that lands directly on main (a hotfix) does not reach develop on its own, so develop can re-ship a bug main already fixed — and merging develop→main can even revert main's fix. This caused the Jun 11 2026 incident: `097e1275 fix(cache): scope Redis entries by build id` sat on main for weeks while develop kept the broken handler. The `branch-drift` CI workflow flags when main is ahead of develop on infra files (`cache-handler.mjs`, `next.config.js`, `Dockerfile`, `proxy.ts`). When you see that warning, back-merge before promoting.
