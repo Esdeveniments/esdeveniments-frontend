@@ -30,6 +30,24 @@ vi.mock("next/headers", () => ({
   cookies: () => cookiesMock(),
 }));
 
+const getValidAccessTokenMock = vi.fn<() => Promise<string | null>>();
+vi.mock("@utils/auth-cookies", () => ({
+  getValidAccessToken: () => getValidAccessTokenMock(),
+}));
+
+const removeFavoriteEventExternalMock = vi.fn<
+  (accessToken: string, eventId: string) => Promise<{ ok: boolean; status: number }>
+>();
+vi.mock("@lib/api/favorites-external", () => ({
+  removeFavoriteEventExternal: (accessToken: string, eventId: string) =>
+    removeFavoriteEventExternalMock(accessToken, eventId),
+}));
+
+const captureExceptionMock = vi.fn();
+vi.mock("@sentry/nextjs", () => ({
+  captureException: (...args: unknown[]) => captureExceptionMock(...args),
+}));
+
 describe("/api/favorites/prune", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -39,6 +57,9 @@ describe("/api/favorites/prune", () => {
       const value = cookieValueByName.get(name);
       return value === undefined ? undefined : { name, value };
     });
+
+    // Guest by default; authed tests override this.
+    getValidAccessTokenMock.mockResolvedValue(null);
   });
 
   it("removes provided slugs and persists cookie", async () => {
@@ -93,5 +114,127 @@ describe("/api/favorites/prune", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true, favorites: ["a"] });
     expect(cookieSetMock).not.toHaveBeenCalled();
+  });
+
+  describe("authenticated branch", () => {
+    beforeEach(() => {
+      getValidAccessTokenMock.mockResolvedValue("token");
+    });
+
+    it("removes each event id and never touches cookies", async () => {
+      removeFavoriteEventExternalMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const { POST } = await import("@app/api/favorites/prune/route");
+      const response = await POST(
+        new Request("http://localhost/api/favorites/prune", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventIdsToRemove: ["id-1", "id-2"] }),
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ ok: true });
+      expect(removeFavoriteEventExternalMock).toHaveBeenCalledTimes(2);
+      expect(removeFavoriteEventExternalMock).toHaveBeenCalledWith(
+        "token",
+        "id-1"
+      );
+      expect(removeFavoriteEventExternalMock).toHaveBeenCalledWith(
+        "token",
+        "id-2"
+      );
+      expect(cookieGetMock).not.toHaveBeenCalled();
+      expect(cookieSetMock).not.toHaveBeenCalled();
+      expect(cookieDeleteMock).not.toHaveBeenCalled();
+      expect(captureExceptionMock).not.toHaveBeenCalled();
+    });
+
+    it("treats a 404 as an idempotent no-op, not a failure", async () => {
+      removeFavoriteEventExternalMock.mockResolvedValue({
+        ok: false,
+        status: 404,
+      });
+
+      const { POST } = await import("@app/api/favorites/prune/route");
+      const response = await POST(
+        new Request("http://localhost/api/favorites/prune", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventIdsToRemove: ["already-gone"] }),
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ ok: true });
+      expect(captureExceptionMock).not.toHaveBeenCalled();
+    });
+
+    it("still returns ok but reports a real backend failure to Sentry", async () => {
+      removeFavoriteEventExternalMock.mockResolvedValue({
+        ok: false,
+        status: 500,
+      });
+
+      const { POST } = await import("@app/api/favorites/prune/route");
+      const response = await POST(
+        new Request("http://localhost/api/favorites/prune", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventIdsToRemove: ["id-1"] }),
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ ok: true });
+      expect(captureExceptionMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("caps and dedupes event ids at MAX_FAVORITES", async () => {
+      const { MAX_FAVORITES } = await import("@utils/constants");
+      removeFavoriteEventExternalMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const uniqueIds = Array.from(
+        { length: MAX_FAVORITES + 5 },
+        (_, i) => `id-${i}`
+      );
+      const idsWithDuplicates = [...uniqueIds, "id-0", "id-1"];
+
+      const { POST } = await import("@app/api/favorites/prune/route");
+      const response = await POST(
+        new Request("http://localhost/api/favorites/prune", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventIdsToRemove: idsWithDuplicates }),
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ ok: true });
+      expect(removeFavoriteEventExternalMock).toHaveBeenCalledTimes(
+        MAX_FAVORITES
+      );
+    });
+
+    it("does nothing when there are no event ids to remove", async () => {
+      const { POST } = await import("@app/api/favorites/prune/route");
+      const response = await POST(
+        new Request("http://localhost/api/favorites/prune", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventIdsToRemove: [] }),
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ ok: true });
+      expect(removeFavoriteEventExternalMock).not.toHaveBeenCalled();
+    });
   });
 });
