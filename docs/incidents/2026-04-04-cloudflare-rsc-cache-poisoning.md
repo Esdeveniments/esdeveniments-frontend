@@ -32,7 +32,8 @@ The issue self-resolved after ~30 minutes when the `s-maxage=1800` TTL expired, 
 | ~12:01 UTC      | `s-maxage=1800` expired; Cloudflare fetched fresh HTML response; issue self-resolved         |
 | 13:22 UTC       | Investigated; confirmed `cf-cache-status: HIT` with `content-type: text/x-component`        |
 | 13:59 UTC       | Revalidation re-run confirmed `/es` now returns `text/html` correctly                       |
-| 16:07 UTC       | Fix deployed to codebase (RSC requests get `private, no-store`)                              |
+| 2026-04-20      | This doc backfilled into the repo (batch commit, no code change alongside it)               |
+| 2026-07-31      | **Recurred on `/en`** — the `isRscRequest` fix below was never actually committed (`git log -S"isRscRequest"` had zero hits). Implemented for real in `proxy.ts` + regression test in `test/proxy.test.ts`. |
 
 ## Root Cause
 
@@ -77,8 +78,8 @@ RSC responses are small (~300 bytes) and fast to generate, so CDN caching provid
 
 ## Prevention
 
-1. **`proxy.ts` now detects RSC requests** via the `RSC: 1` header and excludes them from CDN caching
-2. **All proxy tests pass** (25/25) with the new logic
+1. **`proxy.ts` now detects RSC requests** via the `RSC: 1` header and excludes them from CDN caching (implemented 2026-07-31, see below — the original "16:07 UTC" fix never actually shipped)
+2. **Regression test** in `test/proxy.test.ts` asserts `Cache-Control: private, no-store` for a request carrying `RSC: 1`
 
 ### Cloudflare Cache Rule Reminder
 
@@ -94,3 +95,4 @@ If modifying the Cloudflare cache rule for `www.esdeveniments.cat`, be aware tha
 3. **Cache purges are a high-risk moment** — the first request to refill the cache determines what all users see. After purging, it's worth verifying the response `Content-Type`.
 4. **Self-resolving ≠ safe** — the issue resolved after 30 min via TTL, but could have affected SEO (Googlebot indexing RSC payload) and user trust.
 5. **RSC responses should never be CDN-cached** unless the CDN supports proper cache key differentiation (Enterprise Cloudflare or CloudFront with custom cache policy).
+6. **A "Resolution" section in an incident doc is not proof the fix shipped.** This doc was backfilled 16 days after the incident in a batch commit unrelated to `proxy.ts`, and the described fix was never committed — the same bug recurred on `/en` three months later. Verify fixes described in incident docs against `git log -S` or the current file, don't trust the prose.

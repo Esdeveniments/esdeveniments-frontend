@@ -147,6 +147,22 @@ describe("proxy", () => {
       );
     });
 
+    it("never CDN-caches RSC client-navigation requests (prevents Cloudflare cache poisoning)", async () => {
+      const mockRequest = {
+        nextUrl: mockNextUrl({
+          pathname: "/en",
+          search: "",
+          searchParams: new URLSearchParams(),
+        }),
+        headers: new Headers({ accept: "text/html", RSC: "1" }),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      const result = await proxy(mockRequest);
+
+      expect(result.headers.get("Cache-Control")).toBe("private, no-store");
+    });
+
     it("handles /sw.js route with cache headers", async () => {
       const mockRequest = {
         nextUrl: mockNextUrl({

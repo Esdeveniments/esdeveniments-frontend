@@ -668,6 +668,15 @@ export default async function proxy(request: NextRequest) {
     const isFavoritesPage = normalizedPath === "/preferits";
     const isPersonalizedHtml = isFavoritesPage;
 
+    // RSC client-navigation requests must never be CDN-cached. Cloudflare
+    // Free/Pro/Business ignores custom Vary headers (only Accept-Encoding),
+    // so if an RSC request (`RSC: 1`) is the first to fill the cache for a
+    // URL, Cloudflare serves that raw flight payload (text/x-component) to
+    // every subsequent HTML visitor until the TTL expires. RSC responses are
+    // tiny and cheap to regenerate, so skipping CDN cache here is free.
+    // See docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md.
+    const isRscRequest = request.headers.get("RSC") === "1";
+
     // AI bot requests must not pollute or be served from the shared CDN cache:
     // - Origin renders a different (fully-SSR) HTML for bots (see Slurp trick
     //   above). If that response were cached, browsers would get over-rendered
@@ -680,7 +689,7 @@ export default async function proxy(request: NextRequest) {
     //   the bot regex. See docs/incidents/2026-04-24-ai-bot-cdn-cache-mix.md.
     response.headers.set(
       "Cache-Control",
-      isPersonalizedHtml || isAiBot
+      isPersonalizedHtml || isAiBot || isRscRequest
         ? "private, no-store"
         : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
     );
