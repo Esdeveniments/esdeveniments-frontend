@@ -1,4 +1,4 @@
-import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
+import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkeleton";
 
 export default function ProfileLoading() {
   return (
@@ -21,14 +21,11 @@ export default function ProfileLoading() {
         </div>
       </div>
 
-      {/* Events list skeleton */}
-      <section className="flex flex-col justify-center items-center">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="w-full mb-element-gap">
-            <EventCardSkeleton />
-          </div>
-        ))}
-      </section>
+      {/* Events list skeleton — same grid as List / the Suspense fallback in
+          page.tsx, so swapping in real content doesn't reflow the layout. */}
+      <div className="w-full mt-section-y">
+        <EventsGridSkeleton count={3} />
+      </div>
     </div>
   );
 }

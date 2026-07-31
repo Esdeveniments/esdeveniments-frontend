@@ -972,3 +972,11 @@ export interface UrlFiltersProviderProps {
 export interface PwaBackButtonProps {
   fallbackHref?: string;
 }
+
+// Shared skeleton grid: same grid-cols-1 md:2 xl:3 layout as List
+// (components/ui/list), so a loading state never reflows once real
+// content swaps in. `count` defaults to 6 to match the pre-existing
+// EventsListSkeleton/PlacePageSkeleton usage.
+export interface EventsGridSkeletonProps {
+  count?: number;
+}
