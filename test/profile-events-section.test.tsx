@@ -52,6 +52,11 @@ function paged(
 }
 
 // Recursively collect every element of a given component type in the tree.
+// Resolves function-component boundaries (invokes them with their own
+// props) so the walk can see past a wrapper like EventsSection into what
+// it renders — otherwise a component whose data comes in via non-children
+// props (not the `children` prop) hides everything inside it from a walk
+// that only recurses through `.props.children`.
 function findAllByType(node: unknown, type: unknown): ReactElement[] {
   const acc: ReactElement[] = [];
   const visit = (n: unknown) => {
@@ -61,7 +66,12 @@ function findAllByType(node: unknown, type: unknown): ReactElement[] {
       return;
     }
     const el = n as ReactElement;
-    if (el.type === type) acc.push(el);
+    if (el.type === type) {
+      acc.push(el);
+    } else if (typeof el.type === "function") {
+      visit((el.type as (props: unknown) => unknown)(el.props));
+      return;
+    }
     const children = (el.props as { children?: unknown } | undefined)?.children;
     if (children) visit(children);
   };
