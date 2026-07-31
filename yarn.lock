@@ -1711,12 +1711,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/bundle-analyzer@npm:^16.2.11":
-  version: 16.2.11
-  resolution: "@next/bundle-analyzer@npm:16.2.11"
+"@next/bundle-analyzer@npm:^16.2.12":
+  version: 16.2.12
+  resolution: "@next/bundle-analyzer@npm:16.2.12"
   dependencies:
     webpack-bundle-analyzer: "npm:4.10.1"
-  checksum: 10c0/42d82894353d2770eff05c6acf46ae262e5196a8cfd8d400896ac7088aaa840b13fb7df563d431c925e44c3c773931c6cd03c2fe0852d89e41c395d0e63c80d4
+  checksum: 10c0/1d061bfe8fdcc89f844836ece32e7d86e539fd6f812276b804f5d765cda16405fe7abfa6f8124cb6ea9c06400abb2132d62b823f64480ccac06894473b518d3a
   languageName: node
   linkType: hard
 
@@ -1734,12 +1734,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/eslint-plugin-next@npm:16.2.11":
-  version: 16.2.11
-  resolution: "@next/eslint-plugin-next@npm:16.2.11"
+"@next/eslint-plugin-next@npm:16.2.12":
+  version: 16.2.12
+  resolution: "@next/eslint-plugin-next@npm:16.2.12"
   dependencies:
     fast-glob: "npm:3.3.1"
-  checksum: 10c0/bf143139044b101a6a65a29320c034e56e45fdf2ac582c3b779677e2a35e79c889d4ad982246793ce4b9582c43ec329aa7160a1a5bf4243b63ff083fb67ed70d
+  checksum: 10c0/c44cd10033ea95b30fa3b2cc15e94af2ac06183f481f283fd045964837d47bd2156c563db2d739988ee9b42baed4d7c8101eaaddbcaef667ce20f8985f5cca5c
   languageName: node
   linkType: hard
 
@@ -6592,11 +6592,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-next@npm:^16.2.11":
-  version: 16.2.11
-  resolution: "eslint-config-next@npm:16.2.11"
+"eslint-config-next@npm:^16.2.12":
+  version: 16.2.12
+  resolution: "eslint-config-next@npm:16.2.12"
   dependencies:
-    "@next/eslint-plugin-next": "npm:16.2.11"
+    "@next/eslint-plugin-next": "npm:16.2.12"
     eslint-import-resolver-node: "npm:^0.3.6"
     eslint-import-resolver-typescript: "npm:^3.5.2"
     eslint-plugin-import: "npm:^2.32.0"
@@ -6611,7 +6611,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/eec5af08265aebcd10b61de4b8ede1620ec2adc1640cb497afedcb33723224dea5cc28117912a0566bcfa7a08916f9161e254afcb914eabddc6cbc0acb93b120
+  checksum: 10c0/bbabf2eddc68b039e6ae7d3f32ffd298a0c5c1d239f4a2e15e8c7840d8916e9ffcd009b8fb4e548fc14ab97e5968f66b463dba91294948db694f92b17e74edf4
   languageName: node
   linkType: hard
 
@@ -11661,7 +11661,7 @@ __metadata:
     "@heroicons/react": "npm:^2.2.0"
     "@lhci/cli": "npm:^0.15.1"
     "@lingual/i18n-check": "npm:^0.9.5"
-    "@next/bundle-analyzer": "npm:^16.2.11"
+    "@next/bundle-analyzer": "npm:^16.2.12"
     "@opentelemetry/api": "npm:^1.9.1"
     "@opentelemetry/context-async-hooks": "npm:^2.10.0"
     "@opentelemetry/core": "npm:^2.10.0"
@@ -11692,7 +11692,7 @@ __metadata:
     date-fns: "npm:^4.1.0"
     env-cmd: "npm:^10.1.0"
     eslint: "npm:10"
-    eslint-config-next: "npm:^16.2.11"
+    eslint-config-next: "npm:^16.2.12"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     fast-xml-parser: "npm:^5.7.0"
     feed: "npm:^5.1.0"
