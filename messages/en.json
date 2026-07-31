@@ -82,7 +82,16 @@
       "emptyTitle": "No upcoming favorites yet",
       "emptyDescription": "Tap the heart on an event to save it here. Past events are automatically removed from favorites.",
       "errorTitle": "We couldn't load your favorites",
-      "errorDescription": "Please try again in a moment. Your favorites are safe."
+      "errorDescription": "Please try again in a moment. Your favorites are safe.",
+      "tabUpcoming": "Upcoming",
+      "tabPast": "Past",
+      "pastTitle": "Past favorites - Esdeveniments.cat",
+      "pastDescription": "Your saved past events",
+      "pastEmptyTitle": "No past favorites yet",
+      "pastEmptyDescription": "Events you save with the heart will show up here once they've ended.",
+      "pastAuthGateTitle": "Sign in to see your past favorites",
+      "pastAuthGateDescription": "Past favorites are only available to signed-in accounts.",
+      "pastAuthGateLogin": "Sign in"
     },
     "About": {
       "metaTitle": "About us - Cultural agenda of Catalonia | Esdeveniments.cat",

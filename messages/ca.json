@@ -82,7 +82,16 @@
       "emptyTitle": "Encara no tens esdeveniments futurs desats",
       "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits.",
       "errorTitle": "No hem pogut carregar els teus preferits",
-      "errorDescription": "Torna-ho a provar en un moment. Els teus preferits estan segurs."
+      "errorDescription": "Torna-ho a provar en un moment. Els teus preferits estan segurs.",
+      "tabUpcoming": "Propers",
+      "tabPast": "Passats",
+      "pastTitle": "Preferits passats - Esdeveniments.cat",
+      "pastDescription": "Els teus esdeveniments passats guardats",
+      "pastEmptyTitle": "Encara no tens esdeveniments passats desats",
+      "pastEmptyDescription": "Els esdeveniments que marquis amb el cor apareixeran aquí un cop hagin finalitzat.",
+      "pastAuthGateTitle": "Inicia sessió per veure els teus preferits passats",
+      "pastAuthGateDescription": "Els preferits passats només estan disponibles per a comptes amb sessió iniciada.",
+      "pastAuthGateLogin": "Iniciar sessió"
     },
     "About": {
       "metaTitle": "Qui som - Agenda cultural de Catalunya | Esdeveniments.cat",
