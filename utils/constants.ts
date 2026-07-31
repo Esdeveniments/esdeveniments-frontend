@@ -9,6 +9,11 @@ import enMessages from "../messages/en.json";
 
 export const MAX_RESULTS = 15;
 export const MAX_FAVORITES = 10;
+// Authenticated favourites are stored server-side with no real backend cap
+// (verified against esdeveniments-backend/develop — UserFavoriteEventServiceImpl
+// has no count check). This is a client-side-only UX guard, not a real limit,
+// hence the much higher number than the guest cookie cap above.
+export const MAX_FAVORITES_AUTHENTICATED = 50;
 
 /** Number of days within which news articles are considered "fresh". */
 export const NEWS_FRESHNESS_DAYS = 7;
