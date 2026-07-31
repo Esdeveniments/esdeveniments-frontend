@@ -89,7 +89,11 @@ describe("listFavoriteEventsExternal", () => {
       "active-event",
       "past-event",
     ]);
+    expect(result?.currentPage).toBe(0);
+    expect(result?.pageSize).toBe(20);
     expect(result?.totalElements).toBe(2);
+    expect(result?.totalPages).toBe(1);
+    expect(result?.last).toBe(true);
   });
 
   it("returns null when the active period call fails, even if past succeeds", async () => {
