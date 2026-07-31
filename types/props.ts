@@ -532,6 +532,13 @@ export interface TabsProps {
   ariaLabel: string;
 }
 
+// buildProfileTabItems (components/partials/profile-tabs.ts) is shared by
+// page.tsx and passats/page.tsx, both of which call getTranslations
+// server-side and pass the resolved translator straight through.
+export type ProfileTranslator = Awaited<
+  ReturnType<typeof import("next-intl/server").getTranslations>
+>;
+
 export interface AvatarInitialsProps {
   name: string;
 }

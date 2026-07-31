@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
 import { getUserByUsernameCached } from "@lib/api/profiles";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import ProfileEventsSection from "@components/partials/ProfileEventsSection";
+import { buildProfileTabItems } from "@components/partials/profile-tabs";
 import Tabs from "@components/ui/common/tabs";
 import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkeleton";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
-import type { TabItem } from "types/props";
 
 // No generateStaticParams — mirrors the parent /perfil/[username] page.
 
@@ -69,20 +69,7 @@ export default async function ProfilePastEventsPage({
     profile.username?.trim() ||
     "";
 
-  const tabItems: TabItem[] = [
-    {
-      id: "upcoming",
-      href: `/perfil/${encodeURIComponent(profile.username)}`,
-      label: tProfile("tabUpcoming"),
-      count: profile.upcomingEventCount,
-    },
-    {
-      id: "past",
-      href: `/perfil/${encodeURIComponent(profile.username)}/passats`,
-      label: tProfile("tabPast"),
-      count: profile.pastEventCount,
-    },
-  ];
+  const tabItems = buildProfileTabItems(profile, tProfile);
 
   return (
     <>

@@ -5,13 +5,13 @@ import { buildPageMeta } from "@components/partials/seo-meta";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import ProfileEventsSection from "@components/partials/ProfileEventsSection";
+import { buildProfileTabItems } from "@components/partials/profile-tabs";
 import Tabs from "@components/ui/common/tabs";
 import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkeleton";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
 import type { BreadcrumbItem } from "types/common";
-import type { TabItem } from "types/props";
 
 // No generateStaticParams — usernames are user-generated with infinite
 // cardinality. Pages render on first request and are cached automatically.
@@ -95,20 +95,7 @@ export default async function ProfilePage({
     identifier: profile.username,
   };
 
-  const tabItems: TabItem[] = [
-    {
-      id: "upcoming",
-      href: `/perfil/${encodeURIComponent(profile.username)}`,
-      label: tProfile("tabUpcoming"),
-      count: profile.upcomingEventCount,
-    },
-    {
-      id: "past",
-      href: `/perfil/${encodeURIComponent(profile.username)}/passats`,
-      label: tProfile("tabPast"),
-      count: profile.pastEventCount,
-    },
-  ];
+  const tabItems = buildProfileTabItems(profile, tProfile);
 
   return (
     <>
