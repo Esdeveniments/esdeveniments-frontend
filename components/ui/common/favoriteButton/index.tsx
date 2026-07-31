@@ -15,6 +15,7 @@ import { useAuth } from "@components/hooks/useAuth";
 import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
+import { MAX_FAVORITES_AUTHENTICATED } from "@utils/constants";
 
 const FAVORITES_SWR_KEY = "favorites:list";
 
@@ -92,6 +93,24 @@ export default function FavoriteButton({
           setLimitMessage(null);
           const nextIsFavorite = !isFavorite;
           setIsFavorite(nextIsFavorite);
+
+          if (
+            nextIsFavorite &&
+            isAuthenticated &&
+            favoritesData?.ok === true &&
+            favoritesData.favorites.length >= MAX_FAVORITES_AUTHENTICATED
+          ) {
+            setIsFavorite(!nextIsFavorite);
+            sendGoogleEvent("favorites_limit_reached", {
+              action: "add",
+              max_favorites: MAX_FAVORITES_AUTHENTICATED,
+              event_slug: eventSlug,
+              event_id: eventId,
+              event_title: eventTitle,
+            });
+            setLimitMessage(t("maxReached", { max: MAX_FAVORITES_AUTHENTICATED }));
+            return;
+          }
 
           startTransition(async () => {
             isMutatingRef.current = true;
