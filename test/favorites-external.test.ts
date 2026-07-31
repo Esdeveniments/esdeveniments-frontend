@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
-import { listFavoriteEventsExternal } from "../lib/api/favorites-external";
+import {
+  listFavoriteEventsExternal,
+  listFavoriteEventsByPeriodExternal,
+  countFavoritesByPeriodExternal,
+} from "../lib/api/favorites-external";
 
 vi.mock("../lib/api/fetch-wrapper", () => ({
   fetchWithHmac: vi.fn(),
@@ -151,6 +155,57 @@ describe("listFavoriteEventsExternal", () => {
     const result = await listFavoriteEventsExternal("token", 0, 10);
 
     expect(result).toBeNull();
+    errorSpy.mockRestore();
+  });
+});
+
+describe("listFavoriteEventsByPeriodExternal", () => {
+  it("requests only the given period, not both", async () => {
+    mockFetchWithHmac.mockResolvedValue(pagedResponse(page([activeEvent])));
+
+    await listFavoriteEventsByPeriodExternal("token", "active", 0, 10);
+
+    expect(mockFetchWithHmac).toHaveBeenCalledTimes(1);
+    const url = mockFetchWithHmac.mock.calls[0][0] as string;
+    expect(url).toContain("period=active");
+    expect(url).not.toContain("period=past");
+  });
+
+  it("returns null when the backend call fails", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue(
+      pagedResponse({ error: "backend_down" }, 500)
+    );
+
+    const result = await listFavoriteEventsByPeriodExternal("token", "past", 0, 10);
+
+    expect(result).toBeNull();
+    errorSpy.mockRestore();
+  });
+});
+
+describe("countFavoritesByPeriodExternal", () => {
+  it("returns totalElements from a size=1 fetch", async () => {
+    mockFetchWithHmac.mockResolvedValue(
+      pagedResponse(page([activeEvent], 7))
+    );
+
+    const count = await countFavoritesByPeriodExternal("token", "active");
+
+    expect(count).toBe(7);
+    const url = mockFetchWithHmac.mock.calls[0][0] as string;
+    expect(url).toContain("size=1");
+  });
+
+  it("returns null when the backend call fails", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue(
+      pagedResponse({ error: "backend_down" }, 500)
+    );
+
+    const count = await countFavoritesByPeriodExternal("token", "past");
+
+    expect(count).toBeNull();
     errorSpy.mockRestore();
   });
 });
