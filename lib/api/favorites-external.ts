@@ -61,6 +61,11 @@ async function fetchFavoritesPeriod(
   }
 }
 
+// `page`/`size` are applied identically to both period calls, then
+// concatenated — correct for the "one page holds everything" callers this
+// has today (page=0, size=MAX_FAVORITES). A caller requesting page > 0
+// would NOT get a coherent "page N of the combined list", since active and
+// past are paginated independently before merging.
 export async function listFavoriteEventsExternal(
   accessToken: string,
   page = 0,
