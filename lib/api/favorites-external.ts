@@ -82,12 +82,19 @@ export async function listFavoriteEventsExternal(
   // rather than a partial list that looks complete.
   if (activePage === null || pastPage === null) return null;
 
+  const content = [...activePage.content, ...pastPage.content];
+  const totalElements = activePage.totalElements + pastPage.totalElements;
+  // Up to `size` items come back from each leg, so content.length can reach
+  // 2*size — pageSize must reflect that bound, not the single-leg `size`,
+  // or a caller trusting content.length <= pageSize gets burned.
+  const pageSize = size * 2;
+
   return {
-    content: [...activePage.content, ...pastPage.content],
+    content,
     currentPage: page,
-    pageSize: size,
-    totalElements: activePage.totalElements + pastPage.totalElements,
-    totalPages: Math.max(activePage.totalPages, pastPage.totalPages),
+    pageSize,
+    totalElements,
+    totalPages: pageSize > 0 ? Math.ceil(totalElements / pageSize) : 0,
     last: activePage.last && pastPage.last,
   };
 }

@@ -108,6 +108,32 @@ describe("listFavoriteEventsExternal", () => {
     errorSpy.mockRestore();
   });
 
+  it("reports pageSize/totalPages consistent with content when both legs are full", async () => {
+    const size = 10;
+    const activeContent = Array.from({ length: size }, (_, i) =>
+      makeEvent(`active-${i}`)
+    );
+    const pastContent = Array.from({ length: size }, (_, i) =>
+      makeEvent(`past-${i}`)
+    );
+    mockFetchWithHmac.mockImplementation(async (url) => {
+      const u = url as string;
+      if (u.includes("period=active")) {
+        return pagedResponse(page(activeContent, size));
+      }
+      return pagedResponse(page(pastContent, size));
+    });
+
+    const result = await listFavoriteEventsExternal("token", 0, size);
+
+    expect(result?.content.length).toBe(2 * size);
+    expect(result?.content.length).toBeLessThanOrEqual(result!.pageSize);
+    expect(result?.totalElements).toBe(2 * size);
+    expect(result?.totalPages).toBe(
+      Math.ceil(result!.totalElements / result!.pageSize)
+    );
+  });
+
   it("returns null when the past period call fails, even if active succeeds", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockFetchWithHmac.mockImplementation(async (url) => {
