@@ -9,7 +9,7 @@
 `/preferits` currently shows only active (upcoming/in-progress) favourites for
 everyone. Expired favourites are auto-pruned: `FavoritesAutoPrune` computes
 `eventIdsToRemove`/`slugsToRemove` from expired events and POSTs them to
-`/api/favorites/prune`, which deletes them from the backend (guest branch) or
+`/api/favorites/prune`, which removes cookie slugs (guest branch) or
 issues backend DELETEs (authenticated branch, added in PR #430).
 
 This was a deliberate quota-protection measure: `docs/plans/2026-07-30-profile-events-split.md`

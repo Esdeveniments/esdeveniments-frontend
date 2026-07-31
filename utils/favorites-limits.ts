@@ -9,6 +9,6 @@
 export const MAX_FAVORITES = 10;
 // Authenticated favourites are stored server-side with no real backend cap
 // (verified against esdeveniments-backend/develop — UserFavoriteEventServiceImpl
-// has no count check). This is a client-side-only UX guard, not a real limit,
-// hence the much higher number than the guest cookie cap above.
+// has no count check). This is a soft application limit used by the client guard
+// and favorites page size, not a backend-enforced limit.
 export const MAX_FAVORITES_AUTHENTICATED = 50;

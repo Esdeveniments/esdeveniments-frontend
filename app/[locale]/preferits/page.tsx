@@ -142,7 +142,7 @@ export default async function PreferitsPage() {
     return (
       <>
         <Tabs items={tabItems} active="upcoming" ariaLabel={t("heading")} />
-        {activeCount !== null && (
+        {activeCount !== null && pastCount !== null && (
           <FavoritesPageTracker
             favoritesCount={activeCount + (pastCount ?? 0)}
             activeCount={activeCount}

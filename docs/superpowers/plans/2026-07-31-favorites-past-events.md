@@ -134,7 +134,7 @@ import {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `yarn vitest run test/favorites-external.test.ts`
+Run: `yarn test test/favorites-external.test.ts`
 Expected: FAIL — `listFavoriteEventsByPeriodExternal is not a function` / `countFavoritesByPeriodExternal is not a function`.
 
 - [ ] **Step 3: Implement**
@@ -168,7 +168,7 @@ export async function countFavoritesByPeriodExternal(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `yarn vitest run test/favorites-external.test.ts`
+Run: `yarn test test/favorites-external.test.ts`
 Expected: PASS (all tests, including the pre-existing merge tests).
 
 - [ ] **Step 5: Typecheck**
@@ -237,7 +237,7 @@ describe("buildPeriodTabItems", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `yarn vitest run test/period-tabs.test.ts`
+Run: `yarn test test/period-tabs.test.ts`
 Expected: FAIL — cannot find module `@components/partials/period-tabs`.
 
 - [ ] **Step 3: Implement `period-tabs.ts`**
@@ -275,7 +275,7 @@ export function buildPeriodTabItems({
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `yarn vitest run test/period-tabs.test.ts`
+Run: `yarn test test/period-tabs.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: Refactor `buildProfileTabItems` to use it**
@@ -307,7 +307,7 @@ export function buildProfileTabItems(
 
 - [ ] **Step 6: Run the existing profile-tabs test to confirm no regression**
 
-Run: `yarn vitest run test/profile-tabs.test.ts`
+Run: `yarn test test/profile-tabs.test.ts`
 Expected: PASS, unmodified (output shape is identical to before the refactor).
 
 - [ ] **Step 7: Typecheck**
@@ -370,7 +370,7 @@ describe("buildFavoritesTabItems", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `yarn vitest run test/favorites-tabs.test.ts`
+Run: `yarn test test/favorites-tabs.test.ts`
 Expected: FAIL — cannot find module `@components/partials/favorites-tabs`.
 
 - [ ] **Step 3: Implement**
@@ -400,7 +400,7 @@ export function buildFavoritesTabItems(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `yarn vitest run test/favorites-tabs.test.ts`
+Run: `yarn test test/favorites-tabs.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: Typecheck**
@@ -594,7 +594,7 @@ Note: the original inlined `key={index}` via `List`'s render prop (no explicit k
 
 - [ ] **Step 4: Run the existing test to confirm no regression**
 
-Run: `yarn vitest run test/profile-events-section.test.tsx`
+Run: `yarn test test/profile-events-section.test.tsx`
 Expected: PASS, unmodified.
 
 - [ ] **Step 5: Typecheck**
@@ -735,7 +735,7 @@ describe("FavoritesEventsSection", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `yarn vitest run test/favorites-events-section.test.tsx`
+Run: `yarn test test/favorites-events-section.test.tsx`
 Expected: FAIL — cannot find module `@components/partials/FavoritesEventsSection`.
 
 - [ ] **Step 3: Implement**
@@ -788,7 +788,7 @@ export default async function FavoritesEventsSection({
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `yarn vitest run test/favorites-events-section.test.tsx`
+Run: `yarn test test/favorites-events-section.test.tsx`
 Expected: PASS
 
 - [ ] **Step 5: Typecheck**
@@ -1124,7 +1124,7 @@ Expected: no errors. Fix any type mismatches (e.g. confirm `Tabs`'s `ariaLabel` 
 
 - [ ] **Step 4: Run the existing e2e-adjacent unit test to see what breaks (expected)**
 
-Run: `yarn vitest run test/favorites-page-auto-prune.test.ts`
+Run: `yarn test test/favorites-page-auto-prune.test.ts`
 Expected: FAIL on the authenticated test (it mocks `listFavoriteEventsExternal`, which this page no longer calls) — this is expected and fixed in Task 10, which immediately follows. Do not attempt to fix it in this task.
 
 - [ ] **Step 5: Commit**
@@ -1205,7 +1205,7 @@ it("never prunes for authenticated users, even with expired events in the respon
 
 - [ ] **Step 3: Run tests to verify they pass**
 
-Run: `yarn vitest run test/favorites-page-auto-prune.test.ts`
+Run: `yarn test test/favorites-page-auto-prune.test.ts`
 Expected: PASS, all 3 tests (the two guest-path tests unchanged, the new authenticated test passing).
 
 - [ ] **Step 4: Typecheck**
@@ -1386,7 +1386,7 @@ describe("PreferitsPassatsPage", () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `yarn vitest run test/preferits-passats.test.tsx`
+Run: `yarn test test/preferits-passats.test.tsx`
 Expected: FAIL — cannot find module `@app/[locale]/preferits/passats/page`.
 
 - [ ] **Step 3: Implement**
@@ -1486,7 +1486,7 @@ async function PastFavoritesSectionOrError({
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `yarn vitest run test/preferits-passats.test.tsx`
+Run: `yarn test test/preferits-passats.test.tsx`
 Expected: PASS
 
 - [ ] **Step 5: Typecheck**
@@ -1600,7 +1600,7 @@ Verified `messages/ca.json`'s `Components.FavoriteButton.maxReached` is `"Has ar
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `yarn vitest run test/FavoriteButton.test.tsx`
+Run: `yarn test test/FavoriteButton.test.tsx`
 Expected: FAIL — no limit message shown, a POST call fires (the other 3 tests still pass, since they default to `isAuthenticatedMock() === false` via the `beforeEach` reset from Step 1).
 
 - [ ] **Step 4: Implement**
@@ -1641,7 +1641,7 @@ startTransition(async () => {
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `yarn vitest run test/FavoriteButton.test.tsx`
+Run: `yarn test test/FavoriteButton.test.tsx`
 Expected: PASS, all 4 tests.
 
 - [ ] **Step 6: Typecheck**
@@ -1668,7 +1668,7 @@ Expected: no errors.
 
 - [ ] **Step 2: Full test suite**
 
-Run: `yarn vitest run`
+Run: `yarn test`
 Expected: all tests pass (pre-existing count + the ~15 new/modified tests from Tasks 2-13).
 
 - [ ] **Step 3: i18n check**

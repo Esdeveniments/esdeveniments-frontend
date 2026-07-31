@@ -55,11 +55,15 @@ describe("PreferitsPassatsPage", () => {
     const { default: PreferitsPassatsPage } = await import(
       "@app/[locale]/preferits/passats/page"
     );
+    const { countFavoritesByPeriodExternal } = await import(
+      "@lib/api/favorites-external"
+    );
     const element = await PreferitsPassatsPage();
     const html = renderToStaticMarkup(element);
     // PastFavoritesAuthGateMock renders null; assert the section/error/empty
     // testids it would otherwise show are absent, i.e. the gate branch ran.
     expect(html).not.toContain("favorites-page-error");
+    expect(countFavoritesByPeriodExternal).not.toHaveBeenCalled();
   });
 
   it("renders the error state for authenticated users when the backend fails", async () => {
