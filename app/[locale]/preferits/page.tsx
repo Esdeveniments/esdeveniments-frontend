@@ -130,7 +130,10 @@ export default async function PreferitsPage() {
   // client-side expiry filtering/pruning needed — period=active already
   // excludes expired events server-side, so there's nothing to prune.
   if (authToken) {
-    const pastCount = await countFavoritesByPeriodExternal(authToken, "past");
+    const [pastCount, activeCount] = await Promise.all([
+      countFavoritesByPeriodExternal(authToken, "past"),
+      countFavoritesByPeriodExternal(authToken, "active"),
+    ]);
     const tabItems = buildFavoritesTabItems(
       { pastCount: pastCount ?? undefined },
       t
@@ -139,6 +142,12 @@ export default async function PreferitsPage() {
     return (
       <>
         <Tabs items={tabItems} active="upcoming" ariaLabel={t("heading")} />
+        {activeCount !== null && (
+          <FavoritesPageTracker
+            favoritesCount={activeCount + (pastCount ?? 0)}
+            activeCount={activeCount}
+          />
+        )}
         <div className="w-full mt-section-y">
           <Suspense fallback={<EventsGridSkeleton count={3} />}>
             <FavoritesSectionOrError accessToken={authToken} t={t} />
