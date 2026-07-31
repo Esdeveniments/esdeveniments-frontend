@@ -13,6 +13,11 @@ const autoPruneProps: Array<{
   eventIdsToRemove: string[];
 }> = [];
 
+const trackerProps: Array<{
+  favoritesCount: number;
+  activeCount: number;
+}> = [];
+
 vi.mock("@utils/i18n-seo", () => ({
   getLocaleSafely: vi.fn(async () => "ca"),
 }));
@@ -31,7 +36,8 @@ vi.mock("@utils/auth-cookies", () => ({
 }));
 
 vi.mock("@lib/api/favorites-external", () => ({
-  listFavoriteEventsExternal: vi.fn(async () => null),
+  listFavoriteEventsByPeriodExternal: vi.fn(async () => null),
+  countFavoritesByPeriodExternal: vi.fn(async () => null),
 }));
 
 vi.mock("@utils/event-helpers", () => ({
@@ -90,6 +96,37 @@ vi.mock("./../app/[locale]/preferits/FavoritesAutoPrune", () => ({
   },
 }));
 
+vi.mock("./../app/[locale]/preferits/FavoritesPageTracker", () => ({
+  default: function FavoritesPageTrackerMock(props: {
+    favoritesCount: number;
+    activeCount: number;
+  }) {
+    trackerProps.push({
+      favoritesCount: props.favoritesCount,
+      activeCount: props.activeCount,
+    });
+    return null;
+  },
+}));
+
+vi.mock("@components/ui/common/tabs", () => ({
+  default: function TabsMock() {
+    return null;
+  },
+}));
+
+vi.mock("@components/partials/FavoritesEventsSection", () => ({
+  default: async function FavoritesEventsSectionMock() {
+    return null;
+  },
+}));
+
+vi.mock("@components/ui/common/skeletons/EventsGridSkeleton", () => ({
+  default: function EventsGridSkeletonMock() {
+    return null;
+  },
+}));
+
 function createEventDetail(slug: string): EventDetailResponseDTO {
   return {
     id: `id-${slug}`,
@@ -126,6 +163,7 @@ function createEventDetail(slug: string): EventDetailResponseDTO {
 describe("Favorites page auto-prune", () => {
   beforeEach(() => {
     autoPruneProps.length = 0;
+    trackerProps.length = 0;
     vi.clearAllMocks();
   });
 
@@ -215,41 +253,14 @@ describe("Favorites page auto-prune", () => {
     expect(autoPruneProps[0].slugsToRemove).toEqual([]);
   });
 
-  it("prunes expired favorites by event id for authenticated users", async () => {
+  it("never prunes for authenticated users, even with expired events in the response", async () => {
     const { getAccessTokenFromCookies } = await import("@utils/auth-cookies");
-    const { listFavoriteEventsExternal } = await import(
+    const { countFavoritesByPeriodExternal } = await import(
       "@lib/api/favorites-external"
     );
-    const { isEventActive, filterActiveEvents } = await import(
-      "@utils/event-helpers"
-    );
-
-    const activeSlug = "active-slug";
-    const expiredSlug = "expired-slug";
-    const activeEvent = createEventDetail(activeSlug);
-    const expiredEvent = createEventDetail(expiredSlug);
 
     vi.mocked(getAccessTokenFromCookies).mockResolvedValue("token");
-    vi.mocked(listFavoriteEventsExternal).mockResolvedValue({
-      content: [activeEvent, expiredEvent],
-      currentPage: 0,
-      pageSize: 50,
-      totalElements: 2,
-      totalPages: 1,
-      last: true,
-    });
-
-    vi.mocked(isEventActive).mockImplementation((event: unknown) => {
-      const e = event as { slug?: string };
-      return e.slug === activeSlug;
-    });
-
-    vi.mocked(filterActiveEvents).mockImplementation(
-      (events: EventSummaryResponseDTO[] | ListEvent[]) => {
-        const candidates = events as EventSummaryResponseDTO[];
-        return candidates.filter((event) => event.slug === activeSlug);
-      }
-    );
+    vi.mocked(countFavoritesByPeriodExternal).mockResolvedValue(3);
 
     const { default: PreferitsPage } = await import(
       "@app/[locale]/preferits/page"
@@ -257,8 +268,14 @@ describe("Favorites page auto-prune", () => {
     const element = await PreferitsPage();
     renderToStaticMarkup(element);
 
-    expect(autoPruneProps).toHaveLength(1);
-    expect(autoPruneProps[0].slugsToRemove).toEqual([]);
-    expect(autoPruneProps[0].eventIdsToRemove).toEqual([expiredEvent.id]);
+    // Authenticated branch never renders FavoritesAutoPrune at all — nothing
+    // to prune once period=active already excludes expired events server-side.
+    expect(autoPruneProps).toHaveLength(0);
+
+    // countFavoritesByPeriodExternal is called for both "past" and "active"
+    // in parallel; mockResolvedValue(3) applies to both calls regardless of
+    // the period argument, so favoritesCount = activeCount + pastCount = 6.
+    expect(trackerProps).toHaveLength(1);
+    expect(trackerProps[0]).toEqual({ favoritesCount: 6, activeCount: 3 });
   });
 });
