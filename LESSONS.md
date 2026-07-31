@@ -150,18 +150,22 @@ mutation that changes session-derived fields (profile PATCH, avatar
 upload/remove) must call it explicitly. `router.refresh()` alone is not
 enough for anything read from `useAuth()`.
 
-## The profile Propers/Passats split ships frontend-first — the backend `status` param isn't live yet
+## The profile events endpoint takes `period=active|past`, not `status=upcoming|past`
 
-`lib/api/users-external.ts` `getUserEventsExternal` sends an optional
-`status=upcoming|past` query param to `/users/{username}/events`, and
-`ProfileEventsSection` relies on it entirely (no more client-side
-`filterActiveEvents`). Verified live against a real account with 6
-published-but-expired events (2026-07-30): both the Propers and Passats tabs
-render empty, because the backend silently ignores the unrecognized `status`
-param instead of filtering by it — it hasn't shipped Gerard's side of the
-contract yet (see `docs/plans/2026-07-30-profile-events-split.md`). This is
-expected, not a frontend regression: don't "fix" empty tabs here without
-first checking whether the backend has deployed `status` support. Same
-applies to `upcomingEventCount`/`pastEventCount` on `UserPublicResponseDTO`
-(`lib/validation/user.ts`) — both `.nullish()`, so they degrade to a
-label-only tab until the backend starts sending them.
+`docs/plans/2026-07-30-profile-events-split.md` was drafted against a param
+named `status`. Gerard's actual contract (confirmed 2026-07-30, live on PRE)
+is `period`, required, lowercase, on both
+`/api/users/{username}/events?period=active|past` and
+`/api/users/me/favorites/events?period=active|past` (same spec, for the
+future favourites split). `active` includes upcoming *and* in-progress
+events; `past` sorts most-recent-first. `lib/api/users-external.ts`
+`getUserEventsExternal` keeps `status: "upcoming" | "past"` as its own
+parameter name (a domain word, matching `ProfileEventsSectionProps`) and
+translates it to `period` at that one boundary — see `PERIOD_BY_STATUS`.
+If a future endpoint needs the same split, translate at the API-layer
+boundary rather than renaming the domain-level `status` everywhere it's
+threaded through.
+
+`upcomingEventCount`/`pastEventCount` on `UserPublicResponseDTO`
+(`lib/validation/user.ts`) are unconfirmed — still `.nullish()`, degrading to
+a label-only tab until the backend starts sending them.

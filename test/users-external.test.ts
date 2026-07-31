@@ -69,6 +69,24 @@ describe("getUserEventsExternal", () => {
     expect(url).toContain("size=5");
   });
 
+  it("maps status to the backend's period param (upcoming -> active, past -> past)", async () => {
+    mockFetchWithHmac.mockResolvedValue(pagedResponse(emptyPage));
+
+    await getUserEventsExternal("sala-apolo", 0, 20, "upcoming");
+    expect(mockFetchWithHmac.mock.calls[0][0]).toContain("period=active");
+
+    await getUserEventsExternal("sala-apolo", 0, 20, "past");
+    expect(mockFetchWithHmac.mock.calls[1][0]).toContain("period=past");
+  });
+
+  it("defaults to period=active when status is omitted", async () => {
+    mockFetchWithHmac.mockResolvedValue(pagedResponse(emptyPage));
+
+    await getUserEventsExternal("sala-apolo", 2, 5);
+
+    expect(mockFetchWithHmac.mock.calls[0][0]).toContain("period=active");
+  });
+
   it("returns an empty page (no fetch) for a blank username", async () => {
     const result = await getUserEventsExternal("   ");
     expect(result.content).toEqual([]);

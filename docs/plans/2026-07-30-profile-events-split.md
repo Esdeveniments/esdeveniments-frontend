@@ -4,6 +4,14 @@
 
 ---
 
+> **Resolved (2026-07-30, evening):** Gerard shipped Option A, live on PRE. The actual query
+> param is `period` (required, lowercase `active` | `past`), not `status` as speculated below
+> — `active` includes upcoming and in-progress events. Same spec on
+> `/api/users/me/favorites/events` for the future Phase 3 favourites split. The frontend keeps
+> `status: "upcoming" | "past"` as its own domain-level parameter name and translates to
+> `period` at the `lib/api/users-external.ts` boundary, per this plan's "seam that absorbs
+> Gerard's contract choice." See `LESSONS.md`.
+
 ## Context
 
 A user reported that an organizer's profile renders an empty event list even though the
