@@ -26,6 +26,41 @@ function favoritesBaseUrl(): string | null {
   return `${getApiUrl()}/users/me/favorites/events`;
 }
 
+// Backend contract confirmed live on PRE (LESSONS.md: "The profile events
+// endpoint takes period=active|past, not status=upcoming|past"): `period` is
+// required on this endpoint too, or the backend returns HTTP 500
+// "Required request parameter 'period' ... is not present". There's no
+// "all periods" value, and MAX_FAVORITES-sized single-page callers (route.ts,
+// preferits/page.tsx) need both active and past items in one merged list —
+// the page renders active events and separately prunes expired ones — so
+// fetch both periods and merge rather than picking one.
+async function fetchFavoritesPeriod(
+  base: string,
+  accessToken: string,
+  period: "active" | "past",
+  page: number,
+  size: number
+): Promise<FavoriteEventsPageDTO | null> {
+  try {
+    const query = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+      period,
+    }).toString();
+    const response = await fetchWithHmac(`${base}?${query}`, {
+      headers: authHeaders(accessToken),
+    });
+    if (!response.ok) {
+      await logBackendError(`listFavoriteEventsExternal(period=${period})`, response);
+      return null;
+    }
+    return parseFavoriteEventsPage(await response.json());
+  } catch (error) {
+    console.error(`listFavoriteEventsExternal(period=${period}): failed`, error);
+    return null;
+  }
+}
+
 export async function listFavoriteEventsExternal(
   accessToken: string,
   page = 0,
@@ -34,23 +69,22 @@ export async function listFavoriteEventsExternal(
   const base = favoritesBaseUrl();
   if (!base) return null;
 
-  try {
-    const query = new URLSearchParams({
-      page: String(page),
-      size: String(size),
-    }).toString();
-    const response = await fetchWithHmac(`${base}?${query}`, {
-      headers: authHeaders(accessToken),
-    });
-    if (!response.ok) {
-      await logBackendError("listFavoriteEventsExternal", response);
-      return null;
-    }
-    return parseFavoriteEventsPage(await response.json());
-  } catch (error) {
-    console.error("listFavoriteEventsExternal: failed", error);
-    return null;
-  }
+  const [activePage, pastPage] = await Promise.all([
+    fetchFavoritesPeriod(base, accessToken, "active", page, size),
+    fetchFavoritesPeriod(base, accessToken, "past", page, size),
+  ]);
+  // Either leg failing means the list is incomplete — surface unavailable
+  // rather than a partial list that looks complete.
+  if (activePage === null || pastPage === null) return null;
+
+  return {
+    content: [...activePage.content, ...pastPage.content],
+    currentPage: page,
+    pageSize: size,
+    totalElements: activePage.totalElements + pastPage.totalElements,
+    totalPages: Math.max(activePage.totalPages, pastPage.totalPages),
+    last: activePage.last && pastPage.last,
+  };
 }
 
 export async function isFavoriteEventExternal(
