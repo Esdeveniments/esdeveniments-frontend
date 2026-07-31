@@ -517,12 +517,35 @@ export interface ProfileHeaderProps {
   profile: import("types/api/profile").ProfileDetailResponseDTO;
 }
 
+// Route-based tab strip (e.g. profile/favourites Propers/Passats). Each item
+// is a navigable Link, not a client-side tabpanel switch — see components/ui/common/tabs.
+export interface TabItem {
+  id: string;
+  href: string;
+  label: string;
+  count?: number;
+}
+
+export interface TabsProps {
+  items: TabItem[];
+  active: string;
+  ariaLabel: string;
+}
+
+// buildProfileTabItems (components/partials/profile-tabs.ts) is shared by
+// page.tsx and passats/page.tsx, both of which call getTranslations
+// server-side and pass the resolved translator straight through.
+export type ProfileTranslator = Awaited<
+  ReturnType<typeof import("next-intl/server").getTranslations>
+>;
+
 export interface AvatarInitialsProps {
   name: string;
 }
 
-export interface ProfilePageShellProps {
-  profile: import("types/api/profile").ProfileDetailResponseDTO;
+export interface ProfileEventsSectionProps {
+  username: string;
+  status: "upcoming" | "past";
 }
 
 export interface HybridEventsListProps {
@@ -845,6 +868,14 @@ export interface ProfileOwnerActionsProps {
   username: string;
 }
 
+// Owner-only visits stat client island: totalEventVisits is public on the
+// DTO but reads worse than nothing to a non-owner ("12 visites" on a stranger's
+// profile), so it's gated behind the same owner check as ProfileOwnerActions.
+export interface ProfileVisitsStatProps {
+  username: string;
+  visits: number;
+}
+
 // Profile claim CTA client island props
 export interface ProfileClaimCtaProps {
   username: string;
@@ -947,4 +978,12 @@ export interface UrlFiltersProviderProps {
 
 export interface PwaBackButtonProps {
   fallbackHref?: string;
+}
+
+// Shared skeleton grid: same grid-cols-1 md:2 xl:3 layout as List
+// (components/ui/list), so a loading state never reflows once real
+// content swaps in. `count` defaults to 6 to match the pre-existing
+// EventsListSkeleton/PlacePageSkeleton usage.
+export interface EventsGridSkeletonProps {
+  count?: number;
 }

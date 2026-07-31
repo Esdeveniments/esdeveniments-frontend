@@ -1,11 +1,17 @@
-import { Suspense, use } from "react";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getUserByUsernameCached } from "@lib/api/profiles";
 import { buildPageMeta } from "@components/partials/seo-meta";
-import ProfilePageShell from "@components/partials/ProfilePageShell";
+import { generateBreadcrumbList } from "@components/partials/seo-meta";
+import JsonLdServer from "@components/partials/JsonLdServer";
+import ProfileEventsSection from "@components/partials/ProfileEventsSection";
+import { buildProfileTabItems } from "@components/partials/profile-tabs";
+import Tabs from "@components/ui/common/tabs";
+import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkeleton";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
+import type { BreadcrumbItem } from "types/common";
 
 // No generateStaticParams — usernames are user-generated with infinite
 // cardinality. Pages render on first request and are cached automatically.
@@ -44,26 +50,72 @@ export async function generateMetadata({
   });
 }
 
-export default function ProfilePage({
+export default async function ProfilePage({
   params,
 }: {
   params: Promise<{ username: string }>;
 }) {
-  const { username } = use(params);
+  const { username } = await params;
 
-  return (
-    <Suspense fallback={<h1 className="sr-only">{username}</h1>}>
-      <ProfilePageGate username={username} />
-    </Suspense>
-  );
-}
-
-async function ProfilePageGate({ username }: { username: string }) {
-  const profile = await getUserByUsernameCached(username);
+  const [profile, tBreadcrumbs, tProfile, locale] = await Promise.all([
+    getUserByUsernameCached(username),
+    getTranslations("Components.Breadcrumbs"),
+    getTranslations("Components.Profile"),
+    getLocaleSafely(),
+  ]);
 
   if (!profile) {
     notFound();
   }
 
-  return <ProfilePageShell profile={profile} />;
+  const profileUrl = toLocalizedUrl(`/perfil/${profile.username}`, locale);
+
+  // 2026-07-25 backend migration: profile.displayName is canonical; profile.name
+  // is the legacy field; profile.username is the safety net. Breadcrumb
+  // schemas and the Person schema require string `name`, so coalesce.
+  const profileDisplayName =
+    profile.displayName?.trim() ||
+    profile.name?.trim() ||
+    profile.username?.trim() ||
+    "";
+
+  // No middle "Profiles" crumb: /perfil has no index route to link to.
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { name: tBreadcrumbs("home"), url: toLocalizedUrl("/", locale) },
+    { name: profileDisplayName, url: profileUrl },
+  ];
+
+  const breadcrumbListSchema = generateBreadcrumbList(breadcrumbItems);
+
+  const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: profileDisplayName,
+    url: profileUrl,
+    identifier: profile.username,
+  };
+
+  const tabItems = buildProfileTabItems(profile, tProfile);
+
+  return (
+    <>
+      {breadcrumbListSchema && (
+        <JsonLdServer id="breadcrumbs-schema" data={breadcrumbListSchema} />
+      )}
+      <JsonLdServer id={`person-${profile.username}`} data={personSchema} />
+
+      <Tabs
+        items={tabItems}
+        active="upcoming"
+        ariaLabel={tProfile("title", { name: profileDisplayName })}
+      />
+      <div className="w-full mt-section-y">
+        <Suspense
+          fallback={<EventsGridSkeleton count={3} />}
+        >
+          <ProfileEventsSection username={profile.username} status="upcoming" />
+        </Suspense>
+      </div>
+    </>
+  );
 }

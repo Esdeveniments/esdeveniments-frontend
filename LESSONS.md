@@ -149,3 +149,23 @@ reusable `load()` so both paths share the retry/abort logic) — any client
 mutation that changes session-derived fields (profile PATCH, avatar
 upload/remove) must call it explicitly. `router.refresh()` alone is not
 enough for anything read from `useAuth()`.
+
+## The profile events endpoint takes `period=active|past`, not `status=upcoming|past`
+
+`docs/plans/2026-07-30-profile-events-split.md` was drafted against a param
+named `status`. Gerard's actual contract (confirmed 2026-07-30, live on PRE)
+is `period`, required, lowercase, on both
+`/api/users/{username}/events?period=active|past` and
+`/api/users/me/favorites/events?period=active|past` (same spec, for the
+future favourites split). `active` includes upcoming *and* in-progress
+events; `past` sorts most-recent-first. `lib/api/users-external.ts`
+`getUserEventsExternal` keeps `status: "upcoming" | "past"` as its own
+parameter name (a domain word, matching `ProfileEventsSectionProps`) and
+translates it to `period` at that one boundary — see `PERIOD_BY_STATUS`.
+If a future endpoint needs the same split, translate at the API-layer
+boundary rather than renaming the domain-level `status` everywhere it's
+threaded through.
+
+`upcomingEventCount`/`pastEventCount` on `UserPublicResponseDTO`
+(`lib/validation/user.ts`) are unconfirmed — still `.nullish()`, degrading to
+a label-only tab until the backend starts sending them.

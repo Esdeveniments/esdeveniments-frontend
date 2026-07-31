@@ -26,6 +26,8 @@ export interface UserPublicResponseDTO {
   organizerVerified?: boolean;
   eventCount?: number;
   totalEventVisits?: number;
+  upcomingEventCount?: number;
+  pastEventCount?: number;
   // ── Legacy schema (kept for back-compat) ─────────────────────────────────
   name?: string;
   pictureUrl?: string;

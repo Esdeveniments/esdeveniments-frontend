@@ -336,9 +336,18 @@ export async function deleteUserAvatarExternal(
   }
 }
 
+// Backend contract confirmed by Gerard 2026-07-30: the query param is
+// `period` (required, lowercase `active` | `past`), not the `status` name
+// this plan was drafted against. `active` includes upcoming + in-progress
+// events. Kept as a domain-named `status` param at this function's boundary
+// (see ProfileEventsSectionProps) so only this translation needed to change.
+const PERIOD_BY_STATUS = { upcoming: "active", past: "past" } as const;
+
 /**
  * Public listing of a user's events: GET /api/users/{username}/events.
- * Same paged shape as /events; the endpoint only accepts page & size.
+ * Same paged shape as /events; the endpoint requires page, size, and
+ * `period` (mapped from `status`) that scopes the profile's Propers /
+ * Passats tabs.
  * Default size is 20 — matches the backend handoff and the
  * /[place] listing page size, so a public profile with many events
  * renders at the same density as the home page.
@@ -349,6 +358,7 @@ export async function getUserEventsExternal(
   username: string,
   page = 0,
   size = 20,
+  status: "upcoming" | "past" = "upcoming",
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const empty: PagedResponseDTO<EventSummaryResponseDTO> = {
     content: [],
@@ -367,7 +377,11 @@ export async function getUserEventsExternal(
 
   // No `next: { revalidate }` here — external wrappers must stay no-store
   // (repo cost rule). Matches getUserByUsernameExternal on the same page.
-  const qs = new URLSearchParams({ page: String(page), size: String(size) });
+  const qs = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+    period: PERIOD_BY_STATUS[status],
+  });
   return fetchJsonWithFallback(
     `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
     parsePagedEvents,

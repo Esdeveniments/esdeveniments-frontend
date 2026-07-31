@@ -399,14 +399,22 @@
       "joinedDate": "Desde {date}",
       "noEvents": "Aún no hay eventos",
       "website": "Sitio web",
-      "breadcrumbProfiles": "Perfiles",
       "totalEvents": "{count, plural, one {# evento} other {# eventos}}",
       "notFound": "Perfil no encontrado",
       "notFoundDescription": "El perfil que buscas no existe o ha sido eliminado.",
       "backHome": "Volver al inicio",
       "editProfile": "Editar perfil",
       "claimQuestion": "¿Es tu local?",
-      "claimLogin": "Iniciar sesión"
+      "claimLogin": "Iniciar sesión",
+      "tabUpcoming": "Próximos",
+      "tabPast": "Pasados",
+      "noUpcomingEvents": "Todavía no hay eventos próximos",
+      "noPastEvents": "Todavía no hay eventos pasados",
+      "statsPublished": "Publicados",
+      "statsUpcoming": "Próximos",
+      "statsVisits": "Visitas",
+      "pastTitle": "Eventos pasados de {name} — Perfil",
+      "pastMetaDescription": "Consulta los eventos pasados de {name}: conciertos, exposiciones y actividades que ya ha organizado."
     },
     "Footer": {
       "navigation": {

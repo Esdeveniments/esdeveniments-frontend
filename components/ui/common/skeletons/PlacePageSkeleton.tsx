@@ -1,4 +1,4 @@
-import EventCardSkeleton from "./EventCardSkeleton";
+import EventsGridSkeleton from "./EventsGridSkeleton";
 
 export default function PlacePageSkeleton() {
   return (
@@ -15,13 +15,7 @@ export default function PlacePageSkeleton() {
       <div className="h-5 bg-border/40 rounded w-3/4 mb-element-gap px-section-x animate-pulse mt-2" />
 
       {/* Event cards skeleton - matches List component grid (grid-cols-1 md:2 xl:3) */}
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i}>
-            <EventCardSkeleton />
-          </div>
-        ))}
-      </section>
+      <EventsGridSkeleton />
     </div>
   );
 }

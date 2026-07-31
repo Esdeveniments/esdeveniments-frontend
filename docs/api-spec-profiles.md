@@ -1,5 +1,12 @@
 # Profile API Spec (Backend)
 
+> **Historical / unimplemented proposal — do not build against this.** The
+> `/api/v1/profiles/*` endpoints and the separate `Profile` entity below were
+> never built. The canonical, implemented contract is
+> `GET /api/users/{username}` (see `lib/api/profiles.ts` and
+> `docs/plans/2026-07-30-profile-events-split.md`). Everything past this
+> notice is kept only as a record of the original proposal.
+
 ## Endpoints
 
 | Endpoint | Method | Params | Response |

@@ -322,6 +322,31 @@ components:
     paddingX: "{spacing.sm}"
     paddingY: "2px"
 
+  tab-bar:
+    borderBottom: "1px solid {colors.border}"
+    itemPaddingX: "{spacing.lg}"
+    itemPaddingY: "{spacing.sm}"
+    itemBorderBottom: "2px solid transparent"
+    countFontSize: "{typography.heading-3.fontSize}"
+    countFontWeight: "{typography.heading-3.fontWeight}"
+    labelFontSize: "{typography.body-small.fontSize}"
+    color: "{colors.foreground}"
+    opacity: 0.8
+  tab-bar-active:
+    itemBorderBottom: "2px solid {colors.primary}"
+    color: "{colors.foreground-strong}"
+    opacity: 1
+
+  empty-state:
+    paddingY: "{spacing.3xl}"
+    gap: "{spacing.lg}"
+    titleFontSize: "{typography.heading-3.fontSize}"
+    titleColor: "{colors.foreground-strong}"
+    descriptionColor: "{colors.foreground}"
+    ctaBackground: "{colors.primary}"
+    ctaColor: "{colors.on-primary}"
+    ctaRounded: "{rounded.full}"
+
   chip-on-light:
     background: "{colors.background}"
     color: "{colors.foreground}"
@@ -694,6 +719,20 @@ heart-beats (1 → 1.15 → 1) on activation.
 **Chips** have two contexts: on-light (white fill, hairline border, hover
 shades to muted) and on-photo (glassmorphic over hero photography). The
 active variant in on-photo flips to solid red with a leading check icon.
+
+**Tab bar** is a count-over-label navigation strip (e.g. profile Propers /
+Passats), not a client-side tabpanel switch — each item is a link to its own
+route. A full-width hairline rail (`border-border`) carries items with a
+2px bottom border; the active item's border goes solid red with
+`foreground-strong` text, inactive items sit at `foreground/80` on a
+transparent border. The count renders above the label in `heading-3`,
+label below in `body-small`. Wrapped in the horizontal-scroll primitive on
+narrow screens so it never breaks the rail's height.
+
+**Empty states** (e.g. "no events yet") center a title + description with
+generous vertical padding (`spacing.3xl`) and an optional primary-pill CTA
+below. Title uses `heading-3` in `foreground-strong`; description sits in
+regular `foreground`.
 
 **Modals** on mobile take the full `100dvh` and read like a screen, not a
 popup; on **sm+** they cap at 500px wide with a 16px-radius card. Header is
