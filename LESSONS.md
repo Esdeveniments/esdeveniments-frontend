@@ -166,6 +166,22 @@ If a future endpoint needs the same split, translate at the API-layer
 boundary rather than renaming the domain-level `status` everywhere it's
 threaded through.
 
+**Update, 2026-07-31:** the fix above only touched `users-external.ts`. It
+missed `/api/users/me/favorites/events` — the plan's own finding #2 argued
+favourites didn't need a `period` split yet, so `favorites-external.ts` was
+left sending just `page`/`size`. The backend enforces `period` there too,
+live, independent of whether the frontend favourites split has shipped:
+every `listFavoriteEventsExternal` call was failing with
+`HTTP 500 "Required request parameter 'period' ... is not present"`
+(confirmed via Coolify staging logs), which `/api/favorites` turns into a
+hardcoded 502, breaking `/preferits` and — because homepage cards never
+pass `initialIsFavorite` (`components/ui/hybridEventsList/index.tsx`) and
+rely entirely on the client fetch to `/api/favorites` to learn favorite
+state — leaving homepage hearts stuck unfavorited on every fresh load.
+There is no `period=all`; `listFavoriteEventsExternal` now fetches both
+`active` and `past` and merges them, since `/preferits` needs both (display
++ `FavoritesAutoPrune`'s expired-favourite cleanup, PR #430) in one list.
+
 `upcomingEventCount`/`pastEventCount` on `UserPublicResponseDTO`
 (`lib/validation/user.ts`) are unconfirmed — still `.nullish()`, degrading to
 a label-only tab until the backend starts sending them.
