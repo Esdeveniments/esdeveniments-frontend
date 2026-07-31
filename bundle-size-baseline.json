@@ -1,18 +1,18 @@
 {
   "version": "1.0",
-  "generatedAt": "2026-07-30T19:46:07.770Z",
-  "lastUpdated": "2026-07-30T19:46:07.770Z",
+  "generatedAt": "2026-07-31T18:42:49.927Z",
+  "lastUpdated": "2026-07-31T18:42:49.927Z",
   "client": {
-    "totalBytes": 2268620,
+    "totalBytes": 2278207,
     "topBundles": [
       {
-        "path": ".next/static/chunks/16rsej1h3a~zc.js",
-        "size": 240287,
+        "path": ".next/static/chunks/0.i6cphq.u8xe.js",
+        "size": 241698,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/0-_ovjgv5m~80.js",
-        "size": 236726,
+        "path": ".next/static/chunks/0jios35vl_x_5.js",
+        "size": 236852,
         "type": "JS"
       },
       {
@@ -31,8 +31,8 @@
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/0vzzlzz~ep_fu.css",
-        "size": 81911,
+        "path": ".next/static/chunks/0q29m.s~g2bjq.css",
+        "size": 81855,
         "type": "CSS"
       },
       {
@@ -46,8 +46,8 @@
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/01gj7xa0qbimn.js",
-        "size": 55936,
+        "path": ".next/static/chunks/124fmtl.u5pfp.js",
+        "size": 56168,
         "type": "JS"
       },
       {
@@ -61,13 +61,13 @@
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/16q_heyeah7c0.js",
+        "path": ".next/static/chunks/0hr03xeanz0b1.js",
         "size": 46535,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/05nnzsgwwdk_j.js",
-        "size": 42094,
+        "path": ".next/static/chunks/0zjmg5xwg7u._.js",
+        "size": 42140,
         "type": "JS"
       },
       {
@@ -91,8 +91,8 @@
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/0l99nq..p_jev.js",
-        "size": 34890,
+        "path": ".next/static/chunks/03~_fotsjjzp-.js",
+        "size": 34362,
         "type": "JS"
       },
       {
@@ -118,153 +118,129 @@
     }
   },
   "routes": {
-    "/[locale]": {
-      "serverBytes": 11683829,
-      "fileCount": 244
-    },
-    "/[locale]/patrocina": {
-      "serverBytes": 1537490,
-      "fileCount": 32
-    },
-    "/[locale]/sitemap": {
-      "serverBytes": 1459176,
-      "fileCount": 32
-    },
-    "/[locale]/[place]": {
-      "serverBytes": 1277288,
-      "fileCount": 24
-    },
-    "/[locale]/noticies": {
-      "serverBytes": 1195462,
-      "fileCount": 36
+    "/[locale]/perfil/[username]/passats": {
+      "serverBytes": 564649,
+      "fileCount": 8
     },
     "/[locale]/perfil/[username]": {
-      "serverBytes": 1129100,
-      "fileCount": 16
-    },
-    "/[locale]/sitemap/[town]": {
-      "serverBytes": 1075877,
-      "fileCount": 24
+      "serverBytes": 563671,
+      "fileCount": 8
     },
     "/[locale]/e/[eventId]": {
-      "serverBytes": 988174,
-      "fileCount": 16
-    },
-    "/[locale]/[place]/[byDate]": {
-      "serverBytes": 852577,
-      "fileCount": 16
-    },
-    "/[locale]/noticies/[place]": {
-      "serverBytes": 793496,
-      "fileCount": 22
-    },
-    "/[locale]/sitemap/[town]/[year]": {
-      "serverBytes": 691626,
-      "fileCount": 16
-    },
-    "/[locale]/perfil/[username]/passats": {
-      "serverBytes": 565039,
+      "serverBytes": 514275,
       "fileCount": 8
     },
     "/[locale]/e/[eventId]/edita": {
-      "serverBytes": 473687,
+      "serverBytes": 473478,
       "fileCount": 8
     },
     "/[locale]/[place]/[byDate]/[category]": {
-      "serverBytes": 426819,
+      "serverBytes": 426668,
+      "fileCount": 8
+    },
+    "/[locale]/[place]/[byDate]": {
+      "serverBytes": 425604,
+      "fileCount": 8
+    },
+    "/[locale]/[place]": {
+      "serverBytes": 424554,
+      "fileCount": 8
+    },
+    "/[locale]": {
+      "serverBytes": 408180,
       "fileCount": 8
     },
     "/[locale]/preferits": {
-      "serverBytes": 393044,
+      "serverBytes": 394846,
       "fileCount": 8
     },
     "/[locale]/noticies/[place]/[article]": {
-      "serverBytes": 392748,
+      "serverBytes": 392516,
+      "fileCount": 8
+    },
+    "/[locale]/preferits/passats": {
+      "serverBytes": 391719,
       "fileCount": 8
     },
     "/[locale]/sitemap/[town]/[year]/[month]": {
-      "serverBytes": 389862,
+      "serverBytes": 389714,
+      "fileCount": 8
+    },
+    "/[locale]/noticies": {
+      "serverBytes": 387916,
       "fileCount": 8
     },
     "/[locale]/publica": {
-      "serverBytes": 387773,
+      "serverBytes": 387616,
+      "fileCount": 8
+    },
+    "/[locale]/noticies/[place]": {
+      "serverBytes": 386208,
       "fileCount": 8
     },
     "/[locale]/e2e/load-more": {
-      "serverBytes": 386184,
+      "serverBytes": 385952,
       "fileCount": 8
     },
     "/[locale]/patrocina/upload": {
-      "serverBytes": 385301,
+      "serverBytes": 385069,
       "fileCount": 8
     },
     "/[locale]/perfil/edita": {
-      "serverBytes": 385132,
+      "serverBytes": 384900,
+      "fileCount": 8
+    },
+    "/[locale]/patrocina": {
+      "serverBytes": 384631,
       "fileCount": 8
     },
     "/[locale]/qui-som": {
-      "serverBytes": 384386,
+      "serverBytes": 384154,
+      "fileCount": 8
+    },
+    "/[locale]/sitemap/[town]": {
+      "serverBytes": 384019,
       "fileCount": 8
     },
     "/[locale]/compartir-tiktok": {
-      "serverBytes": 384084,
+      "serverBytes": 383852,
       "fileCount": 8
     },
     "/[locale]/callback": {
-      "serverBytes": 384039,
+      "serverBytes": 383807,
       "fileCount": 8
     },
     "/[locale]/patrocina/cancelled": {
-      "serverBytes": 383671,
+      "serverBytes": 383439,
       "fileCount": 8
     },
     "/[locale]/patrocina/success": {
-      "serverBytes": 383655,
+      "serverBytes": 383423,
       "fileCount": 8
     },
     "/[locale]/offline": {
-      "serverBytes": 383438,
+      "serverBytes": 383206,
+      "fileCount": 8
+    },
+    "/[locale]/sitemap": {
+      "serverBytes": 383067,
+      "fileCount": 8
+    },
+    "/[locale]/sitemap/[town]/[year]": {
+      "serverBytes": 301590,
       "fileCount": 8
     },
     "/[locale]/politica-privacitat": {
-      "serverBytes": 300597,
+      "serverBytes": 300423,
       "fileCount": 8
     },
     "/[locale]/termes-servei": {
-      "serverBytes": 300563,
+      "serverBytes": 300389,
       "fileCount": 8
-    },
-    "/api/places": {
-      "serverBytes": 146018,
-      "fileCount": 24
-    },
-    "/api/favorites": {
-      "serverBytes": 73753,
-      "fileCount": 18
     },
     "/api/places/nearby": {
       "serverBytes": 73698,
       "fileCount": 6
-    },
-    "/api/events": {
-      "serverBytes": 73664,
-      "fileCount": 18
-    },
-    "/api/regions": {
-      "serverBytes": 73263,
-      "fileCount": 18
-    },
-    "/api/news": {
-      "serverBytes": 73008,
-      "fileCount": 18
-    },
-    "/api/categories": {
-      "serverBytes": 48589,
-      "fileCount": 12
-    },
-    "/api/cities": {
-      "serverBytes": 48541,
-      "fileCount": 12
     },
     "/_not-found": {
       "serverBytes": 30421,
@@ -382,12 +358,40 @@
       "serverBytes": 23928,
       "fileCount": 6
     },
+    "/api/favorites": {
+      "serverBytes": 23905,
+      "fileCount": 6
+    },
     "/api/places/photo": {
       "serverBytes": 23904,
       "fileCount": 6
     },
+    "/api/categories": {
+      "serverBytes": 23879,
+      "fileCount": 6
+    },
+    "/api/regions": {
+      "serverBytes": 23861,
+      "fileCount": 6
+    },
+    "/api/cities": {
+      "serverBytes": 23855,
+      "fileCount": 6
+    },
+    "/api/events": {
+      "serverBytes": 23855,
+      "fileCount": 6
+    },
     "/rss.xml": {
       "serverBytes": 23855,
+      "fileCount": 6
+    },
+    "/api/places": {
+      "serverBytes": 23788,
+      "fileCount": 6
+    },
+    "/api/news": {
+      "serverBytes": 23776,
       "fileCount": 6
     },
     "/api/image-proxy": {
@@ -539,5 +543,5 @@
       "fileCount": 4
     }
   },
-  "clientTotalBytes": 2268620
+  "clientTotalBytes": 2278207
 }
