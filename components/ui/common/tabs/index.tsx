@@ -22,7 +22,14 @@ export default function Tabs({ items, active, ariaLabel }: TabsProps) {
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
                   className={[
-                    "flex flex-col items-center gap-1 border-b-2 -mb-px px-element-gap py-sm focus-ring",
+                    // h-full + justify-end: the parent row stretches each
+                    // listitem to the tallest sibling (align-items: stretch),
+                    // but Link's own height is auto so it doesn't fill that
+                    // stretched space by default — its content just sits at
+                    // the top. h-full makes Link fill it; justify-end then
+                    // pushes the label to the bottom so tabs with and without
+                    // a count line still share the same label baseline.
+                    "flex h-full flex-col items-center justify-end gap-1 border-b-2 -mb-px px-element-gap py-sm focus-ring",
                     isActive
                       ? "border-primary text-foreground-strong"
                       : "border-transparent text-foreground/80",
