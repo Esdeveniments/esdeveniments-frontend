@@ -334,6 +334,10 @@ jobs:
       # every deploy removes the floating tag a restart could resurrect.
       # See docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md.
       - name: Pin Coolify to this commit's immutable image tag
+        # skip_ci (emergency deploy) also skips build-and-push above, so no
+        # sha-<commit> image exists to pin to — leave whatever tag is already
+        # configured alone and let the webhook redeploy it as-is.
+        if: needs.build-and-push.result == 'success'
         env:
           COOLIFY_TOKEN: ${{ github.ref_name == 'main' && secrets.COOLIFY_TOKEN || secrets.COOLIFY_TOKEN_STAGING }}
           COOLIFY_WEBHOOK_URL: ${{ github.ref_name == 'main' && secrets.COOLIFY_WEBHOOK_URL || secrets.COOLIFY_WEBHOOK_URL_STAGING }}
