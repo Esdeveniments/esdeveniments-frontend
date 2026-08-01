@@ -8,7 +8,7 @@ import { buildFavoritesTabItems } from "@components/partials/favorites-tabs";
 import FavoritesEventsSection from "@components/partials/FavoritesEventsSection";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
-import { countFavoritesByPeriodExternal } from "@lib/api/favorites-external";
+import { getFavoritePeriodCounts } from "@lib/api/favorites-external";
 import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import { locale as rootLocale } from "next/root-params";
 import { getTranslations } from "next-intl/server";
@@ -43,9 +43,12 @@ export default async function PreferitsPassatsPage() {
     return <PastFavoritesAuthGate />;
   }
 
-  const activeCount = await countFavoritesByPeriodExternal(authToken, "active");
+  const { activeCount, pastCount } = await getFavoritePeriodCounts(authToken);
   const tabItems = buildFavoritesTabItems(
-    { activeCount: activeCount ?? undefined },
+    {
+      activeCount: activeCount ?? undefined,
+      pastCount: pastCount ?? undefined,
+    },
     t
   );
 

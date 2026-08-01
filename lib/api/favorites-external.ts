@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
 import {
@@ -6,6 +7,7 @@ import {
 } from "@lib/validation/favorites";
 import type {
   FavoriteEventsPageDTO,
+  FavoritePeriodCounts,
   MutationResultDTO,
 } from "types/api/favorites";
 
@@ -121,6 +123,24 @@ export async function countFavoritesByPeriodExternal(
   const page = await listFavoriteEventsByPeriodExternal(accessToken, period, 0, 1);
   return page?.totalElements ?? null;
 }
+
+// Fetch both small count-only pages in parallel so every favorites route can
+// render the same complete tab strip without duplicating period orchestration.
+// Counts are user-specific, so this deliberately stays request-scoped and
+// must not use the shared TTL caches used for public reference data.
+async function fetchFavoritePeriodCounts(
+  accessToken: string
+): Promise<FavoritePeriodCounts> {
+  const [activeCount, pastCount] = await Promise.all([
+    countFavoritesByPeriodExternal(accessToken, "active"),
+    countFavoritesByPeriodExternal(accessToken, "past"),
+  ]);
+
+  return { activeCount, pastCount };
+}
+
+// React's cache is request-scoped memoization, not a shared user-data cache.
+export const getFavoritePeriodCounts = cache(fetchFavoritePeriodCounts);
 
 export async function isFavoriteEventExternal(
   accessToken: string,

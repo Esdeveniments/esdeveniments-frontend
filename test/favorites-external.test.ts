@@ -4,6 +4,7 @@ import {
   listFavoriteEventsExternal,
   listFavoriteEventsByPeriodExternal,
   countFavoritesByPeriodExternal,
+  getFavoritePeriodCounts,
 } from "../lib/api/favorites-external";
 
 vi.mock("../lib/api/fetch-wrapper", () => ({
@@ -181,6 +182,25 @@ describe("listFavoriteEventsByPeriodExternal", () => {
 
     expect(result).toBeNull();
     errorSpy.mockRestore();
+  });
+});
+
+describe("getFavoritePeriodCounts", () => {
+  it("fetches active and past counts in parallel", async () => {
+    mockFetchWithHmac.mockImplementation(async (url) => {
+      const totalElements = (url as string).includes("period=active") ? 3 : 1;
+      return pagedResponse(page([activeEvent], totalElements));
+    });
+
+    await expect(getFavoritePeriodCounts("token")).resolves.toEqual({
+      activeCount: 3,
+      pastCount: 1,
+    });
+
+    expect(mockFetchWithHmac).toHaveBeenCalledTimes(2);
+    const urls = mockFetchWithHmac.mock.calls.map((call) => call[0] as string);
+    expect(urls.some((url) => url.includes("period=active"))).toBe(true);
+    expect(urls.some((url) => url.includes("period=past"))).toBe(true);
   });
 });
 

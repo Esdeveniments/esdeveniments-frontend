@@ -11,7 +11,7 @@ import FavoritesEventsSection from "@components/partials/FavoritesEventsSection"
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { fetchEventBySlugWithStatus } from "@lib/api/events";
-import { countFavoritesByPeriodExternal } from "@lib/api/favorites-external";
+import { getFavoritePeriodCounts } from "@lib/api/favorites-external";
 import { captureException } from "@sentry/nextjs";
 import { filterActiveEvents, isEventActive } from "@utils/event-helpers";
 import { locale as rootLocale } from "next/root-params";
@@ -130,12 +130,12 @@ export default async function PreferitsPage() {
   // client-side expiry filtering/pruning needed — period=active already
   // excludes expired events server-side, so there's nothing to prune.
   if (authToken) {
-    const [pastCount, activeCount] = await Promise.all([
-      countFavoritesByPeriodExternal(authToken, "past"),
-      countFavoritesByPeriodExternal(authToken, "active"),
-    ]);
+    const { activeCount, pastCount } = await getFavoritePeriodCounts(authToken);
     const tabItems = buildFavoritesTabItems(
-      { pastCount: pastCount ?? undefined },
+      {
+        activeCount: activeCount ?? undefined,
+        pastCount: pastCount ?? undefined,
+      },
       t
     );
 

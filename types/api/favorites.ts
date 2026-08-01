@@ -3,6 +3,12 @@ import type {
   PagedResponseDTO,
 } from "./event";
 
+/** Counts for the authenticated user's active and past favorite periods. */
+export interface FavoritePeriodCounts {
+  activeCount: number | null;
+  pastCount: number | null;
+}
+
 /** Backend DTO: GET /api/users/me/favorites/events/{eventId} response */
 export interface FavoriteStatusResponseDTO {
   favorite: boolean;
