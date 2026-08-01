@@ -82,7 +82,16 @@
       "emptyTitle": "Aún no tienes eventos futuros guardados",
       "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos.",
       "errorTitle": "No hemos podido cargar tus favoritos",
-      "errorDescription": "Inténtalo de nuevo en un momento. Tus favoritos están a salvo."
+      "errorDescription": "Inténtalo de nuevo en un momento. Tus favoritos están a salvo.",
+      "tabUpcoming": "Próximos",
+      "tabPast": "Pasados",
+      "pastTitle": "Favoritos pasados - Esdeveniments.cat",
+      "pastDescription": "Tus eventos pasados guardados",
+      "pastEmptyTitle": "Aún no tienes eventos pasados guardados",
+      "pastEmptyDescription": "Los eventos que marques con el corazón aparecerán aquí una vez hayan finalizado.",
+      "pastAuthGateTitle": "Inicia sesión para ver tus favoritos pasados",
+      "pastAuthGateDescription": "Los favoritos pasados solo están disponibles para cuentas con sesión iniciada.",
+      "pastAuthGateLogin": "Iniciar sesión"
     },
     "About": {
       "metaTitle": "Quiénes somos - Agenda cultural de Cataluña | Esdeveniments.cat",

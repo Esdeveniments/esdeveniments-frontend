@@ -6,9 +6,13 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import caMessages from "../messages/ca.json";
 import esMessages from "../messages/es.json";
 import enMessages from "../messages/en.json";
+// Re-exported (not declared here) so existing @utils/constants consumers
+// keep working unchanged. Declared in their own dependency-free module so a
+// client component can import just the number, not this file's ~280KB of
+// embedded locale JSON — see utils/favorites-limits.ts for why.
+export { MAX_FAVORITES, MAX_FAVORITES_AUTHENTICATED } from "./favorites-limits";
 
 export const MAX_RESULTS = 15;
-export const MAX_FAVORITES = 10;
 
 /** Number of days within which news articles are considered "fresh". */
 export const NEWS_FRESHNESS_DAYS = 7;

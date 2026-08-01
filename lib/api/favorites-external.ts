@@ -99,6 +99,29 @@ export async function listFavoriteEventsExternal(
   };
 }
 
+export async function listFavoriteEventsByPeriodExternal(
+  accessToken: string,
+  period: "active" | "past",
+  page = 0,
+  size = 50
+): Promise<FavoriteEventsPageDTO | null> {
+  const base = favoritesBaseUrl();
+  if (!base) return null;
+  return fetchFavoritesPeriod(base, accessToken, period, page, size);
+}
+
+// Cheap count-only fetch: Spring Data's Page.getTotalElements() reflects the
+// full count regardless of requested `size`, so size=1 is enough to read the
+// count without downloading a full page of content — used for the "other"
+// tab's count on /preferits and /preferits/passats.
+export async function countFavoritesByPeriodExternal(
+  accessToken: string,
+  period: "active" | "past"
+): Promise<number | null> {
+  const page = await listFavoriteEventsByPeriodExternal(accessToken, period, 0, 1);
+  return page?.totalElements ?? null;
+}
+
 export async function isFavoriteEventExternal(
   accessToken: string,
   eventId: string

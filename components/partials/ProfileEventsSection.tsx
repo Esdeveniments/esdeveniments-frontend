@@ -1,8 +1,6 @@
-import List from "@components/ui/list";
-import CardServer from "@components/ui/card/CardServer";
-import NoEventsFound from "@components/ui/common/noEventsFound";
 import { fetchUserEvents } from "@lib/api/profiles";
 import { getTranslations } from "next-intl/server";
+import EventsSection from "./EventsSection";
 import type { ProfileEventsSectionProps } from "types/props";
 
 // First page of the profile's event listing, scoped to upcoming or past by
@@ -19,21 +17,12 @@ export default async function ProfileEventsSection({
     fetchUserEvents(username, 0, PROFILE_EVENTS_PAGE_SIZE, status),
   ]);
 
-  const sectionLabel = t(status === "past" ? "tabPast" : "tabUpcoming");
-
   return (
-    <section aria-label={sectionLabel} data-testid="profile-events">
-      {eventsResponse.content.length === 0 ? (
-        <NoEventsFound
-          title={t(status === "past" ? "noPastEvents" : "noUpcomingEvents")}
-        />
-      ) : (
-        <List events={eventsResponse.content}>
-          {(event, index) => (
-            <CardServer event={event} isPriority={index === 0} />
-          )}
-        </List>
-      )}
-    </section>
+    <EventsSection
+      events={eventsResponse.content}
+      emptyTitle={t(status === "past" ? "noPastEvents" : "noUpcomingEvents")}
+      sectionLabel={t(status === "past" ? "tabPast" : "tabUpcoming")}
+      testId="profile-events"
+    />
   );
 }

@@ -189,14 +189,6 @@ export interface FavoriteButtonProps {
   className?: string;
 }
 
-export interface FavoritesData {
-  events: EventSummaryResponseDTO[];
-  uniqueFavoritesCount: number;
-  slugsToRemove: string[];
-  eventIdsToRemove: string[];
-  backendUnavailable: boolean;
-}
-
 export interface NativeShareButtonProps {
   title: string;
   text?: string;
