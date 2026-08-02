@@ -85,29 +85,27 @@ test.describe("Publish integration (staging)", () => {
       page.getByTestId("user-avatar-button")
     ).toBeVisible({ timeout: 15_000 });
 
-    // Capture the actual authenticated identity instead of hardcoding a name/
-    // slug: whichever account E2E_STAGING_EMAIL/PASSWORD point to becomes the
-    // event's creator, and that can change independently of this test file
-    // (e.g. the test account gets rotated). Asserting against a fixed string
-    // here would silently start failing the moment the account changes,
-    // exactly as happened before this fix.
+    // Sanity check that we're logged in as *some* real account before
+    // publishing — the actual expected creator name/slug is captured further
+    // down from the created event's own `owner` field (see Step 7), not from
+    // this session data. /api/auth/me's `name` is the enrichment-merged
+    // session display name (lib/auth/enrichment.ts's three-way pick between
+    // backend displayName/name and the id_token name); the event detail page
+    // instead renders `owner.displayName ?? owner.username` from the event's
+    // own OwnerSummaryDTO (a separate backend record for that specific
+    // event). These two only agree when enrichment happens to pick the same
+    // value, so asserting the rendered creator block against /api/auth/me
+    // would flake whenever they diverge.
     const me = await page.evaluate(async () => {
       const res = await fetch("/api/auth/me");
       if (!res.ok) return null;
       const data = await res.json();
       return data?.user ?? null;
     });
-    const expectedCreatorName: string =
-      me?.name || me?.username || "";
-    const expectedCreatorSlug: string = me?.username || "";
     expect(
-      expectedCreatorName,
-      "expected /api/auth/me to return a logged-in user with a name or username"
-    ).not.toBe("");
-    expect(
-      expectedCreatorSlug,
-      "expected /api/auth/me to return a username (used for the /perfil/<username> link)"
-    ).not.toBe("");
+      me?.username,
+      "expected /api/auth/me to return a logged-in user with a username"
+    ).toBeTruthy();
 
     // ── Step 1: Navigate to publish page ──
     await page.goto("/en/publica", {
@@ -256,11 +254,31 @@ test.describe("Publish integration (staging)", () => {
     });
 
     // Creator attribution: the detail page must show "Published by <name>"
-    // with the name linked to /perfil/<username>, matched against the
-    // actual logged-in account (captured above) rather than a hardcoded
-    // name/slug. Rendered twice, same as the location block above — once
-    // inline for mobile, once in the desktop sidebar — so filter to the
-    // visible instance instead of assuming DOM order.
+    // with the name linked to /perfil/<username>. Read the expected values
+    // from the created event's own `owner` field (OwnerSummaryDTO, the same
+    // data the page renders from) rather than the auth session — see the
+    // note above Step 0's login check for why those two can diverge.
+    const eventOwner = await page.evaluate(async (slug: string) => {
+      const res = await fetch(`/api/events/${slug}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.owner ?? null;
+    }, createdEventSlug);
+    const expectedCreatorName: string =
+      eventOwner?.displayName || eventOwner?.username || "";
+    const expectedCreatorSlug: string = eventOwner?.username || "";
+    expect(
+      expectedCreatorName,
+      "expected the created event to have an owner with a displayName or username"
+    ).not.toBe("");
+    expect(
+      expectedCreatorSlug,
+      "expected the created event's owner to have a username (used for the /perfil/<username> link)"
+    ).not.toBe("");
+
+    // Rendered twice, same as the location block above — once inline for
+    // mobile, once in the desktop sidebar — so filter to the visible
+    // instance instead of assuming DOM order.
     const creatorBlock = page
       .locator('[data-testid="event-created-by"]:visible')
       .first();
