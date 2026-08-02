@@ -39,8 +39,10 @@ caching, ISR/PPR, or the Coolify deploy pipeline.
   `competitor-screenshots/`.
 
 Current design tokens live in `DESIGN.md` at the repo root — read that first
-for any new UI work. The three files above are the historical record of how
-the token system got there, not the day-to-day reference.
+for any new UI work. `design-system-overview.md`, `implementation-reference.md`,
+and `reference-data.md` are the historical record of how the token system got
+there, not the day-to-day reference. `design-rationale.md` is a separate,
+still-relevant competitive-UX reference, not part of that migration history.
 
 ## Infra & Deploys
 

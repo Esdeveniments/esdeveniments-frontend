@@ -38,6 +38,7 @@ describe("useEventAnalytics", () => {
   it("fires view_event_page once on mount with the event's fields", () => {
     renderHook(() => useEventAnalytics(makeEvent()));
 
+    expect(sendGoogleEventMock).toHaveBeenCalledTimes(1);
     expect(sendGoogleEventMock).toHaveBeenCalledWith("view_event_page", {
       event_id: "evt-1",
       event_slug: "concert-jazz",

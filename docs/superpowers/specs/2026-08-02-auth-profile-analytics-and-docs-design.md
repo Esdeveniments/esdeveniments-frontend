@@ -1,7 +1,13 @@
 # Auth/profile/favorites-tabs analytics + doc sync — design
 
 Date: 2026-08-02
-Status: approved, implementing
+Status: implemented
+
+Note: the "Verified gaps" and "D." sections below describe the state
+*before* this spec was implemented (e.g. `useEventAnalytics.ts` had zero
+call sites at the time this was written). Both are now fixed by this PR —
+left in the past-tense-implied wording it was authored with, as a record
+of what the plan set out to fix, not the current state of the code.
 
 ## Context
 

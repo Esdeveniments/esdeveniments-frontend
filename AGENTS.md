@@ -11,7 +11,7 @@
 | Components                | `react-nextjs-patterns`        | Server Component default                  |
 | Filters                   | `filter-system-dev`            | `config/filters.ts` only                  |
 | API calls                 | `api-layer-patterns`           | Three-layer proxy pattern                 |
-| Auth/session               | `auth-patterns`                | Use `useAuth()`, never call `/api/auth/*` directly |
+| Auth/session               | `auth-patterns`                | Use `useAuth()` (client) or `getAccessTokenFromCookies()` (server); never call `/api/auth/*` directly |
 | URL/routing               | `url-canonicalization`         | NEVER add `searchParams` to listing pages |
 | i18n/translations         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`           |
 | Styling/UI                | `design-system-conventions`    | Semantic classes, no `gray-*`             |

@@ -484,7 +484,7 @@ const response = await fetchWithHmac(`${apiUrl}/events`, {
 });
 ```
 
-**Implementation**: `proxy.ts` allowlists public GET routes; all others require HMAC.
+**Implementation**: `proxy.ts` allowlists public GET routes and `/api/auth/*`; all other `/api/*` routes require HMAC.
 
 ---
 

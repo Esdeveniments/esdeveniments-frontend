@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "@components/hooks/useAuth";
 import { sendGoogleEvent } from "@utils/analytics";
+import type { ProfilePageTrackerProps } from "types/props";
 
 /**
  * Fires a `profile_page_view` event once when a profile page loads. Reused
@@ -15,12 +16,7 @@ export default function ProfilePageTracker({
   upcomingCount,
   pastCount,
   status,
-}: {
-  username: string;
-  upcomingCount: number | undefined;
-  pastCount: number | undefined;
-  status: "upcoming" | "past";
-}) {
+}: ProfilePageTrackerProps): null {
   const { user, isLoading } = useAuth();
   const hasTrackedRef = useRef(false);
 

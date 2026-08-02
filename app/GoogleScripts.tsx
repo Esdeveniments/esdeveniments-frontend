@@ -4,10 +4,10 @@ import { useEffect, Suspense, useMemo, useState, useRef } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
-import type { WindowWithGtag } from "types/common";
 import { isE2ETestMode } from "@utils/env";
 import { isProductionHost } from "@utils/production-host";
 import { scheduleIdleCallback } from "@utils/browser";
+import { ensureGtag } from "@utils/analytics";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -21,21 +21,6 @@ const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
 // Conditionally defines gtag only if it doesn't already exist to avoid overwriting
 // the real gtag.js implementation if it has already loaded
 const GTAG_SHIM = 'window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};';
-
-const ensureGtag = (): WindowWithGtag | null => {
-  if (typeof window === "undefined") return null;
-  const win = window as WindowWithGtag;
-  win.dataLayer = win.dataLayer || [];
-
-  if (typeof win.gtag !== "function") {
-    win.gtag = function gtag() {
-
-      win.dataLayer.push(arguments);
-    };
-  }
-
-  return win;
-};
 
 // Debounce tracking: store path + timestamp to allow re-visits but prevent duplicates
 // Key = path, Value = timestamp of last track

@@ -15,6 +15,7 @@ Purpose: Catalan events discovery web app (Next.js 16.1 App Router + React 19 + 
 | **Creating components**       | `react-nextjs-patterns`        | Server Component by default, `"use client"` only at leaves  |
 | **Adding filters**            | `filter-system-dev`            | Add to `config/filters.ts` only                             |
 | **API endpoints**             | `api-layer-patterns`           | Three-layer proxy pattern required                          |
+| **Auth/session**              | `auth-patterns`                | Use `useAuth()` (client) or `getAccessTokenFromCookies()` (server); never call `/api/auth/*` directly |
 | **URL/routing changes**       | `url-canonicalization`         | NEVER add `searchParams` to listing pages                   |
 | **i18n/translations**         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`, not `next/link`            |
 | **Styling/UI**                | `design-system-conventions`    | Use semantic classes, NEVER `gray-*` colors                 |

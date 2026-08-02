@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { sendGoogleEvent } from "@utils/analytics";
+import type { FavoritesPageTrackerProps } from "types/props";
 
 /**
  * Fires a `favorites_page_view` event once when the favorites page loads.
@@ -13,11 +14,7 @@ export default function FavoritesPageTracker({
   favoritesCount,
   activeCount,
   period = "active",
-}: {
-  favoritesCount: number;
-  activeCount: number;
-  period?: "active" | "past";
-}) {
+}: FavoritesPageTrackerProps): null {
   const hasTrackedRef = useRef(false);
 
   useEffect(() => {

@@ -72,18 +72,24 @@ export default function EditProfileAvatar({
         sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
         return;
       }
-      await refetchUser();
-      sendGoogleEvent("avatar_upload_success", {});
     } catch {
       setError(t("errorUploadFailed"));
       sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
+      return;
     } finally {
       setIsUploading(false);
     }
+
+    // Mutation succeeded — fire success and resync the session outside the
+    // upload's own try/catch, so a refetchUser() failure (session resync,
+    // not the upload) can't get reported as an upload error.
+    sendGoogleEvent("avatar_upload_success", {});
+    await refetchUser();
   };
 
   const handleRemove = async (): Promise<void> => {
     setError(null);
+    sendGoogleEvent("avatar_remove_start", {});
     setIsRemoving(true);
     try {
       const response = await fetch("/api/users/me/avatar", {
@@ -95,14 +101,17 @@ export default function EditProfileAvatar({
         sendGoogleEvent("avatar_remove_error", {});
         return;
       }
-      await refetchUser();
-      sendGoogleEvent("avatar_remove_success", {});
     } catch {
       setError(t("errorRemoveFailed"));
       sendGoogleEvent("avatar_remove_error", {});
+      return;
     } finally {
       setIsRemoving(false);
     }
+
+    // Same ordering rationale as handleFileChange above.
+    sendGoogleEvent("avatar_remove_success", {});
+    await refetchUser();
   };
 
   return (

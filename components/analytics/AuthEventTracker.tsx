@@ -2,12 +2,15 @@
 
 import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
 
 // Fires once per page load when the OIDC callback redirects back with a
 // one-shot `auth_success`/`auth_error` marker (set by /api/auth/callback).
-// Mirrors EventClient's `edit_suggested` one-shot-banner pattern: read the
-// param once, don't bother stripping it from the URL.
+// The callback landing is always a hard navigation, so GoogleScripts'
+// `lazyOnload` gtag shim hasn't necessarily run yet when this effect fires —
+// `ensureGtag()` installs the shim first so the event isn't silently
+// dropped. Strips the marker from the URL afterward (via replaceState, no
+// navigation) so a page reload doesn't double-count the same auth outcome.
 function AuthResultTracker() {
   const searchParams = useSearchParams();
   const hasTrackedRef = useRef(false);
@@ -16,14 +19,20 @@ function AuthResultTracker() {
     if (hasTrackedRef.current) return;
     const success = searchParams?.get("auth_success");
     const errorReason = searchParams?.get("auth_error");
+    if (!success && !errorReason) return;
 
+    ensureGtag();
     if (success) {
       sendGoogleEvent("auth_success", {});
-      hasTrackedRef.current = true;
     } else if (errorReason) {
       sendGoogleEvent("auth_failure", { reason: errorReason });
-      hasTrackedRef.current = true;
     }
+    hasTrackedRef.current = true;
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("auth_success");
+    url.searchParams.delete("auth_error");
+    window.history.replaceState(window.history.state, "", url);
   }, [searchParams]);
 
   return null;
@@ -41,6 +50,7 @@ function AuthGateClickTracker() {
       const actionEl = target.closest<HTMLElement>("[data-analytics-action]");
       const action = actionEl?.dataset.analyticsAction;
       if (!action) return;
+      ensureGtag();
       sendGoogleEvent("auth_gate_click", { action });
     };
 
