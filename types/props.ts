@@ -509,6 +509,11 @@ export interface ProfileHeaderProps {
   profile: import("types/api/profile").ProfileDetailResponseDTO;
 }
 
+export interface VerifiedBadgeProps {
+  role?: import("types/auth").AuthRole;
+  verified?: boolean;
+}
+
 // Route-based tab strip (e.g. profile/favourites Propers/Passats). Each item
 // is a navigable Link, not a client-side tabpanel switch — see components/ui/common/tabs.
 export interface TabItem {
