@@ -11,6 +11,7 @@
 | Components                | `react-nextjs-patterns`        | Server Component default                  |
 | Filters                   | `filter-system-dev`            | `config/filters.ts` only                  |
 | API calls                 | `api-layer-patterns`           | Three-layer proxy pattern                 |
+| Auth/session               | `auth-patterns`                | Use `useAuth()`, never call `/api/auth/*` directly |
 | URL/routing               | `url-canonicalization`         | NEVER add `searchParams` to listing pages |
 | i18n/translations         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`           |
 | Styling/UI                | `design-system-conventions`    | Semantic classes, no `gray-*`             |
@@ -164,6 +165,7 @@ Before writing ANY new code, ALWAYS search first:
 - **CDN**: Cloudflare caches HTML pages and static assets at the edge. `_next/image` paths bypass CF cache (cache rule) to preserve format negotiation (avif/webp/jpeg via `Vary: Accept`). Origin handles image caching via Next.js 1-year `Cache-Control`.
 - Next.js App Router with server‑first rendering; client state via Zustand (`store.ts`) and client data fetching via SWR.
 - API layer: Internal proxy pattern—client libraries (`lib/api/*`) call internal Next.js API routes (`app/api/*`) which proxy to external backend via `*-external.ts` wrappers with HMAC signing.
+- Auth: Logto OIDC (Authorization Code + PKCE), session in HttpOnly cookies, client state via `useAuth()` (`lib/auth/AuthProvider.tsx`). See the `auth-patterns` skill.
 - SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `proxy.ts` handles canonical redirects, security headers, and CSP.
 - URL canonicalization: Proxy automatically redirects legacy query params and `/tots` segments to canonical paths (301 redirects).
 
@@ -217,7 +219,7 @@ This enables Next.js fetch cache, which stores every unique URL as a separate ca
 
 - Requirements: Node 22, Yarn 4.12+ (use Corepack).
 - Install: `corepack enable && corepack prepare yarn@4.12.0 --activate && yarn install --immutable`.
-- Env: set `HMAC_SECRET` (server‑only), `NEXT_PUBLIC_API_URL` (defaults handled), optional `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `SENTRY_DSN`.
+- Env: set `HMAC_SECRET` (server‑only), `NEXT_PUBLIC_API_URL` (defaults handled), optional `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `SENTRY_DSN`. Auth (Logto) requires `LOGTO_*` — see `docs/logto-auth-setup.md` and the `env-variable-management` skill; sign-in/profile/favorites features no-op without them.
 - Run: `yarn dev` (generates `public/sw.js` via prebuild). Build: `yarn build`.
 - Tests: `yarn test`; E2E: `yarn test:e2e` (local config starts the app).
 
