@@ -29,7 +29,7 @@ export async function fetchPlaceBySlugForMetadata(
   });
   const response = await fetch(url, {
     headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 86400, tags: ["places", `place:${slug}`] },
+    next: { revalidate: 86400, tags: [placesTag, placeTag(slug)] },
   });
   if (response.status === 404) {
     return null;
