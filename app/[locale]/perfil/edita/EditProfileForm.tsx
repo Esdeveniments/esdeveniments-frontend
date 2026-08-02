@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
 import { validateUsername, isPlaceholderUsername } from "@utils/username-validation";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
 import type { EditProfileFormProps } from "types/props";
 import EditProfileAvatar from "./EditProfileAvatar";
 
@@ -43,6 +43,7 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
   const hasTrackedViewRef = useRef(false);
   useEffect(() => {
     if (hasTrackedViewRef.current) return;
+    ensureGtag();
     sendGoogleEvent("edit_profile_page_view", { is_onboarding: isOnboarding });
     hasTrackedViewRef.current = true;
   }, [isOnboarding]);

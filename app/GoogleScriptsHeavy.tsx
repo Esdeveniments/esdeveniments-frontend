@@ -5,8 +5,8 @@
 
 import { useEffect, useRef } from "react";
 
-import type { WindowWithGtag } from "types/common";
 import { isE2ETestMode } from "@utils/env";
+import { ensureGtag } from "@utils/analytics";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -56,20 +56,6 @@ function classifyOutboundLinkType(hostname: string, pathname: string): string {
 
   return "external_website";
 }
-
-const ensureGtag = (): WindowWithGtag | null => {
-  if (typeof window === "undefined") return null;
-  const win = window as WindowWithGtag;
-  win.dataLayer = win.dataLayer || [];
-
-  if (typeof win.gtag !== "function") {
-    win.gtag = function gtag() {
-      win.dataLayer.push(arguments);
-    };
-  }
-
-  return win;
-};
 
 export default function GoogleScriptsHeavy({
   adsAllowed,

@@ -60,31 +60,35 @@ export default function EditProfileAvatar({
     sendGoogleEvent("avatar_upload_start", {});
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("avatarFile", file);
-      const response = await fetch("/api/users/me/avatar", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-      if (!response.ok) {
+      try {
+        const formData = new FormData();
+        formData.append("avatarFile", file);
+        const response = await fetch("/api/users/me/avatar", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        if (!response.ok) {
+          setError(t("errorUploadFailed"));
+          sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
+          return;
+        }
+      } catch {
         setError(t("errorUploadFailed"));
         sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
         return;
       }
-    } catch {
-      setError(t("errorUploadFailed"));
-      sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
-      return;
+
+      // Mutation succeeded — fire success and resync the session outside the
+      // upload's own try/catch, so a refetchUser() failure (session resync,
+      // not the upload) can't get reported as an upload error. Stays inside
+      // the outer finally so isUploading doesn't clear until the resync is
+      // done, or a second upload could race the first one's session refresh.
+      sendGoogleEvent("avatar_upload_success", {});
+      await refetchUser();
     } finally {
       setIsUploading(false);
     }
-
-    // Mutation succeeded — fire success and resync the session outside the
-    // upload's own try/catch, so a refetchUser() failure (session resync,
-    // not the upload) can't get reported as an upload error.
-    sendGoogleEvent("avatar_upload_success", {});
-    await refetchUser();
   };
 
   const handleRemove = async (): Promise<void> => {
@@ -92,26 +96,28 @@ export default function EditProfileAvatar({
     sendGoogleEvent("avatar_remove_start", {});
     setIsRemoving(true);
     try {
-      const response = await fetch("/api/users/me/avatar", {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!response.ok) {
+      try {
+        const response = await fetch("/api/users/me/avatar", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          setError(t("errorRemoveFailed"));
+          sendGoogleEvent("avatar_remove_error", {});
+          return;
+        }
+      } catch {
         setError(t("errorRemoveFailed"));
         sendGoogleEvent("avatar_remove_error", {});
         return;
       }
-    } catch {
-      setError(t("errorRemoveFailed"));
-      sendGoogleEvent("avatar_remove_error", {});
-      return;
+
+      // Same ordering and busy-state rationale as handleFileChange above.
+      sendGoogleEvent("avatar_remove_success", {});
+      await refetchUser();
     } finally {
       setIsRemoving(false);
     }
-
-    // Same ordering rationale as handleFileChange above.
-    sendGoogleEvent("avatar_remove_success", {});
-    await refetchUser();
   };
 
   return (

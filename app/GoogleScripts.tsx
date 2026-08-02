@@ -7,7 +7,7 @@ import { useAdContext } from "@lib/context/AdContext";
 import { isE2ETestMode } from "@utils/env";
 import { isProductionHost } from "@utils/production-host";
 import { scheduleIdleCallback } from "@utils/browser";
-import { ensureGtag } from "@utils/analytics";
+import { ensureGtag, CONSENT_MODE_DEFAULTS } from "@utils/analytics";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -191,12 +191,7 @@ export default function GoogleScripts() {
           <Script id="google-analytics-consent" strategy="lazyOnload">
             {`
               ${GTAG_SHIM}
-              gtag('consent', 'default', {
-                ad_user_data: 'denied',
-                ad_personalization: 'denied',
-                ad_storage: 'denied',
-                analytics_storage: 'denied'
-              });
+              gtag('consent', 'default', ${JSON.stringify(CONSENT_MODE_DEFAULTS)});
             `}
           </Script>
           <Script

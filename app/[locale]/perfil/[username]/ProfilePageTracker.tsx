@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAuth } from "@components/hooks/useAuth";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
 import type { ProfilePageTrackerProps } from "types/props";
 
 /**
@@ -25,6 +25,7 @@ export default function ProfilePageTracker({
     // owner's first render (AuthProvider hydrates asynchronously).
     if (hasTrackedRef.current || isLoading) return;
 
+    ensureGtag();
     sendGoogleEvent("profile_page_view", {
       is_own_profile: user?.username === username,
       upcoming_count: upcomingCount ?? null,

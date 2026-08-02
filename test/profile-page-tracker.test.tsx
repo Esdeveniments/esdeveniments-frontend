@@ -13,6 +13,7 @@ let authLoading = false;
 
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: sendGoogleEventMock,
+  ensureGtag: vi.fn(),
 }));
 
 vi.mock("@components/hooks/useAuth", () => ({

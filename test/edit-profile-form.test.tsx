@@ -35,6 +35,7 @@ vi.mock("@components/hooks/useAuth", () => ({
 
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: sendGoogleEventMock,
+  ensureGtag: vi.fn(),
 }));
 
 vi.mock("@app/[locale]/perfil/edita/EditProfileAvatar", () => ({

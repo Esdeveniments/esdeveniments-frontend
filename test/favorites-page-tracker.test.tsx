@@ -9,6 +9,7 @@ const { sendGoogleEventMock } = vi.hoisted(() => ({
 
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: sendGoogleEventMock,
+  ensureGtag: vi.fn(),
 }));
 
 import FavoritesPageTracker from "@app/[locale]/preferits/FavoritesPageTracker";

@@ -11,6 +11,16 @@ export const sendGoogleEvent = (
   }
 };
 
+// Consent Mode v2 baseline. Mirrored (via JSON.stringify) into GoogleScripts'
+// inline `google-analytics-consent` script so both code paths push the same
+// values — see the comment on `ensureGtag` for why this needs to exist here.
+export const CONSENT_MODE_DEFAULTS = {
+  ad_user_data: "denied",
+  ad_personalization: "denied",
+  ad_storage: "denied",
+  analytics_storage: "denied",
+} as const;
+
 /**
  * Installs the gtag dataLayer-queueing shim if it isn't there yet, so
  * `sendGoogleEvent` calls that fire before GoogleScripts' own `lazyOnload`
@@ -18,6 +28,12 @@ export const sendGoogleEvent = (
  * don't silently no-op. Safe to call anywhere: it only ever queues into
  * `dataLayer` — whether that queue ever reaches Google still depends on
  * GoogleScripts' existing prod-host/consent gating for the real gtag.js load.
+ *
+ * Pushes the Consent Mode v2 denied default in the same branch as the shim
+ * install, so whichever caller gets here first (a tracker on a hard nav, or
+ * GoogleScripts' own consent-update effect) guarantees the default is queued
+ * before any event this or later callers push - not just relying on the
+ * lazyOnload consent script to have run first.
  */
 export const ensureGtag = (): WindowWithGtag | null => {
   if (typeof window === "undefined") return null;
@@ -28,6 +44,7 @@ export const ensureGtag = (): WindowWithGtag | null => {
     win.gtag = function gtag() {
       win.dataLayer.push(arguments);
     };
+    win.gtag("consent", "default", CONSENT_MODE_DEFAULTS);
   }
 
   return win;

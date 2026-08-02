@@ -10,6 +10,7 @@ const { sendGoogleEventMock } = vi.hoisted(() => ({
 
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: sendGoogleEventMock,
+  ensureGtag: vi.fn(),
 }));
 
 import { useEventAnalytics } from "@app/[locale]/e/[eventId]/hooks/useEventAnalytics";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
 import type { FavoritesPageTrackerProps } from "types/props";
 
 /**
@@ -19,6 +19,7 @@ export default function FavoritesPageTracker({
 
   useEffect(() => {
     if (!hasTrackedRef.current) {
+      ensureGtag();
       sendGoogleEvent("favorites_page_view", {
         favorites_count: favoritesCount,
         active_count: activeCount,

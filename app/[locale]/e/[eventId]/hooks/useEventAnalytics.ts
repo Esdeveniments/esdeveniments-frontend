@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
 import type { EventClientProps } from "types/props";
 
 // Fires `view_event_page` once per event render. Extracted from EventClient
@@ -9,6 +9,7 @@ export function useEventAnalytics(event: EventClientProps["event"]): void {
   useEffect(() => {
     const isPast = event.endDate ? new Date(event.endDate) < new Date() : false;
 
+    ensureGtag();
     sendGoogleEvent("view_event_page", {
       event_id: event.id,
       event_slug: event.slug ?? "",
