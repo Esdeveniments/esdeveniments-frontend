@@ -221,10 +221,12 @@ test.describe("Publish integration (staging)", () => {
     // exist in the DOM at once and only one is actually visible at a given
     // viewport. `.first()` picked the mobile-only instance, which is CSS-hidden
     // at this project's desktop viewport, so the assertion always failed even
-    // though the value rendered correctly. Match only the visible instance
-    // instead of assuming DOM order.
+    // though the value rendered correctly. Match the visible instance instead
+    // of assuming DOM order; `.first()` here is just a strict-mode guard in
+    // case a hydration flicker briefly makes both match — the design only
+    // ever intends one to be visible at a time.
     await expect(
-      page.locator('p:visible:has-text("Test Venue - E2E")')
+      page.locator('p:visible:has-text("Test Venue - E2E")').first()
     ).toBeVisible({
       timeout: 15_000,
     });
