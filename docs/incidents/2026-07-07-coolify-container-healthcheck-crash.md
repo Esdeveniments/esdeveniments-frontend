@@ -70,7 +70,14 @@ The HEALTHCHECK timeout (3s, unchanged since the Dockerfile was first created)
 was correct for the *old* unconstrained regime but was never recalibrated for
 the *new* memory-bounded one.
 
-### The swappiness correlation is the smoking gun
+### The swappiness correlation is the leading hypothesis (unconfirmed)
+
+`vm.swappiness` rebalances reclaim priority between anonymous (process) and
+file-backed (page cache) memory — it doesn't directly trigger V8 GC. The
+correlation below is suggestive, not proof: no GC-pause metrics were captured
+during the incident, and the Sentinel review needed to confirm the causal
+chain is still pending (see Prevention #6). Treat the `20-30` recommendation
+below as a monitored change, not a validated fix.
 
 | Application | Swappiness | Memory | Crashed? |
 | --- | --- | --- | --- |
@@ -158,10 +165,12 @@ shared with everything else on the box.
    - **40s start-period** covers cold-start: `docker-entrypoint.sh` reads the
      cgroup limit, sizes the heap, clears 0-byte image cache files (the `find
      .next/cache/images -type f -size 0 -delete` scan added in `3e1d8bc8`),
-     then `node server.js` boots, connects to Redis, and runs the stale-cache
-     purge. The previous 20s was marginal — a slow Redis connect, a large
-     purge, or the 0-byte scan could exceed it, causing false-unhealthy on the
-     very first boot.
+     then `node server.js` boots and connects to Redis. The stale-cache purge
+     that follows the Redis connect (`cache-handler.mjs`) runs fire-and-forget
+     and doesn't gate `/api/health` readiness, so it isn't part of this
+     budget. The previous 20s was marginal — a slow Redis connect or the
+     0-byte scan could exceed it, causing false-unhealthy on the very first
+     boot.
    - **3 retries × 30s interval** unchanged — still 90s of sustained
      unresponsiveness before a restart is triggered, which is a reasonable
      signal that the process is genuinely stuck (not just a momentary GC pause).
@@ -172,17 +181,30 @@ shared with everything else on the box.
    stop-the-world pauses under memory pressure. The healthcheck should detect
    a genuinely dead process, not a temporarily slow one.
 
-2. **Start-period calibrated for cold-start** — 40s covers the full boot
-   sequence (entrypoint → heap sizing → cache cleanup → Node boot → Redis
-   connect → stale-cache purge) without false-unhealthy on first boot.
+2. **Start-period calibrated for cold-start** — 40s covers the full blocking
+   boot sequence (entrypoint → heap sizing → cache cleanup → Node boot →
+   Redis connect) without false-unhealthy on first boot. The stale-cache
+   purge that follows isn't part of this budget — it runs fire-and-forget and
+   doesn't gate `/api/health`.
 
-3. **Raise prod swappiness from 10 to 20–30** — Both prod containers crashed
-   at `swappiness=10`; neither staging container (20–60) has ever crashed.
-   Swappiness=10 forces the kernel to pressure V8 into GC rather than swapping,
-   directly increasing stop-the-world pause frequency and duration. Raising to
-   20–30 gives the kernel swap headroom and reduces GC pause frequency, at the
+3. **Raise prod swappiness from 10 to 20–30 (monitored hypothesis)** — Both
+   prod containers crashed at `swappiness=10`; neither staging container
+   (20–60) has ever crashed. This correlation suggests swappiness=10 forces
+   the kernel to pressure V8 into GC rather than swapping, increasing
+   stop-the-world pause frequency and duration — but it's unconfirmed without
+   GC-pause metrics (see #6 below). Raising to 20–30 gives the kernel swap
+   headroom and reduces GC pause frequency if the hypothesis holds, at the
    cost of some swap I/O under pressure. This is the highest-leverage Coolify
-   dashboard change to prevent recurrence.
+   dashboard change to try first, pending the metrics review below.
+   **Monitoring window:** 14 days from the swappiness change, matching the
+   17–22 day gap observed between the Jun 15 memory-limit change and each
+   prod crash — shorter windows wouldn't have caught either incident.
+   **Success:** zero crash-loops (`last_restart_type: crash`) on either prod
+   container within the window.
+   **Rollback criterion:** if either prod container crash-loops again at
+   swappiness 20–30 within that 14-day window, that rules out swappiness as
+   the sole cause — revert to investigating heap sizing or the memory
+   limits directly instead of swappiness.
 
 4. **Uptime monitor confirmed working** — The GitHub Actions uptime monitor
    (`.github/workflows/uptime.yml`, every 15 min) detected the outage within
