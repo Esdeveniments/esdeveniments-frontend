@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   buildDisplayLocation,
   buildEventLocationLabels,
@@ -6,7 +6,10 @@ import {
   buildEventListLocationLabels,
   getDistance,
   deg2rad,
+  resolvePlaceTypeAndLabel,
 } from "../utils/location-helpers";
+import type { PlaceResponseDTO } from "types/api/place";
+import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
 describe("buildDisplayLocation", () => {
   it("returns location when no city/region", () => {
@@ -237,5 +240,127 @@ describe("deg2rad", () => {
 
   it("converts negative degrees", () => {
     expect(deg2rad(-90)).toBeCloseTo(-Math.PI / 2);
+  });
+});
+
+describe("resolvePlaceTypeAndLabel", () => {
+  const region: RegionsGroupedByCitiesResponseDTO = {
+    id: 1,
+    name: "Vallès Occidental",
+    slug: "valles-occidental",
+    cities: [
+      { id: 10, value: "sabadell", label: "Sabadell", latitude: 0, longitude: 0 },
+    ],
+  };
+
+  it("returns Catalunya for an empty place without calling any fetcher", async () => {
+    const fetchPlace = vi.fn();
+    const fetchRegions = vi.fn();
+    const result = await resolvePlaceTypeAndLabel("", fetchPlace, fetchRegions);
+    expect(result).toEqual({ type: "region", label: "Catalunya" });
+    expect(fetchPlace).not.toHaveBeenCalled();
+    expect(fetchRegions).not.toHaveBeenCalled();
+  });
+
+  it("returns Catalunya for the virtual 'catalunya' slug without calling any fetcher", async () => {
+    const fetchPlace = vi.fn();
+    const fetchRegions = vi.fn();
+    const result = await resolvePlaceTypeAndLabel(
+      "catalunya",
+      fetchPlace,
+      fetchRegions,
+    );
+    expect(result).toEqual({ type: "region", label: "Catalunya" });
+    expect(fetchPlace).not.toHaveBeenCalled();
+    expect(fetchRegions).not.toHaveBeenCalled();
+  });
+
+  it("resolves a CITY place and attaches its parent region", async () => {
+    const place: PlaceResponseDTO = {
+      id: 10,
+      type: "CITY",
+      name: "Sabadell",
+      slug: "sabadell",
+    };
+    const fetchPlace = vi.fn().mockResolvedValue(place);
+    const fetchRegions = vi.fn().mockResolvedValue([region]);
+    const result = await resolvePlaceTypeAndLabel(
+      "sabadell",
+      fetchPlace,
+      fetchRegions,
+    );
+    expect(result).toEqual({
+      type: "town",
+      label: "Sabadell",
+      regionLabel: "Vallès Occidental",
+      regionSlug: "valles-occidental",
+    });
+  });
+
+  it("resolves a REGION place without a parent region lookup", async () => {
+    const place: PlaceResponseDTO = {
+      id: 1,
+      type: "REGION",
+      name: "Vallès Occidental",
+      slug: "valles-occidental",
+    };
+    const fetchPlace = vi.fn().mockResolvedValue(place);
+    const fetchRegions = vi.fn();
+    const result = await resolvePlaceTypeAndLabel(
+      "valles-occidental",
+      fetchPlace,
+      fetchRegions,
+    );
+    expect(result).toEqual({ type: "region", label: "Vallès Occidental" });
+    expect(fetchRegions).not.toHaveBeenCalled();
+  });
+
+  it("falls through to the regions lookup when fetchPlace returns null", async () => {
+    const fetchPlace = vi.fn().mockResolvedValue(null);
+    const fetchRegions = vi.fn().mockResolvedValue([region]);
+    const result = await resolvePlaceTypeAndLabel(
+      "sabadell",
+      fetchPlace,
+      fetchRegions,
+    );
+    expect(result).toEqual({
+      type: "town",
+      label: "Sabadell",
+      regionLabel: "Vallès Occidental",
+      regionSlug: "valles-occidental",
+    });
+  });
+
+  it("falls through to the regions lookup when fetchPlace throws", async () => {
+    const fetchPlace = vi.fn().mockRejectedValue(new Error("network error"));
+    const fetchRegions = vi.fn().mockResolvedValue([region]);
+    const result = await resolvePlaceTypeAndLabel(
+      "valles-occidental",
+      fetchPlace,
+      fetchRegions,
+    );
+    expect(result).toEqual({ type: "region", label: "Vallès Occidental" });
+  });
+
+  it("falls back to a dehyphenated slug when nothing matches", async () => {
+    const fetchPlace = vi.fn().mockResolvedValue(null);
+    const fetchRegions = vi.fn().mockResolvedValue([region]);
+    const result = await resolvePlaceTypeAndLabel(
+      "unknown-place",
+      fetchPlace,
+      fetchRegions,
+    );
+    expect(result).toEqual({ type: "town", label: "Unknown Place" });
+  });
+
+  it("fails open (dehyphenated fallback) when both fetchers throw", async () => {
+    const fetchPlace = vi.fn().mockRejectedValue(new Error("boom"));
+    const fetchRegions = vi.fn().mockRejectedValue(new Error("boom"));
+    const result = await resolvePlaceTypeAndLabel(
+      "some-town",
+      fetchPlace,
+      fetchRegions,
+    );
+    expect(result).toEqual({ type: "town", label: "Some Town" });
   });
 });

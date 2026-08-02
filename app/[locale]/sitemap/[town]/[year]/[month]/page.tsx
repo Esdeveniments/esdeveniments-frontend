@@ -7,8 +7,9 @@ import {
 } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
-import { fetchEvents } from "@lib/api/events";
+import { fetchEvents, fetchEventsForMetadata } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
+import { fetchPlaceBySlugForMetadata } from "@lib/seo/place-metadata";
 import {
   getHistoricDates,
   normalizeMonthParam,
@@ -96,10 +97,36 @@ export async function generateMetadata({
   const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
   const monthLabel =
     monthLabels[monthIndex] || normalizeMonthParam(canonicalMonthSlug).label;
-  // Tolerate backend 5xx for place lookup (cosmetic; town slug is an acceptable
-  // fallback). Prevents archive 500s from intermittent backend errors — the
-  // main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
-  const place = await getPlaceBySlug(town).catch(() => null);
+
+  // Probe events to set robots policy: noindex empty months so GSC stops
+  // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
+  // metadata-safe fetchEventsForMetadata, not the fetchMonthEvents wrapper
+  // Page uses below — fetchMonthEvents goes through fetchWithHmac, which
+  // unconditionally calls connection() and breaks the static shell if
+  // called from generateMetadata. See docs/incidents/
+  // 2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+  const { from, until } = getHistoricDates(
+    canonicalMonthSlug,
+    Number(year),
+    DEFAULT_MONTHS_URL
+  );
+  const fromStr = from.toISOString().split("T")[0];
+  const toStr = until.toISOString().split("T")[0];
+
+  // Place lookup and the events probe are independent — parallelize instead
+  // of awaiting sequentially.
+  const [place, events] = await Promise.all([
+    // Tolerate backend 5xx for place lookup (cosmetic; town slug is an
+    // acceptable fallback). Prevents archive 500s from intermittent backend
+    // errors — the main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
+    fetchPlaceBySlugForMetadata(town).catch(() => null),
+    fetchEventsForMetadata({
+      place: town,
+      from: fromStr,
+      to: toStr,
+      size: MAX_EVENTS_PER_PAGE,
+    }),
+  ]);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
@@ -109,22 +136,15 @@ export async function generateMetadata({
     locale,
     false
   );
-
-  // Probe events to set robots policy: noindex empty months so GSC stops
-  // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
-  // primitive-keyed fetchMonthEvents wrapper so Page reuses the same response.
-  const { from, until } = getHistoricDates(
-    canonicalMonthSlug,
-    Number(year),
-    DEFAULT_MONTHS_URL
-  );
-  const fromStr = from.toISOString().split("T")[0];
-  const toStr = until.toISOString().split("T")[0];
-  const events = await fetchMonthEvents(town, fromStr, toStr);
-  const realEventCount = Array.isArray(events.content)
-    ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
-      .length
-    : 0;
+  // `events === null` means the probe itself failed (upstream outage, bad
+  // payload) — fail open (no robots override) rather than noindex a page
+  // that may well have real content; only a confirmed empty result should
+  // noindex.
+  const realEventCount =
+    events && Array.isArray(events.content)
+      ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
+        .length
+      : null;
   const robotsOverride = realEventCount === 0 ? "noindex, follow" : undefined;
 
   return buildPageMeta({

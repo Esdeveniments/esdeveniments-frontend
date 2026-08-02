@@ -2,7 +2,7 @@ import { PlaceResponseDTO } from "types/api/place";
 import { createKeyedCache, createCache } from "@lib/api/cache";
 import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { cache } from "react";
-import { isBuildPhase } from "@utils/constants";
+import { isBuildPhase } from "@utils/build-phase";
 import {
   fetchPlaceBySlugExternal,
   fetchPlacesAggregatedExternal,

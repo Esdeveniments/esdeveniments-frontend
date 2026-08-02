@@ -1,4 +1,3 @@
-import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import type { ByDateOption, DateRangeShortcut } from "types/common";
 import { getTranslations } from "next-intl/server";
 import type { CategorySummaryResponseDTO } from "types/api/category";
@@ -69,17 +68,10 @@ export const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(
   MAX_ORIGINAL_FILE_BYTES,
 );
 
-/**
- * Detects if the application is in build phase (SSG/static generation).
- * During build phase, we bypass internal API proxy and call external API directly
- * to avoid issues when the Next.js server isn't running.
- *
- * This is used to determine whether to use internal API routes (runtime) or
- * external API calls (build time) for data fetching.
- */
-export const isBuildPhase =
-  process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-  (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
+// isBuildPhase lives in utils/build-phase.ts, not here — the data-fetching
+// layer (lib/api/*) imports it directly from there to avoid pulling in
+// next-intl/server and the full ca/es/en message bundles below.
+export { isBuildPhase } from "./build-phase";
 
 const constantsLabelsByLocale: Record<AppLocale, any> = {
   ca: (caMessages as any).Components.Constants,

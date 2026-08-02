@@ -1,7 +1,51 @@
 import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { fetchEventCountExternal } from "@lib/api/events-external";
+import {
+  buildEventsQuery,
+  getInternalApiUrl,
+  getVercelProtectionBypassHeaders,
+} from "@utils/api-helpers";
+import { eventsTag } from "@lib/cache/tags";
 import { SITEMAP_MIN_EVENTS_FOR_EXPANSION } from "@utils/constants";
 import type { PlaceType } from "types/common";
+
+async function resolvePlaceExpandability(
+  slug: string,
+  type: PlaceType,
+  fetchCount: (slug: string) => Promise<number | null>,
+): Promise<boolean> {
+  if (type !== "town") return true;
+  if (!slug || slug === "catalunya") return true;
+  try {
+    const count = await fetchCount(slug);
+    return count === null || count >= SITEMAP_MIN_EVENTS_FOR_EXPANSION;
+  } catch {
+    // Fail open on unexpected errors so transient failures don't shrink
+    // sitemap or hide internal links.
+    return true;
+  }
+}
+
+// Metadata-only count reader: hits the internal API route with a plain,
+// tagged `fetch()` instead of `fetchEventCountExternal` (which goes through
+// `fetchWithHmac`, and that calls `connection()` unconditionally). Calling a
+// dynamic API from inside a "use cache" scope defeats the whole point of
+// getPlaceExpandabilityForMetadata below — it would stay a resume-mismatch
+// hazard despite the "use cache" wrapper.
+async function fetchEventCountForMetadata(slug: string): Promise<number | null> {
+  const queryString = buildEventsQuery({ place: slug, size: 1 });
+  const url = await getInternalApiUrl(`/api/events?${queryString}`, {
+    preferConfiguredOrigin: true,
+  });
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
+    next: { revalidate: 600, tags: [eventsTag] },
+  });
+  if (!response.ok) return null;
+  const data = await response.json();
+  return typeof data?.totalElements === "number" ? data.totalElements : null;
+}
 
 /**
  * Determines whether a place has enough event depth to warrant filter
@@ -27,16 +71,19 @@ import type { PlaceType } from "types/common";
  * helpers.
  */
 export const getPlaceExpandability = cache(
-  async (slug: string, type: PlaceType): Promise<boolean> => {
-    if (type !== "town") return true;
-    if (!slug || slug === "catalunya") return true;
-    try {
-      const count = await fetchEventCountExternal(slug);
-      return count === null || count >= SITEMAP_MIN_EVENTS_FOR_EXPANSION;
-    } catch {
-      // Fail open on unexpected errors so transient failures don't shrink
-      // sitemap or hide internal links.
-      return true;
-    }
-  },
+  (slug: string, type: PlaceType): Promise<boolean> =>
+    resolvePlaceExpandability(slug, type, fetchEventCountExternal),
 );
+
+// Metadata-only reader: wraps the same check in `"use cache"` so
+// generateMetadata stays prerenderable under cacheComponents. See
+// docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+export async function getPlaceExpandabilityForMetadata(
+  slug: string,
+  type: PlaceType,
+): Promise<boolean> {
+  "use cache";
+  cacheTag(eventsTag);
+  cacheLife("hours");
+  return resolvePlaceExpandability(slug, type, fetchEventCountForMetadata);
+}

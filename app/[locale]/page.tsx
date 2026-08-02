@@ -27,6 +27,7 @@ export async function generateMetadata() {
   const pageData: PageData = await generatePagesData({
     place: "",
     byDate: "",
+    placeTypeLabel: { type: "region", label: "Catalunya" },
     locale,
   });
   return buildPageMeta({
@@ -139,7 +140,12 @@ async function HomeContent({
   const [t, tTopAgenda, pageData] = await Promise.all([
     getTranslations({ locale, namespace: "App.Home" }),
     getTranslations({ locale, namespace: "Config.TopAgenda" }),
-    generatePagesData({ place: "", byDate: "", locale }),
+    generatePagesData({
+      place: "",
+      byDate: "",
+      placeTypeLabel: { type: "region", label: "Catalunya" },
+      locale,
+    }),
   ]);
   const agendaLabel = tTopAgenda("agenda");
 

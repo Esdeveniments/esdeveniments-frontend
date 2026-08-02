@@ -6,7 +6,9 @@ import { createCache, createKeyedCache } from "lib/api/cache";
 import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { cache as reactCache } from "react";
 import { parseCategories } from "lib/validation/category";
-import { isBuildPhase } from "@utils/constants";
+import { isBuildPhase } from "@utils/build-phase";
+import { categoriesTag } from "@lib/cache/tags";
+import { cacheLife, cacheTag } from "next/cache";
 import {
   fetchCategoriesExternal,
   fetchCategoryByIdExternal,
@@ -57,6 +59,32 @@ export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
 
 // React per-request memoization for metadata+page deduplication
 export const getCategories = reactCache(fetchCategories);
+
+// Metadata-only reader: resolves the API origin from configuration instead of
+// request headers(), and is itself cached, so generateMetadata stays
+// prerenderable under cacheComponents. See
+// docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+export async function fetchCategoriesForMetadata(): Promise<
+  CategorySummaryResponseDTO[]
+> {
+  "use cache";
+  cacheTag(categoriesTag);
+  const url = await getInternalApiUrl(`/api/categories`, {
+    preferConfiguredOrigin: true,
+  });
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
+    next: { revalidate: 86400, tags: [categoriesTag] },
+  });
+  if (!response.ok) {
+    // Categories are a fallback enrichment for metadata copy, not the
+    // primary lookup — degrade to empty rather than throw.
+    return [];
+  }
+  cacheLife("hours");
+  const json = await response.json();
+  return parseCategories(json);
+}
 
 async function fetchCategoryByIdApi(
   id: string | number

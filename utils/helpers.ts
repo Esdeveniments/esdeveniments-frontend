@@ -44,6 +44,9 @@ export {
 } from "./category-helpers";
 
 // Location helpers
+// getPlaceTypeAndLabelForMetadata deliberately NOT re-exported here: this
+// barrel is reachable from Client Components, and its "use cache" directive
+// must live in a server-only file. Import it from @lib/seo/place-metadata.
 export {
   getPlaceTypeAndLabel,
   getPlaceTypeAndLabelCached,

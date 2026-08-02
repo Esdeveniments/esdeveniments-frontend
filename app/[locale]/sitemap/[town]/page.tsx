@@ -5,6 +5,7 @@ import { MONTHS_URL as DEFAULT_MONTHS_URL } from "@utils/constants";
 // No headers/nonce needed with relaxed CSP
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getPlaceBySlug } from "@lib/api/places";
+import { fetchPlaceBySlugForMetadata } from "@lib/seo/place-metadata";
 import { getTranslations } from "next-intl/server";
 import type { TownStaticPathParams } from "types/common";
 import type { AppLocale } from "types/i18n";
@@ -35,7 +36,7 @@ export async function generateMetadata({
   // Tolerate backend 5xx: getPlaceBySlug throws on non-200/404. Falling back
   // to null lets the page render with the slug as the label instead of 500ing
   // — fixes ~698 5xx errors flagged by GSC on /sitemap/<town>/...
-  const place = await getPlaceBySlug(town).catch(() => null);
+  const place = await fetchPlaceBySlugForMetadata(town).catch(() => null);
   const label = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";

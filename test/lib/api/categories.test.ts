@@ -8,6 +8,11 @@ vi.mock("@utils/api-helpers", () => ({
   getVercelProtectionBypassHeaders: vi.fn(() => ({})),
 }));
 
+vi.mock("next/cache", () => ({
+  cacheTag: vi.fn(),
+  cacheLife: vi.fn(),
+}));
+
 vi.mock("lib/validation/category", () => ({
   parseCategories: vi.fn((data: unknown) => data),
 }));
@@ -107,5 +112,33 @@ describe("lib/api/categories", () => {
   it("clearCategoriesCaches runs without error", async () => {
     const { clearCategoriesCaches } = await import("lib/api/categories");
     expect(() => clearCategoriesCaches()).not.toThrow();
+  });
+
+  it("fetchCategoriesForMetadata makes fetch call and returns parsed data", async () => {
+    const { fetchCategoriesForMetadata } = await import("lib/api/categories");
+    const result = await fetchCategoriesForMetadata();
+    expect(result).toHaveLength(2);
+    expect(result[0]).toHaveProperty("slug", "musica");
+  });
+
+  it("fetchCategoriesForMetadata degrades to an empty array on a non-ok response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+      }),
+    );
+    const { fetchCategoriesForMetadata } = await import("lib/api/categories");
+    const result = await fetchCategoriesForMetadata();
+    expect(result).toEqual([]);
+  });
+
+  it("fetchCategoriesForMetadata calls cacheTag/cacheLife (use cache boundary)", async () => {
+    const { cacheTag, cacheLife } = await import("next/cache");
+    const { fetchCategoriesForMetadata } = await import("lib/api/categories");
+    await fetchCategoriesForMetadata();
+    expect(cacheTag).toHaveBeenCalled();
+    expect(cacheLife).toHaveBeenCalledWith("hours");
   });
 });

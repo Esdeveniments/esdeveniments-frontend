@@ -26,8 +26,8 @@ import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
-  isBuildPhase,
 } from "@utils/constants";
+import { isBuildPhase } from "@utils/build-phase";
 import { filterActiveEvents } from "@utils/event-helpers";
 import {
   ListEvent,
@@ -163,6 +163,57 @@ async function fetchEventsInternal(
 }
 
 export const fetchEvents = cache(fetchEventsInternal);
+
+// Metadata-only reader: resolves the API origin from configuration instead of
+// request headers(), and is itself cached, so generateMetadata stays
+// prerenderable under cacheComponents. fetchEvents (above) goes through
+// fetchWithHmac, which unconditionally calls connection() — a genuine dynamic
+// API — so wrapping it in React cache() (as fetchMonthEvents does in the
+// sitemap month page) does NOT make it prerenderable; it still breaks the
+// static shell when called from generateMetadata. This variant hits the
+// internal /api/events route with a plain, tagged fetch instead. See
+// docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+//
+// Returns `null` (not an empty page) on any failure to fetch/parse, so
+// callers can tell "genuinely no events" apart from "couldn't check" and
+// fail open (e.g. don't noindex a page just because the probe errored) —
+// same convention as getPlaceExpandability's fail-open contract.
+export async function fetchEventsForMetadata(
+  params: FetchEventsParams,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO> | null> {
+  "use cache";
+  cacheTag(eventsTag);
+  try {
+    const queryString = buildEventsQuery(params);
+    const url = await getInternalApiUrl(`/api/events?${queryString}`, {
+      preferConfiguredOrigin: true,
+    });
+    const response = await fetch(url, {
+      headers: getVercelProtectionBypassHeaders(),
+      next: { revalidate: 600, tags: [eventsTag] },
+    });
+    if (!response.ok) {
+      // Transient upstream failure — cache briefly rather than "hours" so a
+      // recovering backend doesn't leave metadata degraded for a long window.
+      cacheLife("minutes");
+      return null;
+    }
+    const data = await response.json();
+    const validated = parsePagedEvents(data);
+    if (!validated) {
+      // Malformed 2xx payload — same short-lived treatment as a failed
+      // request, not "hours": a schema/proxy blip shouldn't be cached as
+      // if it were a confirmed empty result.
+      cacheLife("minutes");
+      return null;
+    }
+    cacheLife("hours");
+    return validated;
+  } catch {
+    cacheLife("minutes");
+    return null;
+  }
+}
 
 export async function fetchEventBySlug(
   fullSlug: string,

@@ -9,7 +9,7 @@ import {
   fetchRegionsExternal,
   fetchRegionsOptionsExternal,
 } from "./regions-external";
-import { PHASE_PRODUCTION_BUILD } from "next/constants";
+import { isBuildPhase } from "@utils/build-phase";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 const { cache: regionsListCache, clear: clearRegionsListCache } =
@@ -53,12 +53,6 @@ export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (homepage, sitemap) can fetch data during next build
-  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
-  // (NEXT_PHASE may not always be set, so we also check for build-time indicators)
-  const isBuildPhase =
-    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
-
   if (isBuildPhase) {
     try {
       return await fetchRegionsExternal();
@@ -113,11 +107,6 @@ export async function fetchRegionsWithCities(): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
   // During build phase, bypass internal proxy
-  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
-  const isBuildPhase =
-    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
-
   if (isBuildPhase) {
     try {
       const data = await fetchRegionsOptionsExternal();
