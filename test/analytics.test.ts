@@ -37,6 +37,21 @@ describe("ensureGtag", () => {
     expect(win().gtag).toBe(existingGtag);
     expect(win().dataLayer).toEqual([]);
   });
+
+  it("never re-pushes the default once another caller already installed the shim", () => {
+    // Simulates GoogleScripts' inline GTAG_SHIM script (or a real gtag.js
+    // load) winning the race and installing the shim first: ensureGtag()
+    // must not push a second 'default' command, which would reset an
+    // already-granted consent state back to denied.
+    win().dataLayer = [["consent", "default", CONSENT_MODE_DEFAULTS]];
+    win().gtag = function gtag() {
+      win().dataLayer.push(arguments);
+    };
+
+    ensureGtag();
+
+    expect(win().dataLayer).toHaveLength(1);
+  });
 });
 
 describe("sendGoogleEvent", () => {

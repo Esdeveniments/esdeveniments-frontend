@@ -17,10 +17,16 @@ const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
   ? `https://fundingchoicesmessages.google.com/i/${FUNDING_CHOICES_PUB_ID}?ers=1`
   : "";
 
-// Google Analytics gtag shim - reused across multiple Script components
-// Conditionally defines gtag only if it doesn't already exist to avoid overwriting
-// the real gtag.js implementation if it has already loaded
-const GTAG_SHIM = 'window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};';
+// Google Analytics gtag shim - reused across multiple Script components.
+// Conditionally defines gtag only if it doesn't already exist (avoids
+// overwriting the real gtag.js implementation if it has already loaded), and
+// pushes the Consent Mode v2 denied default in that same guarded branch -
+// mirroring ensureGtag() in utils/analytics.ts - so whichever of the two
+// runs first (this inline script, or a tracker's ensureGtag() call on a hard
+// nav) is the only one that ever pushes the default. Consent Mode only
+// honors the first 'default' command; a second one would reset an
+// already-granted consent state back to denied.
+const GTAG_SHIM = `window.dataLayer=window.dataLayer||[];if(typeof window.gtag!=='function'){window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('consent','default',${JSON.stringify(CONSENT_MODE_DEFAULTS)});}`;
 
 // Debounce tracking: store path + timestamp to allow re-visits but prevent duplicates
 // Key = path, Value = timestamp of last track
@@ -185,14 +191,12 @@ export default function GoogleScripts() {
 
   return (
     <>
-      {/* Google Analytics - Consent Mode v2 (defaults set inline to avoid race conditions) */}
+      {/* Google Analytics - Consent Mode v2 (default pushed by GTAG_SHIM, see
+          its comment above, for why this can't unconditionally re-push it) */}
       {GA_MEASUREMENT_ID && !isE2ETestMode && isProdHost && (
         <>
           <Script id="google-analytics-consent" strategy="lazyOnload">
-            {`
-              ${GTAG_SHIM}
-              gtag('consent', 'default', ${JSON.stringify(CONSENT_MODE_DEFAULTS)});
-            `}
+            {GTAG_SHIM}
           </Script>
           <Script
             id="google-analytics-gtag"

@@ -11,9 +11,9 @@ export const sendGoogleEvent = (
   }
 };
 
-// Consent Mode v2 baseline. Mirrored (via JSON.stringify) into GoogleScripts'
-// inline `google-analytics-consent` script so both code paths push the same
-// values — see the comment on `ensureGtag` for why this needs to exist here.
+// Consent Mode v2 baseline, pushed once by ensureGtag() below. Exported so
+// test/analytics.test.ts can assert against it without duplicating the
+// literal.
 export const CONSENT_MODE_DEFAULTS = {
   ad_user_data: "denied",
   ad_personalization: "denied",
@@ -29,11 +29,11 @@ export const CONSENT_MODE_DEFAULTS = {
  * `dataLayer` — whether that queue ever reaches Google still depends on
  * GoogleScripts' existing prod-host/consent gating for the real gtag.js load.
  *
- * Pushes the Consent Mode v2 denied default in the same branch as the shim
- * install, so whichever caller gets here first (a tracker on a hard nav, or
- * GoogleScripts' own consent-update effect) guarantees the default is queued
- * before any event this or later callers push - not just relying on the
- * lazyOnload consent script to have run first.
+ * Pushes the Consent Mode v2 denied default in the same guarded branch as
+ * the shim install, mirroring GoogleScripts' inline GTAG_SHIM script (see
+ * its comment there) - so whichever of the two runs first is the only one
+ * that pushes the default, guaranteeing it's queued before any event either
+ * side sends, without ever double-pushing it.
  */
 export const ensureGtag = (): WindowWithGtag | null => {
   if (typeof window === "undefined") return null;
