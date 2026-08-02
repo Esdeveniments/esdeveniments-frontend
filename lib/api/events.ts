@@ -173,37 +173,46 @@ export const fetchEvents = cache(fetchEventsInternal);
 // static shell when called from generateMetadata. This variant hits the
 // internal /api/events route with a plain, tagged fetch instead. See
 // docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+//
+// Returns `null` (not an empty page) on any failure to fetch/parse, so
+// callers can tell "genuinely no events" apart from "couldn't check" and
+// fail open (e.g. don't noindex a page just because the probe errored) —
+// same convention as getPlaceExpandability's fail-open contract.
 export async function fetchEventsForMetadata(
   params: FetchEventsParams,
-): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+): Promise<PagedResponseDTO<EventSummaryResponseDTO> | null> {
   "use cache";
   cacheTag(eventsTag);
-  const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
-    content: [],
-    currentPage: params.page ?? 0,
-    pageSize: params.size ?? 12,
-    totalElements: 0,
-    totalPages: 0,
-    last: true,
-  };
-  const queryString = buildEventsQuery(params);
-  const url = await getInternalApiUrl(`/api/events?${queryString}`, {
-    preferConfiguredOrigin: true,
-  });
-  const response = await fetch(url, {
-    headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 600, tags: [eventsTag] },
-  });
-  if (!response.ok) {
-    // Transient upstream failure — cache briefly rather than "hours" so a
-    // recovering backend doesn't leave metadata degraded for a long window.
+  try {
+    const queryString = buildEventsQuery(params);
+    const url = await getInternalApiUrl(`/api/events?${queryString}`, {
+      preferConfiguredOrigin: true,
+    });
+    const response = await fetch(url, {
+      headers: getVercelProtectionBypassHeaders(),
+      next: { revalidate: 600, tags: [eventsTag] },
+    });
+    if (!response.ok) {
+      // Transient upstream failure — cache briefly rather than "hours" so a
+      // recovering backend doesn't leave metadata degraded for a long window.
+      cacheLife("minutes");
+      return null;
+    }
+    const data = await response.json();
+    const validated = parsePagedEvents(data);
+    if (!validated) {
+      // Malformed 2xx payload — same short-lived treatment as a failed
+      // request, not "hours": a schema/proxy blip shouldn't be cached as
+      // if it were a confirmed empty result.
+      cacheLife("minutes");
+      return null;
+    }
+    cacheLife("hours");
+    return validated;
+  } catch {
     cacheLife("minutes");
-    return fallbackResponse;
+    return null;
   }
-  const data = await response.json();
-  const validated = parsePagedEvents(data);
-  cacheLife("hours");
-  return validated ?? fallbackResponse;
 }
 
 export async function fetchEventBySlug(

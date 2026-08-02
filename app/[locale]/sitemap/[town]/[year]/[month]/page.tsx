@@ -131,10 +131,15 @@ export async function generateMetadata({
     to: toStr,
     size: MAX_EVENTS_PER_PAGE,
   });
-  const realEventCount = Array.isArray(events.content)
-    ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
-      .length
-    : 0;
+  // `events === null` means the probe itself failed (upstream outage, bad
+  // payload) — fail open (no robots override) rather than noindex a page
+  // that may well have real content; only a confirmed empty result should
+  // noindex.
+  const realEventCount =
+    events && Array.isArray(events.content)
+      ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
+        .length
+      : null;
   const robotsOverride = realEventCount === 0 ? "noindex, follow" : undefined;
 
   return buildPageMeta({
