@@ -5,7 +5,7 @@ import {
   getVercelProtectionBypassHeaders,
 } from "@utils/api-helpers";
 import { fetchCitiesExternal } from "./cities-external";
-import { isBuildPhase } from "@utils/constants";
+import { isBuildPhase } from "@utils/build-phase";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 const { cache: citiesListCache, clear: clearCitiesListCache } =

@@ -26,8 +26,8 @@ import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
-  isBuildPhase,
 } from "@utils/constants";
+import { isBuildPhase } from "@utils/build-phase";
 import { filterActiveEvents } from "@utils/event-helpers";
 import {
   ListEvent,

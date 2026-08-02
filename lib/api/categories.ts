@@ -6,7 +6,7 @@ import { createCache, createKeyedCache } from "lib/api/cache";
 import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
 import { cache as reactCache } from "react";
 import { parseCategories } from "lib/validation/category";
-import { isBuildPhase } from "@utils/constants";
+import { isBuildPhase } from "@utils/build-phase";
 import { categoriesTag } from "@lib/cache/tags";
 import { cacheLife, cacheTag } from "next/cache";
 import {

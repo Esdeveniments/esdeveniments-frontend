@@ -1,5 +1,4 @@
 import { siteUrl } from "@config/index";
-import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
 import { cacheLife, cacheTag } from "next/cache";
 import { placesTag, placeTag } from "@lib/cache/tags";
@@ -84,7 +83,7 @@ export async function generatePagesData({
   search,
   locale,
 }: GeneratePagesDataProps & {
-  placeTypeLabel?: PlaceTypeAndLabel;
+  placeTypeLabel: PlaceTypeAndLabel;
   locale?: AppLocale;
 }): Promise<PageData> {
   // No dynamic API (headers/cookies/searchParams) is read here — the only
@@ -196,8 +195,7 @@ export async function generatePagesData({
     throw new Error("Invalid year range");
   }
 
-  const { type, label }: PlaceTypeAndLabel =
-    placeTypeLabel || (await getPlaceTypeAndLabel(place));
+  const { type, label }: PlaceTypeAndLabel = placeTypeLabel;
   // keep legacy naming compatibility without unused var warnings
   const labelWithArticle = formatPlacePreposition(
     label,

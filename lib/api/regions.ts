@@ -9,7 +9,7 @@ import {
   fetchRegionsExternal,
   fetchRegionsOptionsExternal,
 } from "./regions-external";
-import { isBuildPhase } from "@utils/constants";
+import { isBuildPhase } from "@utils/build-phase";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 const { cache: regionsListCache, clear: clearRegionsListCache } =

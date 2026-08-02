@@ -64,7 +64,7 @@ export async function getPlaceTypeAndLabelForMetadata(
   place: string,
 ): Promise<PlaceTypeAndLabel> {
   "use cache";
-  cacheTag(placesTag, regionsTag);
+  cacheTag(placesTag, regionsTag, regionsOptionsTag);
   cacheLife("hours");
   return resolvePlaceTypeAndLabel(
     place,

@@ -1,4 +1,3 @@
-import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import type { ByDateOption, DateRangeShortcut } from "types/common";
 import { getTranslations } from "next-intl/server";
 import type { CategorySummaryResponseDTO } from "types/api/category";
@@ -69,25 +68,10 @@ export const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(
   MAX_ORIGINAL_FILE_BYTES,
 );
 
-/**
- * Detects if the application is in build phase (SSG/static generation).
- * During build phase, we bypass internal API proxy and call external API directly
- * to avoid issues when the Next.js server isn't running.
- *
- * This is used to determine whether to use internal API routes (runtime) or
- * external API calls (build time) for data fetching.
- *
- * NEXT_PHASE is the only reliable signal — it's set by the Next.js CLI itself
- * during `next build`, regardless of hosting platform. A `NODE_ENV ===
- * "production" && !VERCEL_URL` fallback used to be OR'd in here, added when
- * this app only ran on Vercel (VERCEL_URL is always set at Vercel runtime, so
- * its absence meant "must be the build step"). Since the Coolify migration,
- * that assumption is false: self-hosted production never sets VERCEL_URL
- * either, so the fallback made isBuildPhase permanently true at runtime,
- * silently bypassing the internal API's caching/revalidation for places,
- * regions, cities, categories, and events on every production request.
- */
-export const isBuildPhase = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD;
+// isBuildPhase lives in utils/build-phase.ts, not here — the data-fetching
+// layer (lib/api/*) imports it directly from there to avoid pulling in
+// next-intl/server and the full ca/es/en message bundles below.
+export { isBuildPhase } from "./build-phase";
 
 const constantsLabelsByLocale: Record<AppLocale, any> = {
   ca: (caMessages as any).Components.Constants,
