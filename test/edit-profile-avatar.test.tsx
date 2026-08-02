@@ -12,6 +12,11 @@ const baseUser: AuthUser = {
 
 let authUser: AuthUser = baseUser;
 const mockRefetchUser = vi.fn();
+const { sendGoogleEventMock } = vi.hoisted(() => ({
+  sendGoogleEventMock: vi.fn<
+    (event: string, obj: Record<string, unknown>) => void
+  >(),
+}));
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -19,6 +24,10 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@components/hooks/useAuth", () => ({
   useAuth: () => ({ user: authUser, refetchUser: mockRefetchUser }),
+}));
+
+vi.mock("@utils/analytics", () => ({
+  sendGoogleEvent: sendGoogleEventMock,
 }));
 
 import EditProfileAvatar from "@app/[locale]/perfil/edita/EditProfileAvatar";
@@ -32,6 +41,7 @@ describe("EditProfileAvatar", () => {
   beforeEach(() => {
     authUser = baseUser;
     mockRefetchUser.mockReset().mockResolvedValue(undefined);
+    sendGoogleEventMock.mockReset();
     vi.stubGlobal("fetch", vi.fn());
   });
 
@@ -61,6 +71,9 @@ describe("EditProfileAvatar", () => {
 
     expect(await screen.findByText("errorUnsupported")).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_error", {
+      reason: "unsupported_type",
+    });
   });
 
   it("rejects an oversized file locally, without uploading", async () => {
@@ -71,6 +84,9 @@ describe("EditProfileAvatar", () => {
 
     expect(await screen.findByText("errorTooLarge")).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_error", {
+      reason: "too_large",
+    });
   });
 
   it("uploads a valid file with the avatarFile field and refetches the session", async () => {
@@ -91,6 +107,8 @@ describe("EditProfileAvatar", () => {
     expect((init as RequestInit).method).toBe("POST");
     const body = (init as RequestInit).body as FormData;
     expect(body.get("avatarFile")).toBe(file);
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_start", {});
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_success", {});
   });
 
   it("removes the avatar and refetches the session", async () => {
@@ -109,6 +127,7 @@ describe("EditProfileAvatar", () => {
       "/api/users/me/avatar",
       expect.objectContaining({ method: "DELETE", credentials: "include" }),
     );
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_remove_success", {});
   });
 
   it("surfaces an upload failure without refetching", async () => {
@@ -125,5 +144,8 @@ describe("EditProfileAvatar", () => {
 
     expect(await screen.findByText("errorUploadFailed")).toBeInTheDocument();
     expect(mockRefetchUser).not.toHaveBeenCalled();
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_error", {
+      reason: "upload_failed",
+    });
   });
 });

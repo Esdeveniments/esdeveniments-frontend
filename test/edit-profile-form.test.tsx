@@ -15,6 +15,11 @@ let authUser: AuthUser = baseUser;
 
 const mockRefetchUser = vi.fn();
 const mockPush = vi.fn();
+const { sendGoogleEventMock } = vi.hoisted(() => ({
+  sendGoogleEventMock: vi.fn<
+    (event: string, obj: Record<string, unknown>) => void
+  >(),
+}));
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -28,6 +33,10 @@ vi.mock("@components/hooks/useAuth", () => ({
   useAuth: () => ({ user: authUser, refetchUser: mockRefetchUser }),
 }));
 
+vi.mock("@utils/analytics", () => ({
+  sendGoogleEvent: sendGoogleEventMock,
+}));
+
 vi.mock("@app/[locale]/perfil/edita/EditProfileAvatar", () => ({
   default: () => <div data-testid="edit-profile-avatar" />,
 }));
@@ -39,7 +48,16 @@ describe("EditProfileForm", () => {
     authUser = baseUser;
     mockRefetchUser.mockReset().mockResolvedValue(undefined);
     mockPush.mockReset();
+    sendGoogleEventMock.mockReset();
     vi.stubGlobal("fetch", vi.fn());
+  });
+
+  it("fires edit_profile_page_view once on mount, with is_onboarding", () => {
+    authUser = { ...baseUser, profileCompleted: false };
+    render(<EditProfileForm />);
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("edit_profile_page_view", {
+      is_onboarding: true,
+    });
   });
 
   it("prefills fields from the current user", () => {
@@ -166,6 +184,14 @@ describe("EditProfileForm", () => {
     );
     expect(await screen.findByText("success")).toBeInTheDocument();
     expect(mockPush).not.toHaveBeenCalled();
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "edit_profile_submit_attempt",
+      { is_onboarding: false },
+    );
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "edit_profile_submit_success",
+      { is_onboarding: false, redirected: false },
+    );
   });
 
   it("redirects instead of showing the success banner when redirectTo is set", async () => {
@@ -180,6 +206,10 @@ describe("EditProfileForm", () => {
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/publica"));
     expect(screen.queryByText("success")).toBeNull();
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "edit_profile_submit_success",
+      { is_onboarding: false, redirected: true },
+    );
   });
 
   it("surfaces a 409 as a username-taken field error", async () => {
@@ -195,6 +225,10 @@ describe("EditProfileForm", () => {
     expect(
       await screen.findByText("errors.usernameTaken"),
     ).toBeInTheDocument();
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "edit_profile_submit_blocked",
+      { reason: "username_taken" },
+    );
   });
 
   it("surfaces a 401 as a session-expired banner", async () => {
@@ -210,6 +244,10 @@ describe("EditProfileForm", () => {
     expect(
       await screen.findByText("errors.sessionExpired"),
     ).toBeInTheDocument();
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "edit_profile_submit_blocked",
+      { reason: "session_expired" },
+    );
   });
 
   it("surfaces any other failure as a generic error", async () => {
@@ -223,5 +261,9 @@ describe("EditProfileForm", () => {
     fireEvent.submit(screen.getByRole("button", { name: "submitLabel" }));
 
     expect(await screen.findByText("errors.generic")).toBeInTheDocument();
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "edit_profile_submit_error",
+      { reason: "generic" },
+    );
   });
 });

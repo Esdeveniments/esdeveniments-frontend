@@ -12,6 +12,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
 import type { BreadcrumbItem } from "types/common";
+import ProfilePageTracker from "./ProfilePageTracker";
 
 // No generateStaticParams — usernames are user-generated with infinite
 // cardinality. Pages render on first request and are cached automatically.
@@ -108,6 +109,12 @@ export default async function ProfilePage({
         items={tabItems}
         active="upcoming"
         ariaLabel={tProfile("title", { name: profileDisplayName })}
+      />
+      <ProfilePageTracker
+        username={profile.username}
+        upcomingCount={profile.upcomingEventCount}
+        pastCount={profile.pastEventCount}
+        status="upcoming"
       />
       <div className="w-full mt-section-y">
         <Suspense

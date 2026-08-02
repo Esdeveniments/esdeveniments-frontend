@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@components/hooks/useAuth";
 import AvatarInitials from "@components/ui/common/AvatarInitials";
+import { sendGoogleEvent } from "@utils/analytics";
 import type { EditProfileAvatarProps } from "types/props";
 
 // Mirrors the caps enforced server-side in app/api/users/me/avatar/route.ts.
@@ -47,13 +48,16 @@ export default function EditProfileAvatar({
 
     if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
       setError(t("errorUnsupported"));
+      sendGoogleEvent("avatar_upload_error", { reason: "unsupported_type" });
       return;
     }
     if (file.size > MAX_AVATAR_BYTES) {
       setError(t("errorTooLarge"));
+      sendGoogleEvent("avatar_upload_error", { reason: "too_large" });
       return;
     }
 
+    sendGoogleEvent("avatar_upload_start", {});
     setIsUploading(true);
     try {
       const formData = new FormData();
@@ -65,11 +69,14 @@ export default function EditProfileAvatar({
       });
       if (!response.ok) {
         setError(t("errorUploadFailed"));
+        sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
         return;
       }
       await refetchUser();
+      sendGoogleEvent("avatar_upload_success", {});
     } catch {
       setError(t("errorUploadFailed"));
+      sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
     } finally {
       setIsUploading(false);
     }
@@ -85,11 +92,14 @@ export default function EditProfileAvatar({
       });
       if (!response.ok) {
         setError(t("errorRemoveFailed"));
+        sendGoogleEvent("avatar_remove_error", {});
         return;
       }
       await refetchUser();
+      sendGoogleEvent("avatar_remove_success", {});
     } catch {
       setError(t("errorRemoveFailed"));
+      sendGoogleEvent("avatar_remove_error", {});
     } finally {
       setIsRemoving(false);
     }
