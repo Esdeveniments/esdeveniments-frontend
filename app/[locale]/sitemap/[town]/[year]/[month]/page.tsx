@@ -97,19 +97,6 @@ export async function generateMetadata({
   const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
   const monthLabel =
     monthLabels[monthIndex] || normalizeMonthParam(canonicalMonthSlug).label;
-  // Tolerate backend 5xx for place lookup (cosmetic; town slug is an acceptable
-  // fallback). Prevents archive 500s from intermittent backend errors — the
-  // main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
-  const place = await fetchPlaceBySlugForMetadata(town).catch(() => null);
-  const townLabel = place?.name || town;
-  const placeType: "region" | "town" =
-    place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatPlacePreposition(
-    townLabel,
-    placeType,
-    locale,
-    false
-  );
 
   // Probe events to set robots policy: noindex empty months so GSC stops
   // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
@@ -125,12 +112,30 @@ export async function generateMetadata({
   );
   const fromStr = from.toISOString().split("T")[0];
   const toStr = until.toISOString().split("T")[0];
-  const events = await fetchEventsForMetadata({
-    place: town,
-    from: fromStr,
-    to: toStr,
-    size: MAX_EVENTS_PER_PAGE,
-  });
+
+  // Place lookup and the events probe are independent — parallelize instead
+  // of awaiting sequentially.
+  const [place, events] = await Promise.all([
+    // Tolerate backend 5xx for place lookup (cosmetic; town slug is an
+    // acceptable fallback). Prevents archive 500s from intermittent backend
+    // errors — the main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
+    fetchPlaceBySlugForMetadata(town).catch(() => null),
+    fetchEventsForMetadata({
+      place: town,
+      from: fromStr,
+      to: toStr,
+      size: MAX_EVENTS_PER_PAGE,
+    }),
+  ]);
+  const townLabel = place?.name || town;
+  const placeType: "region" | "town" =
+    place?.type === "CITY" ? "town" : "region";
+  const locationPhrase = formatPlacePreposition(
+    townLabel,
+    placeType,
+    locale,
+    false
+  );
   // `events === null` means the probe itself failed (upstream outage, bad
   // payload) — fail open (no robots override) rather than noindex a page
   // that may well have real content; only a confirmed empty result should

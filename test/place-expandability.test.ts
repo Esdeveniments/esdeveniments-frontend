@@ -9,12 +9,18 @@ vi.mock("next/cache", () => ({
   cacheLife: vi.fn(),
 }));
 
-vi.mock("@utils/api-helpers", () => ({
-  getInternalApiUrl: vi.fn((path: string) =>
-    Promise.resolve(`http://localhost:3000${path}`),
-  ),
-  getVercelProtectionBypassHeaders: vi.fn(() => ({})),
-}));
+vi.mock("@utils/api-helpers", async () => {
+  const actual = await vi.importActual<typeof import("@utils/api-helpers")>(
+    "@utils/api-helpers",
+  );
+  return {
+    ...actual,
+    getInternalApiUrl: vi.fn((path: string) =>
+      Promise.resolve(`http://localhost:3000${path}`),
+    ),
+    getVercelProtectionBypassHeaders: vi.fn(() => ({})),
+  };
+});
 
 import {
   getPlaceExpandability,

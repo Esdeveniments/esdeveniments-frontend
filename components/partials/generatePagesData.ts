@@ -4,8 +4,9 @@ import { cacheLife, cacheTag } from "next/cache";
 import { placesTag, placeTag } from "@lib/cache/tags";
 import {
   PageData,
-  GeneratePagesDataProps,
   PlaceTypeAndLabel,
+  GeneratePagesDataCachedProps,
+  GeneratePagesDataPublicProps,
 } from "types/common";
 import { formatPlacePreposition } from "@utils/helpers";
 import { splitNotFoundText, appendSearchQuery } from "@utils/notFoundMessaging";
@@ -90,10 +91,7 @@ async function generatePagesDataCached({
   category,
   categoryName,
   locale,
-}: Omit<GeneratePagesDataProps, "search"> & {
-  placeTypeLabel: PlaceTypeAndLabel;
-  locale?: AppLocale;
-}): Promise<PageData> {
+}: GeneratePagesDataCachedProps): Promise<PageData> {
   // No dynamic API (headers/cookies/searchParams) is read here — the only
   // request-time value is `now`, used solely as a fallback for the current
   // month/year label on pages with no explicit date/year/month segment (see
@@ -545,10 +543,7 @@ async function generatePagesDataCached({
 export async function generatePagesData({
   search,
   ...rest
-}: GeneratePagesDataProps & {
-  placeTypeLabel: PlaceTypeAndLabel;
-  locale?: AppLocale;
-}): Promise<PageData> {
+}: GeneratePagesDataPublicProps): Promise<PageData> {
   const pageData = await generatePagesDataCached(rest);
   if (!search) return pageData;
   const resolvedLocale = rest.locale || DEFAULT_LOCALE;

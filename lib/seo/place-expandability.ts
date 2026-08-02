@@ -2,6 +2,7 @@ import { cache } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import { fetchEventCountExternal } from "@lib/api/events-external";
 import {
+  buildEventsQuery,
   getInternalApiUrl,
   getVercelProtectionBypassHeaders,
 } from "@utils/api-helpers";
@@ -33,10 +34,10 @@ async function resolvePlaceExpandability(
 // getPlaceExpandabilityForMetadata below — it would stay a resume-mismatch
 // hazard despite the "use cache" wrapper.
 async function fetchEventCountForMetadata(slug: string): Promise<number | null> {
-  const url = await getInternalApiUrl(
-    `/api/events?place=${encodeURIComponent(slug)}&size=1`,
-    { preferConfiguredOrigin: true },
-  );
+  const queryString = buildEventsQuery({ place: slug, size: 1 });
+  const url = await getInternalApiUrl(`/api/events?${queryString}`, {
+    preferConfiguredOrigin: true,
+  });
   const response = await fetch(url, {
     headers: getVercelProtectionBypassHeaders(),
     next: { revalidate: 600, tags: [eventsTag] },

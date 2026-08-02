@@ -103,6 +103,26 @@ export interface GeneratePagesDataProps {
   search?: string;
 }
 
+/**
+ * Input for generatePagesData's inner cached body (components/partials/
+ * generatePagesData.ts). Excludes `search` deliberately: it's free-text user
+ * input, and "use cache" derives its cache key from the function's
+ * arguments, so including it would create one cache entry per unique search
+ * string (unbounded cardinality on the data cache).
+ */
+export interface GeneratePagesDataCachedProps
+  extends Omit<GeneratePagesDataProps, "search" | "placeTypeLabel"> {
+  placeTypeLabel: PlaceTypeAndLabel;
+  locale?: AppLocale;
+}
+
+/** Input for generatePagesData's exported, uncached wrapper. */
+export interface GeneratePagesDataPublicProps
+  extends Omit<GeneratePagesDataProps, "placeTypeLabel"> {
+  placeTypeLabel: PlaceTypeAndLabel;
+  locale?: AppLocale;
+}
+
 export interface PlaceTypeAndLabel {
   type: PlaceType;
   label: string;

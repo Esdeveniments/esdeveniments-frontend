@@ -74,7 +74,7 @@ export async function fetchCategoriesForMetadata(): Promise<
   });
   const response = await fetch(url, {
     headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 86400, tags: ["categories"] },
+    next: { revalidate: 86400, tags: [categoriesTag] },
   });
   if (!response.ok) {
     // Categories are a fallback enrichment for metadata copy, not the
