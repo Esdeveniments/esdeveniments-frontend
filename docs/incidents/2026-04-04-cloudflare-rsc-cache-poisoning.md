@@ -101,7 +101,7 @@ Reported again on `/en` ("weird text instead of the website"). Live reproduction
 
 Root cause: Coolify's `esdeveniments-production` app was configured with `docker_registry_image_tag: "main"` — a **floating** registry tag — with `health_check_enabled: true` (path `/`, 30s interval, 3 retries). CI already pushes an immutable `sha-<commit>` tag alongside `:main` (`.github/workflows/deploy-coolify.yml`, `build-and-push` job), but nothing used it. A health-check-triggered container restart recreates the container from whatever's locally cached under the `:main` tag, bypassing the deploy pipeline entirely — this box has prior history of the same class of bug (`3e1d8bc8` "clear zero-byte image cache files on boot", the Jul 7 crash incident in `cbd429df`).
 
-**Fix:** the `deploy` job in `.github/workflows/deploy-coolify.yml` now PATCHes the Coolify app's `docker_registry_image_tag` to `sha-${{ github.sha }}` before triggering the deploy webhook, on every deploy. There is no floating tag left for a restart to resurrect.
+**Fix:** after a successful image build, the `deploy` job in `.github/workflows/deploy-coolify.yml` PATCHes the Coolify app's `docker_registry_image_tag` to `sha-${{ github.sha }}` before triggering the deploy webhook. Emergency `skip_ci` deployments intentionally retain the currently configured tag, since no commit image was built to pin to. The app itself no longer references the floating `:main`/`:develop` tag — `build-and-push` still pushes it to the registry alongside the immutable `sha-<commit>` tag, so a future manual re-point back to it would revive this bug class, but a restart alone can no longer resurrect it.
 
 ### Bug B: the Cloudflare bypass rule was firing on the wrong side of an ordering conflict
 

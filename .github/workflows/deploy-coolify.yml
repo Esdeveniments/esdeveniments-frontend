@@ -339,9 +339,24 @@ jobs:
         # configured alone and let the webhook redeploy it as-is.
         if: needs.build-and-push.result == 'success'
         env:
-          COOLIFY_TOKEN: ${{ github.ref_name == 'main' && secrets.COOLIFY_TOKEN || secrets.COOLIFY_TOKEN_STAGING }}
-          COOLIFY_WEBHOOK_URL: ${{ github.ref_name == 'main' && secrets.COOLIFY_WEBHOOK_URL || secrets.COOLIFY_WEBHOOK_URL_STAGING }}
+          # Branch-gated in bash, not in the `&&`/`||` expression below: that
+          # pattern falls through to the staging secret whenever the main
+          # secret happens to be empty (GH Actions treats "" as falsy), which
+          # would silently PATCH the staging app on a main-branch deploy.
+          IS_MAIN: ${{ github.ref_name == 'main' }}
+          COOLIFY_TOKEN_MAIN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_TOKEN_STAGING: ${{ secrets.COOLIFY_TOKEN_STAGING }}
+          COOLIFY_WEBHOOK_URL_MAIN: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_WEBHOOK_URL_STAGING: ${{ secrets.COOLIFY_WEBHOOK_URL_STAGING }}
         run: |
+          if [ "$IS_MAIN" = "true" ]; then
+            COOLIFY_TOKEN="$COOLIFY_TOKEN_MAIN"
+            COOLIFY_WEBHOOK_URL="$COOLIFY_WEBHOOK_URL_MAIN"
+          else
+            COOLIFY_TOKEN="$COOLIFY_TOKEN_STAGING"
+            COOLIFY_WEBHOOK_URL="$COOLIFY_WEBHOOK_URL_STAGING"
+          fi
+
           if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
             echo "::error::COOLIFY_WEBHOOK_URL secret is required"
             exit 1
@@ -349,8 +364,11 @@ jobs:
 
           # The webhook URL is Coolify's own `POST /api/v1/deploy?uuid=...`
           # trigger — reuse its host and uuid instead of adding new secrets.
-          COOLIFY_API_BASE=$(echo "$COOLIFY_WEBHOOK_URL" | grep -oP '^https?://[^/]+')
-          COOLIFY_APP_UUID=$(echo "$COOLIFY_WEBHOOK_URL" | grep -oP '(?<=[?&]uuid=)[^&]+')
+          # `|| true` on each: run: steps execute under `set -e`, so a
+          # non-matching grep (exit 1) would otherwise abort the script here
+          # instead of reaching the explicit "could not parse" check below.
+          COOLIFY_API_BASE=$(echo "$COOLIFY_WEBHOOK_URL" | grep -oP '^https?://[^/]+' || true)
+          COOLIFY_APP_UUID=$(echo "$COOLIFY_WEBHOOK_URL" | grep -oP '(?<=[?&]uuid=)[^&]+' || true)
 
           if [ -z "$COOLIFY_API_BASE" ] || [ -z "$COOLIFY_APP_UUID" ]; then
             echo "::error::Could not parse host/uuid out of COOLIFY_WEBHOOK_URL — expected .../api/v1/deploy?uuid=<uuid>. Refusing to deploy on the floating tag; fix the URL or this parsing."
@@ -370,13 +388,27 @@ jobs:
             exit 1
           fi
 
-          echo "Pinned esdeveniments-production to sha-${{ github.sha }}"
+          PINNED_APP_LABEL=$([ "$IS_MAIN" = "true" ] && echo "esdeveniments-production" || echo "esdeveniments-staging")
+          echo "Pinned $PINNED_APP_LABEL to sha-${{ github.sha }}"
 
       - name: Trigger Coolify deployment
         env:
-          COOLIFY_TOKEN: ${{ github.ref_name == 'main' && secrets.COOLIFY_TOKEN || secrets.COOLIFY_TOKEN_STAGING }}
-          COOLIFY_WEBHOOK_URL: ${{ github.ref_name == 'main' && secrets.COOLIFY_WEBHOOK_URL || secrets.COOLIFY_WEBHOOK_URL_STAGING }}
+          # See the "Pin Coolify" step above for why this is a bash if/else
+          # instead of a `&&`/`||` expression.
+          IS_MAIN: ${{ github.ref_name == 'main' }}
+          COOLIFY_TOKEN_MAIN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_TOKEN_STAGING: ${{ secrets.COOLIFY_TOKEN_STAGING }}
+          COOLIFY_WEBHOOK_URL_MAIN: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_WEBHOOK_URL_STAGING: ${{ secrets.COOLIFY_WEBHOOK_URL_STAGING }}
         run: |
+          if [ "$IS_MAIN" = "true" ]; then
+            COOLIFY_TOKEN="$COOLIFY_TOKEN_MAIN"
+            COOLIFY_WEBHOOK_URL="$COOLIFY_WEBHOOK_URL_MAIN"
+          else
+            COOLIFY_TOKEN="$COOLIFY_TOKEN_STAGING"
+            COOLIFY_WEBHOOK_URL="$COOLIFY_WEBHOOK_URL_STAGING"
+          fi
+
           if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
             echo "::error::COOLIFY_WEBHOOK_URL secret is required"
             exit 1

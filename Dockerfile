@@ -87,8 +87,9 @@ USER nextjs
 # memory stress the event loop stalls and /api/health can't respond within 3s
 # even though the process is alive, triggering false-unhealthy restarts.
 # 10s gives GC headroom; start-period 40s covers cold-start (entrypoint heap
-# sizing + 0-byte image cache cleanup + Redis connect + stale-cache purge).
-# See incident 2026-07-07.
+# sizing + 0-byte image cache cleanup + Redis connect). The stale-cache purge
+# runs fire-and-forget after Redis connects (cache-handler.mjs) and isn't a
+# readiness gate, so it isn't counted here. See incident 2026-07-07.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "const c=new AbortController(),t=setTimeout(()=>c.abort(),8000);fetch('http://127.0.0.1:3000/api/health',{signal:c.signal}).then(r=>{clearTimeout(t);process.exit(r.ok?0:1)}).catch(()=>{clearTimeout(t);process.exit(1)})"
 
