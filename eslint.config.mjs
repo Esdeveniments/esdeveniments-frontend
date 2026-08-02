@@ -94,10 +94,19 @@ export default [
           // headers()), which makes metadata runtime-dynamic, pushes the metadata
           // boundary into the resume tree and breaks PPR. Covers declaration and
           // arrow/expression forms. See docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md
+          //
+          // fetchMonthEvents (2026-08-02, sitemap [year]/[month] page) is a
+          // locally-named `cache(async (...) => fetchEvents(...))` wrapper —
+          // this selector only matches by identifier name, so it missed the
+          // real fetchEvents call underneath until reviewed manually. Adding
+          // the specific local alias here is a stopgap, not a generalizable
+          // fix: any future locally-named wrapper around one of these readers
+          // can evade this rule the same way. There is no cheap identifier-only
+          // fix for that; a type-aware rule would be needed to close it fully.
           selector:
-            ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug|fetchEvents|fetchEventBySlug|fetchEventBySlugWithStatus|fetchNews|fetchNewsBySlug|fetchNewsCities)$/]",
+            ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug|fetchEvents|fetchMonthEvents|fetchEventBySlug|fetchEventBySlugWithStatus|fetchNews|fetchNewsBySlug|fetchNewsCities)$/]",
           message:
-            "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
+            "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getEventBySlugForMetadata / getNewsBySlugForMetadata / fetchEventsForMetadata instead.",
         },
         {
           // Same class of bug, different call chain: place/region/category

@@ -164,6 +164,48 @@ async function fetchEventsInternal(
 
 export const fetchEvents = cache(fetchEventsInternal);
 
+// Metadata-only reader: resolves the API origin from configuration instead of
+// request headers(), and is itself cached, so generateMetadata stays
+// prerenderable under cacheComponents. fetchEvents (above) goes through
+// fetchWithHmac, which unconditionally calls connection() — a genuine dynamic
+// API — so wrapping it in React cache() (as fetchMonthEvents does in the
+// sitemap month page) does NOT make it prerenderable; it still breaks the
+// static shell when called from generateMetadata. This variant hits the
+// internal /api/events route with a plain, tagged fetch instead. See
+// docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+export async function fetchEventsForMetadata(
+  params: FetchEventsParams,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  "use cache";
+  cacheTag(eventsTag);
+  const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
+    content: [],
+    currentPage: params.page ?? 0,
+    pageSize: params.size ?? 12,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  };
+  const queryString = buildEventsQuery(params);
+  const url = await getInternalApiUrl(`/api/events?${queryString}`, {
+    preferConfiguredOrigin: true,
+  });
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
+    next: { revalidate: 600, tags: [eventsTag] },
+  });
+  if (!response.ok) {
+    // Transient upstream failure — cache briefly rather than "hours" so a
+    // recovering backend doesn't leave metadata degraded for a long window.
+    cacheLife("minutes");
+    return fallbackResponse;
+  }
+  const data = await response.json();
+  const validated = parsePagedEvents(data);
+  cacheLife("hours");
+  return validated ?? fallbackResponse;
+}
+
 export async function fetchEventBySlug(
   fullSlug: string,
   options: InternalOriginOptions = {},

@@ -39,7 +39,7 @@ async function fetchEventCountForMetadata(slug: string): Promise<number | null> 
   );
   const response = await fetch(url, {
     headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 600, tags: ["events"] },
+    next: { revalidate: 600, tags: [eventsTag] },
   });
   if (!response.ok) return null;
   const data = await response.json();
@@ -69,8 +69,9 @@ async function fetchEventCountForMetadata(slug: string): Promise<number | null> 
  * and API I/O; `utils/` is reserved for deterministic, side-effect-free
  * helpers.
  */
-export const getPlaceExpandability = cache((slug: string, type: PlaceType) =>
-  resolvePlaceExpandability(slug, type, fetchEventCountExternal),
+export const getPlaceExpandability = cache(
+  (slug: string, type: PlaceType): Promise<boolean> =>
+    resolvePlaceExpandability(slug, type, fetchEventCountExternal),
 );
 
 // Metadata-only reader: wraps the same check in `"use cache"` so

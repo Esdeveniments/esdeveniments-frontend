@@ -8,7 +8,7 @@ import {
   PlaceTypeAndLabel,
 } from "types/common";
 import { formatPlacePreposition } from "@utils/helpers";
-import { splitNotFoundText } from "@utils/notFoundMessaging";
+import { splitNotFoundText, appendSearchQuery } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical } from "@utils/i18n-seo";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
@@ -73,16 +73,24 @@ const baseCreatePageData = (
   };
 };
 
-export async function generatePagesData({
+// Cached body, deliberately excluding `search`: it's free-text user input
+// (a query-string param), and "use cache" derives its cache key from the
+// function's arguments — including it here would create one cache entry per
+// unique search string, unbounded cardinality on the data cache. `search`
+// only ever affects notFoundTitle (via appendSearchQuery), so the exported
+// generatePagesData wrapper below appends it AFTER reading from the cache,
+// outside the cache boundary. See the Jan 20 2026 fetch-cache-cardinality
+// incident referenced in lib/api's external-fetch caching rules for the
+// same class of bug.
+async function generatePagesDataCached({
   currentYear,
   place = "",
   byDate = "",
   placeTypeLabel,
   category,
   categoryName,
-  search,
   locale,
-}: GeneratePagesDataProps & {
+}: Omit<GeneratePagesDataProps, "search"> & {
   placeTypeLabel: PlaceTypeAndLabel;
   locale?: AppLocale;
 }): Promise<PageData> {
@@ -221,7 +229,7 @@ export async function generatePagesData({
       metaDescription,
       applyLocaleToCanonical(canonical, resolvedLocale),
       notFoundText,
-      search,
+      undefined,
       resolvedLocale
     );
 
@@ -528,4 +536,28 @@ export async function generatePagesData({
     siteUrl,
     t("fallback.notFound")
   );
+}
+
+// Thin uncached wrapper: reads the cached PageData (search-independent, see
+// generatePagesDataCached above), then appends the search query to
+// notFoundTitle outside the cache boundary. appendSearchQuery is pure and
+// idempotent, so calling it here has no caching implications.
+export async function generatePagesData({
+  search,
+  ...rest
+}: GeneratePagesDataProps & {
+  placeTypeLabel: PlaceTypeAndLabel;
+  locale?: AppLocale;
+}): Promise<PageData> {
+  const pageData = await generatePagesDataCached(rest);
+  if (!search) return pageData;
+  const resolvedLocale = rest.locale || DEFAULT_LOCALE;
+  return {
+    ...pageData,
+    notFoundTitle: appendSearchQuery(
+      pageData.notFoundTitle,
+      search,
+      resolvedLocale
+    ),
+  };
 }

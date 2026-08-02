@@ -7,7 +7,7 @@ import {
 } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
-import { fetchEvents } from "@lib/api/events";
+import { fetchEvents, fetchEventsForMetadata } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
 import { fetchPlaceBySlugForMetadata } from "@lib/seo/place-metadata";
 import {
@@ -113,7 +113,11 @@ export async function generateMetadata({
 
   // Probe events to set robots policy: noindex empty months so GSC stops
   // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
-  // primitive-keyed fetchMonthEvents wrapper so Page reuses the same response.
+  // metadata-safe fetchEventsForMetadata, not the fetchMonthEvents wrapper
+  // Page uses below — fetchMonthEvents goes through fetchWithHmac, which
+  // unconditionally calls connection() and breaks the static shell if
+  // called from generateMetadata. See docs/incidents/
+  // 2026-06-13-cachecomponents-metadata-resume-mismatch.md.
   const { from, until } = getHistoricDates(
     canonicalMonthSlug,
     Number(year),
@@ -121,7 +125,12 @@ export async function generateMetadata({
   );
   const fromStr = from.toISOString().split("T")[0];
   const toStr = until.toISOString().split("T")[0];
-  const events = await fetchMonthEvents(town, fromStr, toStr);
+  const events = await fetchEventsForMetadata({
+    place: town,
+    from: fromStr,
+    to: toStr,
+    size: MAX_EVENTS_PER_PAGE,
+  });
   const realEventCount = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
       .length

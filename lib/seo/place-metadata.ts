@@ -32,6 +32,11 @@ export async function fetchPlaceBySlugForMetadata(
     next: { revalidate: 86400, tags: [placesTag, placeTag(slug)] },
   });
   if (response.status === 404) {
+    // Genuine 404: cache briefly so a newly-created place isn't stuck on
+    // "not found" metadata for hours. "minutes" not "seconds" — seconds is a
+    // PPR dynamic hole and would re-break the static shell. Mirrors
+    // getNewsBySlugForMetadata / getEventBySlugForMetadata.
+    cacheLife("minutes");
     return null;
   }
   if (!response.ok) {
@@ -51,9 +56,10 @@ export async function fetchRegionsWithCitiesForMetadata(): Promise<
   });
   const response = await fetch(url, {
     headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 86400, tags: ["regions", "regions:options"] },
+    next: { revalidate: 86400, tags: [regionsTag, regionsOptionsTag] },
   });
   if (!response.ok) {
+    cacheLife("minutes");
     return [];
   }
   cacheLife("hours");
