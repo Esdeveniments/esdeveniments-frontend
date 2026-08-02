@@ -5,7 +5,7 @@ import {
   getVercelProtectionBypassHeaders,
 } from "@utils/api-helpers";
 import { fetchCitiesExternal } from "./cities-external";
-import { PHASE_PRODUCTION_BUILD } from "next/constants";
+import { isBuildPhase } from "@utils/constants";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
 const { cache: citiesListCache, clear: clearCitiesListCache } =
@@ -49,11 +49,6 @@ export async function fetchCities(): Promise<CitySummaryResponseDTO[]> {
 
   // During build phase, bypass internal proxy and call external API directly
   // This ensures SSG pages (sitemap) can fetch data during next build
-  // Detection: Check if NEXT_PHASE is set, or if we're in production build context
-  const isBuildPhase =
-    process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-    (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
-
   if (isBuildPhase) {
     try {
       return await fetchCitiesExternal();

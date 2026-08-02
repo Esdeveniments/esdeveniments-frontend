@@ -1,7 +1,8 @@
 import { siteUrl } from "@config/index";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
-import { connection } from "next/server";
+import { cacheLife, cacheTag } from "next/cache";
+import { placesTag, placeTag } from "@lib/cache/tags";
 import {
   PageData,
   GeneratePagesDataProps,
@@ -86,6 +87,21 @@ export async function generatePagesData({
   placeTypeLabel?: PlaceTypeAndLabel;
   locale?: AppLocale;
 }): Promise<PageData> {
+  // No dynamic API (headers/cookies/searchParams) is read here — the only
+  // request-time value is `now`, used solely as a fallback for the current
+  // month/year label on pages with no explicit date/year/month segment (see
+  // effectiveYear/monthIndex below). Caching this "hours" trades exact
+  // per-request freshness for prerenderability: on a calendar-month rollover,
+  // the label can lag by up to ~1h (the "hours" profile's revalidate window)
+  // before self-correcting, same eventual-consistency tradeoff already made
+  // for places/regions/categories elsewhere in this fix. connection() here
+  // used to force this dynamic for every caller, including metadata, which
+  // broke the PPR static shell. See
+  // docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+  "use cache";
+  cacheTag(placesTag, placeTag(place || "catalunya"));
+  cacheLife("hours");
+
   const resolvedLocale = locale || DEFAULT_LOCALE;
 
   // Parallelize translation fetches to eliminate waterfall (2 calls → 1 round trip)
@@ -100,7 +116,6 @@ export async function generatePagesData({
     }),
   ]);
 
-  await connection();
   const now = new Date();
 
   // Used only for parsing numeric month/year parts deterministically.

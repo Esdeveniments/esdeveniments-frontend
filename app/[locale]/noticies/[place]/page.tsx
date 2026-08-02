@@ -10,6 +10,7 @@ import { locale as rootLocale } from "next/root-params";
 import { withLocalePath } from "@utils/i18n-seo";
 import { parseNewsPagination } from "@utils/news-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import { getPlaceTypeAndLabelForMetadata } from "@lib/seo/place-metadata";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import type { AppLocale } from "types/i18n";
@@ -26,7 +27,7 @@ export async function generateMetadata({
   params: Promise<{ place: string }>;
 }): Promise<Metadata> {
   const { place } = await params;
-  const placeType = await getPlaceTypeAndLabelCached(place);
+  const placeType = await getPlaceTypeAndLabelForMetadata(place);
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const base = buildPageMeta({

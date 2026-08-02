@@ -1,4 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// generatePagesData is "use cache" (cacheComponents) — see
+// docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+vi.mock("next/cache", () => ({
+  cacheTag: vi.fn(),
+  cacheLife: vi.fn(),
+}));
 
 import { generatePagesData } from "@components/partials/generatePagesData";
 import type { GeneratePagesDataProps, PlaceTypeAndLabel } from "types/common";

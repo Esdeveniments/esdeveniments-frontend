@@ -2,8 +2,9 @@ import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
-import { getCategories } from "@lib/api/categories";
+import { getCategories, fetchCategoriesForMetadata } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
+import { getPlaceTypeAndLabelForMetadata } from "@lib/seo/place-metadata";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -45,7 +46,10 @@ import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getPlaceExpandability } from "@lib/seo/place-expandability";
+import {
+  getPlaceExpandability,
+  getPlaceExpandabilityForMetadata,
+} from "@lib/seo/place-expandability";
 import {
   SSR_EVENTS_SIZE_EXPANDABLE,
   SSR_EVENTS_SIZE_THIN,
@@ -67,7 +71,7 @@ export async function generateMetadata({
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {
-    categories = await getCategories();
+    categories = await fetchCategoriesForMetadata();
   } catch (error) {
     console.error("generateMetadata: Error fetching categories:", error);
   }
@@ -92,7 +96,7 @@ export async function generateMetadata({
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelForMetadata(
     place
   );
 
@@ -119,7 +123,10 @@ export async function generateMetadata({
   // URLs in "Crawled — currently not indexed" (Dec 2025–May 2026 GSC drop).
   // Reversible: when inventory grows past the threshold, the meta tag stops being emitted
   // and the URL re-enters the sitemap on the same signal — Google re-indexes on next crawl.
-  const expandable = await getPlaceExpandability(place, placeTypeLabel.type);
+  const expandable = await getPlaceExpandabilityForMetadata(
+    place,
+    placeTypeLabel.type
+  );
 
   return buildPageMeta({
     title: pageData.metaTitle,

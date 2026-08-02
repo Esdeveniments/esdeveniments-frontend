@@ -3,6 +3,7 @@ import { Suspense, use } from "react";
 import type { JSX } from "react";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, formatPlaceName } from "@utils/helpers";
+import { getPlaceTypeAndLabelForMetadata } from "@lib/seo/place-metadata";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
@@ -59,7 +60,7 @@ export async function generateMetadata({
 
   const locale = (await rootLocale()) as AppLocale;
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelForMetadata(
     place
   );
   const pageData: PageData = await generatePagesData({

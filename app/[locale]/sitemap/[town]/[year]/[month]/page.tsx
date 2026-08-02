@@ -9,6 +9,7 @@ import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
+import { fetchPlaceBySlugForMetadata } from "@lib/seo/place-metadata";
 import {
   getHistoricDates,
   normalizeMonthParam,
@@ -99,7 +100,7 @@ export async function generateMetadata({
   // Tolerate backend 5xx for place lookup (cosmetic; town slug is an acceptable
   // fallback). Prevents archive 500s from intermittent backend errors — the
   // main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
-  const place = await getPlaceBySlug(town).catch(() => null);
+  const place = await fetchPlaceBySlugForMetadata(town).catch(() => null);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
