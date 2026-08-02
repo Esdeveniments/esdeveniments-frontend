@@ -192,6 +192,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                             type="button"
                             onClick={() => { logout(); setIsUserMenuOpen(false); }}
                             className="w-full text-left label font-semibold text-foreground hover:text-primary transition-interactive py-1"
+                            data-analytics-action="navbar_logout_desktop"
                           >
                             {labels.logout}
                           </button>
@@ -202,6 +203,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   <ActiveLink
                     href="/iniciar-sessio"
                     className="btn-outline label font-semibold whitespace-nowrap"
+                    data-analytics-action="navbar_login_desktop"
                   >
                     {labels.login}
                   </ActiveLink>
@@ -256,6 +258,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     activeLinkClass="text-primary bg-primary/10"
                     className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
                     aria-label={labels.login}
+                    data-analytics-action="navbar_login_mobile_icon"
                   >
                     <UserCircleIcon className="h-6 w-6" />
                   </ActiveLink>
@@ -340,6 +343,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                       type="button"
                       onClick={() => { logout(); setIsMenuOpen(false); }}
                       className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
+                      data-analytics-action="navbar_logout_mobile"
                     >
                       {labels.logout}
                     </button>
@@ -348,6 +352,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   <ActiveLink
                     href="/iniciar-sessio"
                     className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
+                    data-analytics-action="navbar_login_mobile_menu"
                   >
                     {labels.login}
                   </ActiveLink>
