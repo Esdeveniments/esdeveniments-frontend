@@ -60,6 +60,9 @@ fi
 # writable layer and the leftover file re-triggers the bug immediately on
 # boot. Upstream bug, unfixed as of Next.js 16.2.10 / 16.3.0-canary.75:
 # https://github.com/vercel/next.js/issues/93757
-find .next/cache/images -type f -size 0 -delete 2>/dev/null || true
+if [ -d .next/cache/images ]; then
+  find .next/cache/images -type f -size 0 -delete ||
+    echo "[entrypoint] warning: failed to clean zero-byte image cache files" >&2
+fi
 
 exec node server.js

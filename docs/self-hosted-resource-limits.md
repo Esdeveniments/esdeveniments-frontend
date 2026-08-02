@@ -40,15 +40,16 @@ Frontend application → **Resource Limits**:
   at 75%, the rest for `sharp`/buffers/RSS). Staging is at 1 GB. The hard limit
   is what OOM-kills; pair it with a soft limit slightly below.
 - **CPU:** 1–2 vCPU is plenty for the current traffic.
-- **Swappiness:** **avoid 10** — use **20–30** for prod. Both prod containers
-  crashed at `swappiness=10` (frontend Jul 7, backend Jul 2, 2026) because the
-  kernel aggressively pressured V8 into GC rather than swapping, producing
-  stop-the-world pauses that exceeded the Docker healthcheck timeout and
-  triggered a crash-loop. Neither staging container (swappiness 20–60) has
-  ever crash-looped. See incident
-  [2026-07-07](./incidents/2026-07-07-coolify-container-healthcheck-crash.md).
-  Swappiness=10 was set with the best intention (memory efficiency) but the
-  interaction with heap bounding + tight healthcheck timeouts made it lethal.
+- **Swappiness:** **avoid 10** — use **20–30** for prod (monitored hypothesis,
+  not a confirmed fix). Both prod containers crashed at `swappiness=10`
+  (frontend Jul 7, backend Jul 2, 2026); neither staging container
+  (swappiness 20–60) has ever crash-looped. The theory is that the kernel
+  aggressively pressured V8 into GC rather than swapping, producing
+  stop-the-world pauses that exceeded the Docker healthcheck timeout — but
+  this is a correlation from 2 data points, not something measured directly
+  (no GC-pause metrics were captured). See incident
+  [2026-07-07](./incidents/2026-07-07-coolify-container-healthcheck-crash.md#3-raise-prod-swappiness-from-10-to-2030-monitored-hypothesis)
+  for the pending Sentinel metrics review that would confirm or rule this out.
 
 Redis (`redis-pro`, `redis-pre`) → set a bound so a cache can't grow without limit:
 
