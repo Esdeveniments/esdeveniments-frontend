@@ -171,4 +171,15 @@ describe("ProfileHeader", () => {
       screen.getByRole("img", { name: "Organitzador verificat" }),
     ).toBeInTheDocument();
   });
+
+  it("falls back to the legacy organizerVerified badge when verified/role are absent", async () => {
+    const profile: ProfileDetailResponseDTO = {
+      ...baseProfile,
+      organizerVerified: true,
+    };
+    await renderHeader(profile);
+    expect(
+      screen.getByRole("img", { name: "Organitzador verificat" }),
+    ).toBeInTheDocument();
+  });
 });

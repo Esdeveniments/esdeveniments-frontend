@@ -73,7 +73,11 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
 
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <h1 className="heading-1 text-foreground">{displayName}</h1>
-          <VerifiedBadge role={profile.role} verified={profile.verified} />
+          <VerifiedBadge
+            role={profile.role}
+            verified={profile.verified}
+            organizerVerified={profile.organizerVerified}
+          />
           <ProfileOwnerActions username={profile.username} />
         </div>
 

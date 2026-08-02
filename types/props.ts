@@ -512,6 +512,7 @@ export interface ProfileHeaderProps {
 export interface VerifiedBadgeProps {
   role?: import("types/auth").AuthRole;
   verified?: boolean;
+  organizerVerified?: boolean;
 }
 
 // Route-based tab strip (e.g. profile/favourites Propers/Passats). Each item
