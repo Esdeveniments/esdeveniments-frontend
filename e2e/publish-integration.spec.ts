@@ -85,6 +85,28 @@ test.describe("Publish integration (staging)", () => {
       page.getByTestId("user-avatar-button")
     ).toBeVisible({ timeout: 15_000 });
 
+    // Sanity check that we're logged in as *some* real account before
+    // publishing — the actual expected creator name/slug is captured further
+    // down from the created event's own `owner` field (see Step 7), not from
+    // this session data. /api/auth/me's `name` is the enrichment-merged
+    // session display name (lib/auth/enrichment.ts's three-way pick between
+    // backend displayName/name and the id_token name); the event detail page
+    // instead renders `owner.displayName ?? owner.username` from the event's
+    // own OwnerSummaryDTO (a separate backend record for that specific
+    // event). These two only agree when enrichment happens to pick the same
+    // value, so asserting the rendered creator block against /api/auth/me
+    // would flake whenever they diverge.
+    const me = await page.evaluate(async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.user ?? null;
+    });
+    expect(
+      me?.username,
+      "expected /api/auth/me to return a logged-in user with a username"
+    ).toBeTruthy();
+
     // ── Step 1: Navigate to publish page ──
     await page.goto("/en/publica", {
       waitUntil: "domcontentloaded",
@@ -215,21 +237,60 @@ test.describe("Publish integration (staging)", () => {
       { timeout: 15_000 }
     );
 
-    // Location we entered is rendered somewhere on the page.
-    await expect(page.getByText("Test Venue - E2E").first()).toBeVisible({
+    // Location we entered is rendered somewhere on the page. The detail page
+    // renders the location twice — once inline for mobile (`lg:hidden`) and
+    // once in the sticky sidebar for desktop (`hidden lg:block`) — so both
+    // exist in the DOM at once and only one is actually visible at a given
+    // viewport. `.first()` picked the mobile-only instance, which is CSS-hidden
+    // at this project's desktop viewport, so the assertion always failed even
+    // though the value rendered correctly. Match the visible instance instead
+    // of assuming DOM order; `.first()` here is just a strict-mode guard in
+    // case a hydration flicker briefly makes both match — the design only
+    // ever intends one to be visible at a time.
+    await expect(
+      page.locator('p:visible:has-text("Test Venue - E2E")').first()
+    ).toBeVisible({
       timeout: 15_000,
     });
 
     // Creator attribution: the detail page must show "Published by <name>"
-    // with the name linked to /perfil/<username>. Hard-assert both the
-    // visible name AND the href, since the backend now exposes
-    // createdByUser.username (verified against the swagger).
-    const creatorBlock = page.getByTestId("event-created-by");
+    // with the name linked to /perfil/<username>. Read the expected values
+    // from the created event's own `owner` field (OwnerSummaryDTO, the same
+    // data the page renders from) rather than the auth session — see the
+    // note above Step 0's login check for why those two can diverge.
+    const eventOwner = await page.evaluate(async (slug: string) => {
+      const res = await fetch(`/api/events/${slug}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.owner ?? null;
+    }, createdEventSlug);
+    const expectedCreatorName: string =
+      eventOwner?.displayName || eventOwner?.username || "";
+    const expectedCreatorSlug: string = eventOwner?.username || "";
+    expect(
+      expectedCreatorName,
+      "expected the created event to have an owner with a displayName or username"
+    ).not.toBe("");
+    expect(
+      expectedCreatorSlug,
+      "expected the created event's owner to have a username (used for the /perfil/<username> link)"
+    ).not.toBe("");
+
+    // Rendered twice, same as the location block above — once inline for
+    // mobile, once in the desktop sidebar — so filter to the visible
+    // instance instead of assuming DOM order.
+    const creatorBlock = page
+      .locator('[data-testid="event-created-by"]:visible')
+      .first();
     await expect(creatorBlock).toBeVisible({ timeout: 10_000 });
-    await expect(creatorBlock).toContainText(/E2E Test User/);
-    await expect(
-      page.getByTestId("event-created-by-link")
-    ).toHaveAttribute("href", /\/perfil\/e2e-test-user/);
+    await expect(creatorBlock).toContainText(expectedCreatorName);
+    const creatorLinkHref = await page
+      .locator('[data-testid="event-created-by-link"]:visible')
+      .first()
+      .getAttribute("href");
+    expect(creatorLinkHref).toContain(
+      `/perfil/${encodeURIComponent(expectedCreatorSlug)}`
+    );
 
     // ── Step 8: Verify the event appears on a listing page ──
     await page.goto("/en/barcelona", {
