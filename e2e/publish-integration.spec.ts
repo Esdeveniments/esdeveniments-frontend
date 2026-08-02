@@ -85,6 +85,30 @@ test.describe("Publish integration (staging)", () => {
       page.getByTestId("user-avatar-button")
     ).toBeVisible({ timeout: 15_000 });
 
+    // Capture the actual authenticated identity instead of hardcoding a name/
+    // slug: whichever account E2E_STAGING_EMAIL/PASSWORD point to becomes the
+    // event's creator, and that can change independently of this test file
+    // (e.g. the test account gets rotated). Asserting against a fixed string
+    // here would silently start failing the moment the account changes,
+    // exactly as happened before this fix.
+    const me = await page.evaluate(async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.user ?? null;
+    });
+    const expectedCreatorName: string =
+      me?.name || me?.username || "";
+    const expectedCreatorSlug: string = me?.username || "";
+    expect(
+      expectedCreatorName,
+      "expected /api/auth/me to return a logged-in user with a name or username"
+    ).not.toBe("");
+    expect(
+      expectedCreatorSlug,
+      "expected /api/auth/me to return a username (used for the /perfil/<username> link)"
+    ).not.toBe("");
+
     // ── Step 1: Navigate to publish page ──
     await page.goto("/en/publica", {
       waitUntil: "domcontentloaded",
@@ -232,15 +256,23 @@ test.describe("Publish integration (staging)", () => {
     });
 
     // Creator attribution: the detail page must show "Published by <name>"
-    // with the name linked to /perfil/<username>. Hard-assert both the
-    // visible name AND the href, since the backend now exposes
-    // createdByUser.username (verified against the swagger).
-    const creatorBlock = page.getByTestId("event-created-by");
+    // with the name linked to /perfil/<username>, matched against the
+    // actual logged-in account (captured above) rather than a hardcoded
+    // name/slug. Rendered twice, same as the location block above — once
+    // inline for mobile, once in the desktop sidebar — so filter to the
+    // visible instance instead of assuming DOM order.
+    const creatorBlock = page
+      .locator('[data-testid="event-created-by"]:visible')
+      .first();
     await expect(creatorBlock).toBeVisible({ timeout: 10_000 });
-    await expect(creatorBlock).toContainText(/E2E Test User/);
-    await expect(
-      page.getByTestId("event-created-by-link")
-    ).toHaveAttribute("href", /\/perfil\/e2e-test-user/);
+    await expect(creatorBlock).toContainText(expectedCreatorName);
+    const creatorLinkHref = await page
+      .locator('[data-testid="event-created-by-link"]:visible')
+      .first()
+      .getAttribute("href");
+    expect(creatorLinkHref).toContain(
+      `/perfil/${encodeURIComponent(expectedCreatorSlug)}`
+    );
 
     // ── Step 8: Verify the event appears on a listing page ──
     await page.goto("/en/barcelona", {

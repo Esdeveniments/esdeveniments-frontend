@@ -111,7 +111,7 @@ export default async function EventSidebar({
             {event.owner && creatorSlug && (
               <>
                 <hr className="border-border" />
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1" data-testid="event-created-by">
                   <h3 className="label font-semibold text-foreground-strong">
                     {t("sidebarCreatedBy")}
                   </h3>
@@ -122,6 +122,7 @@ export default async function EventSidebar({
                   <Link
                     href={`/perfil/${encodeURIComponent(creatorSlug)}`}
                     className="flex flex-col gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
+                    data-testid="event-created-by-link"
                   >
                     <span className="font-normal text-primary">
                       {t("sidebarViewAllEvents")} →
