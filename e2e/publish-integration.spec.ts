@@ -169,29 +169,34 @@ test.describe("Publish integration (staging)", () => {
       await imageUrlInput.fill("https://picsum.photos/800/600");
     }
 
-    // Dates should have defaults — verify start date is populated
-    const startDateInput = page.locator("#event-date-start");
-    if (await startDateInput.isVisible()) {
-      const startVal = await startDateInput.inputValue();
-      if (!startVal) {
-        // Set to tomorrow
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const formatted = tomorrow.toISOString().split("T")[0];
-        await startDateInput.fill(formatted);
-      }
-    }
-
-    const endDateInput = page.locator("#event-date-end");
-    if (await endDateInput.isVisible()) {
-      const endVal = await endDateInput.inputValue();
-      if (!endVal) {
-        const dayAfter = new Date();
-        dayAfter.setDate(dayAfter.getDate() + 2);
-        const formatted = dayAfter.toISOString().split("T")[0];
-        await endDateInput.fill(formatted);
-      }
-    }
+    // The date picker renders buttons rather than #event-date-* inputs. Its
+    // defaults are today at 09:00, which can already be past when CI runs in
+    // the afternoon; active listing endpoints correctly omit such events.
+    // Move the start to a deterministic future date so the published event is
+    // eligible for the active Barcelona listing. The picker keeps the default
+    // one-hour duration when the start day changes.
+    const futureDateIso = await page.evaluate(() => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 2);
+      return [
+        futureDate.getFullYear(),
+        String(futureDate.getMonth() + 1).padStart(2, "0"),
+        String(futureDate.getDate()).padStart(2, "0"),
+      ].join("-");
+    });
+    const datePickerTrigger = page.getByRole("button", {
+      name: /select date and time|seleccionar data i hora/i,
+    });
+    await expect(datePickerTrigger).toBeVisible({ timeout: 15_000 });
+    await datePickerTrigger.click();
+    const startDateButton = page.getByRole("button", {
+      name: /^(Start|Inici) \*:/,
+    });
+    await expect(startDateButton).toBeVisible({ timeout: 15_000 });
+    await startDateButton.click();
+    const futureDateButton = page.locator(`[data-day="${futureDateIso}"]`);
+    await expect(futureDateButton).toBeVisible({ timeout: 15_000 });
+    await futureDateButton.click();
 
     // ── Step 5: Submit ──
     const publishButton = page.getByTestId("publish-button");
