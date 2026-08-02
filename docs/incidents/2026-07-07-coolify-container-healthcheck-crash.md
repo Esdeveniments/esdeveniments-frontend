@@ -196,10 +196,15 @@ shared with everything else on the box.
    headroom and reduces GC pause frequency if the hypothesis holds, at the
    cost of some swap I/O under pressure. This is the highest-leverage Coolify
    dashboard change to try first, pending the metrics review below.
+   **Monitoring window:** 14 days from the swappiness change, matching the
+   17–22 day gap observed between the Jun 15 memory-limit change and each
+   prod crash — shorter windows wouldn't have caught either incident.
+   **Success:** zero crash-loops (`last_restart_type: crash`) on either prod
+   container within the window.
    **Rollback criterion:** if either prod container crash-loops again at
-   swappiness 20–30 within the next monitoring window, that rules out
-   swappiness as the sole cause — revert to investigating heap sizing or the
-   memory limits directly instead of swappiness.
+   swappiness 20–30 within that 14-day window, that rules out swappiness as
+   the sole cause — revert to investigating heap sizing or the memory
+   limits directly instead of swappiness.
 
 4. **Uptime monitor confirmed working** — The GitHub Actions uptime monitor
    (`.github/workflows/uptime.yml`, every 15 min) detected the outage within

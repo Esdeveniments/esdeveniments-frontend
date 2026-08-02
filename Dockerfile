@@ -90,7 +90,14 @@ USER nextjs
 # sizing + 0-byte image cache cleanup + Redis connect). The stale-cache purge
 # runs fire-and-forget after Redis connects (cache-handler.mjs) and isn't a
 # readiness gate, so it isn't counted here. See incident 2026-07-07.
+# The internal AbortController fires at 9500ms, just under Docker's own 10s
+# --timeout: Docker kills the whole probe process at 10s regardless, so an
+# internal abort tighter than that (the previous value here was 8000ms)
+# silently shrinks the documented 10s tolerance down to whatever the internal
+# value is — losing exactly the GC-pause headroom this timeout was raised to
+# provide. 9500ms leaves 500ms for the abort handler and process.exit() to
+# actually run before Docker's own kill would fire.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "const c=new AbortController(),t=setTimeout(()=>c.abort(),8000);fetch('http://127.0.0.1:3000/api/health',{signal:c.signal}).then(r=>{clearTimeout(t);process.exit(r.ok?0:1)}).catch(()=>{clearTimeout(t);process.exit(1)})"
+  CMD node -e "const c=new AbortController(),t=setTimeout(()=>c.abort(),9500);fetch('http://127.0.0.1:3000/api/health',{signal:c.signal}).then(r=>{clearTimeout(t);process.exit(r.ok?0:1)}).catch(()=>{clearTimeout(t);process.exit(1)})"
 
 CMD ["./docker-entrypoint.sh"]
