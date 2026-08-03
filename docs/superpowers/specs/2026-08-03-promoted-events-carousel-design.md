@@ -187,13 +187,18 @@ async function PromotedEventsSection({ scope }: { scope: PromotionScope })
 `isPromoted?: boolean`, applied uniformly to every card it renders in a given call (not a
 per-event flag — if you're inside `PromotedEventsSection`'s carousel, every card in it is
 promoted, so there is nothing to distinguish per-item). Passed through to
-`CardHorizontalServer`, which gets the same optional prop and renders a small pill (i18n
-label, new namespace key) next to the existing `CategoryBadge`, visually distinct (different
-color token) so it isn't confused with a category. No changes to `EventSummaryResponseDTO`,
-no `ListEvent`-style union — this stays a rendering-only flag, avoiding the schema bloat the
-`isAd`/`AdEvent` mechanism has for an unrelated reason (that one needs a union because ad
-placeholders are spliced into an otherwise-organic array; here the whole array passed to
-`EventsAroundServer` is already 100% promoted events).
+`CardHorizontalServer`, which gets the same optional prop and renders a small pill next to
+the existing `CategoryBadge`. **Styling: `badge-primary`**, an existing DESIGN.md token
+(`badge-primary: { background: colors.primary, color: colors.on-primary, rounded: full,
+... }`) — not invented for this feature. It's already the exact class used for this exact
+purpose elsewhere: `components/ui/restaurantPromotion/PromotedRestaurantCard.tsx:36` renders
+`<span className="badge-primary">{t("badge")}</span>` as that feature's own "this is a paid
+promotion" disclosure badge. Copying it here keeps one visual language for "promoted/paid"
+across both promotion features instead of inventing a second one. No changes to
+`EventSummaryResponseDTO`, no `ListEvent`-style union — this stays a rendering-only flag,
+avoiding the schema bloat the `isAd`/`AdEvent` mechanism has for an unrelated reason (that
+one needs a union because ad placeholders are spliced into an otherwise-organic array; here
+the whole array passed to `EventsAroundServer` is already 100% promoted events).
 
 ## Placement
 
@@ -209,10 +214,19 @@ placeholders are spliced into an otherwise-organic array; here the whole array p
   actually renders `HybridEventsList` (`PlacePageShell.tsx:354`) — that's the insertion
   point, prepended above `HybridEventsList`, not `page.tsx` itself. Scope is built from
   `getPlaceTypeAndLabelCached(place)` (`@utils/helpers`, already called in
-  `generateMetadata` and reused for the page body), whose `PlaceTypeAndLabel.type` is
-  exactly `"town" | "region"` — a direct, no-translation match for `PromotionScope`. The
-  `[byDate]` and `[byDate]/[category]` child routes reuse the same `PlacePageShell`, so no
-  separate wiring is needed for those.
+  `generateMetadata` and reused for the page body). Its declared return type,
+  `PlaceTypeAndLabel.type`, is `"town" | "region" | ""` — but **verified against the actual
+  implementation** (`getPlaceTypeAndLabel`, `utils/location-helpers.ts:209-292`): every
+  branch returns `"town"` or `"region"` (empty place → `"region"`/"Catalunya";
+  `fetchPlaceBySlug` hit → `"town"`/`"region"` from the DTO's type; every fallback down to
+  the final catch-all → `"town"`) — there is no code path that returns `""`. The `""` member
+  of `PlaceType` is not reachable from this function; it exists for some other consumer of
+  the shared type, not this one. `PromotionScope`'s mapping is therefore total in practice,
+  but the insertion code still guards it defensively rather than casting past the type
+  checker: `if (!placeTypeLabel.type) return null;` before building `scope` — cheap,
+  correct, and honest that the branch is believed unreachable rather than pretending the
+  type union doesn't include it. The `[byDate]` and `[byDate]/[category]` child routes reuse
+  the same `PlacePageShell`, so no separate wiring is needed for those.
 - Both cases: the section renders nothing when `getActivePromotedEvents` returns `[]` —
   no "no promoted events" empty state, no layout shift beyond a normal conditional render.
 
@@ -334,8 +348,11 @@ namespace precedent from phase 1):
   for this MVP — the "everywhere"/"all pages" tier described in the original ask has no
   purchase path yet (see the divergence note above); known, explicitly deferred, not an
   oversight.
-- `PROMOTED_EVENTS_ENABLED` needs a home in env docs/`.env.example` and in whatever secret
-  manager gates prod env vars — flagged here so it isn't forgotten at deploy time; flipping
-  it on is a deliberate, separate follow-up action once Gerard's endpoint exists, not part
-  of this phase's implementation.
+- `PROMOTED_EVENTS_ENABLED` needs an entry in `.env.example` and in prod env config at
+  deploy time — flagged here so it isn't forgotten; flipping it on is a deliberate, separate
+  follow-up once Gerard's endpoint exists, not part of this phase. Checked `utils/env.ts`:
+  there's no central zod-validated env schema to register with (it's a handful of direct
+  `process.env.X` reads, e.g. `E2E_TEST_MODE`) — a plain `process.env.PROMOTED_EVENTS_ENABLED
+  === "true"` read is consistent with that convention, and it's server-only (no
+  `NEXT_PUBLIC_` prefix), which is correct since it's never read client-side.
 - No impression/view analytics (see "Analytics" above) — click-only for this phase.
