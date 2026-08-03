@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
+import { RocketLaunchIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Modal from "@components/ui/common/modal";
 import Button from "@components/ui/common/button";
 import { sendGoogleEvent } from "@utils/analytics";
@@ -13,12 +14,15 @@ export default function PromoteUpsellModal({
   slug,
 }: PromoteUpsellModalProps) {
   const t = useTranslations("App.Publish.promoteUpsell");
+  // Reuses the promote page's own benefit copy (App.EventPromote.benefit1-3)
+  // instead of duplicating the same three strings under a second namespace.
+  const tPromote = useTranslations("App.EventPromote");
   const router = useRouter();
 
   const handlePromote = () => {
     sendGoogleEvent("promote_modal_cta_click", {
       event_slug: slug,
-      source: "publica",
+      source: "event_detail",
     });
     router.push(`/e/${slug}/promote`);
     // Explicitly returning false stops Modal's own setOpen(false) from racing
@@ -30,10 +34,9 @@ export default function PromoteUpsellModal({
   const handleKeepFree = () => {
     sendGoogleEvent("promote_modal_dismiss", {
       event_slug: slug,
-      source: "publica",
+      source: "event_detail",
     });
     setOpen(false);
-    router.push(`/e/${slug}`);
   };
 
   return (
@@ -46,7 +49,28 @@ export default function PromoteUpsellModal({
       testId="promote-upsell-modal"
     >
       <div className="flex flex-col gap-4 py-4">
-        <p className="body-normal text-foreground/80">{t("description")}</p>
+        <div className="flex justify-center">
+          <div className="flex-center w-14 h-14 rounded-full bg-primary/10 text-primary">
+            <RocketLaunchIcon className="w-8 h-8" aria-hidden="true" />
+          </div>
+        </div>
+        <p className="body-normal text-foreground/80 text-center">
+          {t("description")}
+        </p>
+        <ul className="flex flex-col gap-2 body-small text-foreground/80">
+          <li className="flex items-center gap-2">
+            <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
+            {tPromote("benefit1")}
+          </li>
+          <li className="flex items-center gap-2">
+            <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
+            {tPromote("benefit2")}
+          </li>
+          <li className="flex items-center gap-2">
+            <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
+            {tPromote("benefit3")}
+          </li>
+        </ul>
         <Button
           type="button"
           variant="neutral"

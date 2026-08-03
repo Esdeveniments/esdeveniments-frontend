@@ -11,6 +11,11 @@ vi.mock("@i18n/routing", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+vi.mock("@heroicons/react/24/outline", () => ({
+  RocketLaunchIcon: () => <svg data-testid="rocket-icon" />,
+  CheckCircleIcon: () => <svg data-testid="check-icon" />,
+}));
+
 // Minimal Modal stub mirroring the real component's close/actionButton contract:
 // calls setOpen(false) after onActionButtonClick resolves, unless it returns false.
 vi.mock("@components/ui/common/modal", () => ({
@@ -51,7 +56,7 @@ vi.mock("@components/ui/common/modal", () => ({
   },
 }));
 
-import PromoteUpsellModal from "../app/[locale]/publica/PromoteUpsellModal";
+import PromoteUpsellModal from "../app/[locale]/e/[eventId]/components/PromoteUpsellModal";
 
 describe("PromoteUpsellModal", () => {
   beforeEach(() => {
@@ -67,13 +72,21 @@ describe("PromoteUpsellModal", () => {
     expect(mockPush).toHaveBeenCalledWith("/e/my-event/promote");
   });
 
-  it("navigates to the event detail page and closes the modal on 'keep it free'", () => {
+  it("closes the modal without navigating on 'keep it free' (already on the event detail page)", () => {
     const setOpen = vi.fn();
     render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" />);
 
     fireEvent.click(screen.getByTestId("promote-modal-keep-free"));
 
     expect(setOpen).toHaveBeenCalledWith(false);
-    expect(mockPush).toHaveBeenCalledWith("/e/my-event");
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("shows the benefit list reusing the promote page's own copy", () => {
+    render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" />);
+
+    expect(screen.getByText("benefit1")).toBeInTheDocument();
+    expect(screen.getByText("benefit2")).toBeInTheDocument();
+    expect(screen.getByText("benefit3")).toBeInTheDocument();
   });
 });

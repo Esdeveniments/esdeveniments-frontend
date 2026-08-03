@@ -290,20 +290,22 @@ test.describe("Publish integration (staging)", () => {
     await expect(publishButton).toHaveAttribute("data-publish-ready", "true", {
       timeout: 10_000,
     });
-    // Publishing now shows the post-publish promotion upsell modal instead of
-    // an immediate redirect. Wait for the modal, then dismiss via "keep it
-    // free" (this test's intent: verify the plain publish → detail page path
-    // still works).
-    await publishButton.click();
-    const upsellModal = page.getByTestId("promote-upsell-modal");
-    await expect(upsellModal).toBeVisible({ timeout: 30_000 });
-
+    // Publishing redirects straight to the created event's detail page (with
+    // a one-time ?promote=1 marker); the promotion upsell modal then appears
+    // there rather than blocking navigation. Wait for the redirect first,
+    // then dismiss the modal via "keep it free" (this test's intent: verify
+    // the plain publish → detail page path still works).
     await Promise.all([
       page.waitForURL((url) => !url.pathname.includes("/publica"), {
         timeout: 60_000,
       }),
-      page.getByTestId("promote-modal-keep-free").click(),
+      publishButton.click(),
     ]);
+
+    const upsellModal = page.getByTestId("promote-upsell-modal");
+    await expect(upsellModal).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId("promote-modal-keep-free").click();
+    await expect(upsellModal).not.toBeVisible({ timeout: 10_000 });
 
     // ── Step 6: Wait for success ──
     // The URL assertion above proves the publish action completed and redirected
@@ -459,10 +461,18 @@ test.describe("Publish integration (staging)", () => {
     await expect(publishButton).toHaveAttribute("data-publish-ready", "true", {
       timeout: 10_000,
     });
-    await publishButton.click();
+
+    // Publishing redirects straight to the created event's detail page
+    // (?promote=1 marker); the modal appears there, not before navigating.
+    await Promise.all([
+      page.waitForURL((url) => !url.pathname.includes("/publica"), {
+        timeout: 60_000,
+      }),
+      publishButton.click(),
+    ]);
 
     const upsellModal = page.getByTestId("promote-upsell-modal");
-    await expect(upsellModal).toBeVisible({ timeout: 30_000 });
+    await expect(upsellModal).toBeVisible({ timeout: 15_000 });
 
     await Promise.all([
       page.waitForURL((url) => url.pathname.includes("/promote"), {
