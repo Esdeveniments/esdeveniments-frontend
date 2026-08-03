@@ -391,6 +391,17 @@ export interface EventPromotionOption {
   priceEur: number;
 }
 
+/**
+ * Query-side surface descriptor for `getActivePromotedEvents`
+ * (lib/api/promotedEvents.ts): "which page is asking", not "what the buyer
+ * paid for". Auto-derived from the event's own location for the MVP — not a
+ * purchasable choice yet. `"town" | "region"` matches this codebase's own
+ * `PlaceType` (types/common.ts), not "comarca".
+ */
+export type PromotionScope =
+  | { type: "homepage" }
+  | { type: "town" | "region"; slug: string };
+
 export interface UseEventsOptions {
   place?: string;
   category?: string;
