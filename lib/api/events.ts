@@ -357,6 +357,45 @@ export async function deleteEventById(id: string): Promise<void> {
   }
 }
 
+export async function createPromotionCheckout(
+  id: string,
+  successUrl: string,
+  cancelUrl: string,
+): Promise<{ url: string }> {
+  const { apiUrl, authToken } = await requireMutationAuth();
+
+  const response = await fetchWithHmac(
+    `${apiUrl}/events/${id}/promotions/checkout`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ successUrl, cancelUrl }),
+      skipBodySigning: true,
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("createPromotionCheckout: error response:", errorText);
+    throw new Error(
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
+    );
+  }
+
+  const payload = await response.json();
+  if (!payload || typeof payload.url !== "string") {
+    throw new Error(
+      "createPromotionCheckout: backend response missing url field",
+    );
+  }
+
+  return { url: payload.url };
+}
+
 export async function createEvent(
   data: EventCreateRequestDTO,
   e2eExtras?: E2EEventExtras,
