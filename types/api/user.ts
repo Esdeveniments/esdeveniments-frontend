@@ -24,6 +24,8 @@ export interface UserPublicResponseDTO {
   bio?: string;
   avatarUrl?: string;
   organizerVerified?: boolean;
+  role?: AuthRole;
+  verified?: boolean;
   eventCount?: number;
   totalEventVisits?: number;
   upcomingEventCount?: number;

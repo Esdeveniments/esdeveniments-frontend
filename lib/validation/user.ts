@@ -13,6 +13,11 @@ export const UserPublicResponseDTOSchema = z.object({
   bio: z.string().nullish().transform((v) => v ?? undefined),
   avatarUrl: z.string().nullish().transform((v) => v ?? undefined),
   organizerVerified: z.boolean().nullish().transform((v) => v ?? undefined),
+  role: z
+    .enum(["USER", "ADMIN", "ORGANIZATION"])
+    .nullish()
+    .transform((v) => v ?? undefined),
+  verified: z.boolean().nullish().transform((v) => v ?? undefined),
   eventCount: z.number().nullish().transform((v) => v ?? undefined),
   totalEventVisits: z.number().nullish().transform((v) => v ?? undefined),
   upcomingEventCount: z.number().nullish().transform((v) => v ?? undefined),
