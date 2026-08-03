@@ -45,13 +45,15 @@ Design doc: `docs/superpowers/specs/2026-08-03-event-promotion-checkout-design.m
 
 **Files:**
 - Modify: `types/props.ts` (append new prop interfaces)
+- Modify: `types/event.ts` (append the Server Action result type)
 - Test: none (pure type additions; verified via `yarn typecheck` in later tasks)
 
 **Interfaces:**
-- Produces: `PromotionCheckoutResult`, `PromoteEventClientProps`,
-  `PromoteUpsellModalProps`, `EventPromoteActionProps` — used by every later task.
+- Produces: `PromotionCheckoutResult` (in `types/event.ts`), `PromoteEventClientProps`,
+  `PromoteUpsellModalProps`, `EventPromoteActionProps` (in `types/props.ts`) — used by
+  every later task.
 
-- [ ] **Step 1: Add the new prop/result types to `types/props.ts`**
+- [ ] **Step 1: Add the prop types to `types/props.ts`**
 
 Find the block containing `EventEditActionProps` (around line 979) and add these new
 interfaces immediately after it:
@@ -68,12 +70,6 @@ export interface PromoteEventClientProps {
   slug: string;
 }
 
-// Discriminated result returned by createPromotionCheckoutAction — mirrors
-// EditEventResult's shape (no thrown errors reach the client).
-export type PromotionCheckoutResult =
-  | { success: true; url: string }
-  | { success: false; error: string };
-
 export interface PromoteUpsellModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -81,15 +77,36 @@ export interface PromoteUpsellModalProps {
 }
 ```
 
-- [ ] **Step 2: Verify the file still compiles**
+- [ ] **Step 2: Add the Server Action result type to `types/event.ts`, not `types/props.ts`**
+
+`PromotionCheckoutResult` is a Server Action return type, not a component prop — it
+belongs next to the two existing precedents it's modeled on, `EditEventResult` (line 350)
+and `CreateEventActionResult` (line 365), both in `types/event.ts`. Putting it in
+`types/props.ts` would break the file's own convention (props only) that the other two
+already establish. Find `CreateEventActionResult` (around line 365-367) and add
+immediately after it:
+
+```ts
+/**
+ * Result returned by createPromotionCheckoutAction. A discriminated union
+ * (not a thrown error) — same convention as EditEventResult and
+ * CreateEventActionResult above: the client always gets a value it can
+ * branch on, never an opaque Server Action rejection.
+ */
+export type PromotionCheckoutResult =
+  | { success: true; url: string }
+  | { success: false; error: string };
+```
+
+- [ ] **Step 3: Verify the files still compile**
 
 Run: `yarn typecheck`
-Expected: PASS (no errors related to `types/props.ts`)
+Expected: PASS (no errors related to `types/props.ts` or `types/event.ts`)
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add types/props.ts
+git add types/props.ts types/event.ts
 git commit -m "feat(promote): add types for event promotion checkout"
 ```
 
@@ -446,7 +463,7 @@ import { getCurrentUser } from "@lib/auth/session";
 import { siteUrl } from "@config/index";
 import { withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
-import type { PromotionCheckoutResult } from "types/props";
+import type { PromotionCheckoutResult } from "types/event";
 
 /**
  * Resolves the event by slug and verifies the caller-provided eventId matches
@@ -673,17 +690,38 @@ git commit -m "feat(promote): add i18n messages for event promotion"
 ## Task 5: Promote page (Server Component gate + client component)
 
 **Files:**
+- Modify: `config/pricing.ts` (add the MVP flat-fee constant)
 - Create: `app/[locale]/e/[eventId]/promote/page.tsx`
 - Create: `app/[locale]/e/[eventId]/promote/PromoteEventClient.tsx`
 - Test: Create `test/promote-event-client.test.tsx`
 
 **Interfaces:**
 - Consumes: `fetchEventBySlug`, `getCurrentUser` (existing), `createPromotionCheckoutAction`
-  (Task 3), `PromoteEventClientProps` (Task 1).
+  (Task 3), `PromoteEventClientProps` (Task 1), `EVENT_PROMOTION_FLAT_FEE_EUR`
+  (`config/pricing.ts`, this task).
 - Produces: the `/e/[eventId]/promote` route, rendered `PromoteEventClient` component
   used by Task 7's E2E flow.
 
-- [ ] **Step 1: Write the failing test for `PromoteEventClient`**
+- [ ] **Step 1: Add the flat-fee constant to `config/pricing.ts`**
+
+This repo already centralizes all promotion/sponsor pricing in `config/pricing.ts`
+(`BASE_PRICES_CENTS`, `DISPLAY_PRICES_EUR`) specifically so a price never lives loose in
+a component. Even as an MVP placeholder, the event-promotion fee belongs there, not
+inline in JSX. Add this at the end of `config/pricing.ts`, after `DISPLAY_PRICES_EUR`:
+
+```ts
+/**
+ * MVP flat fee for event promotion checkout (in EUR, not cents — this is a
+ * display-only value passed straight to the confirm button, not used in any
+ * server-side pricing calculation). The real backend pricing methodology is
+ * still undecided (per-day vs. start-to-event-date) — see the design doc.
+ * This constant is a placeholder until that's settled and the backend
+ * exposes it via its own endpoint.
+ */
+export const EVENT_PROMOTION_FLAT_FEE_EUR = 5;
+```
+
+- [ ] **Step 2: Write the failing test for `PromoteEventClient`**
 
 Create `test/promote-event-client.test.tsx`:
 
@@ -768,12 +806,12 @@ describe("PromoteEventClient", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 3: Run test to verify it fails**
 
 Run: `yarn test test/promote-event-client.test.tsx`
 Expected: FAIL (module not found: `PromoteEventClient`)
 
-- [ ] **Step 3: Implement `PromoteEventClient`**
+- [ ] **Step 4: Implement `PromoteEventClient`**
 
 Create `app/[locale]/e/[eventId]/promote/PromoteEventClient.tsx`:
 
@@ -785,13 +823,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
+import { EVENT_PROMOTION_FLAT_FEE_EUR } from "@config/pricing";
 import type { AppLocale } from "types/i18n";
 import type { PromoteEventClientProps } from "types/props";
 import { createPromotionCheckoutAction } from "./actions";
-
-// MVP flat fee — static per design doc; a real pricing config is a follow-up
-// once the backend's pricing methodology is decided.
-const FLAT_FEE_EUR = 5;
 
 function isValidCheckoutUrl(url: string): boolean {
   try {
@@ -833,7 +868,13 @@ export default function PromoteEventClient({
   };
 
   return (
-    <div className="container max-w-2xl mx-auto py-section-y px-section-x">
+    // max-w-[520px] matches DESIGN.md's `containers.detail` token (520px) —
+    // this is a single-focus confirmation flow like the event detail page,
+    // not a multi-field form (which would use the wider `container` class,
+    // as /publica and /edita do). Tailwind's config only customizes the
+    // generic `container` utility, not a named "detail" width, so the literal
+    // value is the correct concrete implementation of that design token today.
+    <div className="max-w-[520px] mx-auto py-section-y px-section-x">
       <Link
         href={`/e/${slug}`}
         className="inline-flex items-center gap-1 body-small text-foreground/70 hover:text-foreground mb-4"
@@ -867,7 +908,9 @@ export default function PromoteEventClient({
 
         <div className="card-bordered card-body flex items-center justify-between">
           <span className="body-normal text-foreground/70">{t("priceLabel")}</span>
-          <span className="heading-2 text-foreground-strong">{FLAT_FEE_EUR}€</span>
+          <span className="heading-2 text-foreground-strong">
+            {EVENT_PROMOTION_FLAT_FEE_EUR}€
+          </span>
         </div>
         <p className="body-small text-foreground/60 -mt-4">{t("priceNote")}</p>
 
@@ -896,12 +939,12 @@ export default function PromoteEventClient({
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 5: Run test to verify it passes**
 
 Run: `yarn test test/promote-event-client.test.tsx`
 Expected: PASS (3 tests)
 
-- [ ] **Step 5: Implement the Server Component page**
+- [ ] **Step 6: Implement the Server Component page**
 
 Create `app/[locale]/e/[eventId]/promote/page.tsx`:
 
@@ -956,16 +999,16 @@ export default async function PromotePage({
 }
 ```
 
-- [ ] **Step 6: Run full test suite and typecheck**
+- [ ] **Step 7: Run full test suite and typecheck**
 
 Run: `yarn typecheck && yarn test test/promote-event-client.test.tsx test/promote-checkout-action.test.ts`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add app/\[locale\]/e/\[eventId\]/promote/page.tsx app/\[locale\]/e/\[eventId\]/promote/PromoteEventClient.tsx test/promote-event-client.test.tsx
-git commit -m "feat(promote): add /e/[eventId]/promote page"
+git add config/pricing.ts app/\[locale\]/e/\[eventId\]/promote/page.tsx app/\[locale\]/e/\[eventId\]/promote/PromoteEventClient.tsx test/promote-event-client.test.tsx
+git commit -m "feat(promote): add /e/[eventId]/promote page with centralized MVP pricing"
 ```
 
 ---
@@ -1015,8 +1058,11 @@ export default async function PromoteSuccessPage({
   const t = await getTranslations("App.EventPromote.successPage");
 
   return (
+    // max-w-3xl matches the existing /patrocina/success precedent exactly
+    // (app/[locale]/patrocina/success/page.tsx) — same return-page pattern,
+    // reused verbatim rather than picking a new width for no reason.
     <main className="min-h-screen bg-background py-section-y px-section-x">
-      <div className="max-w-2xl mx-auto text-center space-y-6">
+      <div className="max-w-3xl mx-auto text-center space-y-6">
         <div className="flex justify-center">
           <CheckCircleIcon className="h-16 w-16 text-success" />
         </div>
@@ -1066,8 +1112,10 @@ export default async function PromoteCancelPage({
   const t = await getTranslations("App.EventPromote.cancelPage");
 
   return (
+    // max-w-3xl matches /patrocina/cancelled exactly — same reasoning as the
+    // success page above.
     <main className="min-h-screen bg-background py-section-y px-section-x">
-      <div className="max-w-2xl mx-auto text-center space-y-6">
+      <div className="max-w-3xl mx-auto text-center space-y-6">
         <h1 className="heading-1">{t("title")}</h1>
         <p className="body-large text-foreground/80">{t("subtitle")}</p>
 
@@ -1448,14 +1496,51 @@ export default function PromoteUpsellModal({
 Run: `yarn test test/promote-upsell-modal.test.tsx`
 Expected: PASS (2 tests)
 
-- [ ] **Step 5: Splice the modal into `publica/page.tsx`**
+- [ ] **Step 5: Splice the modal into `publica/page.tsx`, lazy-loaded**
 
-In `app/[locale]/publica/page.tsx`, add the import next to the other colocated imports
-(near line 39, after `CompleteProfileGate`):
+The modal only ever renders after a successful publish — there's no reason to ship it in
+`/publica`'s initial bundle. This file already has the exact precedent for this: the
+preview modal's content is lazy-loaded via `next/dynamic` with `ssr: false` (lines 44-53).
+Follow the same pattern instead of a static import.
+
+In `app/[locale]/publica/page.tsx`, replace the existing `PreviewContent` dynamic-import
+block (lines 44-53):
 
 ```tsx
-import CompleteProfileGate from "./CompleteProfileGate";
-import PromoteUpsellModal from "./PromoteUpsellModal";
+// Lazy load preview content (only shown in modal when user clicks preview)
+// Client component, so we can use dynamic directly with ssr: false
+const PreviewContent = dynamic(
+  () => import("@components/ui/EventForm/preview/PreviewContent"),
+  {
+    ssr: false, // Preview is only shown in modal, not needed for initial render
+    loading: () => (
+      <div className="w-full h-64 bg-muted animate-pulse rounded" aria-label="Loading preview" />
+    ),
+  }
+);
+```
+
+with the same block plus a second `dynamic()` call for the new modal:
+
+```tsx
+// Lazy load preview content (only shown in modal when user clicks preview)
+// Client component, so we can use dynamic directly with ssr: false
+const PreviewContent = dynamic(
+  () => import("@components/ui/EventForm/preview/PreviewContent"),
+  {
+    ssr: false, // Preview is only shown in modal, not needed for initial render
+    loading: () => (
+      <div className="w-full h-64 bg-muted animate-pulse rounded" aria-label="Loading preview" />
+    ),
+  }
+);
+
+// Lazy load the post-publish upsell modal — same reasoning as PreviewContent
+// above: it only renders after a successful publish, so it shouldn't ship in
+// the initial /publica bundle.
+const PromoteUpsellModal = dynamic(() => import("./PromoteUpsellModal"), {
+  ssr: false,
+});
 ```
 
 Add a new state variable inside `PublishForm`, near the other `showPreview`/`showCompleteProfileGate`
@@ -1793,11 +1878,31 @@ during review is Task 7. Out-of-scope items (pricing lookup, duplicate-checkout 
 list sorting, non-owner promotion, webhook/Stripe SDK) are deliberately absent from every
 task.
 
-**Type consistency:** `PromotionCheckoutResult` (Task 1) is used identically in Task 3's
-action signature and Task 5's client component — checked. `EventPromoteActionProps` (Task
-1) matches `EventEditActionProps`'s shape exactly, used consistently in Task 7.
+**Type consistency:** `PromotionCheckoutResult` (Task 1, defined in `types/event.ts` next
+to its two direct precedents `EditEventResult`/`CreateEventActionResult` — not
+`types/props.ts`, which is props-only) is used identically in Task 3's action signature
+and Task 5's client component — checked. `EventPromoteActionProps` (Task 1) matches
+`EventEditActionProps`'s shape exactly, used consistently in Task 7.
 `PromoteUpsellModalProps` (Task 1) matches the props Task 8's component and test actually
 destructure.
 
 **No placeholders:** every step has complete, concrete code — no TBD/TODO markers, no
 "add appropriate error handling" prose without an implementation.
+
+**Post-plan audit (DRY/centralize/types/design/performance):** a second pass, prompted by
+direct user challenge, caught four issues fixed above: (1) `PromotionCheckoutResult` had
+been placed in `types/props.ts` instead of `types/event.ts`, inconsistent with its own
+named precedents — moved in Task 1. (2) The €5 MVP fee was a raw literal inline in JSX
+instead of living in `config/pricing.ts`, the file that already centralizes every other
+promotion/sponsor price in this repo specifically to prevent that — moved to
+`EVENT_PROMOTION_FLAT_FEE_EUR` in Task 5. (3) `DESIGN.md` (required reading before any UI
+code, per this repo's CLAUDE.md) was not actually read before the first draft of this
+plan; once read, the promote page's container width (`max-w-2xl`) didn't match either
+`DESIGN.md`'s `containers.detail` token (520px, the correct token for a single-focus
+confirmation page) or the actual `/patrocina/success`+`/patrocina/cancelled` precedent's
+`max-w-3xl` (which the success/cancel pages in Task 6 claimed to mirror but didn't) —
+both corrected to their proper values. (4) `PromoteUpsellModal` was a static import in
+`publica/page.tsx` despite that same file already lazy-loading `PreviewContent` via
+`next/dynamic` with `ssr: false` for the identical reason (only renders after a specific
+user action, not on initial page load) — changed to follow the existing pattern in
+Task 8.
