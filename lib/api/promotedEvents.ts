@@ -1,5 +1,10 @@
+import { z } from "zod";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getApiUrl } from "@utils/api-helpers";
+import {
+  EventSummaryResponseDTOSchema,
+  enhanceEventImage,
+} from "@lib/validation/event";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import type { PromotionScope } from "types/event";
 
@@ -46,7 +51,17 @@ export async function getActivePromotedEvents(
 
     const data = await response.json();
     const content = Array.isArray(data?.content) ? data.content : [];
-    return (content as EventSummaryResponseDTO[]).slice(0, MAX_PROMOTED_EVENTS);
+    const parsed = z.array(EventSummaryResponseDTOSchema).safeParse(content);
+    if (!parsed.success) {
+      console.warn(
+        "getActivePromotedEvents: invalid content payload",
+        parsed.error,
+      );
+      return [];
+    }
+
+    const events = parsed.data as EventSummaryResponseDTO[];
+    return events.map(enhanceEventImage).slice(0, MAX_PROMOTED_EVENTS);
   } catch (error) {
     console.warn("getActivePromotedEvents: fetch failed", error);
     return [];

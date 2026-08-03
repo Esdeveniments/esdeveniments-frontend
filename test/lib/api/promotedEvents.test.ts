@@ -109,6 +109,19 @@ describe("getActivePromotedEvents", () => {
     expect(result).toEqual([]);
   });
 
+  it("returns [] (not a throw) when content items don't match EventSummaryResponseDTOSchema", async () => {
+    process.env.PROMOTED_EVENTS_ENABLED = "true";
+    const mockResponse = new Response(
+      JSON.stringify({ content: [{ id: "malformed", title: "missing required fields" }] }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
+
+    const result = await getActivePromotedEvents({ type: "homepage" });
+
+    expect(result).toEqual([]);
+  });
+
   it("caps results at MAX_PROMOTED_EVENTS", async () => {
     process.env.PROMOTED_EVENTS_ENABLED = "true";
     const content = Array.from({ length: 20 }, (_, i) => ({
