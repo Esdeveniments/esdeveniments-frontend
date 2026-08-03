@@ -122,6 +122,24 @@ describe("getActivePromotedEvents", () => {
     expect(result).toEqual([]);
   });
 
+  it("drops individually invalid items without discarding the valid ones around them", async () => {
+    process.env.PROMOTED_EVENTS_ENABLED = "true";
+    const content = [
+      { ...baseEvent, id: "valid-1", slug: "valid-1" },
+      { id: "malformed", title: "missing required fields" },
+      { ...baseEvent, id: "valid-2", slug: "valid-2" },
+    ];
+    const mockResponse = new Response(JSON.stringify({ content }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
+
+    const result = await getActivePromotedEvents({ type: "homepage" });
+
+    expect(result.map((e) => e.id)).toEqual(["valid-1", "valid-2"]);
+  });
+
   it("caps results at MAX_PROMOTED_EVENTS", async () => {
     process.env.PROMOTED_EVENTS_ENABLED = "true";
     const content = Array.from({ length: 20 }, (_, i) => ({

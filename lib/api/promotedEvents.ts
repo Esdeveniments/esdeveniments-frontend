@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getApiUrl } from "@utils/api-helpers";
 import {
@@ -51,16 +50,23 @@ export async function getActivePromotedEvents(
 
     const data = await response.json();
     const content = Array.isArray(data?.content) ? data.content : [];
-    const parsed = z.array(EventSummaryResponseDTOSchema).safeParse(content);
-    if (!parsed.success) {
-      console.warn(
-        "getActivePromotedEvents: invalid content payload",
-        parsed.error,
-      );
-      return [];
+
+    // Validate each item individually rather than the array atomically — one
+    // malformed item (wherever it falls in the response) should be dropped,
+    // not discard every valid promotion alongside it.
+    const events: EventSummaryResponseDTO[] = [];
+    for (const item of content) {
+      const parsed = EventSummaryResponseDTOSchema.safeParse(item);
+      if (parsed.success) {
+        events.push(parsed.data as EventSummaryResponseDTO);
+      } else {
+        console.warn(
+          "getActivePromotedEvents: dropping invalid content item",
+          parsed.error,
+        );
+      }
     }
 
-    const events = parsed.data as EventSummaryResponseDTO[];
     return events.map(enhanceEventImage).slice(0, MAX_PROMOTED_EVENTS);
   } catch (error) {
     console.warn("getActivePromotedEvents: fetch failed", error);
