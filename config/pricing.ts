@@ -160,3 +160,20 @@ export const DISPLAY_PRICES_EUR: Record<
   region: buildDisplayPricesForScope("region"),
   country: buildDisplayPricesForScope("country"),
 };
+
+export interface EventPromotionOption {
+  id: string;
+  priceEur: number;
+}
+
+/**
+ * MVP: exactly one flat-fee option for event promotion checkout. Structured
+ * as a list (not a single constant) so the promote page already renders
+ * "whatever this returns" rather than a hardcoded line — when Gerard defines
+ * real duration/geo-scope tiers (methodology still undecided — see the
+ * design doc and the message sent to him), this function's implementation
+ * changes, not its callers.
+ */
+export function getEventPromotionOptions(): EventPromotionOption[] {
+  return [{ id: "standard", priceEur: 5 }];
+}
