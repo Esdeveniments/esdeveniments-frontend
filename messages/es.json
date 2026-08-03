@@ -210,6 +210,31 @@
       "myEvents": "Mis eventos",
       "requiredNote": "* campos obligatorios"
     },
+    "EventPromote": {
+      "title": "Promociona tu evento",
+      "description": "Llega a más gente promocionando tu evento en Esdeveniments.cat.",
+      "heading": "Promociona tu evento",
+      "subheading": "Destaca para llegar a más gente y aparecer en los primeros puestos.",
+      "benefit1": "Más visibilidad en la agenda",
+      "benefit2": "Prioridad frente a otros eventos",
+      "benefit3": "Más personas interesadas",
+      "priceLabel": "Precio",
+      "priceNote": "Tarifa plana, pago único.",
+      "confirmButton": "Confirmar y pagar",
+      "confirmButtonLoading": "Redirigiendo al pago...",
+      "backToEvent": "Volver al evento",
+      "errorGeneric": "Algo ha fallado. Inténtalo de nuevo.",
+      "successPage": {
+        "title": "¡Gracias!",
+        "subtitle": "Tu evento ya está promocionado.",
+        "backToEvent": "Ver tu evento"
+      },
+      "cancelPage": {
+        "title": "Pago cancelado",
+        "subtitle": "Tu evento sigue siendo gratuito.",
+        "backToEvent": "Volver al evento"
+      }
+    },
     "PublishPage": {
       "metaTitle": "Publica tu evento gratis en Cataluña | Agenda cultural - Esdeveniments.cat",
       "metaDescription": "Añade tu concierto, exposición, teatro o actividad a la agenda de Cataluña. Publicación gratuita y rápida. Llega a miles de personas interesadas en cultura y ocio.",
@@ -313,6 +338,12 @@
       "subheading": "Añade tu concierto, exposición, teatro, taller o actividad cultural a la agenda más grande de Cataluña. ¡Es gratis!",
       "sponsorTitle": "¿Tienes un negocio local?",
       "sponsorLink": "Ver opciones de patrocinio",
+      "promoteUpsell": {
+        "title": "¡Impulsa tu evento!",
+        "description": "Promociona tu evento ahora para llegar a mucha más gente y aparecer en los primeros puestos de la plataforma.",
+        "promoteButton": "Promocionar evento",
+        "keepFreeButton": "Mantener gratis"
+      },
       "benefits": {
         "title": "¿Por qué publicar en Esdeveniments.cat?",
         "free": "100% gratuito - sin costes ocultos",

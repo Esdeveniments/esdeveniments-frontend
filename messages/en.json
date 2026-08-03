@@ -210,6 +210,31 @@
       "myEvents": "My events",
       "requiredNote": "* required fields"
     },
+    "EventPromote": {
+      "title": "Promote your event",
+      "description": "Reach more people by promoting your event on Esdeveniments.cat.",
+      "heading": "Promote your event",
+      "subheading": "Stand out to reach more people and appear at the top.",
+      "benefit1": "More visibility in the agenda",
+      "benefit2": "Priority over other events",
+      "benefit3": "More interested people",
+      "priceLabel": "Price",
+      "priceNote": "Flat fee, one-time payment.",
+      "confirmButton": "Confirm and pay",
+      "confirmButtonLoading": "Redirecting to payment...",
+      "backToEvent": "Back to event",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "successPage": {
+        "title": "Thank you!",
+        "subtitle": "Your event is now promoted.",
+        "backToEvent": "View your event"
+      },
+      "cancelPage": {
+        "title": "Payment canceled",
+        "subtitle": "Your event remains free.",
+        "backToEvent": "Back to event"
+      }
+    },
     "PublishPage": {
       "metaTitle": "Publish your event for free in Catalonia | Cultural agenda - Esdeveniments.cat",
       "metaDescription": "Add your concert, exhibition, theatre or activity to the Catalonia agenda. Free and fast publication. Reach thousands of people interested in culture and leisure.",
@@ -313,6 +338,12 @@
       "subheading": "Add your concert, exhibition, theatre, workshop or cultural activity to Catalonia's largest agenda. It's free!",
       "sponsorTitle": "Have a local business?",
       "sponsorLink": "See sponsorship options",
+      "promoteUpsell": {
+        "title": "Boost your event!",
+        "description": "Promote your event now to reach way more people and appear at the top of the platform.",
+        "promoteButton": "Promote Event",
+        "keepFreeButton": "Keep it free"
+      },
       "benefits": {
         "title": "Why publish on Esdeveniments.cat?",
         "free": "100% free - no hidden costs",
