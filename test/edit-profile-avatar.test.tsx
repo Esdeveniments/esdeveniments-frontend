@@ -71,7 +71,8 @@ describe("EditProfileAvatar", () => {
 
     expect(await screen.findByText("errorUnsupported")).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
-    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_error", {
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_start", {});
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_blocked", {
       reason: "unsupported_type",
     });
   });
@@ -84,7 +85,8 @@ describe("EditProfileAvatar", () => {
 
     expect(await screen.findByText("errorTooLarge")).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
-    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_error", {
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_start", {});
+    expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_blocked", {
       reason: "too_large",
     });
   });

@@ -45,19 +45,19 @@ export default function EditProfileAvatar({
     if (!file) return;
 
     setError(null);
+    sendGoogleEvent("avatar_upload_start", {});
 
     if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
       setError(t("errorUnsupported"));
-      sendGoogleEvent("avatar_upload_error", { reason: "unsupported_type" });
+      sendGoogleEvent("avatar_upload_blocked", { reason: "unsupported_type" });
       return;
     }
     if (file.size > MAX_AVATAR_BYTES) {
       setError(t("errorTooLarge"));
-      sendGoogleEvent("avatar_upload_error", { reason: "too_large" });
+      sendGoogleEvent("avatar_upload_blocked", { reason: "too_large" });
       return;
     }
 
-    sendGoogleEvent("avatar_upload_start", {});
     setIsUploading(true);
     try {
       try {

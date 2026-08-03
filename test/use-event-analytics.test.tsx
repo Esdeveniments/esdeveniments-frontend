@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { render, renderHook } from "@testing-library/react";
+import { StrictMode } from "react";
 import type { EventClientProps } from "types/props";
 
 const { sendGoogleEventMock } = vi.hoisted(() => ({
@@ -60,5 +61,20 @@ describe("useEventAnalytics", () => {
       "view_event_page",
       expect.objectContaining({ is_past: true }),
     );
+  });
+
+  it("fires once even under StrictMode's dev-only double-invoke", () => {
+    function Harness() {
+      useEventAnalytics(makeEvent());
+      return null;
+    }
+
+    render(
+      <StrictMode>
+        <Harness />
+      </StrictMode>,
+    );
+
+    expect(sendGoogleEventMock).toHaveBeenCalledTimes(1);
   });
 });
