@@ -690,35 +690,53 @@ git commit -m "feat(promote): add i18n messages for event promotion"
 ## Task 5: Promote page (Server Component gate + client component)
 
 **Files:**
-- Modify: `config/pricing.ts` (add the MVP flat-fee constant)
+- Modify: `config/pricing.ts` (add the MVP pricing-options function)
 - Create: `app/[locale]/e/[eventId]/promote/page.tsx`
 - Create: `app/[locale]/e/[eventId]/promote/PromoteEventClient.tsx`
 - Test: Create `test/promote-event-client.test.tsx`
 
 **Interfaces:**
 - Consumes: `fetchEventBySlug`, `getCurrentUser` (existing), `createPromotionCheckoutAction`
-  (Task 3), `PromoteEventClientProps` (Task 1), `EVENT_PROMOTION_FLAT_FEE_EUR`
+  (Task 3), `PromoteEventClientProps` (Task 1), `getEventPromotionOptions`
   (`config/pricing.ts`, this task).
 - Produces: the `/e/[eventId]/promote` route, rendered `PromoteEventClient` component
   used by Task 7's E2E flow.
 
-- [ ] **Step 1: Add the flat-fee constant to `config/pricing.ts`**
+- [ ] **Step 1: Add `getEventPromotionOptions` to `config/pricing.ts`**
 
 This repo already centralizes all promotion/sponsor pricing in `config/pricing.ts`
 (`BASE_PRICES_CENTS`, `DISPLAY_PRICES_EUR`) specifically so a price never lives loose in
-a component. Even as an MVP placeholder, the event-promotion fee belongs there, not
-inline in JSX. Add this at the end of `config/pricing.ts`, after `DISPLAY_PRICES_EUR`:
+a component. But Gerard's backend has no real pricing methodology for event promotion
+yet (duration tiers, geo-scope tiers — see the design doc's "Risks" section and the
+2026-08-03 Catalan message sent to him). Building a full `/api/promotions/event-config`
+route + external wrapper right now, for a value that's a single hardcoded number with
+zero real backend config behind it, would be inventing structure for a need that doesn't
+exist yet.
+
+The right-sized seam is a function that returns a list, not a network layer: today it
+returns exactly one option, so `PromoteEventClient` already renders "whatever the list
+contains" instead of a single hardcoded line. When Gerard defines real tiers, this
+function's *implementation* changes (likely a fetch from a new endpoint at that point) —
+but nothing that calls it has to change, since it already iterates a list. Add this at
+the end of `config/pricing.ts`, after `DISPLAY_PRICES_EUR`:
 
 ```ts
+export interface EventPromotionOption {
+  id: string;
+  priceEur: number;
+}
+
 /**
- * MVP flat fee for event promotion checkout (in EUR, not cents — this is a
- * display-only value passed straight to the confirm button, not used in any
- * server-side pricing calculation). The real backend pricing methodology is
- * still undecided (per-day vs. start-to-event-date) — see the design doc.
- * This constant is a placeholder until that's settled and the backend
- * exposes it via its own endpoint.
+ * MVP: exactly one flat-fee option for event promotion checkout. Structured
+ * as a list (not a single constant) so the promote page already renders
+ * "whatever this returns" rather than a hardcoded line — when Gerard defines
+ * real duration/geo-scope tiers (methodology still undecided — see the
+ * design doc and the message sent to him), this function's implementation
+ * changes, not its callers.
  */
-export const EVENT_PROMOTION_FLAT_FEE_EUR = 5;
+export function getEventPromotionOptions(): EventPromotionOption[] {
+  return [{ id: "standard", priceEur: 5 }];
+}
 ```
 
 - [ ] **Step 2: Write the failing test for `PromoteEventClient`**
@@ -803,6 +821,15 @@ describe("PromoteEventClient", () => {
     });
     expect(window.location.href).toBe("");
   });
+
+  it("renders the price from getEventPromotionOptions rather than a hardcoded value", () => {
+    render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
+
+    // 5 is today's only entry from getEventPromotionOptions() — asserting
+    // against the rendered text (not re-importing the config function) keeps
+    // this test honest about what the user actually sees.
+    expect(screen.getByText("5€")).toBeInTheDocument();
+  });
 });
 ```
 
@@ -823,7 +850,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
-import { EVENT_PROMOTION_FLAT_FEE_EUR } from "@config/pricing";
+import { getEventPromotionOptions } from "@config/pricing";
 import type { AppLocale } from "types/i18n";
 import type { PromoteEventClientProps } from "types/props";
 import { createPromotionCheckoutAction } from "./actions";
@@ -844,6 +871,11 @@ export default function PromoteEventClient({
   const locale = useLocale() as AppLocale;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // MVP: exactly one option today. Rendered from a list (not a single
+  // constant) so this component doesn't change shape when Gerard adds real
+  // duration/geo-scope tiers later — only getEventPromotionOptions' return
+  // value grows.
+  const [promotionOption] = getEventPromotionOptions();
 
   const handleConfirm = async () => {
     setError(null);
@@ -909,7 +941,7 @@ export default function PromoteEventClient({
         <div className="card-bordered card-body flex items-center justify-between">
           <span className="body-normal text-foreground/70">{t("priceLabel")}</span>
           <span className="heading-2 text-foreground-strong">
-            {EVENT_PROMOTION_FLAT_FEE_EUR}€
+            {promotionOption.priceEur}€
           </span>
         </div>
         <p className="body-small text-foreground/60 -mt-4">{t("priceNote")}</p>
@@ -942,7 +974,7 @@ export default function PromoteEventClient({
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `yarn test test/promote-event-client.test.tsx`
-Expected: PASS (3 tests)
+Expected: PASS (4 tests)
 
 - [ ] **Step 6: Implement the Server Component page**
 
@@ -1895,14 +1927,19 @@ been placed in `types/props.ts` instead of `types/event.ts`, inconsistent with i
 named precedents — moved in Task 1. (2) The €5 MVP fee was a raw literal inline in JSX
 instead of living in `config/pricing.ts`, the file that already centralizes every other
 promotion/sponsor price in this repo specifically to prevent that — moved to
-`EVENT_PROMOTION_FLAT_FEE_EUR` in Task 5. (3) `DESIGN.md` (required reading before any UI
-code, per this repo's CLAUDE.md) was not actually read before the first draft of this
-plan; once read, the promote page's container width (`max-w-2xl`) didn't match either
-`DESIGN.md`'s `containers.detail` token (520px, the correct token for a single-focus
-confirmation page) or the actual `/patrocina/success`+`/patrocina/cancelled` precedent's
-`max-w-3xl` (which the success/cancel pages in Task 6 claimed to mirror but didn't) —
-both corrected to their proper values. (4) `PromoteUpsellModal` was a static import in
-`publica/page.tsx` despite that same file already lazy-loading `PreviewContent` via
-`next/dynamic` with `ssr: false` for the identical reason (only renders after a specific
+`getEventPromotionOptions()` in Task 5 (a list-returning function rather than a bare
+constant, so the component already renders "whatever the list contains" instead of a
+hardcoded line — deliberately NOT a full `/api/promotions/event-config` route, since
+Gerard's backend has no real duration/geo-scope tiers yet and building that network layer
+now would be inventing structure for a need that doesn't exist; see the design doc's
+"Risks" section and the message sent to Gerard on 2026-08-03). (3) `DESIGN.md` (required
+reading before any UI code, per this repo's CLAUDE.md) was not actually read before the
+first draft of this plan; once read, the promote page's container width (`max-w-2xl`)
+didn't match either `DESIGN.md`'s `containers.detail` token (520px, the correct token for
+a single-focus confirmation page) or the actual `/patrocina/success`+`/patrocina/cancelled`
+precedent's `max-w-3xl` (which the success/cancel pages in Task 6 claimed to mirror but
+didn't) — both corrected to their proper values. (4) `PromoteUpsellModal` was a static
+import in `publica/page.tsx` despite that same file already lazy-loading `PreviewContent`
+via `next/dynamic` with `ssr: false` for the identical reason (only renders after a specific
 user action, not on initial page load) — changed to follow the existing pattern in
 Task 8.
