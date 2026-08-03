@@ -99,16 +99,10 @@ once the real endpoint ships, is a one-file fix.
   JSON body (see "Return pages" for why the frontend, not the backend, builds these).
   Throws on failure — the Server Action wrapping it is what converts that into a
   discriminated result (matching how `createEventAction` wraps `createEvent`'s throw).
-- `types/api/event.ts` — extend `E2EEventExtras` with an optional `owner?:
-  EventDetailResponseDTO["owner"]`. Needed so `createE2EEvent` can stamp an owner
-  matching the E2E-authenticated user (see "Testing").
-- `app/[locale]/publica/page.tsx` — in `buildE2EExtras()`, populate the new `owner` field
-  from the authenticated user already available via `useAuth()` in this file. Around line
-  625, replace the unconditional `router.push('/e/${slug}')` after a successful publish
-  with: show `PromoteUpsellModal`, navigate on either button (see "Modal" below for the
-  exact close/navigate sequencing).
-- `lib/api/events.ts` (`createE2EEvent`) — set `owner: extras?.owner` on the constructed
-  E2E event object.
+- `app/[locale]/publica/page.tsx` — around line 625, replace the unconditional
+  `router.push('/e/${slug}')` after a successful publish with: show
+  `PromoteUpsellModal`, navigate on either button (see "Modal" below for the exact
+  close/navigate sequencing).
 - `messages/ca.json`, `es.json`, `en.json` — new `App.EventPromote` namespace (mirroring
   `App.EventEdit` — verified this naming convention against `messages/ca.json:204-219`),
   plus a few new keys under `App.Publish` for the modal copy.
@@ -253,21 +247,23 @@ sent via `sendGoogleEvent` (imperative calls, matching the majority pattern in t
   a money-adjacent path.) Modal button branching (Promote vs. Keep it free navigate to
   the right paths, and the `actionButton` handler's `return false` is asserted so the
   race described above can't regress silently).
-- E2E (Playwright): **this requires two changes to E2E infra, not just a new
-  assertion.**
-  1. `createE2EEvent` (`lib/api/events.ts`) never sets `owner`, so the new promote page's
-     ownership gate would `notFound()` for every E2E-created event regardless of who's
-     logged in. Fix: extend `E2EEventExtras` with `owner`, populate it in
-     `buildE2EExtras()` (`publica/page.tsx`) from the already-authenticated E2E test
-     user, and pass it through in `createE2EEvent`.
-  2. `e2e/publish-integration.spec.ts`'s existing assertion
-     (`page.waitForURL((url) => !url.pathname.includes("/publica"), ...)` right after
-     clicking publish) currently races the new modal: the URL no longer changes on
-     publish success, the modal appears instead. This existing test **must be updated**,
-     not just extended — insert an explicit wait for the modal, then a "Keep it free"
-     click, before the existing URL assertion can proceed. Add a second, separate test
-     (or a branch in the same one) that instead clicks "Promote Event" and asserts landing
-     on `/e/[slug]/promote`.
+- E2E (Playwright): `e2e/publish-integration.spec.ts` is the one real-backend,
+  real-login E2E that publishes an event and immediately asserts on the post-publish
+  redirect — it runs against staging (gated on `E2E_STAGING_EMAIL`/`E2E_STAGING_PASSWORD`,
+  see `.github/workflows/e2e-integration.yml`), not the mocked-auth or
+  `E2E_TEST_MODE`-short-circuited specs (`publish-wizard.spec.ts`,
+  `publish-no-autosubmit.spec.ts`, `publica_to_event.flow.spec.ts` — none of those
+  submit-and-land-on-`/e/[slug]`, so they're unaffected). Its existing assertion
+  (`page.waitForURL((url) => !url.pathname.includes("/publica"), ...)` right after
+  clicking publish) races the new modal: the URL no longer changes immediately on
+  publish success, the modal appears instead. This existing test **must be updated**,
+  not just extended — insert an explicit wait for the modal, then a "Keep it free"
+  click, before the existing URL assertion can proceed. Add a second, separate test (or
+  a branch in the same one) that instead clicks "Promote Event" and asserts landing on
+  `/e/[slug]/promote`. Since this spec logs in against the real staging backend and
+  publishes a real event, `event.owner` is populated by the backend itself — no
+  synthetic E2E owner-stamping is needed for the new promote page's ownership gate to
+  pass here.
 
 ## Risks / open questions carried forward (not blocking this implementation)
 
@@ -289,15 +285,24 @@ sent via `sendGoogleEvent` (imperative calls, matching the majority pattern in t
 ## Review history
 
 This design went through one adversarial staff-engineer review pass (2026-08-03) before
-implementation. Five blocking issues were found and fixed in this document: (1) the
-modal's `actionButton` auto-close racing the "Promote Event" navigation — fixed by an
-explicit `return false`; (2) the Server Action signature couldn't support an ownership
-check with only `eventId` — fixed by adding `slug` and copying `editEvent`'s
+implementation. Five blocking issues were found; four are fixed in this document as
+written: (1) the modal's `actionButton` auto-close racing the "Promote Event" navigation
+— fixed by an explicit `return false`; (2) the Server Action signature couldn't support
+an ownership check with only `eventId` — fixed by adding `slug` and copying `editEvent`'s
 double-check; (3) the action was designed to let `createPromotionCheckout` throw through
 to the client — fixed with a discriminated result type; (4) `success_url`/`cancel_url`
 can't be built from a UUID alone since the return routes use slugs — fixed by having the
-frontend build and pass both URLs to the backend; (5) the existing E2E publish test and
-`createE2EEvent`'s missing `owner` field would break/block the new promote-page
-assertions — fixed by extending E2E test infra and explicitly updating (not just
-extending) the existing test. All five are reflected in the sections above, not just
-listed here.
+frontend build and pass both URLs to the backend.
+
+The fifth (E2E test breakage) needed a follow-up correction after the review: the
+reviewer's proposed fix — extending `E2EEventExtras`/`createE2EEvent` with a synthetic
+`owner` field — turned out to be solving a problem that doesn't exist for the one test
+that's actually affected. `e2e/publish-integration.spec.ts` (the only spec that publishes
+and asserts on the post-publish redirect) authenticates against the real staging backend
+and publishes a real event, so `event.owner` is already populated server-side; the
+mocked-auth/`E2E_TEST_MODE` specs that *would* need a synthetic owner
+(`publish-wizard.spec.ts`, `publish-no-autosubmit.spec.ts`,
+`publica_to_event.flow.spec.ts`) never submit-and-land-on-`/e/[slug]`, so they're
+unaffected by the modal either. Verified directly against all four spec files before
+finalizing — see "Testing" above for the corrected, narrower fix (update the one race
+condition in `publish-integration.spec.ts`, no E2E infra changes).
