@@ -94,6 +94,109 @@ async function listingContainsEvent(
   return data.content.some((event) => event.slug === eventSlug);
 }
 
+/**
+ * Fills and advances the publish wizard through all three steps (basics,
+ * location, image/dates), leaving the caller on step 3 ready to interact
+ * with the publish button. Shared by every test in this file that needs to
+ * get an event through the form — each test still owns its own submit and
+ * post-submit assertions, since those differ (keep it free vs. promote).
+ */
+async function fillPublishForm(
+  page: Page,
+  data: { title: string; description: string; url: string; location: string },
+): Promise<void> {
+  await page.goto("/en/publica", {
+    waitUntil: "domcontentloaded",
+    timeout: 60_000,
+  });
+
+  const form = page.getByTestId("event-form");
+  await expect(form).toBeVisible({ timeout: 30_000 });
+  await expect(form).toHaveAttribute("data-hydrated", "true", {
+    timeout: 30_000,
+  });
+
+  // ── Step 0 (basics) ──
+  await page.locator("#title").fill(data.title);
+  await page.locator("#description").fill(data.description);
+  await page.locator("#url").fill(data.url);
+  await page.getByTestId("next-button").click();
+
+  // ── Step 1 (location) ──
+  const townSelect = page.getByTestId("town-select");
+  await expect(townSelect).toBeVisible({ timeout: 15_000 });
+  await townSelect.click();
+  await page.keyboard.type("Barcelona");
+  // Wait for the async result the user can actually select; do not sleep for
+  // an assumed network duration.
+  const townOption = page
+    .locator('[role="listbox"]:visible')
+    .getByRole("option")
+    .first();
+  await expect(townOption).toBeVisible({ timeout: 15_000 });
+  await townOption.click();
+
+  await page.locator("#location").fill(data.location);
+
+  const categoriesSelect = page.locator("#categories").locator("..");
+  await categoriesSelect.click();
+  const categoryOption = page
+    .locator('[role="listbox"]:visible')
+    .getByRole("option")
+    .first();
+  await expect(categoryOption).toBeVisible({ timeout: 15_000 });
+  await categoryOption.click();
+  await page.getByTestId("next-button").click();
+
+  // ── Step 2 (image & dates) ──
+  const imageUrlTab = page.getByRole("button", { name: /url|enllaç/i });
+  if (await imageUrlTab.isVisible()) {
+    await imageUrlTab.click();
+  }
+  const imageUrlInput = page.locator('input[placeholder*="http"]').first();
+  if (await imageUrlInput.isVisible()) {
+    await imageUrlInput.fill("https://picsum.photos/800/600");
+  }
+
+  // The date picker renders buttons rather than #event-date-* inputs. Its
+  // defaults are today at 09:00, which can already be past when CI runs in
+  // the afternoon; active listing endpoints correctly omit such events.
+  // Move the start to a deterministic future date so the published event is
+  // eligible for the active Barcelona listing. The picker keeps the default
+  // one-hour duration when the start day changes.
+  const futureDateIso = await page.evaluate(() => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 2);
+    return [
+      futureDate.getFullYear(),
+      String(futureDate.getMonth() + 1).padStart(2, "0"),
+      String(futureDate.getDate()).padStart(2, "0"),
+    ].join("-");
+  });
+  // The DatePicker is lazy-loaded. Its placeholder intentionally replaces
+  // itself on focus, so pointer/keyboard activation can race the React
+  // remount (detached element / html intercepts pointer events). Focus is
+  // the wrapper's explicit lazy-load contract; wait for the real Start
+  // button after that replacement before interacting with the calendar.
+  const datePickerPlaceholder = page.getByRole("button", {
+    name: /select date and time|seleccionar data i hora/i,
+  });
+  const startDateButton = page.getByRole("button", {
+    name: /^(Start|Inici):/,
+  });
+  await expect(datePickerPlaceholder.or(startDateButton)).toBeVisible({
+    timeout: 15_000,
+  });
+  if (await datePickerPlaceholder.isVisible().catch(() => false)) {
+    await datePickerPlaceholder.focus();
+  }
+  await expect(startDateButton).toBeVisible({ timeout: 15_000 });
+  await startDateButton.click();
+  const futureDateButton = page.locator(`[data-day="${futureDateIso}"]`);
+  await expect(futureDateButton).toBeVisible({ timeout: 15_000 });
+  await futureDateButton.click();
+}
+
 test.describe("Publish integration (staging)", () => {
   // Skip entire suite if no staging credentials
   test.skip(!hasCredentials, "Skipped: E2E_STAGING_EMAIL/E2E_STAGING_PASSWORD not set");
@@ -169,111 +272,13 @@ test.describe("Publish integration (staging)", () => {
       "expected /api/auth/me to return a logged-in user with a username"
     ).toBeTruthy();
 
-    // ── Step 1: Navigate to publish page ──
-    await page.goto("/en/publica", {
-      waitUntil: "domcontentloaded",
-      timeout: 60_000,
+    // ── Steps 1-4: Fill and advance the publish form ──
+    await fillPublishForm(page, {
+      title: TEST_EVENT_TITLE,
+      description: `Automated E2E test event created at ${new Date().toISOString()}. Safe to delete.`,
+      url: "https://example.com/e2e-test",
+      location: "Test Venue - E2E",
     });
-
-    const form = page.getByTestId("event-form");
-    await expect(form).toBeVisible({ timeout: 30_000 });
-    await expect(form).toHaveAttribute("data-hydrated", "true", {
-      timeout: 30_000,
-    });
-
-    // ── Step 2: Fill form — Step 0 (basics) ──
-    await page.locator("#title").fill(TEST_EVENT_TITLE);
-    await page.locator("#description").fill(
-      `Automated E2E test event created at ${new Date().toISOString()}. Safe to delete.`
-    );
-    await page.locator("#url").fill("https://example.com/e2e-test");
-
-    // Advance to step 1
-    await page.getByTestId("next-button").click();
-
-    // ── Step 3: Fill form — Step 1 (location) ──
-    // Wait for cities to load, then select first available town
-    const townSelect = page.getByTestId("town-select");
-    await expect(townSelect).toBeVisible({ timeout: 15_000 });
-
-    // Click the select to open dropdown, type to search, pick first result
-    await townSelect.click();
-    await page.keyboard.type("Barcelona");
-    // Wait for the async result the user can actually select; do not sleep for
-    // an assumed network duration.
-    const townOption = page
-      .locator('[role="listbox"]:visible')
-      .getByRole("option")
-      .first();
-    await expect(townOption).toBeVisible({ timeout: 15_000 });
-    await townOption.click();
-
-    // Fill location name
-    await page.locator("#location").fill("Test Venue - E2E");
-
-    // Select first available category
-    const categoriesSelect = page.locator("#categories").locator("..");
-    await categoriesSelect.click();
-    const categoryOption = page
-      .locator('[role="listbox"]:visible')
-      .getByRole("option")
-      .first();
-    await expect(categoryOption).toBeVisible({ timeout: 15_000 });
-    await categoryOption.click();
-
-    // Advance to step 2
-    await page.getByTestId("next-button").click();
-
-    // ── Step 4: Fill form — Step 2 (image & dates) ──
-    // Use URL mode for image (simpler for E2E)
-    const imageUrlTab = page.getByRole("button", { name: /url|enllaç/i });
-    if (await imageUrlTab.isVisible()) {
-      await imageUrlTab.click();
-    }
-
-    // Fill image URL (use a known stable placeholder)
-    const imageUrlInput = page.locator('input[placeholder*="http"]').first();
-    if (await imageUrlInput.isVisible()) {
-      await imageUrlInput.fill("https://picsum.photos/800/600");
-    }
-
-    // The date picker renders buttons rather than #event-date-* inputs. Its
-    // defaults are today at 09:00, which can already be past when CI runs in
-    // the afternoon; active listing endpoints correctly omit such events.
-    // Move the start to a deterministic future date so the published event is
-    // eligible for the active Barcelona listing. The picker keeps the default
-    // one-hour duration when the start day changes.
-    const futureDateIso = await page.evaluate(() => {
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 2);
-      return [
-        futureDate.getFullYear(),
-        String(futureDate.getMonth() + 1).padStart(2, "0"),
-        String(futureDate.getDate()).padStart(2, "0"),
-      ].join("-");
-    });
-    // The DatePicker is lazy-loaded. Its placeholder intentionally replaces
-    // itself on focus, so pointer/keyboard activation can race the React
-    // remount (detached element / html intercepts pointer events). Focus is
-    // the wrapper's explicit lazy-load contract; wait for the real Start
-    // button after that replacement before interacting with the calendar.
-    const datePickerPlaceholder = page.getByRole("button", {
-      name: /select date and time|seleccionar data i hora/i,
-    });
-    const startDateButton = page.getByRole("button", {
-      name: /^(Start|Inici):/,
-    });
-    await expect(datePickerPlaceholder.or(startDateButton)).toBeVisible({
-      timeout: 15_000,
-    });
-    if (await datePickerPlaceholder.isVisible().catch(() => false)) {
-      await datePickerPlaceholder.focus();
-    }
-    await expect(startDateButton).toBeVisible({ timeout: 15_000 });
-    await startDateButton.click();
-    const futureDateButton = page.locator(`[data-day="${futureDateIso}"]`);
-    await expect(futureDateButton).toBeVisible({ timeout: 15_000 });
-    await futureDateButton.click();
 
     // ── Step 5: Submit ──
     const publishButton = page.getByTestId("publish-button");
@@ -285,12 +290,19 @@ test.describe("Publish integration (staging)", () => {
     await expect(publishButton).toHaveAttribute("data-publish-ready", "true", {
       timeout: 10_000,
     });
-    // Start waiting before the click so the redirect cannot race the assertion.
+    // Publishing now shows the post-publish promotion upsell modal instead of
+    // an immediate redirect. Wait for the modal, then dismiss via "keep it
+    // free" (this test's intent: verify the plain publish → detail page path
+    // still works).
+    await publishButton.click();
+    const upsellModal = page.getByTestId("promote-upsell-modal");
+    await expect(upsellModal).toBeVisible({ timeout: 30_000 });
+
     await Promise.all([
       page.waitForURL((url) => !url.pathname.includes("/publica"), {
         timeout: 60_000,
       }),
-      publishButton.click(),
+      page.getByTestId("promote-modal-keep-free").click(),
     ]);
 
     // ── Step 6: Wait for success ──
@@ -424,5 +436,50 @@ test.describe("Publish integration (staging)", () => {
         },
       )
       .toBe(true);
+  });
+
+  test("login → publish event → promote upsell links to the promote page", async ({
+    page,
+  }) => {
+    await loginViaUI(page, email!, password!);
+    await expect(page.getByTestId("user-avatar-button")).toBeVisible({
+      timeout: 15_000,
+    });
+
+    const promoteTestTitle = `${TEST_EVENT_TITLE} Promote`;
+    await fillPublishForm(page, {
+      title: promoteTestTitle,
+      description: `Automated E2E test event for promote flow, created at ${new Date().toISOString()}. Safe to delete.`,
+      url: "https://example.com/e2e-test-promote",
+      location: "Test Venue - E2E Promote",
+    });
+
+    const publishButton = page.getByTestId("publish-button");
+    await expect(publishButton).toBeVisible({ timeout: 10_000 });
+    await expect(publishButton).toHaveAttribute("data-publish-ready", "true", {
+      timeout: 10_000,
+    });
+    await publishButton.click();
+
+    const upsellModal = page.getByTestId("promote-upsell-modal");
+    await expect(upsellModal).toBeVisible({ timeout: 30_000 });
+
+    await Promise.all([
+      page.waitForURL((url) => url.pathname.includes("/promote"), {
+        timeout: 30_000,
+      }),
+      page.getByTestId("promote-upsell-modal-action-button").click(),
+    ]);
+
+    expect(page.url()).toContain("/promote");
+
+    // Cleanup: this test creates its own event, separate from the suite-level
+    // afterAll cleanup (which only tracks TEST_EVENT_TITLE). The DELETE route
+    // resolves by slug internally — same simple pattern already used for
+    // createdEventSlug in afterAll above — so no extra id lookup is needed.
+    const slugMatch = page.url().match(/\/e\/([^/]+)\/promote/);
+    if (slugMatch) {
+      await cleanupEvent(page, slugMatch[1]);
+    }
   });
 });
