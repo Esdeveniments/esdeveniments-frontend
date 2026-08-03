@@ -366,6 +366,16 @@ export type CreateEventActionResult =
   | { success: true; event: EventDetailResponseDTO }
   | { success: false; reason: "profile-incomplete" | "stale-session" };
 
+/**
+ * Result returned by createPromotionCheckoutAction. A discriminated union
+ * (not a thrown error) — same convention as EditEventResult and
+ * CreateEventActionResult above: the client always gets a value it can
+ * branch on, never an opaque Server Action rejection.
+ */
+export type PromotionCheckoutResult =
+  | { success: true; url: string }
+  | { success: false; error: string };
+
 export interface UseEventsOptions {
   place?: string;
   category?: string;
