@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Link, useRouter } from "@i18n/routing";
+import { Link } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
@@ -51,6 +51,13 @@ const PreviewContent = dynamic(
     ),
   }
 );
+
+// Lazy load the post-publish upsell modal — same reasoning as PreviewContent
+// above: it only renders after a successful publish, so it shouldn't ship in
+// the initial /publica bundle.
+const PromoteUpsellModal = dynamic(() => import("./PromoteUpsellModal"), {
+  ssr: false,
+});
 
 const getDefaultEventDates = () => {
   const now = new Date();
@@ -121,7 +128,6 @@ const buildFileSignature = (file: File) =>
 const PublishForm = () => {
   const t = useTranslations("App.Publish");
   const tForm = useTranslations("Components.EventForm");
-  const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -133,6 +139,7 @@ const PublishForm = () => {
   // the same CompleteProfileGate here instead of a generic error, so the
   // user has an actual way forward.
   const [showCompleteProfileGate, setShowCompleteProfileGate] = useState(false);
+  const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
@@ -622,7 +629,11 @@ const PublishForm = () => {
         });
 
         submittedRef.current = true;
-        router.push(`/e/${slug}`);
+        sendGoogleEvent("promote_modal_shown", {
+          event_slug: slug,
+          source: "publica",
+        });
+        setPublishedSlug(slug);
       } catch (error) {
         console.error("Submission error:", error);
 
@@ -828,6 +839,15 @@ const PublishForm = () => {
           </div>
         </div>
       </div>
+      {publishedSlug && (
+        <PromoteUpsellModal
+          open={Boolean(publishedSlug)}
+          setOpen={(open) => {
+            if (!open) setPublishedSlug(null);
+          }}
+          slug={publishedSlug}
+        />
+      )}
     </>
   );
 };
