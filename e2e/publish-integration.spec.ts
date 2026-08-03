@@ -497,8 +497,14 @@ test.describe("Publish integration (staging)", () => {
       // This test creates its own event, separate from the suite-level
       // afterAll cleanup (which only tracks TEST_EVENT_TITLE). The DELETE
       // route resolves by slug internally, so no extra id lookup is needed.
-      if (createdPromoteSlug) {
-        await cleanupEvent(page, createdPromoteSlug);
+      // Falls back to a title lookup (reusing the same helper afterAll uses
+      // for its own recovery) on the rare chance the redirect itself never
+      // matched /e/{slug} — otherwise a failed run leaks an event on staging
+      // that nothing ever cleans up.
+      const cleanupTarget =
+        createdPromoteSlug ?? (await findCreatedEventId(page, promoteTestTitle));
+      if (cleanupTarget) {
+        await cleanupEvent(page, cleanupTarget);
       }
     }
   });

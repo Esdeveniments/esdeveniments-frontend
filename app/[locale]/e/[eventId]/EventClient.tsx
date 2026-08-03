@@ -61,7 +61,7 @@ export default function EventClient({
   // /promote page, which 404s for them. isOwner is undefined (not false)
   // while the auth session is still resolving, so the modal only ever shows
   // once ownership is positively confirmed — never as a flash-then-hide.
-  const isOwner = user?.id === event.ownerId;
+  const isOwner = Boolean(event.ownerId) && user?.id === event.ownerId;
   const initialShowPromoteUpsell = searchParams.get("promote") === "1";
   const [dismissed, setDismissed] = useState(false);
   // Derived, not stored state: isOwner/initialShowPromoteUpsell already fully

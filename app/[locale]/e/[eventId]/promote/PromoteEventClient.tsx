@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
 import { getEventPromotionOptions } from "@config/pricing";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
 import type { AppLocale } from "types/i18n";
 import type { PromoteEventClientProps } from "types/props";
 import { createPromotionCheckoutAction } from "./actions";
@@ -35,10 +35,14 @@ export default function PromoteEventClient({
   // (e.g. no tier available for this event yet).
   const [promotionOption] = getEventPromotionOptions();
 
+  const hasTrackedPageViewRef = useRef(false);
   useEffect(() => {
+    // Guards against React Strict Mode's dev-only double-invoke, same as
+    // FavoritesPageTracker/ProfilePageTracker.
+    if (hasTrackedPageViewRef.current) return;
+    ensureGtag();
     sendGoogleEvent("promote_page_view", { event_slug: slug });
-    // slug is stable for this component's lifetime (a new event means a full
-    // remount), so this still only ever fires once despite the dependency.
+    hasTrackedPageViewRef.current = true;
   }, [slug]);
 
   const handleConfirm = async () => {

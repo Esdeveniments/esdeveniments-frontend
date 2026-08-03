@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 vi.mock("next-intl", () => ({
@@ -7,15 +7,8 @@ vi.mock("next-intl", () => ({
 }));
 
 const mockPush = vi.fn();
-const mockReplace = vi.fn();
 vi.mock("@i18n/routing", () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  usePathname: () => "/en/e/my-event",
-}));
-
-let mockSearchParams = new URLSearchParams();
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => mockSearchParams,
+  useRouter: () => ({ push: mockPush }),
 }));
 
 vi.mock("@heroicons/react/24/outline", () => ({
@@ -68,14 +61,20 @@ import PromoteUpsellModal from "../app/[locale]/e/[eventId]/components/PromoteUp
 describe("PromoteUpsellModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSearchParams = new URLSearchParams("promote=1");
+    window.history.pushState({}, "", "/en/e/my-event?promote=1");
   });
 
-  it("navigates to the promote page without letting Modal's own setOpen(false) fire on the same click", () => {
+  it("navigates to the promote page without letting Modal's own setOpen(false) fire on the same click", async () => {
     const setOpen = vi.fn();
     render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" />);
 
-    fireEvent.click(screen.getByTestId("modal-action-button"));
+    // Awaited via act: the stub's onClick is async (awaits onActionButtonClick
+    // before deciding whether to call setOpen), so asserting setOpen
+    // immediately after a bare fireEvent.click would pass regardless of the
+    // component's return value — the continuation hasn't run yet.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("modal-action-button"));
+    });
 
     expect(mockPush).toHaveBeenCalledWith("/e/my-event/promote");
     // The stubbed Modal only calls setOpen when onActionButtonClick's return
@@ -84,14 +83,15 @@ describe("PromoteUpsellModal", () => {
     expect(setOpen).not.toHaveBeenCalled();
   });
 
-  it("strips the promote marker from the current URL before navigating to the promote page", () => {
+  it("strips the promote marker from the current URL before navigating to the promote page", async () => {
     render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" />);
 
-    fireEvent.click(screen.getByTestId("modal-action-button"));
-
-    expect(mockReplace).toHaveBeenCalledWith("/en/e/my-event", {
-      scroll: false,
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("modal-action-button"));
     });
+
+    expect(window.location.pathname).toBe("/en/e/my-event");
+    expect(window.location.search).toBe("");
   });
 
   it("closes the modal without navigating on 'keep it free' (already on the event detail page)", () => {

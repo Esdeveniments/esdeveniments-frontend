@@ -75,6 +75,18 @@ describe("createPromotionCheckout", () => {
     ).rejects.toThrow(/404/);
   });
 
+  it("attaches the backend's HTTP status to the thrown error, so a 401 the backend itself rejects is classified the same as a locally-expired token", async () => {
+    mockFetchWithHmac.mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => "Token expired",
+    });
+
+    await expect(
+      createPromotionCheckout("event-uuid-1", "https://x/success", "https://x/cancel"),
+    ).rejects.toMatchObject({ status: 401 });
+  });
+
   it("throws when no valid access token is available", async () => {
     mockGetValidAccessToken.mockResolvedValue(null);
 

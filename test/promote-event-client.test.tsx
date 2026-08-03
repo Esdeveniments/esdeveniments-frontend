@@ -18,8 +18,10 @@ vi.mock("../app/[locale]/e/[eventId]/promote/actions", () => ({
     mockCreatePromotionCheckoutAction(eventId, slug, locale),
 }));
 
+const mockEnsureGtag = vi.fn();
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: (...args: unknown[]) => mockSendGoogleEvent(...args),
+  ensureGtag: (...args: unknown[]) => mockEnsureGtag(...args),
 }));
 
 vi.mock("@config/pricing", () => ({
@@ -99,12 +101,17 @@ describe("PromoteEventClient", () => {
   });
 
   it("renders the price from getEventPromotionOptions rather than a hardcoded value", () => {
+    // Deliberately not 5 (config's real current value) — a component that
+    // hardcoded "5€" instead of reading getEventPromotionOptions() would
+    // still pass this test if the mock returned the same value as the
+    // hardcode, so the fixture uses a distinguishing price instead.
+    mockGetEventPromotionOptions.mockReturnValue([
+      { id: "standard", priceEur: 7 },
+    ]);
+
     render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
 
-    // 5 is today's only entry from getEventPromotionOptions() — asserting
-    // against the rendered text (not re-importing the config function) keeps
-    // this test honest about what the user actually sees.
-    expect(screen.getByText("5€")).toBeInTheDocument();
+    expect(screen.getByText("7€")).toBeInTheDocument();
   });
 
   it("resets isSubmitting and shows an error when the action itself rejects (not just returns success:false)", async () => {
@@ -153,6 +160,7 @@ describe("PromoteEventClient", () => {
     render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
 
     expect(screen.getByTestId("promote-confirm-button")).toBeDisabled();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.queryByText("5€")).toBeNull();
   });
 
@@ -180,5 +188,9 @@ describe("PromoteEventClient", () => {
       "promote_checkout_redirect",
       { event_slug: "my-event" },
     );
+    // Exact count, not just toHaveBeenCalledWith, so a regression that fires
+    // any of the three events twice (e.g. a missing one-shot guard) fails
+    // this test instead of passing alongside the correct calls.
+    expect(mockSendGoogleEvent).toHaveBeenCalledTimes(3);
   });
 });

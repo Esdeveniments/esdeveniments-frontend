@@ -1,8 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
-import { useRouter, usePathname } from "@i18n/routing";
+import { useRouter } from "@i18n/routing";
 import { RocketLaunchIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Modal from "@components/ui/common/modal";
 import Button from "@components/ui/common/button";
@@ -19,8 +18,6 @@ export default function PromoteUpsellModal({
   // instead of duplicating the same three strings under a second namespace.
   const tPromote = useTranslations("App.EventPromote");
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
 
   const handlePromote = () => {
     sendGoogleEvent("promote_modal_cta_click", {
@@ -29,14 +26,14 @@ export default function PromoteUpsellModal({
     });
     // Strip the one-time ?promote=1 marker from the *current* history entry
     // before navigating away, so a later browser-back to this event doesn't
-    // re-open the modal (the marker would otherwise still be sitting in the
-    // event detail page's URL even though the user already engaged with it).
-    const remainingParams = new URLSearchParams(searchParams.toString());
-    remainingParams.delete("promote");
-    const query = remainingParams.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, {
-      scroll: false,
-    });
+    // re-open the modal. Uses a raw history replace (not router.replace) —
+    // mirrors AuthEventTracker's marker-stripping — because a router.replace
+    // immediately followed by the router.push below can have the push cancel
+    // the replace's pending navigation in the App Router, leaving the marker
+    // in place despite this call.
+    const url = new URL(window.location.href);
+    url.searchParams.delete("promote");
+    window.history.replaceState(window.history.state, "", url);
     router.push(`/e/${slug}/promote`);
     // Explicitly returning false stops Modal's own setOpen(false) from racing
     // this navigation — see the design doc's "Modal" section for why this

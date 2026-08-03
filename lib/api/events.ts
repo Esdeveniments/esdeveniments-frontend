@@ -381,9 +381,14 @@ export async function createPromotionCheckout(
   if (!response.ok) {
     const errorText = await response.text();
     console.error("createPromotionCheckout: error response:", errorText);
-    throw new Error(
+    const err = new Error(
       `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
+    // Propagate the HTTP status the same way requireMutationAuth's own 401
+    // does, so a backend-rejected (expired) token is classified as
+    // stale-session too, not only a missing local access token.
+    (err as Error & { status: number }).status = response.status;
+    throw err;
   }
 
   const payload = await response.json();
