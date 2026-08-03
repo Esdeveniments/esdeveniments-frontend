@@ -945,6 +945,7 @@
     "EventPage": {
       "sponsored": "Contingut patrocinat",
       "editEvent": "Editar esdeveniment",
+      "promoteEvent": "Promocionar",
       "editTitle": "Edita: {title}",
       "editError": "Error en actualitzar l'esdeveniment",
       "editSave": "Desa canvis",

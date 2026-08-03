@@ -14,6 +14,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { getProfileSlug } from "@utils/user-helpers";
 import EventEditAction from "./EventEditAction";
+import EventPromoteAction from "./EventPromoteAction";
 import type { EventSidebarProps } from "types/props";
 
 /**
@@ -134,6 +135,7 @@ export default async function EventSidebar({
 
             {/* Owner-only edit action */}
             <EventEditAction ownerId={event.owner?.id} slug={event.slug ?? ""} />
+            <EventPromoteAction ownerId={event.owner?.id} slug={event.slug ?? ""} />
 
           </div>
         </div>
