@@ -224,6 +224,7 @@
       "confirmButtonLoading": "Redirigiendo al pago...",
       "backToEvent": "Volver al evento",
       "errorGeneric": "Algo ha fallado. Inténtalo de nuevo.",
+      "errorStaleSession": "Tu sesión ha caducado. Inicia sesión de nuevo.",
       "successPage": {
         "title": "¡Gracias!",
         "subtitle": "Tu evento ya está promocionado.",

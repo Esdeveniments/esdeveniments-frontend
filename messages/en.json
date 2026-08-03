@@ -224,6 +224,7 @@
       "confirmButtonLoading": "Redirecting to payment...",
       "backToEvent": "Back to event",
       "errorGeneric": "Something went wrong. Please try again.",
+      "errorStaleSession": "Your session has expired. Please sign in again.",
       "successPage": {
         "title": "Thank you!",
         "subtitle": "Your event is now promoted.",

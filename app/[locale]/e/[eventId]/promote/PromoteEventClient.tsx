@@ -54,7 +54,11 @@ export default function PromoteEventClient({
           event_slug: slug,
           reason: result.reason ?? "action-failed",
         });
-        setError(t("errorGeneric"));
+        setError(
+          result.reason === "stale-session"
+            ? t("errorStaleSession")
+            : t("errorGeneric"),
+        );
         return;
       }
 

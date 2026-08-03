@@ -127,6 +127,26 @@ describe("PromoteEventClient", () => {
     });
   });
 
+  it("shows the stale-session message (not the generic one) when the action reports an expired session", async () => {
+    mockCreatePromotionCheckoutAction.mockResolvedValue({
+      success: false,
+      error: "Your session has expired. Please sign in again.",
+      reason: "stale-session",
+    });
+
+    render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
+    fireEvent.click(screen.getByTestId("promote-confirm-button"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("App.EventPromote.errorStaleSession"),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByText("App.EventPromote.errorGeneric"),
+    ).toBeNull();
+  });
+
   it("disables the confirm button and shows an error when no promotion option is available", () => {
     mockGetEventPromotionOptions.mockReturnValue([]);
 

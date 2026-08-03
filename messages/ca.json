@@ -224,6 +224,7 @@
       "confirmButtonLoading": "Redirigint a pagament...",
       "backToEvent": "Tornar a l'esdeveniment",
       "errorGeneric": "Alguna cosa ha fallat. Torna-ho a intentar.",
+      "errorStaleSession": "La teva sessió ha caducat. Torna a iniciar sessió.",
       "successPage": {
         "title": "Gràcies!",
         "subtitle": "El teu esdeveniment ja està promocionat.",
