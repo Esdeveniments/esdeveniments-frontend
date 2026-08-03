@@ -92,6 +92,9 @@ export default async function Footer(): Promise<JSX.Element> {
                 href={item.href}
                 key={item.name}
                 className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive"
+                {...(item.href === "/iniciar-sessio"
+                  ? { "data-analytics-action": "footer_login" }
+                  : {})}
               >
                 {item.name}
               </ActiveLink>

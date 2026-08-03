@@ -12,7 +12,9 @@ import type {
 } from "types/api/user";
 import type {
   EventSummaryResponseDTO,
+  FavoritesPeriod,
   PagedResponseDTO,
+  ProfileEventStatus,
 } from "types/api/event";
 
 // Strip control characters (incl. newlines, C1 controls, and the Unicode
@@ -341,7 +343,10 @@ export async function deleteUserAvatarExternal(
 // this plan was drafted against. `active` includes upcoming + in-progress
 // events. Kept as a domain-named `status` param at this function's boundary
 // (see ProfileEventsSectionProps) so only this translation needed to change.
-const PERIOD_BY_STATUS = { upcoming: "active", past: "past" } as const;
+const PERIOD_BY_STATUS: Record<ProfileEventStatus, FavoritesPeriod> = {
+  upcoming: "active",
+  past: "past",
+};
 
 /**
  * Public listing of a user's events: GET /api/users/{username}/events.
@@ -358,7 +363,7 @@ export async function getUserEventsExternal(
   username: string,
   page = 0,
   size = 20,
-  status: "upcoming" | "past" = "upcoming",
+  status: ProfileEventStatus = "upcoming",
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const empty: PagedResponseDTO<EventSummaryResponseDTO> = {
     content: [],

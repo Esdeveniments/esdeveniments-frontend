@@ -14,6 +14,7 @@ import { locale as rootLocale } from "next/root-params";
 import { getTranslations } from "next-intl/server";
 import type { AppLocale } from "types/i18n";
 import type { ProfileTranslator } from "types/props";
+import FavoritesPageTracker from "../FavoritesPageTracker";
 import PastFavoritesAuthGate from "./PastFavoritesAuthGate";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -55,6 +56,13 @@ export default async function PreferitsPassatsPage() {
   return (
     <>
       <Tabs items={tabItems} active="past" ariaLabel={t("heading")} />
+      {activeCount !== null && pastCount !== null && (
+        <FavoritesPageTracker
+          favoritesCount={activeCount + pastCount}
+          activeCount={activeCount}
+          period="past"
+        />
+      )}
       <div className="w-full mt-section-y">
         <Suspense fallback={<EventsGridSkeleton count={3} />}>
           <PastFavoritesSectionOrError accessToken={authToken} t={t} />

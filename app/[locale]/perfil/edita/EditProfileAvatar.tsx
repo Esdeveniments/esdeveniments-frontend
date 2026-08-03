@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@components/hooks/useAuth";
 import AvatarInitials from "@components/ui/common/AvatarInitials";
+import { sendGoogleEvent } from "@utils/analytics";
 import type { EditProfileAvatarProps } from "types/props";
 
 // Mirrors the caps enforced server-side in app/api/users/me/avatar/route.ts.
@@ -44,32 +45,47 @@ export default function EditProfileAvatar({
     if (!file) return;
 
     setError(null);
+    sendGoogleEvent("avatar_upload_start", {});
 
     if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
       setError(t("errorUnsupported"));
+      sendGoogleEvent("avatar_upload_blocked", { reason: "unsupported_type" });
       return;
     }
     if (file.size > MAX_AVATAR_BYTES) {
       setError(t("errorTooLarge"));
+      sendGoogleEvent("avatar_upload_blocked", { reason: "too_large" });
       return;
     }
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("avatarFile", file);
-      const response = await fetch("/api/users/me/avatar", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-      if (!response.ok) {
+      try {
+        const formData = new FormData();
+        formData.append("avatarFile", file);
+        const response = await fetch("/api/users/me/avatar", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        if (!response.ok) {
+          setError(t("errorUploadFailed"));
+          sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
+          return;
+        }
+      } catch {
         setError(t("errorUploadFailed"));
+        sendGoogleEvent("avatar_upload_error", { reason: "upload_failed" });
         return;
       }
+
+      // Mutation succeeded — fire success and resync the session outside the
+      // upload's own try/catch, so a refetchUser() failure (session resync,
+      // not the upload) can't get reported as an upload error. Stays inside
+      // the outer finally so isUploading doesn't clear until the resync is
+      // done, or a second upload could race the first one's session refresh.
+      sendGoogleEvent("avatar_upload_success", {});
       await refetchUser();
-    } catch {
-      setError(t("errorUploadFailed"));
     } finally {
       setIsUploading(false);
     }
@@ -77,19 +93,28 @@ export default function EditProfileAvatar({
 
   const handleRemove = async (): Promise<void> => {
     setError(null);
+    sendGoogleEvent("avatar_remove_start", {});
     setIsRemoving(true);
     try {
-      const response = await fetch("/api/users/me/avatar", {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!response.ok) {
+      try {
+        const response = await fetch("/api/users/me/avatar", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          setError(t("errorRemoveFailed"));
+          sendGoogleEvent("avatar_remove_error", {});
+          return;
+        }
+      } catch {
         setError(t("errorRemoveFailed"));
+        sendGoogleEvent("avatar_remove_error", {});
         return;
       }
+
+      // Same ordering and busy-state rationale as handleFileChange above.
+      sendGoogleEvent("avatar_remove_success", {});
       await refetchUser();
-    } catch {
-      setError(t("errorRemoveFailed"));
     } finally {
       setIsRemoving(false);
     }

@@ -57,7 +57,12 @@ import {
   Href,
   NavigationItem,
 } from "types/common";
-import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import {
+  EventSummaryResponseDTO,
+  ListEvent,
+  ProfileEventStatus,
+  FavoritesPeriod,
+} from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
@@ -543,7 +548,12 @@ export interface AvatarInitialsProps {
 
 export interface ProfileEventsSectionProps {
   username: string;
-  status: "upcoming" | "past";
+  status: ProfileEventStatus;
+}
+
+export interface FavoritesEventsSectionProps {
+  accessToken: string;
+  status: ProfileEventStatus;
 }
 
 export interface HybridEventsListProps {
@@ -877,6 +887,21 @@ export interface ProfileVisitsStatProps {
 // Profile claim CTA client island props
 export interface ProfileClaimCtaProps {
   username: string;
+}
+
+// /perfil/[username] and /perfil/[username]/passats — fires profile_page_view
+export interface ProfilePageTrackerProps {
+  username: string;
+  upcomingCount: number | undefined;
+  pastCount: number | undefined;
+  status: ProfileEventStatus;
+}
+
+// /preferits and /preferits/passats — fires favorites_page_view
+export interface FavoritesPageTrackerProps {
+  favoritesCount: number;
+  activeCount: number;
+  period?: FavoritesPeriod;
 }
 
 // /perfil/edita — shown to anonymous visitors, mirrors PublishAuthGate

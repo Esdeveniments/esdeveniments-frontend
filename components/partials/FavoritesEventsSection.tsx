@@ -3,6 +3,7 @@ import { listFavoriteEventsByPeriodExternal } from "@lib/api/favorites-external"
 import { MAX_FAVORITES_AUTHENTICATED } from "@utils/constants";
 import EventsSection from "./EventsSection";
 import type { ReactElement } from "react";
+import type { FavoritesEventsSectionProps } from "types/props";
 
 // Authenticated-only: fetches one favourites period and renders it via the
 // shared EventsSection, matching ProfileEventsSection's shape. Returns null
@@ -12,10 +13,7 @@ import type { ReactElement } from "react";
 export default async function FavoritesEventsSection({
   accessToken,
   status,
-}: {
-  accessToken: string;
-  status: "upcoming" | "past";
-}): Promise<ReactElement | null> {
+}: FavoritesEventsSectionProps): Promise<ReactElement | null> {
   const period = status === "past" ? "past" : "active";
   const [t, page] = await Promise.all([
     getTranslations("App.Favorites"),

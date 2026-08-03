@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
 import { validateUsername, isPlaceholderUsername } from "@utils/username-validation";
+import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
 import type { EditProfileFormProps } from "types/props";
 import EditProfileAvatar from "./EditProfileAvatar";
 
@@ -38,6 +39,14 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const hasTrackedViewRef = useRef(false);
+  useEffect(() => {
+    if (hasTrackedViewRef.current) return;
+    ensureGtag();
+    sendGoogleEvent("edit_profile_page_view", { is_onboarding: isOnboarding });
+    hasTrackedViewRef.current = true;
+  }, [isOnboarding]);
 
   const validate = (): boolean => {
     let ok = true;
@@ -80,6 +89,7 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
 
     if (!validate()) return;
 
+    sendGoogleEvent("edit_profile_submit_attempt", { is_onboarding: isOnboarding });
     setIsSubmitting(true);
     try {
       const response = await fetch("/api/users/me/profile", {
@@ -95,18 +105,25 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
 
       if (response.status === 409) {
         setUsernameError(t("errors.usernameTaken"));
+        sendGoogleEvent("edit_profile_submit_blocked", { reason: "username_taken" });
         return;
       }
       if (response.status === 401 || response.status === 403) {
         setSubmitError(t("errors.sessionExpired"));
+        sendGoogleEvent("edit_profile_submit_blocked", { reason: "session_expired" });
         return;
       }
       if (!response.ok) {
         setSubmitError(t("errors.generic"));
+        sendGoogleEvent("edit_profile_submit_error", { reason: "generic" });
         return;
       }
 
       await refetchUser();
+      sendGoogleEvent("edit_profile_submit_success", {
+        is_onboarding: isOnboarding,
+        redirected: !!redirectTo,
+      });
       if (redirectTo) {
         router.push(redirectTo);
         return;
@@ -114,6 +131,7 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
       setSuccess(true);
     } catch {
       setSubmitError(t("errors.generic"));
+      sendGoogleEvent("edit_profile_submit_error", { reason: "generic" });
     } finally {
       setIsSubmitting(false);
     }

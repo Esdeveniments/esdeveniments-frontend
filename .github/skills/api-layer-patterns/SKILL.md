@@ -459,29 +459,32 @@ const signature = crypto.createHmac("sha256", secret).update(url).digest("hex");
 
 - `/api/visits` (POST)
 - `/api/events/*` (POST/PUT/DELETE)
-- `/api/auth/*` (POST — login, register, forgot/reset password, email verification)
+
+**Auth does not go through this pattern.** `/api/auth/*` is a Logto OIDC
+redirect flow (sign-in/callback/sign-out/me), not HMAC-signed proxy calls —
+see the `auth-patterns` skill.
 
 **IMPORTANT: `skipBodySigning: true` is required on all POST/PUT/DELETE calls.**
 The backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. Without this flag, mutation requests fail with 401 "Invalid HMAC".
 
 ```typescript
 // ✅ Correct — always pass skipBodySigning for mutations
-const response = await fetchWithHmac(`${apiUrl}/auth/register`, {
+const response = await fetchWithHmac(`${apiUrl}/events`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password, name }),
+  body: JSON.stringify(eventPayload),
   skipBodySigning: true, // backend ignores body for signature
 });
 
 // ❌ Wrong — will fail with 401 "Invalid HMAC"
-const response = await fetchWithHmac(`${apiUrl}/auth/register`, {
+const response = await fetchWithHmac(`${apiUrl}/events`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password, name }),
+  body: JSON.stringify(eventPayload),
 });
 ```
 
-**Implementation**: `proxy.ts` allowlists public GET routes; all others require HMAC.
+**Implementation**: `proxy.ts` allowlists public GET routes and `/api/auth/*`; all other `/api/*` routes require HMAC.
 
 ---
 

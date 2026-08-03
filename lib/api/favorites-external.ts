@@ -10,6 +10,7 @@ import type {
   FavoritePeriodCounts,
   MutationResultDTO,
 } from "types/api/favorites";
+import type { FavoritesPeriod } from "types/api/event";
 
 function authHeaders(accessToken: string): Record<string, string> {
   return { Authorization: `Bearer ${accessToken}` };
@@ -39,7 +40,7 @@ function favoritesBaseUrl(): string | null {
 async function fetchFavoritesPeriod(
   base: string,
   accessToken: string,
-  period: "active" | "past",
+  period: FavoritesPeriod,
   page: number,
   size: number
 ): Promise<FavoriteEventsPageDTO | null> {
@@ -103,7 +104,7 @@ export async function listFavoriteEventsExternal(
 
 export async function listFavoriteEventsByPeriodExternal(
   accessToken: string,
-  period: "active" | "past",
+  period: FavoritesPeriod,
   page = 0,
   size = 50
 ): Promise<FavoriteEventsPageDTO | null> {
@@ -118,7 +119,7 @@ export async function listFavoriteEventsByPeriodExternal(
 // tab's count on /preferits and /preferits/passats.
 export async function countFavoritesByPeriodExternal(
   accessToken: string,
-  period: "active" | "past"
+  period: FavoritesPeriod
 ): Promise<number | null> {
   const page = await listFavoriteEventsByPeriodExternal(accessToken, period, 0, 1);
   return page?.totalElements ?? null;

@@ -6,6 +6,19 @@ import type { ProfileSummaryResponseDTO } from "./profile";
 export type EventType = "FREE" | "PAID";
 export type EventOrigin = "SCRAPE" | "RSS" | "MANUAL" | "MIGRATION";
 
+// Domain-level split for a user's own events (ProfileEventsSection,
+// FavoritesEventsSection, profile/favorites page trackers). Distinct from
+// `FavoritesPeriod` below — do not conflate them. See LESSONS.md: "The
+// profile events endpoint takes period=active|past, not status=upcoming|past".
+export type ProfileEventStatus = "upcoming" | "past";
+
+// Wire-level query param for /api/users/{username}/events and
+// /api/users/me/favorites/events. `getUserEventsExternal` translates
+// `ProfileEventStatus` to this at the API-layer boundary (`PERIOD_BY_STATUS`)
+// rather than renaming the domain-level `status` everywhere it's threaded
+// through — see LESSONS.md for why.
+export type FavoritesPeriod = "active" | "past";
+
 // Use the canonical CitySummaryResponseDTO from types/api/city
 export interface RegionSummaryResponseDTO {
   id: number;

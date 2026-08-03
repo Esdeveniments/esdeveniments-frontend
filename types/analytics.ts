@@ -16,6 +16,8 @@ export const TRACKED_CTA_IDS = [
   "favorite_button",
   "add_to_calendar",
   "card_share",
+  "profile_edit_cta",
+  "profile_claim_cta",
 ] as const;
 
 export type TrackedCtaId = (typeof TRACKED_CTA_IDS)[number];

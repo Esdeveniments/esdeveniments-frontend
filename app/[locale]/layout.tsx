@@ -12,6 +12,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { routing } from "@i18n/routing";
 import GoogleScripts from "../GoogleScripts";
+import AuthEventTracker from "@components/analytics/AuthEventTracker";
 import { AdProvider } from "@lib/context/AdContext";
 import { AuthProvider } from "@lib/auth/AuthProvider";
 import BaseLayout from "@components/ui/layout/base";
@@ -203,6 +204,7 @@ export default async function LocaleLayout({
                 <Suspense fallback={null}>
                   <GoogleScripts />
                 </Suspense>
+                <AuthEventTracker />
                 <AnalyticsBootstrap />
                 <WebMcpTools locale={locale} />
                 <BaseLayout>{children}</BaseLayout>

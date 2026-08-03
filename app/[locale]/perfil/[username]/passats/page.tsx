@@ -9,6 +9,7 @@ import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkelet
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
+import ProfilePageTracker from "../ProfilePageTracker";
 
 // No generateStaticParams — mirrors the parent /perfil/[username] page.
 
@@ -77,6 +78,12 @@ export default async function ProfilePastEventsPage({
         items={tabItems}
         active="past"
         ariaLabel={tProfile("title", { name: displayName })}
+      />
+      <ProfilePageTracker
+        username={profile.username}
+        upcomingCount={profile.upcomingEventCount}
+        pastCount={profile.pastEventCount}
+        status="past"
       />
       <div className="w-full mt-section-y">
         <Suspense

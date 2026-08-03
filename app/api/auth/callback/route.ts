@@ -57,7 +57,12 @@ export async function GET(request: NextRequest): Promise<Response> {
     await verifyIdToken(config, tokens.id_token, flow.nonce);
 
     const returnTo = sanitizeReturnTo(flow.returnTo) ?? "/";
-    const response = NextResponse.redirect(`${origin}${returnTo}`);
+    // One-shot marker so AuthEventTracker can fire `auth_success` once the
+    // browser lands back in the app — mirrors the `auth_error` marker `fail()`
+    // already sets below on failure.
+    const returnToUrl = new URL(returnTo, origin);
+    returnToUrl.searchParams.set("auth_success", "1");
+    const response = NextResponse.redirect(returnToUrl);
     setTokenCookies(response, tokens);
     clearFlowCookies(response);
     return response;
