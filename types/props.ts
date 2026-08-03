@@ -948,6 +948,7 @@ export interface EventClientPayload {
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
+  ownerId?: string;
 }
 
 export interface EventClientProps {

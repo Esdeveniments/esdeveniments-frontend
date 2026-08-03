@@ -50,6 +50,18 @@ export async function createPromotionCheckoutAction(
     return { success: true, url };
   } catch (error) {
     console.error("createPromotionCheckoutAction: checkout failed", error);
+    // requireMutationAuth (inside createPromotionCheckout) throws a tagged
+    // 401 when the backend Bearer token is missing/expired — surface that as
+    // a distinct, actionable reason instead of the generic message, mirroring
+    // createEventAction's own 401 handling for the same underlying cause.
+    const status = (error as { status?: number })?.status;
+    if (status === 401) {
+      return {
+        success: false,
+        error: "Your session has expired. Please sign in again.",
+        reason: "stale-session",
+      };
+    }
     return {
       success: false,
       error: "Something went wrong. Please try again.",

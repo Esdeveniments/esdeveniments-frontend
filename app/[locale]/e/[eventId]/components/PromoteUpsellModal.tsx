@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useRouter } from "@i18n/routing";
+import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "@i18n/routing";
 import { RocketLaunchIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Modal from "@components/ui/common/modal";
 import Button from "@components/ui/common/button";
@@ -18,11 +19,23 @@ export default function PromoteUpsellModal({
   // instead of duplicating the same three strings under a second namespace.
   const tPromote = useTranslations("App.EventPromote");
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
 
   const handlePromote = () => {
     sendGoogleEvent("promote_modal_cta_click", {
       event_slug: slug,
       source: "event_detail",
+    });
+    // Strip the one-time ?promote=1 marker from the *current* history entry
+    // before navigating away, so a later browser-back to this event doesn't
+    // re-open the modal (the marker would otherwise still be sitting in the
+    // event detail page's URL even though the user already engaged with it).
+    const remainingParams = new URLSearchParams(searchParams.toString());
+    remainingParams.delete("promote");
+    const query = remainingParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
     });
     router.push(`/e/${slug}/promote`);
     // Explicitly returning false stops Modal's own setOpen(false) from racing

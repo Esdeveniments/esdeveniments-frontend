@@ -371,10 +371,25 @@ export type CreateEventActionResult =
  * (not a thrown error) — same convention as EditEventResult and
  * CreateEventActionResult above: the client always gets a value it can
  * branch on, never an opaque Server Action rejection.
+ *
+ * `reason: "stale-session"` mirrors CreateEventActionResult's own 401
+ * handling above (createEventAction) — the backend Bearer token expired
+ * mid-session, which is a distinct, actionable case from a generic failure.
  */
 export type PromotionCheckoutResult =
   | { success: true; url: string }
-  | { success: false; error: string };
+  | { success: false; error: string; reason?: "stale-session" };
+
+/**
+ * A single purchasable promotion tier. MVP: exactly one flat-fee option
+ * (see getEventPromotionOptions in config/pricing.ts); structured as a list
+ * so the promote page already renders "whatever this returns" rather than a
+ * hardcoded line once real duration/geo-scope tiers exist.
+ */
+export interface EventPromotionOption {
+  id: string;
+  priceEur: number;
+}
 
 export interface UseEventsOptions {
   place?: string;

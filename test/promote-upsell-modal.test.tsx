@@ -7,8 +7,15 @@ vi.mock("next-intl", () => ({
 }));
 
 const mockPush = vi.fn();
+const mockReplace = vi.fn();
 vi.mock("@i18n/routing", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  usePathname: () => "/en/e/my-event",
+}));
+
+let mockSearchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => mockSearchParams,
 }));
 
 vi.mock("@heroicons/react/24/outline", () => ({
@@ -61,15 +68,30 @@ import PromoteUpsellModal from "../app/[locale]/e/[eventId]/components/PromoteUp
 describe("PromoteUpsellModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSearchParams = new URLSearchParams("promote=1");
   });
 
-  it("navigates to the promote page and keeps working even if Modal also calls setOpen", () => {
+  it("navigates to the promote page without letting Modal's own setOpen(false) fire on the same click", () => {
     const setOpen = vi.fn();
     render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" />);
 
     fireEvent.click(screen.getByTestId("modal-action-button"));
 
     expect(mockPush).toHaveBeenCalledWith("/e/my-event/promote");
+    // The stubbed Modal only calls setOpen when onActionButtonClick's return
+    // value isn't `false` — asserting setOpen was never called is what
+    // actually proves the component's `return false` reached the stub.
+    expect(setOpen).not.toHaveBeenCalled();
+  });
+
+  it("strips the promote marker from the current URL before navigating to the promote page", () => {
+    render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" />);
+
+    fireEvent.click(screen.getByTestId("modal-action-button"));
+
+    expect(mockReplace).toHaveBeenCalledWith("/en/e/my-event", {
+      scroll: false,
+    });
   });
 
   it("closes the modal without navigating on 'keep it free' (already on the event detail page)", () => {

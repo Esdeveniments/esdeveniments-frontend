@@ -36,6 +36,12 @@ once the real endpoint ships, is a one-file fix.
 
 ## Scope
 
+> **Superseded — see "Post-review architecture correction" at the end of this doc.**
+> Item 1 below (modal living in `app/[locale]/publica/page.tsx`) describes the
+> *original* plan. During PR review the modal was moved to the event's own detail page
+> instead, with `/publica` only redirecting there via a `?promote=1` marker. The rest of
+> this section (2-5) is unaffected.
+
 **In scope**
 1. Post-publish upsell modal in `app/[locale]/publica/page.tsx`.
 2. `/e/[eventId]/promote` page: benefits, static flat fee (€5, MVP placeholder), "Confirm
@@ -117,6 +123,15 @@ once the real endpoint ships, is a one-file fix.
 - No new `app/api/*` route. No Stripe SDK/webhook/secret in this repo for this feature.
 
 ## Modal (Wallapop-style)
+
+> **Superseded — see "Post-review architecture correction" at the end of this doc.** This
+> section describes the modal living in `publica/page.tsx` with `router.push` for both
+> buttons. The shipped version moves the modal to the event's own detail page
+> (`EventClient.tsx` + `components/PromoteUpsellModal.tsx`); `publica/page.tsx` only
+> redirects there with a `?promote=1` marker. "Keep it free" no longer navigates (the
+> user is already on the event page) — it only closes the modal and strips the marker.
+> The `return false` / close-sequencing mechanics described below are otherwise accurate
+> and still apply to the shipped component.
 
 Reuses the shared `Modal` component (`components/ui/common/modal`) unchanged, but its
 close/navigate sequencing must be exact:
@@ -306,3 +321,36 @@ mocked-auth/`E2E_TEST_MODE` specs that *would* need a synthetic owner
 unaffected by the modal either. Verified directly against all four spec files before
 finalizing — see "Testing" above for the corrected, narrower fix (update the one race
 condition in `publish-integration.spec.ts`, no E2E infra changes).
+
+## Post-review architecture correction (2026-08-04)
+
+An AI code review pass on the resulting PR (cubic) caught that this design doc and its
+implementation plan still described the modal living inside `publica/page.tsx`, but the
+shipped code doesn't work that way — a second, user-requested correction moved the modal
+after the design doc above was already written. Recording what actually shipped, since a
+future reader following the sections above verbatim would build a conflicting flow:
+
+**What actually ships:**
+- `publica/page.tsx`'s `onSubmit` success path redirects to `` /e/${slug}?promote=1 ``
+  (a query marker, not modal state) instead of rendering the modal itself.
+- The modal (`app/[locale]/e/[eventId]/components/PromoteUpsellModal.tsx`) is rendered
+  by `EventClient.tsx` — the event's own detail page — gated on `?promote=1` **and** on
+  the signed-in user matching `event.ownerId` (a second review finding: without the
+  ownership check, any visitor could trigger the upsell by hand-editing the URL, and its
+  CTA would lead them to the owner-only `/promote` page, which 404s for them).
+- "Keep it free" no longer calls `router.push` at all — the user is already on the
+  event's detail page, so it only closes the modal and strips the `promote` query param
+  (preserving any other existing params, e.g. `edit_suggested`) via `router.replace`.
+- "Promote Event" also strips the `promote` marker (via `router.replace`) *before*
+  pushing to `/promote`, so a later browser-back to the event doesn't re-show the modal.
+- This reuses the exact one-time-query-marker convention already established by
+  `newEvent`/`edit_suggested` in `EventClient.tsx` — not a new mechanism.
+
+**Why the change:** the user's own framing of the request ("when the user creates a new
+event, when it lands in the event detail page that has created, appears a new modal")
+was the actual product intent all along; the original plan's `publica`-hosted modal
+blocked navigation on the publish form itself, which didn't match that.
+
+This correction lives only in this addendum — the "Scope" and "Modal" sections above are
+left as historical record of the original plan (each now carries an inline pointer here)
+rather than being silently rewritten.

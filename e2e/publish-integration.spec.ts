@@ -471,25 +471,35 @@ test.describe("Publish integration (staging)", () => {
       publishButton.click(),
     ]);
 
-    const upsellModal = page.getByTestId("promote-upsell-modal");
-    await expect(upsellModal).toBeVisible({ timeout: 15_000 });
+    // Capture the slug as soon as it's known (right after the redirect off
+    // /publica), then run every subsequent assertion inside try/finally.
+    // Cleanup only runs at the very end of the happy path otherwise — if the
+    // modal never becomes visible or the /promote navigation times out, the
+    // event this test created would never be deleted, and the suite-level
+    // afterAll can't recover it (it only matches TEST_EVENT_TITLE, not this
+    // test's distinct promoteTestTitle).
+    const createdSlugMatch = page.url().match(/\/e\/([^/?#]+)/);
+    const createdPromoteSlug = createdSlugMatch ? createdSlugMatch[1] : null;
 
-    await Promise.all([
-      page.waitForURL((url) => url.pathname.includes("/promote"), {
-        timeout: 30_000,
-      }),
-      page.getByTestId("promote-upsell-modal-action-button").click(),
-    ]);
+    try {
+      const upsellModal = page.getByTestId("promote-upsell-modal");
+      await expect(upsellModal).toBeVisible({ timeout: 15_000 });
 
-    expect(page.url()).toContain("/promote");
+      await Promise.all([
+        page.waitForURL((url) => url.pathname.includes("/promote"), {
+          timeout: 30_000,
+        }),
+        page.getByTestId("promote-upsell-modal-action-button").click(),
+      ]);
 
-    // Cleanup: this test creates its own event, separate from the suite-level
-    // afterAll cleanup (which only tracks TEST_EVENT_TITLE). The DELETE route
-    // resolves by slug internally — same simple pattern already used for
-    // createdEventSlug in afterAll above — so no extra id lookup is needed.
-    const slugMatch = page.url().match(/\/e\/([^/]+)\/promote/);
-    if (slugMatch) {
-      await cleanupEvent(page, slugMatch[1]);
+      expect(page.url()).toContain("/promote");
+    } finally {
+      // This test creates its own event, separate from the suite-level
+      // afterAll cleanup (which only tracks TEST_EVENT_TITLE). The DELETE
+      // route resolves by slug internally, so no extra id lookup is needed.
+      if (createdPromoteSlug) {
+        await cleanupEvent(page, createdPromoteSlug);
+      }
     }
   });
 });

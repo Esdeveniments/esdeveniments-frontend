@@ -142,4 +142,24 @@ describe("createPromotionCheckoutAction", () => {
       error: "Something went wrong. Please try again.",
     });
   });
+
+  it("returns a distinct stale-session result on a tagged 401 from requireMutationAuth", async () => {
+    mockFetchEventBySlug.mockResolvedValue(buildEvent());
+    mockGetCurrentUser.mockResolvedValue({ id: CREATOR_ID });
+    const authError = new Error("Authentication required");
+    (authError as Error & { status: number }).status = 401;
+    mockCreatePromotionCheckout.mockRejectedValue(authError);
+
+    const result = await createPromotionCheckoutAction(
+      "event-uuid-1",
+      "my-event",
+      "ca",
+    );
+
+    expect(result).toEqual({
+      success: false,
+      error: "Your session has expired. Please sign in again.",
+      reason: "stale-session",
+    });
+  });
 });

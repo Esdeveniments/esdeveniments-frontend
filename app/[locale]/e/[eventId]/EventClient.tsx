@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useRouter, usePathname } from "@i18n/routing";
 // import useOnScreen from "components/hooks/useOnScreen";
+import { useAuth } from "@components/hooks/useAuth";
 import { useEventAnalytics } from "./hooks/useEventAnalytics";
 
 import type { EventClientProps } from "types/props";
@@ -33,6 +34,7 @@ export default function EventClient({
   const t = useTranslations("Components.EventPage");
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
   // const editModalRef = useRef<HTMLDivElement>(null);
 
   // const isEditModalVisible = useOnScreen(
@@ -52,37 +54,44 @@ export default function EventClient({
   // section — the modal lives on the event's own detail page, not on the
   // publish form). Same one-time-marker convention as newEvent/edit_suggested
   // above, not a new mechanism.
+  //
+  // Gated on ownership: the marker is just a URL query param, so anyone could
+  // append ?promote=1 to any event's URL. Without this check, a non-owner
+  // visitor would see the upsell and its CTA would lead to the owner-only
+  // /promote page, which 404s for them. isOwner is undefined (not false)
+  // while the auth session is still resolving, so the modal only ever shows
+  // once ownership is positively confirmed — never as a flash-then-hide.
+  const isOwner = user?.id === event.ownerId;
   const initialShowPromoteUpsell = searchParams.get("promote") === "1";
-  const [showPromoteUpsell, setShowPromoteUpsell] = useState(
-    initialShowPromoteUpsell,
-  );
+  const [dismissed, setDismissed] = useState(false);
+  // Derived, not stored state: isOwner/initialShowPromoteUpsell already fully
+  // determine visibility each render, so there's nothing to sync from an
+  // effect here (that was the earlier react-hooks/set-state-in-effect error).
+  const showPromoteUpsell = initialShowPromoteUpsell && isOwner && !dismissed;
 
+  const hasFiredShownEvent = useRef(false);
   useEffect(() => {
-    if (initialShowPromoteUpsell) {
+    if (showPromoteUpsell && !hasFiredShownEvent.current) {
+      hasFiredShownEvent.current = true;
       sendGoogleEvent("promote_modal_shown", {
         event_slug: event.slug ?? "",
         source: "event_detail",
       });
     }
-    // initialShowPromoteUpsell and event.slug are both stable for this
-    // component's lifetime (the component fully remounts on navigation to a
-    // different event), so this still only ever fires once despite the
-    // complete dependency list.
-  }, [initialShowPromoteUpsell, event.slug]);
+  }, [showPromoteUpsell, event.slug]);
 
   const handlePromoteUpsellOpenChange = (open: boolean) => {
-    setShowPromoteUpsell(open);
-    if (!open) {
-      // Strip only the one-time marker so a refresh or shared link doesn't
-      // re-trigger the modal — preserve any other existing query params
-      // (e.g. edit_suggested) rather than dropping the whole query string.
-      const remainingParams = new URLSearchParams(searchParams.toString());
-      remainingParams.delete("promote");
-      const query = remainingParams.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, {
-        scroll: false,
-      });
-    }
+    if (open) return;
+    setDismissed(true);
+    // Strip only the one-time marker so a refresh or shared link doesn't
+    // re-trigger the modal — preserve any other existing query params
+    // (e.g. edit_suggested) rather than dropping the whole query string.
+    const remainingParams = new URLSearchParams(searchParams.toString());
+    remainingParams.delete("promote");
+    const query = remainingParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
   };
 
   // const {

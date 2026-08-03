@@ -10,6 +10,7 @@ import {
   type GeoScope,
   type SponsorDuration,
 } from "types/sponsor";
+import type { EventPromotionOption } from "types/event";
 
 /**
  * @deprecated Use GeoScope from types/sponsor.ts instead
@@ -160,11 +161,6 @@ export const DISPLAY_PRICES_EUR: Record<
   region: buildDisplayPricesForScope("region"),
   country: buildDisplayPricesForScope("country"),
 };
-
-export interface EventPromotionOption {
-  id: string;
-  priceEur: number;
-}
 
 /**
  * MVP: exactly one flat-fee option for event promotion checkout. Structured

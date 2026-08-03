@@ -1943,3 +1943,41 @@ import in `publica/page.tsx` despite that same file already lazy-loading `Previe
 via `next/dynamic` with `ssr: false` for the identical reason (only renders after a specific
 user action, not on initial page load) — changed to follow the existing pattern in
 Task 8.
+
+## Post-review corrections (2026-08-04)
+
+An AI code review pass on the resulting PR (cubic, coderabbit, greptile) found several
+gaps between this plan's embedded code samples and what actually shipped. Recorded here
+rather than editing the historical code blocks above:
+
+1. **Analytics funnel was missing.** Task 5's `PromoteEventClient` code sample above
+   fires no `sendGoogleEvent` calls at all, contradicting this doc's own Self-Review
+   Notes ("analytics woven into Tasks 5 and 8") and the design doc's "Analytics (new)"
+   section, which specifies `promote_page_view`, `promote_checkout_click`,
+   `promote_checkout_redirect` (renamed from `promote_checkout_success` — no payment has
+   happened yet at redirect time), and `promote_checkout_error`. Fixed in the shipped
+   `PromoteEventClient.tsx`: all four now fire at the appropriate points in
+   `handleConfirm` and a mount-time `useEffect`.
+2. **Unguarded `getEventPromotionOptions()` destructure.** The `const [promotionOption] =
+   getEventPromotionOptions();` line above throws if that function ever returns an empty
+   array, and only ever reads index 0 regardless of how many options exist — worth
+   flagging since the whole reason for returning a list (not a constant) was to support
+   more than one tier later. The shipped component guards the empty case (renders a
+   disabled button + error state) rather than crashing; the "read only index 0" behavior
+   is accepted for now since real multi-tier UI is still backend-blocked (see the design
+   doc's "Risks" section) — the guard is the one change needed to make that acceptable.
+3. **`isSubmitting` reset only on the two explicit failure branches.** If
+   `createPromotionCheckoutAction` rejects outright (rather than returning `{ success:
+   false }`), the code sample above never resets `isSubmitting`, permanently disabling
+   the button. Shipped version wraps the body in `try/finally`.
+4. **Modal architecture superseded.** Task 8 below still describes splicing the modal
+   into `publica/page.tsx`. See the design doc's "Post-review architecture correction"
+   addendum for the full, current description — the modal now lives on the event detail
+   page, gated on ownership (a related review finding: the original `?promote=1` marker
+   had no ownership check, so any visitor could trigger the upsell by hand-editing the
+   URL).
+5. **Mobile visibility gap (Greptile).** `EventPromoteAction` (Task 7) is rendered only
+   in `EventSidebar`, which is desktop-only (`lg:block`). An owner on a phone or tablet
+   had no persistent way to reach `/promote` outside the one-time post-publish modal.
+   Fixed by also rendering `EventPromoteAction` in `EventDetailsSection` (the existing
+   mobile-visible counterpart to the sidebar).

@@ -18,9 +18,6 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => mockSearchParams,
 }));
 
-vi.mock("./hooks/useEventAnalytics", () => ({
-  useEventAnalytics: () => {},
-}));
 vi.mock("../app/[locale]/e/[eventId]/hooks/useEventAnalytics", () => ({
   useEventAnalytics: () => {},
 }));
@@ -42,6 +39,12 @@ vi.mock("@heroicons/react/24/outline", () => ({
 const mockSendGoogleEvent = vi.fn();
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: (...args: unknown[]) => mockSendGoogleEvent(...args),
+}));
+
+const OWNER_ID = "owner-uuid-1";
+let mockAuthUser: { id: string } | null = { id: OWNER_ID };
+vi.mock("@components/hooks/useAuth", () => ({
+  useAuth: () => ({ user: mockAuthUser }),
 }));
 
 vi.mock("../app/[locale]/e/[eventId]/components/PromoteUpsellModal", () => ({
@@ -96,6 +99,7 @@ function buildEvent(): EventClientProps["event"] {
     placeSlug: "barcelona",
     hasImage: false,
     origin: "MANUAL",
+    ownerId: OWNER_ID,
   };
 }
 
@@ -103,6 +107,7 @@ describe("EventClient promote upsell wiring", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSearchParams = new URLSearchParams();
+    mockAuthUser = { id: OWNER_ID };
   });
 
   it("does not show the promote upsell modal when there is no promote marker", async () => {
@@ -133,10 +138,9 @@ describe("EventClient promote upsell wiring", () => {
     mockSearchParams = new URLSearchParams("promote=1&edit_suggested=true");
     render(<EventClient event={buildEvent()} />);
 
-    const modal = await screen.findByTestId("promote-upsell-modal");
+    await screen.findByTestId("promote-upsell-modal");
     fireEvent.click(screen.getByTestId("mock-close"));
 
-    expect(modal).toBeDefined();
     expect(mockReplace).toHaveBeenCalledWith(
       "/en/e/my-event?edit_suggested=true",
       { scroll: false },
@@ -153,5 +157,29 @@ describe("EventClient promote upsell wiring", () => {
     expect(mockReplace).toHaveBeenCalledWith("/en/e/my-event", {
       scroll: false,
     });
+  });
+
+  it("does not show the modal for a signed-in user who is not the event owner, even with ?promote=1", () => {
+    mockSearchParams = new URLSearchParams("promote=1");
+    mockAuthUser = { id: "someone-else" };
+    render(<EventClient event={buildEvent()} />);
+
+    expect(screen.queryByTestId("promote-upsell-modal")).toBeNull();
+    expect(mockSendGoogleEvent).not.toHaveBeenCalledWith(
+      "promote_modal_shown",
+      expect.anything(),
+    );
+  });
+
+  it("does not show the modal for a logged-out visitor, even with ?promote=1", () => {
+    mockSearchParams = new URLSearchParams("promote=1");
+    mockAuthUser = null;
+    render(<EventClient event={buildEvent()} />);
+
+    expect(screen.queryByTestId("promote-upsell-modal")).toBeNull();
+    expect(mockSendGoogleEvent).not.toHaveBeenCalledWith(
+      "promote_modal_shown",
+      expect.anything(),
+    );
   });
 });

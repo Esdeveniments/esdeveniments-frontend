@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
 import { getEventPromotionOptions } from "@config/pricing";
+import { sendGoogleEvent } from "@utils/analytics";
 import type { AppLocale } from "types/i18n";
 import type { PromoteEventClientProps } from "types/props";
 import { createPromotionCheckoutAction } from "./actions";
@@ -29,29 +30,59 @@ export default function PromoteEventClient({
   // MVP: exactly one option today. Rendered from a list (not a single
   // constant) so this component doesn't change shape when Gerard adds real
   // duration/geo-scope tiers later — only getEventPromotionOptions' return
-  // value grows.
+  // value grows. Guarded (not a bare destructure) since a future
+  // implementation of that function could legitimately return zero options
+  // (e.g. no tier available for this event yet).
   const [promotionOption] = getEventPromotionOptions();
+
+  useEffect(() => {
+    sendGoogleEvent("promote_page_view", { event_slug: slug });
+    // slug is stable for this component's lifetime (a new event means a full
+    // remount), so this still only ever fires once despite the dependency.
+  }, [slug]);
 
   const handleConfirm = async () => {
     setError(null);
     setIsSubmitting(true);
+    sendGoogleEvent("promote_checkout_click", { event_slug: slug });
 
-    const result = await createPromotionCheckoutAction(eventId, slug, locale);
+    try {
+      const result = await createPromotionCheckoutAction(eventId, slug, locale);
 
-    if (!result.success) {
+      if (!result.success) {
+        sendGoogleEvent("promote_checkout_error", {
+          event_slug: slug,
+          reason: result.reason ?? "action-failed",
+        });
+        setError(t("errorGeneric"));
+        return;
+      }
+
+      if (!isValidCheckoutUrl(result.url)) {
+        console.error("PromoteEventClient: invalid checkout url", result.url);
+        sendGoogleEvent("promote_checkout_error", {
+          event_slug: slug,
+          reason: "invalid-url",
+        });
+        setError(t("errorGeneric"));
+        return;
+      }
+
+      sendGoogleEvent("promote_checkout_redirect", { event_slug: slug });
+      window.location.href = result.url;
+    } catch (checkoutError) {
+      console.error(
+        "PromoteEventClient: checkout action rejected",
+        checkoutError,
+      );
+      sendGoogleEvent("promote_checkout_error", {
+        event_slug: slug,
+        reason: "unexpected-rejection",
+      });
       setError(t("errorGeneric"));
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    if (!isValidCheckoutUrl(result.url)) {
-      console.error("PromoteEventClient: invalid checkout url", result.url);
-      setError(t("errorGeneric"));
-      setIsSubmitting(false);
-      return;
-    }
-
-    window.location.href = result.url;
   };
 
   return (
@@ -93,13 +124,30 @@ export default function PromoteEventClient({
           </ul>
         </div>
 
-        <div className="card-bordered card-body flex items-center justify-between">
-          <span className="body-normal text-foreground/70">{t("priceLabel")}</span>
-          <span className="heading-2 text-foreground-strong">
-            {promotionOption.priceEur}€
-          </span>
-        </div>
-        <p className="body-small text-foreground/60 -mt-4">{t("priceNote")}</p>
+        {promotionOption ? (
+          <>
+            <div className="card-bordered card-body flex items-center justify-between">
+              <span className="body-normal text-foreground/70">
+                {t("priceLabel")}
+              </span>
+              <span className="heading-2 text-foreground-strong">
+                {promotionOption.priceEur}€
+              </span>
+            </div>
+            <p className="body-small text-foreground/60 -mt-4">
+              {t("priceNote")}
+            </p>
+          </>
+        ) : (
+          <div
+            className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg"
+            role="alert"
+          >
+            <p className="text-sm font-medium text-error">
+              {t("errorGeneric")}
+            </p>
+          </div>
+        )}
 
         {error && (
           <div
@@ -114,7 +162,7 @@ export default function PromoteEventClient({
           type="button"
           variant="primary"
           className="w-full min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !promotionOption}
           data-testid="promote-confirm-button"
           onClick={handleConfirm}
         >
