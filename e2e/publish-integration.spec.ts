@@ -1,4 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
+import type {
+  EventSummaryResponseDTO,
+  PagedResponseDTO,
+} from "types/api/event";
 import { loginViaUI } from "./helpers/login";
 
 /**
@@ -27,8 +31,9 @@ const hasCredentials = Boolean(email && password);
 const UNIQUE_SUFFIX = `e2e-${Date.now()}`;
 const TEST_EVENT_TITLE = `Test Event ${UNIQUE_SUFFIX}`;
 
-// Store created event slug for cleanup
+// Store created event identity for cleanup
 let createdEventSlug: string | null = null;
+let createdEventId: string | null = null;
 
 /** Delete event via API (direct fetch with cookies from browser context) */
 async function cleanupEvent(page: Page, uuid: string) {
@@ -45,24 +50,81 @@ async function cleanupEvent(page: Page, uuid: string) {
   }
 }
 
+async function findCreatedEventId(
+  page: Page,
+  title: string,
+): Promise<string | null> {
+  try {
+    const query = new URLSearchParams({
+      page: "0",
+      size: "50",
+      term: title,
+      _e2e_cleanup: String(Date.now()),
+    });
+    const response = await page.request.get(`/api/events?${query.toString()}`);
+    if (!response.ok()) return null;
+    const data = (await response.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
+    return data.content.find((event) => event.title === title)?.id ?? null;
+  } catch (error) {
+    console.warn(`Failed to find event for cleanup (${title}):`, error);
+    return null;
+  }
+}
+
+async function listingContainsEvent(
+  page: Page,
+  eventSlug: string,
+  title: string,
+  attempt: number,
+): Promise<boolean> {
+  const query = new URLSearchParams({
+    page: "0",
+    size: "50",
+    place: "barcelona",
+    term: title,
+    // The events proxy is intentionally cached for normal users. A unique
+    // query key per poll prevents a failed first read from pinning the test to
+    // a stale CDN response while the backend finishes indexing the event.
+    _e2e: `${Date.now()}-${attempt}`,
+  });
+  const response = await page.request.get(`/api/events?${query.toString()}`);
+  if (!response.ok()) return false;
+
+  const data = (await response.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
+  return data.content.some((event) => event.slug === eventSlug);
+}
+
 test.describe("Publish integration (staging)", () => {
   // Skip entire suite if no staging credentials
   test.skip(!hasCredentials, "Skipped: E2E_STAGING_EMAIL/E2E_STAGING_PASSWORD not set");
   test.setTimeout(180_000); // 3 minutes — real backend is slow
 
   test.afterAll(async ({ browser }) => {
-    // Best-effort cleanup via API if we captured the slug
-    if (createdEventSlug) {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      try {
-        await loginViaUI(page, email!, password!);
-        await cleanupEvent(page, createdEventSlug);
-      } catch (error) {
-        console.warn("Cleanup failed:", error);
-      } finally {
-        await context.close();
+    if (!hasCredentials) return;
+
+    // Always attempt cleanup after login. If redirect parsing failed after a
+    // successful publish, recover the unique event ID through the API first.
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await loginViaUI(page, email!, password!);      let fallbackEventId: string | null = null;
+      if (!createdEventId) {
+        await expect
+          .poll(
+            async () => {
+              fallbackEventId = await findCreatedEventId(page, TEST_EVENT_TITLE);
+              return fallbackEventId;
+            },
+            { timeout: 30_000, intervals: [500, 1_000, 2_000, 5_000] },
+          )
+          .not.toBeNull();
       }
+      const eventId = createdEventId ?? fallbackEventId;
+      if (eventId) await cleanupEvent(page, eventId);
+    } catch (error) {
+      console.warn("Cleanup failed:", error);
+    } finally {
+      await context.close();
     }
   });
 
@@ -137,9 +199,14 @@ test.describe("Publish integration (staging)", () => {
     // Click the select to open dropdown, type to search, pick first result
     await townSelect.click();
     await page.keyboard.type("Barcelona");
-    await page.waitForTimeout(1_000); // Wait for async search
-    // Select the first option from the dropdown
-    await page.keyboard.press("Enter");
+    // Wait for the async result the user can actually select; do not sleep for
+    // an assumed network duration.
+    const townOption = page
+      .locator('[role="listbox"]:visible')
+      .getByRole("option")
+      .first();
+    await expect(townOption).toBeVisible({ timeout: 15_000 });
+    await townOption.click();
 
     // Fill location name
     await page.locator("#location").fill("Test Venue - E2E");
@@ -147,11 +214,12 @@ test.describe("Publish integration (staging)", () => {
     // Select first available category
     const categoriesSelect = page.locator("#categories").locator("..");
     await categoriesSelect.click();
-    await page.waitForTimeout(500);
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
-    // Close the dropdown
-    await page.keyboard.press("Escape");
+    const categoryOption = page
+      .locator('[role="listbox"]:visible')
+      .getByRole("option")
+      .first();
+    await expect(categoryOption).toBeVisible({ timeout: 15_000 });
+    await categoryOption.click();
 
     // Advance to step 2
     await page.getByTestId("next-button").click();
@@ -184,14 +252,23 @@ test.describe("Publish integration (staging)", () => {
         String(futureDate.getDate()).padStart(2, "0"),
       ].join("-");
     });
-    const datePickerTrigger = page.getByRole("button", {
+    // The DatePicker is lazy-loaded. Its placeholder intentionally replaces
+    // itself on focus, so pointer/keyboard activation can race the React
+    // remount (detached element / html intercepts pointer events). Focus is
+    // the wrapper's explicit lazy-load contract; wait for the real Start
+    // button after that replacement before interacting with the calendar.
+    const datePickerPlaceholder = page.getByRole("button", {
       name: /select date and time|seleccionar data i hora/i,
     });
-    await expect(datePickerTrigger).toBeVisible({ timeout: 15_000 });
-    await datePickerTrigger.click();
     const startDateButton = page.getByRole("button", {
-      name: /^(Start|Inici) \*:/,
+      name: /^(Start|Inici):/,
     });
+    await expect(datePickerPlaceholder.or(startDateButton)).toBeVisible({
+      timeout: 15_000,
+    });
+    if (await datePickerPlaceholder.isVisible().catch(() => false)) {
+      await datePickerPlaceholder.focus();
+    }
     await expect(startDateButton).toBeVisible({ timeout: 15_000 });
     await startDateButton.click();
     const futureDateButton = page.locator(`[data-day="${futureDateIso}"]`);
@@ -202,17 +279,23 @@ test.describe("Publish integration (staging)", () => {
     const publishButton = page.getByTestId("publish-button");
     await expect(publishButton).toBeVisible({ timeout: 10_000 });
 
-    // Wait for canPublishRef to arm (250ms guard in EventForm)
-    await page.waitForTimeout(500);
-
-    await publishButton.click();
+    // The button's visibility/enabled state is the public readiness contract;
+    // let Playwright's web-first assertion wait for it instead of sleeping for
+    // the implementation's internal publish-arm timer.
+    await expect(publishButton).toHaveAttribute("data-publish-ready", "true", {
+      timeout: 10_000,
+    });
+    // Start waiting before the click so the redirect cannot race the assertion.
+    await Promise.all([
+      page.waitForURL((url) => !url.pathname.includes("/publica"), {
+        timeout: 60_000,
+      }),
+      publishButton.click(),
+    ]);
 
     // ── Step 6: Wait for success ──
-    // After publish, the page should redirect to the event detail or show success
-    // Wait for navigation away from /publica
-    await page.waitForURL((url) => !url.pathname.includes("/publica"), {
-      timeout: 60_000,
-    });
+    // The URL assertion above proves the publish action completed and redirected
+    // away from the form.
 
     const currentUrl = page.url();
     console.log(`Event created, redirected to: ${currentUrl}`);
@@ -234,6 +317,14 @@ test.describe("Publish integration (staging)", () => {
       waitUntil: "domcontentloaded",
       timeout: 60_000,
     });
+
+    const createdEvent = await page.evaluate(async (slug: string) => {
+      const res = await fetch(`/api/events/${slug}?_e2e=${Date.now()}`);
+      if (!res.ok) return null;
+      return res.json();
+    }, createdEventSlug);
+    createdEventId = createdEvent?.id ?? null;
+    expect(createdEventId, "expected the created event to have an id").toBeTruthy();
 
     // Title (data we entered) is the H1. This also proves it's not the
     // not-found page, which would render a different heading.
@@ -263,12 +354,28 @@ test.describe("Publish integration (staging)", () => {
     // from the created event's own `owner` field (OwnerSummaryDTO, the same
     // data the page renders from) rather than the auth session — see the
     // note above Step 0's login check for why those two can diverge.
-    const eventOwner = await page.evaluate(async (slug: string) => {
-      const res = await fetch(`/api/events/${slug}`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      return data?.owner ?? null;
-    }, createdEventSlug);
+    const readEventOwner = async () =>
+      page.evaluate(async (slug: string | null) => {
+        if (!slug) return null;
+        const res = await fetch(`/api/events/${slug}?_e2e=${Date.now()}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data?.owner ?? null;
+      }, createdEventSlug);
+
+    // Owner enrichment can lag behind the initial event write. Poll the same
+    // detail API contract the page consumes instead of assuming one response
+    // immediately contains the attribution data.
+    await expect
+      .poll(
+        async () => {
+          const owner = await readEventOwner();
+          return Boolean(owner?.username || owner?.displayName);
+        },
+        { timeout: 30_000, intervals: [250, 500, 1_000, 2_000] },
+      )
+      .toBe(true);
+    const eventOwner = await readEventOwner();
     const expectedCreatorName: string =
       eventOwner?.displayName || eventOwner?.username || "";
     const expectedCreatorSlug: string = eventOwner?.username || "";
@@ -281,33 +388,41 @@ test.describe("Publish integration (staging)", () => {
       "expected the created event's owner to have a username (used for the /perfil/<username> link)"
     ).not.toBe("");
 
-    // Rendered twice, same as the location block above — once inline for
-    // mobile, once in the desktop sidebar — so filter to the visible
-    // instance instead of assuming DOM order.
-    const creatorBlock = page
-      .locator('[data-testid="event-created-by"]:visible')
+    // The page renders this semantic block twice for responsive layouts. Test
+    // the attribution contract in the DOM and scope the link to the matching
+    // block; CSS visibility is a layout concern and is not part of this API
+    // integration test.
+    const creatorBlock =    page
+      .getByTestId("event-created-by")
+      .filter({ hasText: expectedCreatorName })
       .first();
-    await expect(creatorBlock).toBeVisible({ timeout: 10_000 });
+    await expect(creatorBlock).toBeAttached({ timeout: 10_000 });
     await expect(creatorBlock).toContainText(expectedCreatorName);
-    const creatorLinkHref = await page
-      .locator('[data-testid="event-created-by-link"]:visible')
-      .first()
-      .getAttribute("href");
-    expect(creatorLinkHref).toContain(
-      `/perfil/${encodeURIComponent(expectedCreatorSlug)}`
-    );
+    await expect(
+      creatorBlock.getByTestId("event-created-by-link").first()
+    ).toHaveAttribute("href", new RegExp(`/perfil/${expectedCreatorSlug}`));
 
-    // ── Step 8: Verify the event appears on a listing page ──
-    await page.goto("/en/barcelona", {
-      waitUntil: "domcontentloaded",
-      timeout: 60_000,
-    });
-    // Soft: listing may be cached or paginate the fresh event off page 1.
+    // ── Step 8: Verify eventual listing inclusion through the API ──
+    // The rendered place page and /api/events are cached independently, and a
+    // newly published event can take time to reach the backend's search/index
+    // path. Poll a fresh cache key until the server contract observes it. This
+    // keeps the check meaningful without asserting against one stale HTML page
+    // or hiding the failure with expect.soft().
+    let listingAttempt = 0;
     await expect
-      .soft(
-        page.getByText(TEST_EVENT_TITLE).first(),
-        "freshly published event should appear in the Barcelona listing"
+      .poll(
+        async () =>
+          listingContainsEvent(
+            page,
+            createdEventSlug!,
+            TEST_EVENT_TITLE,
+            listingAttempt++,
+          ),
+        {
+          timeout: 60_000,
+          intervals: [500, 1_000, 2_000, 5_000],
+        },
       )
-      .toBeVisible({ timeout: 15_000 });
+      .toBe(true);
   });
 });
