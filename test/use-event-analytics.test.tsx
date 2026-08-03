@@ -77,4 +77,22 @@ describe("useEventAnalytics", () => {
 
     expect(sendGoogleEventMock).toHaveBeenCalledTimes(1);
   });
+
+  it("fires again when the event changes without unmounting (no key remount)", () => {
+    const { rerender } = renderHook(
+      (event: EventClientProps["event"]) => useEventAnalytics(event),
+      { initialProps: makeEvent({ id: "evt-1" }) },
+    );
+    expect(sendGoogleEventMock).toHaveBeenCalledTimes(1);
+
+    rerender(makeEvent({ id: "evt-1" }));
+    expect(sendGoogleEventMock).toHaveBeenCalledTimes(1);
+
+    rerender(makeEvent({ id: "evt-2", slug: "fira-artesans" }));
+    expect(sendGoogleEventMock).toHaveBeenCalledTimes(2);
+    expect(sendGoogleEventMock).toHaveBeenLastCalledWith(
+      "view_event_page",
+      expect.objectContaining({ event_id: "evt-2" }),
+    );
+  });
 });

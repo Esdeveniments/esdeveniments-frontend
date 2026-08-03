@@ -6,12 +6,16 @@ import type { EventClientProps } from "types/props";
 // so the event-detail page's analytics logic lives in one place, the same
 // way FavoritesPageTracker/ProfilePageTracker own their pages' tracking.
 export function useEventAnalytics(event: EventClientProps["event"]): void {
-  const hasTrackedRef = useRef(false);
+  // Tracks the last event.id we fired for, not a plain boolean: Next.js
+  // App Router doesn't remount this component on a dynamic-segment change
+  // (e.g. client-side nav to a different /e/[eventId]), so a one-shot
+  // boolean would silently stop tracking after the first event.
+  const trackedEventIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Guards against React Strict Mode's dev-only double-invoke, same as
     // ProfilePageTracker/FavoritesPageTracker.
-    if (hasTrackedRef.current) return;
+    if (trackedEventIdRef.current === event.id) return;
 
     const isPast = event.endDate ? new Date(event.endDate) < new Date() : false;
 
@@ -25,7 +29,7 @@ export function useEventAnalytics(event: EventClientProps["event"]): void {
       is_past: isPast,
       origin: event.origin,
     });
-    hasTrackedRef.current = true;
+    trackedEventIdRef.current = event.id;
   }, [
     event.categorySlug,
     event.endDate,
