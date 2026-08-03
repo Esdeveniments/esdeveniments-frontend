@@ -43,6 +43,7 @@ async function EventsAroundServer({
   showJsonLd = false,
   jsonLdId,
   title,
+  isPromoted = false,
 }: EventsAroundServerProps) {
   const locale = await getLocaleSafely();
   const uniqueEvents = dedupeEvents(events);
@@ -141,6 +142,7 @@ async function EventsAroundServer({
                 <CardHorizontalServer
                   event={event}
                   isPriority={usePriority && index <= 2}
+                  isPromoted={isPromoted}
                 />
               </div>
             ))}
