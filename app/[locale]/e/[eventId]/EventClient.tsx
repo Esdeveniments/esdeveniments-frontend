@@ -73,9 +73,15 @@ export default function EventClient({
   const handlePromoteUpsellOpenChange = (open: boolean) => {
     setShowPromoteUpsell(open);
     if (!open) {
-      // Strip the one-time marker so a refresh or shared link doesn't
-      // re-trigger the modal.
-      router.replace(pathname, { scroll: false });
+      // Strip only the one-time marker so a refresh or shared link doesn't
+      // re-trigger the modal — preserve any other existing query params
+      // (e.g. edit_suggested) rather than dropping the whole query string.
+      const remainingParams = new URLSearchParams(searchParams.toString());
+      remainingParams.delete("promote");
+      const query = remainingParams.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
     }
   };
 

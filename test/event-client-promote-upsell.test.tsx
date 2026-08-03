@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { useState, useEffect, type ComponentType } from "react";
 import type { EventClientProps } from "types/props";
 
@@ -46,8 +46,17 @@ vi.mock("@utils/analytics", () => ({
 
 vi.mock("../app/[locale]/e/[eventId]/components/PromoteUpsellModal", () => ({
   __esModule: true,
-  default: ({ slug }: { slug: string }) => (
-    <div data-testid="promote-upsell-modal">{slug}</div>
+  default: ({
+    slug,
+    setOpen,
+  }: {
+    slug: string;
+    setOpen: (open: boolean) => void;
+  }) => (
+    <div data-testid="promote-upsell-modal">
+      {slug}
+      <button data-testid="mock-close" onClick={() => setOpen(false)} />
+    </div>
   ),
 }));
 
@@ -117,6 +126,32 @@ describe("EventClient promote upsell wiring", () => {
     expect(mockSendGoogleEvent).toHaveBeenCalledWith("promote_modal_shown", {
       event_slug: "my-event",
       source: "event_detail",
+    });
+  });
+
+  it("strips only the promote marker on close, preserving other query params", async () => {
+    mockSearchParams = new URLSearchParams("promote=1&edit_suggested=true");
+    render(<EventClient event={buildEvent()} />);
+
+    const modal = await screen.findByTestId("promote-upsell-modal");
+    fireEvent.click(screen.getByTestId("mock-close"));
+
+    expect(modal).toBeDefined();
+    expect(mockReplace).toHaveBeenCalledWith(
+      "/en/e/my-event?edit_suggested=true",
+      { scroll: false },
+    );
+  });
+
+  it("strips the promote marker on close with no other params, leaving a bare pathname", async () => {
+    mockSearchParams = new URLSearchParams("promote=1");
+    render(<EventClient event={buildEvent()} />);
+
+    await screen.findByTestId("promote-upsell-modal");
+    fireEvent.click(screen.getByTestId("mock-close"));
+
+    expect(mockReplace).toHaveBeenCalledWith("/en/e/my-event", {
+      scroll: false,
     });
   });
 });
