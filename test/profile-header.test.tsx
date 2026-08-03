@@ -145,4 +145,41 @@ describe("ProfileHeader", () => {
     await renderHeader(baseProfile);
     expect(screen.getByTestId("profile-header")).toBeInTheDocument();
   });
+
+  it("does not render a verified badge when verified is absent", async () => {
+    await renderHeader(baseProfile);
+    expect(screen.queryByRole("img", { name: "Verificat" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "Organitzador verificat" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the user verified badge when verified is true and role is not ORGANIZATION", async () => {
+    const profile: ProfileDetailResponseDTO = { ...baseProfile, verified: true };
+    await renderHeader(profile);
+    expect(screen.getByRole("img", { name: "Verificat" })).toBeInTheDocument();
+  });
+
+  it("renders the organizer verified badge when verified is true and role is ORGANIZATION", async () => {
+    const profile: ProfileDetailResponseDTO = {
+      ...baseProfile,
+      verified: true,
+      role: "ORGANIZATION",
+    };
+    await renderHeader(profile);
+    expect(
+      screen.getByRole("img", { name: "Organitzador verificat" }),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to the legacy organizerVerified badge when verified/role are absent", async () => {
+    const profile: ProfileDetailResponseDTO = {
+      ...baseProfile,
+      organizerVerified: true,
+    };
+    await renderHeader(profile);
+    expect(
+      screen.getByRole("img", { name: "Organitzador verificat" }),
+    ).toBeInTheDocument();
+  });
 });

@@ -405,6 +405,7 @@
       "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
       "events": "Esdeveniments",
       "verified": "Verificat",
+      "verifiedOrganizer": "Organitzador verificat",
       "joinedDate": "Des de {date}",
       "noEvents": "Encara no hi ha esdeveniments",
       "website": "Lloc web",

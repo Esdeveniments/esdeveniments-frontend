@@ -405,6 +405,7 @@
       "metaDescription": "Discover events by {name}. Browse their upcoming events, concerts, exhibitions and more.",
       "events": "Events",
       "verified": "Verified",
+      "verifiedOrganizer": "Verified organizer",
       "joinedDate": "Joined {date}",
       "noEvents": "No events yet",
       "website": "Website",
