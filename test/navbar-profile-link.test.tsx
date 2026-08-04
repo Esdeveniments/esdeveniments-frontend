@@ -48,8 +48,6 @@ import NavbarClient from "@components/ui/common/navbar/NavbarClient";
 
 const labels: NavbarLabels = {
   logoAlt: "Esdeveniments",
-  openMenu: "Obre el menú",
-  closeMenu: "Tanca el menú",
   home: "Inici",
   agenda: "Agenda",
   favorites: "Preferits",
@@ -78,12 +76,13 @@ describe("NavbarClient profile link", () => {
     };
     render(<NavbarClient navigation={[]} labels={labels} />);
     fireEvent.click(screen.getByTestId("user-avatar-button"));
-    fireEvent.click(screen.getByLabelText(labels.openMenu));
 
-    const links = screen.getAllByText("El meu perfil");
-    for (const link of links) {
-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/edita");
-    }
+    expect(
+      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
+    ).toBe("/perfil/edita");
+    expect(
+      screen.getByTestId("mobile-avatar-link").getAttribute("href")
+    ).toBe("/perfil/edita");
   });
 
   it("links to /perfil/{username} once the profile is completed", () => {
@@ -96,12 +95,13 @@ describe("NavbarClient profile link", () => {
     };
     render(<NavbarClient navigation={[]} labels={labels} />);
     fireEvent.click(screen.getByTestId("user-avatar-button"));
-    fireEvent.click(screen.getByLabelText(labels.openMenu));
 
-    const links = screen.getAllByText("El meu perfil");
-    for (const link of links) {
-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/alba");
-    }
+    expect(
+      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
+    ).toBe("/perfil/alba");
+    expect(
+      screen.getByTestId("mobile-avatar-link").getAttribute("href")
+    ).toBe("/perfil/alba");
   });
 
   it("links to /perfil/{username} when profileCompleted is undefined (transient enrichment blip)", () => {
@@ -114,11 +114,12 @@ describe("NavbarClient profile link", () => {
     };
     render(<NavbarClient navigation={[]} labels={labels} />);
     fireEvent.click(screen.getByTestId("user-avatar-button"));
-    fireEvent.click(screen.getByLabelText(labels.openMenu));
 
-    const links = screen.getAllByText("El meu perfil");
-    for (const link of links) {
-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/alba");
-    }
+    expect(
+      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
+    ).toBe("/perfil/alba");
+    expect(
+      screen.getByTestId("mobile-avatar-link").getAttribute("href")
+    ).toBe("/perfil/alba");
   });
 });

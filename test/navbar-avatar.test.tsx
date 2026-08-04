@@ -54,8 +54,6 @@ import NavbarClient from "@components/ui/common/navbar/NavbarClient";
 
 const labels: NavbarLabels = {
   logoAlt: "Esdeveniments",
-  openMenu: "Obre el menú",
-  closeMenu: "Tanca el menú",
   home: "Inici",
   agenda: "Agenda",
   favorites: "Preferits",
@@ -72,7 +70,7 @@ const labels: NavbarLabels = {
 describe("NavbarClient avatar", () => {
   it("gives a transparent-background upload a neutral backdrop instead of the fallback button color", () => {
     render(<NavbarClient navigation={[]} labels={labels} />);
-    const img = screen.getByAltText("");
+    const img = screen.getByTestId("user-avatar-button").querySelector("img");
     expect(img).toHaveAttribute("src", authUser.avatarUrl);
     expect(img).toHaveClass("bg-background");
   });

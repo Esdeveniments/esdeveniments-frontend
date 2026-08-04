@@ -419,8 +419,6 @@ export interface SitemapPartsRouteContext {
 
 export interface NavbarLabels {
   logoAlt: string;
-  openMenu: string;
-  closeMenu: string;
   home: string;
   agenda: string;
   favorites: string;

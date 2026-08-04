@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 import {
-  Bars3Icon as MenuIcon,
-  XMarkIcon as XIcon,
   PlusIcon,
   HomeIcon,
   CalendarIcon,
@@ -25,7 +23,6 @@ import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function NavbarClient({ navigation, labels }: NavbarClientProps) {
   const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -51,16 +48,13 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
         ? `/perfil/${encodeURIComponent(profileSlug)}`
         : null;
 
-  const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
-
-  // Close mobile menu when pathname changes (navigation occurs)
+  // Close the desktop user dropdown when pathname changes (navigation occurs)
   // This is a legitimate effect that synchronizes state with an external system (route)
   const previousPathname = useRef(pathname);
   useEffect(() => {
     if (previousPathname.current !== pathname) {
       previousPathname.current = pathname;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing menu state with route changes is intentional
-      setIsMenuOpen(false);
       setIsUserMenuOpen(false);
     }
   }, [pathname]);
@@ -103,21 +97,42 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               </PressableLink>
             </div>
 
-            <div className="flex justify-center items-center md:hidden">
-              <button
-                type="button"
-                onClick={toggleMenu}
-                className="inline-flex items-center justify-center py-2 px-3 rounded-button hover:bg-muted transition-interactive focus:outline-none"
-                aria-expanded={isMenuOpen}
-                aria-controls="mobile-menu-panel"
-                aria-label={isMenuOpen ? labels.closeMenu : labels.openMenu}
-              >
-                {isMenuOpen ? (
-                  <XIcon className="h-5 w-5" />
+            {/* Mobile header: language switcher + direct link to profile/login.
+                No dropdown, logout lives on the profile page itself (see
+                ProfileOwnerActions). Nav items live in the bottom bar only. */}
+            <div className="flex md:hidden justify-end items-center gap-2 px-3">
+              <LanguageSwitcher />
+              {!isLoading && (
+                isAuthenticated && user && !user.profileEnrichmentFailed ? (
+                  <ActiveLink
+                    href={profileHref || "/"}
+                    className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    aria-label={labels.myProfile}
+                    data-testid="mobile-avatar-link"
+                    data-analytics-action="navbar_profile_mobile_header"
+                  >
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt=""
+                        className="w-9 h-9 rounded-full object-cover bg-background"
+                      />
+                    ) : (
+                      (user.name || user.email).charAt(0).toUpperCase()
+                    )}
+                  </ActiveLink>
                 ) : (
-                  <MenuIcon className="h-5 w-5" />
-                )}
-              </button>
+                  <ActiveLink
+                    href="/iniciar-sessio"
+                    className="flex-center p-2 rounded-button hover:bg-muted transition-interactive focus:outline-none"
+                    aria-label={labels.login}
+                    data-testid="mobile-login-link"
+                    data-analytics-action="navbar_login_mobile_header"
+                  >
+                    <UserCircleIcon className="h-6 w-6" />
+                  </ActiveLink>
+                )
+              )}
             </div>
 
             <div className="hidden md:flex md:w-1/2 justify-end items-center gap-3">
@@ -243,26 +258,14 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               </div>
 
               <div className="flex-center">
-                {!isLoading && isAuthenticated ? (
-                  <ActiveLink
-                    href="/preferits"
-                    activeLinkClass="text-primary bg-primary/10"
-                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
-                    aria-label={labels.favorites}
-                  >
-                    <HeartIcon className="h-6 w-6" />
-                  </ActiveLink>
-                ) : !isLoading ? (
-                  <ActiveLink
-                    href="/iniciar-sessio"
-                    activeLinkClass="text-primary bg-primary/10"
-                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
-                    aria-label={labels.login}
-                    data-analytics-action="navbar_login_mobile_icon"
-                  >
-                    <UserCircleIcon className="h-6 w-6" />
-                  </ActiveLink>
-                ) : null}
+                <ActiveLink
+                  href="/preferits"
+                  activeLinkClass="text-primary bg-primary/10"
+                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  aria-label={labels.favorites}
+                >
+                  <HeartIcon className="h-6 w-6" />
+                </ActiveLink>
               </div>
 
               <div className="flex-center">
@@ -293,79 +296,6 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
           </div>
         </div>
       </div>
-
-      {isMenuOpen && (
-        <div
-          id="mobile-menu-panel"
-          className="md:hidden relative z-50 bg-background border-b border-border shadow-md"
-        >
-          <div className="w-full flex flex-col items-stretch bg-background py-3 px-section-x gap-2">
-            {navigation.map((item) => (
-              <ActiveLink
-                href={item.href}
-                key={item.name}
-                className="label font-semibold px-button-x py-3 border-b-2 border-b-background hover:bg-muted/50 rounded-lg transition-all text-center"
-              >
-                {item.name}
-              </ActiveLink>
-            ))}
-
-            {/* Auth section */}
-            {!isLoading && (
-              <div className="pt-3 border-t border-border flex flex-col gap-2">
-                {isAuthenticated && user ? (
-                  <>
-                    <p className="body-small text-foreground/60 text-center truncate">
-                      {user.name || user.email}
-                    </p>
-                    {/* Surface "incomplete session" inside the mobile panel too,
-                        so the warning is visible without opening the desktop
-                        dropdown. See desktop variant for rationale. */}
-                    {user.profileEnrichmentFailed && (
-                      <p
-                        className="body-small text-error text-center py-1"
-                        data-testid="navbar-session-warning-mobile"
-                        role="status"
-                        aria-live="polite"
-                      >
-                        {labels.incompleteProfile}
-                      </p>
-                    )}
-                    {profileHref && !user.profileEnrichmentFailed && (
-                      <ActiveLink
-                        href={profileHref}
-                        className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
-                      >
-                        {labels.myProfile}
-                      </ActiveLink>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => { logout(); setIsMenuOpen(false); }}
-                      className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
-                      data-analytics-action="navbar_logout_mobile"
-                    >
-                      {labels.logout}
-                    </button>
-                  </>
-                ) : (
-                  <ActiveLink
-                    href="/iniciar-sessio"
-                    className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
-                    data-analytics-action="navbar_login_mobile_menu"
-                  >
-                    {labels.login}
-                  </ActiveLink>
-                )}
-              </div>
-            )}
-
-            <div className="pt-3 border-t border-border flex justify-end items-center">
-              <LanguageSwitcher />
-            </div>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
