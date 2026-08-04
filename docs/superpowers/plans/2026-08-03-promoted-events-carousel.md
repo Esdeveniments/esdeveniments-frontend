@@ -161,13 +161,15 @@ Expected: FAIL — `Cannot find module '@lib/api/promotedEvents'`
 
 ```ts
 // lib/api/promotedEvents.ts
+import type { z } from "zod";
 import { fetchWithHmac } from "./fetch-wrapper";
-import { getApiUrl } from "./events";
+import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
+import {
+  EventSummaryResponseDTOSchema,
+  enhanceEventImage,
+} from "@lib/validation/event";
 import type { EventSummaryResponseDTO } from "types/api/event";
-
-export type PromotionScope =
-  | { type: "homepage" }
-  | { type: "town" | "region"; slug: string };
+import type { PromotionScope } from "types/event";
 
 const MAX_PROMOTED_EVENTS = 8;
 
@@ -192,12 +194,18 @@ export async function getActivePromotedEvents(
     return [];
   }
 
+  if (!isApiUrlConfigured()) {
+    return [];
+  }
+
   try {
     const apiUrl = getApiUrl();
     const finalUrl = `${apiUrl}/events/promotions/active?${buildScopeQuery(scope)}`;
 
+    // NEVER add `next: { revalidate, tags }` here — external wrappers must not opt
+    // into the Next fetch cache (high-cardinality per-scope URLs caused a 146k-entry
+    // cache explosion, see docs/incidents/2026-01-20-fetch-cache-explosion.md).
     const response = await fetchWithHmac(finalUrl, {
-      next: { revalidate: 300, tags: ["promoted-events"] },
       headers: { Accept: "application/json" },
     });
 
@@ -210,11 +218,30 @@ export async function getActivePromotedEvents(
 
     const data = await response.json();
     const content = Array.isArray(data?.content) ? data.content : [];
-    const events = content
-      .map((item) => EventSummaryResponseDTOSchema.safeParse(item))
-      .filter((parsed) => parsed.success)
-      .map((parsed) => parsed.data as EventSummaryResponseDTO);
-    return events.slice(0, MAX_PROMOTED_EVENTS);
+
+    // Validate each item individually rather than the array atomically — one
+    // malformed item (wherever it falls in the response) should be dropped,
+    // not discard every valid promotion alongside it.
+    const events: EventSummaryResponseDTO[] = [];
+    let invalidCount = 0;
+    let firstError: z.ZodError | undefined;
+    for (const item of content) {
+      const parsed = EventSummaryResponseDTOSchema.safeParse(item);
+      if (parsed.success) {
+        events.push(parsed.data as EventSummaryResponseDTO);
+      } else {
+        invalidCount++;
+        firstError ??= parsed.error;
+      }
+    }
+    if (invalidCount > 0) {
+      console.warn(
+        `getActivePromotedEvents: dropped ${invalidCount} invalid content item(s)`,
+        firstError,
+      );
+    }
+
+    return events.map(enhanceEventImage).slice(0, MAX_PROMOTED_EVENTS);
   } catch (error) {
     console.warn("getActivePromotedEvents: fetch failed", error);
     return [];

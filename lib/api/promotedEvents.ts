@@ -1,3 +1,4 @@
+import type { z } from "zod";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
 import {
@@ -62,17 +63,20 @@ export async function getActivePromotedEvents(
     // not discard every valid promotion alongside it.
     const events: EventSummaryResponseDTO[] = [];
     let invalidCount = 0;
+    let firstError: z.ZodError | undefined;
     for (const item of content) {
       const parsed = EventSummaryResponseDTOSchema.safeParse(item);
       if (parsed.success) {
         events.push(parsed.data as EventSummaryResponseDTO);
       } else {
         invalidCount++;
+        firstError ??= parsed.error;
       }
     }
     if (invalidCount > 0) {
       console.warn(
         `getActivePromotedEvents: dropped ${invalidCount} invalid content item(s)`,
+        firstError,
       );
     }
 
