@@ -224,7 +224,7 @@ export function parseCategorizedEvents(
   return Object.fromEntries(normalizedEntries) as CategorizedEvents;
 }
 
-function enhanceEventImage<
+export function enhanceEventImage<
   T extends { imageUrl?: string | null; hash?: string | null; updatedAt?: string }
 >(event: T): T {
   const cacheKey = event.hash || event.updatedAt;

@@ -851,6 +851,10 @@
       "badge": "Sponsored",
       "activeUntil": "Promotion active until {date}"
     },
+    "PromotedEvents": {
+      "title": "Featured events",
+      "badge": "Sponsored"
+    },
     "WhereToEatSection": {
       "showPhoto": "Show photo",
       "title": "Where you can eat",

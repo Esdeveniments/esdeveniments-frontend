@@ -859,6 +859,10 @@
       "badge": "Patrocinat",
       "activeUntil": "Promoció activa fins al {date}"
     },
+    "PromotedEvents": {
+      "title": "Esdeveniments destacats",
+      "badge": "Patrocinat"
+    },
     "WhereToEatSection": {
       "title": "On pots menjar",
       "promote": "Promociona el teu restaurant",
