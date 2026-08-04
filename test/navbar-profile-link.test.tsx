@@ -123,6 +123,25 @@ describe("NavbarClient profile link", () => {
     ).toBe("/perfil/alba");
   });
 
+  it("sends the mobile avatar to /perfil/edita instead of home when no usable slug exists", () => {
+    // getProfileSlug (utils/user-helpers.ts) rejects an email-shaped
+    // username/name — profileHref ends up null even though the user is
+    // authenticated and profileCompleted isn't explicitly false. Landing on
+    // "/" here would strand the user with no way back to their account.
+    authUser = {
+      id: OWNER_ID,
+      email: "a@b.com",
+      name: "a@b.com",
+      username: "a@b.com",
+      profileCompleted: true,
+    };
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    expect(
+      screen.getByTestId("mobile-avatar-link").getAttribute("href")
+    ).toBe("/perfil/edita");
+  });
+
   it("falls back to the re-auth link on mobile when the session is only partially enriched", () => {
     authUser = {
       id: OWNER_ID,

@@ -105,11 +105,10 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               {!isLoading && (
                 isAuthenticated && user && !user.profileEnrichmentFailed ? (
                   <ActiveLink
-                    href={profileHref || "/"}
+                    href={profileHref || "/perfil/edita"}
                     className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     aria-label={labels.myProfile}
                     data-testid="mobile-avatar-link"
-                    data-analytics-action="navbar_profile_mobile_header"
                   >
                     {user.avatarUrl ? (
                       <img
@@ -125,7 +124,11 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   <ActiveLink
                     href="/iniciar-sessio"
                     className="flex-center p-2 rounded-button hover:bg-muted transition-interactive focus:outline-none"
-                    aria-label={labels.login}
+                    aria-label={
+                      user?.profileEnrichmentFailed
+                        ? labels.incompleteProfile
+                        : labels.login
+                    }
                     data-testid="mobile-login-link"
                     data-analytics-action="navbar_login_mobile_header"
                   >

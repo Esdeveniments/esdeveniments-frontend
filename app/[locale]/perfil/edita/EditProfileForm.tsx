@@ -14,7 +14,12 @@ const BIO_MAX = 500;
 
 export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
   const t = useTranslations("App.EditProfile");
-  const { user, refetchUser } = useAuth();
+  // Reuses the navbar's logout copy: this is a profile-owner page whose
+  // only auth entry point is the navbar avatar, and it has no dropdown of
+  // its own to put a logout action in — see ProfileOwnerActions for the
+  // equivalent on /perfil/[username].
+  const tAuth = useTranslations("Components.Navbar.auth");
+  const { user, refetchUser, logout } = useAuth();
   const router = useRouter();
   // Matches the check in NavbarClient: `=== false`, not falsy, so a
   // transient backend enrichment blip (profileCompleted undefined) doesn't
@@ -147,6 +152,14 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
           <p className="body-normal text-foreground/80">
             {t(isOnboarding ? "onboardingSubheading" : "subheading")}
           </p>
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="btn-outline btn-sm self-center"
+            data-analytics-action="edit_profile_logout_cta"
+          >
+            {tAuth("logout")}
+          </button>
         </div>
 
         {submitError && (

@@ -14,6 +14,7 @@ const baseUser: AuthUser = {
 let authUser: AuthUser = baseUser;
 
 const mockRefetchUser = vi.fn();
+const mockLogout = vi.fn();
 const mockPush = vi.fn();
 const { sendGoogleEventMock } = vi.hoisted(() => ({
   sendGoogleEventMock: vi.fn<
@@ -30,7 +31,11 @@ vi.mock("@i18n/routing", () => ({
 }));
 
 vi.mock("@components/hooks/useAuth", () => ({
-  useAuth: () => ({ user: authUser, refetchUser: mockRefetchUser }),
+  useAuth: () => ({
+    user: authUser,
+    refetchUser: mockRefetchUser,
+    logout: mockLogout,
+  }),
 }));
 
 vi.mock("@utils/analytics", () => ({
@@ -48,9 +53,21 @@ describe("EditProfileForm", () => {
   beforeEach(() => {
     authUser = baseUser;
     mockRefetchUser.mockReset().mockResolvedValue(undefined);
+    mockLogout.mockReset();
     mockPush.mockReset();
     sendGoogleEventMock.mockReset();
     vi.stubGlobal("fetch", vi.fn());
+  });
+
+  it("lets an onboarding user (no other logout entry point) log out from here", () => {
+    // NavbarClient sends profileCompleted === false users to this page, and
+    // logout otherwise only lives on the owner's completed profile page
+    // (ProfileOwnerActions) — without this, onboarding users on mobile
+    // would have no way to end their session.
+    authUser = { ...baseUser, profileCompleted: false };
+    render(<EditProfileForm />);
+    fireEvent.click(screen.getByText("logout"));
+    expect(mockLogout).toHaveBeenCalledTimes(1);
   });
 
   it("fires edit_profile_page_view once on mount, with is_onboarding", () => {

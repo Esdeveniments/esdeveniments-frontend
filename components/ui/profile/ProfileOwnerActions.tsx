@@ -11,6 +11,9 @@ export default function ProfileOwnerActions({
 }: ProfileOwnerActionsProps) {
   const { user, logout } = useAuth();
   const t = useTranslations("Components.Profile");
+  // Reuses the navbar's logout copy rather than duplicating the string —
+  // also read from app/[locale]/perfil/edita/EditProfileForm.tsx, so don't
+  // prune "Components.Navbar.auth.logout" for looking unused navbar-side.
   const tAuth = useTranslations("Components.Navbar.auth");
   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("profile_edit_cta");
 
