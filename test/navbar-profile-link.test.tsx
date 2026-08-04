@@ -122,4 +122,59 @@ describe("NavbarClient profile link", () => {
       screen.getByTestId("mobile-avatar-link").getAttribute("href")
     ).toBe("/perfil/alba");
   });
+
+  it("falls back to the re-auth link on mobile when the session is only partially enriched", () => {
+    authUser = {
+      id: OWNER_ID,
+      email: "a@b.com",
+      name: "A",
+      username: "alba",
+      profileCompleted: true,
+      profileEnrichmentFailed: "auth",
+    };
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    expect(
+      screen.getByTestId("mobile-login-link").getAttribute("href")
+    ).toBe("/iniciar-sessio");
+    expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
+  });
+
+  it("shows the mobile login link, not the avatar, when signed out", () => {
+    authUser = null;
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    expect(
+      screen.getByTestId("mobile-login-link").getAttribute("href")
+    ).toBe("/iniciar-sessio");
+    expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
+    expect(screen.queryByTestId("user-avatar-button")).toBeNull();
+  });
+});
+
+describe("NavbarClient bottom bar Favoritos", () => {
+  beforeEach(() => {
+    authUser = null;
+  });
+
+  it("always links to /preferits, signed in or out", () => {
+    authUser = null;
+    const { unmount } = render(<NavbarClient navigation={[]} labels={labels} />);
+    expect(
+      screen.getByLabelText(labels.favorites).getAttribute("href")
+    ).toBe("/preferits");
+    unmount();
+
+    authUser = {
+      id: OWNER_ID,
+      email: "a@b.com",
+      name: "A",
+      username: "alba",
+      profileCompleted: true,
+    };
+    render(<NavbarClient navigation={[]} labels={labels} />);
+    expect(
+      screen.getByLabelText(labels.favorites).getAttribute("href")
+    ).toBe("/preferits");
+  });
 });
