@@ -509,7 +509,9 @@ export async function ServerEventsCategorizedContent({
 
   return (
     <>
-      <PromotedEventsSection scope={{ type: "homepage" }} />
+      <Suspense fallback={null}>
+        <PromotedEventsSection scope={{ type: "homepage" }} />
+      </Suspense>
 
       {/* Popular Now Section — derived from existing data, zero extra API calls */}
       {popularEvents.length > 0 && (

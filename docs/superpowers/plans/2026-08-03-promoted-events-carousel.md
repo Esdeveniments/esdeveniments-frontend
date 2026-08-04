@@ -210,7 +210,11 @@ export async function getActivePromotedEvents(
 
     const data = await response.json();
     const content = Array.isArray(data?.content) ? data.content : [];
-    return (content as EventSummaryResponseDTO[]).slice(0, MAX_PROMOTED_EVENTS);
+    const events = content
+      .map((item) => EventSummaryResponseDTOSchema.safeParse(item))
+      .filter((parsed) => parsed.success)
+      .map((parsed) => parsed.data as EventSummaryResponseDTO);
+    return events.slice(0, MAX_PROMOTED_EVENTS);
   } catch (error) {
     console.warn("getActivePromotedEvents: fetch failed", error);
     return [];

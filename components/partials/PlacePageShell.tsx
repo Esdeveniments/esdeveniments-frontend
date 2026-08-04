@@ -353,9 +353,11 @@ async function PlacePageContent({
 
       <FilterLoadingGate>
         {placeTypeLabel.type && (
-          <PromotedEventsSection
-            scope={{ type: placeTypeLabel.type, slug: place }}
-          />
+          <Suspense fallback={null}>
+            <PromotedEventsSection
+              scope={{ type: placeTypeLabel.type, slug: place }}
+            />
+          </Suspense>
         )}
 
         <HybridEventsList

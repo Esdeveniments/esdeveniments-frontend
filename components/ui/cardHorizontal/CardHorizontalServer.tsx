@@ -18,7 +18,9 @@ const CardHorizontalServer = async ({
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const tCategories = await getTranslations({ locale, namespace: "Config.Categories" });
-  const tPromoted = await getTranslations({ locale, namespace: "Components.PromotedEvents" });
+  const tPromoted = isPromoted
+    ? await getTranslations({ locale, namespace: "Components.PromotedEvents" })
+    : null;
 
   const {
     title,
@@ -83,7 +85,7 @@ const CardHorizontalServer = async ({
       </div>
 
       <div className="flex-1 flex flex-col px-3.5 pt-2.5 pb-3.5 pointer-events-none">
-        {isPromoted && (
+        {isPromoted && tPromoted && (
           <span className="badge-primary mb-1 w-fit">{tPromoted("badge")}</span>
         )}
         <CategoryBadge label={categoryLabel} />

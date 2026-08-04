@@ -337,7 +337,7 @@ the whole array passed to `EventsAroundServer` is already 100% promoted events).
 New keys (added to `messages/ca.json`, `es.json`, `en.json`, mirroring the `App.EventPromote`
 namespace precedent from phase 1):
 - `Components.PromotedEvents.title` — carousel heading (e.g. "Esdeveniments destacats").
-- `Components.PromotedEvents.pill` — the disclosure pill label (e.g. "Patrocinat").
+- `Components.PromotedEvents.badge` — the disclosure pill label (e.g. "Patrocinat").
 
 ## Risks / open questions carried forward (not blocking this implementation)
 
@@ -348,9 +348,9 @@ namespace precedent from phase 1):
   for this MVP — the "everywhere"/"all pages" tier described in the original ask has no
   purchase path yet (see the divergence note above); known, explicitly deferred, not an
   oversight.
-- `PROMOTED_EVENTS_ENABLED` needs an entry in `.env.example` and in prod env config at
-  deploy time — flagged here so it isn't forgotten; flipping it on is a deliberate, separate
-  follow-up once Gerard's endpoint exists, not part of this phase. Checked `utils/env.ts`:
+- `PROMOTED_EVENTS_ENABLED` is documented in `.env.example`; the remaining deployment action
+  is configuring it in prod env config, deliberately deferred until Gerard's endpoint exists.
+  Checked `utils/env.ts`:
   there's no central zod-validated env schema to register with (it's a handful of direct
   `process.env.X` reads, e.g. `E2E_TEST_MODE`) — a plain `process.env.PROMOTED_EVENTS_ENABLED
   === "true"` read is consistent with that convention, and it's server-only (no
