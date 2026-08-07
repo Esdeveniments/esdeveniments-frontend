@@ -1,0 +1,1 @@
+Move "Editar esdeveniment" button from eventid page to eventSidebar after sidebarViewAllEvents, keeping the logic of only show when the event is from that user, also fix the createdByUser deprecation
