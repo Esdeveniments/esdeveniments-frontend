@@ -1,0 +1,464 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - components/ui/common/navbar/NavbarClient.tsx
+  - components/ui/common/navbar/index.tsx
+  - components/ui/profile/ProfileOwnerActions.tsx
+  - messages/ca.json
+  - messages/en.json
+  - messages/es.json
+  - test/navbar-avatar.test.tsx
+  - test/navbar-profile-link.test.tsx
+  - test/profile-cta-tracking.test.tsx
+  - types/props.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: components/ui/common/navbar/NavbarClient.tsx ===
+@@ -1,10 +1,8 @@
+ "use client";
+ 
+-import { useEffect, useState, useCallback, useRef } from "react";
++import { useEffect, useState, useRef } from "react";
+ import { usePathname } from "next/navigation";
+ import {
+-  Bars3Icon as MenuIcon,
+-  XMarkIcon as XIcon,
+   PlusIcon,
+   HomeIcon,
+   CalendarIcon,
+@@ -25,7 +23,6 @@ import LanguageSwitcher from "./LanguageSwitcher";
+ 
+ export default function NavbarClient({ navigation, labels }: NavbarClientProps) {
+   const pathname = usePathname();
+-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+   const userMenuRef = useRef<HTMLDivElement>(null);
+   const { user, isAuthenticated, isLoading, logout } = useAuth();
+@@ -51,16 +48,13 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps)
+         ? `/perfil/${encodeURIComponent(profileSlug)}`
+         : null;
+ 
+-  const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
+-
+-  // Close mobile menu when pathname changes (navigation occurs)
++  // Close the desktop user dropdown when pathname changes (navigation occurs)
+   // This is a legitimate effect that synchronizes state with an external system (route)
+   const previousPathname = useRef(pathname);
+   useEffect(() => {
+     if (previousPathname.current !== pathname) {
+       previousPathname.current = pathname;
+       // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing menu state with route changes is intentional
+-      setIsMenuOpen(false);
+       setIsUserMenuOpen(false);
+     }
+   }, [pathname]);
+@@ -103,21 +97,42 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps)
+               </PressableLink>
+             </div>
+ 
+-            <div className="flex justify-center items-center md:hidden">
+-              <button
+-                type="button"
+-                onClick={toggleMenu}
+-                className="inline-flex items-center justify-center py-2 px-3 rounded-button hover:bg-muted transition-interactive focus:outline-none"
+-                aria-expanded={isMenuOpen}
+-                aria-controls="mobile-menu-panel"
+-                aria-label={isMenuOpen ? labels.closeMenu : labels.openMenu}
+-              >
+-                {isMenuOpen ? (
+-                  <XIcon className="h-5 w-5" />
++            {/* Mobile header: language switcher + direct link to profile/login.
++                No dropdown, logout lives on the profile page itself (see
++                ProfileOwnerActions). Nav items live in the bottom bar only. */}
++            <div className="flex md:hidden justify-end items-center gap-2 px-3">
++              <LanguageSwitcher />
++              {!isLoading && (
++                isAuthenticated && user && !user.profileEnrichmentFailed ? (
++                  <ActiveLink
++                    href={profileHref || "/"}
++                    className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
++                    aria-label={labels.myProfile}
++                    data-testid="mobile-avatar-link"
++                    data-analytics-action="navbar_profile_mobile_header"
++                  >
++                    {user.avatarUrl ? (
++                      <img
++                        src={user.avatarUrl}
++                        alt=""
++                        className="w-9 h-9 rounded-full object-cover bg-background"
++                      />
++                    ) : (
++                      (user.name || user.email).charAt(0).toUpperCase()
++                    )}
++                  </ActiveLink>
+                 ) : (
+-                  <MenuIcon className="h-5 w-5" />
+-                )}
+-              </button>
++                  <ActiveLink
++                    href="/iniciar-sessio"
++                    className="flex-center p-2 rounded-button hover:bg-muted transition-interactive focus:outline-none"
++                    aria-label={labels.login}
++                    data-testid="mobile-login-link"
++                    data-analytics-action="navbar_login_mobile_header"
++                  >
++                    <UserCircleIcon className="h-6 w-6" />
++                  </ActiveLink>
++                )
++              )}
+             </div>
+ 
+             <div className="hidden md:flex md:w-1/2 justify-end items-center gap-3">
+@@ -243,26 +258,14 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps)
+               </div>
+ 
+               <div className="flex-center">
+-                {!isLoading && isAuthenticated ? (
+-                  <ActiveLink
+-                    href="/preferits"
+-                    activeLinkClass="text-primary bg-primary/10"
+-                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+-                    aria-label={labels.favorites}
+-                  >
+-                    <HeartIcon className="h-6 w-6" />
+-                  </ActiveLink>
+-                ) : !isLoading ? (
+-                  <ActiveLink
+-                    href="/iniciar-sessio"
+-                    activeLinkClass="text-primary bg-primary/10"
+-                    className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+-                    aria-label={labels.login}
+-                    data-analytics-action="navbar_login_mobile_icon"
+-                  >
+-                    <UserCircleIcon className="h-6 w-6" />
+-                  </ActiveLink>
+-                ) : null}
++                <ActiveLink
++                  href="/preferits"
++                  activeLinkClass="text-primary bg-primary/10"
++                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
++                  aria-label={labels.favorites}
++                >
++                  <HeartIcon className="h-6 w-6" />
++                </ActiveLink>
+               </div>
+ 
+               <div className="flex-center">
+@@ -293,79 +296,6 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps)
+           </div>
+         </div>
+       </div>
+-
+-      {isMenuOpen && (
+-        <div
+-          id="mobile-menu-panel"
+-          className="md:hidden relative z-50 bg-background border-b border-border shadow-md"
+-        >
+-          <div className="w-full flex flex-col items-stretch bg-background py-3 px-section-x gap-2">
+-            {navigation.map((item) => (
+-              <ActiveLink
+-                href={item.href}
+-                key={item.name}
+-                className="label font-semibold px-button-x py-3 border-b-2 border-b-background hover:bg-muted/50 rounded-lg transition-all text-center"
+-              >
+-                {item.name}
+-              </ActiveLink>
+-            ))}
+-
+-            {/* Auth section */}
+-            {!isLoading && (
+-              <div className="pt-3 border-t border-border flex flex-col gap-2">
+-                {isAuthenticated && user ? (
+-                  <>
+-                    <p className="body-small text-foreground/60 text-center truncate">
+-                      {user.name || user.email}
+-                    </p>
+-                    {/* Surface "incomplete session" inside the mobile panel too,
+-                        so the warning is visible without opening the desktop
+-                        dropdown. See desktop variant for rationale. */}
+-                    {user.profileEnrichmentFailed && (
+-                      <p
+-                        className="body-small text-error text-center py-1"
+-                        data-testid="navbar-session-warning-mobile"
+-                        role="status"
+-                        aria-live="polite"
+-                      >
+-                        {labels.incompleteProfile}
+-                      </p>
+-                    )}
+-                    {profileHref && !user.profileEnrichmentFailed && (
+-                      <ActiveLink
+-                        href={profileHref}
+-                        className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
+-                      >
+-                        {labels.myProfile}
+-                      </ActiveLink>
+-                    )}
+-                    <button
+-                      type="button"
+-                      onClick={() => { logout(); setIsMenuOpen(false); }}
+-                      className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
+-                      data-analytics-action="navbar_logout_mobile"
+-                    >
+-                      {labels.logout}
+-                    </button>
+-                  </>
+-                ) : (
+-                  <ActiveLink
+-                    href="/iniciar-sessio"
+-                    className="label font-semibold px-button-x py-3 hover:bg-muted/50 rounded-lg transition-all text-center"
+-                    data-analytics-action="navbar_login_mobile_menu"
+-                  >
+-                    {labels.login}
+-                  </ActiveLink>
+-                )}
+-              </div>
+-            )}
+-
+-            <div className="pt-3 border-t border-border flex justify-end items-center">
+-              <LanguageSwitcher />
+-            </div>
+-          </div>
+-        </div>
+-      )}
+     </nav>
+   );
+ }
+
+
+=== DIFF: components/ui/common/navbar/index.tsx ===
+@@ -19,8 +19,6 @@ export default async function Navbar() {
+     navigation,
+     labels: {
+       logoAlt: t("logoAlt"),
+-      openMenu: t("aria.openMenu"),
+-      closeMenu: t("aria.closeMenu"),
+       home: t("aria.home"),
+       agenda: t("aria.agenda"),
+       favorites: t("aria.favorites"),
+
+
+=== DIFF: components/ui/profile/ProfileOwnerActions.tsx ===
+@@ -9,17 +9,26 @@ import type { ProfileOwnerActionsProps } from "types/props";
+ export default function ProfileOwnerActions({
+   username,
+ }: ProfileOwnerActionsProps) {
+-  const { user } = useAuth();
++  const { user, logout } = useAuth();
+   const t = useTranslations("Components.Profile");
++  const tAuth = useTranslations("Components.Navbar.auth");
+   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("profile_edit_cta");
+ 
+   if (user?.username !== username) return null;
+ 
+   return (
+-    <div ref={ctaRef} className="inline-block">
++    <div ref={ctaRef} className="inline-flex items-center gap-2">
+       <Link href="/perfil/edita" className="btn-outline btn-sm" onClick={trackClick}>
+         {t("editProfile")}
+       </Link>
++      <button
++        type="button"
++        onClick={() => logout()}
++        className="btn-outline btn-sm"
++        data-analytics-action="profile_logout_cta"
++      >
++        {tAuth("logout")}
++      </button>
+     </div>
+   );
+ }
+
+
+=== DIFF: messages/ca.json ===
+@@ -460,8 +460,6 @@
+       },
+       "logoAlt": "Logo Esdeveniments.cat",
+       "aria": {
+-        "openMenu": "Open menu",
+-        "closeMenu": "Close menu",
+         "home": "Home",
+         "agenda": "Agenda",
+         "favorites": "Preferits",
+
+
+=== DIFF: messages/en.json ===
+@@ -460,8 +460,6 @@
+       },
+       "logoAlt": "Esdeveniments.cat logo",
+       "aria": {
+-        "openMenu": "Open menu",
+-        "closeMenu": "Close menu",
+         "home": "Home",
+         "agenda": "Agenda",
+         "favorites": "Favorites",
+
+
+=== DIFF: messages/es.json ===
+@@ -460,8 +460,6 @@
+       },
+       "logoAlt": "Logo Esdeveniments.cat",
+       "aria": {
+-        "openMenu": "Abrir menú",
+-        "closeMenu": "Cerrar menú",
+         "home": "Inicio",
+         "agenda": "Agenda",
+         "favorites": "Favoritos",
+
+
+=== DIFF: test/navbar-avatar.test.tsx ===
+@@ -54,8 +54,6 @@ import NavbarClient from "@components/ui/common/navbar/NavbarClient";
+ 
+ const labels: NavbarLabels = {
+   logoAlt: "Esdeveniments",
+-  openMenu: "Obre el menú",
+-  closeMenu: "Tanca el menú",
+   home: "Inici",
+   agenda: "Agenda",
+   favorites: "Preferits",
+@@ -72,7 +70,7 @@ const labels: NavbarLabels = {
+ describe("NavbarClient avatar", () => {
+   it("gives a transparent-background upload a neutral backdrop instead of the fallback button color", () => {
+     render(<NavbarClient navigation={[]} labels={labels} />);
+-    const img = screen.getByAltText("");
++    const img = screen.getByTestId("user-avatar-button").querySelector("img");
+     expect(img).toHaveAttribute("src", authUser.avatarUrl);
+     expect(img).toHaveClass("bg-background");
+   });
+
+
+=== DIFF: test/navbar-profile-link.test.tsx ===
+@@ -48,8 +48,6 @@ import NavbarClient from "@components/ui/common/navbar/NavbarClient";
+ 
+ const labels: NavbarLabels = {
+   logoAlt: "Esdeveniments",
+-  openMenu: "Obre el menú",
+-  closeMenu: "Tanca el menú",
+   home: "Inici",
+   agenda: "Agenda",
+   favorites: "Preferits",
+@@ -78,12 +76,13 @@ describe("NavbarClient profile link", () => {
+     };
+     render(<NavbarClient navigation={[]} labels={labels} />);
+     fireEvent.click(screen.getByTestId("user-avatar-button"));
+-    fireEvent.click(screen.getByLabelText(labels.openMenu));
+ 
+-    const links = screen.getAllByText("El meu perfil");
+-    for (const link of links) {
+-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/edita");
+-    }
++    expect(
++      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
++    ).toBe("/perfil/edita");
++    expect(
++      screen.getByTestId("mobile-avatar-link").getAttribute("href")
++    ).toBe("/perfil/edita");
+   });
+ 
+   it("links to /perfil/{username} once the profile is completed", () => {
+@@ -96,12 +95,13 @@ describe("NavbarClient profile link", () => {
+     };
+     render(<NavbarClient navigation={[]} labels={labels} />);
+     fireEvent.click(screen.getByTestId("user-avatar-button"));
+-    fireEvent.click(screen.getByLabelText(labels.openMenu));
+ 
+-    const links = screen.getAllByText("El meu perfil");
+-    for (const link of links) {
+-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/alba");
+-    }
++    expect(
++      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
++    ).toBe("/perfil/alba");
++    expect(
++      screen.getByTestId("mobile-avatar-link").getAttribute("href")
++    ).toBe("/perfil/alba");
+   });
+ 
+   it("links to /perfil/{username} when profileCompleted is undefined (transient enrichment blip)", () => {
+@@ -114,11 +114,12 @@ describe("NavbarClient profile link", () => {
+     };
+     render(<NavbarClient navigation={[]} labels={labels} />);
+     fireEvent.click(screen.getByTestId("user-avatar-button"));
+-    fireEvent.click(screen.getByLabelText(labels.openMenu));
+ 
+-    const links = screen.getAllByText("El meu perfil");
+-    for (const link of links) {
+-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/alba");
+-    }
++    expect(
++      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
++    ).toBe("/perfil/alba");
++    expect(
++      screen.getByTestId("mobile-avatar-link").getAttribute("href")
++    ).toBe("/perfil/alba");
+   });
+ });
+
+
+=== DIFF: test/profile-cta-tracking.test.tsx ===
+@@ -11,6 +11,7 @@ let authState: { user: { username: string } | null; status: string } = {
+   user: null,
+   status: "unauthenticated",
+ };
++const logoutMock = vi.fn();
+ 
+ vi.mock("next-intl", () => ({
+   useTranslations: () => (key: string) => key,
+@@ -32,7 +33,7 @@ vi.mock("@i18n/routing", () => ({
+ }));
+ 
+ vi.mock("@components/hooks/useAuth", () => ({
+-  useAuth: () => authState,
++  useAuth: () => ({ ...authState, logout: logoutMock }),
+ }));
+ 
+ vi.mock("@components/hooks/useTrackedCta", () => ({
+@@ -46,6 +47,7 @@ describe("ProfileOwnerActions", () => {
+   beforeEach(() => {
+     trackClickMock.mockReset();
+     trackedCtaMock.mockClear();
++    logoutMock.mockReset();
+     authState = { user: null, status: "unauthenticated" };
+   });
+ 
+@@ -53,6 +55,7 @@ describe("ProfileOwnerActions", () => {
+     authState = { user: { username: "someoneElse" }, status: "authenticated" };
+     render(<ProfileOwnerActions username="alex91" />);
+     expect(screen.queryByText("editProfile")).toBeNull();
++    expect(screen.queryByText("logout")).toBeNull();
+   });
+ 
+   it("registers the profile_edit_cta id and tracks a click for the owner", () => {
+@@ -63,6 +66,16 @@ describe("ProfileOwnerActions", () => {
+     fireEvent.click(screen.getByText("editProfile"));
+     expect(trackClickMock).toHaveBeenCalledTimes(1);
+   });
++
++  it("calls logout when the owner clicks the logout button", () => {
++    authState = { user: { username: "alex91" }, status: "authenticated" };
++    render(<ProfileOwnerActions username="alex91" />);
++
++    const logoutButton = screen.getByText("logout");
++    expect(logoutButton).toHaveAttribute("data-analytics-action", "profile_logout_cta");
++    fireEvent.click(logoutButton);
++    expect(logoutMock).toHaveBeenCalledTimes(1);
++  });
+ });
+ 
+ describe("ProfileClaimCta", () => {
+
+
+=== DIFF: types/props.ts ===
+@@ -419,8 +419,6 @@ export interface SitemapPartsRouteContext {
+ 
+ export interface NavbarLabels {
+   logoAlt: string;
+-  openMenu: string;
+-  closeMenu: string;
+   home: string;
+   agenda: string;
+   favorites: string;
+
+
+Investigate per the method in your instructions, then return the findings list.
