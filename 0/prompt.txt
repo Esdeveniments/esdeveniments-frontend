@@ -1,0 +1,32 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - components/partials/PlacePageShell.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: components/partials/PlacePageShell.tsx ===
+@@ -2,6 +2,7 @@ import { Suspense } from "react";
+ import type { JSX } from "react";
+ import dynamic from "next/dynamic";
+ import HybridEventsList from "@components/ui/hybridEventsList";
++import PromotedEventsSection from "@components/ui/promotedEvents/PromotedEventsSection";
+ import JsonLdServer from "./JsonLdServer";
+ import { EventsListSkeleton } from "@components/ui/common/skeletons";
+ import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
+@@ -351,6 +352,12 @@ async function PlacePageContent({
+       ))}
+ 
+       <FilterLoadingGate>
++        {placeTypeLabel.type && (
++          <PromotedEventsSection
++            scope={{ type: placeTypeLabel.type, slug: place }}
++          />
++        )}
++
+         <HybridEventsList
+           initialEvents={events}
+           placeTypeLabel={placeTypeLabel}
+
+
+Investigate per the method in your instructions, then return the findings list.
