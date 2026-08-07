@@ -1,0 +1,97 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - lib/auth/session.ts
+  - test/api-auth-me.route.test.ts
+  - types/auth.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: lib/auth/session.ts ===
+@@ -11,7 +11,7 @@ import {
+   getAccessTokenFromCookies,
+   getIdTokenFromCookies,
+ } from "@utils/auth-cookies";
+-import type { AuthUser, SessionResolution } from "types/auth";
++import type { AuthUser, ResolveSessionInput, SessionResolution } from "types/auth";
+ 
+ /**
+  * Resolve the current authenticated user from the verified id_token cookie.
+@@ -86,12 +86,9 @@ export const getCurrentUser = cache(getCurrentUserInternal);
+  * bad signature, wrong issuer/audience) instead falls through to the
+  * refresh attempt below.
+  */
+-export async function resolveSession(input: {
+-  idToken: string | null;
+-  refreshToken: string | null;
+-  accessToken: string | null;
+-  hasRawCookie: boolean;
+-}): Promise<SessionResolution> {
++export async function resolveSession(
++  input: ResolveSessionInput,
++): Promise<SessionResolution> {
+   const { idToken, refreshToken, accessToken, hasRawCookie } = input;
+ 
+   if (!idToken && !refreshToken) {
+
+
+=== DIFF: test/api-auth-me.route.test.ts ===
+@@ -127,4 +127,37 @@ describe("GET /api/auth/me (route mapping layer)", () => {
+     const response = await GET(buildRequest());
+     expect(response.headers.get("Cache-Control")).toBe("no-store");
+   });
++
++  it("passes the exact per-cookie token values and hasRawCookie through to resolveSession", async () => {
++    const mockReadTokenFromRequest = vi.mocked(authCookies.readTokenFromRequest);
++    mockReadTokenFromRequest.mockImplementation((_request, name: string) => {
++      if (name === "logto_id_token") return "the-id-token";
++      if (name === "auth_refresh_token") return "the-refresh-token";
++      if (name === "auth_token") return "the-access-token";
++      return null;
++    });
++    mockResolveSession.mockResolvedValue({ kind: "transient" });
++
++    const request = new NextRequest("http://localhost/api/auth/me", {
++      headers: { cookie: "logto_id_token=raw-encrypted-value" },
++    });
++    await GET(request);
++
++    expect(mockResolveSession).toHaveBeenCalledWith({
++      idToken: "the-id-token",
++      refreshToken: "the-refresh-token",
++      accessToken: "the-access-token",
++      hasRawCookie: true,
++    });
++  });
++
++  it("passes hasRawCookie:false when no auth cookie is present at all", async () => {
++    mockResolveSession.mockResolvedValue({ kind: "unauthorized", clearCookies: false });
++
++    await GET(buildRequest());
++
++    expect(mockResolveSession).toHaveBeenCalledWith(
++      expect.objectContaining({ hasRawCookie: false }),
++    );
++  });
+ });
+
+
+=== DIFF: types/auth.ts ===
+@@ -49,6 +49,14 @@ export type SessionResolution =
+   | { kind: "unauthorized"; clearCookies: boolean }
+   | { kind: "transient" };
+ 
++/** Input to lib/auth/session.ts's resolveSession() — the three decrypted token cookies plus whether an undecryptable raw cookie was present. */
++export interface ResolveSessionInput {
++  idToken: string | null;
++  refreshToken: string | null;
++  accessToken: string | null;
++  hasRawCookie: boolean;
++}
++
+ export type { LogtoTokenResponse, LogtoUserInfo, LogtoIdTokenClaims, IdTokenPayload, Jwk } from "./api/auth";
+ 
+ /** Resolved Logto OIDC endpoints + client credentials. */
+
+
+Investigate per the method in your instructions, then return the findings list.
