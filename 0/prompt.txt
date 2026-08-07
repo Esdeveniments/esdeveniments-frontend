@@ -1,0 +1,7 @@
+check for ai reviews, ie coderabbitai, etc and fix them if you agree and loop again using ai skill loop review. also we have a big regression that needs to be fixed ```Run node scripts/compare-bundle-sizes.mjs --baseline bundle-size-baseline.json --current bundle-sizes.json
+📦 Bundle size regressions detected:
+
+ERROR /[locale]: 11.14 MB → 11.52 MB (+384.69 KB, +3.37%) (threshold: 10% or 100 KB)
+ERROR /[locale]/preferits: 383.83 KB → 770.19 KB (+386.36 KB, +100.66%) (threshold: 10% or 100 KB)
+
+Summary: 2 error(s), 0 warning(s).``` that you can check while you wait for the ai report
