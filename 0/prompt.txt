@@ -1,0 +1,1 @@
+given this PR, check latest comments and ensure we can merge safely https://github.com/Esdeveniments/esdeveniments-frontend/pull/444
