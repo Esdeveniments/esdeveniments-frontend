@@ -1,0 +1,1 @@
+it was merged the pr by automerge but there are some visual issues, see: [Image #3] [Image #4] in favorites, why? how we can fix it, do you need to run any skills avaiable that fix those kind of things? [Image #5]
