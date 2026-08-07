@@ -1,0 +1,1 @@
+btw I see this before publishing [Image #2], didnt we said that show the modal when the event has been created instead? also is not a very good UI, can we add icons or something more beautiful? for 1, remove it if it was not in develop, at least that is very important to add, the same as 2, why we have changes? 3. DRY now
