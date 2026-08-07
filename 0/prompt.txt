@@ -1,0 +1,96 @@
+Given this as a context and the current branch:
+
+```
+[18:17, 25/7/2026] Gerard Segarra: Integración Frontend
+El frontend debe llamar a GET /api/auth/me justo después del login de Logto, enviando el access token:
+Authorization: Bearer <access_token>
+Eso crea el usuario local temporal si aún no existe.
+GET /api/auth/me
+Respuesta:
+{
+  "id": "uuid",
+  "email": "usuario@email.com",
+  "displayName": null,
+  "username": "user-9c44cc30",
+  "bio": null,
+  "avatarUrl": null,
+  "organizerVerified": false,
+  "profileCompleted": false,
+  "role": "USER",
+  "lastLoginAt": "2026-07-25T18:10:05"
+}
+Onboarding
+Si profileCompleted es false, redirigir al usuario a completar perfil antes de permitir crear eventos.
+PATCH /api/users/me/profile
+Authorization: Bearer <access_token>
+Content-Type: application/json
+{
+  "username": "alex91",
+  "displayName": "Alex García",
+  "bio": "Organizo conciertos y actividades culturales."
+}
+Reglas de username:
+- Entre 3 y 30 caracteres.
+- Solo minúsculas, números y guiones.
+- Sin guion inicial/final ni guiones consecutivos.
+- No puede empezar por user-.
+- No puede ser reservado: admin, api, auth, eventos, usuarios, me, login, logout.
+- Si ya existe, backend devuelve 409 Conflict.
+- Si el formato no es válido, devuelve 400 Bad Request.
+No hay endpoint de disponibilidad. El frontend valida formato localmente y muestra el error devuelto al guardar.
+Tras guardar correctamente, llamar de nuevo a GET /api/auth/me para obtener profileCompleted: true.
+Avatar
+Subir avatar:
+POST /api/users/me/avatar
+Authorization: Bearer <access_token>
+Content-Type: multipart/form-data
+El campo del FormData debe llamarse avatarFile.
+const formData = new FormData();
+formData.append("avatarFile", file);
+Respuesta:
+{
+  "avatarUrl": "https://..."
+}
+Eliminar avatar:
+DELETE /api/users/me/avatar
+Authorization: Bearer <access_token>
+Perfil público
+GET /api/users/{username}
+Ejemplo: GET /api/users/alex91
+{
+  "id": "uuid",
+  "displayName": "Alex García",
+  "username": "alex91",
+  "bio": "Organizo conciertos y actividades culturales.",
+  "avatarUrl": "https://...",
+  "organizerVerified": true,
+  "eventCount": 12,
+  "totalEventVisits": 840,
+  "createdAt": "2026-07-25T18:10:05"
+}
+El frontend construye la URL pública como:
+/usuarios/${username}
+Perfiles incompletos o temporales no son públicos: el backend responde 404.
+Eventos del perfil
+GET /api/users/{username}/events?page=0&size=20
+Es público. Si hay sesión iniciada y enviáis el token, los eventos incluyen correctamente el estado de favorito.
+Crear y gestionar eventos
+- POST /api/events requiere sesión y profileCompleted: true.
+- Si el perfil está incompleto, backend devuelve 403.
+- PUT /api/events/{uuid} y DELETE /api/events/{uuid} requieren sesión.
+- Solo puede modificar o borrar un evento su creador, salvo un usuario ADMIN.
+- Si no es el creador, backend devuelve 403.
+Creador en detalle de evento
+El creador ya no expone email. Ahora llega así:
+{
+  "id": "uuid",
+  "displayName": "Alex García",
+  "username": "alex91",
+  "avatarUrl": "https://...",
+  "organizerVerified": true
+}
+La insignia se muestra únicamente si organizerVerified es true. No hay flujo ni endpoint para solicitarla; se gestiona manualmente desde BDD.
+[18:18, 25/7/2026] Gerard Segarra: Lo del avatar encara no ho he provat, pero ho pujo a pre aixi pots anar fent
+```
+
+Check the work we did and then propose a plan to finelize all work, dont do the usuarios change, we keep profile, ie we need to do the new onboarding pages, etc. /plan
