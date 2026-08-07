@@ -1,0 +1,51 @@
+am developing an event application using Next.js and need to implement the frontend workflow for an event promotion feature via Stripe, coordinated with a Spring Boot backend.
+
+We want a Wallapop-style flow: right after a user successfully creates/publishes an event, a modal will pop up to upsell them on promoting it. Clicking the button in the modal will take them to a dedicated Promotion/Pricing page where they can complete the checkout.
+
+Before writing any code, please analyze my current files to understand the event creation flow, routing, and how free/paid states are currently structured in the UI.
+
+[ATTACH HERE: Event creation form component, main landing/list page, event detail page, and event type/interface definition files]
+
+Once you have reviewed the code, generate the necessary implementation for the following tasks:
+
+Post-Publish "Wallapop-Style" Modal:
+
+Intercept the successful event creation response to grab the new event_id.
+
+Trigger a modal immediately upon publishing that focuses on reach and visibility. Text idea: "Boost your event! Promote your event now to reach way more people and appear at the top of the platform."
+
+Include two buttons:
+
+"Promote Event": Redirects the user to the dedicated promotion page: /events/[event_id]/promote.
+
+"Keep it free": Closes the modal and redirects them to their standard event detail page or main list.
+
+Dedicated Promotion & Checkout Page (/events/[id]/promote):
+
+Create (or reuse/adapt if one exists) this page to serve as the landing page for the promotion.
+
+Clearly state the benefits (pinned to the top) and display a static flat fee for the MVP (e.g., €5).
+
+Include a "Confirm and Pay" button.
+
+Stripe Redirection Logic (Gerard's Backend Integration):
+
+When the user clicks "Confirm and Pay" on the promotion page, trigger a POST request to Gerard's exact backend endpoint: /api/events/{event_id}/promotions/checkout.
+
+The backend will validate the request, save a PENDING order, generate the Stripe session, and return a JSON containing the Stripe URL (e.g., { "url": "[https://checkout.stripe.com/](https://checkout.stripe.com/)..." }).
+
+Provide the React/Next.js logic to capture this URL and execute a window.location.href redirect to Stripe.
+
+Return Pages (Success/Cancel):
+
+Create two simple, visually clean Next.js pages for when Stripe redirects the user back (after the backend webhook updates the status to paid and SUCCESSFUL):
+
+/payment-success: A "Thank you! Your event is now successfully promoted" message.
+
+/payment-cancel: A "Payment canceled. Your event will remain free" message.
+
+Design and Code Requirements:
+
+Match the exact visual style and design system of the current application (Tailwind CSS, existing UI/modal components).
+
+Ensure this aligns with the existing data structure so that when the backend flags an event as paid, it successfully renders at the top of the list based on our current main view logic., use Opus for the adversarial, the idea is to try to rehuse as much as possible, but the logic of payment will live in the backend. think deeply
