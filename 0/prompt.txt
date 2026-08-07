@@ -1,0 +1,169 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - components/ui/profile/ProfileHeader.tsx
+  - components/ui/profile/VerifiedBadge.tsx
+  - lib/validation/user.ts
+  - messages/ca.json
+  - messages/en.json
+  - messages/es.json
+  - test/profile-header.test.tsx
+  - types/api/user.ts
+  - types/props.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: components/ui/profile/ProfileHeader.tsx ===
+@@ -1,5 +1,6 @@
+ import ProfileOwnerActions from "@components/ui/profile/ProfileOwnerActions";
+ import ProfileVisitsStat from "@components/ui/profile/ProfileVisitsStat";
++import VerifiedBadge from "@components/ui/profile/VerifiedBadge";
+ import AvatarInitials from "@components/ui/common/AvatarInitials";
+ import { getTranslations } from "next-intl/server";
+ import { getLocaleSafely } from "@utils/i18n-seo";
+@@ -72,6 +73,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
+ 
+         <div className="flex items-center gap-2 mb-2 flex-wrap">
+           <h1 className="heading-1 text-foreground">{displayName}</h1>
++          <VerifiedBadge role={profile.role} verified={profile.verified} />
+           <ProfileOwnerActions username={profile.username} />
+         </div>
+ 
+
+
+=== DIFF: components/ui/profile/VerifiedBadge.tsx ===
+@@ -0,0 +1,22 @@
++import { CheckBadgeIcon, ShieldCheckIcon } from "@heroicons/react/24/solid";
++import { useTranslations } from "next-intl";
++import type { VerifiedBadgeProps } from "types/props";
++
++export default function VerifiedBadge({ role, verified }: VerifiedBadgeProps) {
++  const t = useTranslations("Components.Profile");
++
++  if (!verified) return null;
++
++  const isOrganizer = role === "ORGANIZATION";
++  const Icon = isOrganizer ? ShieldCheckIcon : CheckBadgeIcon;
++  const label = isOrganizer ? t("verifiedOrganizer") : t("verified");
++
++  return (
++    <Icon
++      className="w-5 h-5 text-primary flex-shrink-0"
++      role="img"
++      aria-hidden="false"
++      aria-label={label}
++    />
++  );
++}
+
+
+=== DIFF: lib/validation/user.ts ===
+@@ -13,6 +13,11 @@ export const UserPublicResponseDTOSchema = z.object({
+   bio: z.string().nullish().transform((v) => v ?? undefined),
+   avatarUrl: z.string().nullish().transform((v) => v ?? undefined),
+   organizerVerified: z.boolean().nullish().transform((v) => v ?? undefined),
++  role: z
++    .enum(["USER", "ADMIN", "ORGANIZATION"])
++    .nullish()
++    .transform((v) => v ?? undefined),
++  verified: z.boolean().nullish().transform((v) => v ?? undefined),
+   eventCount: z.number().nullish().transform((v) => v ?? undefined),
+   totalEventVisits: z.number().nullish().transform((v) => v ?? undefined),
+   upcomingEventCount: z.number().nullish().transform((v) => v ?? undefined),
+
+
+=== DIFF: messages/ca.json ===
+@@ -405,6 +405,7 @@
+       "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+       "events": "Esdeveniments",
+       "verified": "Verificat",
++      "verifiedOrganizer": "Organitzador verificat",
+       "joinedDate": "Des de {date}",
+       "noEvents": "Encara no hi ha esdeveniments",
+       "website": "Lloc web",
+
+
+=== DIFF: messages/en.json ===
+@@ -405,6 +405,7 @@
+       "metaDescription": "Discover events by {name}. Browse their upcoming events, concerts, exhibitions and more.",
+       "events": "Events",
+       "verified": "Verified",
++      "verifiedOrganizer": "Verified organizer",
+       "joinedDate": "Joined {date}",
+       "noEvents": "No events yet",
+       "website": "Website",
+
+
+=== DIFF: messages/es.json ===
+@@ -405,6 +405,7 @@
+       "metaDescription": "Descubre los eventos de {name}. Consulta sus próximos eventos, conciertos, exposiciones y mucho más.",
+       "events": "Eventos",
+       "verified": "Verificado",
++      "verifiedOrganizer": "Organizador verificado",
+       "joinedDate": "Desde {date}",
+       "noEvents": "Aún no hay eventos",
+       "website": "Sitio web",
+
+
+=== DIFF: test/profile-header.test.tsx ===
+@@ -145,4 +145,30 @@ describe("ProfileHeader", () => {
+     await renderHeader(baseProfile);
+     expect(screen.getByTestId("profile-header")).toBeInTheDocument();
+   });
++
++  it("does not render a verified badge when verified is absent", async () => {
++    await renderHeader(baseProfile);
++    expect(screen.queryByRole("img", { name: "Verificat" })).not.toBeInTheDocument();
++    expect(
++      screen.queryByRole("img", { name: "Organitzador verificat" }),
++    ).not.toBeInTheDocument();
++  });
++
++  it("renders the user verified badge when verified is true and role is not ORGANIZATION", async () => {
++    const profile: ProfileDetailResponseDTO = { ...baseProfile, verified: true };
++    await renderHeader(profile);
++    expect(screen.getByRole("img", { name: "Verificat" })).toBeInTheDocument();
++  });
++
++  it("renders the organizer verified badge when verified is true and role is ORGANIZATION", async () => {
++    const profile: ProfileDetailResponseDTO = {
++      ...baseProfile,
++      verified: true,
++      role: "ORGANIZATION",
++    };
++    await renderHeader(profile);
++    expect(
++      screen.getByRole("img", { name: "Organitzador verificat" }),
++    ).toBeInTheDocument();
++  });
+ });
+
+
+=== DIFF: types/api/user.ts ===
+@@ -24,6 +24,8 @@ export interface UserPublicResponseDTO {
+   bio?: string;
+   avatarUrl?: string;
+   organizerVerified?: boolean;
++  role?: AuthRole;
++  verified?: boolean;
+   eventCount?: number;
+   totalEventVisits?: number;
+   upcomingEventCount?: number;
+
+
+=== DIFF: types/props.ts ===
+@@ -509,6 +509,11 @@ export interface ProfileHeaderProps {
+   profile: import("types/api/profile").ProfileDetailResponseDTO;
+ }
+ 
++export interface VerifiedBadgeProps {
++  role?: import("types/auth").AuthRole;
++  verified?: boolean;
++}
++
+ // Route-based tab strip (e.g. profile/favourites Propers/Passats). Each item
+ // is a navigable Link, not a client-side tabpanel switch — see components/ui/common/tabs.
+ export interface TabItem {
+
+
+Investigate per the method in your instructions, then return the findings list.
