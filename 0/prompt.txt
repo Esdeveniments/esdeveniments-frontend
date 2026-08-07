@@ -1,0 +1,1 @@
+so the idea is that when the user creates a new event, when it lands in the event detail page that has created, appears a new modal that suggest to boost that event so people can reach more, and if it clicks it lands in another page, what we current have for featured ads and or new with the options to promote, I share with you the design of wallapop: [Image #1]
