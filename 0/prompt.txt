@@ -1,0 +1,36 @@
+<task-notification>
+<task-id>a59981a0dd85677ca</task-id>
+<tool-use-id>toolu_01Qm4AQWsbHnJMT6hnoAmX2j</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/34a95ce8-44f4-41ae-a9fa-9d8fbb397720/tasks/a59981a0dd85677ca.output</output-file>
+<status>completed</status>
+<summary>Agent "Review Task 2 (spec + quality)" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Confirmed: the try/catch (line 44, 58-61) lives inside `fetchFavoritesPeriod` itself, which both `listFavoriteEventsExternal` (line 78-79) and the new `listFavoriteEventsByPeriodExternal` (line 110) call through. The new wrapper has no try/catch of its own, but it doesn't need one — network errors are already caught at the shared helper and return null, so both exported functions get identical null-on-failure behavior for both the HTTP-error and thrown-exception paths. Also confirms `FavoriteEventsPageDTO` is imported at line 8, satisfying the type usage in the new functions.
+
+### Spec Compliance
+- ✅ Spec compliant. Both functions match the required names, parameter lists (including defaults `page = 0, size = 50`), and return types exactly. No backend files touched — diff is scoped to `lib/api/favorites-external.ts` and `test/favorites-external.test.ts`. Null-on-failure convention verified equivalent to `listFavoriteEventsExternal` (see below).
+
+### Strengths
+- `listFavoriteEventsByPeriodExternal` (favorites-external.ts:102-111) is a correct thin wrapper: checks `favoritesBaseUrl()` itself (matching the guard in `listFavoriteEventsExternal` at line 74-75), then delegates to the same private `fetchFavoritesPeriod` used by the existing merge function, so both exported functions share identical error handling (try/catch and non-OK response handling live in `fetchFavoritesPeriod`, lines 44-61) rather than duplicating it.
+- `countFavoritesByPeriodExternal` (favorites-external.ts:116-121, per diff) reuses `listFavoriteEventsByPeriodExternal` instead of re-implementing the fetch, keeping the base-URL check and error handling in one place (DRY).
+- `page?.totalElements ?? null` (diff line 47) uses `??` not `||` — correctly returns `0` for a legitimate zero-count response instead of coercing it to `null`. Checked explicitly since a `||` here would be a real bug for a common case (no past favorites).
+- Tests hit the real external boundary (`fetchWithHmac` mock only) rather than mocking anything internal to the module — consistent with the existing test file's approach for `listFavoriteEventsExternal`.
+- Both new functions have a success-path and failure-path test, matching the brief's edge-case list.
+- Code placement matches the brief precisely: inserted directly after `listFavoriteEventsExternal` (ends line 100) and before `isFavoriteEventExternal`, diff import block matches the specified multi-import format.
+
+### Issues
+
+#### Critical (Must Fix)
+None.
+
+#### Important (Should Fix)
+None.
+
+#### Minor (Nice to Have)
+- The `countFavoritesByPeriodExternal` tests (test/favorites-external.test.ts, diff lines 120-144) assert `size=1` in the request URL but never assert `period=active`/`period=past` threading through to the delegated call. Coverage gap only — the delegation is a single line (`listFavoriteEventsByPeriodExternal(accessToken, period, 0, 1)`) and period-threading is already directly tested by the `listFavoriteEventsByPeriodExternal` describe block, so this isn't a real correctness risk.
+
+### Assessment
+**Task quality:** Approved
+**Reasoning:** Implementation is a verbatim, minimal match to the brief — correct signatures, correct delegation to the existing private helper (inheriting its try/catch so both the HTTP-error and thrown-exception paths return null identically to the established `listFavoriteEventsExternal` convention), and tests that exercise real behavior through the actual network-call boundary. No unrequested refactors, no scope creep, no backend touch.</result>
+<usage><subagent_tokens>61002</subagent_tokens><tool_uses>4</tool_uses><duration_ms>113369</duration_ms></usage>
+</task-notification>
