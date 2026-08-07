@@ -1,0 +1,39 @@
+<task-notification>
+<task-id>ad42d59e45129b724</task-id>
+<tool-use-id>toolu_01CZfZhu6hzbvLXC2GjG7TFC</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/78eb8937-1199-4e8b-b6e8-0059924441c8/tasks/ad42d59e45129b724.output</output-file>
+<status>completed</status>
+<summary>Agent "Stripe checkout success/cancel URL best practices" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Stripe's Official Guidance Summary
+
+**1. Query Parameters on success_url:**
+Yes, Stripe recommends using the `{CHECKOUT_SESSION_ID}` template variable. Set it as a literal string (e.g., `https://example.com/success?session_id={CHECKOUT_SESSION_ID}`) when creating the Checkout Session. Stripe automatically substitutes the actual session ID after payment—never pre-substitute it yourself.
+
+**2. Generic vs. Scoped Success Pages:**
+Stripe's documentation doesn't explicitly prescribe one pattern. However, their examples show retrieving the session data server-side to display customized order information, suggesting per-resource or flexible design is expected. The session ID in the URL allows you to look up context.
+
+**3. Success Page Verification:**
+**Rely on webhooks as your source of truth, not the redirect.** Key principle: "Customers aren't guaranteed to visit the success page." Stripe recommends:
+- Set up a webhook handler for `checkout.session.completed` events
+- Verify payment server-side via webhooks, which retry on failure
+- Use the success page to *display* confirmation, not to *verify* payment occurred
+- If you need additional confirmation before showing success content, retrieve the session server-side using the session ID from the URL
+
+**4. URL Structure Conventions:**
+- Use `{CHECKOUT_SESSION_ID}` as a literal template (not pre-substituted)
+- Stripe handles variable substitution automatically post-payment
+- Webhook signature verification required (use `constructEvent()` with `Stripe-Signature` header)
+- Return 200 response quickly for webhook safety
+
+**Bottom line:** Session IDs in URLs enable page personalization; webhooks enable reliable fulfillment.
+
+---
+
+Sources:
+- [Customize redirect behavior | Stripe Docs](https://docs.stripe.com/payments/checkout/custom-success-page)
+- [Receive Stripe events in webhooks | Stripe Docs](https://docs.stripe.com/webhooks)
+- [Fulfill orders | Stripe Docs](https://docs.stripe.com/checkout/fulfillment)
+- [Stripe webhook security | Stripe Docs](https://docs.stripe.com/webhooks/signature)</result>
+<usage><subagent_tokens>41232</subagent_tokens><tool_uses>12</tool_uses><duration_ms>58769</duration_ms></usage>
+</task-notification>
