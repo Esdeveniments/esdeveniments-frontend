@@ -1,0 +1,37 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - components/ui/common/social/SocialLinksSection.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: components/ui/common/social/SocialLinksSection.tsx ===
+@@ -9,7 +9,6 @@ const SOCIAL_LINKS = [
+   { platform: "threads", label: "Threads", href: socialLinks.threads },
+   { platform: "linkedin", label: "LinkedIn", href: socialLinks.linkedin },
+   { platform: "telegram", label: "Telegram", href: socialLinks.telegram },
+-  // { platform: "tiktok", label: "TikTok", href: socialLinks.tiktok },
+   { platform: "mastodon", label: "Mastodon", href: socialLinks.mastodon },
+ ] as const;
+ 
+@@ -37,7 +36,7 @@ export default function SocialLinksSection({
+                 href={social.href}
+                 target="_blank"
+                 rel="noopener noreferrer"
+-                className="flex-center gap-1.5 px-3.5 py-2 rounded-full border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-[transform,background-color,border-color] duration-normal text-foreground body-small font-medium no-underline flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
++                className="flex-center gap-1.5 px-3.5 py-2 rounded-full border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-[transform,background-color,border-color] duration-normal text-foreground body-small font-medium no-underline flex-shrink-0 focus-ring"
+                 aria-label={social.label}
+               >
+                 <span className="text-primary">
+@@ -55,7 +54,7 @@ export default function SocialLinksSection({
+               href={social.href}
+               target="_blank"
+               rel="noopener noreferrer"
+-              className="flex-center gap-1.5 px-3 py-2.5 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-[transform,background-color,border-color] duration-normal text-foreground body-small font-medium no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
++              className="flex-center gap-1.5 px-3 py-2.5 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-[transform,background-color,border-color] duration-normal text-foreground body-small font-medium no-underline focus-ring"
+               aria-label={social.label}
+             >
+               <span className="text-primary">
+
+
+Investigate per the method in your instructions, then return the findings list.
