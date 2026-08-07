@@ -1,0 +1,306 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/sitemap/[town]/[year]/[month]/page.tsx
+  - components/partials/generatePagesData.ts
+  - eslint.config.mjs
+  - lib/api/events.ts
+  - lib/seo/place-expandability.ts
+  - lib/seo/place-metadata.ts
+  - test/lib/api/categories.test.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/sitemap/[town]/[year]/[month]/page.tsx ===
+@@ -7,7 +7,7 @@ import {
+ } from "@utils/helpers";
+ import { getTranslations } from "next-intl/server";
+ import { siteUrl } from "@config/index";
+-import { fetchEvents } from "@lib/api/events";
++import { fetchEvents, fetchEventsForMetadata } from "@lib/api/events";
+ import { getPlaceBySlug } from "@lib/api/places";
+ import { fetchPlaceBySlugForMetadata } from "@lib/seo/place-metadata";
+ import {
+@@ -113,7 +113,11 @@ export async function generateMetadata({
+ 
+   // Probe events to set robots policy: noindex empty months so GSC stops
+   // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
+-  // primitive-keyed fetchMonthEvents wrapper so Page reuses the same response.
++  // metadata-safe fetchEventsForMetadata, not the fetchMonthEvents wrapper
++  // Page uses below — fetchMonthEvents goes through fetchWithHmac, which
++  // unconditionally calls connection() and breaks the static shell if
++  // called from generateMetadata. See docs/incidents/
++  // 2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+   const { from, until } = getHistoricDates(
+     canonicalMonthSlug,
+     Number(year),
+@@ -121,7 +125,12 @@ export async function generateMetadata({
+   );
+   const fromStr = from.toISOString().split("T")[0];
+   const toStr = until.toISOString().split("T")[0];
+-  const events = await fetchMonthEvents(town, fromStr, toStr);
++  const events = await fetchEventsForMetadata({
++    place: town,
++    from: fromStr,
++    to: toStr,
++    size: MAX_EVENTS_PER_PAGE,
++  });
+   const realEventCount = Array.isArray(events.content)
+     ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
+       .length
+
+
+=== DIFF: components/partials/generatePagesData.ts ===
+@@ -8,7 +8,7 @@ import {
+   PlaceTypeAndLabel,
+ } from "types/common";
+ import { formatPlacePreposition } from "@utils/helpers";
+-import { splitNotFoundText } from "@utils/notFoundMessaging";
++import { splitNotFoundText, appendSearchQuery } from "@utils/notFoundMessaging";
+ import { applyLocaleToCanonical } from "@utils/i18n-seo";
+ import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+@@ -73,16 +73,24 @@ const baseCreatePageData = (
+   };
+ };
+ 
+-export async function generatePagesData({
++// Cached body, deliberately excluding `search`: it's free-text user input
++// (a query-string param), and "use cache" derives its cache key from the
++// function's arguments — including it here would create one cache entry per
++// unique search string, unbounded cardinality on the data cache. `search`
++// only ever affects notFoundTitle (via appendSearchQuery), so the exported
++// generatePagesData wrapper below appends it AFTER reading from the cache,
++// outside the cache boundary. See the Jan 20 2026 fetch-cache-cardinality
++// incident referenced in lib/api's external-fetch caching rules for the
++// same class of bug.
++async function generatePagesDataCached({
+   currentYear,
+   place = "",
+   byDate = "",
+   placeTypeLabel,
+   category,
+   categoryName,
+-  search,
+   locale,
+-}: GeneratePagesDataProps & {
++}: Omit<GeneratePagesDataProps, "search"> & {
+   placeTypeLabel: PlaceTypeAndLabel;
+   locale?: AppLocale;
+ }): Promise<PageData> {
+@@ -221,7 +229,7 @@ export async function generatePagesData({
+       metaDescription,
+       applyLocaleToCanonical(canonical, resolvedLocale),
+       notFoundText,
+-      search,
++      undefined,
+       resolvedLocale
+     );
+ 
+@@ -529,3 +537,27 @@ export async function generatePagesData({
+     t("fallback.notFound")
+   );
+ }
++
++// Thin uncached wrapper: reads the cached PageData (search-independent, see
++// generatePagesDataCached above), then appends the search query to
++// notFoundTitle outside the cache boundary. appendSearchQuery is pure and
++// idempotent, so calling it here has no caching implications.
++export async function generatePagesData({
++  search,
++  ...rest
++}: GeneratePagesDataProps & {
++  placeTypeLabel: PlaceTypeAndLabel;
++  locale?: AppLocale;
++}): Promise<PageData> {
++  const pageData = await generatePagesDataCached(rest);
++  if (!search) return pageData;
++  const resolvedLocale = rest.locale || DEFAULT_LOCALE;
++  return {
++    ...pageData,
++    notFoundTitle: appendSearchQuery(
++      pageData.notFoundTitle,
++      search,
++      resolvedLocale
++    ),
++  };
++}
+
+
+=== DIFF: eslint.config.mjs ===
+@@ -94,10 +94,19 @@ export default [
+           // headers()), which makes metadata runtime-dynamic, pushes the metadata
+           // boundary into the resume tree and breaks PPR. Covers declaration and
+           // arrow/expression forms. See docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md
++          //
++          // fetchMonthEvents (2026-08-02, sitemap [year]/[month] page) is a
++          // locally-named `cache(async (...) => fetchEvents(...))` wrapper —
++          // this selector only matches by identifier name, so it missed the
++          // real fetchEvents call underneath until reviewed manually. Adding
++          // the specific local alias here is a stopgap, not a generalizable
++          // fix: any future locally-named wrapper around one of these readers
++          // can evade this rule the same way. There is no cheap identifier-only
++          // fix for that; a type-aware rule would be needed to close it fully.
+           selector:
+-            ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug|fetchEvents|fetchEventBySlug|fetchEventBySlugWithStatus|fetchNews|fetchNewsBySlug|fetchNewsCities)$/]",
++            ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug|fetchEvents|fetchMonthEvents|fetchEventBySlug|fetchEventBySlugWithStatus|fetchNews|fetchNewsBySlug|fetchNewsCities)$/]",
+           message:
+-            "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
++            "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getEventBySlugForMetadata / getNewsBySlugForMetadata / fetchEventsForMetadata instead.",
+         },
+         {
+           // Same class of bug, different call chain: place/region/category
+
+
+=== DIFF: lib/api/events.ts ===
+@@ -164,6 +164,48 @@ async function fetchEventsInternal(
+ 
+ export const fetchEvents = cache(fetchEventsInternal);
+ 
++// Metadata-only reader: resolves the API origin from configuration instead of
++// request headers(), and is itself cached, so generateMetadata stays
++// prerenderable under cacheComponents. fetchEvents (above) goes through
++// fetchWithHmac, which unconditionally calls connection() — a genuine dynamic
++// API — so wrapping it in React cache() (as fetchMonthEvents does in the
++// sitemap month page) does NOT make it prerenderable; it still breaks the
++// static shell when called from generateMetadata. This variant hits the
++// internal /api/events route with a plain, tagged fetch instead. See
++// docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
++export async function fetchEventsForMetadata(
++  params: FetchEventsParams,
++): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
++  "use cache";
++  cacheTag(eventsTag);
++  const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
++    content: [],
++    currentPage: params.page ?? 0,
++    pageSize: params.size ?? 12,
++    totalElements: 0,
++    totalPages: 0,
++    last: true,
++  };
++  const queryString = buildEventsQuery(params);
++  const url = await getInternalApiUrl(`/api/events?${queryString}`, {
++    preferConfiguredOrigin: true,
++  });
++  const response = await fetch(url, {
++    headers: getVercelProtectionBypassHeaders(),
++    next: { revalidate: 600, tags: [eventsTag] },
++  });
++  if (!response.ok) {
++    // Transient upstream failure — cache briefly rather than "hours" so a
++    // recovering backend doesn't leave metadata degraded for a long window.
++    cacheLife("minutes");
++    return fallbackResponse;
++  }
++  const data = await response.json();
++  const validated = parsePagedEvents(data);
++  cacheLife("hours");
++  return validated ?? fallbackResponse;
++}
++
+ export async function fetchEventBySlug(
+   fullSlug: string,
+   options: InternalOriginOptions = {},
+
+
+=== DIFF: lib/seo/place-expandability.ts ===
+@@ -39,7 +39,7 @@ async function fetchEventCountForMetadata(slug: string): Promise<number | null>
+   );
+   const response = await fetch(url, {
+     headers: getVercelProtectionBypassHeaders(),
+-    next: { revalidate: 600, tags: ["events"] },
++    next: { revalidate: 600, tags: [eventsTag] },
+   });
+   if (!response.ok) return null;
+   const data = await response.json();
+@@ -69,8 +69,9 @@ async function fetchEventCountForMetadata(slug: string): Promise<number | null>
+  * and API I/O; `utils/` is reserved for deterministic, side-effect-free
+  * helpers.
+  */
+-export const getPlaceExpandability = cache((slug: string, type: PlaceType) =>
+-  resolvePlaceExpandability(slug, type, fetchEventCountExternal),
++export const getPlaceExpandability = cache(
++  (slug: string, type: PlaceType): Promise<boolean> =>
++    resolvePlaceExpandability(slug, type, fetchEventCountExternal),
+ );
+ 
+ // Metadata-only reader: wraps the same check in `"use cache"` so
+
+
+=== DIFF: lib/seo/place-metadata.ts ===
+@@ -32,6 +32,11 @@ export async function fetchPlaceBySlugForMetadata(
+     next: { revalidate: 86400, tags: [placesTag, placeTag(slug)] },
+   });
+   if (response.status === 404) {
++    // Genuine 404: cache briefly so a newly-created place isn't stuck on
++    // "not found" metadata for hours. "minutes" not "seconds" — seconds is a
++    // PPR dynamic hole and would re-break the static shell. Mirrors
++    // getNewsBySlugForMetadata / getEventBySlugForMetadata.
++    cacheLife("minutes");
+     return null;
+   }
+   if (!response.ok) {
+@@ -51,9 +56,10 @@ export async function fetchRegionsWithCitiesForMetadata(): Promise<
+   });
+   const response = await fetch(url, {
+     headers: getVercelProtectionBypassHeaders(),
+-    next: { revalidate: 86400, tags: ["regions", "regions:options"] },
++    next: { revalidate: 86400, tags: [regionsTag, regionsOptionsTag] },
+   });
+   if (!response.ok) {
++    cacheLife("minutes");
+     return [];
+   }
+   cacheLife("hours");
+
+
+=== DIFF: test/lib/api/categories.test.ts ===
+@@ -8,6 +8,11 @@ vi.mock("@utils/api-helpers", () => ({
+   getVercelProtectionBypassHeaders: vi.fn(() => ({})),
+ }));
+ 
++vi.mock("next/cache", () => ({
++  cacheTag: vi.fn(),
++  cacheLife: vi.fn(),
++}));
++
+ vi.mock("lib/validation/category", () => ({
+   parseCategories: vi.fn((data: unknown) => data),
+ }));
+@@ -108,4 +113,32 @@ describe("lib/api/categories", () => {
+     const { clearCategoriesCaches } = await import("lib/api/categories");
+     expect(() => clearCategoriesCaches()).not.toThrow();
+   });
++
++  it("fetchCategoriesForMetadata makes fetch call and returns parsed data", async () => {
++    const { fetchCategoriesForMetadata } = await import("lib/api/categories");
++    const result = await fetchCategoriesForMetadata();
++    expect(result).toHaveLength(2);
++    expect(result[0]).toHaveProperty("slug", "musica");
++  });
++
++  it("fetchCategoriesForMetadata degrades to an empty array on a non-ok response", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({
++        ok: false,
++        status: 500,
++      }),
++    );
++    const { fetchCategoriesForMetadata } = await import("lib/api/categories");
++    const result = await fetchCategoriesForMetadata();
++    expect(result).toEqual([]);
++  });
++
++  it("fetchCategoriesForMetadata calls cacheTag/cacheLife (use cache boundary)", async () => {
++    const { cacheTag, cacheLife } = await import("next/cache");
++    const { fetchCategoriesForMetadata } = await import("lib/api/categories");
++    await fetchCategoriesForMetadata();
++    expect(cacheTag).toHaveBeenCalled();
++    expect(cacheLife).toHaveBeenCalledWith("hours");
++  });
+ });
+
+
+Investigate per the method in your instructions, then return the findings list.
