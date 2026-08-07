@@ -1,0 +1,1 @@
+so you propose to keep neoticias tab in bottom menu, remove hambuger menu and in there add the profile icon that only navigates to profile and in there the logout?
