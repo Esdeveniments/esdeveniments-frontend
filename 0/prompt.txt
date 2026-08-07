@@ -1,0 +1,85 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - lib/api/users-external.ts
+  - test/users-external.test.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: lib/api/users-external.ts ===
+@@ -336,11 +336,18 @@ export async function deleteUserAvatarExternal(
+   }
+ }
+ 
++// Backend contract confirmed by Gerard 2026-07-30: the query param is
++// `period` (required, lowercase `active` | `past`), not the `status` name
++// this plan was drafted against. `active` includes upcoming + in-progress
++// events. Kept as a domain-named `status` param at this function's boundary
++// (see ProfileEventsSectionProps) so only this translation needed to change.
++const PERIOD_BY_STATUS = { upcoming: "active", past: "past" } as const;
++
+ /**
+  * Public listing of a user's events: GET /api/users/{username}/events.
+- * Same paged shape as /events; the endpoint accepts page, size, and an
+- * optional status ("upcoming" | "past") that scopes the profile's Propers /
+- * Passats tabs. Omitting status keeps today's upcoming-only behaviour.
++ * Same paged shape as /events; the endpoint requires page, size, and
++ * `period` (mapped from `status`) that scopes the profile's Propers /
++ * Passats tabs.
+  * Default size is 20 — matches the backend handoff and the
+  * /[place] listing page size, so a public profile with many events
+  * renders at the same density as the home page.
+@@ -351,7 +358,7 @@ export async function getUserEventsExternal(
+   username: string,
+   page = 0,
+   size = 20,
+-  status?: "upcoming" | "past",
++  status: "upcoming" | "past" = "upcoming",
+ ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+   const empty: PagedResponseDTO<EventSummaryResponseDTO> = {
+     content: [],
+@@ -370,8 +377,11 @@ export async function getUserEventsExternal(
+ 
+   // No `next: { revalidate }` here — external wrappers must stay no-store
+   // (repo cost rule). Matches getUserByUsernameExternal on the same page.
+-  const qs = new URLSearchParams({ page: String(page), size: String(size) });
+-  if (status) qs.set("status", status);
++  const qs = new URLSearchParams({
++    page: String(page),
++    size: String(size),
++    period: PERIOD_BY_STATUS[status],
++  });
+   return fetchJsonWithFallback(
+     `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
+     parsePagedEvents,
+
+
+=== DIFF: test/users-external.test.ts ===
+@@ -69,6 +69,24 @@ describe("getUserEventsExternal", () => {
+     expect(url).toContain("size=5");
+   });
+ 
++  it("maps status to the backend's period param (upcoming -> active, past -> past)", async () => {
++    mockFetchWithHmac.mockResolvedValue(pagedResponse(emptyPage));
++
++    await getUserEventsExternal("sala-apolo", 0, 20, "upcoming");
++    expect(mockFetchWithHmac.mock.calls[0][0]).toContain("period=active");
++
++    await getUserEventsExternal("sala-apolo", 0, 20, "past");
++    expect(mockFetchWithHmac.mock.calls[1][0]).toContain("period=past");
++  });
++
++  it("defaults to period=active when status is omitted", async () => {
++    mockFetchWithHmac.mockResolvedValue(pagedResponse(emptyPage));
++
++    await getUserEventsExternal("sala-apolo", 2, 5);
++
++    expect(mockFetchWithHmac.mock.calls[0][0]).toContain("period=active");
++  });
++
+   it("returns an empty page (no fetch) for a blank username", async () => {
+     const result = await getUserEventsExternal("   ");
+     expect(result.content).toEqual([]);
+
+
+Investigate per the method in your instructions, then return the findings list.
