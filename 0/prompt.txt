@@ -1,0 +1,294 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/e/[eventId]/EventClient.tsx
+  - app/[locale]/e/[eventId]/components/PromoteUpsellModal.tsx
+  - app/[locale]/e/[eventId]/promote/PromoteEventClient.tsx
+  - e2e/publish-integration.spec.ts
+  - lib/api/events.ts
+  - test/lib/api/events.createPromotionCheckout.test.ts
+  - test/promote-event-client.test.tsx
+  - test/promote-upsell-modal.test.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/e/[eventId]/EventClient.tsx ===
+@@ -61,7 +61,7 @@ export default function EventClient({
+   // /promote page, which 404s for them. isOwner is undefined (not false)
+   // while the auth session is still resolving, so the modal only ever shows
+   // once ownership is positively confirmed — never as a flash-then-hide.
+-  const isOwner = user?.id === event.ownerId;
++  const isOwner = Boolean(event.ownerId) && user?.id === event.ownerId;
+   const initialShowPromoteUpsell = searchParams.get("promote") === "1";
+   const [dismissed, setDismissed] = useState(false);
+   // Derived, not stored state: isOwner/initialShowPromoteUpsell already fully
+
+
+=== DIFF: app/[locale]/e/[eventId]/components/PromoteUpsellModal.tsx ===
+@@ -1,8 +1,7 @@
+ "use client";
+ 
+ import { useTranslations } from "next-intl";
+-import { useSearchParams } from "next/navigation";
+-import { useRouter, usePathname } from "@i18n/routing";
++import { useRouter } from "@i18n/routing";
+ import { RocketLaunchIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+ import Modal from "@components/ui/common/modal";
+ import Button from "@components/ui/common/button";
+@@ -19,8 +18,6 @@ export default function PromoteUpsellModal({
+   // instead of duplicating the same three strings under a second namespace.
+   const tPromote = useTranslations("App.EventPromote");
+   const router = useRouter();
+-  const pathname = usePathname();
+-  const searchParams = useSearchParams() ?? new URLSearchParams();
+ 
+   const handlePromote = () => {
+     sendGoogleEvent("promote_modal_cta_click", {
+@@ -29,14 +26,14 @@ export default function PromoteUpsellModal({
+     });
+     // Strip the one-time ?promote=1 marker from the *current* history entry
+     // before navigating away, so a later browser-back to this event doesn't
+-    // re-open the modal (the marker would otherwise still be sitting in the
+-    // event detail page's URL even though the user already engaged with it).
+-    const remainingParams = new URLSearchParams(searchParams.toString());
+-    remainingParams.delete("promote");
+-    const query = remainingParams.toString();
+-    router.replace(query ? `${pathname}?${query}` : pathname, {
+-      scroll: false,
+-    });
++    // re-open the modal. Uses a raw history replace (not router.replace) —
++    // mirrors AuthEventTracker's marker-stripping — because a router.replace
++    // immediately followed by the router.push below can have the push cancel
++    // the replace's pending navigation in the App Router, leaving the marker
++    // in place despite this call.
++    const url = new URL(window.location.href);
++    url.searchParams.delete("promote");
++    window.history.replaceState(window.history.state, "", url);
+     router.push(`/e/${slug}/promote`);
+     // Explicitly returning false stops Modal's own setOpen(false) from racing
+     // this navigation — see the design doc's "Modal" section for why this
+
+
+=== DIFF: app/[locale]/e/[eventId]/promote/PromoteEventClient.tsx ===
+@@ -1,12 +1,12 @@
+ "use client";
+ 
+-import { useEffect, useState } from "react";
++import { useEffect, useRef, useState } from "react";
+ import { useLocale, useTranslations } from "next-intl";
+ import { Link } from "@i18n/routing";
+ import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+ import Button from "@components/ui/common/button";
+ import { getEventPromotionOptions } from "@config/pricing";
+-import { sendGoogleEvent } from "@utils/analytics";
++import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
+ import type { AppLocale } from "types/i18n";
+ import type { PromoteEventClientProps } from "types/props";
+ import { createPromotionCheckoutAction } from "./actions";
+@@ -35,10 +35,14 @@ export default function PromoteEventClient({
+   // (e.g. no tier available for this event yet).
+   const [promotionOption] = getEventPromotionOptions();
+ 
++  const hasTrackedPageViewRef = useRef(false);
+   useEffect(() => {
++    // Guards against React Strict Mode's dev-only double-invoke, same as
++    // FavoritesPageTracker/ProfilePageTracker.
++    if (hasTrackedPageViewRef.current) return;
++    ensureGtag();
+     sendGoogleEvent("promote_page_view", { event_slug: slug });
+-    // slug is stable for this component's lifetime (a new event means a full
+-    // remount), so this still only ever fires once despite the dependency.
++    hasTrackedPageViewRef.current = true;
+   }, [slug]);
+ 
+   const handleConfirm = async () => {
+
+
+=== DIFF: e2e/publish-integration.spec.ts ===
+@@ -497,8 +497,14 @@ test.describe("Publish integration (staging)", () => {
+       // This test creates its own event, separate from the suite-level
+       // afterAll cleanup (which only tracks TEST_EVENT_TITLE). The DELETE
+       // route resolves by slug internally, so no extra id lookup is needed.
+-      if (createdPromoteSlug) {
+-        await cleanupEvent(page, createdPromoteSlug);
++      // Falls back to a title lookup (reusing the same helper afterAll uses
++      // for its own recovery) on the rare chance the redirect itself never
++      // matched /e/{slug} — otherwise a failed run leaks an event on staging
++      // that nothing ever cleans up.
++      const cleanupTarget =
++        createdPromoteSlug ?? (await findCreatedEventId(page, promoteTestTitle));
++      if (cleanupTarget) {
++        await cleanupEvent(page, cleanupTarget);
+       }
+     }
+   });
+
+
+=== DIFF: lib/api/events.ts ===
+@@ -381,9 +381,14 @@ export async function createPromotionCheckout(
+   if (!response.ok) {
+     const errorText = await response.text();
+     console.error("createPromotionCheckout: error response:", errorText);
+-    throw new Error(
++    const err = new Error(
+       `HTTP error! status: ${response.status}, body: ${errorText}`,
+     );
++    // Propagate the HTTP status the same way requireMutationAuth's own 401
++    // does, so a backend-rejected (expired) token is classified as
++    // stale-session too, not only a missing local access token.
++    (err as Error & { status: number }).status = response.status;
++    throw err;
+   }
+ 
+   const payload = await response.json();
+
+
+=== DIFF: test/lib/api/events.createPromotionCheckout.test.ts ===
+@@ -75,6 +75,18 @@ describe("createPromotionCheckout", () => {
+     ).rejects.toThrow(/404/);
+   });
+ 
++  it("attaches the backend's HTTP status to the thrown error, so a 401 the backend itself rejects is classified the same as a locally-expired token", async () => {
++    mockFetchWithHmac.mockResolvedValue({
++      ok: false,
++      status: 401,
++      text: async () => "Token expired",
++    });
++
++    await expect(
++      createPromotionCheckout("event-uuid-1", "https://x/success", "https://x/cancel"),
++    ).rejects.toMatchObject({ status: 401 });
++  });
++
+   it("throws when no valid access token is available", async () => {
+     mockGetValidAccessToken.mockResolvedValue(null);
+ 
+
+
+=== DIFF: test/promote-event-client.test.tsx ===
+@@ -18,8 +18,10 @@ vi.mock("../app/[locale]/e/[eventId]/promote/actions", () => ({
+     mockCreatePromotionCheckoutAction(eventId, slug, locale),
+ }));
+ 
++const mockEnsureGtag = vi.fn();
+ vi.mock("@utils/analytics", () => ({
+   sendGoogleEvent: (...args: unknown[]) => mockSendGoogleEvent(...args),
++  ensureGtag: (...args: unknown[]) => mockEnsureGtag(...args),
+ }));
+ 
+ vi.mock("@config/pricing", () => ({
+@@ -99,12 +101,17 @@ describe("PromoteEventClient", () => {
+   });
+ 
+   it("renders the price from getEventPromotionOptions rather than a hardcoded value", () => {
++    // Deliberately not 5 (config's real current value) — a component that
++    // hardcoded "5€" instead of reading getEventPromotionOptions() would
++    // still pass this test if the mock returned the same value as the
++    // hardcode, so the fixture uses a distinguishing price instead.
++    mockGetEventPromotionOptions.mockReturnValue([
++      { id: "standard", priceEur: 7 },
++    ]);
++
+     render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
+ 
+-    // 5 is today's only entry from getEventPromotionOptions() — asserting
+-    // against the rendered text (not re-importing the config function) keeps
+-    // this test honest about what the user actually sees.
+-    expect(screen.getByText("5€")).toBeInTheDocument();
++    expect(screen.getByText("7€")).toBeInTheDocument();
+   });
+ 
+   it("resets isSubmitting and shows an error when the action itself rejects (not just returns success:false)", async () => {
+@@ -153,6 +160,7 @@ describe("PromoteEventClient", () => {
+     render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
+ 
+     expect(screen.getByTestId("promote-confirm-button")).toBeDisabled();
++    expect(screen.getByRole("alert")).toBeInTheDocument();
+     expect(screen.queryByText("5€")).toBeNull();
+   });
+ 
+@@ -180,5 +188,9 @@ describe("PromoteEventClient", () => {
+       "promote_checkout_redirect",
+       { event_slug: "my-event" },
+     );
++    // Exact count, not just toHaveBeenCalledWith, so a regression that fires
++    // any of the three events twice (e.g. a missing one-shot guard) fails
++    // this test instead of passing alongside the correct calls.
++    expect(mockSendGoogleEvent).toHaveBeenCalledTimes(3);
+   });
+ });
+
+
+=== DIFF: test/promote-upsell-modal.test.tsx ===
+@@ -1,5 +1,5 @@
+ import { describe, it, expect, vi, beforeEach } from "vitest";
+-import { render, screen, fireEvent } from "@testing-library/react";
++import { render, screen, fireEvent, act } from "@testing-library/react";
+ import type { ReactNode } from "react";
+ 
+ vi.mock("next-intl", () => ({
+@@ -7,15 +7,8 @@ vi.mock("next-intl", () => ({
+ }));
+ 
+ const mockPush = vi.fn();
+-const mockReplace = vi.fn();
+ vi.mock("@i18n/routing", () => ({
+-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+-  usePathname: () => "/en/e/my-event",
+-}));
+-
+-let mockSearchParams = new URLSearchParams();
+-vi.mock("next/navigation", () => ({
+-  useSearchParams: () => mockSearchParams,
++  useRouter: () => ({ push: mockPush }),
+ }));
+ 
+ vi.mock("@heroicons/react/24/outline", () => ({
+@@ -68,14 +61,20 @@ import PromoteUpsellModal from "../app/[locale]/e/[eventId]/components/PromoteUp
+ describe("PromoteUpsellModal", () => {
+   beforeEach(() => {
+     vi.clearAllMocks();
+-    mockSearchParams = new URLSearchParams("promote=1");
++    window.history.pushState({}, "", "/en/e/my-event?promote=1");
+   });
+ 
+-  it("navigates to the promote page without letting Modal's own setOpen(false) fire on the same click", () => {
++  it("navigates to the promote page without letting Modal's own setOpen(false) fire on the same click", async () => {
+     const setOpen = vi.fn();
+     render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" />);
+ 
+-    fireEvent.click(screen.getByTestId("modal-action-button"));
++    // Awaited via act: the stub's onClick is async (awaits onActionButtonClick
++    // before deciding whether to call setOpen), so asserting setOpen
++    // immediately after a bare fireEvent.click would pass regardless of the
++    // component's return value — the continuation hasn't run yet.
++    await act(async () => {
++      fireEvent.click(screen.getByTestId("modal-action-button"));
++    });
+ 
+     expect(mockPush).toHaveBeenCalledWith("/e/my-event/promote");
+     // The stubbed Modal only calls setOpen when onActionButtonClick's return
+@@ -84,14 +83,15 @@ describe("PromoteUpsellModal", () => {
+     expect(setOpen).not.toHaveBeenCalled();
+   });
+ 
+-  it("strips the promote marker from the current URL before navigating to the promote page", () => {
++  it("strips the promote marker from the current URL before navigating to the promote page", async () => {
+     render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" />);
+ 
+-    fireEvent.click(screen.getByTestId("modal-action-button"));
+-
+-    expect(mockReplace).toHaveBeenCalledWith("/en/e/my-event", {
+-      scroll: false,
++    await act(async () => {
++      fireEvent.click(screen.getByTestId("modal-action-button"));
+     });
++
++    expect(window.location.pathname).toBe("/en/e/my-event");
++    expect(window.location.search).toBe("");
+   });
+ 
+   it("closes the modal without navigating on 'keep it free' (already on the event detail page)", () => {
+
+
+Investigate per the method in your instructions, then return the findings list.
