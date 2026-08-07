@@ -1,0 +1,1 @@
+why in the navbar we see this weird bg with a webp image? [Image #2] , also I still see this weird skeleton, maybe is the auth skeleon or something else? it happens in publica page, profile page, etc [Image #3], also do we have tested all edge cases, etc so this is very robust?
