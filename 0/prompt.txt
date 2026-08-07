@@ -1,0 +1,1 @@
+yes, and commit and push dont assume anything and do it robust, centralize, DRY, tests, as allways
