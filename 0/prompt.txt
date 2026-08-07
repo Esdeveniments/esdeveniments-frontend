@@ -1,0 +1,39 @@
+<task-notification>
+<task-id>a0556b69a5c8885f7</task-id>
+<tool-use-id>toolu_01Ku2GknPiZqZxDZK91rJ5XQ</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/34a95ce8-44f4-41ae-a9fa-9d8fbb397720/tasks/a0556b69a5c8885f7.output</output-file>
+<status>completed</status>
+<summary>Agent "Review Task 7 (spec + quality)" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All four translation keys (`emptyTitle`, `tabUpcoming`, `pastEmptyTitle`, `tabPast`) exist under `App.Favorites` in `messages/ca.json` (confirmed same set present in en/es too). No missing-key risk.
+
+Verified `EventsSection` (components/partials/EventsSection.tsx:10-21) prop shape matches the call site exactly, and `listFavoriteEventsByPeriodExternal` (lib/api/favorites-external.ts:102-111) returns `FavoriteEventsPageDTO | null`, propagating `null` from `fetchFavoritesPeriod` on non-ok response, thrown error, or unconfigured API URL — never an empty-content object on failure. `MAX_FAVORITES_AUTHENTICATED = 50` confirmed in utils/constants.ts:16, distinct from `MAX_FAVORITES = 10` at line 11.
+
+### Spec Compliance
+- ✅ Spec compliant
+
+### Strengths
+- Null-on-failure contract is correct: `lib/api/favorites-external.ts` returns `null` (never `{content: []}`) on HTTP failure, thrown error, or missing API config, and `FavoritesEventsSection.tsx:47` checks `page === null` before touching `page.content`, so it can't misrender a failure as an empty list.
+- Status→period mapping is correct and matches the endpoint's confirmed contract: `status === "past" ? "past" : "active"` (FavoritesEventsSection.tsx:36), consistent with the LESSONS.md note in favorites-external.ts:29-31 that the backend takes `period=active|past`.
+- Uses `MAX_FAVORITES_AUTHENTICATED` (50), not `MAX_FAVORITES` (10) or a hardcoded number — component.tsx:20,43.
+- Delegates correctly: no reimplemented fetch or list-rendering logic; `EventsSection` is called with exactly the props it declares (events, emptyTitle, sectionLabel, testId, initialIsFavorite).
+- Parallelizes `getTranslations` and the data fetch via `Promise.all`, avoiding unnecessary sequential latency — reasonable, not over-engineered.
+- Tests cover both branches with concrete assertions: null-on-failure (test/favorites-events-section.test.tsx:121-137) and success-path argument verification `toHaveBeenCalledWith("token", "past", 0, expect.any(Number))` (line 162-167), which would catch a period-mapping regression.
+- Code matches the brief byte-for-byte except the one documented, justified `props`→`_props` lint fix in a test mock — no unrequested refactors.
+
+### Issues
+#### Critical (Must Fix)
+None.
+
+#### Important (Should Fix)
+None.
+
+#### Minor (Nice to Have)
+- The "upcoming" success path (status: "upcoming" → period: "active") has no dedicated test — only the "past" branch is exercised for the success case. The null-on-failure test also happens to use `status: "past"`. Since both branches of the ternary are simple and the "past" branch is verified end-to-end, this is low risk, but a symmetric test would fully pin the mapping against regression. Not a blocker given the ternary's simplicity and that the reverse case is visually obvious in the 3-line mapping.
+- Comment at FavoritesEventsSection.tsx:24-28 says "matching ProfileEventsSection's shape" — reasonable but unverified from this diff alone (Task 6/ProfileEventsSection not in this diff); low risk since it's descriptive, not load-bearing.
+
+### Assessment
+**Task quality:** Approved
+**Reasoning:** Implementation is a verbatim, correct match to the brief: null-on-failure, period mapping, and `MAX_FAVORITES_AUTHENTICATED` sizing all check out against the actual dependency signatures (`listFavoriteEventsByPeriodExternal`, `EventsSection`, `utils/constants.ts`), and both new tests assert real behavior rather than mock internals.</result>
+<usage><subagent_tokens>62429</subagent_tokens><tool_uses>9</tool_uses><duration_ms>48593</duration_ms></usage>
+</task-notification>
