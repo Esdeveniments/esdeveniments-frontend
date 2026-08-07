@@ -1,0 +1,126 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - components/ui/filtersModal/NavigationFiltersModal.tsx
+  - test/navigation-filters-modal.bydate-default.test.tsx
+  - test/navigation-filters-modal.locale-noop-apply.test.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: components/ui/filtersModal/NavigationFiltersModal.tsx ===
+@@ -201,7 +201,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
+   // Reset local state whenever the modal opens or the default inputs change while open
+   useEffect(() => {
+     if (!isOpen) return;
+-    const id = window.setTimeout(() => {
++    startTransition(() => {
+       setLocalPlace(defaults.place);
+       setLocalByDate(defaults.byDate);
+       setLocalCategory(defaults.category);
+@@ -223,8 +223,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
+       setUserLocationError("");
+       setIsDistanceActive(Boolean(defaults.distance));
+       setUseCurrentLocationMode(initialUseCurrentLocation);
+-    }, 0);
+-    return () => window.clearTimeout(id);
++    });
+   }, [
+     isOpen,
+     defaults.place,
+
+
+=== DIFF: test/navigation-filters-modal.bydate-default.test.tsx ===
+@@ -9,7 +9,7 @@
+  * Fix: changed to `localByDate || DEFAULT_FILTER_VALUE`.
+  */
+ import { describe, it, expect, vi, beforeEach } from "vitest";
+-import { render, screen, fireEvent, act } from "@testing-library/react";
++import { render, screen, fireEvent } from "@testing-library/react";
+ 
+ import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
+ 
+@@ -75,13 +75,7 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
+     window.history.pushState({}, "", "/catalunya/avui");
+   });
+ 
+-  afterEach(() => {
+-    vi.useRealTimers();
+-  });
+-
+   it("applies DEFAULT_FILTER_VALUE ('tots') when no date is selected, not 'avui'", async () => {
+-    vi.useFakeTimers();
+-
+     render(
+       <NavigationFiltersModal
+         isOpen
+@@ -97,11 +91,6 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
+       />,
+     );
+ 
+-    // Flush the setTimeout(0) that resets local state on open
+-    await act(async () => {
+-      vi.runOnlyPendingTimers();
+-    });
+-
+     // Click "Apply" without selecting any date → localByDate = "" → should become "tots"
+     fireEvent.click(screen.getByTestId("modal-action"));
+ 
+@@ -116,8 +105,6 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
+   });
+ 
+   it("preserves selected date when one is chosen", async () => {
+-    vi.useFakeTimers();
+-
+     // Start with date = "avui" so localByDate initialises to "avui"
+     render(
+       <NavigationFiltersModal
+@@ -134,10 +121,6 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
+       />,
+     );
+ 
+-    await act(async () => {
+-      vi.runOnlyPendingTimers();
+-    });
+-
+     // Apply with the existing "avui" date
+     fireEvent.click(screen.getByTestId("modal-action"));
+ 
+
+
+=== DIFF: test/navigation-filters-modal.locale-noop-apply.test.tsx ===
+@@ -1,5 +1,5 @@
+ import { describe, it, expect, vi, beforeEach } from "vitest";
+-import { render, screen, fireEvent, act } from "@testing-library/react";
++import { render, screen, fireEvent } from "@testing-library/react";
+ 
+ import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
+ 
+@@ -73,7 +73,6 @@ describe("NavigationFiltersModal - Locale no-op apply", () => {
+   });
+ 
+   it("does not set loading or navigate when applying unchanged filters on a locale-prefixed URL", async () => {
+-    vi.useFakeTimers();
+     render(
+       <NavigationFiltersModal
+         isOpen
+@@ -85,17 +84,9 @@ describe("NavigationFiltersModal - Locale no-op apply", () => {
+       />
+     );
+ 
+-    // The component resets local state with setTimeout(0) on open.
+-    // Flush it to avoid act() warnings and mimic settled UI state.
+-    await act(async () => {
+-      vi.runOnlyPendingTimers();
+-    });
+-
+     fireEvent.click(screen.getByTestId("modal-action"));
+ 
+     expect(mockSetLoading).not.toHaveBeenCalled();
+     expect(mockPush).not.toHaveBeenCalled();
+-
+-    vi.useRealTimers();
+   });
+ });
+
+
+Investigate per the method in your instructions, then return the findings list.
