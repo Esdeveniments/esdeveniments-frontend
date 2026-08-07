@@ -1,0 +1,35 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/preferits/layout.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/preferits/layout.tsx ===
+@@ -0,0 +1,23 @@
++import type { ReactNode } from "react";
++import { getTranslations } from "next-intl/server";
++
++// Shared shell for /preferits and /preferits/passats, mirroring
++// perfil/[username]/layout.tsx's role for the profile Propers/Passats
++// pages: render the page identity once, let each page render its own
++// Tabs + content underneath.
++export default async function PreferitsLayout({
++  children,
++}: {
++  children: ReactNode;
++}) {
++  const t = await getTranslations("App.Favorites");
++
++  return (
++    <div className="container py-section-y flex-col justify-center items-center">
++      <h1 className="heading-1 mt-element-gap mb-element-gap">
++        {t("heading")}
++      </h1>
++      {children}
++    </div>
++  );
++}
+
+
+Investigate per the method in your instructions, then return the findings list.
