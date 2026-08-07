@@ -1,0 +1,44 @@
+<task-notification>
+<task-id>a6ee01d7cf746636f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/34a95ce8-44f4-41ae-a9fa-9d8fbb397720/tasks/a6ee01d7cf746636f.output</output-file>
+<status>completed</status>
+<summary>Agent "Review Task 9 (spec + quality)" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>### Spec Compliance
+- ✅ Spec compliant — all five stated global-constraint checks verified against the diff (see checks below).
+- ⚠️ Cannot verify from diff: none. Every item was verifiable by reading the diff plus the small set of directly-consumed dependencies (`FavoritesEventsSection`, `favorites-external.ts`, `favorites-tabs.ts`, `tabs/index.tsx`, `FavoritesAutoPrune.tsx`, `FavoritesPageTracker.tsx`, `types/props.ts`, and the existing test file).
+
+**Checks run:**
+
+1. **Guest branch unchanged.** `app/[locale]/preferits/page.tsx:151-195`. Fetch (`fetchFavoritesEvents`), pruning computation (`collectExpiredEventKeys`, `slugsToRemove`), `filterActiveEvents`, `uniqueFavoritesCount = new Set(cookieSlugs).size`, all three `data-testid`s (`favorites-page`, `favorites-page-empty`, `favorites-page-error` — the last one is authed-only in both old and new code), and all copy keys (`subtitle`, `countLabel`, `emptyTitle`, `emptyDescription`) are identical to the pre-diff version. The one textual change — old branch condition used `favoriteSlugs.length === 0` (derived from fetched events), new uses `cookieSlugs.length === 0` (page.tsx:161) — is not byte-for-byte identical text but is behaviorally equivalent: whenever the old first disjunct was true, `fetched.events` was necessarily empty too, so `activeEvents.length === 0` (the second disjunct, unchanged in both versions) was already true; and whenever `activeEvents.length &gt; 0`, both first-disjunct forms evaluate false. Output is identical for every reachable input. This substitution was baked into the brief's own Step 1 code block, not an implementer deviation.
+2. **`FavoritesAutoPrune` never rendered for authenticated users.** `page.tsx:132-149` (the `if (authToken)` block) contains no `FavoritesAutoPrune` reference at all — confirmed by grep, the component only appears at page.tsx:164 and :173, both inside the guest branch below the early return. Matches the brief's stricter "shouldn't render at all," not merely "empty arrays."
+3. **`FavoritesData` removed, `EventSummaryResponseDTO` import kept.** `types/props.ts:279-285` (old) deleted cleanly with no formatting artifacts (verified 175-199 post-diff). Repo-wide grep for `FavoritesData` returns zero hits. `EventSummaryResponseDTO` import at `types/props.ts:60` confirmed still consumed at lines 105, 170, 792, 912-919.
+4. **Authenticated branch fetches only the active period.** `page.tsx:133` calls `countFavoritesByPeriodExternal(authToken, "past")` (cheap, size=1, `lib/api/favorites-external.ts:117-123`) purely for the tab badge; the actual rendered list comes from `FavoritesSectionOrError` → `FavoritesEventsSection({accessToken, status: "upcoming"})` (`page.tsx:208-211`) → `listFavoriteEventsByPeriodExternal(accessToken, "active", 0, MAX_FAVORITES_AUTHENTICATED)` (`components/partials/FavoritesEventsSection.tsx:19-27`). The old merged `listFavoriteEventsExternal` (both periods, concatenated) import is gone from page.tsx entirely (diff line 31→32).
+5. **Outer container/heading gone, no duplicate heading.** Confirmed removed from `page.tsx` (no `container py-section-y…` wrapper, no `HeadingLayout`); `app/[locale]/preferits/layout.tsx:16-19` is the sole heading/container source now, so no duplication. (Task 8's addition is out of this diff's scope per the task framing — not re-litigated here.)
+
+### Strengths
+- Guest path preserved with proof, not just "tests still pass" — traced the actual control-flow equivalence rather than trusting the two green tests alone.
+- Clean split: authenticated branch returns early (`page.tsx:139-148`), guest logic falls through unindented below it — no shared mutable state between the two paths, easy to read top-to-bottom.
+- `FavoritesSectionOrError` (`page.tsx:198-225`) correctly distinguishes "backend failure" (`section === null` → dedicated error UI) from "zero results" (handled inside `EventsSection`, its own empty state) — no silent-empty-on-failure bug.
+- `Promise.all([getTranslations, getAccessTokenFromCookies])` (`page.tsx:124-127`) is a small, correct perf tightening over the old sequential awaits, doesn't change semantics.
+- Test-failure report is accurate: verified by reading `test/favorites-page-auto-prune.test.ts` directly — tests 1 and 2 (`:132`, `:184`) run with `getAccessTokenFromCookies` mocked to `null` (guest path, unaffected), test 3 (`:218`) is the only authenticated test and dies on the now-unmocked `countFavoritesByPeriodExternal` call. Exactly the sole expected failure, not evidence of broader regression.
+
+### Issues
+
+#### Critical (Must Fix)
+None.
+
+#### Important (Should Fix)
+- **`FavoritesPageTracker` (the `favorites_page_view` GA event) is silently dropped for authenticated users, in both the populated and zero-favorites states.** Before this diff, the single shared JSX path rendered `&lt;FavoritesPageTracker&gt;` for all users regardless of auth status (old `page.tsx`, both the empty-state and populated-state returns). The new authenticated branch (`page.tsx:139-148`) never imports/renders it in either sub-state — only the guest branch does, at `page.tsx:164` and `:173`. Repo-wide grep confirms `favorites_page_view` is fired from nowhere else, and a check of the full plan (`docs/superpowers/plans/2026-07-31-favorites-past-events.md`) shows no later task (10-14) reintroduces it for authed users. This isn't covered by the stated global constraints, and it originates in the brief's own Step 1 template (the implementer matched it verbatim), but it's a real, currently-unaddressed analytics regression that should get an explicit decision — re-add the tracker to the authed branch, or record it as an intentional drop — before the branch ships.
+
+#### Minor (Nice to Have)
+- **"Passats" tab is a dead link until Task 12 lands.** `buildFavoritesTabItems` hardcodes `pastHref: "/preferits/passats"` (`components/partials/favorites-tabs.ts:12`), and no `app/[locale]/preferits/passats/` directory exists yet. This is expected, staged work — the plan (`docs/.../2026-07-31-favorites-past-events.md:1291`) explicitly schedules `Task 12: /preferits/passats/page.tsx` right after this task, and the SDD progress ledger confirms Tasks 1-8 are done with Task 9 in flight. Not a defect in this task; flagging only so the branch isn't merged/deployed between Task 9 and Task 12 landing.
+- **Tab count asymmetry (upcoming tab shows no count, past tab does) is intentional, already documented — not a new finding.** `buildFavoritesTabItems({ pastCount: pastCount ?? undefined }, t)` (`page.tsx:134-137`) never supplies `activeCount`, so per `Tabs`' `count !== undefined` check (`components/ui/common/tabs/index.tsx`), only the Passats badge renders. The plan's self-review notes (`docs/.../2026-07-31-favorites-past-events.md:1706`) explicitly call this out as an accepted v1 gap matching the existing profile-tabs `count: undefined` pattern. Confirmed consistent, not filing as an implementation issue.
+- **Silent `null` handling on `countFavoritesByPeriodExternal` failure.** If the past-count fetch fails, `pastCount ?? undefined` (`page.tsx:135`) just omits the badge rather than surfacing an error or a Sentry capture — indistinguishable from "genuinely zero past favorites." Low impact given the badge is already optional/decorative per the above, and the primary content path (`FavoritesSectionOrError`) has its own dedicated error UI. Inherited from the brief's template, not an implementer addition.
+
+### Assessment
+**Task quality:** Approved
+**Reasoning:** All five stated global constraints are met and independently verified against the diff and its direct dependencies, not just the implementer's narrative — guest behavior is functionally identical, `FavoritesAutoPrune` is genuinely absent from the authed branch, the type removal is clean, and the single-period fetch replaces the merged one. The one real gap found (`FavoritesPageTracker` dropped for authed users) sits outside the brief's stated scope and doesn't violate any named constraint, so it doesn't block this task's gate, but it should be logged and resolved before the branch ships.</result>
+<usage><subagent_tokens>104900</subagent_tokens><tool_uses>33</tool_uses><duration_ms>356026</duration_ms></usage>
+</task-notification>
