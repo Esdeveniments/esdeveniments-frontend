@@ -1,0 +1,65 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - components/ui/common/favoriteButton/index.tsx
+  - utils/constants.ts
+  - utils/favorites-limits.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: components/ui/common/favoriteButton/index.tsx ===
+@@ -15,7 +15,9 @@ import { useAuth } from "@components/hooks/useAuth";
+ import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
+ import type { FavoriteButtonProps } from "types/props";
+ import { captureException } from "@sentry/nextjs";
+-import { MAX_FAVORITES_AUTHENTICATED } from "@utils/constants";
++// Not @utils/constants: that barrel imports ~280KB of locale JSON at module
++// scope, and this is a client component — see utils/favorites-limits.ts.
++import { MAX_FAVORITES_AUTHENTICATED } from "@utils/favorites-limits";
+ 
+ const FAVORITES_SWR_KEY = "favorites:list";
+ 
+
+
+=== DIFF: utils/constants.ts ===
+@@ -6,14 +6,13 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+ import caMessages from "../messages/ca.json";
+ import esMessages from "../messages/es.json";
+ import enMessages from "../messages/en.json";
++// Re-exported (not declared here) so existing @utils/constants consumers
++// keep working unchanged. Declared in their own dependency-free module so a
++// client component can import just the number, not this file's ~280KB of
++// embedded locale JSON — see utils/favorites-limits.ts for why.
++export { MAX_FAVORITES, MAX_FAVORITES_AUTHENTICATED } from "./favorites-limits";
+ 
+ export const MAX_RESULTS = 15;
+-export const MAX_FAVORITES = 10;
+-// Authenticated favourites are stored server-side with no real backend cap
+-// (verified against esdeveniments-backend/develop — UserFavoriteEventServiceImpl
+-// has no count check). This is a client-side-only UX guard, not a real limit,
+-// hence the much higher number than the guest cookie cap above.
+-export const MAX_FAVORITES_AUTHENTICATED = 50;
+ 
+ /** Number of days within which news articles are considered "fresh". */
+ export const NEWS_FRESHNESS_DAYS = 7;
+
+
+=== DIFF: utils/favorites-limits.ts ===
+@@ -0,0 +1,14 @@
++// Deliberately dependency-free: utils/constants.ts imports the full locale
++// JSON files at module scope (~280KB combined), which is fine for the
++// server components that already pulled it in, but FavoriteButton is a
++// client component and importing MAX_FAVORITES_AUTHENTICATED from
++// @utils/constants there dragged that whole barrel into the client bundle
++// for the first time — +386KB / +100% on /preferits, +384KB on /[locale]
++// (bundle-size CI regression, 2026-07-31). Keep these two here so a client
++// import stays a plain number, not the JSON payload.
++export const MAX_FAVORITES = 10;
++// Authenticated favourites are stored server-side with no real backend cap
++// (verified against esdeveniments-backend/develop — UserFavoriteEventServiceImpl
++// has no count check). This is a client-side-only UX guard, not a real limit,
++// hence the much higher number than the guest cookie cap above.
++export const MAX_FAVORITES_AUTHENTICATED = 50;
+
+
+Investigate per the method in your instructions, then return the findings list.
