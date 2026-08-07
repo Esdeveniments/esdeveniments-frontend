@@ -1,0 +1,1 @@
+btw, favorites, if the user is not logged in, we show this [Image #1] so what we do?  wallapop it triggers the auth login
