@@ -1,0 +1,9 @@
+[Image #4]  i mean, I uploaded a webp icon and it shows with a bg color: ```<img alt="" class="w-9 h-9 rounded-full object-cover" src="https://res.cloudinary.com/drigo1xqe/image/upload/v1785220077/avatars/ff3da805-08f2-4fd0-acd5-6372344aa339.webp">``` and feedback from backend developer: ```[11:54, 28/7/2026] Gerard Segarra: Val una cosa
+[11:54, 28/7/2026] Gerard Segarra: el nom d'usuari nomes hauria de poder ser modificable 1 cop
+[11:54, 28/7/2026] Gerard Segarra: No?
+[11:54, 28/7/2026] Gerard Segarra: perq indexarem URLs a partir d'aquest nom
+[11:55, 28/7/2026] Gerard Segarra: Haure d'afegir logica al back perq puguis "bloquejar" el camp no?
+[11:55, 28/7/2026] Albert Olivé Corbella: val te sentit clar
+[11:55, 28/7/2026] Gerard Segarra: i he posat biogrrafia al perfil i no es mostra, ara m apunto aquestes coses i reviso
+[11:55, 28/7/2026] Albert Olivé Corbella: si aixo ho tinc en local lo de la bio
+[11:56, 28/7/2026] Gerard Segarra: Val guai```
