@@ -1,0 +1,22 @@
+<task-notification>
+<task-id>abad60583535aef27</task-id>
+<tool-use-id>toolu_01FrGJR8bUvDmt2obY7LFim1</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/7a2943ca-2e5e-4664-954a-cd482f3f0383/tasks/abad60583535aef27.output</output-file>
+<status>completed</status>
+<summary>Agent "Visual design token consistency audit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Task: audit visual/design-token consistency in que-fer (read-only, no edits).
+
+**Findings, ranked:**
+
+1. **Duplicate avatar markup with a token violation** — `components/ui/profile/ProfileHeader.tsx:12` and `app/[locale]/perfil/edita/EditProfileAvatar.tsx:23` have byte-identical classNames: `"w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold"`. Two things wrong: (a) `text-white` is a raw Tailwind color, not the semantic `on-primary` token (DESIGN.md defines `colors.on-primary`, code elsewhere correctly uses `text-primary-foreground`, e.g. `patrocina/page.tsx:161`); (b) this is copy-pasted, not shared — extract one `AvatarInitials` component and fix the token in one place.
+
+2. **`bg-gray-200` still present, violating the project's own critical rule** ("never gray-*" per `.claude/CLAUDE.md` and `design-system-conventions` skill): `components/sitemap/SitemapHeaderSkeleton.tsx:4-5` and `components/sitemap/SitemapSkeleton.tsx:5,6,10,13,19,22`. DESIGN.md already defines a `skeleton` token (`background: surface-muted`, `animation: fast-pulse 2s`) — these files predate it and never got migrated.
+
+3. **Raw heading utility instead of semantic class** — `app/[locale]/offline/page.tsx:57` uses `text-4xl font-bold text-foreground-strong` instead of `.heading-1`. Minor but breaks the mobile/desktop responsive step defined in DESIGN.md's heading scale (this page won't shrink to 24px on mobile like every other h1 does).
+
+4. **Doc drift, not a code bug**: `.github/skills/design-system-conventions/SKILL.md` names classes (`.btn-primary`, `.card-bordered`, `.card-elevated`, `.badge-default`) that don't match what DESIGN.md and the actual codebase ship (`button-primary`, `card-default`, semantic Tailwind utility classes composed inline rather than single CSS classes). The skill also self-labels "Migration Context: Week 0 - Foundation" — worth a doc-sync pass since an agent following this skill literally would write classes that don't exist.
+
+**Not a problem**: broader `gray-*`/deprecated-alias/arbitrary-hex/arbitrary-pixel search across `app/`, `components/`, `lib/` came back otherwise clean — only the 2 sitemap-skeleton files above. Semantic heading classes (`heading-1` through `heading-4`) are adopted in 70+ locations. 11 files hand-roll circular icon-button patterns (`rounded-full` + `bg-primary`/`bg-primary/10`); all but #1 above are one-off enough (different sizes/contexts) to fall under DESIGN.md's own "leaf component micro-spacing" exception — not worth forcing into a shared primitive.</result>
+<usage><subagent_tokens>111295</subagent_tokens><tool_uses>6</tool_uses><duration_ms>61518</duration_ms></usage>
+</task-notification>
