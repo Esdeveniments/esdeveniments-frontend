@@ -1,0 +1,1 @@
+btw, add bio in the profile page, also we have a skeleton loader that doesnt match the final UI and creates a glift, Idk if its the auth one , ie [Image #1]
