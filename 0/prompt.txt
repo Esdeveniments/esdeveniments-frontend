@@ -1,0 +1,1 @@
+Continue the pr-review-loop for PR #438 (Esdeveniments/esdeveniments-frontend, fix/favorites-missing-period-param): re-fetch unresolved review threads via the GraphQL query, check if CodeRabbit/Copilot/Gemini/Cubic have posted feedback yet, and proceed to Step 4 (evaluate) if there are new threads, or report "no open suggestions yet" and wait longer if not.
