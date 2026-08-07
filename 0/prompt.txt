@@ -1,0 +1,111 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - .github/workflows/deploy-coolify.yml
+  - Dockerfile
+
+Unified diff (only + lines are new):
+
+=== DIFF: .github/workflows/deploy-coolify.yml ===
+@@ -322,6 +322,30 @@ jobs:
+             echo "**Trigger:** Push to ${{ github.ref_name }} ($([ '${{ github.ref_name }}' = 'main' ] && echo 'full CI' || echo 'lint+typecheck+unit'))" >> $GITHUB_STEP_SUMMARY
+           fi
+ 
++      # Resolves COOLIFY_TOKEN/COOLIFY_WEBHOOK_URL once for both steps below,
++      # so the branch->secret selection logic lives in exactly one place.
++      # Branch-gated in bash, not in a `&&`/`||` expression: that pattern
++      # falls through to the staging secret whenever the main secret happens
++      # to be empty (GH Actions treats "" as falsy), which would silently
++      # PATCH/deploy the staging app on a main-branch push. Always runs
++      # (not gated on build-and-push) because "Trigger Coolify deployment"
++      # needs these even on the skip_ci emergency-deploy path.
++      - name: Resolve Coolify secrets for this branch
++        env:
++          IS_MAIN: ${{ github.ref_name == 'main' }}
++          COOLIFY_TOKEN_MAIN: ${{ secrets.COOLIFY_TOKEN }}
++          COOLIFY_TOKEN_STAGING: ${{ secrets.COOLIFY_TOKEN_STAGING }}
++          COOLIFY_WEBHOOK_URL_MAIN: ${{ secrets.COOLIFY_WEBHOOK_URL }}
++          COOLIFY_WEBHOOK_URL_STAGING: ${{ secrets.COOLIFY_WEBHOOK_URL_STAGING }}
++        run: |
++          if [ "$IS_MAIN" = "true" ]; then
++            echo "COOLIFY_TOKEN=$COOLIFY_TOKEN_MAIN" >> "$GITHUB_ENV"
++            echo "COOLIFY_WEBHOOK_URL=$COOLIFY_WEBHOOK_URL_MAIN" >> "$GITHUB_ENV"
++          else
++            echo "COOLIFY_TOKEN=$COOLIFY_TOKEN_STAGING" >> "$GITHUB_ENV"
++            echo "COOLIFY_WEBHOOK_URL=$COOLIFY_WEBHOOK_URL_STAGING" >> "$GITHUB_ENV"
++          fi
++
+       # Coolify's app config points at the floating `:main` registry tag. A
+       # health-check-triggered container restart recreates the container
+       # from whatever image is locally cached under that tag WITHOUT going
+@@ -339,24 +363,8 @@ jobs:
+         # configured alone and let the webhook redeploy it as-is.
+         if: needs.build-and-push.result == 'success'
+         env:
+-          # Branch-gated in bash, not in the `&&`/`||` expression below: that
+-          # pattern falls through to the staging secret whenever the main
+-          # secret happens to be empty (GH Actions treats "" as falsy), which
+-          # would silently PATCH the staging app on a main-branch deploy.
+           IS_MAIN: ${{ github.ref_name == 'main' }}
+-          COOLIFY_TOKEN_MAIN: ${{ secrets.COOLIFY_TOKEN }}
+-          COOLIFY_TOKEN_STAGING: ${{ secrets.COOLIFY_TOKEN_STAGING }}
+-          COOLIFY_WEBHOOK_URL_MAIN: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+-          COOLIFY_WEBHOOK_URL_STAGING: ${{ secrets.COOLIFY_WEBHOOK_URL_STAGING }}
+         run: |
+-          if [ "$IS_MAIN" = "true" ]; then
+-            COOLIFY_TOKEN="$COOLIFY_TOKEN_MAIN"
+-            COOLIFY_WEBHOOK_URL="$COOLIFY_WEBHOOK_URL_MAIN"
+-          else
+-            COOLIFY_TOKEN="$COOLIFY_TOKEN_STAGING"
+-            COOLIFY_WEBHOOK_URL="$COOLIFY_WEBHOOK_URL_STAGING"
+-          fi
+-
+           if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
+             echo "::error::COOLIFY_WEBHOOK_URL secret is required"
+             exit 1
+@@ -392,23 +400,7 @@ jobs:
+           echo "Pinned $PINNED_APP_LABEL to sha-${{ github.sha }}"
+ 
+       - name: Trigger Coolify deployment
+-        env:
+-          # See the "Pin Coolify" step above for why this is a bash if/else
+-          # instead of a `&&`/`||` expression.
+-          IS_MAIN: ${{ github.ref_name == 'main' }}
+-          COOLIFY_TOKEN_MAIN: ${{ secrets.COOLIFY_TOKEN }}
+-          COOLIFY_TOKEN_STAGING: ${{ secrets.COOLIFY_TOKEN_STAGING }}
+-          COOLIFY_WEBHOOK_URL_MAIN: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+-          COOLIFY_WEBHOOK_URL_STAGING: ${{ secrets.COOLIFY_WEBHOOK_URL_STAGING }}
+         run: |
+-          if [ "$IS_MAIN" = "true" ]; then
+-            COOLIFY_TOKEN="$COOLIFY_TOKEN_MAIN"
+-            COOLIFY_WEBHOOK_URL="$COOLIFY_WEBHOOK_URL_MAIN"
+-          else
+-            COOLIFY_TOKEN="$COOLIFY_TOKEN_STAGING"
+-            COOLIFY_WEBHOOK_URL="$COOLIFY_WEBHOOK_URL_STAGING"
+-          fi
+-
+           if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
+             echo "::error::COOLIFY_WEBHOOK_URL secret is required"
+             exit 1
+
+
+=== DIFF: Dockerfile ===
+@@ -90,7 +90,14 @@ USER nextjs
+ # sizing + 0-byte image cache cleanup + Redis connect). The stale-cache purge
+ # runs fire-and-forget after Redis connects (cache-handler.mjs) and isn't a
+ # readiness gate, so it isn't counted here. See incident 2026-07-07.
++# The internal AbortController fires at 9500ms, just under Docker's own 10s
++# --timeout: Docker kills the whole probe process at 10s regardless, so an
++# internal abort tighter than that (the previous value here was 8000ms)
++# silently shrinks the documented 10s tolerance down to whatever the internal
++# value is — losing exactly the GC-pause headroom this timeout was raised to
++# provide. 9500ms leaves 500ms for the abort handler and process.exit() to
++# actually run before Docker's own kill would fire.
+ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+-  CMD node -e "const c=new AbortController(),t=setTimeout(()=>c.abort(),8000);fetch('http://127.0.0.1:3000/api/health',{signal:c.signal}).then(r=>{clearTimeout(t);process.exit(r.ok?0:1)}).catch(()=>{clearTimeout(t);process.exit(1)})"
++  CMD node -e "const c=new AbortController(),t=setTimeout(()=>c.abort(),9500);fetch('http://127.0.0.1:3000/api/health',{signal:c.signal}).then(r=>{clearTimeout(t);process.exit(r.ok?0:1)}).catch(()=>{clearTimeout(t);process.exit(1)})"
+ 
+ CMD ["./docker-entrypoint.sh"]
+
+
+Investigate per the method in your instructions, then return the findings list.
