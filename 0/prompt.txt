@@ -1,0 +1,220 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/e/[eventId]/promote/actions.ts
+  - test/promote-checkout-action.test.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/e/[eventId]/promote/actions.ts ===
+@@ -0,0 +1,58 @@
++"use server";
++import { createPromotionCheckout, fetchEventBySlug } from "@lib/api/events";
++import { getCurrentUser } from "@lib/auth/session";
++import { siteUrl } from "@config/index";
++import { withLocalePath } from "@utils/i18n-seo";
++import type { AppLocale } from "types/i18n";
++import type { PromotionCheckoutResult } from "types/event";
++
++/**
++ * Resolves the event by slug and verifies the caller-provided eventId matches
++ * — same double-check as editEvent (app/[locale]/e/[eventId]/edita/actions.ts)
++ * to prevent a client passing a slug it owns alongside a different eventId.
++ */
++export async function createPromotionCheckoutAction(
++  eventId: string,
++  slug: string,
++  locale: AppLocale,
++): Promise<PromotionCheckoutResult> {
++  const [currentUser, event] = await Promise.all([
++    getCurrentUser(),
++    fetchEventBySlug(slug),
++  ]);
++
++  if (!event) {
++    return { success: false, error: "Event not found" };
++  }
++
++  if (event.id !== eventId) {
++    return {
++      success: false,
++      error: "Unauthorized: only the event creator can promote this event",
++    };
++  }
++
++  const isCreator = Boolean(
++    currentUser?.id && event.owner?.id && currentUser.id === event.owner.id,
++  );
++  if (!isCreator) {
++    return {
++      success: false,
++      error: "Unauthorized: only the event creator can promote this event",
++    };
++  }
++
++  const successUrl = `${siteUrl}${withLocalePath(`/e/${slug}/promote/success`, locale)}`;
++  const cancelUrl = `${siteUrl}${withLocalePath(`/e/${slug}/promote/cancel`, locale)}`;
++
++  try {
++    const { url } = await createPromotionCheckout(event.id, successUrl, cancelUrl);
++    return { success: true, url };
++  } catch (error) {
++    console.error("createPromotionCheckoutAction: checkout failed", error);
++    return {
++      success: false,
++      error: "Something went wrong. Please try again.",
++    };
++  }
++}
+
+
+=== DIFF: test/promote-checkout-action.test.ts ===
+@@ -0,0 +1,145 @@
++import { describe, it, expect, vi, beforeEach } from "vitest";
++import type { EventDetailResponseDTO } from "types/api/event";
++
++const mockCreatePromotionCheckout = vi.fn();
++const mockFetchEventBySlug = vi.fn();
++const mockGetCurrentUser = vi.fn();
++
++vi.mock("@lib/api/events", () => ({
++  createPromotionCheckout: (id: string, successUrl: string, cancelUrl: string) =>
++    mockCreatePromotionCheckout(id, successUrl, cancelUrl),
++  fetchEventBySlug: (slug: string) => mockFetchEventBySlug(slug),
++}));
++
++vi.mock("@lib/auth/session", () => ({
++  getCurrentUser: () => mockGetCurrentUser(),
++}));
++
++import { createPromotionCheckoutAction } from "../app/[locale]/e/[eventId]/promote/actions";
++
++const CREATOR_ID = "creator-uuid-1";
++
++function buildEvent(overrides: Partial<EventDetailResponseDTO> = {}): EventDetailResponseDTO {
++  return {
++    id: "event-uuid-1",
++    hash: "hash",
++    slug: "my-event",
++    title: "My Event",
++    type: "FREE",
++    url: "",
++    description: "desc",
++    imageUrl: "",
++    startDate: "2026-09-01",
++    startTime: null,
++    endDate: "2026-09-01",
++    endTime: null,
++    location: "Location",
++    visits: 0,
++    origin: "MANUAL",
++    owner: {
++      id: CREATOR_ID,
++      displayName: "Creator",
++      username: "creator",
++      avatarUrl: null,
++      organizerVerified: false,
++    },
++    city: { id: 1, name: "City", slug: "city", latitude: 0, longitude: 0, postalCode: "08001", rssFeed: null, enabled: true },
++    region: { id: 1, name: "Region", slug: "region" },
++    province: { id: 1, name: "Region", slug: "region" },
++    categories: [],
++    ...overrides,
++  };
++}
++
++describe("createPromotionCheckoutAction", () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++  });
++
++  it("returns the checkout url when the caller owns the event", async () => {
++    mockFetchEventBySlug.mockResolvedValue(buildEvent());
++    mockGetCurrentUser.mockResolvedValue({ id: CREATOR_ID });
++    mockCreatePromotionCheckout.mockResolvedValue({
++      url: "https://checkout.stripe.com/session123",
++    });
++
++    const result = await createPromotionCheckoutAction(
++      "event-uuid-1",
++      "my-event",
++      "ca",
++    );
++
++    expect(result).toEqual({
++      success: true,
++      url: "https://checkout.stripe.com/session123",
++    });
++    expect(mockCreatePromotionCheckout).toHaveBeenCalledWith(
++      "event-uuid-1",
++      expect.stringContaining("/e/my-event/promote/success"),
++      expect.stringContaining("/e/my-event/promote/cancel"),
++    );
++  });
++
++  it("rejects when the provided eventId does not match the resolved event's id", async () => {
++    mockFetchEventBySlug.mockResolvedValue(buildEvent({ id: "different-uuid" }));
++    mockGetCurrentUser.mockResolvedValue({ id: CREATOR_ID });
++
++    const result = await createPromotionCheckoutAction(
++      "event-uuid-1",
++      "my-event",
++      "ca",
++    );
++
++    expect(result).toEqual({
++      success: false,
++      error: "Unauthorized: only the event creator can promote this event",
++    });
++    expect(mockCreatePromotionCheckout).not.toHaveBeenCalled();
++  });
++
++  it("rejects when the signed-in user does not own the event", async () => {
++    mockFetchEventBySlug.mockResolvedValue(buildEvent());
++    mockGetCurrentUser.mockResolvedValue({ id: "someone-else" });
++
++    const result = await createPromotionCheckoutAction(
++      "event-uuid-1",
++      "my-event",
++      "ca",
++    );
++
++    expect(result).toEqual({
++      success: false,
++      error: "Unauthorized: only the event creator can promote this event",
++    });
++  });
++
++  it("rejects when the event does not exist", async () => {
++    mockFetchEventBySlug.mockResolvedValue(null);
++    mockGetCurrentUser.mockResolvedValue({ id: CREATOR_ID });
++
++    const result = await createPromotionCheckoutAction(
++      "event-uuid-1",
++      "my-event",
++      "ca",
++    );
++
++    expect(result).toEqual({ success: false, error: "Event not found" });
++  });
++
++  it("converts a thrown backend error into a generic result instead of throwing", async () => {
++    mockFetchEventBySlug.mockResolvedValue(buildEvent());
++    mockGetCurrentUser.mockResolvedValue({ id: CREATOR_ID });
++    mockCreatePromotionCheckout.mockRejectedValue(new Error("HTTP error! status: 404"));
++
++    const result = await createPromotionCheckoutAction(
++      "event-uuid-1",
++      "my-event",
++      "ca",
++    );
++
++    expect(result).toEqual({
++      success: false,
++      error: "Something went wrong. Please try again.",
++    });
++  });
++});
+
+
+Investigate per the method in your instructions, then return the findings list.
