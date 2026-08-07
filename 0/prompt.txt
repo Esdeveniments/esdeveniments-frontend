@@ -1,0 +1,36 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/preferits/page.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/preferits/page.tsx ===
+@@ -130,7 +130,10 @@ export default async function PreferitsPage() {
+   // client-side expiry filtering/pruning needed — period=active already
+   // excludes expired events server-side, so there's nothing to prune.
+   if (authToken) {
+-    const pastCount = await countFavoritesByPeriodExternal(authToken, "past");
++    const [pastCount, activeCount] = await Promise.all([
++      countFavoritesByPeriodExternal(authToken, "past"),
++      countFavoritesByPeriodExternal(authToken, "active"),
++    ]);
+     const tabItems = buildFavoritesTabItems(
+       { pastCount: pastCount ?? undefined },
+       t
+@@ -139,6 +142,12 @@ export default async function PreferitsPage() {
+     return (
+       <>
+         <Tabs items={tabItems} active="upcoming" ariaLabel={t("heading")} />
++        {activeCount !== null && (
++          <FavoritesPageTracker
++            favoritesCount={activeCount + (pastCount ?? 0)}
++            activeCount={activeCount}
++          />
++        )}
+         <div className="w-full mt-section-y">
+           <Suspense fallback={<EventsGridSkeleton count={3} />}>
+             <FavoritesSectionOrError accessToken={authToken} t={t} />
+
+
+Investigate per the method in your instructions, then return the findings list.
