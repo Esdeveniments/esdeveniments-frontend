@@ -1,0 +1,1 @@
+Given this: '/Users/albertolive/Downloads/staging.esdeveniments.cat.har', sometimes the favorites endpoint is failing 502 and then i can't see the favorites events in /preferits page altough in the homepage the events selected are shown as favorites, but then, after some time are again unfavorited, why? dont assume anything
