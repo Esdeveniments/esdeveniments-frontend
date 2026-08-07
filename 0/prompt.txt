@@ -1,0 +1,1 @@
+now it work, but I cant' see the past events in favorites , [Image #1] why? shouldnt we show past favorites events for UX?
