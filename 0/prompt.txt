@@ -1,0 +1,1 @@
+now it goes to `http://localhost:3000/perfil/edita` but is not clear to the user that needs to change the username no? is this overall a good user experience? shouldnt for example after the user is created redirect to edit page and force the user to change the settings? what are the best practices?
