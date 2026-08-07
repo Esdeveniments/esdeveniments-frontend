@@ -1,0 +1,63 @@
+<task-notification>
+<task-id>a3979c6700530d9fe</task-id>
+<tool-use-id>toolu_01C7CvJZichoLuHRmJkcaADh</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/7174eabb-cfe1-481b-b7b9-04fc60c1358f/tasks/a3979c6700530d9fe.output</output-file>
+<status>completed</status>
+<summary>Agent "General code review of PR #449" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Full picture confirmed, including test hunks I initially truncated. `yarn typecheck` passes and the three affected test files pass (10 tests).
+
+## Reviewed
+
+PR #449, `feat/mobile-nav-profile-header` vs `develop` — 10 files, 144+/148-. Verified against `.github/skills/auth-patterns/SKILL.md`, the i18n and design-system skills, and traced logout reachability across `/perfil/[username]` and `/perfil/edita`.
+
+The cleanup is genuinely clean: no orphaned references to `openMenu`/`closeMenu`/`mobile-menu-panel`/`navbar-session-warning-mobile` anywhere in `test/`, `e2e/`, or source. The bottom-bar Favoritos simplification is correct — `app/[locale]/preferits/page.tsx:159` has a real guest branch backed by the cookie store, so an unauthenticated tap lands on a working page.
+
+## Important (80-89)
+
+**1. Mobile users can't log out until they finish onboarding — confidence 88**
+
+`/Users/albertolive/Repos/que-fer/components/ui/common/navbar/NavbarClient.tsx:44-49` and `:108`
+
+Logout now exists in exactly two places: the desktop dropdown (`NavbarClient.tsx:206`, inside a `hidden md:flex` container) and `ProfileOwnerActions`. `ProfileOwnerActions` is rendered from exactly one place — `ProfileHeader.tsx:81`, mounted in `app/[locale]/perfil/[username]/layout.tsx:28`. Nothing renders it under `/perfil/edita` (grep for `logout` across `app/` and `components/` returns no other call site).
+
+When `user.profileCompleted === false`, `profileHref` is `/perfil/edita` by design (line 45). So the mobile avatar sends the user to the edit form, which has no logout button. That's the state every newly-signed-up user occupies until they complete onboarding, and on mobile there is now no way out of the session at all.
+
+Fix: render a logout affordance on the edit-profile page too, or keep one auth escape hatch in the mobile header for the `profileCompleted === false` case.
+
+**2. `profileHref || "/"` silently sends "El meu perfil" to the homepage — confidence 85**
+
+`NavbarClient.tsx:108`
+
+`profileHref` is `null` when `getProfileSlug()` returns `""` (username is an email/UUID and no usable display name — see `utils/user-helpers.ts:19-70`). The mobile branch swallows that with `|| "/"`, producing a link labeled `aria-label={labels.myProfile}` that navigates home. Desktop handles the same state correctly by hiding the link entirely (`NavbarClient.tsx:198`: `profileHref &amp;&amp; !user.profileEnrichmentFailed &amp;&amp; ...`).
+
+Fix: mirror the desktop guard — render the avatar as a non-link element (or fall through to the login/re-auth branch) when `profileHref` is null, instead of pointing it at `/`.
+
+**3. The mobile "incomplete session" warning is gone, reversing a deliberate earlier decision — confidence 82**
+
+`NavbarClient.tsx:105-135` (removed block visible in the diff)
+
+The deleted mobile panel carried an explicit comment: *"Surface 'incomplete session' inside the mobile panel too, so the warning is visible without opening the desktop dropdown."* This PR removes `data-testid="navbar-session-warning-mobile"` with no replacement. The desktop equivalent survives at `:188-197`, so the behavior is now desktop-only again — the exact state that comment was written to prevent.
+
+The new fallback itself is intentional and tested (`test/navbar-profile-link.test.tsx:126` — "falls back to the re-auth link on mobile when the session is only partially enriched"), and re-entering `/iniciar-sessio` is a plausible recovery path. The problem is that a logged-in user sees a control labeled `aria-label={labels.login}` ("Inicia sessió") with zero explanation of why their avatar disappeared. Screen-reader users get an outright false statement about their session state.
+
+Fix: either keep a compact `incompleteProfile` indicator in the mobile header, or add a distinct label for the re-auth case rather than reusing `labels.login`.
+
+**4. `navbar_profile_mobile_header` pollutes the auth funnel — confidence 80**
+
+`NavbarClient.tsx:112`
+
+`.github/skills/auth-patterns/SKILL.md` scopes `data-analytics-action` to login/logout entry points, and `components/analytics/AuthEventTracker.tsx:50` fires `auth_gate_click` unconditionally for any element carrying it. A profile *navigation* link isn't an auth CTA, so every mobile avatar tap now inflates `auth_gate_click`. The codebase already has the right mechanism for non-auth CTAs: `useTrackedCta` with a typed `TrackedCtaId` (`components/hooks/useTrackedCta.ts`).
+
+To be precise about scope: the attribute is correct on the new logout button (`ProfileOwnerActions.tsx:28`, `profile_logout_cta`) and on `navbar_login_mobile_header`. Only the avatar link is misfiled.
+
+## Notes (below the 80 threshold, flagging since you asked about conventions)
+
+- **Layout shift on every mobile page load.** The auth control at `NavbarClient.tsx:105` sits behind `{!isLoading &amp;&amp; ...}` while `LanguageSwitcher` renders immediately. The old hamburger was unconditional, so this is a new ~36-40px pop-in after hydration. Reserving the box with a fixed-size placeholder would fix it. (~72)
+- **Touch targets.** The mobile avatar is `w-9 h-9` (36px) and the login link is `p-2` + 24px icon (40px). Every other mobile control in this file uses `min-w-[44px] min-h-[44px]`. No documented rule in the design skill, so it's a consistency nit. (~70)
+- **Namespace coupling.** `ProfileOwnerActions.tsx:14` reads `Components.Navbar.auth.logout`. The i18n skill's "prefer reusing existing keys" endorses the reuse, but the dependency now runs backwards: a profile component depends on a navbar namespace whose navbar-side usage this PR just shrank. A comment (or moving the key) would stop the next pruning pass from breaking it. (~55)
+- **CTA container semantics.** `ProfileOwnerActions.tsx:22` registers the wrapper div as `profile_edit_cta` for impression tracking; that wrapper now also contains the logout button. Clicks are unaffected (only the `Link` calls `trackClick`), but the tracked element's meaning drifted slightly. (~50)
+
+No test covers finding 1 — `test/navbar-profile-link.test.tsx` exercises the `profileCompleted === false` path only through the navbar's href, never through whether logout is reachable at the destination.</result>
+<usage><subagent_tokens>85895</subagent_tokens><tool_uses>31</tool_uses><duration_ms>344880</duration_ms></usage>
+</task-notification>
