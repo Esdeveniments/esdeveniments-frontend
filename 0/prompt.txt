@@ -1,0 +1,182 @@
+Base directory for this skill: /Users/albertolive/.claude/skills/pr-review-loop
+
+# PR Review Loop
+
+Run AI code review to convergence on one PR, hands-off. One round = fetch → evaluate →
+fix/decline → resolve → request re-review → wait. Loop rounds until diminishing returns.
+
+This skill is **repo-agnostic**. The mechanics (gh GraphQL, bot triggers, the loop) are
+universal. Project-specific judgment is NOT hardcoded here — see "Adapt to the project".
+
+## Round cap and termination
+
+Stop the loop when ANY of these is true:
+- A round produces **no new agreed fixes** (every new thread is a decline, or there are zero new unresolved threads).
+- The new threads only **repeat already-declined** suggestions from a prior round.
+- **5 rounds** have run (safety cap — report that the cap was hit, don't silently continue).
+
+When stopping, report a final table: rounds run, fixed vs declined per round, and which condition ended the loop.
+
+## Step 1 — Identify the PR
+
+```bash
+export GH_PAGER=cat
+# Use the number if the user gave one; otherwise detect from the branch:
+PR=$(gh pr view --json number --jq .number)
+REPO=$(gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"')
+```
+
+If no PR exists for the branch, stop and tell the user to create one first (don't create it silently).
+
+### Request Copilot's review (once, at the start)
+
+Unlike the comment-triggered bots, GitHub Copilot is requested as a *reviewer* via the API. Do
+it once when the loop starts (it then re-reviews on each push):
+
+```bash
+gh api --method POST "/repos/OWNER/REPO/pulls/PR_NUMBER/requested_reviewers" \
+  -f "reviewers[]=copilot-pull-request-reviewer[bot]"
+```
+
+A `200` adds `Copilot` to the PR's requested reviewers and it reviews shortly after. A `422`
+means Copilot code review isn't enabled for the repo/org (or the plan doesn't cover it) — note
+it and carry on with the other bots, don't let it break the loop. Copilot posts inline review
+comments, so Step 3 picks them up as threads with author `Copilot` and Step 4 evaluates them
+like any other bot.
+
+## Step 2 — Adapt to the project (do this once, at the start)
+
+Before evaluating suggestions, learn this repo's conventions so declines are grounded:
+- The current repo's `CLAUDE.md` and `AGENTS.md` are usually already in context — use them.
+- Look for a project review skill (e.g. `code-review-evaluation`) under `.github/skills/`, `.claude/skills/`, or `.agents/skills/`. If present, load it — it lists conventions external bots don't know (import rules, type organization, routing/searchParams restrictions, env-var rules, etc.).
+- If the repo documents nothing relevant, fall back to generic review judgment (below).
+
+The point: a suggestion that contradicts a documented project convention is a **decline with a reason**, not a fix.
+
+## Step 3 — Fetch unresolved threads
+
+```bash
+export GH_PAGER=cat
+gh api graphql -f query='
+{
+  repository(owner: "OWNER", name: "REPO") {
+    pullRequest(number: PR_NUMBER) {
+      reviewThreads(first: 50) {
+        nodes {
+          id
+          isResolved
+          comments(first: 1) {
+            nodes { createdAt author { login } path line body }
+          }
+        }
+      }
+    }
+  }
+}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false) | {id, author: .comments.nodes[0].author.login, path: .comments.nodes[0].path, line: .comments.nodes[0].line, created: .comments.nodes[0].createdAt, body: .comments.nodes[0].body[0:300]}'
+```
+
+No unresolved threads on round 1 → report "no open suggestions" and stop.
+
+## Step 4 — Evaluate each suggestion
+
+Default verdicts (override with project conventions from Step 2):
+
+| Category | Default | Action |
+|----------|---------|--------|
+| Bug / error / edge-case fix (null check, try/catch, mkdir) | AGREE | Fix |
+| Missing docs / fields | AGREE | Fix |
+| Unused code / imports | AGREE | Fix |
+| Extract constant / reduce duplication | AGREE | Fix |
+| Performance (batch calls, avoid N+1) | AGREE | Fix |
+| Security (generic patterns) | AGREE | Fix |
+| Pattern / architecture change | CHECK PROJECT | Decide against repo conventions |
+| Cosmetic refactor of working code | DECLINE | Resolve with rationale |
+| Contradicts a documented project convention | DECLINE | Resolve, cite the convention |
+| Repeat of a previously declined suggestion | DECLINE | Resolve, reference prior round |
+
+Present a summary table before changing anything:
+
+```
+| # | Source | Line | Issue | Verdict |
+|---|--------|------|-------|---------|
+| 1 | Gemini L594 | Batch API calls | ✅ AGREE — N calls → 1 |
+| 2 | Cubic L88   | Don't exit on error | ❌ DECLINE — CI needs to fail loud |
+```
+
+## Step 5 — Apply fixes, then resolve all threads
+
+Read flagged sections (parallel reads), make minimal fixes, then validate with whatever the
+repo uses (`yarn typecheck && yarn lint`, `npm test`, etc. — check package.json / Makefile).
+
+One commit per round:
+
+```bash
+git add <files>
+git commit -m "fix: address AI review feedback (round N)
+
+- <fix 1> (Source)
+- <fix 2> (Source)"
+git push || (git pull --rebase && git push)
+```
+
+Resolve ALL threads (fixed **and** declined) in one loop:
+
+```bash
+for TID in "THREAD_ID_1" "THREAD_ID_2"; do
+  gh api graphql -F tid="$TID" -f query='mutation($tid: ID!) {
+    resolveReviewThread(input: {threadId: $tid}) { thread { isResolved } }
+  }' --jq '.data.resolveReviewThread.thread.isResolved'
+done
+```
+
+## Step 6 — Trigger the next review (only if needed)
+
+The push in Step 5 already re-triggers most bots: CodeRabbit re-reviews incrementally on new
+commits, and Gemini Code Assist usually re-syncs on push. **Check the repo's bot config — if
+it auto-reviews on push, skip the manual trigger.** Only post one if the bot needs it:
+
+```bash
+gh pr comment PR_NUMBER --body "Round N: <fixes>. Declined: <rationale>.
+
+@gemini review"
+```
+
+Triggers, when needed: `@gemini review`, `@coderabbitai review`, `@cubic-dev-ai review`
+(it's `@gemini review`, not `/gemini review`).
+
+Copilot doesn't watch for comment triggers — re-request it as a reviewer instead (re-requesting
+also forces a fresh pass even if it would otherwise skip an incremental push):
+
+```bash
+gh api --method POST "/repos/OWNER/REPO/pulls/PR_NUMBER/requested_reviewers" \
+  -f "reviewers[]=copilot-pull-request-reviewer[bot]"
+```
+
+## Step 7 — Wait for the new review, then loop
+
+The bot posts a few minutes after the push. Don't busy-hold the session — schedule a single
+re-check with `ScheduleWakeup` (~4 min) so the session is free meanwhile; one wake per round.
+On wake, re-run Step 3 (compare thread `createdAt` against your push time so you don't
+re-process old threads):
+
+- New actionable threads → round N+1, back to Step 4.
+- Nothing new after the wake → diminishing returns, stop.
+
+If running interactively and the user prefers to drive the cadence, just report the round and
+let them re-invoke when the new review lands — same loop, user-paced.
+
+## Checklist
+
+- [ ] `export GH_PAGER=cat` before GraphQL calls
+- [ ] Requested Copilot's review at the start (and re-requested each round), or noted the 422 if it's unavailable
+- [ ] Loaded project conventions (CLAUDE.md / AGENTS.md / project review skill) before evaluating
+- [ ] Summary table before changes each round
+- [ ] Validated fixes (typecheck/lint/test per the repo)
+- [ ] `git push` falls back to `--rebase` on rejection
+- [ ] Resolved ALL threads, fixed and declined
+- [ ] Round number in commit and comment
+- [ ] Skipped the manual bot trigger if push already re-reviews; scheduled a single wake to re-check
+- [ ] Stopped on no-new-fixes / repeats / 5-round cap, and reported why
+
+
+ARGUMENTS: 438
