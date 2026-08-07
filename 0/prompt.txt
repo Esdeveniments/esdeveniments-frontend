@@ -1,0 +1,45 @@
+<task-notification>
+<task-id>a21dad75e70c0abc4</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/7174eabb-cfe1-481b-b7b9-04fc60c1358f/tasks/a21dad75e70c0abc4.output</output-file>
+<status>completed</status>
+<summary>Agent "Test coverage review of PR #449" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Test Coverage Review — PR #449 (feat/mobile-nav-profile-header)
+
+**Summary:** The three modified test files do exercise real behavior, not just patch around deleted code — `navbar-profile-link.test.tsx` correctly asserts the new `mobile-avatar-link` href across all three `profileCompleted` states, and `profile-cta-tracking.test.tsx` adds a genuine test of the new logout button calling `useAuth().logout()`. But coverage stops at the "happy, authenticated" path. Every test that renders `NavbarClient` renders it authenticated — the logged-out state and the `profileEnrichmentFailed` state are never exercised, despite both being live branches in the new mobile-header conditional at `components/ui/common/navbar/NavbarClient.tsx:106`.
+
+### Critical Gap (9/10)
+
+**No test covers `profileEnrichmentFailed` on the new mobile header.**
+`components/ui/common/navbar/NavbarClient.tsx:106` — `isAuthenticated &amp;&amp; user &amp;&amp; !user.profileEnrichmentFailed ? &lt;avatar link&gt; : &lt;login link href="/iniciar-sessio"&gt;`. The PR body explicitly claims this was checked ("Verified the `profileEnrichmentFailed` edge case... mobile now routes to `/iniciar-sessio`") but that verification is manual, not automated. `test/navbar-profile-link.test.tsx` only varies `profileCompleted` (false/true/undefined) — it never sets `profileEnrichmentFailed: "auth"`. This is a backend-driven stale-session recovery path; if a future refactor drops the `!user.profileEnrichmentFailed` clause (or inverts it), a user with a broken session would see a dead avatar link instead of the `/iniciar-sessio` re-auth route, and nothing in the suite would catch it. Add a case to `test/navbar-profile-link.test.tsx`: render with `authUser.profileEnrichmentFailed = "auth"`, assert `getByTestId("mobile-login-link")` has `href="/iniciar-sessio"` and `queryByTestId("mobile-avatar-link")` is null.
+
+### Important Gaps (6-7/10)
+
+**No test renders `NavbarClient` unauthenticated at all (7/10).**
+`data-testid="mobile-login-link"` (`NavbarClient.tsx:129`) is defined but never queried anywhere in `test/`. Both `navbar-avatar.test.tsx` (`isAuthenticated: true` hardcoded) and `navbar-profile-link.test.tsx` (every test case sets an `authUser`) only cover the logged-in branch. A regression that renders the avatar link for guests (e.g. wrong operator on `isAuthenticated &amp;&amp; user`) wouldn't be caught. Same fix location as above — add a `user: null` / `isAuthenticated: false` test case.
+
+**No test asserts the bottom-bar Favoritos link is unconditionally `/preferits` (6/10).**
+`NavbarClient.tsx:260-269` — this is the exact simplification the PR makes (removing the old `isAuthenticated ? favorites-link : login-icon` ternary at the old lines 104-123 in the diff). Neither modified test file queries anything in the bottom bar; `grep -rln "NavbarClient" test/` returns only `navbar-avatar.test.tsx` and `navbar-profile-link.test.tsx`, and neither touches `labels.favorites` or `/preferits`. Note this was *also* untested before the PR (no prior test existed for the old ternary either), but that doesn't reduce risk going forward — new behavioral logic with zero assertions is exactly what should get a regression test. One line would do it: render authenticated and unauthenticated, assert the Favoritos `ActiveLink` href is `/preferits` in both.
+
+### Minor Gap (4/10)
+
+**No test asserts the hamburger DOM is gone.**
+No assertion anywhere (`queryByTestId("mobile-menu-panel")`, `queryByRole("button", {name: /menu/i})`) confirms the removal. Low priority — the JSX was deleted outright rather than hidden behind a flag, so there's no runtime branch to regress. Only matters if someone later reintroduces a conditionally-hidden hamburger.
+
+### Test Quality Notes (not gaps)
+
+- `test/navbar-avatar.test.tsx:73` correctly switched from `screen.getByAltText("")` to `screen.getByTestId("user-avatar-button").querySelector("img")` — necessary because the page now has two `alt=""` avatar images (desktop + mobile), and the old query would throw on ambiguity. This is a real fix, not a workaround.
+- `test/profile-cta-tracking.test.tsx:70-78` is solid: verifies both the `data-analytics-action="profile_logout_cta"` attribute and that clicking calls the real `logoutMock`, with proper `beforeEach` reset.
+- `test/auth-event-tracker.test.tsx:64,73` still uses the literal string `"navbar_login_mobile_icon"` (the old analytics action name for the now-deleted bottom-bar login icon) as a synthetic prop value in a generic click-delegation test unrelated to `NavbarClient`. Harmless — it's testing `AuthEventTracker`'s generic behavior, not asserting anything about the navbar — but it's a stale string that should be renamed to something like `"test_action"` on next touch to avoid implying coverage that doesn't exist.
+
+### Ranked Priority to Fix Before Merge
+
+1. `profileEnrichmentFailed` mobile fallback — 9/10, add to `test/navbar-profile-link.test.tsx`
+2. Unauthenticated mobile header (`mobile-login-link`) — 7/10, same file
+3. Bottom-bar Favoritos always `/preferits` — 6/10, same file or a new small test
+4. Hamburger DOM absence — 4/10, optional
+
+Files referenced: `/Users/albertolive/Repos/que-fer/components/ui/common/navbar/NavbarClient.tsx`, `/Users/albertolive/Repos/que-fer/components/ui/profile/ProfileOwnerActions.tsx`, `/Users/albertolive/Repos/que-fer/test/navbar-profile-link.test.tsx`, `/Users/albertolive/Repos/que-fer/test/navbar-avatar.test.tsx`, `/Users/albertolive/Repos/que-fer/test/profile-cta-tracking.test.tsx`, `/Users/albertolive/Repos/que-fer/test/auth-event-tracker.test.tsx`.</result>
+<usage><subagent_tokens>83701</subagent_tokens><tool_uses>26</tool_uses><duration_ms>177156</duration_ms></usage>
+</task-notification>
