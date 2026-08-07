@@ -1,0 +1,58 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - messages/ca.json
+  - messages/en.json
+  - messages/es.json
+
+Unified diff (only + lines are new):
+
+=== DIFF: messages/ca.json ===
+@@ -77,10 +77,10 @@
+       "title": "Preferits - Esdeveniments.cat",
+       "description": "Els teus esdeveniments futurs guardats",
+       "heading": "Preferits",
+-      "subtitle": "Es mostren els propers esdeveniments. Els passats són a la pestanya Passats.",
++      "subtitle": "Només es mostren esdeveniments futurs. Quan un esdeveniment finalitza, s'elimina automàticament dels preferits.",
+       "countLabel": "{count}/{max} desats",
+       "emptyTitle": "Encara no tens esdeveniments futurs desats",
+-      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí.",
++      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits.",
+       "errorTitle": "No hem pogut carregar els teus preferits",
+       "errorDescription": "Torna-ho a provar en un moment. Els teus preferits estan segurs.",
+       "tabUpcoming": "Propers",
+
+
+=== DIFF: messages/en.json ===
+@@ -77,10 +77,10 @@
+       "title": "Favorites - Esdeveniments.cat",
+       "description": "Your saved upcoming events",
+       "heading": "Favorites",
+-      "subtitle": "Upcoming events are shown here. Past favorites are in the Past tab.",
++      "subtitle": "Only upcoming events are shown. When an event ends, it is automatically removed from favorites.",
+       "countLabel": "{count}/{max} saved",
+       "emptyTitle": "No upcoming favorites yet",
+-      "emptyDescription": "Tap the heart on an event to save it here.",
++      "emptyDescription": "Tap the heart on an event to save it here. Past events are automatically removed from favorites.",
+       "errorTitle": "We couldn't load your favorites",
+       "errorDescription": "Please try again in a moment. Your favorites are safe.",
+       "tabUpcoming": "Upcoming",
+
+
+=== DIFF: messages/es.json ===
+@@ -77,10 +77,10 @@
+       "title": "Favoritos - Esdeveniments.cat",
+       "description": "Tus eventos futuros guardados",
+       "heading": "Favoritos",
+-      "subtitle": "Se muestran los eventos futuros. Los favoritos pasados están en la pestaña Pasados.",
++      "subtitle": "Solo se muestran eventos futuros. Cuando un evento termina, se elimina automáticamente de favoritos.",
+       "countLabel": "{count}/{max} guardados",
+       "emptyTitle": "Aún no tienes eventos futuros guardados",
+-      "emptyDescription": "Marca eventos con el corazón para verlos aquí.",
++      "emptyDescription": "Marca eventos con el corazón para verlos aquí. Los eventos pasados se eliminan automáticamente de favoritos.",
+       "errorTitle": "No hemos podido cargar tus favoritos",
+       "errorDescription": "Inténtalo de nuevo en un momento. Tus favoritos están a salvo.",
+       "tabUpcoming": "Próximos",
+
+
+Investigate per the method in your instructions, then return the findings list.
