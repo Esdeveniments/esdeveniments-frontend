@@ -1,0 +1,207 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/sitemap/[town]/[year]/[month]/page.tsx
+  - components/partials/generatePagesData.ts
+  - lib/api/categories.ts
+  - lib/seo/place-expandability.ts
+  - test/place-expandability.test.ts
+  - types/common.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/sitemap/[town]/[year]/[month]/page.tsx ===
+@@ -97,19 +97,6 @@ export async function generateMetadata({
+   const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
+   const monthLabel =
+     monthLabels[monthIndex] || normalizeMonthParam(canonicalMonthSlug).label;
+-  // Tolerate backend 5xx for place lookup (cosmetic; town slug is an acceptable
+-  // fallback). Prevents archive 500s from intermittent backend errors — the
+-  // main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
+-  const place = await fetchPlaceBySlugForMetadata(town).catch(() => null);
+-  const townLabel = place?.name || town;
+-  const placeType: "region" | "town" =
+-    place?.type === "CITY" ? "town" : "region";
+-  const locationPhrase = formatPlacePreposition(
+-    townLabel,
+-    placeType,
+-    locale,
+-    false
+-  );
+ 
+   // Probe events to set robots policy: noindex empty months so GSC stops
+   // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
+@@ -125,12 +112,30 @@ export async function generateMetadata({
+   );
+   const fromStr = from.toISOString().split("T")[0];
+   const toStr = until.toISOString().split("T")[0];
+-  const events = await fetchEventsForMetadata({
+-    place: town,
+-    from: fromStr,
+-    to: toStr,
+-    size: MAX_EVENTS_PER_PAGE,
+-  });
++
++  // Place lookup and the events probe are independent — parallelize instead
++  // of awaiting sequentially.
++  const [place, events] = await Promise.all([
++    // Tolerate backend 5xx for place lookup (cosmetic; town slug is an
++    // acceptable fallback). Prevents archive 500s from intermittent backend
++    // errors — the main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
++    fetchPlaceBySlugForMetadata(town).catch(() => null),
++    fetchEventsForMetadata({
++      place: town,
++      from: fromStr,
++      to: toStr,
++      size: MAX_EVENTS_PER_PAGE,
++    }),
++  ]);
++  const townLabel = place?.name || town;
++  const placeType: "region" | "town" =
++    place?.type === "CITY" ? "town" : "region";
++  const locationPhrase = formatPlacePreposition(
++    townLabel,
++    placeType,
++    locale,
++    false
++  );
+   // `events === null` means the probe itself failed (upstream outage, bad
+   // payload) — fail open (no robots override) rather than noindex a page
+   // that may well have real content; only a confirmed empty result should
+
+
+=== DIFF: components/partials/generatePagesData.ts ===
+@@ -4,8 +4,9 @@ import { cacheLife, cacheTag } from "next/cache";
+ import { placesTag, placeTag } from "@lib/cache/tags";
+ import {
+   PageData,
+-  GeneratePagesDataProps,
+   PlaceTypeAndLabel,
++  GeneratePagesDataCachedProps,
++  GeneratePagesDataPublicProps,
+ } from "types/common";
+ import { formatPlacePreposition } from "@utils/helpers";
+ import { splitNotFoundText, appendSearchQuery } from "@utils/notFoundMessaging";
+@@ -90,10 +91,7 @@ async function generatePagesDataCached({
+   category,
+   categoryName,
+   locale,
+-}: Omit<GeneratePagesDataProps, "search"> & {
+-  placeTypeLabel: PlaceTypeAndLabel;
+-  locale?: AppLocale;
+-}): Promise<PageData> {
++}: GeneratePagesDataCachedProps): Promise<PageData> {
+   // No dynamic API (headers/cookies/searchParams) is read here — the only
+   // request-time value is `now`, used solely as a fallback for the current
+   // month/year label on pages with no explicit date/year/month segment (see
+@@ -545,10 +543,7 @@ async function generatePagesDataCached({
+ export async function generatePagesData({
+   search,
+   ...rest
+-}: GeneratePagesDataProps & {
+-  placeTypeLabel: PlaceTypeAndLabel;
+-  locale?: AppLocale;
+-}): Promise<PageData> {
++}: GeneratePagesDataPublicProps): Promise<PageData> {
+   const pageData = await generatePagesDataCached(rest);
+   if (!search) return pageData;
+   const resolvedLocale = rest.locale || DEFAULT_LOCALE;
+
+
+=== DIFF: lib/api/categories.ts ===
+@@ -74,7 +74,7 @@ export async function fetchCategoriesForMetadata(): Promise<
+   });
+   const response = await fetch(url, {
+     headers: getVercelProtectionBypassHeaders(),
+-    next: { revalidate: 86400, tags: ["categories"] },
++    next: { revalidate: 86400, tags: [categoriesTag] },
+   });
+   if (!response.ok) {
+     // Categories are a fallback enrichment for metadata copy, not the
+
+
+=== DIFF: lib/seo/place-expandability.ts ===
+@@ -2,6 +2,7 @@ import { cache } from "react";
+ import { cacheLife, cacheTag } from "next/cache";
+ import { fetchEventCountExternal } from "@lib/api/events-external";
+ import {
++  buildEventsQuery,
+   getInternalApiUrl,
+   getVercelProtectionBypassHeaders,
+ } from "@utils/api-helpers";
+@@ -33,10 +34,10 @@ async function resolvePlaceExpandability(
+ // getPlaceExpandabilityForMetadata below — it would stay a resume-mismatch
+ // hazard despite the "use cache" wrapper.
+ async function fetchEventCountForMetadata(slug: string): Promise<number | null> {
+-  const url = await getInternalApiUrl(
+-    `/api/events?place=${encodeURIComponent(slug)}&size=1`,
+-    { preferConfiguredOrigin: true },
+-  );
++  const queryString = buildEventsQuery({ place: slug, size: 1 });
++  const url = await getInternalApiUrl(`/api/events?${queryString}`, {
++    preferConfiguredOrigin: true,
++  });
+   const response = await fetch(url, {
+     headers: getVercelProtectionBypassHeaders(),
+     next: { revalidate: 600, tags: [eventsTag] },
+
+
+=== DIFF: test/place-expandability.test.ts ===
+@@ -9,12 +9,18 @@ vi.mock("next/cache", () => ({
+   cacheLife: vi.fn(),
+ }));
+ 
+-vi.mock("@utils/api-helpers", () => ({
+-  getInternalApiUrl: vi.fn((path: string) =>
+-    Promise.resolve(`http://localhost:3000${path}`),
+-  ),
+-  getVercelProtectionBypassHeaders: vi.fn(() => ({})),
+-}));
++vi.mock("@utils/api-helpers", async () => {
++  const actual = await vi.importActual<typeof import("@utils/api-helpers")>(
++    "@utils/api-helpers",
++  );
++  return {
++    ...actual,
++    getInternalApiUrl: vi.fn((path: string) =>
++      Promise.resolve(`http://localhost:3000${path}`),
++    ),
++    getVercelProtectionBypassHeaders: vi.fn(() => ({})),
++  };
++});
+ 
+ import {
+   getPlaceExpandability,
+
+
+=== DIFF: types/common.ts ===
+@@ -103,6 +103,26 @@ export interface GeneratePagesDataProps {
+   search?: string;
+ }
+ 
++/**
++ * Input for generatePagesData's inner cached body (components/partials/
++ * generatePagesData.ts). Excludes `search` deliberately: it's free-text user
++ * input, and "use cache" derives its cache key from the function's
++ * arguments, so including it would create one cache entry per unique search
++ * string (unbounded cardinality on the data cache).
++ */
++export interface GeneratePagesDataCachedProps
++  extends Omit<GeneratePagesDataProps, "search" | "placeTypeLabel"> {
++  placeTypeLabel: PlaceTypeAndLabel;
++  locale?: AppLocale;
++}
++
++/** Input for generatePagesData's exported, uncached wrapper. */
++export interface GeneratePagesDataPublicProps
++  extends Omit<GeneratePagesDataProps, "placeTypeLabel"> {
++  placeTypeLabel: PlaceTypeAndLabel;
++  locale?: AppLocale;
++}
++
+ export interface PlaceTypeAndLabel {
+   type: PlaceType;
+   label: string;
+
+
+Investigate per the method in your instructions, then return the findings list.
