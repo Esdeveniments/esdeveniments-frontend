@@ -1,0 +1,5 @@
+btw, what about this? ```Val una cosa
+el nom d'usuari nomes hauria de poder ser modificable 1 cop
+No?
+perq indexarem URLs a partir d'aquest nom
+Haure d'afegir logica al back perq puguis "bloquejar" el camp no?```
