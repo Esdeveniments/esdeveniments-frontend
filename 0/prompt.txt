@@ -1,0 +1,168 @@
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   The user's requests evolved through a long session on the `que-fer` repo (branch `fix/audit-findings-cleanup`, PR #428 against `develop`):
+   - Initially asked general questions about Claude Code skill locking, then what skill/plugin would improve the codebase.
+   - Explicitly requested: "i mean to check the architecture of this project and or visuals and or animations, etc" — leading to a 4-part parallel audit (architecture/over-engineering, visual design tokens, animation, and later React/Next.js performance via the `/vercel-react-best-practices` skill invocation).
+   - Approved removal of a stray orphaned git worktree found during the architecture audit.
+   - Said "fix all with no assumptions" — authorizing me to verify every audit finding (via grep/git blame/reading actual files) and apply fixes for everything that held up, while explicitly flagging anything requiring product judgment rather than guessing.
+   - Said "commit this and create a PR and explore the skipped ones with no assumptions" — requiring: (a) git commit/push/PR workflow, and (b) rigorous re-investigation of the items I'd previously skipped (NavigationFiltersModal's `setTimeout(0)`, barrel imports, oversized files, `publica/page.tsx`'s `"use client"` placement).
+   - Asked "what will happen if you run again the same skills, about the three, can you fix them if you are 100% sure?" — pushing me to distinguish between re-running static analysis (useless) versus gathering genuinely new evidence (git blame, live browser testing, React render instrumentation) before acting, and to fix only what I could truly be confident about.
+   - Mid-turn: "when you are done, check pr ai suggestions and fix them all if you agree" — requiring me to wait for/read the PR's automated AI review bots (CodeRabbit, cubic-dev-ai) and apply the fixes I agree are valid, explicitly skipping ones I disagree with (with stated reasoning).
+
+2. Key Technical Concepts:
+   - Next.js App Router, React 19, Server/Client Components, `"use client"` boundary rules, `generateMetadata()` server-only pattern
+   - React hooks: `useEffect`, `useState`, `startTransition`, `useTransition`, `useMemo`, `useCallback`
+   - ESLint rule `react-hooks/set-state-in-effect` ("Calling setState synchronously within an effect can trigger cascading renders") — a critical discovery explaining the `setTimeout(0)` anti-pattern
+   - Project-specific ESLint rule `no-restricted-syntax` enforcing "Types in /types only — never inline interfaces outside /types" (targets named `interface`/`type` declarations, NOT anonymous inline object-type literals in function signatures — confirmed via lint + 69-occurrence codebase grep)
+   - Design system tokens (DESIGN.md, Tailwind semantic classes: `bg-muted`, `bg-border/40`, `.heading-1`, `.focus-ring`, `.transition-modal`, `text-primary-foreground`)
+   - Haversine distance calculation (`getDistance` in `utils/location-helpers.ts`) reused for `findNearestCity()`
+   - `agent-browser` CLI: snapshot/ref workflow, `react renders start/stop --json` for render-timing instrumentation, video recording, screenshot
+   - Vitest testing: `vi.useFakeTimers()`/`vi.useRealTimers()`/`vi.runOnlyPendingTimers()`, `act()`, React Testing Library `render`/`fireEvent`
+   - Git workflow: feature branches off `develop` (not `main`), conventional commits, `gh pr create`/`gh api ... -X PATCH` (worked around a `gh pr edit` GraphQL "Projects (classic)" deprecation error)
+   - AI PR review bots: CodeRabbit, cubic-dev-ai, github-actions (AI review via free-tier gateway) — polling `gh pr checks` for review completion status
+   - Husky pre-push hook (`yarn typecheck && yarn test --run && yarn i18n:check`)
+   - Test flakiness from real network I/O (HTTP loopback server tests) under resource contention
+
+3. Files and Code Sections:
+   - **`store.ts`, `types/store.ts`, `test/store.test.ts`** — Deleted entirely (zustand store with zero importers, confirmed via grep). Removed `zustand` from `package.json`, ran `yarn install` to update `yarn.lock`.
+   - **`types/common.ts`** — Removed dead `import type { StoreState } from "types/store"` and the unused `SearchState` interface that only referenced it.
+   - **`components/ui/locationDiscoveryWidget/utils.ts`** — Rewrote `findNearestCity()`:
+     ```ts
+     import { getDistance } from "@utils/location-helpers";
+     export function findNearestCity(
+       coordinates: GeolocationCoordinates,
+       regions: RegionsGroupedByCitiesResponseDTO[]
+     ): Option | null {
+       const origin = { lat: coordinates.latitude, lng: coordinates.longitude };
+       let nearest: Option | null = null;
+       let nearestDistance = Infinity;
+       for (const region of regions) {
+         for (const city of region.cities) {
+           const distance = getDistance(origin, { lat: city.latitude, lng: city.longitude });
+           if (distance < nearestDistance) {
+             nearestDistance = distance;
+             nearest = { value: city.value, label: city.label };
+           }
+         }
+       }
+       return nearest ?? { value: "catalunya", label: "Catalunya" };
+     }
+     ```
+     Also deleted the dead `debounce()` helper from this file.
+   - **`test/location-discovery-widget-utils.test.ts`** (new) — 3 tests for `findNearestCity` (closest city, other city, fallback to Catalunya).
+   - **`components/ui/layout/index.ts`** — Deleted (1-caller barrel). **`app/[locale]/layout.tsx`** — changed `import { BaseLayout } from "@components/ui/layout"` to `import BaseLayout from "@components/ui/layout/base"`.
+   - **`components/ui/common/AvatarInitials.tsx`** (new) — Shared avatar-fallback component; props type moved to `types/props.ts` (`AvatarInitialsProps`) after ESLint flagged the inline `interface`.
+   - **`components/ui/profile/ProfileHeader.tsx`**, **`app/[locale]/perfil/edita/EditProfileAvatar.tsx`** — Replaced duplicated local `AvatarFallback` with `AvatarInitials`, fixed `text-white`→`text-primary-foreground`.
+   - **`components/sitemap/SitemapHeaderSkeleton.tsx`**, **`components/sitemap/SitemapSkeleton.tsx`** — `bg-gray-200`→`bg-muted` (WRONG, nearly invisible against white bg) → corrected to `bg-border/40` in follow-up commit.
+   - **`app/[locale]/offline/page.tsx`** — `text-4xl font-bold` → `.heading-1` on the h1.
+   - **`.github/skills/design-system-conventions/SKILL.md`** — Removed `.card-header` reference (never implemented) and stale "(component coming in Week 4)"/"Week 0 - Foundation" text. Did NOT touch `.btn-primary`/`.card-bordered` class names (verified correct).
+   - **`components/ui/common/modal/index.tsx`** — `Transition.Child` enter/leave changed from `"ease-out duration-300"`/`"ease-in duration-200"` to `"transition-modal"` (both), with `enterFrom="opacity-0 translate-y-4 sm:translate-y-0"` / `enterTo="opacity-70 translate-y-0"` (mirrored on leave).
+   - **`components/ui/locationDiscoveryWidget/LocationDropdown.tsx`** — Added `animate-dropdown-in` class to the dropdown panel div.
+   - **`styles/globals.css`** — Added new keyframes/utilities after `.animate-disappear`: `@keyframes dropdownIn` + `.animate-dropdown-in`, `@keyframes fadeInUp` + `.animate-fade-in-up`, `.animate-fade-in-fast` (reusing existing `fadeIn` keyframe).
+   - **`components/ui/filtersModal/NavigationFiltersModal.tsx`** (933→934/932 lines depending on edit) — Multiple changes:
+     - Added `animate-fade-in-fast` to `useCurrentLocationMode`/`isRegionSelected` notice divs and the geolocation feedback div.
+     - Wrapped `CalendarDatePicker` conditional in `<div className="animate-fade-in-up w-full">`.
+     - Converted the `showMoreDates` `<>...</>` Fragment to `<div className="animate-fade-in-up w-full flex flex-col gap-4">` to preserve spacing while adding the class.
+     - **Most significant fix**: the reset `useEffect` (originally lines ~202-227) was:
+       ```ts
+       useEffect(() => {
+         if (!isOpen) return;
+         const id = window.setTimeout(() => {
+           setLocalPlace(defaults.place);
+           /* ...11 more setters... */
+         }, 0);
+         return () => window.clearTimeout(id);
+       }, [isOpen, defaults.place, /* ...etc */]);
+       ```
+       Changed to:
+       ```ts
+       useEffect(() => {
+         if (!isOpen) return;
+         startTransition(() => {
+           setLocalPlace(defaults.place);
+           /* ...same 11 setters... */
+         });
+       }, [isOpen, defaults.place, /* ...same deps... */]);
+       ```
+       This was necessary because removing the `setTimeout` outright triggered a NEW ESLint error (`react-hooks/set-state-in-effect`) — `startTransition` (already imported in this file) was the correct fix, satisfying the lint rule while achieving the same "defer the reset" semantics.
+   - **`test/navigation-filters-modal.bydate-default.test.tsx`**, **`test/navigation-filters-modal.locale-noop-apply.test.tsx`** — Removed now-unnecessary `vi.useFakeTimers()`/`vi.useRealTimers()`/`vi.runOnlyPendingTimers()` calls and stale comments referencing "the setTimeout(0)"; removed unused `act` import from both.
+   - **`app/api/events/[slug]/route.ts`** — DELETE handler: `getCurrentUser()` and `context.params` parallelized via `Promise.all`.
+   - **`components/ui/common/index.ts`** — Deleted (confirmed 100% dead: all 10 re-exports consumed via direct subpath imports elsewhere, never through this barrel).
+   - **`components/ui/placePageExploreNav/index.ts`** — Removed dead `export { default as CategoryQuicklinks } from "./CategoryQuicklinks";` line (kept the `export { default } from "./PlacePageExploreNav";` which IS load-bearing for a dynamic import in `PlacePageShell.tsx`).
+   - **`components/ui/common/social/SocialFollowPopup.tsx`** (851→528 lines) — Split into 5 new files:
+     - **`CloseIcon.tsx`** (new)
+     - **`IosInstallSteps.tsx`** (new) — takes `{isIpad, shareLocation}: {isIpad: boolean; shareLocation: "safari" | "menu"}`
+     - **`InstallSection.tsx`** (new) — imports `IosInstallSteps`
+     - **`PushSection.tsx`** (new) — imports `usePushNotifications` type
+     - **`SocialLinksSection.tsx`** (new) — moved the `SOCIAL_LINKS` const array here (includes a commented-out TikTok entry: `// { platform: "tiktok", label: "TikTok", href: socialLinks.tiktok },`), imports `SocialIcon` and `socialLinks`. Contains the manually hand-rolled focus classes flagged by CodeRabbit at (approximately) lines 40 and 58: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2` in both the mobile and desktop link grids.
+     Main `SocialFollowPopup.tsx` now imports all 5 and keeps only the default export component plus private helpers (`getPopupState`, `savePopupState`, `trackPageView`, `shouldShow`, `getScrollThreshold`) and exported constants (`STORAGE_KEY`, `PAGE_VIEW_KEY`, etc. — verified still imported correctly by `test/social-follow-popup.test.tsx` and `test/social-follow-popup-install-ux.test.tsx`, both passing).
+   - **`config/index.ts`** — Read-only check confirmed lines 173 and 181 have commented-out tiktok entries (`// tiktok: "https://www.tiktok.com/@esdeveniments",` and `// socialLinks.tiktok,`), matching cubic's dead-code claim about `SocialLinksSection.tsx`.
+
+4. Errors and fixes:
+   - **ESLint `no-restricted-syntax` on `AvatarInitials.tsx`**: inline `interface AvatarInitialsProps` violated "Types in /types only". Fixed by moving to `types/props.ts` and importing `type { AvatarInitialsProps } from "types/props"`.
+   - **Visual regression self-caught**: `bg-gray-200`→`bg-muted` made skeletons nearly invisible (`#F7F7F7` vs `#FFFFFF` page bg). Fixed to `bg-border/40` (~`#EBEBEB` effective) matching other genuinely-visible skeletons in the codebase (`EventCardSkeleton`, `HeroSectionSkeleton`). Committed as a separate, explicitly-labeled self-correction commit.
+   - **Incorrect audit finding on design-system-conventions SKILL.md**: original visual-audit fork claimed `.btn-primary`/`.card-bordered` class names didn't match reality (claimed real classes were `button-primary`/`card-default`). Verified via grep that these are just DESIGN.md's abstract token-spec names, not real CSS classes — the actual classes (`.btn-primary`, `.card-bordered`) DO exist and are used 26/23 times. Corrected course: only fixed the genuinely stale `.card-header` reference and "Week 4"/"Week 0" framing, left class names untouched.
+   - **`gh pr edit` GraphQL error**: "Projects (classic) is being deprecated... (repository.pullRequest.projectCards)" — unrelated repo config issue. Worked around by using `gh api repos/.../pulls/428 -X PATCH -f body=... -f title=...` instead.
+   - **Overcorrection on `publica/page.tsx`**: Initially claimed the `onSubmit` extraction was "pure code motion" (safe). After actually reading the full ~300-line function, corrected myself: it's entangled with 9 pieces of state and multiple handlers reading the same state — NOT a safe shallow extraction. Explicitly told the user: "I was wrong to call this 'pure code motion' — flagging it back rather than pushing it through on overconfidence."
+   - **`agent-browser` ref staleness / video timing unreliability**: First attempt at video-recording the modal reopen failed to capture the actual transition (caught mid-"Compiling..." Next.js dev overlay in one attempt; a stray `SocialFollowPopup` timer-triggered popup caused ref drift and accidental navigation to `/patrocina` in another). Switched to `agent-browser react renders start/stop --json` for precise, code-level render timing instead of pixel/video inspection — this was the deciding, rigorous evidence.
+   - **New ESLint error after removing `setTimeout(0)` entirely**: `react-hooks/set-state-in-effect` fired ("Calling setState synchronously within an effect can trigger cascading renders"). This was a critical discovery — it strongly suggested the original `setTimeout(0)` existed specifically to dodge this lint rule, not for UX/timing reasons. Fixed properly by wrapping the setters in `startTransition(...)` (already imported in the file), which cleanly satisfied the lint rule (confirmed via `npx eslint ... --format json`, 0 errors).
+   - **Bash `status` variable is read-only** in the shell environment: `for i in ...; do status=$(...); done` threw `read-only variable: status`. Fixed by renaming the variable to `chk`.
+   - **Transient/flaky `git push` failure**: First `git push` attempt after the `startTransition` fix failed pre-push hook with "2 failed | 2213 passed (2215)" — but my own immediately-prior and immediately-subsequent `yarn vitest run` (twice) and exact `yarn test --run` reproduction all passed 2215/2215. Root-caused to likely resource contention (dev server + Chrome/agent-browser were still running, consuming CPU during the first push attempt). Killed both processes (`agent-browser close --all`, `pkill -f "next dev"`), retried `git push` — succeeded.
+   - **CodeRabbit's "fix the failing pinned-dns-dispatcher test" claim**: Verified the test exists and runs a real HTTP loopback server (`createServer`, `srv.listen(0, "127.0.0.1", ...)`) — genuinely network/port-dependent and prone to flaking under load, matching the resource-contention theory above. Ran it in isolation 3x, all passed. Concluded this is pre-existing, unrelated-to-my-PR flakiness — decided NOT to "fix" it within this PR's scope, planning to note it as a `LESSONS.md`-worthy gotcha instead.
+   - **CodeRabbit's "extract inline prop types to /types" suggestion**: Verified via `npx eslint` (0 errors on all 4 affected files) and a codebase-wide grep (69 other occurrences of the same inline-anonymous-prop-type pattern in established files like `HeroSearch.tsx`, `SectionHeading.tsx`, `staticShareButtons/index.tsx`). Concluded this suggestion doesn't match the codebase's real, widespread convention — decided to DISAGREE and skip it, with reasoning to communicate to the user.
+
+5. Problem Solving:
+   - Ongoing: distinguishing "genuinely safe, verified fixes" from "overconfident assumptions" throughout — corrected course twice (bg-muted contrast, publica/page.tsx onSubmit) rather than pushing through with initial (wrong) assessments.
+   - Solved: root-caused why `setTimeout(0)` existed in `NavigationFiltersModal.tsx` (it was very likely a workaround for the `react-hooks/set-state-in-effect` lint rule, not a UX-timing fix) via a combination of git blame, existing test comments, live browser render-timing instrumentation, and finally the lint rule itself firing when the timer was removed.
+   - Solved: distinguished valid AI PR-review suggestions (`.focus-ring` utility, dead TikTok comment) from invalid ones (extract-to-/types guideline, which doesn't match the 69-instance codebase convention) and unrelated pre-existing flakiness (pinned-dns-dispatcher test) that shouldn't be "fixed" within this PR's scope.
+   - Currently mid-resolution: applying the two AI-review fixes I've verified and agree with (`.focus-ring` utility swap in `SocialLinksSection.tsx`; removing the dead commented-out TikTok line in the same file) — verification just completed for both, but neither edit has been applied yet.
+
+6. All user messages:
+   - "why we have lock some skills? [image]"
+   - "what is the best skill or plugin available here or to install to improve this codebase?"
+   - "i mean to check the architecture of this project and or visuals and or animations, etc"
+   - [AskUserQuestion response] "Which parts of que-fer do you want audited right now?" → "Architecture, Visual design, Animations/motion"; "Do you want a report only, or should fixes be applied where they're low-risk?" → "Report only (Recommended)"
+   - "yes, check the worktree directory"
+   - "yes, go ahead and remove it"
+   - [Slash command] `/vercel-react-best-practices` (skill invocation, no additional text)
+   - "fix all with no assumptions"
+   - "commit this and create a PR and explore the skipped ones with no assumptions"
+   - "what will happen if you run again the same skills, about the three, can you fix them if you are 100% sure?"
+   - [AskUserQuestion response] "For the NavigationFiltersModal setTimeout question... Want me to do that now?" → "Yes, run the live browser test (Recommended)"
+   - [Mid-turn injected message] "when you are done, check pr ai suggestions and fix them all if you agree"
+
+7. Pending Tasks:
+   - Apply the `.focus-ring` utility fix in `components/ui/common/social/SocialLinksSection.tsx` (replace the two duplicated manual `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2` class strings with `.focus-ring`, at the mobile link grid ~line 40 and desktop link grid ~line 58).
+   - Remove the dead commented-out TikTok line from `SocialLinksSection.tsx`: `// { platform: "tiktok", label: "TikTok", href: socialLinks.tiktok },`
+   - Run `yarn typecheck && yarn lint && yarn vitest run` after these edits to verify.
+   - Commit these two fixes (likely as one commit, e.g. "fix(social): apply focus-ring utility and remove dead tiktok comment per AI review").
+   - Skip (with stated reasoning to the user) the CodeRabbit "extract inline prop types to /types" suggestion — doesn't match established codebase convention (69 other instances).
+   - Skip (with stated reasoning to the user) the CodeRabbit "fix pinned-dns-dispatcher.test.ts" suggestion — pre-existing, unrelated flakiness, not reproducible, out of scope for this PR; consider suggesting a `LESSONS.md` entry about network-test flakiness under load (not yet actioned).
+   - Push the new commit and report back to the user with a summary of which AI suggestions were fixed vs. skipped and why.
+   - Update the PR #428 description again if appropriate to reflect this latest round.
+
+8. Current Work:
+   Immediately before this summary was requested, I had just finished verifying cubic-dev-ai's suggestion about `components/ui/common/social/SocialLinksSection.tsx`: "Commented-out TikTok entry in SOCIAL_LINKS references socialLinks.tiktok which is also commented out in config/index.ts. This is stale dead code — remove the commented line to keep the codebase clean." I ran:
+   ```bash
+   cd /Users/albertolive/Repos/que-fer
+   grep -n "tiktok" config/index.ts
+   ```
+   which returned:
+   ```
+   173:  // tiktok: "https://www.tiktok.com/@esdeveniments",
+   181:  // socialLinks.tiktok,
+   ```
+   confirming both the config value and its reference are indeed commented out, validating cubic's claim as correct and safe to act on. This was the last tool call executed before the conversation was interrupted for compaction. I had already independently verified (via `grep -n "\.focus-ring\b" styles/globals.css` and reading its definition) that CodeRabbit's `.focus-ring` suggestion is also valid and exactly matches the hand-rolled classes in the same file. Neither fix has been applied yet — both are queued for the next action.
+
+9. Optional Next Step:
+   Apply both agreed-upon AI review fixes to `components/ui/common/social/SocialLinksSection.tsx`:
+   1. Replace the two occurrences of `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2` with `focus-ring` (per CodeRabbit's suggestion, verified the utility exists in `styles/globals.css:423` with an identical `@apply` expansion).
+   2. Remove the commented-out line `// { platform: "tiktok", label: "TikTok", href: socialLinks.tiktok },` from the `SOCIAL_LINKS` array (per cubic's suggestion, just verified both halves of this dead reference are commented out in `config/index.ts`).
+   Then run `yarn typecheck && yarn lint && yarn vitest run` to verify, commit, and push — followed by reporting to the user which suggestions were applied and which were explicitly skipped (with reasoning): the "extract inline prop types" guideline (disagreed — doesn't match the codebase's 69-instance established convention) and the "fix pinned-dns-dispatcher.test.ts" claim (disagreed as in-scope — it's pre-existing, unrelated, unreproducible flakiness, likely from resource contention, not a bug in this PR).
+
+   This directly continues the user's explicit instruction: "when you are done, check pr ai suggestions and fix them all if you agree."
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/albertolive/.claude/projects/-Users-albertolive-Repos-que-fer/7a2943ca-2e5e-4664-954a-cd482f3f0383.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
