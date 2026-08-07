@@ -1,0 +1,315 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/e/[eventId]/promote/PromoteEventClient.tsx
+  - app/[locale]/e/[eventId]/promote/page.tsx
+  - config/pricing.ts
+  - test/promote-event-client.test.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/e/[eventId]/promote/PromoteEventClient.tsx ===
+@@ -0,0 +1,126 @@
++"use client";
++
++import { useState } from "react";
++import { useLocale, useTranslations } from "next-intl";
++import { Link } from "@i18n/routing";
++import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
++import Button from "@components/ui/common/button";
++import { getEventPromotionOptions } from "@config/pricing";
++import type { AppLocale } from "types/i18n";
++import type { PromoteEventClientProps } from "types/props";
++import { createPromotionCheckoutAction } from "./actions";
++
++function isValidCheckoutUrl(url: string): boolean {
++  try {
++    return new URL(url).protocol === "https:";
++  } catch {
++    return false;
++  }
++}
++
++export default function PromoteEventClient({
++  eventId,
++  slug,
++}: PromoteEventClientProps) {
++  const t = useTranslations("App.EventPromote");
++  const locale = useLocale() as AppLocale;
++  const [isSubmitting, setIsSubmitting] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++  // MVP: exactly one option today. Rendered from a list (not a single
++  // constant) so this component doesn't change shape when Gerard adds real
++  // duration/geo-scope tiers later — only getEventPromotionOptions' return
++  // value grows.
++  const [promotionOption] = getEventPromotionOptions();
++
++  const handleConfirm = async () => {
++    setError(null);
++    setIsSubmitting(true);
++
++    const result = await createPromotionCheckoutAction(eventId, slug, locale);
++
++    if (!result.success) {
++      setError(t("errorGeneric"));
++      setIsSubmitting(false);
++      return;
++    }
++
++    if (!isValidCheckoutUrl(result.url)) {
++      console.error("PromoteEventClient: invalid checkout url", result.url);
++      setError(t("errorGeneric"));
++      setIsSubmitting(false);
++      return;
++    }
++
++    window.location.href = result.url;
++  };
++
++  return (
++    // max-w-[520px] matches DESIGN.md's `containers.detail` token (520px) —
++    // this is a single-focus confirmation flow like the event detail page,
++    // not a multi-field form (which would use the wider `container` class,
++    // as /publica and /edita do). Tailwind's config only customizes the
++    // generic `container` utility, not a named "detail" width, so the literal
++    // value is the correct concrete implementation of that design token today.
++    <div className="max-w-[520px] mx-auto py-section-y px-section-x">
++      <Link
++        href={`/e/${slug}`}
++        className="inline-flex items-center gap-1 body-small text-foreground/70 hover:text-foreground mb-4"
++      >
++        <ArrowLeftIcon className="w-4 h-4" />
++        {t("backToEvent")}
++      </Link>
++
++      <div className="flex flex-col gap-6">
++        <div className="flex flex-col gap-2 text-center">
++          <h1 className="heading-1 text-foreground-strong">{t("heading")}</h1>
++          <p className="body-large text-foreground/80">{t("subheading")}</p>
++        </div>
++
++        <div className="card-bordered card-body space-y-3">
++          <ul className="flex flex-col gap-2 body-normal text-foreground/80">
++            <li className="flex items-center gap-2">
++              <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" />
++              {t("benefit1")}
++            </li>
++            <li className="flex items-center gap-2">
++              <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" />
++              {t("benefit2")}
++            </li>
++            <li className="flex items-center gap-2">
++              <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" />
++              {t("benefit3")}
++            </li>
++          </ul>
++        </div>
++
++        <div className="card-bordered card-body flex items-center justify-between">
++          <span className="body-normal text-foreground/70">{t("priceLabel")}</span>
++          <span className="heading-2 text-foreground-strong">
++            {promotionOption.priceEur}€
++          </span>
++        </div>
++        <p className="body-small text-foreground/60 -mt-4">{t("priceNote")}</p>
++
++        {error && (
++          <div
++            className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg"
++            role="alert"
++          >
++            <p className="text-sm font-medium text-error">{error}</p>
++          </div>
++        )}
++
++        <Button
++          type="button"
++          variant="primary"
++          className="w-full min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
++          disabled={isSubmitting}
++          data-testid="promote-confirm-button"
++          onClick={handleConfirm}
++        >
++          {isSubmitting ? t("confirmButtonLoading") : t("confirmButton")}
++        </Button>
++      </div>
++    </div>
++  );
++}
+
+
+=== DIFF: app/[locale]/e/[eventId]/promote/page.tsx ===
+@@ -0,0 +1,48 @@
++import { notFound } from "next/navigation";
++import { locale as rootLocale } from "next/root-params";
++import { getTranslations } from "next-intl/server";
++import type { Metadata } from "next";
++import { siteUrl } from "@config/index";
++import { withLocalePath } from "@utils/i18n-seo";
++import type { AppLocale } from "types/i18n";
++import { fetchEventBySlug } from "lib/api/events";
++import { getCurrentUser } from "@lib/auth/session";
++import PromoteEventClient from "./PromoteEventClient";
++
++export async function generateMetadata({
++  params,
++}: {
++  params: Promise<{ eventId: string }>;
++}): Promise<Metadata> {
++  const { eventId } = await params;
++  const locale = (await rootLocale()) as AppLocale;
++  const t = await getTranslations({ locale, namespace: "App.EventPromote" });
++  const canonical = `${siteUrl}${withLocalePath(`/e/${eventId}/promote`, locale)}`;
++  return {
++    title: t("title"),
++    description: t("description"),
++    robots: "noindex, nofollow",
++    alternates: { canonical },
++  };
++}
++
++export default async function PromotePage({
++  params,
++}: {
++  params: Promise<{ eventId: string }>;
++}) {
++  const slug = (await params).eventId;
++  const [event, currentUser] = await Promise.all([
++    fetchEventBySlug(slug),
++    getCurrentUser(),
++  ]);
++
++  // Only the event creator may promote it. Treat missing/unknown ownership as
++  // 404 to avoid leaking the existence of the promote page — same convention
++  // as the edita page's ownership gate.
++  const currentUserId = currentUser?.id;
++  const isCreator = Boolean(currentUserId) && currentUserId === event?.owner?.id;
++  if (!event || !isCreator) return notFound();
++
++  return <PromoteEventClient eventId={event.id} slug={event.slug} />;
++}
+
+
+=== DIFF: config/pricing.ts ===
+@@ -160,3 +160,20 @@ export const DISPLAY_PRICES_EUR: Record<
+   region: buildDisplayPricesForScope("region"),
+   country: buildDisplayPricesForScope("country"),
+ };
++
++export interface EventPromotionOption {
++  id: string;
++  priceEur: number;
++}
++
++/**
++ * MVP: exactly one flat-fee option for event promotion checkout. Structured
++ * as a list (not a single constant) so the promote page already renders
++ * "whatever this returns" rather than a hardcoded line — when Gerard defines
++ * real duration/geo-scope tiers (methodology still undecided — see the
++ * design doc and the message sent to him), this function's implementation
++ * changes, not its callers.
++ */
++export function getEventPromotionOptions(): EventPromotionOption[] {
++  return [{ id: "standard", priceEur: 5 }];
++}
+
+
+=== DIFF: test/promote-event-client.test.tsx ===
+@@ -0,0 +1,94 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
++import { render, screen, fireEvent, waitFor } from "@testing-library/react";
++
++const mockCreatePromotionCheckoutAction = vi.fn();
++const mockUseLocale = vi.fn(() => "ca");
++
++vi.mock("next-intl", () => ({
++  useTranslations: (namespace: string) => (key: string) => `${namespace}.${key}`,
++  useLocale: () => mockUseLocale(),
++}));
++
++vi.mock("../app/[locale]/e/[eventId]/promote/actions", () => ({
++  createPromotionCheckoutAction: (eventId: string, slug: string, locale: string) =>
++    mockCreatePromotionCheckoutAction(eventId, slug, locale),
++}));
++
++const originalLocation = window.location;
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  // @ts-expect-error -- overriding a readonly for the test
++  delete window.location;
++  Object.defineProperty(window, "location", {
++    value: { href: "" },
++    writable: true,
++    configurable: true,
++  });
++});
++
++afterEach(() => {
++  Object.defineProperty(window, "location", {
++    value: originalLocation,
++    writable: true,
++    configurable: true,
++  });
++});
++
++import PromoteEventClient from "../app/[locale]/e/[eventId]/promote/PromoteEventClient";
++
++describe("PromoteEventClient", () => {
++  it("redirects to the returned Stripe url on success", async () => {
++    mockCreatePromotionCheckoutAction.mockResolvedValue({
++      success: true,
++      url: "https://checkout.stripe.com/session123",
++    });
++
++    render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
++
++    fireEvent.click(screen.getByTestId("promote-confirm-button"));
++
++    await waitFor(() => {
++      expect(window.location.href).toBe("https://checkout.stripe.com/session123");
++    });
++  });
++
++  it("shows a generic error and does not redirect when the action fails", async () => {
++    mockCreatePromotionCheckoutAction.mockResolvedValue({
++      success: false,
++      error: "Unauthorized: only the event creator can promote this event",
++    });
++
++    render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
++    fireEvent.click(screen.getByTestId("promote-confirm-button"));
++
++    await waitFor(() => {
++      expect(screen.getByRole("alert")).toBeInTheDocument();
++    });
++    expect(window.location.href).toBe("");
++  });
++
++  it("rejects a non-https url instead of redirecting", async () => {
++    mockCreatePromotionCheckoutAction.mockResolvedValue({
++      success: true,
++      url: "/undefined",
++    });
++
++    render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
++    fireEvent.click(screen.getByTestId("promote-confirm-button"));
++
++    await waitFor(() => {
++      expect(screen.getByRole("alert")).toBeInTheDocument();
++    });
++    expect(window.location.href).toBe("");
++  });
++
++  it("renders the price from getEventPromotionOptions rather than a hardcoded value", () => {
++    render(<PromoteEventClient eventId="event-uuid-1" slug="my-event" />);
++
++    // 5 is today's only entry from getEventPromotionOptions() — asserting
++    // against the rendered text (not re-importing the config function) keeps
++    // this test honest about what the user actually sees.
++    expect(screen.getByText("5€")).toBeInTheDocument();
++  });
++});
+
+
+Investigate per the method in your instructions, then return the findings list.
