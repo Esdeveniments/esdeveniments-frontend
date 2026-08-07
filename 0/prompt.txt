@@ -1,0 +1,45 @@
+<task-notification>
+<task-id>a1c6df36952e8781e</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/ce1a5f58-9f84-44c3-8e85-496d9b268795/tasks/a1c6df36952e8781e.output</output-file>
+<status>completed</status>
+<summary>Agent "Explore events API layer patterns" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Report
+
+**1. Backend architecture (3-layer proxy pattern, per PR #429 "deepen the auth/profile modules (users-external, proxy gateway, auth/me session)")**
+
+- Layer 1 (Client/Server Components) → Layer 2 `app/api/*/route.ts` (internal Next.js routes) → Layer 3 `lib/api/*-external.ts` (calls the real backend).
+- Base URL resolution: `utils/api-helpers.ts:29-85` — `getApiUrl()`/`resolveApiUrl()` tries `API_URL` then `NEXT_PUBLIC_API_URL` (build-time), falling back to a hardcoded default. `isApiUrlConfigured()` guards calls.
+- HMAC client: `lib/api/fetch-wrapper.ts` → `fetchWithHmac()` (10s timeout, no-store, `skipBodySigning` needed for mutations). Middleware `proxy.ts` allowlists public GET routes; everything else needs HMAC (line ~250 "API gateway: multipart allowlist, public-route classification").
+- Full doc: `.github/skills/api-layer-patterns/SKILL.md`.
+
+**2. Current user-events fetch**
+
+- Single endpoint: `GET /users/{username}/events?page&amp;size` — external wrapper `lib/api/users-external.ts:288-321` (`getUserEventsExternal`). Only `page`/`size` params, default `size=20`. No date filter exists on the backend today.
+- Called by internal `lib/api/profiles.ts:88` (`fetchUserEvents = cache(getUserEventsExternal)`); there is currently no `app/api/users/[username]/events/route.ts` — it goes external-wrapper-direct (no internal route wrapping it yet, unlike other resources). Note: there IS `app/api/users/[username]/route.ts` for the profile itself (server-only proxy, cache headers `s-maxage=300`/no-store on 404).
+- Consumer: `components/partials/ProfilePageShell.tsx:17,26` fetches page 0, size 20, then client-side filters with `filterActiveEvents` — comment at line 15-16 explicitly says: "Client pagination (‘load more’) via `/api/users/[username]/events` is a follow-up; v1 renders the first page."
+
+**3. Existing past/upcoming ("expired"/"caducat") concept — reuse this**
+
+- Canonical logic: `utils/event-status.ts` → `computeTemporalStatus(startDate, endDate, nowOverride, startTime, endTime)` returns `{state: "past"|"live"|"upcoming", ...}`. Handles all-day vs timed events, day-level vs timestamp comparisons.
+- Simple boolean wrapper: `utils/event-helpers.ts:9-20` `isEventActive(event)` → `computeTemporalStatus(...).state !== "past"`, and `filterActiveEvents()` (line 22-28) filters a list. This is exactly the "past/future" split logic a new endpoint should mirror.
+- UI: event detail page shows `PastEventBanner` (`app/[locale]/e/[eventId]/components/PastEventBanner.tsx`) when `temporalStatus.state === "past"`; i18n strings at `messages/ca.json:887-893` ("Aquest esdeveniment ja ha finalitzat") and `EventStatus` labels at line 1404+ ("Esdeveniment finalitzat").
+- Sitemap also uses a simpler day-diff cutoff independently: `lib/meta.ts:23` `EXPIRED_EVENT_NOINDEX_DAYS = 60`, applied in `app/sitemap-events/[...parts]/route.ts:70-83` — different/coarser definition, not the one to reuse for UI-facing splits.
+
+**4. Server vs Client Component data-fetching conventions** (from `.github/skills/api-layer-patterns/SKILL.md`)
+
+- Server Components import typed client libs from `lib/api/*.ts` (e.g. `fetchEvents`), never call `*-external.ts` directly.
+- Client Components use SWR with `getInternalApiUrl()` to build internal route URLs — never hardcode `/api/...` strings, never call `NEXT_PUBLIC_API_URL` directly, never sign HMAC client-side.
+- Every `lib/api/*.ts` client lib must check `isBuildPhase` and call the external wrapper directly during `next build` (internal routes aren't running yet) — see "Build-Time vs Runtime Behavior" section.
+- Internal routes set `Cache-Control` headers (table: Events 600s/3600s, News 60s/300s, Categories 3600s/86400s); external wrappers must NOT use `next: { revalidate }` (caused a documented cache-explosion incident, `docs/incidents/2026-01-20-fetch-cache-explosion.md`).
+
+**5. Pagination pattern**
+
+- Backend uses classic page-number pagination: `PagedResponseDTO&lt;T&gt;` = `{ content[], currentPage, pageSize, totalElements, totalPages, last }` (`types/api/event.ts:67-74`), same shape used by `getUserEventsExternal`.
+- Client "infinite scroll" convention: `useSWRInfinite` (`components/hooks/useEvents.ts:7,138-139,232-241`) with a `loadMore()` calling `setSize(prev =&gt; prev+1)`, stopping via `data[last].last === true` per the skill doc's "Pagination" section (lines 350-374).
+- Favorites split precedent (the "mirror" the team means): `lib/api/favorites-external.ts` (`listFavoriteEventsExternal`) + `app/api/favorites/route.ts` — same page/size paged pattern, separate route per concern, GET returns `{ok, favorites}` with graceful `502 BACKEND_ERROR` fallback rather than silently empty results — a good resilience pattern to copy for the new past/future split.
+
+**Recommendation for the new endpoints**: keep the same `page`/`size` paged-response shape, add a query param (e.g. `status=upcoming|past` or separate paths `/users/{username}/events/upcoming` and `/users/{username}/events/past`) that the backend filters by, and on the frontend reuse `computeTemporalStatus`/`isEventActive` from `utils/event-status.ts` / `utils/event-helpers.ts` only as a client-side safety net — the source of truth for "past" should move server-side to match Gerard's new split.</result>
+<usage><subagent_tokens>81120</subagent_tokens><tool_uses>29</tool_uses><duration_ms>81046</duration_ms></usage>
+</task-notification>
