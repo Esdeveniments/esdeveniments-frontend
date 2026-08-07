@@ -1,0 +1,58 @@
+i manualy tested and it had this error, why? ```Authentication required
+lib/api/events.ts (66:17) @ requireMutationAuth
+
+
+  64 |   const authToken = await getAccessTokenFromCookies();
+  65 |   if (!authToken) {
+> 66 |     const err = new Error("Authentication required");
+     |                 ^
+  67 |     (err as Error & { status: number }).status = 401;
+  68 |     throw err;
+  69 |   }
+Call Stack
+8
+
+Show 5 ignore-listed frame(s)
+requireMutationAuth
+lib/api/events.ts (66:17)
+createEvent
+lib/api/events.ts (368:33)
+createEventAction
+app/[locale]/publica/actions.ts (51:15)``` more logs: ```)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1252ms (next.js: 1241ms, application-code: 11ms)
+[AUTH DIAGNOSTIC] getEncKey initialized: secret length=48
+[AUTH DIAGNOSTIC] decrypt: SUCCESS
+[AUTH DIAGNOSTIC] decrypt: SUCCESS
+[AUTH DIAGNOSTIC] decrypt: cookie value is undefined
+ GET /api/categories 200 in 846ms (next.js: 421ms, proxy.ts: 108ms, application-code: 317ms)
+ GET /api/regions/options 200 in 930ms (next.js: 260ms, proxy.ts: 74ms, application-code: 596ms)
+ GET /api/auth/me 401 in 1316ms (next.js: 448ms, proxy.ts: 58ms, application-code: 811ms)
+[AUTH DIAGNOSTIC] decrypt: cookie value is undefined
+createEventAction: backend rejected with 401 — Likely stale Bearer — user should log out and back in.
+⨯ Error: Authentication required
+    at requireMutationAuth (lib/api/events.ts:66:17)
+    at async createEvent (lib/api/events.ts:368:33)
+    at async createEventAction (app/[locale]/publica/actions.ts:51:15)
+  64 |   const authToken = await getAccessTokenFromCookies();
+  65 |   if (!authToken) {
+> 66 |     const err = new Error("Authentication required");
+     |                 ^
+  67 |     (err as Error & { status: number }).status = 401;
+  68 |     throw err;
+  69 |   } {
+  status: 401,
+  digest: '4092128919'
+}
+ POST /publica 500 in 1082ms (next.js: 24ms, proxy.ts: 44ms, generate-params: 4ms, application-code: 1014ms)
+  └─ ƒ createEventAction({"categories":[1],"cityId":62,"description":"test","...":"10 items not stringified"}, {"categories":["[Object]"],"city":{"label":"Alella","latitude":41.4938,"longitude":2.2945,"...":"2 items not stringified"},"province":{"id":9,"name":"Maresme","slug":"maresme"},"...":"1 item not stringified"}) in 19ms app/[locale]/publica/actions.ts
+[browser] Submission error: Error: Authentication required
+    at requireMutationAuth (lib/api/events.ts:66:17)
+    at  createEvent (lib/api/events.ts:368:33)
+    at  createEventAction (app/[locale]/publica/actions.ts:51:15)
+  64 |   const authToken = await getAccessTokenFromCookies();
+  65 |   if (!authToken) {
+> 66 |     const err = new Error("Authentication required");
+     |                 ^
+  67 |     (err as Error & { status: number }).status = 401;
+  68 |     throw err;
+  69 |   } (app/[locale]/publica/page.tsx:595:17)```
