@@ -1,0 +1,125 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - components/partials/EventsSection.tsx
+  - components/partials/ProfileEventsSection.tsx
+  - test/profile-events-section.test.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: components/partials/EventsSection.tsx ===
+@@ -0,0 +1,41 @@
++import List from "@components/ui/list";
++import CardServer from "@components/ui/card/CardServer";
++import NoEventsFound from "@components/ui/common/noEventsFound";
++import type { EventSummaryResponseDTO } from "types/api/event";
++
++// Presentational half of ProfileEventsSection/FavoritesEventsSection: given
++// already-fetched events, render the list or an empty state. Both callers
++// fetch from different sources (profile events vs. favourite events) but
++// share this exact rendering shape.
++export default function EventsSection({
++  events,
++  emptyTitle,
++  sectionLabel,
++  testId,
++  initialIsFavorite = false,
++}: {
++  events: EventSummaryResponseDTO[];
++  emptyTitle: string;
++  sectionLabel: string;
++  testId: string;
++  initialIsFavorite?: boolean;
++}) {
++  return (
++    <section aria-label={sectionLabel} data-testid={testId}>
++      {events.length === 0 ? (
++        <NoEventsFound title={emptyTitle} />
++      ) : (
++        <List events={events}>
++          {(event, index) => (
++            <CardServer
++              key={`${event.id}-${index}`}
++              event={event}
++              isPriority={index === 0}
++              initialIsFavorite={initialIsFavorite}
++            />
++          )}
++        </List>
++      )}
++    </section>
++  );
++}
+
+
+=== DIFF: components/partials/ProfileEventsSection.tsx ===
+@@ -1,8 +1,6 @@
+-import List from "@components/ui/list";
+-import CardServer from "@components/ui/card/CardServer";
+-import NoEventsFound from "@components/ui/common/noEventsFound";
+ import { fetchUserEvents } from "@lib/api/profiles";
+ import { getTranslations } from "next-intl/server";
++import EventsSection from "./EventsSection";
+ import type { ProfileEventsSectionProps } from "types/props";
+ 
+ // First page of the profile's event listing, scoped to upcoming or past by
+@@ -19,21 +17,12 @@ export default async function ProfileEventsSection({
+     fetchUserEvents(username, 0, PROFILE_EVENTS_PAGE_SIZE, status),
+   ]);
+ 
+-  const sectionLabel = t(status === "past" ? "tabPast" : "tabUpcoming");
+-
+   return (
+-    <section aria-label={sectionLabel} data-testid="profile-events">
+-      {eventsResponse.content.length === 0 ? (
+-        <NoEventsFound
+-          title={t(status === "past" ? "noPastEvents" : "noUpcomingEvents")}
+-        />
+-      ) : (
+-        <List events={eventsResponse.content}>
+-          {(event, index) => (
+-            <CardServer event={event} isPriority={index === 0} />
+-          )}
+-        </List>
+-      )}
+-    </section>
++    <EventsSection
++      events={eventsResponse.content}
++      emptyTitle={t(status === "past" ? "noPastEvents" : "noUpcomingEvents")}
++      sectionLabel={t(status === "past" ? "tabPast" : "tabUpcoming")}
++      testId="profile-events"
++    />
+   );
+ }
+
+
+=== DIFF: test/profile-events-section.test.tsx ===
+@@ -52,6 +52,11 @@ function paged(
+ }
+ 
+ // Recursively collect every element of a given component type in the tree.
++// Resolves function-component boundaries (invokes them with their own
++// props) so the walk can see past a wrapper like EventsSection into what
++// it renders — otherwise a component whose data comes in via non-children
++// props (not the `children` prop) hides everything inside it from a walk
++// that only recurses through `.props.children`.
+ function findAllByType(node: unknown, type: unknown): ReactElement[] {
+   const acc: ReactElement[] = [];
+   const visit = (n: unknown) => {
+@@ -61,7 +66,12 @@ function findAllByType(node: unknown, type: unknown): ReactElement[] {
+       return;
+     }
+     const el = n as ReactElement;
+-    if (el.type === type) acc.push(el);
++    if (el.type === type) {
++      acc.push(el);
++    } else if (typeof el.type === "function") {
++      visit((el.type as (props: unknown) => unknown)(el.props));
++      return;
++    }
+     const children = (el.props as { children?: unknown } | undefined)?.children;
+     if (children) visit(children);
+   };
+
+
+Investigate per the method in your instructions, then return the findings list.
