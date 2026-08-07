@@ -1,0 +1,72 @@
+when you finish, verfy everything works e2e, and also this issues we had yesterday, context: ```[16:21, 26/7/2026] Albert Olivé Corbella: No puc crear un esdeveniment i fent proves amb el jwt em diu aixo:
+
+
+POST /api/events is returning 401 with this exact server response:
+  error_description="An error occurred while attempting to decode the Jwt: Malformed token"
+The same token works fine for GET /api/auth/me.
+
+[16:21, 26/7/2026] Gerard Segarra: Wtf
+[16:21, 26/7/2026] Albert Olivé Corbella: 
+POST /publica 500 in 995ms (next.js: 21ms, proxy.ts: 13ms, generate-params: 4ms, application-code: 960ms)
+  └─ ƒ createEventAction({"categories":[1],"cityId":25,"description":"test","...":"10 items not stringified"}, {"categories":["[Object]"],"city":{"label":"Aguilar de Segarra","latitude":41.739327,"longitude":1.628002,"...":"2 items not stringified"},"province":{"id":22,"name":"Bages","slug":"bages"},"...":"1 item not stringified"}) in 553ms app/[locale]/publica/actions.ts
+[browser] Submission error: Error: HTTP error! status: 401, body: 
+    at createEvent (lib/api/events.ts:381:21)
+    at  createEventAction (app/[locale]/publica/actions.ts:32:14)
+  379 |   });
+  380 |
+> 381 |   if (!response.ok) {
+      |                     ^
+  382 |     const errorText = await response.text().c...
+
+[16:21, 26/7/2026] Gerard Segarra: Mmmm ara quan arribi a casa m’ho miro
+[16:21, 26/7/2026] Albert Olivé Corbella: a veure si veus logs al back
+[16:21, 26/7/2026] Gerard Segarra: Perf
+[16:22, 26/7/2026] Albert Olivé Corbella: pensava q era cosa meva dels canvis q mhavies dit pero a staging.esdeveniments.cat, q surt de develop tambe falla
+[16:27, 26/7/2026] Gerard Segarra: Mmm val
+[16:27, 26/7/2026] Gerard Segarra: Molt raro perq el token no l’he modificat
+[16:27, 26/7/2026] Gerard Segarra: Bueno lo únic q he modificat es q ara el token no portà ni username ni res
+[16:27, 26/7/2026] Gerard Segarra: Nmes mail i rol
+[16:28, 26/7/2026] Gerard Segarra: En una estona ho reviso
+[16:28, 26/7/2026] Albert Olivé Corbella: ok, potser es una tonteria, pero no ho se veure
+[22:22, 26/7/2026] Gerard Segarra: Ja se perq es
+[22:22, 26/7/2026] Gerard Segarra: un dubte
+[22:22, 26/7/2026] Gerard Segarra: necesitem el mail del user per algun motiu?
+[22:25, 26/7/2026] Gerard Segarra: Bueno no he dit res, el guardare
+[22:33, 26/7/2026] Gerard Segarra: Solucionat
+[22:33, 26/7/2026] Gerard Segarra: era una cosa de logto
+[22:34, 26/7/2026] Gerard Segarra: que vaig tocar i la vaig liar, ara esta arrreglat
+[10:52, 27/7/2026] Albert Olivé Corbella: ostres val, guai q era aixo pq em vaig rallar molt pq no sabia q podia ser
+[10:52, 27/7/2026] Albert Olivé Corbella: aixo de logto mola pro es una caixa negra en moltes coses
+[10:52, 27/7/2026] Albert Olivé Corbella: pq no veig logs ni res
+[10:53, 27/7/2026] Albert Olivé Corbella: el mail del user el necesitem si el necesites tu per logto o backend
+[11:04, 27/7/2026] Gerard Segarra: pq no veig logs ni res
+Jo vaig veure-ho a partir d un log meu
+[11:05, 27/7/2026] Gerard Segarra: Al final nmes autèntica i llestos. L autorització la faig dsd el back
+[11:05, 27/7/2026] Gerard Segarra: el mail del user el necesitem si el necesites tu per logto o backend
+Sisi el guardarem igual
+[11:05, 27/7/2026] Albert Olivé Corbella: ok, si falla sempre es back no?
+[11:05, 27/7/2026] Gerard Segarra: O que he borrat algo a logto jajajaja
+[11:05, 27/7/2026] Albert Olivé Corbella: ok
+[11:05, 27/7/2026] Gerard Segarra: Es a dir, si jo torno un 401 amb un token tret x logto
+[11:05, 27/7/2026] Albert Olivé Corbella: dns en ppi lo que em vas demanar ja sta fet, lunic q haure de fer es el tema de noves pagines donboarding x demanar la nova info
+[11:06, 27/7/2026] Gerard Segarra: Vol dir q algo estic fent malament o intentant agafar del token q no te
+[11:06, 27/7/2026] Albert Olivé Corbella: val
+[11:06, 27/7/2026] Gerard Segarra: Jo he fet q no puguin publicar si el onboarding no esta fet
+[11:06, 27/7/2026] Albert Olivé Corbella: guai, potser x aixo tb em fallava ahir
+[11:06, 27/7/2026] Albert Olivé Corbella: saps?
+[11:06, 27/7/2026] Albert Olivé Corbella: pq vaig agafar un usuari antic
+[11:06, 27/7/2026] Gerard Segarra: I quan tu edites el user i li poses username llavors el marco com fet
+[11:07, 27/7/2026] Gerard Segarra: Nono ahir era x una altre cosa
+[11:07, 27/7/2026] Gerard Segarra: Jo retorno el error
+[11:07, 27/7/2026] Gerard Segarra: Amb un 403 diria
+[11:07, 27/7/2026] Gerard Segarra: I descripció de q li falta el onboarding
+[11:08, 27/7/2026] Gerard Segarra: Després, tmb vull fer algo de neteja de endpoints. Per exemple, crear categoria mai ho farem a partir de endpoint
+[11:08, 27/7/2026] Gerard Segarra: Sempre bdd
+[11:08, 27/7/2026] Gerard Segarra: Eliminar-la igual
+[11:08, 27/7/2026] Gerard Segarra: Aixi el swagger no es tant lios
+[11:08, 27/7/2026] Albert Olivé Corbella: val
+[11:08, 27/7/2026] Albert Olivé Corbella: a veure pero si podem pujar ja tot aixo
+[11:08, 27/7/2026] Albert Olivé Corbella: q ja fa temps q stem
+[11:09, 27/7/2026] Albert Olivé Corbella: x cert
+[11:09, 27/7/2026] Gerard Segarra: Si, aixo un cop ho tinguem tot a pre, faria 4 proves i llestos
+[11:09, 27/7/2026] Gerard Segarra: Veure q els users es linken be amb els esdeveniments etc``` btw, if you want, i have test user: esdeveniments.catalunya.cat@gmail.com, pass: xEv77gUiW6XzkEH, if you can run agent browser in localhost to test everything e2e
