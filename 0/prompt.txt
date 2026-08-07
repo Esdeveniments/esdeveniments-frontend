@@ -1,0 +1,83 @@
+continue, i stoped the task before.  also the navbar profile goes to http://localhost:3000/perfil/a10mgbryoklh instead of http://localhost:3000/perfil/esdeveniments-catalunya-cat, why? also the profile page complains about this: ```[AUTH DIAGNOSTIC] decrypt: SUCCESS
+[AUTH DIAGNOSTIC] decrypt: SUCCESS
+[AUTH DIAGNOSTIC] decrypt: SUCCESS
+ GET /perfil/esdeveniments-catalunya-cat 200 in 10.2s (next.js: 332ms, proxy.ts: 86ms, generate-params: 27ms, application-code: 9.8s)
+ GET /api/auth/me 200 in 351ms (next.js: 10ms, proxy.ts: 17ms, application-code: 324ms)
+[browser] Error: MISSING_MESSAGE: Could not resolve `Components.Profile.comingSoon` in messages for locale `ca`.
+    at ProfileOwnerActions (components/ui/profile/ProfileOwnerActions.tsx:14:34)
+    at ProfileHeader (components/ui/profile/ProfileHeader.tsx:74:11)
+    at ProfilePageShell (components/partials/ProfilePageShell.tsx:71:9)
+    at ProfilePageGate (app/[locale]/perfil/[username]/page.tsx:68:10)
+    at ProfilePage (app/[locale]/perfil/[username]/page.tsx:56:7)
+  12 |   const t = useTranslations("Components.Profile");
+  13 |
+> 14 |   if (user?.username !== username) return null;
+     |                                  ^
+  15 |
+  16 |   return (
+  17 |     <Link href="/perfil/edita" className="btn-outline btn-sm"> (components/ui/profile/ProfileOwnerActions.tsx:14:34)
+[browser] Error: MISSING_MESSAGE: Could not resolve `Components.Profile.comingSoon` in messages for locale `ca`.
+    at ProfileOwnerActions (components/ui/profile/ProfileOwnerActions.tsx:14:34)
+    at ProfileHeader (components/ui/profile/ProfileHeader.tsx:74:11)
+    at ProfilePageShell (components/partials/ProfilePageShell.tsx:71:9)
+    at ProfilePageGate (app/[locale]/perfil/[username]/page.tsx:68:10)
+    at ProfilePage (app/[locale]/perfil/[username]/page.tsx:56:7)
+  12 |   const t = useTranslations("Components.Profile");
+  13 |
+> 14 |   if (user?.username !== username) return null;
+     |                                  ^
+  15 |
+  16 |   return (
+  17 |     <Link href="/perfil/edita" className="btn-outline btn-sm"> (components/ui/profile/ProfileOwnerActions.tsx:14:34)
+[browser] Error: MISSING_MESSAGE: Could not resolve `Components.Profile.comingSoon` in messages for locale `ca`.
+    at ProfileOwnerActions (components/ui/profile/ProfileOwnerActions.tsx:18:24)
+    at ProfileHeader (components/ui/profile/ProfileHeader.tsx:74:11)
+    at ProfilePageShell (components/partials/ProfilePageShell.tsx:71:9)
+    at ProfilePageGate (app/[locale]/perfil/[username]/page.tsx:68:10)
+    at ProfilePage (app/[locale]/perfil/[username]/page.tsx:56:7)
+  16 |   return (
+  17 |     <Link href="/perfil/edita" className="btn-outline btn-sm">
+> 18 |       {t("editProfile")}
+     |                        ^
+  19 |     </Link>
+  20 |   );
+  21 | } (components/ui/profile/ProfileOwnerActions.tsx:18:24)
+[browser] Error: MISSING_MESSAGE: Could not resolve `Components.Profile.comingSoon` in messages for locale `ca`.
+    at ProfileOwnerActions (components/ui/profile/ProfileOwnerActions.tsx:18:24)
+    at ProfileHeader (components/ui/profile/ProfileHeader.tsx:74:11)
+    at ProfilePageShell (components/partials/ProfilePageShell.tsx:71:9)
+    at ProfilePageGate (app/[locale]/perfil/[username]/page.tsx:68:10)
+    at ProfilePage (app/[locale]/perfil/[username]/page.tsx:56:7)
+  16 |   return (
+  17 |     <Link href="/perfil/edita" className="btn-outline btn-sm">
+> 18 |       {t("editProfile")}
+     |                        ^
+  19 |     </Link>
+  20 |   );
+  21 | } (components/ui/profile/ProfileOwnerActions.tsx:18:24)
+[browser] Error: MISSING_MESSAGE: Could not resolve `Components.Profile.comingSoon` in messages for locale `ca`.
+    at ProfileOwnerActions (components/ui/profile/ProfileOwnerActions.tsx:14:34)
+    at ProfileHeader (components/ui/profile/ProfileHeader.tsx:74:11)
+    at ProfilePageShell (components/partials/ProfilePageShell.tsx:71:9)
+    at ProfilePageGate (app/[locale]/perfil/[username]/page.tsx:68:10)
+    at ProfilePage (app/[locale]/perfil/[username]/page.tsx:56:7)
+  12 |   const t = useTranslations("Components.Profile");
+  13 |
+> 14 |   if (user?.username !== username) return null;
+     |                                  ^
+  15 |
+  16 |   return (
+  17 |     <Link href="/perfil/edita" className="btn-outline btn-sm"> (components/ui/profile/ProfileOwnerActions.tsx:14:34)
+[browser] Error: MISSING_MESSAGE: Could not resolve `Components.Profile.comingSoon` in messages for locale `ca`.
+    at ProfileOwnerActions (components/ui/profile/ProfileOwnerActions.tsx:14:34)
+    at ProfileHeader (components/ui/profile/ProfileHeader.tsx:74:11)
+    at ProfilePageShell (components/partials/ProfilePageShell.tsx:71:9)
+    at ProfilePageGate (app/[locale]/perfil/[username]/page.tsx:68:10)
+    at ProfilePage (app/[locale]/perfil/[username]/page.tsx:56:7)
+  12 |   const t = useTranslations("Components.Profile");
+  13 |
+> 14 |   if (user?.username !== username) return null;
+     |                                  ^
+  15 |
+  16 |   return (
+  17 |     <Link href="/perfil/edita" className="btn-outline btn-sm"> (components/ui/profile/ProfileOwnerActions.tsx:14:34)```the button is still disabled
