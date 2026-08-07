@@ -1,0 +1,245 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/sitemap/[town]/[year]/[month]/page.tsx
+  - lib/api/events.ts
+  - test/lib/api/events-for-metadata.test.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/sitemap/[town]/[year]/[month]/page.tsx ===
+@@ -131,10 +131,15 @@ export async function generateMetadata({
+     to: toStr,
+     size: MAX_EVENTS_PER_PAGE,
+   });
+-  const realEventCount = Array.isArray(events.content)
+-    ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
+-      .length
+-    : 0;
++  // `events === null` means the probe itself failed (upstream outage, bad
++  // payload) — fail open (no robots override) rather than noindex a page
++  // that may well have real content; only a confirmed empty result should
++  // noindex.
++  const realEventCount =
++    events && Array.isArray(events.content)
++      ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
++        .length
++      : null;
+   const robotsOverride = realEventCount === 0 ? "noindex, follow" : undefined;
+ 
+   return buildPageMeta({
+
+
+=== DIFF: lib/api/events.ts ===
+@@ -173,37 +173,46 @@ export const fetchEvents = cache(fetchEventsInternal);
+ // static shell when called from generateMetadata. This variant hits the
+ // internal /api/events route with a plain, tagged fetch instead. See
+ // docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
++//
++// Returns `null` (not an empty page) on any failure to fetch/parse, so
++// callers can tell "genuinely no events" apart from "couldn't check" and
++// fail open (e.g. don't noindex a page just because the probe errored) —
++// same convention as getPlaceExpandability's fail-open contract.
+ export async function fetchEventsForMetadata(
+   params: FetchEventsParams,
+-): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
++): Promise<PagedResponseDTO<EventSummaryResponseDTO> | null> {
+   "use cache";
+   cacheTag(eventsTag);
+-  const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
+-    content: [],
+-    currentPage: params.page ?? 0,
+-    pageSize: params.size ?? 12,
+-    totalElements: 0,
+-    totalPages: 0,
+-    last: true,
+-  };
+-  const queryString = buildEventsQuery(params);
+-  const url = await getInternalApiUrl(`/api/events?${queryString}`, {
+-    preferConfiguredOrigin: true,
+-  });
+-  const response = await fetch(url, {
+-    headers: getVercelProtectionBypassHeaders(),
+-    next: { revalidate: 600, tags: [eventsTag] },
+-  });
+-  if (!response.ok) {
+-    // Transient upstream failure — cache briefly rather than "hours" so a
+-    // recovering backend doesn't leave metadata degraded for a long window.
++  try {
++    const queryString = buildEventsQuery(params);
++    const url = await getInternalApiUrl(`/api/events?${queryString}`, {
++      preferConfiguredOrigin: true,
++    });
++    const response = await fetch(url, {
++      headers: getVercelProtectionBypassHeaders(),
++      next: { revalidate: 600, tags: [eventsTag] },
++    });
++    if (!response.ok) {
++      // Transient upstream failure — cache briefly rather than "hours" so a
++      // recovering backend doesn't leave metadata degraded for a long window.
++      cacheLife("minutes");
++      return null;
++    }
++    const data = await response.json();
++    const validated = parsePagedEvents(data);
++    if (!validated) {
++      // Malformed 2xx payload — same short-lived treatment as a failed
++      // request, not "hours": a schema/proxy blip shouldn't be cached as
++      // if it were a confirmed empty result.
++      cacheLife("minutes");
++      return null;
++    }
++    cacheLife("hours");
++    return validated;
++  } catch {
+     cacheLife("minutes");
+-    return fallbackResponse;
++    return null;
+   }
+-  const data = await response.json();
+-  const validated = parsePagedEvents(data);
+-  cacheLife("hours");
+-  return validated ?? fallbackResponse;
+ }
+ 
+ export async function fetchEventBySlug(
+
+
+=== DIFF: test/lib/api/events-for-metadata.test.ts ===
+@@ -0,0 +1,133 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
++
++vi.mock("next/cache", () => ({
++  cacheTag: vi.fn(),
++  cacheLife: vi.fn(),
++}));
++
++vi.mock("next/server", () => ({
++  connection: vi.fn().mockResolvedValue(undefined),
++}));
++
++vi.mock("@utils/api-helpers", async () => {
++  const actual = await vi.importActual<typeof import("@utils/api-helpers")>(
++    "@utils/api-helpers",
++  );
++  return {
++    ...actual,
++    getInternalApiUrl: vi.fn((path: string) =>
++      Promise.resolve(`http://localhost:3000${path}`),
++    ),
++    getVercelProtectionBypassHeaders: vi.fn(() => ({})),
++  };
++});
++
++const validEvent = {
++  id: "1",
++  hash: "abc123",
++  slug: "test-event",
++  title: "Test event",
++  type: "FREE",
++  url: "https://example.com/test-event",
++  description: "",
++  imageUrl: null,
++  startDate: "2026-01-01",
++  startTime: null,
++  endDate: null,
++  endTime: null,
++  location: "",
++  visits: 0,
++  origin: "MANUAL",
++  categories: [],
++};
++
++const pagedResponse = {
++  content: [validEvent],
++  currentPage: 0,
++  pageSize: 12,
++  totalElements: 1,
++  totalPages: 1,
++  last: true,
++};
++
++describe("fetchEventsForMetadata", () => {
++  beforeEach(() => {
++    vi.resetModules();
++  });
++
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it("returns the parsed response on success", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({
++        ok: true,
++        json: () => Promise.resolve(pagedResponse),
++      }),
++    );
++    const { fetchEventsForMetadata } = await import("@lib/api/events");
++    const result = await fetchEventsForMetadata({ place: "sabadell" });
++    expect(result).toEqual(pagedResponse);
++  });
++
++  it("returns null (not an empty page) on a non-ok response", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({ ok: false, status: 500 }),
++    );
++    const { fetchEventsForMetadata } = await import("@lib/api/events");
++    const result = await fetchEventsForMetadata({ place: "sabadell" });
++    expect(result).toBeNull();
++  });
++
++  it("returns null on a malformed 2xx payload", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({
++        ok: true,
++        json: () => Promise.resolve({ garbage: true }),
++      }),
++    );
++    const { fetchEventsForMetadata } = await import("@lib/api/events");
++    const result = await fetchEventsForMetadata({ place: "sabadell" });
++    expect(result).toBeNull();
++  });
++
++  it("returns null instead of throwing on a network error", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockRejectedValue(new Error("network down")),
++    );
++    const { fetchEventsForMetadata } = await import("@lib/api/events");
++    const result = await fetchEventsForMetadata({ place: "sabadell" });
++    expect(result).toBeNull();
++  });
++
++  it("calls cacheTag/cacheLife on success (use cache boundary)", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({
++        ok: true,
++        json: () => Promise.resolve(pagedResponse),
++      }),
++    );
++    const { cacheTag, cacheLife } = await import("next/cache");
++    const { fetchEventsForMetadata } = await import("@lib/api/events");
++    await fetchEventsForMetadata({ place: "sabadell" });
++    expect(cacheTag).toHaveBeenCalled();
++    expect(cacheLife).toHaveBeenCalledWith("hours");
++  });
++
++  it("uses the minutes profile on failure", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({ ok: false, status: 500 }),
++    );
++    const { cacheLife } = await import("next/cache");
++    const { fetchEventsForMetadata } = await import("@lib/api/events");
++    await fetchEventsForMetadata({ place: "sabadell" });
++    expect(cacheLife).toHaveBeenCalledWith("minutes");
++  });
++});
+
+
+Investigate per the method in your instructions, then return the findings list.
