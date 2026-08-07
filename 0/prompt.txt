@@ -1,0 +1,184 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/perfil/[username]/page.tsx
+  - app/[locale]/perfil/[username]/passats/page.tsx
+  - components/partials/profile-tabs.ts
+  - test/profile-tabs.test.ts
+  - types/props.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/perfil/[username]/page.tsx ===
+@@ -5,13 +5,13 @@ import { buildPageMeta } from "@components/partials/seo-meta";
+ import { generateBreadcrumbList } from "@components/partials/seo-meta";
+ import JsonLdServer from "@components/partials/JsonLdServer";
+ import ProfileEventsSection from "@components/partials/ProfileEventsSection";
++import { buildProfileTabItems } from "@components/partials/profile-tabs";
+ import Tabs from "@components/ui/common/tabs";
+ import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkeleton";
+ import { getTranslations } from "next-intl/server";
+ import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+ import { siteUrl } from "@config/index";
+ import type { BreadcrumbItem } from "types/common";
+-import type { TabItem } from "types/props";
+ 
+ // No generateStaticParams — usernames are user-generated with infinite
+ // cardinality. Pages render on first request and are cached automatically.
+@@ -95,20 +95,7 @@ export default async function ProfilePage({
+     identifier: profile.username,
+   };
+ 
+-  const tabItems: TabItem[] = [
+-    {
+-      id: "upcoming",
+-      href: `/perfil/${encodeURIComponent(profile.username)}`,
+-      label: tProfile("tabUpcoming"),
+-      count: profile.upcomingEventCount,
+-    },
+-    {
+-      id: "past",
+-      href: `/perfil/${encodeURIComponent(profile.username)}/passats`,
+-      label: tProfile("tabPast"),
+-      count: profile.pastEventCount,
+-    },
+-  ];
++  const tabItems = buildProfileTabItems(profile, tProfile);
+ 
+   return (
+     <>
+
+
+=== DIFF: app/[locale]/perfil/[username]/passats/page.tsx ===
+@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
+ import { getUserByUsernameCached } from "@lib/api/profiles";
+ import { buildPageMeta } from "@components/partials/seo-meta";
+ import ProfileEventsSection from "@components/partials/ProfileEventsSection";
++import { buildProfileTabItems } from "@components/partials/profile-tabs";
+ import Tabs from "@components/ui/common/tabs";
+ import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkeleton";
+ import { getTranslations } from "next-intl/server";
+ import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+ import { siteUrl } from "@config/index";
+-import type { TabItem } from "types/props";
+ 
+ // No generateStaticParams — mirrors the parent /perfil/[username] page.
+ 
+@@ -69,20 +69,7 @@ export default async function ProfilePastEventsPage({
+     profile.username?.trim() ||
+     "";
+ 
+-  const tabItems: TabItem[] = [
+-    {
+-      id: "upcoming",
+-      href: `/perfil/${encodeURIComponent(profile.username)}`,
+-      label: tProfile("tabUpcoming"),
+-      count: profile.upcomingEventCount,
+-    },
+-    {
+-      id: "past",
+-      href: `/perfil/${encodeURIComponent(profile.username)}/passats`,
+-      label: tProfile("tabPast"),
+-      count: profile.pastEventCount,
+-    },
+-  ];
++  const tabItems = buildProfileTabItems(profile, tProfile);
+ 
+   return (
+     <>
+
+
+=== DIFF: components/partials/profile-tabs.ts ===
+@@ -0,0 +1,25 @@
++import type { UserPublicResponseDTO } from "types/api/user";
++import type { TabItem, ProfileTranslator } from "types/props";
++
++// Shared by page.tsx and passats/page.tsx: the Propers/Passats tab items are
++// identical on both routes, only which one is `active` differs (passed
++// separately to <Tabs>).
++export function buildProfileTabItems(
++  profile: UserPublicResponseDTO,
++  tProfile: ProfileTranslator,
++): TabItem[] {
++  return [
++    {
++      id: "upcoming",
++      href: `/perfil/${encodeURIComponent(profile.username)}`,
++      label: tProfile("tabUpcoming"),
++      count: profile.upcomingEventCount,
++    },
++    {
++      id: "past",
++      href: `/perfil/${encodeURIComponent(profile.username)}/passats`,
++      label: tProfile("tabPast"),
++      count: profile.pastEventCount,
++    },
++  ];
++}
+
+
+=== DIFF: test/profile-tabs.test.ts ===
+@@ -0,0 +1,43 @@
++import { describe, it, expect } from "vitest";
++import { buildProfileTabItems } from "@components/partials/profile-tabs";
++import type { UserPublicResponseDTO } from "types/api/user";
++import type { ProfileTranslator } from "types/props";
++
++const baseProfile: UserPublicResponseDTO = {
++  id: "uuid-1",
++  username: "sala apolo",
++};
++
++const stubTranslator = ((key: string) =>
++  key === "tabUpcoming" ? "Propers" : "Passats") as ProfileTranslator;
++
++describe("buildProfileTabItems", () => {
++  it("builds upcoming and past tabs with encoded hrefs and translated labels", () => {
++    const items = buildProfileTabItems(baseProfile, stubTranslator);
++
++    expect(items).toEqual([
++      {
++        id: "upcoming",
++        href: "/perfil/sala%20apolo",
++        label: "Propers",
++        count: undefined,
++      },
++      {
++        id: "past",
++        href: "/perfil/sala%20apolo/passats",
++        label: "Passats",
++        count: undefined,
++      },
++    ]);
++  });
++
++  it("passes through upcomingEventCount/pastEventCount when present", () => {
++    const items = buildProfileTabItems(
++      { ...baseProfile, upcomingEventCount: 3, pastEventCount: 12 },
++      stubTranslator,
++    );
++
++    expect(items[0].count).toBe(3);
++    expect(items[1].count).toBe(12);
++  });
++});
+
+
+=== DIFF: types/props.ts ===
+@@ -532,6 +532,13 @@ export interface TabsProps {
+   ariaLabel: string;
+ }
+ 
++// buildProfileTabItems (components/partials/profile-tabs.ts) is shared by
++// page.tsx and passats/page.tsx, both of which call getTranslations
++// server-side and pass the resolved translator straight through.
++export type ProfileTranslator = Awaited<
++  ReturnType<typeof import("next-intl/server").getTranslations>
++>;
++
+ export interface AvatarInitialsProps {
+   name: string;
+ }
+
+
+Investigate per the method in your instructions, then return the findings list.
