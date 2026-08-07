@@ -1,0 +1,1 @@
+did you think about performance, DRY, centralize, types, best practices, design, etc?
