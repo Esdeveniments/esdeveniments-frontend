@@ -1,0 +1,81 @@
+Base directory for this skill: /Users/albertolive/.claude/skills/doc-sync
+
+# doc-sync
+
+Keep the docs honest after the code moved. Find what changed, audit each doc against current
+reality, fix only what's genuinely wrong, record what bit you, and ship it as a small reviewed PR.
+
+## When this runs
+
+Auto-activates when the task is "finish or merge a behavior-changing change," or when the user asks
+about stale docs. Rule of thumb: if you just merged a PR that altered documented behavior — a
+threshold, a fallback, a CI condition, a data flow, a renamed/added/removed file — run this before
+declaring the work done.
+
+## 1. Establish what actually changed
+
+Don't audit in a vacuum. List the deltas first:
+- The merges/diffs from this session: `gh pr list --state merged`, `git log origin/main`, the PRs you opened.
+- Translate each into a claim a doc might assert, e.g. "X now falls back to Y, not Z", "the run reds
+  on any non-pass, not just FAIL", "field W is captured per-day, not as a window-max", "file F moved".
+This delta list is what you audit against.
+
+## 2. Find every doc that could claim it
+
+Per repo, and any sibling repo a procedure points at:
+- `README.md`, `LESSONS.md`, `docs/*.md`, CONTRIBUTING, CHANGELOG
+- `CLAUDE.md` / `AGENTS.md` / other agent/procedure instructions (e.g. SHADOW.md)
+- CI workflow files — the HEADER and inline COMMENTS describe behavior and rot silently
+- procedure docs in a SIBLING repo or on a non-default branch (e.g. a renderer's procedure on
+  another repo's branch). Read them with `git -C <repo> show <ref>:<path>`.
+
+## 3. Audit each doc against the delta list (fan out)
+
+Audit docs in PARALLEL for thoroughness — one reader per doc, each reads the doc AND the code it
+describes, returning `{doc, verdict: stale|minor|clean, findings:[{location, staleClaim, nowTrue,
+severity: misleading|cosmetic}]}`. Use the Workflow tool's parallel readers (a handful of docs is a
+good fan-out). Be concrete: quote the line and state what is true now.
+
+## 4. Triage each finding
+
+- **stale / misleading** (a claim now false): FIX it, preserving the doc's voice and intent. Drop the
+  wrong part, keep the point.
+- **gap / incomplete** (true but silent on the new thing): add a brief cross-reference or status
+  line pointing at the new design/doc. Don't rewrite the doc.
+- **new gotcha that bit you**: record it in `LESSONS.md` — the non-obvious thing, WHY, and the fix,
+  in that file's existing style.
+- **style nit** (markdown-link vs plain ref, full path vs shorthand): DECLINE, and match the repo's
+  EXISTING convention. If the docs use plain inline-code refs, keep that; don't convert to links.
+- **false positive**: a "missing file" may live in a sibling repo or another branch — verify before
+  "fixing." A reference to another repo's file is correct as written.
+
+## 5. Ship it
+
+- Gate: re-validate any file with structure (YAML/JSON workflows + config), e.g.
+  `ruby -ryaml -e "YAML.load_file('<file>')"`, and run any self-checks the change touches.
+- Branch off the latest `main`, commit (conventional `docs:`), open a PR.
+- Run the `pr-review-loop` skill to convergence; decline doc style nits with a one-line rationale.
+- Merge when green ONLY if the user authorized it; otherwise hand back the PR link.
+- Clean up the worktree/branch; verify the docs on `main`. Update the agent-memory index if the
+  project keeps one.
+
+## Gotchas (from real runs)
+
+- `gh pr edit --body` can FAIL on the "Projects (classic)" GraphQL deprecation. Set a PR body via
+  `gh api --method PATCH /repos/OWNER/REPO/pulls/N -F body=@file` instead.
+- Never put backticks inside a double-quoted shell `--body "..."` — zsh runs them as commands. Use a
+  heredoc with a quoted delimiter (`<<'BODY'`) or `--body-file`.
+- A stale CI comment hides where the step changed but the comment didn't (e.g. a "pings on FAIL"
+  header above a step that now pings on any non-pass). Grep workflow comments, not just `run:` blocks.
+
+## Checklist
+
+- [ ] Delta list written (what changed -> what a doc might assert)
+- [ ] Every doc enumerated, incl. CI comments + sibling-repo / other-branch procedure docs
+- [ ] Audited against the delta (parallel readers), findings with line refs
+- [ ] Stale fixed, gaps cross-referenced, gotchas added to LESSONS.md, style nits declined with reason
+- [ ] Gated (YAML/JSON valid, self-checks pass); PR opened; review loop run
+- [ ] Merged only if authorized; worktree cleaned; verified on main
+
+
+ARGUMENTS: Just merged: onboarding UI for the Logto auth integration (profile completion form at /perfil/edita, avatar upload/remove, AuthProvider.refetchUser(), profileCompleted/bio gating on AuthUser, /publica now proactively gates on profileCompleted). Check LESSONS.md and docs/logto-auth-setup.md (the manual test runbook) for staleness against this change, and record the AuthProvider staleness gotcha (client session hydrated once on mount, nothing kept it in sync until refetchUser() was added) if it's not already captured.
