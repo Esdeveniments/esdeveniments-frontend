@@ -1,0 +1,483 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/e/[eventId]/EventClient.tsx
+  - app/[locale]/e/[eventId]/components/PromoteUpsellModal.tsx
+  - app/[locale]/publica/page.tsx
+  - e2e/publish-integration.spec.ts
+  - test/event-client-promote-upsell.test.tsx
+  - test/promote-upsell-modal.test.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/e/[eventId]/EventClient.tsx ===
+@@ -1,6 +1,8 @@
+ "use client";
+-import { useState } from "react";
++import { useEffect, useState } from "react";
++import dynamic from "next/dynamic";
+ import { useSearchParams } from "next/navigation";
++import { useRouter, usePathname } from "@i18n/routing";
+ // import useOnScreen from "components/hooks/useOnScreen";
+ import { useEventAnalytics } from "./hooks/useEventAnalytics";
+ 
+@@ -12,13 +14,25 @@ import { MegaphoneIcon as SpeakerphoneIcon } from "@heroicons/react/24/outline";
+ import AdArticle from "components/ui/adArticle";
+ import SectionHeading from "@components/ui/common/SectionHeading";
+ import { useTranslations } from "next-intl";
++import { sendGoogleEvent } from "@utils/analytics";
+ 
+ // computeTemporalStatus now imported from utils/event-status for reuse & testability
+ 
++// Lazy load the post-publish promote upsell modal — every event detail page
++// view goes through this component, but the modal is only ever relevant
++// right after the owner published (see the `promote=1` marker below), so it
++// shouldn't ship in every page view's bundle.
++const PromoteUpsellModal = dynamic(
++  () => import("./components/PromoteUpsellModal"),
++  { ssr: false },
++);
++
+ export default function EventClient({
+   event,
+ }: EventClientProps) {
+   const t = useTranslations("Components.EventPage");
++  const router = useRouter();
++  const pathname = usePathname();
+   // const editModalRef = useRef<HTMLDivElement>(null);
+ 
+   // const isEditModalVisible = useOnScreen(
+@@ -33,6 +47,38 @@ export default function EventClient({
+   const edit_suggested = searchParams.get("edit_suggested") === "true";
+   const [showThankYouBanner, setShowThankYouBanner] = useState(edit_suggested);
+ 
++  // Post-publish promote upsell: publica/page.tsx redirects here with
++  // ?promote=1 right after a successful publish (see design doc's "Modal"
++  // section — the modal lives on the event's own detail page, not on the
++  // publish form). Same one-time-marker convention as newEvent/edit_suggested
++  // above, not a new mechanism.
++  const initialShowPromoteUpsell = searchParams.get("promote") === "1";
++  const [showPromoteUpsell, setShowPromoteUpsell] = useState(
++    initialShowPromoteUpsell,
++  );
++
++  useEffect(() => {
++    if (initialShowPromoteUpsell) {
++      sendGoogleEvent("promote_modal_shown", {
++        event_slug: event.slug ?? "",
++        source: "event_detail",
++      });
++    }
++    // initialShowPromoteUpsell and event.slug are both stable for this
++    // component's lifetime (the component fully remounts on navigation to a
++    // different event), so this still only ever fires once despite the
++    // complete dependency list.
++  }, [initialShowPromoteUpsell, event.slug]);
++
++  const handlePromoteUpsellOpenChange = (open: boolean) => {
++    setShowPromoteUpsell(open);
++    if (!open) {
++      // Strip the one-time marker so a refresh or shared link doesn't
++      // re-trigger the modal.
++      router.replace(pathname, { scroll: false });
++    }
++  };
++
+   // const {
+   //   openModal,
+   //   setOpenModal,
+@@ -59,6 +105,14 @@ export default function EventClient({
+         setShowThankYouBanner={setShowThankYouBanner}
+       />
+ 
++      {showPromoteUpsell && (
++        <PromoteUpsellModal
++          open={showPromoteUpsell}
++          setOpen={handlePromoteUpsellOpenChange}
++          slug={slug}
++        />
++      )}
++
+       {/* Ad Section */}
+       <div className="w-full h-full min-h-[250px]">
+         <div className="w-full flex flex-col gap-element-gap">
+
+
+=== DIFF: app/[locale]/e/[eventId]/components/PromoteUpsellModal.tsx ===
+@@ -2,6 +2,7 @@
+ 
+ import { useTranslations } from "next-intl";
+ import { useRouter } from "@i18n/routing";
++import { RocketLaunchIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+ import Modal from "@components/ui/common/modal";
+ import Button from "@components/ui/common/button";
+ import { sendGoogleEvent } from "@utils/analytics";
+@@ -13,12 +14,15 @@ export default function PromoteUpsellModal({
+   slug,
+ }: PromoteUpsellModalProps) {
+   const t = useTranslations("App.Publish.promoteUpsell");
++  // Reuses the promote page's own benefit copy (App.EventPromote.benefit1-3)
++  // instead of duplicating the same three strings under a second namespace.
++  const tPromote = useTranslations("App.EventPromote");
+   const router = useRouter();
+ 
+   const handlePromote = () => {
+     sendGoogleEvent("promote_modal_cta_click", {
+       event_slug: slug,
+-      source: "publica",
++      source: "event_detail",
+     });
+     router.push(`/e/${slug}/promote`);
+     // Explicitly returning false stops Modal's own setOpen(false) from racing
+@@ -30,10 +34,9 @@ export default function PromoteUpsellModal({
+   const handleKeepFree = () => {
+     sendGoogleEvent("promote_modal_dismiss", {
+       event_slug: slug,
+-      source: "publica",
++      source: "event_detail",
+     });
+     setOpen(false);
+-    router.push(`/e/${slug}`);
+   };
+ 
+   return (
+@@ -46,7 +49,28 @@ export default function PromoteUpsellModal({
+       testId="promote-upsell-modal"
+     >
+       <div className="flex flex-col gap-4 py-4">
+-        <p className="body-normal text-foreground/80">{t("description")}</p>
++        <div className="flex justify-center">
++          <div className="flex-center w-14 h-14 rounded-full bg-primary/10 text-primary">
++            <RocketLaunchIcon className="w-8 h-8" aria-hidden="true" />
++          </div>
++        </div>
++        <p className="body-normal text-foreground/80 text-center">
++          {t("description")}
++        </p>
++        <ul className="flex flex-col gap-2 body-small text-foreground/80">
++          <li className="flex items-center gap-2">
++            <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
++            {tPromote("benefit1")}
++          </li>
++          <li className="flex items-center gap-2">
++            <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
++            {tPromote("benefit2")}
++          </li>
++          <li className="flex items-center gap-2">
++            <CheckCircleIcon className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
++            {tPromote("benefit3")}
++          </li>
++        </ul>
+         <Button
+           type="button"
+           variant="neutral"
+
+
+=== DIFF: app/[locale]/publica/page.tsx ===
+@@ -3,7 +3,7 @@
+ import { useTranslations } from "next-intl";
+ import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
+ import dynamic from "next/dynamic";
+-import { Link } from "@i18n/routing";
++import { Link, useRouter } from "@i18n/routing";
+ import { addBreadcrumb, captureException } from "@sentry/nextjs";
+ import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
+ import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
+@@ -52,13 +52,6 @@ const PreviewContent = dynamic(
+   }
+ );
+ 
+-// Lazy load the post-publish upsell modal — same reasoning as PreviewContent
+-// above: it only renders after a successful publish, so it shouldn't ship in
+-// the initial /publica bundle.
+-const PromoteUpsellModal = dynamic(() => import("./PromoteUpsellModal"), {
+-  ssr: false,
+-});
+-
+ const getDefaultEventDates = () => {
+   const now = new Date();
+   now.setMinutes(0, 0, 0);
+@@ -128,6 +121,7 @@ const buildFileSignature = (file: File) =>
+ const PublishForm = () => {
+   const t = useTranslations("App.Publish");
+   const tForm = useTranslations("Components.EventForm");
++  const router = useRouter();
+   const [form, setForm] = useState<FormData>(defaultForm);
+   const [imageFile, setImageFile] = useState<File | null>(null);
+   const [imagePreview, setImagePreview] = useState<string | null>(null);
+@@ -139,7 +133,6 @@ const PublishForm = () => {
+   // the same CompleteProfileGate here instead of a generic error, so the
+   // user has an actual way forward.
+   const [showCompleteProfileGate, setShowCompleteProfileGate] = useState(false);
+-  const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
+   const [uploadProgress, setUploadProgress] = useState(0);
+   const [isUploadingImage, setIsUploadingImage] = useState(false);
+   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+@@ -629,11 +622,12 @@ const PublishForm = () => {
+         });
+ 
+         submittedRef.current = true;
+-        sendGoogleEvent("promote_modal_shown", {
+-          event_slug: slug,
+-          source: "publica",
+-        });
+-        setPublishedSlug(slug);
++        // The promote upsell modal is shown on the event detail page itself
++        // (EventClient.tsx), not here — this marker tells that page to show
++        // it once, right after landing there. Following the existing
++        // newEvent/edit_suggested query-param convention in that file rather
++        // than inventing a new cross-page signaling mechanism.
++        router.push(`/e/${slug}?promote=1`);
+       } catch (error) {
+         console.error("Submission error:", error);
+ 
+@@ -839,15 +833,6 @@ const PublishForm = () => {
+           </div>
+         </div>
+       </div>
+-      {publishedSlug && (
+-        <PromoteUpsellModal
+-          open={Boolean(publishedSlug)}
+-          setOpen={(open) => {
+-            if (!open) setPublishedSlug(null);
+-          }}
+-          slug={publishedSlug}
+-        />
+-      )}
+     </>
+   );
+ };
+
+
+=== DIFF: e2e/publish-integration.spec.ts ===
+@@ -290,21 +290,23 @@ test.describe("Publish integration (staging)", () => {
+     await expect(publishButton).toHaveAttribute("data-publish-ready", "true", {
+       timeout: 10_000,
+     });
+-    // Publishing now shows the post-publish promotion upsell modal instead of
+-    // an immediate redirect. Wait for the modal, then dismiss via "keep it
+-    // free" (this test's intent: verify the plain publish → detail page path
+-    // still works).
+-    await publishButton.click();
+-    const upsellModal = page.getByTestId("promote-upsell-modal");
+-    await expect(upsellModal).toBeVisible({ timeout: 30_000 });
+-
++    // Publishing redirects straight to the created event's detail page (with
++    // a one-time ?promote=1 marker); the promotion upsell modal then appears
++    // there rather than blocking navigation. Wait for the redirect first,
++    // then dismiss the modal via "keep it free" (this test's intent: verify
++    // the plain publish → detail page path still works).
+     await Promise.all([
+       page.waitForURL((url) => !url.pathname.includes("/publica"), {
+         timeout: 60_000,
+       }),
+-      page.getByTestId("promote-modal-keep-free").click(),
++      publishButton.click(),
+     ]);
+ 
++    const upsellModal = page.getByTestId("promote-upsell-modal");
++    await expect(upsellModal).toBeVisible({ timeout: 15_000 });
++    await page.getByTestId("promote-modal-keep-free").click();
++    await expect(upsellModal).not.toBeVisible({ timeout: 10_000 });
++
+     // ── Step 6: Wait for success ──
+     // The URL assertion above proves the publish action completed and redirected
+     // away from the form.
+@@ -459,10 +461,18 @@ test.describe("Publish integration (staging)", () => {
+     await expect(publishButton).toHaveAttribute("data-publish-ready", "true", {
+       timeout: 10_000,
+     });
+-    await publishButton.click();
++
++    // Publishing redirects straight to the created event's detail page
++    // (?promote=1 marker); the modal appears there, not before navigating.
++    await Promise.all([
++      page.waitForURL((url) => !url.pathname.includes("/publica"), {
++        timeout: 60_000,
++      }),
++      publishButton.click(),
++    ]);
+ 
+     const upsellModal = page.getByTestId("promote-upsell-modal");
+-    await expect(upsellModal).toBeVisible({ timeout: 30_000 });
++    await expect(upsellModal).toBeVisible({ timeout: 15_000 });
+ 
+     await Promise.all([
+       page.waitForURL((url) => url.pathname.includes("/promote"), {
+
+
+=== DIFF: test/event-client-promote-upsell.test.tsx ===
+@@ -0,0 +1,122 @@
++import { describe, it, expect, vi, beforeEach } from "vitest";
++import { render, screen } from "@testing-library/react";
++import { useState, useEffect, type ComponentType } from "react";
++import type { EventClientProps } from "types/props";
++
++vi.mock("next-intl", () => ({
++  useTranslations: () => (key: string) => key,
++}));
++
++const mockReplace = vi.fn();
++vi.mock("@i18n/routing", () => ({
++  useRouter: () => ({ replace: mockReplace }),
++  usePathname: () => "/en/e/my-event",
++}));
++
++let mockSearchParams = new URLSearchParams();
++vi.mock("next/navigation", () => ({
++  useSearchParams: () => mockSearchParams,
++}));
++
++vi.mock("./hooks/useEventAnalytics", () => ({
++  useEventAnalytics: () => {},
++}));
++vi.mock("../app/[locale]/e/[eventId]/hooks/useEventAnalytics", () => ({
++  useEventAnalytics: () => {},
++}));
++
++vi.mock("components/ui/adArticle", () => ({
++  __esModule: true,
++  default: () => <div data-testid="ad-article" />,
++}));
++
++vi.mock("@components/ui/common/SectionHeading", () => ({
++  __esModule: true,
++  default: () => <div data-testid="section-heading" />,
++}));
++
++vi.mock("@heroicons/react/24/outline", () => ({
++  MegaphoneIcon: () => <svg data-testid="megaphone-icon" />,
++}));
++
++const mockSendGoogleEvent = vi.fn();
++vi.mock("@utils/analytics", () => ({
++  sendGoogleEvent: (...args: unknown[]) => mockSendGoogleEvent(...args),
++}));
++
++vi.mock("../app/[locale]/e/[eventId]/components/PromoteUpsellModal", () => ({
++  __esModule: true,
++  default: ({ slug }: { slug: string }) => (
++    <div data-testid="promote-upsell-modal">{slug}</div>
++  ),
++}));
++
++// next/dynamic's real loader resolves asynchronously. Mirror the existing
++// project convention (see navigation-filters-modal tests) of resolving the
++// dynamic import in tests — using real state so the resolution triggers a
++// re-render, since findByTestId below needs to observe it.
++vi.mock("next/dynamic", () => ({
++  default: (loader: () => Promise<{ default: ComponentType<Record<string, unknown>> }>) => {
++    return function DynamicMock(props: Record<string, unknown>) {
++      const [Component, setComponent] = useState<ComponentType<
++        Record<string, unknown>
++      > | null>(null);
++      useEffect(() => {
++        let active = true;
++        loader().then((mod) => {
++          if (active) setComponent(() => mod.default);
++        });
++        return () => {
++          active = false;
++        };
++      }, []);
++      return Component ? <Component {...props} /> : null;
++    };
++  },
++}));
++
++import EventClient from "../app/[locale]/e/[eventId]/EventClient";
++
++function buildEvent(): EventClientProps["event"] {
++  return {
++    id: "event-uuid-1",
++    slug: "my-event",
++    title: "My Event",
++    endDate: "2026-09-01",
++    categorySlug: undefined,
++    placeSlug: "barcelona",
++    hasImage: false,
++    origin: "MANUAL",
++  };
++}
++
++describe("EventClient promote upsell wiring", () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    mockSearchParams = new URLSearchParams();
++  });
++
++  it("does not show the promote upsell modal when there is no promote marker", async () => {
++    render(<EventClient event={buildEvent()} />);
++    // The modal is only ever rendered when showPromoteUpsell is true, so its
++    // dynamic import never even loads here — no async wait needed.
++    expect(screen.queryByTestId("promote-upsell-modal")).toBeNull();
++    expect(mockSendGoogleEvent).not.toHaveBeenCalledWith(
++      "promote_modal_shown",
++      expect.anything(),
++    );
++  });
++
++  it("shows the promote upsell modal and fires analytics when ?promote=1 is present", async () => {
++    mockSearchParams = new URLSearchParams("promote=1");
++    render(<EventClient event={buildEvent()} />);
++
++    expect(
++      await screen.findByTestId("promote-upsell-modal"),
++    ).toHaveTextContent("my-event");
++    expect(mockSendGoogleEvent).toHaveBeenCalledWith("promote_modal_shown", {
++      event_slug: "my-event",
++      source: "event_detail",
++    });
++  });
++});
+
+
+=== DIFF: test/promote-upsell-modal.test.tsx ===
+@@ -11,6 +11,11 @@ vi.mock("@i18n/routing", () => ({
+   useRouter: () => ({ push: mockPush }),
+ }));
+ 
++vi.mock("@heroicons/react/24/outline", () => ({
++  RocketLaunchIcon: () => <svg data-testid="rocket-icon" />,
++  CheckCircleIcon: () => <svg data-testid="check-icon" />,
++}));
++
+ // Minimal Modal stub mirroring the real component's close/actionButton contract:
+ // calls setOpen(false) after onActionButtonClick resolves, unless it returns false.
+ vi.mock("@components/ui/common/modal", () => ({
+@@ -51,7 +56,7 @@ vi.mock("@components/ui/common/modal", () => ({
+   },
+ }));
+ 
+-import PromoteUpsellModal from "../app/[locale]/publica/PromoteUpsellModal";
++import PromoteUpsellModal from "../app/[locale]/e/[eventId]/components/PromoteUpsellModal";
+ 
+ describe("PromoteUpsellModal", () => {
+   beforeEach(() => {
+@@ -67,13 +72,21 @@ describe("PromoteUpsellModal", () => {
+     expect(mockPush).toHaveBeenCalledWith("/e/my-event/promote");
+   });
+ 
+-  it("navigates to the event detail page and closes the modal on 'keep it free'", () => {
++  it("closes the modal without navigating on 'keep it free' (already on the event detail page)", () => {
+     const setOpen = vi.fn();
+     render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" />);
+ 
+     fireEvent.click(screen.getByTestId("promote-modal-keep-free"));
+ 
+     expect(setOpen).toHaveBeenCalledWith(false);
+-    expect(mockPush).toHaveBeenCalledWith("/e/my-event");
++    expect(mockPush).not.toHaveBeenCalled();
++  });
++
++  it("shows the benefit list reusing the promote page's own copy", () => {
++    render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" />);
++
++    expect(screen.getByText("benefit1")).toBeInTheDocument();
++    expect(screen.getByText("benefit2")).toBeInTheDocument();
++    expect(screen.getByText("benefit3")).toBeInTheDocument();
+   });
+ });
+
+
+Investigate per the method in your instructions, then return the findings list.
