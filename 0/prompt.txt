@@ -1,0 +1,72 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - lib/api/favorites-external.ts
+  - test/favorites-external.test.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: lib/api/favorites-external.ts ===
+@@ -82,12 +82,19 @@ export async function listFavoriteEventsExternal(
+   // rather than a partial list that looks complete.
+   if (activePage === null || pastPage === null) return null;
+ 
++  const content = [...activePage.content, ...pastPage.content];
++  const totalElements = activePage.totalElements + pastPage.totalElements;
++  // Up to `size` items come back from each leg, so content.length can reach
++  // 2*size — pageSize must reflect that bound, not the single-leg `size`,
++  // or a caller trusting content.length <= pageSize gets burned.
++  const pageSize = size * 2;
++
+   return {
+-    content: [...activePage.content, ...pastPage.content],
++    content,
+     currentPage: page,
+-    pageSize: size,
+-    totalElements: activePage.totalElements + pastPage.totalElements,
+-    totalPages: Math.max(activePage.totalPages, pastPage.totalPages),
++    pageSize,
++    totalElements,
++    totalPages: pageSize > 0 ? Math.ceil(totalElements / pageSize) : 0,
+     last: activePage.last && pastPage.last,
+   };
+ }
+
+
+=== DIFF: test/favorites-external.test.ts ===
+@@ -108,6 +108,32 @@ describe("listFavoriteEventsExternal", () => {
+     errorSpy.mockRestore();
+   });
+ 
++  it("reports pageSize/totalPages consistent with content when both legs are full", async () => {
++    const size = 10;
++    const activeContent = Array.from({ length: size }, (_, i) =>
++      makeEvent(`active-${i}`)
++    );
++    const pastContent = Array.from({ length: size }, (_, i) =>
++      makeEvent(`past-${i}`)
++    );
++    mockFetchWithHmac.mockImplementation(async (url) => {
++      const u = url as string;
++      if (u.includes("period=active")) {
++        return pagedResponse(page(activeContent, size));
++      }
++      return pagedResponse(page(pastContent, size));
++    });
++
++    const result = await listFavoriteEventsExternal("token", 0, size);
++
++    expect(result?.content.length).toBe(2 * size);
++    expect(result?.content.length).toBeLessThanOrEqual(result!.pageSize);
++    expect(result?.totalElements).toBe(2 * size);
++    expect(result?.totalPages).toBe(
++      Math.ceil(result!.totalElements / result!.pageSize)
++    );
++  });
++
+   it("returns null when the past period call fails, even if active succeeds", async () => {
+     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+     mockFetchWithHmac.mockImplementation(async (url) => {
+
+
+Investigate per the method in your instructions, then return the findings list.
