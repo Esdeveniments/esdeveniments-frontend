@@ -1,0 +1,1 @@
+Yes, proceed, ensuring that we dont lose performance in the event detail page. my reasoning was to move the edit button there for discoverity following wallapop best practices
