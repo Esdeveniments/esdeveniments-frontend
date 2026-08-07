@@ -1,0 +1,1 @@
+i created a new user, and after I register, it navigates to homepage, if I try to click to my profile, it navigates to `http://localhost:3000/perfil/user-4b34dd41` and it fails because it says doesnt exists, shouldnt we plan to go through an onboarding in the initial plan?
