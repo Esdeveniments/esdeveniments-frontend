@@ -1,0 +1,111 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - components/ui/common/modal/index.tsx
+  - components/ui/filtersModal/NavigationFiltersModal.tsx
+  - components/ui/locationDiscoveryWidget/LocationDropdown.tsx
+
+Unified diff (only + lines are new):
+
+=== DIFF: components/ui/common/modal/index.tsx ===
+@@ -47,12 +47,12 @@ export default function Modal({
+           <Transition show={open} as={Fragment}>
+             <Transition.Child
+               as={Fragment}
+-              enter="ease-out duration-300"
+-              enterFrom="opacity-0"
+-              enterTo="opacity-70"
+-              leave="ease-in duration-200"
+-              leaveFrom="opacity-70"
+-              leaveTo="opacity-0"
++              enter="transition-modal"
++              enterFrom="opacity-0 translate-y-4 sm:translate-y-0"
++              enterTo="opacity-70 translate-y-0"
++              leave="transition-modal"
++              leaveFrom="opacity-70 translate-y-0"
++              leaveTo="opacity-0 translate-y-4 sm:translate-y-0"
+             >
+               <DialogPanel
+                 className="flex justify-center items-center relative z-10 pointer-events-auto"
+
+
+=== DIFF: components/ui/filtersModal/NavigationFiltersModal.tsx ===
+@@ -674,7 +674,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
+                 {useLocationLabel}
+               </button>
+               {useCurrentLocationMode && (
+-                <div className="text-xs text-border flex items-center gap-2">
++                <div className="animate-fade-in-fast text-xs text-border flex items-center gap-2">
+                   {t("useLocation.active")}
+                   <button
+                     onClick={() => setUseCurrentLocationMode(false)}
+@@ -685,7 +685,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
+                 </div>
+               )}
+               {isRegionSelected && (
+-                <div className="text-xs text-border bg-background border border-border rounded-md p-2">
++                <div className="animate-fade-in-fast text-xs text-border bg-background border border-border rounded-md p-2">
+                   {t("useLocation.regionNotice")}
+                 </div>
+               )}
+@@ -731,11 +731,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
+                 </label>
+               </div>
+               {showCalendar && (
+-                <CalendarDatePicker
+-                  fromDate={localFromDate}
+-                  toDate={localToDate}
+-                  onChange={handleCalendarDateChange}
+-                />
++                <div className="animate-fade-in-up w-full">
++                  <CalendarDatePicker
++                    fromDate={localFromDate}
++                    toDate={localToDate}
++                    onChange={handleCalendarDateChange}
++                  />
++                </div>
+               )}
+               {!showMoreDates ? (
+                 <button
+@@ -746,7 +748,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
+                   {t("modal.viewMore")}
+                 </button>
+               ) : (
+-                <>
++                <div className="animate-fade-in-up w-full flex flex-col gap-4">
+                   <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+                     {BYDATES.slice(3).map(({ value, labelKey }) => (
+                       <RadioInput
+@@ -791,7 +793,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
+                   >
+                     {t("modal.viewLess")}
+                   </button>
+-                </>
++                </div>
+               )}
+             </fieldset>
+             {categories.length > 0 && (
+@@ -876,7 +878,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
+                 )}
+               </p>
+               {shouldShowGeolocationFeedback && (
+-                <div className="border-t border-border py-2">
++                <div className="animate-fade-in-fast border-t border-border py-2">
+                   <div className="flex flex-col">
+                     {userLocationLoading && (
+                       <div className="text-sm text-border">
+
+
+=== DIFF: components/ui/locationDiscoveryWidget/LocationDropdown.tsx ===
+@@ -123,7 +123,7 @@ export default function LocationDropdown({
+ 
+       {/* Dropdown content */}
+       {isOpen && (
+-        <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-10 max-h-64 overflow-hidden">
++        <div className="animate-dropdown-in absolute top-full left-0 right-0 mt-1 bg-background border border-border border-opacity-50 rounded-lg shadow-lg z-10 max-h-64 overflow-hidden">
+           {/* Search input */}
+           <div className="p-3 border-b border-border border-opacity-30">
+             <input
+
+
+Investigate per the method in your instructions, then return the findings list.
