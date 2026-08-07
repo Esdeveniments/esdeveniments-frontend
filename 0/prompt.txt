@@ -1,0 +1,64 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - .github/workflows/deploy-coolify.yml
+
+Unified diff (only + lines are new):
+
+=== DIFF: .github/workflows/deploy-coolify.yml ===
+@@ -322,6 +322,52 @@ jobs:
+             echo "**Trigger:** Push to ${{ github.ref_name }} ($([ '${{ github.ref_name }}' = 'main' ] && echo 'full CI' || echo 'lint+typecheck+unit'))" >> $GITHUB_STEP_SUMMARY
+           fi
+ 
++      # Coolify's app config points at the floating `:main` registry tag. A
++      # health-check-triggered container restart recreates the container
++      # from whatever image is locally cached under that tag WITHOUT going
++      # through this deploy pipeline — so a restart can silently resurrect
++      # stale code hours after a correct deploy, with no CI run, webhook, or
++      # API call to show for it. This happened on 2026-07-31: the RSC
++      # cache-poisoning fix (0cdf6f8e) deployed correctly at 14:34 UTC, then
++      # a restart at 19:01 UTC reverted it. Pinning to the immutable
++      # `sha-<commit>` tag (already pushed by build-and-push, above) before
++      # every deploy removes the floating tag a restart could resurrect.
++      # See docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md.
++      - name: Pin Coolify to this commit's immutable image tag
++        env:
++          COOLIFY_TOKEN: ${{ github.ref_name == 'main' && secrets.COOLIFY_TOKEN || secrets.COOLIFY_TOKEN_STAGING }}
++          COOLIFY_WEBHOOK_URL: ${{ github.ref_name == 'main' && secrets.COOLIFY_WEBHOOK_URL || secrets.COOLIFY_WEBHOOK_URL_STAGING }}
++        run: |
++          if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
++            echo "::error::COOLIFY_WEBHOOK_URL secret is required"
++            exit 1
++          fi
++
++          # The webhook URL is Coolify's own `POST /api/v1/deploy?uuid=...`
++          # trigger — reuse its host and uuid instead of adding new secrets.
++          COOLIFY_API_BASE=$(echo "$COOLIFY_WEBHOOK_URL" | grep -oP '^https?://[^/]+')
++          COOLIFY_APP_UUID=$(echo "$COOLIFY_WEBHOOK_URL" | grep -oP '(?<=[?&]uuid=)[^&]+')
++
++          if [ -z "$COOLIFY_API_BASE" ] || [ -z "$COOLIFY_APP_UUID" ]; then
++            echo "::error::Could not parse host/uuid out of COOLIFY_WEBHOOK_URL — expected .../api/v1/deploy?uuid=<uuid>. Refusing to deploy on the floating tag; fix the URL or this parsing."
++            exit 1
++          fi
++
++          HTTP_CODE=$(curl -s -o /tmp/coolify-patch-response.json -w "%{http_code}" \
++            -X PATCH "${COOLIFY_API_BASE}/api/v1/applications/${COOLIFY_APP_UUID}" \
++            -H "Authorization: Bearer $COOLIFY_TOKEN" \
++            -H "Content-Type: application/json" \
++            --data "{\"docker_registry_image_tag\": \"sha-${{ github.sha }}\"}" \
++            --max-time 15) || HTTP_CODE="000"
++
++          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
++            echo "::error::Failed to pin docker_registry_image_tag (HTTP $HTTP_CODE) — aborting rather than deploying on the floating :main tag"
++            cat /tmp/coolify-patch-response.json 2>/dev/null || true
++            exit 1
++          fi
++
++          echo "Pinned esdeveniments-production to sha-${{ github.sha }}"
++
+       - name: Trigger Coolify deployment
+         env:
+           COOLIFY_TOKEN: ${{ github.ref_name == 'main' && secrets.COOLIFY_TOKEN || secrets.COOLIFY_TOKEN_STAGING }}
+
+
+Investigate per the method in your instructions, then return the findings list.
