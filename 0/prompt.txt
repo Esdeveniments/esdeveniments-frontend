@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>b21ar2cbw</task-id>
+<tool-use-id>toolu_01MPpPcQGMWLK2uZD1pnQyTT</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/0ebc427f-f30a-4fe7-a34d-813613a31886/tasks/b21ar2cbw.output</output-file>
+<status>completed</status>
+<summary>Background command "Run full test suite before committing" completed (exit code 0)</summary>
+</task-notification>
