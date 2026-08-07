@@ -1,0 +1,57 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - types/event.ts
+  - types/props.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: types/event.ts ===
+@@ -366,6 +366,16 @@ export type CreateEventActionResult =
+   | { success: true; event: EventDetailResponseDTO }
+   | { success: false; reason: "profile-incomplete" | "stale-session" };
+ 
++/**
++ * Result returned by createPromotionCheckoutAction. A discriminated union
++ * (not a thrown error) — same convention as EditEventResult and
++ * CreateEventActionResult above: the client always gets a value it can
++ * branch on, never an opaque Server Action rejection.
++ */
++export type PromotionCheckoutResult =
++  | { success: true; url: string }
++  | { success: false; error: string };
++
+ export interface UseEventsOptions {
+   place?: string;
+   category?: string;
+
+
+=== DIFF: types/props.ts ===
+@@ -987,6 +987,24 @@ export interface EditEventClientProps {
+   regions: import("./api/region").RegionsGroupedByCitiesResponseDTO[] | null;
+ }
+ 
++// Owner-only promote action, event detail sidebar client island
++export interface EventPromoteActionProps {
++  ownerId?: string;
++  slug: string;
++}
++
++// /e/[eventId]/promote client page
++export interface PromoteEventClientProps {
++  eventId: string;
++  slug: string;
++}
++
++export interface PromoteUpsellModalProps {
++  open: boolean;
++  setOpen: (open: boolean) => void;
++  slug: string;
++}
++
+ // Social proof counter
+ export interface SocialProofCounterProps {
+   visits: number;
+
+
+Investigate per the method in your instructions, then return the findings list.
