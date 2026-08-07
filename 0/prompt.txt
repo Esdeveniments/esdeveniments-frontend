@@ -1,0 +1,642 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - app/[locale]/page.tsx
+  - components/partials/generatePagesData.ts
+  - lib/api/categories.ts
+  - lib/api/cities.ts
+  - lib/api/events.ts
+  - lib/api/places.ts
+  - lib/api/regions.ts
+  - lib/seo/place-expandability.ts
+  - lib/seo/place-metadata.ts
+  - test/lib/seo/place-metadata.test.ts
+  - test/location-helpers.test.ts
+  - test/place-expandability.test.ts
+  - utils/build-phase.ts
+  - utils/constants.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: app/[locale]/page.tsx ===
+@@ -27,6 +27,7 @@ export async function generateMetadata() {
+   const pageData: PageData = await generatePagesData({
+     place: "",
+     byDate: "",
++    placeTypeLabel: { type: "region", label: "Catalunya" },
+     locale,
+   });
+   return buildPageMeta({
+@@ -139,7 +140,12 @@ async function HomeContent({
+   const [t, tTopAgenda, pageData] = await Promise.all([
+     getTranslations({ locale, namespace: "App.Home" }),
+     getTranslations({ locale, namespace: "Config.TopAgenda" }),
+-    generatePagesData({ place: "", byDate: "", locale }),
++    generatePagesData({
++      place: "",
++      byDate: "",
++      placeTypeLabel: { type: "region", label: "Catalunya" },
++      locale,
++    }),
+   ]);
+   const agendaLabel = tTopAgenda("agenda");
+ 
+
+
+=== DIFF: components/partials/generatePagesData.ts ===
+@@ -1,5 +1,4 @@
+ import { siteUrl } from "@config/index";
+-import { getPlaceTypeAndLabel } from "@utils/helpers";
+ import { getTranslations } from "next-intl/server";
+ import { cacheLife, cacheTag } from "next/cache";
+ import { placesTag, placeTag } from "@lib/cache/tags";
+@@ -84,7 +83,7 @@ export async function generatePagesData({
+   search,
+   locale,
+ }: GeneratePagesDataProps & {
+-  placeTypeLabel?: PlaceTypeAndLabel;
++  placeTypeLabel: PlaceTypeAndLabel;
+   locale?: AppLocale;
+ }): Promise<PageData> {
+   // No dynamic API (headers/cookies/searchParams) is read here — the only
+@@ -196,8 +195,7 @@ export async function generatePagesData({
+     throw new Error("Invalid year range");
+   }
+ 
+-  const { type, label }: PlaceTypeAndLabel =
+-    placeTypeLabel || (await getPlaceTypeAndLabel(place));
++  const { type, label }: PlaceTypeAndLabel = placeTypeLabel;
+   // keep legacy naming compatibility without unused var warnings
+   const labelWithArticle = formatPlacePreposition(
+     label,
+
+
+=== DIFF: lib/api/categories.ts ===
+@@ -6,7 +6,7 @@ import { createCache, createKeyedCache } from "lib/api/cache";
+ import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
+ import { cache as reactCache } from "react";
+ import { parseCategories } from "lib/validation/category";
+-import { isBuildPhase } from "@utils/constants";
++import { isBuildPhase } from "@utils/build-phase";
+ import { categoriesTag } from "@lib/cache/tags";
+ import { cacheLife, cacheTag } from "next/cache";
+ import {
+
+
+=== DIFF: lib/api/cities.ts ===
+@@ -5,7 +5,7 @@ import {
+   getVercelProtectionBypassHeaders,
+ } from "@utils/api-helpers";
+ import { fetchCitiesExternal } from "./cities-external";
+-import { isBuildPhase } from "@utils/constants";
++import { isBuildPhase } from "@utils/build-phase";
+ import { getSanitizedErrorMessage } from "@utils/api-error-handler";
+ 
+ const { cache: citiesListCache, clear: clearCitiesListCache } =
+
+
+=== DIFF: lib/api/events.ts ===
+@@ -26,8 +26,8 @@ import { getSanitizedErrorMessage } from "@utils/api-error-handler";
+ import {
+   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
+   MAX_TOTAL_UPLOAD_BYTES,
+-  isBuildPhase,
+ } from "@utils/constants";
++import { isBuildPhase } from "@utils/build-phase";
+ import { filterActiveEvents } from "@utils/event-helpers";
+ import {
+   ListEvent,
+
+
+=== DIFF: lib/api/places.ts ===
+@@ -2,7 +2,7 @@ import { PlaceResponseDTO } from "types/api/place";
+ import { createKeyedCache, createCache } from "@lib/api/cache";
+ import { getInternalApiUrl, getVercelProtectionBypassHeaders } from "@utils/api-helpers";
+ import { cache } from "react";
+-import { isBuildPhase } from "@utils/constants";
++import { isBuildPhase } from "@utils/build-phase";
+ import {
+   fetchPlaceBySlugExternal,
+   fetchPlacesAggregatedExternal,
+
+
+=== DIFF: lib/api/regions.ts ===
+@@ -9,7 +9,7 @@ import {
+   fetchRegionsExternal,
+   fetchRegionsOptionsExternal,
+ } from "./regions-external";
+-import { isBuildPhase } from "@utils/constants";
++import { isBuildPhase } from "@utils/build-phase";
+ import { getSanitizedErrorMessage } from "@utils/api-error-handler";
+ 
+ const { cache: regionsListCache, clear: clearRegionsListCache } =
+
+
+=== DIFF: lib/seo/place-expandability.ts ===
+@@ -1,17 +1,23 @@
+ import { cache } from "react";
+-import { cacheLife } from "next/cache";
++import { cacheLife, cacheTag } from "next/cache";
+ import { fetchEventCountExternal } from "@lib/api/events-external";
++import {
++  getInternalApiUrl,
++  getVercelProtectionBypassHeaders,
++} from "@utils/api-helpers";
++import { eventsTag } from "@lib/cache/tags";
+ import { SITEMAP_MIN_EVENTS_FOR_EXPANSION } from "@utils/constants";
+ import type { PlaceType } from "types/common";
+ 
+ async function resolvePlaceExpandability(
+   slug: string,
+   type: PlaceType,
++  fetchCount: (slug: string) => Promise<number | null>,
+ ): Promise<boolean> {
+   if (type !== "town") return true;
+   if (!slug || slug === "catalunya") return true;
+   try {
+-    const count = await fetchEventCountExternal(slug);
++    const count = await fetchCount(slug);
+     return count === null || count >= SITEMAP_MIN_EVENTS_FOR_EXPANSION;
+   } catch {
+     // Fail open on unexpected errors so transient failures don't shrink
+@@ -20,6 +26,26 @@ async function resolvePlaceExpandability(
+   }
+ }
+ 
++// Metadata-only count reader: hits the internal API route with a plain,
++// tagged `fetch()` instead of `fetchEventCountExternal` (which goes through
++// `fetchWithHmac`, and that calls `connection()` unconditionally). Calling a
++// dynamic API from inside a "use cache" scope defeats the whole point of
++// getPlaceExpandabilityForMetadata below — it would stay a resume-mismatch
++// hazard despite the "use cache" wrapper.
++async function fetchEventCountForMetadata(slug: string): Promise<number | null> {
++  const url = await getInternalApiUrl(
++    `/api/events?place=${encodeURIComponent(slug)}&size=1`,
++    { preferConfiguredOrigin: true },
++  );
++  const response = await fetch(url, {
++    headers: getVercelProtectionBypassHeaders(),
++    next: { revalidate: 600, tags: ["events"] },
++  });
++  if (!response.ok) return null;
++  const data = await response.json();
++  return typeof data?.totalElements === "number" ? data.totalElements : null;
++}
++
+ /**
+  * Determines whether a place has enough event depth to warrant filter
+  * expansion (date/category internal links and sitemap entries).
+@@ -43,19 +69,19 @@ async function resolvePlaceExpandability(
+  * and API I/O; `utils/` is reserved for deterministic, side-effect-free
+  * helpers.
+  */
+-export const getPlaceExpandability = cache(resolvePlaceExpandability);
++export const getPlaceExpandability = cache((slug: string, type: PlaceType) =>
++  resolvePlaceExpandability(slug, type, fetchEventCountExternal),
++);
+ 
+ // Metadata-only reader: wraps the same check in `"use cache"` so
+-// generateMetadata stays prerenderable under cacheComponents. The underlying
+-// fetchEventCountExternal call has no cache directive of its own — React
+-// cache() is request memoization only and doesn't make an uncached fetch
+-// prerenderable, so an outer "use cache" boundary is required here too. See
++// generateMetadata stays prerenderable under cacheComponents. See
+ // docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
+ export async function getPlaceExpandabilityForMetadata(
+   slug: string,
+   type: PlaceType,
+ ): Promise<boolean> {
+   "use cache";
++  cacheTag(eventsTag);
+   cacheLife("hours");
+-  return resolvePlaceExpandability(slug, type);
++  return resolvePlaceExpandability(slug, type, fetchEventCountForMetadata);
+ }
+
+
+=== DIFF: lib/seo/place-metadata.ts ===
+@@ -64,7 +64,7 @@ export async function getPlaceTypeAndLabelForMetadata(
+   place: string,
+ ): Promise<PlaceTypeAndLabel> {
+   "use cache";
+-  cacheTag(placesTag, regionsTag);
++  cacheTag(placesTag, regionsTag, regionsOptionsTag);
+   cacheLife("hours");
+   return resolvePlaceTypeAndLabel(
+     place,
+
+
+=== DIFF: test/lib/seo/place-metadata.test.ts ===
+@@ -0,0 +1,111 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
++
++vi.mock("next/cache", () => ({
++  cacheTag: vi.fn(),
++  cacheLife: vi.fn(),
++}));
++
++vi.mock("@utils/api-helpers", () => ({
++  getInternalApiUrl: vi.fn((path: string) =>
++    Promise.resolve(`http://localhost:3000${path}`),
++  ),
++  getVercelProtectionBypassHeaders: vi.fn(() => ({})),
++}));
++
++import {
++  fetchPlaceBySlugForMetadata,
++  fetchRegionsWithCitiesForMetadata,
++  getPlaceTypeAndLabelForMetadata,
++} from "@lib/seo/place-metadata";
++
++describe("fetchPlaceBySlugForMetadata", () => {
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it("returns the parsed place on success", async () => {
++    const place = { id: 1, type: "CITY", name: "Sabadell", slug: "sabadell" };
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({
++        status: 200,
++        ok: true,
++        json: () => Promise.resolve(place),
++      }),
++    );
++    const result = await fetchPlaceBySlugForMetadata("sabadell");
++    expect(result).toEqual(place);
++  });
++
++  it("returns null on a 404", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({ status: 404, ok: false }),
++    );
++    const result = await fetchPlaceBySlugForMetadata("nonexistent");
++    expect(result).toBeNull();
++  });
++
++  it("throws on a non-404 error response", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({ status: 500, ok: false }),
++    );
++    await expect(fetchPlaceBySlugForMetadata("sabadell")).rejects.toThrow(
++      "HTTP 500",
++    );
++  });
++});
++
++describe("fetchRegionsWithCitiesForMetadata", () => {
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it("returns the parsed regions on success", async () => {
++    const regions = [{ id: 1, name: "Vallès Occidental", cities: [] }];
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({
++        ok: true,
++        json: () => Promise.resolve(regions),
++      }),
++    );
++    const result = await fetchRegionsWithCitiesForMetadata();
++    expect(result).toEqual(regions);
++  });
++
++  it("degrades to an empty array on a non-ok response", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({ ok: false, status: 500 }),
++    );
++    const result = await fetchRegionsWithCitiesForMetadata();
++    expect(result).toEqual([]);
++  });
++});
++
++describe("getPlaceTypeAndLabelForMetadata", () => {
++  beforeEach(() => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({ status: 404, ok: false }),
++    );
++  });
++
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it("returns Catalunya for an empty place without any fetch", async () => {
++    (global.fetch as ReturnType<typeof vi.fn>).mockClear();
++    const result = await getPlaceTypeAndLabelForMetadata("");
++    expect(result).toEqual({ type: "region", label: "Catalunya" });
++    expect(global.fetch).not.toHaveBeenCalled();
++  });
++
++  it("falls back to a dehyphenated slug when the place and regions lookups both miss", async () => {
++    const result = await getPlaceTypeAndLabelForMetadata("some-town");
++    expect(result).toEqual({ type: "town", label: "Some Town" });
++  });
++});
+
+
+=== DIFF: test/location-helpers.test.ts ===
+@@ -1,4 +1,4 @@
+-import { describe, it, expect } from "vitest";
++import { describe, it, expect, vi } from "vitest";
+ import {
+   buildDisplayLocation,
+   buildEventLocationLabels,
+@@ -6,7 +6,10 @@ import {
+   buildEventListLocationLabels,
+   getDistance,
+   deg2rad,
++  resolvePlaceTypeAndLabel,
+ } from "../utils/location-helpers";
++import type { PlaceResponseDTO } from "types/api/place";
++import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
+ 
+ describe("buildDisplayLocation", () => {
+   it("returns location when no city/region", () => {
+@@ -239,3 +242,125 @@ describe("deg2rad", () => {
+     expect(deg2rad(-90)).toBeCloseTo(-Math.PI / 2);
+   });
+ });
++
++describe("resolvePlaceTypeAndLabel", () => {
++  const region: RegionsGroupedByCitiesResponseDTO = {
++    id: 1,
++    name: "Vallès Occidental",
++    slug: "valles-occidental",
++    cities: [
++      { id: 10, value: "sabadell", label: "Sabadell", latitude: 0, longitude: 0 },
++    ],
++  };
++
++  it("returns Catalunya for an empty place without calling any fetcher", async () => {
++    const fetchPlace = vi.fn();
++    const fetchRegions = vi.fn();
++    const result = await resolvePlaceTypeAndLabel("", fetchPlace, fetchRegions);
++    expect(result).toEqual({ type: "region", label: "Catalunya" });
++    expect(fetchPlace).not.toHaveBeenCalled();
++    expect(fetchRegions).not.toHaveBeenCalled();
++  });
++
++  it("returns Catalunya for the virtual 'catalunya' slug without calling any fetcher", async () => {
++    const fetchPlace = vi.fn();
++    const fetchRegions = vi.fn();
++    const result = await resolvePlaceTypeAndLabel(
++      "catalunya",
++      fetchPlace,
++      fetchRegions,
++    );
++    expect(result).toEqual({ type: "region", label: "Catalunya" });
++    expect(fetchPlace).not.toHaveBeenCalled();
++    expect(fetchRegions).not.toHaveBeenCalled();
++  });
++
++  it("resolves a CITY place and attaches its parent region", async () => {
++    const place: PlaceResponseDTO = {
++      id: 10,
++      type: "CITY",
++      name: "Sabadell",
++      slug: "sabadell",
++    };
++    const fetchPlace = vi.fn().mockResolvedValue(place);
++    const fetchRegions = vi.fn().mockResolvedValue([region]);
++    const result = await resolvePlaceTypeAndLabel(
++      "sabadell",
++      fetchPlace,
++      fetchRegions,
++    );
++    expect(result).toEqual({
++      type: "town",
++      label: "Sabadell",
++      regionLabel: "Vallès Occidental",
++      regionSlug: "valles-occidental",
++    });
++  });
++
++  it("resolves a REGION place without a parent region lookup", async () => {
++    const place: PlaceResponseDTO = {
++      id: 1,
++      type: "REGION",
++      name: "Vallès Occidental",
++      slug: "valles-occidental",
++    };
++    const fetchPlace = vi.fn().mockResolvedValue(place);
++    const fetchRegions = vi.fn();
++    const result = await resolvePlaceTypeAndLabel(
++      "valles-occidental",
++      fetchPlace,
++      fetchRegions,
++    );
++    expect(result).toEqual({ type: "region", label: "Vallès Occidental" });
++    expect(fetchRegions).not.toHaveBeenCalled();
++  });
++
++  it("falls through to the regions lookup when fetchPlace returns null", async () => {
++    const fetchPlace = vi.fn().mockResolvedValue(null);
++    const fetchRegions = vi.fn().mockResolvedValue([region]);
++    const result = await resolvePlaceTypeAndLabel(
++      "sabadell",
++      fetchPlace,
++      fetchRegions,
++    );
++    expect(result).toEqual({
++      type: "town",
++      label: "Sabadell",
++      regionLabel: "Vallès Occidental",
++      regionSlug: "valles-occidental",
++    });
++  });
++
++  it("falls through to the regions lookup when fetchPlace throws", async () => {
++    const fetchPlace = vi.fn().mockRejectedValue(new Error("network error"));
++    const fetchRegions = vi.fn().mockResolvedValue([region]);
++    const result = await resolvePlaceTypeAndLabel(
++      "valles-occidental",
++      fetchPlace,
++      fetchRegions,
++    );
++    expect(result).toEqual({ type: "region", label: "Vallès Occidental" });
++  });
++
++  it("falls back to a dehyphenated slug when nothing matches", async () => {
++    const fetchPlace = vi.fn().mockResolvedValue(null);
++    const fetchRegions = vi.fn().mockResolvedValue([region]);
++    const result = await resolvePlaceTypeAndLabel(
++      "unknown-place",
++      fetchPlace,
++      fetchRegions,
++    );
++    expect(result).toEqual({ type: "town", label: "Unknown Place" });
++  });
++
++  it("fails open (dehyphenated fallback) when both fetchers throw", async () => {
++    const fetchPlace = vi.fn().mockRejectedValue(new Error("boom"));
++    const fetchRegions = vi.fn().mockRejectedValue(new Error("boom"));
++    const result = await resolvePlaceTypeAndLabel(
++      "some-town",
++      fetchPlace,
++      fetchRegions,
++    );
++    expect(result).toEqual({ type: "town", label: "Some Town" });
++  });
++});
+
+
+=== DIFF: test/place-expandability.test.ts ===
+@@ -1,10 +1,25 @@
+-import { describe, it, expect, vi, beforeEach } from "vitest";
++import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+ 
+ vi.mock("@lib/api/events-external", () => ({
+   fetchEventCountExternal: vi.fn(),
+ }));
+ 
+-import { getPlaceExpandability } from "@lib/seo/place-expandability";
++vi.mock("next/cache", () => ({
++  cacheTag: vi.fn(),
++  cacheLife: vi.fn(),
++}));
++
++vi.mock("@utils/api-helpers", () => ({
++  getInternalApiUrl: vi.fn((path: string) =>
++    Promise.resolve(`http://localhost:3000${path}`),
++  ),
++  getVercelProtectionBypassHeaders: vi.fn(() => ({})),
++}));
++
++import {
++  getPlaceExpandability,
++  getPlaceExpandabilityForMetadata,
++} from "@lib/seo/place-expandability";
+ import { fetchEventCountExternal } from "@lib/api/events-external";
+ 
+ const mockedFetchCount = vi.mocked(fetchEventCountExternal);
+@@ -50,3 +65,52 @@ describe("getPlaceExpandability", () => {
+     expect(result).toBe(true);
+   });
+ });
++
++describe("getPlaceExpandabilityForMetadata", () => {
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it("returns true for regions without calling the internal API", async () => {
++    vi.stubGlobal("fetch", vi.fn());
++    const result = await getPlaceExpandabilityForMetadata(
++      "valles-occidental",
++      "region",
++    );
++    expect(result).toBe(true);
++    expect(global.fetch).not.toHaveBeenCalled();
++  });
++
++  it("returns false for towns below the threshold", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({
++        ok: true,
++        json: () => Promise.resolve({ totalElements: 12 }),
++      }),
++    );
++    const result = await getPlaceExpandabilityForMetadata("begues", "town");
++    expect(result).toBe(false);
++  });
++
++  it("returns true for towns at or above the threshold", async () => {
++    vi.stubGlobal(
++      "fetch",
++      vi.fn().mockResolvedValue({
++        ok: true,
++        json: () => Promise.resolve({ totalElements: 40 }),
++      }),
++    );
++    const result = await getPlaceExpandabilityForMetadata("sabadell", "town");
++    expect(result).toBe(true);
++  });
++
++  it("fails open (returns true) when the internal API returns non-ok", async () => {
++    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
++    const result = await getPlaceExpandabilityForMetadata(
++      "transient-failure",
++      "town",
++    );
++    expect(result).toBe(true);
++  });
++});
+
+
+=== DIFF: utils/build-phase.ts ===
+@@ -0,0 +1,26 @@
++import { PHASE_PRODUCTION_BUILD } from "next/constants";
++
++/**
++ * Detects if the application is in build phase (SSG/static generation).
++ * During build phase, we bypass internal API proxy and call external API directly
++ * to avoid issues when the Next.js server isn't running.
++ *
++ * This is used to determine whether to use internal API routes (runtime) or
++ * external API calls (build time) for data fetching.
++ *
++ * NEXT_PHASE is the only reliable signal — it's set by the Next.js CLI itself
++ * during `next build`, regardless of hosting platform. A `NODE_ENV ===
++ * "production" && !VERCEL_URL` fallback used to be OR'd in here, added when
++ * this app only ran on Vercel (VERCEL_URL is always set at Vercel runtime, so
++ * its absence meant "must be the build step"). Since the Coolify migration,
++ * that assumption is false: self-hosted production never sets VERCEL_URL
++ * either, so the fallback made isBuildPhase permanently true at runtime,
++ * silently bypassing the internal API's caching/revalidation for places,
++ * regions, cities, categories, and events on every production request.
++ *
++ * Lives in its own module (not utils/constants.ts) so the API data-fetching
++ * layer (lib/api/regions.ts, cities.ts, places.ts, events.ts, categories.ts)
++ * doesn't transitively pull in next-intl/server and the full ca/es/en message
++ * bundles just to read one boolean flag.
++ */
++export const isBuildPhase = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD;
+
+
+=== DIFF: utils/constants.ts ===
+@@ -1,4 +1,3 @@
+-import { PHASE_PRODUCTION_BUILD } from "next/constants";
+ import type { ByDateOption, DateRangeShortcut } from "types/common";
+ import { getTranslations } from "next-intl/server";
+ import type { CategorySummaryResponseDTO } from "types/api/category";
+@@ -69,25 +68,10 @@ export const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(
+   MAX_ORIGINAL_FILE_BYTES,
+ );
+ 
+-/**
+- * Detects if the application is in build phase (SSG/static generation).
+- * During build phase, we bypass internal API proxy and call external API directly
+- * to avoid issues when the Next.js server isn't running.
+- *
+- * This is used to determine whether to use internal API routes (runtime) or
+- * external API calls (build time) for data fetching.
+- *
+- * NEXT_PHASE is the only reliable signal — it's set by the Next.js CLI itself
+- * during `next build`, regardless of hosting platform. A `NODE_ENV ===
+- * "production" && !VERCEL_URL` fallback used to be OR'd in here, added when
+- * this app only ran on Vercel (VERCEL_URL is always set at Vercel runtime, so
+- * its absence meant "must be the build step"). Since the Coolify migration,
+- * that assumption is false: self-hosted production never sets VERCEL_URL
+- * either, so the fallback made isBuildPhase permanently true at runtime,
+- * silently bypassing the internal API's caching/revalidation for places,
+- * regions, cities, categories, and events on every production request.
+- */
+-export const isBuildPhase = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD;
++// isBuildPhase lives in utils/build-phase.ts, not here — the data-fetching
++// layer (lib/api/*) imports it directly from there to avoid pulling in
++// next-intl/server and the full ca/es/en message bundles below.
++export { isBuildPhase } from "./build-phase";
+ 
+ const constantsLabelsByLocale: Record<AppLocale, any> = {
+   ca: (caMessages as any).Components.Constants,
+
+
+Investigate per the method in your instructions, then return the findings list.
