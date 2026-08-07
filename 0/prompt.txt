@@ -1,0 +1,27 @@
+<task-notification>
+<task-id>acf294d878b7080ae</task-id>
+<tool-use-id>toolu_019QN7V9CBRt9B7bqFaSBsfs</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/7a2943ca-2e5e-4664-954a-cd482f3f0383/tasks/acf294d878b7080ae.output</output-file>
+<status>completed</status>
+<summary>Agent "Architecture over-engineering audit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Architecture audit — que-fer (report-only, ponytail-audit)**
+
+Ranked findings, biggest cut first:
+
+- `delete:` root `store.ts` — zustand `create/persist` store with **zero importers** anywhere in app/components/lib/utils. Confirmed via grep for `useStore`, `from "store"`, `@store`. Nothing replaces it — delete the file and drop `zustand` from package.json. [store.ts]
+- `delete:` dead `debounce()` helper, exported but never called anywhere in the tree (only referenced in unrelated comments). Nothing. [components/ui/locationDiscoveryWidget/utils.ts:44]
+- `yagni:` `findNearestCity()` ignores its `coordinates` argument entirely and always returns a hardcoded `{value: "catalunya", label: "Catalunya"}` stub (has a literal `// TODO: Implement actual coordinate-to-city mapping`). It's called for real from `useGeolocation.ts:35`, so the geolocation flow silently always resolves to Catalunya. Either implement it or stop pretending `useGeolocation` does real city resolution. [components/ui/locationDiscoveryWidget/utils.ts:37]
+- `yagni:` `components/ui/layout/index.ts` is a 1-line barrel (`export { default as BaseLayout } from "./base"`) with exactly one caller (`app/[locale]/layout.tsx`). Import `./base` directly. [components/ui/layout/index.ts]
+
+**Project-rule cross-check** (types-in-/types, Server Components by default):
+- Inline `interface`/`type` in components: **0 violations** — rule is clean.
+- `"use client"` on a page.tsx (should be leaf-only): `app/[locale]/publica/page.tsx` (865 lines) is a client component at the page root, not a leaf. May be deliberate (full-page form), but it forces the whole publish flow into client JS — worth confirming intent.
+
+**Oversized files** (&gt;400-line guidance, not deep-audited): `NavigationFiltersModal.tsx` (933), `publica/page.tsx` (865), `SocialFollowPopup.tsx` (851) are the top candidates for splitting if anyone touches them next; `types/props.ts`/`types/common.ts` being large is expected for central type files.
+
+**Out of scope, noted in passing:** a stray leftover `.claude/worktrees/agent-a1937b1e847f9439e/` directory sits in the repo root — looks like an orphaned agent worktree, not part of this audit but worth a `git worktree prune` check.
+
+`net: -38 lines, -1 dep (zustand) possible from the two delete: findings alone.`</result>
+<usage><subagent_tokens>98177</subagent_tokens><tool_uses>10</tool_uses><duration_ms>100759</duration_ms></usage>
+</task-notification>
