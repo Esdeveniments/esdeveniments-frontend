@@ -1,0 +1,112 @@
+fix unit test issue: ```
+  1) [chromium] › e2e/favorites.flow.spec.ts:60:7 › Favorites flow › add favorite, see it on /preferits, persists after reload 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/esdeveniments futurs/i)
+    Expected: visible
+    Timeout: 60000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 60000ms
+      - waiting for getByText(/esdeveniments futurs/i)
+
+
+      123 |     });
+      124 |
+    > 125 |     await expect(page.getByText(/esdeveniments futurs/i)).toBeVisible({
+          |                                                           ^
+      126 |       timeout: process.env.CI ? 60000 : 30000,
+      127 |     });
+      128 |     await expect(page.getByText(/automàticament/i)).toBeVisible({
+        at /home/runner/work/esdeveniments-frontend/esdeveniments-frontend/e2e/favorites.flow.spec.ts:125:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/esdeveniments futurs/i)
+    Expected: visible
+    Timeout: 60000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 60000ms
+      - waiting for getByText(/esdeveniments futurs/i)
+
+
+      123 |     });
+      124 |
+    > 125 |     await expect(page.getByText(/esdeveniments futurs/i)).toBeVisible({
+          |                                                           ^
+      126 |       timeout: process.env.CI ? 60000 : 30000,
+      127 |     });
+      128 |     await expect(page.getByText(/automàticament/i)).toBeVisible({
+        at /home/runner/work/esdeveniments-frontend/esdeveniments-frontend/e2e/favorites.flow.spec.ts:125:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium-retry1/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium-retry1/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium-retry1/trace.zip
+    Usage:
+
+        yarn playwright show-trace test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/esdeveniments futurs/i)
+    Expected: visible
+    Timeout: 60000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 60000ms
+      - waiting for getByText(/esdeveniments futurs/i)
+
+
+      123 |     });
+      124 |
+    > 125 |     await expect(page.getByText(/esdeveniments futurs/i)).toBeVisible({
+          |                                                           ^
+      126 |       timeout: process.env.CI ? 60000 : 30000,
+      127 |     });
+      128 |     await expect(page.getByText(/automàticament/i)).toBeVisible({
+        at /home/runner/work/esdeveniments-frontend/esdeveniments-frontend/e2e/favorites.flow.spec.ts:125:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium-retry2/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/favorites.flow-Favorites-f-b4691-erits-persists-after-reload-chromium-retry2/error-context.md
+
+  1 failed
+    [chromium] › e2e/favorites.flow.spec.ts:60:7 › Favorites flow › add favorite, see it on /preferits, persists after reload 
+  23 skipped
+  86 passed (3.6m)```
