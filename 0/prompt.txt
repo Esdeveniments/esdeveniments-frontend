@@ -1,0 +1,1 @@
+btw, the loading skeleton you added in the profile, auth, publica is now a spinner loader, why cant it match the current layout and or other skeletons in the project? about flagged not done, do we need to do it?
