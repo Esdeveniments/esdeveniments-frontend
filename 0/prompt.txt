@@ -1,0 +1,32 @@
+<task-notification>
+<task-id>a256e176415454a3f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-albertolive-Repos-que-fer/7a2943ca-2e5e-4664-954a-cd482f3f0383/tasks/a256e176415454a3f.output</output-file>
+<status>completed</status>
+<summary>Agent "Animation and motion opportunities audit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Animation/motion audit — que-fer** (report-only, find-animation-opportunities skill)
+
+Stack: no motion library (no framer-motion/gsap installed) — pure Tailwind CSS transitions + Headless UI `Transition`. Existing semantic tokens already defined in `styles/globals.css`: `.transition-modal` (`opacity,transform` / `duration-slow` 300ms / `ease-smooth` = `cubic-bezier(0.4,0,0.2,1)`), plus a solid `.pressable-chip/-card/-inline` press-feedback system with `prefers-reduced-motion` handling already wired. This is a more mature base than most codebases at this stage — good.
+
+**Part 1 — Opportunities**
+
+| # | Location | Today | Purpose | Freq | Suggested motion |
+|---|---|---|---|---|---|
+| 1 | `components/ui/common/modal/index.tsx:44-54` | `DialogPanel` only fades opacity (300/200ms), no transform — but on mobile it's a full-height (`h-[100dvh]`) sheet | Spatial consistency | Occasional | Use the *already-defined but unused* `.transition-modal` token. Add `enterFrom="opacity-0 translate-y-4"` `enterTo="opacity-100 translate-y-0"` (mirror on leave), `duration-slow ease-smooth` — panel should read as sliding up on mobile, not just fading. |
+| 2 | `components/ui/locationDiscoveryWidget/LocationDropdown.tsx:125-164` | Dropdown panel appears/disappears via bare `{isOpen &amp;&amp; &lt;div&gt;}`, zero transition (chevron rotate at :118 already animates) | Spatial consistency | Occasional | `transform-origin: top`, enter `scale(0.97) opacity-0` → `scale(1) opacity-100`, `duration-normal ease-smooth` (200ms) — matches the chevron's existing `duration-200`. |
+| 3 | `components/ui/filtersModal/NavigationFiltersModal.tsx:733-739, 750-795` | Calendar picker and "view more dates" block teleport in/out on toggle | Preventing jarring change | Occasional | height+opacity transition, `duration-normal ease-smooth`; skip if content reflow makes height animation janky — fade+`translateY(-4px)` on the block is a cheaper equivalent. |
+| 4 | Same file, `:676-691, 878-893` (location-mode notices, region notice, geolocation feedback) | Conditional `&lt;div&gt;`s pop in with no bridge | Preventing jarring change | Occasional | Simple fade, `opacity-0→100`, `duration-fast` (100ms) — these are small inline text rows, don't over-animate. |
+
+**Part 2 — Rejected**
+
+- `components/ui/filters/FilterButton.tsx` chip press state — **already has `.pressable-chip` with proper reduced-motion handling. No change.**
+- `components/ui/filters/FilterButton.tsx:79` remove-chip (×) icon — tens/day interaction on a frequently-toggled filter chip. **Rejected: near-imperceptible only; current hover bg is enough, adding transform would be noise at this frequency.**
+- `NavigationFiltersModal.tsx` distance `RangeInput` drag — user-in-control drag with live value feedback. **Rejected: function over decoration — the value the user is dragging shouldn't get extra motion layered on top.**
+- Category/region select dropdowns (react-select based, dynamic-imported) — **Deferred, not rejected: those are the react-select library's own internal transitions; out of scope for hand-rolled recipes, would need the library's own animation config.**
+
+**Part 3 — Verdict**
+
+This interface needs a light touch, not a redesign — it's a dense filter/listing app, and the token system already shows restraint (fast press feedback, no gratuitous stagger). The gap isn't "add more animation," it's that a few conditional-render seams (`{x &amp;&amp; &lt;div&gt;}`) never got the bridge the design tokens already anticipate — `.transition-modal` exists and is unused by the one component named after it. Highest leverage: **#1, the base Modal** — every screen that opens a modal inherits the fix for free. Next: `improve-animations plan "Modal sheet uses .transition-modal with translateY on mobile"`.</result>
+<usage><subagent_tokens>115770</subagent_tokens><tool_uses>15</tool_uses><duration_ms>98929</duration_ms></usage>
+</task-notification>
