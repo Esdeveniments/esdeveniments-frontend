@@ -1,0 +1,78 @@
+Review this change for security vulnerabilities.
+
+Changed files (you may Read these and any other file in the repo):
+  - lib/api/promotedEvents.ts
+  - lib/validation/event.ts
+  - test/lib/api/promotedEvents.test.ts
+
+Unified diff (only + lines are new):
+
+=== DIFF: lib/api/promotedEvents.ts ===
+@@ -1,5 +1,10 @@
++import { z } from "zod";
+ import { fetchWithHmac } from "./fetch-wrapper";
+ import { getApiUrl } from "@utils/api-helpers";
++import {
++  EventSummaryResponseDTOSchema,
++  enhanceEventImage,
++} from "@lib/validation/event";
+ import type { EventSummaryResponseDTO } from "types/api/event";
+ import type { PromotionScope } from "types/event";
+ 
+@@ -46,7 +51,17 @@ export async function getActivePromotedEvents(
+ 
+     const data = await response.json();
+     const content = Array.isArray(data?.content) ? data.content : [];
+-    return (content as EventSummaryResponseDTO[]).slice(0, MAX_PROMOTED_EVENTS);
++    const parsed = z.array(EventSummaryResponseDTOSchema).safeParse(content);
++    if (!parsed.success) {
++      console.warn(
++        "getActivePromotedEvents: invalid content payload",
++        parsed.error,
++      );
++      return [];
++    }
++
++    const events = parsed.data as EventSummaryResponseDTO[];
++    return events.map(enhanceEventImage).slice(0, MAX_PROMOTED_EVENTS);
+   } catch (error) {
+     console.warn("getActivePromotedEvents: fetch failed", error);
+     return [];
+
+
+=== DIFF: lib/validation/event.ts ===
+@@ -224,7 +224,7 @@ export function parseCategorizedEvents(
+   return Object.fromEntries(normalizedEntries) as CategorizedEvents;
+ }
+ 
+-function enhanceEventImage<
++export function enhanceEventImage<
+   T extends { imageUrl?: string | null; hash?: string | null; updatedAt?: string }
+ >(event: T): T {
+   const cacheKey = event.hash || event.updatedAt;
+
+
+=== DIFF: test/lib/api/promotedEvents.test.ts ===
+@@ -109,6 +109,19 @@ describe("getActivePromotedEvents", () => {
+     expect(result).toEqual([]);
+   });
+ 
++  it("returns [] (not a throw) when content items don't match EventSummaryResponseDTOSchema", async () => {
++    process.env.PROMOTED_EVENTS_ENABLED = "true";
++    const mockResponse = new Response(
++      JSON.stringify({ content: [{ id: "malformed", title: "missing required fields" }] }),
++      { status: 200, headers: { "content-type": "application/json" } },
++    );
++    vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
++
++    const result = await getActivePromotedEvents({ type: "homepage" });
++
++    expect(result).toEqual([]);
++  });
++
+   it("caps results at MAX_PROMOTED_EVENTS", async () => {
+     process.env.PROMOTED_EVENTS_ENABLED = "true";
+     const content = Array.from({ length: 20 }, (_, i) => ({
+
+
+Investigate per the method in your instructions, then return the findings list.
