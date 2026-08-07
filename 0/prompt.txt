@@ -1,0 +1,1 @@
+btw is this normal? [browser] Failed to fetch RSC payload for http://localhost:3000/iniciar-sessio. Falling back to browser navigation. TypeError: Failed to fetch
