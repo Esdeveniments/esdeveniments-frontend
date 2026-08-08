@@ -165,6 +165,7 @@ motion:
 breakpoints:
   xs: "360px"
   sm: "576px"
+  nav: "950px"
   md: "768px"
   lg: "1024px"
   xl: "1280px"
@@ -653,13 +654,13 @@ titles vary.
 Z-layers are explicit: 10 sticky chrome, 100 dropdowns, 900 modals, 1000
 tooltips. Anything above 1000 is forbidden.
 
-Navigation is a top sticky bar on desktop, a fixed bottom tab bar on mobile
-— a deliberate native-app affordance for a product that's used walking
-around towns. The desktop bar is 56px tall with a backdrop blur and a
-hairline border. The mobile bar is 64px tall with five circular icon-only
-buttons (Home, Agenda, Favorites, Publish, News), each at least 44×44 px;
-the active route fills with `colors.primary-tint` and tints its icon
-primary red.
+Navigation is a top sticky bar on desktop, a fixed bottom tab bar below the
+950px navigation breakpoint — a deliberate native-app affordance for a
+product that's used walking around towns. The desktop bar is 56px tall with
+a backdrop blur and a hairline border. The mobile bar is 64px tall with five
+circular icon-only buttons (Home, Agenda, Favorites, Publish, News), each at
+least 44×44 px; the active route fills with `colors.primary-tint` and tints
+its icon primary red.
 
 ## Elevation & Depth
 

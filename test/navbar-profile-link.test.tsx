@@ -26,8 +26,10 @@ vi.mock("@components/ui/common/link", () => ({
 }));
 
 vi.mock("@components/ui/primitives/PressableLink", () => ({
-  default: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({ children, href, ...props }: { children: ReactNode; href: string } & Record<string, unknown>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
