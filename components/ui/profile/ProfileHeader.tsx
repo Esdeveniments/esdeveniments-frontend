@@ -95,41 +95,41 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
         {(profile.eventCount !== undefined ||
           profile.upcomingEventCount !== undefined ||
           profile.totalEventVisits !== undefined) && (
-          <div
-            className="flex items-center gap-element-gap mb-element-gap"
-            data-testid="profile-stats"
-          >
-            {profile.eventCount !== undefined && (
-              <div className="flex flex-col items-center">
-                <span className="heading-3 text-foreground-strong">
-                  {profile.eventCount}
-                </span>
-                <span className="body-small text-foreground/60">
-                  {t("statsPublished")}
-                </span>
-              </div>
-            )}
-            {profile.upcomingEventCount !== undefined && (
-              <div className="flex flex-col items-center">
-                <span className="heading-3 text-foreground-strong">
-                  {profile.upcomingEventCount}
-                </span>
-                <span className="body-small text-foreground/60">
-                  {t("statsUpcoming")}
-                </span>
-              </div>
-            )}
-            {profile.totalEventVisits !== undefined && (
-              <ProfileVisitsStat
-                username={profile.username}
-                visits={profile.totalEventVisits}
-              />
-            )}
-          </div>
-        )}
+            <div
+              className="flex items-center gap-element-gap mb-element-gap"
+              data-testid="profile-stats"
+            >
+              {profile.eventCount !== undefined && (
+                <div className="flex flex-col items-center">
+                  <span className="heading-3 text-foreground-strong">
+                    {profile.eventCount}
+                  </span>
+                  <span className="body-small text-foreground/60">
+                    {t("statsPublished")}
+                  </span>
+                </div>
+              )}
+              {profile.upcomingEventCount !== undefined && (
+                <div className="flex flex-col items-center">
+                  <span className="heading-3 text-foreground-strong">
+                    {profile.upcomingEventCount}
+                  </span>
+                  <span className="body-small text-foreground/60">
+                    {t("statsUpcoming")}
+                  </span>
+                </div>
+              )}
+              {profile.totalEventVisits !== undefined && (
+                <ProfileVisitsStat
+                  username={profile.username}
+                  visits={profile.totalEventVisits}
+                />
+              )}
+            </div>
+          )}
 
         {joinedDateText && (
-          <p className="body-small text-foreground/50">
+          <p className="body-small text-foreground/50 italic">
             {t("joinedDate", { date: joinedDateText })}
           </p>
         )}
