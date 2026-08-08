@@ -11,6 +11,7 @@ let authState: { user: { username: string } | null; status: string } = {
   user: null,
   status: "unauthenticated",
 };
+const logoutMock = vi.fn();
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -32,7 +33,7 @@ vi.mock("@i18n/routing", () => ({
 }));
 
 vi.mock("@components/hooks/useAuth", () => ({
-  useAuth: () => authState,
+  useAuth: () => ({ ...authState, logout: logoutMock }),
 }));
 
 vi.mock("@components/hooks/useTrackedCta", () => ({
@@ -46,6 +47,7 @@ describe("ProfileOwnerActions", () => {
   beforeEach(() => {
     trackClickMock.mockReset();
     trackedCtaMock.mockClear();
+    logoutMock.mockReset();
     authState = { user: null, status: "unauthenticated" };
   });
 
@@ -53,6 +55,7 @@ describe("ProfileOwnerActions", () => {
     authState = { user: { username: "someoneElse" }, status: "authenticated" };
     render(<ProfileOwnerActions username="alex91" />);
     expect(screen.queryByText("editProfile")).toBeNull();
+    expect(screen.queryByText("logout")).toBeNull();
   });
 
   it("registers the profile_edit_cta id and tracks a click for the owner", () => {
@@ -62,6 +65,16 @@ describe("ProfileOwnerActions", () => {
     expect(trackedCtaMock).toHaveBeenCalledWith("profile_edit_cta");
     fireEvent.click(screen.getByText("editProfile"));
     expect(trackClickMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls logout when the owner clicks the logout button", () => {
+    authState = { user: { username: "alex91" }, status: "authenticated" };
+    render(<ProfileOwnerActions username="alex91" />);
+
+    const logoutButton = screen.getByText("logout");
+    expect(logoutButton).toHaveAttribute("data-analytics-action", "profile_logout_cta");
+    fireEvent.click(logoutButton);
+    expect(logoutMock).toHaveBeenCalledTimes(1);
   });
 });
 

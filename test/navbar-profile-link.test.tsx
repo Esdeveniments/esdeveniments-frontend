@@ -26,8 +26,10 @@ vi.mock("@components/ui/common/link", () => ({
 }));
 
 vi.mock("@components/ui/primitives/PressableLink", () => ({
-  default: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({ children, href, ...props }: { children: ReactNode; href: string } & Record<string, unknown>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -48,8 +50,6 @@ import NavbarClient from "@components/ui/common/navbar/NavbarClient";
 
 const labels: NavbarLabels = {
   logoAlt: "Esdeveniments",
-  openMenu: "Obre el menú",
-  closeMenu: "Tanca el menú",
   home: "Inici",
   agenda: "Agenda",
   favorites: "Preferits",
@@ -78,12 +78,13 @@ describe("NavbarClient profile link", () => {
     };
     render(<NavbarClient navigation={[]} labels={labels} />);
     fireEvent.click(screen.getByTestId("user-avatar-button"));
-    fireEvent.click(screen.getByLabelText(labels.openMenu));
 
-    const links = screen.getAllByText("El meu perfil");
-    for (const link of links) {
-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/edita");
-    }
+    expect(
+      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
+    ).toBe("/perfil/edita");
+    expect(
+      screen.getByTestId("mobile-avatar-link").getAttribute("href")
+    ).toBe("/perfil/edita");
   });
 
   it("links to /perfil/{username} once the profile is completed", () => {
@@ -96,12 +97,13 @@ describe("NavbarClient profile link", () => {
     };
     render(<NavbarClient navigation={[]} labels={labels} />);
     fireEvent.click(screen.getByTestId("user-avatar-button"));
-    fireEvent.click(screen.getByLabelText(labels.openMenu));
 
-    const links = screen.getAllByText("El meu perfil");
-    for (const link of links) {
-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/alba");
-    }
+    expect(
+      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
+    ).toBe("/perfil/alba");
+    expect(
+      screen.getByTestId("mobile-avatar-link").getAttribute("href")
+    ).toBe("/perfil/alba");
   });
 
   it("links to /perfil/{username} when profileCompleted is undefined (transient enrichment blip)", () => {
@@ -114,11 +116,86 @@ describe("NavbarClient profile link", () => {
     };
     render(<NavbarClient navigation={[]} labels={labels} />);
     fireEvent.click(screen.getByTestId("user-avatar-button"));
-    fireEvent.click(screen.getByLabelText(labels.openMenu));
 
-    const links = screen.getAllByText("El meu perfil");
-    for (const link of links) {
-      expect(link.closest("a")?.getAttribute("href")).toBe("/perfil/alba");
-    }
+    expect(
+      screen.getByText("El meu perfil").closest("a")?.getAttribute("href")
+    ).toBe("/perfil/alba");
+    expect(
+      screen.getByTestId("mobile-avatar-link").getAttribute("href")
+    ).toBe("/perfil/alba");
+  });
+
+  it("sends the mobile avatar to /perfil/edita instead of home when no usable slug exists", () => {
+    // getProfileSlug (utils/user-helpers.ts) rejects an email-shaped
+    // username/name — profileHref ends up null even though the user is
+    // authenticated and profileCompleted isn't explicitly false. Landing on
+    // "/" here would strand the user with no way back to their account.
+    authUser = {
+      id: OWNER_ID,
+      email: "a@b.com",
+      name: "a@b.com",
+      username: "a@b.com",
+      profileCompleted: true,
+    };
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    expect(
+      screen.getByTestId("mobile-avatar-link").getAttribute("href")
+    ).toBe("/perfil/edita");
+  });
+
+  it("falls back to the re-auth link on mobile when the session is only partially enriched", () => {
+    authUser = {
+      id: OWNER_ID,
+      email: "a@b.com",
+      name: "A",
+      username: "alba",
+      profileCompleted: true,
+      profileEnrichmentFailed: "auth",
+    };
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    expect(
+      screen.getByTestId("mobile-login-link").getAttribute("href")
+    ).toBe("/iniciar-sessio");
+    expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
+  });
+
+  it("shows the mobile login link, not the avatar, when signed out", () => {
+    authUser = null;
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    expect(
+      screen.getByTestId("mobile-login-link").getAttribute("href")
+    ).toBe("/iniciar-sessio");
+    expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
+    expect(screen.queryByTestId("user-avatar-button")).toBeNull();
+  });
+});
+
+describe("NavbarClient bottom bar Favoritos", () => {
+  beforeEach(() => {
+    authUser = null;
+  });
+
+  it("always links to /preferits, signed in or out", () => {
+    authUser = null;
+    const { unmount } = render(<NavbarClient navigation={[]} labels={labels} />);
+    expect(
+      screen.getByLabelText(labels.favorites).getAttribute("href")
+    ).toBe("/preferits");
+    unmount();
+
+    authUser = {
+      id: OWNER_ID,
+      email: "a@b.com",
+      name: "A",
+      username: "alba",
+      profileCompleted: true,
+    };
+    render(<NavbarClient navigation={[]} labels={labels} />);
+    expect(
+      screen.getByLabelText(labels.favorites).getAttribute("href")
+    ).toBe("/preferits");
   });
 });
