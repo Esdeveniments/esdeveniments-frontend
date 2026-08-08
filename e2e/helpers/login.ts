@@ -1,22 +1,25 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 const PASSKEY_SETUP_PATH = /\/create-passkey(?:\/|$)/;
 export const PASSKEY_NAV_CONTROL_SELECTOR = '[role="button"]';
 
 export async function getPasskeySkipControl(page: Page) {
   const controls = page.locator(PASSKEY_NAV_CONTROL_SELECTOR);
-  // Wait for the hosted page to render at least one navigation control before
-  // checking the exact structure. A count of two is the verified Back + Skip
-  // contract, and malformed markup fails with an actionable error.
-  await controls.first().waitFor({ timeout: 15_000 });
-  const count = await controls.count();
-  if (count !== 2) {
-    throw new Error(
-      `Unexpected Logto passkey navigation controls: expected 2, found ${count}`,
-    );
-  }
-  // SecondaryPageLayout renders Back first and optional Skip second.
-  return controls.nth(1);
+  // SecondaryPageLayout renders Back first and optional Skip second. Poll for
+  // the complete pair so async hosted-UI painting cannot produce a transient
+  // one-control count.
+  await expect(controls).toHaveCount(2, { timeout: 15_000 });
+
+  // This helper always enters through `/en/iniciar-sessio`; proxy.ts passes
+  // that locale to Logto as `ui_locales=en`. Logto's verified `action.nav_skip`
+  // translation is therefore the accessible name "Skip" for this flow.
+  const skipControl = page.getByRole("button", { name: /^skip$/i });
+  await expect(skipControl).toHaveCount(1, { timeout: 15_000 });
+
+  // Also verify the second navigation item is Skip (Back, then Skip), so a
+  // future unrelated "Skip" control cannot be clicked.
+  await expect(controls.nth(1)).toHaveAccessibleName(/^skip$/i);
+  return skipControl;
 }
 
 /** Return true while Logto is showing its optional passkey enrollment step. */
