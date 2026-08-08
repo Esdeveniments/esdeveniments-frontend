@@ -38,7 +38,7 @@ export default function Tabs({ items, active, ariaLabel }: TabsProps) {
                   {item.count !== undefined && (
                     <span className="heading-3">{item.count}</span>
                   )}
-                  <span className="body-small">{item.label}</span>
+                  <span className="heading-3">{item.label}</span>
                 </Link>
               </div>
             );
