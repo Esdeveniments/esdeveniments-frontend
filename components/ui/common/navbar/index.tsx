@@ -19,8 +19,6 @@ export default async function Navbar() {
     navigation,
     labels: {
       logoAlt: t("logoAlt"),
-      openMenu: t("aria.openMenu"),
-      closeMenu: t("aria.closeMenu"),
       home: t("aria.home"),
       agenda: t("aria.agenda"),
       favorites: t("aria.favorites"),
