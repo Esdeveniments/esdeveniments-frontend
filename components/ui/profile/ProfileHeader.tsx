@@ -129,7 +129,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
           )}
 
         {joinedDateText && (
-          <p className="body-small text-foreground/50 italic">
+          <p className="body-small-italic text-foreground/50">
             {t("joinedDate", { date: joinedDateText })}
           </p>
         )}

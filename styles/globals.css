@@ -152,6 +152,10 @@ p {
     @apply text-sm font-normal leading-relaxed tracking-normal;
   }
 
+  .body-small-italic {
+    @apply body-small italic;
+  }
+
   /* LABEL: UI elements - Small badges, uppercase labels */
   .label {
     @apply text-xs uppercase tracking-wider font-medium;

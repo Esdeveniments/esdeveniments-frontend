@@ -1,24 +1,33 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Request } from "@playwright/test";
 
 const PASSKEY_SETUP_PATH = /\/create-passkey(?:\/|$)/;
 export const PASSKEY_NAV_CONTROL_SELECTOR = '[role="button"]';
 
-export async function getPasskeySkipControl(page: Page) {
+// The login helper enters through the English `/en/iniciar-sessio` flow, which
+// forwards `ui_locales=en` to Logto. This is the explicit hosted-UI contract
+// for the optional passkey page; fail closed if the tenant changes the label.
+const PASSKEY_SKIP_NAME = /^skip$/i;
+
+export async function getPasskeySkipControl(
+  page: Page,
+  timeout = 15_000,
+) {
   const controls = page.locator(PASSKEY_NAV_CONTROL_SELECTOR);
   // SecondaryPageLayout renders Back first and optional Skip second. Poll for
   // the complete pair so async hosted-UI painting cannot produce a transient
   // one-control count.
-  await expect(controls).toHaveCount(2, { timeout: 15_000 });
+  await expect(controls).toHaveCount(2, { timeout });
 
-  // This helper always enters through `/en/iniciar-sessio`; proxy.ts passes
-  // that locale to Logto as `ui_locales=en`. Logto's verified `action.nav_skip`
-  // translation is therefore the accessible name "Skip" for this flow.
-  const skipControl = page.getByRole("button", { name: /^skip$/i });
-  await expect(skipControl).toHaveCount(1, { timeout: 15_000 });
+  const skipControl = page.getByRole("button", {
+    name: PASSKEY_SKIP_NAME,
+  });
+  await expect(skipControl).toHaveCount(1, { timeout });
 
   // Also verify the second navigation item is Skip (Back, then Skip), so a
   // future unrelated "Skip" control cannot be clicked.
-  await expect(controls.nth(1)).toHaveAccessibleName(/^skip$/i);
+  await expect(controls.nth(1)).toHaveAccessibleName(PASSKEY_SKIP_NAME, {
+    timeout,
+  });
   return skipControl;
 }
 
@@ -52,7 +61,10 @@ export async function loginViaUI(page: Page, email: string, password: string) {
   // Capture the app origin from the actual login-entry request. Do not infer
   // it from an auth-host naming convention: deployments may use any hostname.
   let appOrigin: string | undefined;
-  const captureAppOrigin = (request: { url: () => string }) => {
+  const captureAppOrigin = (request: Request): void => {
+    if (!request.isNavigationRequest() || request.frame() !== page.mainFrame()) {
+      return;
+    }
     const url = new URL(request.url());
     if (/\/iniciar-sessio\/?$/.test(url.pathname)) {
       appOrigin = url.origin;
