@@ -946,6 +946,7 @@ export interface EventClientPayload {
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
+  ownerId?: string;
 }
 
 export interface EventClientProps {
@@ -983,6 +984,24 @@ export interface EventEditActionProps {
 export interface EditEventClientProps {
   event: import("./api/event").EventDetailResponseDTO;
   regions: import("./api/region").RegionsGroupedByCitiesResponseDTO[] | null;
+}
+
+// Owner-only promote action, event detail sidebar client island
+export interface EventPromoteActionProps {
+  ownerId?: string;
+  slug: string;
+}
+
+// /e/[eventId]/promote client page
+export interface PromoteEventClientProps {
+  eventId: string;
+  slug: string;
+}
+
+export interface PromoteUpsellModalProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  slug: string;
 }
 
 // Social proof counter

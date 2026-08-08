@@ -5,11 +5,18 @@ import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { Link } from "@i18n/routing";
 import { useTranslations } from "next-intl";
+import EventPromoteAction from "./EventPromoteAction";
 
 /**
  * Renders ancillary event details: duration + external link + creator info.
  * Status badge and date/time info are intentionally NOT shown here
  * to avoid duplication (they already appear in EventHeader and EventCalendar).
+ *
+ * Also renders the owner-only Promote action. EventSidebar (desktop, lg:block)
+ * already renders it, but that sidebar is hidden below the lg breakpoint —
+ * without this mobile-visible counterpart, an owner on a phone or tablet
+ * would have no persistent way to reach the promote page at all (only the
+ * one-time post-publish upsell modal).
  */
 const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
@@ -86,6 +93,10 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
                 })}
               </span>
             </div>
+          )}
+
+          {owner && (
+            <EventPromoteAction ownerId={owner.id} slug={event.slug ?? ""} />
           )}
 
         </div>

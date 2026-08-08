@@ -34,6 +34,7 @@ import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import { createDateFilterBadgeLabels } from "./DateFilterBadges";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
+import PromotedEventsSection from "@components/ui/promotedEvents/PromotedEventsSection";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
@@ -508,6 +509,10 @@ export async function ServerEventsCategorizedContent({
 
   return (
     <>
+      <Suspense fallback={null}>
+        <PromotedEventsSection scope={{ type: "homepage" }} />
+      </Suspense>
+
       {/* Popular Now Section — derived from existing data, zero extra API calls */}
       {popularEvents.length > 0 && (
         <div className="container content-auto-section">
