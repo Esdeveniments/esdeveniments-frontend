@@ -82,6 +82,7 @@ describe("NavbarClient avatar", () => {
     expect(screen.getByTestId("mobile-bottom-nav")).toHaveClass("nav:hidden");
 
     const mobileAvatar = screen.getByTestId("mobile-avatar-link");
+    expect(mobileAvatar).toHaveAttribute("href", "/perfil/alba");
     expect(mobileAvatar).not.toHaveClass("text-primary", "border-b-2", "border-primary");
   });
 
