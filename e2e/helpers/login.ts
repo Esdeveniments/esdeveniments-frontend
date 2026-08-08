@@ -1,4 +1,9 @@
-import { expect, type Page, type Request } from "@playwright/test";
+import {
+  expect,
+  type Locator,
+  type Page,
+  type Request,
+} from "@playwright/test";
 
 const PASSKEY_SETUP_PATH = /\/create-passkey(?:\/|$)/;
 export const PASSKEY_NAV_CONTROL_SELECTOR = '[role="button"]';
@@ -11,7 +16,7 @@ const PASSKEY_SKIP_NAME = /^skip$/i;
 export async function getPasskeySkipControl(
   page: Page,
   timeout = 15_000,
-) {
+): Promise<Locator> {
   const controls = page.locator(PASSKEY_NAV_CONTROL_SELECTOR);
   // SecondaryPageLayout renders Back first and optional Skip second. Poll for
   // the complete pair so async hosted-UI painting cannot produce a transient
