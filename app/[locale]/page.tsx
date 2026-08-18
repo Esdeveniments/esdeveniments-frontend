@@ -43,10 +43,9 @@ export async function generateMetadata() {
 // avoids a language mismatch for crawlers and SEO tools that don't execute JS.
 const STATIC_FALLBACK_CONTENT: Record<
   AppLocale,
-  { h1: string; h2: string; description: string; apiNote: string }
+  { h2: string; description: string; apiNote: string }
 > = {
   ca: {
-    h1: "Què fer a Catalunya - Agenda cultural i plans",
     h2: "Agenda cultural a Catalunya amb concerts, exposicions, teatre, activitats familiars i plans per a totes les edats.",
     description:
       "Esdeveniments.cat és la plataforma gratuïta més completa per descobrir esdeveniments culturals a Catalunya. Consulta l'agenda de concerts, teatre, exposicions, festivals, activitats familiars i molt més en més de 900 municipis catalans. Troba què fer avui, demà o aquest cap de setmana a prop teu.",
@@ -54,7 +53,6 @@ const STATIC_FALLBACK_CONTENT: Record<
       "API pública gratuïta disponible a /llms.txt i /openapi.json — sense autenticació necessària.",
   },
   es: {
-    h1: "Qué hacer en Cataluña - Agenda cultural y planes",
     h2: "Agenda cultural en Cataluña con conciertos, exposiciones, teatro, actividades familiares y planes para todas las edades.",
     description:
       "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y mucho más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti.",
@@ -62,7 +60,6 @@ const STATIC_FALLBACK_CONTENT: Record<
       "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria.",
   },
   en: {
-    h1: "What to do in Catalonia - Cultural agenda and plans",
     h2: "Cultural agenda in Catalonia with concerts, exhibitions, theater, family activities and plans for all ages.",
     description:
       "Esdeveniments.cat is the most complete free platform to discover cultural events in Catalonia. Browse the agenda of concerts, theater, exhibitions, festivals, family activities and more across 900+ Catalan municipalities. Find what to do today, tomorrow or this weekend near you.",
@@ -75,7 +72,6 @@ function HomeStaticFallback({ locale }: { locale: AppLocale }) {
   const content = STATIC_FALLBACK_CONTENT[locale] ?? STATIC_FALLBACK_CONTENT.ca;
   return (
     <>
-      <h1 className="sr-only">{content.h1}</h1>
       {/* API doc links — visible to crawlers for agent discovery (orank public-api-docs check).
           Uses <a> not <Link> because these are machine-readable file URLs, not navigable pages. */}
       {/* eslint-disable @next/next/no-html-link-for-pages */}
@@ -246,13 +242,6 @@ async function HomeContent({
 
   return (
     <>
-      {/* h1 is duplicated in HomeContent so that after the Suspense fallback is
-          replaced by the streamed content, the final DOM still contains the h1
-          (important for SEO crawlers that execute JS and for accessibility).
-          The <noscript> stays in HomeStaticFallback only — it is prerendered
-          in the PPR static shell and is what JS-less crawlers see. */}
-      <h1 className="sr-only">{pageData.title}</h1>
-
       {siteNavigationSchema && (
         <JsonLdServer id="site-navigation" data={siteNavigationSchema} />
       )}
@@ -318,7 +307,12 @@ async function HomeStructuredData({
     title: pageData.title,
     description: pageData.metaDescription,
     url: pageData.canonical,
-    mainContentOfPage: itemListSchema || undefined,
+    // Reference the ItemList by @id instead of inlining it: it is emitted
+    // standalone below, so inlining it here tripled the event descriptions
+    // (~300 KB of the homepage payload).
+    mainContentOfPage: itemListSchema
+      ? { "@id": itemListSchema["@id"] }
+      : undefined,
     locale,
     speakableCssSelectors: ["h1", "[data-speakable='description']"],
   });
@@ -330,7 +324,9 @@ async function HomeStructuredData({
         description: pageData.metaDescription,
         url: pageData.canonical,
         numberOfItems: homepageEvents.length,
-        mainEntity: itemListSchema || undefined,
+        mainEntity: itemListSchema
+          ? { "@id": itemListSchema["@id"] }
+          : undefined,
         locale,
       })
       : null;

@@ -217,7 +217,7 @@ async function ServerEventsCategorized({
             alt=""
             aria-hidden="true"
             fetchPriority="high"
-            decoding="sync"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
           />
         </picture>
