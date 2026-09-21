@@ -357,6 +357,50 @@ export async function deleteEventById(id: string): Promise<void> {
   }
 }
 
+export async function createPromotionCheckout(
+  id: string,
+  successUrl: string,
+  cancelUrl: string,
+): Promise<{ url: string }> {
+  const { apiUrl, authToken } = await requireMutationAuth();
+
+  const response = await fetchWithHmac(
+    `${apiUrl}/events/${id}/promotions/checkout`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ successUrl, cancelUrl }),
+      skipBodySigning: true,
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("createPromotionCheckout: error response:", errorText);
+    const err = new Error(
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
+    );
+    // Propagate the HTTP status the same way requireMutationAuth's own 401
+    // does, so a backend-rejected (expired) token is classified as
+    // stale-session too, not only a missing local access token.
+    (err as Error & { status: number }).status = response.status;
+    throw err;
+  }
+
+  const payload = await response.json();
+  if (!payload || typeof payload.url !== "string") {
+    throw new Error(
+      "createPromotionCheckout: backend response missing url field",
+    );
+  }
+
+  return { url: payload.url };
+}
+
 export async function createEvent(
   data: EventCreateRequestDTO,
   e2eExtras?: E2EEventExtras,

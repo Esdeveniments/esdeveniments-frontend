@@ -622,7 +622,12 @@ const PublishForm = () => {
         });
 
         submittedRef.current = true;
-        router.push(`/e/${slug}`);
+        // The promote upsell modal is shown on the event detail page itself
+        // (EventClient.tsx), not here — this marker tells that page to show
+        // it once, right after landing there. Following the existing
+        // newEvent/edit_suggested query-param convention in that file rather
+        // than inventing a new cross-page signaling mechanism.
+        router.push(`/e/${slug}?promote=1`);
       } catch (error) {
         console.error("Submission error:", error);
 

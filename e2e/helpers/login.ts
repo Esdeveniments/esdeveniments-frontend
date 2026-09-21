@@ -5,6 +5,7 @@ import {
   type Request,
 } from "@playwright/test";
 
+const SESSION_READY_TIMEOUT = 30_000;
 const PASSKEY_SETUP_PATH = /\/create-passkey(?:\/|$)/;
 export const PASSKEY_NAV_CONTROL_SELECTOR = '[role="button"]';
 
@@ -42,10 +43,7 @@ export function isPasskeySetupUrl(url: URL): boolean {
 }
 
 /** Return true once Logto has redirected the browser back to this app. */
-export function isLoginCompleteUrl(
-  url: URL,
-  appOrigin?: string,
-): boolean {
+export function isLoginCompleteUrl(url: URL, appOrigin?: string): boolean {
   return (
     Boolean(appOrigin) &&
     url.origin === appOrigin &&
@@ -56,11 +54,94 @@ export function isLoginCompleteUrl(
   );
 }
 
+async function pageDiagnostics(page: Page): Promise<string> {
+  const diagnostics = await page
+    .evaluate(() => ({
+      url: window.location.href,
+      readyState: document.readyState,
+    }))
+    .catch(() => ({ url: page.url(), readyState: "unavailable" }));
+
+  return `url=${diagnostics.url}, readyState=${diagnostics.readyState}`;
+}
+
+async function assertAuthenticatedSession(page: Page): Promise<void> {
+  let lastSessionCheck = "not checked";
+  try {
+    await expect
+      .poll(
+        async () => {
+          const state = await page.evaluate(async () => {
+            try {
+              const response = await fetch("/api/auth/me", {
+                credentials: "include",
+                cache: "no-store",
+              });
+              const body = await response.text();
+              if (!response.ok) {
+                return { authenticated: false, detail: `status=${response.status}` };
+              }
+              try {
+                const data = JSON.parse(body) as { user?: unknown };
+                return {
+                  authenticated: Boolean(data.user),
+                  detail: data.user ? "user present" : "response has no user",
+                };
+              } catch {
+                return { authenticated: false, detail: "invalid JSON response" };
+              }
+            } catch (error) {
+              return {
+                authenticated: false,
+                detail: `request failed: ${error instanceof Error ? error.message : String(error)}`,
+              };
+            }
+          });
+          lastSessionCheck = state.detail;
+          return state.authenticated;
+        },
+        {
+          timeout: SESSION_READY_TIMEOUT,
+          intervals: [250, 500, 1_000, 2_000],
+        },
+      )
+      .toBe(true);
+  } catch (error) {
+    throw new Error(
+      `OIDC callback reached the app, but /api/auth/me did not confirm an authenticated session (${lastSessionCheck}; ${await pageDiagnostics(page)}).`,
+      { cause: error },
+    );
+  }
+}
+
+async function throwLoginError(page: Page, cause: unknown): Promise<never> {
+  const invalidCredentials = page
+    .getByText(/incorrect account or password|invalid.?credentials/i)
+    .first();
+  if (await invalidCredentials.isVisible().catch(() => false)) {
+    throw new Error(
+      "Logto rejected E2E_STAGING_EMAIL/E2E_STAGING_PASSWORD (\"Incorrect account or " +
+        "password\"). This is a staging test-user credentials problem, not an app bug — " +
+        "verify the account exists and its email is verified in the preproduction Logto " +
+        "tenant, and that the `staging` GitHub environment secret matches its password " +
+        "(see scripts/e2e-staging-setup.sh).",
+      { cause },
+    );
+  }
+
+  throw new Error(
+    `Logto login did not reach a usable application session (${await pageDiagnostics(page)}).`,
+    { cause },
+  );
+}
+
 /**
  * Log in through Logto's hosted sign-in page (reached via the OIDC redirect
  * from /iniciar-sessio). Selectors target Logto's default sign-in experience
  * and may need adjusting if the hosted UI is customized. Handles both
- * single-step and identifier-then-password layouts.
+ * single-step and identifier-then-password layouts, Logto's optional passkey
+ * enrollment interstitial, and verifies the app actually establishes a
+ * session afterward (the redirect landing is not itself proof of that).
  */
 export async function loginViaUI(page: Page, email: string, password: string) {
   // Capture the app origin from the actual login-entry request. Do not infer
@@ -107,16 +188,19 @@ export async function loginViaUI(page: Page, email: string, password: string) {
   await page
     .getByRole("button", { name: /sign in|log in|continue|submit|entra/i })
     .first()
-    .click();
+    .click({ noWaitAfter: true });
 
   // Logto may show an optional passkey enrollment page immediately after a
   // successful password login. Accept that intermediate URL, dismiss the
-  // enrollment step, then wait for the normal callback redirect.
+  // enrollment step, then wait for the normal callback redirect. Waits for
+  // the OIDC navigation to commit, not the destination's complete `load`
+  // event — the authenticated application state is established by
+  // /api/auth/me below, which is the contract the app itself uses instead of
+  // an incidental page-load milestone.
   try {
     await page.waitForURL(
-      (url) =>
-        isLoginCompleteUrl(url, appOrigin) || isPasskeySetupUrl(url),
-      { timeout: 30_000 },
+      (url) => isLoginCompleteUrl(url, appOrigin) || isPasskeySetupUrl(url),
+      { timeout: 30_000, waitUntil: "commit" },
     );
 
     if (isPasskeySetupUrl(new URL(page.url()))) {
@@ -126,29 +210,14 @@ export async function loginViaUI(page: Page, email: string, password: string) {
       // and CSS-module class names altogether.
       const skipPasskey = await getPasskeySkipControl(page);
       await skipPasskey.click();
-      await page.waitForURL(
-        (url) => isLoginCompleteUrl(url, appOrigin),
-        { timeout: 30_000 },
-      );
+      await page.waitForURL((url) => isLoginCompleteUrl(url, appOrigin), {
+        timeout: 30_000,
+        waitUntil: "commit",
+      });
     }
-  } catch (timeoutError) {
-    // A stuck-on-Logto timeout is ambiguous by itself — surface the actual
-    // reason (usually a stale/unverified test-user password) instead of a
-    // bare "Timeout 30000ms exceeded" that sends the next person spelunking
-    // through API response logs.
-    const invalidCredentials = page
-      .getByText(/incorrect account or password|invalid.?credentials/i)
-      .first();
-    if (await invalidCredentials.isVisible().catch(() => false)) {
-      throw new Error(
-        "Logto rejected E2E_STAGING_EMAIL/E2E_STAGING_PASSWORD (\"Incorrect account or " +
-          "password\"). This is a staging test-user credentials problem, not an app bug — " +
-          "verify the account exists and its email is verified in the preproduction Logto " +
-          "tenant, and that the `staging` GitHub environment secret matches its password " +
-          "(see scripts/e2e-staging-setup.sh).",
-        { cause: timeoutError },
-      );
-    }
-    throw timeoutError;
+  } catch (error) {
+    await throwLoginError(page, error);
   }
+
+  await assertAuthenticatedSession(page);
 }

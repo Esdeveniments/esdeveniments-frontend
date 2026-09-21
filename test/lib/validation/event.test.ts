@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   parsePagedEvents,
   parseEventDetail,
+  enhanceEventImage,
 } from "@lib/validation/event";
 
 const baseSummary = {
@@ -107,6 +108,39 @@ describe("parseEventDetail", () => {
     expect(result).not.toBeNull();
     expect(result?.imageUrl).toContain("v=detail-hash");
     expect(result?.relatedEvents?.[0].imageUrl).toContain("v=related-hash");
+  });
+});
+
+describe("enhanceEventImage", () => {
+  it("appends a cache key derived from hash", () => {
+    const event = { imageUrl: "https://cdn.example.com/e.jpg", hash: "h1" };
+    expect(enhanceEventImage(event).imageUrl).toContain("v=h1");
+  });
+
+  it("falls back to updatedAt when hash is empty", () => {
+    const event = {
+      imageUrl: "https://cdn.example.com/e.jpg",
+      hash: "",
+      updatedAt: "2024-01-02T00:00:00Z",
+    };
+    expect(enhanceEventImage(event).imageUrl).toContain(
+      "v=2024-01-02T00%3A00%3A00Z"
+    );
+  });
+
+  it("returns the event unchanged when there is no cache key", () => {
+    const event = { imageUrl: "https://cdn.example.com/e.jpg" };
+    expect(enhanceEventImage(event)).toBe(event);
+  });
+
+  it("returns the event unchanged when imageUrl is missing", () => {
+    const event = { hash: "h1" };
+    expect(enhanceEventImage(event)).toBe(event);
+  });
+
+  it("returns the event unchanged when imageUrl is an empty string", () => {
+    const event = { imageUrl: "", hash: "h1" };
+    expect(enhanceEventImage(event)).toBe(event);
   });
 });
 

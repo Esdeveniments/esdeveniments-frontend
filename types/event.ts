@@ -366,6 +366,42 @@ export type CreateEventActionResult =
   | { success: true; event: EventDetailResponseDTO }
   | { success: false; reason: "profile-incomplete" | "stale-session" };
 
+/**
+ * Result returned by createPromotionCheckoutAction. A discriminated union
+ * (not a thrown error) — same convention as EditEventResult and
+ * CreateEventActionResult above: the client always gets a value it can
+ * branch on, never an opaque Server Action rejection.
+ *
+ * `reason: "stale-session"` mirrors CreateEventActionResult's own 401
+ * handling above (createEventAction) — the backend Bearer token expired
+ * mid-session, which is a distinct, actionable case from a generic failure.
+ */
+export type PromotionCheckoutResult =
+  | { success: true; url: string }
+  | { success: false; error: string; reason?: "stale-session" };
+
+/**
+ * A single purchasable promotion tier. MVP: exactly one flat-fee option
+ * (see getEventPromotionOptions in config/pricing.ts); structured as a list
+ * so the promote page already renders "whatever this returns" rather than a
+ * hardcoded line once real duration/geo-scope tiers exist.
+ */
+export interface EventPromotionOption {
+  id: string;
+  priceEur: number;
+}
+
+/**
+ * Query-side surface descriptor for `getActivePromotedEvents`
+ * (lib/api/promotedEvents.ts): "which page is asking", not "what the buyer
+ * paid for". Auto-derived from the event's own location for the MVP — not a
+ * purchasable choice yet. `"town" | "region"` matches this codebase's own
+ * `PlaceType` (types/common.ts), not "comarca".
+ */
+export type PromotionScope =
+  | { type: "homepage" }
+  | { type: "town" | "region"; slug: string };
+
 export interface UseEventsOptions {
   place?: string;
   category?: string;

@@ -25,6 +25,14 @@ vi.mock("@components/ui/eventsAround/EventsAroundServer", () => ({
   ),
 }));
 
+// PromotedEventsSection is async (calls getActivePromotedEvents) — RTL's render()
+// can't handle an unmocked async Server Component. It's irrelevant to what these
+// tests cover (category-matching logic), so stub it to null, matching its real
+// behavior with PROMOTED_EVENTS_ENABLED unset (the default in every test env here).
+vi.mock("@components/ui/promotedEvents/PromotedEventsSection", () => ({
+  default: () => null,
+}));
+
 vi.mock("@components/ui/common/badge", () => ({
   default: ({
     href,
