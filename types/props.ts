@@ -68,6 +68,7 @@ import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
 import type { AppLocale } from "types/i18n";
+import type { PromotionScope } from "types/event";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -946,6 +947,7 @@ export interface EventClientPayload {
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
+  ownerId?: string;
 }
 
 export interface EventClientProps {
@@ -985,6 +987,24 @@ export interface EditEventClientProps {
   regions: import("./api/region").RegionsGroupedByCitiesResponseDTO[] | null;
 }
 
+// Owner-only promote action, event detail sidebar client island
+export interface EventPromoteActionProps {
+  ownerId?: string;
+  slug: string;
+}
+
+// /e/[eventId]/promote client page
+export interface PromoteEventClientProps {
+  eventId: string;
+  slug: string;
+}
+
+export interface PromoteUpsellModalProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  slug: string;
+}
+
 // Social proof counter
 export interface SocialProofCounterProps {
   visits: number;
@@ -1007,4 +1027,8 @@ export interface PwaBackButtonProps {
 // EventsListSkeleton/PlacePageSkeleton usage.
 export interface EventsGridSkeletonProps {
   count?: number;
+}
+
+export interface PromotedEventsSectionProps {
+  scope: PromotionScope;
 }

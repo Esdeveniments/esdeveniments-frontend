@@ -349,6 +349,7 @@ export interface CardHorizontalServerProps {
   event: EventSummaryResponseDTO;
   isPriority?: boolean;
   initialIsFavorite?: boolean;
+  isPromoted?: boolean;
 }
 
 export interface CardShareButtonProps {
@@ -378,6 +379,7 @@ export interface EventsAroundServerProps extends EventsAroundProps {
   showJsonLd?: boolean;
   jsonLdId?: string;
   analyticsCategory?: string;
+  isPromoted?: boolean;
 }
 
 export interface BaseLayoutProps {

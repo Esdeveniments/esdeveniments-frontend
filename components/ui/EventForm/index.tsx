@@ -55,6 +55,17 @@ export const EventForm: React.FC<EventFormProps> = ({
   const [step, setStep] = useState(0);
   const canPublishRef = useRef(false);
   const publishArmTimeoutRef = useRef<number | null>(null);
+  const publishReadyRef = useRef(false);
+  const publishButtonRef = useRef<HTMLButtonElement>(null);
+  const setPublishButtonRef = (button: HTMLButtonElement | null) => {
+    publishButtonRef.current = button;
+    if (button) {
+      button.setAttribute(
+        "data-publish-ready",
+        publishReadyRef.current ? "true" : "false",
+      );
+    }
+  };
   const [hasInteracted, setHasInteracted] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
@@ -114,6 +125,8 @@ export const EventForm: React.FC<EventFormProps> = ({
 
   useEffect(() => {
     canPublishRef.current = false;
+    publishReadyRef.current = false;
+    publishButtonRef.current?.setAttribute("data-publish-ready", "false");
     if (publishArmTimeoutRef.current !== null) {
       window.clearTimeout(publishArmTimeoutRef.current);
       publishArmTimeoutRef.current = null;
@@ -124,6 +137,8 @@ export const EventForm: React.FC<EventFormProps> = ({
       // submit button during a step transition (can happen under CI timing/layout shifts).
       publishArmTimeoutRef.current = window.setTimeout(() => {
         canPublishRef.current = true;
+        publishReadyRef.current = true;
+        publishButtonRef.current?.setAttribute("data-publish-ready", "true");
         publishArmTimeoutRef.current = null;
       }, 250);
     }
@@ -555,6 +570,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               variant="primary"
               disabled={formState.isDisabled || isLoading}
               className="min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              ref={setPublishButtonRef}
               data-testid="publish-button"
               data-analytics-event-name={
                 analyticsContext === "publica" ? "publish_submit_click" : undefined
