@@ -1,3 +1,4 @@
+import path from "path";
 import { test, expect, type Page } from "@playwright/test";
 import { loginViaUI } from "./helpers/login";
 
@@ -157,17 +158,11 @@ test.describe("Publish integration (staging)", () => {
     await page.getByTestId("next-button").click();
 
     // ── Step 4: Fill form — Step 2 (image & dates) ──
-    // Use URL mode for image (simpler for E2E)
-    const imageUrlTab = page.getByRole("button", { name: /url|enllaç/i });
-    if (await imageUrlTab.isVisible()) {
-      await imageUrlTab.click();
-    }
-
-    // Fill image URL (use a known stable placeholder)
-    const imageUrlInput = page.locator('input[placeholder*="http"]').first();
-    if (await imageUrlInput.isVisible()) {
-      await imageUrlInput.fill("https://picsum.photos/800/600");
-    }
+    // The image travels as the multipart `imageFile` part of POST /events.
+    await page.setInputFiles(
+      'input[type="file"][accept*="image"]',
+      path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
+    );
 
     // The date picker renders buttons rather than #event-date-* inputs. Its
     // defaults are today at 09:00, which can already be past when CI runs in

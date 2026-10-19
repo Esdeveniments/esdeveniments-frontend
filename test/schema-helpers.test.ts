@@ -14,7 +14,7 @@ const baseEvent: EventSummaryResponseDTO = {
   hash: "hash",
   slug: "test-event",
   title: "Test Event",
-  type: "FREE",
+  isPromoted: false,
   url: "https://example.com/event",
   description: "Event description",
   imageUrl: "https://example.com/image.jpg",
@@ -55,14 +55,13 @@ describe("generateJsonData", () => {
     expect(schema.description).toBe("Test Event a Catalunya");
     expect(schema.image[0]).toMatch(/logo-seo-meta\.webp$/);
     expect(schema.endDate).toBe(schema.startDate);
-    expect(schema.offers).toBeDefined();
-    expect(schema.offers!.price).toBe(0);
+    expect(schema.offers).toBeUndefined();
   });
 
   it("omits offers for paid events without price information", () => {
     const schema = generateJsonData(
       createEvent({
-        type: "PAID",
+        isPromoted: false,
         description: "Gran concert",
         location: "Palau de la Música",
       })

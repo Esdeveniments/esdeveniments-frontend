@@ -558,9 +558,9 @@ export async function GET() {
             startDate: { type: "string", format: "date-time", description: "Event start date (ISO 8601)" },
             endDate: { type: "string", format: "date-time", description: "Event end date (ISO 8601)" },
             location: { type: "string", description: "Event venue or address" },
-            imageUrl: { type: "string", format: "uri", description: "Event image URL" },
-            url: { type: "string", format: "uri", description: "Original event source URL" },
-            type: { type: "string", enum: ["FREE", "PAID"], description: "Whether the event is free or paid" },
+            imageUrl: { type: "string", format: "uri", nullable: true, description: "Event image URL" },
+            url: { type: "string", format: "uri", nullable: true, description: "Original event source URL" },
+            isPromoted: { type: "boolean", description: "Whether the event has an active paid promotion" },
             lat: { type: "number", description: "Latitude of event location" },
             lon: { type: "number", description: "Longitude of event location" },
             city: {

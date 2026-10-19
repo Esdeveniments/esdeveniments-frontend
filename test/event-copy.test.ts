@@ -95,7 +95,7 @@ function createTestEvent(
     hash: "test-hash",
     slug: "test-slug",
     title: "Test Event",
-    type: "FREE",
+    isPromoted: false,
     url: "https://test.com",
     description: "Test description",
     imageUrl: "https://test.com/image.jpg",
@@ -192,7 +192,7 @@ describe("buildEventIntroText", () => {
         title: "Exposició d'Art",
         city: MOCK_CITIES.olot,
         region: undefined,
-        type: "PAID",
+        isPromoted: false,
       });
 
       const result = await buildEventIntroText(event);
@@ -225,7 +225,7 @@ describe("buildEventIntroText", () => {
         endDate: "2025-07-03",
         city: MOCK_CITIES.barcelona,
         region: undefined,
-        type: "PAID",
+        isPromoted: false,
       });
 
       const result = await buildEventIntroText(event);

@@ -20,7 +20,7 @@ function makeEvent(
     hash: `hash-${id}`,
     slug,
     title,
-    type: "FREE",
+    isPromoted: false,
     url: `https://example.com/${slug}`,
     description: "Event description",
     imageUrl: "",

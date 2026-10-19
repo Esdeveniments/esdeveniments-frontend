@@ -49,5 +49,6 @@ export type ProfileSlugSource = {
   // that is a UI copy decision (see auth-cookie-migration followup).
   displayName?: string | null;
   avatarUrl?: string | null;
-  organizerVerified?: boolean;
+  verified?: boolean;
+  role?: import("types/auth").AuthRole;
 };

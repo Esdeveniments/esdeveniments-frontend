@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import { setHours, setMinutes, setSeconds } from "date-fns";
 import {
   DatePicker,
@@ -16,6 +22,8 @@ import type { EventFormProps } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
 import { useTranslations } from "next-intl";
+
+const subscribeNoop = () => () => {};
 
 export const EventForm: React.FC<EventFormProps> = ({
   form,
@@ -35,23 +43,21 @@ export const EventForm: React.FC<EventFormProps> = ({
   handleUseGeolocation,
   handleTestUrl,
   isLocating = false,
-  progress,
   imageToUpload,
   imageFile,
-  isUploadingImage = false,
-  uploadMessage,
   onPreview,
   canPreview,
   previewLabel,
   previewTestId,
-  imageMode = "upload",
-  onImageModeChange,
-  imageUrlValue = null,
-  handleImageUrlChange,
 }) => {
   const t = useTranslations("Utils.Validation");
   const tForm = useTranslations("Components.EventForm");
-  const [isHydrated, setIsHydrated] = useState(false);
+  // true on the client, false during SSR: marks the form interactive for e2e.
+  const isHydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  );
   const [step, setStep] = useState(0);
   const canPublishRef = useRef(false);
   const publishArmTimeoutRef = useRef<number | null>(null);
@@ -91,8 +97,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       imageFile,
       isEditMode,
       validationLabels,
-      zodLabels,
-      form.imageUrl
+      zodLabels
     );
   }, [form, imageFile, isEditMode, validationLabels, zodLabels, hasInteracted]);
 
@@ -104,13 +109,6 @@ export const EventForm: React.FC<EventFormProps> = ({
     handleFormChange("isAllDay", isAllDayEvent);
     handleFormChange("endDate", targetEndDate.toISOString().slice(0, 16));
   };
-
-  const [internalImageMode, setInternalImageMode] =
-    useState<"upload" | "url">(imageMode);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
 
   useEffect(() => {
     canPublishRef.current = false;
@@ -135,17 +133,6 @@ export const EventForm: React.FC<EventFormProps> = ({
       }
     };
   }, [step, steps.length]);
-
-  useEffect(() => {
-    setInternalImageMode(imageMode);
-  }, [imageMode]);
-
-  const effectiveImageMode = onImageModeChange ? imageMode : internalImageMode;
-  const effectiveImageUrlValue = imageUrlValue ?? form.imageUrl ?? null;
-  const handleImageModeChangeValue = onImageModeChange ?? setInternalImageMode;
-  const handleImageUrlValueChange =
-    handleImageUrlChange ??
-    ((value: string) => handleFormChange("imageUrl", value || null));
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -179,8 +166,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       imageFile,
       isEditMode,
       validationLabels,
-      zodLabels,
-      form.imageUrl
+      zodLabels
     );
 
     if (!submitValidation.isDisabled) {
@@ -188,9 +174,7 @@ export const EventForm: React.FC<EventFormProps> = ({
     }
   };
 
-  const hasImage = Boolean(
-    imageToUpload || imageFile || effectiveImageUrlValue || form.imageUrl
-  );
+  const hasImage = Boolean(imageToUpload || imageFile);
   const hasDates = Boolean(form.startDate && (form.isAllDay ? true : form.endDate));
 
 
@@ -245,7 +229,7 @@ export const EventForm: React.FC<EventFormProps> = ({
         })
         : stepMissing.join(", ")
       : "";
-  const isNextDisabled = stepMissing.length > 0 || isUploadingImage;
+  const isNextDisabled = stepMissing.length > 0;
   const shouldShowFeedback = hasInteracted;
 
   // Feedback message comes from step errors OR global form errors (if we are at the end)
@@ -454,17 +438,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 
       {step === 2 && (
         <>
-          <ImageUpload
-            value={imageToUpload}
-            onUpload={handleImageChange}
-            progress={progress}
-            isUploading={isUploadingImage}
-            uploadMessage={uploadMessage}
-            mode={effectiveImageMode}
-            onModeChange={handleImageModeChangeValue}
-            imageUrlValue={effectiveImageUrlValue || ""}
-            onImageUrlChange={handleImageUrlValueChange}
-          />
+          <ImageUpload value={imageToUpload} onUpload={handleImageChange} />
           {helperImage ? (
             <p className="text-[12px] text-foreground/80 w-full px-2 -mt-2">
               {helperImage}

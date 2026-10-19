@@ -22,7 +22,7 @@ const baseEvent: EventSummaryResponseDTO = {
   hash: "hash-base",
   slug: "event-base",
   title: "Base Event",
-  type: "FREE",
+  isPromoted: false,
   url: "https://example.com",
   description: "",
   imageUrl: "",

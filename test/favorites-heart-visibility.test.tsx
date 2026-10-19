@@ -25,7 +25,7 @@ describe("favorites heart visibility", () => {
     hash: "h",
     slug: "test-event",
     title: "Test",
-    type: "FREE",
+    isPromoted: false,
     url: "https://example.com",
     description: "d",
     imageUrl: "",

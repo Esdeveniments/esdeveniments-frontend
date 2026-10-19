@@ -96,8 +96,6 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/favorites/migrate",
   // DISABLED: Restaurant promotions feature is currently disabled
   // "/api/cloudinary/sign",
-  // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)
-  "/api/publica/image-upload",
   // Revalidation endpoint handles its own secret, so bypass HMAC middleware
   "/api/revalidate",
   // Health check endpoint for monitoring cache infrastructure
@@ -220,18 +218,17 @@ export async function gateApiRequest(
   // path is also a public-API entry, it still has to pass the same
   // narrow multipart allowlist.
   //
-  // Why these three? Each carries a multipart body that the HMAC middleware
+  // Why these two? Each carries a multipart body that the HMAC middleware
   // can't re-sign from a server-cloned stream (multipart binaries can't be
   // re-derived from a server-cloned body without losing boundaries). The
-  // three flows use multipart for browser-uploaded images / files:
+  // flows use multipart for browser-uploaded images / files:
   //   - /api/users/me/avatar        — HttpOnly cookie auth (avatar)
-  //   - /api/publica/image-upload   — IP rate limit + Origin (event image)
   //   - /api/sponsors/image-upload  — Stripe session paid-status guard
+  // Event images travel inside server actions (page routes, not /api/*).
   // Every other /api/ path is required to use a JSON body that HMAC can
-  // re-sign. PR review thread 121G expanded the allowlist from 1 to 3.
+  // re-sign.
   const MULTIPART_ALLOWLIST = new Set([
     "/api/users/me/avatar",
-    "/api/publica/image-upload",
     "/api/sponsors/image-upload",
   ]);
   const requestContentType = (

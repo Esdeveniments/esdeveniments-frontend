@@ -23,7 +23,7 @@ function makeEvent(id: string, startDate: string): EventSummaryResponseDTO {
     hash: `hash-${id}`,
     slug: `event-${id}`,
     title: `Event ${id}`,
-    type: "FREE",
+    isPromoted: false,
     url: "https://example.com",
     description: "",
     imageUrl: "",

@@ -34,7 +34,7 @@ function makeEvent(slug: string): EventSummaryResponseDTO {
     hash: `hash-${slug}`,
     slug,
     title: `Title ${slug}`,
-    type: "FREE" as const,
+    isPromoted: false,
     url: "https://example.com",
     description: "desc",
     imageUrl: "https://example.com/img.jpg",

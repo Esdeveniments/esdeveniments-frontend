@@ -37,10 +37,23 @@ async function sendNewEventEmail(title: string, slug: string): Promise<void> {
   });
 }
 
+/**
+ * `formData` carries `event` (EventCreateRequestDTO as a JSON string) and an
+ * optional `imageFile`. FormData is the server-action-safe way to send a File.
+ */
 export async function createEventAction(
-  data: EventCreateRequestDTO,
+  formData: FormData,
   e2eExtras?: E2EEventExtras
 ): Promise<CreateEventActionResult> {
+  const rawEvent = formData.get("event");
+  if (typeof rawEvent !== "string") {
+    throw new Error("createEventAction: missing event payload");
+  }
+  // The backend validates the fields; this only rejects a malformed payload.
+  const data = JSON.parse(rawEvent) as EventCreateRequestDTO;
+  const image = formData.get("imageFile");
+  const imageFile = image instanceof File && image.size > 0 ? image : null;
+
   // 2026-07-26 round-5: catch the mutation error path so we can distinguish
   // 401 (likely stale Bearer — user should log out and back in) from 403
   // (profileCompleted: false per backend spec — user should complete
@@ -59,7 +72,7 @@ export async function createEventAction(
   let created;
   try {
     // 1. Create the event in your backend
-    created = await createEvent(data, e2eExtras);
+    created = await createEvent(data, imageFile, e2eExtras);
   } catch (err) {
     const status = (err as { status?: number })?.status;
     if (status === 401 || status === 403) {

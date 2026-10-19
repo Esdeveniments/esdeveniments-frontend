@@ -8,7 +8,7 @@ const previewEvent: EventDetailResponseDTO = {
   hash: "preview",
   slug: "sample-event",
   title: "Sample Event",
-  type: "FREE",
+  isPromoted: false,
   url: "",
   description: "",
   imageUrl: "https://example.com/image.jpg",

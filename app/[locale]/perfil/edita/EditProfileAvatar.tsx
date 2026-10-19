@@ -11,12 +11,8 @@ import type { EditProfileAvatarProps } from "types/props";
 // Checking here is UX only (fail before the upload round-trip) — the route
 // is the real gate.
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-const ALLOWED_AVATAR_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/jpg",
-  "image/webp",
-]);
+// The backend accepts JPEG and PNG only.
+const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png"]);
 
 export default function EditProfileAvatar({
   className,
@@ -161,7 +157,7 @@ export default function EditProfileAvatar({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png, image/jpeg, image/jpg, image/webp"
+          accept="image/png, image/jpeg"
           className="hidden"
           onChange={(event) => {
             void handleFileChange(event);

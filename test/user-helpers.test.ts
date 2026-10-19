@@ -133,7 +133,7 @@ describe("getProfileSlug", () => {
         displayName: "Alex García",
         username: "alex91",
         avatarUrl: null,
-        organizerVerified: true,
+        verified: true,
       }),
     ).toBe("alex91");
   });
@@ -145,7 +145,7 @@ describe("getProfileSlug", () => {
         displayName: "Alex García",
         username: "",
         avatarUrl: null,
-        organizerVerified: false,
+        verified: false,
       }),
     ).toBe("alex-garcia");
   });
@@ -158,7 +158,7 @@ describe("getProfileSlug", () => {
         displayName: "!!!",
         username: "550e8400-e29b-41d4-a716-446655440000",
         avatarUrl: null,
-        organizerVerified: false,
+        verified: false,
       }),
     ).toBe("");
   });
@@ -170,7 +170,7 @@ describe("getProfileSlug", () => {
         displayName: null,
         username: null,
         avatarUrl: null,
-        organizerVerified: false,
+        verified: false,
       }),
     ).toBe("");
   });

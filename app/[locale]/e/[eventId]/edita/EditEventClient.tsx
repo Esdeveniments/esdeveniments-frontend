@@ -21,9 +21,9 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
   const creatorSlug = event.owner ? getProfileSlug(event.owner) : null;
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
   const [imageToUpload, setImageToUpload] = useState<string | null>(
-    form.imageUrl
+    event.imageUrl
   );
-  const [progress] = useState<number>(0);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -69,6 +69,7 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
     handleFormChange("categories", categories);
 
   const handleImageChange = (file: File | null) => {
+    setImageFile(file);
     if (!file) {
       setImageToUpload(null);
       return;
@@ -92,7 +93,15 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
           ...form,
           url: normalizeUrl(form.url),
         });
-        const result = await editEvent(event.id, event.slug, data);
+        let cover: globalThis.FormData | undefined;
+        if (imageFile) {
+          cover = new globalThis.FormData();
+          cover.append("imageFile", imageFile);
+        } else if (event.imageUrl && !imageToUpload) {
+          cover = new globalThis.FormData();
+          cover.append("removeImage", "1");
+        }
+        const result = await editEvent(event.id, event.slug, data, cover);
         if (result && result.success) {
           router.push(`/e/${result.newSlug || event.slug}`);
         } else {
@@ -191,8 +200,8 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
             handleImageChange={handleImageChange}
             handleTownChange={handleTownChange}
             handleCategoriesChange={handleCategoriesChange}
-            progress={progress}
             imageToUpload={imageToUpload}
+            imageFile={imageFile}
           />
         </div>
       </div>

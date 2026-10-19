@@ -8,7 +8,6 @@ import type {
 } from "types/api/event";
 
 // --- Summary DTOs needed for event payload validation ---
-const EventTypeEnum = z.enum(["FREE", "PAID"]);
 const EventOriginEnum = z.enum(["SCRAPE", "RSS", "MANUAL", "MIGRATION"]);
 
 export const CategorySummaryResponseDTOSchema = z.object({
@@ -49,8 +48,9 @@ const EventSummaryBaseSchema = z
     // Note: title is allowed to be empty string (backend may return empty titles)
     // Frontend code should handle empty titles defensively (see app/e/[eventId]/page.tsx)
     title: z.string(),
-    type: EventTypeEnum,
-    url: z.string(),
+    // Absent on the pre-v2 backend still serving prod; default keeps it parsing.
+    isPromoted: z.boolean().default(false),
+    url: z.string().nullable(),
     description: z.string(),
     imageUrl: z.string().nullable(),
     startDate: z.string(),
@@ -107,7 +107,7 @@ const RelatedEventSummarySchema = z
     city: CitySummaryResponseDTOSchema.optional().nullable(),
     region: RegionSummaryResponseDTOSchema.optional().nullable(),
     province: ProvinceSummaryResponseDTOSchema.optional().nullable(),
-    type: EventTypeEnum.optional(),
+    isPromoted: z.boolean().optional(),
     origin: EventOriginEnum.optional(),
     hash: z.string().optional(),
     updatedAt: z.string().optional(),

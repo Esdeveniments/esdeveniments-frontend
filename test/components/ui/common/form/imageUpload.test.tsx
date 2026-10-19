@@ -89,7 +89,7 @@ describe("ImageUploader file validation", () => {
     ); // 1.5MB
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -129,7 +129,7 @@ describe("ImageUploader file validation", () => {
     ); // 3MB
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -169,7 +169,7 @@ describe("ImageUploader file validation", () => {
     );
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -209,7 +209,7 @@ describe("ImageUploader file validation", () => {
     );
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -253,7 +253,7 @@ describe("ImageUploader file validation", () => {
     mockCompress.mockResolvedValueOnce(compressedFile);
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -283,7 +283,7 @@ describe("ImageUploader file validation", () => {
     mockCompress.mockRejectedValueOnce(new Error("failed"));
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -310,7 +310,7 @@ describe("ImageUploader file validation", () => {
     const invalidFile = createMockFile("test.pdf", "application/pdf", 1024);
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -332,25 +332,5 @@ describe("ImageUploader file validation", () => {
     });
 
     expect(onUpload).not.toHaveBeenCalled();
-  });
-
-  it("previews arbitrary external image URLs without Next optimizer", () => {
-    const externalImage = "https://www.cardedeu.cat/media/cartell.jpg";
-
-    renderWithProviders(
-      <ImageUploader
-        value={null}
-        onUpload={vi.fn()}
-        progress={0}
-        mode="url"
-        imageUrlValue={externalImage}
-      />,
-    );
-
-    const preview = document.querySelector(
-      `img[src="${externalImage}"]`,
-    );
-
-    expect(preview).toBeInTheDocument();
   });
 });

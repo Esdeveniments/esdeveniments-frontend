@@ -66,24 +66,26 @@ vi.mock("@app/[locale]/publica/actions", () => ({
   createEventAction: (...args: unknown[]) => mockCreateEventAction(...args),
 }));
 
-// Minimal stand-in: exposes a way to set the required imageUrl field and a
+// Minimal stand-in: exposes a way to set the required image file and a
 // submit button wired straight to the real onSubmit handler, bypassing the
 // real EventForm's own field UI/validation (out of scope for this test —
 // only the createEventAction-result handling is under test here).
 vi.mock("@components/ui/EventForm", () => ({
   default: ({
     onSubmit,
-    handleFormChange,
+    handleImageChange,
   }: {
     onSubmit: (e?: unknown) => void;
-    handleFormChange: (field: string, value: unknown) => void;
+    handleImageChange: (file: File | null) => void;
   }) => (
     <div>
       <button
         type="button"
-        onClick={() => handleFormChange("imageUrl", "https://example.com/image.jpg")}
+        onClick={() =>
+          handleImageChange(new File(["x"], "image.jpg", { type: "image/jpeg" }))
+        }
       >
-        set-image-url
+        set-image-file
       </button>
       <button type="button" onClick={() => onSubmit()}>
         submit
@@ -101,7 +103,7 @@ describe("Publica submit-time createEventAction result handling", () => {
 
   async function renderAndSubmit() {
     render(<Publica />);
-    fireEvent.click(screen.getByText("set-image-url"));
+    fireEvent.click(screen.getByText("set-image-file"));
     fireEvent.click(screen.getByText("submit"));
   }
 

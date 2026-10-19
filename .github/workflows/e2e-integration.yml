@@ -12,6 +12,7 @@ name: E2E Integration (preproduction)
 # Mirrors how prod config lives in the hosting platform:
 #   vars.NEXT_PUBLIC_API_URL        → preproduction API (defaults below)
 #   secrets.HMAC_SECRET             → preproduction HMAC signing secret
+#   secrets.BACKEND_SERVICE_SECRET → preproduction X-Backend-Key value
 #                                     (falls back to the repo-level secret if
 #                                     the staging env doesn't define one)
 #   secrets.E2E_STAGING_EMAIL       → a dedicated, email-verified test user
@@ -81,6 +82,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           # Logto OIDC config (preproduction app). Without these, /iniciar-sessio
           # → /api/auth/sign-in throws in getLogtoConfig() and returns a 500,
           # so the login step never reaches Logto's form. Sourced from the

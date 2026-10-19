@@ -25,6 +25,45 @@ describe("lib/api/fetch-wrapper", () => {
   });
 
   describe("fetchWithHmac", () => {
+    it("sends X-Backend-Key from BACKEND_SERVICE_SECRET", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+      (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
+      process.env.BACKEND_SERVICE_SECRET = "a".repeat(64);
+      process.env.API_URL = "https://api.example.com/api";
+
+      await fetchWithHmac("https://api.example.com/api/events");
+
+      const headers = mockFetch.mock.calls[0][1].headers as Headers;
+      expect(headers.get("X-Backend-Key")).toBe("a".repeat(64));
+    });
+
+    it("never sends X-Backend-Key to a non-backend origin", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+      (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
+      process.env.API_URL = "https://api.example.com/api";
+
+      await fetchWithHmac("https://elsewhere.example.org/events");
+
+      const headers = mockFetch.mock.calls[0][1].headers as Headers;
+      expect(headers.get("X-Backend-Key")).toBeNull();
+    });
+
+    it("skips HMAC headers when HMAC_SECRET is unset", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+      (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
+      delete process.env.HMAC_SECRET;
+      process.env.API_URL = "https://api.example.com/api";
+
+      await fetchWithHmac("https://api.example.com/api/events");
+
+      const headers = mockFetch.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-hmac")).toBeNull();
+      expect(headers.get("x-timestamp")).toBeNull();
+      expect(headers.get("X-Backend-Key")).toBe(
+        process.env.BACKEND_SERVICE_SECRET,
+      );
+    });
+
     it("adds x-timestamp and x-hmac headers to the request", async () => {
       const mockFetch = vi.fn().mockResolvedValue({ ok: true });
       (globalThis as { fetch: typeof fetch }).fetch = mockFetch;

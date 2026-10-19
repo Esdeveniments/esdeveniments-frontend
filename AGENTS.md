@@ -114,8 +114,8 @@ See: `docs/incidents/2026-04-23-coolify-pr-preview-empty-html.md`
 - Sentry is configured (`sentry.*.config.ts`); set DSN only in non‑local environments.
 - Yarn 4 workspace; prefer `yarn` over `npm`.
 - CSP: Relaxed policy with host allowlisting (see `proxy.ts`). Allows `'unsafe-inline'` for inline scripts/JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains are allowlisted. No nonce required.
-- API security: Internal API proxy layer (`app/api/*`) handles HMAC signing server-side via `*-external.ts` wrappers using `fetchWithHmac`. Client libraries call internal routes, never external API directly. Middleware enforces HMAC on most `/api/*` routes; public endpoints (GET events, news, categories, etc.) are allowlisted.
-- **HMAC body signing**: The backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. All POST/PUT/DELETE calls to `fetchWithHmac` MUST pass `skipBodySigning: true`. Without it, mutations fail with 401 "Invalid HMAC".
+- API security: server-side calls to the backend go through `fetchWithHmac`, which sends `X-Backend-Key` from the server-only `BACKEND_SERVICE_SECRET` (the v2 backend rejects every request without it, public GETs included). While `HMAC_SECRET` is set it also sends the legacy `x-hmac`/`x-timestamp` headers, because the prod backend still verifies HMAC; delete that once prod runs v2. Client libraries call internal routes, never the backend directly. Middleware enforces the frontend's own HMAC gate on most internal `/api/*` routes; public endpoints (GET events, news, categories, etc.) are allowlisted.
+- **HMAC body signing**: The legacy backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. All JSON POST/PUT/DELETE calls to `fetchWithHmac` pass `skipBodySigning: true`.
 - **Fetch best practices**: Never use raw `fetch()` without timeout and response validation. Use `fetchWithHmac` for internal API calls (has built-in 10s timeout), or `safeFetch`/`fireAndForgetFetch` from `utils/safe-fetch.ts` for external webhooks/services (5s default timeout, response validation, Sentry logging).
 
 ## Agent-Specific Instructions
@@ -219,7 +219,7 @@ This enables Next.js fetch cache, which stores every unique URL as a separate ca
 
 - Requirements: Node 22, Yarn 4.12+ (use Corepack).
 - Install: `corepack enable && corepack prepare yarn@4.12.0 --activate && yarn install --immutable`.
-- Env: set `HMAC_SECRET` (server‑only), `NEXT_PUBLIC_API_URL` (defaults handled), optional `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `SENTRY_DSN`. Auth (Logto) requires `LOGTO_*` — see `docs/logto-auth-setup.md` and the `env-variable-management` skill; sign-in/profile/favorites features no-op without them.
+- Env: set `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` (both server‑only), `NEXT_PUBLIC_API_URL` (defaults handled), optional `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `SENTRY_DSN`. Auth (Logto) requires `LOGTO_*` — see `docs/logto-auth-setup.md` and the `env-variable-management` skill; sign-in/profile/favorites features no-op without them.
 - Run: `yarn dev` (generates `public/sw.js` via prebuild). Build: `yarn build`.
 - Tests: `yarn test`; E2E: `yarn test:e2e` (local config starts the app).
 
@@ -239,7 +239,7 @@ This enables Next.js fetch cache, which stores every unique URL as a separate ca
 - **Node 22** and **Yarn 4.12.0** (via Corepack) are required. The VM ships with both pre-installed via nvm.
 - Dependencies: `corepack enable && yarn install --immutable` from the repo root.
 - A `.env.development` file must exist with at least `HMAC_SECRET=<any-value>`. The app falls back to the default API URL in `config/api-defaults.json` when `NEXT_PUBLIC_API_URL` is not set.
-- Without the production `HMAC_SECRET`, the external backend returns HTTP 401. The app still renders (pages return 200) but with empty event/news data. Unit tests are unaffected (test setup seeds its own `HMAC_SECRET`).
+- Without `BACKEND_SERVICE_SECRET` (v2 backend) or `HMAC_SECRET` (legacy backend), the external backend returns HTTP 401. The app still renders (pages return 200) but with empty event/news data. Unit tests are unaffected (test setup seeds its own `HMAC_SECRET`).
 
 ### Running services
 

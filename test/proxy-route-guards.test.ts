@@ -228,7 +228,6 @@ describe("PUBLIC_API_EXACT_PATHS includes expected routes", () => {
 
   it("includes other browser-initiated routes", () => {
     expect(PUBLIC_API_EXACT_PATHS).toContain("/api/favorites");
-    expect(PUBLIC_API_EXACT_PATHS).toContain("/api/publica/image-upload");
   });
 
   it("does NOT include private routes", () => {

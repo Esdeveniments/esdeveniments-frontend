@@ -73,7 +73,7 @@ async function requireMutationAuth(): Promise<{ apiUrl: string; authToken: strin
 const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYTES) => {
   if (imageFile.size > maxBytes) {
     console.warn(
-      `uploadEventImage: image ${formatMegabytes(
+      `ensureImageWithinLimit: image ${formatMegabytes(
         imageFile.size,
       )}MB exceeds limit ${formatMegabytes(maxBytes)}MB`,
     );
@@ -357,12 +357,37 @@ export async function deleteEventById(id: string): Promise<void> {
   }
 }
 
+/**
+ * POST /events is multipart: an `event` part (JSON, must be typed
+ * application/json or the backend answers 415) and an optional `imageFile`.
+ * fetch sets the multipart Content-Type with its boundary; never set it here.
+ */
+export function buildCreateEventFormData(
+  data: EventCreateRequestDTO,
+  imageFile?: File | null,
+): FormData {
+  const formData = new FormData();
+  formData.append(
+    "event",
+    new Blob([JSON.stringify(data)], { type: "application/json" }),
+  );
+  if (imageFile) {
+    formData.append("imageFile", imageFile);
+  }
+  return formData;
+}
+
 export async function createEvent(
   data: EventCreateRequestDTO,
+  imageFile?: File | null,
   e2eExtras?: E2EEventExtras,
 ): Promise<EventDetailResponseDTO> {
+  if (imageFile) {
+    ensureImageWithinLimit(imageFile);
+  }
+
   if (isE2ETestMode && e2eEventsStore) {
-    return createE2EEvent(data, e2eExtras);
+    return createE2EEvent(data, imageFile, e2eExtras);
   }
 
   const { apiUrl, authToken } = await requireMutationAuth();
@@ -371,11 +396,9 @@ export async function createEvent(
     method: "POST",
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json",
       Authorization: `Bearer ${authToken}`,
     },
-    body: JSON.stringify(data),
-    skipBodySigning: true, // backend ignores body for signature; align client signing
+    body: buildCreateEventFormData(data, imageFile),
   });
 
   if (!response.ok) {
@@ -420,6 +443,76 @@ export async function createEvent(
   return response.json();
 }
 
+/** PUT /events/{uuid}/image — replaces the cover. Owner or admin only. */
+export async function replaceEventImage(
+  eventId: string,
+  imageFile: File,
+): Promise<UploadImageResponse> {
+  ensureImageWithinLimit(imageFile);
+  if (isE2ETestMode) {
+    return { url: `https://example.com/${imageFile.name}`, publicId: "e2e-image" };
+  }
+  const { apiUrl, authToken } = await requireMutationAuth();
+
+  const formData = new FormData();
+  formData.append("imageFile", imageFile);
+  const response = await fetchWithHmac(
+    `${apiUrl}/events/${encodeURIComponent(eventId)}/image`,
+    {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: formData,
+    },
+  );
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "<unreadable>");
+    console.error(
+      `replaceEventImage: HTTP ${response.status} -- body=${errorText.slice(0, 200)}`,
+    );
+    if (response.status === 413) {
+      throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
+    }
+    throw Object.assign(
+      new Error(`HTTP error! status: ${response.status}`),
+      { status: response.status },
+    );
+  }
+  return response.json();
+}
+
+/** DELETE /events/{uuid}/image — removes the cover (imageUrl becomes null). */
+export async function deleteEventImage(eventId: string): Promise<void> {
+  if (isE2ETestMode) return;
+  const { apiUrl, authToken } = await requireMutationAuth();
+
+  const response = await fetchWithHmac(
+    `${apiUrl}/events/${encodeURIComponent(eventId)}/image`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${authToken}` },
+      skipBodySigning: true,
+    },
+  );
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "<unreadable>");
+    console.error(
+      `deleteEventImage: HTTP ${response.status} -- body=${errorText.slice(0, 200)}`,
+    );
+    throw Object.assign(
+      new Error(`HTTP error! status: ${response.status}`),
+      { status: response.status },
+    );
+  }
+}
+
+/**
+ * Sponsor banner upload only. The backend removed POST /events/images in the
+ * v2 contract (2026-10-18) and has no non-event image endpoint, so this fails
+ * against v2 backends until the backend adds a replacement.
+ */
 export async function uploadEventImage(
   imageFile: File,
   maxBytes?: number,
@@ -503,6 +596,7 @@ export async function uploadEventImage(
 
 function createE2EEvent(
   data: EventCreateRequestDTO,
+  imageFile: File | null | undefined,
   extras?: E2EEventExtras,
 ): EventDetailResponseDTO {
   const slug = `e2e-event-${Date.now()}`;
@@ -546,10 +640,10 @@ function createE2EEvent(
     hash: `hash-${slug}`,
     slug,
     title: data.title,
-    type: data.type,
-    url: data.url || "",
+    isPromoted: false,
+    url: data.url,
     description: data.description,
-    imageUrl: data.imageUrl || "",
+    imageUrl: imageFile ? `https://example.com/${imageFile.name}` : null,
     startDate: data.startDate,
     startTime: data.startTime,
     endDate: data.endDate,
@@ -667,7 +761,7 @@ function buildE2EFallbackCategorizedEvents(): CategorizedEvents {
     hash: "e2e-fallback",
     slug: "e2e-fallback",
     title: "Esdeveniment de prova E2E",
-    type: "FREE",
+    isPromoted: false,
     url: "https://example.com",
     description: "Esdeveniment de prova per a E2E.",
     imageUrl: "https://via.placeholder.com/800x600",

@@ -64,7 +64,6 @@ export const createEventFormSchema = (
     id: z.string().optional(),
     title: z.string().min(1, labels.titleRequired),
     description: z.string().min(1, labels.descriptionRequired),
-    type: z.enum(["FREE", "PAID"]),
     startDate: z.string(), // "YYYY-MM-DD" - consistent with API
     startTime: z.string().nullable(), // ISO time string or null - consistent with API
     endDate: z.string(), // "YYYY-MM-DD" - consistent with API
@@ -72,20 +71,6 @@ export const createEventFormSchema = (
     region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
     town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
     location: z.string().min(1, labels.locationRequired),
-    imageUrl: z
-      .string()
-      .url(labels.invalidUrl)
-      .refine((val) => {
-        if (!val) return true;
-        try {
-          const url = new URL(val);
-          return url.hostname.includes(".");
-        } catch {
-          return false;
-        }
-      }, labels.invalidUrl)
-      .nullable()
-      .or(z.literal("")),
     url: z
       .string()
       .refine(
@@ -133,7 +118,6 @@ export interface FormData {
   id?: string;
   title: string;
   description: string;
-  type: "FREE" | "PAID";
   startDate: string; // "YYYY-MM-DD" - consistent with API
   startTime: string | null; // ISO time string or null - consistent with API
   endDate: string; // "YYYY-MM-DD" - consistent with API
@@ -141,7 +125,6 @@ export interface FormData {
   region: RegionSummaryResponseDTO | { value: string; label: string } | null;
   town: CitySummaryResponseDTO | { value: string; label: string } | null;
   location: string;
-  imageUrl: string | null;
   url: string;
   categories: Array<
     { id: number; name: string } | { value: string; label: string } | number
@@ -172,7 +155,6 @@ export interface FetchEventsParams {
   byDate?: string; // Date filter
   from?: string; // Start date
   to?: string; // End date
-  type?: string; // Price filter: "FREE" | "PAID"
   isToday?: boolean;
   profileSlug?: string; // Filter events by profile/venue slug
   // Note: API expects 'term' for search queries
@@ -331,19 +313,12 @@ export interface EventFormProps {
   handleCategoriesChange: (categories: Option[]) => void;
   handleUseGeolocation?: () => void;
   handleTestUrl?: (url: string) => void;
-  progress: number;
   imageToUpload: string | null;
   imageFile?: File | null;
-  isUploadingImage?: boolean;
-  uploadMessage?: string | null;
   onPreview?: () => void;
   canPreview?: boolean;
   previewLabel?: string;
   previewTestId?: string;
-  imageMode?: "upload" | "url";
-  onImageModeChange?: (mode: "upload" | "url") => void;
-  handleImageUrlChange?: (url: string) => void;
-  imageUrlValue?: string | null;
 }
 
 /** Result returned by the editEvent server action. */

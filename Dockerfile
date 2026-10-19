@@ -14,7 +14,8 @@ FROM base AS builder
 # Build-time arguments for Next.js static optimization.
 # ARGs are scoped to the builder stage and do NOT persist in the final runner image.
 # NEXT_PUBLIC_* vars are inlined at build time by Next.js.
-# HMAC_SECRET is needed for ISR static generation (API route HMAC signing).
+# HMAC_SECRET signs internal API routes; BACKEND_SERVICE_SECRET is the X-Backend-Key
+# the backend requires on every call. Both are needed for ISR static generation.
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_SENTRY_DSN
@@ -30,6 +31,7 @@ ARG NEXT_PUBLIC_CONTACT_EMAIL
 # never renders in production.
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ARG HMAC_SECRET
+ARG BACKEND_SERVICE_SECRET
 ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
@@ -48,6 +50,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_CONTACT_EMAIL=$NEXT_PUBLIC_CONTACT_EMAIL \
     NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY \
     HMAC_SECRET=$HMAC_SECRET \
+    BACKEND_SERVICE_SECRET=$BACKEND_SERVICE_SECRET \
     SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN \
     SENTRY_ORG=$SENTRY_ORG \
     SENTRY_PROJECT=$SENTRY_PROJECT \

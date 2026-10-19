@@ -146,6 +146,7 @@ jobs:
         env:
           NODE_ENV: production
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -165,6 +166,7 @@ jobs:
           E2E_TEST_MODE: "1"
           NEXT_PUBLIC_E2E_TEST_MODE: "1"
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
@@ -304,6 +306,7 @@ jobs:
             NEXT_PUBLIC_TIKTOK_REDIRECT_URI=${{ secrets.NEXT_PUBLIC_TIKTOK_REDIRECT_URI }}
             NEXT_PUBLIC_VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
             HMAC_SECRET=${{ secrets.HMAC_SECRET }}
+            BACKEND_SERVICE_SECRET=${{ secrets.BACKEND_SERVICE_SECRET }}
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG=${{ secrets.SENTRY_ORG }}
             SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
