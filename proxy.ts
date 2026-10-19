@@ -481,10 +481,19 @@ export default async function proxy(request: NextRequest) {
     // Without this, a non-creator's 404 could be cached and served to the
     // actual creator for up to 30 min (s-maxage=1800), and a creator's edit
     // form HTML could leak to other users via the CDN edge cache.
-    const isEditPage = normalizedPath.includes("/edita");
-    // Promote pages are owner-only too and carry payment status and Stripe
-    // checkout URLs.
-    const isPromotePage = /^\/e\/[^/]+\/promote(\/|$)/.test(normalizedPath);
+    // Match owner-only routes on the decoded, lowercased, slash-collapsed
+    // path, so a variant like /e/x/promot%65 or /e/x//promote can't reach the
+    // page and still get CDN-cached.
+    let ownerPath = normalizedPath;
+    try {
+      ownerPath = decodeURIComponent(normalizedPath);
+    } catch {
+      // Malformed escapes: fall back to the raw path.
+    }
+    ownerPath = ownerPath.toLowerCase().replace(/\/{2,}/g, "/");
+    const isEditPage = ownerPath.includes("/edita");
+    // Promote pages carry payment status and Stripe checkout URLs.
+    const isPromotePage = /\/promote(\/|$)/.test(ownerPath);
     const isPersonalizedHtml = isFavoritesPage || isEditPage || isPromotePage;
 
     // AI bot requests must not pollute or be served from the shared CDN cache:

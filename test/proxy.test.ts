@@ -191,6 +191,23 @@ describe("proxy", () => {
       expect(result.headers.get("Cache-Control")).toBe("private, no-store");
     });
 
+    it.each(["/e/concert/promot%65/success", "/e/concert//PROMOTE"])(
+      "keeps the variant path %s out of the CDN cache",
+      async (pathname) => {
+        const mockRequest = {
+          nextUrl: mockNextUrl({ pathname, search: "", searchParams: new URLSearchParams() }),
+          headers: new Headers({ accept: "text/html" }),
+          method: "GET",
+        } as unknown as NextRequest;
+        const mockResponse = { headers: new Headers() };
+        (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+        const result = await proxy(mockRequest);
+
+        expect(result.headers.get("Cache-Control")).toBe("private, no-store");
+      },
+    );
+
     it("sends the Stripe promotion return page to the visitor's locale", async () => {
       const mockRequest = {
         nextUrl: mockNextUrl({
