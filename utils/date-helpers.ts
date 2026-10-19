@@ -262,6 +262,8 @@ export function parseLocalDateTime(value: string): Date {
  * shows and publishes. Never use toISOString() here, it shifts to UTC.
  */
 export function toLocalDateTimeString(date: Date): string {
+  // Fail like toISOString() did, instead of sending "NaN-NaN-NaN".
+  if (Number.isNaN(date.getTime())) throw new RangeError("Invalid time value");
   const y = date.getFullYear();
   const mo = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");

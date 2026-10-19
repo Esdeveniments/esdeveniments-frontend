@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { setHours, setMinutes, setSeconds } from "date-fns";
+import { toLocalDateTimeString } from "@utils/date-helpers";
 import {
   DatePicker,
   Input,
@@ -102,7 +103,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       ? setSeconds(setMinutes(setHours(startDateValue, 23), 59), 59)
       : new Date(startDateValue.getTime() + 60 * 60 * 1000);
     handleFormChange("isAllDay", isAllDayEvent);
-    handleFormChange("endDate", targetEndDate.toISOString().slice(0, 16));
+    handleFormChange("endDate", toLocalDateTimeString(targetEndDate));
   };
 
   const [internalImageMode, setInternalImageMode] =

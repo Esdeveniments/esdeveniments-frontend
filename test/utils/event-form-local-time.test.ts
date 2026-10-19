@@ -9,7 +9,8 @@ beforeAll(() => {
   process.env.TZ = "Europe/Madrid";
 });
 afterAll(() => {
-  process.env.TZ = originalTz;
+  if (originalTz === undefined) delete process.env.TZ;
+  else process.env.TZ = originalTz;
 });
 
 const form = (startDate: string, endDate: string) =>
@@ -46,6 +47,10 @@ describe("event form local time", () => {
     expect(dto.startDate).toBe("2026-10-31");
     expect(dto.startTime).toBe("00:30");
     expect(dto.endTime).toBe("02:00");
+  });
+
+  it("rejects an invalid date instead of sending NaN", () => {
+    expect(() => formDataToBackendDTO(form("", ""))).toThrow(RangeError);
   });
 
   it("keeps date-only edit values on their day west of UTC", () => {
