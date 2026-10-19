@@ -7,6 +7,7 @@ export function isEventSummaryResponseDTO(event: ListEvent): event is EventSumma
     event !== null &&
     'hash' in event &&
     'slug' in event &&
-    'title' in event
+    'title' in event &&
+    !('isAd' in event && event.isAd)
   );
 }

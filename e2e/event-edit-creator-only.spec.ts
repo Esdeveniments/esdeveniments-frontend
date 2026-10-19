@@ -1,3 +1,4 @@
+import path from "path";
 import { test, expect, type Page } from "@playwright/test";
 import { loginViaUI } from "./helpers/login";
 
@@ -65,16 +66,11 @@ async function publishTestEvent(page: Page) {
 
   await page.getByTestId("next-button").click();
 
-  // Step 2: image & dates
-  const imageUrlTab = page.getByRole("button", { name: /url|enllaç/i });
-  if (await imageUrlTab.isVisible()) {
-    await imageUrlTab.click();
-  }
-
-  const imageUrlInput = page.locator('input[placeholder*="http"]').first();
-  if (await imageUrlInput.isVisible()) {
-    await imageUrlInput.fill("https://picsum.photos/800/600");
-  }
+  // Step 2: image & dates. The image travels as the multipart `imageFile`.
+  await page.setInputFiles(
+    'input[type="file"][accept*="image"]',
+    path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
+  );
 
   const startDateInput = page.locator("#event-date-start");
   if (await startDateInput.isVisible()) {

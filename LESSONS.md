@@ -189,3 +189,14 @@ There is no `period=all`; `listFavoriteEventsExternal` now fetches both
 `upcomingEventCount`/`pastEventCount` on `UserPublicResponseDTO`
 (`lib/validation/user.ts`) are unconfirmed — still `.nullish()`, degrading to
 a label-only tab until the backend starts sending them.
+
+## A field the backend drops can empty every event list, with HTTP 200
+
+Backend v2 (PRE, 2026-10-18) removed event `type`. Two frontend checks still
+required it: the Zod event schema and the `isEventSummaryResponseDTO` type
+guard. Zod rejected every payload and the guard filtered every remaining
+event out, so lists rendered empty with no error page. v2 also answers 401
+to any request without `X-Backend-Key`, which the safe fallbacks turn into
+the same empty lists. When the backend contract changes, grep for the
+removed field in `lib/validation/` and `types/api/is*.ts` first, and check
+PRE's `/v3/api-docs` (it needs no key) before trusting an empty page.

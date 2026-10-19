@@ -187,6 +187,19 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(result).toEqual({ success: true, event: mockEvent });
     });
 
+    it("forwards the imageFile part to createEvent", async () => {
+      mockCreateEvent.mockResolvedValue(buildEvent({ slug: "with-image" }));
+      const formData = toFormData(buildEventData("With image"));
+      formData.append("imageFile", new File([new Uint8Array([1])], "c.png", { type: "image/png" }));
+
+      await createEventAction(formData);
+
+      expect(mockCreateEvent).toHaveBeenCalledWith(
+        buildEventData("With image"),
+        expect.any(File),
+      );
+    });
+
     it("calls refresh after updateTag calls", async () => {
       const mockEvent = buildEvent();
 
@@ -360,8 +373,39 @@ describe("Server Actions - Next.js 16 caching", () => {
       );
 
       expect(mockReplaceEventImage).toHaveBeenCalledWith("test-id", expect.any(File));
+      expect(mockUpdateTag).toHaveBeenCalledWith("events");
       expect(mockUpdateTag).toHaveBeenCalledWith("event:same-event");
-      expect(result.success).toBe(false);
+      expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("same-event");
+      expect(result).toMatchObject({ success: false, newSlug: "same-event" });
+    });
+
+    it("deletes the cover when the client asks to remove it", async () => {
+      mockUpdateEventById.mockResolvedValue(buildEvent({ slug: "same-event" }));
+      const cover = new FormData();
+      cover.append("removeImage", "1");
+
+      const result = await editEvent(
+        "test-id",
+        "same-event",
+        {
+          title: "T",
+          url: null,
+          description: "D",
+          regionId: 1,
+          cityId: 1,
+          startDate: "2025-06-15",
+          startTime: "",
+          endDate: "2025-06-15",
+          endTime: "",
+          location: "L",
+          categories: [],
+        },
+        cover,
+      );
+
+      expect(mockDeleteEventImage).toHaveBeenCalledWith("test-id");
+      expect(mockReplaceEventImage).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
     });
 
     it("does not update old event tag when slug unchanged", async () => {

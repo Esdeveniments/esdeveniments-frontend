@@ -52,6 +52,7 @@ describe("lib/api/fetch-wrapper", () => {
       const mockFetch = vi.fn().mockResolvedValue({ ok: true });
       (globalThis as { fetch: typeof fetch }).fetch = mockFetch;
       delete process.env.HMAC_SECRET;
+      process.env.BACKEND_SERVICE_SECRET = "b".repeat(64);
       process.env.API_URL = "https://api.example.com/api";
 
       await fetchWithHmac("https://api.example.com/api/events");
@@ -59,9 +60,7 @@ describe("lib/api/fetch-wrapper", () => {
       const headers = mockFetch.mock.calls[0][1].headers as Headers;
       expect(headers.get("x-hmac")).toBeNull();
       expect(headers.get("x-timestamp")).toBeNull();
-      expect(headers.get("X-Backend-Key")).toBe(
-        process.env.BACKEND_SERVICE_SECRET,
-      );
+      expect(headers.get("X-Backend-Key")).toBe("b".repeat(64));
     });
 
     it("adds x-timestamp and x-hmac headers to the request", async () => {

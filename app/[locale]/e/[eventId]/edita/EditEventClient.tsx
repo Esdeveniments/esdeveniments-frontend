@@ -24,6 +24,9 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
     event.imageUrl
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // A saved title change renames the slug even when the cover step fails;
+  // retries must look the event up by the new one.
+  const [slug, setSlug] = useState(event.slug ?? "");
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -101,9 +104,10 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
           cover = new globalThis.FormData();
           cover.append("removeImage", "1");
         }
-        const result = await editEvent(event.id, event.slug, data, cover);
+        const result = await editEvent(event.id, slug, data, cover);
+        if (result?.newSlug) setSlug(result.newSlug);
         if (result && result.success) {
-          router.push(`/e/${result.newSlug || event.slug}`);
+          router.push(`/e/${result.newSlug || slug}`);
         } else {
           setSubmitError(result?.error ?? t("editError"));
         }
@@ -114,7 +118,6 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
     });
   }
 
-  const slug = event.slug ?? "";
 
   return (
     <div className="container flex flex-col justify-center pt-6 pb-14">
