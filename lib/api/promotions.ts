@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { requireAuth } from "./events";
 import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
@@ -127,6 +128,9 @@ export function buildPromotedEventsQuery(query: PromotedEventsQuery): string {
 export async function fetchPromotedEvents(
   query: PromotedEventsQuery,
 ): Promise<EventSummaryResponseDTO[]> {
+  // Always a dynamic hole: a warm cache hit must not let the row get baked
+  // into a prerendered shell (fetchWithHmac's own connection() is skipped).
+  await connection();
   if (!isApiUrlConfigured()) return [];
   return promotedEventsCache(buildPromotedEventsQuery(query), fetchPromotedEventsApi);
 }
