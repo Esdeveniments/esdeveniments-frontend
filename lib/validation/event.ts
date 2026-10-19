@@ -107,7 +107,7 @@ const RelatedEventSummarySchema = z
     city: CitySummaryResponseDTOSchema.optional().nullable(),
     region: RegionSummaryResponseDTOSchema.optional().nullable(),
     province: ProvinceSummaryResponseDTOSchema.optional().nullable(),
-    isPromoted: z.boolean().optional(),
+    isPromoted: z.boolean().default(false),
     origin: EventOriginEnum.optional(),
     hash: z.string().optional(),
     updatedAt: z.string().optional(),

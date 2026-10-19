@@ -110,6 +110,7 @@ export async function editEvent(
   if (coverFailed) {
     return {
       success: false,
+      newSlug: updatedEvent.slug,
       error: "The event was saved, but the image could not be updated.",
     };
   }

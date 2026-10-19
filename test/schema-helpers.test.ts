@@ -58,18 +58,16 @@ describe("generateJsonData", () => {
     expect(schema.offers).toBeUndefined();
   });
 
-  it("omits offers for paid events without price information", () => {
+  it("omits offers because the backend has no price data", () => {
     const schema = generateJsonData(
       createEvent({
-        isPromoted: false,
         description: "Gran concert",
         location: "Palau de la Música",
       })
     );
 
-    // Per Google sd-policies: emitting price:0 + placeholder descriptions for
-    // unknown prices is misleading and suppresses rich results. offers is
-    // recommended, not required — omitting it is correct when price is unknown.
+    // Per Google sd-policies: emitting price:0 for an unknown price is
+    // misleading. offers is recommended, not required.
     expect(schema.offers).toBeUndefined();
     expect(schema.performer.name).toBe("Palau de la Música");
     expect(schema.location.address.streetAddress).toBe("Palau de la Música");
