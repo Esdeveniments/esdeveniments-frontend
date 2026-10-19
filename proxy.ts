@@ -61,6 +61,8 @@ function parseAcceptLanguage(header: string | null): AppLocale | null {
   return null;
 }
 
+const PROMOTION_RETURN_PATH = /^\/e\/[^/]+\/promote\/(success|cancel)$/;
+
 function getLocaleFromCookie(request: NextRequest): AppLocale | null {
   const cookieLocale = request.cookies?.get?.(LOCALE_COOKIE)?.value;
   if (
@@ -359,14 +361,16 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Auto-redirect to preferred non-default locale on root path
-  if (!localeFromPath && pathname === "/") {
+  // Auto-redirect to preferred non-default locale on root path, and on the
+  // Stripe promotion return pages (the backend builds them without a locale).
+  const isPromotionReturn = PROMOTION_RETURN_PATH.test(pathname);
+  if (!localeFromPath && (pathname === "/" || isPromotionReturn)) {
     const preferredLocale =
       localeFromCookie ||
       parseAcceptLanguage(request.headers.get("accept-language"));
     if (preferredLocale && preferredLocale !== DEFAULT_LOCALE) {
       const redirectUrl = new URL(
-        `/${preferredLocale}${search || ""}`,
+        `/${preferredLocale}${isPromotionReturn ? pathname : ""}${search || ""}`,
         request.url,
       );
       const response = NextResponse.redirect(redirectUrl, 302);

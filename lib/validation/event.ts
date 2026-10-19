@@ -199,6 +199,22 @@ export function parsePagedEvents(
   };
 }
 
+/** Plain array of summaries (e.g. GET /events/promoted). Drops invalid items. */
+export function parseEventSummaryList(input: unknown): EventSummaryResponseDTO[] {
+  if (!Array.isArray(input)) {
+    console.error("parseEventSummaryList: expected an array");
+    return [];
+  }
+  return input.flatMap((item) => {
+    const result = EventSummaryResponseDTOSchema.safeParse(item);
+    if (!result.success) {
+      console.error("parseEventSummaryList: invalid event", result.error);
+      return [];
+    }
+    return [enhanceEventImage(result.data as EventSummaryResponseDTO)];
+  });
+}
+
 // Categorized events schema
 export const CategorizedEventsSchema = z.record(
   z.string(),

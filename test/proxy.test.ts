@@ -172,6 +172,30 @@ describe("proxy", () => {
       expect(result.headers.get("Service-Worker-Allowed")).toBe("/");
     });
 
+    it("sends the Stripe promotion return page to the visitor's locale", async () => {
+      const mockRequest = {
+        nextUrl: mockNextUrl({
+          pathname: "/e/concert/promote/success",
+          search: "",
+          searchParams: new URLSearchParams(),
+        }),
+        url: "https://example.com/e/concert/promote/success",
+        headers: new Headers(),
+        cookies: { get: vi.fn().mockReturnValue({ value: "es" }) },
+        method: "GET",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL(
+          "/es/e/concert/promote/success",
+          "https://example.com/e/concert/promote/success",
+        ),
+        302,
+      );
+    });
+
     it("redirects legacy /tots/ routes", async () => {
       const mockRequest = {
         nextUrl: mockNextUrl({

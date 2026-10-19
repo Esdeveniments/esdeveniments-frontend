@@ -340,7 +340,13 @@
       "restoreDraftApply": "Restore draft",
       "restoreDraftDiscard": "Discard",
       "geoNotSupported": "Your browser does not allow location access.",
-      "geoDenied": "We couldn't get your location. Please check permissions."
+      "geoDenied": "We couldn't get your location. Please check permissions.",
+      "promoteUpsell": {
+        "title": "Boost your event!",
+        "description": "Promote your event now to reach way more people and appear at the top of the platform.",
+        "promoteButton": "Promote Event",
+        "keepFreeButton": "Keep it free"
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " in {place}",
@@ -388,6 +394,66 @@
       "notFoundTitle": "No events available",
       "notFoundDescriptionWithDate": "We couldn't find {activitiesLabel} for {date} in {place}.",
       "notFoundDescriptionFallback": "We couldn't find {activitiesLabel} for the coming days in {place}."
+    },
+    "EventPromote": {
+      "title": "Promote your event",
+      "description": "Reach more people by promoting your event on Esdeveniments.cat.",
+      "heading": "Promote your event",
+      "subheading": "Stand out to reach more people and appear at the top.",
+      "benefit1": "More visibility in the agenda",
+      "benefit2": "Priority over other events",
+      "benefit3": "More interested people",
+      "backToEvent": "Back to event",
+      "confirmButton": "Confirm and pay",
+      "confirmButtonLoading": "Redirecting to payment...",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "chooseOption": "Choose where and for how long",
+      "taxIncluded": "Prices include VAT. One-off payment.",
+      "duration": "{days, plural, one {# day} other {# days}}",
+      "scope": {
+        "CITY": "Your town",
+        "REGION": "Your region",
+        "PROVINCE": "Your province",
+        "CATALONIA": "All of Catalonia"
+      },
+      "pendingCheckout": "You have a pending payment for this event.",
+      "resumeCheckout": "Continue payment",
+      "refreshStatus": "Refresh status",
+      "tryAgain": "Try again",
+      "errors": {
+        "PROMOTION_ALREADY_ACTIVE": "This event is already promoted.",
+        "CHECKOUT_ALREADY_PENDING": "You already have a pending payment for this event.",
+        "REFUND_PENDING": "A refund is in progress for this event.",
+        "PROMOTIONS_DISABLED": "Promotions are not available right now.",
+        "MISSING_EVENT_LOCATION": "The event needs a town before it can be promoted.",
+        "MISSING_EVENT_DATE": "The event needs a date before it can be promoted.",
+        "INSUFFICIENT_EVENT_DURATION": "The event ends before this promotion would.",
+        "NO_AVAILABLE_OPTIONS": "No promotion is available for this event right now.",
+        "AUTHENTICATION_REQUIRED": "Your session has expired. Please sign in again.",
+        "NOT_EVENT_OWNER": "Only the person who created the event can promote it.",
+        "INVALID_OPTION": "This option is no longer available. Choose another one.",
+        "CHECKOUT_EXPIRED": "The payment expired. Please try again.",
+        "PAYMENT_PROCESSING": "We are processing the payment. Wait a few seconds."
+      },
+      "status": {
+        "ACTIVE": "Your event is promoted until {endsAt}.",
+        "PENDING": "We are confirming the payment. It can take a few seconds.",
+        "PAID": "Payment received. The promotion will start shortly.",
+        "EXPIRED": "The payment expired and you were not charged.",
+        "FAILED": "The payment could not be completed.",
+        "REFUND_PENDING": "We are processing the refund.",
+        "REFUNDED": "We have refunded the payment.",
+        "NONE": "There is no payment for this event.",
+        "unknown": "We can't check the payment status right now. Try again in a while.",
+        "promotionEXPIRED": "This event's promotion has ended.",
+        "promotionREVOKED": "This event's promotion was withdrawn."
+      },
+      "successPage": {
+        "title": "Thank you!"
+      },
+      "cancelPage": {
+        "title": "Payment cancelled"
+      }
     }
   },
   "Components": {
@@ -915,18 +981,19 @@
       "sidebarAriaLabel": "Event details",
       "toolbarAriaLabel": "Event actions",
       "sidebarCreatedBy": "Published by",
-      "sidebarViewAllEvents": "View all events"
+      "sidebarViewAllEvents": "View all events",
+      "promoteEvent": "Promote"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Add to favorites",
       "favoriteRemoveAria": "Remove from favorites",
-      "free": "Free",
       "today": "Today",
       "tomorrow": "Tomorrow",
       "multipleDates": "Multiple dates",
-      "viewCountAria": "{count, plural, one {{count} view} other {{count} views}}"
+      "viewCountAria": "{count, plural, one {{count} view} other {{count} views}}",
+      "promoted": "Sponsored"
     },
     "EventForm": {
       "title": "Title *",
@@ -1116,6 +1183,9 @@
     "PwaBackButton": {
       "label": "Back",
       "ariaLabel": "Go back"
+    },
+    "PromotedEvents": {
+      "title": "Featured events"
     }
   },
   "Partials": {

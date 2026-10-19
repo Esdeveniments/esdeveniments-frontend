@@ -26,7 +26,7 @@ const CardHorizontalServer = async ({
     favoriteLabels,
     shouldShowFavoriteButton,
     categoryLabel,
-    priceLabel,
+    promotedLabel,
     urgencyLabel,
     urgencyType,
     multiDayLabel,
@@ -81,6 +81,9 @@ const CardHorizontalServer = async ({
       </div>
 
       <div className="flex-1 flex flex-col px-3.5 pt-2.5 pb-3.5 pointer-events-none">
+        {promotedLabel && (
+          <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
+        )}
         <CategoryBadge label={categoryLabel} />
 
         <p className="text-xs text-muted-foreground mb-1 truncate">
@@ -92,7 +95,6 @@ const CardHorizontalServer = async ({
             cardDate
           )}
           {timeDisplay && <> · {timeDisplay}</>}
-          {priceLabel && <> · <span className="text-success font-medium">{priceLabel}</span></>}
           {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 

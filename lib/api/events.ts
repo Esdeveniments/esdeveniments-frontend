@@ -54,8 +54,8 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>()))
   : null;
 
-/** Shared guard for mutation endpoints: validates API URL and auth cookie. */
-async function requireMutationAuth(): Promise<{ apiUrl: string; authToken: string }> {
+/** Shared guard for authenticated endpoints: validates API URL and auth cookie. */
+export async function requireAuth(): Promise<{ apiUrl: string; authToken: string }> {
   if (!isApiUrlConfigured()) {
     throw new Error(
       "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
@@ -309,7 +309,7 @@ export async function updateEventById(
   id: string,
   data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
-  const { apiUrl, authToken } = await requireMutationAuth();
+  const { apiUrl, authToken } = await requireAuth();
 
   const response = await fetchWithHmac(
     `${apiUrl}/events/${id}`,
@@ -335,7 +335,7 @@ export async function updateEventById(
 }
 
 export async function deleteEventById(id: string): Promise<void> {
-  const { apiUrl, authToken } = await requireMutationAuth();
+  const { apiUrl, authToken } = await requireAuth();
 
   const response = await fetchWithHmac(
     `${apiUrl}/events/${id}`,
@@ -390,7 +390,7 @@ export async function createEvent(
     return createE2EEvent(data, imageFile, e2eExtras);
   }
 
-  const { apiUrl, authToken } = await requireMutationAuth();
+  const { apiUrl, authToken } = await requireAuth();
 
   const response = await fetchWithHmac(`${apiUrl}/events`, {
     method: "POST",
@@ -452,7 +452,7 @@ export async function replaceEventImage(
   if (isE2ETestMode) {
     return { url: `https://example.com/${imageFile.name}`, publicId: "e2e-image" };
   }
-  const { apiUrl, authToken } = await requireMutationAuth();
+  const { apiUrl, authToken } = await requireAuth();
 
   const formData = new FormData();
   formData.append("imageFile", imageFile);
@@ -486,7 +486,7 @@ export async function replaceEventImage(
 /** DELETE /events/{uuid}/image — removes the cover (imageUrl becomes null). */
 export async function deleteEventImage(eventId: string): Promise<void> {
   if (isE2ETestMode) return;
-  const { apiUrl, authToken } = await requireMutationAuth();
+  const { apiUrl, authToken } = await requireAuth();
 
   const response = await fetchWithHmac(
     `${apiUrl}/events/${encodeURIComponent(eventId)}/image`,
