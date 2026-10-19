@@ -12,7 +12,8 @@ async function toPromotedQuery(
   placeSlug?: string,
 ): Promise<PromotedEventsQuery | null> {
   if (!placeSlug || placeSlug === "catalunya") return { placement: "CATALONIA" };
-  const place = await getPlaceBySlug(placeSlug);
+  // The section is optional: a failed place lookup hides it, never the page.
+  const place = await getPlaceBySlug(placeSlug).catch(() => null);
   if (!place) return null;
   if (place.type === "CITY") return { placement: "CITY", cityId: place.id };
   if (place.type === "REGION") return { placement: "REGION", regionId: place.id };

@@ -6,6 +6,7 @@ import { Link } from "@i18n/routing";
 import { getOwnedEventBySlug } from "@lib/auth/owned-event";
 import { getPromotionStatus, isStripeCheckoutUrl } from "@lib/api/promotions";
 import type { AppLocale } from "types/i18n";
+import RefreshSession from "./RefreshSession";
 import type { PromotionReturnPageProps, PromotionStatusPanelProps } from "types/props";
 
 export async function promotionReturnMetadata(
@@ -32,11 +33,16 @@ export async function PromotionReturnPage({ params, variant }: PromotionReturnPa
 
   const status = await getPromotionStatus(event.id);
   return (
-    <PromotionStatusPanel
-      slug={event.slug}
-      status={status.ok ? status.data : null}
-      variant={variant}
-    />
+    <>
+      {!status.ok && status.code === "AUTHENTICATION_REQUIRED" && (
+        <RefreshSession />
+      )}
+      <PromotionStatusPanel
+        slug={event.slug}
+        status={status.ok ? status.data : null}
+        variant={variant}
+      />
+    </>
   );
 }
 

@@ -15,7 +15,7 @@ import { MegaphoneIcon as SpeakerphoneIcon } from "@heroicons/react/24/outline";
 import AdArticle from "components/ui/adArticle";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { useTranslations } from "next-intl";
-import { sendGoogleEvent } from "@utils/analytics";
+import { ensureGtag, sendGoogleEvent } from "@utils/analytics";
 
 // computeTemporalStatus now imported from utils/event-status for reuse & testability
 
@@ -58,6 +58,7 @@ export default function EventClient({
   useEffect(() => {
     if (showPromoteUpsell && !hasFiredPromoteShownRef.current) {
       hasFiredPromoteShownRef.current = true;
+      ensureGtag();
       sendGoogleEvent("promote_modal_shown", {
         event_slug: event.slug ?? "",
         source: "event_detail",

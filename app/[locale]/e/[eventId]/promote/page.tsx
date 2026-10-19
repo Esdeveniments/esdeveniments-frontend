@@ -12,6 +12,7 @@ import {
   isStripeCheckoutUrl,
 } from "@lib/api/promotions";
 import PromoteEventClient from "./PromoteEventClient";
+import RefreshSession from "./RefreshSession";
 
 export async function generateMetadata({
   params,
@@ -45,15 +46,20 @@ export default async function PromotePage({
     getPromotionStatus(event.id),
   ]);
   return (
-    <PromoteEventClient
-      eventId={event.id}
-      slug={event.slug}
-      options={options}
-      pendingCheckoutUrl={
-        status.ok && isStripeCheckoutUrl(status.data.checkoutUrl)
-          ? status.data.checkoutUrl
-          : null
-      }
-    />
+    <>
+      {!options.ok && options.code === "AUTHENTICATION_REQUIRED" && (
+        <RefreshSession />
+      )}
+      <PromoteEventClient
+        eventId={event.id}
+        slug={event.slug}
+        options={options}
+        pendingCheckoutUrl={
+          status.ok && isStripeCheckoutUrl(status.data.checkoutUrl)
+            ? status.data.checkoutUrl
+            : null
+        }
+      />
+    </>
   );
 }

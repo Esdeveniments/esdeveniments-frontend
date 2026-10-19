@@ -3,6 +3,7 @@ import {
   createPromotionCheckout,
   isStripeCheckoutUrl,
 } from "@lib/api/promotions";
+import { getValidAccessToken } from "@utils/auth-cookies";
 import type { PromotionResult } from "types/api/promotion";
 
 /**
@@ -20,4 +21,12 @@ export async function createPromotionCheckoutAction(
     return { ok: false, code: "CHECKOUT_UNAVAILABLE" };
   }
   return { ok: true, data: { url: result.data.url } };
+}
+
+/**
+ * Refreshes an expired access token. Server Components can't persist the new
+ * cookies, so RefreshSession calls this from the browser and re-renders.
+ */
+export async function refreshSessionAction(): Promise<boolean> {
+  return Boolean(await getValidAccessToken());
 }

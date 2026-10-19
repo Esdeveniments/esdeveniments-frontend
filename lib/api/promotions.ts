@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { requireAuth } from "./events";
 import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
+import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import { createKeyedCache } from "@lib/api/cache";
 import { parseEventSummaryList } from "@lib/validation/event";
 import type { EventSummaryResponseDTO } from "types/api/event";
@@ -33,39 +34,60 @@ async function readPromotionErrorCode(response: Response): Promise<string> {
   return "UNKNOWN";
 }
 
+// Server Components can't write cookies, so they must not refresh the access
+// token: Logto would rotate the refresh token and the new one would be lost.
+// Renders read the cookie token only; RefreshSession refreshes through a
+// server action and re-renders.
+async function getAuth(
+  canRefresh: boolean,
+): Promise<{ apiUrl: string; authToken: string } | null> {
+  if (canRefresh) {
+    try {
+      return await requireAuth();
+    } catch (error) {
+      if ((error as { status?: number }).status !== 401) throw error;
+      return null;
+    }
+  }
+  if (!isApiUrlConfigured()) throw new Error("NEXT_PUBLIC_API_URL is not set");
+  const authToken = await getAccessTokenFromCookies();
+  return authToken ? { apiUrl: getApiUrl(), authToken } : null;
+}
+
 async function promotionRequest<T>(
   eventId: string,
   path: "options" | "status" | "checkout",
   init: { method?: "POST"; headers?: Record<string, string>; body?: string } = {},
 ): Promise<PromotionResult<T>> {
-  let auth;
+  const auth = await getAuth(init.method === "POST");
+  if (!auth) return { ok: false, code: "AUTHENTICATION_REQUIRED" };
+
   try {
-    auth = await requireAuth();
-  } catch (error) {
-    if ((error as { status?: number }).status !== 401) throw error;
-    return { ok: false, code: "AUTHENTICATION_REQUIRED" };
-  }
-
-  const response = await fetchWithHmac(
-    `${auth.apiUrl}/events/${encodeURIComponent(eventId)}/promotions/${path}`,
-    {
-      method: init.method ?? "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${auth.authToken}`,
-        ...init.headers,
+    const response = await fetchWithHmac(
+      `${auth.apiUrl}/events/${encodeURIComponent(eventId)}/promotions/${path}`,
+      {
+        method: init.method ?? "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${auth.authToken}`,
+          ...init.headers,
+        },
+        body: init.body,
+        skipBodySigning: true,
       },
-      body: init.body,
-      skipBodySigning: true,
-    },
-  );
+    );
 
-  if (!response.ok) {
-    const code = await readPromotionErrorCode(response);
-    console.error(`promotions/${path}: HTTP ${response.status} ${code}`);
-    return { ok: false, code };
+    if (!response.ok) {
+      const code = await readPromotionErrorCode(response);
+      console.error(`promotions/${path}: HTTP ${response.status} ${code}`);
+      return { ok: false, code };
+    }
+    return { ok: true, data: (await response.json()) as T };
+  } catch (error) {
+    // Timeouts and malformed bodies must not turn the payment pages into a 500.
+    console.error(`promotions/${path}: request failed`, error);
+    return { ok: false, code: "UNKNOWN" };
   }
-  return { ok: true, data: (await response.json()) as T };
 }
 
 export function getPromotionOptions(

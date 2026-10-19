@@ -482,7 +482,10 @@ export default async function proxy(request: NextRequest) {
     // actual creator for up to 30 min (s-maxage=1800), and a creator's edit
     // form HTML could leak to other users via the CDN edge cache.
     const isEditPage = normalizedPath.includes("/edita");
-    const isPersonalizedHtml = isFavoritesPage || isEditPage;
+    // Promote pages are owner-only too and carry payment status and Stripe
+    // checkout URLs.
+    const isPromotePage = /^\/e\/[^/]+\/promote(\/|$)/.test(normalizedPath);
+    const isPersonalizedHtml = isFavoritesPage || isEditPage || isPromotePage;
 
     // AI bot requests must not pollute or be served from the shared CDN cache:
     // - Origin renders a different (fully-SSR) HTML for bots (see Slurp trick
