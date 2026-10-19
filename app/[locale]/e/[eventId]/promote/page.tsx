@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
-import { getOwnedEventBySlug } from "@lib/auth/owned-event";
+import { getOwnedEventBySlug, ownerCheckNeedsRefresh } from "@lib/auth/owned-event";
 import {
   getPromotionOptions,
   getPromotionStatus,
@@ -13,6 +13,7 @@ import {
 } from "@lib/api/promotions";
 import PromoteEventClient from "./PromoteEventClient";
 import RefreshSession from "./RefreshSession";
+import SessionRefreshNotice from "./SessionRefreshNotice";
 
 export async function generateMetadata({
   params,
@@ -39,7 +40,9 @@ export default async function PromotePage({
   const slug = (await params).eventId;
   // Owner only; the backend has no admin exemption for promotions.
   const event = await getOwnedEventBySlug(slug);
-  if (!event) return notFound();
+  if (!event) {
+    return (await ownerCheckNeedsRefresh()) ? <SessionRefreshNotice /> : notFound();
+  }
 
   const [options, status] = await Promise.all([
     getPromotionOptions(event.id),

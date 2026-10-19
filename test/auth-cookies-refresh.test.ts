@@ -77,6 +77,22 @@ describe("getValidAccessToken", () => {
     );
   });
 
+  it("refreshes even with an access token cookie when forceRefresh is set", async () => {
+    const m = await loadAuthCookies();
+    cookieStore.set(m.ACCESS_TOKEN_COOKIE, "rejected-token");
+    cookieStore.set(m.REFRESH_TOKEN_COOKIE, "my-refresh-token");
+    refreshAccessTokenMock.mockResolvedValue({
+      access_token: "new-access-token",
+      token_type: "Bearer",
+      expires_in: 3600,
+    });
+
+    const result = await m.getValidAccessToken({ forceRefresh: true });
+
+    expect(result).toBe("new-access-token");
+    expect(refreshAccessTokenMock).toHaveBeenCalledOnce();
+  });
+
   it("returns null when neither cookie is present", async () => {
     const m = await loadAuthCookies();
     const result = await m.getValidAccessToken();

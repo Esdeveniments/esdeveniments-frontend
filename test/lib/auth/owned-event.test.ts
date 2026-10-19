@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getOwnedEventBySlug } from "@lib/auth/owned-event";
+import { getOwnedEventBySlug, ownerCheckNeedsRefresh } from "@lib/auth/owned-event";
 
 const mockFetchEvent = vi.fn();
 const mockCurrentUser = vi.fn();
@@ -8,6 +8,10 @@ vi.mock("@lib/api/events", () => ({
 }));
 vi.mock("@lib/auth/session", () => ({
   getCurrentUser: () => mockCurrentUser(),
+}));
+const mockAccessToken = vi.fn();
+vi.mock("@utils/auth-cookies", () => ({
+  getAccessTokenFromCookies: () => mockAccessToken(),
 }));
 
 describe("getOwnedEventBySlug", () => {
@@ -36,5 +40,39 @@ describe("getOwnedEventBySlug", () => {
     mockCurrentUser.mockResolvedValue(null);
 
     expect(await getOwnedEventBySlug("e")).toBeNull();
+  });
+});
+
+describe("ownerCheckNeedsRefresh", () => {
+  beforeEach(() => {
+    mockCurrentUser.mockReset();
+    mockAccessToken.mockReset();
+  });
+
+  it("is false when logged out", async () => {
+    mockCurrentUser.mockResolvedValue(null);
+
+    expect(await ownerCheckNeedsRefresh()).toBe(false);
+  });
+
+  it("is true when the access token cookie expired", async () => {
+    mockCurrentUser.mockResolvedValue({ id: "logto-sub" });
+    mockAccessToken.mockResolvedValue(null);
+
+    expect(await ownerCheckNeedsRefresh()).toBe(true);
+  });
+
+  it("is true when the backend rejected the access token", async () => {
+    mockCurrentUser.mockResolvedValue({ id: "logto-sub", profileEnrichmentFailed: "auth" });
+    mockAccessToken.mockResolvedValue("rejected");
+
+    expect(await ownerCheckNeedsRefresh()).toBe(true);
+  });
+
+  it("is false for an enriched session", async () => {
+    mockCurrentUser.mockResolvedValue({ id: "backend-uuid" });
+    mockAccessToken.mockResolvedValue("valid");
+
+    expect(await ownerCheckNeedsRefresh()).toBe(false);
   });
 });

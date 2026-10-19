@@ -240,10 +240,17 @@ export function setTokenCookies(
  *
  * Returns null (caller should 401) only when there's no refresh_token either,
  * or the refresh itself fails (revoked/expired refresh token, Logto outage).
+ *
+ * `forceRefresh` skips the cookie's token, for callers whose request the
+ * backend already rejected with it.
  */
-export async function getValidAccessToken(): Promise<string | null> {
-  const existing = await getAccessTokenFromCookies();
-  if (existing) return existing;
+export async function getValidAccessToken({
+  forceRefresh = false,
+}: { forceRefresh?: boolean } = {}): Promise<string | null> {
+  if (!forceRefresh) {
+    const existing = await getAccessTokenFromCookies();
+    if (existing) return existing;
+  }
 
   const cookieStore = await cookies();
   const refreshToken = decrypt(cookieStore.get(REFRESH_TOKEN_COOKIE)?.value);

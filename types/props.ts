@@ -993,6 +993,11 @@ export interface PromotionStatusPanelProps {
   variant: "success" | "cancel";
 }
 
+// /e/[eventId]/promote: shown only if the session refresh fails
+export interface RefreshSessionProps {
+  children?: import("react").ReactNode;
+}
+
 export interface PromotionReturnPageProps {
   params: Promise<{ eventId: string }>;
   variant: PromotionStatusPanelProps["variant"];

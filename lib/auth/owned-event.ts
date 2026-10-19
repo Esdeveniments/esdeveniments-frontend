@@ -1,5 +1,6 @@
 import { fetchEventBySlug } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
+import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 /**
@@ -15,4 +16,16 @@ export async function getOwnedEventBySlug(
   ]);
   const isOwner = Boolean(currentUser?.id) && currentUser?.id === event?.owner?.id;
   return event && isOwner ? event : null;
+}
+
+/**
+ * True when the user is signed in but the access token expired or the backend
+ * rejected it. Then getCurrentUser has no backend UUID, so the owner check
+ * fails for the real owner until the session is refreshed.
+ */
+export async function ownerCheckNeedsRefresh(): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  if (user.profileEnrichmentFailed === "auth") return true;
+  return !(await getAccessTokenFromCookies());
 }

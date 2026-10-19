@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fetchWrapper from "@lib/api/fetch-wrapper";
 import * as authCookies from "@utils/auth-cookies";
 import * as events from "@lib/api/events";
+import * as apiHelpers from "@utils/api-helpers";
 import {
   buildPromotedEventsQuery,
   createPromotionCheckout,
@@ -17,7 +18,7 @@ vi.mock("@utils/auth-cookies", () => ({
 vi.mock("@utils/api-helpers", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@utils/api-helpers")>()),
   getApiUrl: () => "https://api.example.com/api",
-  isApiUrlConfigured: () => true,
+  isApiUrlConfigured: vi.fn(() => true),
 }));
 vi.mock("@lib/api/events", () => ({
   requireAuth: vi.fn().mockResolvedValue({
@@ -130,6 +131,15 @@ describe("promotion reads during a server render", () => {
       code: "AUTHENTICATION_REQUIRED",
     });
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("report a failed result instead of throwing without an API URL", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(apiHelpers.isApiUrlConfigured).mockReturnValueOnce(false);
+
+    expect(await getPromotionOptions("uuid-1")).toEqual({ ok: false, code: "UNKNOWN" });
+    expect(mockFetch).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it("turn a malformed response into a failed result instead of throwing", async () => {

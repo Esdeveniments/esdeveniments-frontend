@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { Link } from "@i18n/routing";
-import { getOwnedEventBySlug } from "@lib/auth/owned-event";
+import { getOwnedEventBySlug, ownerCheckNeedsRefresh } from "@lib/auth/owned-event";
 import { getPromotionStatus, isStripeCheckoutUrl } from "@lib/api/promotions";
 import type { AppLocale } from "types/i18n";
 import RefreshSession from "./RefreshSession";
+import SessionRefreshNotice from "./SessionRefreshNotice";
 import type { PromotionReturnPageProps, PromotionStatusPanelProps } from "types/props";
 
 export async function promotionReturnMetadata(
@@ -29,7 +30,9 @@ export async function PromotionReturnPage({ params, variant }: PromotionReturnPa
   setRequestLocale((await rootLocale()) as AppLocale);
 
   const event = await getOwnedEventBySlug(slug);
-  if (!event) return notFound();
+  if (!event) {
+    return (await ownerCheckNeedsRefresh()) ? <SessionRefreshNotice /> : notFound();
+  }
 
   const status = await getPromotionStatus(event.id);
   return (

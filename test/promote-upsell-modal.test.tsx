@@ -3,7 +3,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: (namespace: string) => (key: string) => `${namespace}.${key}`,
 }));
 
 const mockPush = vi.fn();
@@ -107,8 +107,8 @@ describe("PromoteUpsellModal", () => {
   it("shows the benefit list reusing the promote page's own copy", () => {
     render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" />);
 
-    expect(screen.getByText("benefit1")).toBeInTheDocument();
-    expect(screen.getByText("benefit2")).toBeInTheDocument();
-    expect(screen.getByText("benefit3")).toBeInTheDocument();
+    expect(screen.getByText("App.EventPromote.benefit1")).toBeInTheDocument();
+    expect(screen.getByText("App.EventPromote.benefit2")).toBeInTheDocument();
+    expect(screen.getByText("App.EventPromote.benefit3")).toBeInTheDocument();
   });
 });

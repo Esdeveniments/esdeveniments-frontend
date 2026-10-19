@@ -24,9 +24,11 @@ export async function createPromotionCheckoutAction(
 }
 
 /**
- * Refreshes an expired access token. Server Components can't persist the new
- * cookies, so RefreshSession calls this from the browser and re-renders.
+ * Refreshes an expired or rejected access token. Server Components can't
+ * persist the new cookies, so RefreshSession calls this from the browser and
+ * re-renders. Always refreshes: the render that asked for it already failed
+ * with whatever token the cookie holds.
  */
 export async function refreshSessionAction(): Promise<boolean> {
-  return Boolean(await getValidAccessToken());
+  return Boolean(await getValidAccessToken({ forceRefresh: true }));
 }

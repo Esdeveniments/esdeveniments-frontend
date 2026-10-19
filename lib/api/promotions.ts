@@ -59,10 +59,10 @@ async function promotionRequest<T>(
   path: "options" | "status" | "checkout",
   init: { method?: "POST"; headers?: Record<string, string>; body?: string } = {},
 ): Promise<PromotionResult<T>> {
-  const auth = await getAuth(init.method === "POST");
-  if (!auth) return { ok: false, code: "AUTHENTICATION_REQUIRED" };
-
   try {
+    const auth = await getAuth(init.method === "POST");
+    if (!auth) return { ok: false, code: "AUTHENTICATION_REQUIRED" };
+
     const response = await fetchWithHmac(
       `${auth.apiUrl}/events/${encodeURIComponent(eventId)}/promotions/${path}`,
       {
@@ -84,7 +84,8 @@ async function promotionRequest<T>(
     }
     return { ok: true, data: (await response.json()) as T };
   } catch (error) {
-    // Timeouts and malformed bodies must not turn the payment pages into a 500.
+    // Missing API config, timeouts and malformed bodies must not turn the
+    // payment pages into a 500.
     console.error(`promotions/${path}: request failed`, error);
     return { ok: false, code: "UNKNOWN" };
   }
