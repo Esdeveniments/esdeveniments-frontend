@@ -53,7 +53,8 @@ export async function fetchWithHmac(
   const headers = new Headers(options.headers);
   const backendKey = process.env.BACKEND_SERVICE_SECRET;
   // Only the backend gets the service secret, whatever URL a caller passes.
-  if (backendKey && urlObject.origin === getApiOrigin()) {
+  const sendsBackendKey = !!backendKey && urlObject.origin === getApiOrigin();
+  if (backendKey && sendsBackendKey) {
     headers.set("X-Backend-Key", backendKey);
   }
   // ponytail: prod backend (main) still verifies HMAC; delete this block and
@@ -99,6 +100,8 @@ export async function fetchWithHmac(
       body: normalizedBody,
       headers,
       signal,
+      // fetch forwards custom headers on redirect; a 3xx comes back as !ok instead.
+      ...(sendsBackendKey && { redirect: "manual" as const }),
     });
   } finally {
     clearTimeout(timeoutId);
