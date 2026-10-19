@@ -35,6 +35,7 @@ describe("lib/api/fetch-wrapper", () => {
 
       const headers = mockFetch.mock.calls[0][1].headers as Headers;
       expect(headers.get("X-Backend-Key")).toBe("a".repeat(64));
+      expect(mockFetch.mock.calls[0][1].redirect).toBe("manual");
     });
 
     it("never sends X-Backend-Key to a non-backend origin", async () => {

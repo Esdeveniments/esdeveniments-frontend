@@ -141,7 +141,7 @@ export async function GET() {
                   example: {
                     content: [
                       {
-                        id: 12345,
+                        id: "3f2b8c1e-7a4d-4e9b-9c2a-5d6e7f8a9b0c",
                         title: "Festival de Jazz de Barcelona",
                         slug: "festival-de-jazz-de-barcelona",
                         description: "Annual jazz festival in Barcelona",
@@ -199,7 +199,7 @@ export async function GET() {
               in: "path",
               required: true,
               schema: { type: "string" },
-              description: "Event slug or numeric ID",
+              description: "Event slug or UUID",
             },
           ],
           responses: {
