@@ -18,7 +18,7 @@ vi.mock("@heroicons/react/24/outline", () => ({
 vi.mock("react-day-picker/style.css", () => ({}));
 
 /**
- * Mirrors the component's toISOStringLocalMinutes: creates a local Date
+ * Mirrors toLocalDateTimeString (utils/date-helpers): creates a local Date
  * with the given hours/minutes and formats as local ISO (no UTC shift).
  * Uses numeric Date constructor to avoid UTC parsing of date-only strings.
  */

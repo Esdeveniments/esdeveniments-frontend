@@ -17,6 +17,7 @@ import type { Locale } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import type { DatePickerComponentProps, TimeSelectorProps, DateButtonProps } from "types/props";
 import "react-day-picker/style.css";
+import { toLocalDateTimeString } from "@utils/date-helpers";
 
 const LOCALE_MAP: Record<string, Locale> = { ca, es, en: enUS };
 
@@ -26,15 +27,6 @@ function toDate(dateStr: string): Date {
     return new Date(`${dateStr}T09:00`);
   }
   return new Date(dateStr);
-}
-
-function toISOStringLocalMinutes(date: Date): string {
-  const y = date.getFullYear();
-  const mo = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  const h = String(date.getHours()).padStart(2, "0");
-  const mi = String(date.getMinutes()).padStart(2, "0");
-  return `${y}-${mo}-${d}T${h}:${mi}`;
 }
 
 function computeEndDate(
@@ -235,7 +227,7 @@ export default function DatePickerImpl({
       const newStart = new Date(day);
       newStart.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
 
-      onChange("startDate", toISOStringLocalMinutes(newStart));
+      onChange("startDate", toLocalDateTimeString(newStart));
 
       if (isAllDay) {
         const dayDiff = Math.max(
@@ -247,7 +239,7 @@ export default function DatePickerImpl({
           setMinutes(setHours(newEnd, 23), 59),
           59,
         );
-        onChange("endDate", toISOStringLocalMinutes(endOfDay));
+        onChange("endDate", toLocalDateTimeString(endOfDay));
         setActiveField(null);
         requestAnimationFrame(() => {
           startButtonRef.current?.focus();
@@ -258,7 +250,7 @@ export default function DatePickerImpl({
           diff > 0
             ? new Date(newStart.getTime() + diff)
             : addMinutes(newStart, 60);
-        onChange("endDate", toISOStringLocalMinutes(newEnd));
+        onChange("endDate", toLocalDateTimeString(newEnd));
         // Keep calendar open so user can adjust the time without re-clicking
       }
     }
@@ -275,7 +267,7 @@ export default function DatePickerImpl({
           setMinutes(setHours(baseDate, 23), 59),
           59,
         );
-        onChange("endDate", toISOStringLocalMinutes(corrected));
+        onChange("endDate", toLocalDateTimeString(corrected));
         setActiveField(null);
         requestAnimationFrame(() => {
           endButtonRef.current?.focus();
@@ -283,7 +275,7 @@ export default function DatePickerImpl({
       } else {
         const corrected =
           newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
-        onChange("endDate", toISOStringLocalMinutes(corrected));
+        onChange("endDate", toLocalDateTimeString(corrected));
         // Keep calendar open so user can adjust the time without re-clicking
       }
     }
@@ -293,11 +285,11 @@ export default function DatePickerImpl({
     const [h, m] = time.split(":").map(Number);
     const newStart = new Date(startDate);
     newStart.setHours(h, m, 0, 0);
-    onChange("startDate", toISOStringLocalMinutes(newStart));
+    onChange("startDate", toLocalDateTimeString(newStart));
 
     if (newStart >= endDate) {
       const newEnd = addMinutes(newStart, 60);
-      onChange("endDate", toISOStringLocalMinutes(newEnd));
+      onChange("endDate", toLocalDateTimeString(newEnd));
     }
   };
 
@@ -307,7 +299,7 @@ export default function DatePickerImpl({
     newEnd.setHours(h, m, 0, 0);
 
     const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
-    onChange("endDate", toISOStringLocalMinutes(corrected));
+    onChange("endDate", toLocalDateTimeString(corrected));
   };
 
   const startDisplay = formatDateDisplay(startDate, locale);

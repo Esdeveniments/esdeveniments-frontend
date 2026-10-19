@@ -250,6 +250,19 @@ export const toLocalDateString = (date: Date): string => {
 };
 
 /**
+ * "YYYY-MM-DDTHH:mm" in the browser's local time: the value the event form
+ * shows and publishes. Never use toISOString() here, it shifts to UTC.
+ */
+export function toLocalDateTimeString(date: Date): string {
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${d}T${h}:${mi}`;
+}
+
+/**
  * Format time string for API compatibility (HH:mm format)
  * @param timeString - Time string in various formats
  * @returns string in HH:mm format or empty string if invalid
