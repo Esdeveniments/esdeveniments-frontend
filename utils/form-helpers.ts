@@ -4,7 +4,11 @@ import type {
   EventDetailResponseDTO,
 } from "types/api/event";
 import type { FormData } from "types/event";
-import { formatTimeForAPI, toLocalDateTimeString } from "./date-helpers";
+import {
+  formatTimeForAPI,
+  parseLocalDateTime,
+  toLocalDateTimeString,
+} from "./date-helpers";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -29,8 +33,8 @@ export function formDataToBackendDTO(
   form: FormData
 ): EventBaseRequestDTO {
   // Split the local datetimes the form shows into YYYY-MM-DD and HH:mm
-  const start = toLocalDateTimeString(new Date(form.startDate));
-  const end = toLocalDateTimeString(new Date(form.endDate));
+  const start = toLocalDateTimeString(parseLocalDateTime(form.startDate));
+  const end = toLocalDateTimeString(parseLocalDateTime(form.endDate));
 
   const startDate = start.slice(0, 10);
   const endDate = end.slice(0, 10);

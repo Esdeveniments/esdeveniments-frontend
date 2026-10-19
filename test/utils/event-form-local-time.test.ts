@@ -47,4 +47,14 @@ describe("event form local time", () => {
     expect(dto.startTime).toBe("00:30");
     expect(dto.endTime).toBe("02:00");
   });
+
+  it("keeps date-only edit values on their day west of UTC", () => {
+    process.env.TZ = "America/New_York";
+    try {
+      const dto = formDataToBackendDTO(form("2026-10-30", "2026-10-30"));
+      expect(dto.startDate).toBe("2026-10-30");
+    } finally {
+      process.env.TZ = "Europe/Madrid";
+    }
+  });
 });

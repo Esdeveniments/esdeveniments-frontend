@@ -250,6 +250,14 @@ export const toLocalDateString = (date: Date): string => {
 };
 
 /**
+ * Parses a form date value in local time. Edit forms prefill date-only
+ * "YYYY-MM-DD" values, which `new Date()` would read as UTC midnight.
+ */
+export function parseLocalDateTime(value: string): Date {
+  return new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00` : value);
+}
+
+/**
  * "YYYY-MM-DDTHH:mm" in the browser's local time: the value the event form
  * shows and publishes. Never use toISOString() here, it shifts to UTC.
  */
