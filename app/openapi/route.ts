@@ -536,7 +536,7 @@ export async function GET() {
           type: "object",
           required: ["id", "title", "slug"],
           properties: {
-            id: { type: "integer" },
+            id: { type: "string", description: "Unique event identifier (UUID)" },
             title: { type: "string" },
             slug: { type: "string" },
             description: { type: "string" },
