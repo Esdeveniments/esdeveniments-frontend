@@ -63,6 +63,10 @@ export type PromotedEventsQuery =
   | { placement: "REGION"; regionId: number }
   | { placement: "PROVINCE"; provinceId: number };
 
+/** Backend codes that have localized copy under App.EventPromote.errors. */
+export type PromotionCopyCode =
+  keyof (typeof import("../../messages/ca.json"))["App"]["EventPromote"]["errors"];
+
 /** Promotion calls never throw to the UI: failures carry the backend `code`. */
 export type PromotionResult<T> =
   | { ok: true; data: T }

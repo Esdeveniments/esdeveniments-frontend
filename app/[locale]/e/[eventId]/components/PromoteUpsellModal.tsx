@@ -14,8 +14,6 @@ export default function PromoteUpsellModal({
   slug,
 }: PromoteUpsellModalProps) {
   const t = useTranslations("App.Publish.promoteUpsell");
-  // Reuses the promote page's own benefit copy (App.EventPromote.benefit1-3)
-  // instead of duplicating the same three strings under a second namespace.
   const tPromote = useTranslations("App.EventPromote");
   const router = useRouter();
 
@@ -24,20 +22,13 @@ export default function PromoteUpsellModal({
       event_slug: slug,
       source: "event_detail",
     });
-    // Strip the one-time ?promote=1 marker from the *current* history entry
-    // before navigating away, so a later browser-back to this event doesn't
-    // re-open the modal. Uses a raw history replace (not router.replace) —
-    // mirrors AuthEventTracker's marker-stripping — because a router.replace
-    // immediately followed by the router.push below can have the push cancel
-    // the replace's pending navigation in the App Router, leaving the marker
-    // in place despite this call.
+    // Drop ?promote=1 so browser-back doesn't reopen the modal. A raw history
+    // replace, because router.replace + router.push can cancel each other.
     const url = new URL(window.location.href);
     url.searchParams.delete("promote");
     window.history.replaceState(window.history.state, "", url);
     router.push(`/e/${slug}/promote`);
-    // Explicitly returning false stops Modal's own setOpen(false) from racing
-    // this navigation — see the design doc's "Modal" section for why this
-    // matters (Modal calls setOpen(false) automatically unless told not to).
+    // false stops Modal's own setOpen(false) from racing this navigation.
     return false;
   };
 

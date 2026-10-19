@@ -7,7 +7,7 @@ import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
 import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
 import type { PromoteEventClientProps } from "types/props";
-import type { PromotionOptionDTO } from "types/api/promotion";
+import type { PromotionCopyCode, PromotionOptionDTO } from "types/api/promotion";
 import { createPromotionCheckoutAction } from "./actions";
 
 export default function PromoteEventClient({
@@ -39,9 +39,10 @@ export default function PromoteEventClient({
     hasTrackedPageViewRef.current = true;
   }, [slug]);
 
+  // Unknown backend codes fall back to the generic message.
   const describeCode = (code: string) => {
-    const key = `errors.${code}`;
-    return t.has(key as never) ? t(key as never) : t("errorGeneric");
+    const key = `errors.${code}` as `errors.${PromotionCopyCode}`;
+    return t.has(key) ? t(key) : t("errorGeneric");
   };
 
   const formatPrice = (option: PromotionOptionDTO) =>

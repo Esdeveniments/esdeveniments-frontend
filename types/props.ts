@@ -993,6 +993,11 @@ export interface PromotionStatusPanelProps {
   variant: "success" | "cancel";
 }
 
+export interface PromotionReturnPageProps {
+  params: Promise<{ eventId: string }>;
+  variant: PromotionStatusPanelProps["variant"];
+}
+
 export interface PromotedEventsSectionProps {
   /** Place page slug; omit (or "catalunya") for the Catalonia-wide list. */
   placeSlug?: string;

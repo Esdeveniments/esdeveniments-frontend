@@ -5,8 +5,7 @@ import type { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
-import { fetchEventBySlug } from "lib/api/events";
-import { getCurrentUser } from "@lib/auth/session";
+import { getOwnedEventBySlug } from "@lib/auth/owned-event";
 import {
   getPromotionOptions,
   getPromotionStatus,
@@ -37,16 +36,9 @@ export default async function PromotePage({
   params: Promise<{ eventId: string }>;
 }) {
   const slug = (await params).eventId;
-  const [event, currentUser] = await Promise.all([
-    fetchEventBySlug(slug),
-    getCurrentUser(),
-  ]);
-
-  // Only the owner may promote (admins included: the backend has no admin
-  // exemption here). 404 so the page doesn't leak, same as /edita.
-  const currentUserId = currentUser?.id;
-  const isOwner = Boolean(currentUserId) && currentUserId === event?.owner?.id;
-  if (!event || !isOwner) return notFound();
+  // Owner only; the backend has no admin exemption for promotions.
+  const event = await getOwnedEventBySlug(slug);
+  if (!event) return notFound();
 
   const [options, status] = await Promise.all([
     getPromotionOptions(event.id),

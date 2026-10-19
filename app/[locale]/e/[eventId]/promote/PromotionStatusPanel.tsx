@@ -1,13 +1,50 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
+import { locale as rootLocale } from "next/root-params";
 import { Link } from "@i18n/routing";
-import { isStripeCheckoutUrl } from "@lib/api/promotions";
-import type { PromotionStatusPanelProps } from "types/props";
+import { getOwnedEventBySlug } from "@lib/auth/owned-event";
+import { getPromotionStatus, isStripeCheckoutUrl } from "@lib/api/promotions";
+import type { AppLocale } from "types/i18n";
+import type { PromotionReturnPageProps, PromotionStatusPanelProps } from "types/props";
+
+export async function promotionReturnMetadata(
+  variant: PromotionStatusPanelProps["variant"],
+): Promise<Metadata> {
+  const locale = (await rootLocale()) as AppLocale;
+  const t = await getTranslations({ locale, namespace: "App.EventPromote" });
+  return {
+    title: t(`${variant}Page.title`),
+    robots: { index: false, follow: false },
+  };
+}
+
+/**
+ * Body of /promote/success and /promote/cancel. Stripe returns to
+ * /e/{slug}/promote/{variant} with no locale prefix and no session id.
+ */
+export async function PromotionReturnPage({ params, variant }: PromotionReturnPageProps) {
+  const slug = (await params).eventId;
+  setRequestLocale((await rootLocale()) as AppLocale);
+
+  const event = await getOwnedEventBySlug(slug);
+  if (!event) return notFound();
+
+  const status = await getPromotionStatus(event.id);
+  return (
+    <PromotionStatusPanel
+      slug={event.slug}
+      status={status.ok ? status.data : null}
+      variant={variant}
+    />
+  );
+}
 
 /**
  * Stripe's redirect proves nothing: the webhook confirms payment. So both
  * return pages render from GET /promotions/status, never from the URL.
  */
-export default async function PromotionStatusPanel({
+async function PromotionStatusPanel({
   slug,
   status,
   variant,
