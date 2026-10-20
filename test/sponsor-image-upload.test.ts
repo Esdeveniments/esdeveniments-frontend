@@ -178,6 +178,29 @@ describe("Sponsor Image Upload Route", () => {
   });
 
   describe("validation", () => {
+    it.each([
+      ["webp", "image/webp", [0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]],
+      ["gif labelled as png", "image/png", [0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0, 0, 0, 0, 0, 0]],
+      ["webp labelled as jpeg", "image/jpeg", [0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]],
+    ])("rejects %s content with invalid_file_type", async (_name, type, bytes) => {
+      const file = new File([new Uint8Array(bytes)], "a.img", { type });
+      const response = await POST(createMockRequest(createMockFormData(validSessionId, file)));
+      expect(response.status).toBe(400);
+      expect((await response.json()).errorCode).toBe("invalid_file_type");
+      expect(mockUploadEventImage).not.toHaveBeenCalled();
+    });
+
+    it("accepts PNG content", async () => {
+      const png = new File(
+        [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0])],
+        "a.png",
+        { type: "image/png" },
+      );
+      mockUpdateCheckoutSessionMetadata.mockResolvedValue(true);
+      const response = await POST(createMockRequest(createMockFormData(validSessionId, png)));
+      expect(response.status).toBe(200);
+    });
+
     it("rejects missing session id", async () => {
       const formData = new FormData();
       formData.set("imageFile", new File(["test"], "test.jpg"));

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fetchEvents, insertAds } from "../lib/api/events";
-import { uploadSponsorImage as uploadEventImage } from "../lib/api/sponsors-external";
+import { uploadSponsorImage } from "../lib/api/sponsors-external";
 import * as fetchWrapper from "../lib/api/fetch-wrapper";
 
 vi.mock("next/server", () => ({
@@ -115,7 +115,7 @@ describe("lib/api/events", () => {
       value: MAX_SPONSOR_IMAGE_BYTES + 1024,
     });
 
-    await expect(uploadEventImage(oversizedFile)).rejects.toThrow(
+    await expect(uploadSponsorImage(oversizedFile)).rejects.toThrow(
       EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
     );
   });
@@ -140,7 +140,7 @@ describe("lib/api/events", () => {
       .spyOn(fetchWrapper, "fetchWithHmac")
       .mockResolvedValue(mockResponse as unknown as Response);
 
-    const result = await uploadEventImage(imageFile);
+    const result = await uploadSponsorImage(imageFile);
     expect(result).toEqual({
       url: "https://cdn.example.com/photo.jpg",
       publicId: "abc-123",
@@ -165,7 +165,7 @@ describe("lib/api/events", () => {
 
     vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
 
-    await expect(uploadEventImage(imageFile)).rejects.toThrow(
+    await expect(uploadSponsorImage(imageFile)).rejects.toThrow(
       EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
     );
   });
@@ -187,7 +187,7 @@ describe("lib/api/events", () => {
 
     vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
 
-    await expect(uploadEventImage(imageFile)).rejects.toThrow(
+    await expect(uploadSponsorImage(imageFile)).rejects.toThrow(
       /invalid response/i
     );
   });
@@ -204,6 +204,6 @@ describe("lib/api/events", () => {
 
     vi.spyOn(fetchWrapper, "fetchWithHmac").mockResolvedValue(mockResponse);
 
-    await expect(uploadEventImage(imageFile)).rejects.toThrow(SyntaxError);
+    await expect(uploadSponsorImage(imageFile)).rejects.toThrow(/invalid response/i);
   });
 });

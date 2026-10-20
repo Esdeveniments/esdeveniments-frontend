@@ -9,6 +9,13 @@ import { cleanupEvent, publishTestEvent } from "./helpers/publish";
  *   - E2E_STAGING_EMAIL
  *   - E2E_STAGING_PASSWORD
  *
+ * Optional second verified staging user (the "different signed-in user" test
+ * skips without it):
+ *   - E2E_STAGING_EMAIL_2
+ *   - E2E_STAGING_PASSWORD_2
+ *   Provision it like the first pair (scripts/e2e-staging-setup.sh) and set
+ *   both as secrets on the GitHub "staging" environment.
+ *
  * The flow publishes an event, then verifies that:
  *   - The creator sees the "Edit event" button on the detail page.
  *   - The creator can navigate to /e/{slug}/edita.

@@ -30,4 +30,12 @@ describe("getValidatedImageFile", () => {
       "not a valid image",
     );
   });
+
+  it.each([
+    ["gif", "image/gif", [0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0, 0, 0, 0, 0, 0]],
+    ["webp", "image/webp", [0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]],
+  ])("throws for %s content the backend rejects", async (name, type, bytes) => {
+    const file = new File([new Uint8Array(bytes)], `a.${name}`, { type });
+    await expect(getValidatedImageFile(file)).rejects.toThrow("not a valid image");
+  });
 });

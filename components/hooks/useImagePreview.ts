@@ -24,6 +24,9 @@ export function useImagePreview(initialValue: string | null) {
         setPreview(reader.result);
       }
     });
+    reader.addEventListener("error", () => {
+      if (version === versionRef.current) setPreview(null);
+    });
     reader.readAsDataURL(file);
   }, []);
 

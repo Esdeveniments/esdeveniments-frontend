@@ -101,6 +101,8 @@ jobs:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
           E2E_STAGING_PASSWORD: ${{ secrets.E2E_STAGING_PASSWORD }}
+          E2E_STAGING_EMAIL_2: ${{ secrets.E2E_STAGING_EMAIL_2 }}
+          E2E_STAGING_PASSWORD_2: ${{ secrets.E2E_STAGING_PASSWORD_2 }}
         run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/event-edit-creator-only.spec.ts
 
       - name: Stop server

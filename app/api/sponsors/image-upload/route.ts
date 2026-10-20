@@ -12,7 +12,7 @@ import {
   FORMDATA_PARSE_ERROR_SUBSTRING,
 } from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
-import { isValidImageContent } from "@utils/image-validation";
+import { detectImageType, isBackendImageType } from "@utils/image-validation";
 
 // 10 uploads per minute per IP — prevents abuse of the public image upload
 const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
@@ -90,13 +90,19 @@ export async function POST(request: Request) {
 
     // Server-side validation: check actual file content via magic bytes
     // Client-provided MIME types can be spoofed by malicious clients
-    const isValidContent = await isValidImageContent(imageFile);
-    if (!isValidContent) {
+    const detectedType = await detectImageType(imageFile);
+    if (!detectedType) {
       return NextResponse.json(
         {
           errorCode: "invalid_file_content",
           error: "File is not a valid image.",
         },
+        { status: 400 },
+      );
+    }
+    if (!isBackendImageType(detectedType)) {
+      return NextResponse.json(
+        { errorCode: "invalid_file_type", error: "File must be a JPEG or PNG image." },
         { status: 400 },
       );
     }
