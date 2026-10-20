@@ -1,5 +1,6 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { loginViaUI } from "./helpers/login";
+import { cleanupEvent, publishTestEvent } from "./helpers/publish";
 
 /**
  * E2E: Creator-only edit access + form submission
@@ -7,6 +8,13 @@ import { loginViaUI } from "./helpers/login";
  * Requires the same staging credentials as publish-integration.spec.ts:
  *   - E2E_STAGING_EMAIL
  *   - E2E_STAGING_PASSWORD
+ *
+ * Optional second verified staging user (the "different signed-in user" test
+ * skips without it):
+ *   - E2E_STAGING_EMAIL_2
+ *   - E2E_STAGING_PASSWORD_2
+ *   Provision it like the first pair (scripts/e2e-staging-setup.sh) and set
+ *   both as secrets on the GitHub "staging" environment.
  *
  * The flow publishes an event, then verifies that:
  *   - The creator sees the "Edit event" button on the detail page.
@@ -27,121 +35,30 @@ const EDITED_TITLE = `Edited ${UNIQUE_SUFFIX}`;
 
 let createdEventSlug: string | null = null;
 
-async function publishTestEvent(page: Page) {
-  await page.goto("/en/publica", {
-    waitUntil: "domcontentloaded",
-    timeout: 60_000,
-  });
-
-  const form = page.getByTestId("event-form");
-  await expect(form).toBeVisible({ timeout: 30_000 });
-  await expect(form).toHaveAttribute("data-hydrated", "true", {
-    timeout: 30_000,
-  });
-
-  // Step 0: basics
-  await page.locator("#title").fill(TEST_EVENT_TITLE);
-  await page.locator("#description").fill(
-    `Automated E2E edit-access test event created at ${new Date().toISOString()}. Safe to delete.`
-  );
-  await page.locator("#url").fill("https://example.com/e2e-edit-test");
-  await page.getByTestId("next-button").click();
-
-  // Step 1: location
-  const townSelect = page.getByTestId("town-select");
-  await expect(townSelect).toBeVisible({ timeout: 15_000 });
-  await townSelect.click();
-  await page.keyboard.type("Barcelona");
-  await page.waitForTimeout(1_000);
-  await page.keyboard.press("Enter");
-  await page.locator("#location").fill("Test Venue - Edit E2E");
-
-  const categoriesSelect = page.locator("#categories").locator("..");
-  await categoriesSelect.click();
-  await page.waitForTimeout(500);
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("Enter");
-  await page.keyboard.press("Escape");
-
-  await page.getByTestId("next-button").click();
-
-  // Step 2: image & dates
-  const imageUrlTab = page.getByRole("button", { name: /url|enllaç/i });
-  if (await imageUrlTab.isVisible()) {
-    await imageUrlTab.click();
-  }
-
-  const imageUrlInput = page.locator('input[placeholder*="http"]').first();
-  if (await imageUrlInput.isVisible()) {
-    await imageUrlInput.fill("https://picsum.photos/800/600");
-  }
-
-  const startDateInput = page.locator("#event-date-start");
-  if (await startDateInput.isVisible()) {
-    const startVal = await startDateInput.inputValue();
-    if (!startVal) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      await startDateInput.fill(tomorrow.toISOString().split("T")[0]);
-    }
-  }
-
-  const endDateInput = page.locator("#event-date-end");
-  if (await endDateInput.isVisible()) {
-    const endVal = await endDateInput.inputValue();
-    if (!endVal) {
-      const dayAfter = new Date();
-      dayAfter.setDate(dayAfter.getDate() + 2);
-      await endDateInput.fill(dayAfter.toISOString().split("T")[0]);
-    }
-  }
-
-  const publishButton = page.getByTestId("publish-button");
-  await expect(publishButton).toBeVisible({ timeout: 10_000 });
-  await page.waitForTimeout(500);
-  await publishButton.click();
-
-  await page.waitForURL((url) => !url.pathname.includes("/publica"), {
-    timeout: 60_000,
-  });
-
-  const currentUrl = page.url();
-  const slugMatch = currentUrl.match(/\/e\/([^/?#]+)/);
-  expect(slugMatch, `expected to land on /e/{slug}, got: ${currentUrl}`).not.toBeNull();
-  if (!slugMatch) throw new Error("unreachable: slug match guard");
-  createdEventSlug = slugMatch[1];
-}
-
-async function cleanupEvent(page: Page, uuid: string) {
-  try {
-    const response = await page.evaluate(async (eventUuid: string) => {
-      const res = await fetch(`/api/events/${eventUuid}`, {
-        method: "DELETE",
-      });
-      return { status: res.status, ok: res.ok };
-    }, uuid);
-    console.log(`Cleanup event ${uuid}: ${response.status}`);
-  } catch (error) {
-    console.warn(`Failed to clean up event ${uuid}:`, error);
-  }
-}
+// Traces record fill() arguments, including the staging password.
+test.use({ trace: "off" });
 
 test.describe("Creator-only edit access (staging)", () => {
   test.skip(!hasCredentials, "Skipped: E2E_STAGING_EMAIL/E2E_STAGING_PASSWORD not set");
-  test.setTimeout(180_000);
+  // Real login + publish against staging. A describe-level setTimeout does
+  // not cover beforeAll/afterAll, so each hook sets its own.
+  const timeout = 180_000;
+  test.setTimeout(timeout);
 
   test.beforeAll(async ({ browser }) => {
+    test.setTimeout(timeout);
     const context = await browser.newContext();
     const page = await context.newPage();
     try {
       await loginViaUI(page, email!, password!);
-      await publishTestEvent(page);
+      createdEventSlug = await publishTestEvent(page, TEST_EVENT_TITLE);
     } finally {
       await context.close();
     }
   });
 
   test.afterAll(async ({ browser }) => {
+    test.setTimeout(timeout);
     if (!createdEventSlug) return;
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -255,15 +172,68 @@ test.describe("Creator-only edit access (staging)", () => {
     await expect(page.getByTestId("event-edit-link")).not.toBeVisible();
   });
 
-  test("logged-out user gets 404 on the edit page", async ({ page }) => {
+  test("a different signed-in user cannot edit or promote the event", async ({
+    browser,
+  }) => {
+    const otherEmail = process.env.E2E_STAGING_EMAIL_2;
+    const otherPassword = process.env.E2E_STAGING_PASSWORD_2;
+    test.skip(
+      !otherEmail || !otherPassword,
+      "Skipped: E2E_STAGING_EMAIL_2/E2E_STAGING_PASSWORD_2 not set",
+    );
+
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    try {
+      await loginViaUI(page, otherEmail!, otherPassword!);
+      const me = await page.evaluate(async () => (await fetch("/api/auth/me")).json());
+      expect(me.user?.email).toBe(otherEmail);
+
+      await page.goto(`/en/e/${createdEventSlug}`, {
+        waitUntil: "domcontentloaded",
+        timeout: 60_000,
+      });
+      await expect(page.getByTestId("desktop-avatar-link")).toBeVisible({
+        timeout: 15_000,
+      });
+      // The edit test may already have renamed the event; the suffix survives.
+      await expect(page.getByRole("heading", { level: 1, name: UNIQUE_SUFFIX }),
+      ).toBeVisible();
+      await expect(page.getByTestId("event-edit-link")).toHaveCount(0);
+
+      for (const path of ["edita", "promote"]) {
+        await page.goto(`/en/e/${createdEventSlug}/${path}`, {
+          waitUntil: "domcontentloaded",
+          timeout: 60_000,
+        });
+        await expect(
+          page
+            .getByTestId("no-event-found")
+            .or(page.getByTestId("not-found-page")),
+        ).toBeVisible({ timeout: 30_000 });
+        await expect(page.getByTestId("event-form")).toHaveCount(0);
+        await expect(page.getByTestId("promote-confirm-button")).toHaveCount(0);
+      }
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("logged-out user cannot open the edit form", async ({ page }) => {
     // Ensure no session cookie is sent by clearing cookies.
     await page.context().clearCookies();
 
-    const response = await page.goto(`/en/e/${createdEventSlug}/edita`, {
+    // The 404 UI streams after the response status is committed, so the
+    // status is 200 even for missing events. Assert what the user and the
+    // owner data actually see: the not-found page, never the form.
+    await page.goto(`/en/e/${createdEventSlug}/edita`, {
       waitUntil: "domcontentloaded",
       timeout: 60_000,
     });
 
-    expect(response?.status()).toBe(404);
+    await expect(
+      page.getByTestId("no-event-found").or(page.getByTestId("not-found-page")),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("event-form")).toHaveCount(0);
   });
 });

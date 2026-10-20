@@ -1,10 +1,16 @@
 import { test, expect } from "@playwright/test";
+import path from "node:path";
 import { mockAuthenticatedUser } from "./helpers/auth";
 
 test.describe("Publish - Preview", () => {
   // Publishing is gated behind auth — sign the session in before each test.
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
+    await page.route("**/api/regions/options", (route) => route.fulfill({
+      json: [{ id: 1, name: "Maresme", slug: "maresme", cities: [
+        { id: 2, value: "mataro", label: "Mataró", latitude: 41.54, longitude: 2.44 },
+      ] }],
+    }));
   });
 
   test("shows preview modal with event details", async ({ page }) => {
@@ -56,6 +62,10 @@ test.describe("Publish - Preview", () => {
     await nextBtn2.click();
 
     // Step 3: Dates & Image
+    await page.setInputFiles(
+      'input[type="file"]',
+      path.join(process.cwd(), "public/static/icons/icon-192x192.png"),
+    );
 
     const previewButton = page.getByTestId("preview-button");
     await expect(previewButton).toBeVisible({ timeout: 20000 });
@@ -69,6 +79,7 @@ test.describe("Publish - Preview", () => {
     // Assert Content
     await expect(modal).toContainText(title);
     await expect(modal).toContainText(desc);
+    await page.screenshot({ path: test.info().outputPath("preview-ready.png") });
 
     // Close Modal
     await modal.getByLabel("Tanca").click();

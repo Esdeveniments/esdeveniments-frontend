@@ -11,6 +11,7 @@ import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
 import { getZodValidationState } from "@utils/form-validation";
 import { toLocalDateTimeString } from "@utils/date-helpers";
 import EventForm from "@components/ui/EventForm";
+import { useImagePreview } from "@components/hooks/useImagePreview";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
@@ -25,13 +26,11 @@ import {
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
 } from "@utils/constants";
-import { uploadImageWithProgress } from "@utils/upload-event-image-client";
 import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
 import { sendGoogleEvent } from "@utils/analytics";
 import {
   buildPublishContext,
   classifyPublishError,
-  classifyUploadError,
 } from "@utils/publica-analytics";
 
 import Modal from "@components/ui/common/modal";
@@ -72,7 +71,6 @@ const defaultEventDates = getDefaultEventDates();
 const defaultForm: FormData = {
   title: "",
   description: "",
-  type: "FREE",
   startDate: defaultEventDates.startDate,
   startTime: "",
   endDate: defaultEventDates.endDate,
@@ -80,7 +78,6 @@ const defaultForm: FormData = {
   region: null,
   town: null,
   location: "",
-  imageUrl: null,
   url: "",
   categories: [],
   email: "",
@@ -114,9 +111,6 @@ const isCategoryOption = (
     "label" in category
   );
 
-const buildFileSignature = (file: File) =>
-  `${file.name}-${file.size}-${file.lastModified}`;
-
 // The form body. Mounted only for authenticated users (see Publica below),
 // so its data hooks (regions/cities, categories) never fire for guests.
 const PublishForm = () => {
@@ -125,7 +119,7 @@ const PublishForm = () => {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, updateImagePreview] = useImagePreview(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   // A submit-time 403 (profileCompleted: false) means the client's session
@@ -134,17 +128,6 @@ const PublishForm = () => {
   // the same CompleteProfileGate here instead of a generic error, so the
   // user has an actual way forward.
   const [showCompleteProfileGate, setShowCompleteProfileGate] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [uploadAbortController, setUploadAbortController] =
-    useState<AbortController | null>(null);
-  const [uploadedImageSignature, setUploadedImageSignature] = useState<
-    string | null
-  >(null);
-  const [imageUploadMessage, setImageUploadMessage] = useState<string | null>(
-    null
-  );
 
   // Funnel tracking refs (no re-render needed)
   const formStartedRef = useRef(false);
@@ -224,27 +207,10 @@ const PublishForm = () => {
 
   const handleImageChange = (file: File | null) => {
     setError(null);
-    setImageUploadMessage(null);
     trackFieldInteraction("image");
 
-    if (!file) {
-      setImageFile(null);
-      setImagePreview(null);
-      setUploadedImageUrl(null);
-      setUploadedImageSignature(null);
-      setUploadProgress(0);
-      return;
-    }
-
     setImageFile(file);
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      setImagePreview(reader.result as string);
-    });
-    reader.readAsDataURL(file);
-    setUploadedImageUrl(null);
-    setUploadedImageSignature(null);
-    setUploadProgress(0);
+    updateImagePreview(file);
   };
 
   const handleTownChange = (town: Option | null) => {
@@ -270,7 +236,7 @@ const PublishForm = () => {
     window.open(normalized, "_blank", "noopener,noreferrer");
 
     sendGoogleEvent("publish_test_url_click", {
-      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      ...buildPublishContext({ form, imageFile }),
       source: "publica",
     });
   };
@@ -282,20 +248,13 @@ const PublishForm = () => {
 
   const handlePreview = () => {
     sendGoogleEvent("publish_preview_open", {
-      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      ...buildPublishContext({ form, imageFile }),
       source: "publica",
     });
 
-    // Determine the image URL to show in preview
-    // 1. Uploaded image URL if available
-    // 2. Currently selected file (as data URL) if available
-    // 3. Any manual URL entered
-    const previewImageUrl =
-      uploadedImageUrl || imagePreview || form.imageUrl || "";
-
     const event = mapDraftToPreviewEvent({
       form,
-      imageUrl: previewImageUrl,
+      imageUrl: imagePreview,
     });
     setPreviewEvent(event);
     setShowPreview(true);
@@ -403,7 +362,6 @@ const PublishForm = () => {
 
   const onSubmit = async () => {
     setError(null); // Clear any previous errors
-    setImageUploadMessage(null);
 
     addBreadcrumb({
       category: "publica",
@@ -411,18 +369,18 @@ const PublishForm = () => {
       level: "info",
       data: {
         source: "publica",
-        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+        ...buildPublishContext({ form, imageFile }),
       },
     });
 
     sendGoogleEvent("publish_submit_attempt", {
-      ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+      ...buildPublishContext({ form, imageFile }),
       source: "publica",
     });
 
     if (imageFile && imageFile.size > MAX_TOTAL_UPLOAD_BYTES) {
       sendGoogleEvent("publish_submit_blocked", {
-        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+        ...buildPublishContext({ form, imageFile }),
         source: "publica",
         reason: "image_too_large_client",
       });
@@ -432,105 +390,11 @@ const PublishForm = () => {
       return;
     }
 
-    if (isUploadingImage) {
-      sendGoogleEvent("publish_submit_blocked", {
-        ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
-        source: "publica",
-        reason: "upload_in_progress",
-      });
-      return;
-    }
-
     startTransition(async () => {
       try {
-        let resolvedImageUrl =
-          uploadedImageUrl ||
-          (form.imageUrl ? normalizeUrl(form.imageUrl) || null : null);
-
-        if (imageFile) {
-          const signature = buildFileSignature(imageFile);
-          if (signature !== uploadedImageSignature) {
-            setIsUploadingImage(true);
-            setUploadProgress(0);
-            uploadAbortController?.abort();
-            const controller = new AbortController();
-            setUploadAbortController(controller);
-            try {
-              sendGoogleEvent("publish_image_upload_start", {
-                ...buildPublishContext({
-                  form,
-                  imageFile,
-                  uploadedImageUrl,
-                }),
-                source: "publica",
-              });
-
-              const uploadResult = await uploadImageWithProgress(imageFile, {
-                onProgress: (percent) => setUploadProgress(percent),
-                signal: controller.signal,
-              });
-              resolvedImageUrl = uploadResult.url;
-              setUploadedImageUrl(uploadResult.url);
-              setUploadedImageSignature(signature);
-              setImageUploadMessage("Imatge pujada correctament.");
-              setUploadProgress(100);
-              setTimeout(() => setUploadProgress(0), 800);
-
-              sendGoogleEvent("publish_image_upload_success", {
-                ...buildPublishContext({
-                  form,
-                  imageFile,
-                  uploadedImageUrl: uploadResult.url,
-                }),
-                source: "publica",
-              });
-            } catch (uploadError) {
-              const reason = classifyUploadError(uploadError);
-              if (reason === "abort") {
-                sendGoogleEvent("publish_image_upload_abort", {
-                  ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
-                  source: "publica",
-                });
-                setIsUploadingImage(false);
-                setUploadProgress(0);
-                setImageUploadMessage(null);
-                setUploadAbortController(null);
-                return;
-              }
-
-              sendGoogleEvent("publish_image_upload_error", {
-                ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
-                source: "publica",
-                reason,
-              });
-
-              const uploadMessage =
-                uploadError instanceof Error
-                  ? uploadError.message
-                  : String(uploadError);
-              if (uploadMessage === EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR) {
-                setError(
-                  `La imatge supera el límit permès de ${MAX_UPLOAD_LIMIT_LABEL} MB. Si us plau, redueix-la o tria un altre fitxer.`
-                );
-              } else {
-                setError(
-                  "No hem pogut pujar la imatge. Revisa la connexió i torna-ho a intentar."
-                );
-              }
-              setImageUploadMessage(null);
-              setIsUploadingImage(false);
-              setUploadProgress(0);
-              return;
-            } finally {
-              setIsUploadingImage(false);
-              setUploadAbortController(null);
-            }
-          }
-        }
-
-        if (!resolvedImageUrl) {
+        if (!imageFile) {
           sendGoogleEvent("publish_submit_blocked", {
-            ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+            ...buildPublishContext({ form, imageFile }),
             source: "publica",
             reason: "missing_image",
           });
@@ -549,19 +413,18 @@ const PublishForm = () => {
           ...form,
           url: normalizeUrl(form.url),
           location,
-          imageUrl: resolvedImageUrl,
         });
 
+        const payload = new globalThis.FormData();
+        payload.append("event", JSON.stringify(eventData));
+        payload.append("imageFile", imageFile);
+
         const e2eExtras = buildE2EExtras();
-        const result = await createEventAction(eventData, e2eExtras);
+        const result = await createEventAction(payload, e2eExtras);
 
         if (!result.success) {
           sendGoogleEvent("publish_error", {
-            ...buildPublishContext({
-              form,
-              imageFile,
-              uploadedImageUrl: resolvedImageUrl,
-            }),
+            ...buildPublishContext({ form, imageFile }),
             source: "publica",
             category:
               result.reason === "profile-incomplete"
@@ -582,11 +445,7 @@ const PublishForm = () => {
           // backend response body could still resolve to something falsy
           // at runtime despite what the type claims.
           sendGoogleEvent("publish_error", {
-            ...buildPublishContext({
-              form,
-              imageFile,
-              uploadedImageUrl: resolvedImageUrl,
-            }),
+            ...buildPublishContext({ form, imageFile }),
             source: "publica",
             category: "generic",
           });
@@ -594,11 +453,7 @@ const PublishForm = () => {
           captureException(new Error("publica: createEventAction returned no event"), {
             tags: { section: "publica", action: "create-event", result: "empty" },
             extra: {
-              publish_context: buildPublishContext({
-                form,
-                imageFile,
-                uploadedImageUrl: resolvedImageUrl,
-              }),
+              publish_context: buildPublishContext({ form, imageFile }),
             },
           });
           return;
@@ -613,11 +468,7 @@ const PublishForm = () => {
         }
 
         sendGoogleEvent("publish_success", {
-          ...buildPublishContext({
-            form,
-            imageFile,
-            uploadedImageUrl: resolvedImageUrl,
-          }),
+          ...buildPublishContext({ form, imageFile }),
           source: "publica",
           has_slug: Boolean(slug),
         });
@@ -650,7 +501,7 @@ const PublishForm = () => {
           normalizedMessage.includes("integrity violation");
 
         sendGoogleEvent("publish_error", {
-          ...buildPublishContext({ form, imageFile, uploadedImageUrl }),
+          ...buildPublishContext({ form, imageFile }),
           source: "publica",
           category: classifyPublishError({
             isImageUploadLimit,
@@ -698,11 +549,7 @@ const PublishForm = () => {
               }),
             },
             extra: {
-              publish_context: buildPublishContext({
-                form,
-                imageFile,
-                uploadedImageUrl,
-              }),
+              publish_context: buildPublishContext({ form, imageFile }),
             },
           });
         }
@@ -799,7 +646,6 @@ const PublishForm = () => {
               isLoading={isPending}
               cityOptions={cityOptions}
               categoryOptions={categoryOptions}
-              progress={uploadProgress}
               isLoadingCities={isLoadingCities}
               handleFormChange={handleFormChange}
               handleImageChange={handleImageChange}
@@ -807,8 +653,6 @@ const PublishForm = () => {
               handleCategoriesChange={handleCategoriesChange}
               imageToUpload={imagePreview}
               imageFile={imageFile}
-              isUploadingImage={isUploadingImage}
-              uploadMessage={imageUploadMessage}
               handleTestUrl={handleTestUrl}
               onPreview={handlePreview}
               canPreview={true}

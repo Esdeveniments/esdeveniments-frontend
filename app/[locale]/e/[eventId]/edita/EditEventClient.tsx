@@ -1,10 +1,11 @@
 "use client";
 import { useRouter, Link } from "@i18n/routing";
 import { useState, useMemo, useTransition } from "react";
+import { useImagePreview } from "@components/hooks/useImagePreview";
 import { useTranslations } from "next-intl";
 import { getProfileSlug } from "@utils/user-helpers";
 import EventForm from "@components/ui/EventForm";
-import type { FormData } from "types/event";
+import type { FormData, CoverImageIntent } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
 import { normalizeUrl } from "@utils/string-helpers";
@@ -20,10 +21,12 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
   const router = useRouter();
   const creatorSlug = event.owner ? getProfileSlug(event.owner) : null;
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
-  const [imageToUpload, setImageToUpload] = useState<string | null>(
-    form.imageUrl
-  );
-  const [progress] = useState<number>(0);
+  const [imageToUpload, updateImagePreview] = useImagePreview(event.imageUrl);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [coverIntent, setCoverIntent] = useState<CoverImageIntent>("keep");
+  // A saved title change renames the slug even when the cover step fails;
+  // retries must look the event up by the new one.
+  const [slug, setSlug] = useState(event.slug ?? "");
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -69,15 +72,9 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
     handleFormChange("categories", categories);
 
   const handleImageChange = (file: File | null) => {
-    if (!file) {
-      setImageToUpload(null);
-      return;
-    }
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      setImageToUpload(reader.result as string);
-    });
-    reader.readAsDataURL(file);
+    setImageFile(file);
+    setCoverIntent(file ? "replace" : "remove");
+    updateImagePreview(file);
   };
 
   async function onSubmit() {
@@ -92,11 +89,24 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
           ...form,
           url: normalizeUrl(form.url),
         });
-        const result = await editEvent(event.id, event.slug, data);
+        let cover: globalThis.FormData | undefined;
+        if (coverIntent === "replace" && imageFile) {
+          cover = new globalThis.FormData();
+          cover.append("imageFile", imageFile);
+        } else if (coverIntent === "remove" && event.imageUrl) {
+          cover = new globalThis.FormData();
+          cover.append("removeImage", "1");
+        }
+        const result = await editEvent(event.id, slug, data, cover);
+        if (result?.newSlug) setSlug(result.newSlug);
         if (result && result.success) {
-          router.push(`/e/${result.newSlug || event.slug}`);
+          router.push(`/e/${result.newSlug || slug}`);
         } else {
-          setSubmitError(result?.error ?? t("editError"));
+          setSubmitError(
+            result?.errorCode === "COVER_UPDATE_FAILED"
+              ? tEdit("coverUpdateFailed")
+              : result?.error ?? t("editError"),
+          );
         }
       } catch (error) {
         console.error("Error updating event:", error);
@@ -105,7 +115,6 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
     });
   }
 
-  const slug = event.slug ?? "";
 
   return (
     <div className="container flex flex-col justify-center pt-6 pb-14">
@@ -191,8 +200,8 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
             handleImageChange={handleImageChange}
             handleTownChange={handleTownChange}
             handleCategoriesChange={handleCategoriesChange}
-            progress={progress}
             imageToUpload={imageToUpload}
+            imageFile={imageFile}
           />
         </div>
       </div>

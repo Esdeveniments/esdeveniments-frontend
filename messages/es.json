@@ -202,6 +202,7 @@
       "nearbyLabel": "Cerca:"
     },
     "EventEdit": {
+      "coverUpdateFailed": "El evento se ha guardado, pero no se ha podido actualizar la imagen.",
       "title": "Editar evento",
       "description": "Panel seguro para editar eventos de Esdeveniments.cat.",
       "heading": "Edita tu evento",
@@ -256,7 +257,7 @@
         "uploading": "Subiendo...",
         "removing": "Eliminando...",
         "altPreview": "Foto de perfil",
-        "errorUnsupported": "Formato no admitido. Usa JPG, PNG o WEBP.",
+        "errorUnsupported": "Formato no admitido. Usa JPG o PNG.",
         "errorTooLarge": "La imagen supera el límite de 2 MB.",
         "errorUploadFailed": "No se ha podido subir la foto. Inténtalo de nuevo.",
         "errorRemoveFailed": "No se ha podido eliminar la foto. Inténtalo de nuevo."
@@ -776,26 +777,17 @@
     },
     "ImageUploader": {
       "label": "Imagen *",
-      "unsupported": "El archivo seleccionado no es una imagen soportada. Por favor, sube un archivo en formato JPEG, PNG, JPG o WEBP.",
+      "unsupported": "El archivo seleccionado no es una imagen soportada. Por favor, sube un archivo JPEG o PNG.",
       "originalTooLarge": "La imagen supera el límite máximo de {limit} MB. Reduce el tamaño de la imagen antes de volver a intentarlo.",
       "tooLarge": "El tamaño de la imagen supera el límite permitido de {limit} MB. Por favor, elige una imagen más pequeña.",
       "compressFailed": "No hemos podido reducir la imagen. Revisa la conexión e inténtalo de nuevo.",
       "optimizing": "Optimizando la imagen para cumplir el límite de {limit} MB...",
-      "progress": "{progress}%",
-      "uploading": "Subiendo la imagen ({progress}%)...",
-      "uploadSuccess": "Imagen subida correctamente.",
-      "uploadMode": "Subir un archivo",
-      "urlMode": "Usar URL de imagen",
-      "imageUrlLabel": "URL de la imagen",
-      "imageUrlPlaceholder": "https://ejemplo.com/imagen.jpg",
-      "imageUrlHelper": "Si la imagen ya está online, pega el enlace y la usaremos directamente sin subirla.",
-      "imageUrlInvalid": "Añade una URL válida",
       "remove": "Eliminar imagen",
       "altPreview": "Imagen",
       "uploadDropCta": "Arrastra tu imagen aquí",
       "uploadDropHelper": "o haz clic para seleccionar",
       "selectButton": "Seleccionar archivo",
-      "formatHelper": "Formato: JPEG, PNG, JPG o WEBP"
+      "formatHelper": "Formato: JPEG o PNG"
     },
     "HeroCTA": {
       "buttonBase": "Ver eventos",
@@ -945,7 +937,7 @@
       "titleHint": "Ejemplo: Fiesta mayor del barrio",
       "locationHint": "Añade el punto exacto: plaza, calle o equipamiento",
       "urlHint": "Opcional: enlace oficial o redes del evento",
-      "imageHint": "Formatos JPG/PNG/WebP. Una imagen clara ayuda a encontrarlo.",
+      "imageHint": "Formatos JPG/PNG. Una imagen clara ayuda a encontrarlo.",
       "reviewTitle": "Antes de publicar",
       "reviewReady": "¡Todo listo! Revisa y publica.",
       "reviewMissing": "{count, plural, one {Falta: {fields}} other {Faltan: {fields}}}",
@@ -1737,7 +1729,7 @@
       "doneCta": "Finalizar",
       "dropzone": {
         "title": "Arrastra la imagen aquí o haz clic",
-        "formats": "Formato horizontal • JPG, PNG o WebP",
+        "formats": "Formato horizontal • JPG o PNG",
         "optimal": "Óptimo: 728×150px",
         "minimum": "Mínimo: 400×80px"
       },
@@ -1745,7 +1737,7 @@
         "title": "Recomendaciones para la imagen:",
         "recommended": "Tamaño óptimo: {width}×{height}px (proporción 5:1)",
         "horizontal": "Formato banner horizontal alargado",
-        "formats": "Formatos: JPG, PNG o WebP",
+        "formats": "Formatos: JPG o PNG",
         "minimum": "Mínimo aceptado: 400×80px"
       },
       "validation": {

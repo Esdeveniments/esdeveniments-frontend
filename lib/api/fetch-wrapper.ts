@@ -1,4 +1,5 @@
 import { generateHmac } from "@utils/hmac";
+import { getApiOrigin } from "@utils/api-helpers";
 import { connection } from "next/server";
 
 export async function fetchWithHmac(
@@ -49,11 +50,20 @@ export async function fetchWithHmac(
 
   const method = options.method?.toUpperCase() || "GET";
 
-  const hmac = await generateHmac(bodyToSign, timestamp, pathAndQuery, method);
-
   const headers = new Headers(options.headers);
-  headers.set("x-timestamp", String(timestamp));
-  headers.set("x-hmac", hmac);
+  const backendKey = process.env.BACKEND_SERVICE_SECRET;
+  // Only the backend gets the service secret, whatever URL a caller passes.
+  const sendsBackendKey = !!backendKey && urlObject.origin === getApiOrigin();
+  if (backendKey && sendsBackendKey) {
+    headers.set("X-Backend-Key", backendKey);
+  }
+  // ponytail: prod backend (main) still verifies HMAC; delete this block and
+  // HMAC_SECRET from the outbound path once prod runs the X-Backend-Key backend.
+  if (process.env.HMAC_SECRET) {
+    const hmac = await generateHmac(bodyToSign, timestamp, pathAndQuery, method);
+    headers.set("x-timestamp", String(timestamp));
+    headers.set("x-hmac", hmac);
+  }
 
   // Note: The caller can provide an explicit 'x-visitor-id' header in
   // options.headers when needed (e.g., counting event detail views).
@@ -90,6 +100,8 @@ export async function fetchWithHmac(
       body: normalizedBody,
       headers,
       signal,
+      // fetch forwards custom headers on redirect; a 3xx comes back as !ok instead.
+      ...(sendsBackendKey && { redirect: "manual" as const }),
     });
   } finally {
     clearTimeout(timeoutId);

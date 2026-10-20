@@ -141,7 +141,7 @@ export async function GET() {
                   example: {
                     content: [
                       {
-                        id: 12345,
+                        id: "3f2b8c1e-7a4d-4e9b-9c2a-5d6e7f8a9b0c",
                         title: "Festival de Jazz de Barcelona",
                         slug: "festival-de-jazz-de-barcelona",
                         description: "Annual jazz festival in Barcelona",
@@ -192,14 +192,14 @@ export async function GET() {
           tags: ["Events"],
           summary: "Get event details",
           description:
-            "Retrieve full details for a single event by its slug or ID.",
+            "Retrieve full details for a single event by its slug.",
           parameters: [
             {
               name: "slug",
               in: "path",
               required: true,
               schema: { type: "string" },
-              description: "Event slug or numeric ID",
+              description: "Event slug",
             },
           ],
           responses: {
@@ -536,14 +536,16 @@ export async function GET() {
           type: "object",
           required: ["id", "title", "slug"],
           properties: {
-            id: { type: "integer" },
+            id: { type: "string", description: "Unique event identifier (UUID)" },
             title: { type: "string" },
             slug: { type: "string" },
             description: { type: "string" },
             startDate: { type: "string", format: "date-time" },
             endDate: { type: "string", format: "date-time" },
             location: { type: "string" },
-            imageUrl: { type: "string", format: "uri" },
+            imageUrl: { type: ["string", "null"], format: "uri" },
+            url: { type: ["string", "null"], format: "uri" },
+            isPromoted: { type: "boolean", description: "Whether the event has an active paid promotion" },
             category: { type: "string" },
           },
         },
@@ -558,9 +560,9 @@ export async function GET() {
             startDate: { type: "string", format: "date-time", description: "Event start date (ISO 8601)" },
             endDate: { type: "string", format: "date-time", description: "Event end date (ISO 8601)" },
             location: { type: "string", description: "Event venue or address" },
-            imageUrl: { type: "string", format: "uri", description: "Event image URL" },
-            url: { type: "string", format: "uri", description: "Original event source URL" },
-            type: { type: "string", enum: ["FREE", "PAID"], description: "Whether the event is free or paid" },
+            imageUrl: { type: ["string", "null"], format: "uri", description: "Event image URL" },
+            url: { type: ["string", "null"], format: "uri", description: "Original event source URL" },
+            isPromoted: { type: "boolean", description: "Whether the event has an active paid promotion" },
             lat: { type: "number", description: "Latitude of event location" },
             lon: { type: "number", description: "Longitude of event location" },
             city: {

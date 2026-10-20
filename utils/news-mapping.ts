@@ -14,7 +14,7 @@ export function mapNewsSummaryToEventSummary(
     hash: news.id,
     slug: news.slug,
     title: news.title,
-    type: "FREE",
+    isPromoted: false,
     url: `/noticies/${place}/${news.slug}`,
     description: news.description,
     imageUrl: news.imageUrl,

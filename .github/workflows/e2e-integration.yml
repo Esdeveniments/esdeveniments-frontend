@@ -12,10 +12,13 @@ name: E2E Integration (preproduction)
 # Mirrors how prod config lives in the hosting platform:
 #   vars.NEXT_PUBLIC_API_URL        → preproduction API (defaults below)
 #   secrets.HMAC_SECRET             → preproduction HMAC signing secret
+#   secrets.BACKEND_SERVICE_SECRET → preproduction X-Backend-Key value
 #                                     (falls back to the repo-level secret if
 #                                     the staging env doesn't define one)
 #   secrets.E2E_STAGING_EMAIL       → a dedicated, email-verified test user
 #   secrets.E2E_STAGING_PASSWORD    ↲
+#   secrets.E2E_STAGING_EMAIL_2     → a second verified user (creator-only edit flow)
+#   secrets.E2E_STAGING_PASSWORD_2  ↲
 # The publish-integration spec self-skips when the test-user secrets are
 # absent, so an unconfigured environment never turns this red.
 on:
@@ -33,7 +36,7 @@ concurrency:
 
 jobs:
   publish-integration:
-    name: Publish → detail (preproduction)
+    name: Publish → detail and creator-only edit (preproduction)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: staging
@@ -81,6 +84,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           # Logto OIDC config (preproduction app). Without these, /iniciar-sessio
           # → /api/auth/sign-in throws in getLogtoConfig() and returns a 500,
           # so the login step never reaches Logto's form. Sourced from the
@@ -94,12 +98,14 @@ jobs:
       - name: Wait for server
         run: npx wait-on http://localhost:3000 --timeout 90000
 
-      - name: Run publish → detail integration
+      - name: Run publish → detail and creator-only edit integration
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
           E2E_STAGING_PASSWORD: ${{ secrets.E2E_STAGING_PASSWORD }}
-        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts
+          E2E_STAGING_EMAIL_2: ${{ secrets.E2E_STAGING_EMAIL_2 }}
+          E2E_STAGING_PASSWORD_2: ${{ secrets.E2E_STAGING_PASSWORD_2 }}
+        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/event-edit-creator-only.spec.ts
 
       - name: Stop server
         if: always()

@@ -36,6 +36,8 @@ vi.mock("next/server", () => ({
 const mockCreateEvent = vi.fn();
 const mockUpdateEventById = vi.fn();
 const mockFetchEventBySlug = vi.fn();
+const mockReplaceEventImage = vi.fn();
+const mockDeleteEventImage = vi.fn();
 
 vi.mock("@lib/api/events", () => ({
   createEvent: (data: EventCreateRequestDTO, imageFile?: File) =>
@@ -43,6 +45,9 @@ vi.mock("@lib/api/events", () => ({
   updateEventById: (uuid: string, data: EventUpdateRequestDTO) =>
     mockUpdateEventById(uuid, data),
   fetchEventBySlug: (slug: string) => mockFetchEventBySlug(slug),
+  replaceEventImage: (uuid: string, file: File) =>
+    mockReplaceEventImage(uuid, file),
+  deleteEventImage: (uuid: string) => mockDeleteEventImage(uuid),
 }));
 
 // Mock lib/auth/session
@@ -58,6 +63,10 @@ const mockDeleteEventDetailCache = vi.fn();
 vi.mock("@lib/cache/event-detail-cache", () => ({
   deleteEventDetailCache: (slug: string) => mockDeleteEventDetailCache(slug),
 }));
+
+const pngFile = () =>
+  new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], "c.png", { type: "image/png" });
+const fakePngFile = () => new File(["<html>"], "c.png", { type: "image/png" });
 
 const CREATOR_ID = "creator-uuid";
 const OTHER_USER_ID = "other-uuid";
@@ -88,7 +97,7 @@ function buildEvent(overrides: Partial<EventDetailResponseDTO> = {}): EventDetai
     hash: "test-hash",
     slug: "test-event",
     title: "Test Event",
-    type: "FREE",
+    isPromoted: false,
     url: "https://test.com",
     description: "Test description",
     imageUrl: "",
@@ -104,7 +113,8 @@ function buildEvent(overrides: Partial<EventDetailResponseDTO> = {}): EventDetai
       displayName: "Creator",
       username: "creator",
       avatarUrl: null,
-      organizerVerified: false,
+      verified: false,
+      role: "USER",
     },
     city: {
       id: 1,
@@ -131,6 +141,12 @@ function buildEvent(overrides: Partial<EventDetailResponseDTO> = {}): EventDetai
   };
 }
 
+function toFormData(event: EventCreateRequestDTO): FormData {
+  const formData = new FormData();
+  formData.set("event", JSON.stringify(event));
+  return formData;
+}
+
 describe("Server Actions - Next.js 16 caching", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -154,10 +170,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const eventData: EventCreateRequestDTO = {
         title: "Test Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Test description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",
@@ -168,13 +182,34 @@ describe("Server Actions - Next.js 16 caching", () => {
         categories: [],
       };
 
-      const result = await createEventAction(eventData);
+      const result = await createEventAction(toFormData(eventData));
 
-      expect(mockCreateEvent).toHaveBeenCalledWith(eventData, undefined);
+      expect(mockCreateEvent).toHaveBeenCalledWith(eventData, null);
       expect(mockUpdateTag).toHaveBeenCalledWith("events");
       expect(mockUpdateTag).toHaveBeenCalledWith("events:categorized");
       expect(mockRefresh).toHaveBeenCalledTimes(1);
       expect(result).toEqual({ success: true, event: mockEvent });
+    });
+
+    it("forwards the imageFile part to createEvent", async () => {
+      mockCreateEvent.mockResolvedValue(buildEvent({ slug: "with-image" }));
+      const formData = toFormData(buildEventData("With image"));
+      formData.append("imageFile", pngFile());
+
+      await createEventAction(formData);
+
+      expect(mockCreateEvent).toHaveBeenCalledWith(
+        buildEventData("With image"),
+        expect.any(File),
+      );
+    });
+
+    it("rejects an imageFile whose content is not an image", async () => {
+      const formData = toFormData(buildEventData("Fake image"));
+      formData.append("imageFile", fakePngFile());
+
+      await expect(createEventAction(formData)).rejects.toThrow("not a valid image");
+      expect(mockCreateEvent).not.toHaveBeenCalled();
     });
 
     it("calls refresh after updateTag calls", async () => {
@@ -184,10 +219,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const eventData: EventCreateRequestDTO = {
         title: "Test Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Test description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",
@@ -198,7 +231,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         categories: [],
       };
 
-      await createEventAction(eventData);
+      await createEventAction(toFormData(eventData));
 
       // Verify refresh is called after updateTag calls
       const updateTagCalls = mockUpdateTag.mock.calls.length;
@@ -208,10 +241,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
     const buildEventData = (title: string): EventCreateRequestDTO => ({
       title,
-      type: "FREE",
       url: "https://test.com",
       description: "Test description",
-      imageUrl: "",
       regionId: 1,
       cityId: 1,
       startDate: "2025-06-15",
@@ -239,7 +270,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         "A very sensitive event title nobody should see in Sentry",
       );
 
-      const result = await createEventAction(eventData);
+      const result = await createEventAction(toFormData(eventData));
       expect(result).toEqual({ success: false, reason: "profile-incomplete" });
 
       expect(captureException).toHaveBeenCalledTimes(1);
@@ -261,7 +292,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       );
       mockCreateEvent.mockRejectedValue(backendError);
 
-      const result = await createEventAction(buildEventData("Test Event"));
+      const result = await createEventAction(toFormData(buildEventData("Test Event")));
       expect(result).toEqual({ success: false, reason: "stale-session" });
 
       expect(captureException).toHaveBeenCalledTimes(1);
@@ -279,7 +310,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       );
       mockCreateEvent.mockRejectedValue(backendError);
 
-      await expect(createEventAction(buildEventData("Test Event"))).rejects.toBe(
+      await expect(createEventAction(toFormData(buildEventData("Test Event")))).rejects.toBe(
         backendError,
       );
       expect(captureException).not.toHaveBeenCalled();
@@ -287,6 +318,20 @@ describe("Server Actions - Next.js 16 caching", () => {
   });
 
   describe("editEvent", () => {
+    const coverEditData: EventBaseRequestDTO = {
+      title: "T",
+      url: null,
+      description: "D",
+      regionId: 1,
+      cityId: 1,
+      startDate: "2025-06-15",
+      startTime: "",
+      endDate: "2025-06-15",
+      endTime: "",
+      location: "L",
+      categories: [],
+    };
+
     it("calls updateTag for events and the specific event tag, with indexed: true injected server-side", async () => {
       const mockUpdatedEvent = buildEvent({
         slug: "updated-event",
@@ -299,10 +344,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Updated description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",
@@ -330,6 +373,67 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(result).toEqual({ success: true, newSlug: "updated-event" });
     });
 
+    it("still invalidates caches and reports the failure when the cover update fails", async () => {
+      mockUpdateEventById.mockResolvedValue(buildEvent({ slug: "same-event" }));
+      mockReplaceEventImage.mockRejectedValue(new Error("HTTP error! status: 413"));
+      const cover = new FormData();
+      cover.append("imageFile", pngFile());
+
+      const result = await editEvent(
+        "test-id",
+        "same-event",
+        coverEditData,
+        cover,
+      );
+
+      expect(mockReplaceEventImage).toHaveBeenCalledWith("test-id", expect.any(File));
+      expect(mockUpdateTag).toHaveBeenCalledWith("events");
+      expect(mockUpdateTag).toHaveBeenCalledWith("event:same-event");
+      expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("same-event");
+      expect(result).toEqual({
+        success: false,
+        newSlug: "same-event",
+        errorCode: "COVER_UPDATE_FAILED",
+      });
+    });
+
+    it("does not upload a cover whose content is not an image", async () => {
+      mockUpdateEventById.mockResolvedValue(buildEvent({ slug: "same-event" }));
+      const cover = new FormData();
+      cover.append("imageFile", fakePngFile());
+
+      const result = await editEvent(
+        "test-id",
+        "same-event",
+        coverEditData,
+        cover,
+      );
+
+      expect(mockReplaceEventImage).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        success: false,
+        newSlug: "same-event",
+        errorCode: "COVER_UPDATE_FAILED",
+      });
+    });
+
+    it("deletes the cover when the client asks to remove it", async () => {
+      mockUpdateEventById.mockResolvedValue(buildEvent({ slug: "same-event" }));
+      const cover = new FormData();
+      cover.append("removeImage", "1");
+
+      const result = await editEvent(
+        "test-id",
+        "same-event",
+        coverEditData,
+        cover,
+      );
+
+      expect(mockDeleteEventImage).toHaveBeenCalledWith("test-id");
+      expect(mockReplaceEventImage).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+    });
+
     it("does not update old event tag when slug unchanged", async () => {
       const mockUpdatedEvent = buildEvent({
         slug: "same-event",
@@ -342,10 +446,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Updated description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",
@@ -379,10 +481,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Updated description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",
@@ -406,10 +506,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Updated description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",
@@ -433,10 +531,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const updateData: EventBaseRequestDTO = {
         title: "Hacked Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Hacked description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",
@@ -463,10 +559,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const updateData: EventBaseRequestDTO = {
         title: "Hacked Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Hacked description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",
@@ -493,10 +587,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       const updateData: EventBaseRequestDTO = {
         title: "Updated Event",
-        type: "FREE",
         url: "https://test.com",
         description: "Updated description",
-        imageUrl: "",
         regionId: 1,
         cityId: 1,
         startDate: "2025-06-15",

@@ -26,13 +26,6 @@ const pageFetcher = async (
   return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
 };
 
-/** Map URL price slug to API EventType value */
-const priceToType = (price?: string): string | undefined => {
-  if (price === "gratis") return "FREE";
-  if (price === "pagament") return "PAID";
-  return undefined;
-};
-
 export const useEvents = ({
   place,
   category,
@@ -53,8 +46,6 @@ export const useEvents = ({
   const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
   const currentKey = `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${profileSlug}|${initialSize}`;
-
-  const eventType = priceToType(price);
 
   const hasClientFilters = hasActiveClientFilters({
     search,
@@ -101,7 +92,6 @@ export const useEvents = ({
     from: range.from,
     to: range.to,
     term: search,
-    type: eventType,
     radius: hasCoords && hasValidRadius ? radius : undefined,
     lat: hasCoords && hasValidRadius ? latNumber : undefined,
     lon: hasCoords && hasValidRadius ? lonNumber : undefined,
@@ -121,7 +111,6 @@ export const useEvents = ({
       baseParams.from,
       baseParams.to,
       baseParams.term,
-      baseParams.type,
       baseParams.radius,
       baseParams.lat,
       baseParams.lon,
@@ -146,7 +135,6 @@ export const useEvents = ({
       fromParam,
       toParam,
       termParam,
-      typeParam,
       radiusParam,
       latParam,
       lonParam,
@@ -163,7 +151,6 @@ export const useEvents = ({
         from: fromParam as string | undefined,
         to: toParam as string | undefined,
         term: termParam as string | undefined,
-        type: typeParam as string | undefined,
         radius: radiusParam as number | undefined,
         lat: latParam as number | undefined,
         lon: lonParam as number | undefined,

@@ -32,7 +32,7 @@ function createEvent(id: string): EventSummaryResponseDTO {
     hash: id,
     slug: id,
     title: `Event ${id}`,
-    type: "FREE",
+    isPromoted: false,
     url: `https://example.com/${id}`,
     description: "demo",
     imageUrl: "",

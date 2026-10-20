@@ -125,6 +125,10 @@ test.describe("Image Proxy", () => {
     test("event detail image loads via proxy", async ({ page }) => {
       const slug = await gotoFirstResolvableEvent(page);
       test.skip(!slug, "No resolvable events available for testing");
+      test.skip(
+        (await page.locator("main img").count()) === 0,
+        "The first resolvable event has no cover image",
+      );
       await verifyImagesLoad(page, "event detail page", "main img");
       await verifyProxyUrls(page);
     });

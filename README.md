@@ -18,6 +18,7 @@ yarn install --immutable
 Create `.env.development` (and set in CI/hosting for others):
 
 - HMAC_SECRET=your-server-secret
+- BACKEND_SERVICE_SECRET=your-backend-service-key (must match the v2 backend)
 - NEXT_PUBLIC_API_URL=`https://api.esdeveniments.cat/api`
 - Optional: NEXT_PUBLIC_GOOGLE_ANALYTICS, NEXT_PUBLIC_GOOGLE_ADS, SENTRY_DSN, REDIS_URL
 - Auth (sign-in, profile, favorites): LOGTO_* — see `docs/logto-auth-setup.md`
@@ -99,19 +100,26 @@ Deployed via **Docker on Coolify** (self-hosted PaaS).
 
 ### Docker build locally
 
+Export `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` in your shell, and set
+`NEXT_PUBLIC_API_URL` to the v2 backend URL. The build preflight rejects a
+missing key or a backend without the v2 endpoints. BuildKit mounts the secrets
+for the build without storing them in image layers.
+
 ```bash
-# Build: NEXT_PUBLIC_* inlined by Next.js, HMAC_SECRET needed for ISR static generation
+# Build: public configuration is inlined; credentials use BuildKit secrets.
 docker build \
-  --build-arg NEXT_PUBLIC_API_URL=https://api.esdeveniments.cat/api \
+  --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
   --build-arg NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat \
-  --build-arg HMAC_SECRET=your-secret \
+  --secret id=HMAC_SECRET,env=HMAC_SECRET \
+  --secret id=BACKEND_SERVICE_SECRET,env=BACKEND_SERVICE_SECRET \
   -t esdeveniments-frontend .
 
 # Run: server-side secrets provided at runtime (not baked into image)
 docker run -p 3000:3000 \
-  -e HMAC_SECRET=your-secret \
+  -e HMAC_SECRET \
+  -e BACKEND_SERVICE_SECRET \
+  -e NEXT_PUBLIC_API_URL \
   -e REVALIDATE_SECRET=your-revalidate-secret \
   -e REDIS_URL=redis://localhost:6379 \
   esdeveniments-frontend
 ```
-

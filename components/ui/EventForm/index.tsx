@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import { setHours, setMinutes, setSeconds } from "date-fns";
 import { parseLocalDateTime, toLocalDateTimeString } from "@utils/date-helpers";
 import {
@@ -17,6 +23,8 @@ import type { EventFormProps } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
 import { useTranslations } from "next-intl";
+
+const subscribeNoop = () => () => {};
 
 export const EventForm: React.FC<EventFormProps> = ({
   form,
@@ -36,24 +44,23 @@ export const EventForm: React.FC<EventFormProps> = ({
   handleUseGeolocation,
   handleTestUrl,
   isLocating = false,
-  progress,
   imageToUpload,
   imageFile,
-  isUploadingImage = false,
-  uploadMessage,
   onPreview,
   canPreview,
   previewLabel,
   previewTestId,
-  imageMode = "upload",
-  onImageModeChange,
-  imageUrlValue = null,
-  handleImageUrlChange,
 }) => {
   const t = useTranslations("Utils.Validation");
   const tForm = useTranslations("Components.EventForm");
-  const [isHydrated, setIsHydrated] = useState(false);
+  // true on the client, false during SSR: marks the form interactive for e2e.
+  const isHydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  );
   const [step, setStep] = useState(0);
+  const [isImagePreparing, setIsImagePreparing] = useState(false);
   const canPublishRef = useRef(false);
   const publishArmTimeoutRef = useRef<number | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -92,8 +99,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       imageFile,
       isEditMode,
       validationLabels,
-      zodLabels,
-      form.imageUrl
+      zodLabels
     );
   }, [form, imageFile, isEditMode, validationLabels, zodLabels, hasInteracted]);
 
@@ -107,13 +113,6 @@ export const EventForm: React.FC<EventFormProps> = ({
     handleFormChange("isAllDay", isAllDayEvent);
     handleFormChange("endDate", toLocalDateTimeString(targetEndDate));
   };
-
-  const [internalImageMode, setInternalImageMode] =
-    useState<"upload" | "url">(imageMode);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
 
   useEffect(() => {
     canPublishRef.current = false;
@@ -139,19 +138,9 @@ export const EventForm: React.FC<EventFormProps> = ({
     };
   }, [step, steps.length]);
 
-  useEffect(() => {
-    setInternalImageMode(imageMode);
-  }, [imageMode]);
-
-  const effectiveImageMode = onImageModeChange ? imageMode : internalImageMode;
-  const effectiveImageUrlValue = imageUrlValue ?? form.imageUrl ?? null;
-  const handleImageModeChangeValue = onImageModeChange ?? setInternalImageMode;
-  const handleImageUrlValueChange =
-    handleImageUrlChange ??
-    ((value: string) => handleFormChange("imageUrl", value || null));
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isImagePreparing || isLoading) return;
     setHasInteracted(true);
 
     // Never publish via implicit form submits (e.g. pressing Enter in a field).
@@ -182,8 +171,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       imageFile,
       isEditMode,
       validationLabels,
-      zodLabels,
-      form.imageUrl
+      zodLabels
     );
 
     if (!submitValidation.isDisabled) {
@@ -191,9 +179,7 @@ export const EventForm: React.FC<EventFormProps> = ({
     }
   };
 
-  const hasImage = Boolean(
-    imageToUpload || imageFile || effectiveImageUrlValue || form.imageUrl
-  );
+  const hasImage = Boolean(imageToUpload || imageFile);
   const hasDates = Boolean(form.startDate && (form.isAllDay ? true : form.endDate));
 
 
@@ -248,7 +234,7 @@ export const EventForm: React.FC<EventFormProps> = ({
         })
         : stepMissing.join(", ")
       : "";
-  const isNextDisabled = stepMissing.length > 0 || isUploadingImage;
+  const isNextDisabled = stepMissing.length > 0;
   const shouldShowFeedback = hasInteracted;
 
   // Feedback message comes from step errors OR global form errors (if we are at the end)
@@ -460,13 +446,7 @@ export const EventForm: React.FC<EventFormProps> = ({
           <ImageUpload
             value={imageToUpload}
             onUpload={handleImageChange}
-            progress={progress}
-            isUploading={isUploadingImage}
-            uploadMessage={uploadMessage}
-            mode={effectiveImageMode}
-            onModeChange={handleImageModeChangeValue}
-            imageUrlValue={effectiveImageUrlValue || ""}
-            onImageUrlChange={handleImageUrlValueChange}
+            onPreparingChange={setIsImagePreparing}
           />
           {helperImage ? (
             <p className="text-[12px] text-foreground/80 w-full px-2 -mt-2">
@@ -513,6 +493,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             type="button"
             variant="ghost"
             data-testid="prev-button"
+            disabled={isImagePreparing}
             onClick={goPrev}
             className="min-h-[44px] px-6 w-full sm:w-auto"
           >
@@ -527,7 +508,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               type="button"
               variant="neutral"
               className="btn-outline min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!isPreviewReady || isLoading}
+              disabled={!isPreviewReady || isLoading || isImagePreparing}
               data-testid={previewTestId || "preview-button"}
               data-analytics-event-name={
                 analyticsContext === "publica" ? "publish_preview_click" : undefined
@@ -556,7 +537,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             <Button
               type="submit"
               variant="primary"
-              disabled={formState.isDisabled || isLoading}
+              disabled={formState.isDisabled || isLoading || isImagePreparing}
               className="min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="publish-button"
               data-analytics-event-name={

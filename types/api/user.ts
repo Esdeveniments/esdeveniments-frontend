@@ -6,7 +6,7 @@ import type { AuthRole } from "../auth";
  *
  * 2026-07-25 Logto-onboarding handoff: the backend moved to a richer shape
  * matching the OpenAPI spec at /v3/api-docs (displayName/bio/avatarUrl +
- * organizerVerified + eventCount + totalEventVisits). The legacy fields
+ * verified + role + eventCount + totalEventVisits). The legacy fields
  * (name/pictureUrl) are kept optional so the frontend still parses older
  * backend instances during the cut-over window. UI code should prefer the
  * new fields and fall back to the legacy ones.
@@ -23,9 +23,8 @@ export interface UserPublicResponseDTO {
   displayName?: string;
   bio?: string;
   avatarUrl?: string;
-  organizerVerified?: boolean;
-  role?: AuthRole;
   verified?: boolean;
+  role?: AuthRole;
   eventCount?: number;
   totalEventVisits?: number;
   upcomingEventCount?: number;
@@ -67,7 +66,7 @@ export interface AuthenticatedUserDTO {
   displayName?: string;
   bio?: string;
   avatarUrl?: string;
-  organizerVerified?: boolean;
+  verified?: boolean;
   profileCompleted?: boolean;
   emailVerified?: boolean;
   // Legacy / transitional (kept for back-compat during cut-over)
@@ -113,14 +112,15 @@ export interface AvatarUploadResponseDTO {
  * Compact owner summary embedded in event detail responses.
  * The 2026-07-25 backend handoff drops `email` and `name` from the creator
  * payload (privacy / anti-spam). UI must not read those fields here; the
- * organizer badge is renderer-driven (organizerVerified === true).
+ * organizer badge is renderer-driven (verified === true).
  */
 export interface OwnerSummaryDTO {
   id: string;
   displayName: string | null;
   username: string;
   avatarUrl: string | null;
-  organizerVerified: boolean;
+  verified: boolean;
+  role: AuthRole;
 }
 
 /**
@@ -133,7 +133,8 @@ export interface UserPublicProfileDTO {
   username: string;
   bio: string | null;
   avatarUrl: string | null;
-  organizerVerified: boolean;
+  verified: boolean;
+  role: AuthRole;
   eventCount: number;
   totalEventVisits: number;
   createdAt: string;

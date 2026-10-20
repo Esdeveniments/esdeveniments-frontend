@@ -54,10 +54,8 @@ export function formDataToBackendDTO(
 
   return {
     title: form.title,
-    type: form.type ?? "FREE",
-    url: form.url,
+    url: form.url || null,
     description: form.description,
-    imageUrl: form.imageUrl,
     regionId,
     cityId,
     startDate, // Now in YYYY-MM-DD format
@@ -89,7 +87,6 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
     id: event.id ? String(event.id) : undefined,
     title: event.title || "",
     description: event.description || "",
-    type: event.type || "FREE",
     startDate: event.startDate || "", // Keep as string, already in YYYY-MM-DD format
     startTime: event.startTime, // Keep as string | null, already in ISO time format
     endDate: event.endDate || "", // Keep as string, already in YYYY-MM-DD format
@@ -101,7 +98,6 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
       ? { value: String(event.city.id), label: event.city.name }
       : null,
     location: event.location || "",
-    imageUrl: event.imageUrl || null,
     url: event.url || "",
     categories: Array.isArray(event.categories)
       ? event.categories.map((cat) => ({ id: cat.id, name: cat.name }))

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
-import { uploadEventImage } from "@lib/api/events";
+import { uploadSponsorImage } from "@lib/api/sponsors-external";
 import {
   fetchCheckoutSession,
   updateCheckoutSessionMetadata,
@@ -9,11 +9,10 @@ import {
 import { activateSponsorImage } from "@lib/db/sponsors";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
-  MAX_SPONSOR_IMAGE_BYTES,
   FORMDATA_PARSE_ERROR_SUBSTRING,
 } from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
-import { isValidImageContent } from "@utils/image-validation";
+import { detectImageType, isBackendImageType } from "@utils/image-validation";
 
 // 10 uploads per minute per IP — prevents abuse of the public image upload
 const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
@@ -82,22 +81,28 @@ export async function POST(request: Request) {
     }
 
     // Validate file is actually an image (client MIME type check)
-    if (!imageFile.type.startsWith("image/")) {
+    if (!isBackendImageType(imageFile.type)) {
       return NextResponse.json(
-        { errorCode: "invalid_file_type", error: "File must be an image." },
+        { errorCode: "invalid_file_type", error: "File must be a JPEG or PNG image." },
         { status: 400 },
       );
     }
 
     // Server-side validation: check actual file content via magic bytes
     // Client-provided MIME types can be spoofed by malicious clients
-    const isValidContent = await isValidImageContent(imageFile);
-    if (!isValidContent) {
+    const detectedType = await detectImageType(imageFile);
+    if (!detectedType) {
       return NextResponse.json(
         {
           errorCode: "invalid_file_content",
           error: "File is not a valid image.",
         },
+        { status: 400 },
+      );
+    }
+    if (!isBackendImageType(detectedType)) {
+      return NextResponse.json(
+        { errorCode: "invalid_file_type", error: "File must be a JPEG or PNG image." },
         { status: 400 },
       );
     }
@@ -136,10 +141,7 @@ export async function POST(request: Request) {
     // Get payment intent ID to update its metadata too
     const paymentIntentId = getPaymentIntentId(session);
 
-    const { url, publicId } = await uploadEventImage(
-      imageFile,
-      MAX_SPONSOR_IMAGE_BYTES,
-    );
+    const { url, publicId } = await uploadSponsorImage(imageFile);
 
     const imageMetadata = {
       sponsor_image_url: url,

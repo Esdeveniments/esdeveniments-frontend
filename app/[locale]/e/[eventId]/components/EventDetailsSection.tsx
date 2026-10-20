@@ -14,7 +14,8 @@ import { useTranslations } from "next-intl";
 const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
 
-  const hasValidUrl = !!event.url && /^https?:\/\//i.test(event.url);
+  const eventUrl = event.url ?? "";
+  const hasValidUrl = /^https?:\/\//i.test(eventUrl);
   const owner = event.owner;
 
   // Only render if there's something to show
@@ -41,7 +42,7 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
             <div className="body-normal font-semibold text-foreground-strong">
               {t("eventLink")}{" "}
               <PressableAnchor
-                href={event.url}
+                href={eventUrl}
                 className="body-normal inline-block text-primary hover:underline transition-colors duration-200 ease-in-out pb-0"
                 target="_blank"
                 rel="noreferrer"

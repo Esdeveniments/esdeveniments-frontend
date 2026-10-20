@@ -1,49 +1,52 @@
+import path from "node:path";
 import { test, expect } from "@playwright/test";
-import path from "path";
+import { mockAuthenticatedUser } from "./helpers/auth";
 
 // Note: Service workers are blocked globally via playwright.config.ts (serviceWorkers: 'block')
 // This allows Playwright's route handlers to intercept API requests for mocking
 
-// This test relies on E2E_TEST_MODE to short-circuit the server action and produce a stable slug.
-// CI sets no E2E_TEST_MODE by default. We set it via Playwright config env or GitHub Actions step if needed.
+// Deterministic publish -> detail flow. With E2E_TEST_MODE the server action
+// skips the backend and stores the event in memory under a stable slug, so no
+// backend write happens. CI exports E2E_TEST_MODE=1 for both the server and
+// this process; the real-backend equivalent is publish-integration.spec.ts.
+test.describe("Publica -> Event flow (deterministic)", () => {
+  test.skip(
+    process.env.E2E_TEST_MODE !== "1",
+    "Needs a server built and started with E2E_TEST_MODE=1 / NEXT_PUBLIC_E2E_TEST_MODE=1 (CI sets both)",
+  );
 
-test.skip("Publica -> Event flow (deterministic)", () => {
   test("publishes an event and displays the created detail page", async ({
     page,
   }) => {
-    const mockRegions = [
-      {
-        id: 1,
-        name: "Vallès Oriental",
-        cities: [
-          {
-            id: 101,
-            value: "cardedeu",
-            label: "Cardedeu",
-          },
-        ],
-      },
-    ];
-
-    const mockCategories = [
-      { id: 1, name: "Concerts", slug: "concerts" },
-      { id: 2, name: "Festivals", slug: "festivals" },
-    ];
-
+    await mockAuthenticatedUser(page);
     await page.route("**/api/regions/options", (route) =>
       route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(mockRegions),
-      })
+        json: [
+          {
+            id: 1,
+            name: "Maresme",
+            slug: "maresme",
+            cities: [
+              {
+                id: 2,
+                value: "mataro",
+                label: "Mataró",
+                latitude: 41.54,
+                longitude: 2.44,
+              },
+            ],
+          },
+        ],
+      }),
     );
 
     await page.route("**/api/categories", (route) =>
       route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(mockCategories),
-      })
+        json: [
+          { id: 1, name: "Concerts", slug: "concerts" },
+          { id: 2, name: "Festivals", slug: "festivals" },
+        ],
+      }),
     );
 
     const title = `E2E Concert ${Date.now()}`;
@@ -55,44 +58,43 @@ test.skip("Publica -> Event flow (deterministic)", () => {
       timeout: 60000,
     });
 
-    await expect(page.getByTestId("event-form")).toBeVisible({
+    const form = page.getByTestId("event-form");
+    await expect(form).toBeVisible({ timeout: 30000 });
+    await expect(form).toHaveAttribute("data-hydrated", "true", {
       timeout: 30000,
     });
-    await expect(page.getByTestId("event-form")).toHaveAttribute(
-      "data-hydrated",
-      "true",
-      { timeout: 30000 }
-    );
 
-    const imagePath = path.join(
-      process.cwd(),
-      "public",
-      "static",
-      "icons",
-      "icon-192x192.png"
-    );
-    await page.setInputFiles('input[type="file"][accept*="image"]', imagePath);
-
+    // Step 1: basics
     await page.fill("#title", title);
     await expect(page.locator("#title")).toHaveValue(title);
     await page.fill("#description", description);
     await expect(page.locator("#description")).toHaveValue(description);
+    await page.fill("#url", "https://example.com/prova-e2e");
+    await expect(page.getByTestId("next-button")).toBeEnabled({
+      timeout: 10000,
+    });
+    await page.getByTestId("next-button").click();
+
+    // Step 2: location
+    await page.locator("#town-input").fill("Mataró");
+    await page.keyboard.press("Enter");
     await page.fill("#location", venue);
     await expect(page.locator("#location")).toHaveValue(venue);
-    await page.fill("#url", "https://example.com/prova-e2e");
+    await expect(page.getByTestId("next-button")).toBeEnabled({
+      timeout: 10000,
+    });
+    await page.getByTestId("next-button").click();
 
-    const selectOption = async (inputId: string, option: string) => {
-      const container = page.locator(`#${inputId}`);
-      await container.click();
-      await container.locator("input").fill(option);
-      await page.getByRole("option", { name: option }).click();
-    };
-
-    await selectOption("region", "Vallès Oriental");
-    await selectOption("town", "Cardedeu");
+    // Step 3: image and dates (the picker's default start is enough here)
+    await page.setInputFiles(
+      'input[type="file"][accept*="image"]',
+      path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
+    );
 
     const publishButton = page.getByTestId("publish-button");
-    await expect(publishButton).toBeEnabled();
+    await expect(publishButton).toBeEnabled({ timeout: 20000 });
+    // Wait for canPublishRef to arm (250ms guard in EventForm)
+    await page.waitForTimeout(500);
 
     const publishSlugHandle = page.waitForFunction(
       () =>
@@ -101,21 +103,19 @@ test.skip("Publica -> Event flow (deterministic)", () => {
           ? window.__LAST_E2E_PUBLISH_SLUG__
           : null) ||
         null,
-      { timeout: 60000 }
+      { timeout: 60000 },
     );
     await publishButton.click();
-    const slugHandle = await publishSlugHandle;
-    const resolvedSlug = (await slugHandle.jsonValue()) as string;
+    const resolvedSlug = (await (await publishSlugHandle).jsonValue()) as string;
 
-    await page.goto(`/e/${resolvedSlug}`, {
-      waitUntil: "domcontentloaded",
-    });
+    await page.goto(`/e/${resolvedSlug}`, { waitUntil: "domcontentloaded" });
 
     await expect(page).toHaveURL(/\/e\/e2e-event-/);
-    await expect(page.locator("h1")).toHaveText(title);
-    await expect(page.getByText(description, { exact: false })).toBeVisible();
+    // The Suspense fallback briefly renders an sr-only h1 too; match by name.
+    await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+    await expect(page.getByText(description, { exact: false }).first()).toBeVisible();
     await expect(
-      page.getByText(`${venue}, Cardedeu, Vallès Oriental`, { exact: false })
+      page.getByText(venue, { exact: false }).filter({ visible: true }).first(),
     ).toBeVisible();
   });
 });

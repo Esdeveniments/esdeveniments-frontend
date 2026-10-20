@@ -28,6 +28,9 @@ if (process.env.NEXT_PUBLIC_API_URL) {
 if (process.env.HMAC_SECRET) {
   webServerEnv.HMAC_SECRET = process.env.HMAC_SECRET;
 }
+if (process.env.BACKEND_SERVICE_SECRET) {
+  webServerEnv.BACKEND_SERVICE_SECRET = process.env.BACKEND_SERVICE_SECRET;
+}
 
 export default defineConfig({
   testDir: "./e2e",

@@ -12,7 +12,6 @@ export const UserPublicResponseDTOSchema = z.object({
   displayName: z.string().nullish().transform((v) => v ?? undefined),
   bio: z.string().nullish().transform((v) => v ?? undefined),
   avatarUrl: z.string().nullish().transform((v) => v ?? undefined),
-  organizerVerified: z.boolean().nullish().transform((v) => v ?? undefined),
   role: z
     .enum(["USER", "ADMIN", "ORGANIZATION"])
     .nullish()
@@ -65,7 +64,7 @@ export const AuthenticatedUserDTOSchema = z.object({
     .enum(["LOGTO", "CUSTOM"])
     .nullish()
     .transform((v) => v ?? undefined),
-  organizerVerified: z.boolean().nullish().transform((v) => v ?? undefined),
+  verified: z.boolean().nullish().transform((v) => v ?? undefined),
   profileCompleted: z.boolean().nullish().transform((v) => v ?? undefined),
   emailVerified: z.boolean().nullish().transform((v) => v ?? undefined),
   role: z

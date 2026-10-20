@@ -49,7 +49,7 @@ export async function GET(request: Request) {
         {
           method: "GET",
           path: "/api/events/{slug}",
-          description: "Get event details by slug or ID",
+          description: "Get event details by slug",
         },
         {
           method: "GET",

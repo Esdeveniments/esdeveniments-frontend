@@ -141,6 +141,7 @@ export async function GET(request: NextRequest) {
       config: {
         apiUrlConfigured,
         hmacConfigured,
+        backendKeyConfigured: Boolean(process.env.BACKEND_SERVICE_SECRET),
         revalidateSecretConfigured: Boolean(process.env.REVALIDATE_SECRET),
         redisConfigured,
       },

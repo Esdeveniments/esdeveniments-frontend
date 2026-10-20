@@ -82,7 +82,7 @@ function makeEvent(
     hash: "hash",
     slug: "event-slug",
     title: "Event Title",
-    type: "FREE",
+    isPromoted: false,
     url: "https://example.com",
     description: "desc",
     imageUrl: "https://img",

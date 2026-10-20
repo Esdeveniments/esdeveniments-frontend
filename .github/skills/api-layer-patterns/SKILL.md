@@ -43,7 +43,7 @@ This skill enforces the **internal API proxy layer architecture** - a critical s
                   ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 3: External Wrappers (lib/api/*-external.ts)         │
-│ - HMAC signing via fetchWithHmac                           │
+│ - X-Backend-Key (+ legacy HMAC) via fetchWithHmac          │
 │ - Env guard (NEXT_PUBLIC_API_URL check)                    │
 │ - Zod parsing for type safety                              │
 │ - Safe fallback DTOs on failure                            │

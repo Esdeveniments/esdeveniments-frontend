@@ -15,6 +15,14 @@
 #   - HMAC_SECRET env var set
 #   - gh CLI authenticated
 #   - Playwright installed (npx playwright install chromium)
+#
+# Optional second user: e2e/event-edit-creator-only.spec.ts skips its
+# "different signed-in user" test without E2E_STAGING_EMAIL_2 and
+# E2E_STAGING_PASSWORD_2. Do not rerun this script for that user: it would
+# overwrite the primary secrets. Create the second account by hand, then
+# store its credentials as the _2 secrets:
+#   gh secret set E2E_STAGING_EMAIL_2    --env staging
+#   gh secret set E2E_STAGING_PASSWORD_2 --env staging
 
 set -euo pipefail
 

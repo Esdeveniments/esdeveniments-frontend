@@ -3,7 +3,6 @@ import type { CitySummaryResponseDTO } from "./city";
 import type { OwnerSummaryDTO } from "./user";
 import type { ProfileSummaryResponseDTO } from "./profile";
 
-export type EventType = "FREE" | "PAID";
 export type EventOrigin = "SCRAPE" | "RSS" | "MANUAL" | "MIGRATION";
 
 // Domain-level split for a user's own events (ProfileEventsSection,
@@ -37,10 +36,10 @@ export interface EventSummaryResponseDTO {
   hash: string;
   slug: string;
   title: string;
-  type: EventType;
-  url: string;
+  isPromoted: boolean;
+  url: string | null;
   description: string;
-  imageUrl: string;
+  imageUrl: string | null;
   startDate: string; // ISO date
   startTime: string | null; // ISO time or null
   endDate: string; // ISO date
@@ -110,9 +109,9 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
    * Public owner summary embedded in event detail. No email — the backend's
    * latest auth handoff drops email from the creator payload, the UI must
    * never read an email field here. The organizer badge is renderer-driven
-   * (only when organizerVerified === true).
+   * (only when verified === true). Null on legacy/imported events.
    */
-  owner?: OwnerSummaryDTO;
+  owner?: OwnerSummaryDTO | null;
 }
 
 export type CategorizedEvents = {
@@ -127,13 +126,14 @@ export interface EventTimeDTO {
   nano?: number;
 }
 
-// --- Shared event write request DTO (used for both create POST and update PUT) ---
+// --- Shared event write request DTO (create `event` part and update PUT body) ---
+// The backend rejects unknown fields, so never add `type` or `imageUrl` here:
+// the cover image travels as the `imageFile` multipart part on create and via
+// PUT/DELETE /events/{uuid}/image afterwards.
 export interface EventBaseRequestDTO {
   title: string;
-  type: EventType;
-  url: string;
+  url: string | null;
   description: string;
-  imageUrl: string | null;
   regionId: number;
   cityId: number;
   startDate: string; // YYYY-MM-DD
@@ -146,7 +146,7 @@ export interface EventBaseRequestDTO {
 
 // `indexed` is required by the backend's UpdateEventRequestDTO (PUT /events/{uuid}).
 // The create endpoint (POST /events) does not declare it, so we keep it separate
-// to avoid sending an unknown field that could 400 if FAIL_ON_UNKNOWN_PROPERTIES=true.
+// to avoid sending an unknown field.
 export interface EventUpdateRequestDTO extends EventBaseRequestDTO {
   indexed: boolean;
 }

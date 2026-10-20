@@ -202,6 +202,7 @@
       "nearbyLabel": "Nearby:"
     },
     "EventEdit": {
+      "coverUpdateFailed": "The event was saved, but the image could not be updated.",
       "title": "Edit event",
       "description": "Secure panel to edit Esdeveniments.cat events.",
       "heading": "Edit your event",
@@ -256,7 +257,7 @@
         "uploading": "Uploading...",
         "removing": "Removing...",
         "altPreview": "Profile photo",
-        "errorUnsupported": "Unsupported format. Use JPG, PNG or WEBP.",
+        "errorUnsupported": "Unsupported format. Use JPG or PNG.",
         "errorTooLarge": "Image exceeds the 2 MB limit.",
         "errorUploadFailed": "Couldn't upload the photo. Please try again.",
         "errorRemoveFailed": "Couldn't remove the photo. Please try again."
@@ -776,26 +777,17 @@
     },
     "ImageUploader": {
       "label": "Image *",
-      "unsupported": "The selected file is not a supported image. Please upload a JPEG, PNG, JPG, or WEBP file.",
+      "unsupported": "The selected file is not a supported image. Please upload a JPEG or PNG file.",
       "originalTooLarge": "The image exceeds the maximum limit of {limit} MB. Reduce the image size before retrying.",
       "tooLarge": "The image size exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
       "compressFailed": "We couldn't reduce the image. Check your connection and try again.",
       "optimizing": "Optimizing the image to meet the {limit} MB limit...",
-      "progress": "{progress}%",
-      "uploading": "Uploading the image ({progress}%)...",
-      "uploadSuccess": "Image uploaded successfully.",
-      "uploadMode": "Upload a file",
-      "urlMode": "Use an image URL",
-      "imageUrlLabel": "Image URL",
-      "imageUrlPlaceholder": "https://example.com/image.jpg",
-      "imageUrlHelper": "If your image is already online, paste the link and we'll use it directly without uploading.",
-      "imageUrlInvalid": "Add a valid image URL",
       "remove": "Remove image",
       "altPreview": "Image",
       "uploadDropCta": "Drop your image here",
       "uploadDropHelper": "or click to select",
       "selectButton": "Select file",
-      "formatHelper": "Format: JPEG, PNG, JPG, or WEBP"
+      "formatHelper": "Format: JPEG or PNG"
     },
     "HeroCTA": {
       "buttonBase": "See events",
@@ -945,7 +937,7 @@
       "titleHint": "Example: Summer street festival",
       "locationHint": "Add the exact spot: square, street or venue",
       "urlHint": "Optional: official link or social post",
-      "imageHint": "JPG/PNG/WebP. A clear image helps people find it.",
+      "imageHint": "JPG/PNG. A clear image helps people find it.",
       "reviewTitle": "Before publishing",
       "reviewReady": "All set! Review and publish.",
       "reviewMissing": "Missing: {fields}",
@@ -1735,7 +1727,7 @@
       "doneCta": "Finish",
       "dropzone": {
         "title": "Drag image here or click to select",
-        "formats": "Horizontal format • JPG, PNG or WebP",
+        "formats": "Horizontal format • JPG or PNG",
         "optimal": "Optimal: 728×150px",
         "minimum": "Min: 400×80px"
       },
@@ -1743,7 +1735,7 @@
         "title": "Image recommendations:",
         "recommended": "Optimal: {width}×{height}px (5:1 ratio)",
         "horizontal": "Wide horizontal banner format",
-        "formats": "Formats: JPG, PNG or WebP",
+        "formats": "Formats: JPG or PNG",
         "minimum": "Minimum accepted: 400×80px"
       },
       "validation": {

@@ -81,7 +81,7 @@ export const PreviewContent = ({
       <div className={`w-full rounded-card overflow-hidden ${hasImage ? 'bg-muted' : 'bg-error/10 border-2 border-dashed border-error/50'}`}>
         {hasImage ? (
           <ClientImage
-            image={event.imageUrl}
+            image={event.imageUrl ?? undefined}
             title={event.title}
             className="w-full aspect-video object-cover"
             context="detail"
@@ -206,7 +206,7 @@ export const PreviewContent = ({
             {hasUrl ? (
               <a
                 className="body-normal text-primary hover:underline ml-6 break-all"
-                href={event.url}
+                href={event.url ?? undefined}
                 target="_blank"
                 rel="noreferrer"
               >

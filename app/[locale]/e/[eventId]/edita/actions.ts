@@ -1,17 +1,28 @@
 "use server";
 import { updateTag, refresh, revalidatePath } from "next/cache";
-import { updateEventById, fetchEventBySlug } from "@lib/api/events";
+import {
+  updateEventById,
+  fetchEventBySlug,
+  replaceEventImage,
+  deleteEventImage,
+} from "@lib/api/events";
 import type { EventBaseRequestDTO, EventUpdateRequestDTO } from "types/api/event";
 import type { EditEventResult } from "types/event";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import { deleteEventDetailCache } from "@lib/cache/event-detail-cache";
 import { getCurrentUser } from "@lib/auth/session";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
+import { getValidatedImageFile } from "@utils/image-validation";
 
+/**
+ * `cover` (optional) changes the event image: `imageFile` replaces it,
+ * `removeImage` deletes it. Absent = keep the current image.
+ */
 export async function editEvent(
   eventId: string,
   slug: string,
-  data: EventBaseRequestDTO
+  data: EventBaseRequestDTO,
+  cover?: FormData
 ): Promise<EditEventResult> {
   // 1. Resolve the event by slug and verify the caller-provided id matches.
   // This prevents a mismatch where a malicious client passes a slug they own
@@ -53,6 +64,21 @@ export async function editEvent(
   const updatePayload: EventUpdateRequestDTO = { ...data, indexed: true };
   const updatedEvent = await updateEventById(event.id, updatePayload);
 
+  // The text edit is already saved, so a failed cover change must still
+  // reach the cache invalidation below.
+  let coverFailed = false;
+  try {
+    const image = await getValidatedImageFile(cover?.get("imageFile"));
+    if (image) {
+      await replaceEventImage(event.id, image);
+    } else if (cover?.get("removeImage")) {
+      await deleteEventImage(event.id);
+    }
+  } catch (error) {
+    console.error("editEvent: cover update failed", error);
+    coverFailed = true;
+  }
+
   // 2. Immediately expire cache tags for event lists and the specific event
   // This ensures read-your-own-writes: the updated event appears immediately
   updateTag(eventsTag);
@@ -81,6 +107,14 @@ export async function editEvent(
   }
   // Refresh the current request to reflect changes
   refresh();
+
+  if (coverFailed) {
+    return {
+      success: false,
+      newSlug: updatedEvent.slug,
+      errorCode: "COVER_UPDATE_FAILED",
+    };
+  }
 
   // 3. Return result with new slug for client redirection
   return { success: true, newSlug: updatedEvent.slug };

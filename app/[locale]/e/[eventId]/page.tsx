@@ -572,7 +572,7 @@ async function EventPageContent({
       {/* Sticky CTA bar for mobile — sits above bottom nav */}
       {temporalStatus.state !== "past" && (
         <EventStickyCTA
-          eventUrl={event.url}
+          eventUrl={event.url ?? undefined}
           eventSlug={event.slug}
           labels={{
             moreInfo: tEvent("stickyMoreInfo"),

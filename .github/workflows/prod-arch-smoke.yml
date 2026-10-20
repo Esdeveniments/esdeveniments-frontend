@@ -54,6 +54,7 @@ jobs:
       - name: Build Next.js application
         env:
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -62,6 +63,7 @@ jobs:
       - name: Start server against Redis (background)
         env:
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
