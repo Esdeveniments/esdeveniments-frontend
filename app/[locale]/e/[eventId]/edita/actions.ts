@@ -111,7 +111,7 @@ export async function editEvent(
     return {
       success: false,
       newSlug: updatedEvent.slug,
-      error: "The event was saved, but the image could not be updated.",
+      errorCode: "COVER_UPDATE_FAILED",
     };
   }
 

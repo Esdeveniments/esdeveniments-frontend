@@ -202,6 +202,7 @@
       "nearbyLabel": "Cerca:"
     },
     "EventEdit": {
+      "coverUpdateFailed": "El evento se ha guardado, pero no se ha podido actualizar la imagen.",
       "title": "Editar evento",
       "description": "Panel seguro para editar eventos de Esdeveniments.cat.",
       "heading": "Edita tu evento",
@@ -1728,7 +1729,7 @@
       "doneCta": "Finalizar",
       "dropzone": {
         "title": "Arrastra la imagen aquí o haz clic",
-        "formats": "Formato horizontal • JPG, PNG o WebP",
+        "formats": "Formato horizontal • JPG o PNG",
         "optimal": "Óptimo: 728×150px",
         "minimum": "Mínimo: 400×80px"
       },
@@ -1736,7 +1737,7 @@
         "title": "Recomendaciones para la imagen:",
         "recommended": "Tamaño óptimo: {width}×{height}px (proporción 5:1)",
         "horizontal": "Formato banner horizontal alargado",
-        "formats": "Formatos: JPG, PNG o WebP",
+        "formats": "Formatos: JPG o PNG",
         "minimum": "Mínimo aceptado: 400×80px"
       },
       "validation": {

@@ -321,11 +321,14 @@ export interface EventFormProps {
   previewTestId?: string;
 }
 
+export type CoverImageIntent = "keep" | "replace" | "remove";
+
 /** Result returned by the editEvent server action. */
 export interface EditEventResult {
   success: boolean;
   newSlug?: string;
   error?: string;
+  errorCode?: "COVER_UPDATE_FAILED";
 }
 
 /**

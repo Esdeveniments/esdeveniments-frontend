@@ -202,6 +202,7 @@
       "nearbyLabel": "Nearby:"
     },
     "EventEdit": {
+      "coverUpdateFailed": "The event was saved, but the image could not be updated.",
       "title": "Edit event",
       "description": "Secure panel to edit Esdeveniments.cat events.",
       "heading": "Edit your event",
@@ -1726,7 +1727,7 @@
       "doneCta": "Finish",
       "dropzone": {
         "title": "Drag image here or click to select",
-        "formats": "Horizontal format • JPG, PNG or WebP",
+        "formats": "Horizontal format • JPG or PNG",
         "optimal": "Optimal: 728×150px",
         "minimum": "Min: 400×80px"
       },
@@ -1734,7 +1735,7 @@
         "title": "Image recommendations:",
         "recommended": "Optimal: {width}×{height}px (5:1 ratio)",
         "horizontal": "Wide horizontal banner format",
-        "formats": "Formats: JPG, PNG or WebP",
+        "formats": "Formats: JPG or PNG",
         "minimum": "Minimum accepted: 400×80px"
       },
       "validation": {

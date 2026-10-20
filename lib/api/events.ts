@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
-import { getAccessTokenFromCookies, getValidAccessToken } from "@utils/auth-cookies";
+import { getValidAccessToken } from "@utils/auth-cookies";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { decodeSafeJwtClaims } from "./users-external";
 import {
@@ -506,92 +506,6 @@ export async function deleteEventImage(eventId: string): Promise<void> {
       { status: response.status },
     );
   }
-}
-
-/**
- * Sponsor banner upload only. The backend removed POST /events/images in the
- * v2 contract (2026-10-18) and has no non-event image endpoint, so this fails
- * against v2 backends until the backend adds a replacement.
- */
-export async function uploadEventImage(
-  imageFile: File,
-  maxBytes?: number,
-): Promise<UploadImageResponse> {
-  if (!imageFile) {
-    throw new Error("uploadEventImage: imageFile is required");
-  }
-  ensureImageWithinLimit(imageFile, maxBytes);
-
-  if (isE2ETestMode) {
-    return {
-      url: `https://example.com/${imageFile.name || "e2e-image"}.jpg`,
-      publicId: "e2e-image",
-    };
-  }
-
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
-
-  const apiUrl = getApiUrl();
-  // Auth is optional — sponsor image uploads use Stripe session, not user login
-  const authToken = await getAccessTokenFromCookies();
-  const headers: HeadersInit = { Accept: "application/json" };
-  if (authToken) {
-    headers.Authorization = `Bearer ${authToken}`;
-  }
-
-  const formData = new FormData();
-  formData.append("imageFile", imageFile);
-
-  const response = await fetchWithHmac(`${apiUrl}/events/images`, {
-    method: "POST",
-    headers,
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorText = await response
-      .text()
-      .catch(() => "Unable to read error response");
-    // 2026-07-26 round-10 diagnostic: surface the WWW-Authenticate header so
-    // Spring's resource-server rejection reason (RFC 6750) is visible in
-    // one grep. The 401 body is usually empty for Spring resource-server
-    // failures; the header is where the actual cause lives (e.g.
-    // invalid_token vs insufficient_scope vs missing cnf-binding).
-    console.error(
-      `uploadEventImage: HTTP ${response.status} -- body=${errorText} -- www-authenticate=${response.headers.get("www-authenticate") ?? "<none>"}`,
-    );
-    if (response.status === 413) {
-      throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
-    }
-    throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`,
-    );
-  }
-
-  let payload: unknown;
-  try {
-    payload = await response.json();
-  } catch {
-    throw new Error("uploadEventImage: invalid JSON response from backend");
-  }
-
-  if (
-    !payload ||
-    typeof payload !== "object" ||
-    typeof (payload as { url?: unknown }).url !== "string" ||
-    typeof (payload as { publicId?: unknown }).publicId !== "string"
-  ) {
-    throw new Error(
-      "uploadEventImage: backend response missing url/publicId fields",
-    );
-  }
-
-  const { url, publicId } = payload as UploadImageResponse;
-  return { url, publicId };
 }
 
 function createE2EEvent(

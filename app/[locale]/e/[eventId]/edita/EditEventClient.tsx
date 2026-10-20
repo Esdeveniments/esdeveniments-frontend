@@ -1,10 +1,11 @@
 "use client";
 import { useRouter, Link } from "@i18n/routing";
 import { useState, useMemo, useTransition } from "react";
+import { useImagePreview } from "@components/hooks/useImagePreview";
 import { useTranslations } from "next-intl";
 import { getProfileSlug } from "@utils/user-helpers";
 import EventForm from "@components/ui/EventForm";
-import type { FormData } from "types/event";
+import type { FormData, CoverImageIntent } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
 import { normalizeUrl } from "@utils/string-helpers";
@@ -20,10 +21,9 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
   const router = useRouter();
   const creatorSlug = event.owner ? getProfileSlug(event.owner) : null;
   const [form, setForm] = useState<FormData>(eventDtoToFormData(event));
-  const [imageToUpload, setImageToUpload] = useState<string | null>(
-    event.imageUrl
-  );
+  const [imageToUpload, updateImagePreview] = useImagePreview(event.imageUrl);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [coverIntent, setCoverIntent] = useState<CoverImageIntent>("keep");
   // A saved title change renames the slug even when the cover step fails;
   // retries must look the event up by the new one.
   const [slug, setSlug] = useState(event.slug ?? "");
@@ -73,15 +73,8 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
 
   const handleImageChange = (file: File | null) => {
     setImageFile(file);
-    if (!file) {
-      setImageToUpload(null);
-      return;
-    }
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      setImageToUpload(reader.result as string);
-    });
-    reader.readAsDataURL(file);
+    setCoverIntent(file ? "replace" : "remove");
+    updateImagePreview(file);
   };
 
   async function onSubmit() {
@@ -97,10 +90,10 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
           url: normalizeUrl(form.url),
         });
         let cover: globalThis.FormData | undefined;
-        if (imageFile) {
+        if (coverIntent === "replace" && imageFile) {
           cover = new globalThis.FormData();
           cover.append("imageFile", imageFile);
-        } else if (event.imageUrl && !imageToUpload) {
+        } else if (coverIntent === "remove" && event.imageUrl) {
           cover = new globalThis.FormData();
           cover.append("removeImage", "1");
         }
@@ -109,7 +102,11 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
         if (result && result.success) {
           router.push(`/e/${result.newSlug || slug}`);
         } else {
-          setSubmitError(result?.error ?? t("editError"));
+          setSubmitError(
+            result?.errorCode === "COVER_UPDATE_FAILED"
+              ? tEdit("coverUpdateFailed")
+              : result?.error ?? t("editError"),
+          );
         }
       } catch (error) {
         console.error("Error updating event:", error);

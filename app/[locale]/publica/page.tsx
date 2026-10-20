@@ -10,6 +10,7 @@ import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
 import { getZodValidationState } from "@utils/form-validation";
 import EventForm from "@components/ui/EventForm";
+import { useImagePreview } from "@components/hooks/useImagePreview";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
@@ -117,7 +118,7 @@ const PublishForm = () => {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, updateImagePreview] = useImagePreview(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   // A submit-time 403 (profileCompleted: false) means the client's session
@@ -207,18 +208,8 @@ const PublishForm = () => {
     setError(null);
     trackFieldInteraction("image");
 
-    if (!file) {
-      setImageFile(null);
-      setImagePreview(null);
-      return;
-    }
-
     setImageFile(file);
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      setImagePreview(reader.result as string);
-    });
-    reader.readAsDataURL(file);
+    updateImagePreview(file);
   };
 
   const handleTownChange = (town: Option | null) => {

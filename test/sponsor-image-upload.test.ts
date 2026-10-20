@@ -2,13 +2,13 @@
  * Tests for sponsor image upload route
  *
  * Focus: Ensuring metadata save failures are properly handled
- * to prevent orphaned images in Cloudinary.
+ * to prevent orphaned images in object storage.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Define mock functions that will be hoisted
-vi.mock("lib/api/events", () => ({
-  uploadEventImage: vi.fn(),
+vi.mock("lib/api/sponsors-external", () => ({
+  uploadSponsorImage: vi.fn(),
 }));
 
 vi.mock("lib/stripe", () => ({
@@ -25,7 +25,7 @@ vi.mock("utils/rate-limit", () => ({
 
 // Import after mocks are set up
 import { POST } from "app/api/sponsors/image-upload/route";
-import { uploadEventImage } from "lib/api/events";
+import { uploadSponsorImage } from "lib/api/sponsors-external";
 import {
   fetchCheckoutSession,
   updateCheckoutSessionMetadata,
@@ -33,7 +33,7 @@ import {
 } from "lib/stripe";
 
 // Cast to mocked functions for type safety
-const mockUploadEventImage = vi.mocked(uploadEventImage);
+const mockUploadEventImage = vi.mocked(uploadSponsorImage);
 const mockFetchCheckoutSession = vi.mocked(fetchCheckoutSession);
 const mockUpdateCheckoutSessionMetadata = vi.mocked(
   updateCheckoutSessionMetadata,

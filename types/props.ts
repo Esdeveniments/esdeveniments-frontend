@@ -311,6 +311,7 @@ export type AcceptedImageTypes = "image/jpeg" | "image/png";
 export interface ImageUploaderProps {
   value: string | null;
   onUpload: (file: File | null) => void;
+  onPreparingChange?: (preparing: boolean) => void;
 }
 
 export interface InputProps {

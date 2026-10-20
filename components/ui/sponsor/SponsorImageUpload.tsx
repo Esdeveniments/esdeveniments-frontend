@@ -87,6 +87,7 @@ export default function SponsorImageUpload({
   placeName?: string | null;
 }) {
   const t = useTranslations("Sponsorship");
+  const tImage = useTranslations("Components.ImageUploader");
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -141,6 +142,13 @@ export default function SponsorImageUpload({
 
       if (!selectedFile) return;
 
+      if (selectedFile.type !== "image/jpeg" && selectedFile.type !== "image/png") {
+        setFile(null);
+        setError(tImage("unsupported"));
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
       if (selectedFile.size > MAX_SPONSOR_IMAGE_BYTES) {
         setFile(null);
         setError(t("upload.errors.tooLarge"));
@@ -165,7 +173,7 @@ export default function SponsorImageUpload({
       };
       img.src = previewUrl;
     },
-    [preview, t],
+    [preview, t, tImage],
   );
 
   /**
@@ -415,7 +423,7 @@ export default function SponsorImageUpload({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png"
                 onChange={handleFileChange}
                 className="sr-only"
                 disabled={isUploading}

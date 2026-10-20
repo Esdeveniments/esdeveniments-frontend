@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
-import { uploadEventImage } from "@lib/api/events";
+import { uploadSponsorImage } from "@lib/api/sponsors-external";
 import {
   fetchCheckoutSession,
   updateCheckoutSessionMetadata,
@@ -9,7 +9,6 @@ import {
 import { activateSponsorImage } from "@lib/db/sponsors";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
-  MAX_SPONSOR_IMAGE_BYTES,
   FORMDATA_PARSE_ERROR_SUBSTRING,
 } from "@utils/constants";
 import { createRateLimiter } from "@utils/rate-limit";
@@ -82,9 +81,9 @@ export async function POST(request: Request) {
     }
 
     // Validate file is actually an image (client MIME type check)
-    if (!imageFile.type.startsWith("image/")) {
+    if (imageFile.type !== "image/jpeg" && imageFile.type !== "image/png") {
       return NextResponse.json(
-        { errorCode: "invalid_file_type", error: "File must be an image." },
+        { errorCode: "invalid_file_type", error: "File must be a JPEG or PNG image." },
         { status: 400 },
       );
     }
@@ -136,10 +135,7 @@ export async function POST(request: Request) {
     // Get payment intent ID to update its metadata too
     const paymentIntentId = getPaymentIntentId(session);
 
-    const { url, publicId } = await uploadEventImage(
-      imageFile,
-      MAX_SPONSOR_IMAGE_BYTES,
-    );
+    const { url, publicId } = await uploadSponsorImage(imageFile);
 
     const imageMetadata = {
       sponsor_image_url: url,

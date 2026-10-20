@@ -192,14 +192,14 @@ export async function GET() {
           tags: ["Events"],
           summary: "Get event details",
           description:
-            "Retrieve full details for a single event by its slug or ID.",
+            "Retrieve full details for a single event by its slug.",
           parameters: [
             {
               name: "slug",
               in: "path",
               required: true,
               schema: { type: "string" },
-              description: "Event slug or UUID",
+              description: "Event slug",
             },
           ],
           responses: {
