@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
-import { formDataToBackendDTO } from "@utils/form-helpers";
+import { eventDtoToFormData, formDataToBackendDTO } from "@utils/form-helpers";
 import type { FormData } from "types/event";
+import type { EventDetailResponseDTO } from "types/api/event";
 
 // Pin a non-UTC zone so a UTC shift (toISOString) fails here even on CI.
 const originalTz = process.env.TZ;
@@ -61,5 +62,46 @@ describe("event form local time", () => {
     } finally {
       process.env.TZ = "Europe/Madrid";
     }
+  });
+});
+
+describe("event edit form time", () => {
+  const stored = {
+    id: "5f1c0d2e-0000-4000-8000-000000000001",
+    title: "Cercle",
+    description: "Desc",
+    startDate: "2026-12-05",
+    startTime: "21:00:00",
+    endDate: "2026-12-05",
+    endTime: "23:30:00",
+    region: { id: 1, name: "Barcelonès" },
+    city: { id: 2, name: "Barcelona" },
+    location: "Lloc",
+    url: null,
+    categories: [],
+  } as unknown as EventDetailResponseDTO;
+
+  it.each(["Europe/Madrid", "UTC", "America/New_York"])(
+    "prefills the stored local time and saves it unchanged in %s",
+    (tz) => {
+      process.env.TZ = tz;
+      const edit = eventDtoToFormData(stored);
+
+      expect(edit.startDate).toBe("2026-12-05T21:00");
+      expect(edit.endDate).toBe("2026-12-05T23:30");
+
+      const dto = formDataToBackendDTO(edit);
+      expect(dto.startDate).toBe("2026-12-05");
+      expect(dto.startTime).toBe("21:00");
+      expect(dto.endTime).toBe("23:30");
+    },
+  );
+
+  it("saves a time changed in the date picker instead of the stored one", () => {
+    const edit = eventDtoToFormData(stored);
+    const changed = { ...edit, endDate: "2026-12-05T23:45" };
+
+    expect(formDataToBackendDTO(changed).endTime).toBe("23:45");
+    expect(mapDraftToPreviewEvent({ form: changed, imageUrl: null }).endTime).toBe("23:45");
   });
 });

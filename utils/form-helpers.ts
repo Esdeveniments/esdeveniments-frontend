@@ -81,8 +81,13 @@ export function formDataToBackendDTO(
   };
 }
 
+function toLocalDateTimeValue(date: string | null, time: string | null): string {
+  if (!date) return "";
+  return time ? `${date}T${time.slice(0, 5)}` : date;
+}
+
 export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
-  return {
+  const form: FormData = {
     id: event.id ? String(event.id) : undefined,
     title: event.title || "",
     description: event.description || "",
@@ -104,5 +109,14 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
       ? event.categories.map((cat) => ({ id: cat.id, name: cat.name }))
       : [],
     email: "", // UI only
+  };
+  // The picker edits one local "YYYY-MM-DDTHH:mm" per field; the stored times
+  // kept separately above would outrank what the user changes in it.
+  return {
+    ...form,
+    startDate: toLocalDateTimeValue(event.startDate, event.startTime),
+    startTime: null,
+    endDate: toLocalDateTimeValue(event.endDate, event.endTime),
+    endTime: null,
   };
 }
