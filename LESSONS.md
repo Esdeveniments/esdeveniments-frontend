@@ -200,3 +200,30 @@ to any request without `X-Backend-Key`, which the safe fallbacks turn into
 the same empty lists. When the backend contract changes, grep for the
 removed field in `lib/validation/` and `types/api/is*.ts` first, and check
 PRE's `/v3/api-docs` (it needs no key) before trusting an empty page.
+
+## Module-level state is not shared between a server action and a route handler
+
+`lib/cache/event-detail-cache.ts` kept its cache in a module-level `Map` and
+documented that the edit action and `/api/events/[slug]` shared it. A production
+build bundles them separately, so each got its own copy. The action cleared its
+copy, the route kept serving the old event, and owners saw their edit only after
+the 30-minute TTL. `next dev` uses one module graph, so it never showed. Keep
+state that two entry points must share on `globalThis`, as `redis-client.ts`
+does, and test it by importing the module again after `vi.resetModules()`.
+
+## Pin `NEXT_PUBLIC_SITE_URL` when you run e2e against pre-production
+
+`NEXT_PUBLIC_SITE_URL` is inlined at build time, and the event page fetches its
+own `/api/events/{slug}` through that origin. Unset, it falls back to the
+production site, so an event that exists only on pre-production renders "not
+found" while the backend serves it. Build with `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
+for local runs. The e2e-integration workflow already does. The sponsor checkout
+refuses a non-https site URL in production, so the payment specs need an https
+value instead.
+
+## Specs that type a password must switch traces off
+
+Playwright traces record `fill()` arguments in plain text, and the staging
+workflows retry and upload `playwright-report/`. The `E2E_STAGING_*` specs call
+`test.use({ trace: "off" })`. Do the same in any new spec that logs in with a
+real credential.

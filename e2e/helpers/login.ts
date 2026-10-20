@@ -57,6 +57,26 @@ export function isLoginCompleteUrl(
 }
 
 /**
+ * The app shows engagement dialogs ("Follow us", "Install the app") over the
+ * page at unpredictable moments; they block clicks until dismissed. Playwright
+ * runs this handler whenever one appears and an action is waiting.
+ */
+export async function dismissEngagementPopups(page: Page) {
+  await page.addLocatorHandler(
+    page.getByRole("dialog", { name: /follow us|install the/i }),
+    async (dialog) => {
+      // The dialog animates in and can re-mount, so a strict click may never
+      // see a stable element; force it and fall back to Escape.
+      await dialog
+        .getByRole("button", { name: /not now/i })
+        .first()
+        .click({ force: true, timeout: 3_000 })
+        .catch(() => page.keyboard.press("Escape"));
+    },
+  );
+}
+
+/**
  * Log in through Logto's hosted sign-in page (reached via the OIDC redirect
  * from /iniciar-sessio). Selectors target Logto's default sign-in experience
  * and may need adjusting if the hosted UI is customized. Handles both
@@ -151,4 +171,6 @@ export async function loginViaUI(page: Page, email: string, password: string) {
     }
     throw timeoutError;
   }
+
+  await dismissEngagementPopups(page);
 }

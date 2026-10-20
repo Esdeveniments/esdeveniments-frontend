@@ -376,7 +376,11 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockUpdateTag).toHaveBeenCalledWith("events");
       expect(mockUpdateTag).toHaveBeenCalledWith("event:same-event");
       expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("same-event");
-      expect(result).toMatchObject({ success: false, newSlug: "same-event" });
+      expect(result).toEqual({
+        success: false,
+        newSlug: "same-event",
+        errorCode: "COVER_UPDATE_FAILED",
+      });
     });
 
     it("deletes the cover when the client asks to remove it", async () => {

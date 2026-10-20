@@ -202,6 +202,7 @@
       "nearbyLabel": "A prop:"
     },
     "EventEdit": {
+      "coverUpdateFailed": "L'esdeveniment s'ha desat, però no s'ha pogut actualitzar la imatge.",
       "title": "Editar esdeveniment",
       "description": "Panell segur per editar esdeveniments d'Esdeveniments.cat.",
       "heading": "Edita el teu esdeveniment",
@@ -1800,7 +1801,7 @@
       "doneCta": "Fet",
       "dropzone": {
         "title": "Arrossega la imatge aquí o fes clic",
-        "formats": "Format horitzontal • JPG, PNG o WebP",
+        "formats": "Format horitzontal • JPG o PNG",
         "optimal": "Òptim: 728×150px",
         "minimum": "Mínim: 400×80px"
       },
@@ -1808,7 +1809,7 @@
         "title": "Recomanacions per a la imatge:",
         "recommended": "Mida òptima: {width}×{height}px (proporció 5:1)",
         "horizontal": "Format bàner horitzontal allargat",
-        "formats": "Formats: JPG, PNG o WebP",
+        "formats": "Formats: JPG o PNG",
         "minimum": "Mínim acceptat: 400×80px"
       },
       "validation": {

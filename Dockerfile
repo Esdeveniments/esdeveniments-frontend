@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:22-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
@@ -12,10 +13,7 @@ RUN corepack enable && yarn install --immutable
 
 FROM base AS builder
 # Build-time arguments for Next.js static optimization.
-# ARGs are scoped to the builder stage and do NOT persist in the final runner image.
 # NEXT_PUBLIC_* vars are inlined at build time by Next.js.
-# HMAC_SECRET signs internal API routes; BACKEND_SERVICE_SECRET is the X-Backend-Key
-# the backend requires on every call. Both are needed for ISR static generation.
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_SENTRY_DSN
@@ -30,9 +28,6 @@ ARG NEXT_PUBLIC_CONTACT_EMAIL
 # Without it, usePushNotifications reports "unsupported" and the push CTA
 # never renders in production.
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
-ARG HMAC_SECRET
-ARG BACKEND_SERVICE_SECRET
-ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
 ARG BUILD_VERSION
@@ -49,16 +44,16 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_TIKTOK_REDIRECT_URI=$NEXT_PUBLIC_TIKTOK_REDIRECT_URI \
     NEXT_PUBLIC_CONTACT_EMAIL=$NEXT_PUBLIC_CONTACT_EMAIL \
     NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY \
-    HMAC_SECRET=$HMAC_SECRET \
-    BACKEND_SERVICE_SECRET=$BACKEND_SERVICE_SECRET \
-    SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN \
     SENTRY_ORG=$SENTRY_ORG \
     SENTRY_PROJECT=$SENTRY_PROJECT \
     BUILD_VERSION=$BUILD_VERSION
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN corepack enable && yarn prebuild && yarn build
+RUN --mount=type=secret,id=HMAC_SECRET,env=HMAC_SECRET,required=true \
+    --mount=type=secret,id=BACKEND_SERVICE_SECRET,env=BACKEND_SERVICE_SECRET,required=true \
+    --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN \
+    node scripts/verify-backend-build.mjs && corepack enable && yarn prebuild && yarn build
 
 FROM base AS runner
 ENV NODE_ENV=production

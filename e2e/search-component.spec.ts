@@ -7,8 +7,8 @@ test.describe("Search behavior", () => {
     test.setTimeout(120000);
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
-    const input = page.getByTestId("search-input");
-    const searchButton = page.getByTestId("search-button");
+    const input = page.getByTestId("search-input").filter({ visible: true });
+    const searchButton = page.getByTestId("search-button").filter({ visible: true });
     await expect(input).toBeVisible({
       timeout: process.env.CI ? 60000 : 30000,
     });

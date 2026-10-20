@@ -247,6 +247,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Run outside Docker too: BuildKit does not invalidate cached layers
+      # when a secret changes or disappears.
+      - name: Verify backend build access
+        run: node scripts/verify-backend-build.mjs
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+
       - name: Compute lowercase image name
         id: meta
         run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
@@ -291,8 +305,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           # NEXT_PUBLIC_* are inlined into the client bundle (public by design).
-          # HMAC_SECRET / SENTRY_AUTH_TOKEN are used only in the builder stage and
-          # do not persist in the final runner image (multi-stage Dockerfile).
+          # Private credentials use secret mounts, not provenance-visible build args.
+          secrets: |
+            HMAC_SECRET=${{ secrets.HMAC_SECRET }}
+            BACKEND_SERVICE_SECRET=${{ secrets.BACKEND_SERVICE_SECRET }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
           build-args: |
             BUILD_VERSION=${{ github.sha }}
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
@@ -305,9 +322,6 @@ jobs:
             NEXT_PUBLIC_TIKTOK_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_TIKTOK_CLIENT_KEY }}
             NEXT_PUBLIC_TIKTOK_REDIRECT_URI=${{ secrets.NEXT_PUBLIC_TIKTOK_REDIRECT_URI }}
             NEXT_PUBLIC_VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
-            HMAC_SECRET=${{ secrets.HMAC_SECRET }}
-            BACKEND_SERVICE_SECRET=${{ secrets.BACKEND_SERVICE_SECRET }}
-            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG=${{ secrets.SENTRY_ORG }}
             SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
 

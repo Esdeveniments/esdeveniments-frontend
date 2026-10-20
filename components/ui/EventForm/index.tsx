@@ -59,6 +59,7 @@ export const EventForm: React.FC<EventFormProps> = ({
     () => false
   );
   const [step, setStep] = useState(0);
+  const [isImagePreparing, setIsImagePreparing] = useState(false);
   const canPublishRef = useRef(false);
   const publishArmTimeoutRef = useRef<number | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -136,6 +137,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isImagePreparing || isLoading) return;
     setHasInteracted(true);
 
     // Never publish via implicit form submits (e.g. pressing Enter in a field).
@@ -438,7 +440,11 @@ export const EventForm: React.FC<EventFormProps> = ({
 
       {step === 2 && (
         <>
-          <ImageUpload value={imageToUpload} onUpload={handleImageChange} />
+          <ImageUpload
+            value={imageToUpload}
+            onUpload={handleImageChange}
+            onPreparingChange={setIsImagePreparing}
+          />
           {helperImage ? (
             <p className="text-[12px] text-foreground/80 w-full px-2 -mt-2">
               {helperImage}
@@ -484,6 +490,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             type="button"
             variant="ghost"
             data-testid="prev-button"
+            disabled={isImagePreparing}
             onClick={goPrev}
             className="min-h-[44px] px-6 w-full sm:w-auto"
           >
@@ -498,7 +505,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               type="button"
               variant="neutral"
               className="btn-outline min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!isPreviewReady || isLoading}
+              disabled={!isPreviewReady || isLoading || isImagePreparing}
               data-testid={previewTestId || "preview-button"}
               data-analytics-event-name={
                 analyticsContext === "publica" ? "publish_preview_click" : undefined
@@ -527,7 +534,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             <Button
               type="submit"
               variant="primary"
-              disabled={formState.isDisabled || isLoading}
+              disabled={formState.isDisabled || isLoading || isImagePreparing}
               className="min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="publish-button"
               data-analytics-event-name={

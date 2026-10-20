@@ -11,7 +11,9 @@ import {
 } from "@utils/constants";
 import { compressImageIfNeeded } from "@utils/image-optimizer";
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({
+  value, onUpload, onPreparingChange,
+}) => {
   const t = useTranslations("Components.ImageUploader");
   const fileSelect = useRef<HTMLInputElement>(null);
   const [imgData, setImgData] = useState<string | null>(value || null);
@@ -19,6 +21,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload }) => {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const selectionVersionRef = useRef(0);
+  const previewReaderRef = useRef<FileReader | null>(null);
+
+  useEffect(() => () => {
+    selectionVersionRef.current += 1;
+    previewReaderRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     setImgData(value || null);
@@ -52,53 +62,51 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload }) => {
     return true;
   }
 
-  const tryPrepareFile = async (file: File): Promise<File | null> => {
+  const prepareFile = async (file: File): Promise<void> => {
     if (!handleFileValidation(file)) {
-      return null;
+      return;
     }
-
+    const version = ++selectionVersionRef.current;
+    previewReaderRef.current?.abort();
     resetMessages();
-    let workingFile = file;
-
-    if (file.size > MAX_TOTAL_UPLOAD_BYTES) {
-      setIsOptimizing(true);
-      try {
+    setIsPreparing(true);
+    onPreparingChange?.(true);
+    setIsOptimizing(file.size > MAX_TOTAL_UPLOAD_BYTES);
+    try {
+      let workingFile = file;
+      if (file.size > MAX_TOTAL_UPLOAD_BYTES) {
         const optimized = await compressImageIfNeeded(file, {
           maxBytes: MAX_TOTAL_UPLOAD_BYTES,
         });
-
-        if (optimized) {
-          workingFile = optimized;
-        }
-      } catch (compressionError) {
-        console.error("Image optimization failed", compressionError);
-        setError(t("compressFailed"));
-        return null;
-      } finally {
+        if (optimized) workingFile = optimized;
+      }
+      if (version !== selectionVersionRef.current) return;
+      if (workingFile.size > MAX_TOTAL_UPLOAD_BYTES) {
+        setError(t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
+        return;
+      }
+      updateImage(workingFile, version);
+      onUpload(workingFile);
+    } catch (compressionError) {
+      console.error("Image preparation failed", compressionError);
+      if (version === selectionVersionRef.current) setError(t("compressFailed"));
+    } finally {
+      if (version === selectionVersionRef.current) {
+        setIsPreparing(false);
         setIsOptimizing(false);
+        onPreparingChange?.(false);
       }
     }
-
-    if (workingFile.size > MAX_TOTAL_UPLOAD_BYTES) {
-      setError(t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
-      return null;
-    }
-
-    return workingFile;
   };
 
   const onChangeImage = async (
     e: React.ChangeEvent<HTMLInputElement>
   ): Promise<void> => {
     const file = e.target.files?.[0];
-    if (!file) {
+    if (!file || isPreparing) {
       return;
     }
-    const preparedFile = await tryPrepareFile(file);
-    if (preparedFile) {
-      updateImage(preparedFile);
-      onUpload(preparedFile);
-    }
+    await prepareFile(file);
   };
 
   const handleDrop = async (
@@ -109,25 +117,29 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload }) => {
     setDragOver(false);
 
     const file = e.dataTransfer.files[0];
-    if (!file) {
+    if (!file || isPreparing) {
       return;
     }
-    const preparedFile = await tryPrepareFile(file);
-    if (preparedFile) {
-      updateImage(preparedFile);
-      onUpload(preparedFile);
-    }
+    await prepareFile(file);
   };
 
-  const updateImage = (file: File): void => {
+  const updateImage = (file: File, version: number): void => {
     const reader = new FileReader();
+    previewReaderRef.current = reader;
     reader.addEventListener("load", () => {
-      setImgData(reader.result as string);
+      if (version === selectionVersionRef.current && typeof reader.result === "string") {
+        setImgData(reader.result);
+      }
     });
     reader.readAsDataURL(file);
   };
 
   const handleRemoveImage = () => {
+    selectionVersionRef.current += 1;
+    previewReaderRef.current?.abort();
+    setIsPreparing(false);
+    setIsOptimizing(false);
+    onPreparingChange?.(false);
     setImgData(null);
     resetMessages();
     if (fileSelect.current) {
@@ -136,7 +148,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload }) => {
     onUpload(null);
   };
 
-  const isInteractionDisabled = isOptimizing;
+  const isInteractionDisabled = isPreparing;
 
   return (
     <div className="w-full text-foreground-strong">
@@ -235,6 +247,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onUpload }) => {
         <div className="flex justify-center items-start p-4">
           <button
             onClick={handleRemoveImage}
+            aria-label={t("remove")}
             className="bg-background rounded-full p-1 hover:bg-primary"
             type="button"
           >
