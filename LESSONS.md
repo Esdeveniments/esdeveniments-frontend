@@ -245,15 +245,15 @@ token whose result expired throws 401, not a statusless error, so the cookie is 
 
 PR E2E runs against the Vercel preview, and the preview calls the pre-production
 backend, which rejects every request without `X-Backend-Key`. Without the secret
-in Vercel's Preview environment, every API route returns 200 with empty data and
-the same 11 data specs fail on every PR, develop-based ones included. Vercel
+in Vercel's Preview environment, backend-backed data GETs return 200 with empty
+data and the same 11 data specs fail on every PR, develop-based ones included. Vercel
 applies env changes only to new deployments, so push to get a fresh preview.
 
-## A green E2E check can mean nothing ran
+## A green E2E check on a push run means nothing ran
 
-`ci.yml` skips the Playwright step when no preview is ready, and the job still
-passes. Before trusting a fast green run, read the job log for
-`Running N tests` and the passed/failed counts.
+On PR runs, `ci.yml` fails the E2E job when no preview is ready. On push runs it
+skips the preview lookup, so the Playwright step is skipped and the job still
+passes. A green E2E check is evidence only on a PR run.
 
 ## Test-mode specs read `E2E_TEST_MODE` in the Playwright process
 

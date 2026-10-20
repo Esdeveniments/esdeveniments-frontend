@@ -1004,6 +1004,9 @@ export interface PromotionReturnPageProps {
   variant: PromotionStatusPanelProps["variant"];
 }
 
+/** Route props of the promote success and cancel pages. */
+export type PromotionReturnRouteProps = Pick<PromotionReturnPageProps, "params">;
+
 export interface PromotedEventsSectionProps {
   /** Place page slug; omit (or "catalunya") for the Catalonia-wide list. */
   placeSlug?: string;

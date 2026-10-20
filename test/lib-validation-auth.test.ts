@@ -1,6 +1,46 @@
 import { describe, it, expect } from "vitest";
-import { profileUpdateSchema } from "../lib/validation/auth";
+import { LogtoTokenResponseSchema, profileUpdateSchema } from "../lib/validation/auth";
 import { parseUserPublic } from "../lib/validation/user";
+
+describe("LogtoTokenResponseSchema", () => {
+  const valid = { access_token: "at", token_type: "Bearer", expires_in: 600 };
+
+  it("accepts a full payload", () => {
+    const r = LogtoTokenResponseSchema.safeParse({
+      ...valid,
+      scope: "openid",
+      id_token: "id",
+      refresh_token: "rt",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("defaults expires_in to 3600 when missing", () => {
+    const r = LogtoTokenResponseSchema.parse({
+      access_token: "at",
+      token_type: "Bearer",
+    });
+    expect(r.expires_in).toBe(3600);
+  });
+
+  it.each(["access_token", "token_type"])("requires %s", (field) => {
+    const rest: Record<string, unknown> = { ...valid };
+    delete rest[field];
+    expect(LogtoTokenResponseSchema.safeParse(rest).success).toBe(false);
+  });
+
+  it.each([
+    { access_token: "" },
+    { token_type: "" },
+    { expires_in: "600" },
+    { id_token: "" },
+    { refresh_token: "" },
+  ])("rejects invalid value %o", (override) => {
+    expect(
+      LogtoTokenResponseSchema.safeParse({ ...valid, ...override }).success,
+    ).toBe(false);
+  });
+});
 
 describe("profileUpdateSchema", () => {
   it("accepts a minimal valid payload", () => {
