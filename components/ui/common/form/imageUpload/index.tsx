@@ -24,10 +24,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [isPreparing, setIsPreparing] = useState(false);
   const selectionVersionRef = useRef(0);
   const previewReaderRef = useRef<FileReader | null>(null);
+  const onPreparingChangeRef = useRef(onPreparingChange);
+  onPreparingChangeRef.current = onPreparingChange;
 
   useEffect(() => () => {
     selectionVersionRef.current += 1;
     previewReaderRef.current?.abort();
+    onPreparingChangeRef.current?.(false);
   }, []);
 
   useEffect(() => {

@@ -54,4 +54,32 @@ describe("EventForm image preparation", () => {
     fireEvent.click(save);
     expect(onSubmit).toHaveBeenCalledOnce();
   });
+
+  it("clears the preparing flag when the uploader unmounts mid-compression", async () => {
+    vi.useFakeTimers();
+    const pending = Promise.withResolvers<File>();
+    compress.mockReturnValueOnce(pending.promise);
+    const onImage = vi.fn();
+    render(
+      <EventForm form={form} onSubmit={vi.fn()} submitLabel="Save" isEditMode
+        cityOptions={[]} categoryOptions={[]} handleFormChange={vi.fn()}
+        handleImageChange={onImage} handleTownChange={vi.fn()} handleCategoriesChange={vi.fn()}
+        imageToUpload="https://example.com/old.jpg" onPreview={vi.fn()} canPreview />,
+    );
+    fireEvent.click(screen.getByTestId("next-button"));
+    fireEvent.click(screen.getByTestId("next-button"));
+    act(() => vi.advanceTimersByTime(300));
+    const large = new File(["large"], "large.jpg", { type: "image/jpeg" });
+    Object.defineProperty(large, "size", { value: 9 * 1024 * 1024 });
+    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [large] } });
+    expect(screen.getByTestId("publish-button")).toBeDisabled();
+    fireEvent.click(screen.getAllByRole("button", { name: /\(pending\)|\(completed\)/ })[0]);
+    expect(document.querySelector('input[type="file"]')).toBeNull();
+    await act(async () => pending.resolve(new File(["ready"], "ready.jpg", { type: "image/jpeg" })));
+    expect(onImage).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("next-button"));
+    fireEvent.click(screen.getByTestId("next-button"));
+    act(() => vi.advanceTimersByTime(300));
+    expect(screen.getByTestId("publish-button")).toBeEnabled();
+  });
 });
