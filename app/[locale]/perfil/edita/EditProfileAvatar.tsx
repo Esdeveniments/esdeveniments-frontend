@@ -5,14 +5,13 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@components/hooks/useAuth";
 import AvatarInitials from "@components/ui/common/AvatarInitials";
 import { sendGoogleEvent } from "@utils/analytics";
+import { ALLOWED_AVATAR_TYPES } from "@utils/constants";
 import type { EditProfileAvatarProps } from "types/props";
 
 // Mirrors the caps enforced server-side in app/api/users/me/avatar/route.ts.
 // Checking here is UX only (fail before the upload round-trip) — the route
 // is the real gate.
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-// The backend accepts JPEG and PNG only.
-const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png"]);
 
 export default function EditProfileAvatar({
   className,

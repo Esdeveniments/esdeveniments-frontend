@@ -190,9 +190,8 @@ test.describe("Creator-only edit access (staging)", () => {
         timeout: 15_000,
       });
       // The edit test may already have renamed the event; the suffix survives.
-      await expect(page.getByRole("heading", { level: 1 })).toContainText(
-        UNIQUE_SUFFIX,
-      );
+      await expect(page.getByRole("heading", { level: 1, name: UNIQUE_SUFFIX }),
+      ).toBeVisible();
       await expect(page.getByTestId("event-edit-link")).toHaveCount(0);
 
       for (const path of ["edita", "promote"]) {
