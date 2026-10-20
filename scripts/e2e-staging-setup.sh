@@ -18,9 +18,9 @@
 #
 # Optional second user: e2e/event-edit-creator-only.spec.ts skips its
 # "different signed-in user" test without E2E_STAGING_EMAIL_2 and
-# E2E_STAGING_PASSWORD_2. Run this script again with E2E_STAGING_EMAIL and
-# E2E_STAGING_PASSWORD set to the second user, then store the values as the
-# _2 secrets:
+# E2E_STAGING_PASSWORD_2. Do not rerun this script for that user: it would
+# overwrite the primary secrets. Create the second account by hand, then
+# store its credentials as the _2 secrets:
 #   gh secret set E2E_STAGING_EMAIL_2    --env staging
 #   gh secret set E2E_STAGING_PASSWORD_2 --env staging
 
