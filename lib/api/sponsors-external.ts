@@ -26,10 +26,8 @@ export async function uploadSponsorImage(imageFile: File): Promise<UploadImageRe
   });
   if (!response.ok) {
     const detail = (await response.text().catch(() => "<unreadable>")).slice(0, 200);
-    if (response.status === 413) {
-      console.error(`Sponsor image upload rejected: HTTP 413, body=${detail}`);
-      throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
-    }
+    console.error(`Sponsor image upload failed: HTTP ${response.status}, body=${detail}`);
+    if (response.status === 413) throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
     throw new Error(`Sponsor image upload failed: HTTP ${response.status}, ${detail}`);
   }
   let payload: unknown;
