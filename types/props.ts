@@ -306,8 +306,6 @@ export interface CalendarDatePickerProps {
   onChange: (from: string, to: string) => void;
 }
 
-export type AcceptedImageTypes = "image/jpeg" | "image/png";
-
 export interface ImageUploaderProps {
   value: string | null;
   onUpload: (file: File | null) => void;

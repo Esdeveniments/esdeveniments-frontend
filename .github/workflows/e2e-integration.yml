@@ -17,6 +17,8 @@ name: E2E Integration (preproduction)
 #                                     the staging env doesn't define one)
 #   secrets.E2E_STAGING_EMAIL       → a dedicated, email-verified test user
 #   secrets.E2E_STAGING_PASSWORD    ↲
+#   secrets.E2E_STAGING_EMAIL_2     → a second verified user (creator-only edit flow)
+#   secrets.E2E_STAGING_PASSWORD_2  ↲
 # The publish-integration spec self-skips when the test-user secrets are
 # absent, so an unconfigured environment never turns this red.
 on:
@@ -34,7 +36,7 @@ concurrency:
 
 jobs:
   publish-integration:
-    name: Publish → detail (preproduction)
+    name: Publish → detail and creator-only edit (preproduction)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: staging

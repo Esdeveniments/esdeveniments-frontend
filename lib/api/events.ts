@@ -46,6 +46,7 @@ import {
 import { FetchEventsParams } from "types/event";
 import type { UploadImageResponse } from "types/upload";
 import { isE2ETestMode } from "@utils/env";
+import { UploadImageResponseSchema } from "@lib/validation/upload";
 
 const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
 
@@ -480,7 +481,17 @@ export async function replaceEventImage(
       { status: response.status },
     );
   }
-  return response.json();
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch (cause) {
+    throw new Error("Event image replace returned an invalid response", { cause });
+  }
+  const parsed = UploadImageResponseSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error("Event image replace returned an invalid response", { cause: parsed.error });
+  }
+  return parsed.data;
 }
 
 /** DELETE /events/{uuid}/image — removes the cover (imageUrl becomes null). */

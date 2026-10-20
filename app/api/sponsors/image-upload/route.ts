@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     }
 
     // Validate file is actually an image (client MIME type check)
-    if (imageFile.type !== "image/jpeg" && imageFile.type !== "image/png") {
+    if (!isBackendImageType(imageFile.type)) {
       return NextResponse.json(
         { errorCode: "invalid_file_type", error: "File must be a JPEG or PNG image." },
         { status: 400 },

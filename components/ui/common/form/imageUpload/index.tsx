@@ -2,13 +2,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowUpTrayIcon as UploadIcon } from "@heroicons/react/24/outline";
-import { AcceptedImageTypes, ImageUploaderProps } from "types/props";
+import { ImageUploaderProps } from "types/props";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
   MAX_ORIGINAL_FILE_BYTES,
   MAX_ORIGINAL_LIMIT_LABEL,
 } from "@utils/constants";
+import { isBackendImageType } from "@utils/image-validation";
 import { compressImageIfNeeded } from "@utils/image-optimizer";
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -51,10 +52,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   }
 
   function handleFileValidation(file: File): boolean {
-    // The backend accepts JPEG and PNG only.
-    const acceptedImageTypes: AcceptedImageTypes[] = ["image/jpeg", "image/png"];
-
-    if (!acceptedImageTypes.includes(file.type as AcceptedImageTypes)) {
+    if (!isBackendImageType(file.type)) {
       setError(t("unsupported"));
       return false;
     }

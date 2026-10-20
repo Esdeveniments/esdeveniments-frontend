@@ -40,6 +40,15 @@ test.describe("Publica -> Event flow (deterministic)", () => {
       }),
     );
 
+    await page.route("**/api/categories", (route) =>
+      route.fulfill({
+        json: [
+          { id: 1, name: "Concerts", slug: "concerts" },
+          { id: 2, name: "Festivals", slug: "festivals" },
+        ],
+      }),
+    );
+
     const title = `E2E Concert ${Date.now()}`;
     const description = "Concert de prova automatitzada per a Playwright.";
     const venue = "Plaça Major";

@@ -25,7 +25,7 @@ export async function uploadSponsorImage(imageFile: File): Promise<UploadImageRe
     skipBodySigning: true,
   });
   if (!response.ok) {
-    const detail = (await response.text()).slice(0, 200);
+    const detail = (await response.text().catch(() => "<unreadable>")).slice(0, 200);
     if (response.status === 413) {
       console.error(`Sponsor image upload rejected: HTTP 413, body=${detail}`);
       throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
