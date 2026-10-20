@@ -241,7 +241,9 @@ export function parseTimeToEventTimeDTO(
 }
 
 /**
- * Convert Date object to LocalDate format (YYYY-MM-DD) for API compatibility
+ * Convert Date object to LocalDate format (YYYY-MM-DD) for API compatibility.
+ * Despite the name this is the UTC date (toISOString). For the browser-local
+ * date and time the event form shows, use toLocalDateTimeString.
  * @param date - Date object to convert
  * @returns string in YYYY-MM-DD format
  */
