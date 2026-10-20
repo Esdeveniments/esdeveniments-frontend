@@ -139,7 +139,7 @@ const userPublicDTO = {
   displayName: "Esdeveniments Catalunya",
   username: "esdeveniments-catalunya-cat",
   avatarUrl: null,
-  organizerVerified: false,
+  verified: false,
 };
 
 function jsonResponse(data: unknown, status = 200) {

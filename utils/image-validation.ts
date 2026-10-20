@@ -51,12 +51,13 @@ export async function isValidImageContent(file: File): Promise<boolean> {
 
 /**
  * The optional image part of a server action's FormData: null when absent,
- * the File when its content is a real image. Throws otherwise.
+ * the File when its content is a real image. Throws otherwise, including
+ * for an empty file.
  */
 export async function getValidatedImageFile(
   value: FormDataEntryValue | null | undefined,
 ): Promise<File | null> {
-  if (!(value instanceof File) || value.size === 0) return null;
+  if (!(value instanceof File)) return null;
   if (!value.type.startsWith("image/") || !(await isValidImageContent(value))) {
     throw new Error("The uploaded file is not a valid image");
   }

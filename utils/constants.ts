@@ -28,6 +28,8 @@ export const MIN_VALID_YEAR = 2000;
 export const MAX_VALID_YEAR = 2100;
 // Keep safely under common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
+// The backend accepts JPEG and PNG avatars only.
+export const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png"]);
 // Sitemap chunking: places per chunk to keep response sizes manageable
 export const SITEMAP_PLACES_PER_CHUNK = 100;
 // Minimum event count for a place to get full date/category expansion in sitemap.

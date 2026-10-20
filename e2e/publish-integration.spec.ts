@@ -194,10 +194,9 @@ test.describe("Publish integration (staging)", () => {
 
     // Title (data we entered) is the H1. This also proves it's not the
     // not-found page, which would render a different heading.
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      TEST_EVENT_TITLE,
-      { timeout: 15_000 }
-    );
+    await expect(
+      page.getByRole("heading", { level: 1, name: TEST_EVENT_TITLE })
+    ).toBeVisible({ timeout: 15_000 });
 
     // Location we entered is rendered somewhere on the page. The detail page
     // renders the location twice — once inline for mobile (`lg:hidden`) and

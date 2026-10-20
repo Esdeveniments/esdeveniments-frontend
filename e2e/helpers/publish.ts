@@ -204,23 +204,6 @@ export async function openEditForm(page: Page, slug: string) {
   await expect(form).toHaveAttribute("data-hydrated", "true", { timeout: 30_000 });
 }
 
-export type StoredEvent = {
-  startDate: string;
-  startTime: string | null;
-  endDate: string;
-  endTime: string | null;
-  imageUrl: string | null;
-};
-
-/** Read an event straight from the backend with the service key. */
-export async function fetchStoredEvent(slug: string): Promise<StoredEvent> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${slug}`, {
-    headers: { "X-Backend-Key": process.env.BACKEND_SERVICE_SECRET! },
-  });
-  expect(res.status, "stored event is readable").toBe(200);
-  return (await res.json()) as StoredEvent;
-}
-
 /** Edit forms render the picker collapsed; expand it so Start/End are reachable. */
 export async function expandDatePicker(page: Page) {
   await page.getByRole("button", { name: /select date and time/i }).click();

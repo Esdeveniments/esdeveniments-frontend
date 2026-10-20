@@ -5,12 +5,11 @@ import {
   uploadUserAvatarExternal,
 } from "@lib/api/users-external";
 import { handleApiError } from "@utils/api-error-handler";
+import { ALLOWED_AVATAR_TYPES } from "@utils/constants";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2 MB hard cap; matches MAX_TOTAL_UPLOAD_BYTES
-// The backend accepts JPEG and PNG only.
-const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png"]);
 
 async function requireAuthCookie(): Promise<
   { ok: true; token: string } | { ok: false; response: Response }
