@@ -5,6 +5,7 @@ import { fetchWithHmac } from "./fetch-wrapper";
 import { requireAuth } from "./events";
 import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
 import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { isUuid } from "@utils/user-helpers";
 import { createKeyedCache } from "@lib/api/cache";
 import { parseEventSummaryList } from "@lib/validation/event";
 import {
@@ -67,6 +68,8 @@ async function promotionRequest<T>(
   schema: z.ZodType<T>,
   init: { method?: "POST"; headers?: Record<string, string>; body?: string } = {},
 ): Promise<PromotionResult<T>> {
+  // The client-supplied id goes into the backend path; the contract is a UUID.
+  if (!isUuid(eventId)) return { ok: false, code: "UNKNOWN" };
   try {
     const auth = await getAuth(init.method === "POST");
     if (!auth) return { ok: false, code: "AUTHENTICATION_REQUIRED" };

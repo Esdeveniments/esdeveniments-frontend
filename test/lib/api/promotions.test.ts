@@ -30,6 +30,7 @@ vi.mock("@lib/api/events", () => ({
 
 const mockFetch = vi.mocked(fetchWrapper.fetchWithHmac);
 const orderId = "6d1ebd26-7ef8-4fe2-bec3-3e855080ce59";
+const eventId = "74beae63-5c27-4590-94c0-368dc2657d52";
 const options = {
   options: [],
   canPurchase: false,
@@ -94,10 +95,10 @@ describe("createPromotionCheckout", () => {
       jsonResponse(200, { orderId, url: "https://checkout.stripe.com/x" }),
     );
 
-    const result = await createPromotionCheckout("uuid-1", "city-7d", "key-1");
+    const result = await createPromotionCheckout(eventId, "city-7d", "key-1");
 
     const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://api.example.com/api/events/uuid-1/promotions/checkout");
+    expect(url).toBe(`https://api.example.com/api/events/${eventId}/promotions/checkout`);
     expect(init?.method).toBe("POST");
     expect((init?.headers as Record<string, string>)["Idempotency-Key"]).toBe("key-1");
     expect(init?.body).toBe(JSON.stringify({ optionId: "city-7d" }));
@@ -107,12 +108,18 @@ describe("createPromotionCheckout", () => {
     });
   });
 
+  it("never sends a non-UUID event id to the backend", async () => {
+    expect(await createPromotionCheckout("..", "city-7d", "key-1")).toEqual({ ok: false, code: "UNKNOWN" });
+    expect(await getPromotionStatus("../users/me")).toEqual({ ok: false, code: "UNKNOWN" });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it("returns the backend error code instead of throwing", async () => {
     mockFetch.mockResolvedValue(
       jsonResponse(409, { status: 409, code: "PROMOTION_ALREADY_ACTIVE" }),
     );
 
-    const result = await createPromotionCheckout("uuid-1", "city-7d", "key-1");
+    const result = await createPromotionCheckout(eventId, "city-7d", "key-1");
 
     expect(result).toEqual({ ok: false, code: "PROMOTION_ALREADY_ACTIVE" });
   });
@@ -124,7 +131,7 @@ describe("createPromotionCheckout", () => {
       json: () => Promise.reject(new Error("no body")),
     } as Response);
 
-    const result = await createPromotionCheckout("uuid-1", "city-7d", "key-1");
+    const result = await createPromotionCheckout(eventId, "city-7d", "key-1");
 
     expect(result).toEqual({ ok: false, code: "AUTHENTICATION_REQUIRED" });
   });
@@ -137,7 +144,7 @@ describe("promotion reads during a server render", () => {
     vi.mocked(events.requireAuth).mockClear();
     mockFetch.mockResolvedValue(jsonResponse(200, options));
 
-    await getPromotionOptions("uuid-1");
+    await getPromotionOptions(eventId);
 
     const headers = mockFetch.mock.calls[0][1]?.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer cookie-token");
@@ -147,7 +154,7 @@ describe("promotion reads during a server render", () => {
   it("report AUTHENTICATION_REQUIRED without a cookie token", async () => {
     vi.mocked(authCookies.getAccessTokenFromCookies).mockResolvedValueOnce(null);
 
-    expect(await getPromotionOptions("uuid-1")).toEqual({
+    expect(await getPromotionOptions(eventId)).toEqual({
       ok: false,
       code: "AUTHENTICATION_REQUIRED",
     });
@@ -158,7 +165,7 @@ describe("promotion reads during a server render", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(apiHelpers.isApiUrlConfigured).mockReturnValueOnce(false);
 
-    expect(await getPromotionOptions("uuid-1")).toEqual({ ok: false, code: "UNKNOWN" });
+    expect(await getPromotionOptions(eventId)).toEqual({ ok: false, code: "UNKNOWN" });
     expect(mockFetch).not.toHaveBeenCalled();
     errorSpy.mockRestore();
   });
@@ -171,7 +178,7 @@ describe("promotion reads during a server render", () => {
       json: () => Promise.reject(new SyntaxError("Unexpected token <")),
     } as Response);
 
-    expect(await getPromotionOptions("uuid-1")).toEqual({ ok: false, code: "UNKNOWN" });
+    expect(await getPromotionOptions(eventId)).toEqual({ ok: false, code: "UNKNOWN" });
     errorSpy.mockRestore();
   });
 });
@@ -181,16 +188,16 @@ describe("promotion response validation", () => {
 
   it("accepts complete options and an empty promotion status", async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse(200, options));
-    expect(await getPromotionOptions("uuid-1")).toEqual({ ok: true, data: options });
+    expect(await getPromotionOptions(eventId)).toEqual({ ok: true, data: options });
     mockFetch.mockResolvedValueOnce(jsonResponse(200, status));
-    expect(await getPromotionStatus("uuid-1")).toEqual({ ok: true, data: status });
+    expect(await getPromotionStatus(eventId)).toEqual({ ok: true, data: status });
   });
 
   it.each([{}, null, { ...options, options: null }, { ...options, eventEndsAt: "bad" }])(
     "rejects schema-invalid options: %j",
     async (body) => {
       mockFetch.mockResolvedValue(jsonResponse(200, body));
-      expect(await getPromotionOptions("uuid-1")).toEqual({ ok: false, code: "UNKNOWN" });
+      expect(await getPromotionOptions(eventId)).toEqual({ ok: false, code: "UNKNOWN" });
     },
   );
 
@@ -200,7 +207,7 @@ describe("promotion response validation", () => {
     { ...status, orderId: "not-a-uuid" },
   ])("rejects invalid status fields before rendering: %j", async (body) => {
     mockFetch.mockResolvedValue(jsonResponse(200, body));
-    expect(await getPromotionStatus("uuid-1")).toEqual({ ok: false, code: "UNKNOWN" });
+    expect(await getPromotionStatus(eventId)).toEqual({ ok: false, code: "UNKNOWN" });
   });
 
   it.each([
@@ -208,7 +215,7 @@ describe("promotion response validation", () => {
     { orderId: "not-a-uuid", url: "https://checkout.stripe.com/x" },
   ])("rejects invalid checkout responses: %j", async (body) => {
     mockFetch.mockResolvedValue(jsonResponse(200, body));
-    expect(await createPromotionCheckout("uuid-1", "city-7d", "key-1")).toEqual({
+    expect(await createPromotionCheckout(eventId, "city-7d", "key-1")).toEqual({
       ok: false,
       code: "UNKNOWN",
     });
@@ -216,7 +223,7 @@ describe("promotion response validation", () => {
 
   it("returns UNKNOWN for non-authentication checkout setup errors", async () => {
     vi.mocked(events.requireAuth).mockRejectedValueOnce(new Error("Missing API config"));
-    expect(await createPromotionCheckout("uuid-1", "city-7d", "key-1")).toEqual({
+    expect(await createPromotionCheckout(eventId, "city-7d", "key-1")).toEqual({
       ok: false,
       code: "UNKNOWN",
     });
