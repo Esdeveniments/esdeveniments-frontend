@@ -12,6 +12,7 @@ import { eventsTag, eventTag } from "@lib/cache/tags";
 import { deleteEventDetailCache } from "@lib/cache/event-detail-cache";
 import { getCurrentUser } from "@lib/auth/session";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
+import { getValidatedImageFile } from "@utils/image-validation";
 
 /**
  * `cover` (optional) changes the event image: `imageFile` replaces it,
@@ -67,8 +68,8 @@ export async function editEvent(
   // reach the cache invalidation below.
   let coverFailed = false;
   try {
-    const image = cover?.get("imageFile");
-    if (image instanceof File && image.size > 0) {
+    const image = await getValidatedImageFile(cover?.get("imageFile"));
+    if (image) {
       await replaceEventImage(event.id, image);
     } else if (cover?.get("removeImage")) {
       await deleteEventImage(event.id);
