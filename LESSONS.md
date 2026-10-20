@@ -238,5 +238,47 @@ cleared. Leaving timeouts and 5xx unresolved had the same effect for 30 days.
 The code now stores every failed exchange for 5 seconds (with its status when
 there is one), so waiting requests fail fast, and then releases the claim. If the
 provider had used the token, the retry gets `invalid_grant` and signs the user
-out. Nobody holds the rotated tokens then, so nothing better is possible. A rotated token
-whose result expired throws 401, not a statusless error, so the cookie is cleared.
+out. Nobody holds the rotated tokens then, so nothing better is possible. A rotated
+token whose result expired throws 401, not a statusless error, so the cookie is cleared.
+
+## PR E2E needs `BACKEND_SERVICE_SECRET` in the Vercel Preview env
+
+PR E2E runs against the Vercel preview, and the preview calls the pre-production
+backend, which rejects every request without `X-Backend-Key`. Without the secret
+in Vercel's Preview environment, every API route returns 200 with empty data and
+the same 11 data specs fail on every PR, develop-based ones included. Vercel
+applies env changes only to new deployments, so push to get a fresh preview.
+
+## A green E2E check can mean nothing ran
+
+`ci.yml` skips the Playwright step when no preview is ready, and the job still
+passes. Before trusting a fast green run, read the job log for
+`Running N tests` and the passed/failed counts.
+
+## Test-mode specs read `E2E_TEST_MODE` in the Playwright process
+
+`publica_to_event.flow.spec.ts` calls `test.skip` on `process.env.E2E_TEST_MODE`
+inside Playwright, so setting it only on the server step skipped the spec on
+every deploy. Set it on the step that runs `yarn test:e2e` too.
+
+## Playwright hooks keep the 30 s default under a describe-level timeout
+
+`test.setTimeout()` at describe level covers the tests, not `beforeAll` or
+`afterAll`. A real login plus publish in `beforeAll` hit 30 s. Call
+`test.setTimeout()` inside each slow hook.
+
+## `vi.resetModules()` keeps `vi.mock` factories
+
+A `mockImplementation` set on a mocked module survives `vi.resetModules()` and
+leaks into later tests. Restore the original implementation in a `finally`.
+
+## Client components must not import `@utils/constants`
+
+`utils/constants.ts` imports all three locale JSON files and `next-intl/server`.
+A client import pulls them into that route's bundle. Put shared client-safe
+values in a module without heavy imports, such as `utils/image-validation.ts`.
+
+## The backend looks events up by slug only
+
+`GET /api/events/{slug}` returns 404 for an event UUID on the v2 backend. Docs and
+agent surfaces (llms.txt, MCP, agent-view, OpenAPI) say slug only.
