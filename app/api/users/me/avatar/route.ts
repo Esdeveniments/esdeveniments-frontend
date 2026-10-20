@@ -5,7 +5,7 @@ import {
   uploadUserAvatarExternal,
 } from "@lib/api/users-external";
 import { handleApiError } from "@utils/api-error-handler";
-import { ALLOWED_AVATAR_TYPES } from "@utils/constants";
+import { isBackendImageType } from "@utils/image-validation";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       { status: 413, headers: NO_STORE },
     );
   }
-  if (!file.type || !ALLOWED_AVATAR_TYPES.has(file.type)) {
+  if (!isBackendImageType(file.type)) {
     return NextResponse.json(
       { error: "Unsupported avatar format" },
       { status: 415, headers: NO_STORE },

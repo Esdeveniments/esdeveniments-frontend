@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@components/hooks/useAuth";
 import AvatarInitials from "@components/ui/common/AvatarInitials";
 import { sendGoogleEvent } from "@utils/analytics";
-import { ALLOWED_AVATAR_TYPES } from "@utils/constants";
+import { isBackendImageType } from "@utils/image-validation";
 import type { EditProfileAvatarProps } from "types/props";
 
 // Mirrors the caps enforced server-side in app/api/users/me/avatar/route.ts.
@@ -42,7 +42,7 @@ export default function EditProfileAvatar({
     setError(null);
     sendGoogleEvent("avatar_upload_start", {});
 
-    if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
+    if (!isBackendImageType(file.type)) {
       setError(t("errorUnsupported"));
       sendGoogleEvent("avatar_upload_blocked", { reason: "unsupported_type" });
       return;

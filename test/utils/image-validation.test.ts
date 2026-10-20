@@ -24,6 +24,13 @@ describe("getValidatedImageFile", () => {
     );
   });
 
+  it("throws for image bytes declared as a non-image type", async () => {
+    const file = new File([PNG_BYTES], "a.pdf", { type: "application/pdf" });
+    await expect(getValidatedImageFile(file)).rejects.toThrow(
+      "not a valid image",
+    );
+  });
+
   it("throws for non-image content labelled as an image", async () => {
     const file = new File(["<html>"], "a.png", { type: "image/png" });
     await expect(getValidatedImageFile(file)).rejects.toThrow(

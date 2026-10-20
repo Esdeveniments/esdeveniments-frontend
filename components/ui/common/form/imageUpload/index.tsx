@@ -25,7 +25,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const selectionVersionRef = useRef(0);
   const previewReaderRef = useRef<FileReader | null>(null);
   const onPreparingChangeRef = useRef(onPreparingChange);
-  onPreparingChangeRef.current = onPreparingChange;
+  useEffect(() => {
+    onPreparingChangeRef.current = onPreparingChange;
+  });
 
   useEffect(() => () => {
     selectionVersionRef.current += 1;
