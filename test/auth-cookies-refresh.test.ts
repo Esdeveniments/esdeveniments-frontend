@@ -111,4 +111,13 @@ describe("getValidAccessToken", () => {
 
     expect(result).toBeNull();
   });
+
+  it("preserves cookies and propagates an unavailable refresh coordinator", async () => {
+    const m = await loadAuthCookies();
+    cookieStore.set(m.REFRESH_TOKEN_COOKIE, "still-valid-refresh-token");
+    refreshAccessTokenMock.mockRejectedValue(new Error("database unavailable"));
+    await expect(m.getValidAccessToken()).rejects.toThrow("database unavailable");
+    expect(setMock).not.toHaveBeenCalled();
+    expect(cookieStore.get(m.REFRESH_TOKEN_COOKIE)).toBe("still-valid-refresh-token");
+  });
 });

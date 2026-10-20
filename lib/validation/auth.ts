@@ -1,5 +1,15 @@
 import { z } from "zod";
 import { usernameSchema } from "lib/validation/username";
+import type { LogtoTokenResponse } from "types/auth";
+
+export const LogtoTokenResponseSchema = z.object({
+  access_token: z.string().min(1),
+  token_type: z.string().min(1),
+  expires_in: z.number().default(3600),
+  scope: z.string().optional(),
+  id_token: z.string().min(1).optional(),
+  refresh_token: z.string().min(1).optional(),
+}) satisfies z.ZodType<LogtoTokenResponse, z.ZodTypeDef, unknown>;
 
 /**
  * Schema for PATCH /api/users/me/profile.

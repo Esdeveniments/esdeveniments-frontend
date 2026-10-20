@@ -2,6 +2,7 @@
 // OpenID Connect endpoints directly (no @logto/* SDK) to keep the client
 // bundle untouched. Endpoints are fixed for Logto, so no network discovery.
 import "server-only";
+import { coordinateRefresh } from "./refresh-token";
 import {
   createHash,
   createPublicKey,
@@ -186,10 +187,10 @@ export function refreshAccessToken(
   config: LogtoConfig,
   refreshToken: string,
 ): Promise<LogtoTokenResponse> {
-  return postToken(config, {
+  return coordinateRefresh(config, refreshToken, () => postToken(config, {
     grant_type: "refresh_token",
     refresh_token: refreshToken,
-  });
+  }));
 }
 
 export function buildEndSessionUrl(params: {
