@@ -148,7 +148,7 @@ describe("parseUserPublic (PATCH /api/users/me/profile response shape)", () => {
       username: "esdeveniments-catalunya-cat",
       bio: "Compte de prova QA agent-browser.",
       avatarUrl: null,
-      verified: true,
+      verified: false,
       eventCount: 4,
       totalEventVisits: 21,
       createdAt: "2026-07-10T16:00:27.49072",
@@ -157,8 +157,7 @@ describe("parseUserPublic (PATCH /api/users/me/profile response shape)", () => {
     expect(result).not.toBeNull();
     expect(result?.username).toBe("esdeveniments-catalunya-cat");
     expect(result?.bio).toBe("Compte de prova QA agent-browser.");
-    expect(result?.verified).toBe(true);
-    expect(result?.verified).toBe(true);
+    expect(result?.verified).toBe(false);
   });
 
   it("does NOT require email/profileCompleted/role/lastLoginAt", () => {
