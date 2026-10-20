@@ -991,6 +991,8 @@ export interface PromoteEventClientProps {
 export interface PromotionStatusPanelProps {
   slug: string;
   status: import("types/api/promotion").PromotionStatusDTO | null;
+  /** Backend code of a failed status call; localized when it has copy. */
+  errorCode?: string;
   variant: "success" | "cancel";
 }
 

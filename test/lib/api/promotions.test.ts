@@ -32,7 +32,18 @@ const mockFetch = vi.mocked(fetchWrapper.fetchWithHmac);
 const orderId = "6d1ebd26-7ef8-4fe2-bec3-3e855080ce59";
 const eventId = "74beae63-5c27-4590-94c0-368dc2657d52";
 const options = {
-  options: [],
+  options: [
+    {
+      id: "opt-city-7",
+      scope: "CITY",
+      durationDays: 7,
+      amountMinor: 1500,
+      currency: "EUR",
+      taxIncluded: true,
+      available: true,
+      unavailableReason: null,
+    },
+  ],
   canPurchase: false,
   unavailableReason: null,
   cityId: null,
@@ -193,7 +204,7 @@ describe("promotion response validation", () => {
     expect(await getPromotionStatus(eventId)).toEqual({ ok: true, data: status });
   });
 
-  it.each([{}, null, { ...options, options: null }, { ...options, eventEndsAt: "bad" }])(
+  it.each([{}, null, { ...options, options: null }, { ...options, options: [{ ...options.options[0], currency: "eur" }] }, { ...options, eventEndsAt: "bad" }])(
     "rejects schema-invalid options: %j",
     async (body) => {
       mockFetch.mockResolvedValue(jsonResponse(200, body));

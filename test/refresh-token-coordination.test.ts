@@ -143,7 +143,7 @@ describe("cross-instance refresh coordination", () => {
     const exchange = vi.fn().mockResolvedValue(tokens);
     await coordinateRefresh(config, "one", exchange);
     await coordinateRefresh(config, "two", exchange);
-    const rows = db.prepare("SELECT token_key, result FROM auth_refresh").all();
+    const rows = db.prepare("SELECT token_key, result FROM auth_refresh ORDER BY rowid").all();
     db.prepare("UPDATE auth_refresh SET result = ? WHERE token_key = ?")
       .run(String(rows[1].result), String(rows[0].token_key));
     await expect(coordinateRefresh(config, "one", exchange)).rejects.toThrow();

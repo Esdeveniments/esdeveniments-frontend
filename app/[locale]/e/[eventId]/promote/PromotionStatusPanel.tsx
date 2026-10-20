@@ -8,6 +8,7 @@ import { getPromotionStatus, isStripeCheckoutUrl } from "@lib/api/promotions";
 import type { AppLocale } from "types/i18n";
 import RefreshSession from "./RefreshSession";
 import SessionRefreshNotice from "./SessionRefreshNotice";
+import type { PromotionCopyCode } from "types/api/promotion";
 import type { PromotionReturnPageProps, PromotionStatusPanelProps } from "types/props";
 
 export async function promotionReturnMetadata(
@@ -43,6 +44,7 @@ export async function PromotionReturnPage({ params, variant }: PromotionReturnPa
       <PromotionStatusPanel
         slug={event.slug}
         status={status.ok ? status.data : null}
+        errorCode={status.ok ? undefined : status.code}
         variant={variant}
       />
     </>
@@ -56,6 +58,7 @@ export async function PromotionReturnPage({ params, variant }: PromotionReturnPa
 async function PromotionStatusPanel({
   slug,
   status,
+  errorCode,
   variant,
 }: PromotionStatusPanelProps) {
   const t = await getTranslations("App.EventPromote");
@@ -71,6 +74,7 @@ async function PromotionStatusPanel({
       : promotionEnded
         ? `promotion${status.promotionStatus}` as const
         : status.paymentStatus;
+  const errorCopyKey = `errors.${errorCode}` as `errors.${PromotionCopyCode}`;
   const statusText = isActive
     ? t("status.ACTIVE", {
         endsAt: status.endsAt
@@ -81,7 +85,9 @@ async function PromotionStatusPanel({
             }).format(new Date(status.endsAt))
           : "",
       })
-    : t(`status.${statusKey as Exclude<typeof statusKey, "ACTIVE">}`);
+    : !status && errorCode && t.has(errorCopyKey)
+      ? t(errorCopyKey)
+      : t(`status.${statusKey as Exclude<typeof statusKey, "ACTIVE">}`);
   const resumeUrl = isStripeCheckoutUrl(status?.checkoutUrl)
     ? status?.checkoutUrl
     : null;

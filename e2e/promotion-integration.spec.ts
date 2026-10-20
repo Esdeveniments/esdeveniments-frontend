@@ -34,6 +34,8 @@ test.describe("Promotion checkout (staging)", () => {
     try {
       await loginViaUI(page, email!, password!);
       await cleanupEvent(page, slug);
+    } catch (error) {
+      console.warn("Cleanup failed:", error);
     } finally {
       await context.close();
     }

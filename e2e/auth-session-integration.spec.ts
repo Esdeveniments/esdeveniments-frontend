@@ -5,7 +5,7 @@ import { cleanupEvent, publishTestEvent } from "./helpers/publish";
 /**
  * Staging integration E2E: real Logto session lifecycle.
  *
- * Exercises logout, silent refresh of an expired access token, concurrent
+ * Exercises logout, silent refresh of a missing access token, concurrent
  * refresh from two tabs, refresh-token rotation and terminal failures against
  * the real Logto tenant. It reads and clears cookies but never prints values.
  *
@@ -83,7 +83,7 @@ test.describe("Session lifecycle (staging)", () => {
     expect(await meStatus(page)).toBe(200);
   });
 
-  test("two tabs refreshing an expired session at once both stay signed in", async ({
+  test("two tabs refreshing from the refresh token alone at once both stay signed in", async ({
     page,
     context,
   }) => {
@@ -91,7 +91,7 @@ test.describe("Session lifecycle (staging)", () => {
     const second = await context.newPage();
     await second.goto("/en", { waitUntil: "domcontentloaded" });
 
-    // Expired ID token and no access token: only the refresh token is left.
+    // ID and access cookies deleted: only the refresh token is left.
     await dropCookies(context, [ACCESS, ID]);
     const statuses = await Promise.all(
       [page, second, page, second, page, second].map((p) => meStatus(p)),
@@ -140,7 +140,7 @@ test.describe("Session lifecycle (staging)", () => {
     }
   });
 
-  test("expired session with no refresh token: 401, login prompt, no redirect loop", async ({
+  test("no session cookies at all: 401, login prompt, no redirect loop", async ({
     page,
     context,
   }) => {
@@ -161,7 +161,7 @@ test.describe("Session lifecycle (staging)", () => {
     expect(navigations, "no navigation loop").toBeLessThanOrEqual(3);
   });
 
-  test("a corrupted refresh token ends an expired session cleanly", async ({
+  test("a corrupted refresh token with no other cookies ends the session cleanly", async ({
     page,
     context,
   }) => {
