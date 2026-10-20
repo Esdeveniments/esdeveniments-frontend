@@ -33,9 +33,13 @@ test.use({ trace: "off" });
 
 test.describe("Creator-only edit access (staging)", () => {
   test.skip(!hasCredentials, "Skipped: E2E_STAGING_EMAIL/E2E_STAGING_PASSWORD not set");
-  test.setTimeout(180_000);
+  // Real login + publish against staging. A describe-level setTimeout does
+  // not cover beforeAll/afterAll, so each hook sets its own.
+  const timeout = 180_000;
+  test.setTimeout(timeout);
 
   test.beforeAll(async ({ browser }) => {
+    test.setTimeout(timeout);
     const context = await browser.newContext();
     const page = await context.newPage();
     try {
@@ -47,6 +51,7 @@ test.describe("Creator-only edit access (staging)", () => {
   });
 
   test.afterAll(async ({ browser }) => {
+    test.setTimeout(timeout);
     if (!createdEventSlug) return;
     const context = await browser.newContext();
     const page = await context.newPage();
