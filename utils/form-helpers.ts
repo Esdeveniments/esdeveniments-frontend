@@ -4,11 +4,7 @@ import type {
   EventDetailResponseDTO,
 } from "types/api/event";
 import type { FormData } from "types/event";
-import {
-  formatTimeForAPI,
-  parseLocalDateTime,
-  toLocalDateTimeString,
-} from "./date-helpers";
+import { formatTimeForAPI } from "./date-helpers";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -29,18 +25,20 @@ export function getTownValue(
   return null;
 }
 
+const LOCAL_DATE_TIME = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?$/;
+
+// Split by string, not through Date: a local time inside a DST gap would shift.
+function splitLocalDateTime(value: string): { date: string; time: string } {
+  const match = LOCAL_DATE_TIME.exec(value);
+  if (!match) throw new RangeError("Invalid time value");
+  return { date: match[1], time: match[2] ?? "00:00" };
+}
+
 export function formDataToBackendDTO(
   form: FormData
 ): EventBaseRequestDTO {
-  // Split the local datetimes the form shows into YYYY-MM-DD and HH:mm
-  const start = toLocalDateTimeString(parseLocalDateTime(form.startDate));
-  const end = toLocalDateTimeString(parseLocalDateTime(form.endDate));
-
-  const startDate = start.slice(0, 10);
-  const endDate = end.slice(0, 10);
-
-  const startTime = start.slice(11, 16);
-  const endTime = end.slice(11, 16);
+  const { date: startDate, time: startTime } = splitLocalDateTime(form.startDate);
+  const { date: endDate, time: endTime } = splitLocalDateTime(form.endDate);
 
   // Extract region and city IDs - they can be Option objects or DTO objects
   const regionId = form.region

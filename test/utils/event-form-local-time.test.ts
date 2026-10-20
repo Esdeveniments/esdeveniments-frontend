@@ -105,3 +105,37 @@ describe("event edit form time", () => {
     expect(mapDraftToPreviewEvent({ form: changed, imageUrl: null }).endTime).toBe("23:45");
   });
 });
+
+describe("event form DST gap", () => {
+  it.each([
+    ["Europe/Madrid", "2027-03-28T02:30", "2027-03-28T04:00"],
+    ["America/New_York", "2027-03-14T02:30", "2027-03-14T04:00"],
+  ])("sends a nonexistent local time unchanged in %s", (tz, start, end) => {
+    process.env.TZ = tz;
+    const dto = formDataToBackendDTO(form(start, end));
+
+    expect(dto.startDate).toBe(start.slice(0, 10));
+    expect(dto.startTime).toBe("02:30");
+    expect(dto.endTime).toBe("04:00");
+  });
+
+  it("round-trips a stored DST-gap time through the edit form", () => {
+    process.env.TZ = "Europe/Madrid";
+    const edit = eventDtoToFormData({
+      id: "5f1c0d2e-0000-4000-8000-000000000001",
+      title: "Cercle",
+      description: "Desc",
+      startDate: "2027-03-28",
+      startTime: "02:30:00",
+      endDate: "2027-03-28",
+      endTime: "04:00:00",
+      region: { id: 1, name: "Barcelonès" },
+      city: { id: 2, name: "Barcelona" },
+      location: "Lloc",
+      url: null,
+      categories: [],
+    } as unknown as EventDetailResponseDTO);
+
+    expect(formDataToBackendDTO(edit).startTime).toBe("02:30");
+  });
+});
