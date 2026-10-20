@@ -8,6 +8,6 @@ export function isEventSummaryResponseDTO(event: ListEvent): event is EventSumma
     'hash' in event &&
     'slug' in event &&
     'title' in event &&
-    'type' in event
+    !('isAd' in event && event.isAd)
   );
 }

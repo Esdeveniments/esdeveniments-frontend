@@ -1,5 +1,7 @@
-import { test, expect, type Page } from "@playwright/test";
+import path from "path";
+import { test, expect } from "@playwright/test";
 import { loginViaUI } from "./helpers/login";
+import { cleanupEvent, pickFutureStartDate } from "./helpers/publish";
 
 /**
  * Staging integration E2E: Publish → Detail → Cleanup
@@ -30,20 +32,8 @@ const TEST_EVENT_TITLE = `Test Event ${UNIQUE_SUFFIX}`;
 // Store created event slug for cleanup
 let createdEventSlug: string | null = null;
 
-/** Delete event via API (direct fetch with cookies from browser context) */
-async function cleanupEvent(page: Page, uuid: string) {
-  try {
-    const response = await page.evaluate(async (eventUuid: string) => {
-      const res = await fetch(`/api/events/${eventUuid}`, {
-        method: "DELETE",
-      });
-      return { status: res.status, ok: res.ok };
-    }, uuid);
-    console.log(`Cleanup event ${uuid}: ${response.status}`);
-  } catch (error) {
-    console.warn(`Failed to clean up event ${uuid}:`, error);
-  }
-}
+// Traces record fill() arguments, including the staging password.
+test.use({ trace: "off" });
 
 test.describe("Publish integration (staging)", () => {
   // Skip entire suite if no staging credentials
@@ -157,46 +147,13 @@ test.describe("Publish integration (staging)", () => {
     await page.getByTestId("next-button").click();
 
     // ── Step 4: Fill form — Step 2 (image & dates) ──
-    // Use URL mode for image (simpler for E2E)
-    const imageUrlTab = page.getByRole("button", { name: /url|enllaç/i });
-    if (await imageUrlTab.isVisible()) {
-      await imageUrlTab.click();
-    }
+    // The image travels as the multipart `imageFile` part of POST /events.
+    await page.setInputFiles(
+      'input[type="file"][accept*="image"]',
+      path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
+    );
 
-    // Fill image URL (use a known stable placeholder)
-    const imageUrlInput = page.locator('input[placeholder*="http"]').first();
-    if (await imageUrlInput.isVisible()) {
-      await imageUrlInput.fill("https://picsum.photos/800/600");
-    }
-
-    // The date picker renders buttons rather than #event-date-* inputs. Its
-    // defaults are today at 09:00, which can already be past when CI runs in
-    // the afternoon; active listing endpoints correctly omit such events.
-    // Move the start to a deterministic future date so the published event is
-    // eligible for the active Barcelona listing. The picker keeps the default
-    // one-hour duration when the start day changes.
-    const futureDateIso = await page.evaluate(() => {
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 2);
-      return [
-        futureDate.getFullYear(),
-        String(futureDate.getMonth() + 1).padStart(2, "0"),
-        String(futureDate.getDate()).padStart(2, "0"),
-      ].join("-");
-    });
-    const datePickerTrigger = page.getByRole("button", {
-      name: /select date and time|seleccionar data i hora/i,
-    });
-    await expect(datePickerTrigger).toBeVisible({ timeout: 15_000 });
-    await datePickerTrigger.click();
-    const startDateButton = page.getByRole("button", {
-      name: /^(Start|Inici) \*:/,
-    });
-    await expect(startDateButton).toBeVisible({ timeout: 15_000 });
-    await startDateButton.click();
-    const futureDateButton = page.locator(`[data-day="${futureDateIso}"]`);
-    await expect(futureDateButton).toBeVisible({ timeout: 15_000 });
-    await futureDateButton.click();
+    await pickFutureStartDate(page);
 
     // ── Step 5: Submit ──
     const publishButton = page.getByTestId("publish-button");
@@ -237,10 +194,9 @@ test.describe("Publish integration (staging)", () => {
 
     // Title (data we entered) is the H1. This also proves it's not the
     // not-found page, which would render a different heading.
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      TEST_EVENT_TITLE,
-      { timeout: 15_000 }
-    );
+    await expect(
+      page.getByRole("heading", { level: 1, name: TEST_EVENT_TITLE })
+    ).toBeVisible({ timeout: 15_000 });
 
     // Location we entered is rendered somewhere on the page. The detail page
     // renders the location twice — once inline for mobile (`lg:hidden`) and

@@ -52,6 +52,7 @@ These MUST be set in the location(s) indicated:
 | ----------------------- | -------------------------- | -------------------------- |
 | `NEXT_PUBLIC_API_URL`   | Backend API URL            | Coolify + GitHub Secrets   |
 | `HMAC_SECRET`           | API request signing        | Coolify + GitHub Secrets   |
+| `BACKEND_SERVICE_SECRET` | `X-Backend-Key` for the backend (64 hex, same value as the backend's) | Coolify + GitHub Secrets |
 | `SENTRY_DSN`            | Error tracking             | Coolify + GitHub Secrets   |
 | `DEEPL_API_KEY`         | Translation service        | Coolify                    |
 | `STRIPE_SECRET_KEY`     | Payment processing         | Coolify                    |

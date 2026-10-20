@@ -213,32 +213,6 @@ export const generateJsonData = (
   const slugPart = typeof slug === "string" ? slug : "";
   const eventUrl = toLocalizedUrl(`/e/${slugPart}`, localeToUse);
 
-  const buildOffer = () => {
-    const baseOffer = {
-      "@type": "Offer" as const,
-      priceCurrency: "EUR",
-      availability: "https://schema.org/InStock",
-      url: eventUrl,
-      validFrom: resolvedStartDate,
-    };
-
-    if (event.type === "FREE") {
-      return {
-        ...baseOffer,
-        price: 0,
-      };
-    }
-
-    // Paid events without known price: omit offers entirely.
-    // Emitting price:0 + "Consult price" placeholder violates Google's
-    // sd-policies ("don't use structured data to deceive") and suppresses
-    // rich results. schema.org/Event treats offers as recommended, not required.
-    logSchemaWarning(slug, "offers", "missing price for paid event");
-    return null;
-  };
-
-  const offers = buildOffer();
-
   // Always emit EventScheduled. schema.org/EventStatusType only defines:
   // EventScheduled, EventCancelled, EventMovedOnline, EventPostponed,
   // EventRescheduled. "EventInProgress" and "EventCompleted" are NOT valid
@@ -291,7 +265,6 @@ export const generateJsonData = (
       name: organizerName,
       url: siteUrl,
     },
-    ...(offers && { offers }),
     // isAccessibleForFree removed: event.type defaults to "FREE" so this is unreliable.
     // We only want to claim "Free" when we are 100% sure.
     ...(isValidHttpUrl(event.url) && {

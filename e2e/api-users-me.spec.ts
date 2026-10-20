@@ -6,8 +6,8 @@ import { test, expect } from "@playwright/test";
  * These hit the running dev server (started by Playwright via `E2E_TEST_MODE=1
  * yarn dev` in playwright.config.ts). Without an authenticated session, the
  * route handlers MUST return 401 (Bearer via HttpOnly cookie is missing),
- * and POST /api/users/me/avatar MUST return 415 when Content-Type lacks a
- * boundary parameter (proxy.ts edge-level multipart allowlist).
+ * including malformed avatar requests. Multipart requests to other routes
+ * must return 415 before reaching their handlers.
  *
  * These tests do NOT require Logto login flows; they lock the unauthenticated
  * contract + proxy multipart guard so accidental regressions surface in CI.
@@ -24,9 +24,13 @@ test.describe("/api/users/me/* (unauthenticated contract)", () => {
 
   test("PATCH /api/users/me/profile without auth cookie returns 401", async ({
     request,
+    baseURL,
   }) => {
     const response = await request.patch("/api/users/me/profile", {
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        origin: new URL(baseURL!).origin,
+      },
       data: { username: "alex91", displayName: "Alex García" },
     });
     expect(response.status()).toBe(401);
@@ -34,6 +38,7 @@ test.describe("/api/users/me/* (unauthenticated contract)", () => {
 
   test("POST /api/users/me/avatar without auth cookie returns 401", async ({
     request,
+    baseURL,
   }) => {
     // We send a properly-bound multipart body — the route handler still 401s
     // before any size/type checks because the auth-cookie read fails first.
@@ -41,6 +46,7 @@ test.describe("/api/users/me/* (unauthenticated contract)", () => {
     const body = `--${boundary}\r\nContent-Disposition: form-data; name="avatarFile"; filename="a.png"\r\nContent-Type: image/png\r\n\r\nbinary\r\n--${boundary}--\r\n`;
     const response = await request.post("/api/users/me/avatar", {
       headers: {
+        origin: new URL(baseURL!).origin,
         "content-type": `multipart/form-data; boundary=${boundary}`,
         "content-length": String(body.length),
       },
@@ -51,31 +57,44 @@ test.describe("/api/users/me/* (unauthenticated contract)", () => {
 
   test("DELETE /api/users/me/avatar without auth cookie returns 401", async ({
     request,
+    baseURL,
   }) => {
-    const response = await request.delete("/api/users/me/avatar");
+    const response = await request.delete("/api/users/me/avatar", {
+      headers: { origin: new URL(baseURL!).origin },
+    });
     expect(response.status()).toBe(401);
   });
 });
 
-test.describe("/api/users/me/avatar (multipart allowlist)", () => {
+test.describe("/api/users/me/* (multipart handling)", () => {
   test.skip(SHOULD_SKIP, "Skipped: HMAC_SECRET or NEXT_PUBLIC_API_URL not set");
 
-  test("returns 415 when Content-Type lacks a boundary parameter", async ({
+  test("requires authentication before parsing a malformed avatar body", async ({
     request,
+    baseURL,
   }) => {
-    // Send a malformed multipart content-type with a valid-looking body so the
-    // request reaches proxy.ts. proxy.ts's edge-level check rejects before
-    // public-API gate / route handler ever run.
     const response = await request.post("/api/users/me/avatar", {
       headers: {
+        origin: new URL(baseURL!).origin,
         "content-type": "multipart/form-data",
       },
       data: "no-boundary",
       failOnStatusCode: false,
     });
-    // 415 is the contract from the proxy.ts allowlist. If this is ever 401,
-    // proxy.ts ordering regressed (check might have flipped back behind
-    // isPublicApiRequest).
+    expect(response.status()).toBe(401);
+  });
+
+  test("rejects multipart on the JSON-only profile route", async ({
+    request,
+    baseURL,
+  }) => {
+    const response = await request.patch("/api/users/me/profile", {
+      headers: {
+        origin: new URL(baseURL!).origin,
+        "content-type": "multipart/form-data; boundary=test",
+      },
+      data: "--test--\r\n",
+    });
     expect(response.status()).toBe(415);
   });
 });

@@ -13,6 +13,7 @@ vi.mock("next/root-params", () => ({
 }));
 
 process.env.HMAC_SECRET = "test-secret";
+process.env.BACKEND_SERVICE_SECRET = "0".repeat(64);
 // API_URL takes precedence over NEXT_PUBLIC_API_URL in getApiUrl/getApiOrigin.
 // Clear any value leaked from the dev/CI environment so tests that set only
 // NEXT_PUBLIC_API_URL stay deterministic.

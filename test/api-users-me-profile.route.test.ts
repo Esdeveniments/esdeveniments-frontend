@@ -90,7 +90,7 @@ describe("PATCH /api/users/me/profile", () => {
       username: "alex91",
       bio: "Music.",
       avatarUrl: null,
-      organizerVerified: false,
+      verified: false,
       profileCompleted: true,
       role: "USER",
       lastLoginAt: "2026-07-25T18:10:05Z",

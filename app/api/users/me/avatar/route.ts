@@ -5,16 +5,11 @@ import {
   uploadUserAvatarExternal,
 } from "@lib/api/users-external";
 import { handleApiError } from "@utils/api-error-handler";
+import { detectImageType, isBackendImageType } from "@utils/image-validation";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2 MB hard cap; matches MAX_TOTAL_UPLOAD_BYTES
-const ALLOWED_AVATAR_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/jpg",
-  "image/webp",
-]);
 
 async function requireAuthCookie(): Promise<
   { ok: true; token: string } | { ok: false; response: Response }
@@ -130,7 +125,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       { status: 413, headers: NO_STORE },
     );
   }
-  if (!file.type || !ALLOWED_AVATAR_TYPES.has(file.type)) {
+  if (!isBackendImageType(file.type) || !isBackendImageType(await detectImageType(file))) {
     return NextResponse.json(
       { error: "Unsupported avatar format" },
       { status: 415, headers: NO_STORE },

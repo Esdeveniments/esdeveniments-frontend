@@ -49,11 +49,11 @@ const TOOLS = [
   },
   {
     name: "getEvent",
-    description: "Get full details for a single cultural event by its slug or ID. Returns title, dates, location, description, and categories.",
+    description: "Get full details for a single cultural event by its slug. Returns title, dates, location, description, and categories.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        slug: { type: "string", description: "Event slug or numeric ID" },
+        slug: { type: "string", description: "Event slug" },
       },
       required: ["slug"],
     },

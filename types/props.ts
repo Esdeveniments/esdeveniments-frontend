@@ -306,23 +306,10 @@ export interface CalendarDatePickerProps {
   onChange: (from: string, to: string) => void;
 }
 
-export type AcceptedImageTypes =
-  | "image/jpeg"
-  | "image/png"
-  | "image/jpg"
-  | "image/webp";
-
 export interface ImageUploaderProps {
   value: string | null;
   onUpload: (file: File | null) => void;
-  progress: number;
-  isUploading?: boolean;
-  uploadMessage?: string | null;
-  mode?: "upload" | "url";
-  onModeChange?: (mode: "upload" | "url") => void;
-  imageUrlValue?: string;
-  onImageUrlChange?: (url: string) => void;
-  imageUrlError?: string | null;
+  onPreparingChange?: (preparing: boolean) => void;
 }
 
 export interface InputProps {
@@ -515,7 +502,6 @@ export interface ProfileHeaderProps {
 export interface VerifiedBadgeProps {
   role?: import("types/auth").AuthRole;
   verified?: boolean;
-  organizerVerified?: boolean;
 }
 
 // Route-based tab strip (e.g. profile/favourites Propers/Passats). Each item

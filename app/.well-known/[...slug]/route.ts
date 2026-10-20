@@ -79,9 +79,9 @@ export async function GET(
         },
         {
           name: "getEvent",
-          description: "Get full details for a single event by slug or ID",
+          description: "Get full details for a single event by slug",
           parameters: {
-            slug: { type: "string", description: "Event slug or numeric ID", required: true },
+            slug: { type: "string", description: "Event slug", required: true },
           },
         },
         {
@@ -143,7 +143,7 @@ export async function GET(
           name: "getEvent",
           description: "Get event details by slug",
           parameters: {
-            slug: { type: "string", description: "Event slug or ID", required: true },
+            slug: { type: "string", description: "Event slug", required: true },
           },
         },
         {

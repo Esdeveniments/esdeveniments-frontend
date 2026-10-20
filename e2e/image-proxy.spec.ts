@@ -5,6 +5,7 @@ import {
   type APIRequestContext,
   type APIResponse,
 } from "@playwright/test";
+import { gotoFirstResolvableEvent } from "./helpers/events";
 
 /**
  * E2E tests for image proxy functionality
@@ -63,26 +64,24 @@ test.describe("Image Proxy", () => {
   /**
    * Helper to check if images on page are loading correctly via proxy
    */
-  async function verifyImagesLoad(page: Page, context: string) {
-    // Wait for images to be present
-    const images = page.locator("img");
-    const count = await images.count();
-
-    if (count === 0) {
-      // Some pages may not have images, skip verification
-      return;
-    }
-
-    // Check at least one image loaded successfully
-    // We check for naturalWidth > 0 which indicates the image loaded
-    const firstImage = images.first();
+  async function verifyImagesLoad(
+    page: Page,
+    context: string,
+    selector = "img",
+  ) {
+    const firstImage = page.locator(selector).filter({ visible: true }).first();
     await expect(firstImage).toBeVisible({ timeout: 10000 });
+    await firstImage.scrollIntoViewIfNeeded();
 
-    // Verify the image actually loaded (naturalWidth > 0)
-    const loaded = await firstImage.evaluate((img: HTMLImageElement) => {
-      return img.complete && img.naturalWidth > 0;
-    });
-    expect(loaded, `Image should load in ${context}`).toBe(true);
+    await expect
+      .poll(
+        () =>
+          firstImage.evaluate(
+            (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+          ),
+        { message: `Image should load in ${context}`, timeout: 15000 },
+      )
+      .toBe(true);
   }
 
   /**
@@ -117,45 +116,21 @@ test.describe("Image Proxy", () => {
         timeout: 30000,
       });
 
-      await verifyImagesLoad(page, "home page event cards");
+      await verifyImagesLoad(page, "home page event cards", "main img");
       await verifyProxyUrls(page);
     });
   });
 
   test.describe("Event detail page images", () => {
     test("event detail image loads via proxy", async ({ page }) => {
-      // Navigate to sitemap to find a real event
-      await page.goto("/sitemap", {
-        waitUntil: "domcontentloaded",
-        timeout: 60000,
-      });
-
-      // Try to find an event link
-      const cityLink = page.getByTestId("sitemap-city-link").first();
-      if (await cityLink.isVisible({ timeout: 5000 })) {
-        await cityLink.click();
-        await page.waitForLoadState("domcontentloaded");
-
-        const monthLink = page.locator('nav[role="list"] a').first();
-        if (await monthLink.isVisible({ timeout: 5000 })) {
-          await monthLink.click();
-          await page.waitForLoadState("domcontentloaded");
-
-          const eventLink = page.locator('a[href^="/e/"]').first();
-          if (await eventLink.isVisible({ timeout: 5000 })) {
-            await eventLink.click();
-            await page.waitForURL(/\/e\/[^/]+$/, { timeout: 30000 });
-            await page.waitForLoadState("domcontentloaded");
-
-            await verifyImagesLoad(page, "event detail page");
-            await verifyProxyUrls(page);
-            return;
-          }
-        }
-      }
-
-      // If no events found, skip test gracefully
-      test.skip(true, "No events available for testing");
+      const slug = await gotoFirstResolvableEvent(page);
+      test.skip(!slug, "No resolvable events available for testing");
+      test.skip(
+        (await page.locator("main img").count()) === 0,
+        "The first resolvable event has no cover image",
+      );
+      await verifyImagesLoad(page, "event detail page", "main img");
+      await verifyProxyUrls(page);
     });
   });
 
@@ -172,7 +147,7 @@ test.describe("Image Proxy", () => {
         timeout: 30000,
       });
 
-      await verifyImagesLoad(page, "barcelona place page");
+      await verifyImagesLoad(page, "barcelona place page", "main img");
       await verifyProxyUrls(page);
     });
   });
@@ -350,44 +325,18 @@ test.describe("Image Proxy", () => {
 
   test.describe("Related events images", () => {
     test("related events section loads images", async ({ page }) => {
-      // Navigate to an event detail page
-      await page.goto("/sitemap", {
-        waitUntil: "domcontentloaded",
-        timeout: 60000,
+      const slug = await gotoFirstResolvableEvent(page);
+      test.skip(!slug, "No resolvable events available for testing");
+      const heading = page.getByRole("heading", {
+        name: /esdeveniments relacionats/i,
       });
-
-      const cityLink = page.getByTestId("sitemap-city-link").first();
-      if (await cityLink.isVisible({ timeout: 5000 })) {
-        await cityLink.click();
-        await page.waitForLoadState("domcontentloaded");
-
-        const monthLink = page.locator('nav[role="list"] a').first();
-        if (await monthLink.isVisible({ timeout: 5000 })) {
-          await monthLink.click();
-          await page.waitForLoadState("domcontentloaded");
-
-          const eventLink = page.locator('a[href^="/e/"]').first();
-          if (await eventLink.isVisible({ timeout: 5000 })) {
-            await eventLink.click();
-            await page.waitForURL(/\/e\/[^/]+$/, { timeout: 30000 });
-            await page.waitForLoadState("domcontentloaded");
-
-            // Check for related events section
-            const relatedSection = page.locator(
-              '[data-testid="related-events"], section:has-text("Esdeveniments relacionats")'
-            );
-            if (await relatedSection.isVisible({ timeout: 5000 })) {
-              const relatedImages = relatedSection.locator("img");
-              if ((await relatedImages.count()) > 0) {
-                await verifyImagesLoad(page, "related events");
-              }
-            }
-            return;
-          }
-        }
-      }
-
-      test.skip(true, "No events with related events available");
+      test.skip((await heading.count()) === 0, "No related events available");
+      await expect(heading).toBeVisible();
+      await verifyImagesLoad(
+        page,
+        "related events",
+        '[data-analytics-context="related_events"] img',
+      );
     });
   });
 });

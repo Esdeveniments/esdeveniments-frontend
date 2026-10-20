@@ -5,18 +5,13 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@components/hooks/useAuth";
 import AvatarInitials from "@components/ui/common/AvatarInitials";
 import { sendGoogleEvent } from "@utils/analytics";
+import { isBackendImageType } from "@utils/image-validation";
 import type { EditProfileAvatarProps } from "types/props";
 
 // Mirrors the caps enforced server-side in app/api/users/me/avatar/route.ts.
 // Checking here is UX only (fail before the upload round-trip) — the route
 // is the real gate.
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-const ALLOWED_AVATAR_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/jpg",
-  "image/webp",
-]);
 
 export default function EditProfileAvatar({
   className,
@@ -47,7 +42,7 @@ export default function EditProfileAvatar({
     setError(null);
     sendGoogleEvent("avatar_upload_start", {});
 
-    if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
+    if (!isBackendImageType(file.type)) {
       setError(t("errorUnsupported"));
       sendGoogleEvent("avatar_upload_blocked", { reason: "unsupported_type" });
       return;
@@ -161,7 +156,7 @@ export default function EditProfileAvatar({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png, image/jpeg, image/jpg, image/webp"
+          accept="image/png, image/jpeg"
           className="hidden"
           onChange={(event) => {
             void handleFileChange(event);

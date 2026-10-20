@@ -14,7 +14,7 @@ const baseEvent: EventSummaryResponseDTO = {
   hash: "hash",
   slug: "test-event",
   title: "Test Event",
-  type: "FREE",
+  isPromoted: false,
   url: "https://example.com/event",
   description: "Event description",
   imageUrl: "https://example.com/image.jpg",
@@ -55,22 +55,19 @@ describe("generateJsonData", () => {
     expect(schema.description).toBe("Test Event a Catalunya");
     expect(schema.image[0]).toMatch(/logo-seo-meta\.webp$/);
     expect(schema.endDate).toBe(schema.startDate);
-    expect(schema.offers).toBeDefined();
-    expect(schema.offers!.price).toBe(0);
+    expect(schema.offers).toBeUndefined();
   });
 
-  it("omits offers for paid events without price information", () => {
+  it("omits offers because the backend has no price data", () => {
     const schema = generateJsonData(
       createEvent({
-        type: "PAID",
         description: "Gran concert",
         location: "Palau de la Música",
       })
     );
 
-    // Per Google sd-policies: emitting price:0 + placeholder descriptions for
-    // unknown prices is misleading and suppresses rich results. offers is
-    // recommended, not required — omitting it is correct when price is unknown.
+    // Per Google sd-policies: emitting price:0 for an unknown price is
+    // misleading. offers is recommended, not required.
     expect(schema.offers).toBeUndefined();
     expect(schema.performer.name).toBe("Palau de la Música");
     expect(schema.location.address.streetAddress).toBe("Palau de la Música");
