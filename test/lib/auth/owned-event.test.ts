@@ -10,8 +10,10 @@ vi.mock("@lib/auth/session", () => ({
   getCurrentUser: () => mockCurrentUser(),
 }));
 const mockAccessToken = vi.fn();
+const mockRefreshToken = vi.fn();
 vi.mock("@utils/auth-cookies", () => ({
   getAccessTokenFromCookies: () => mockAccessToken(),
+  getRefreshTokenFromCookies: () => mockRefreshToken(),
 }));
 
 describe("getOwnedEventBySlug", () => {
@@ -47,6 +49,7 @@ describe("ownerCheckNeedsRefresh", () => {
   beforeEach(() => {
     mockCurrentUser.mockReset();
     mockAccessToken.mockReset();
+    mockRefreshToken.mockReset();
   });
 
   it("is false when logged out", async () => {
@@ -59,6 +62,12 @@ describe("ownerCheckNeedsRefresh", () => {
     mockCurrentUser.mockResolvedValue({ id: "logto-sub" });
     mockAccessToken.mockResolvedValue(null);
 
+    expect(await ownerCheckNeedsRefresh()).toBe(true);
+  });
+
+  it("recovers an expired ID token when a refresh credential remains", async () => {
+    mockCurrentUser.mockResolvedValue(null);
+    mockRefreshToken.mockResolvedValue("refreshable-session");
     expect(await ownerCheckNeedsRefresh()).toBe(true);
   });
 

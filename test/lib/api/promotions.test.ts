@@ -7,6 +7,7 @@ import {
   buildPromotedEventsQuery,
   createPromotionCheckout,
   getPromotionOptions,
+  getPromotionStatus,
   isStripeCheckoutUrl,
 } from "@lib/api/promotions";
 import { parseEventSummaryList } from "@lib/validation/event";
@@ -28,6 +29,26 @@ vi.mock("@lib/api/events", () => ({
 }));
 
 const mockFetch = vi.mocked(fetchWrapper.fetchWithHmac);
+const orderId = "6d1ebd26-7ef8-4fe2-bec3-3e855080ce59";
+const options = {
+  options: [],
+  canPurchase: false,
+  unavailableReason: null,
+  cityId: null,
+  regionId: null,
+  provinceId: null,
+  eventEndsAt: "2026-11-01T23:00:00Z",
+};
+const status = {
+  orderId: null,
+  paymentStatus: "NONE",
+  promotionStatus: "NONE",
+  scope: null,
+  startsAt: null,
+  endsAt: null,
+  canPurchase: true,
+  checkoutUrl: null,
+};
 
 const jsonResponse = (status: number, body: unknown) =>
   ({
@@ -70,7 +91,7 @@ describe("createPromotionCheckout", () => {
 
   it("posts the option with the caller's Idempotency-Key to the event UUID", async () => {
     mockFetch.mockResolvedValue(
-      jsonResponse(200, { orderId: "o1", url: "https://checkout.stripe.com/x" }),
+      jsonResponse(200, { orderId, url: "https://checkout.stripe.com/x" }),
     );
 
     const result = await createPromotionCheckout("uuid-1", "city-7d", "key-1");
@@ -82,7 +103,7 @@ describe("createPromotionCheckout", () => {
     expect(init?.body).toBe(JSON.stringify({ optionId: "city-7d" }));
     expect(result).toEqual({
       ok: true,
-      data: { orderId: "o1", url: "https://checkout.stripe.com/x" },
+      data: { orderId, url: "https://checkout.stripe.com/x" },
     });
   });
 
@@ -114,7 +135,7 @@ describe("promotion reads during a server render", () => {
 
   it("use the cookie token and never refresh it", async () => {
     vi.mocked(events.requireAuth).mockClear();
-    mockFetch.mockResolvedValue(jsonResponse(200, { options: [], canPurchase: false }));
+    mockFetch.mockResolvedValue(jsonResponse(200, options));
 
     await getPromotionOptions("uuid-1");
 
@@ -152,6 +173,54 @@ describe("promotion reads during a server render", () => {
 
     expect(await getPromotionOptions("uuid-1")).toEqual({ ok: false, code: "UNKNOWN" });
     errorSpy.mockRestore();
+  });
+});
+
+describe("promotion response validation", () => {
+  beforeEach(() => mockFetch.mockReset());
+
+  it("accepts complete options and an empty promotion status", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse(200, options));
+    expect(await getPromotionOptions("uuid-1")).toEqual({ ok: true, data: options });
+    mockFetch.mockResolvedValueOnce(jsonResponse(200, status));
+    expect(await getPromotionStatus("uuid-1")).toEqual({ ok: true, data: status });
+  });
+
+  it.each([{}, null, { ...options, options: null }, { ...options, eventEndsAt: "bad" }])(
+    "rejects schema-invalid options: %j",
+    async (body) => {
+      mockFetch.mockResolvedValue(jsonResponse(200, body));
+      expect(await getPromotionOptions("uuid-1")).toEqual({ ok: false, code: "UNKNOWN" });
+    },
+  );
+
+  it.each([
+    { ...status, paymentStatus: "UNKNOWN_STATUS" },
+    { ...status, promotionStatus: "ACTIVE", endsAt: "not-a-date" },
+    { ...status, orderId: "not-a-uuid" },
+  ])("rejects invalid status fields before rendering: %j", async (body) => {
+    mockFetch.mockResolvedValue(jsonResponse(200, body));
+    expect(await getPromotionStatus("uuid-1")).toEqual({ ok: false, code: "UNKNOWN" });
+  });
+
+  it.each([
+    { orderId, url: "not-a-url" },
+    { orderId: "not-a-uuid", url: "https://checkout.stripe.com/x" },
+  ])("rejects invalid checkout responses: %j", async (body) => {
+    mockFetch.mockResolvedValue(jsonResponse(200, body));
+    expect(await createPromotionCheckout("uuid-1", "city-7d", "key-1")).toEqual({
+      ok: false,
+      code: "UNKNOWN",
+    });
+  });
+
+  it("returns UNKNOWN for non-authentication checkout setup errors", async () => {
+    vi.mocked(events.requireAuth).mockRejectedValueOnce(new Error("Missing API config"));
+    expect(await createPromotionCheckout("uuid-1", "city-7d", "key-1")).toEqual({
+      ok: false,
+      code: "UNKNOWN",
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });
 

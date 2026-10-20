@@ -16,13 +16,21 @@ import RefreshSession from "../app/[locale]/e/[eventId]/promote/RefreshSession";
 describe("RefreshSession", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("re-renders the page once the session is refreshed", async () => {
+  it("keeps a fallback if the refreshed page still returns the notice", async () => {
     mockRefreshSessionAction.mockResolvedValue(true);
 
-    render(<RefreshSession>expired</RefreshSession>);
+    const { rerender } = render(<RefreshSession>expired</RefreshSession>);
 
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledOnce());
-    expect(screen.queryByText("expired")).not.toBeInTheDocument();
+    rerender(<RefreshSession>expired</RefreshSession>);
+    expect(await screen.findByText("expired")).toBeInTheDocument();
+    expect(mockRefreshSessionAction).toHaveBeenCalledOnce();
+  });
+
+  it("shows progress instead of an empty page while refresh is pending", () => {
+    mockRefreshSessionAction.mockReturnValue(new Promise(() => {}));
+    render(<RefreshSession>expired</RefreshSession>);
+    expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
   it("shows its fallback when the refresh fails", async () => {

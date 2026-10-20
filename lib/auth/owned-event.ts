@@ -1,6 +1,6 @@
 import { fetchEventBySlug } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
-import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { getAccessTokenFromCookies, getRefreshTokenFromCookies } from "@utils/auth-cookies";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 /**
@@ -25,7 +25,7 @@ export async function getOwnedEventBySlug(
  */
 export async function ownerCheckNeedsRefresh(): Promise<boolean> {
   const user = await getCurrentUser();
-  if (!user) return false;
+  if (!user) return Boolean(await getRefreshTokenFromCookies());
   if (user.profileEnrichmentFailed === "auth") return true;
   return !(await getAccessTokenFromCookies());
 }

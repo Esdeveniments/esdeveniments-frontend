@@ -397,6 +397,7 @@
       "notFoundDescriptionFallback": "No hem trobat {activitiesLabel} per als propers dies a {place}."
     },
     "EventPromote": {
+      "refreshingSession": "S'està restaurant la sessió...",
       "title": "Promociona el teu esdeveniment",
       "description": "Arriba a més gent promocionant el teu esdeveniment a Esdeveniments.cat.",
       "heading": "Promociona el teu esdeveniment",

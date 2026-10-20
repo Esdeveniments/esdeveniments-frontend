@@ -397,6 +397,7 @@
       "notFoundDescriptionFallback": "We couldn't find {activitiesLabel} for the coming days in {place}."
     },
     "EventPromote": {
+      "refreshingSession": "Restoring your session...",
       "title": "Promote your event",
       "description": "Reach more people by promoting your event on Esdeveniments.cat.",
       "heading": "Promote your event",

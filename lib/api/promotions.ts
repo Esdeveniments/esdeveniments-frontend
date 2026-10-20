@@ -1,10 +1,17 @@
 import { connection } from "next/server";
+import { captureException } from "@sentry/nextjs";
+import type { z } from "zod";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { requireAuth } from "./events";
 import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
 import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import { createKeyedCache } from "@lib/api/cache";
 import { parseEventSummaryList } from "@lib/validation/event";
+import {
+  PromotionCheckoutSchema,
+  PromotionOptionsSchema,
+  PromotionStatusSchema,
+} from "@lib/validation/promotion";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import type {
   PromotedEventsQuery,
@@ -57,6 +64,7 @@ async function getAuth(
 async function promotionRequest<T>(
   eventId: string,
   path: "options" | "status" | "checkout",
+  schema: z.ZodType<T>,
   init: { method?: "POST"; headers?: Record<string, string>; body?: string } = {},
 ): Promise<PromotionResult<T>> {
   try {
@@ -82,7 +90,15 @@ async function promotionRequest<T>(
       console.error(`promotions/${path}: HTTP ${response.status} ${code}`);
       return { ok: false, code };
     }
-    return { ok: true, data: (await response.json()) as T };
+    const parsed = schema.safeParse(await response.json());
+    if (!parsed.success) {
+      console.error(`promotions/${path}: invalid response`);
+      captureException(parsed.error, {
+        tags: { section: "promotions", type: "validation-failed", endpoint: path },
+      });
+      return { ok: false, code: "UNKNOWN" };
+    }
+    return { ok: true, data: parsed.data };
   } catch (error) {
     // Missing API config, timeouts and malformed bodies must not turn the
     // payment pages into a 500.
@@ -94,13 +110,13 @@ async function promotionRequest<T>(
 export function getPromotionOptions(
   eventId: string,
 ): Promise<PromotionResult<PromotionOptionsDTO>> {
-  return promotionRequest(eventId, "options");
+  return promotionRequest(eventId, "options", PromotionOptionsSchema);
 }
 
 export function getPromotionStatus(
   eventId: string,
 ): Promise<PromotionResult<PromotionStatusDTO>> {
-  return promotionRequest(eventId, "status");
+  return promotionRequest(eventId, "status", PromotionStatusSchema);
 }
 
 /**
@@ -113,7 +129,7 @@ export function createPromotionCheckout(
   optionId: string,
   idempotencyKey: string,
 ): Promise<PromotionResult<PromotionCheckoutResponseDTO>> {
-  return promotionRequest(eventId, "checkout", {
+  return promotionRequest(eventId, "checkout", PromotionCheckoutSchema, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

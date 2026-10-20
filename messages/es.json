@@ -397,6 +397,7 @@
       "notFoundDescriptionFallback": "No hemos encontrado {activitiesLabel} para los próximos días en {place}."
     },
     "EventPromote": {
+      "refreshingSession": "Restaurando la sesión...",
       "title": "Promociona tu evento",
       "description": "Llega a más gente promocionando tu evento en Esdeveniments.cat.",
       "heading": "Promociona tu evento",
