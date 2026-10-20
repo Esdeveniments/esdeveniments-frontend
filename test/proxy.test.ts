@@ -172,6 +172,70 @@ describe("proxy", () => {
       expect(result.headers.get("Service-Worker-Allowed")).toBe("/");
     });
 
+    it("never lets the CDN cache owner-only promote pages", async () => {
+      const mockRequest = {
+        nextUrl: mockNextUrl({
+          pathname: "/e/concert/promote/success",
+          search: "",
+          searchParams: new URLSearchParams(),
+        }),
+        headers: new Headers({ accept: "text/html" }),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(mockRequest);
+
+      expect(result.headers.get("Cache-Control")).toBe("private, no-store");
+    });
+
+    it.each(["/e/concert/promot%65/success", "/e/concert//PROMOTE"])(
+      "keeps the variant path %s out of the CDN cache",
+      async (pathname) => {
+        const mockRequest = {
+          nextUrl: mockNextUrl({ pathname, search: "", searchParams: new URLSearchParams() }),
+          headers: new Headers({ accept: "text/html" }),
+          method: "GET",
+        } as unknown as NextRequest;
+        const mockResponse = { headers: new Headers() };
+        (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+        const result = await proxy(mockRequest);
+
+        expect(result.headers.get("Cache-Control")).toBe("private, no-store");
+      },
+    );
+
+    it("sends the Stripe promotion return page to the visitor's locale", async () => {
+      const mockRequest = {
+        nextUrl: mockNextUrl({
+          pathname: "/e/concert/promote/success",
+          search: "",
+          searchParams: new URLSearchParams(),
+        }),
+        url: "https://example.com/e/concert/promote/success",
+        headers: new Headers(),
+        cookies: {
+          get: vi.fn((name: string) =>
+            name === "NEXT_LOCALE" ? { value: "es" } : undefined,
+          ),
+        },
+        method: "GET",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL(
+          "/es/e/concert/promote/success",
+          "https://example.com/e/concert/promote/success",
+        ),
+        302,
+      );
+    });
+
     it("redirects legacy /tots/ routes", async () => {
       const mockRequest = {
         nextUrl: mockNextUrl({

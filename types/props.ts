@@ -135,8 +135,8 @@ export interface CardLayoutProps {
   categoryLabel?: string;
   /** Category slug for analytics/URL building */
   categorySlug?: string;
-  /** Localized price label (e.g., "Gratuït" for free events) */
-  priceLabel?: string;
+  /** Localized badge for events with an active paid promotion */
+  promotedLabel?: string;
   /** Urgency label ("Today" / "Tomorrow") */
   urgencyLabel?: string;
   /** Urgency type for styling */
@@ -932,6 +932,7 @@ export interface EventClientPayload {
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
+  ownerId?: string;
 }
 
 export interface EventClientProps {
@@ -963,6 +964,52 @@ export interface EventSidebarProps {
 export interface EventEditActionProps {
   ownerId?: string;
   slug: string;
+}
+
+// Owner-only promote action, event detail sidebar client island
+export type EventPromoteActionProps = EventEditActionProps;
+
+export interface PromoteUpsellModalProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  slug: string;
+}
+
+// /e/[eventId]/promote client page
+export interface PromoteEventClientProps {
+  eventId: string;
+  slug: string;
+  options: import("types/api/promotion").PromotionResult<
+    import("types/api/promotion").PromotionOptionsDTO
+  >;
+  pendingCheckoutUrl: string | null;
+}
+
+// /e/[eventId]/promote/{success,cancel} status panel
+export interface PromotionStatusPanelProps {
+  slug: string;
+  status: import("types/api/promotion").PromotionStatusDTO | null;
+  /** Backend code of a failed status call; localized when it has copy. */
+  errorCode?: string;
+  variant: "success" | "cancel";
+}
+
+// /e/[eventId]/promote: shown only if the session refresh fails
+export interface RefreshSessionProps {
+  children?: import("react").ReactNode;
+}
+
+export interface PromotionReturnPageProps {
+  params: Promise<{ eventId: string }>;
+  variant: PromotionStatusPanelProps["variant"];
+}
+
+/** Route props of the promote success and cancel pages. */
+export type PromotionReturnRouteProps = Pick<PromotionReturnPageProps, "params">;
+
+export interface PromotedEventsSectionProps {
+  /** Place page slug; omit (or "catalunya") for the Catalonia-wide list. */
+  placeSlug?: string;
 }
 
 // /e/[eventId]/edita client form

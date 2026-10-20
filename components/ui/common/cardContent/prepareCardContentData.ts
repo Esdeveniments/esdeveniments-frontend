@@ -113,9 +113,7 @@ export function prepareCardContentData({
 
   const shouldShowFavoriteButton = Boolean(event.slug);
 
-  // The backend dropped event `type` (FREE/PAID) in the v2 contract, so there
-  // is no price data to show.
-  const priceLabel = undefined;
+  const promotedLabel = event.isPromoted ? tCard("promoted") : undefined;
 
   // View count aria label
   const viewCountAriaLabel = tCard("viewCountAria", {
@@ -150,7 +148,7 @@ export function prepareCardContentData({
     timeDisplay,
     favoriteLabels,
     shouldShowFavoriteButton,
-    priceLabel,
+    promotedLabel,
     viewCountAriaLabel,
     categoryLabel,
     categorySlug,

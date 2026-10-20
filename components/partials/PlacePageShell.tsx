@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { JSX } from "react";
 import dynamic from "next/dynamic";
 import HybridEventsList from "@components/ui/hybridEventsList";
+import PromotedEventsSection from "@components/ui/promotedEvents/PromotedEventsSection";
 import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
@@ -351,6 +352,10 @@ async function PlacePageContent({
       ))}
 
       <FilterLoadingGate>
+        <Suspense fallback={null}>
+          <PromotedEventsSection placeSlug={place} />
+        </Suspense>
+
         <HybridEventsList
           initialEvents={events}
           placeTypeLabel={placeTypeLabel}

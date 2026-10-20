@@ -24,7 +24,7 @@ async function CardContentServer({
     shouldShowFavoriteButton,
     categoryLabel,
     categorySlug,
-    priceLabel,
+    promotedLabel,
     urgencyLabel,
     urgencyType,
     multiDayLabel,
@@ -52,7 +52,7 @@ async function CardContentServer({
       primaryLocation={primaryLocation}
       categoryLabel={categoryLabel}
       categorySlug={categorySlug}
-      priceLabel={priceLabel}
+      promotedLabel={promotedLabel}
       urgencyLabel={urgencyLabel}
       urgencyType={urgencyType}
       multiDayLabel={multiDayLabel}

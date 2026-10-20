@@ -474,7 +474,8 @@ const PublishForm = () => {
         });
 
         submittedRef.current = true;
-        router.push(`/e/${slug}`);
+        // ?promote=1 tells the event page to show the promote upsell once.
+        router.push(`/e/${slug}?promote=1`);
       } catch (error) {
         console.error("Submission error:", error);
 

@@ -10,12 +10,9 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { NextRequest, NextResponse } from "next/server";
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-} from "node:crypto";
+import { createHash } from "node:crypto";
+import { sealToken, openToken, TOKEN_ENVELOPE_PREFIX } from "@lib/auth/token-encryption";
+import { AUTH_SESSION_MAX_AGE as SESSION_MAX_AGE } from "@utils/constants";
 import type { FlowState, LogtoTokenResponse, TokenCookieWrite } from "types/auth";
 
 export const ACCESS_TOKEN_COOKIE = "auth_token";
@@ -28,7 +25,6 @@ export const NONCE_COOKIE = "logto_nonce";
 export const RETURN_TO_COOKIE = "logto_return_to";
 
 // Refresh token / id_token outlive the access token; cap session length here.
-const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 const FLOW_MAX_AGE = 60 * 10; // 10 minutes
 // 2026-07-26: Logto's default access_token lifetime is 3600s. We use this as
 // a defensive fallback when the token response omits `expires_in` or returns
@@ -50,7 +46,7 @@ const baseOptions = {
 };
 
 // ── At-rest encryption (optional) ─────────────────────────────
-const ENC_PREFIX = "v1.";
+const ENC_PREFIX = TOKEN_ENVELOPE_PREFIX;
 
 // Resolve the AES key lazily on first cookie access (not at module load) so a
 // missing/short secret fails the request, not the whole build/import — this
@@ -83,11 +79,7 @@ function getEncKey(): Buffer | null {
 function encrypt(plaintext: string): string {
   const encKey = getEncKey();
   if (!encKey) return plaintext;
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", encKey, iv);
-  const enc = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return ENC_PREFIX + Buffer.concat([iv, tag, enc]).toString("base64url");
+  return sealToken(plaintext, encKey);
 }
 
 function decrypt(value: string | undefined): string | null {
@@ -113,15 +105,7 @@ function decrypt(value: string | undefined): string | null {
     return value;
   }
   try {
-    const buf = Buffer.from(value.slice(ENC_PREFIX.length), "base64url");
-    const iv = buf.subarray(0, 12);
-    const tag = buf.subarray(12, 28);
-    const enc = buf.subarray(28);
-    const decipher = createDecipheriv("aes-256-gcm", encKey, iv);
-    decipher.setAuthTag(tag);
-    const result = Buffer.concat([decipher.update(enc), decipher.final()]).toString(
-      "utf8",
-    );
+    const result = openToken(value, encKey);
     console.log("[AUTH DIAGNOSTIC] decrypt: SUCCESS");
     return result;
   } catch (err) {
@@ -145,6 +129,11 @@ export async function getAccessTokenFromCookies(): Promise<string | null> {
 export async function getIdTokenFromCookies(): Promise<string | null> {
   const cookieStore = await cookies();
   return decrypt(cookieStore.get(ID_TOKEN_COOKIE)?.value);
+}
+
+export async function getRefreshTokenFromCookies(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return decrypt(cookieStore.get(REFRESH_TOKEN_COOKIE)?.value);
 }
 
 /** Read and decrypt a token cookie from a route handler's NextRequest. */
@@ -239,14 +228,20 @@ export function setTokenCookies(
  * previously read the access token cookie directly and gave up immediately.
  *
  * Returns null (caller should 401) only when there's no refresh_token either,
- * or the refresh itself fails (revoked/expired refresh token, Logto outage).
+ * or the refresh token is revoked/expired. Transient failures are thrown.
+ *
+ * `forceRefresh` skips the cookie's token, for callers whose request the
+ * backend already rejected with it.
  */
-export async function getValidAccessToken(): Promise<string | null> {
-  const existing = await getAccessTokenFromCookies();
-  if (existing) return existing;
+export async function getValidAccessToken({
+  forceRefresh = false,
+}: { forceRefresh?: boolean } = {}): Promise<string | null> {
+  if (!forceRefresh) {
+    const existing = await getAccessTokenFromCookies();
+    if (existing) return existing;
+  }
 
-  const cookieStore = await cookies();
-  const refreshToken = decrypt(cookieStore.get(REFRESH_TOKEN_COOKIE)?.value);
+  const refreshToken = await getRefreshTokenFromCookies();
   if (!refreshToken) return null;
 
   try {
@@ -260,7 +255,9 @@ export async function getValidAccessToken(): Promise<string | null> {
     return refreshed.access_token;
   } catch (err) {
     console.error("getValidAccessToken: refresh failed", err);
-    return null;
+    const status = err && typeof err === "object" && "status" in err ? err.status : undefined;
+    if (status === 400 || status === 401 || status === 403) return null;
+    throw err;
   }
 }
 

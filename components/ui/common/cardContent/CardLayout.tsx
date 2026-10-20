@@ -19,7 +19,7 @@ export default function CardLayout({
   timeDisplay,
   primaryLocation,
   categoryLabel,
-  priceLabel,
+  promotedLabel,
   urgencyLabel,
   urgencyType,
   multiDayLabel,
@@ -73,6 +73,9 @@ export default function CardLayout({
       </div>
 
       <div className="flex-1 flex flex-col px-4 pt-3 pb-4 pointer-events-none">
+        {promotedLabel && (
+          <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
+        )}
         <CategoryBadge label={categoryLabel} />
 
         <p className="text-sm text-muted-foreground mb-1">
@@ -84,7 +87,6 @@ export default function CardLayout({
             cardDate
           )}
           {timeDisplay && <> · {timeDisplay}</>}
-          {priceLabel && <> · <span className="text-success font-medium">{priceLabel}</span></>}
           {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 

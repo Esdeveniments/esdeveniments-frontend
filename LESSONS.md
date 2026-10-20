@@ -238,3 +238,58 @@ Playwright traces record `fill()` arguments in plain text, and the staging
 workflows retry and upload `playwright-report/`. The `E2E_STAGING_*` specs call
 `test.use({ trace: "off" })`. Do the same in any new spec that logs in with a
 real credential.
+
+## A rejected refresh token must not leave its claim open
+
+`coordinateRefresh` claims a refresh token in the database before it calls Logto.
+When Logto answered 4xx, the claim stayed open with no result. Every later
+request with that token waited 20 seconds, then threw an error without a status,
+which `resolveSession` treats as transient (503), so the dead cookie was never
+cleared. Leaving timeouts and 5xx unresolved had the same effect for 30 days.
+The code now stores every failed exchange for 5 seconds (with its status when
+there is one), so waiting requests fail fast, and then releases the claim. If the
+provider had used the token, the retry gets `invalid_grant` and signs the user
+out. Nobody holds the rotated tokens then, so nothing better is possible. A rotated
+token whose result expired throws 401, not a statusless error, so the cookie is cleared.
+
+## PR E2E needs `BACKEND_SERVICE_SECRET` in the Vercel Preview env
+
+PR E2E runs against the Vercel preview, and the preview calls the pre-production
+backend, which rejects every request without `X-Backend-Key`. Without the secret
+in Vercel's Preview environment, backend-backed data GETs return 200 with empty
+data and the same 11 data specs fail on every PR, develop-based ones included. Vercel
+applies env changes only to new deployments, so push to get a fresh preview.
+
+## A green E2E check on a push run means nothing ran
+
+On PR runs, `ci.yml` fails the E2E job when no preview is ready. On push runs it
+skips the preview lookup, so the Playwright step is skipped and the job still
+passes. A green E2E check is evidence only on a PR run.
+
+## Test-mode specs read `E2E_TEST_MODE` in the Playwright process
+
+`publica_to_event.flow.spec.ts` calls `test.skip` on `process.env.E2E_TEST_MODE`
+inside Playwright, so setting it only on the server step skipped the spec on
+every deploy. Set it on the step that runs `yarn test:e2e` too.
+
+## Playwright hooks keep the 30 s default under a describe-level timeout
+
+`test.setTimeout()` at describe level covers the tests, not `beforeAll` or
+`afterAll`. A real login plus publish in `beforeAll` hit 30 s. Call
+`test.setTimeout()` inside each slow hook.
+
+## `vi.resetModules()` keeps `vi.mock` factories
+
+A `mockImplementation` set on a mocked module survives `vi.resetModules()` and
+leaks into later tests. Restore the original implementation in a `finally`.
+
+## Client components must not import `@utils/constants`
+
+`utils/constants.ts` imports all three locale JSON files and `next-intl/server`.
+A client import pulls them into that route's bundle. Put shared client-safe
+values in a module without heavy imports, such as `utils/image-validation.ts`.
+
+## The backend looks events up by slug only
+
+`GET /api/events/{slug}` returns 404 for an event UUID on the v2 backend. Docs and
+agent surfaces (llms.txt, MCP, agent-view, OpenAPI) say slug only.

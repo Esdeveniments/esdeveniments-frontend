@@ -5,8 +5,8 @@ import type { ProfileSlugSource } from "types/api/auth-validation";
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** True when the value is a raw UUID that should never appear in a URL. */
-function isUuid(value: string): boolean {
+/** True when the value is a hyphenated UUID. */
+export function isUuid(value: string): boolean {
   return UUID_RE.test(value);
 }
 

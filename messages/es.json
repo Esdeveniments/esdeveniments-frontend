@@ -341,7 +341,13 @@
       "restoreDraftApply": "Recuperar borrador",
       "restoreDraftDiscard": "Descartar",
       "geoNotSupported": "Tu navegador no permite obtener la ubicación.",
-      "geoDenied": "No hemos podido obtener la ubicación. Revisa los permisos."
+      "geoDenied": "No hemos podido obtener la ubicación. Revisa los permisos.",
+      "promoteUpsell": {
+        "title": "¡Impulsa tu evento!",
+        "description": "Promociona tu evento ahora para llegar a mucha más gente y aparecer en los primeros puestos de la plataforma.",
+        "promoteButton": "Promocionar evento",
+        "keepFreeButton": "Mantener gratis"
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " en {place}",
@@ -389,6 +395,67 @@
       "notFoundTitle": "Sin eventos disponibles",
       "notFoundDescriptionWithDate": "No hemos encontrado {activitiesLabel} para {date} en {place}.",
       "notFoundDescriptionFallback": "No hemos encontrado {activitiesLabel} para los próximos días en {place}."
+    },
+    "EventPromote": {
+      "refreshingSession": "Restaurando la sesión...",
+      "title": "Promociona tu evento",
+      "description": "Llega a más gente promocionando tu evento en Esdeveniments.cat.",
+      "heading": "Promociona tu evento",
+      "subheading": "Destaca para llegar a más gente y aparecer en los primeros puestos.",
+      "benefit1": "Más visibilidad en la agenda",
+      "benefit2": "Prioridad frente a otros eventos",
+      "benefit3": "Más personas interesadas",
+      "backToEvent": "Volver al evento",
+      "confirmButton": "Confirmar y pagar",
+      "confirmButtonLoading": "Redirigiendo al pago...",
+      "errorGeneric": "Algo ha fallado. Inténtalo de nuevo.",
+      "chooseOption": "Elige dónde y durante cuánto tiempo",
+      "taxIncluded": "Precios con IVA incluido. Pago único.",
+      "duration": "{days, plural, one {# día} other {# días}}",
+      "scope": {
+        "CITY": "Tu población",
+        "REGION": "Tu comarca",
+        "PROVINCE": "Tu provincia",
+        "CATALONIA": "Toda Cataluña"
+      },
+      "pendingCheckout": "Tienes un pago pendiente para este evento.",
+      "resumeCheckout": "Continuar el pago",
+      "refreshStatus": "Actualizar el estado",
+      "tryAgain": "Volver a intentarlo",
+      "errors": {
+        "PROMOTION_ALREADY_ACTIVE": "Este evento ya está promocionado.",
+        "CHECKOUT_ALREADY_PENDING": "Ya tienes un pago pendiente para este evento.",
+        "REFUND_PENDING": "Hay un reembolso en curso para este evento.",
+        "PROMOTIONS_DISABLED": "Las promociones no están disponibles ahora mismo.",
+        "MISSING_EVENT_LOCATION": "El evento necesita una población para poder promocionarlo.",
+        "MISSING_EVENT_DATE": "El evento necesita una fecha para poder promocionarlo.",
+        "INSUFFICIENT_EVENT_DURATION": "El evento termina antes de que acabe esta promoción.",
+        "NO_AVAILABLE_OPTIONS": "Ahora mismo no hay ninguna promoción disponible para este evento.",
+        "AUTHENTICATION_REQUIRED": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+        "NOT_EVENT_OWNER": "Solo quien ha creado el evento puede promocionarlo.",
+        "INVALID_OPTION": "Esta opción ya no está disponible. Elige otra.",
+        "CHECKOUT_EXPIRED": "El pago ha caducado. Vuelve a intentarlo.",
+        "PAYMENT_PROCESSING": "Estamos procesando el pago. Espera unos segundos."
+      },
+      "status": {
+        "ACTIVE": "Tu evento está promocionado hasta el {endsAt}.",
+        "PENDING": "Estamos confirmando el pago. Puede tardar unos segundos.",
+        "PAID": "Pago recibido. La promoción se activará enseguida.",
+        "EXPIRED": "El pago ha caducado y no se ha hecho ningún cargo.",
+        "FAILED": "No se ha podido completar el pago.",
+        "REFUND_PENDING": "Estamos tramitando el reembolso.",
+        "REFUNDED": "Hemos reembolsado el pago.",
+        "NONE": "No hay ningún pago para este evento.",
+        "unknown": "Ahora no podemos consultar el estado del pago. Vuelve a intentarlo en un rato.",
+        "promotionEXPIRED": "La promoción de este evento ya ha terminado.",
+        "promotionREVOKED": "La promoción de este evento se ha retirado."
+      },
+      "successPage": {
+        "title": "¡Gracias!"
+      },
+      "cancelPage": {
+        "title": "Pago cancelado"
+      }
     }
   },
   "Components": {
@@ -916,18 +983,19 @@
       "sidebarAriaLabel": "Detalles del evento",
       "toolbarAriaLabel": "Acciones del evento",
       "sidebarCreatedBy": "Publicado por",
-      "sidebarViewAllEvents": "Ver todos los eventos"
+      "sidebarViewAllEvents": "Ver todos los eventos",
+      "promoteEvent": "Promocionar"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Añadir a favoritos",
       "favoriteRemoveAria": "Quitar de favoritos",
-      "free": "Gratis",
       "today": "Hoy",
       "tomorrow": "Mañana",
       "multipleDates": "Varios días",
-      "viewCountAria": "{count, plural, one {{count} visualización} other {{count} visualizaciones}}"
+      "viewCountAria": "{count, plural, one {{count} visualización} other {{count} visualizaciones}}",
+      "promoted": "Patrocinado"
     },
     "EventForm": {
       "title": "Título *",
@@ -1117,6 +1185,9 @@
     "PwaBackButton": {
       "label": "Volver",
       "ariaLabel": "Volver atrás"
+    },
+    "PromotedEvents": {
+      "title": "Eventos destacados"
     }
   },
   "Partials": {

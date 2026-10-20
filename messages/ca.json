@@ -341,7 +341,13 @@
       "restoreDraftApply": "Recupera esborrany",
       "restoreDraftDiscard": "Descarta",
       "geoNotSupported": "El teu navegador no permet obtenir la ubicació.",
-      "geoDenied": "No hem pogut obtenir la ubicació. Revisa els permisos."
+      "geoDenied": "No hem pogut obtenir la ubicació. Revisa els permisos.",
+      "promoteUpsell": {
+        "title": "Impulsa el teu esdeveniment!",
+        "description": "Promociona el teu esdeveniment ara per arribar a molta més gent i aparèixer als primers llocs de la plataforma.",
+        "promoteButton": "Promocionar esdeveniment",
+        "keepFreeButton": "Mantenir gratuït"
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " a {place}",
@@ -389,6 +395,67 @@
       "notFoundTitle": "Sense esdeveniments disponibles",
       "notFoundDescriptionWithDate": "No hem trobat {activitiesLabel} per {date} a {place}.",
       "notFoundDescriptionFallback": "No hem trobat {activitiesLabel} per als propers dies a {place}."
+    },
+    "EventPromote": {
+      "refreshingSession": "S'està restaurant la sessió...",
+      "title": "Promociona el teu esdeveniment",
+      "description": "Arriba a més gent promocionant el teu esdeveniment a Esdeveniments.cat.",
+      "heading": "Promociona el teu esdeveniment",
+      "subheading": "Destaca't per arribar a més gent i aparèixer als primers llocs.",
+      "benefit1": "Més visibilitat a l'agenda",
+      "benefit2": "Prioritat davant d'altres esdeveniments",
+      "benefit3": "Més persones interessades",
+      "backToEvent": "Tornar a l'esdeveniment",
+      "confirmButton": "Confirma i paga",
+      "confirmButtonLoading": "Redirigint a pagament...",
+      "errorGeneric": "Alguna cosa ha fallat. Torna-ho a intentar.",
+      "chooseOption": "Tria on i quant de temps",
+      "taxIncluded": "Preus amb IVA inclòs. Pagament únic.",
+      "duration": "{days, plural, one {# dia} other {# dies}}",
+      "scope": {
+        "CITY": "La teva població",
+        "REGION": "La teva comarca",
+        "PROVINCE": "La teva província",
+        "CATALONIA": "Tot Catalunya"
+      },
+      "pendingCheckout": "Tens un pagament pendent per a aquest esdeveniment.",
+      "resumeCheckout": "Continua el pagament",
+      "refreshStatus": "Actualitza l'estat",
+      "tryAgain": "Torna-ho a provar",
+      "errors": {
+        "PROMOTION_ALREADY_ACTIVE": "Aquest esdeveniment ja està promocionat.",
+        "CHECKOUT_ALREADY_PENDING": "Ja tens un pagament pendent per a aquest esdeveniment.",
+        "REFUND_PENDING": "Hi ha un reemborsament en curs per a aquest esdeveniment.",
+        "PROMOTIONS_DISABLED": "Les promocions no estan disponibles ara mateix.",
+        "MISSING_EVENT_LOCATION": "L'esdeveniment necessita una població per poder-lo promocionar.",
+        "MISSING_EVENT_DATE": "L'esdeveniment necessita una data per poder-lo promocionar.",
+        "INSUFFICIENT_EVENT_DURATION": "L'esdeveniment acaba abans que s'acabi aquesta promoció.",
+        "NO_AVAILABLE_OPTIONS": "Ara mateix no hi ha cap promoció disponible per a aquest esdeveniment.",
+        "AUTHENTICATION_REQUIRED": "La teva sessió ha caducat. Torna a iniciar sessió.",
+        "NOT_EVENT_OWNER": "Només qui ha creat l'esdeveniment el pot promocionar.",
+        "INVALID_OPTION": "Aquesta opció ja no està disponible. Tria'n una altra.",
+        "CHECKOUT_EXPIRED": "El pagament ha caducat. Torna-ho a provar.",
+        "PAYMENT_PROCESSING": "Estem processant el pagament. Espera uns segons."
+      },
+      "status": {
+        "ACTIVE": "El teu esdeveniment està promocionat fins al {endsAt}.",
+        "PENDING": "Estem confirmant el pagament. Pot trigar uns segons.",
+        "PAID": "Pagament rebut. La promoció s'activarà de seguida.",
+        "EXPIRED": "El pagament ha caducat i no s'ha fet cap càrrec.",
+        "FAILED": "El pagament no s'ha pogut completar.",
+        "REFUND_PENDING": "Estem tramitant el reemborsament.",
+        "REFUNDED": "Hem reemborsat el pagament.",
+        "NONE": "No hi ha cap pagament per a aquest esdeveniment.",
+        "unknown": "Ara no podem consultar l'estat del pagament. Torna-ho a provar d'aquí a una estona.",
+        "promotionEXPIRED": "La promoció d'aquest esdeveniment ja ha acabat.",
+        "promotionREVOKED": "La promoció d'aquest esdeveniment s'ha retirat."
+      },
+      "successPage": {
+        "title": "Gràcies!"
+      },
+      "cancelPage": {
+        "title": "Pagament cancel·lat"
+      }
     }
   },
   "Components": {
@@ -924,18 +991,19 @@
       "sidebarAriaLabel": "Detalls de l'esdeveniment",
       "toolbarAriaLabel": "Accions de l'esdeveniment",
       "sidebarCreatedBy": "Publicat per",
-      "sidebarViewAllEvents": "Veure tots els esdeveniments"
+      "sidebarViewAllEvents": "Veure tots els esdeveniments",
+      "promoteEvent": "Promocionar"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Afegeix a preferits",
       "favoriteRemoveAria": "Elimina de preferits",
-      "free": "Gratuït",
       "today": "Avui",
       "tomorrow": "Demà",
       "multipleDates": "Diversos dies",
-      "viewCountAria": "{count, plural, one {{count} visualització} other {{count} visualitzacions}}"
+      "viewCountAria": "{count, plural, one {{count} visualització} other {{count} visualitzacions}}",
+      "promoted": "Patrocinat"
     },
     "EventForm": {
       "title": "Títol *",
@@ -1117,6 +1185,9 @@
     "PwaBackButton": {
       "label": "Tornar",
       "ariaLabel": "Tornar enrere"
+    },
+    "PromotedEvents": {
+      "title": "Esdeveniments destacats"
     }
   },
   "Partials": {
