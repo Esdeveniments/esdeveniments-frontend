@@ -51,41 +51,53 @@ export async function coordinateRefresh(
       tokens = LogtoTokenResponseSchema.parse(await exchange());
     } catch (error) {
       const status = (error as { status?: unknown }).status;
-      // A 4xx verdict consumed nothing at the provider. Share it so concurrent
-      // and later requests fail fast with the same status instead of waiting
-      // out the claim, and let the claim be retried once the window passes.
-      if (typeof status === "number" && status >= 400 && status < 500) {
-        await execute(
-          `UPDATE auth_refresh SET result = ?, result_until = unixepoch() + 30, reusable = 1
-           WHERE token_key = ? AND owner = ?`,
-          [sealToken(JSON.stringify({ status }), key, tokenKey), tokenKey, owner],
-        );
-      }
+      // Share the failure, then release the claim. If a 5xx or timeout spent
+      // the token, the retry gets invalid_grant: a clean sign-out, not a claim
+      // that blocks every later request.
+      await execute(
+        `UPDATE auth_refresh SET result = ?, result_until = unixepoch() + 5, reusable = 1
+         WHERE token_key = ? AND owner = ?`,
+        [
+          sealToken(JSON.stringify({ status: typeof status === "number" ? status : null }), key, tokenKey),
+          tokenKey,
+          owner,
+        ],
+      ).catch((shareError: unknown) => console.error("[refresh] could not share the failure", shareError));
       throw error;
     }
-    const encrypted = sealToken(JSON.stringify(tokens), key, tokenKey);
-    const saved = await execute(
+    // The provider may have rotated the token already, so these are the only
+    // valid tokens: return them even if sharing them fails.
+    await execute(
       `UPDATE auth_refresh SET result = ?, result_until = unixepoch() + 30, reusable = ?
        WHERE token_key = ? AND owner = ?`,
-      [encrypted, !tokens.refresh_token || tokens.refresh_token === refreshToken ? 1 : 0, tokenKey, owner],
-    );
-    if (saved.rowsAffected !== 1) throw new Error("Session refresh result could not be persisted");
+      [
+        sealToken(JSON.stringify(tokens), key, tokenKey),
+        !tokens.refresh_token || tokens.refresh_token === refreshToken ? 1 : 0,
+        tokenKey,
+        owner,
+      ],
+    ).catch((shareError: unknown) => console.error("[refresh] could not share the result", shareError));
     return tokens;
   }
   const deadline = Date.now() + 20_000;
   do {
     const stored = await execute(
-      `SELECT result, result_until, unixepoch() AS now FROM auth_refresh WHERE token_key = ?`,
+      `SELECT result, result_until, reusable, unixepoch() AS now FROM auth_refresh WHERE token_key = ?`,
       [tokenKey],
     );
     const row = stored.rows[0];
     if (row && typeof row.result_until === "number" && typeof row.now === "number") {
-      if (row.result_until <= row.now) break;
+      if (row.result_until <= row.now) {
+        // The window closed between our claim attempt and this read.
+        if (row.reusable === 1) return coordinateRefresh(config, refreshToken, exchange);
+        // A rotated token whose result expired is spent: a definitive sign-out.
+        throw Object.assign(new Error("Refresh token already used; sign in again"), { status: 401 });
+      }
       if (typeof row.result === "string") {
         const shared = JSON.parse(openToken(row.result, key, tokenKey));
-        if (typeof shared?.status === "number") {
-          throw Object.assign(new Error(`Logto token endpoint ${shared.status}`), {
-            status: shared.status,
+        if ("status" in shared) {
+          throw Object.assign(new Error(`Session refresh failed (${shared.status ?? "no response"})`), {
+            status: shared.status ?? undefined,
           });
         }
         return LogtoTokenResponseSchema.parse(shared);

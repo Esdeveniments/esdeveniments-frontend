@@ -234,6 +234,9 @@ real credential.
 When Logto answered 4xx, the claim stayed open with no result. Every later
 request with that token waited 20 seconds, then threw an error without a status,
 which `resolveSession` treats as transient (503), so the dead cookie was never
-cleared. The code now stores a 4xx verdict for 30 seconds, so waiting requests fail
-fast with the same status, and the claim can be retried afterwards. Timeouts stay
-unresolved on purpose. The provider may already have used the token.
+cleared. Leaving timeouts and 5xx unresolved had the same effect for 30 days.
+The code now stores every failed exchange for 5 seconds (with its status when
+there is one), so waiting requests fail fast, and then releases the claim. If the
+provider had used the token, the retry gets `invalid_grant` and signs the user
+out. Nobody holds the rotated tokens then, so nothing better is possible. A rotated token
+whose result expired throws 401, not a statusless error, so the cookie is cleared.

@@ -261,9 +261,16 @@ claim and allow replay of a rotated Logto token. Turso retains spent claims for 
 Encryption is derived from the server-only Logto app secret and bound to the token
 key. A non-rotating response allows reuse after that short result window.
 
-An interrupted exchange is not retried with the same token: Logto may already
-have consumed it. The UI shows a sign-in fallback instead. Database/coordination
-failures do not clear session cookies. Keep the database durable and shared across
+The code shares a failed exchange for 5 seconds, then releases the claim, so the
+next request retries the same token. After a 4xx, Logto consumed nothing. After a
+5xx, network error or timeout, Logto may have consumed it. The retry then gets
+`invalid_grant` and the app clears the session. Nobody holds the rotated tokens in
+that case, so the retry loses nothing. A rotated token whose result window has
+passed is spent. Refreshing with it fails with 401 and clears the session. A process that
+dies mid-exchange never releases its claim: later requests with that token wait 20
+seconds and get 503 until the user signs in again. Database/coordination failures
+do not clear session cookies. When the new tokens cannot be stored, the request
+that refreshed still returns them. Keep the database durable and shared across
 replicas and deploys; never truncate this table while sessions remain active.
 Expired rows and expired encrypted results are cleaned on process initialization.
 Deploy the coordination change to all instances together; an older instance can

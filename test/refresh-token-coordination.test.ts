@@ -67,7 +67,7 @@ describe("cross-instance refresh coordination", () => {
     const exchange = vi.fn().mockResolvedValue(tokens);
     await coordinateRefresh(config, "old", exchange);
     db.exec("UPDATE auth_refresh SET result_until = unixepoch() - 1");
-    await expect(coordinateRefresh(config, "old", exchange)).rejects.toThrow(/sign in again/);
+    await expect(coordinateRefresh(config, "old", exchange)).rejects.toMatchObject({ status: 401 });
     expect(exchange).toHaveBeenCalledOnce();
   });
 
@@ -89,13 +89,35 @@ describe("cross-instance refresh coordination", () => {
     expect(exchange).not.toHaveBeenCalled();
   });
 
-  it("does not steal a claim after an ambiguous provider timeout", async () => {
+  it("shares an ambiguous provider failure, then retries once the window passes", async () => {
     const { coordinateRefresh } = await import("@lib/auth/refresh-token");
-    const exchange = vi.fn().mockRejectedValue(new Error("provider timeout"));
+    const exchange = vi.fn().mockRejectedValueOnce(new Error("provider timeout")).mockResolvedValue(tokens);
     await expect(coordinateRefresh(config, "old", exchange)).rejects.toThrow("provider timeout");
-    vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValue(20_001);
-    await expect(coordinateRefresh(config, "old", exchange)).rejects.toThrow(/sign in again/);
+    const waiter = await coordinateRefresh(config, "old", exchange).catch((error: unknown) => error);
+    expect(waiter).toBeInstanceOf(Error);
+    expect((waiter as { status?: number }).status).toBeUndefined();
     expect(exchange).toHaveBeenCalledOnce();
+
+    db.exec("UPDATE auth_refresh SET result_until = unixepoch() - 1");
+    await expect(coordinateRefresh(config, "old", exchange)).resolves.toEqual(tokens);
+    expect(exchange).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns the new tokens when sharing the result fails", async () => {
+    const { coordinateRefresh } = await import("@lib/auth/refresh-token");
+    const { execute } = await import("@lib/db/turso");
+    const run = vi.mocked(execute).getMockImplementation()!;
+    vi.mocked(execute).mockImplementation(async (sql, args) =>
+      sql.trimStart().startsWith("UPDATE auth_refresh SET result = ?")
+        ? Promise.reject(new Error("write failed"))
+        : run(sql, args));
+    const exchange = vi.fn().mockResolvedValue(tokens);
+    try {
+      await expect(coordinateRefresh(config, "old", exchange)).resolves.toEqual(tokens);
+    } finally {
+      // resetModules keeps the mocked module, so restore it for later tests.
+      vi.mocked(execute).mockImplementation(run);
+    }
   });
 
   it("shares a definitive provider rejection instead of making later requests wait", async () => {
