@@ -31,7 +31,11 @@ const LOCAL_DATE_TIME =
 // Split by string, not through Date: a local time inside a DST gap would shift.
 function splitLocalDateTime(value: string): { date: string; time: string } {
   const match = LOCAL_DATE_TIME.exec(value);
-  if (!match) throw new RangeError("Invalid time value");
+  const [year, month, day] = (match?.[1] ?? "").split("-").map(Number);
+  // UTC round trip: rejects a day the month does not have, such as 02-31.
+  if (!match || new Date(Date.UTC(year, month - 1, day)).getUTCDate() !== day) {
+    throw new RangeError("Invalid time value");
+  }
   return { date: match[1], time: match[2] ?? "00:00" };
 }
 

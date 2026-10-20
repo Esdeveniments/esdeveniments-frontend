@@ -54,12 +54,16 @@ describe("event form local time", () => {
     expect(() => formDataToBackendDTO(form("", ""))).toThrow(RangeError);
   });
 
-  it.each(["2026-10-30T25:99", "2026-13-01T10:00", "2026-10-32T10:00"])(
+  it.each(["2026-10-30T25:99", "2026-13-01T10:00", "2026-10-32T10:00", "2026-02-29T10:00", "2026-04-31"])(
     "rejects an out-of-range date or time: %s",
     (value) => {
       expect(() => formDataToBackendDTO(form(value, value))).toThrow(RangeError);
     },
   );
+
+  it("accepts a leap day", () => {
+    expect(formDataToBackendDTO(form("2028-02-29T10:00", "2028-02-29T11:00")).startDate).toBe("2028-02-29");
+  });
 
   it("accepts the edges of the clock", () => {
     const dto = formDataToBackendDTO(form("2026-12-31T00:00", "2026-12-31T23:59"));
