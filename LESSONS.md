@@ -227,3 +227,13 @@ Playwright traces record `fill()` arguments in plain text, and the staging
 workflows retry and upload `playwright-report/`. The `E2E_STAGING_*` specs call
 `test.use({ trace: "off" })`. Do the same in any new spec that logs in with a
 real credential.
+
+## A rejected refresh token must not leave its claim open
+
+`coordinateRefresh` claims a refresh token in the database before it calls Logto.
+When Logto answered 4xx, the claim stayed open with no result. Every later
+request with that token waited 20 seconds, then threw an error without a status,
+which `resolveSession` treats as transient (503), so the dead cookie was never
+cleared. The code now stores a 4xx verdict for 30 seconds, so waiting requests fail
+fast with the same status, and the claim can be retried afterwards. Timeouts stay
+unresolved on purpose. The provider may already have used the token.

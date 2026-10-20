@@ -248,3 +248,24 @@ agent-browser gotchas (the ones a fresh agent trips on):
   `agent-browser --session $s cookies get` (CDP), not JS.
 - To inspect what the SW cached: `eval` `caches.keys()` then
   `caches.open(n).keys()` and grep the URLs.
+# Refresh-token coordination
+
+Session refresh requires the existing `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`
+runtime configuration on every frontend instance. The first refresh creates the
+`auth_refresh` table and expiry index using the existing database client. No token
+exchange occurs if the database cannot confirm an atomic claim.
+
+Do not use the app Redis cache for this: it uses `allkeys-lru`, which can evict a
+claim and allow replay of a rotated Logto token. Turso retains spent claims for the
+30-day cookie lifetime and shares authenticated-encrypted results for 30 seconds.
+Encryption is derived from the server-only Logto app secret and bound to the token
+key. A non-rotating response allows reuse after that short result window.
+
+An interrupted exchange is not retried with the same token: Logto may already
+have consumed it. The UI shows a sign-in fallback instead. Database/coordination
+failures do not clear session cookies. Keep the database durable and shared across
+replicas and deploys; never truncate this table while sessions remain active.
+Expired rows and expired encrypted results are cleaned on process initialization.
+Deploy the coordination change to all instances together; an older instance can
+still exchange tokens outside this protocol. Runtime connectivity and permissions
+must be checked before rollout; local checks do not establish production readiness.
