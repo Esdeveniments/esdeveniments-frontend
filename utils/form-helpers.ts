@@ -25,18 +25,25 @@ export function getTownValue(
   return null;
 }
 
+const LOCAL_DATE_TIME =
+  /^(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?:T((?:[01]\d|2[0-3]):[0-5]\d))?$/;
+
+// Split by string, not through Date: a local time inside a DST gap would shift.
+function splitLocalDateTime(value: string): { date: string; time: string } {
+  const match = LOCAL_DATE_TIME.exec(value);
+  const [year, month, day] = (match?.[1] ?? "").split("-").map(Number);
+  // UTC round trip: rejects a day the month does not have, such as 02-31.
+  if (!match || new Date(Date.UTC(year, month - 1, day)).getUTCDate() !== day) {
+    throw new RangeError("Invalid time value");
+  }
+  return { date: match[1], time: match[2] ?? "00:00" };
+}
+
 export function formDataToBackendDTO(
   form: FormData
 ): EventBaseRequestDTO {
-  // Extract date and time from datetime strings
-  const startDateTime = new Date(form.startDate);
-  const endDateTime = new Date(form.endDate);
-
-  const startDate = startDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
-  const endDate = endDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
-
-  const startTime = startDateTime.toTimeString().slice(0, 5); // HH:mm
-  const endTime = endDateTime.toTimeString().slice(0, 5); // HH:mm
+  const { date: startDate, time: startTime } = splitLocalDateTime(form.startDate);
+  const { date: endDate, time: endTime } = splitLocalDateTime(form.endDate);
 
   // Extract region and city IDs - they can be Option objects or DTO objects
   const regionId = form.region
@@ -75,8 +82,13 @@ export function formDataToBackendDTO(
   };
 }
 
+function toLocalDateTimeValue(date: string | null, time: string | null): string {
+  if (!date) return "";
+  return time ? `${date}T${time.slice(0, 5)}` : date;
+}
+
 export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
-  return {
+  const form: FormData = {
     id: event.id ? String(event.id) : undefined,
     title: event.title || "",
     description: event.description || "",
@@ -96,5 +108,14 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
       ? event.categories.map((cat) => ({ id: cat.id, name: cat.name }))
       : [],
     email: "", // UI only
+  };
+  // The picker edits one local "YYYY-MM-DDTHH:mm" per field; the stored times
+  // kept separately above would outrank what the user changes in it.
+  return {
+    ...form,
+    startDate: toLocalDateTimeValue(event.startDate, event.startTime),
+    startTime: null,
+    endDate: toLocalDateTimeValue(event.endDate, event.endTime),
+    endTime: null,
   };
 }

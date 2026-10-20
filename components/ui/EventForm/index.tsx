@@ -8,6 +8,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import { setHours, setMinutes, setSeconds } from "date-fns";
+import { parseLocalDateTime, toLocalDateTimeString } from "@utils/date-helpers";
 import {
   DatePicker,
   Input,
@@ -103,12 +104,14 @@ export const EventForm: React.FC<EventFormProps> = ({
   }, [form, imageFile, isEditMode, validationLabels, zodLabels, hasInteracted]);
 
   const handleAllDayToggle = (isAllDayEvent: boolean) => {
-    const startDateValue = form.startDate ? new Date(form.startDate) : new Date();
+    const startDateValue = form.startDate
+      ? parseLocalDateTime(form.startDate)
+      : new Date();
     const targetEndDate = isAllDayEvent
       ? setSeconds(setMinutes(setHours(startDateValue, 23), 59), 59)
       : new Date(startDateValue.getTime() + 60 * 60 * 1000);
     handleFormChange("isAllDay", isAllDayEvent);
-    handleFormChange("endDate", targetEndDate.toISOString().slice(0, 16));
+    handleFormChange("endDate", toLocalDateTimeString(targetEndDate));
   };
 
   useEffect(() => {

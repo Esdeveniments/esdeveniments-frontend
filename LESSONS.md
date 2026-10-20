@@ -2,6 +2,17 @@
 
 Repo-specific gotchas worth sharing. Read this during research on any task here.
 
+
+## The edit form holds one local datetime per field
+
+`eventDtoToFormData` used to put the stored `startTime` and `endTime` next to a
+date-only `startDate`, and `formDataToBackendDTO` preferred the stored time. The
+date picker therefore showed 09:00 for a 21:00 event, and a time changed in the
+picker was ignored on save. The form now holds `YYYY-MM-DDTHH:mm` in
+`startDate`/`endDate` and leaves `startTime`/`endTime` empty, the same shape the
+create form uses. The backend has no all-day flag. It stores an all-day event as
+09:00 to 23:59, so the edit form cannot show the toggle again.
+
 ## Never `waitUntil: "networkidle"` in an e2e against a deployed build
 
 `load_more_with_filters.spec.ts` did `page.goto(..., { waitUntil: "networkidle" })`. Locally it passed; against the Vercel preview it timed out `page.goto` at 45s **every** retry, hard-failing the required E2E gate and blocking every develop PR — even a docs-only one. The cause isn't the test's data or mocks (that spec fully mocks `/api/events`): analytics, ads and Sentry keep the network busy on a deployed build, so "networkidle" (500ms of silence) never fires. Use `waitUntil: "domcontentloaded"` plus an explicit auto-waiting assertion for the element you need (`expect(getByTestId(...))`), the way `home.flow.spec.ts` does reliably. For a mid-test settle after an action, bound it: `page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {})`, never an unbounded wait. Grep `e2e/` for `networkidle` before trusting the gate.

@@ -9,6 +9,7 @@ import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpe
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
 import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
 import { getZodValidationState } from "@utils/form-validation";
+import { toLocalDateTimeString } from "@utils/date-helpers";
 import EventForm from "@components/ui/EventForm";
 import { useImagePreview } from "@components/hooks/useImagePreview";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
@@ -60,8 +61,8 @@ const getDefaultEventDates = () => {
   endDate.setHours(10, 0, 0, 0);
 
   return {
-    startDate: startDate.toISOString().slice(0, 16),
-    endDate: endDate.toISOString().slice(0, 16),
+    startDate: toLocalDateTimeString(startDate),
+    endDate: toLocalDateTimeString(endDate),
   };
 };
 
