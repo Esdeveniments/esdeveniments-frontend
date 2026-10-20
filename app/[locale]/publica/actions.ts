@@ -9,6 +9,7 @@ import type { CreateEventActionResult } from "types/event";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
 import { env } from "@utils/misc-helpers";
+import { getValidatedImageFile } from "@utils/image-validation";
 
 /**
  * Sends email notification via Pipedream when a new event is published.
@@ -51,8 +52,7 @@ export async function createEventAction(
   }
   // The backend validates the fields; this only rejects a malformed payload.
   const data = JSON.parse(rawEvent) as EventCreateRequestDTO;
-  const image = formData.get("imageFile");
-  const imageFile = image instanceof File && image.size > 0 ? image : null;
+  const imageFile = await getValidatedImageFile(formData.get("imageFile"));
 
   // 2026-07-26 round-5: catch the mutation error path so we can distinguish
   // 401 (likely stale Bearer — user should log out and back in) from 403

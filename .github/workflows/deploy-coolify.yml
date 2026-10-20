@@ -190,6 +190,8 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          # publica_to_event.flow.spec.ts runs only when this process sees it.
+          E2E_TEST_MODE: "1"
 
       - name: Stop Next.js server
         if: always()

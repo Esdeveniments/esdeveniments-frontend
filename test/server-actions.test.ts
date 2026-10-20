@@ -64,6 +64,10 @@ vi.mock("@lib/cache/event-detail-cache", () => ({
   deleteEventDetailCache: (slug: string) => mockDeleteEventDetailCache(slug),
 }));
 
+const pngFile = () =>
+  new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], "c.png", { type: "image/png" });
+const fakePngFile = () => new File(["<html>"], "c.png", { type: "image/png" });
+
 const CREATOR_ID = "creator-uuid";
 const OTHER_USER_ID = "other-uuid";
 
@@ -190,7 +194,7 @@ describe("Server Actions - Next.js 16 caching", () => {
     it("forwards the imageFile part to createEvent", async () => {
       mockCreateEvent.mockResolvedValue(buildEvent({ slug: "with-image" }));
       const formData = toFormData(buildEventData("With image"));
-      formData.append("imageFile", new File([new Uint8Array([1])], "c.png", { type: "image/png" }));
+      formData.append("imageFile", pngFile());
 
       await createEventAction(formData);
 
@@ -198,6 +202,14 @@ describe("Server Actions - Next.js 16 caching", () => {
         buildEventData("With image"),
         expect.any(File),
       );
+    });
+
+    it("rejects an imageFile whose content is not an image", async () => {
+      const formData = toFormData(buildEventData("Fake image"));
+      formData.append("imageFile", fakePngFile());
+
+      await expect(createEventAction(formData)).rejects.toThrow("not a valid image");
+      expect(mockCreateEvent).not.toHaveBeenCalled();
     });
 
     it("calls refresh after updateTag calls", async () => {
@@ -306,6 +318,20 @@ describe("Server Actions - Next.js 16 caching", () => {
   });
 
   describe("editEvent", () => {
+    const coverEditData: EventBaseRequestDTO = {
+      title: "T",
+      url: null,
+      description: "D",
+      regionId: 1,
+      cityId: 1,
+      startDate: "2025-06-15",
+      startTime: "",
+      endDate: "2025-06-15",
+      endTime: "",
+      location: "L",
+      categories: [],
+    };
+
     it("calls updateTag for events and the specific event tag, with indexed: true injected server-side", async () => {
       const mockUpdatedEvent = buildEvent({
         slug: "updated-event",
@@ -351,24 +377,12 @@ describe("Server Actions - Next.js 16 caching", () => {
       mockUpdateEventById.mockResolvedValue(buildEvent({ slug: "same-event" }));
       mockReplaceEventImage.mockRejectedValue(new Error("HTTP error! status: 413"));
       const cover = new FormData();
-      cover.append("imageFile", new File([new Uint8Array([1])], "c.png", { type: "image/png" }));
+      cover.append("imageFile", pngFile());
 
       const result = await editEvent(
         "test-id",
         "same-event",
-        {
-          title: "T",
-          url: null,
-          description: "D",
-          regionId: 1,
-          cityId: 1,
-          startDate: "2025-06-15",
-          startTime: "",
-          endDate: "2025-06-15",
-          endTime: "",
-          location: "L",
-          categories: [],
-        },
+        coverEditData,
         cover,
       );
 
@@ -376,6 +390,26 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockUpdateTag).toHaveBeenCalledWith("events");
       expect(mockUpdateTag).toHaveBeenCalledWith("event:same-event");
       expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("same-event");
+      expect(result).toEqual({
+        success: false,
+        newSlug: "same-event",
+        errorCode: "COVER_UPDATE_FAILED",
+      });
+    });
+
+    it("does not upload a cover whose content is not an image", async () => {
+      mockUpdateEventById.mockResolvedValue(buildEvent({ slug: "same-event" }));
+      const cover = new FormData();
+      cover.append("imageFile", fakePngFile());
+
+      const result = await editEvent(
+        "test-id",
+        "same-event",
+        coverEditData,
+        cover,
+      );
+
+      expect(mockReplaceEventImage).not.toHaveBeenCalled();
       expect(result).toEqual({
         success: false,
         newSlug: "same-event",
@@ -391,19 +425,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       const result = await editEvent(
         "test-id",
         "same-event",
-        {
-          title: "T",
-          url: null,
-          description: "D",
-          regionId: 1,
-          cityId: 1,
-          startDate: "2025-06-15",
-          startTime: "",
-          endDate: "2025-06-15",
-          endTime: "",
-          location: "L",
-          categories: [],
-        },
+        coverEditData,
         cover,
       );
 

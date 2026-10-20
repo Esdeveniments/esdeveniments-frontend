@@ -96,12 +96,12 @@ jobs:
       - name: Wait for server
         run: npx wait-on http://localhost:3000 --timeout 90000
 
-      - name: Run publish → detail integration
+      - name: Run publish → detail and creator-only edit integration
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
           E2E_STAGING_PASSWORD: ${{ secrets.E2E_STAGING_PASSWORD }}
-        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts
+        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/event-edit-creator-only.spec.ts
 
       - name: Stop server
         if: always()
