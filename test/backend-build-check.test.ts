@@ -62,7 +62,7 @@ describe("backend build preflight", () => {
     status = code;
     await expect(check()).rejects.toMatchObject({
       code: 1,
-      stderr: `Backend build authentication check failed: HTTP ${code}\n`,
+      stderr: `Backend build authentication check failed for /categories: HTTP ${code}\n`,
     });
     expect(requests).toEqual(["/api/categories"]);
   });

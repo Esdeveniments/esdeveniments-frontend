@@ -24,7 +24,7 @@ try {
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) {
-      throw new Error(`Backend build authentication check failed: HTTP ${response.status}`);
+      throw new Error(`Backend build authentication check failed for ${path}: HTTP ${response.status}`);
     }
     if (!Array.isArray(await response.json())) {
       throw new Error("Backend build check returned an invalid v2 response.");

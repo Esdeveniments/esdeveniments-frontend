@@ -14,7 +14,7 @@ export async function uploadSponsorImage(imageFile: File): Promise<UploadImageRe
     return { url: `https://example.com/${imageFile.name || "e2e-image"}.jpg`, publicId: "e2e-image" };
   }
   if (!isApiUrlConfigured()) {
-    throw new Error("NEXT_PUBLIC_API_URL is not set");
+    throw new Error("NEXT_PUBLIC_API_URL or API_URL is not set");
   }
   const body = new FormData();
   body.append("imageFile", imageFile);
@@ -25,11 +25,20 @@ export async function uploadSponsorImage(imageFile: File): Promise<UploadImageRe
     skipBodySigning: true,
   });
   if (!response.ok) {
-    const detail = await response.text();
-    if (response.status === 413) throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
+    const detail = (await response.text()).slice(0, 200);
+    if (response.status === 413) {
+      console.error(`Sponsor image upload rejected: HTTP 413, body=${detail}`);
+      throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
+    }
     throw new Error(`Sponsor image upload failed: HTTP ${response.status}, ${detail}`);
   }
-  const parsed = UploadImageResponseSchema.safeParse(await response.json());
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch (cause) {
+    throw new Error("Sponsor image upload returned an invalid response", { cause });
+  }
+  const parsed = UploadImageResponseSchema.safeParse(payload);
   if (!parsed.success) {
     throw new Error("Sponsor image upload returned an invalid response", { cause: parsed.error });
   }

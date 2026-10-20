@@ -11,18 +11,18 @@ const IMAGE_MAGIC_BYTES: { type: string; bytes: number[] }[] = [
 ];
 
 /**
- * Validate file content by checking magic bytes.
- * Returns true if the file starts with known image magic bytes.
+ * Detect the real image type from magic bytes.
+ * Returns null when the file starts with no known image signature.
  */
-export async function isValidImageContent(file: File): Promise<boolean> {
+export async function detectImageType(file: File): Promise<string | null> {
   try {
     // Read first 12 bytes (enough for all magic byte patterns)
     const buffer = await file.slice(0, 12).arrayBuffer();
     const bytes = new Uint8Array(buffer);
 
-    for (const { bytes: magicBytes } of IMAGE_MAGIC_BYTES) {
+    for (const { type, bytes: magicBytes } of IMAGE_MAGIC_BYTES) {
       if (magicBytes.every((byte, index) => bytes[index] === byte)) {
-        return true;
+        return type;
       }
     }
 
@@ -40,25 +40,30 @@ export async function isValidImageContent(file: File): Promise<boolean> {
       bytes[11] === 0x50; // P
 
     if (isRiffHeader && isWebpType) {
-      return true;
+      return "image/webp";
     }
 
-    return false;
+    return null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** The backend accepts JPEG and PNG only. */
+export function isBackendImageType(type: string | null): boolean {
+  return type === "image/jpeg" || type === "image/png";
 }
 
 /**
  * The optional image part of a server action's FormData: null when absent,
- * the File when its content is a real image. Throws otherwise, including
+ * the File when its content is a real JPEG or PNG. Throws otherwise, including
  * for an empty file.
  */
 export async function getValidatedImageFile(
   value: FormDataEntryValue | null | undefined,
 ): Promise<File | null> {
   if (!(value instanceof File)) return null;
-  if (!value.type.startsWith("image/") || !(await isValidImageContent(value))) {
+  if (!value.type.startsWith("image/") || !isBackendImageType(await detectImageType(value))) {
     throw new Error("The uploaded file is not a valid image");
   }
   return value;
