@@ -25,7 +25,8 @@ export function getTownValue(
   return null;
 }
 
-const LOCAL_DATE_TIME = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?$/;
+const LOCAL_DATE_TIME =
+  /^(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?:T((?:[01]\d|2[0-3]):[0-5]\d))?$/;
 
 // Split by string, not through Date: a local time inside a DST gap would shift.
 function splitLocalDateTime(value: string): { date: string; time: string } {
