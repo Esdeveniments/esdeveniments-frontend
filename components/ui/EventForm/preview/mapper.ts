@@ -1,4 +1,5 @@
 import { getRegionValue, getTownValue } from "@utils/form-helpers";
+import { parseLocalDateTime, toLocalDateTimeString } from "@utils/date-helpers";
 import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { EventDetailResponseDTO, RegionSummaryResponseDTO } from "types/api/event";
@@ -130,19 +131,19 @@ const buildCategoriesMeta = (
 };
 
 const parseDate = (value: string): Date | null => {
-  const date = new Date(value);
+  const date = parseLocalDateTime(value);
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
 const extractDate = (value: string, fallback: Date): string => {
   const parsed = parseDate(value) || fallback;
-  return parsed.toISOString().slice(0, 10);
+  return toLocalDateTimeString(parsed).slice(0, 10);
 };
 
 const extractTime = (value: string): string | null => {
   const parsed = parseDate(value);
   if (!parsed) return null;
-  return parsed.toISOString().slice(11, 16);
+  return toLocalDateTimeString(parsed).slice(11, 16);
 };
 
 export const mapDraftToPreviewEvent = ({
