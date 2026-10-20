@@ -42,6 +42,14 @@ describe("event cover endpoints", () => {
     });
   });
 
+  it("throws when the backend returns a malformed cover payload", async () => {
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({ url: "not-a-url" })));
+
+    await expect(replaceEventImage("uuid-1", png())).rejects.toThrow(
+      "invalid response",
+    );
+  });
+
   it("DELETEs /events/{uuid}/image", async () => {
     mockFetch.mockResolvedValue(new Response(null, { status: 200 }));
 
