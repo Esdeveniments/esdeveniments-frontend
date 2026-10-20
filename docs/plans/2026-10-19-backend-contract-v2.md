@@ -34,7 +34,23 @@ instead of HMAC, nullable `imageUrl`/`avatarUrl`, promotion error format.
    go through `PUT|DELETE /api/events/{uuid}/image` in the same server action.
 5. Remove the image-URL input, `/api/publica/image-upload`, the client XHR
    uploader, and `POST /api/events/images`. Accept JPEG/PNG only.
-6. Env plumbing: Dockerfile ARG, workflows, `.env.example`, health check, test seed.
+6. Env plumbing: BuildKit secret mounts (not Docker build arguments), workflows,
+   `.env.example`, health check, test seed. CI checks authenticated backend access
+   outside the Docker cache; the image build repeats the same preflight.
+
+## Deployment prerequisites
+
+- Deploy the v2 backend, including `POST /api/sponsors/images`, before this
+  frontend. Keeping HMAC headers preserves legacy read authentication, not
+  compatibility with v1 event-write payloads.
+- Provision the matching server-only `BACKEND_SERVICE_SECRET` in the backend,
+  frontend Coolify runtime, and the applicable GitHub staging/production
+  environment. Keep `HMAC_SECRET` during the migration. Never pass either as a
+  Docker build argument or a `NEXT_PUBLIC_*` variable.
+- The preflight verifies read authentication and the v2 promoted-events route,
+  not every v2 mutation. Backend
+  rollout and runtime credential provisioning still require operational checks;
+  local tests and placeholders do not establish that they are configured.
 
 ## Not changed
 
@@ -44,8 +60,10 @@ instead of HMAC, nullable `imageUrl`/`avatarUrl`, promotion error format.
 
 ## Blockers for the backend
 
-- Sponsor banner upload (`app/api/sponsors/image-upload`) used the removed
-  `POST /api/events/images`. The backend has no non-event image endpoint now.
+- Sponsor banner upload now targets `POST /api/sponsors/images`. It requires
+  the accompanying backend controller/storage-prefix change: service-key
+  authentication, JPEG/PNG only, 5 MB maximum, and `{publicId, url}` response.
+  The frontend still verifies the paid sponsor checkout before calling it.
 - Stripe redirects go to `{PROMOTIONS_FRONTEND_BASE_URL}/e/{slug}/promote/...`;
   PRE defaults that to `http://localhost:3000`.
 - Prod sets no `PROMOTIONS_ENABLED`, so promotions are off there by default.
