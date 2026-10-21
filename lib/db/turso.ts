@@ -58,12 +58,12 @@ export function isDbConfigured(): boolean {
   return true;
 }
 
+export const TURSO_TIMEOUT_MS = 10_000;
+
 /**
  * Execute a single SQL statement against Turso via HTTP.
  * Returns `{ rows, rowsAffected }`. Throws on network or DB errors.
  */
-export const TURSO_TIMEOUT_MS = 10_000;
-
 export async function execute(
   sql: string,
   args: unknown[] = [],

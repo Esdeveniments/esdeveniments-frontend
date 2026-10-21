@@ -277,15 +277,16 @@ answers or aborts within its timeout (`TURSO_TIMEOUT_MS`, `LOGTO_TOKEN_TIMEOUT_M
 `CLAIM_LEASE_SECONDS` (those three plus 5 seconds, so 35) belongs to a process that
 died mid-exchange. The next request with that token, or one already waiting, takes
 the claim over and retries the exchange; the claim statement lets only one of them
-win. Waiting requests wait 5 seconds longer than the lease, so they take over
-instead of failing. If Logto had consumed the token, the
-retry gets `invalid_grant` and the user signs in again. One case is worse than
+win. Waiting requests wait past the lease and one slow database poll, so they take
+over instead of failing. If Logto had consumed the token, the retry gets
+`invalid_grant`, which ends the session only when no valid ID token is left. One case is worse than
 before the lease: when the exchange succeeds but the result cannot be written, a
 later request with the old token takes over after the lease and replays a spent
 token. Logto may then revoke the whole grant, which also ends the session that
 holds the new tokens. Before the lease that request got a 503 instead. Tables
-created before the lease get the column through `ALTER TABLE`, and their open
-claims start the lease when a process first runs the schema step.
+created before the lease get the column through `ALTER TABLE`. A claim with no
+`claimed_at` (from before the lease or from an older instance) starts its lease
+when a request first waits on it.
 
 Database/coordination failures
 do not clear session cookies. When the new tokens cannot be stored, the request

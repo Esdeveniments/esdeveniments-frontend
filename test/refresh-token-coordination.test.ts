@@ -101,17 +101,33 @@ describe("cross-instance refresh coordination", () => {
     expect(exchange).toHaveBeenCalledOnce();
   });
 
-  it("adds the lease to a table created before it and starts the lease of open claims", async () => {
+  it("adds the lease column to a table created before it", async () => {
     db.exec(`CREATE TABLE auth_refresh (
       token_key TEXT PRIMARY KEY, owner TEXT NOT NULL, result TEXT,
       result_until INTEGER, reusable INTEGER NOT NULL DEFAULT 0,
       expires_at INTEGER NOT NULL
     )`);
-    db.exec("INSERT INTO auth_refresh(token_key, owner, expires_at) VALUES ('legacy', 'old', unixepoch() + 60)");
     const { coordinateRefresh } = await import("@lib/auth/refresh-token");
     await expect(coordinateRefresh(config, "old", vi.fn().mockResolvedValue(tokens))).resolves.toEqual(tokens);
-    expect(db.prepare("SELECT claimed_at FROM auth_refresh WHERE token_key = 'legacy'").get())
-      .toEqual({ claimed_at: expect.any(Number) });
+    const row = db.prepare("SELECT unixepoch() - claimed_at AS age FROM auth_refresh").get();
+    expect(row?.age).toBeLessThanOrEqual(2);
+  });
+
+  it("starts the lease of a claim from an older instance when a request waits on it", async () => {
+    const { coordinateRefresh, CLAIM_LEASE_SECONDS } = await import("@lib/auth/refresh-token");
+    void coordinateRefresh(config, "old", () => new Promise<never>(() => {}));
+    await vi.waitFor(() => expect(db.prepare("SELECT owner FROM auth_refresh").get()).toBeDefined());
+    db.exec("UPDATE auth_refresh SET claimed_at = NULL");
+    const exchange = vi.fn().mockResolvedValue(tokens);
+    const waiter = coordinateRefresh(config, "old", exchange);
+    await vi.waitFor(() =>
+      expect(db.prepare("SELECT unixepoch() - claimed_at AS age FROM auth_refresh").get()?.age)
+        .toBeLessThanOrEqual(2));
+    expect(exchange).not.toHaveBeenCalled();
+
+    db.prepare("UPDATE auth_refresh SET claimed_at = unixepoch() - ?").run(CLAIM_LEASE_SECONDS + 1);
+    await expect(waiter).resolves.toEqual(tokens);
+    expect(exchange).toHaveBeenCalledOnce();
   });
 
   it.each([undefined, "old"])("allows later use of a non-rotating token (%s)", async (refresh_token) => {

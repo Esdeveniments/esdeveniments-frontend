@@ -33,8 +33,6 @@ export async function coordinateRefresh(
       .then(() => execute("ALTER TABLE auth_refresh ADD COLUMN claimed_at INTEGER").catch((error: unknown) => {
         if (!/duplicate column/i.test(String(error))) throw error;
       }))
-      // Claims from before the lease, or from an older instance, start it now.
-      .then(() => execute("UPDATE auth_refresh SET claimed_at = unixepoch() WHERE claimed_at IS NULL"))
       .then(() => execute("CREATE INDEX IF NOT EXISTS auth_refresh_expiry ON auth_refresh(expires_at)"))
       .then(() => execute("DELETE FROM auth_refresh WHERE expires_at < unixepoch()"))
       .then(() => execute("UPDATE auth_refresh SET result = NULL WHERE result_until < unixepoch()"))
@@ -91,8 +89,9 @@ export async function coordinateRefresh(
     ).catch((shareError: unknown) => console.error("[refresh] could not share the result", shareError));
     return tokens;
   }
-  // Outlast the lease, so a waiter takes over a dead claim instead of failing.
-  const deadline = Date.now() + (CLAIM_LEASE_SECONDS + 5) * 1000;
+  // Outlast the lease and one slow poll, so a waiter takes over a dead claim
+  // instead of failing.
+  const deadline = Date.now() + (CLAIM_LEASE_SECONDS + 1) * 1000 + TURSO_TIMEOUT_MS;
   do {
     const stored = await execute(
       `SELECT result, result_until, reusable, claimed_at, unixepoch() AS now
@@ -116,6 +115,12 @@ export async function coordinateRefresh(
         }
         return LogtoTokenResponseSchema.parse(shared);
       }
+    } else if (row && row.claimed_at === null) {
+      // A claim from before the lease or from an older instance: start it now.
+      await execute(
+        "UPDATE auth_refresh SET claimed_at = unixepoch() WHERE token_key = ? AND claimed_at IS NULL",
+        [tokenKey],
+      );
     } else if (
       row && typeof row.claimed_at === "number" && typeof row.now === "number" &&
       row.claimed_at < row.now - CLAIM_LEASE_SECONDS
