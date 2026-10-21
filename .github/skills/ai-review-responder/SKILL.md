@@ -1,6 +1,6 @@
 ---
 name: ai-review-responder
-description: Automate responding to AI code review comments (Gemini, CodeRabbit, Cubic, Sentry) on PRs. Use when asked to "check comments", "check new suggestions", or "respond to AI reviews".
+description: Automate responding to AI code review comments (Gemini, CodeRabbit, Cubic, Greptile, Pullfrog, Sentry) on PRs. Use when asked to "check comments", "check new suggestions", or "respond to AI reviews".
 ---
 
 # AI Review Responder Skill
@@ -101,9 +101,7 @@ git add <files>
 git commit -m "fix: address AI review feedback (round N)
 
 - [description of fix 1] (Source)
-- [description of fix 2] (Source)
-
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+- [description of fix 2] (Source)"
 ```
 
 If push is rejected (non-fast-forward), use `git pull --rebase && git push`.
@@ -135,6 +133,7 @@ Round N: [summary of fixes]. Declined: [summary with rationale].
 @coderabbitai review
 @gemini review
 @cubic-dev-ai review
+@greptileai
 EOF
 gh pr comment PR_NUMBER --body-file /tmp/review-comment.md
 ```
@@ -143,6 +142,15 @@ gh pr comment PR_NUMBER --body-file /tmp/review-comment.md
 - CodeRabbit: `@coderabbitai review`
 - Gemini: `@gemini review`
 - Cubic: `@cubic-dev-ai review`
+- Greptile: `@greptileai` (it does not always re-review a push)
+- Pullfrog: `@pullfrog` (see below)
+
+**Pullfrog** (`.github/workflows/pullfrog.yml`, docs: https://docs.pullfrog.com/pr-reviews)
+re-reviews new commits on its own, and resolving its **last** open thread starts a re-review.
+After Step 6 it needs no trigger, so leave `@pullfrog` out of the comment unless neither
+happened, or it runs twice. Its threads come from an author whose login contains `pullfrog`.
+
+GitHub Copilot code review is no longer used here; do not request it as a reviewer.
 
 ### Step 8: Report Results
 
