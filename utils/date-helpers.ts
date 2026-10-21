@@ -274,6 +274,20 @@ export function toLocalDateTimeString(date: Date): string {
   return `${y}-${mo}-${d}T${h}:${mi}`;
 }
 
+const LOCAL_DATE_TIME =
+  /^(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?:T((?:[01]\d|2[0-3]):[0-5]\d))?$/;
+
+// Split by string, not through Date: a local time inside a DST gap would shift.
+export function splitLocalDateTime(value: string): { date: string; time: string } {
+  const match = LOCAL_DATE_TIME.exec(value);
+  const [year, month, day] = (match?.[1] ?? "").split("-").map(Number);
+  // UTC round trip: rejects a day the month does not have, such as 02-31.
+  if (!match || new Date(Date.UTC(year, month - 1, day)).getUTCDate() !== day) {
+    throw new RangeError("Invalid time value");
+  }
+  return { date: match[1], time: match[2] ?? "00:00" };
+}
+
 /**
  * Format time string for API compatibility (HH:mm format)
  * @param timeString - Time string in various formats
