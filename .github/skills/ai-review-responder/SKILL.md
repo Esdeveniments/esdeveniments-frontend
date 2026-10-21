@@ -133,6 +133,7 @@ Round N: [summary of fixes]. Declined: [summary with rationale].
 @coderabbitai review
 @gemini review
 @cubic-dev-ai review
+@greptileai
 EOF
 gh pr comment PR_NUMBER --body-file /tmp/review-comment.md
 ```
@@ -141,6 +142,7 @@ gh pr comment PR_NUMBER --body-file /tmp/review-comment.md
 - CodeRabbit: `@coderabbitai review`
 - Gemini: `@gemini review`
 - Cubic: `@cubic-dev-ai review`
+- Greptile: `@greptileai` (it does not always re-review a push)
 - Pullfrog: `@pullfrog` (see below)
 
 **Pullfrog** (`.github/workflows/pullfrog.yml`, docs: https://docs.pullfrog.com/pr-reviews)
