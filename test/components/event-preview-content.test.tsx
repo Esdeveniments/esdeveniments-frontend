@@ -49,6 +49,19 @@ const previewEvent: EventDetailResponseDTO = {
 };
 
 describe("PreviewContent", () => {
+  it("shows the event's own day in a browser west of UTC", () => {
+    const originalTz = process.env.TZ;
+    process.env.TZ = "America/New_York";
+    try {
+      render(<PreviewContent event={previewEvent} />);
+
+      expect(screen.getByText(/Dijous, 1 de maig/)).toBeInTheDocument();
+    } finally {
+      if (originalTz === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTz;
+    }
+  });
+
   it("renders core event fields", () => {
     render(<PreviewContent event={previewEvent} />);
 
