@@ -66,6 +66,9 @@ test.describe("Publish wizard UX", () => {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30000,
+    });
     await page.fill("input#url", "example.com");
 
     await page.getByTestId("test-link-button").click();
