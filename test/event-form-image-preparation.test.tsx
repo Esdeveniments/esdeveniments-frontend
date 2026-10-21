@@ -83,3 +83,30 @@ describe("EventForm image preparation", () => {
     expect(screen.getByTestId("publish-button")).toBeEnabled();
   });
 });
+
+describe("EventForm publish arming", () => {
+  it("marks the form armed only once it accepts a publish click", () => {
+    vi.useFakeTimers();
+    const onSubmit = vi.fn();
+    render(
+      <EventForm form={form} onSubmit={onSubmit} submitLabel="Save" isEditMode
+        cityOptions={[]} categoryOptions={[]} handleFormChange={vi.fn()}
+        handleImageChange={vi.fn()} handleTownChange={vi.fn()} handleCategoriesChange={vi.fn()}
+        imageToUpload="https://example.com/old.jpg" />,
+    );
+    const formEl = screen.getByTestId("event-form");
+    fireEvent.click(screen.getByTestId("next-button"));
+    fireEvent.click(screen.getByTestId("next-button"));
+    expect(formEl).toHaveAttribute("data-publish-armed", "false");
+    fireEvent.click(screen.getByTestId("publish-button"));
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(300));
+    expect(formEl).toHaveAttribute("data-publish-armed", "true");
+    fireEvent.click(screen.getByTestId("publish-button"));
+    expect(onSubmit).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByTestId("prev-button"));
+    expect(formEl).toHaveAttribute("data-publish-armed", "false");
+  });
+});

@@ -136,9 +136,7 @@ export async function publishTestEvent(
   await pickEventWhen(page, options.when);
   await options.beforePublish?.(page);
 
-  const publishButton = page.getByTestId("publish-button");
-  await expect(publishButton).toBeEnabled({ timeout: 10_000 });
-  await publishButton.click();
+  await clickArmedPublish(page);
 
   await page.waitForURL((url) => !url.pathname.includes("/publica"), {
     timeout: 60_000,
@@ -149,6 +147,17 @@ export async function publishTestEvent(
   expect(slugMatch, `expected to land on /e/{slug}, got: ${currentUrl}`).not.toBeNull();
   if (!slugMatch) throw new Error("unreachable: slug match guard");
   return slugMatch[1];
+}
+
+/**
+ * The form ignores a publish click in the first 250 ms of the last step (an
+ * accidental double tap on Next); wait until it accepts one.
+ */
+async function clickArmedPublish(page: Page) {
+  const submit = page.getByTestId("publish-button");
+  await expect(submit).toBeEnabled({ timeout: 15_000 });
+  await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
+  await submit.click();
 }
 
 /** Delete an event through the app API using the page's session cookies. */
@@ -177,9 +186,7 @@ export async function advanceToLastStep(page: Page) {
 
 /** Submit the last step of the edit form; returns once back on the detail page. */
 export async function submitLastStep(page: Page) {
-  const submit = page.getByTestId("publish-button");
-  await expect(submit).toBeEnabled({ timeout: 15_000 });
-  await submit.click();
+  await clickArmedPublish(page);
   await page.waitForURL(
     (url) => url.pathname.includes("/e/") && !url.pathname.includes("/edita"),
     { timeout: 60_000 },

@@ -4,7 +4,6 @@ import React, {
   useState,
   useMemo,
   useEffect,
-  useRef,
   useSyncExternalStore,
 } from "react";
 import { setHours, setMinutes, setSeconds } from "date-fns";
@@ -61,8 +60,8 @@ export const EventForm: React.FC<EventFormProps> = ({
   );
   const [step, setStep] = useState(0);
   const [isImagePreparing, setIsImagePreparing] = useState(false);
-  const canPublishRef = useRef(false);
-  const publishArmTimeoutRef = useRef<number | null>(null);
+  // The last step whose publish button is armed; e2e waits on data-publish-armed.
+  const [armedStep, setArmedStep] = useState<number | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
@@ -114,27 +113,16 @@ export const EventForm: React.FC<EventFormProps> = ({
     handleFormChange("endDate", toLocalDateTimeString(targetEndDate));
   };
 
+  const isPublishArmed = armedStep === step && step === steps.length - 1;
+
   useEffect(() => {
-    canPublishRef.current = false;
-    if (publishArmTimeoutRef.current !== null) {
-      window.clearTimeout(publishArmTimeoutRef.current);
-      publishArmTimeoutRef.current = null;
-    }
-
-    if (step === steps.length - 1) {
-      // Guard against accidental publish when the Next button is replaced by the Publish
-      // submit button during a step transition (can happen under CI timing/layout shifts).
-      publishArmTimeoutRef.current = window.setTimeout(() => {
-        canPublishRef.current = true;
-        publishArmTimeoutRef.current = null;
-      }, 250);
-    }
-
+    if (step !== steps.length - 1) return;
+    // Guard against accidental publish when the Next button is replaced by the Publish
+    // submit button during a step transition (can happen under CI timing/layout shifts).
+    const timeoutId = window.setTimeout(() => setArmedStep(step), 250);
     return () => {
-      if (publishArmTimeoutRef.current !== null) {
-        window.clearTimeout(publishArmTimeoutRef.current);
-        publishArmTimeoutRef.current = null;
-      }
+      window.clearTimeout(timeoutId);
+      setArmedStep(null);
     };
   }, [step, steps.length]);
 
@@ -160,7 +148,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       return;
     }
 
-    if (!canPublishRef.current) {
+    if (!isPublishArmed) {
       return;
     }
 
@@ -290,6 +278,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       className="w-full flex flex-col justify-center items-center gap-y-4"
       data-testid="event-form"
       data-hydrated={isHydrated ? "true" : "false"}
+      data-publish-armed={isPublishArmed ? "true" : "false"}
     >
       <div className="w-full">
         <div className="flex justify-between text-sm md:text-base text-foreground/80 mb-2">
