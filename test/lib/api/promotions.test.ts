@@ -145,6 +145,24 @@ describe("createPromotionCheckout", () => {
     const result = await createPromotionCheckout(eventId, "city-7d", "key-1");
 
     expect(result).toEqual({ ok: false, code: "AUTHENTICATION_REQUIRED" });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("renews a rejected token once and retries with the same Idempotency-Key", async () => {
+    vi.mocked(events.requireAuth)
+      .mockResolvedValueOnce({ apiUrl: "https://api.example.com/api", authToken: "stale" })
+      .mockResolvedValueOnce({ apiUrl: "https://api.example.com/api", authToken: "renewed" });
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse(401, {}))
+      .mockResolvedValueOnce(jsonResponse(200, { orderId, url: "https://checkout.stripe.com/x" }));
+
+    const result = await createPromotionCheckout(eventId, "city-7d", "key-1");
+
+    expect(result.ok).toBe(true);
+    expect(vi.mocked(events.requireAuth)).toHaveBeenLastCalledWith({ forceRefresh: true });
+    const headers = mockFetch.mock.calls[1][1]?.headers as Record<string, string>;
+    expect(headers.Authorization).toBe("Bearer renewed");
+    expect(headers["Idempotency-Key"]).toBe("key-1");
   });
 });
 
