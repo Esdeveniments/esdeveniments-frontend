@@ -4,7 +4,7 @@ import type {
   EventDetailResponseDTO,
 } from "types/api/event";
 import type { FormData } from "types/event";
-import { formatTimeForAPI } from "./date-helpers";
+import { formatTimeForAPI, splitLocalDateTime } from "./date-helpers";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -23,20 +23,6 @@ export function getTownValue(
   if ("value" in town) return town.value;
   if ("id" in town) return String(town.id);
   return null;
-}
-
-const LOCAL_DATE_TIME =
-  /^(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?:T((?:[01]\d|2[0-3]):[0-5]\d))?$/;
-
-// Split by string, not through Date: a local time inside a DST gap would shift.
-function splitLocalDateTime(value: string): { date: string; time: string } {
-  const match = LOCAL_DATE_TIME.exec(value);
-  const [year, month, day] = (match?.[1] ?? "").split("-").map(Number);
-  // UTC round trip: rejects a day the month does not have, such as 02-31.
-  if (!match || new Date(Date.UTC(year, month - 1, day)).getUTCDate() !== day) {
-    throw new RangeError("Invalid time value");
-  }
-  return { date: match[1], time: match[2] ?? "00:00" };
 }
 
 export function formDataToBackendDTO(
@@ -82,9 +68,8 @@ export function formDataToBackendDTO(
   };
 }
 
-function toLocalDateTimeValue(date: string | null, time: string | null): string {
-  if (!date) return "";
-  return time ? `${date}T${time.slice(0, 5)}` : date;
+function toLocalDateTimeValue(date: string | null, time: string): string {
+  return date ? `${date}T${time.slice(0, 5)}` : "";
 }
 
 export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
@@ -109,13 +94,21 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
       : [],
     email: "", // UI only
   };
+  // The picker cannot leave a time open. A null start is how the site marks an
+  // all-day event (event-status.ts), and end of day keeps the event listed all
+  // day, as a null end does in the backend's lists.
+  const startTime = (event.startTime || "00:00").slice(0, 5);
+  const endTime = (event.endTime || "23:59").slice(0, 5);
   // The picker edits one local "YYYY-MM-DDTHH:mm" per field; the stored times
   // kept separately above would outrank what the user changes in it.
   return {
     ...form,
-    startDate: toLocalDateTimeValue(event.startDate, event.startTime),
+    startDate: toLocalDateTimeValue(event.startDate, startTime),
     startTime: null,
-    endDate: toLocalDateTimeValue(event.endDate, event.endTime),
+    endDate: toLocalDateTimeValue(event.endDate, endTime),
     endTime: null,
+    // What an all-day save stores, so it reopens as all-day. Any other stored
+    // time stays timed and is saved back unchanged.
+    isAllDay: startTime === "00:00" && endTime === "23:59",
   };
 }
