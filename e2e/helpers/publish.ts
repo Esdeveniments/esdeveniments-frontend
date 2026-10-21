@@ -216,6 +216,7 @@ export type StoredEvent = {
 export async function fetchStoredEvent(slug: string): Promise<StoredEvent> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${slug}`, {
     headers: { "X-Backend-Key": process.env.BACKEND_SERVICE_SECRET! },
+    signal: AbortSignal.timeout(15_000),
   });
   expect(res.status, "stored event is readable").toBe(200);
   return (await res.json()) as StoredEvent;

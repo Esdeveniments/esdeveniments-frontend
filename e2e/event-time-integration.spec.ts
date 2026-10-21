@@ -104,6 +104,10 @@ test.describe("Event times across timezones (staging)", () => {
             await p.screenshot({ path: `test-results/time-preview-${c.tz.replace("/", "-")}-${c.name.replace(/\W+/g, "-")}.png` });
             const text = (await modal.innerText()).replace(/\s+/g, " ");
             console.log(`PREVIEW[${c.tz} ${c.name}]: ${text.slice(0, 500)}`);
+            const day = new Date(`${c.date}T12:00:00Z`).toLocaleDateString("en-US", {
+              weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC",
+            });
+            expect(text, "preview shows the typed date").toContain(day);
             expect(text, "preview shows the typed start time").toContain(c.start);
             expect(text, "preview shows the typed end time").toContain(c.end);
             await p.keyboard.press("Escape");
@@ -114,6 +118,7 @@ test.describe("Event times across timezones (staging)", () => {
         const stored = await fetchStoredEvent(slug);
         console.log(`STORED[${c.tz} ${c.name}]: ${JSON.stringify(stored)}`);
         expect(stored.startDate).toBe(c.date);
+        expect(stored.endDate).toBe(c.date);
         expect(stored.startTime?.slice(0, 5)).toBe(c.start);
         expect(stored.endTime?.slice(0, 5)).toBe(c.end);
       } finally {
