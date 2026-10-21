@@ -85,6 +85,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const [isSubscribingPush, setIsSubscribingPush] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const hasTriggeredRef = useRef(false);
+  const hasDismissedRef = useRef(false);
   const hasTrackedOfferRef = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -135,6 +136,8 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
    */
   const dismiss = useCallback(
     (countAsDismissal: boolean = true) => {
+      if (hasDismissedRef.current) return;
+      hasDismissedRef.current = true;
       // `counted: false` is a post-success auto-close, not a real decline —
       // keep both so decline rate = dismisses where counted is true.
       sendGoogleEvent("push_optin_dismiss", {
