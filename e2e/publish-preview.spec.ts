@@ -41,9 +41,6 @@ test.describe("Publish - Preview", () => {
     // Provide URL while still on basics step (field not visible later)
     await page.fill("input#url", "https://example.com");
 
-    // Explicitly wait for validation to clear
-    await page.waitForTimeout(1000);
-
     const nextBtn = page.getByTestId("next-button");
     await expect(nextBtn).toBeEnabled({ timeout: 10000 });
     await nextBtn.click();
@@ -53,9 +50,6 @@ test.describe("Publish - Preview", () => {
     await page.keyboard.press("Enter");
     await page.fill("input#location", "Parc Central");
     await page.locator("input#location").blur();
-
-    // Explicitly wait for validation to clear
-    await page.waitForTimeout(1000);
 
     const nextBtn2 = page.getByTestId("next-button");
     await expect(nextBtn2).toBeEnabled({ timeout: 10000 });

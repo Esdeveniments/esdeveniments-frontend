@@ -45,35 +45,32 @@ test.describe("Publish wizard UX", () => {
       });
     await page.locator("textarea#description").blur();
 
-    // Wait for validation to clear
-    await page.waitForTimeout(1000);
-
     await expect(next).toBeEnabled({ timeout: 10000 });
     await next.click();
-
-    await page.waitForTimeout(500);
   });
 
   test("test link button opens normalized URL", async ({ page }) => {
-    await page.goto("/publica", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
+    // Init scripts run on the next navigation, so stub window.open before it.
     await page.addInitScript(() => {
       window.__OPENED_URLS__ = [];
-      const originalOpen = window.open;
       window.open = (...args) => {
         const urlArg = args[0];
         if (urlArg) {
           const value = typeof urlArg === "string" ? urlArg : urlArg.toString();
           window.__OPENED_URLS__?.push(value);
         }
-        return originalOpen ? originalOpen(...args) : null;
+        return null;
       };
+    });
+    await page.goto("/publica", {
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
     });
     await page.fill("input#url", "example.com");
 
     await page.getByTestId("test-link-button").click();
-    await page.waitForTimeout(300);
+    await expect
+      .poll(() => page.evaluate(() => window.__OPENED_URLS__))
+      .toEqual(["https://example.com"]);
   });
 });
