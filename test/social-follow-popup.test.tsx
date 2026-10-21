@@ -299,6 +299,20 @@ describe("SocialFollowPopup – dismiss", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("keeps the dismissal when the popup unmounts mid-close", () => {
+    showPopup();
+    fireEvent.keyDown(document, { key: "Escape" });
+    cleanup();
+
+    render(<SocialFollowPopup pathname="/page-c" />);
+    act(() => {
+      vi.advanceTimersByTime(DELAY_MS + 100);
+    });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(getPopupState().dismissCount).toBe(1);
+  });
+
   it("should increment dismissCount on each dismiss", () => {
     // First dismiss
     setPopupState(0, 0);

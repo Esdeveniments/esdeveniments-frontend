@@ -149,18 +149,21 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         clearTimeout(autoCloseTimerRef.current);
         autoCloseTimerRef.current = null;
       }
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsVisible(false);
-      setIsClosing(false);
-
+      // Save now, not after the close animation: an unmount mid-close would
+      // drop the dismissal and the popup would open again.
       const current = getPopupState();
       savePopupState({
         dismissCount: (current?.dismissCount ?? 0) + (countAsDismissal ? 1 : 0),
         lastDismissedAt: Date.now(),
       });
-    }, 300);
-  }, []);
+      setIsClosing(true);
+      setTimeout(() => {
+        setIsVisible(false);
+        setIsClosing(false);
+      }, 300);
+    },
+    [],
+  );
 
   const handleSubscribePush = useCallback(async () => {
     sendGoogleEvent("push_optin_click", {
