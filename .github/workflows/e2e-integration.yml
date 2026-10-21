@@ -19,8 +19,11 @@ name: E2E Integration (preproduction)
 #   secrets.E2E_STAGING_PASSWORD    ↲
 #   secrets.E2E_STAGING_EMAIL_2     → a second verified user (creator-only edit flow)
 #   secrets.E2E_STAGING_PASSWORD_2  ↲
-# The publish-integration spec self-skips when the test-user secrets are
-# absent, so an unconfigured environment never turns this red.
+# The specs self-skip when the test-user secrets are absent, so an
+# unconfigured environment never turns this red. The event-edit and
+# event-time specs also read NEXT_PUBLIC_API_URL and BACKEND_SERVICE_SECRET
+# in the Playwright process to check what the backend stored, so the test
+# step gets them too.
 on:
   workflow_dispatch:
   schedule:
@@ -36,9 +39,12 @@ concurrency:
 
 jobs:
   publish-integration:
-    name: Publish → detail and creator-only edit (preproduction)
+    name: Publish, edit, timezones and session (preproduction)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 14 more tests (about 4 min locally on a production build) on top of
+    # specs that already took 15 of 25 min with retries. Dev mode compiles
+    # each route on first hit, and a timed-out job skips the report upload.
+    timeout-minutes: 60
     environment: staging
     env:
       NODE_VERSION: "22"
@@ -98,14 +104,16 @@ jobs:
       - name: Wait for server
         run: npx wait-on http://localhost:3000 --timeout 90000
 
-      - name: Run publish → detail and creator-only edit integration
+      - name: Run publish, edit, timezone and session integration
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
           E2E_STAGING_PASSWORD: ${{ secrets.E2E_STAGING_PASSWORD }}
           E2E_STAGING_EMAIL_2: ${{ secrets.E2E_STAGING_EMAIL_2 }}
           E2E_STAGING_PASSWORD_2: ${{ secrets.E2E_STAGING_PASSWORD_2 }}
-        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/event-edit-creator-only.spec.ts e2e/auth-session-integration.spec.ts
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
+        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/event-edit-creator-only.spec.ts e2e/auth-session-integration.spec.ts e2e/event-edit-integration.spec.ts e2e/event-time-integration.spec.ts
 
       - name: Stop server
         if: always()
