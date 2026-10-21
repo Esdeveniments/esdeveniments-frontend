@@ -113,6 +113,35 @@ describe("event edit form time", () => {
     },
   );
 
+  it.each(["Europe/Madrid", "UTC", "America/New_York"])(
+    "opens an event with no stored times as all-day and saves 00:00 to 23:59 in %s",
+    (tz) => {
+      process.env.TZ = tz;
+      const edit = eventDtoToFormData({ ...stored, startTime: null, endTime: null });
+
+      expect(edit).toMatchObject({
+        isAllDay: true,
+        startDate: "2026-12-05T00:00",
+        endDate: "2026-12-05T23:59",
+      });
+      const dto = formDataToBackendDTO(edit);
+      expect([dto.startDate, dto.startTime, dto.endDate, dto.endTime])
+        .toEqual(["2026-12-05", "00:00", "2026-12-05", "23:59"]);
+    },
+  );
+
+  it.each(["Europe/Madrid", "UTC", "America/New_York"])(
+    "keeps a timed event with no stored end listed to the end of its day in %s",
+    (tz) => {
+      process.env.TZ = tz;
+      const edit = eventDtoToFormData({ ...stored, endTime: null });
+
+      expect(edit).toMatchObject({ isAllDay: false, startDate: "2026-12-05T21:00" });
+      const dto = formDataToBackendDTO(edit);
+      expect([dto.startTime, dto.endDate, dto.endTime]).toEqual(["21:00", "2026-12-05", "23:59"]);
+    },
+  );
+
   it("saves a time changed in the date picker instead of the stored one", () => {
     const edit = eventDtoToFormData(stored);
     const changed = { ...edit, endDate: "2026-12-05T23:45" };

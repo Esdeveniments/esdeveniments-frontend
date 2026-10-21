@@ -10,8 +10,13 @@ date-only `startDate`, and `formDataToBackendDTO` preferred the stored time. The
 date picker therefore showed 09:00 for a 21:00 event, and a time changed in the
 picker was ignored on save. The form now holds `YYYY-MM-DDTHH:mm` in
 `startDate`/`endDate` and leaves `startTime`/`endTime` empty, the same shape the
-create form uses. The backend has no all-day flag. It stores an all-day event as
-09:00 to 23:59, so the edit form cannot show the toggle again.
+create form uses. The backend has no all-day flag. It stores an event made with
+the all-day toggle as 09:00 to 23:59, so the edit form shows that one as timed. A
+stored null start time is the site's own all-day mark (`utils/event-status.ts`), so
+the edit form loads it with the toggle on, 00:00 to 23:59. The picker cannot leave
+an end open, so a null end time loads as 23:59: the backend lists a null end and a
+23:59 end the same way, while an end equal to the start would drop the event from
+lists at its start time. A bare date used to save as 00:00, an end before the start.
 
 ## Never `waitUntil: "networkidle"` in an e2e against a deployed build
 

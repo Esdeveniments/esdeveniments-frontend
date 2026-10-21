@@ -82,9 +82,8 @@ export function formDataToBackendDTO(
   };
 }
 
-function toLocalDateTimeValue(date: string | null, time: string | null): string {
-  if (!date) return "";
-  return time ? `${date}T${time.slice(0, 5)}` : date;
+function toLocalDateTimeValue(date: string | null, time: string): string {
+  return date ? `${date}T${time.slice(0, 5)}` : "";
 }
 
 export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
@@ -109,13 +108,19 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
       : [],
     email: "", // UI only
   };
+  // A null start time is how the site marks an all-day event (event-status.ts).
+  const isAllDay = !event.startTime;
+  // The picker cannot leave the end open. End of day keeps the event listed all
+  // day, as a null end time does in the backend's lists.
+  const endTime = !isAllDay && event.endTime ? event.endTime : "23:59";
   // The picker edits one local "YYYY-MM-DDTHH:mm" per field; the stored times
   // kept separately above would outrank what the user changes in it.
   return {
     ...form,
-    startDate: toLocalDateTimeValue(event.startDate, event.startTime),
+    startDate: toLocalDateTimeValue(event.startDate, isAllDay ? "00:00" : event.startTime!),
     startTime: null,
-    endDate: toLocalDateTimeValue(event.endDate, event.endTime),
+    endDate: toLocalDateTimeValue(event.endDate, endTime),
     endTime: null,
+    isAllDay,
   };
 }
