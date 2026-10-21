@@ -55,14 +55,19 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>()))
   : null;
 
-/** Shared guard for authenticated endpoints: validates API URL and auth cookie. */
-export async function requireAuth(): Promise<{ apiUrl: string; authToken: string }> {
+/**
+ * Shared guard for authenticated endpoints: validates API URL and auth cookie.
+ * `forceRefresh` renews a token the backend already rejected.
+ */
+export async function requireAuth({
+  forceRefresh = false,
+}: { forceRefresh?: boolean } = {}): Promise<{ apiUrl: string; authToken: string }> {
   if (!isApiUrlConfigured()) {
     throw new Error(
       "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
     );
   }
-  const authToken = await getValidAccessToken();
+  const authToken = await getValidAccessToken({ forceRefresh });
   if (!authToken) {
     const err = new Error("Authentication required");
     (err as Error & { status: number }).status = 401;
