@@ -4,7 +4,7 @@ import type {
   EventDetailResponseDTO,
 } from "types/api/event";
 import type { FormData } from "types/event";
-import { formatTimeForAPI } from "./date-helpers";
+import { formatTimeForAPI, splitLocalDateTime } from "./date-helpers";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -23,20 +23,6 @@ export function getTownValue(
   if ("value" in town) return town.value;
   if ("id" in town) return String(town.id);
   return null;
-}
-
-const LOCAL_DATE_TIME =
-  /^(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?:T((?:[01]\d|2[0-3]):[0-5]\d))?$/;
-
-// Split by string, not through Date: a local time inside a DST gap would shift.
-function splitLocalDateTime(value: string): { date: string; time: string } {
-  const match = LOCAL_DATE_TIME.exec(value);
-  const [year, month, day] = (match?.[1] ?? "").split("-").map(Number);
-  // UTC round trip: rejects a day the month does not have, such as 02-31.
-  if (!match || new Date(Date.UTC(year, month - 1, day)).getUTCDate() !== day) {
-    throw new RangeError("Invalid time value");
-  }
-  return { date: match[1], time: match[2] ?? "00:00" };
 }
 
 export function formDataToBackendDTO(

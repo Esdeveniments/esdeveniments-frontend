@@ -1,13 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
 import type { FormData } from "types/event";
 
 const baseForm: FormData = {
   title: "Nit de Música",
   description: "Concert al centre cívic",
-  startDate: "2025-05-01T09:00:00.000Z",
+  // The form only ever holds local "YYYY-MM-DDTHH:mm" (toLocalDateTimeString).
+  startDate: "2025-05-01T09:00",
   startTime: null,
-  endDate: "2025-05-02T10:00:00.000Z",
+  endDate: "2025-05-02T10:00",
   endTime: null,
   region: { value: "1", label: "Barcelona" },
   town: { value: "2", label: "Barcelona", latitude: 41.38, longitude: 2.17 },
@@ -18,6 +19,22 @@ const baseForm: FormData = {
 };
 
 describe("mapDraftToPreviewEvent", () => {
+  const originalTz = process.env.TZ;
+  afterEach(() => {
+    if (originalTz === undefined) delete process.env.TZ;
+    else process.env.TZ = originalTz;
+  });
+
+  it("previews a time inside the spring-forward gap as typed, like publishing", () => {
+    process.env.TZ = "Europe/Madrid";
+    const result = mapDraftToPreviewEvent({
+      form: { ...baseForm, startDate: "2027-03-28T02:30", endDate: "2027-03-28T04:00" },
+      imageUrl: null,
+    });
+
+    expect([result.startDate, result.startTime]).toEqual(["2027-03-28", "02:30"]);
+  });
+
   it("maps draft form into preview event with normalized values", () => {
     const result = mapDraftToPreviewEvent({
       form: baseForm,
