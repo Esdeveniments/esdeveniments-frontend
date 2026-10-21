@@ -149,8 +149,9 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         clearTimeout(autoCloseTimerRef.current);
         autoCloseTimerRef.current = null;
       }
-      // Save now, not after the close animation: an unmount mid-close would
-      // drop the dismissal and the popup would open again.
+      // Save now, not after the close animation: a remount mid-close (e.g. a
+      // locale switch) runs shouldShow() before a deferred save would land,
+      // so the popup would open again.
       const current = getPopupState();
       savePopupState({
         dismissCount: (current?.dismissCount ?? 0) + (countAsDismissal ? 1 : 0),
