@@ -62,6 +62,20 @@ export function isLoginCompleteUrl(
  * runs this handler whenever one appears and an action is waiting.
  */
 export async function dismissEngagementPopups(page: Page) {
+  // Mark the popup (STORAGE_KEY / MAX_DISMISSALS in SocialFollowPopup.tsx) as
+  // dismissed the maximum number of times before every page load, so it never
+  // opens. In CI it stuck mid-close and blocked clicks for
+  // the whole test timeout. The handler below stays as a fallback.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem(
+        "social-follow-popup",
+        JSON.stringify({ dismissCount: 3, lastDismissedAt: Date.now() }),
+      );
+    } catch {
+      // Storage blocked on this origin: the handler below still covers it.
+    }
+  });
   await page.addLocatorHandler(
     page.getByRole("dialog", { name: /follow us|install the/i }),
     async (dialog) => {
@@ -83,6 +97,7 @@ export async function dismissEngagementPopups(page: Page) {
  * single-step and identifier-then-password layouts.
  */
 export async function loginViaUI(page: Page, email: string, password: string) {
+  await dismissEngagementPopups(page);
   // Capture the app origin from the actual login-entry request. Do not infer
   // it from an auth-host naming convention: deployments may use any hostname.
   let appOrigin: string | undefined;
@@ -171,6 +186,4 @@ export async function loginViaUI(page: Page, email: string, password: string) {
     }
     throw timeoutError;
   }
-
-  await dismissEngagementPopups(page);
 }
