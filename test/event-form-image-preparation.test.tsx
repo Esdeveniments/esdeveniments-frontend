@@ -108,5 +108,9 @@ describe("EventForm publish arming", () => {
 
     fireEvent.click(screen.getByTestId("prev-button"));
     expect(formEl).toHaveAttribute("data-publish-armed", "false");
+    fireEvent.click(screen.getByTestId("next-button"));
+    expect(formEl).toHaveAttribute("data-publish-armed", "false");
+    act(() => vi.advanceTimersByTime(300));
+    expect(formEl).toHaveAttribute("data-publish-armed", "true");
   });
 });
