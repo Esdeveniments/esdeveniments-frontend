@@ -94,8 +94,7 @@ test.describe("Publica -> Event flow (deterministic)", () => {
 
     const publishButton = page.getByTestId("publish-button");
     await expect(publishButton).toBeEnabled({ timeout: 20000 });
-    // Wait for canPublishRef to arm (250ms guard in EventForm)
-    await page.waitForTimeout(500);
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
 
     const publishSlugHandle = page.waitForFunction(
       () =>

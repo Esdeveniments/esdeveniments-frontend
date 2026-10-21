@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ImageUploader from "@components/ui/common/form/imageUpload";
+import { useImagePreview } from "@components/hooks/useImagePreview";
 import { renderWithProviders } from "../../../../utils/renderWithProviders";
 import { MAX_TOTAL_UPLOAD_BYTES, formatMegabytesLabel } from "@utils/constants";
 
@@ -72,6 +73,29 @@ class MockFileReader {
 
 const MAX_LIMIT_LABEL = formatMegabytesLabel(MAX_TOTAL_UPLOAD_BYTES);
 
+/** Wires the uploader the way the publish and edit forms do. */
+function WithPreview({
+  initial,
+  onUpload,
+  onPreparingChange,
+}: {
+  initial: string | null;
+  onUpload: (file: File | null) => void;
+  onPreparingChange?: (preparing: boolean) => void;
+}) {
+  const [preview, updatePreview] = useImagePreview(initial);
+  return (
+    <ImageUploader
+      value={preview}
+      onUpload={(file) => {
+        onUpload(file);
+        updatePreview(file);
+      }}
+      onPreparingChange={onPreparingChange}
+    />
+  );
+}
+
 describe("ImageUploader file validation", () => {
   beforeEach(() => {
     vi.stubGlobal("FileReader", MockFileReader);
@@ -98,7 +122,7 @@ describe("ImageUploader file validation", () => {
     const onUpload = vi.fn();
     const preparing = vi.fn();
     renderWithProviders(
-      <ImageUploader value="https://example.com/old.jpg" onUpload={onUpload} onPreparingChange={preparing} />,
+      <WithPreview initial="https://example.com/old.jpg" onUpload={onUpload} onPreparingChange={preparing} />,
     );
     fireEvent.change(document.querySelector('input[type="file"]')!, {
       target: { files: [createMockFile("large.jpg", "image/jpeg", 9 * 1024 * 1024)] },
@@ -114,7 +138,7 @@ describe("ImageUploader file validation", () => {
   it("ignores a preview load arriving after removal", async () => {
     MockFileReader.automatic = false;
     const onUpload = vi.fn();
-    renderWithProviders(<ImageUploader value="https://example.com/old.jpg" onUpload={onUpload} />);
+    renderWithProviders(<WithPreview initial="https://example.com/old.jpg" onUpload={onUpload} />);
     fireEvent.change(document.querySelector('input[type="file"]')!, {
       target: { files: [createMockFile("new.jpg", "image/jpeg", 100)] },
     });
@@ -123,6 +147,23 @@ describe("ImageUploader file validation", () => {
     expect(onUpload).toHaveBeenLastCalledWith(null);
     expect(MockFileReader.instances[0].abort).toHaveBeenCalled();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("shows the preview its parent passes, not one of its own", async () => {
+    const onUpload = vi.fn();
+    const { rerender } = renderWithProviders(
+      <ImageUploader value={null} onUpload={onUpload} />,
+    );
+    const file = createMockFile("new.jpg", "image/jpeg", 100);
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [file] },
+    });
+    await waitFor(() => expect(onUpload).toHaveBeenCalledWith(file));
+    await act(async () => {});
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+
+    rerender(<ImageUploader value="data:image/jpeg;base64,parent" onUpload={onUpload} />);
+    expect(screen.getByRole("img")).toHaveAttribute("src", "data:image/jpeg;base64,parent");
   });
 
   it(`accepts valid image files under ${MAX_LIMIT_LABEL}MB`, async () => {

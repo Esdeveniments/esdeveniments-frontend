@@ -285,6 +285,24 @@ describe("SocialFollowPopup – dismiss", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("counts repeated close actions during the animation as one dismissal", () => {
+    showPopup();
+    const closeButton = screen.getAllByRole("button", { name: /ara no/i })[0];
+
+    act(() => {
+      fireEvent.click(closeButton);
+      fireEvent.click(closeButton);
+      fireEvent.keyDown(document, { key: "Escape" });
+    });
+
+    expect(getPopupState().dismissCount).toBe(1);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(getPopupState().dismissCount).toBe(1);
+  });
+
   it("should dismiss when backdrop is clicked", () => {
     showPopup();
 
@@ -297,6 +315,20 @@ describe("SocialFollowPopup – dismiss", () => {
     });
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps the dismissal when the popup unmounts mid-close", () => {
+    showPopup();
+    fireEvent.keyDown(document, { key: "Escape" });
+    cleanup();
+
+    render(<SocialFollowPopup pathname="/page-c" />);
+    act(() => {
+      vi.advanceTimersByTime(DELAY_MS + 100);
+    });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(getPopupState().dismissCount).toBe(1);
   });
 
   it("should increment dismissCount on each dismiss", () => {

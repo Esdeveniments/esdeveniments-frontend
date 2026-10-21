@@ -20,6 +20,8 @@ way. Treating every 00:00 start as all-day would overwrite a stored end such as
 an end open, so a null end time loads as 23:59: the backend lists a null end and a
 23:59 end the same way, while an end equal to the start would drop the event from
 lists at its start time. A bare date used to save as 00:00, an end before the start.
+Turning the toggle off moves a 00:00 start to 09:00 and the end to 10:00, because
+the site would still show a 00:00 start as all-day.
 
 ## Never `waitUntil: "networkidle"` in an e2e against a deployed build
 
@@ -317,3 +319,21 @@ values in a module without heavy imports, such as `utils/image-validation.ts`.
 
 `GET /api/events/{slug}` returns 404 for an event UUID on the v2 backend. Docs and
 agent surfaces (llms.txt, MCP, agent-view, OpenAPI) say slug only.
+
+## "N × locator resolved to visible" after a locator handler is not a stuck overlay
+
+After `addLocatorHandler` runs, Playwright waits for the overlay to hide and logs
+each poll: `5 × locator resolved to visible <div … animate-disappear>`. Its next
+line, `interception handler has finished, continuing`, is written only once the
+overlay is hidden. Five polls at Playwright's backoff is about 270 ms, which is the
+Follow-us popup's normal 300 ms close. The 2026-10-21 nightly timeout blamed on the
+popup was the date picker: its placeholder swaps itself for the real picker on
+pointer enter, so a click lost its target (`element was detached from the DOM`).
+Read the lines after the handler before blaming the overlay.
+
+## The publish button ignores clicks for 250 ms after the last step opens
+
+`EventForm` arms Publish 250 ms after the last step renders, so a double tap on
+Next cannot publish. A spec that clicks Publish sooner is silently ignored and then
+times out waiting for navigation. Wait for `data-publish-armed="true"` on
+`event-form`, never a fixed sleep.
