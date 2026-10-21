@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LogtoConfig } from "types/auth";
 
 let db: DatabaseSync;
-vi.mock("@lib/db/turso", () => ({
+vi.mock("@lib/db/turso", async (importActual) => ({
+  ...(await importActual<typeof import("@lib/db/turso")>()),
   execute: vi.fn(async (sql: string, args: unknown[] = []) => {
     const values = args.map((value) => {
       if (typeof value === "string" || typeof value === "number") return value;
@@ -71,6 +72,14 @@ describe("cross-instance refresh coordination", () => {
     db.exec("UPDATE auth_refresh SET result_until = unixepoch() - 1, result = NULL, claimed_at = 0");
     await expect(coordinateRefresh(config, "old", exchange)).rejects.toMatchObject({ status: 401 });
     expect(exchange).toHaveBeenCalledOnce();
+  });
+
+  it("leases a claim for longer than a live owner can take", async () => {
+    const { CLAIM_LEASE_SECONDS } = await import("@lib/auth/refresh-token");
+    const { TURSO_TIMEOUT_MS } = await import("@lib/db/turso");
+    const { LOGTO_TOKEN_TIMEOUT_MS } = await import("@utils/constants");
+    // Claim reply, token request and result write, each up to its timeout.
+    expect(CLAIM_LEASE_SECONDS * 1000).toBeGreaterThan(2 * TURSO_TIMEOUT_MS + LOGTO_TOKEN_TIMEOUT_MS);
   });
 
   it("takes over a claim whose owner died mid-exchange, only after the lease", async () => {

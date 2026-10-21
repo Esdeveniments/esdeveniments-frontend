@@ -257,12 +257,16 @@ token whose result expired throws 401, not a statusless error, so the cookie is 
 A process that died mid-exchange (a deploy restart, a crash) left its
 `auth_refresh` claim open with no result. Every later request with that token
 waited 20 seconds and got 503 until the user signed in again. The claim now has
-`claimed_at` and a lease of the Logto token timeout plus 5 seconds; after that,
-a request may take it over. Test "no result" as `result_until IS NULL`: the
+`claimed_at` and a lease; after it, a request may take the claim over. The lease
+must cover everything a live owner does after the claim commits: reading the
+claim reply, the Logto call and the result write, each up to its own timeout.
+The first version covered only the Logto call, so a slow but live owner could be
+stolen from. Test "no result" as `result_until IS NULL`: the
 cleanup step sets `result = NULL` on expired results, so a spent rotated token
 also has a NULL `result`, and a lease keyed on it would replay that token.
-Derive the lease from `LOGTO_TOKEN_TIMEOUT_MS`, never a separate number, so a
-longer timeout cannot make the lease shorter than a live exchange.
+Derive the lease from `TURSO_TIMEOUT_MS` and `LOGTO_TOKEN_TIMEOUT_MS`, never a
+separate number, so a longer timeout cannot make the lease shorter than a live
+owner.
 
 ## PR E2E needs `BACKEND_SERVICE_SECRET` in the Vercel Preview env
 

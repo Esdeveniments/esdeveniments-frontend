@@ -1,7 +1,7 @@
 import "server-only";
 import { createHmac, randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
-import { execute } from "@lib/db/turso";
+import { execute, TURSO_TIMEOUT_MS } from "@lib/db/turso";
 import { AUTH_SESSION_MAX_AGE, LOGTO_TOKEN_TIMEOUT_MS } from "@utils/constants";
 import { LogtoTokenResponseSchema } from "@lib/validation/auth";
 import { openToken, sealToken } from "./token-encryption";
@@ -12,9 +12,10 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS auth_refresh (
   result_until INTEGER, reusable INTEGER NOT NULL DEFAULT 0,
   expires_at INTEGER NOT NULL, claimed_at INTEGER
 )`;
-// A live owner gets a response or aborts within the token timeout, then writes
-// a result. A claim with no result after this lease lost its process.
-export const CLAIM_LEASE_SECONDS = LOGTO_TOKEN_TIMEOUT_MS / 1000 + 5;
+// After the claim commits, a live owner's claim reply, token request and result
+// write each answer or abort within their timeouts. A claim with no result after
+// this lease lost its process.
+export const CLAIM_LEASE_SECONDS = (2 * TURSO_TIMEOUT_MS + LOGTO_TOKEN_TIMEOUT_MS) / 1000 + 5;
 let schemaPromise: Promise<void> | null = null;
 
 /**
@@ -90,7 +91,8 @@ export async function coordinateRefresh(
     ).catch((shareError: unknown) => console.error("[refresh] could not share the result", shareError));
     return tokens;
   }
-  const deadline = Date.now() + 20_000;
+  // Outlast the lease, so a waiter takes over a dead claim instead of failing.
+  const deadline = Date.now() + (CLAIM_LEASE_SECONDS + 5) * 1000;
   do {
     const stored = await execute(
       `SELECT result, result_until, reusable, claimed_at, unixepoch() AS now

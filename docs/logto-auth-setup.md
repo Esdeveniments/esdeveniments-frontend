@@ -270,12 +270,15 @@ window has passed is spent, and refreshing with it fails with 401. Either failur
 ends the session only when no valid ID token is left: `resolveSession` keeps a
 still-valid ID token as the session, and API calls then get no access token.
 
-Each claim records `claimed_at` on the database clock. The token request aborts
-after `LOGTO_TOKEN_TIMEOUT_MS` (10 seconds), so a live owner writes a result within
-that time. A claim with no result after `CLAIM_LEASE_SECONDS` (the timeout plus 5
-seconds) belongs to a process that died mid-exchange. The next request with that
-token, or one already waiting, takes the claim over and retries the exchange; the
-claim statement lets only one of them win. If Logto had consumed the token, the
+Each claim records `claimed_at` on the database clock. After the claim commits, a
+live owner reads the claim reply, calls Logto and writes the result. Each step
+answers or aborts within its timeout (`TURSO_TIMEOUT_MS`, `LOGTO_TOKEN_TIMEOUT_MS`,
+`TURSO_TIMEOUT_MS`, 10 seconds each). A claim with no result after
+`CLAIM_LEASE_SECONDS` (those three plus 5 seconds, so 35) belongs to a process that
+died mid-exchange. The next request with that token, or one already waiting, takes
+the claim over and retries the exchange; the claim statement lets only one of them
+win. Waiting requests wait 5 seconds longer than the lease, so they take over
+instead of failing. If Logto had consumed the token, the
 retry gets `invalid_grant` and the user signs in again. One case is worse than
 before the lease: when the exchange succeeds but the result cannot be written, a
 later request with the old token takes over after the lease and replays a spent
