@@ -127,7 +127,7 @@ test.describe("Publish integration (staging)", () => {
     // Click the select to open dropdown, type to search, pick first result
     await townSelect.click();
     await page.keyboard.type("Barcelona");
-    await page.waitForTimeout(1_000); // Wait for async search
+    await expect(townSelect.getByRole("option").first()).toContainText("Barcelona");
     // Select the first option from the dropdown
     await page.keyboard.press("Enter");
 
@@ -137,7 +137,7 @@ test.describe("Publish integration (staging)", () => {
     // Select first available category
     const categoriesSelect = page.locator("#categories").locator("..");
     await categoriesSelect.click();
-    await page.waitForTimeout(500);
+    await expect(categoriesSelect.getByRole("option").first()).toBeVisible();
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
     // Close the dropdown
@@ -159,8 +159,7 @@ test.describe("Publish integration (staging)", () => {
     const publishButton = page.getByTestId("publish-button");
     await expect(publishButton).toBeVisible({ timeout: 10_000 });
 
-    // Wait for canPublishRef to arm (250ms guard in EventForm)
-    await page.waitForTimeout(500);
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
 
     await publishButton.click();
 

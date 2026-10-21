@@ -121,9 +121,7 @@ test.describe("Creator-only edit access (staging)", () => {
     await expect(submitButton).toBeVisible({ timeout: 15_000 });
     await expect(submitButton).toBeEnabled({ timeout: 10_000 });
 
-    // Wait for the publish button to arm (canPublishRef has a 250ms delay
-    // after step change to prevent accidental submits during transition)
-    await page.waitForTimeout(500);
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
 
     // Submit the form — this must not 500 (the `indexed` bug)
     await submitButton.click();
