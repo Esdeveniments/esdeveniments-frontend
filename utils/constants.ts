@@ -14,6 +14,8 @@ export { MAX_FAVORITES, MAX_FAVORITES_AUTHENTICATED } from "./favorites-limits";
 
 export const MAX_RESULTS = 15;
 export const AUTH_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+/** Logto token endpoint timeout. The refresh claim lease is derived from it. */
+export const LOGTO_TOKEN_TIMEOUT_MS = 10_000;
 
 /** Number of days within which news articles are considered "fresh". */
 export const NEWS_FRESHNESS_DAYS = 7;

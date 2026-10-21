@@ -3,6 +3,7 @@
 // bundle untouched. Endpoints are fixed for Logto, so no network discovery.
 import "server-only";
 import { coordinateRefresh } from "./refresh-token";
+import { LOGTO_TOKEN_TIMEOUT_MS } from "@utils/constants";
 import {
   createHash,
   createPublicKey,
@@ -153,7 +154,7 @@ async function postToken(
       ...(config.apiResource ? { resource: config.apiResource } : {}),
     }).toString(),
     cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(LOGTO_TOKEN_TIMEOUT_MS),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
