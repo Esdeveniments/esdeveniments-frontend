@@ -39,6 +39,7 @@ describe.each(["Europe/Madrid", "UTC", "America/New_York"])("all-day editing in 
     fireEvent.click(screen.getByText("All day"));
     expect(changed).toHaveBeenCalledWith("endDate", `${date}T23:59`);
     fireEvent.click(screen.getByText("Timed"));
-    expect(changed).toHaveBeenCalledWith("endDate", `${date}T01:00`);
+    expect(changed).toHaveBeenCalledWith("startDate", `${date}T09:00`);
+    expect(changed).toHaveBeenCalledWith("endDate", `${date}T10:00`);
   });
 });
