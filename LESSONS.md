@@ -10,8 +10,16 @@ date-only `startDate`, and `formDataToBackendDTO` preferred the stored time. The
 date picker therefore showed 09:00 for a 21:00 event, and a time changed in the
 picker was ignored on save. The form now holds `YYYY-MM-DDTHH:mm` in
 `startDate`/`endDate` and leaves `startTime`/`endTime` empty, the same shape the
-create form uses. The backend has no all-day flag. It stores an all-day event as
-09:00 to 23:59, so the edit form cannot show the toggle again.
+create form uses. The backend has no all-day flag. It stores an event made with
+the all-day toggle as 09:00 to 23:59, so the edit form shows that one as timed. A
+stored null start time is the site's own all-day mark (`utils/event-status.ts`), so
+the edit form loads null or 00:00 start with null or 23:59 end with the toggle on,
+00:00 to 23:59. That is also what an all-day save stores, so it reopens the same
+way. Treating every 00:00 start as all-day would overwrite a stored end such as
+03:00 with 23:59. The picker cannot leave
+an end open, so a null end time loads as 23:59: the backend lists a null end and a
+23:59 end the same way, while an end equal to the start would drop the event from
+lists at its start time. A bare date used to save as 00:00, an end before the start.
 
 ## Never `waitUntil: "networkidle"` in an e2e against a deployed build
 
@@ -251,6 +259,22 @@ there is one), so waiting requests fail fast, and then releases the claim. If th
 provider had used the token, the retry gets `invalid_grant` and signs the user
 out. Nobody holds the rotated tokens then, so nothing better is possible. A rotated
 token whose result expired throws 401, not a statusless error, so the cookie is cleared.
+
+## A refresh claim needs a lease, keyed on `result_until`, not `result`
+
+A process that died mid-exchange (a deploy restart, a crash) left its
+`auth_refresh` claim open with no result. Every later request with that token
+waited 20 seconds and got 503 until the user signed in again. The claim now has
+`claimed_at` and a lease; after it, a request may take the claim over. The lease
+must cover everything a live owner does after the claim commits: reading the
+claim reply, the Logto call and the result write, each up to its own timeout.
+The first version covered only the Logto call, so a slow but live owner could be
+stolen from. Test "no result" as `result_until IS NULL`: the
+cleanup step sets `result = NULL` on expired results, so a spent rotated token
+also has a NULL `result`, and a lease keyed on it would replay that token.
+Derive the lease from `TURSO_TIMEOUT_MS` and `LOGTO_TOKEN_TIMEOUT_MS`, never a
+separate number, so a longer timeout cannot make the lease shorter than a live
+owner.
 
 ## PR E2E needs `BACKEND_SERVICE_SECRET` in the Vercel Preview env
 

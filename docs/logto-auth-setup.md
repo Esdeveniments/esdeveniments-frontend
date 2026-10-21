@@ -268,14 +268,34 @@ not, the retry succeeds. If it did, the retry gets `invalid_grant`; nobody holds
 the rotated tokens then, so the retry loses nothing. A rotated token whose result
 window has passed is spent, and refreshing with it fails with 401. Either failure
 ends the session only when no valid ID token is left: `resolveSession` keeps a
-still-valid ID token as the session, and API calls then get no access token. A process that
-dies mid-exchange never releases its claim: later requests with that token wait 20
-seconds and get 503 until the user signs in again. Database/coordination failures
+still-valid ID token as the session, and API calls then get no access token.
+
+Each claim records `claimed_at` on the database clock. After the claim commits, a
+live owner reads the claim reply, calls Logto and writes the result. Each step
+answers or aborts within its timeout (`TURSO_TIMEOUT_MS`, `LOGTO_TOKEN_TIMEOUT_MS`,
+`TURSO_TIMEOUT_MS`, 10 seconds each). A claim with no result after
+`CLAIM_LEASE_SECONDS` (those three plus 5 seconds, so 35) belongs to a process that
+died mid-exchange. The next request with that token, or one already waiting, takes
+the claim over and retries the exchange; the claim statement lets only one of them
+win. Waiting requests wait past the lease and one slow database poll, so they take
+over instead of failing. If Logto had consumed the token, the retry gets
+`invalid_grant`, which ends the session only when no valid ID token is left. One case is worse than
+before the lease: when the exchange succeeds but the result cannot be written, a
+later request with the old token takes over after the lease and replays a spent
+token. Logto may then revoke the whole grant, which also ends the session that
+holds the new tokens. Before the lease that request got a 503 instead. Tables
+created before the lease get the column through `ALTER TABLE`. A claim with no
+`claimed_at` (from before the lease or from an older instance) starts its lease
+when a request first waits on it.
+
+Database/coordination failures
 do not clear session cookies. When the new tokens cannot be stored, the request
 that refreshed still returns them. Keep the database durable and shared across
 replicas and deploys; never truncate this table while sessions remain active.
 Expired rows and expired encrypted results are cleaned once per process, on its
 first coordinated refresh.
 Deploy the coordination change to all instances together; an older instance can
-still exchange tokens outside this protocol. Runtime connectivity and permissions
+still exchange tokens outside this protocol. An older instance also does not reset
+`claimed_at` when it retakes a claim, so a newer instance can take over that live
+claim. Runtime connectivity and permissions
 must be checked before rollout; local checks do not establish production readiness.

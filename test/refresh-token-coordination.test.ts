@@ -1,10 +1,12 @@
 // @vitest-environment node
 import { DatabaseSync } from "node:sqlite";
+import { setTimeout as delay } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LogtoConfig } from "types/auth";
 
 let db: DatabaseSync;
-vi.mock("@lib/db/turso", () => ({
+vi.mock("@lib/db/turso", async (importActual) => ({
+  ...(await importActual<typeof import("@lib/db/turso")>()),
   execute: vi.fn(async (sql: string, args: unknown[] = []) => {
     const values = args.map((value) => {
       if (typeof value === "string" || typeof value === "number") return value;
@@ -66,8 +68,65 @@ describe("cross-instance refresh coordination", () => {
     const { coordinateRefresh } = await import("@lib/auth/refresh-token");
     const exchange = vi.fn().mockResolvedValue(tokens);
     await coordinateRefresh(config, "old", exchange);
-    db.exec("UPDATE auth_refresh SET result_until = unixepoch() - 1");
+    // As after the expired-result cleanup, with a claim far older than the lease.
+    db.exec("UPDATE auth_refresh SET result_until = unixepoch() - 1, result = NULL, claimed_at = 0");
     await expect(coordinateRefresh(config, "old", exchange)).rejects.toMatchObject({ status: 401 });
+    expect(exchange).toHaveBeenCalledOnce();
+  });
+
+  it("leases a claim for longer than a live owner can take", async () => {
+    const { CLAIM_LEASE_SECONDS } = await import("@lib/auth/refresh-token");
+    const { TURSO_TIMEOUT_MS } = await import("@lib/db/turso");
+    const { LOGTO_TOKEN_TIMEOUT_MS } = await import("@utils/constants");
+    // Claim reply, token request and result write, each up to its timeout.
+    expect(CLAIM_LEASE_SECONDS * 1000).toBeGreaterThan(2 * TURSO_TIMEOUT_MS + LOGTO_TOKEN_TIMEOUT_MS);
+  });
+
+  it("takes over a claim whose owner died mid-exchange, only after the lease", async () => {
+    const { coordinateRefresh, CLAIM_LEASE_SECONDS } = await import("@lib/auth/refresh-token");
+    void coordinateRefresh(config, "old", () => new Promise<never>(() => {}));
+    await vi.waitFor(() => expect(db.prepare("SELECT owner FROM auth_refresh").get()).toBeDefined());
+    const age = db.prepare("UPDATE auth_refresh SET claimed_at = unixepoch() - ?");
+    age.run(CLAIM_LEASE_SECONDS - 3);
+    const exchange = vi.fn().mockResolvedValue(tokens);
+    const waiters = Promise.all([
+      coordinateRefresh(config, "old", exchange),
+      coordinateRefresh(config, "old", exchange),
+    ]);
+    await delay(600);
+    expect(exchange).not.toHaveBeenCalled();
+
+    age.run(CLAIM_LEASE_SECONDS + 1);
+    await expect(waiters).resolves.toEqual([tokens, tokens]);
+    expect(exchange).toHaveBeenCalledOnce();
+  });
+
+  it("adds the lease column to a table created before it", async () => {
+    db.exec(`CREATE TABLE auth_refresh (
+      token_key TEXT PRIMARY KEY, owner TEXT NOT NULL, result TEXT,
+      result_until INTEGER, reusable INTEGER NOT NULL DEFAULT 0,
+      expires_at INTEGER NOT NULL
+    )`);
+    const { coordinateRefresh } = await import("@lib/auth/refresh-token");
+    await expect(coordinateRefresh(config, "old", vi.fn().mockResolvedValue(tokens))).resolves.toEqual(tokens);
+    const row = db.prepare("SELECT unixepoch() - claimed_at AS age FROM auth_refresh").get();
+    expect(row?.age).toBeLessThanOrEqual(2);
+  });
+
+  it("starts the lease of a claim from an older instance when a request waits on it", async () => {
+    const { coordinateRefresh, CLAIM_LEASE_SECONDS } = await import("@lib/auth/refresh-token");
+    void coordinateRefresh(config, "old", () => new Promise<never>(() => {}));
+    await vi.waitFor(() => expect(db.prepare("SELECT owner FROM auth_refresh").get()).toBeDefined());
+    db.exec("UPDATE auth_refresh SET claimed_at = NULL");
+    const exchange = vi.fn().mockResolvedValue(tokens);
+    const waiter = coordinateRefresh(config, "old", exchange);
+    await vi.waitFor(() =>
+      expect(db.prepare("SELECT unixepoch() - claimed_at AS age FROM auth_refresh").get()?.age)
+        .toBeLessThanOrEqual(2));
+    expect(exchange).not.toHaveBeenCalled();
+
+    db.prepare("UPDATE auth_refresh SET claimed_at = unixepoch() - ?").run(CLAIM_LEASE_SECONDS + 1);
+    await expect(waiter).resolves.toEqual(tokens);
     expect(exchange).toHaveBeenCalledOnce();
   });
 
