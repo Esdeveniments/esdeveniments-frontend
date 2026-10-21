@@ -17,14 +17,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 }) => {
   const t = useTranslations("Components.ImageUploader");
   const fileSelect = useRef<HTMLInputElement>(null);
-  const [imgData, setImgData] = useState<string | null>(value || null);
   const [dragOver, setDragOver] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const selectionVersionRef = useRef(0);
-  const previewReaderRef = useRef<FileReader | null>(null);
   const onPreparingChangeRef = useRef(onPreparingChange);
   useEffect(() => {
     onPreparingChangeRef.current = onPreparingChange;
@@ -32,13 +30,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   useEffect(() => () => {
     selectionVersionRef.current += 1;
-    previewReaderRef.current?.abort();
     onPreparingChangeRef.current?.(false);
   }, []);
-
-  useEffect(() => {
-    setImgData(value || null);
-  }, [value]);
 
   const resetMessages = () => {
     setError(null);
@@ -70,7 +63,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       return;
     }
     const version = ++selectionVersionRef.current;
-    previewReaderRef.current?.abort();
     resetMessages();
     setIsPreparing(true);
     onPreparingChange?.(true);
@@ -88,7 +80,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         setError(t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
         return;
       }
-      updateImage(workingFile, version);
       onUpload(workingFile);
     } catch (compressionError) {
       console.error("Image preparation failed", compressionError);
@@ -126,24 +117,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     await prepareFile(file);
   };
 
-  const updateImage = (file: File, version: number): void => {
-    const reader = new FileReader();
-    previewReaderRef.current = reader;
-    reader.addEventListener("load", () => {
-      if (version === selectionVersionRef.current && typeof reader.result === "string") {
-        setImgData(reader.result);
-      }
-    });
-    reader.readAsDataURL(file);
-  };
-
   const handleRemoveImage = () => {
     selectionVersionRef.current += 1;
-    previewReaderRef.current?.abort();
     setIsPreparing(false);
     setIsOptimizing(false);
     onPreparingChange?.(false);
-    setImgData(null);
     resetMessages();
     if (fileSelect.current) {
       fileSelect.current.value = "";
@@ -246,7 +224,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           <p className="text-sm font-medium text-error">{error}</p>
         </div>
       )}
-      {imgData && (imgData.startsWith("http") || imgData.startsWith("data:") || imgData.startsWith("/")) ? (
+      {value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("/")) ? (
         <div className="flex justify-center items-start p-4">
           <button
             onClick={handleRemoveImage}
@@ -274,7 +252,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             height={100}
             width={100}
             className="object-contain"
-            src={imgData}
+            src={value}
             style={{
               maxWidth: "100%",
               height: "auto",

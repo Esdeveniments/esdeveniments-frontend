@@ -20,6 +20,8 @@ way. Treating every 00:00 start as all-day would overwrite a stored end such as
 an end open, so a null end time loads as 23:59: the backend lists a null end and a
 23:59 end the same way, while an end equal to the start would drop the event from
 lists at its start time. A bare date used to save as 00:00, an end before the start.
+Turning the toggle off moves a 00:00 start to 09:00 and the end to 10:00, because
+the site would still show a 00:00 start as all-day.
 
 ## Never `waitUntil: "networkidle"` in an e2e against a deployed build
 

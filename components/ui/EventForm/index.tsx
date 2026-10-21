@@ -103,9 +103,15 @@ export const EventForm: React.FC<EventFormProps> = ({
   }, [form, imageFile, isEditMode, validationLabels, zodLabels, hasInteracted]);
 
   const handleAllDayToggle = (isAllDayEvent: boolean) => {
-    const startDateValue = form.startDate
+    let startDateValue = form.startDate
       ? parseLocalDateTime(form.startDate)
       : new Date();
+    // The site shows a 00:00 start as all-day (utils/event-status.ts), so a
+    // timed event cannot keep it: move it to the picker's default 09:00.
+    if (!isAllDayEvent && startDateValue.getHours() === 0 && startDateValue.getMinutes() === 0) {
+      startDateValue = setHours(startDateValue, 9);
+      handleFormChange("startDate", toLocalDateTimeString(startDateValue));
+    }
     const targetEndDate = isAllDayEvent
       ? setSeconds(setMinutes(setHours(startDateValue, 23), 59), 59)
       : new Date(startDateValue.getTime() + 60 * 60 * 1000);
