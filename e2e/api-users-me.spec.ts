@@ -12,16 +12,10 @@ import { test, expect } from "@playwright/test";
  * These tests do NOT require Logto login flows; they lock the unauthenticated
  * contract + proxy multipart guard so accidental regressions surface in CI.
  *
- * Tests are skipped when the dev server URL is not reachable or HMAC_SECRET
- * is not configured (avoids running against an unconfigured preview).
+ * They send no HMAC and need no backend, so they also run against PR previews.
  */
 
-const SHOULD_SKIP =
-  !process.env.HMAC_SECRET || !process.env.NEXT_PUBLIC_API_URL;
-
 test.describe("/api/users/me/* (unauthenticated contract)", () => {
-  test.skip(SHOULD_SKIP, "Skipped: HMAC_SECRET or NEXT_PUBLIC_API_URL not set");
-
   test("PATCH /api/users/me/profile without auth cookie returns 401", async ({
     request,
     baseURL,
@@ -67,8 +61,6 @@ test.describe("/api/users/me/* (unauthenticated contract)", () => {
 });
 
 test.describe("/api/users/me/* (multipart handling)", () => {
-  test.skip(SHOULD_SKIP, "Skipped: HMAC_SECRET or NEXT_PUBLIC_API_URL not set");
-
   test("requires authentication before parsing a malformed avatar body", async ({
     request,
     baseURL,
