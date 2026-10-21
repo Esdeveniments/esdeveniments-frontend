@@ -19,6 +19,8 @@ name: E2E Integration (preproduction)
 #   secrets.E2E_STAGING_PASSWORD    ↲
 #   secrets.E2E_STAGING_EMAIL_2     → a second verified user (creator-only edit flow)
 #   secrets.E2E_STAGING_PASSWORD_2  ↲
+#   secrets.TURSO_*_TEST            → repo-level test DB; session refresh
+#                                     claims the token there
 # The specs self-skip when the test-user secrets are absent, so an
 # unconfigured environment never turns this red. The event-edit and
 # event-time specs also read NEXT_PUBLIC_API_URL and BACKEND_SERVICE_SECRET
@@ -91,6 +93,10 @@ jobs:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
+          # Session refresh claims the token in Turso first and answers 503
+          # without it, so every auth-session refresh test failed.
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL_TEST }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN_TEST }}
           # Logto OIDC config (preproduction app). Without these, /iniciar-sessio
           # → /api/auth/sign-in throws in getLogtoConfig() and returns a 500,
           # so the login step never reaches Logto's form. Sourced from the
