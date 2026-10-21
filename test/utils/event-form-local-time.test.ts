@@ -142,6 +142,20 @@ describe("event edit form time", () => {
     },
   );
 
+  it("reopens a saved all-day event as all-day", () => {
+    const saved = formDataToBackendDTO(eventDtoToFormData({ ...stored, startTime: null, endTime: null }));
+    const reopened = eventDtoToFormData({ ...stored, startTime: `${saved.startTime}:00`, endTime: `${saved.endTime}:00` });
+
+    expect(reopened.isAllDay).toBe(true);
+  });
+
+  it("keeps a stored midnight start with an end time timed and unchanged", () => {
+    const edit = eventDtoToFormData({ ...stored, startTime: "00:00:00", endTime: "03:00:00" });
+
+    expect(edit.isAllDay).toBe(false);
+    expect(formDataToBackendDTO(edit).endTime).toBe("03:00");
+  });
+
   it("saves a time changed in the date picker instead of the stored one", () => {
     const edit = eventDtoToFormData(stored);
     const changed = { ...edit, endDate: "2026-12-05T23:45" };

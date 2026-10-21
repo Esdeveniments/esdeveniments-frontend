@@ -13,7 +13,10 @@ picker was ignored on save. The form now holds `YYYY-MM-DDTHH:mm` in
 create form uses. The backend has no all-day flag. It stores an event made with
 the all-day toggle as 09:00 to 23:59, so the edit form shows that one as timed. A
 stored null start time is the site's own all-day mark (`utils/event-status.ts`), so
-the edit form loads it with the toggle on, 00:00 to 23:59. The picker cannot leave
+the edit form loads null or 00:00 start with null or 23:59 end with the toggle on,
+00:00 to 23:59. That is also what an all-day save stores, so it reopens the same
+way. Treating every 00:00 start as all-day would overwrite a stored end such as
+03:00 with 23:59. The picker cannot leave
 an end open, so a null end time loads as 23:59: the backend lists a null end and a
 23:59 end the same way, while an end equal to the start would drop the event from
 lists at its start time. A bare date used to save as 00:00, an end before the start.
