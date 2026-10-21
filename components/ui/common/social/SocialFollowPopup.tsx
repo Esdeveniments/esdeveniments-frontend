@@ -85,6 +85,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const [isSubscribingPush, setIsSubscribingPush] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const hasTriggeredRef = useRef(false);
+  const hasDismissedRef = useRef(false);
   const hasTrackedOfferRef = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -135,6 +136,8 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
    */
   const dismiss = useCallback(
     (countAsDismissal: boolean = true) => {
+      if (hasDismissedRef.current) return;
+      hasDismissedRef.current = true;
       // `counted: false` is a post-success auto-close, not a real decline —
       // keep both so decline rate = dismisses where counted is true.
       sendGoogleEvent("push_optin_dismiss", {
@@ -149,18 +152,22 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         clearTimeout(autoCloseTimerRef.current);
         autoCloseTimerRef.current = null;
       }
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsVisible(false);
-      setIsClosing(false);
-
+      // Save now, not after the close animation: a remount mid-close (e.g. a
+      // locale switch) runs shouldShow() before a deferred save would land,
+      // so the popup would open again.
       const current = getPopupState();
       savePopupState({
         dismissCount: (current?.dismissCount ?? 0) + (countAsDismissal ? 1 : 0),
         lastDismissedAt: Date.now(),
       });
-    }, 300);
-  }, []);
+      setIsClosing(true);
+      setTimeout(() => {
+        setIsVisible(false);
+        setIsClosing(false);
+      }, 300);
+    },
+    [],
+  );
 
   const handleSubscribePush = useCallback(async () => {
     sendGoogleEvent("push_optin_click", {

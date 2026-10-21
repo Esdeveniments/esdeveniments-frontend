@@ -64,8 +64,7 @@ export function isLoginCompleteUrl(
 export async function dismissEngagementPopups(page: Page) {
   // Mark the popup (STORAGE_KEY / MAX_DISMISSALS in SocialFollowPopup.tsx) as
   // dismissed the maximum number of times before every page load, so it never
-  // opens. In CI it stuck mid-close and blocked clicks for
-  // the whole test timeout. The handler below stays as a fallback.
+  // opens over a step. The handler below stays as a fallback.
   await page.addInitScript(() => {
     try {
       localStorage.setItem(
