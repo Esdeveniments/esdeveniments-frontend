@@ -48,10 +48,11 @@ async function readPromotionErrorCode(response: Response): Promise<string> {
 // server action and re-renders.
 async function getAuth(
   canRefresh: boolean,
+  forceRefresh = false,
 ): Promise<{ apiUrl: string; authToken: string } | null> {
   if (canRefresh) {
     try {
-      return await requireAuth();
+      return await requireAuth({ forceRefresh });
     } catch (error) {
       if ((error as { status?: number }).status !== 401) throw error;
       return null;
@@ -71,22 +72,33 @@ async function promotionRequest<T>(
   // The client-supplied id goes into the backend path; the contract is a UUID.
   if (!isUuid(eventId)) return { ok: false, code: "UNKNOWN" };
   try {
-    const auth = await getAuth(init.method === "POST");
+    const canRefresh = init.method === "POST";
+    const auth = await getAuth(canRefresh);
     if (!auth) return { ok: false, code: "AUTHENTICATION_REQUIRED" };
 
-    const response = await fetchWithHmac(
-      `${auth.apiUrl}/events/${encodeURIComponent(eventId)}/promotions/${path}`,
-      {
-        method: init.method ?? "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${auth.authToken}`,
-          ...init.headers,
+    const send = ({ apiUrl, authToken }: { apiUrl: string; authToken: string }) =>
+      fetchWithHmac(
+        `${apiUrl}/events/${encodeURIComponent(eventId)}/promotions/${path}`,
+        {
+          method: init.method ?? "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${authToken}`,
+            ...init.headers,
+          },
+          body: init.body,
+          skipBodySigning: true,
         },
-        body: init.body,
-        skipBodySigning: true,
-      },
-    );
+      );
+
+    let response = await send(auth);
+    // The backend can reject a token the cookie still holds (revoked, clock
+    // skew). Renew it once; the repeated Idempotency-Key keeps the retry safe.
+    if (response.status === 401 && canRefresh) {
+      const renewed = await getAuth(true, true);
+      if (!renewed) return { ok: false, code: "AUTHENTICATION_REQUIRED" };
+      response = await send(renewed);
+    }
 
     if (!response.ok) {
       const code = await readPromotionErrorCode(response);
