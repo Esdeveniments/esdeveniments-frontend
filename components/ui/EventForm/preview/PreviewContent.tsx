@@ -14,6 +14,8 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 
+// value is a "YYYY-MM-DD" calendar day, which Date reads as UTC midnight:
+// format it in UTC too, or a browser west of UTC shows the day before.
 const formatDate = (value: string, locale: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -22,6 +24,7 @@ const formatDate = (value: string, locale: string) => {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   }).format(date);
   // Capitalize first letter of the formatted date
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
