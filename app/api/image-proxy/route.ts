@@ -296,18 +296,14 @@ export async function GET(request: Request) {
   const requestedQuality = isDesktopRequest 
     ? Math.min(baseQuality + DESKTOP_QUALITY_BOOST, MAX_OPTIMIZED_QUALITY)
     : baseQuality;
-  // Determine output format:
-  // 1. Explicit format param takes priority (avif, webp, jpeg, png)
-  // 2. Falls back to Accept header (CDN may not forward it)
-  // 3. Defaults to source format or JPEG
+  // The output depends on the URL only, never on request headers, so
+  // Cloudflare can cache one copy per URL. (It ignores Vary: Accept unless a
+  // Cache Rule configures Vary.) Callers pick the format in the URL: <picture>
+  // sources pass avif/webp. Without one, WebP and AVIF sources become WebP,
+  // PNG and GIF stay, and the rest become JPEG.
   const formatParam = url.searchParams.get("format")?.toLowerCase();
-  const acceptHeader = request.headers.get("accept") || "";
-  const preferAvif =
-    formatParam === "avif" ||
-    (!formatParam && acceptHeader.includes("image/avif"));
-  const preferWebp =
-    formatParam === "webp" ||
-    (!formatParam && acceptHeader.includes("image/webp"));
+  const preferAvif = formatParam === "avif";
+  const preferWebp = formatParam === "webp";
 
   // Clamp values to reasonable limits
   const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);
@@ -454,7 +450,12 @@ export async function GET(request: Request) {
         let outputBuffer: Buffer;
         let outputContentType: string;
 
-        if (preferAvif || preferWebp) {
+        if (
+          preferAvif ||
+          preferWebp ||
+          sourceType === "image/webp" ||
+          sourceType === "image/avif"
+        ) {
           // WebP: excellent compression, fast encoding, reliable output
           // We always use WebP for modern formats - AVIF encoding is slower
           // and has caused issues with certain source images
@@ -491,7 +492,6 @@ export async function GET(request: Request) {
           headers: {
             "Content-Type": outputContentType,
             "Cache-Control": getCacheControl(hasCacheKey),
-            Vary: "Accept", // Cache different formats separately
             "X-Image-Proxy-Optimized": "true",
             "X-Image-Proxy-Savings": `${savingsPercent}%`,
             "X-Image-Proxy-Original-Size": String(imageBuffer.length),
