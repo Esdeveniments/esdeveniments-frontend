@@ -207,7 +207,7 @@ Two-column with a sidebar. The sidebar is not sticky: it is taller than most scr
 - **Left (~60%)**: Hero image → Share bar → Title → Description → Related events → Categories → Weather → FAQ → Restaurants → News
 - **Right (~40%)**: Date & time → Add to calendar → Location + static map → External link → Source attribution → Sponsor
 
-**Components**: `EventSidebar` (server sidebar), event detail page layout in `app/e/[eventId]/page.tsx`.
+**Components**: `EventSidebar` (server sidebar), event detail page layout in `app/[locale]/e/[eventId]/page.tsx`.
 
 ### 4.4 Mobile Layout (implemented)
 
