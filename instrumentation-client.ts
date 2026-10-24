@@ -1,8 +1,25 @@
 // Browser Sentry. Turbopack loads only this file: it ignores
 // sentry.client.config.ts, so an init there never ran and browser errors went
 // unreported.
+//
+// Errors only. A hand-built BrowserClient instead of init() keeps the React and
+// Next.js wrappers, tracing and Session Replay out of the boot chunk (see the
+// Sentry tree-shaking docs). The release comes from withSentryConfig, which
+// inlines it as process.env._sentryRelease: the one the source maps use.
 
-import { init } from "@sentry/nextjs";
+import {
+  BrowserClient,
+  breadcrumbsIntegration,
+  dedupeIntegration,
+  defaultStackParser,
+  eventFiltersIntegration,
+  functionToStringIntegration,
+  getCurrentScope,
+  globalHandlersIntegration,
+  httpContextIntegration,
+  linkedErrorsIntegration,
+  makeFetchTransport,
+} from "@sentry/nextjs";
 import {
   beforeSendClient,
   SENTRY_IGNORE_ERRORS,
@@ -10,23 +27,27 @@ import {
 } from "@utils/sentry-helpers";
 
 if (process.env.NODE_ENV === "production") {
-  init({
+  const client = new BrowserClient({
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
     environment: process.env.NEXT_PUBLIC_VERCEL_ENV,
-    release:
-      process.env.SENTRY_RELEASE ||
-      process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
-      undefined,
-    // Errors only: no tracing (stripped by compiler.define in next.config.js),
-    // no Session Replay.
-    tracesSampleRate: 0,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 0,
+    release: process.env._sentryRelease,
+    transport: makeFetchTransport,
+    stackParser: defaultStackParser,
+    integrations: [
+      // ignoreErrors and denyUrls only work through this integration.
+      eventFiltersIntegration(),
+      functionToStringIntegration(),
+      breadcrumbsIntegration(),
+      globalHandlersIntegration(),
+      linkedErrorsIntegration(),
+      dedupeIntegration(),
+      httpContextIntegration(),
+    ],
     sendDefaultPii: false,
-    debug: false,
     ignoreErrors: SENTRY_IGNORE_ERRORS,
     denyUrls: SENTRY_DENY_URLS,
-    enableLogs: false,
     beforeSend: beforeSendClient,
   });
+  getCurrentScope().setClient(client);
+  client.init();
 }
