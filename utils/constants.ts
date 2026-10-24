@@ -3,13 +3,12 @@ import type { ByDateOption, DateRangeShortcut } from "types/common";
 import { getTranslations } from "next-intl/server";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
-import caMessages from "../messages/ca.json";
-import esMessages from "../messages/es.json";
-import enMessages from "../messages/en.json";
+// Not messages/*.json: client components import this file, and that would
+// ship all three locale files to the browser. See scripts/generate-locale-labels.mjs.
+import localeLabels from "../i18n/locale-labels.generated.json";
 // Re-exported (not declared here) so existing @utils/constants consumers
 // keep working unchanged. Declared in their own dependency-free module so a
-// client component can import just the number, not this file's ~280KB of
-// embedded locale JSON — see utils/favorites-limits.ts for why.
+// client component can import just the number — see utils/favorites-limits.ts.
 export { MAX_FAVORITES, MAX_FAVORITES_AUTHENTICATED } from "./favorites-limits";
 
 export const MAX_RESULTS = 15;
@@ -88,11 +87,7 @@ export const isBuildPhase =
   process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
   (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
 
-const constantsLabelsByLocale: Record<AppLocale, any> = {
-  ca: (caMessages as any).Components.Constants,
-  es: (esMessages as any).Components.Constants,
-  en: (enMessages as any).Components.Constants,
-};
+const constantsLabelsByLocale: Record<AppLocale, any> = localeLabels.constants;
 
 const defaultConstantsLabels = constantsLabelsByLocale[DEFAULT_LOCALE];
 
