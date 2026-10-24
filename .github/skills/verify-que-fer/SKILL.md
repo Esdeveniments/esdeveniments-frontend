@@ -9,90 +9,103 @@ Prove behavior against the running app. This drives the real UI the way a user
 does and captures the result. It is not a substitute for `yarn test`; it is the
 proof that a change works end to end.
 
+## Before you start
+
+- Check memory. `next dev` plus a Playwright Chromium needs several GB. On a
+  loaded 16 GB Mac this froze the machine (2026-10-24). If `memory_pressure`
+  reports under 30% free, close apps first, or verify against the deployed
+  staging site instead of a local server. Run one browser at a time and stop
+  the dev server when you finish.
+- Use `localhost:3000`, not `127.0.0.1` or another port. The Logto login
+  callback is registered only for `http://localhost:3000/api/auth/callback`.
+
 ## Launch
 
+From the repo root:
+
 ```bash
-cd ~/Repos/que-fer
-yarn dev   # Next.js dev server on http://localhost:3000 (runs prebuild → generates sw.js)
+yarn prebuild   # generates public/sw.js and robots.txt; yarn dev does not
+yarn dev        # next dev on http://localhost:3000
 ```
 
-- Requires `.env.development` with at least `HMAC_SECRET` (pages still render
-  without the production secret; external data comes back empty).
-- Readiness signal: the URL answers and the home page shows the search input.
+- Skip `yarn prebuild` only when the service worker does not matter for the
+  change. `public/sw.js` is gitignored, so a fresh clone has none.
+- Data needs `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` in `.env.development`
+  or `.env.local`. Without them pages render, but external data comes back
+  empty.
+- Ready when the home page HTML has the search input:
   ```bash
-  curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:3000/   # expect 200
+  curl -s http://localhost:3000/ | grep -c 'data-testid="search-input"'   # expect 1
   ```
-- The Playwright config (`playwright.config.ts`) auto-starts the dev server via
-  `webServer.reuseExistingServer`, so an existing dev server is reused.
-
-- Use `localhost:3000`, not `127.0.0.1` or another port: the Logto login
-  callback is registered only for `http://localhost:3000/api/auth/callback`.
-- Check memory first. `next dev` plus a Playwright Chromium needs several GB.
-  On a loaded 16 GB Mac this froze the machine (2026-10-24). If
-  `memory_pressure` reports under 30% free, close apps first, or verify against
-  the deployed staging site instead of a local server. Run one browser at a
-  time and stop the dev server when you finish.
+- `playwright.config.ts` starts `yarn dev` itself and reuses a server that
+  already answers on the base URL (`webServer.reuseExistingServer`).
 
 ## Doctor (run first whenever anything looks off)
 
 ```bash
-lsof -i :3000 -sTCP:LISTEN          # is the port owned by our dev server?
-grep -c HMAC_SECRET .env.development  # >= 1, otherwise external fetches 401
-yarn --version                       # expect 4.12.x
-node --version                       # expect v22
+lsof -i :3000 -sTCP:LISTEN     # is the port owned by your dev server?
+grep -cE '^(HMAC_SECRET|BACKEND_SERVICE_SECRET)=.+' .env.development .env.local   # each secret set once
+yarn --version                 # expect 4.12.x
+node --version                 # expect v22; Node 25+ breaks the jsdom localStorage tests
 ```
 
 ## Drive
 
-Two harnesses, both already in the repo:
+Two harnesses, both already in the repo.
 
 **1. Playwright E2E (UI paths).** `e2e/**/*.spec.ts`. Stable selectors use
 `data-testid`. Run one spec or the smoke test:
 ```bash
-yarn test:e2e -- e2e/smoke.spec.ts        # home renders + search input visible
+yarn test:e2e e2e/smoke.spec.ts   # home renders and the search input is visible
 ```
-Remote target instead of local: `PLAYWRIGHT_TEST_BASE_URL=https://... yarn test:e2e`.
+To test a deployed site instead, set the base URL. No local server starts:
+```bash
+PLAYWRIGHT_TEST_BASE_URL=https://staging.esdeveniments.cat yarn test:e2e e2e/smoke.spec.ts
+```
 
-**2. SSR bot check (SEO path).** Drives production HTML for AI crawlers:
+**2. SSR bot check (SEO path).** Fetches the home page with AI crawler user
+agents:
 ```bash
 ./scripts/verify-ai-bot-ssr.sh [https://www.esdeveniments.cat]
 ```
-Passes when every bot UA gets full SSR: `cf-cache-status` is BYPASS/DYNAMIC,
-`h1 >= 1`, `h2 >= 1`, `json+ld >= 1`.
+The script exits 0 unless a bot gets a cached PPR shell (`cf=HIT` together with
+`x-nextjs-postponed`) or a page with no `h1` or `h2`. It prints the JSON-LD
+count but does not check it. Read every row yourself: `cf` should be `BYPASS`
+or `DYNAMIC`, and `ld` should be at least 1.
 
 ## Evidence
 
-Capture the action and the resulting state, not just the final screen:
-- Playwright: screenshots/videos are written to `playwright-report/` on failure
-  (config: `screenshot: only-on-failure`, `video: retain-on-failure`, `trace: on-first-retry`).
-- SSR script: its own stdout table (bot, cf status, h1/h2/ld counts) is the proof.
-- For a manual proof, save the transcript to a scratch path and keep it visible;
-  do not commit proof artifacts unless the change is a large port/migration.
+Capture the action and the resulting state, not just the final screen.
+- Playwright writes failure screenshots and videos to `test-results/` and the
+  HTML report to `playwright-report/` (config: `screenshot: only-on-failure`,
+  `video: retain-on-failure`, `trace: on-first-retry`).
+- SSR script: its stdout table (bot, cf status, h1, h2, ld counts) is the proof.
+- For a manual proof, save the output to a scratch path and show it. Do not
+  commit proof artifacts unless the change is a large port or migration.
 
 ## Cleanup
 
-- `yarn dev` spawns a child `next dev` process; killing the `yarn` PID leaves it
-  orphaned. Kill the whole process group you started:
+- Stop the server that listens on the port, then confirm the port is free:
   ```bash
-  # capture the PGID when launching: setsid yarn dev &   (macOS: use nohup … &)
   lsof -i :3000 -sTCP:LISTEN -t | xargs kill   # only when the port is yours
+  lsof -i :3000 -sTCP:LISTEN                    # expect no output
   ```
-  Then confirm the port is free. Never kill by bare process name: other
-  que-fer processes may be running.
-- `playwright-report/` and `.next/` are gitignored build output; leave them.
-- The SSR script cleans its own temp files.
+  If you started `yarn dev &`, also `kill` the PID you saved from `$!`.
+  Never kill by bare process name: other que-fer processes may be running.
+- `test-results/`, `playwright-report/` and `.next/` are gitignored; leave them.
+- The SSR script deletes its temp files only when every request succeeds.
 
 ## Feature map
 
-Top user paths, what to reach them, and what observable end state proves them.
+Top user paths, how to reach them, and what observable end state proves them.
 
 | Feature | Reach | Proof |
 |---|---|---|
 | Home + search | `GET /` | `data-testid="search-input"` visible |
 | Event listing | `GET /<place>` (e.g. `/barcelona`) | event cards render, no `$RX` suspense errors |
 | Event detail | click an event card | title, date, JSON-LD `Event` block present |
-| Filters | listing page → filters | results update client-side via SWR, URL stays clean |
-| News | `GET /<place>/noticies` | news cards + JSON-LD present |
+| Filters | listing page, then filters | results update client-side via SWR; date and category go in the path, search and distance in the query (see `url-canonicalization`) |
+| News | `GET /noticies/<place>` (e.g. `/noticies/barcelona`) | news cards + JSON-LD present |
 
 ## Maintenance
 

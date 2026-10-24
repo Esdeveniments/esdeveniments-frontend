@@ -1,6 +1,6 @@
 # Agent Skills Index
 
-This directory contains **16 Agent Skills** that guide AI coding agents (GitHub Copilot, Claude, etc.) when working on this project.
+This directory contains **18 Agent Skills** that guide AI coding agents (GitHub Copilot, Claude, etc.) when working on this project.
 
 ## How Skills Work
 
@@ -10,7 +10,7 @@ This directory contains **16 Agent Skills** that guide AI coding agents (GitHub 
 
 ## Available Skills
 
-### Core Development (5)
+### Core Development (6)
 
 | Skill                                                                 | Purpose            | Key Rule                        |
 | --------------------------------------------------------------------- | ------------------ | ------------------------------- |
@@ -19,6 +19,7 @@ This directory contains **16 Agent Skills** that guide AI coding agents (GitHub 
 | [react-nextjs-patterns](react-nextjs-patterns/SKILL.md)               | Component patterns | Server Component by default     |
 | [filter-system-dev](filter-system-dev/SKILL.md)                       | Filter system      | `config/filters.ts` only        |
 | [api-layer-patterns](api-layer-patterns/SKILL.md)                     | API architecture   | Three-layer proxy pattern       |
+| [auth-patterns](auth-patterns/SKILL.md)                               | Auth and session   | `useAuth()` / server cookies    |
 
 ### Infrastructure (4)
 
@@ -38,13 +39,14 @@ This directory contains **16 Agent Skills** that guide AI coding agents (GitHub 
 | [bundle-optimization](bundle-optimization/SKILL.md)             | Performance | Quality caps, Server Components     |
 | [verify-que-fer](verify-que-fer/SKILL.md)                       | Proof gate  | Drive the running app, keep evidence |
 
-### Operations (3)
+### Operations (4)
 
 | Skill                                                         | Purpose          | Key Rule                       |
 | ------------------------------------------------------------- | ---------------- | ------------------------------ |
 | [env-variable-management](env-variable-management/SKILL.md)   | Environment vars | Update 5 locations             |
 | [data-validation-patterns](data-validation-patterns/SKILL.md) | Data validation  | Zod schemas, safe fallbacks    |
 | [code-review-evaluation](code-review-evaluation/SKILL.md)     | PR reviews       | Cross-reference against skills |
+| [ai-review-responder](ai-review-responder/SKILL.md)           | AI review replies | Fix or decline each thread     |
 
 ## Adding a New Skill
 
