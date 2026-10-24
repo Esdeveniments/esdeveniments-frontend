@@ -338,7 +338,7 @@ Next cannot publish. A spec that clicks Publish sooner is silently ignored and t
 times out waiting for navigation. Wait for `data-publish-armed="true"` on
 `event-form`, never a fixed sleep.
 
-## Cloudflare caches `/api/*` only through a Cache Rule, and ignores `Vary: Accept`
+## Cloudflare caches `/api/*` only through a Cache Rule, and honors `Vary` only through one
 
 On the Free plan Cloudflare does not cache `/api/*` by default
 (`cf-cache-status: DYNAMIC`), whatever `Cache-Control` says. A Cache Rule can
