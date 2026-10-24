@@ -22,11 +22,11 @@ async function waitForHydration(page: Page) {
   }
 }
 
-// "/" is left out: its PPR resume reuses boundary ids from the prerendered
-// shell (B:5, S:5, S:6 appear twice), so #418 still fires on some loads.
-// That is a Next.js/React issue (still present in 16.2.12); add "/" back
-// once an upgrade fixes it.
-for (const path of ["/catalunya", "/barcelona"]) {
+// "/" used to throw #418 on some loads: its PPR resume reused boundary ids
+// from the prerendered shell (vercel/next.js#94670). Fixed in React's Fizz
+// (facebook/react#36779), which App Router gets from the React build Next
+// bundles (not the app's own react package) since vercel/next.js#94951.
+for (const path of ["/", "/catalunya", "/barcelona"]) {
   test(`${path} hydrates without React errors`, async ({ page }) => {
     // Two cold loads plus the waits; the 30 s default is too tight on previews.
     test.setTimeout(120_000);
