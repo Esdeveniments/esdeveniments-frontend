@@ -202,12 +202,12 @@ A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja,
 
 ### 4.3 Desktop Layout (implemented)
 
-Two-column with sticky sidebar:
+Two-column with a sidebar. The sidebar is not sticky: it is taller than most screens, so sticking would hide the sponsor card until the end of the event content.
 
 - **Left (~60%)**: Hero image → Share bar → Title → Description → Related events → Categories → Weather → FAQ → Restaurants → News
-- **Right (~40%, sticky)**: Date & time → Add to calendar → Location + static map → External link → Source attribution → Sponsor
+- **Right (~40%)**: Date & time → Add to calendar → Location + static map → External link → Source attribution → Sponsor
 
-**Components**: `EventSidebar` (server, sticky sidebar), event detail page layout in `app/e/[eventId]/page.tsx`.
+**Components**: `EventSidebar` (server sidebar), event detail page layout in `app/e/[eventId]/page.tsx`.
 
 ### 4.4 Mobile Layout (implemented)
 
@@ -281,7 +281,7 @@ Improvements that were identified as valuable but not yet implemented, listed by
 | --------------------------------------------- | -------------------------------------------------------------------------------- |
 | **Card: 3-col grid on `xl:` (≥1280px)**       | ✅ Implemented — `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` in `List` component |
 | **Event detail: Sticky bottom CTA (mobile)**  | ✅ Implemented — `EventStickyCTA` component                                      |
-| **Event detail: Two-column layout (desktop)** | ✅ Implemented — `EventSidebar` with sticky positioning                          |
+| **Event detail: Two-column layout (desktop)** | ✅ Implemented — `EventSidebar` (not sticky, see 4.3)                            |
 
 ### Medium Priority
 
