@@ -309,7 +309,7 @@ async function HomeStructuredData({
     url: pageData.canonical,
     // Reference the ItemList by @id instead of inlining it: it is emitted
     // standalone below, so inlining it here tripled the event descriptions
-    // (~300 KB of the homepage payload).
+    // (~130 KB of the homepage HTML, measured 2026-10-24).
     mainContentOfPage: itemListSchema
       ? { "@id": itemListSchema["@id"] }
       : undefined,
