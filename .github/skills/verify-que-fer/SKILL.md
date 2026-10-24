@@ -34,8 +34,8 @@ yarn start -p 3000
   at the production site, and event pages for preprod events return 404.
 - Skip `yarn prebuild` only when the service worker does not matter for the
   change. `public/sw.js` is gitignored, so a fresh clone has none.
-- Data needs `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` in `.env.local` (or
-  exported in the shell). `next build` and `next start` run in production mode
+- Data needs `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` in `.env.local`.
+  `next build` and `next start` run in production mode
   and never read `.env.development`, where `README.md` puts them for `yarn dev`.
   Without them pages render, but external data comes back empty.
 - Ready when the home page HTML has the search input:
