@@ -37,7 +37,9 @@ This skill enforces the **internal API proxy layer architecture** - a critical s
 │ - Next.js route handlers (edge-friendly)                   │
 │ - Call external wrappers                                   │
 │ - Set cache headers (s-maxage, stale-while-revalidate)     │
-│ - Return safe fallbacks on errors                          │
+│ - Return safe fallbacks on errors, unless the success      │
+│   response is CDN-cached: then return the error status     │
+│   with no-store (see app/api/events/route.ts)              │
 └─────────────────┬───────────────────────────────────────────┘
                   │
                   ▼

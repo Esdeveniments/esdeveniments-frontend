@@ -2,8 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "app/api/events/route";
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { fetchEventsExternal } from "@lib/api/events-external";
+import * as Sentry from "@sentry/nextjs";
 
 vi.mock("@lib/api/fetch-wrapper", () => ({ fetchWithHmac: vi.fn() }));
+vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
 const emptyPage = {
   content: [],
@@ -16,6 +18,8 @@ const emptyPage = {
 
 beforeEach(() => {
   vi.mocked(fetchWithHmac).mockReset();
+  vi.mocked(Sentry.captureException).mockReset();
+  vi.unstubAllEnvs();
 });
 
 describe("events API outage distinction", () => {
@@ -68,6 +72,16 @@ describe("events API outage distinction", () => {
 
     expect(response.status).toBe(status);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("does not send an upstream outage to Sentry on every request", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.mocked(fetchWithHmac).mockResolvedValue(new Response(null, { status: 503 }));
+
+    await GET(new Request("http://localhost/api/events"));
+    await GET(new Request("http://localhost/api/events"));
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
   it("retains the safe fallback for server callers", async () => {
