@@ -111,8 +111,9 @@ export default function GoogleScripts() {
   // dashboard, all of which inline the same prod measurement ID. Reuses the
   // existing prod-host allowlist (covers www + apex). Resolved after mount so
   // the first client render matches SSR (both render nothing) — no hydration
-  // mismatch. The CMP/consent banner is intentionally NOT gated (it keeps its
-  // beforeInteractive ordering and sends nothing to GA on its own).
+  // mismatch. The CMP/consent banner is intentionally NOT gated (its
+  // googlefcPresent script runs in the root layout <head>, and it sends
+  // nothing to GA on its own).
   const [isProdHost, setIsProdHost] = useState(false);
   useEffect(() => {
     setIsProdHost(isProductionHost(window.location.hostname));
@@ -221,31 +222,9 @@ export default function GoogleScripts() {
 
       {!isE2ETestMode && (
         <>
-          {/* googlefcPresent iframe - MUST exist BEFORE Funding Choices loads (Google requirement).
-              Uses beforeInteractive to guarantee ordering. This is a tiny inline script with
-              zero performance impact - it just creates a hidden iframe. */}
-          <Script id="google-fc-present" strategy="beforeInteractive">
-            {`
-              (function() {
-                if (window.frames['googlefcPresent']) return;
-                var createIframe = function() {
-                  if (!document.body) {
-                    setTimeout(createIframe, 0);
-                    return;
-                  }
-                  var i = document.createElement('iframe');
-                  i.style.cssText = 'width:0;height:0;border:none;z-index:-1000;position:absolute;left:-1000px;top:-1000px';
-                  i.style.display = 'none';
-                  i.name = 'googlefcPresent';
-                  document.body.appendChild(i);
-                };
-                createIframe();
-              })();
-            `}
-          </Script>
 
           {/* Funding Choices (CMP) - loads with lazyOnload for PageSpeed.
-              Since googlefcPresent uses beforeInteractive, ordering is guaranteed.
+              The googlefcPresent iframe script runs earlier, in the root layout <head>.
               AdContext polls for __tcfapi and falls back after 5s. */}
           {FUNDING_CHOICES_SRC && (
             <Script
