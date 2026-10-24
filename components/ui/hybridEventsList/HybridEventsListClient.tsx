@@ -124,6 +124,7 @@ function HybridEventsListClientContent({
     if (
       search &&
       !isLoading &&
+      !error &&
       !searchResultsTrackedRef.current &&
       hasClientFilters
     ) {
@@ -136,7 +137,7 @@ function HybridEventsListClientContent({
         date: date || undefined,
       });
     }
-  }, [search, isLoading, hasClientFilters, displayedEvents.length, place, category, date]);
+  }, [search, isLoading, error, hasClientFilters, displayedEvents.length, place, category, date]);
 
   // Track zero results when filters are active and loading is complete
   useEffect(() => {
@@ -175,9 +176,6 @@ function HybridEventsListClientContent({
     console.error("Events loading error:", error);
   }
 
-  // Show error state when there's an error and filters are active
-  const showErrorState = error && hasClientFilters;
-
   // Show no events found when filters are active, fetch completed, and no results
   const showNoEventsFound =
     hasClientFilters &&
@@ -197,12 +195,8 @@ function HybridEventsListClientContent({
 
   return (
     <>
-      {isLoading ? (
-        // Show skeleton immediately while fetching filtered events
-        <EventsGridSkeleton />
-      ) : showErrorState ? (
-        // Show error message when events fail to load
-        <div className="w-full flex flex-col items-center gap-element-gap py-section-y px-section-x">
+      {error ? (
+        <div role="alert" className="w-full stack items-center py-section-y px-section-x">
           <div className="w-full text-center">
             <p className="body-normal text-foreground-strong mb-element-gap">
               {t("errorTitle")}
@@ -212,6 +206,10 @@ function HybridEventsListClientContent({
             </p>
           </div>
         </div>
+      ) : null}
+      {isLoading ? (
+        // Show skeleton immediately while fetching filtered events
+        <EventsGridSkeleton />
       ) : showNoEventsFound ? (
         // Show no events found message when filters return no results
         <>

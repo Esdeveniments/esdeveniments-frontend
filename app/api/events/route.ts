@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { fetchEventsExternal } from "@lib/api/events-external";
+import { fetchEventsExternalResult } from "@lib/api/events-external";
 import { FetchEventsParams } from "types/event";
 import { handleApiError } from "@utils/api-error-handler";
 
 // GET /api/events - proxy to external API with server-side HMAC signing
 export async function GET(request: Request) {
+  let errorStatus = 500;
   try {
     const url = new URL(request.url);
     const search = url.searchParams;
@@ -50,8 +51,12 @@ export async function GET(request: Request) {
           : undefined,
     };
 
-    const data = await fetchEventsExternal(params);
-    return NextResponse.json(data, {
+    const result = await fetchEventsExternalResult(params);
+    if (!result.data) {
+      errorStatus = result.status ?? 502;
+      throw result.error ?? new Error("Events service unavailable");
+    }
+    return NextResponse.json(result.data, {
       status: 200,
       headers: {
         // s-maxage=1800: events are published days ahead; 30 min staleness
@@ -61,15 +66,11 @@ export async function GET(request: Request) {
       },
     });
   } catch (e) {
-    return handleApiError(e, "/api/events", {
-      fallbackData: {
-        content: [],
-        currentPage: 0,
-        pageSize: 10,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      },
+    const response = handleApiError(e, "/api/events", {
+      status: errorStatus,
+      errorMessage: "Events service unavailable",
     });
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   }
 }
