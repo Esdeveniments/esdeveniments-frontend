@@ -304,6 +304,49 @@ every deploy. Set it on the step that runs `yarn test:e2e` too.
 `afterAll`. A real login plus publish in `beforeAll` hit 30 s. Call
 `test.setTimeout()` inside each slow hook.
 
+## `<body>` scrolls the page, not the window
+
+`styles/globals.css` gives `html, body` `height: 100vh` and `overflow-x:
+hidden`, so `<body>` is the scroll container. `window.scrollY` stays 0 and
+`scroll` listeners on `window` never fire: read `document.body.scrollTop`.
+Playwright's `scrollIntoViewIfNeeded()`, `hover()` and `click()` scroll the
+nearest scrollable ancestor. While `<main>` had `overflow-hidden` (until #507) they
+scrolled `<main>` itself, and a popover clipped for users looked fine in tests.
+To test what a user sees, scroll with `page.mouse.wheel()` and move the mouse
+by coordinates.
+
+## React hoists a preload `<link>` into `<head>` only when it has `href`
+
+`<link rel="preload" as="image" imageSrcSet={…} media={…}>` without `href`
+renders in `<body>`, where the browser finds it late. Pass `href` (a fallback
+size) as well as `imageSrcSet`, as the home hero preload does (#508).
+
+## Local builds: leave `SENTRY_AUTH_TOKEN` empty
+
+`next.config.js` uploads source maps and creates a Sentry release whenever
+`SENTRY_AUTH_TOKEN` is set, and `.env.local` may set it. Every local
+`yarn build` then adds a junk release to the production project. Build with
+`SENTRY_AUTH_TOKEN= yarn build`.
+
+## Local Lighthouse: run it on Playwright's Chromium
+
+Lighthouse against Chrome 156 fails with "connection closed". Point
+`CHROME_PATH` at the Chromium that Playwright installs (on macOS,
+`~/Library/Caches/ms-playwright/chromium-*/chrome-mac-arm64/Google Chrome for
+Testing.app/Contents/MacOS/Google Chrome for Testing`).
+
+## Run the bundle gate in the main checkout; refresh its baseline from CI
+
+In a git worktree with a symlinked `node_modules`, the `.nft.json` trace files
+list longer paths. Every route's `serverBytes` grows a few KB, and
+`compare-bundle-sizes.mjs` reports dozens of false errors. Refresh
+`bundle-size-baseline.json` from the `bundle-sizes` artifact of a green develop
+CI run (`gh run download <id> -n bundle-sizes`), never from a local build.
+The artifact lists `routes` as an array; the baseline keys them by route and
+keeps its own `version` and `thresholds`. Copy the artifact's
+`client.totalBytes` into the top-level `clientTotalBytes` too: the gate reads
+that field, and without it the client check is skipped.
+
 ## `vi.resetModules()` keeps `vi.mock` factories
 
 A `mockImplementation` set on a mocked module survives `vi.resetModules()` and
