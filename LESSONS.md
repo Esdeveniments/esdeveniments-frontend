@@ -317,7 +317,7 @@ component that reached them loaded a 72 KB gzip chunk holding `ca`, `es` and
 `en`. They now read `i18n/locale-labels.generated.json`; run
 `yarn i18n:labels` after editing `Components.Constants` or the `Utils` sections
 it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
-Only `i18n/request.ts` loads the full message files.
+Outside tests, only `i18n/request.ts` loads the full message files.
 
 ## The backend looks events up by slug only
 
