@@ -187,6 +187,24 @@ export function beforeSend(
 }
 
 /**
+ * The tunnel URL @sentry/nextjs's init() derives from withSentryConfig's
+ * tunnelRoute, for a hand-built BrowserClient. Events then go to our own origin,
+ * so ad blockers that block *.sentry.io do not drop them. Non-SaaS DSNs are not
+ * tunnelled, as in the SDK.
+ */
+export function sentryTunnelFor(
+  dsn: string | undefined,
+  tunnelPath: string | undefined,
+): string | undefined {
+  const saas = dsn?.match(
+    /^https:\/\/[^@]+@o(\d+)\.ingest(?:\.([a-z]{2}))?\.sentry\.io\/(\d+)$/,
+  );
+  if (!tunnelPath || !saas) return undefined;
+  const [, orgId, region, projectId] = saas;
+  return `${tunnelPath}?o=${orgId}&p=${projectId}${region ? `&r=${region}` : ""}`;
+}
+
+/**
  * Client-specific beforeSend handler.
  * Browser runtime expects ErrorEvent type.
  */

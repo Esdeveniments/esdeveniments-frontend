@@ -337,3 +337,19 @@ Read the lines after the handler before blaming the overlay.
 Next cannot publish. A spec that clicks Publish sooner is silently ignored and then
 times out waiting for navigation. Wait for `data-publish-armed="true"` on
 `event-form`, never a fixed sleep.
+
+## Browser Sentry must be initialised in `instrumentation-client.ts`
+
+Turbopack ignores `sentry.client.config.ts`. Until 2026-10-24 the browser
+`Sentry.init()` lived there, so production sent no client errors for months,
+with no build error or warning. Keep the init in `instrumentation-client.ts`.
+To check a deploy, load a page and look for `window.__SENTRY__`, then throw an
+error in the console: a `POST /monitoring?o=…&p=…` request should follow.
+The `webpack.treeshake` options in `next.config.js` also do nothing under
+Turbopack; `compiler.define` (`__SENTRY_TRACING__`, `__SENTRY_DEBUG__`) is what
+strips Sentry's tracing and debug code. Even then, `init()` from
+`@sentry/nextjs` adds 148 KB raw to the boot chunk, so the file builds a
+`BrowserClient` by hand (48 KB). That client must set what `init()` did for
+free: `release` (`process.env._sentryRelease`), `tunnel` (`sentryTunnelFor`)
+and `eventFiltersIntegration` (without it `ignoreErrors` and `denyUrls` do
+nothing).
