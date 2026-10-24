@@ -347,4 +347,9 @@ To check a deploy, load a page and look for `window.__SENTRY__`, then throw an
 error in the console: a `POST /monitoring?o=…&p=…` request should follow.
 The `webpack.treeshake` options in `next.config.js` also do nothing under
 Turbopack; `compiler.define` (`__SENTRY_TRACING__`, `__SENTRY_DEBUG__`) is what
-strips Sentry's tracing and debug code.
+strips Sentry's tracing and debug code. Even then, `init()` from
+`@sentry/nextjs` adds 148 KB raw to the boot chunk, so the file builds a
+`BrowserClient` by hand (48 KB). That client must set what `init()` did for
+free: `release` (`process.env._sentryRelease`), `tunnel` (`sentryTunnelFor`)
+and `eventFiltersIntegration` (without it `ignoreErrors` and `denyUrls` do
+nothing).

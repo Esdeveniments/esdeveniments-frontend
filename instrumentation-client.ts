@@ -4,8 +4,8 @@
 //
 // Errors only. A hand-built BrowserClient instead of init() keeps the React and
 // Next.js wrappers, tracing and Session Replay out of the boot chunk (see the
-// Sentry tree-shaking docs). The release comes from withSentryConfig, which
-// inlines it as process.env._sentryRelease: the one the source maps use.
+// Sentry tree-shaking docs). withSentryConfig inlines the release (the one the
+// source maps use) and the tunnelRoute path; init() would apply both itself.
 
 import {
   BrowserClient,
@@ -24,11 +24,14 @@ import {
   beforeSendClient,
   SENTRY_IGNORE_ERRORS,
   SENTRY_DENY_URLS,
+  sentryTunnelFor,
 } from "@utils/sentry-helpers";
 
 if (process.env.NODE_ENV === "production") {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
   const client = new BrowserClient({
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    dsn,
+    tunnel: sentryTunnelFor(dsn, process.env._sentryRewritesTunnelPath),
     environment: process.env.NEXT_PUBLIC_VERCEL_ENV,
     release: process.env._sentryRelease,
     transport: makeFetchTransport,
