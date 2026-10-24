@@ -6,6 +6,9 @@
 // Next.js wrappers, tracing and Session Replay out of the boot chunk (see the
 // Sentry tree-shaking docs). withSentryConfig inlines the release (the one the
 // source maps use) and the tunnelRoute path; init() would apply both itself.
+// Left out on purpose: browserSessionIntegration (one release-health request
+// per page load) and browserApiErrorsIntegration (globalHandlers already
+// catches uncaught errors from timers and listeners in our own scripts).
 
 import {
   BrowserClient,
