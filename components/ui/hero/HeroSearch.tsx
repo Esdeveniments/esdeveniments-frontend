@@ -46,6 +46,11 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const [localPlaceValue, setLocalPlaceValue] = useState<string>("");
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
 
+  // The Modal mounts on first open; fetch its chunk now so that open is instant.
+  useEffect(() => {
+    void import("@components/ui/common/modal");
+  }, []);
+
   // --- Location Logic ---
   const isPlacePage = useMemo(() => {
     const { pathnameWithoutLocale } = stripLocalePrefix(pathname || "/");

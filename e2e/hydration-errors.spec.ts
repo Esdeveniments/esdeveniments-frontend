@@ -9,6 +9,9 @@ const HYDRATION_ERROR =
 
 async function waitForHydration(page: Page) {
   await page.waitForLoadState("load");
+  // Each streamed boundary starts as <template id="B:n"> and is swapped out
+  // when its content arrives. None left means the stream has finished.
+  await page.waitForFunction(() => !document.querySelector('template[id^="B:"]'));
   for (let i = 0; i < 2; i++) {
     await page.evaluate(
       () =>
@@ -25,6 +28,8 @@ async function waitForHydration(page: Page) {
 // once an upgrade fixes it.
 for (const path of ["/catalunya", "/barcelona"]) {
   test(`${path} hydrates without React errors`, async ({ page }) => {
+    // Two cold loads plus the waits; the 30 s default is too tight on previews.
+    test.setTimeout(120_000);
     const errors: string[] = [];
     page.on("pageerror", (error) => {
       if (HYDRATION_ERROR.test(error.message)) errors.push(error.message);
@@ -32,7 +37,8 @@ for (const path of ["/catalunya", "/barcelona"]) {
 
     // These errors depend on stream timing, so load each page twice.
     for (let load = 0; load < 2; load++) {
-      await page.goto(path, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+      expect(response?.ok(), `${path} responds 2xx`).toBe(true);
       await waitForHydration(page);
     }
 
