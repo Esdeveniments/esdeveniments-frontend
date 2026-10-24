@@ -119,6 +119,7 @@ export default function Page({
           key={source.media}
           rel="preload"
           as="image"
+          href={source.href}
           media={source.media}
           imageSrcSet={source.srcSet}
           imageSizes={source.sizes}

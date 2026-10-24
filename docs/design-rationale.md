@@ -166,7 +166,7 @@ Hero (text + search + date pills + CTA)
 
 ### 3.4 Hero Image Decision
 
-A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja, Barcelona, April 2023). File: `public/static/images/hero-castellers.webp` (1920×1080, 113 KB WebP), plus `-1280` (1x laptops), `-m800` and `-m1152` (a 1152×1080 centre crop for phones up to 440px). `config/hero-image.ts` holds the `srcset` values that the `<picture>` and the preload links share.
+A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja, Barcelona, April 2023). File: `public/static/images/hero-castellers.webp` (1920×1080, 113 KB WebP), plus `-1280` (1x laptops), `-m1152` (a 1152×1080 centre crop for phones up to 440px) and `-m800` (the same crop at 800×750). `config/hero-image.ts` holds the `srcset` values that the `<picture>` and the preload links share.
 
 **Why castellers**: Most iconic symbol of Catalan culture (UNESCO Intangible Cultural Heritage). Vibrant yellow/blue palette complements brand red. Upward angle creates aspiration. Sky in upper 40% provides contrast space for white text overlay.
 

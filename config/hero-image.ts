@@ -9,13 +9,17 @@
 export const HERO_IMAGE = {
   src: "/static/images/hero-castellers.webp",
   mobile: {
+    // React hoists a preload <link> into <head> only when it has an href.
+    href: "/static/images/hero-castellers-m800.webp",
     media: "(max-width: 440px)",
     srcSet:
       "/static/images/hero-castellers-m800.webp 800w, /static/images/hero-castellers-m1152.webp 1152w",
     sizes: "max(100vw, 440px)",
   },
   desktop: {
-    media: "(min-width: 441px)",
+    href: "/static/images/hero-castellers.webp",
+    // Exact complement of the mobile query: no gap at fractional widths.
+    media: "not all and (max-width: 440px)",
     srcSet:
       "/static/images/hero-castellers-1280.webp 1280w, /static/images/hero-castellers.webp 1920w",
     sizes: "max(100vw, 730px)",
