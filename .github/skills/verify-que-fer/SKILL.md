@@ -11,11 +11,12 @@ proof that a change works end to end.
 
 ## Before you start
 
-- Check memory. `next dev` plus a Playwright Chromium needs several GB. On a
-  loaded 16 GB Mac this froze the machine (2026-10-24). If `memory_pressure`
-  reports under 30% free, close apps first, or verify against the deployed
-  staging site instead of a local server. Run one browser at a time and stop
-  the dev server when you finish.
+- Do not use `next dev` (`yarn dev`) for verification on a 16 GB machine. Its
+  Turbopack process reached 2.5-2.8 GB and froze a loaded Mac twice on
+  2026-10-24. A production build plus `next start` uses far less and is what
+  ships anyway. Check `memory_pressure` first: under 30% free, close apps or
+  verify against the deployed staging site. Run one browser at a time and stop
+  the server when you finish.
 - Use `localhost:3000`, not `127.0.0.1` or another port. The Logto login
   callback is registered only for `http://localhost:3000/api/auth/callback`.
 
@@ -24,10 +25,13 @@ proof that a change works end to end.
 From the repo root:
 
 ```bash
-yarn prebuild   # generates public/sw.js and robots.txt; yarn dev does not
-yarn dev        # next dev on http://localhost:3000
+yarn prebuild                                               # public/sw.js and robots.txt; yarn build does not run it
+NEXT_PUBLIC_SITE_URL=http://localhost:3000 yarn build       # inlined at build time
+yarn start -p 3000
 ```
 
+- `NEXT_PUBLIC_SITE_URL` is inlined at build time. Without it the build points
+  at the production site, and event pages for preprod events return 404.
 - Skip `yarn prebuild` only when the service worker does not matter for the
   change. `public/sw.js` is gitignored, so a fresh clone has none.
 - Data needs `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` in `.env.development`
@@ -37,8 +41,10 @@ yarn dev        # next dev on http://localhost:3000
   ```bash
   curl -s http://localhost:3000/ | grep -c 'data-testid="search-input"'   # expect 1
   ```
-- `playwright.config.ts` starts `yarn dev` itself and reuses a server that
-  already answers on the base URL (`webServer.reuseExistingServer`).
+- `playwright.config.ts` reuses a server that already answers on the base URL
+  (`webServer.reuseExistingServer`). If none answers, it starts `yarn dev`
+  itself, so start `yarn start` first, or set `PLAYWRIGHT_TEST_BASE_URL` to a
+  deployed site.
 
 ## Doctor (run first whenever anything looks off)
 
