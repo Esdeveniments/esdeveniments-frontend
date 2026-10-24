@@ -34,9 +34,10 @@ yarn start -p 3000
   at the production site, and event pages for preprod events return 404.
 - Skip `yarn prebuild` only when the service worker does not matter for the
   change. `public/sw.js` is gitignored, so a fresh clone has none.
-- Data needs `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` in `.env.development`
-  or `.env.local`. Without them pages render, but external data comes back
-  empty.
+- Data needs `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` in `.env.local` (or
+  exported in the shell). `next build` and `next start` run in production mode
+  and never read `.env.development`, where `README.md` puts them for `yarn dev`.
+  Without them pages render, but external data comes back empty.
 - Ready when the home page HTML has the search input:
   ```bash
   curl -s http://localhost:3000/ | grep -c 'data-testid="search-input"'   # expect 1
@@ -50,7 +51,7 @@ yarn start -p 3000
 
 ```bash
 lsof -i :3000 -sTCP:LISTEN     # is the port owned by your dev server?
-grep -cE '^(HMAC_SECRET|BACKEND_SERVICE_SECRET)=.+' .env.development .env.local   # each secret set once
+grep -cE '^(HMAC_SECRET|BACKEND_SERVICE_SECRET)=.+' .env.local   # expect 2; .env.development does not count
 yarn --version                 # expect 4.12.x
 node --version                 # expect v22; Node 25+ breaks the jsdom localStorage tests
 ```
