@@ -1,6 +1,6 @@
 # Agent Skills Index
 
-This directory contains **15 Agent Skills** that guide AI coding agents (GitHub Copilot, Claude, etc.) when working on this project.
+This directory contains **16 Agent Skills** that guide AI coding agents (GitHub Copilot, Claude, etc.) when working on this project.
 
 ## How Skills Work
 
@@ -29,13 +29,14 @@ This directory contains **15 Agent Skills** that guide AI coding agents (GitHub 
 | [security-headers-csp](security-headers-csp/SKILL.md)     | Security patterns    | Use `fetchWithHmac`, allowlist CSP domains |
 | [service-worker-updates](service-worker-updates/SKILL.md) | Service worker       | Edit `sw-template.js`, run `prebuild`      |
 
-### Quality & Testing (3)
+### Quality & Testing (4)
 
 | Skill                                                           | Purpose     | Key Rule                            |
 | --------------------------------------------------------------- | ----------- | ----------------------------------- |
 | [design-system-conventions](design-system-conventions/SKILL.md) | UI styling  | Semantic classes, no `gray-*`       |
 | [testing-patterns](testing-patterns/SKILL.md)                   | Testing     | Vitest for unit, Playwright for E2E |
 | [bundle-optimization](bundle-optimization/SKILL.md)             | Performance | Quality caps, Server Components     |
+| [verify-que-fer](verify-que-fer/SKILL.md)                       | Proof gate  | Drive the running app, keep evidence |
 
 ### Operations (3)
 

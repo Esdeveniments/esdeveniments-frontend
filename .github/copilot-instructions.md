@@ -20,6 +20,7 @@ Purpose: Catalan events discovery web app (Next.js 16.1 App Router + React 19 + 
 | **i18n/translations**         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`, not `next/link`            |
 | **Styling/UI**                | `design-system-conventions`    | Use semantic classes, NEVER `gray-*` colors                 |
 | **Writing tests**             | `testing-patterns`             | Vitest for unit, Playwright for E2E                         |
+| **Proving a change works**    | `verify-que-fer`               | Drive the running app on localhost:3000, capture evidence   |
 | **Security/CSP/scripts**      | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains in CSP               |
 | **Service worker**            | `service-worker-updates`       | Edit `sw-template.js`, run `yarn prebuild`                  |
 | **Performance/images**        | `bundle-optimization`          | Use quality caps, Server Components by default              |
