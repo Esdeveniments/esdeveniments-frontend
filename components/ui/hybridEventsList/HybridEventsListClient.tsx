@@ -195,18 +195,6 @@ function HybridEventsListClientContent({
 
   return (
     <>
-      {error ? (
-        <div role="alert" className="w-full stack items-center py-section-y px-section-x">
-          <div className="w-full text-center">
-            <p className="body-normal text-foreground-strong mb-element-gap">
-              {t("errorTitle")}
-            </p>
-            <p className="body-small text-foreground/80">
-              {t("error")}
-            </p>
-          </div>
-        </div>
-      ) : null}
       {isLoading ? (
         // Show skeleton immediately while fetching filtered events
         <EventsGridSkeleton />
@@ -249,6 +237,19 @@ function HybridEventsListClientContent({
           />
         </>
       )}
+      {/* Below the list: a late error must not push loaded cards down (CLS). */}
+      {error ? (
+        <div role="alert" className="w-full stack items-center py-section-y px-section-x">
+          <div className="w-full text-center">
+            <p className="body-normal text-foreground-strong mb-element-gap">
+              {t("errorTitle")}
+            </p>
+            <p className="body-small text-foreground/80">
+              {t("error")}
+            </p>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

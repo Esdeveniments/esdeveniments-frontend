@@ -69,6 +69,11 @@ describe("listing outage UI", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("Error al carregar");
     expect(screen.getByTestId("client-cards")).toHaveTextContent(event.title);
+    // The notice sits after the cards so it cannot push them down.
+    expect(
+      screen.getByTestId("client-cards").compareDocumentPosition(screen.getByRole("alert")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("shows an error on unfiltered pagination failures too", () => {
