@@ -391,7 +391,7 @@ async function EventPageContent({
               className="px-section-x pt-4"
             />
 
-            {/* Two-column layout: Main content + Sticky sidebar (desktop) */}
+            {/* Two-column layout: Main content + sidebar (desktop) */}
             <div className="flex flex-col lg:flex-row lg:gap-8">
               {/* ========== MAIN CONTENT (left column) ========== */}
               <div className="flex-1 min-w-0 flex flex-col gap-section-y-sm">
@@ -547,7 +547,7 @@ async function EventPageContent({
                 <ClientEventClient event={clientEvent} />
               </div>
 
-              {/* ========== STICKY SIDEBAR (desktop only) ========== */}
+              {/* ========== SIDEBAR (desktop only) ========== */}
               <EventSidebar
                 event={event}
                 cityName={cityName}
