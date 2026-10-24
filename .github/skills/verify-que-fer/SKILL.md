@@ -96,7 +96,7 @@ Capture the action and the resulting state, not just the final screen.
   lsof -i :3000 -sTCP:LISTEN -t | xargs kill   # only when the port is yours
   lsof -i :3000 -sTCP:LISTEN                    # expect no output
   ```
-  If you started `yarn dev &`, also `kill` the PID you saved from `$!`.
+  If you started `yarn start &`, also `kill` the PID you saved from `$!`.
   Never kill by bare process name: other que-fer processes may be running.
 - `test-results/`, `playwright-report/` and `.next/` are gitignored; leave them.
 - The SSR script deletes its temp files only when every request succeeds.
