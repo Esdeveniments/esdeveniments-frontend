@@ -82,4 +82,18 @@ describe("image proxy responses are cacheable by URL alone", () => {
     expect(res.headers.get("content-type")).toBe("image/webp");
     expect(isWebp(Buffer.from(await res.arrayBuffer()))).toBe(true);
   });
+
+  // The Cache Rule matches /api/image-proxy by path, so a cacheable failure
+  // would be served from the edge for the whole s-maxage.
+  it.each([
+    ["the upstream returns 404", async () => new Response(null, { status: 404 })],
+    ["the upstream fetch rejects", async () => Promise.reject(new Error("ECONNRESET"))],
+  ])("does not let the edge cache a failure when %s", async (_, impl) => {
+    vi.mocked(undiciFetch).mockImplementation(impl as never);
+
+    const res = await proxy("&format=webp", "*/*");
+
+    expect(res.status).not.toBe(200);
+    expect(res.headers.get("cache-control")).toMatch(/\bno-store\b/);
+  });
 });
