@@ -297,9 +297,10 @@ export async function GET(request: Request) {
     ? Math.min(baseQuality + DESKTOP_QUALITY_BOOST, MAX_OPTIMIZED_QUALITY)
     : baseQuality;
   // The output depends on the URL only, never on request headers, so
-  // Cloudflare can cache it by URL (the Free plan ignores Vary: Accept).
-  // Callers pick the format in the URL (<picture> sources pass avif/webp);
-  // without one, the source format is kept.
+  // Cloudflare can cache one copy per URL. (It ignores Vary: Accept unless a
+  // Cache Rule configures Vary.) Callers pick the format in the URL: <picture>
+  // sources pass avif/webp. Without one, WebP and AVIF sources become WebP,
+  // PNG and GIF stay, and the rest become JPEG.
   const formatParam = url.searchParams.get("format")?.toLowerCase();
   const preferAvif = formatParam === "avif";
   const preferWebp = formatParam === "webp";
@@ -449,7 +450,12 @@ export async function GET(request: Request) {
         let outputBuffer: Buffer;
         let outputContentType: string;
 
-        if (preferAvif || preferWebp) {
+        if (
+          preferAvif ||
+          preferWebp ||
+          sourceType === "image/webp" ||
+          sourceType === "image/avif"
+        ) {
           // WebP: excellent compression, fast encoding, reliable output
           // We always use WebP for modern formats - AVIF encoding is slower
           // and has caused issues with certain source images

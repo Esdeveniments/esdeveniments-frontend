@@ -13,6 +13,7 @@ vi.mock("@utils/public-fetch-safety", () => ({
 
 const SOURCE = "https://images.example.com/poster.jpg";
 let jpeg: Buffer;
+let webp: Buffer;
 
 beforeAll(async () => {
   // Noise so the JPEG stays above the 10 KB optimisation threshold.
@@ -21,17 +22,26 @@ beforeAll(async () => {
   jpeg = await sharp(raw, { raw: { width: 400, height: 300, channels: 3 } })
     .jpeg({ quality: 90 })
     .toBuffer();
+  webp = await sharp(raw, { raw: { width: 400, height: 300, channels: 3 } })
+    .webp({ quality: 95 })
+    .toBuffer();
 });
 
-beforeEach(() => {
+function upstream(body: Buffer, contentType: string) {
   vi.mocked(undiciFetch).mockImplementation(
     async () =>
-      new Response(new Uint8Array(jpeg), {
+      new Response(new Uint8Array(body), {
         status: 200,
-        headers: { "content-type": "image/jpeg" },
+        headers: { "content-type": contentType },
       }) as never,
   );
-});
+}
+
+const isWebp = (bytes: Buffer) =>
+  bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+  bytes.subarray(8, 12).toString("ascii") === "WEBP";
+
+beforeEach(() => upstream(jpeg, "image/jpeg"));
 
 function proxy(query: string, accept: string) {
   return GET(
@@ -53,10 +63,23 @@ describe("image proxy responses are cacheable by URL alone", () => {
     expect(modern.headers.get("vary") ?? "").not.toMatch(/accept(?!-)/i);
   });
 
-  it("serves WebP when the URL asks for it", async () => {
+  it("serves WebP bytes with a public shared-cache policy when the URL asks for it", async () => {
     const res = await proxy("&format=webp", "*/*");
 
     expect(res.headers.get("content-type")).toBe("image/webp");
-    expect(res.headers.get("cache-control")).toContain("s-maxage=");
+    expect(isWebp(Buffer.from(await res.arrayBuffer()))).toBe(true);
+    const cacheControl = res.headers.get("cache-control") ?? "";
+    expect(cacheControl).toMatch(/\bpublic\b/);
+    expect(cacheControl).toMatch(/\bs-maxage=\d+/);
+    expect(cacheControl).not.toMatch(/private|no-store/);
+  });
+
+  it("keeps a WebP source as WebP when the URL has no format", async () => {
+    upstream(webp, "image/webp");
+
+    const res = await proxy("", "image/jpeg,*/*");
+
+    expect(res.headers.get("content-type")).toBe("image/webp");
+    expect(isWebp(Buffer.from(await res.arrayBuffer()))).toBe(true);
   });
 });
