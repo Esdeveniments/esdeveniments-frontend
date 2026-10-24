@@ -309,8 +309,8 @@ every deploy. Set it on the step that runs `yarn test:e2e` too.
 `styles/globals.css` gives `html, body` `height: 100vh` and `overflow-x:
 hidden`, so `<body>` is the scroll container. `window.scrollY` stays 0 and
 `scroll` listeners on `window` never fire: read `document.body.scrollTop`.
-Playwright's `scrollIntoView()`, `hover()` and `click()` scroll the nearest
-scrollable ancestor. While `<main>` had `overflow-hidden` (until #507) they
+Playwright's `scrollIntoViewIfNeeded()`, `hover()` and `click()` scroll the
+nearest scrollable ancestor. While `<main>` had `overflow-hidden` (until #507) they
 scrolled `<main>` itself, and a popover clipped for users looked fine in tests.
 To test what a user sees, scroll with `page.mouse.wheel()` and move the mouse
 by coordinates.
@@ -343,7 +343,9 @@ list longer paths. Every route's `serverBytes` grows a few KB, and
 `bundle-size-baseline.json` from the `bundle-sizes` artifact of a green develop
 CI run (`gh run download <id> -n bundle-sizes`), never from a local build.
 The artifact lists `routes` as an array; the baseline keys them by route and
-keeps its own `version` and `thresholds`.
+keeps its own `version` and `thresholds`. Copy the artifact's
+`client.totalBytes` into the top-level `clientTotalBytes` too: the gate reads
+that field, and without it the client check is skipped.
 
 ## `vi.resetModules()` keeps `vi.mock` factories
 
