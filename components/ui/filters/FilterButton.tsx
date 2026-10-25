@@ -41,7 +41,9 @@ const FilterButton = ({
     }
     startTransition(() => setLoading(true));
     router.push(removeUrl);
-    // Scroll to top for better UX
+    // Scroll to top. <body> is the scroll container (styles/globals.css), so
+    // window.scrollTo alone is a no-op; keep it in case that CSS changes.
+    document.body.scrollTo({ top: 0, behavior: "smooth" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

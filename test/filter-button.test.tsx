@@ -56,4 +56,22 @@ describe("FilterButton (black-box)", () => {
     fireEvent.click(screen.getByText("Categoria"));
     expect(onOpenModal).toHaveBeenCalledTimes(1);
   });
+
+  it("scrolls <body> (the real scroll container) to top when removing", () => {
+    const bodyScrollTo = vi.fn();
+    document.body.scrollTo = bodyScrollTo;
+    window.scrollTo = vi.fn();
+    renderWithProviders(
+      <FilterButton
+        text="Categoria"
+        filterKey="category"
+        enabled={true}
+        removeUrl="/barcelona"
+        onOpenModal={vi.fn()}
+        testId="filter-pill-category"
+      />
+    );
+    fireEvent.click(screen.getByTestId("filter-pill-category-remove"));
+    expect(bodyScrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+  });
 });

@@ -339,10 +339,15 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       tryShow();
     }, DELAY_MS);
 
-    document.addEventListener("scroll", handleScroll, { passive: true });
+    // <body> is the scroll container (styles/globals.css), and element scroll
+    // events don't bubble, so listen in the capture phase to receive them.
+    document.addEventListener("scroll", handleScroll, {
+      capture: true,
+      passive: true,
+    });
 
     return () => {
-      document.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("scroll", handleScroll, { capture: true });
       clearTimeout(timerId);
     };
     // Re-evaluate on route change so page-view count can reach MIN_PAGE_VIEWS
