@@ -16,8 +16,8 @@ import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
 import { BYDATES, DISTANCES, DEFAULT_FILTER_VALUE, DATE_RANGE_SHORTCUTS } from "@utils/constants";
 
-const CalendarDatePicker = dynamic(
-  () => import("./CalendarDatePicker"),
+const DateRangeCalendar = dynamic(
+  () => import("@components/ui/common/form/DateRangeCalendar"),
   { ssr: false, loading: () => <div className="h-[220px] w-full animate-pulse bg-muted/30 rounded-card" /> },
 );
 import { generateRegionsAndTownsOptions } from "@utils/helpers";
@@ -46,6 +46,22 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
   loading: () => <SelectSkeleton />,
   ssr: false,
 });
+
+const dateChipClass = (isActive: boolean) =>
+  `px-3 py-1.5 text-sm rounded-badge border transition-colors ${isActive
+    ? "bg-primary text-primary-foreground border-primary"
+    : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
+  }`;
+
+// Tells GA which date control people use: a path preset, a range chip or the calendar.
+function getDateMode(byDate: string, from?: string, to?: string): string {
+  if (!from) return byDate === DEFAULT_FILTER_VALUE ? "none" : "preset";
+  const isShortcut = DATE_RANGE_SHORTCUTS.some(({ getRange }) => {
+    const range = getRange();
+    return range.from === from && range.to === to;
+  });
+  return isShortcut ? "shortcut" : "calendar";
+}
 
 const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   isOpen,
@@ -169,11 +185,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   // const [localPrice, setLocalPrice] = useState<string>(defaults.price);
   const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
   const [localToDate, setLocalToDate] = useState<string>(currentQueryParams.to || defaults.fromDate);
-  const [showCalendar, setShowCalendar] = useState<boolean>(Boolean(defaults.fromDate));
-  const isAdvancedDateActive =
-    BYDATES.slice(3).some((opt) => opt.value === defaults.byDate) ||
-    Boolean(defaults.fromDate);
-  const [showMoreDates, setShowMoreDates] = useState<boolean>(isAdvancedDateActive);
   const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
   const [localUserLocation, setLocalUserLocation] = useState(
     defaults.userLocation
@@ -210,11 +221,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalFromDate(defaults.fromDate);
       const hasExplicitRange = Boolean(currentQueryParams.from && currentQueryParams.to);
       setLocalToDate(hasExplicitRange ? (currentQueryParams.to || defaults.fromDate) : defaults.fromDate);
-      setShowCalendar(Boolean(defaults.fromDate));
-      const advancedActive =
-        BYDATES.slice(3).some((opt) => opt.value === defaults.byDate) ||
-        Boolean(defaults.fromDate);
-      setShowMoreDates(advancedActive);
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
       setLocalPlaceType(defaults.placeType);
@@ -522,6 +528,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     sendGoogleEvent("filter_change", {
       filter_place: changes.place,
       filter_date: changes.byDate,
+      filter_date_mode: getDateMode(changes.byDate, changes.from, changes.to),
       filter_category: changes.category,
       filter_distance: changes.distance !== undefined ? changes.distance.toString() : undefined,
       context: "filters_modal_apply",
@@ -537,7 +544,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     setLocalByDate((prevValue) => (prevValue === value ? "" : value) as string);
     setLocalFromDate(""); // Clear calendar date when shortcut selected
     setLocalToDate("");
-    setShowCalendar(false); // Hide calendar when shortcut selected
   }, []);
 
   const handleCalendarDateChange = useCallback((from: string, to: string) => {
@@ -693,107 +699,43 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
                 {t("modal.dateHeading")}
               </p>
-              <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-                {BYDATES.slice(0, 3).map(({ value, labelKey }) => (
-                  <RadioInput
-                    key={value}
-                    id={value}
-                    name="byDate"
-                    value={value}
-                    checkedValue={localByDate}
-                    onChange={handleByDateChange}
-                    label={tByDates(labelKey)}
-                  />
-                ))}
-                <label htmlFor="pick-date" className="flex-start gap-2 cursor-pointer">
-                  <input
-                    id="pick-date"
-                    name="byDate"
-                    type="checkbox"
-                    className="h-4 w-4 rounded-md text-primary border border-primary focus-ring"
-                    checked={showCalendar}
-                    onChange={() => {
-                      setShowCalendar((prev) => {
-                        if (!prev) {
-                          // Opening calendar: clear byDate shortcut
-                          setLocalByDate("");
-                        } else {
-                          // Closing calendar: clear date range
-                          setLocalFromDate("");
-                          setLocalToDate("");
-                        }
-                        return !prev;
-                      });
-                    }}
-                  />
-                  <span>{t("modal.pickDate")}</span>
-                </label>
-              </div>
-              {showCalendar && (
-                <div className="animate-fade-in-up w-full">
-                  <CalendarDatePicker
-                    fromDate={localFromDate}
-                    toDate={localToDate}
-                    onChange={handleCalendarDateChange}
-                  />
-                </div>
-              )}
-              {!showMoreDates ? (
-                <button
-                  type="button"
-                  onClick={() => setShowMoreDates(true)}
-                  className="text-sm text-primary font-medium hover:text-primary/80 transition-colors"
-                >
-                  {t("modal.viewMore")}
-                </button>
-              ) : (
-                <div className="animate-fade-in-up w-full flex flex-col gap-4">
-                  <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-                    {BYDATES.slice(3).map(({ value, labelKey }) => (
-                      <RadioInput
-                        key={value}
-                        id={value}
-                        name="byDate"
-                        value={value}
-                        checkedValue={localByDate}
-                        onChange={handleByDateChange}
-                        label={tByDates(labelKey)}
-                      />
-                    ))}
-                  </div>
-                  <div className="w-full flex flex-wrap gap-2">
-                    {DATE_RANGE_SHORTCUTS.map(({ labelKey, getRange }) => {
-                      const { from: rangeFrom, to: rangeTo } = getRange();
-                      const isActive =
-                        !localByDate &&
-                        localFromDate !== "" &&
-                        localFromDate === rangeFrom &&
-                        localToDate === rangeTo;
-                      return (
-                        <button
-                          key={labelKey}
-                          type="button"
-                          aria-pressed={isActive}
-                          onClick={() => handleDateRangeShortcut(getRange)}
-                          className={`px-3 py-1.5 text-sm rounded-badge border transition-colors ${isActive
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
-                            }`}
-                        >
-                          {tByDates(labelKey)}
-                        </button>
-                      );
-                    })}
-                  </div>
+              <div className="w-full flex flex-wrap gap-2">
+                {BYDATES.map(({ value, labelKey }) => (
                   <button
+                    key={value}
                     type="button"
-                    onClick={() => setShowMoreDates(false)}
-                    className="text-sm text-primary font-medium hover:text-primary/80 transition-colors"
+                    aria-pressed={localByDate === value}
+                    onClick={() => handleByDateChange(value)}
+                    className={dateChipClass(localByDate === value)}
                   >
-                    {t("modal.viewLess")}
+                    {tByDates(labelKey)}
                   </button>
-                </div>
-              )}
+                ))}
+                {DATE_RANGE_SHORTCUTS.map(({ labelKey, getRange }) => {
+                  const { from: rangeFrom, to: rangeTo } = getRange();
+                  const isActive =
+                    !localByDate &&
+                    localFromDate !== "" &&
+                    localFromDate === rangeFrom &&
+                    localToDate === rangeTo;
+                  return (
+                    <button
+                      key={labelKey}
+                      type="button"
+                      aria-pressed={isActive}
+                      onClick={() => handleDateRangeShortcut(getRange)}
+                      className={dateChipClass(isActive)}
+                    >
+                      {tByDates(labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+              <DateRangeCalendar
+                fromDate={localFromDate}
+                toDate={localToDate}
+                onChange={handleCalendarDateChange}
+              />
             </fieldset>
             {categories.length > 0 && (
               <fieldset className="w-full flex flex-col justify-start items-start gap-4">

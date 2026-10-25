@@ -78,22 +78,15 @@ test.describe("Publish wizard UX", () => {
     await page.keyboard.press("Escape");
     await page.getByTestId("next-button").click();
 
-    const startButton = page.getByRole("button", { name: /^(Start|Inici) \*:/ });
-    const placeholder = page.getByRole("button", {
-      name: /select date and time|seleccionar data i hora/i,
-    });
-    await expect(placeholder.or(startButton)).toBeVisible({ timeout: 15000 });
-    if (await placeholder.isVisible()) await placeholder.focus();
-    await startButton.click();
-    const lastRowDay = page.locator(".rdp-form-wrapper .rdp-week").last().locator(".rdp-day").first();
-    await expect(lastRowDay).toBeVisible();
+    const lastRowDay = page.locator(".rdp-calendar .rdp-week").last().locator(".rdp-day").first();
+    await expect(lastRowDay).toBeAttached({ timeout: 15000 });
 
     // Scroll with the wheel like a user. scrollIntoView, hover() and click()
     // would also scroll an overflow-hidden <main> and hide the clipping.
     const viewportHeight = page.viewportSize()!.height;
     // Move the mouse by coordinates: hover() would scroll the target into view.
-    const startBox = (await startButton.boundingBox())!;
-    await page.mouse.move(startBox.x + startBox.width / 2, startBox.y + startBox.height / 2);
+    const formBox = (await page.getByTestId("event-form").boundingBox())!;
+    await page.mouse.move(formBox.x + formBox.width / 2, Math.min(formBox.y + 100, viewportHeight / 2));
     await expect
       .poll(async () => {
         const box = await lastRowDay.boundingBox();

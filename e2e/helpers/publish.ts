@@ -1,5 +1,5 @@
 import path from "path";
-import { expect, type Locator, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 export const DEFAULT_IMAGE = path.join(
   process.cwd(),
@@ -28,21 +28,17 @@ function isoDay(offsetDays: number): string {
 }
 
 /**
- * Open the picker and set the start day (and optionally start/end times).
+ * Pick the start day on the inline calendar (and optionally start/end times).
  *
  * The picker defaults to today at 09:00, which is already past in the
- * afternoon, and listings omit ended events. It keeps the default one-hour
- * duration when the start day changes.
+ * afternoon, and listings omit ended events. One tap makes a one-day event
+ * and keeps the default one-hour duration.
  */
 export async function pickEventWhen(page: Page, when: EventWhen = {}) {
   const dayIso = when.date ?? isoDay(2);
-  const startDateButton = page.getByRole("button", {
-    name: /^(Start|Inici) \*:/,
-  });
-  await loadDatePicker(page, startDateButton);
-  await startDateButton.click();
+  await waitForDatePicker(page);
 
-  const day = page.locator(`[data-day="${dayIso}"]`);
+  const day = page.locator(`.rdp-calendar [data-day="${dayIso}"]`);
   for (let month = 0; month < 14 && !(await day.isVisible()); month++) {
     await page.getByRole("button", { name: /next month/i }).click();
   }
@@ -54,18 +50,16 @@ export async function pickEventWhen(page: Page, when: EventWhen = {}) {
     await page.getByText(/^All day/).click();
   }
 
-  // One time input is mounted at a time: it edits whichever field is open.
-  const timeInput = page.locator('input[type="time"]');
   if (when.startTime) {
-    // Re-picking the already selected day closes the popup; reopen Start.
-    if (!(await timeInput.isVisible())) await startDateButton.click();
-    await timeInput.fill(when.startTime, { timeout: 10_000 });
+    await startTimeInput(page).fill(when.startTime, { timeout: 10_000 });
   }
   if (when.endTime) {
-    await page.getByRole("button", { name: /^(End|Fi) \*:/ }).click();
-    await timeInput.fill(when.endTime, { timeout: 10_000 });
+    await endTimeInput(page).fill(when.endTime, { timeout: 10_000 });
   }
 }
+
+export const startTimeInput = (page: Page) => page.getByLabel(/^(Start time|Hora d'inici)$/);
+export const endTimeInput = (page: Page) => page.getByLabel(/^(End time|Hora de fi)$/);
 
 /** Move the publish form's start date to a day in the future. */
 export async function pickFutureStartDate(page: Page, daysAhead = 2) {
@@ -222,22 +216,7 @@ export async function fetchStoredEvent(slug: string): Promise<StoredEvent> {
   return (await res.json()) as StoredEvent;
 }
 
-/** Edit forms render the picker collapsed; expand it so Start/End are reachable. */
-export async function expandDatePicker(page: Page) {
-  await loadDatePicker(page, page.getByRole("button", { name: /^Start \*:/ }));
-}
-
-/**
- * The picker first renders a placeholder that swaps itself for the real
- * picker on pointer enter or focus. A click can therefore lose its target
- * halfway (the nightly of 2026-10-21 timed out on it), so focus it instead.
- */
-async function loadDatePicker(page: Page, startDateButton: Locator) {
-  const placeholder = page.getByRole("button", {
-    name: /select date and time|seleccionar data i hora/i,
-  });
-  await expect(placeholder.or(startDateButton)).toBeVisible({ timeout: 15_000 });
-  // A short timeout: the placeholder may swap itself out between the check and the focus.
-  if (await placeholder.isVisible()) await placeholder.focus({ timeout: 5_000 }).catch(() => {});
-  await expect(startDateButton).toBeVisible({ timeout: 15_000 });
+/** The picker chunk loads lazily; wait until the inline calendar is there. */
+export async function waitForDatePicker(page: Page) {
+  await expect(page.locator(".rdp-calendar [role=grid]")).toBeVisible({ timeout: 15_000 });
 }

@@ -836,10 +836,7 @@
         "priceHeading": "Price",
         "priceFree": "Free",
         "pricePaid": "Paid",
-        "calendarLabel": "Or pick from calendar:",
-        "pickDate": "Pick a date...",
-        "viewMore": "View more",
-        "viewLess": "View less"
+        "calendarLabel": "Or pick from calendar:"
       }
     },
     "ImageUploader": {
@@ -1085,16 +1082,19 @@
       "helperPreview": "This is how visitors will see the description",
       "helperEdit": "Press Enter for line breaks."
     },
+    "DateRangeCalendar": {
+      "pickStart": "Pick the first day",
+      "pickEnd": "Now pick the last day (or tap the same day for a one-day event)",
+      "clear": "Clear dates"
+    },
     "DatePicker": {
+      "startTime": "Start time",
+      "endTime": "End time",
       "dateAndTime": "Date and time *",
-      "selectDateAndTime": "Select date and time",
-      "start": "Start *",
-      "end": "End *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "All day (no end time)",
-      "allDayHelper": "If it lasts all day, we'll set the end to the same day.",
-      "today": "Today"
+      "allDayHelper": "If it lasts all day, we'll set the end to the same day."
     },
     "LoadMoreButton": {
       "loading": "Loading more events",

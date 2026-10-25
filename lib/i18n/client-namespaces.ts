@@ -17,6 +17,7 @@ export const CLIENT_COMPONENT_KEYS = [
   "AdBoard",
   "CardContent",
   "DatePicker",
+  "DateRangeCalendar",
   "Description",
   "EditModal",
   "EventForm",
