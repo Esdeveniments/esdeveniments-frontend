@@ -360,6 +360,22 @@ describe("SocialFollowPopup – mobile vs desktop", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("locks <html> scroll (the window scroller) while the desktop dialog is open", () => {
+    seedPageViews(1, "/other");
+    render(<SocialFollowPopup pathname="/page-b" />);
+
+    act(() => {
+      vi.advanceTimersByTime(DELAY_MS + 100);
+    });
+    expect(document.documentElement.style.overflow).toBe("hidden");
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(document.documentElement.style.overflow).toBe("");
+  });
+
   it("should render as complementary (role=complementary) on mobile", async () => {
     const mod = await import("@components/hooks/useCheckMobileScreen");
     (mod.default as ReturnType<typeof vi.fn>).mockReturnValue(true);

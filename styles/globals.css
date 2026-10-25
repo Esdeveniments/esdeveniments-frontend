@@ -75,10 +75,14 @@ body {
 html,
 body {
   font-size: 100%; /* keep 1rem = 16px */
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* prevent stray horizontal gap/scroll on mobile */
+  /* Prevent stray horizontal gap/scroll on mobile. `clip`, unlike `hidden`,
+     doesn't turn <body> into a scroll container, so the window keeps
+     scrolling (Next.js scroll reset, back/forward restore) and the sticky
+     navbar works. No `hidden` fallback: it would break the sticky navbar. */
+  overflow-x: clip;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-font-smoothing: antialiased;

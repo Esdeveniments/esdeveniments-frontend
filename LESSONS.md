@@ -304,11 +304,16 @@ every deploy. Set it on the step that runs `yarn test:e2e` too.
 `afterAll`. A real login plus publish in `beforeAll` hit 30 s. Call
 `test.setTimeout()` inside each slow hook.
 
-## `<body>` scrolls the page, not the window
+## Keep the window as the scroller: `overflow-x: clip`, never `hidden`, on `html, body`
 
-`styles/globals.css` gives `html, body` `height: 100vh` and `overflow-x:
-hidden`, so `<body>` is the scroll container. `window.scrollY` stays 0 and
-`scroll` listeners on `window` never fire: read `document.body.scrollTop`.
+`styles/globals.css` used to give `html, body` `height: 100vh` and
+`overflow-x: hidden`. That made `<body>` the scroll container: `window.scrollY`
+stayed 0, `window` scroll listeners never fired, Next.js's scroll reset on
+navigation was a no-op (users landed mid-page with the navbar hidden), and Back
+lost the list position. `overflow-x: clip` clips the same way without creating
+a scroll container, and `min-height` lets `<html>` grow with the page. Because
+`<html>` sets an overflow, `body { overflow: hidden }` no longer reaches the
+viewport: lock page scroll on `document.documentElement`, as Headless UI does.
 Playwright's `scrollIntoViewIfNeeded()`, `hover()` and `click()` scroll the
 nearest scrollable ancestor. While `<main>` had `overflow-hidden` (until #507) they
 scrolled `<main>` itself, and a popover clipped for users looked fine in tests.

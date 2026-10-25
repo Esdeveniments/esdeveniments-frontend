@@ -266,7 +266,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     };
 
     let didLock = false;
-    let previousBodyOverflow: string | null = null;
+    let previousOverflow: string | null = null;
     if (!isMobile) {
       // Remember the focused element, move focus into the dialog, and lock
       // background scroll while the modal is open (desktop only — the
@@ -280,8 +280,10 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       );
       firstFocusable?.focus();
 
-      previousBodyOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
+      // Lock <html>: the window is the scroller, and <body>'s overflow
+      // doesn't reach it while <html> sets overflow-x (styles/globals.css).
+      previousOverflow = document.documentElement.style.overflow;
+      document.documentElement.style.overflow = "hidden";
       didLock = true;
     }
 
@@ -291,7 +293,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       // Restore based on whether this effect run actually locked, not on
       // the (correct but indirect) isMobile closure value.
       if (didLock) {
-        document.body.style.overflow = previousBodyOverflow ?? "";
+        document.documentElement.style.overflow = previousOverflow ?? "";
         previousFocusRef.current?.focus?.();
         previousFocusRef.current = null;
       }
