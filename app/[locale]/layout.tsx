@@ -11,6 +11,7 @@ import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { routing } from "@i18n/routing";
+import { isE2ETestMode } from "@utils/env";
 import GoogleScripts from "../GoogleScripts";
 import AuthEventTracker from "@components/analytics/AuthEventTracker";
 import { AdProvider } from "@lib/context/AdContext";
@@ -168,6 +169,33 @@ export default async function LocaleLayout({
             `,
           }}
         />
+        {/* googlefcPresent iframe: Google requires it before Funding Choices
+            loads. It lives here, not as a beforeInteractive <Script> in
+            GoogleScripts: inside that streamed client tree the inline script
+            landed at random spots in the DOM and caused hydration error #418. */}
+        {!isE2ETestMode && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+              (function() {
+                if (window.frames['googlefcPresent']) return;
+                var createIframe = function() {
+                  if (!document.body) {
+                    setTimeout(createIframe, 0);
+                    return;
+                  }
+                  var i = document.createElement('iframe');
+                  i.style.cssText = 'width:0;height:0;border:none;z-index:-1000;position:absolute;left:-1000px;top:-1000px';
+                  i.style.display = 'none';
+                  i.name = 'googlefcPresent';
+                  document.body.appendChild(i);
+                };
+                createIframe();
+              })();
+            `,
+            }}
+          />
+        )}
       </head>
       <body>
         <Script
