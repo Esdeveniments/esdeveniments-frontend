@@ -16,6 +16,7 @@
 | i18n/translations         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`           |
 | Styling/UI                | `design-system-conventions`    | Semantic classes, no `gray-*`             |
 | Tests                     | `testing-patterns`             | Vitest for unit, Playwright for E2E       |
+| Proving a change works    | `verify-que-fer`               | Drive the running app, capture evidence   |
 | Security/CSP              | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains    |
 | Service worker            | `service-worker-updates`       | Edit `sw-template.js`, run `prebuild`     |
 | Performance/images        | `bundle-optimization`          | Quality caps, Server Components default   |
