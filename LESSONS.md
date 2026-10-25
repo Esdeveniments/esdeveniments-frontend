@@ -319,7 +319,7 @@ by coordinates.
 
 `<link rel="preload" as="image" imageSrcSet={…} media={…}>` without `href`
 renders in `<body>`, where the browser finds it late. Pass `href` (a fallback
-size) as well as `imageSrcSet`, as the home hero preload does (#508).
+URL) as well as `imageSrcSet`, as the home hero preload does (#508).
 
 ## Local builds: leave `SENTRY_AUTH_TOKEN` empty
 
