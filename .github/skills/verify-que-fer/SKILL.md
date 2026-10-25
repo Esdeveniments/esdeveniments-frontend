@@ -75,6 +75,9 @@ agents:
 ```bash
 ./scripts/verify-ai-bot-ssr.sh [https://www.esdeveniments.cat]
 ```
+Point it at a site behind Cloudflare. On a URL with no `cf-cache-status`
+header (such as `localhost`), it stops before printing anything, because
+`set -euo pipefail` aborts on the failed `grep`.
 The script exits 0 unless a bot gets a cached PPR shell (`cf=HIT` together with
 `x-nextjs-postponed`) or a page with no `h1` or `h2`. It prints the JSON-LD
 count but does not check it. Read every row yourself: `cf` should be `BYPASS`
@@ -94,8 +97,9 @@ Capture the action and the resulting state, not just the final screen.
 
 - Stop the server that listens on the port, then confirm the port is free:
   ```bash
-  lsof -i :3000 -sTCP:LISTEN -t | xargs kill   # only when the port is yours
-  lsof -i :3000 -sTCP:LISTEN                    # expect no output
+  pid="$(lsof -i :3000 -sTCP:LISTEN -t || true)"
+  [ -z "$pid" ] || kill $pid                     # only when the port is yours
+  lsof -i :3000 -sTCP:LISTEN                     # expect no output
   ```
   If you started `yarn start &`, also `kill` the PID you saved from `$!`.
   Never kill by bare process name: other que-fer processes may be running.
