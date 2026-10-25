@@ -153,6 +153,25 @@ describe("SocialFollowPopup – trigger conditions", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("should show when <body> (the real scroll container) passes threshold", () => {
+    seedPageViews(1, "/other");
+
+    render(<SocialFollowPopup pathname="/page-b" />);
+
+    // globals.css makes <body> the scroller: window.scrollY stays 0 and the
+    // scroll event fires on <body> without bubbling to document.
+    Object.defineProperty(document.body, "scrollTop", {
+      value: 800,
+      configurable: true,
+    });
+    act(() => {
+      fireEvent.scroll(document.body);
+    });
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    delete (document.body as { scrollTop?: number }).scrollTop;
+  });
+
   it("should not show if scroll is below threshold", () => {
     seedPageViews(1, "/other");
 
@@ -459,6 +478,7 @@ describe("SocialFollowPopup – edge cases", () => {
     expect(removeListenerSpy).toHaveBeenCalledWith(
       "scroll",
       expect.any(Function),
+      { capture: true },
     );
     removeListenerSpy.mockRestore();
   });

@@ -328,6 +328,9 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     };
 
     const handleScroll = () => {
+      // The capture listener sees every nested scroller too; stop reading
+      // layout once the popup has shown.
+      if (hasTriggeredRef.current) return;
       if (getScrollY() >= getScrollThreshold()) {
         scrolled = true;
         tryShow();
@@ -339,10 +342,16 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       tryShow();
     }, DELAY_MS);
 
-    document.addEventListener("scroll", handleScroll, { passive: true });
+    // Capture phase catches scrolls from the window and from any element
+    // scroller (e.g. <body> when html/body clip overflow). Element scroll
+    // events don't bubble, so a plain listener would miss those.
+    document.addEventListener("scroll", handleScroll, {
+      capture: true,
+      passive: true,
+    });
 
     return () => {
-      document.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("scroll", handleScroll, { capture: true });
       clearTimeout(timerId);
     };
     // Re-evaluate on route change so page-view count can reach MIN_PAGE_VIEWS
