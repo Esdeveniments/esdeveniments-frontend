@@ -18,10 +18,11 @@ import EventPromoteAction from "./EventPromoteAction";
 import type { EventSidebarProps } from "types/props";
 
 /**
- * Sticky sidebar for the event detail page (desktop only).
+ * Sidebar for the event detail page (desktop only).
  * Contains: Date/Time, Location, More Info, Duration, Sponsor.
  *
- * Rendered inside a card with sticky positioning.
+ * Not sticky: it is taller than most screens, so sticking would hide the
+ * sponsor card until the end of the event content.
  * Hidden on mobile (lg:hidden) — mobile uses inline versions of these components.
  */
 export default async function EventSidebar({
@@ -42,7 +43,7 @@ export default async function EventSidebar({
       className="hidden lg:block w-[340px] xl:w-[380px] flex-shrink-0"
       aria-label={t("sidebarAriaLabel")}
     >
-      <div className="sticky top-20 flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         {/* Main sidebar card */}
         <div className="card-bordered">
           <div className="card-body flex flex-col gap-4">
