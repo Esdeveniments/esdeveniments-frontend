@@ -27,6 +27,7 @@ vi.mock("@heroicons/react/24/outline", () => ({
   ClockIcon: () => <svg data-testid="clock-icon" />,
   UserIcon: () => <svg data-testid="user-icon" />,
   MegaphoneIcon: () => <svg data-testid="megaphone-icon" />,
+  PencilIcon: () => <svg data-testid="pencil-icon" />,
 }));
 
 vi.mock("@components/ui/common/SectionHeading", () => ({
@@ -89,12 +90,12 @@ function buildEvent(
   };
 }
 
-describe("EventDetailsSection promote action (mobile)", () => {
+describe("EventDetailsSection owner actions (mobile)", () => {
   beforeEach(() => {
     mockAuthUser = null;
   });
 
-  it("shows the promote link on the mobile details section when the signed-in user owns the event", () => {
+  it("shows the edit and promote links on the mobile details section when the signed-in user owns the event", () => {
     mockAuthUser = {
       id: OWNER_ID,
       email: "a@b.com",
@@ -103,11 +104,15 @@ describe("EventDetailsSection promote action (mobile)", () => {
     };
     render(<EventDetailsSection event={buildEvent()} />);
 
-    const link = screen.getByTestId("event-promote-link");
-    expect(link.getAttribute("href")).toBe("/e/my-event/promote");
+    expect(
+      screen.getByTestId("event-edit-link").getAttribute("href"),
+    ).toBe("/e/my-event/edita");
+    expect(
+      screen.getByTestId("event-promote-link").getAttribute("href"),
+    ).toBe("/e/my-event/promote");
   });
 
-  it("does not show the promote link when the signed-in user is not the owner", () => {
+  it("does not show the owner links when the signed-in user is not the owner", () => {
     mockAuthUser = {
       id: "someone-else",
       email: "b@c.com",
@@ -116,13 +121,15 @@ describe("EventDetailsSection promote action (mobile)", () => {
     };
     render(<EventDetailsSection event={buildEvent()} />);
 
+    expect(screen.queryByTestId("event-edit-link")).toBeNull();
     expect(screen.queryByTestId("event-promote-link")).toBeNull();
   });
 
-  it("does not show the promote link when logged out", () => {
+  it("does not show the owner links when logged out", () => {
     mockAuthUser = null;
     render(<EventDetailsSection event={buildEvent()} />);
 
+    expect(screen.queryByTestId("event-edit-link")).toBeNull();
     expect(screen.queryByTestId("event-promote-link")).toBeNull();
   });
 });
