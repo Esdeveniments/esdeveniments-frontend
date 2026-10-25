@@ -328,6 +328,9 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     };
 
     const handleScroll = () => {
+      // The capture listener sees every nested scroller too; stop reading
+      // layout once the popup has shown.
+      if (hasTriggeredRef.current) return;
       if (getScrollY() >= getScrollThreshold()) {
         scrolled = true;
         tryShow();
