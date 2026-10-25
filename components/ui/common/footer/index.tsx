@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { JSX } from "react";
 import ActiveLink from "@components/ui/common/link";
@@ -6,6 +7,15 @@ import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClie
 import CopyrightNotice from "./CopyrightYear";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 import { contactEmail, socialLinks } from "@config/index";
+
+// Reading the clock while rendering made the footer boundary dynamic under
+// cacheComponents. The shell then dropped the <footer>, but still streamed its
+// link holes, so React's $RS found no placeholders (11 errors per page).
+async function getCopyrightYear(): Promise<number> {
+  "use cache";
+  cacheLife("days");
+  return new Date().getFullYear();
+}
 
 export default async function Footer(): Promise<JSX.Element> {
   const t = await getTranslations("Components.Footer");
@@ -163,7 +173,7 @@ export default async function Footer(): Promise<JSX.Element> {
           className="w-full flex flex-col items-center gap-element-gap-sm px-section-x"
           data-testid="footer-last-content"
         >
-          <CopyrightNotice />
+          <CopyrightNotice year={await getCopyrightYear()} />
           <span className="text-xs text-muted-foreground text-center">
             {t("tagline")}
           </span>
