@@ -166,7 +166,7 @@ Hero (text + search + date pills + CTA)
 
 ### 3.4 Hero Image Decision
 
-A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja, Barcelona, April 2023). File: `public/static/images/hero-castellers.webp` (1920×1080, 159 KB WebP).
+A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja, Barcelona, April 2023). File: `public/static/images/hero-castellers.webp` (1920×1080, 113 KB WebP), plus `-1280` (1x laptops), `-m1152` (a 1152×1080 centre crop for phones up to 440px) and `-m800` (the same crop at 800×750). `config/hero-image.ts` holds the `srcset` values that the `<picture>` and the preload links share.
 
 **Why castellers**: Most iconic symbol of Catalan culture (UNESCO Intangible Cultural Heritage). Vibrant yellow/blue palette complements brand red. Upward angle creates aspiration. Sky in upper 40% provides contrast space for white text overlay.
 
@@ -202,12 +202,12 @@ A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja,
 
 ### 4.3 Desktop Layout (implemented)
 
-Two-column with sticky sidebar:
+Two-column with a sidebar. The sidebar is not sticky: it is taller than most screens, so sticking would hide the sponsor card until the end of the event content.
 
 - **Left (~60%)**: Hero image → Share bar → Title → Description → Related events → Categories → Weather → FAQ → Restaurants → News
-- **Right (~40%, sticky)**: Date & time → Add to calendar → Location + static map → External link → Source attribution → Sponsor
+- **Right (~40%)**: Date & time → Add to calendar → Location + static map → External link → Source attribution → Sponsor
 
-**Components**: `EventSidebar` (server, sticky sidebar), event detail page layout in `app/e/[eventId]/page.tsx`.
+**Components**: `EventSidebar` (server sidebar), event detail page layout in `app/[locale]/e/[eventId]/page.tsx`.
 
 ### 4.4 Mobile Layout (implemented)
 
@@ -281,7 +281,7 @@ Improvements that were identified as valuable but not yet implemented, listed by
 | --------------------------------------------- | -------------------------------------------------------------------------------- |
 | **Card: 3-col grid on `xl:` (≥1280px)**       | ✅ Implemented — `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` in `List` component |
 | **Event detail: Sticky bottom CTA (mobile)**  | ✅ Implemented — `EventStickyCTA` component                                      |
-| **Event detail: Two-column layout (desktop)** | ✅ Implemented — `EventSidebar` with sticky positioning                          |
+| **Event detail: Two-column layout (desktop)** | ✅ Implemented — `EventSidebar` (not sticky, see 4.3)                            |
 
 ### Medium Priority
 

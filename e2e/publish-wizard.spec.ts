@@ -49,6 +49,67 @@ test.describe("Publish wizard UX", () => {
     await next.click();
   });
 
+  test("date picker on the last step is not hidden under the footer", async ({
+    page,
+  }) => {
+    await page.goto("/publica", {
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
+    });
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30000,
+    });
+
+    await page.locator("input#title").fill("Concert de prova");
+    await page
+      .locator("textarea#description")
+      .fill("Descripció de prova amb prou caràcters.");
+    await page.getByTestId("next-button").click();
+    const townSelect = page.getByTestId("town-select");
+    await expect(townSelect).toBeVisible({ timeout: 15000 });
+    await townSelect.click();
+    await page.keyboard.type("Barcelona");
+    await expect(townSelect.getByRole("option").first()).toContainText("Barcelona");
+    await page.keyboard.press("Enter");
+    await page.locator("#location").fill("Sala de prova");
+    await page.locator("#categories").locator("..").click();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Escape");
+    await page.getByTestId("next-button").click();
+
+    const startButton = page.getByRole("button", { name: /^(Start|Inici) \*:/ });
+    const placeholder = page.getByRole("button", {
+      name: /select date and time|seleccionar data i hora/i,
+    });
+    await expect(placeholder.or(startButton)).toBeVisible({ timeout: 15000 });
+    if (await placeholder.isVisible()) await placeholder.focus();
+    await startButton.click();
+    const lastRowDay = page.locator(".rdp-form-wrapper .rdp-week").last().locator(".rdp-day").first();
+    await expect(lastRowDay).toBeVisible();
+
+    // Scroll with the wheel like a user. scrollIntoView, hover() and click()
+    // would also scroll an overflow-hidden <main> and hide the clipping.
+    const viewportHeight = page.viewportSize()!.height;
+    // Move the mouse by coordinates: hover() would scroll the target into view.
+    const startBox = (await startButton.boundingBox())!;
+    await page.mouse.move(startBox.x + startBox.width / 2, startBox.y + startBox.height / 2);
+    await expect
+      .poll(async () => {
+        const box = await lastRowDay.boundingBox();
+        if (box && box.y + box.height <= viewportHeight - 20) return true;
+        await page.mouse.wheel(0, 200);
+        return false;
+      })
+      .toBe(true);
+    const lastRowOnTop = await lastRowDay.evaluate((cell) => {
+      const box = cell.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return cell.contains(hit);
+    });
+    expect(lastRowOnTop, "last calendar row is covered by another element").toBe(true);
+  });
+
   test("test link button opens normalized URL", async ({ page }) => {
     // Init scripts run on the next navigation, so stub window.open before it.
     await page.addInitScript(() => {

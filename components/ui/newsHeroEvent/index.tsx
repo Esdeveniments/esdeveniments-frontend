@@ -46,7 +46,7 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
               src={sources.fallback}
               alt={event.title}
               loading="eager"
-              decoding="sync"
+              decoding="async"
               fetchPriority="high"
               sizes={sizes}
               className="object-cover w-full h-full absolute inset-0"
