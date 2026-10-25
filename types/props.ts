@@ -462,6 +462,10 @@ export interface FiltersClientProps {
   labels: FilterLabels;
 }
 
+export interface CopyrightNoticeProps {
+  year: number;
+}
+
 export interface ActiveNavLinkProps {
   href: string;
   children: ReactNode;

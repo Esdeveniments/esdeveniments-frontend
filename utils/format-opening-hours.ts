@@ -1,8 +1,8 @@
 import { OpeningInfo } from "types/api/restaurant";
 import { FormatOpeningHoursOptions, OpeningHoursLabels } from "types/common";
-import caMessages from "../messages/ca.json";
+import localeLabels from "../i18n/locale-labels.generated.json";
 
-const defaultOpeningHoursLabels: OpeningHoursLabels = (caMessages as any).Utils
+const defaultOpeningHoursLabels: OpeningHoursLabels = localeLabels.utils
   .OpeningHours as OpeningHoursLabels;
 
 export function formatOpeningHours(

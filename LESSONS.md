@@ -352,11 +352,15 @@ that field, and without it the client check is skipped.
 A `mockImplementation` set on a mocked module survives `vi.resetModules()` and
 leaks into later tests. Restore the original implementation in a `finally`.
 
-## Client components must not import `@utils/constants`
+## Shared code must not import `messages/*.json`
 
-`utils/constants.ts` imports all three locale JSON files and `next-intl/server`.
-A client import pulls them into that route's bundle. Put shared client-safe
-values in a module without heavy imports, such as `utils/image-validation.ts`.
+The bundler ships an imported JSON file whole. `utils/constants.ts` and five
+shared utils imported the locale files for a few labels, so every client
+component that reached them loaded a 72 KB gzip chunk holding `ca`, `es` and
+`en`. They now read `i18n/locale-labels.generated.json`; run
+`yarn i18n:labels` after editing `Components.Constants` or the `Utils` sections
+it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
+Outside tests, only `i18n/request.ts` loads the full message files.
 
 ## The backend looks events up by slug only
 
@@ -380,3 +384,19 @@ Read the lines after the handler before blaming the overlay.
 Next cannot publish. A spec that clicks Publish sooner is silently ignored and then
 times out waiting for navigation. Wait for `data-publish-armed="true"` on
 `event-form`, never a fixed sleep.
+
+## Browser Sentry must be initialised in `instrumentation-client.ts`
+
+Turbopack ignores `sentry.client.config.ts`. Until 2026-10-24 the browser
+`Sentry.init()` lived there, so production sent no client errors for months,
+with no build error or warning. Keep the init in `instrumentation-client.ts`.
+To check a deploy, load a page and look for `window.__SENTRY__`, then throw an
+error in the console: a `POST /monitoring?o=…&p=…` request should follow.
+The `webpack.treeshake` options in `next.config.js` also do nothing under
+Turbopack; `compiler.define` (`__SENTRY_TRACING__`, `__SENTRY_DEBUG__`) is what
+strips Sentry's tracing and debug code. Even then, `init()` from
+`@sentry/nextjs` adds 148 KB raw to the boot chunk, so the file builds a
+`BrowserClient` by hand (48 KB). That client must set what `init()` did for
+free: `release` (`process.env._sentryRelease`), `tunnel` (`sentryTunnelFor`)
+and `eventFiltersIntegration` (without it `ignoreErrors` and `denyUrls` do
+nothing).
