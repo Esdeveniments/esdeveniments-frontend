@@ -271,39 +271,33 @@ export interface DatePickerComponentProps {
   idPrefix?: string;
   startDate: string; // "YYYY-MM-DD" or ISO string
   endDate: string; // "YYYY-MM-DD" or ISO string
-  minDate?: string; // "YYYY-MM-DD" or ISO string
   onChange: (field: "startDate" | "endDate", value: string) => void;
   required?: boolean;
   className?: string;
   enableAllDayToggle?: boolean;
   isAllDay?: boolean;
   onToggleAllDay?: (isAllDayEvent: boolean) => void;
-  autoFocus?: boolean;
-  error?: boolean;
 }
 
 export interface TimeSelectorProps {
+  id: string;
   value: string;
   onChange: (time: string) => void;
   minTime?: string;
   label: string;
 }
 
-export interface DateButtonProps {
-  label: string;
-  value: string;
-  isOpen: boolean;
-  onClick: () => void;
-  error?: boolean;
-}
-
-export interface CalendarDatePickerProps {
+export interface DateRangeCalendarProps {
   /** Range start as YYYY-MM-DD or empty string */
   fromDate: string;
   /** Range end as YYYY-MM-DD or empty string */
   toDate: string;
   /** Callback with from/to YYYY-MM-DD strings (empty to clear) */
   onChange: (from: string, to: string) => void;
+  /** First selectable day as YYYY-MM-DD (default: today in Madrid) */
+  minDate?: string;
+  /** Never let the user clear the range */
+  required?: boolean;
 }
 
 export interface ImageUploaderProps {

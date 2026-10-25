@@ -797,78 +797,64 @@ video {
    primary: #D6002F, primary-foreground: #ffffff,
    foreground: rgb(69 69 69), foreground-strong: rgb(0 0 0)
 ─── */
-.rdp-filter-wrapper {
+/* Variables go on .rdp-root: the library declares its defaults there, so a
+   parent wrapper cannot override them. */
+.rdp-calendar .rdp-root {
   --rdp-accent-color: #d6002f;
   --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
   --rdp-range_middle-color: rgb(69, 69, 69);
   --rdp-range_middle-background-color: rgba(214, 0, 47, 0.08);
   --rdp-selected-border: 0px solid transparent;
+  --rdp-today-color: #d6002f;
+  --rdp-day-width: min(44px, calc((100vw - 3rem) / 7));
+  --rdp-day-height: 44px;
+  --rdp-day_button-width: min(42px, calc((100vw - 3rem) / 7));
+  --rdp-day_button-height: 42px;
   --rdp-day_button-border-radius: 9999px;
-  --rdp-day_button-height: 28px;
-  --rdp-day_button-width: 28px;
+  --rdp-nav_button-width: 44px;
+  --rdp-nav_button-height: 44px;
   --rdp-outside-opacity: 0.4;
+
+  font-size: 0.875rem;
 }
 
-.rdp-filter-wrapper .rdp-root {
-  --rdp-font-family: var(--font-family, inherit);
-
-  font-size: 0.8125rem;
-  width: 100%;
-  max-width: 280px;
-}
-
-/* Remove default blue outline ring on all interactive elements */
-.rdp-filter-wrapper .rdp-day_button {
+.rdp-calendar .rdp-day_button {
   outline: none !important;
   border: none;
 }
 
-.rdp-filter-wrapper .rdp-month_caption {
+.rdp-calendar .rdp-month_caption {
   font-weight: 600;
   text-transform: capitalize;
-  font-size: 0.8125rem;
   color: rgb(0, 0, 0);
-  padding-bottom: 0.25rem;
 }
 
-.rdp-filter-wrapper .rdp-weekday {
-  color: rgba(69, 69, 69, 0.4);
-  font-size: 0.6875rem;
+.rdp-calendar .rdp-weekday {
+  color: rgba(69, 69, 69, 0.5);
+  font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.125rem 0;
 }
 
-.rdp-filter-wrapper .rdp-day {
+.rdp-calendar .rdp-day {
   color: rgb(69, 69, 69);
 }
 
-.rdp-filter-wrapper .rdp-day.rdp-disabled {
-  color: rgba(69, 69, 69, 0.25);
-}
-
-/* Selected start/end circles – solid brand red, no outline ring */
-.rdp-filter-wrapper .rdp-day.rdp-range_start .rdp-day_button,
-.rdp-filter-wrapper .rdp-day.rdp-range_end .rdp-day_button,
-.rdp-filter-wrapper .rdp-day.rdp-selected .rdp-day_button {
+/* A start still waiting for its end has no range_start class yet: fill it too. */
+.rdp-calendar .rdp-day.rdp-selected:not(.rdp-range_middle) .rdp-day_button {
   background-color: #d6002f;
   color: #ffffff;
   font-weight: 600;
-  outline: none !important;
-  border: none !important;
-  box-shadow: none;
 }
 
-/* Range middle – soft rose tint */
-.rdp-filter-wrapper .rdp-day.rdp-range_middle .rdp-day_button {
-  background-color: rgba(214, 0, 47, 0.08);
-  color: rgb(69, 69, 69);
+.rdp-calendar .rdp-day.rdp-selected.rdp-outside {
+  opacity: 1;
+}
+
+.rdp-calendar .rdp-day.rdp-range_middle .rdp-day_button {
   border-radius: 0;
-  outline: none !important;
-  border: none !important;
 }
 
-/* Today indicator – subtle dotted border */
-.rdp-filter-wrapper
+.rdp-calendar
   .rdp-day.rdp-today:not(
     .rdp-selected,
     .rdp-range_start,
@@ -879,117 +865,20 @@ video {
   border: 1px solid rgba(214, 0, 47, 0.35) !important;
 }
 
-.rdp-filter-wrapper .rdp-button_previous,
-.rdp-filter-wrapper .rdp-button_next {
-  color: #d6002f;
-  width: 24px;
-  height: 24px;
-}
-
-.rdp-filter-wrapper .rdp-button_previous:hover,
-.rdp-filter-wrapper .rdp-button_next:hover {
-  color: #d6002f;
-  background-color: rgba(214, 0, 47, 0.06);
-}
-
-.rdp-filter-wrapper .rdp-chevron {
+.rdp-calendar .rdp-chevron {
   fill: #d6002f;
 }
 
-.rdp-filter-wrapper .rdp-nav {
-  gap: 0.25rem;
-}
-
-/* Keyboard focus: visible ring for accessibility (box-shadow survives outline:none on selected days) */
-.rdp-filter-wrapper .rdp-day_button:focus-visible,
-.rdp-filter-wrapper .rdp-button_previous:focus-visible,
-.rdp-filter-wrapper .rdp-button_next:focus-visible {
-  box-shadow: 0 0 0 2px #d6002f !important;
+.rdp-calendar .rdp-button_previous:hover,
+.rdp-calendar .rdp-button_next:hover {
+  background-color: rgba(214, 0, 47, 0.06);
   border-radius: 9999px;
 }
 
-.rdp-filter-wrapper .rdp-months {
-  gap: 0;
-}
-
-/* EventForm date picker overrides */
-.rdp-form-wrapper {
-  --rdp-accent-color: #d6002f;
-  --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
-  --rdp-selected-border: 0px solid transparent;
-  --rdp-day_button-border-radius: 9999px;
-  --rdp-day_button-height: 44px;
-  --rdp-day_button-width: 44px;
-}
-
-.rdp-form-wrapper .rdp-root {
-  font-size: 0.875rem;
-}
-
-.rdp-form-wrapper .rdp-day_button {
-  outline: none !important;
-  border: none;
-}
-
-.rdp-form-wrapper .rdp-month_caption {
-  font-weight: 600;
-  text-transform: capitalize;
-}
-
-.rdp-form-wrapper .rdp-day.rdp-selected .rdp-day_button {
-  background-color: #d6002f;
-  color: #ffffff;
-  font-weight: 600;
-  outline: none !important;
-  border: none !important;
-  box-shadow: none;
-}
-
-.rdp-form-wrapper .rdp-day.rdp-today:not(.rdp-selected) .rdp-day_button {
-  border: 1px solid rgba(214, 0, 47, 0.35) !important;
-}
-
-.rdp-form-wrapper .rdp-range_middle .rdp-day_button {
-  background-color: rgba(214, 0, 47, 0.06);
-  color: rgb(69, 69, 69);
-  outline: none !important;
-}
-
-.rdp-form-wrapper .rdp-button_previous,
-.rdp-form-wrapper .rdp-button_next {
-  color: #d6002f;
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-}
-
-.rdp-form-wrapper .rdp-button_previous:hover,
-.rdp-form-wrapper .rdp-button_next:hover {
-  color: #a80025;
-  background-color: rgba(214, 0, 47, 0.06);
-}
-
-.rdp-form-wrapper .rdp-chevron {
-  width: 24px;
-  height: 24px;
-  fill: #d6002f;
-}
-
-.rdp-form-wrapper .rdp-button_previous:hover .rdp-chevron,
-.rdp-form-wrapper .rdp-button_next:hover .rdp-chevron {
-  fill: #a80025;
-}
-
-/* Add breathing room to the right of the last column day numbers so they
-   don't sit flush against the popup edge. */
-.rdp-form-wrapper .rdp-week > .rdp-day:last-child {
-  padding-right: 0.5rem;
-}
-
-/* Keyboard focus: visible ring for form calendar accessibility */
-.rdp-form-wrapper .rdp-day_button:focus-visible,
-.rdp-form-wrapper .rdp-button_previous:focus-visible,
-.rdp-form-wrapper .rdp-button_next:focus-visible {
+/* Keyboard focus: visible ring (box-shadow survives outline:none on selected days) */
+.rdp-calendar .rdp-day_button:focus-visible,
+.rdp-calendar .rdp-button_previous:focus-visible,
+.rdp-calendar .rdp-button_next:focus-visible {
   box-shadow: 0 0 0 2px #d6002f !important;
   border-radius: 9999px;
 }

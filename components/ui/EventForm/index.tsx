@@ -453,7 +453,6 @@ export const EventForm: React.FC<EventFormProps> = ({
             idPrefix="event-date"
             startDate={form.startDate}
             endDate={form.endDate}
-            minDate={form.startDate}
             onChange={(field, value) => handleFormChange(field, value)}
             required
             enableAllDayToggle

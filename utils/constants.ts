@@ -178,7 +178,7 @@ function toYMD(d: Date): string {
 }
 
 /** Create a Date representing "now" in Madrid local time (avoids wrong day at tz boundaries). */
-function nowInMadrid(): Date {
+export function nowInMadrid(): Date {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone: TIMEZONE_MADRID,
     year: "numeric",

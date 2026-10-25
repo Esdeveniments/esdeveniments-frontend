@@ -424,3 +424,13 @@ strips Sentry's tracing and debug code. Even then, `init()` from
 free: `release` (`process.env._sentryRelease`), `tunnel` (`sentryTunnelFor`)
 and `eventFiltersIntegration` (without it `ignoreErrors` and `denyUrls` do
 nothing).
+
+## react-day-picker ignores CSS variables set on a parent
+
+The library declares its defaults (`--rdp-accent-color`, `--rdp-day_button-height`,
+...) on `.rdp-root` itself, so variables set on a wrapper never reach it. The old
+`.rdp-filter-wrapper` asked for 28px days and got 42px, and the publish calendar's
+arrows stayed the library's blue. Set the variables on `.rdp-calendar .rdp-root`.
+In range mode, a controlled `selected` with `to === from` counts as a full range,
+so with `resetOnSelect` the next tap starts over instead of picking the end.
+`DateRangeCalendar` keeps `to` undefined while it waits for the second tap.

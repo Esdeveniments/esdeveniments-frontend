@@ -1,25 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect, forwardRef } from "react";
-import { DayPicker } from "react-day-picker";
-import { CalendarIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 import {
   setHours,
   setMinutes,
   setSeconds,
   addMinutes,
   addDays,
-  differenceInCalendarDays,
-  startOfDay,
 } from "date-fns";
-import { ca, es, enUS } from "date-fns/locale";
-import type { Locale } from "date-fns";
-import { useLocale, useTranslations } from "next-intl";
-import type { DatePickerComponentProps, TimeSelectorProps, DateButtonProps } from "types/props";
-import "react-day-picker/style.css";
+import { useTranslations } from "next-intl";
+import type { DatePickerComponentProps, TimeSelectorProps } from "types/props";
 import { toLocalDateTimeString } from "@utils/date-helpers";
-
-const LOCALE_MAP: Record<string, Locale> = { ca, es, en: enUS };
+import { nowInMadrid } from "@utils/constants";
+import DateRangeCalendar from "../DateRangeCalendar";
 
 function toDate(dateStr: string): Date {
   if (!dateStr) return setHours(setMinutes(new Date(), 0), 9);
@@ -53,232 +46,84 @@ function formatTime(d: Date): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-function formatDateDisplay(d: Date, locale: string): string {
-  const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
-  return d.toLocaleDateString(dateFnsLocale.code ?? locale, {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+function toYMD(d: Date): string {
+  return toLocalDateTimeString(d).slice(0, 10);
+}
+
+/** Copies the calendar day of `ymd` onto `time`, keeping its hours and minutes. */
+function withDay(ymd: string, time: Date): Date {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const result = new Date(time);
+  result.setFullYear(y, m - 1, d);
+  return result;
 }
 
 function TimeSelector({
+  id,
   value,
   onChange,
   minTime,
   label,
 }: TimeSelectorProps) {
   return (
-    <input
-      type="time"
-      value={value}
-      min={minTime}
-      onChange={(e) => onChange(e.target.value)}
-      aria-label={label}
-      className="input h-12 text-base"
-    />
+    <div className="w-full sm:flex-1 sm:min-w-0">
+      <label
+        htmlFor={id}
+        className="text-sm text-muted-foreground mb-1.5 block font-medium"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        type="time"
+        value={value}
+        min={minTime}
+        onChange={(e) => onChange(e.target.value)}
+        className="input h-12 text-base"
+      />
+    </div>
   );
 }
-
-const DateButton = forwardRef<HTMLButtonElement, DateButtonProps>(
-  ({ label, value, isOpen, onClick, error }, ref) => {
-    const accessibleLabel = value ? `${label}: ${value}` : label;
-
-    return (
-      <button
-        ref={ref}
-        type="button"
-        onClick={onClick}
-        aria-label={accessibleLabel}
-        aria-expanded={isOpen}
-        className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 transition-all flex items-center justify-between gap-2 ${
-          isOpen
-            ? "border-primary ring-2 ring-primary/20 focus-visible:ring-primary/20"
-            : error
-              ? "border-error focus-visible:ring-error/40"
-              : "border-border focus-visible:ring-primary/20"
-        }`}
-      >
-        <span>{value || label}</span>
-        <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-      </button>
-    );
-  }
-);
-DateButton.displayName = "DateButton";
 
 export default function DatePickerImpl({
   idPrefix = "date",
   startDate: initialStartDate,
   endDate: initialEndDate,
-  minDate,
   onChange,
   required,
   className,
   enableAllDayToggle = false,
   isAllDay = false,
   onToggleAllDay,
-  autoFocus,
-  error,
 }: DatePickerComponentProps) {
   const t = useTranslations("Components.DatePicker");
-  const locale = useLocale();
-  const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
 
   const startDate = toDate(initialStartDate);
   const endDate = computeEndDate(startDate, initialEndDate, isAllDay);
-  const minDateObj = minDate ? toDate(minDate) : undefined;
-
-  const [activeField, setActiveField] = useState<"start" | "end" | null>(null);
-  const [renderedField, setRenderedField] = useState<"start" | "end" | null>(
-    null,
-  );
-  const [isAnimating, setIsAnimating] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const startButtonRef = useRef<HTMLButtonElement>(null);
-  const endButtonRef = useRef<HTMLButtonElement>(null);
-  const hasAutoFocusedRef = useRef(false);
+  // New events start today or later. An edited event may already have started,
+  // so its original start day stays selectable.
+  const [firstDay] = useState(() => {
+    const today = toYMD(nowInMadrid());
+    const start = toYMD(startDate);
+    return start < today ? start : today;
+  });
   const allDaySwitchId = `${idPrefix}-all-day-switch`;
 
-  useEffect(() => {
-    if (autoFocus && startButtonRef.current && !hasAutoFocusedRef.current) {
-      hasAutoFocusedRef.current = true;
-      startButtonRef.current.focus();
-    }
-  }, [autoFocus]);
+  const handleRangeChange = (from: string, to: string) => {
+    if (!from) return;
+    const newStart = withDay(from, startDate);
+    let newEnd = withDay(to || from, endDate);
 
-  // Manage enter/leave animation for the calendar popup. We intentionally
-  // drive the animation flag from the active field change so the popup stays
-  // mounted long enough to animate out. renderedField keeps the content
-  // mounted during the exit animation so it doesn't disappear instantly.
-  useEffect(() => {
-    if (activeField) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- renderedField mirrors activeField for exit animation
-      setRenderedField(activeField);
-      setIsAnimating(true);
-      return;
+    if (isAllDay) {
+      newEnd = setSeconds(setMinutes(setHours(newEnd, 23), 59), 59);
+    } else if (newEnd <= newStart) {
+      // Same end day as the start but an earlier time: an overnight event
+      // (22:00 to 02:00) ends the next day, so keep that time-of-day length.
+      newEnd = addDays(withDay(from, endDate), 1);
     }
 
-    const timer = setTimeout(() => {
-      setIsAnimating(false);
-      setRenderedField(null);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [activeField]);
-
-  // Close calendar when clicking outside, pressing Escape, or moving focus out
-  useEffect(() => {
-    if (!activeField) return;
-
-    const handleClickOutside = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (
-        target &&
-        target.isConnected &&
-        wrapperRef.current &&
-        !wrapperRef.current.contains(target)
-      ) {
-        setActiveField(null);
-      }
-    };
-
-    document.addEventListener("pointerdown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("pointerdown", handleClickOutside);
-    };
-  }, [activeField]);
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape" && activeField) {
-      event.stopPropagation();
-      event.preventDefault();
-
-      const field = activeField;
-      setActiveField(null);
-
-      // Restore focus to the button that opened the calendar
-      requestAnimationFrame(() => {
-        if (field === "start") {
-          startButtonRef.current?.focus();
-        } else if (field === "end") {
-          endButtonRef.current?.focus();
-        }
-      });
-    }
-  };
-
-  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    // Only close the calendar when focus moves to a known element outside the
-    // wrapper (e.g. user pressed Tab). When clicking non-focusable elements
-    // inside the dropdown, relatedTarget is null and the existing mousedown
-    // listener already handles outside clicks, so we leave the calendar open.
-    if (
-      event.relatedTarget &&
-      wrapperRef.current &&
-      !wrapperRef.current.contains(event.relatedTarget as Node)
-    ) {
-      setActiveField(null);
-    }
-  };
-
-  const handleDaySelectStart = (day: Date | undefined): void => {
-    if (day) {
-      const newStart = new Date(day);
-      newStart.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
-
-      onChange("startDate", toLocalDateTimeString(newStart));
-
-      if (isAllDay) {
-        const dayDiff = Math.max(
-          0,
-          differenceInCalendarDays(endDate, startDate),
-        );
-        const newEnd = addDays(newStart, dayDiff);
-        const endOfDay = setSeconds(
-          setMinutes(setHours(newEnd, 23), 59),
-          59,
-        );
-        onChange("endDate", toLocalDateTimeString(endOfDay));
-        setActiveField(null);
-        requestAnimationFrame(() => {
-          startButtonRef.current?.focus();
-        });
-      } else {
-        const diff = endDate.getTime() - startDate.getTime();
-        const newEnd =
-          diff > 0
-            ? new Date(newStart.getTime() + diff)
-            : addMinutes(newStart, 60);
-        onChange("endDate", toLocalDateTimeString(newEnd));
-        // Keep calendar open so user can adjust the time without re-clicking
-      }
-    }
-  };
-
-  const handleDaySelectEnd = (day: Date | undefined): void => {
-    if (day) {
-      const newEnd = new Date(day);
-      newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
-
-      if (isAllDay) {
-        const baseDate = newEnd <= startDate ? startDate : newEnd;
-        const corrected = setSeconds(
-          setMinutes(setHours(baseDate, 23), 59),
-          59,
-        );
-        onChange("endDate", toLocalDateTimeString(corrected));
-        setActiveField(null);
-        requestAnimationFrame(() => {
-          endButtonRef.current?.focus();
-        });
-      } else {
-        const corrected =
-          newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
-        onChange("endDate", toLocalDateTimeString(corrected));
-        // Keep calendar open so user can adjust the time without re-clicking
-      }
-    }
+    onChange("startDate", toLocalDateTimeString(newStart));
+    onChange("endDate", toLocalDateTimeString(newEnd));
   };
 
   const handleStartTimeChange = (time: string) => {
@@ -302,31 +147,12 @@ export default function DatePickerImpl({
     onChange("endDate", toLocalDateTimeString(corrected));
   };
 
-  const startDisplay = formatDateDisplay(startDate, locale);
-  const endDisplay = formatDateDisplay(endDate, locale);
-
-  const today = startOfDay(new Date());
-  const isTodayValidForStart =
-    !minDateObj || today >= startOfDay(minDateObj);
-  const isTodayValidForEnd =
-    today >= startOfDay(startDate) &&
-    (!minDateObj || today >= startOfDay(minDateObj));
-  // renderedField is kept during the exit animation so the popup content
-  // stays mounted while it fades out. While a field is actively open, prefer
-  // activeField so switching between Start and End updates immediately.
-  const visibleField = activeField ?? renderedField;
-  const isTodayValid =
-    visibleField === "start" ? isTodayValidForStart : isTodayValidForEnd;
+  const isSameDay = startDate.toDateString() === endDate.toDateString();
 
   return (
-    <div
-      ref={wrapperRef}
-      className={`relative w-full flex flex-col gap-4 ${className ?? ""}`}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-    >
+    <div className={`w-full flex flex-col gap-4 ${className ?? ""}`}>
       <div className="flex justify-between items-center">
-        <label className="form-label">{t("dateAndTime")}</label>
+        <span className="form-label">{t("dateAndTime")}</span>
 
         {enableAllDayToggle && (
           <label
@@ -357,143 +183,30 @@ export default function DatePickerImpl({
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full">
-        <div className="w-full sm:flex-1 sm:min-w-0">
-          <span className="text-sm text-muted-foreground mb-1.5 block font-medium">
-            {t("start")}
-          </span>
-          <DateButton
-            ref={startButtonRef}
-            label={t("start")}
-            value={
-              isAllDay
-                ? startDisplay
-                : `${startDisplay} ${formatTime(startDate)}`
-            }
-            isOpen={activeField === "start"}
-            onClick={() =>
-              setActiveField((prev) => (prev === "start" ? null : "start"))
-            }
-            error={error}
+      <DateRangeCalendar
+        fromDate={toYMD(startDate)}
+        toDate={toYMD(endDate)}
+        minDate={firstDay}
+        required={required}
+        onChange={handleRangeChange}
+      />
+
+      {!isAllDay && (
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+          <TimeSelector
+            id={`${idPrefix}-start-time`}
+            label={t("startTime")}
+            value={formatTime(startDate)}
+            onChange={handleStartTimeChange}
+          />
+          <TimeSelector
+            id={`${idPrefix}-end-time`}
+            label={t("endTime")}
+            value={formatTime(endDate)}
+            minTime={isSameDay ? formatTime(startDate) : undefined}
+            onChange={handleEndTimeChange}
           />
         </div>
-
-        <div className="w-full sm:flex-1 sm:min-w-0">
-          <span className="text-sm text-muted-foreground mb-1.5 block font-medium">
-            {t("end")}
-          </span>
-          <DateButton
-            ref={endButtonRef}
-            label={t("end")}
-            value={
-              isAllDay
-                ? endDisplay
-                : `${endDisplay} ${formatTime(endDate)}`
-            }
-            isOpen={activeField === "end"}
-            onClick={() =>
-              setActiveField((prev) => (prev === "end" ? null : "end"))
-            }
-            error={error}
-          />
-        </div>
-      </div>
-
-      {(activeField || isAnimating) && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/5 z-40 pointer-events-none"
-            aria-hidden="true"
-          />
-          <div
-            aria-hidden={!activeField}
-            inert={!activeField ? true : undefined}
-            className={`rdp-form-wrapper absolute top-full left-0 right-0 sm:left-0 sm:right-auto sm:w-fit z-50 mt-2 border border-border rounded-card p-3 bg-background shadow-lg transition-all duration-200 ease-smooth origin-top-left ${
-              activeField
-                ? "opacity-100 scale-100 translate-y-0"
-                : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
-            }`}
-          >
-            {visibleField && (
-              <>
-                <DayPicker
-                  id={`${idPrefix}-${visibleField}`}
-                  mode="single"
-                  locale={dateFnsLocale}
-                  selected={
-                    visibleField === "start" ? startDate : endDate
-                  }
-                  onSelect={
-                    visibleField === "start"
-                      ? handleDaySelectStart
-                      : handleDaySelectEnd
-                  }
-                  disabled={
-                    visibleField === "end"
-                      ? {
-                          before:
-                            minDateObj && minDateObj > startDate
-                              ? minDateObj
-                              : startDate,
-                        }
-                      : minDateObj
-                        ? { before: minDateObj }
-                        : undefined
-                  }
-                  defaultMonth={
-                    visibleField === "start" ? startDate : endDate
-                  }
-                  showOutsideDays
-                  fixedWeeks
-                  required={required}
-                />
-                {!isAllDay && (
-                  <div className="mt-3 pt-3 border-t border-border">
-                    <TimeSelector
-                      value={formatTime(
-                        visibleField === "start" ? startDate : endDate,
-                      )}
-                      onChange={
-                        visibleField === "start"
-                          ? handleStartTimeChange
-                          : handleEndTimeChange
-                      }
-                      minTime={
-                        visibleField === "end" &&
-                          startDate.toDateString() === endDate.toDateString()
-                          ? formatTime(startDate)
-                          : undefined
-                      }
-                      label={
-                        visibleField === "start" ? t("start") : t("end")
-                      }
-                    />
-                  </div>
-                )}
-                <div className="mt-3 pt-3 border-t border-border flex justify-end">
-                  <button
-                    type="button"
-                    disabled={!isTodayValid}
-                    onClick={() => {
-                      if (visibleField === "start") {
-                        handleDaySelectStart(today);
-                      } else if (visibleField === "end") {
-                        handleDaySelectEnd(today);
-                      }
-                    }}
-                    className={`text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm ${
-                      isTodayValid
-                        ? "text-primary hover:text-primary-dark hover:underline"
-                        : "text-muted-foreground cursor-not-allowed"
-                    }`}
-                  >
-                    {t("today")}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </>
       )}
     </div>
   );

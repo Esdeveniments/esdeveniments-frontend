@@ -7,7 +7,9 @@ import { loginViaUI } from "./helpers/login";
 import {
   advanceToLastStep,
   cleanupEvent,
-  expandDatePicker,
+  endTimeInput,
+  startTimeInput,
+  waitForDatePicker,
   fetchStoredEvent,
   openEditForm,
   publishTestEvent,
@@ -33,9 +35,6 @@ const configured = Boolean(
 const ICON_512 = path.join(process.cwd(), "public/static/icons/icon-512x512.png");
 // A plain day a month out, in UTC so the runner's timezone does not matter.
 const DAY = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
-const [YEAR, MONTH, DATE] = DAY.split("-");
-// The en-US picker shows MM/DD/YYYY.
-const SHOWN_DAY = `${MONTH}/${DATE}/${YEAR}`;
 const schedule = (e: StoredEvent) => ({
   startDate: e.startDate,
   startTime: e.startTime,
@@ -76,9 +75,10 @@ test.describe("Event edit and images (staging, America/New_York)", () => {
 
     await openEditForm(page, slug);
     await advanceToLastStep(page);
-    await expandDatePicker(page);
-    await expect(page.getByRole("button", { name: /^Start \*:/ })).toContainText(`${SHOWN_DAY} 09:00`);
-    await expect(page.getByRole("button", { name: /^End \*:/ })).toContainText(`${SHOWN_DAY} 23:59`);
+    await waitForDatePicker(page);
+    await expect(page.locator(`.rdp-calendar [data-day="${DAY}"]`)).toHaveClass(/rdp-range_start/);
+    await expect(startTimeInput(page)).toHaveValue("09:00");
+    await expect(endTimeInput(page)).toHaveValue("23:59");
     await submitLastStep(page);
 
     const after = await fetchStoredEvent(slug);
@@ -95,18 +95,18 @@ test.describe("Event edit and images (staging, America/New_York)", () => {
 
     await openEditForm(page, slug);
     await advanceToLastStep(page);
-    await expandDatePicker(page);
-    await expect(page.getByRole("button", { name: /^Start \*:/ })).toContainText(`${SHOWN_DAY} 21:00`);
-    await expect(page.getByRole("button", { name: /^End \*:/ })).toContainText(`${SHOWN_DAY} 23:30`);
+    await waitForDatePicker(page);
+    await expect(page.locator(`.rdp-calendar [data-day="${DAY}"]`)).toHaveClass(/rdp-range_start/);
+    await expect(startTimeInput(page)).toHaveValue("21:00");
+    await expect(endTimeInput(page)).toHaveValue("23:30");
     await submitLastStep(page);
     const unchanged = await fetchStoredEvent(slug);
     expect(schedule(unchanged)).toEqual(schedule(before));
 
     await openEditForm(page, slug);
     await advanceToLastStep(page);
-    await expandDatePicker(page);
-    await page.getByRole("button", { name: /^End \*:/ }).click();
-    await page.locator('input[type="time"]').fill("23:45");
+    await waitForDatePicker(page);
+    await endTimeInput(page).fill("23:45");
     await submitLastStep(page);
     const edited = await fetchStoredEvent(slug);
     expect(edited.startTime?.slice(0, 5)).toBe("21:00");

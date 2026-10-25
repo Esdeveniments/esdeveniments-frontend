@@ -844,10 +844,7 @@
         "priceHeading": "Preu",
         "priceFree": "Gratuït",
         "pricePaid": "De pagament",
-        "calendarLabel": "O escull al calendari:",
-        "pickDate": "Escull una data...",
-        "viewMore": "Veure més",
-        "viewLess": "Veure menys"
+        "calendarLabel": "O escull al calendari:"
       }
     },
     "ImageUploader": {
@@ -1093,16 +1090,19 @@
       "helperPreview": "Així és com veuran la descripció els visitants",
       "helperEdit": "Prem Enter per fer salts de línia."
     },
+    "DateRangeCalendar": {
+      "pickStart": "Tria el primer dia",
+      "pickEnd": "Ara tria l'últim dia (o toca el mateix si només és un dia)",
+      "clear": "Esborra les dates"
+    },
     "DatePicker": {
+      "startTime": "Hora d'inici",
+      "endTime": "Hora de fi",
       "dateAndTime": "Data i hora *",
-      "selectDateAndTime": "Seleccionar data i hora",
-      "start": "Inici *",
-      "end": "Final *",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "Tot el dia (sense hora de fi)",
-      "allDayHelper": "Si l'esdeveniment dura tot el dia, marcarem el final el mateix dia.",
-      "today": "Avui"
+      "allDayHelper": "Si l'esdeveniment dura tot el dia, marcarem el final el mateix dia."
     },
     "LoadMoreButton": {
       "loading": "Carregant més esdeveniments",
