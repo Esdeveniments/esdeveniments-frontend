@@ -21,6 +21,7 @@ import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 import { filterActiveEvents } from "@utils/event-helpers";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 import { connection } from "next/server";
+import { HERO_IMAGE } from "@config/hero-image";
 
 export async function generateMetadata() {
   const locale = (await rootLocale()) as AppLocale;
@@ -111,14 +112,21 @@ export default function Page({
 
   return (
     <>
-      {/* Preload LCP hero image — React 19 hoists <link> to <head> automatically */}
-      <link
-        rel="preload"
-        as="image"
-        href="/static/images/hero-castellers.webp"
-        type="image/webp"
-        fetchPriority="high"
-      />
+      {/* Preload LCP hero image — React 19 hoists <link> to <head> automatically.
+          One link per <picture> source, so each device preloads only its file. */}
+      {[HERO_IMAGE.mobile, HERO_IMAGE.desktop].map((source) => (
+        <link
+          key={source.media}
+          rel="preload"
+          as="image"
+          href={source.href}
+          media={source.media}
+          imageSrcSet={source.srcSet}
+          imageSizes={source.sizes}
+          type="image/webp"
+          fetchPriority="high"
+        />
+      ))}
 
       <Suspense fallback={<HomeStaticFallback locale={appLocale} />}>
         <HomeContent locale={appLocale} />
