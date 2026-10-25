@@ -23,6 +23,9 @@ async function wheelToBottom(page: Page) {
 
 test.describe("Scroll position on navigation", () => {
   test.use({ viewport: { width: 390, height: 844 } });
+  // Up to three page loads plus wheel loops; the default 30 s would cut off
+  // the 90 s goto timeout on a cold preview deploy.
+  test.describe.configure({ timeout: 90_000 });
 
   test.beforeEach(async ({ page }) => {
     // Keep the follow-us popup from covering the page.

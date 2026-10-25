@@ -265,9 +265,11 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       }
     };
 
-    let didLock = false;
+    let isModal = false;
     let previousOverflow: string | null = null;
+    let previousPaddingRight = "";
     if (!isMobile) {
+      isModal = true;
       // Remember the focused element, move focus into the dialog, and lock
       // background scroll while the modal is open (desktop only — the
       // mobile toast is intentionally nonmodal).
@@ -282,18 +284,30 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
 
       // Lock <html>: the window is the scroller, and <body>'s overflow
       // doesn't reach it while <html> sets overflow-x (styles/globals.css).
-      previousOverflow = document.documentElement.style.overflow;
-      document.documentElement.style.overflow = "hidden";
-      didLock = true;
+      // Skip if another dialog (Headless UI) already holds this lock:
+      // writing its "hidden" back after it releases would leave the page
+      // unscrollable. Pad like Headless UI so content doesn't shift when
+      // the scrollbar goes away.
+      const root = document.documentElement;
+      if (root.style.overflow !== "hidden") {
+        const scrollbarWidth = window.innerWidth - root.clientWidth;
+        previousOverflow = root.style.overflow;
+        previousPaddingRight = root.style.paddingRight;
+        root.style.overflow = "hidden";
+        if (scrollbarWidth > 0) root.style.paddingRight = `${scrollbarWidth}px`;
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      // Restore based on whether this effect run actually locked, not on
+      if (previousOverflow !== null) {
+        document.documentElement.style.overflow = previousOverflow;
+        document.documentElement.style.paddingRight = previousPaddingRight;
+      }
+      // Restore focus based on whether this effect run was modal, not on
       // the (correct but indirect) isMobile closure value.
-      if (didLock) {
-        document.documentElement.style.overflow = previousOverflow ?? "";
+      if (isModal) {
         previousFocusRef.current?.focus?.();
         previousFocusRef.current = null;
       }

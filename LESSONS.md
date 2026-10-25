@@ -314,6 +314,11 @@ lost the list position. `overflow-x: clip` clips the same way without creating
 a scroll container, and `min-height` lets `<html>` grow with the page. Because
 `<html>` sets an overflow, `body { overflow: hidden }` no longer reaches the
 viewport: lock page scroll on `document.documentElement`, as Headless UI does.
+If a Headless UI dialog already holds that lock, leave it alone: saving its
+`hidden` and writing it back after Headless releases leaves the page
+unscrollable until reload. Safari before 16 ignores `clip`, so it gets no
+horizontal clipping on `html, body`. Don't add a `hidden` fallback: it breaks
+the sticky navbar.
 Playwright's `scrollIntoViewIfNeeded()`, `hover()` and `click()` scroll the
 nearest scrollable ancestor. While `<main>` had `overflow-hidden` (until #507) they
 scrolled `<main>` itself, and a popover clipped for users looked fine in tests.
