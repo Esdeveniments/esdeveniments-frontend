@@ -8,6 +8,7 @@ import type {
   CategorizedEvents,
 } from "types/api/event";
 import type { FetchEventsParams } from "types/event";
+import type { SafeFetchResult } from "types/fetch";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
 // This creates a separate cache entry for every unique URL.
@@ -35,32 +36,56 @@ export async function fetchEventBySlug(
 export async function fetchEventsExternal(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  const { data } = await fetchEventsExternalResult(params);
+  return data ?? {
+    content: [],
+    currentPage: 0,
+    pageSize: 12,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  };
+}
+
+export async function fetchEventsExternalResult(
+  params: FetchEventsParams,
+): Promise<SafeFetchResult<PagedResponseDTO<EventSummaryResponseDTO>>> {
   const api = getApiUrl();
   try {
     const qs = buildEventsQuery(params);
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const res = await fetchWithHmac(`${api}/events?${qs.toString()}`);
     if (!res.ok) {
-      console.error(`fetchEventsExternal: HTTP ${res.status}`);
+      const error = new Error(`fetchEventsExternal: HTTP ${res.status}`);
+      console.error(error.message);
       return {
-        content: [],
-        currentPage: 0,
-        pageSize: 12,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
+        data: null,
+        error,
+        status: res.status >= 400 ? res.status : 502,
       };
     }
-    return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
+    const data = parsePagedEvents(await res.json());
+    if (!data) {
+      return {
+        data: null,
+        error: new Error("fetchEventsExternal: invalid paged events payload"),
+        status: 502,
+      };
+    }
+    return { data, error: null, status: 200 };
   } catch (error) {
     console.error("fetchEventsExternal: failed", error);
+    const failure =
+      error instanceof Error || error instanceof DOMException
+        ? error
+        : new Error(String(error));
     return {
-      content: [],
-      currentPage: 0,
-      pageSize: 12,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
+      data: null,
+      error: failure,
+      status:
+        failure.name === "AbortError" || failure.name === "TimeoutError"
+          ? 504
+          : 502,
     };
   }
 }
