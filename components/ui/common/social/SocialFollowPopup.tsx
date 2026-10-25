@@ -265,9 +265,11 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       }
     };
 
-    let didLock = false;
-    let previousBodyOverflow: string | null = null;
+    let isModal = false;
+    let previousOverflow: string | null = null;
+    let previousPaddingRight = "";
     if (!isMobile) {
+      isModal = true;
       // Remember the focused element, move focus into the dialog, and lock
       // background scroll while the modal is open (desktop only — the
       // mobile toast is intentionally nonmodal).
@@ -280,18 +282,32 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       );
       firstFocusable?.focus();
 
-      previousBodyOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      didLock = true;
+      // Lock <html>: the window is the scroller, and <body>'s overflow
+      // doesn't reach it while <html> sets overflow-x (styles/globals.css).
+      // Skip if another dialog (Headless UI) already holds this lock:
+      // writing its "hidden" back after it releases would leave the page
+      // unscrollable. Pad like Headless UI so content doesn't shift when
+      // the scrollbar goes away.
+      const root = document.documentElement;
+      if (root.style.overflow !== "hidden") {
+        const scrollbarWidth = window.innerWidth - root.clientWidth;
+        previousOverflow = root.style.overflow;
+        previousPaddingRight = root.style.paddingRight;
+        root.style.overflow = "hidden";
+        if (scrollbarWidth > 0) root.style.paddingRight = `${scrollbarWidth}px`;
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      // Restore based on whether this effect run actually locked, not on
+      if (previousOverflow !== null) {
+        document.documentElement.style.overflow = previousOverflow;
+        document.documentElement.style.paddingRight = previousPaddingRight;
+      }
+      // Restore focus based on whether this effect run was modal, not on
       // the (correct but indirect) isMobile closure value.
-      if (didLock) {
-        document.body.style.overflow = previousBodyOverflow ?? "";
+      if (isModal) {
         previousFocusRef.current?.focus?.();
         previousFocusRef.current = null;
       }
@@ -328,6 +344,9 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     };
 
     const handleScroll = () => {
+      // The capture listener sees every nested scroller too; stop reading
+      // layout once the popup has shown.
+      if (hasTriggeredRef.current) return;
       if (getScrollY() >= getScrollThreshold()) {
         scrolled = true;
         tryShow();
@@ -339,10 +358,16 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       tryShow();
     }, DELAY_MS);
 
-    document.addEventListener("scroll", handleScroll, { passive: true });
+    // Capture phase catches scrolls from the window and from any element
+    // scroller (e.g. <body> when html/body clip overflow). Element scroll
+    // events don't bubble, so a plain listener would miss those.
+    document.addEventListener("scroll", handleScroll, {
+      capture: true,
+      passive: true,
+    });
 
     return () => {
-      document.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("scroll", handleScroll, { capture: true });
       clearTimeout(timerId);
     };
     // Re-evaluate on route change so page-view count can reach MIN_PAGE_VIEWS
