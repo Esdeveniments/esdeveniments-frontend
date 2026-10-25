@@ -379,6 +379,41 @@ describe("SocialFollowPopup – mobile vs desktop", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("locks <html> scroll (the window scroller) while the desktop dialog is open", () => {
+    seedPageViews(1, "/other");
+    render(<SocialFollowPopup pathname="/page-b" />);
+
+    act(() => {
+      vi.advanceTimersByTime(DELAY_MS + 100);
+    });
+    expect(document.documentElement.style.overflow).toBe("hidden");
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(document.documentElement.style.overflow).toBe("");
+  });
+
+  it("leaves another dialog's <html> lock alone, so the page can scroll after both close", () => {
+    // A Headless UI dialog (e.g. filters) is open when the timer fires.
+    document.documentElement.style.overflow = "hidden";
+    seedPageViews(1, "/other");
+    render(<SocialFollowPopup pathname="/page-b" />);
+    act(() => {
+      vi.advanceTimersByTime(DELAY_MS + 100);
+    });
+
+    // Escape closes both: Headless UI releases its lock at once...
+    fireEvent.keyDown(document, { key: "Escape" });
+    document.documentElement.style.overflow = "";
+    // ...and the popup's cleanup runs after its 300 ms close animation.
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(document.documentElement.style.overflow).toBe("");
+  });
+
   it("should render as complementary (role=complementary) on mobile", async () => {
     const mod = await import("@components/hooks/useCheckMobileScreen");
     (mod.default as ReturnType<typeof vi.fn>).mockReturnValue(true);
