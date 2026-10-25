@@ -385,6 +385,20 @@ Next cannot publish. A spec that clicks Publish sooner is silently ignored and t
 times out waiting for navigation. Wait for `data-publish-armed="true"` on
 `event-form`, never a fixed sleep.
 
+## Cloudflare caches `/api/*` only through a Cache Rule, and honors `Vary` only through one
+
+On the Free plan Cloudflare does not cache `/api/*` by default
+(`cf-cache-status: DYNAMIC`), whatever `Cache-Control` says. A Cache Rule can
+opt a route in, and `/api/image-proxy` is the one that earns it: a miss fetches
+the upstream image and usually re-encodes it with Sharp (0.2-0.8 s, measured
+2026-10-24). Cloudflare ignores `Vary: Accept` unless a Cache Rule configures
+Vary, so the image proxy returns bytes that depend on the URL only: it picks the
+output format from the `format` query param, never from the `Accept` header.
+That keeps one cached copy per URL with no Vary setup. Do not reintroduce
+`Accept` negotiation there without a Vary rule, or Cloudflare would serve one
+browser's format to every browser. Deploy URL-only code before you enable the
+rule for a host.
+
 ## Browser Sentry must be initialised in `instrumentation-client.ts`
 
 Turbopack ignores `sentry.client.config.ts`. Until 2026-10-24 the browser
