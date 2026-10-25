@@ -50,15 +50,31 @@ export default function DateRangeCalendar({
   const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
   // The parent only stores complete ranges, so remember which start is still
   // waiting for its end. DayPicker needs `to: undefined` to finish the range
-  // on the next tap instead of starting a new one.
-  const [pendingFrom, setPendingFrom] = useState("");
+  // on the next tap instead of starting a new one. The parent may move the end
+  // (an overnight event ends the next day), so record the end it answered
+  // with; any other change, such as a chip, ends the wait.
+  const [pending, setPending] = useState<{ from: string; to?: string } | null>(null);
+  if (pending && pending.from === fromDate && pending.to === undefined) {
+    setPending({ from: fromDate, to: toDate });
+  }
 
   const from = parseYMD(fromDate);
-  const isPending = Boolean(from) && pendingFrom === fromDate && toDate === fromDate;
+  const isPending =
+    Boolean(from) &&
+    pending?.from === fromDate &&
+    (pending.to === undefined || pending.to === toDate);
   const selected: DateRange | undefined = from
     ? { from, to: isPending ? undefined : (parseYMD(toDate) ?? from) }
     : undefined;
   const firstDay = parseYMD(minDate) ?? nowInMadrid();
+
+  // `defaultMonth` only applies once: follow starts set from outside (chips).
+  const [month, setMonth] = useState<Date>(from ?? firstDay);
+  const [shownFrom, setShownFrom] = useState(fromDate);
+  if (shownFrom !== fromDate) {
+    setShownFrom(fromDate);
+    if (from) setMonth(from);
+  }
 
   const formatDay = (d: Date) =>
     d.toLocaleDateString(dateFnsLocale.code ?? locale, {
@@ -75,7 +91,7 @@ export default function DateRangeCalendar({
   }
 
   const clear = () => {
-    setPendingFrom("");
+    setPending(null);
     onChange("", "");
   };
 
@@ -93,11 +109,12 @@ export default function DateRangeCalendar({
             return;
           }
           const start = toYMD(range.from);
-          setPendingFrom(range.to ? "" : start);
+          setPending(range.to ? null : { from: start });
           onChange(start, range.to ? toYMD(range.to) : start);
         }}
         disabled={{ before: firstDay }}
-        defaultMonth={selected?.from ?? firstDay}
+        month={month}
+        onMonthChange={setMonth}
         showOutsideDays
         fixedWeeks
         footer={

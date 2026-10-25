@@ -53,16 +53,6 @@ const dateChipClass = (isActive: boolean) =>
     : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
   }`;
 
-// Tells GA which date control people use: a path preset, a range chip or the calendar.
-function getDateMode(byDate: string, from?: string, to?: string): string {
-  if (!from) return byDate === DEFAULT_FILTER_VALUE ? "none" : "preset";
-  const isShortcut = DATE_RANGE_SHORTCUTS.some(({ getRange }) => {
-    const range = getRange();
-    return range.from === from && range.to === to;
-  });
-  return isShortcut ? "shortcut" : "calendar";
-}
-
 const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   isOpen,
   onClose,
@@ -185,6 +175,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   // const [localPrice, setLocalPrice] = useState<string>(defaults.price);
   const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
   const [localToDate, setLocalToDate] = useState<string>(currentQueryParams.to || defaults.fromDate);
+  // Which date control the user touched last, for GA: preset, shortcut or calendar.
+  const [dateSource, setDateSource] = useState("unchanged");
   const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
   const [localUserLocation, setLocalUserLocation] = useState(
     defaults.userLocation
@@ -221,6 +213,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalFromDate(defaults.fromDate);
       const hasExplicitRange = Boolean(currentQueryParams.from && currentQueryParams.to);
       setLocalToDate(hasExplicitRange ? (currentQueryParams.to || defaults.fromDate) : defaults.fromDate);
+      setDateSource("unchanged");
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
       setLocalPlaceType(defaults.placeType);
@@ -528,7 +521,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     sendGoogleEvent("filter_change", {
       filter_place: changes.place,
       filter_date: changes.byDate,
-      filter_date_mode: getDateMode(changes.byDate, changes.from, changes.to),
+      filter_date_mode:
+        !changes.from && changes.byDate === DEFAULT_FILTER_VALUE ? "none" : dateSource,
       filter_category: changes.category,
       filter_distance: changes.distance !== undefined ? changes.distance.toString() : undefined,
       context: "filters_modal_apply",
@@ -544,11 +538,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     setLocalByDate((prevValue) => (prevValue === value ? "" : value) as string);
     setLocalFromDate(""); // Clear calendar date when shortcut selected
     setLocalToDate("");
+    setDateSource("preset");
   }, []);
 
   const handleCalendarDateChange = useCallback((from: string, to: string) => {
     setLocalFromDate(from);
     setLocalToDate(to || from);
+    setDateSource("calendar");
     if (from) {
       setLocalByDate(""); // Clear shortcut when calendar date selected
     }
@@ -560,6 +556,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalFromDate(from);
       setLocalToDate(to);
       setLocalByDate(""); // Clear byDate shortcut
+      setDateSource("shortcut");
     },
     [],
   );

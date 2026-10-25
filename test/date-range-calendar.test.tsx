@@ -49,6 +49,23 @@ describe("DateRangeCalendar", () => {
     expect(onChange).toHaveBeenLastCalledWith("2030-05-05", "2030-05-10");
   });
 
+  it("shows the month of a range set from outside, like a chip", () => {
+    const { rerender } = render(
+      <DateRangeCalendar fromDate="" toDate="" minDate="2030-05-01" onChange={vi.fn()} />,
+    );
+    expect(document.querySelector('[data-day="2030-07-10"]')).toBeNull();
+
+    rerender(
+      <DateRangeCalendar
+        fromDate="2030-07-10"
+        toDate="2030-07-31"
+        minDate="2030-05-01"
+        onChange={vi.fn()}
+      />,
+    );
+    expect(document.querySelector('[data-day="2030-07-10"]')).not.toBeNull();
+  });
+
   it("clear empties the range", () => {
     const onChange = vi.fn();
     render(<Harness onChange={onChange} />);

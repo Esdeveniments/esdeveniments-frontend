@@ -6,6 +6,7 @@ import {
   setMinutes,
   setSeconds,
   addMinutes,
+  addDays,
 } from "date-fns";
 import { useTranslations } from "next-intl";
 import type { DatePickerComponentProps, TimeSelectorProps } from "types/props";
@@ -116,7 +117,9 @@ export default function DatePickerImpl({
     if (isAllDay) {
       newEnd = setSeconds(setMinutes(setHours(newEnd, 23), 59), 59);
     } else if (newEnd <= newStart) {
-      newEnd = addMinutes(newStart, 60);
+      // Same end day as the start but an earlier time: an overnight event
+      // (22:00 to 02:00) ends the next day, so keep that time-of-day length.
+      newEnd = addDays(withDay(from, endDate), 1);
     }
 
     onChange("startDate", toLocalDateTimeString(newStart));

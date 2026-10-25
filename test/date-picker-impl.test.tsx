@@ -4,7 +4,7 @@
  * auto-adjustment and the regression where an earlier start became unselectable.
  */
 import { useState } from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import DatePickerImpl from "../components/ui/common/form/datePicker/DatePickerImpl";
@@ -68,6 +68,13 @@ describe("DatePickerImpl", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // "Today" decides the first selectable day: keep it after the fixtures.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 3, 1, 12));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("initial rendering", () => {
@@ -136,6 +143,26 @@ describe("DatePickerImpl", () => {
       expect(baseProps.onChange).toHaveBeenLastCalledWith(
         "endDate",
         expectedLocalTime("2026-03-20", 11, 0),
+      );
+    });
+
+    it("keeps an overnight event overnight and still takes a second tap", () => {
+      render(<Harness {...baseProps} startDate="2026-03-07T22:00" endDate="2026-03-08T02:00" />);
+
+      fireEvent.click(dayButton("2026-03-14"));
+      expect(baseProps.onChange).toHaveBeenLastCalledWith(
+        "endDate",
+        expectedLocalTime("2026-03-15", 2, 0),
+      );
+
+      fireEvent.click(dayButton("2026-03-17"));
+      expect(baseProps.onChange).toHaveBeenCalledWith(
+        "startDate",
+        expectedLocalTime("2026-03-14", 22, 0),
+      );
+      expect(baseProps.onChange).toHaveBeenLastCalledWith(
+        "endDate",
+        expectedLocalTime("2026-03-17", 2, 0),
       );
     });
 
