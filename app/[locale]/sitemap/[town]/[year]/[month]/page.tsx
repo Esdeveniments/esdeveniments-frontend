@@ -261,11 +261,15 @@ export default async function Page({
     breadcrumbs,
     locale,
     numberOfItems: filteredEvents.length,
-    mainEntity: eventsItemList || {
-      "@type": "Thing",
-      name: t("itemListTitle", { town: townLabel, month: monthLabel, year }),
-      description: t("collectionFallbackDescription"),
-    },
+    // Reference the ItemList by @id instead of inlining it: it is emitted
+    // standalone below, so inlining it here duplicated the event payload.
+    mainEntity: eventsItemList
+      ? { "@id": eventsItemList["@id"] }
+      : {
+          "@type": "Thing",
+          name: t("itemListTitle", { town: townLabel, month: monthLabel, year }),
+          description: t("collectionFallbackDescription"),
+        },
   });
 
   return (

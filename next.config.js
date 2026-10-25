@@ -121,6 +121,13 @@ const nextConfig = {
       process.env.NODE_ENV === "production"
         ? { exclude: ["error", "warn"] }
         : false,
+    // Sentry runs errors-only (tracesSampleRate: 0 everywhere). These flags
+    // strip its tracing and debug code from the bundles. The
+    // webpack.treeshake options below do the same, but Turbopack ignores them.
+    define: {
+      __SENTRY_TRACING__: false,
+      __SENTRY_DEBUG__: false,
+    },
   },
 
   // --- Image Optimization ---
@@ -183,6 +190,9 @@ module.exports = withSentryConfig(
 
     // Only print logs for uploading source maps in CI
     silent: !process.env.CI,
+
+    // Tracing is off in the browser, so there is no navigation hook to export.
+    suppressOnRouterTransitionStartWarning: true,
 
     // Skip all Sentry network operations when no auth token is configured (e.g., CI builds)
     dryRun: !sentryUploadsEnabled,

@@ -304,16 +304,63 @@ every deploy. Set it on the step that runs `yarn test:e2e` too.
 `afterAll`. A real login plus publish in `beforeAll` hit 30 s. Call
 `test.setTimeout()` inside each slow hook.
 
+## `<body>` scrolls the page, not the window
+
+`styles/globals.css` gives `html, body` `height: 100vh` and `overflow-x:
+hidden`, so `<body>` is the scroll container. `window.scrollY` stays 0 and
+`scroll` listeners on `window` never fire: read `document.body.scrollTop`.
+Playwright's `scrollIntoViewIfNeeded()`, `hover()` and `click()` scroll the
+nearest scrollable ancestor. While `<main>` had `overflow-hidden` (until #507) they
+scrolled `<main>` itself, and a popover clipped for users looked fine in tests.
+To test what a user sees, scroll with `page.mouse.wheel()` and move the mouse
+by coordinates.
+
+## React hoists a preload `<link>` into `<head>` only when it has `href`
+
+`<link rel="preload" as="image" imageSrcSet={…} media={…}>` without `href`
+renders in `<body>`, where the browser finds it late. Pass `href` (a fallback
+URL) as well as `imageSrcSet`, as the home hero preload does (#508).
+
+## Local builds: leave `SENTRY_AUTH_TOKEN` empty
+
+`next.config.js` uploads source maps and creates a Sentry release whenever
+`SENTRY_AUTH_TOKEN` is set, and `.env.local` may set it. Every local
+`yarn build` then adds a junk release to the production project. Build with
+`SENTRY_AUTH_TOKEN= yarn build`.
+
+## Local Lighthouse: run it on Playwright's Chromium
+
+Lighthouse against Chrome 156 fails with "connection closed". Point
+`CHROME_PATH` at the Chromium that Playwright installs (on macOS,
+`~/Library/Caches/ms-playwright/chromium-*/chrome-mac-arm64/Google Chrome for
+Testing.app/Contents/MacOS/Google Chrome for Testing`).
+
+## Run the bundle gate in the main checkout; refresh its baseline from CI
+
+In a git worktree with a symlinked `node_modules`, the `.nft.json` trace files
+list longer paths. Every route's `serverBytes` grows a few KB, and
+`compare-bundle-sizes.mjs` reports dozens of false errors. Refresh
+`bundle-size-baseline.json` from the `bundle-sizes` artifact of a green develop
+CI run (`gh run download <id> -n bundle-sizes`), never from a local build.
+The artifact lists `routes` as an array; the baseline keys them by route and
+keeps its own `version` and `thresholds`. Copy the artifact's
+`client.totalBytes` into the top-level `clientTotalBytes` too: the gate reads
+that field, and without it the client check is skipped.
+
 ## `vi.resetModules()` keeps `vi.mock` factories
 
 A `mockImplementation` set on a mocked module survives `vi.resetModules()` and
 leaks into later tests. Restore the original implementation in a `finally`.
 
-## Client components must not import `@utils/constants`
+## Shared code must not import `messages/*.json`
 
-`utils/constants.ts` imports all three locale JSON files and `next-intl/server`.
-A client import pulls them into that route's bundle. Put shared client-safe
-values in a module without heavy imports, such as `utils/image-validation.ts`.
+The bundler ships an imported JSON file whole. `utils/constants.ts` and five
+shared utils imported the locale files for a few labels, so every client
+component that reached them loaded a 72 KB gzip chunk holding `ca`, `es` and
+`en`. They now read `i18n/locale-labels.generated.json`; run
+`yarn i18n:labels` after editing `Components.Constants` or the `Utils` sections
+it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
+Outside tests, only `i18n/request.ts` loads the full message files.
 
 ## The backend looks events up by slug only
 
@@ -351,3 +398,19 @@ That keeps one cached copy per URL with no Vary setup. Do not reintroduce
 `Accept` negotiation there without a Vary rule, or Cloudflare would serve one
 browser's format to every browser. Deploy URL-only code before you enable the
 rule for a host.
+
+## Browser Sentry must be initialised in `instrumentation-client.ts`
+
+Turbopack ignores `sentry.client.config.ts`. Until 2026-10-24 the browser
+`Sentry.init()` lived there, so production sent no client errors for months,
+with no build error or warning. Keep the init in `instrumentation-client.ts`.
+To check a deploy, load a page and look for `window.__SENTRY__`, then throw an
+error in the console: a `POST /monitoring?o=…&p=…` request should follow.
+The `webpack.treeshake` options in `next.config.js` also do nothing under
+Turbopack; `compiler.define` (`__SENTRY_TRACING__`, `__SENTRY_DEBUG__`) is what
+strips Sentry's tracing and debug code. Even then, `init()` from
+`@sentry/nextjs` adds 148 KB raw to the boot chunk, so the file builds a
+`BrowserClient` by hand (48 KB). That client must set what `init()` did for
+free: `release` (`process.env._sentryRelease`), `tunnel` (`sentryTunnelFor`)
+and `eventFiltersIntegration` (without it `ignoreErrors` and `denyUrls` do
+nothing).

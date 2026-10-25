@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchEventsExternal } from "@lib/api/events-external";
+import { fetchEventsExternalResult } from "@lib/api/events-external";
 import { FetchEventsParams } from "types/event";
 import { handleApiError } from "@utils/api-error-handler";
 
@@ -50,8 +50,17 @@ export async function GET(request: Request) {
           : undefined,
     };
 
-    const data = await fetchEventsExternal(params);
-    return NextResponse.json(data, {
+    const result = await fetchEventsExternalResult(params);
+    // fetchEventsExternalResult already logged the upstream failure. Skip
+    // handleApiError here so a backend outage does not send one Sentry event
+    // per request.
+    if (!result.data) {
+      return NextResponse.json(
+        { error: "Events service unavailable" },
+        { status: result.status ?? 502, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    return NextResponse.json(result.data, {
       status: 200,
       headers: {
         // s-maxage=1800: events are published days ahead; 30 min staleness
@@ -61,15 +70,10 @@ export async function GET(request: Request) {
       },
     });
   } catch (e) {
-    return handleApiError(e, "/api/events", {
-      fallbackData: {
-        content: [],
-        currentPage: 0,
-        pageSize: 10,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      },
+    const response = handleApiError(e, "/api/events", {
+      errorMessage: "Events service unavailable",
     });
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   }
 }

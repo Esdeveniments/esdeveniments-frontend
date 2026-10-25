@@ -46,7 +46,7 @@ export default function EventDetailSkeleton() {
 
             {/* Sidebar placeholder (desktop only) */}
             <div className="hidden lg:block w-80 flex-shrink-0">
-              <div className="sticky top-24 space-y-4">
+              <div className="space-y-4">
                 <div className="h-48 bg-border/40 rounded animate-pulse" />
                 <div className="h-32 bg-border/40 rounded animate-pulse" />
               </div>

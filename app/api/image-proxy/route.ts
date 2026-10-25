@@ -414,7 +414,9 @@ export async function GET(request: Request) {
       // Process image with Sharp
       // eval("require") bypasses Turbopack's module mangling for native modules
       try {
-        const sharp = eval("require")("sharp") as typeof import("sharp");
+        // CommonJS require returns the sharp function itself; its ESM typings
+        // (picked by moduleResolution "bundler") expose it as `default`.
+        const sharp = eval("require")("sharp") as typeof import("sharp").default;
         let sharpInstance: Sharp = sharp(imageBuffer);
 
         // Get image metadata to determine if resize is needed
