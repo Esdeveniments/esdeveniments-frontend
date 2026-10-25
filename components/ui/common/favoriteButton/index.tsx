@@ -15,8 +15,8 @@ import { useAuth } from "@components/hooks/useAuth";
 import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
-// Not @utils/constants: that barrel imports ~280KB of locale JSON at module
-// scope, and this is a client component — see utils/favorites-limits.ts.
+// Not @utils/constants: keep this client import dependency-free — see
+// utils/favorites-limits.ts.
 import { MAX_FAVORITES_AUTHENTICATED } from "@utils/favorites-limits";
 
 const FAVORITES_SWR_KEY = "favorites:list";

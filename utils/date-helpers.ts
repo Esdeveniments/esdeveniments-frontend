@@ -10,7 +10,7 @@ import type {
   EventTimeLabels,
 } from "types/event";
 import type { EventTimeDTO } from "types/api/event";
-import caMessages from "../messages/ca.json";
+import localeLabels from "../i18n/locale-labels.generated.json";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export type { EventTimeLabels };
@@ -299,7 +299,7 @@ export const formatTimeForAPI = (timeString: string): string => {
   return `${hour}:${minute}`;
 };
 
-const defaultEventTimeLabels: EventTimeLabels = (caMessages as any).Utils
+const defaultEventTimeLabels: EventTimeLabels = localeLabels.utils
   .EventTime as EventTimeLabels;
 
 const fillTemplate = (
