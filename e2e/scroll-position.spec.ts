@@ -91,7 +91,9 @@ test.describe("Scroll position on navigation", () => {
     await page.goBack();
     await page.waitForURL((url) => url.pathname === "/catalunya");
     await expect
-      .poll(() => scrollTop(page), { timeout: 10000 })
-      .toBeGreaterThan(listTop - 50);
+      .poll(async () => Math.abs((await scrollTop(page)) - listTop), {
+        timeout: 10000,
+      })
+      .toBeLessThan(50);
   });
 });
