@@ -4,10 +4,10 @@
 
 import type { StringHelperLabels } from "types/common";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
-import caMessages from "../messages/ca.json";
+import localeLabels from "../i18n/locale-labels.generated.json";
 import { sanitize, sanitizeLegacyApostrophe } from "./sanitize-segment";
 
-const stringHelperLabels: StringHelperLabels = (caMessages as any).Utils
+const stringHelperLabels: StringHelperLabels = localeLabels.utils
   .StringHelpers as StringHelperLabels;
 const { articles, prepositions, feminineExceptions, masculineExceptions } =
   stringHelperLabels;

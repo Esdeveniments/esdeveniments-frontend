@@ -309,11 +309,15 @@ every deploy. Set it on the step that runs `yarn test:e2e` too.
 A `mockImplementation` set on a mocked module survives `vi.resetModules()` and
 leaks into later tests. Restore the original implementation in a `finally`.
 
-## Client components must not import `@utils/constants`
+## Shared code must not import `messages/*.json`
 
-`utils/constants.ts` imports all three locale JSON files and `next-intl/server`.
-A client import pulls them into that route's bundle. Put shared client-safe
-values in a module without heavy imports, such as `utils/image-validation.ts`.
+The bundler ships an imported JSON file whole. `utils/constants.ts` and five
+shared utils imported the locale files for a few labels, so every client
+component that reached them loaded a 72 KB gzip chunk holding `ca`, `es` and
+`en`. They now read `i18n/locale-labels.generated.json`; run
+`yarn i18n:labels` after editing `Components.Constants` or the `Utils` sections
+it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
+Outside tests, only `i18n/request.ts` loads the full message files.
 
 ## The backend looks events up by slug only
 
