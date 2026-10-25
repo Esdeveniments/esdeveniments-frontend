@@ -38,7 +38,7 @@ export default function EventHeroImageClient({
         src={sources.fallback}
         alt={safeTitle}
         loading="eager"
-        decoding="sync"
+        decoding="async"
         fetchPriority="high"
         sizes={sizes}
         className="object-cover w-full h-full absolute inset-0 z-10"
