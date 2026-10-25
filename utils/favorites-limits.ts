@@ -1,11 +1,8 @@
-// Deliberately dependency-free: utils/constants.ts imports the full locale
-// JSON files at module scope (~280KB combined), which is fine for the
-// server components that already pulled it in, but FavoriteButton is a
-// client component and importing MAX_FAVORITES_AUTHENTICATED from
-// @utils/constants there dragged that whole barrel into the client bundle
-// for the first time — +386KB / +100% on /preferits, +384KB on /[locale]
-// (bundle-size CI regression, 2026-07-31). Keep these two here so a client
-// import stays a plain number, not the JSON payload.
+// Dependency-free so a client component can import these numbers without
+// utils/constants.ts. That file used to embed the full locale JSON files
+// (~280KB), and importing it from FavoriteButton added +386KB on /preferits
+// (bundle-size CI regression, 2026-07-31). It no longer does (see
+// scripts/generate-locale-labels.mjs), but keep client imports this small.
 export const MAX_FAVORITES = 10;
 // Authenticated favourites are stored server-side with no real backend cap
 // (verified against esdeveniments-backend/develop — UserFavoriteEventServiceImpl
