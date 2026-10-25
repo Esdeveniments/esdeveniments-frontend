@@ -146,23 +146,24 @@ describe("DatePickerImpl", () => {
       );
     });
 
+    // May: no daylight-saving switch in any timezone the tests may run in.
     it("keeps an overnight event overnight and still takes a second tap", () => {
-      render(<Harness {...baseProps} startDate="2026-03-07T22:00" endDate="2026-03-08T02:00" />);
+      render(<Harness {...baseProps} startDate="2026-05-07T22:00" endDate="2026-05-08T02:00" />);
 
-      fireEvent.click(dayButton("2026-03-14"));
+      fireEvent.click(dayButton("2026-05-14"));
       expect(baseProps.onChange).toHaveBeenLastCalledWith(
         "endDate",
-        expectedLocalTime("2026-03-15", 2, 0),
+        expectedLocalTime("2026-05-15", 2, 0),
       );
 
-      fireEvent.click(dayButton("2026-03-17"));
+      fireEvent.click(dayButton("2026-05-17"));
       expect(baseProps.onChange).toHaveBeenCalledWith(
         "startDate",
-        expectedLocalTime("2026-03-14", 22, 0),
+        expectedLocalTime("2026-05-14", 22, 0),
       );
       expect(baseProps.onChange).toHaveBeenLastCalledWith(
         "endDate",
-        expectedLocalTime("2026-03-17", 2, 0),
+        expectedLocalTime("2026-05-17", 2, 0),
       );
     });
 
