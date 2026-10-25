@@ -46,6 +46,11 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const [localPlaceValue, setLocalPlaceValue] = useState<string>("");
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
 
+  // The Modal mounts on first open; fetch its chunk now so that open is instant.
+  useEffect(() => {
+    void import("@components/ui/common/modal");
+  }, []);
+
   // --- Location Logic ---
   const isPlacePage = useMemo(() => {
     const { pathnameWithoutLocale } = stripLocalePrefix(pathname || "/");
@@ -220,44 +225,49 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
               />
             </Button>
 
-            <Modal
-              open={isModalOpen}
-              setOpen={setIsModalOpen}
-              title={t("modalTitle")}
-              actionButton={t("modalAction")}
-              onActionButtonClick={handleApplyLocation}
-              testId="location-modal"
-            >
-              <div className="w-full flex flex-col justify-start items-start gap-4 py-4">
-                <div className="w-full flex flex-col px-0">
-                  {isLoadingRegions ? (
-                    <SelectSkeleton />
-                  ) : regionsError ? (
-                    <div className="flex flex-col items-center gap-2 text-center py-4">
-                      <p className="text-destructive">
-                        {t("errorLoadingLocations")}
-                      </p>
-                      <Button onClick={() => mutate()} variant="outline" className="text-sm">
-                        {t("retry")}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Select
-                      id="hero-location-select"
-                      title=""
-                      options={regionsAndCitiesArray}
-                      value={selectedOption}
-                      onChange={handlePlaceChange}
-                      isClearable
-                      placeholder={t("selectPlaceholder")}
-                      testId="hero-location-select"
-                      autoFocus
-                      menuPosition="fixed"
-                    />
-                  )}
+            {/* Mounted on first open, then kept for the close animation. While
+                closed, the ssr:false Modal's bailout sat inside the hero <h1>
+                and caused hydration error #418 on the home page. */}
+            {hasOpenedModal && (
+              <Modal
+                open={isModalOpen}
+                setOpen={setIsModalOpen}
+                title={t("modalTitle")}
+                actionButton={t("modalAction")}
+                onActionButtonClick={handleApplyLocation}
+                testId="location-modal"
+              >
+                <div className="w-full flex flex-col justify-start items-start gap-4 py-4">
+                  <div className="w-full flex flex-col px-0">
+                    {isLoadingRegions ? (
+                      <SelectSkeleton />
+                    ) : regionsError ? (
+                      <div className="flex flex-col items-center gap-2 text-center py-4">
+                        <p className="text-destructive">
+                          {t("errorLoadingLocations")}
+                        </p>
+                        <Button onClick={() => mutate()} variant="outline" className="text-sm">
+                          {t("retry")}
+                        </Button>
+                      </div>
+                    ) : (
+                      <Select
+                        id="hero-location-select"
+                        title=""
+                        options={regionsAndCitiesArray}
+                        value={selectedOption}
+                        onChange={handlePlaceChange}
+                        isClearable
+                        placeholder={t("selectPlaceholder")}
+                        testId="hero-location-select"
+                        autoFocus
+                        menuPosition="fixed"
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Modal>
+              </Modal>
+            )}
           </div>
         </h1>
         <p className="body-large text-white/90 drop-shadow-md max-w-xl mx-auto" data-speakable="description">

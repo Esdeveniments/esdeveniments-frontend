@@ -21,6 +21,7 @@ All detailed skills are in `.github/skills/*/SKILL.md` - load them based on task
 | i18n/translations | `i18n-best-practices`          |
 | Styling/UI        | `design-system-conventions`    |
 | Tests             | `testing-patterns`             |
+| Prove it works    | `verify-que-fer`               |
 | Security/CSP      | `security-headers-csp`         |
 | Service worker    | `service-worker-updates`       |
 | Performance       | `bundle-optimization`          |
