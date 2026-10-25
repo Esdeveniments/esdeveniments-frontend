@@ -41,8 +41,8 @@ const FilterButton = ({
     }
     startTransition(() => setLoading(true));
     router.push(removeUrl);
-    // Scroll to top. <body> is the scroll container (styles/globals.css), so
-    // window.scrollTo alone is a no-op; keep it in case that CSS changes.
+    // Scroll to top on whichever element scrolls: <body> when html/body
+    // clip overflow (styles/globals.css), the window otherwise.
     document.body.scrollTo({ top: 0, behavior: "smooth" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

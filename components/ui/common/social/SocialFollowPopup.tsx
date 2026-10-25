@@ -339,8 +339,9 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       tryShow();
     }, DELAY_MS);
 
-    // <body> is the scroll container (styles/globals.css), and element scroll
-    // events don't bubble, so listen in the capture phase to receive them.
+    // Capture phase catches scrolls from the window and from any element
+    // scroller (e.g. <body> when html/body clip overflow). Element scroll
+    // events don't bubble, so a plain listener would miss those.
     document.addEventListener("scroll", handleScroll, {
       capture: true,
       passive: true,
