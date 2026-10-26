@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
+import { Suspense, useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { getPathname, Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
@@ -708,7 +708,7 @@ const PublishForm = () => {
                 type="button"
                 className="btn-primary"
                 disabled={imagePreparing || isDraftLocked || isPending}
-                onClick={beginAuthReturn}
+                onClick={onSubmit}
                 aria-busy={handingOff}
                 data-testid="publish-resume-action"
                 data-analytics-action={`publish_resume_${authStage}`}
@@ -786,7 +786,7 @@ const Publica = () => {
   }
 
   if (!isAuthenticated) {
-    return <PublishAuthGate />;
+    return <Suspense fallback={<AuthCheckSkeleton />}><PublishAuthGate /></Suspense>;
   }
 
   // Strict `=== false` (not `!user?.profileCompleted`): the field is absent

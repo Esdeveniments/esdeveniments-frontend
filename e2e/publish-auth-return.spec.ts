@@ -7,7 +7,13 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   let profileComplete = true;
   let profileSaved = false;
   let authReadsAfterProfile = 0;
+  let signIns = 0;
+  let denyNextAuthRead = false;
   await page.route("**/api/auth/me", (route) => {
+    if (denyNextAuthRead) {
+      denyNextAuthRead = false;
+      return route.fulfill({ status: 401, json: { user: null } });
+    }
     if (profileSaved) authReadsAfterProfile++;
     return route.fulfill({ json: { user: { ...MOCK_USER, profileCompleted: profileComplete } } });
   });
@@ -26,6 +32,7 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
     });
   });
   await page.route("**/api/auth/sign-in?*", (route) => {
+    signIns++;
     const destination = new URL(route.request().url()).searchParams.get("redirect");
     expect(destination).toBe("/es/publica?resume=1");
     return route.fulfill({ contentType: "text/html", body:
@@ -33,6 +40,7 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   });
   await page.route("**/__publish-auth-complete", (route) => {
     profileComplete = false;
+    denyNextAuthRead = signIns === 1;
     return route.fulfill({ status: 302, headers: { location: "/es/publica?resume=1&auth_success=1" } });
   });
   await page.route("**/api/users/me/profile", (route) => {
@@ -64,6 +72,12 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   expect(JSON.parse(intent!)).toMatchObject({ owner: { accountId: MOCK_USER.id }, stage: "login" });
   await page.getByRole("link", { name: "Complete login" }).click();
   await expect(page).toHaveURL(/\/es\/publica\?resume=1/);
+  const signedOutGate = page.getByTestId("publish-auth-gate");
+  await expect(signedOutGate).toBeVisible();
+  await signedOutGate.getByRole("button").click();
+  await expect(page.getByRole("heading", { name: "Hosted login fixture" })).toBeVisible();
+  await page.getByRole("link", { name: "Complete login" }).click();
+  expect(signIns).toBe(2);
   const gate = page.getByTestId("complete-profile-gate");
   await expect(gate).toBeVisible();
   await gate.getByRole("link").click();

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventFormProps } from "types/event";
 import { PUBLISH_RESUME_STORAGE_KEY } from "@utils/constants";
 import Publica from "@app/[locale]/publica/page";
-
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(window.location.search) }));
 const mocks = vi.hoisted(() => ({
   load: vi.fn(), save: vi.fn(), discard: vi.fn(), create: vi.fn(), push: vi.fn(), signIn: vi.fn(),
   user: { id: "a", profileCompleted: true as boolean | undefined }, locale: "es",
@@ -45,7 +45,6 @@ vi.mock("@components/ui/EventForm", () => ({
     </div>
   ),
 }));
-
 const revision = "00000000-0000-4000-8000-000000000001";
 const saved = { form: { title: "Preserved" }, imageFile: new File(["image"], "poster.png", { type: "image/png" }), updatedAt: 1 };
 function setReturn(owner = "a", expectedRevision = revision) {
@@ -81,6 +80,12 @@ async function rejectPublication(reason = "stale-session") {
 }
 
 describe("publish auth handoff", () => {
+  it("uses shared conflict guidance on repeated auth actions", async () => {
+    await rejectPublication(); mocks.save.mockResolvedValue({ ok: false, reason: "stale" });
+    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    expect(screen.getByText("draftResolveBeforePublish")).toBeVisible();
+  });
   it("awaits the exact pending save before localized sign-in and never retries create", async () => {
     await rejectPublication();
     let finish!: (result: { ok: true; revision: string }) => void;

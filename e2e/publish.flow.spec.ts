@@ -17,10 +17,10 @@ test.describe("Publish event flow", () => {
     });
     // The form (and its data hooks) must not mount for guests.
     await expect(page.getByTestId("event-form")).toHaveCount(0);
-    // CTA carries the redirect back to /publica.
-    await expect(
-      page.getByTestId("publish-auth-gate").getByRole("link").first()
-    ).toHaveAttribute("href", /\/iniciar-sessio\?redirect=%2Fpublica/);
+    await page.route("**/api/auth/sign-in?*", (route) =>
+      route.fulfill({ contentType: "text/html", body: "<main>Sign-in fixture</main>" }));
+    await page.getByTestId("publish-auth-gate").getByRole("button").click();
+    await expect(page).toHaveURL(/\/api\/auth\/sign-in\?redirect=%2Fpublica/);
   });
 
   test("authenticated users see the form", async ({ page }) => {

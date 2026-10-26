@@ -70,12 +70,12 @@ export function usePublishDraft({
   const markEdited = useCallback(() => { edited.current = true; }, []);
   const restore = () => {
     const draft = session.current?.restore();
-    if (draft) { edited.current = false; onRestore(draft); }
+    if (draft) { edited.current = false; setResumeFailed(false); onRestore(draft); }
   };
   const discard = async () => {
     edited.current = false;
     const result = await session.current?.discard();
-    if (result?.ok) onReset();
+    if (result?.ok) { setResumeFailed(false); onReset(); }
     return result;
   };
   const flush = async (): Promise<PublishDraftFlushResult> => {
