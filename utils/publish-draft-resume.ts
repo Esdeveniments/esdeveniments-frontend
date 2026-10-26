@@ -43,14 +43,19 @@ export function takePublishResumeIntent(): PublishResumeReadResult {
   }
 }
 
-/** Guest adoption requires this tab's deliberate handoff and never replaces an account draft. */
+/** Replacing an account draft additionally requires an explicit, revision-fenced choice. */
 export async function preparePublishDraftResume(
   owner: PublishDraftOwner,
   intent: PublishResumeIntent,
+  replaceRevision?: string,
 ): Promise<PublishDraftWriteResult> {
   if (!PublishDraftOwnerSchema.safeParse(owner).success ||
       !PublishResumeIntentSchema.safeParse(intent).success || owner.kind !== "account") {
     return { ok: false, reason: "invalid-input" };
+  }
+  if (Date.now() - intent.createdAt >= PUBLISH_RESUME_TTL_MS ||
+      intent.createdAt > Date.now() + PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS) {
+    return { ok: false, reason: "stale" };
   }
   if (intent.owner.kind === "account") {
     return intent.owner.accountId === owner.accountId
@@ -58,7 +63,9 @@ export async function preparePublishDraftResume(
       : { ok: false, reason: "stale" };
   }
   return transactPublishDraft<PublishDraftWriteResult>((store, revision, finish, advance) => {
-    if (revision !== intent.revision) { finish({ ok: false, reason: "stale" }); return; }
+    if (revision !== intent.revision || (replaceRevision !== undefined && replaceRevision !== revision)) {
+      finish({ ok: false, reason: "stale" }); return;
+    }
     const guest = store.get("guest");
     handlePublishDraftRequest(guest, (raw: unknown) => {
       const parsed = PublishDraftRecordSchema.safeParse(raw);
@@ -71,7 +78,9 @@ export async function preparePublishDraftResume(
       }
       const key = getPublishDraftOwnerKey(owner);
       handlePublishDraftRequest(store.get(key), (existing: unknown) => {
-        if (existing !== undefined) { finish({ ok: false, reason: "stale" }); return; }
+        if (existing !== undefined && replaceRevision === undefined) {
+          finish({ ok: false, reason: "account-conflict" }); return;
+        }
         const next = advance();
         store.put({ ...parsed.data, owner, revision: next }, key);
         store.delete("guest");

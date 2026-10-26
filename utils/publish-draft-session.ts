@@ -8,6 +8,7 @@ import type {
 
 export const initialPublishDraftState: PublishDraftSessionState = {
   status: "loading", pendingDraft: null, failure: null, dirty: false, canDiscard: false,
+  guestConflict: false,
 };
 
 /** One mounted editor owns its queue; IndexedDB revisions fence other tabs. */
@@ -20,6 +21,7 @@ export class PublishDraftSession {
   private version = 0;
   private savedVersion = 0;
   private input: PublishDraftInput | null = null;
+  private guestIntent: PublishResumeIntent | null = null;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private queue: Promise<PublishDraftFlushResult> = Promise.resolve({ ok: true, revision: null });
 
@@ -34,13 +36,14 @@ export class PublishDraftSession {
     this.notify(this.state);
   }
 
-  async load(intent?: PublishResumeIntent) {
+  async load(intent?: PublishResumeIntent, replaceRevision?: string) {
     const generation = ++this.generation;
     clearTimeout(this.timer);
     this.loaded = false;
     this.update({ status: "loading", failure: null });
-    const prepared = intent ? await preparePublishDraftResume(this.owner, intent) : null;
+    const prepared = intent ? await preparePublishDraftResume(this.owner, intent, replaceRevision) : null;
     if (!this.active || generation !== this.generation) return;
+    this.guestIntent = prepared && !prepared.ok && prepared.reason === "account-conflict" ? intent ?? null : null;
     const result = await loadPublishDraft(this.owner);
     if (!this.active || generation !== this.generation) return;
     if (!result.ok) {
@@ -51,16 +54,17 @@ export class PublishDraftSession {
     this.loaded = true;
     this.revision = result.revision;
     this.update({
-      status: result.status === "found" ? "decision" : "idle",
+      status: result.status === "found" || this.guestIntent ? "decision" : "idle",
       pendingDraft: result.status === "found" ? result.draft : null,
       canDiscard: result.status === "found",
+      guestConflict: this.guestIntent !== null,
     });
-    if (result.status !== "found" && this.state.dirty) void this.flush();
+    if (result.status !== "found" && this.state.dirty && !this.guestIntent) void this.flush();
     const matchesResume = prepared?.ok === true && result.status === "found" &&
       result.revision === prepared.revision;
     const resumed = matchesResume && !this.state.dirty;
     if (resumed) this.restore();
-    return { ...result, resumed, matchesResume };
+    return { ...result, resumed, matchesResume, guestConflict: this.guestIntent !== null };
   }
 
   edit(input: PublishDraftInput) {
@@ -77,14 +81,29 @@ export class PublishDraftSession {
     const draft = this.state.pendingDraft;
     if (!draft) return null;
     this.input = draft;
+    this.guestIntent = null;
     this.savedVersion = this.version;
-    this.update({ status: "saved", pendingDraft: null, dirty: false });
+    this.update({ status: "saved", pendingDraft: null, dirty: false, guestConflict: false });
     return draft;
+  }
+
+  async restoreGuest() {
+    const intent = this.guestIntent;
+    const { revision, version } = this;
+    if (!intent || !revision || this.state.status !== "decision") return null;
+    const result = await this.load(intent, revision);
+    if (result?.matchesResume && result.status === "found" && version === this.version) {
+      return this.restore() ?? result.draft;
+    }
+    if (result && !result.matchesResume) {
+      this.update({ status: "error", failure: { ok: false, reason: "stale" } });
+    }
+    return null;
   }
 
   flush(): Promise<PublishDraftFlushResult> {
     clearTimeout(this.timer);
-    if (!this.active || !this.loaded || this.state.pendingDraft) {
+    if (!this.active || !this.loaded || this.state.pendingDraft || this.state.guestConflict) {
       return Promise.resolve({ ok: false, reason: "unavailable" });
     }
     if (this.state.failure?.reason === "stale") return Promise.resolve(this.state.failure);
@@ -133,8 +152,9 @@ export class PublishDraftSession {
         this.revision = result.revision;
         this.loaded = true;
         this.input = null;
+        this.guestIntent = null;
         this.savedVersion = ++this.version;
-        this.update({ status: "idle", pendingDraft: null, dirty: false, failure: null, canDiscard: false });
+        this.update({ status: "idle", pendingDraft: null, dirty: false, failure: null, canDiscard: false, guestConflict: false });
       } else {
         this.update({ status: "error", failure: result });
       }
@@ -144,7 +164,7 @@ export class PublishDraftSession {
   }
 
   async retry() {
-    if (!this.loaded || this.state.pendingDraft || this.state.failure?.reason === "stale") return this.load();
+    if (!this.loaded || this.state.pendingDraft || this.state.failure?.reason === "stale") return this.load(this.guestIntent ?? undefined);
     return this.flush();
   }
 

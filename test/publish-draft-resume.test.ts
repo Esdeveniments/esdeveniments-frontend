@@ -102,12 +102,57 @@ describe("deliberate guest handoff boundary for guest editing", () => {
     await seedDraft(accountA);
     const revision = await seedDraft();
     expect(await preparePublishDraftResume(accountA, { ...intent(revision), owner: guest }))
-      .toEqual({ ok: false, reason: "stale" });
+      .toEqual({ ok: false, reason: "account-conflict" });
     expect(await rawDraft("guest")).toBeDefined();
     await seedDraft();
     expect(await preparePublishDraftResume(accountB, { ...intent(revision), owner: guest }))
       .toEqual({ ok: false, reason: "stale" });
     expect(await loadPublishDraft(accountA)).toMatchObject({ draft: { form: { title: "unfinished" } } });
+  });
+
+  it.each(["guest", "account", "competing-write", "expired-intent"])("requires an explicit %s choice when both drafts exist", async (choice) => {
+    await seedDraft(accountA);
+    const image = new File([new Uint8Array([1, 2, 3])], "guest.png", { type: "image/png", lastModified: 123 });
+    const form = { title: "New guest", location: "Guest venue", startDate: "2027-01-02T12:30" };
+    const revision = savedRevision(await savePublishDraft(guest, { form, imageFile: image },
+      loadedRevision(await loadPublishDraft(guest))));
+    const guestBefore = await rawDraft("guest");
+    const accountBefore = await rawDraft("account:account-a");
+    const session = new PublishDraftSession(accountA, vi.fn());
+    try {
+      expect(await session.load({ ...intent(revision), owner: guest })).toMatchObject({
+        guestConflict: true, resumed: false, matchesResume: false,
+      });
+      expect(await rawDraft("guest")).toEqual(guestBefore);
+      expect(await rawDraft("account:account-a")).toEqual(accountBefore);
+      if (choice === "account") {
+        expect(session.restore()?.form.title).toBe("unfinished");
+        expect(session.state.guestConflict).toBe(false);
+        expect(await rawDraft("guest")).toEqual(guestBefore);
+        expect(await rawDraft("account:account-a")).toEqual(accountBefore);
+      } else if (choice === "competing-write" || choice === "expired-intent") {
+        if (choice === "competing-write") await seedDraft(accountA);
+        else {
+          const later = Date.now() + PUBLISH_RESUME_TTL_MS;
+          vi.spyOn(Date, "now").mockReturnValue(later);
+        }
+        const newer = await rawDraft("account:account-a");
+        expect(await session.restoreGuest()).toBeNull();
+        expect(session.state.failure?.reason).toBe("stale");
+        expect(await rawDraft("guest")).toEqual(guestBefore);
+        expect(await rawDraft("account:account-a")).toEqual(newer);
+      } else {
+        const [restored, repeated] = await Promise.all([session.restoreGuest(), session.restoreGuest()]);
+        expect(repeated).toBeNull();
+        expect(restored?.form).toEqual(form);
+        expect(restored?.imageFile).toMatchObject({ name: image.name, lastModified: image.lastModified, type: image.type });
+        expect(new Uint8Array(await restored!.imageFile!.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+        expect(await rawDraft("guest")).toBeUndefined();
+        expect(session.state).toMatchObject({ guestConflict: false, dirty: false, status: "saved" });
+        expect(await savePublishDraft(guest, { form: {}, imageFile: null }, revision))
+          .toEqual({ ok: false, reason: "stale" });
+      }
+    } finally { session.dispose(); }
   });
 
   it("rejects an expired guest without discarding its bytes during a failed handoff", async () => {

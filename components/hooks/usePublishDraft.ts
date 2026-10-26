@@ -72,10 +72,6 @@ export function usePublishDraft({
     const returning = !!accountId && (resumeRequest.current !== null || url.searchParams.get("resume") === "1");
     const request = returning
       ? (resumeRequest.current ??= takePublishResumeIntent()) : null;
-    if (returning) {
-      url.searchParams.delete("resume");
-      window.history.replaceState(window.history.state, "", url);
-    }
     void (async () => {
       if (request?.ok) {
         await Promise.resolve();
@@ -83,6 +79,13 @@ export function usePublishDraft({
       }
       const result = await current.load(request?.ok ? request.intent : undefined);
       if (!active || !returning) return;
+      if (result?.guestConflict && request?.ok) {
+        const persisted = savePublishResumeIntent(request.intent);
+        setResumeFailed(!persisted.ok);
+        return;
+      }
+      url.searchParams.delete("resume");
+      window.history.replaceState(window.history.state, "", url);
       resumeRequest.current = null;
       if (result?.matchesResume) {
         setResumeFailed(false);
@@ -114,14 +117,32 @@ export function usePublishDraft({
   }, [hasUnsavedEdits]);
 
   const markEdited = useCallback(() => { edited.current = true; completed.current = false; }, []);
+  const clearGuestReturn = () => {
+    if (!state.guestConflict) return;
+    resumeRequest.current = null;
+    takePublishResumeIntent();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("resume");
+    window.history.replaceState(window.history.state, "", url);
+  };
   const restore = () => {
     const draft = session.current?.restore();
-    if (draft) { edited.current = false; setResumeFailed(false); onRestore(draft); }
+    if (draft) { clearGuestReturn(); edited.current = false; setResumeFailed(false); onRestore(draft); }
+  };
+  const restoreGuest = async () => {
+    const current = session.current;
+    const draft = await current?.restoreGuest();
+    if (draft && current === session.current) {
+      clearGuestReturn();
+      edited.current = false;
+      setResumeFailed(false);
+      onRestore(draft, true);
+    }
   };
   const discard = async () => {
     edited.current = false;
     const result = await session.current?.discard();
-    if (result?.ok) { setResumeFailed(false); onReset(); }
+    if (result?.ok) { clearGuestReturn(); setResumeFailed(false); onReset(); }
     return result;
   };
   const flush = async (): Promise<PublishDraftFlushResult> => {
@@ -153,6 +174,6 @@ export function usePublishDraft({
   const ownerState: PublishDraftSessionState = !ownerChanged ? state : {
     ...initialPublishDraftState, status: "error", dirty: state.dirty, failure: { ok: false, reason: "unavailable" },
   };
-  return { ...ownerState, markEdited, restore, discard, flush, complete, prepareResume, resumeFailed, ownerChanged,
+  return { ...ownerState, markEdited, restore, restoreGuest, discard, flush, complete, prepareResume, resumeFailed, ownerChanged,
     retry: () => session.current?.retry() };
 }

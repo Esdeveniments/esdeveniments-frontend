@@ -6,7 +6,7 @@ import Modal from "@components/ui/common/modal";
 import type { PublishDraftPanelProps } from "types/props";
 
 export default function PublishDraftPanel({
-  state, onRestore, onDiscard, onRetry, warnings,
+  state, onRestore, onRestoreGuest, onDiscard, onRetry, warnings,
 }: PublishDraftPanelProps) {
   const t = useTranslations("App.Publish");
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -20,13 +20,25 @@ export default function PublishDraftPanel({
   return (
     <section className="card-bordered" aria-label={t("draftHeading")} data-testid="publish-draft-panel">
       <div className="card-body stack">
+        {state.guestConflict && (
+          <>
+            <h2 className="heading-3">{t("draftChooseTitle")}</h2>
+            <p className="body-normal">{t("draftChooseDescription")}</p>
+            <button type="button" className="btn-primary" onClick={onRestoreGuest} disabled={busy || !!failure}
+              data-testid="draft-restore-guest">
+              {t("draftUseGuest")}
+            </button>
+          </>
+        )}
         {pendingDraft && (
           <>
-            <h2 className="heading-3">{t("restoreDraftTitle")}</h2>
-            <p className="body-normal">{t("restoreDraftDescription")}</p>
+            {!state.guestConflict && <h2 className="heading-3">{t("restoreDraftTitle")}</h2>}
+            <p className="body-normal">{state.guestConflict
+              ? t("draftAccountTitle", { title: pendingDraft.form.title || t("heading") })
+              : t("restoreDraftDescription")}</p>
             {state.dirty && <p className="body-normal">{t("draftRestoreReplacesEdits")}</p>}
             <button type="button" className="btn-primary" onClick={onRestore} disabled={busy || !!failure}>
-              {t("restoreDraftApply")}
+              {t(state.guestConflict ? "draftUseAccount" : "restoreDraftApply")}
             </button>
           </>
         )}
@@ -51,7 +63,7 @@ export default function PublishDraftPanel({
               : warning === "city" ? "draftCityUnavailable" : "draftCategoryUnavailable")}
           </p>
         ))}
-        {(state.canDiscard || state.dirty) && (
+        {!state.guestConflict && (state.canDiscard || state.dirty) && (
           <button type="button" className="btn-muted" onClick={() => setConfirmDiscard(true)} disabled={busy}>
             {t("restoreDraftDiscard")}
           </button>

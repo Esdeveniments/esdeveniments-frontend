@@ -34,6 +34,7 @@ export interface PublishDraftFailure {
     | "quota"
     | "transaction"
     | "stale"
+    | "account-conflict"
     | "too-large"
     | "capacity"
     | "invalid-input"
@@ -79,6 +80,7 @@ export interface PublishDraftSessionState {
   failure: PublishDraftFailure | null;
   dirty: boolean;
   canDiscard: boolean;
+  guestConflict: boolean;
 }
 
 export interface UsePublishDraftOptions {
