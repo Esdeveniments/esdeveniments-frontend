@@ -30,12 +30,12 @@ test.describe("Publish - Preview", () => {
       "Descripció de l'esdeveniment de prova per validar la funcionalitat de preview.";
 
     // Step 1: Basics
-    await page.locator("input#title").pressSequentially(title, { delay: 50 });
+    await page.locator("input#title").fill(title);
     await page.locator("input#title").blur();
 
     await page
       .locator("textarea#description")
-      .pressSequentially(desc, { delay: 20 });
+      .fill(desc);
     await page.locator("textarea#description").blur();
 
     // Provide URL while still on basics step (field not visible later)
@@ -73,10 +73,48 @@ test.describe("Publish - Preview", () => {
     // Assert Content
     await expect(modal).toContainText(title);
     await expect(modal).toContainText(desc);
+    await expect(modal.locator('img[src^="data:image/"]')).toBeVisible();
     await page.screenshot({ path: test.info().outputPath("preview-ready.png") });
 
     // Close Modal
     await modal.getByLabel("Tanca").click();
     await expect(modal).toBeHidden();
+    await expect(page.getByTestId("draft-save-status")).toHaveText("Desat en aquest dispositiu");
+    const storedImage = await page.evaluate(async () => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open("esdeveniments-publish-drafts", 1);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      try {
+        const record = await new Promise<unknown>((resolve, reject) => {
+          const request = db.transaction("drafts").objectStore("drafts")
+            .get("account:550e8400-e29b-41d4-a716-446655440001");
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        if (!record || typeof record !== "object" || !("image" in record)) throw new Error("Draft image missing");
+        return record.image;
+      } finally { db.close(); }
+    });
+    expect(storedImage).toMatchObject({ type: "image/png", name: expect.any(String), size: expect.any(Number) });
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("button", { name: "Recupera esborrany" })).toBeVisible();
+    await expect(page.locator("input#title")).toHaveValue("");
+    await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await expect(page.locator("input#title")).toHaveValue(title);
+    await expect(page.locator("textarea#description")).toHaveValue(desc);
+    await page.fill("input#title", `${title} recuperat`);
+    await page.getByTestId("next-button").click();
+    await expect(page.locator("input#location")).toHaveValue("Parc Central");
+    await page.getByTestId("next-button").click();
+    await expect(page.getByTestId("preview-button")).toBeEnabled();
+    await page.getByTestId("preview-button").click();
+    await expect(modal).toContainText(`${title} recuperat`);
+    const previewImage = modal.locator('img[src^="data:image/"]:visible').first();
+    await expect(previewImage).toBeVisible();
+    expect(await previewImage.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+    await page.screenshot({ path: test.info().outputPath("draft-restored-preview.png") });
   });
 });

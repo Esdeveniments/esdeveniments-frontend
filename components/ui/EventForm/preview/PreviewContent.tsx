@@ -86,8 +86,8 @@ export const PreviewContent = ({
           <ClientImage
             image={event.imageUrl ?? undefined}
             title={event.title}
-            className="w-full aspect-video object-cover"
-            context="detail"
+            className="w-full object-cover"
+            context="card"
           />
         ) : (
           <div className="w-full h-48 flex-center flex-col gap-2 text-error/70">
@@ -287,7 +287,6 @@ export const PreviewContent = ({
 };
 
 export default PreviewContent;
-
 
 
 

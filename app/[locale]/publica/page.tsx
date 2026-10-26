@@ -12,6 +12,9 @@ import { getZodValidationState } from "@utils/form-validation";
 import { toLocalDateTimeString } from "@utils/date-helpers";
 import EventForm from "@components/ui/EventForm";
 import { useImagePreview } from "@components/hooks/useImagePreview";
+import { usePublishDraft } from "@components/hooks/usePublishDraft";
+import PublishDraftPanel from "@components/ui/publish/PublishDraftPanel";
+import { getPublishDraftWarnings } from "@utils/publish-draft-warnings";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
@@ -120,6 +123,24 @@ const PublishForm = () => {
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, updateImagePreview] = useImagePreview(null);
+  const { user } = useAuth();
+  const [restoredDraft, setRestoredDraft] = useState(false);
+  const draft = usePublishDraft({
+    accountId: user?.id, form, imageFile,
+    onRestore: (saved) => {
+      setForm({ ...defaultForm, ...saved.form });
+      setImageFile(saved.imageFile);
+      updateImagePreview(saved.imageFile);
+      setRestoredDraft(true);
+    },
+    onReset: () => {
+      setForm({ ...defaultForm });
+      setImageFile(null);
+      updateImagePreview(null);
+      setRestoredDraft(false);
+    },
+  });
+  const { markEdited } = draft;
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   // A submit-time 403 (profileCompleted: false) means the client's session
@@ -166,7 +187,7 @@ const PublishForm = () => {
     isLoadingRegionsWithCities ||
     (!regionsWithCities && !isErrorRegionsWithCities);
 
-  const { categories } = useCategories();
+  const { categories, isLoading: isLoadingCategories, isError: isErrorCategories } = useCategories();
 
   const { cityOptions, cityToRegionOptionMap } = useMemo(
     () => generateCityOptionsWithRegionMap(regionsWithCities),
@@ -182,7 +203,8 @@ const PublishForm = () => {
     [categories]
   );
 
-  const trackFieldInteraction = (fieldName: string) => {
+  const trackFieldInteraction = useCallback((fieldName: string) => {
+    markEdited();
     if (!formStartedRef.current) {
       formStartedRef.current = true;
       sendGoogleEvent("publish_form_start", { source: "publica" });
@@ -195,7 +217,7 @@ const PublishForm = () => {
         source: "publica",
       });
     }
-  };
+  }, [markEdited]);
 
   const handleFormChange = useCallback(<K extends keyof FormData>(
     name: K,
@@ -203,7 +225,7 @@ const PublishForm = () => {
   ) => {
     trackFieldInteraction(String(name));
     setForm((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  }, [trackFieldInteraction]);
 
   const handleImageChange = (file: File | null) => {
     setError(null);
@@ -361,6 +383,7 @@ const PublishForm = () => {
   };
 
   const onSubmit = async () => {
+    if (draft.status === "loading" || draft.status === "decision" || draft.status === "discarding") return;
     setError(null); // Clear any previous errors
 
     addBreadcrumb({
@@ -474,6 +497,13 @@ const PublishForm = () => {
         });
 
         submittedRef.current = true;
+        const cleanup = await draft.complete();
+        if (!cleanup.ok) {
+          captureException(new Error("Publish draft cleanup failed"), {
+            tags: { section: "publica", action: "draft-cleanup", reason: cleanup.reason },
+          });
+          window.alert(t("draftCleanupFailed"));
+        }
         // ?promote=1 tells the event page to show the promote upsell once.
         router.push(`/e/${slug}?promote=1`);
       } catch (error) {
@@ -638,6 +668,18 @@ const PublishForm = () => {
               <p className="text-sm font-medium text-error">{error}</p>
             </div>
           )}
+          <PublishDraftPanel
+            state={draft}
+            onRestore={draft.restore}
+            onDiscard={draft.discard}
+            onRetry={() => { void draft.retry(); }}
+            warnings={restoredDraft ? getPublishDraftWarnings(form, cityOptions, categoryOptions,
+              !isLoadingCities && !isErrorRegionsWithCities,
+              !isLoadingCategories && !isErrorCategories) : []}
+          />
+          <fieldset disabled={draft.status === "loading" || draft.status === "decision" ||
+            draft.status === "discarding" || isPending}
+            inert={draft.status === "loading" || draft.status === "decision" || draft.status === "discarding"}>
           <div className="w-full flex flex-col gap-y-4 pt-4">
             <EventForm
               form={form}
@@ -659,6 +701,7 @@ const PublishForm = () => {
               canPreview={true}
             />
           </div>
+          </fieldset>
           <div className="flex-center pt-2 text-center">
             <p className="body-small text-foreground/70">
               {t("sponsorTitle")}{" "}
@@ -705,7 +748,7 @@ const Publica = () => {
     return <CompleteProfileGate redirectTo="/publica" />;
   }
 
-  return <PublishForm />;
+  return <PublishForm key={user?.id} />;
 };
 
 export default Publica;
