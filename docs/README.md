@@ -55,6 +55,9 @@ still-relevant competitive-UX reference, not part of that migration history.
 
 ## Product / Growth
 
+- [`plans/2026-10-26-publish-form-roadmap.md`](./plans/2026-10-26-publish-form-roadmap.md)
+  links the publish-form issues, AI autofill and intake proposals, dependencies,
+  evidence limits and release gates.
 - [`restaurant-promotion-implementation.md`](./restaurant-promotion-implementation.md)
   and [`restaurant-promotion-schema.md`](./restaurant-promotion-schema.md) —
   restaurant promotion feature implementation + DB schema.
