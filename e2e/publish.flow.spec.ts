@@ -48,7 +48,8 @@ test.describe("Publish event flow", () => {
     await page.route("**/api/auth/sign-in?*", (route) =>
       route.fulfill({ contentType: "text/html", body: "<main>Sign-in fixture</main>" }));
     await page.getByTestId("publish-early-sign-in").click();
-    await expect(page).toHaveURL(/\/api\/auth\/sign-in\?redirect=%2Fpublica%3Fresume%3D1/);
+    await expect(page).toHaveURL((url) => url.pathname === "/api/auth/sign-in" &&
+      url.searchParams.get("redirect") === "/publica?resume=1" && url.searchParams.get("locale") === "ca");
     expect(creates).toBe(0);
   });
 
