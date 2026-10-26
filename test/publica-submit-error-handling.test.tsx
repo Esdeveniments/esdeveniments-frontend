@@ -3,15 +3,6 @@ import { act, render, screen, fireEvent, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react";
 import type { AuthUser } from "types/auth";
 
-/**
- * Verifies the client side of the profile-incomplete / stale-session fix:
- * createEventAction returning a CreateEventActionResult (not throwing) must
- * actually flip PublishForm to CompleteProfileGate / a specific error
- * message. PublishForm isn't exported directly (only the auth-gated
- * `Publica` default export is), so this renders through that — useAuth is
- * mocked authenticated+complete so Publica mounts the real PublishForm.
- */
-
 const authUser: AuthUser = {
   id: "user-1",
   email: "a@b.com",
@@ -35,6 +26,7 @@ vi.mock("@components/hooks/useAuth", () => ({
 }));
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "ca",
   useTranslations: () => (key: string) => key,
 }));
 
@@ -120,7 +112,7 @@ describe("Publica submit-time createEventAction result handling", () => {
     return view;
   }
 
-  it("shows CompleteProfileGate instead of a generic error on a profile-incomplete result", async () => {
+  it("keeps the editor and offers profile recovery on a profile-incomplete result", async () => {
     mockCreateEventAction.mockResolvedValue({
       success: false,
       reason: "profile-incomplete",
@@ -129,8 +121,9 @@ describe("Publica submit-time createEventAction result handling", () => {
     await renderAndSubmit();
 
     await waitFor(() =>
-      expect(screen.getByTestId("complete-profile-gate")).toBeInTheDocument(),
+      expect(screen.getByText("completeProfileGate.cta")).toBeInTheDocument(),
     );
+    expect(screen.getByText("set-image-file")).toBeInTheDocument();
     expect(storage.discard).not.toHaveBeenCalled();
   });
 

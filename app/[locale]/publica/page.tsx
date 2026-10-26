@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Link, useRouter } from "@i18n/routing";
+import { getPathname, Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
@@ -28,6 +28,7 @@ import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
+  PUBLISH_RESUME_PATH,
 } from "@utils/constants";
 import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
 import { sendGoogleEvent } from "@utils/analytics";
@@ -41,7 +42,7 @@ import { useAuth } from "@components/hooks/useAuth";
 import PublishAuthGate from "./PublishAuthGate";
 import CompleteProfileGate from "./CompleteProfileGate";
 import AuthCheckSkeleton from "@components/ui/common/skeletons/AuthCheckSkeleton";
-import type { EventDetailResponseDTO } from "types/api/event";
+import type { PublishResumeStage } from "types/publish-draft";
 
 // Lazy load preview content (only shown in modal when user clicks preview)
 // Client component, so we can use dynamic directly with ssr: false
@@ -120,21 +121,24 @@ const PublishForm = () => {
   const t = useTranslations("App.Publish");
   const tForm = useTranslations("Components.EventForm");
   const router = useRouter();
+  const locale = useLocale();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreparing, setImagePreparing] = useState(false);
   const [imagePreview, updateImagePreview] = useImagePreview(null);
-  const { user } = useAuth();
+  const { user, signIn } = useAuth();
   const [restoredDraft, setRestoredDraft] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
   const draft = usePublishDraft({
     accountId: user?.id, form, imageFile,
-    onRestore: (saved) => {
+    onRestore: (saved, resumed) => {
       setError(null);
       setEditorVersion((version) => version + 1);
       setForm({ ...defaultForm, ...saved.form });
       setImageFile(saved.imageFile);
       updateImagePreview(saved.imageFile);
       setRestoredDraft(true);
+      if (resumed) setShowPreview(true);
     },
     onReset: () => {
       setError(null);
@@ -148,12 +152,10 @@ const PublishForm = () => {
   const { markEdited } = draft;
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  // A submit-time 403 (profileCompleted: false) means the client's session
-  // state was stale/ambiguous when this form rendered — Publica's own
-  // top-level gate normally catches this before the form ever mounts. Show
-  // the same CompleteProfileGate here instead of a generic error, so the
-  // user has an actual way forward.
-  const [showCompleteProfileGate, setShowCompleteProfileGate] = useState(false);
+  const [authStage, setAuthStage] = useState<PublishResumeStage | null>(null);
+  const [handingOff, setHandingOff] = useState(false);
+  const handoffStartedRef = useRef(false);
+  const handedOffRef = useRef(false);
 
   // Funnel tracking refs (no re-render needed)
   const formStartedRef = useRef(false);
@@ -164,7 +166,7 @@ const PublishForm = () => {
   // Track form abandonment on page unload or SPA navigation
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (abandonFiredRef.current) return;
+      if (abandonFiredRef.current || handedOffRef.current) return;
       if (formStartedRef.current && !submittedRef.current) {
         abandonFiredRef.current = true;
         sendGoogleEvent("publish_form_abandon", {
@@ -269,9 +271,9 @@ const PublishForm = () => {
   };
 
   const [showPreview, setShowPreview] = useState(false);
-  const [previewEvent, setPreviewEvent] = useState<EventDetailResponseDTO | null>(
-    null
-  );
+  const previewEvent = useMemo(() => mapDraftToPreviewEvent({
+    form, imageUrl: imagePreview,
+  }), [form, imagePreview]);
 
   const handlePreview = () => {
     sendGoogleEvent("publish_preview_open", {
@@ -279,12 +281,32 @@ const PublishForm = () => {
       source: "publica",
     });
 
-    const event = mapDraftToPreviewEvent({
-      form,
-      imageUrl: imagePreview,
-    });
-    setPreviewEvent(event);
     setShowPreview(true);
+  };
+
+  const beginAuthReturn = async () => {
+    if (!authStage || imagePreparing || handoffStartedRef.current) return;
+    handoffStartedRef.current = true;
+    setHandingOff(true);
+    const result = await draft.prepareResume(authStage);
+    if (!result.ok) {
+      setError(t("draftHandoffFailed"));
+      handoffStartedRef.current = false;
+      setHandingOff(false);
+      return;
+    }
+    const destination = result.revision ? PUBLISH_RESUME_PATH : "/publica";
+    try {
+      handedOffRef.current = true;
+      if (authStage === "login") signIn(getPathname({ href: destination, locale }));
+      else router.push(`/perfil/edita?redirect=${encodeURIComponent(destination)}`);
+    } catch (error) {
+      captureException(error);
+      handedOffRef.current = false;
+      handoffStartedRef.current = false;
+      setHandingOff(false);
+      setError(t("draftHandoffFailed"));
+    }
   };
 
   const buildE2EExtras = (): E2EEventExtras | undefined => {
@@ -388,11 +410,13 @@ const PublishForm = () => {
   };
 
   const onSubmit = async () => {
+    if (handingOff || isPending) return;
     if (draft.status === "decision" || draft.failure?.reason === "stale") {
       setError(t("draftResolveBeforePublish"));
       return;
     }
     if (draft.status === "loading" || draft.status === "discarding") return;
+    if (authStage) { await beginAuthReturn(); return; }
     setError(null); // Clear any previous errors
 
     addBreadcrumb({
@@ -463,11 +487,10 @@ const PublishForm = () => {
                 ? "profile-incomplete"
                 : "stale-session",
           });
-          if (result.reason === "profile-incomplete") {
-            setShowCompleteProfileGate(true);
-          } else {
-            setError(t("errorStaleSession"));
-          }
+          setShowPreview(false);
+          setAuthStage(result.reason === "profile-incomplete" ? "profile" : "login");
+          setError(t(result.reason === "profile-incomplete"
+            ? "completeProfileGate.description" : "errorStaleSession"));
           return;
         }
 
@@ -598,12 +621,10 @@ const PublishForm = () => {
   };
 
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
-  const isDraftLocked = draft.status === "loading" || draft.status === "discarding" ||
+  const isDraftLocked = handingOff || draft.status === "loading" || draft.status === "discarding" ||
     (draft.status === "decision" && !draft.dirty);
-
-  if (showCompleteProfileGate) {
-    return <CompleteProfileGate redirectTo="/publica" />;
-  }
+  const submitLabel = authStage === "login" ? t("authGate.login")
+    : authStage === "profile" ? t("completeProfileGate.cta") : t("submitLabel");
 
   return (
     <>
@@ -612,8 +633,8 @@ const PublishForm = () => {
           open={showPreview}
           setOpen={setShowPreview}
           title={tForm("previewModalTitle")}
-          actionButton={t("submitLabel")}
-          actionButtonDisabled={isFormDisabled || isPending}
+          actionButton={submitLabel}
+          actionButtonDisabled={isDraftLocked || isFormDisabled || isPending}
           onActionButtonClick={async () => {
             await onSubmit();
           }}
@@ -679,6 +700,22 @@ const PublishForm = () => {
               <p className="text-sm font-medium text-error">{error}</p>
             </div>
           )}
+          {draft.resumeFailed && <p role="status" className="body-normal text-foreground/80">{t("draftResumeFailed")}</p>}
+          {authStage && (
+            <div className="stack">
+              <p className="body-small text-foreground/80">{t("draftAuthNotice")}</p>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={imagePreparing || isDraftLocked || isPending}
+                onClick={beginAuthReturn}
+                aria-busy={handingOff}
+                data-testid="publish-resume-action"
+                data-analytics-action={`publish_resume_${authStage}`}
+              >{submitLabel}</button>
+            </div>
+          )}
+          <fieldset disabled={handingOff} inert={handingOff}>
           <PublishDraftPanel
             state={draft}
             onRestore={draft.restore}
@@ -688,13 +725,14 @@ const PublishForm = () => {
               !isLoadingCities && !isErrorRegionsWithCities,
               !isLoadingCategories && !isErrorCategories) : []}
           />
+          </fieldset>
           <fieldset disabled={isDraftLocked || isPending} inert={isDraftLocked}>
           <div className="w-full flex flex-col gap-y-4 pt-4">
             <EventForm
               key={editorVersion}
               form={form}
               onSubmit={onSubmit}
-              submitLabel={t("submitLabel")}
+              submitLabel={submitLabel}
               analyticsContext="publica"
               isLoading={isPending}
               cityOptions={cityOptions}
@@ -702,6 +740,7 @@ const PublishForm = () => {
               isLoadingCities={isLoadingCities}
               handleFormChange={handleFormChange}
               handleImageChange={handleImageChange}
+              onImagePreparingChange={setImagePreparing}
               handleTownChange={handleTownChange}
               handleCategoriesChange={handleCategoriesChange}
               imageToUpload={imagePreview}
@@ -755,7 +794,7 @@ const Publica = () => {
   // open than block publishing on ambiguous state — the backend's own 403
   // (caught in createEventAction) is the authoritative fallback.
   if (user?.profileCompleted === false) {
-    return <CompleteProfileGate redirectTo="/publica" />;
+    return <CompleteProfileGate redirectTo={PUBLISH_RESUME_PATH} />;
   }
 
   return <PublishForm key={user?.id} />;

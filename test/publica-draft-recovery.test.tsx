@@ -20,7 +20,7 @@ vi.mock("@components/hooks/useGetRegionsWithCities", () => ({
 vi.mock("@components/hooks/useCategories", () => ({
   useCategories: () => ({ categories: [], isLoading: false, isError: false }),
 }));
-vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
+vi.mock("next-intl", () => ({ useLocale: () => "ca", useTranslations: () => (key: string) => key }));
 vi.mock("@i18n/routing", () => ({ Link: "a", useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
 vi.mock("@sentry/nextjs", () => ({ addBreadcrumb: vi.fn(), captureException: vi.fn() }));

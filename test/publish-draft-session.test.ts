@@ -24,6 +24,17 @@ beforeEach(() => {
 afterEach(() => { session.dispose(); vi.useRealTimers(); });
 
 describe("create-only draft autosave session", () => {
+  it.each(["changed", "deleted", "unavailable"])("blocks a clean handoff after storage is %s", async (status) => {
+    storage.load.mockResolvedValue({ ok: true, status: "found", revision: "r0", draft: saved });
+    await session.load();
+    session.restore();
+    storage.load.mockResolvedValue(status === "unavailable" ? { ok: false, reason: "unavailable" }
+      : { ok: true, status: status === "deleted" ? "empty" : "found", revision: "r1", draft: saved });
+    expect(await session.confirmSaved()).toEqual({ ok: false, reason: status === "unavailable" ? "unavailable" : "stale" });
+    expect(session.state.status).toBe("error");
+    expect(storage.save).not.toHaveBeenCalled();
+  });
+
   it("waits for a delayed lookup and explicit restore before any save", async () => {
     let resolve!: (result: PublishDraftLoadResult) => void;
     storage.load.mockReturnValue(new Promise<PublishDraftLoadResult>((done) => { resolve = done; }));

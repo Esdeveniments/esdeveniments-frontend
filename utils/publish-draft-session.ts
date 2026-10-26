@@ -1,8 +1,9 @@
 import { PUBLISH_DRAFT_AUTOSAVE_DELAY_MS } from "./constants";
 import { discardPublishDraft, loadPublishDraft, savePublishDraft } from "./publish-draft-storage";
+import { preparePublishDraftResume } from "./publish-draft-resume";
 import type {
   PublishDraftFlushResult, PublishDraftInput, PublishDraftOwner,
-  PublishDraftRevision, PublishDraftSessionState,
+  PublishDraftRevision, PublishDraftSessionState, PublishDraftWriteResult, PublishResumeIntent,
 } from "types/publish-draft";
 
 export const initialPublishDraftState: PublishDraftSessionState = {
@@ -33,11 +34,13 @@ export class PublishDraftSession {
     this.notify(this.state);
   }
 
-  async load() {
+  async load(intent?: PublishResumeIntent) {
     const generation = ++this.generation;
     clearTimeout(this.timer);
     this.loaded = false;
     this.update({ status: "loading", failure: null });
+    const prepared = intent ? await preparePublishDraftResume(this.owner, intent) : null;
+    if (!this.active || generation !== this.generation) return;
     const result = await loadPublishDraft(this.owner);
     if (!this.active || generation !== this.generation) return;
     if (!result.ok) {
@@ -53,6 +56,10 @@ export class PublishDraftSession {
       canDiscard: result.status === "found",
     });
     if (result.status !== "found" && this.state.dirty) void this.flush();
+    const resumed = prepared?.ok === true && result.status === "found" &&
+      result.revision === prepared.revision;
+    if (resumed) this.restore();
+    return { ...result, resumed };
   }
 
   edit(input: PublishDraftInput) {
@@ -100,6 +107,18 @@ export class PublishDraftSession {
       return result;
     });
     return this.queue;
+  }
+
+  async confirmSaved(): Promise<PublishDraftWriteResult> {
+    const generation = this.generation;
+    const saved = await loadPublishDraft(this.owner);
+    if (!this.active || generation !== this.generation) return { ok: false, reason: "stale" };
+    if (saved.ok && saved.status === "found" && saved.revision !== null && saved.revision === this.revision) {
+      return { ok: true, revision: saved.revision };
+    }
+    const failure = saved.ok ? { ok: false, reason: "stale" } as const : saved;
+    this.update({ status: "error", failure });
+    return failure;
   }
 
   discard() {

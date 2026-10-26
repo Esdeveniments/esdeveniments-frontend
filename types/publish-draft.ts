@@ -1,5 +1,7 @@
 import type { AuthUser } from "./auth";
 import type { FormData } from "./event";
+import type { z } from "zod";
+import type { PublishResumeIntentSchema } from "@lib/validation/publish-draft";
 
 export type PublishDraftOwner =
   | { kind: "guest" }
@@ -7,6 +9,11 @@ export type PublishDraftOwner =
 
 export type PublishDraftForm = Partial<Omit<FormData, "id">>;
 export type PublishDraftRevision = string | null;
+export type PublishResumeIntent = z.infer<typeof PublishResumeIntentSchema>;
+export type PublishResumeStage = PublishResumeIntent["stage"];
+export type PublishResumeReadResult =
+  | { ok: true; intent: PublishResumeIntent }
+  | { ok: false; reason: "missing" | "invalid" | "unavailable" };
 
 export interface PublishDraftInput {
   form: PublishDraftForm;
@@ -77,7 +84,7 @@ export interface UsePublishDraftOptions {
   accountId: string | undefined;
   form: FormData;
   imageFile: File | null;
-  onRestore: (draft: PublishDraft) => void;
+  onRestore: (draft: PublishDraft, resumed?: boolean) => void;
   onReset: () => void;
 }
 
