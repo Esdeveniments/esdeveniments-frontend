@@ -177,7 +177,7 @@ const PublishForm = () => {
 
   // Track form abandonment on page unload or SPA navigation
   useEffect(() => {
-    if (submittedRef.current) resetEditor();
+    const resetFrame = submittedRef.current ? requestAnimationFrame(resetEditor) : null;
     const handlePageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return;
       if (submittedRef.current) resetEditor();
@@ -200,6 +200,7 @@ const PublishForm = () => {
     window.addEventListener("pageshow", handlePageShow);
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
+      if (resetFrame !== null) cancelAnimationFrame(resetFrame);
       window.removeEventListener("pageshow", handlePageShow);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       // Also fire on SPA navigation (component unmount)

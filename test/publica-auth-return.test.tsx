@@ -109,7 +109,7 @@ describe("publish auth handoff", () => {
     view.rerender(<Activity mode="hidden"><Publica /></Activity>);
     view.rerender(<Activity mode="visible"><Publica /></Activity>);
     await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
-    expect(screen.getByLabelText("title")).toHaveValue("");
+    await waitFor(() => expect(screen.getByLabelText("title")).toHaveValue(""));
     fireEvent.change(screen.getByLabelText("title"), { target: { value: "Second" } });
     fireEvent.click(screen.getByText("valid-fields"));
     await act(async () => { fireEvent.click(screen.getByText("submit")); });
