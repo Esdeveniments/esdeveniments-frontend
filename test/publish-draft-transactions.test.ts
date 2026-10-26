@@ -3,8 +3,9 @@ import { IDBObjectStore, IDBOpenDBRequest, IDBVersionChangeEvent } from "fake-in
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { discardPublishDraft, loadPublishDraft, savePublishDraft } from "@utils/publish-draft-storage";
 import { PUBLISH_DRAFT_MAX_COUNT, PUBLISH_DRAFT_TTL_MS } from "@utils/constants";
+import { PublishDraftRecordSchema } from "@lib/validation/publish-draft";
 import {
-  accountA, guest, loadedRevision, resetDraftStorage, savedRevision, seedDraft,
+  accountA, guest, loadedRevision, rawDraft, resetDraftStorage, savedRevision, seedDraft,
 } from "./helpers/publish-draft";
 
 beforeEach(resetDraftStorage);
@@ -68,6 +69,25 @@ describe("atomic publication draft mutations", () => {
     savedRevision(await savePublishDraft(guest, { form: {}, imageFile: null }, revision));
     expect(await loadPublishDraft({ kind: "account", accountId: "owner-0" }))
       .toMatchObject({ status: "empty" });
+  });
+
+  it("rolls back expiry cleanup and the fence when an over-capacity database rejects a save", async () => {
+    const now = Date.now();
+    vi.spyOn(Date, "now").mockReturnValue(now);
+    await seedDraft();
+    for (let i = 0; i < PUBLISH_DRAFT_MAX_COUNT - 1; i++) {
+      await seedDraft({ kind: "account", accountId: `owner-${i}` });
+    }
+    const template = PublishDraftRecordSchema.parse(await rawDraft("guest"));
+    await rawDraft("account:extra", () => ({
+      ...template, owner: { kind: "account", accountId: "extra" },
+    }));
+    await rawDraft("guest", () => ({ ...template, updatedAt: now - PUBLISH_DRAFT_TTL_MS }));
+    const revision = loadedRevision(await loadPublishDraft(accountA));
+    expect(await savePublishDraft(accountA, { form: {}, imageFile: null }, revision))
+      .toEqual({ ok: false, reason: "capacity" });
+    expect(await rawDraft("guest")).toMatchObject({ updatedAt: now - PUBLISH_DRAFT_TTL_MS });
+    expect(loadedRevision(await loadPublishDraft(accountA))).toBe(revision);
   });
 
   it.each(["QuotaExceededError", "SecurityError", "AbortError"] as const)(

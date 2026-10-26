@@ -136,6 +136,7 @@ export async function savePublishDraft(
         }
         if (count >= PUBLISH_DRAFT_MAX_COUNT) {
           finish({ ok: false, reason: "capacity" });
+          store.transaction.abort();
           return;
         }
         const nextRevision = advance();
