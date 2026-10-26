@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
 import path from "node:path";
 import { MOCK_USER } from "./helpers/auth";
+import { dismissEngagementPopups } from "./helpers/login";
 
 test("preserves a Spanish draft and real poster across full-document auth and profile return", async ({ page }, testInfo) => {
+  await dismissEngagementPopups(page);
   let attempts = 0;
   let profileComplete = true;
   let profileSaved = false;
