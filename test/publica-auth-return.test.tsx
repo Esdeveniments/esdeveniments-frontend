@@ -293,6 +293,7 @@ describe("one-shot publish return", () => {
       await screen.findByText("restoreDraftApply");
       expect(screen.getByLabelText("title")).toHaveValue("Newer input");
       expect(screen.queryByTestId("preview-modal")).not.toBeInTheDocument();
+      expect(screen.queryByText("draftResumeFailed")).not.toBeInTheDocument();
       expect(mocks.save).not.toHaveBeenCalled();
       expect(mocks.create).not.toHaveBeenCalled();
       expect(mocks.track.mock.calls.filter(([name]) => name === "publish_form_start")).toHaveLength(1);

@@ -7,6 +7,7 @@ import { loadPublishDraft, savePublishDraft } from "@utils/publish-draft-storage
 import { PUBLISH_DRAFT_TTL_MS, PUBLISH_RESUME_STORAGE_KEY, PUBLISH_RESUME_TTL_MS } from "@utils/constants";
 import { accountA, accountB, guest, loadedRevision, rawDraft, resetDraftStorage, savedRevision, seedDraft } from "./helpers/publish-draft";
 import type { PublishResumeIntent } from "types/publish-draft";
+import { PublishDraftSession } from "@utils/publish-draft-session";
 
 const values = new Map<string, string>();
 const intent = (revision = crypto.randomUUID()): PublishResumeIntent => ({
@@ -62,6 +63,25 @@ describe("tab-local publish return intent", () => {
 });
 
 describe("deliberate guest handoff boundary for guest editing", () => {
+  it("moves the exact guest image even when newer hydration edits require an explicit restore", async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "poster.png", { type: "image/png", lastModified: 123 });
+    const revision = savedRevision(await savePublishDraft(guest, { form: { title: "Guest" }, imageFile: file }, null));
+    const session = new PublishDraftSession(accountA, vi.fn());
+    try {
+      session.edit({ form: { title: "New input" }, imageFile: null });
+      expect(await session.load({ ...intent(revision), owner: guest })).toMatchObject({
+        resumed: false, matchesResume: true,
+      });
+      expect(session.state).toMatchObject({ status: "decision", dirty: true, pendingDraft: {
+        form: { title: "Guest" }, imageFile: { name: file.name, lastModified: file.lastModified },
+      } });
+      expect(await session.flush()).toEqual({ ok: false, reason: "unavailable" });
+      expect(await rawDraft("guest")).toBeUndefined();
+      const restored = session.restore();
+      expect(new Uint8Array(await restored!.imageFile!.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+    } finally { session.dispose(); }
+  });
+
   it("moves real bytes and metadata atomically, fences the guest and leaves no implicit adoption", async () => {
     const file = new File([new Uint8Array([1, 2, 3])], "poster.png", { type: "image/png", lastModified: 123 });
     const revision = savedRevision(await savePublishDraft(guest, { form: { title: "Guest" }, imageFile: file }, null));

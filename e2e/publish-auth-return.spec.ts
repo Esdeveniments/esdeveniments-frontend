@@ -4,8 +4,8 @@ import { MOCK_USER } from "./helpers/auth";
 import { dismissEngagementPopups } from "./helpers/login";
 import type { PublishDraftRecord } from "types/publish-draft";
 
-async function readSavedDraft(page: Page) {
-  return page.evaluate(async () => {
+async function readSavedDraft(page: Page, accountId?: string) {
+  return page.evaluate(async (expectedAccount) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const open = indexedDB.open("esdeveniments-publish-drafts");
       open.onsuccess = () => resolve(open.result);
@@ -18,14 +18,19 @@ async function readSavedDraft(page: Page) {
         read.onerror = () => reject(read.error);
       });
       if (records.length !== 1 || !records[0]?.image) throw new Error("Expected one image draft");
+      if (expectedAccount && (records[0].owner.kind !== "account" || records[0].owner.accountId !== expectedAccount)) {
+        throw new Error("Expected the poster draft to transfer to the authenticated account");
+      }
       const { form, image } = records[0];
       return { form, image: { ...image, bytes: Array.from(new Uint8Array(image.bytes)) } };
     } finally { db.close(); }
-  });
+  }, accountId);
 }
 
-for (const guest of [false, true]) {
-test(`preserves a Spanish ${guest ? "guest" : "stale-session"} draft and real poster across full-document auth and profile return`, async ({ page }, testInfo) => {
+for (const scenario of ["stale-session", "guest", "guest-typing"]) {
+test(`preserves a Spanish ${scenario} draft and real poster across full-document auth and profile return`, async ({ page }, testInfo) => {
+  const guest = scenario !== "stale-session";
+  const typing = scenario === "guest-typing";
   await dismissEngagementPopups(page);
   let attempts = 0;
   let signedIn = !guest;
@@ -36,11 +41,14 @@ test(`preserves a Spanish ${guest ? "guest" : "stale-session"} draft and real po
   let authReadsAfterProfile = 0;
   let completedLogins = 0;
   let denyNextAuthRead = false;
-  await page.route("**/api/auth/me", (route) => {
+  let resolveHydration!: () => void;
+  const hydrationReady = new Promise<void>((resolve) => { resolveHydration = resolve; });
+  await page.route("**/api/auth/me", async (route) => {
     if (!signedIn || denyNextAuthRead) {
       denyNextAuthRead = false;
       return route.fulfill({ status: 401, json: { user: null } });
     }
+    if (typing && completedLogins === 2) await hydrationReady;
     if (profileSaved) authReadsAfterProfile++;
     return route.fulfill({ json: { user: { ...MOCK_USER, profileCompleted: profileComplete } } });
   });
@@ -124,11 +132,26 @@ test(`preserves a Spanish ${guest ? "guest" : "stale-session"} draft and real po
   await expect(page.getByRole("heading", { name: "Hosted login fixture" })).toBeVisible();
   await page.getByRole("link", { name: "Complete login" }).click();
   expect(completedLogins).toBe(2);
+  if (typing) {
+    await expect(page.locator("input#title")).toBeEnabled();
+    await page.locator("input#title").fill("New input during authentication");
+    resolveHydration();
+    await expect(pendingGuest).toBeEnabled();
+    await expect(page.locator("input#title")).toHaveValue("New input during authentication");
+    expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(originalDraft);
+    await expect(page.getByText("No hemos podido recuperar el borrador de este regreso.", { exact: false })).not.toBeVisible();
+    expect(attempts).toBe(0);
+    await page.screenshot({ path: testInfo.outputPath("hydration-edits-explicit-restore.png") });
+    await pendingGuest.click();
+    await page.getByTestId("next-button").click();
+    await page.getByTestId("next-button").click();
+    await page.getByTestId("preview-button").click();
+  }
   await expect(page.getByTestId("preview-modal")).toBeVisible();
   await page.getByTestId("preview-modal-action-button").click();
   await expect(page).toHaveURL(/\/es\/perfil\/edita/);
   await page.locator("#displayName").fill("Test User");
-  await page.locator('main form button[type="submit"]').click();
+  await page.getByRole("button", { name: "Guardar cambios", exact: true }).click();
   const modal = page.getByTestId("preview-modal");
   await expect(modal).toBeVisible();
   await expect(page).toHaveURL(/\/es\/publica/);

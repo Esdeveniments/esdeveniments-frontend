@@ -81,12 +81,12 @@ export function usePublishDraft({
         await Promise.resolve();
         if (!active) return;
       }
-      const result = await current.load(request?.ok && !edited.current ? request.intent : undefined);
+      const result = await current.load(request?.ok ? request.intent : undefined);
       if (!active || !returning) return;
       resumeRequest.current = null;
-      if (result?.resumed && result.status === "found") {
+      if (result?.matchesResume) {
         setResumeFailed(false);
-        restoreCallback.current(result.draft, true);
+        if (result.resumed && result.status === "found") restoreCallback.current(result.draft, true);
       } else if (request?.ok || request?.reason !== "missing") {
         setResumeFailed(true);
       }

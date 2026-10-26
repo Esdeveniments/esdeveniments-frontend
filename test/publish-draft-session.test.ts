@@ -31,7 +31,7 @@ describe("create-only draft autosave session", () => {
     const loading = session.load({ version: 1, owner, revision, stage: "login", createdAt: Date.now() });
     session.edit(input);
     resolve({ ok: true, status: "found", revision, draft: saved });
-    expect(await loading).toMatchObject({ resumed: false });
+    expect(await loading).toMatchObject({ resumed: false, matchesResume: true });
     expect(session.state).toMatchObject({ dirty: true, pendingDraft: saved, status: "decision" });
     await session.flush();
     expect(storage.save).not.toHaveBeenCalled();
