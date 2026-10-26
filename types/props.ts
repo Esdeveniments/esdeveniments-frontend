@@ -221,6 +221,7 @@ export interface ModalProps {
   actionButton?: ReactNode;
   onActionButtonClick?: () => boolean | void | Promise<boolean | void>;
   actionButtonDisabled?: boolean;
+  actionButtonAnalyticsAction?: string;
   testId?: string;
 }
 

@@ -299,6 +299,8 @@ export interface EventFormProps {
   analyticsContext?: string;
   isEditMode?: boolean;
   isLoading?: boolean;
+  isSubmitDisabled?: boolean;
+  submitAnalyticsAction?: string;
   cityOptions: Option[];
   categoryOptions: Option[];
   isLoadingCities?: boolean;

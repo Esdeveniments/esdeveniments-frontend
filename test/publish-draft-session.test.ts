@@ -24,6 +24,19 @@ beforeEach(() => {
 afterEach(() => { session.dispose(); vi.useRealTimers(); });
 
 describe("create-only draft autosave session", () => {
+  it("keeps edits made during resume lookup for an explicit restore decision", async () => {
+    const revision = "00000000-0000-4000-8000-000000000001";
+    let resolve!: (result: PublishDraftLoadResult) => void;
+    storage.load.mockReturnValue(new Promise<PublishDraftLoadResult>((done) => { resolve = done; }));
+    const loading = session.load({ version: 1, owner, revision, stage: "login", createdAt: Date.now() });
+    session.edit(input);
+    resolve({ ok: true, status: "found", revision, draft: saved });
+    expect(await loading).toMatchObject({ resumed: false, matchesResume: true });
+    expect(session.state).toMatchObject({ dirty: true, pendingDraft: saved, status: "decision" });
+    await session.flush();
+    expect(storage.save).not.toHaveBeenCalled();
+  });
+
   it.each(["changed", "deleted", "unavailable"])("blocks a clean handoff after storage is %s", async (status) => {
     storage.load.mockResolvedValue({ ok: true, status: "found", revision: "r0", draft: saved });
     await session.load();

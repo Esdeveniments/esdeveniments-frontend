@@ -56,10 +56,11 @@ export class PublishDraftSession {
       canDiscard: result.status === "found",
     });
     if (result.status !== "found" && this.state.dirty) void this.flush();
-    const resumed = prepared?.ok === true && result.status === "found" &&
+    const matchesResume = prepared?.ok === true && result.status === "found" &&
       result.revision === prepared.revision;
+    const resumed = matchesResume && !this.state.dirty;
     if (resumed) this.restore();
-    return { ...result, resumed };
+    return { ...result, resumed, matchesResume };
   }
 
   edit(input: PublishDraftInput) {

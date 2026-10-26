@@ -19,6 +19,7 @@ export default function Modal({
   actionButton,
   onActionButtonClick,
   actionButtonDisabled = false,
+  actionButtonAnalyticsAction,
   testId,
 }: ModalProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -103,6 +104,7 @@ export default function Modal({
                         data-testid={testId ? `${testId}-action-button` : undefined}
                         className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={actionButtonDisabled}
+                        data-analytics-action={actionButtonAnalyticsAction}
                       >
                         {actionButton}
                       </Button>

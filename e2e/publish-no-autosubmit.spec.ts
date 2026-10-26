@@ -1,19 +1,30 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
 import { mockAuthenticatedUser } from "./helpers/auth";
+import { dismissEngagementPopups } from "./helpers/login";
 
 // Note: Service workers are blocked globally via playwright.config.ts (serviceWorkers: 'block')
 // This allows Playwright's route handlers to intercept API requests for mocking
 
 test.describe("Publish wizard should not auto publish", () => {
-  // Publishing is gated behind auth — sign the session in before each test.
-  test.beforeEach(async ({ page }) => {
-    await mockAuthenticatedUser(page);
-  });
-
-  test("does not publish when navigating back and forth and ignores implicit submits", async ({
+  for (const guest of [false, true]) {
+  test(`${guest ? "guest" : "signed-in"} wizard never publishes on navigation or implicit submits`, async ({
     page,
   }) => {
+    await dismissEngagementPopups(page);
+    if (guest) await page.route("**/api/auth/me", (route) => route.fulfill({ status: 401, json: { user: null } }));
+    else await mockAuthenticatedUser(page);
+    let attempts = 0;
+    let signIns = 0;
+    await page.route("**/publica", (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      attempts++;
+      return route.fulfill({ status: 500, contentType: "text/plain", body: "Synthetic create failure" });
+    });
+    await page.route("**/api/auth/sign-in?*", (route) => {
+      signIns++;
+      return route.fulfill({ contentType: "text/html", body: "<main>Sign-in fixture</main>" });
+    });
     const mockRegions = [
       {
         id: 1,
@@ -62,6 +73,9 @@ test.describe("Publish wizard should not auto publish", () => {
 
     // Step 1: basics
     await page.fill("input#title", `Concert de prova ${Date.now()}`);
+    await page.locator("input#title").press("Enter");
+    expect(attempts).toBe(0);
+    expect(signIns).toBe(0);
     await page.fill(
       "textarea#description",
       "Descripció de prova amb prou caràcters."
@@ -138,15 +152,20 @@ test.describe("Publish wizard should not auto publish", () => {
     });
     expect(publishedSlug).toBeNull();
     expect(navigatedToEventUrl).toBeNull();
+    expect(attempts).toBe(0);
+    expect(signIns).toBe(0);
+
+    if (guest) {
+      await expect(page.getByTestId("publish-button")).toHaveText("Inicia sessió per publicar");
+      await page.getByTestId("publish-button").click();
+      await expect(page).toHaveURL(/\/api\/auth\/sign-in/);
+      expect(signIns).toBe(1);
+      expect(attempts).toBe(0);
+      return;
+    }
 
     // A failed server action must not clear the locally saved draft or retry creation.
     await expect(page.getByTestId("draft-save-status")).toHaveText("Desat en aquest dispositiu");
-    let attempts = 0;
-    await page.route("**/publica", (route) => {
-      if (route.request().method() !== "POST") return route.continue();
-      attempts++;
-      return route.fulfill({ status: 500, contentType: "text/plain", body: "Synthetic create failure" });
-    });
     await expect(page.getByTestId("publish-button")).toBeEnabled();
     await page.getByTestId("publish-button").click();
     await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
@@ -157,4 +176,5 @@ test.describe("Publish wizard should not auto publish", () => {
     await expect(page.locator("input#title")).not.toHaveValue("");
     expect(attempts).toBe(1);
   });
+  }
 });

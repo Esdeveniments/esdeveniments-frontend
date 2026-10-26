@@ -32,8 +32,7 @@ no `@logto/*` SDK — to keep the client bundle untouched. All of it lives in
 
 Entry points: `/iniciar-sessio` (proxy-rewritten to `/api/auth/sign-in` — see
 `LOGIN_ENTRY_PATTERN` in `proxy.ts`). There is currently **no working
-`/registre` route** — it's referenced from `PublishAuthGate` but nothing
-serves it. Logto's own hosted UI is where the actual login/signup choice
+`/registre` route**. Logto's own hosted UI is where the actual login/signup choice
 happens; the app cannot distinguish login vs. signup intent client-side.
 
 ## `useAuth()` — the only way client code reads session state
@@ -62,10 +61,16 @@ pattern.
 
 Server pages: check the session cookie server-side (`getAccessTokenFromCookies`
 from `@utils/auth-cookies`) and render an `*AuthGate` component when absent —
-see `PublishAuthGate.tsx`, `EditProfileAuthGate.tsx`,
+see `EditProfileAuthGate.tsx`,
 `PastFavoritesAuthGate.tsx` for the shape. Client components: use
 `useAuth().isAuthenticated` / `.status` — see `ProfileOwnerActions.tsx`,
 `ProfileClaimCta.tsx`.
+
+Publishing is the exception: guests and incomplete-profile users can edit and
+preview `/publica`. Its shared submit handler saves through `usePublishDraft`
+before calling `signIn()` or opening profile completion. Auth hydration keeps
+the editor mounted and disables only publication. Returning restores preview,
+not creation; an explicit Publish still requires server authorization.
 
 ## Auth-CTA analytics: `data-analytics-action`
 

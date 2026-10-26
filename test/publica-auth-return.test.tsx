@@ -1,5 +1,5 @@
-import { StrictMode } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { Activity, StrictMode } from "react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventFormProps } from "types/event";
 import { PUBLISH_RESUME_STORAGE_KEY } from "@utils/constants";
@@ -8,13 +8,13 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(w
 const mocks = vi.hoisted(() => ({
   load: vi.fn(), save: vi.fn(), discard: vi.fn(), create: vi.fn(), push: vi.fn(), signIn: vi.fn(),
   user: { id: "a", profileCompleted: true as boolean | undefined }, locale: "es",
-  authenticated: true,
+  authenticated: true, loading: false, track: vi.fn(), optionsFailed: false, retryOptions: vi.fn(),
 }));
 vi.mock("@utils/publish-draft-storage", () => ({
   loadPublishDraft: mocks.load, savePublishDraft: mocks.save, discardPublishDraft: mocks.discard,
 }));
 vi.mock("@components/hooks/useAuth", () => ({
-  useAuth: () => ({ user: mocks.user, signIn: mocks.signIn, isAuthenticated: mocks.authenticated, isLoading: false }),
+  useAuth: () => ({ user: mocks.user, signIn: mocks.signIn, isAuthenticated: mocks.authenticated, isLoading: mocks.loading }),
 }));
 vi.mock("next-intl", () => ({
   useLocale: () => mocks.locale, useTranslations: () => (key: string) => key,
@@ -24,17 +24,17 @@ vi.mock("@i18n/routing", () => ({
   getPathname: ({ href, locale }: { href: string; locale: string }) => locale === "ca" ? href : `/${locale}${href}`,
 }));
 vi.mock("@components/hooks/useGetRegionsWithCities", () => ({
-  useGetRegionsWithCities: () => ({ regionsWithCities: [], isLoading: false, isError: false }),
+  useGetRegionsWithCities: () => ({ regionsWithCities: [], isLoading: false, isError: mocks.optionsFailed, mutate: mocks.retryOptions }),
 }));
 vi.mock("@components/hooks/useCategories", () => ({
-  useCategories: () => ({ categories: [], isLoading: false, isError: false }),
+  useCategories: () => ({ categories: [], isLoading: false, isError: mocks.optionsFailed, refetch: mocks.retryOptions }),
 }));
-vi.mock("@utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
+vi.mock("@utils/analytics", () => ({ sendGoogleEvent: mocks.track }));
 vi.mock("@sentry/nextjs", () => ({ addBreadcrumb: vi.fn(), captureException: vi.fn() }));
 vi.mock("@app/[locale]/publica/actions", () => ({ createEventAction: mocks.create }));
 vi.mock("next/dynamic", () => ({ default: () => () => <div>preview-content</div> }));
 vi.mock("@components/ui/EventForm", () => ({
-  default: ({ form, imageFile, imageToUpload, handleFormChange, handleImageChange, onSubmit, onImagePreparingChange }: EventFormProps) => (
+  default: ({ form, imageFile, imageToUpload, handleFormChange, handleImageChange, onSubmit, onImagePreparingChange, submitLabel, isSubmitDisabled, onPreview }: EventFormProps) => (
     <div>
       <input aria-label="title" value={form.title} onChange={(e) => handleFormChange("title", e.target.value)} />
       <output data-testid="image">{imageFile?.name}</output>
@@ -43,6 +43,16 @@ vi.mock("@components/ui/EventForm", () => ({
       <button onClick={() => onImagePreparingChange?.(true)}>prepare-image</button>
       <button onClick={() => onImagePreparingChange?.(false)}>finish-image</button>
       <button onClick={onSubmit}>submit</button>
+      <button onClick={onSubmit} disabled={isSubmitDisabled}>{submitLabel}</button>
+      <button onClick={onPreview}>preview</button>
+      <button onClick={() => {
+        handleFormChange("description", "A detailed description for validation.");
+        handleFormChange("location", "Park");
+        handleFormChange("town", { value: "1", label: "Town" });
+        handleFormChange("region", { value: "2", label: "Region" });
+        handleFormChange("url", "https://example.com");
+        handleImageChange(new File(["image"], "poster.png", { type: "image/png" }));
+      }}>valid-fields</button>
     </div>
   ),
 }));
@@ -61,6 +71,9 @@ beforeEach(() => {
   window.history.replaceState(null, "", "/es/publica");
   mocks.user = { id: "a", profileCompleted: true };
   mocks.authenticated = true;
+  mocks.locale = "es";
+  mocks.loading = false;
+  mocks.optionsFailed = false;
   mocks.load.mockResolvedValue({ ok: true, status: "empty", revision: null });
   mocks.save.mockImplementation(async (_owner, input) => {
     mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: { ...input, updatedAt: 1 } });
@@ -81,17 +94,60 @@ async function rejectPublication(reason = "stale-session") {
 }
 
 describe("publish auth handoff", () => {
+  it("allows another explicit publication after a completed cached editor returns", async () => {
+    mocks.create.mockResolvedValue({ success: true, event: { slug: "created" } });
+    mocks.discard.mockImplementation(async () => {
+      mocks.load.mockResolvedValue({ ok: true, status: "empty", revision });
+      return { ok: true, revision };
+    });
+    const view = render(<Activity mode="visible"><Publica /></Activity>);
+    await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+    fireEvent.change(screen.getByLabelText("title"), { target: { value: "First" } });
+    fireEvent.click(screen.getByText("valid-fields"));
+    await act(async () => { fireEvent.click(screen.getByText("submit")); });
+    expect(mocks.create).toHaveBeenCalledTimes(1);
+    view.rerender(<Activity mode="hidden"><Publica /></Activity>);
+    view.rerender(<Activity mode="visible"><Publica /></Activity>);
+    await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+    await waitFor(() => expect(screen.getByLabelText("title")).toHaveValue(""));
+    fireEvent.change(screen.getByLabelText("title"), { target: { value: "Second" } });
+    fireEvent.click(screen.getByText("valid-fields"));
+    await act(async () => { fireEvent.click(screen.getByText("submit")); });
+    expect(mocks.create).toHaveBeenCalledTimes(2);
+  });
+
+  it("consumes a fresh profile intent when a cached editor reactivates after login", async () => {
+    mocks.user.profileCompleted = false;
+    mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
+    setReturn();
+    const view = render(<Activity mode="visible"><Publica /></Activity>);
+    await waitFor(() => expect(screen.getByTestId("preview-modal")).toBeVisible());
+    fireEvent.click(screen.getByText("valid-fields"));
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.completeProfile")[0]); });
+    expect(mocks.push).toHaveBeenCalledOnce();
+    expect(JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!)).toMatchObject({ stage: "profile" });
+    view.rerender(<Activity mode="hidden"><Publica /></Activity>);
+    mocks.user.profileCompleted = true;
+    window.history.replaceState(null, "", "/es/publica?resume=1");
+    view.rerender(<Activity mode="visible"><Publica /></Activity>);
+    await waitFor(() => expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull());
+    expect(screen.queryByText("draftResumeFailed")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId("preview-modal-action-button")).toBeEnabled());
+    expect(screen.getByTestId("preview-modal-action-button")).toHaveTextContent("submitLabel");
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
   it("uses shared conflict guidance on repeated auth actions", async () => {
     await rejectPublication(); mocks.save.mockResolvedValue({ ok: false, reason: "stale" });
-    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
-    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.signIn")[0]); });
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.signIn")[0]); });
     expect(screen.getByText("draftResolveBeforePublish")).toBeVisible();
   });
   it("awaits the exact pending save before localized sign-in and never retries create", async () => {
     await rejectPublication();
     let finish!: (result: { ok: true; revision: string }) => void;
     mocks.save.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
-    fireEvent.click(screen.getByText("authGate.login"));
+    fireEvent.click(screen.getAllByText("publishCta.signIn")[0]);
     expect(mocks.signIn).not.toHaveBeenCalled();
     mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
     await act(async () => { finish({ ok: true, revision }); });
@@ -105,18 +161,18 @@ describe("publish auth handoff", () => {
   it.each(["retry", "discard"])("blocks failed navigation until explicit %s", async (action) => {
     await rejectPublication();
     mocks.save.mockResolvedValueOnce({ ok: false, reason: "quota" });
-    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.signIn")[0]); });
     expect(screen.getByText("draftHandoffFailed")).toBeVisible();
     expect(mocks.signIn).not.toHaveBeenCalled();
     const denied = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new DOMException("denied"); });
-    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.signIn")[0]); });
     expect(mocks.signIn).not.toHaveBeenCalled();
     denied.mockRestore();
     if (action === "discard") {
       fireEvent.click(screen.getByText("restoreDraftDiscard"));
       await act(async () => { fireEvent.click(screen.getByTestId("draft-discard-modal-action-button")); });
     }
-    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.signIn")[0]); });
     expect(mocks.signIn).toHaveBeenCalledExactlyOnceWith(action === "discard" ? "/es/publica" : "/es/publica?resume=1");
   });
 
@@ -124,11 +180,11 @@ describe("publish auth handoff", () => {
     await rejectPublication("profile-incomplete");
     expect(screen.getByLabelText("title")).toHaveValue("Latest");
     fireEvent.click(screen.getByText("prepare-image"));
-    expect(screen.getByText("completeProfileGate.cta")).toBeDisabled();
+    expect(screen.getAllByText("publishCta.completeProfile")[0]).toBeDisabled();
     expect(mocks.push).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText("finish-image"));
-    expect(screen.getByText("completeProfileGate.cta")).toBeEnabled();
-    await act(async () => { fireEvent.click(screen.getByText("completeProfileGate.cta")); });
+    expect(screen.getAllByText("publishCta.completeProfile")[0]).toBeEnabled();
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.completeProfile")[0]); });
     expect(mocks.push).toHaveBeenCalledWith("/perfil/edita?redirect=%2Fpublica%3Fresume%3D1");
   });
 
@@ -136,7 +192,7 @@ describe("publish auth handoff", () => {
     await rejectPublication("profile-incomplete");
     let finish!: (result: { ok: true; revision: string }) => void;
     mocks.save.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
-    fireEvent.click(screen.getByText("completeProfileGate.cta"));
+    fireEvent.click(screen.getAllByText("publishCta.completeProfile")[0]);
     expect(mocks.push).not.toHaveBeenCalled();
     mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
     await act(async () => { finish({ ok: true, revision }); });
@@ -149,13 +205,13 @@ describe("publish auth handoff", () => {
 
   it("unlocks a completed handoff only on persisted pageshow and allows another deliberate action", async () => {
     await rejectPublication();
-    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.signIn")[0]); });
     expect(screen.getByLabelText("title")).toBeDisabled();
     act(() => { window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: false })); });
     expect(screen.getByLabelText("title")).toBeDisabled();
     act(() => { window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })); });
     expect(screen.getByLabelText("title")).toBeEnabled();
-    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    await act(async () => { fireEvent.click(screen.getAllByText("publishCta.signIn")[0]); });
     expect(mocks.signIn).toHaveBeenCalledTimes(2);
     expect(mocks.create).toHaveBeenCalledTimes(1);
   });
@@ -197,14 +253,164 @@ describe("one-shot publish return", () => {
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
-  it("retains the strict upfront incomplete-profile gate and its resume destination", () => {
+  it("restores an incomplete-profile return into editable preview without publishing", async () => {
     mocks.user.profileCompleted = false;
     setReturn();
+    mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
     render(<Publica />);
-    expect(screen.getByTestId("complete-profile-gate")).toBeVisible();
-    expect(screen.getByRole("link", { name: "cta" })).toHaveAttribute("href", "/perfil/edita?redirect=%2Fpublica%3Fresume%3D1");
-    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).not.toBeNull();
-    expect(mocks.load).not.toHaveBeenCalled();
+    await screen.findByTestId("preview-modal");
+    expect(screen.getByTestId("preview-modal-action-button")).toHaveTextContent("publishCta.completeProfile");
+    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull();
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  describe("guest editor publication policy", () => {
+    it("allows edits during hydration and keeps them in the resolved account without creating", async () => {
+      mocks.loading = true;
+      const view = render(<Publica />);
+      fireEvent.change(screen.getByLabelText("title"), { target: { value: "While loading" } });
+      expect(screen.getByText("publishCta.resolving")).toBeDisabled();
+      fireEvent.click(screen.getByText("submit"));
+      expect(mocks.load).not.toHaveBeenCalled();
+      mocks.loading = false;
+      view.rerender(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+      expect(screen.getByLabelText("title")).toHaveValue("While loading");
+      expect(mocks.load).toHaveBeenCalledWith({ kind: "account", accountId: "a" });
+      expect(mocks.create).not.toHaveBeenCalled();
+      expect(mocks.track.mock.calls.filter(([name]) => name === "publish_form_start")).toHaveLength(1);
+    });
+
+    it("keeps newer hydration edits separate from an authenticated resume snapshot", async () => {
+      setReturn();
+      mocks.loading = true;
+      mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
+      const view = render(<Publica />);
+      fireEvent.change(screen.getByLabelText("title"), { target: { value: "Newer input" } });
+      fireEvent.click(screen.getByText("valid-fields"));
+      mocks.loading = false;
+      view.rerender(<Publica />);
+      await screen.findByText("restoreDraftApply");
+      expect(screen.getByLabelText("title")).toHaveValue("Newer input");
+      expect(screen.queryByTestId("preview-modal")).not.toBeInTheDocument();
+      expect(screen.queryByText("draftResumeFailed")).not.toBeInTheDocument();
+      expect(mocks.save).not.toHaveBeenCalled();
+      expect(mocks.create).not.toHaveBeenCalled();
+      expect(mocks.track.mock.calls.filter(([name]) => name === "publish_form_start")).toHaveLength(1);
+    });
+
+    it("retains pre-auth fields and File across a real route unmount without guessing an owner", async () => {
+      mocks.loading = true;
+      const view = render(<Publica />);
+      fireEvent.change(screen.getByLabelText("title"), { target: { value: "Before resolution" } });
+      fireEvent.click(screen.getByText("image"));
+      view.unmount();
+      expect(mocks.load).not.toHaveBeenCalled();
+      expect(mocks.save).not.toHaveBeenCalled();
+      const unloading = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(unloading);
+      expect(unloading.defaultPrevented).toBe(true);
+      mocks.loading = false;
+      render(<Publica />);
+      await waitFor(() => expect(mocks.save).toHaveBeenCalledWith({ kind: "account", accountId: "a" },
+        { form: expect.objectContaining({ title: "Before resolution" }), imageFile: expect.any(File) }, null));
+      expect(screen.getByLabelText("title")).toHaveValue("Before resolution");
+      expect(screen.getByTestId("image")).toHaveTextContent("poster.png");
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("fences an older pre-auth editor cleanup from replacing the newest buffer", async () => {
+      mocks.loading = true;
+      const older = render(<Publica />);
+      fireEvent.change(within(older.container).getByLabelText("title"), { target: { value: "Older" } });
+      const newer = render(<Publica />);
+      fireEvent.change(within(newer.container).getByLabelText("title"), { target: { value: "Newest" } });
+      newer.unmount();
+      older.unmount();
+      mocks.loading = false;
+      render(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+      expect(screen.getByLabelText("title")).toHaveValue("Newest");
+    });
+
+    it("reports public option failures and retries both without a backend bypass", async () => {
+      mocks.authenticated = false;
+      mocks.optionsFailed = true;
+      render(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+      expect(screen.getByText("optionsFailed")).toBeVisible();
+      fireEvent.click(screen.getByText("draftRetry"));
+      expect(mocks.retryOptions).toHaveBeenCalledTimes(2);
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("never creates twice while an explicit publication is pending", async () => {
+      let finish!: (result: { success: false; reason: "stale-session" }) => void;
+      mocks.create.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+      render(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+      fireEvent.click(screen.getByText("image"));
+      act(() => {
+        fireEvent.click(screen.getByText("submit"));
+        fireEvent.click(screen.getByText("submit"));
+      });
+      expect(mocks.create).toHaveBeenCalledTimes(1);
+      await act(async () => { finish({ success: false, reason: "stale-session" }); });
+      expect(mocks.create).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(["ca", "es", "en"])("saves incomplete guest fields before early %s sign-in without submit telemetry", async (locale) => {
+      mocks.locale = locale;
+      mocks.authenticated = false;
+      render(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+      fireEvent.change(screen.getByLabelText("title"), { target: { value: "Incomplete guest" } });
+      await act(async () => { fireEvent.click(screen.getByTestId("publish-early-sign-in")); });
+      expect(mocks.save).toHaveBeenCalledWith({ kind: "guest" },
+        { form: expect.objectContaining({ title: "Incomplete guest" }), imageFile: null }, null);
+      expect(mocks.signIn).toHaveBeenCalledWith(`${locale === "ca" ? "" : `/${locale}`}/publica?resume=1`);
+      act(() => { window.dispatchEvent(new Event("beforeunload")); });
+      expect(mocks.track.mock.calls.some(([name]) => name === "publish_submit_attempt" || name === "publish_success" || name === "publish_form_abandon")).toBe(false);
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("shares guest auth policy with preview, keeps it open and restores focus after failed storage", async () => {
+      mocks.authenticated = false;
+      render(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+      fireEvent.change(screen.getByLabelText("title"), { target: { value: "Guest preview" } });
+      fireEvent.click(screen.getByText("valid-fields"));
+      fireEvent.click(screen.getByText("preview"));
+      const action = await screen.findByTestId("preview-modal-action-button");
+      expect(action).toHaveTextContent("publishCta.signIn");
+      mocks.save.mockResolvedValueOnce({ ok: false, reason: "quota" });
+      action.focus();
+      await act(async () => { fireEvent.click(action); });
+      expect(screen.getByTestId("preview-modal")).toBeVisible();
+      expect(screen.getByTestId("preview-modal")).toHaveTextContent("draftHandoffFailed");
+      await waitFor(() => expect(action).toHaveFocus());
+      expect(mocks.signIn).not.toHaveBeenCalled();
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("preserves guest edits on an in-document login without implicitly adopting them", async () => {
+      mocks.authenticated = false;
+      const view = render(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+      fireEvent.change(screen.getByLabelText("title"), { target: { value: "Guest edits" } });
+      fireEvent.click(screen.getByText("valid-fields"));
+      await waitFor(() => expect(mocks.save).toHaveBeenCalledWith({ kind: "guest" },
+        { form: expect.objectContaining({ title: "Guest edits" }), imageFile: expect.any(File) }, null));
+      mocks.authenticated = true;
+      view.rerender(<Publica />);
+      expect(screen.getByLabelText("title")).toHaveValue("Guest edits");
+      expect(screen.getByText("draftOwnerChanged")).toBeVisible();
+      await act(async () => { fireEvent.click(screen.getByText("submit")); });
+      expect(mocks.save.mock.calls.every(([owner]) => owner.kind === "guest")).toBe(true);
+      expect(mocks.save).not.toHaveBeenCalledWith({ kind: "account", accountId: "a" }, expect.anything(), expect.anything());
+      expect(mocks.load).not.toHaveBeenCalledWith({ kind: "account", accountId: "a" });
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
   });
 
   it.each(["unknown-profile", "signed-out"])("keeps auth authoritative for %s", async (status) => {
@@ -215,8 +421,10 @@ describe("one-shot publish return", () => {
     render(<Publica />);
     if (mocks.authenticated) await screen.findByTestId("preview-modal");
     else {
-      expect(screen.getByTestId("publish-auth-gate")).toBeVisible();
-      expect(mocks.load).not.toHaveBeenCalled();
+      await screen.findByText("restoreDraftApply");
+      expect(screen.queryByTestId("preview-modal")).not.toBeInTheDocument();
+      expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).not.toBeNull();
+      expect(mocks.load).toHaveBeenCalledWith({ kind: "guest" });
     }
     expect(mocks.create).not.toHaveBeenCalled();
   });

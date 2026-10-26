@@ -298,13 +298,15 @@
       "description": "Les últimes notícies i recomanacions culturals de Catalunya"
     },
     "Publish": {
-      "authGate": {
-        "title": "Inicia sessió per publicar",
-        "description": "Crea un compte o inicia sessió per afegir el teu esdeveniment. És ràpid i després podràs gestionar els teus esdeveniments.",
-        "login": "Inicia sessió",
-        "noAccount": "No tens compte?",
-        "register": "Registra't"
+      "publishCta": {
+        "signIn": "Inicia sessió per publicar",
+        "completeProfile": "Completa el perfil per publicar",
+        "resolving": "Comprovant la sessió..."
       },
+      "accountNotice": "Pots preparar i previsualitzar l'esdeveniment sense compte. Per publicar-lo, cal un compte gratuït i un perfil complet.",
+      "earlySignIn": "Inicia sessió ara",
+      "optionsFailed": "No hem pogut carregar els municipis o les categories. Torna-ho a provar.",
+      "draftOwnerChanged": "La sessió ha canviat. Conservem el formulari, però no el desarem en un altre compte. Copia el que vulguis conservar i recarrega la pàgina.",
       "completeProfileGate": {
         "title": "Completa el teu perfil",
         "description": "Abans de publicar un esdeveniment, cal que triïs un nom d'usuari i un nom visible.",
