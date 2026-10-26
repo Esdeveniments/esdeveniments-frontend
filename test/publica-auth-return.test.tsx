@@ -41,6 +41,7 @@ vi.mock("@components/ui/EventForm", () => ({
       <output data-testid="preview-image">{imageToUpload}</output>
       <button onClick={() => handleImageChange(new File(["image"], "poster.png", { type: "image/png" }))}>image</button>
       <button onClick={() => onImagePreparingChange?.(true)}>prepare-image</button>
+      <button onClick={() => onImagePreparingChange?.(false)}>finish-image</button>
       <button onClick={onSubmit}>submit</button>
     </div>
   ),
@@ -125,13 +126,37 @@ describe("publish auth handoff", () => {
     fireEvent.click(screen.getByText("prepare-image"));
     expect(screen.getByText("completeProfileGate.cta")).toBeDisabled();
     expect(mocks.push).not.toHaveBeenCalled();
-  });
-
-  it("uses the existing profile route with a safe, unprefixed return destination", async () => {
-    await rejectPublication("profile-incomplete");
+    fireEvent.click(screen.getByText("finish-image"));
+    expect(screen.getByText("completeProfileGate.cta")).toBeEnabled();
     await act(async () => { fireEvent.click(screen.getByText("completeProfileGate.cta")); });
     expect(mocks.push).toHaveBeenCalledWith("/perfil/edita?redirect=%2Fpublica%3Fresume%3D1");
+  });
+
+  it("awaits saving fields and File before the safe, unprefixed profile destination", async () => {
+    await rejectPublication("profile-incomplete");
+    let finish!: (result: { ok: true; revision: string }) => void;
+    mocks.save.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    fireEvent.click(screen.getByText("completeProfileGate.cta"));
+    expect(mocks.push).not.toHaveBeenCalled();
+    mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
+    await act(async () => { finish({ ok: true, revision }); });
+    expect(mocks.save).toHaveBeenCalledWith({ kind: "account", accountId: "a" },
+      { form: expect.objectContaining({ title: "Latest" }), imageFile: expect.any(File) }, null);
+    expect(mocks.push).toHaveBeenCalledWith("/perfil/edita?redirect=%2Fpublica%3Fresume%3D1");
     expect(mocks.signIn).not.toHaveBeenCalled();
+    expect(mocks.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("unlocks a completed handoff only on persisted pageshow and allows another deliberate action", async () => {
+    await rejectPublication();
+    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    expect(screen.getByLabelText("title")).toBeDisabled();
+    act(() => { window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: false })); });
+    expect(screen.getByLabelText("title")).toBeDisabled();
+    act(() => { window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })); });
+    expect(screen.getByLabelText("title")).toBeEnabled();
+    await act(async () => { fireEvent.click(screen.getByText("authGate.login")); });
+    expect(mocks.signIn).toHaveBeenCalledTimes(2);
     expect(mocks.create).toHaveBeenCalledTimes(1);
   });
 });

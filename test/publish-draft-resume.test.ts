@@ -40,7 +40,7 @@ describe("tab-local publish return intent", () => {
       : field === "expired" ? { ...saved, createdAt: Date.now() - PUBLISH_RESUME_TTL_MS }
       : field === "future" ? { ...saved, createdAt: Date.now() + 600_000 } : saved;
     values.set(PUBLISH_RESUME_STORAGE_KEY, field === "json" ? "{" : JSON.stringify(raw));
-    expect(takePublishResumeIntent().ok).toBe(false);
+    expect(takePublishResumeIntent()).toEqual({ ok: false, reason: "invalid" });
     expect(values.size).toBe(0);
   });
 

@@ -22,10 +22,15 @@ export function savePublishResumeIntent(intent: PublishResumeIntent): PublishDra
 }
 
 export function takePublishResumeIntent(): PublishResumeReadResult {
+  let raw: string | null;
   try {
-    const raw = sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY);
+    raw = sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY);
     sessionStorage.removeItem(PUBLISH_RESUME_STORAGE_KEY);
-    if (!raw) return { ok: false, reason: "missing" };
+  } catch {
+    return { ok: false, reason: "unavailable" };
+  }
+  if (!raw) return { ok: false, reason: "missing" };
+  try {
     const parsed = PublishResumeIntentSchema.safeParse(JSON.parse(raw));
     if (!parsed.success ||
         Date.now() - parsed.data.createdAt >= PUBLISH_RESUME_TTL_MS ||
@@ -34,7 +39,7 @@ export function takePublishResumeIntent(): PublishResumeReadResult {
     }
     return { ok: true, intent: parsed.data };
   } catch {
-    return { ok: false, reason: "unavailable" };
+    return { ok: false, reason: "invalid" };
   }
 }
 

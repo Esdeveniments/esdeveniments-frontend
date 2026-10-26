@@ -7,7 +7,7 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   let profileComplete = true;
   let profileSaved = false;
   let authReadsAfterProfile = 0;
-  let signIns = 0;
+  let completedLogins = 0;
   let denyNextAuthRead = false;
   await page.route("**/api/auth/me", (route) => {
     if (denyNextAuthRead) {
@@ -32,7 +32,6 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
     });
   });
   await page.route("**/api/auth/sign-in?*", (route) => {
-    signIns++;
     const destination = new URL(route.request().url()).searchParams.get("redirect");
     expect(destination).toBe("/es/publica?resume=1");
     return route.fulfill({ contentType: "text/html", body:
@@ -40,7 +39,7 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   });
   await page.route("**/__publish-auth-complete", (route) => {
     profileComplete = false;
-    denyNextAuthRead = signIns === 1;
+    denyNextAuthRead = ++completedLogins === 1;
     return route.fulfill({ status: 302, headers: { location: "/es/publica?resume=1&auth_success=1" } });
   });
   await page.route("**/api/users/me/profile", (route) => {
@@ -70,6 +69,16 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   await expect(page.getByRole("heading", { name: "Hosted login fixture" })).toBeVisible();
   const intent = await page.evaluate(() => sessionStorage.getItem("publish-resume-v1"));
   expect(JSON.parse(intent!)).toMatchObject({ owner: { accountId: MOCK_USER.id }, stage: "login" });
+  await page.goBack();
+  const restoreAfterBack = page.locator('[data-testid="publish-draft-panel"] button.btn-primary');
+  await expect(page.locator("input#title:enabled").or(restoreAfterBack)).toBeVisible();
+  if (await restoreAfterBack.isVisible()) await restoreAfterBack.click();
+  await expect(page.locator("input#title")).toBeEnabled();
+  await expect(page.locator("input#title")).toHaveValue("Cartell conservat després de l'accés");
+  expect(attempts).toBe(1);
+  await page.screenshot({ path: testInfo.outputPath("auth-back-editor-unlocked.png") });
+  await page.goForward();
+  await expect(page.getByRole("heading", { name: "Hosted login fixture" })).toBeVisible();
   await page.getByRole("link", { name: "Complete login" }).click();
   await expect(page).toHaveURL(/\/es\/publica\?resume=1/);
   const signedOutGate = page.getByTestId("publish-auth-gate");
@@ -77,7 +86,7 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   await signedOutGate.getByRole("button").click();
   await expect(page.getByRole("heading", { name: "Hosted login fixture" })).toBeVisible();
   await page.getByRole("link", { name: "Complete login" }).click();
-  expect(signIns).toBe(2);
+  expect(completedLogins).toBe(2);
   const gate = page.getByTestId("complete-profile-gate");
   await expect(gate).toBeVisible();
   await gate.getByRole("link").click();

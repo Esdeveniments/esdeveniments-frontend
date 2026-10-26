@@ -165,6 +165,12 @@ const PublishForm = () => {
 
   // Track form abandonment on page unload or SPA navigation
   useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted || !handedOffRef.current) return;
+      handedOffRef.current = false;
+      handoffStartedRef.current = false;
+      setHandingOff(false);
+    };
     const handleBeforeUnload = () => {
       if (abandonFiredRef.current || handedOffRef.current) return;
       if (formStartedRef.current && !submittedRef.current) {
@@ -176,8 +182,10 @@ const PublishForm = () => {
         });
       }
     };
+    window.addEventListener("pageshow", handlePageShow);
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
+      window.removeEventListener("pageshow", handlePageShow);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       // Also fire on SPA navigation (component unmount)
       handleBeforeUnload();
