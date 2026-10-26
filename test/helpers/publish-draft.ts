@@ -2,6 +2,7 @@ import { expect, vi } from "vitest";
 import { IDBFactory } from "fake-indexeddb";
 import type {
   PublishDraftLoadResult,
+  PublishDraftForm,
   PublishDraftOwner,
   PublishDraftWriteResult,
   PublishResumeIntent,
@@ -35,10 +36,10 @@ export function loadedRevision(result: PublishDraftLoadResult): string | null {
   return result.revision;
 }
 
-export async function seedDraft(owner = guest) {
+export async function seedDraft(owner = guest, form: PublishDraftForm = { title: "unfinished" }) {
   return savedRevision(await savePublishDraft(
     owner,
-    { form: { title: "unfinished" }, imageFile: null },
+    { form, imageFile: null },
     loadedRevision(await loadPublishDraft(owner)),
   ));
 }

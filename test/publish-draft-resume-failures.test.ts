@@ -12,7 +12,7 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("guest return recovery failures", () => {
   it.each(["version", "corrupt", "missing"])("offers explicit metadata repair after a %s fence, without losing the guest", async (kind) => {
-    await seedDraft(accountA);
+    await seedDraft(accountA, { title: "Older account basics" });
     const revision = await seedDraft();
     const intent = { ...resumeIntent(revision), owner: guest };
     const guestBefore = await rawDraft("guest");
@@ -32,7 +32,7 @@ describe("guest return recovery failures", () => {
   });
 
   it.each(["corrupt", "version"])("offers a fenced guest replacement for an unreadable %s account draft", async (reason) => {
-    await seedDraft(accountA);
+    await seedDraft(accountA, { title: "Older account basics" });
     const revision = await seedDraft();
     await rawDraft("account:account-a", (raw) => {
       const previous = PublishDraftRecordSchema.parse(raw);
@@ -52,7 +52,7 @@ describe("guest return recovery failures", () => {
   it("reclaims an account draft that expires during login without invalidating the guest handoff", async () => {
     const now = Date.now();
     const clock = vi.spyOn(Date, "now").mockReturnValue(now - PUBLISH_DRAFT_TTL_MS + 10);
-    await seedDraft(accountA);
+    await seedDraft(accountA, { title: "Older account basics" });
     clock.mockReturnValue(now);
     const revision = await seedDraft();
     clock.mockReturnValue(now + 11);
@@ -66,7 +66,7 @@ describe("guest return recovery failures", () => {
   });
 
   it.each(["load", "load-empty-account", "replace"])("keeps both drafts after a %s transaction failure", async (stage) => {
-    if (stage !== "load-empty-account") await seedDraft(accountA);
+    if (stage !== "load-empty-account") await seedDraft(accountA, { title: "Older account basics" });
     const revision = await seedDraft();
     const session = new PublishDraftSession(accountA, vi.fn());
     try {
@@ -91,7 +91,7 @@ describe("guest return recovery failures", () => {
   });
 
   it("keeps the moved image recoverable and reports the real error if the post-handoff read fails", async () => {
-    await seedDraft(accountA);
+    await seedDraft(accountA, { title: "Older account basics" });
     const revision = savedRevision(await storage.savePublishDraft(guest, {
       form: { title: "unfinished" },
       imageFile: new File([new Uint8Array([1, 2, 3])], "poster.png", { type: "image/png", lastModified: 123 }),

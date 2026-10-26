@@ -153,6 +153,7 @@ for (const choice of ["empty-account", "guest", "account", "untitled-account", "
       } else {
         await page.getByRole("button", { name: "Restore the account's previous draft", exact: true }).click();
         await expect(page.locator("#title")).toHaveValue(choice === "untitled-account" ? "" : "Older account basics");
+        expect(await readSavedDraft(page, undefined, "guest")).toEqual(original);
       }
       await expect(page.getByTestId("draft-restore-guest")).not.toBeVisible();
       await expect(page).not.toHaveURL(/resume=1/);

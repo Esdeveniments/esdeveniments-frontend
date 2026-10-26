@@ -286,6 +286,8 @@ describe("one-shot publish return", () => {
       expect(window.location.search).toContain("resume=1");
       await act(async () => { fireEvent.click(screen.getByText("draftRetry")); });
       expect(screen.getByTestId("draft-restore-guest")).toBeEnabled();
+      expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).not.toBeNull();
+      expect(window.location.search).toContain("resume=1");
       return;
     }
     expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull();
