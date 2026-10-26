@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { initialPublishDraftState, PublishDraftSession } from "@utils/publish-draft-session";
 import { savePublishResumeIntent, takePublishResumeIntent } from "@utils/publish-draft-resume";
 import type {
-  PublishDraftFlushResult, PublishDraftInput, PublishDraftSessionState, PublishResumeStage, UsePublishDraftOptions,
+  PublishDraft, PublishDraftFlushResult, PublishDraftInput, PublishDraftSessionState, PublishResumeStage, UsePublishDraftOptions,
 } from "types/publish-draft";
 
 // Auth may still be unresolved when this route unmounts. Do not guess an owner.
@@ -118,7 +118,7 @@ export function usePublishDraft({
 
   const markEdited = useCallback(() => { edited.current = true; completed.current = false; }, []);
   const clearGuestReturn = () => {
-    if (!state.guestConflict) return;
+    if (!resumeRequest.current?.ok) return;
     resumeRequest.current = null;
     takePublishResumeIntent();
     const url = new URL(window.location.href);
@@ -129,15 +129,23 @@ export function usePublishDraft({
     const draft = session.current?.restore();
     if (draft) { clearGuestReturn(); edited.current = false; setResumeFailed(false); onRestore(draft); }
   };
-  const restoreGuest = async () => {
-    const current = session.current;
-    const draft = await current?.restoreGuest();
-    if (draft && current === session.current) {
-      clearGuestReturn();
+  const finishGuestReturn = (current: PublishDraftSession | null, draft: PublishDraft | null = null) => {
+    if (!current || current !== session.current) return;
+    if (!current.state.guestConflict) clearGuestReturn();
+    if (draft) {
       edited.current = false;
       setResumeFailed(false);
       onRestore(draft, true);
     }
+  };
+  const restoreGuest = async () => {
+    const current = session.current;
+    finishGuestReturn(current, await current?.restoreGuest());
+  };
+  const retry = async () => {
+    const current = session.current;
+    const result = await current?.retry();
+    finishGuestReturn(current, result && "resumed" in result && result.resumed && result.status === "found" ? result.draft : null);
   };
   const discard = async () => {
     edited.current = false;
@@ -174,6 +182,5 @@ export function usePublishDraft({
   const ownerState: PublishDraftSessionState = !ownerChanged ? state : {
     ...initialPublishDraftState, status: "error", dirty: state.dirty, failure: { ok: false, reason: "unavailable" },
   };
-  return { ...ownerState, markEdited, restore, restoreGuest, discard, flush, complete, prepareResume, resumeFailed, ownerChanged,
-    retry: () => session.current?.retry() };
+  return { ...ownerState, markEdited, restore, restoreGuest, discard, flush, complete, prepareResume, resumeFailed, ownerChanged, retry };
 }

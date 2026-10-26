@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventFormProps } from "types/event";
 import { PUBLISH_RESUME_STORAGE_KEY } from "@utils/constants";
+import * as publishResume from "@utils/publish-draft-resume";
 import Publica from "@app/[locale]/publica/page";
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(window.location.search) }));
 const mocks = vi.hoisted(() => ({
@@ -218,6 +219,77 @@ describe("publish auth handoff", () => {
 });
 
 describe("one-shot publish return", () => {
+  it.each(["corrupt", "version"] as const)("allows an explicit guest choice after a %s account read", async (reason) => {
+    setReturn();
+    const intent = JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!);
+    sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({ ...intent, owner: { kind: "guest" } }));
+    vi.spyOn(publishResume, "preparePublishDraftResume")
+      .mockResolvedValueOnce({ ok: false, reason: "account-conflict" })
+      .mockResolvedValue({ ok: true, revision });
+    mocks.load.mockResolvedValueOnce({ ok: false, reason, revision })
+      .mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
+    render(<Publica />);
+    const choice = await screen.findByTestId("draft-restore-guest");
+    expect(screen.getByText("draftRecordInvalid")).toBeVisible();
+    expect(choice).toBeEnabled();
+    await act(async () => { fireEvent.click(choice); });
+    await screen.findByTestId("preview-modal");
+    expect(screen.getByLabelText("title")).toHaveValue("Preserved");
+    expect(screen.getByTestId("image")).toHaveTextContent("poster.png");
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it("restores fields, File and preview when an empty-account handoff succeeds on explicit retry", async () => {
+    setReturn();
+    const intent = JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!);
+    sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({ ...intent, owner: { kind: "guest" } }));
+    vi.spyOn(publishResume, "preparePublishDraftResume")
+      .mockResolvedValueOnce({ ok: false, reason: "transaction" })
+      .mockResolvedValue({ ok: true, revision });
+    mocks.load.mockResolvedValueOnce({ ok: true, status: "empty", revision })
+      .mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
+    render(<Publica />);
+    await screen.findByText("draftRetry");
+    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).not.toBeNull();
+    await act(async () => { fireEvent.click(screen.getByText("draftRetry")); });
+    await screen.findByTestId("preview-modal");
+    expect(screen.getByLabelText("title")).toHaveValue("Preserved");
+    expect(screen.getByTestId("image")).toHaveTextContent("poster.png");
+    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull();
+    expect(window.location.search).not.toContain("resume");
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it.each(["stale", "transaction"] as const)("handles %s replacement without losing return state", async (reason) => {
+    setReturn();
+    const intent = JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!);
+    sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({ ...intent, owner: { kind: "guest" } }));
+    vi.spyOn(publishResume, "preparePublishDraftResume")
+      .mockResolvedValueOnce({ ok: false, reason: "account-conflict" })
+      .mockResolvedValueOnce({ ok: false, reason })
+      .mockResolvedValueOnce({ ok: false, reason: "account-conflict" });
+    mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
+    const view = render(<Publica />);
+    await screen.findByTestId("draft-restore-guest");
+    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).not.toBeNull();
+    expect(window.location.search).toContain("resume=1");
+    await act(async () => { fireEvent.click(screen.getByTestId("draft-restore-guest")); });
+    if (reason === "transaction") {
+      expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).not.toBeNull();
+      expect(window.location.search).toContain("resume=1");
+      await act(async () => { fireEvent.click(screen.getByText("draftRetry")); });
+      expect(screen.getByTestId("draft-restore-guest")).toBeEnabled();
+      return;
+    }
+    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull();
+    expect(window.location.search).not.toContain("resume");
+    expect(mocks.create).not.toHaveBeenCalled();
+    view.unmount();
+    render(<Publica />);
+    await screen.findByText("restoreDraftApply");
+    expect(screen.queryByText("draftResumeFailed")).not.toBeInTheDocument();
+  });
+
   it("restores the real File and preview, including StrictMode, with zero create calls", async () => {
     setReturn();
     mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });

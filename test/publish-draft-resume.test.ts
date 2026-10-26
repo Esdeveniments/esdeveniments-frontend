@@ -5,14 +5,10 @@ import {
 } from "@utils/publish-draft-resume";
 import { loadPublishDraft, savePublishDraft } from "@utils/publish-draft-storage";
 import { PUBLISH_DRAFT_TTL_MS, PUBLISH_RESUME_STORAGE_KEY, PUBLISH_RESUME_TTL_MS } from "@utils/constants";
-import { accountA, accountB, guest, loadedRevision, rawDraft, resetDraftStorage, savedRevision, seedDraft } from "./helpers/publish-draft";
-import type { PublishResumeIntent } from "types/publish-draft";
+import { accountA, accountB, guest, loadedRevision, rawDraft, resetDraftStorage, resumeIntent as intent, savedRevision, seedDraft } from "./helpers/publish-draft";
 import { PublishDraftSession } from "@utils/publish-draft-session";
 
 const values = new Map<string, string>();
-const intent = (revision = crypto.randomUUID()): PublishResumeIntent => ({
-  version: 1, owner: accountA, revision, stage: "login", createdAt: Date.now(),
-});
 beforeEach(async () => {
   await resetDraftStorage();
   values.clear();

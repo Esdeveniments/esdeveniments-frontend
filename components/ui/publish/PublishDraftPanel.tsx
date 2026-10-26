@@ -20,11 +20,13 @@ export default function PublishDraftPanel({
   return (
     <section className="card-bordered" aria-label={t("draftHeading")} data-testid="publish-draft-panel">
       <div className="card-body stack">
+        {state.dirty && (state.guestConflict || pendingDraft) &&
+          <p className="body-normal">{t("draftRestoreReplacesEdits")}</p>}
         {state.guestConflict && (
           <>
             <h2 className="heading-3">{t("draftChooseTitle")}</h2>
             <p className="body-normal">{t("draftChooseDescription")}</p>
-            <button type="button" className="btn-primary" onClick={onRestoreGuest} disabled={busy || !!failure}
+            <button type="button" className="btn-primary" onClick={onRestoreGuest} disabled={busy || (!!failure && status !== "decision")}
               data-testid="draft-restore-guest">
               {t("draftUseGuest")}
             </button>
@@ -34,9 +36,8 @@ export default function PublishDraftPanel({
           <>
             {!state.guestConflict && <h2 className="heading-3">{t("restoreDraftTitle")}</h2>}
             <p className="body-normal">{state.guestConflict
-              ? t("draftAccountTitle", { title: pendingDraft.form.title || t("heading") })
+              ? t("draftAccountTitle", { title: pendingDraft.form.title || t("previewNoTitle") })
               : t("restoreDraftDescription")}</p>
-            {state.dirty && <p className="body-normal">{t("draftRestoreReplacesEdits")}</p>}
             <button type="button" className="btn-primary" onClick={onRestore} disabled={busy || !!failure}>
               {t(state.guestConflict ? "draftUseAccount" : "restoreDraftApply")}
             </button>

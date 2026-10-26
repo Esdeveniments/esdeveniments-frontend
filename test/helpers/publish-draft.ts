@@ -4,6 +4,7 @@ import type {
   PublishDraftLoadResult,
   PublishDraftOwner,
   PublishDraftWriteResult,
+  PublishResumeIntent,
 } from "types/publish-draft";
 import { loadPublishDraft, savePublishDraft } from "@utils/publish-draft-storage";
 import { PUBLISH_DRAFT_DB_NAME } from "@utils/publish-draft-db";
@@ -11,6 +12,10 @@ import { PUBLISH_DRAFT_DB_NAME } from "@utils/publish-draft-db";
 export const guest: PublishDraftOwner = { kind: "guest" };
 export const accountA: PublishDraftOwner = { kind: "account", accountId: "account-a" };
 export const accountB: PublishDraftOwner = { kind: "account", accountId: "account-b" };
+
+export const resumeIntent = (revision = crypto.randomUUID()): PublishResumeIntent => ({
+  version: 1, owner: accountA, revision, stage: "login", createdAt: Date.now(),
+});
 
 export async function resetDraftStorage() {
   vi.restoreAllMocks();

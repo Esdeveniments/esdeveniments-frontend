@@ -78,7 +78,10 @@ export async function preparePublishDraftResume(
       }
       const key = getPublishDraftOwnerKey(owner);
       handlePublishDraftRequest(store.get(key), (existing: unknown) => {
-        if (existing !== undefined && replaceRevision === undefined) {
+        const previous = PublishDraftRecordSchema.safeParse(existing);
+        const expired = previous.success && getPublishDraftOwnerKey(previous.data.owner) === key &&
+          Date.now() - previous.data.updatedAt >= PUBLISH_DRAFT_TTL_MS;
+        if (existing !== undefined && !expired && replaceRevision === undefined) {
           finish({ ok: false, reason: "account-conflict" }); return;
         }
         const next = advance();

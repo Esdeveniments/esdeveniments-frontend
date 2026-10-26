@@ -36,25 +36,32 @@ export class PublishDraftSession {
     this.notify(this.state);
   }
 
-  async load(intent?: PublishResumeIntent, replaceRevision?: string) {
+  async load(intent?: PublishResumeIntent) {
     const generation = ++this.generation;
     clearTimeout(this.timer);
     this.loaded = false;
     this.update({ status: "loading", failure: null });
-    const prepared = intent ? await preparePublishDraftResume(this.owner, intent, replaceRevision) : null;
+    const prepared = intent ? await preparePublishDraftResume(this.owner, intent) : null;
     if (!this.active || generation !== this.generation) return;
-    this.guestIntent = prepared && !prepared.ok && prepared.reason === "account-conflict" ? intent ?? null : null;
+    const handoffFailure = prepared && !prepared.ok ? prepared : null;
+    this.guestIntent = intent?.owner.kind === "guest" && handoffFailure &&
+      handoffFailure.reason !== "stale" && handoffFailure.reason !== "invalid-input" ? intent : null;
     const result = await loadPublishDraft(this.owner);
     if (!this.active || generation !== this.generation) return;
     if (!result.ok) {
       if ("revision" in result) this.revision = result.revision ?? null;
-      this.update({ status: "error", failure: result, canDiscard: "revision" in result });
-      return;
+      const unreadableAccount = this.guestIntent && "revision" in result &&
+        (result.reason === "corrupt" || result.reason === "version");
+      this.update({ status: unreadableAccount ? "decision" : "error", failure: result, canDiscard: "revision" in result,
+        guestConflict: this.guestIntent !== null });
+      return { ...result, resumed: false as const, matchesResume: false as const, guestConflict: this.guestIntent !== null };
     }
     this.loaded = true;
     this.revision = result.revision;
     this.update({
-      status: result.status === "found" || this.guestIntent ? "decision" : "idle",
+      status: this.guestIntent && handoffFailure?.reason !== "account-conflict" ? "error"
+        : result.status === "found" || this.guestIntent ? "decision" : "idle",
+      failure: this.guestIntent && handoffFailure?.reason !== "account-conflict" ? handoffFailure : null,
       pendingDraft: result.status === "found" ? result.draft : null,
       canDiscard: result.status === "found",
       guestConflict: this.guestIntent !== null,
@@ -91,11 +98,21 @@ export class PublishDraftSession {
     const intent = this.guestIntent;
     const { revision, version } = this;
     if (!intent || !revision || this.state.status !== "decision") return null;
-    const result = await this.load(intent, revision);
+    const generation = ++this.generation;
+    this.update({ status: "loading", failure: null });
+    const prepared = await preparePublishDraftResume(this.owner, intent, revision);
+    if (!this.active || generation !== this.generation) return null;
+    if (!prepared.ok) {
+      const retryable = prepared.reason !== "stale" && prepared.reason !== "invalid-input";
+      if (!retryable) this.guestIntent = null;
+      this.update({ status: "error", failure: prepared, guestConflict: retryable });
+      return null;
+    }
+    const result = await this.load({ ...intent, owner: this.owner, revision: prepared.revision });
     if (result?.matchesResume && result.status === "found" && version === this.version) {
       return this.restore() ?? result.draft;
     }
-    if (result && !result.matchesResume) {
+    if (result?.ok && !result.matchesResume) {
       this.update({ status: "error", failure: { ok: false, reason: "stale" } });
     }
     return null;
@@ -164,8 +181,9 @@ export class PublishDraftSession {
   }
 
   async retry() {
-    if (!this.loaded || this.state.pendingDraft || this.state.failure?.reason === "stale") return this.load(this.guestIntent ?? undefined);
-    return this.flush();
+    if (this.guestIntent || !this.loaded || this.state.pendingDraft || this.state.failure?.reason === "stale") return this.load(this.guestIntent ?? undefined);
+    await this.flush();
+    return undefined;
   }
 
   dispose() {
