@@ -34,6 +34,7 @@ export const PUBLISH_DRAFT_VERSION = 1;
 export const PUBLISH_DRAFT_FENCE_VERSION = 1;
 export const PUBLISH_DRAFT_TTL_MS = 7 * MS_PER_DAY;
 export const PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
+export const PUBLISH_DRAFT_AUTOSAVE_DELAY_MS = 600;
 export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
 export const PUBLISH_DRAFT_MAX_COUNT = 5;
 // Sitemap chunking: places per chunk to keep response sizes manageable

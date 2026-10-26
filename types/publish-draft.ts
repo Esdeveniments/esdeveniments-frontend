@@ -59,4 +59,26 @@ export type PublishDraftTransactionAction<T> = (
   advance: () => string,
 ) => void;
 
+export type PublishDraftFlushResult =
+  | { ok: true; revision: PublishDraftRevision }
+  | PublishDraftFailure;
+
+export type PublishDraftWarning = "date" | "city" | "category";
+
+export interface PublishDraftSessionState {
+  status: "loading" | "decision" | "idle" | "saving" | "saved" | "error" | "discarding";
+  pendingDraft: PublishDraft | null;
+  failure: PublishDraftFailure | null;
+  dirty: boolean;
+  canDiscard: boolean;
+}
+
+export interface UsePublishDraftOptions {
+  accountId: string | undefined;
+  form: FormData;
+  imageFile: File | null;
+  onRestore: (draft: PublishDraft) => void;
+  onReset: () => void;
+}
+
 export type PublishDraftRequestHandler<T> = (value: T) => void;

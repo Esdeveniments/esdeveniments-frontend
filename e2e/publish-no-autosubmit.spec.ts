@@ -138,5 +138,23 @@ test.describe("Publish wizard should not auto publish", () => {
     });
     expect(publishedSlug).toBeNull();
     expect(navigatedToEventUrl).toBeNull();
+
+    // A failed server action must not clear the locally saved draft or retry creation.
+    await expect(page.getByTestId("draft-save-status")).toHaveText("Desat en aquest dispositiu");
+    let attempts = 0;
+    await page.route("**/publica", (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      attempts++;
+      return route.fulfill({ status: 500, contentType: "text/plain", body: "Synthetic create failure" });
+    });
+    await expect(page.getByTestId("publish-button")).toBeEnabled();
+    await page.getByTestId("publish-button").click();
+    await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
+    expect(attempts).toBe(1);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("button", { name: "Recupera esborrany" })).toBeVisible();
+    await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await expect(page.locator("input#title")).not.toHaveValue("");
+    expect(attempts).toBe(1);
   });
 });
