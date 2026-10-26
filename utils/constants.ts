@@ -30,6 +30,10 @@ export const MIN_VALID_YEAR = 2000;
 export const MAX_VALID_YEAR = 2100;
 // Keep safely under common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
+export const PUBLISH_DRAFT_VERSION = 1;
+export const PUBLISH_DRAFT_TTL_MS = 7 * MS_PER_DAY;
+export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
+export const PUBLISH_DRAFT_MAX_COUNT = 5;
 // Sitemap chunking: places per chunk to keep response sizes manageable
 export const SITEMAP_PLACES_PER_CHUNK = 100;
 // Minimum event count for a place to get full date/category expansion in sitemap.

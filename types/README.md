@@ -34,6 +34,19 @@ This directory contains all TypeScript type definitions for the project. Types a
 - **Purpose**: URL filtering and filter configuration types
 - **Contains**: Filter state, configuration, and error boundary types
 
+### `types/publish-draft.ts`
+
+- **Purpose**: Device-local, create-only publish drafts
+- **Contains**: Partial canonical form input, guest/account scope, revision tokens and explicit storage outcomes
+- `loadPublishDraft(owner)` returns an owner-scoped snapshot and a database-wide revision token.
+- Pass that token to `savePublishDraft(owner, input, revision)` or `discardPublishDraft(owner, revision)`. Await completion before navigation. Save is the flush operation; it has no debounce.
+- After a successful mutation, use its returned revision. A stale result requires reloading and resolving the conflict, not an automatic retry over newer work. Mutations in another owner's slot also invalidate the token.
+- Discard advances the persistent revision fence even if no payload exists. No per-account tombstones accumulate.
+- Proposed storage policy: five owner-scoped drafts, 64 KiB of UTF-8 JSON form data each, the existing 2 MiB processed-image limit, and seven days since the last save. Reads do not extend expiry. Reads and writes remove expired payloads; browser eviction may happen sooner.
+- Owner IDs only prevent accidental account mixing, not access by another person using the same browser profile. No guest-to-account adoption is implicit.
+- Storage does not add autosave or restore UI; those belong to #526.
+- Native-browser module proof (no application/auth UI): `yarn test:e2e e2e/publish-draft-storage.spec.ts --config playwright.remote.config.ts --workers=1`. The test serves the actual bundled module on an intercepted localhost fixture and uses real IndexedDB, File and image decoding across reloads and tabs.
+
 ### `types/url-filters.ts`
 
 - **Purpose**: URL parsing and routing types
