@@ -154,5 +154,27 @@ test.describe("Publish - Preview", () => {
     expect(imageBounds).not.toBeNull();
     expect(imageBounds!.width / imageBounds!.height).toBeCloseTo(16 / 9, 1);
     await page.screenshot({ path: test.info().outputPath("draft-restored-preview.png") });
+    await modal.getByLabel("Tanca").click();
+    await expect(modal).toBeHidden();
+    await expect(page.getByTestId("draft-save-status")).toHaveText("Desat en aquest dispositiu");
+    const other = await page.context().newPage();
+    await mockAuthenticatedUser(other);
+    await other.goto("/publica");
+    await other.getByRole("button", { name: "Recupera esborrany" }).click();
+    await other.locator("input#title").fill("Newer stored draft");
+    await expect(other.getByTestId("draft-save-status")).toHaveText("Desat en aquest dispositiu");
+    await page.getByTestId("prev-button").click();
+    await page.getByTestId("prev-button").click();
+    await page.locator("input#title").fill("Conflicting publication");
+    await page.getByRole("button", { name: "Revisa l'esborrany desat" }).click();
+    await page.getByTestId("next-button").click();
+    await page.getByTestId("next-button").click();
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
+    await page.getByTestId("publish-button").click();
+    await expect(page.locator("main").getByRole("alert")).toContainText(
+      "Revisa l'esborrany desat i tria si el vols recuperar o descartar abans de publicar.",
+    );
+    await page.screenshot({ path: test.info().outputPath("conflict-publish-guidance.png") });
+    await other.close();
   });
 });

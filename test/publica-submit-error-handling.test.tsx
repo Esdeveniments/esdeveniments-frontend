@@ -113,10 +113,11 @@ describe("Publica submit-time createEventAction result handling", () => {
   });
 
   async function renderAndSubmit() {
-    render(<Publica />);
+    const view = render(<Publica />);
     await waitFor(() => expect(screen.getByText("set-image-file")).toBeEnabled());
     await act(async () => { fireEvent.click(screen.getByText("set-image-file")); });
     await act(async () => { fireEvent.click(screen.getByText("submit")); });
+    return view;
   }
 
   it("shows CompleteProfileGate instead of a generic error on a profile-incomplete result", async () => {
@@ -182,11 +183,14 @@ describe("Publica submit-time createEventAction result handling", () => {
 
   it("reports cleanup failure separately and still navigates after confirmed creation", async () => {
     mockCreateEventAction.mockResolvedValue({ success: true, event: { slug: "created" } });
-    storage.discard.mockResolvedValue({ ok: false, reason: "stale" });
-    await renderAndSubmit();
+    storage.discard.mockResolvedValue({ ok: false, reason: "transaction" });
+    const view = await renderAndSubmit();
     await waitFor(() => expect(window.alert).toHaveBeenCalledWith("draftCleanupFailed"));
     expect(storage.push).toHaveBeenCalledWith("/e/created?promote=1");
     expect(mockCreateEventAction).toHaveBeenCalledTimes(1);
     expect(screen.queryByText("errorGeneric")).not.toBeInTheDocument();
+    const savesAfterCreation = storage.save.mock.calls.length;
+    await act(async () => { view.unmount(); });
+    expect(storage.save).toHaveBeenCalledTimes(savesAfterCreation);
   });
 });

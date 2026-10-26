@@ -352,6 +352,7 @@
       "draftRecordInvalid": "The saved draft cannot be read. Try again or discard it to start fresh. Do not close this page if you have changes.",
       "draftConflict": "Another tab changed the saved drafts. Your changes have not been overwritten or saved. Do not close this page; review the saved draft before deciding what to keep.",
       "draftReviewConflict": "Review saved draft",
+      "draftResolveBeforePublish": "Review the saved draft and choose Restore or Discard before publishing.",
       "draftRetry": "Try again",
       "draftDiscardConfirm": "Discard this draft?",
       "draftDiscardDescription": "The saved draft and this form's changes, including the image, will be deleted.",

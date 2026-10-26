@@ -352,6 +352,7 @@
       "draftRecordInvalid": "No se puede leer el borrador guardado. Puedes volver a intentarlo o descartarlo para empezar de nuevo. No cierres la página si tienes cambios.",
       "draftConflict": "Otra pestaña ha cambiado los borradores guardados. Tus cambios no se han sobrescrito ni guardado. No cierres esta página; revisa el borrador guardado antes de decidir qué conservar.",
       "draftReviewConflict": "Revisar el borrador guardado",
+      "draftResolveBeforePublish": "Revisa el borrador guardado y elige si quieres recuperarlo o descartarlo antes de publicar.",
       "draftRetry": "Volver a intentarlo",
       "draftDiscardConfirm": "¿Descartar el borrador?",
       "draftDiscardDescription": "Se eliminarán el borrador guardado y los cambios de este formulario, incluida la imagen.",

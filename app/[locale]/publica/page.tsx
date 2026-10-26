@@ -129,6 +129,7 @@ const PublishForm = () => {
   const draft = usePublishDraft({
     accountId: user?.id, form, imageFile,
     onRestore: (saved) => {
+      setError(null);
       setEditorVersion((version) => version + 1);
       setForm({ ...defaultForm, ...saved.form });
       setImageFile(saved.imageFile);
@@ -136,6 +137,7 @@ const PublishForm = () => {
       setRestoredDraft(true);
     },
     onReset: () => {
+      setError(null);
       setEditorVersion((version) => version + 1);
       setForm({ ...defaultForm });
       setImageFile(null);
@@ -386,7 +388,11 @@ const PublishForm = () => {
   };
 
   const onSubmit = async () => {
-    if (draft.status === "loading" || draft.status === "decision" || draft.status === "discarding") return;
+    if (draft.status === "decision" || draft.failure?.reason === "stale") {
+      setError(t("draftResolveBeforePublish"));
+      return;
+    }
+    if (draft.status === "loading" || draft.status === "discarding") return;
     setError(null); // Clear any previous errors
 
     addBreadcrumb({

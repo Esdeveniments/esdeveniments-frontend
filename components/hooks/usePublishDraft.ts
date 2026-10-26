@@ -21,7 +21,8 @@ export function usePublishDraft({
     void current.load();
     return () => {
       session.current = null;
-      void current.flush().finally(() => current.dispose());
+      if (completed.current) current.dispose();
+      else void current.flush().finally(() => current.dispose());
     };
   }, [accountId]);
 

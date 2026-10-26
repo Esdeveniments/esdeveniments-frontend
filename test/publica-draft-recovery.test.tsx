@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { FormData } from "types/event";
+import type { EventFormProps } from "types/event";
 import type { PublishDraftLoadResult } from "types/publish-draft";
 import Publica from "@app/[locale]/publica/page";
 
@@ -26,16 +26,13 @@ vi.mock("@utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
 vi.mock("@sentry/nextjs", () => ({ addBreadcrumb: vi.fn(), captureException: vi.fn() }));
 vi.mock("@app/[locale]/publica/actions", () => ({ createEventAction: vi.fn() }));
 vi.mock("@components/ui/EventForm", () => ({
-  default: ({ form, imageFile, imageToUpload, handleFormChange, handleImageChange }: {
-    form: FormData; imageFile: File | null; imageToUpload: string | null;
-    handleFormChange: (key: "title", value: string) => void;
-    handleImageChange: (file: File | null) => void;
-  }) => (
+  default: ({ form, imageFile, imageToUpload, handleFormChange, handleImageChange, onSubmit }: EventFormProps) => (
     <div>
       <input aria-label="title" value={form.title} onChange={(event) => handleFormChange("title", event.target.value)} />
       <output data-testid="image">{imageFile?.name}</output>
       <output data-testid="image-preview">{imageToUpload}</output>
       <button type="button" onClick={() => handleImageChange(null)}>remove-image</button>
+      <button type="button" onClick={onSubmit}>submit</button>
     </div>
   ),
 }));
@@ -91,12 +88,13 @@ describe("publish draft recovery UI", () => {
     mocks.load.mockResolvedValue({ ok: true, status: "empty", revision: "r0" });
     const view = render(<Publica />);
     await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+    vi.useFakeTimers();
     fireEvent.change(screen.getByLabelText("title"), { target: { value: "Leaving now" } });
-    view.unmount();
-    await waitFor(() => expect(mocks.save).toHaveBeenCalledWith(
+    await act(async () => { view.unmount(); });
+    expect(mocks.save).toHaveBeenCalledWith(
       { kind: "account", accountId: "a" },
       { form: expect.objectContaining({ title: "Leaving now" }), imageFile: null }, "r0",
-    ));
+    );
   });
 
   it("keeps dirty conflict fields focusable for copying without overwriting the other draft", async () => {
@@ -107,6 +105,8 @@ describe("publish draft recovery UI", () => {
     vi.useFakeTimers();
     fireEvent.change(screen.getByLabelText("title"), { target: { value: "Keep this text" } });
     await act(() => vi.advanceTimersByTimeAsync(600));
+    await act(async () => { fireEvent.click(screen.getByText("submit")); });
+    expect(screen.getByText("draftResolveBeforePublish")).toBeInTheDocument();
     await act(async () => { fireEvent.click(screen.getByText("draftReviewConflict")); });
     expect(screen.getByText("draftRestoreReplacesEdits")).toBeInTheDocument();
     const title = screen.getByLabelText("title");
@@ -117,6 +117,10 @@ describe("publish draft recovery UI", () => {
     await act(() => vi.advanceTimersByTimeAsync(1000));
     expect(mocks.save).toHaveBeenCalledTimes(1);
     expect(title).toHaveValue("Still mine");
+    await act(async () => { fireEvent.click(screen.getByText("submit")); });
+    expect(screen.getByRole("alert")).toHaveTextContent("draftResolveBeforePublish");
+    fireEvent.click(screen.getByText("restoreDraftApply"));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("shows save failures without claiming saved, keeps edits and saves removed images on retry", async () => {
