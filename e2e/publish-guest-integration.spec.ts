@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { completeHostedLogin, dismissEngagementPopups } from "./helpers/login";
-import { cleanupEvent, publishTestEvent } from "./helpers/publish";
+import { advanceToLastStep, cleanupEvent, publishTestEvent } from "./helpers/publish";
 import { readSavedDraft } from "./helpers/publish-draft";
 
 const email = process.env.E2E_STAGING_EMAIL;
@@ -48,6 +48,7 @@ test("guest poster survives real sign-in with the normal service worker before e
         await expect(page.getByTestId("preview-modal-action-button")).toHaveText("Publish");
         await page.screenshot({ path: testInfo.outputPath("real-guest-login-recovered.png") });
         await preview.getByLabel("Tanca").click();
+        await advanceToLastStep(page);
       },
     });
     expect(creates).toBe(1);
