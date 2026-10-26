@@ -81,13 +81,14 @@ export const PreviewContent = ({
   return (
     <div className="flex flex-col gap-element-gap py-3">
       {/* Image preview */}
-      <div className={`w-full rounded-card overflow-hidden ${hasImage ? 'bg-muted' : 'bg-error/10 border-2 border-dashed border-error/50'}`}>
+      <div className={`w-full rounded-card overflow-hidden ${hasImage ? 'bg-muted' : 'bg-error/10 border-2 border-dashed border-error/50'}`}
+        style={hasImage ? { aspectRatio: "16 / 9" } : undefined}>
         {hasImage ? (
           <ClientImage
             image={event.imageUrl ?? undefined}
             title={event.title}
-            className="w-full object-cover"
-            context="card"
+            className="w-full h-full object-cover"
+            context="detail"
           />
         ) : (
           <div className="w-full h-48 flex-center flex-col gap-2 text-error/70">
@@ -287,7 +288,6 @@ export const PreviewContent = ({
 };
 
 export default PreviewContent;
-
 
 
 

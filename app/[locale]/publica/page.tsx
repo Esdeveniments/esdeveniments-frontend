@@ -125,15 +125,18 @@ const PublishForm = () => {
   const [imagePreview, updateImagePreview] = useImagePreview(null);
   const { user } = useAuth();
   const [restoredDraft, setRestoredDraft] = useState(false);
+  const [editorVersion, setEditorVersion] = useState(0);
   const draft = usePublishDraft({
     accountId: user?.id, form, imageFile,
     onRestore: (saved) => {
+      setEditorVersion((version) => version + 1);
       setForm({ ...defaultForm, ...saved.form });
       setImageFile(saved.imageFile);
       updateImagePreview(saved.imageFile);
       setRestoredDraft(true);
     },
     onReset: () => {
+      setEditorVersion((version) => version + 1);
       setForm({ ...defaultForm });
       setImageFile(null);
       updateImagePreview(null);
@@ -589,6 +592,8 @@ const PublishForm = () => {
   };
 
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
+  const isDraftLocked = draft.status === "loading" || draft.status === "discarding" ||
+    (draft.status === "decision" && !draft.dirty);
 
   if (showCompleteProfileGate) {
     return <CompleteProfileGate redirectTo="/publica" />;
@@ -677,11 +682,10 @@ const PublishForm = () => {
               !isLoadingCities && !isErrorRegionsWithCities,
               !isLoadingCategories && !isErrorCategories) : []}
           />
-          <fieldset disabled={draft.status === "loading" || draft.status === "decision" ||
-            draft.status === "discarding" || isPending}
-            inert={draft.status === "loading" || draft.status === "decision" || draft.status === "discarding"}>
+          <fieldset disabled={isDraftLocked || isPending} inert={isDraftLocked}>
           <div className="w-full flex flex-col gap-y-4 pt-4">
             <EventForm
+              key={editorVersion}
               form={form}
               onSubmit={onSubmit}
               submitLabel={t("submitLabel")}

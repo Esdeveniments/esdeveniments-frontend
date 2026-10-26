@@ -124,7 +124,7 @@ export class PublishDraftSession {
   }
 
   async retry() {
-    if (!this.loaded || this.state.failure?.reason === "stale") return this.load();
+    if (!this.loaded || this.state.pendingDraft || this.state.failure?.reason === "stale") return this.load();
     return this.flush();
   }
 

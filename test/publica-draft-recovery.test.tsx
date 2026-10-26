@@ -77,12 +77,46 @@ describe("publish draft recovery UI", () => {
     await waitFor(() => expect(screen.queryByTestId("draft-discard-modal")).not.toBeInTheDocument());
     expect(mocks.discard).not.toHaveBeenCalled();
     expect(screen.getByText("restoreDraftApply")).toBeInTheDocument();
+    const previousEditor = screen.getByLabelText("title");
     fireEvent.click(screen.getByText("restoreDraftDiscard"));
     fireEvent.click(await screen.findByTestId("draft-discard-modal-action-button"));
     await waitFor(() => expect(mocks.discard).toHaveBeenCalledWith({ kind: "account", accountId: "a" }, "r0"));
     await waitFor(() => expect(screen.queryByText("restoreDraftApply")).not.toBeInTheDocument());
     expect(screen.getByLabelText("title")).toHaveValue("");
+    expect(previousEditor).not.toBeInTheDocument();
     expect(mocks.save).not.toHaveBeenCalled();
+  });
+
+  it("flushes edited fields on SPA unmount before the debounce fires", async () => {
+    mocks.load.mockResolvedValue({ ok: true, status: "empty", revision: "r0" });
+    const view = render(<Publica />);
+    await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+    fireEvent.change(screen.getByLabelText("title"), { target: { value: "Leaving now" } });
+    view.unmount();
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledWith(
+      { kind: "account", accountId: "a" },
+      { form: expect.objectContaining({ title: "Leaving now" }), imageFile: null }, "r0",
+    ));
+  });
+
+  it("keeps dirty conflict fields focusable for copying without overwriting the other draft", async () => {
+    mocks.load.mockResolvedValueOnce({ ok: true, status: "empty", revision: "r0" });
+    mocks.save.mockResolvedValue({ ok: false, reason: "stale" });
+    render(<Publica />);
+    await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+    vi.useFakeTimers();
+    fireEvent.change(screen.getByLabelText("title"), { target: { value: "Keep this text" } });
+    await act(() => vi.advanceTimersByTimeAsync(600));
+    await act(async () => { fireEvent.click(screen.getByText("draftReviewConflict")); });
+    expect(screen.getByText("draftRestoreReplacesEdits")).toBeInTheDocument();
+    const title = screen.getByLabelText("title");
+    expect(title).toBeEnabled();
+    expect(title.closest("fieldset")).not.toHaveAttribute("inert");
+    expect(title).toHaveValue("Keep this text");
+    fireEvent.change(title, { target: { value: "Still mine" } });
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    expect(mocks.save).toHaveBeenCalledTimes(1);
+    expect(title).toHaveValue("Still mine");
   });
 
   it("shows save failures without claiming saved, keeps edits and saves removed images on retry", async () => {

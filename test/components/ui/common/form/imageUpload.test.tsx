@@ -116,6 +116,19 @@ describe("ImageUploader file validation", () => {
     return file;
   };
 
+  it("ignores compression finishing after the editor is unmounted", async () => {
+    const pending = Promise.withResolvers<File>();
+    mockCompress.mockReturnValueOnce(pending.promise);
+    const onUpload = vi.fn();
+    const view = renderWithProviders(<ImageUploader value={null} onUpload={onUpload} />);
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [createMockFile("large.jpg", "image/jpeg", 9 * 1024 * 1024)] },
+    });
+    view.unmount();
+    await act(async () => pending.resolve(createMockFile("small.jpg", "image/jpeg", 100)));
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
   it("invalidates pending compression when the user removes the cover", async () => {
     const pending = Promise.withResolvers<File>();
     mockCompress.mockReturnValueOnce(pending.promise);

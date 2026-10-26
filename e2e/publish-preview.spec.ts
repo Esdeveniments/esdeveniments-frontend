@@ -13,6 +13,41 @@ test.describe("Publish - Preview", () => {
     }));
   });
 
+  test("saves pending edits when an internal link unmounts the form", async ({ page }) => {
+    await page.goto("/publica");
+    await expect(page.locator("input#title")).toBeEnabled();
+    await page.clock.install();
+    await page.locator("input#title").fill("Pending SPA draft");
+    await page.locator('a[href="/"]').first().click();
+    await expect(page).not.toHaveURL(/\/publica$/);
+    await page.goto("/publica");
+    await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await expect(page.locator("input#title")).toHaveValue("Pending SPA draft");
+  });
+
+  test("lets conflicting tabs copy unsaved text without silently replacing either version", async ({ page, context }) => {
+    await page.goto("/publica");
+    await expect(page.locator("input#title")).toBeEnabled();
+    const other = await context.newPage();
+    await mockAuthenticatedUser(other);
+    await other.goto("/publica");
+    await other.locator("input#title").fill("Other tab draft");
+    await expect(other.getByTestId("draft-save-status")).toHaveText("Desat en aquest dispositiu");
+    await page.locator("input#title").fill("My unsaved text");
+    await page.getByRole("button", { name: "Revisa l'esborrany desat" }).click();
+    const title = page.locator("input#title");
+    await expect(title).toBeEnabled();
+    await title.focus();
+    await expect(title).toBeFocused();
+    await title.press("ControlOrMeta+A");
+    expect(await title.evaluate((input: HTMLInputElement) =>
+      input.value.slice(input.selectionStart ?? 0, input.selectionEnd ?? 0))).toBe("My unsaved text");
+    await page.screenshot({ path: test.info().outputPath("conflict-copyable.png") });
+    await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await expect(title).toHaveValue("Other tab draft");
+    await other.close();
+  });
+
   test("shows preview modal with event details", async ({ page }) => {
     await page.goto("/publica", { waitUntil: "domcontentloaded" });
 
@@ -115,6 +150,9 @@ test.describe("Publish - Preview", () => {
     const previewImage = modal.locator('img[src^="data:image/"]:visible').first();
     await expect(previewImage).toBeVisible();
     expect(await previewImage.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+    const imageBounds = await previewImage.boundingBox();
+    expect(imageBounds).not.toBeNull();
+    expect(imageBounds!.width / imageBounds!.height).toBeCloseTo(16 / 9, 1);
     await page.screenshot({ path: test.info().outputPath("draft-restored-preview.png") });
   });
 });

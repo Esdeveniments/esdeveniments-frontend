@@ -122,6 +122,9 @@ describe("create-only draft autosave session", () => {
     storage.discard.mockResolvedValue({ ok: false, reason: "denied" });
     await session.discard();
     expect(session.state).toMatchObject({ status: "error", pendingDraft: saved });
+    await session.retry();
+    expect(storage.load).toHaveBeenCalledTimes(2);
+    expect(session.state).toMatchObject({ status: "decision", failure: null, pendingDraft: saved });
     expect(session.restore()).toEqual(saved);
   });
 

@@ -19,7 +19,10 @@ export function usePublishDraft({
     const current = new PublishDraftSession({ kind: "account", accountId }, setState);
     session.current = current;
     void current.load();
-    return () => { current.dispose(); session.current = null; };
+    return () => {
+      session.current = null;
+      void current.flush().finally(() => current.dispose());
+    };
   }, [accountId]);
 
   useEffect(() => {
