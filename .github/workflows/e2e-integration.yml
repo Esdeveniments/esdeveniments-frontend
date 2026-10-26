@@ -85,6 +85,7 @@ jobs:
         # and the localhost origin is accepted for POST/PUT/DELETE.
         # Secrets/vars are scoped to this step (the only one running the app).
         run: |
+          yarn prebuild
           yarn dev > /tmp/next-dev.log 2>&1 &
           echo $! > .next-server.pid
         env:
@@ -119,7 +120,7 @@ jobs:
           E2E_STAGING_PASSWORD_2: ${{ secrets.E2E_STAGING_PASSWORD_2 }}
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
-        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/event-edit-creator-only.spec.ts e2e/auth-session-integration.spec.ts e2e/event-edit-integration.spec.ts e2e/event-time-integration.spec.ts
+        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/publish-guest-integration.spec.ts e2e/event-edit-creator-only.spec.ts e2e/auth-session-integration.spec.ts e2e/event-edit-integration.spec.ts e2e/event-time-integration.spec.ts
 
       - name: Stop server
         if: always()
