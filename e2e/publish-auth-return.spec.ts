@@ -1,16 +1,43 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import path from "node:path";
 import { MOCK_USER } from "./helpers/auth";
+import { dismissEngagementPopups } from "./helpers/login";
+import type { PublishDraftRecord } from "types/publish-draft";
 
-test("preserves a Spanish draft and real poster across full-document auth and profile return", async ({ page }, testInfo) => {
+async function readSavedDraft(page: Page) {
+  return page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const open = indexedDB.open("esdeveniments-publish-drafts");
+      open.onsuccess = () => resolve(open.result);
+      open.onerror = () => reject(open.error);
+    });
+    try {
+      const records = await new Promise<PublishDraftRecord[]>((resolve, reject) => {
+        const read: IDBRequest<PublishDraftRecord[]> = db.transaction("drafts").objectStore("drafts").getAll();
+        read.onsuccess = () => resolve(read.result);
+        read.onerror = () => reject(read.error);
+      });
+      if (records.length !== 1 || !records[0]?.image) throw new Error("Expected one image draft");
+      const { form, image } = records[0];
+      return { form, image: { ...image, bytes: Array.from(new Uint8Array(image.bytes)) } };
+    } finally { db.close(); }
+  });
+}
+
+for (const guest of [false, true]) {
+test(`preserves a Spanish ${guest ? "guest" : "stale-session"} draft and real poster across full-document auth and profile return`, async ({ page }, testInfo) => {
+  await dismissEngagementPopups(page);
   let attempts = 0;
+  let signedIn = !guest;
+  let allowCreate = false;
+  const beforeReturn = guest ? 0 : 1;
   let profileComplete = true;
   let profileSaved = false;
   let authReadsAfterProfile = 0;
   let completedLogins = 0;
   let denyNextAuthRead = false;
   await page.route("**/api/auth/me", (route) => {
-    if (denyNextAuthRead) {
+    if (!signedIn || denyNextAuthRead) {
       denyNextAuthRead = false;
       return route.fulfill({ status: 401, json: { user: null } });
     }
@@ -28,7 +55,8 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
     attempts++;
     return route.fulfill({
       contentType: "text/x-component",
-      body: '0:{"a":{"success":false,"reason":"stale-session"},"f":[]}\n',
+      body: allowCreate ? '0:{"a":{"success":true,"event":{"slug":"guest-publish-fixture"}},"f":[]}\n'
+        : '0:{"a":{"success":false,"reason":"stale-session"},"f":[]}\n',
     });
   });
   await page.route("**/api/auth/sign-in?*", (route) => {
@@ -38,6 +66,7 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
       '<!doctype html><title>Identity-provider fixture</title><main><h1>Hosted login fixture</h1><a href="/__publish-auth-complete">Complete login</a><a href="/es/?auth_error=fixture_cancelled">Cancel login</a></main>' });
   });
   await page.route("**/__publish-auth-complete", (route) => {
+    signedIn = true;
     profileComplete = false;
     denyNextAuthRead = ++completedLogins === 1;
     return route.fulfill({ status: 302, headers: { location: "/es/publica?resume=1&auth_success=1" } });
@@ -61,35 +90,42 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
   await expect(page.getByTestId("publish-button")).toBeEnabled();
   const originalImage = await page.locator('main img[src^="data:image/"]').first().getAttribute("src");
-  await page.getByTestId("publish-button").click();
-  await expect(page.getByTestId("publish-resume-action")).toBeVisible();
-  expect(attempts).toBe(1);
+  await page.getByTestId("preview-button").click();
+  await expect(page.getByTestId("preview-modal")).toBeVisible();
+  expect(attempts).toBe(0);
+  if (!guest) {
+    await page.getByTestId("preview-modal-action-button").click();
+    await expect(page.getByTestId("publish-resume-action")).toBeVisible();
+  }
+  expect(attempts).toBe(beforeReturn);
   await page.screenshot({ path: testInfo.outputPath("stale-session-draft-retained.png") });
-  await page.getByTestId("publish-resume-action").click();
+  await page.getByTestId(guest ? "preview-modal-action-button" : "publish-resume-action").click();
   await expect(page.getByRole("heading", { name: "Hosted login fixture" })).toBeVisible();
   const intent = await page.evaluate(() => sessionStorage.getItem("publish-resume-v1"));
-  expect(JSON.parse(intent!)).toMatchObject({ owner: { accountId: MOCK_USER.id }, stage: "login" });
+  expect(JSON.parse(intent!)).toMatchObject({ owner: guest ? { kind: "guest" } : { accountId: MOCK_USER.id }, stage: "login" });
+  const originalDraft = await readSavedDraft(page);
   await page.goBack();
   const restoreAfterBack = page.locator('[data-testid="publish-draft-panel"] button.btn-primary');
   await expect(page.locator("input#title:enabled").or(restoreAfterBack)).toBeVisible();
   if (await restoreAfterBack.isVisible()) await restoreAfterBack.click();
   await expect(page.locator("input#title")).toBeEnabled();
   await expect(page.locator("input#title")).toHaveValue("Cartell conservat després de l'accés");
-  expect(attempts).toBe(1);
+  expect(attempts).toBe(beforeReturn);
   await page.screenshot({ path: testInfo.outputPath("auth-back-editor-unlocked.png") });
   await page.goForward();
   await expect(page.getByRole("heading", { name: "Hosted login fixture" })).toBeVisible();
   await page.getByRole("link", { name: "Complete login" }).click();
   await expect(page).toHaveURL(/\/es\/publica\?resume=1/);
-  const signedOutGate = page.getByTestId("publish-auth-gate");
-  await expect(signedOutGate).toBeVisible();
-  await signedOutGate.getByRole("button").click();
+  const pendingGuest = page.locator('[data-testid="publish-draft-panel"] button.btn-primary');
+  await expect(page.locator('button[data-testid="publish-early-sign-in"]:enabled').or(pendingGuest)).toBeVisible();
+  if (await pendingGuest.isVisible()) await pendingGuest.click();
+  await expect(page.getByTestId("publish-early-sign-in")).toBeEnabled();
+  await page.getByTestId("publish-early-sign-in").click();
   await expect(page.getByRole("heading", { name: "Hosted login fixture" })).toBeVisible();
   await page.getByRole("link", { name: "Complete login" }).click();
   expect(completedLogins).toBe(2);
-  const gate = page.getByTestId("complete-profile-gate");
-  await expect(gate).toBeVisible();
-  await gate.getByRole("link").click();
+  await expect(page.getByTestId("preview-modal")).toBeVisible();
+  await page.getByTestId("preview-modal-action-button").click();
   await expect(page).toHaveURL(/\/es\/perfil\/edita/);
   await page.locator("#displayName").fill("Test User");
   await page.locator('main form button[type="submit"]').click();
@@ -102,12 +138,14 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   await expect(image).toBeVisible();
   await expect(image).toHaveAttribute("src", originalImage!);
   expect(await image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
-  expect(attempts).toBe(1);
-  expect(await page.evaluate(() => sessionStorage.getItem("publish-resume-v1"))).toBeNull();
+  expect(await readSavedDraft(page)).toEqual(originalDraft);
+  expect(attempts).toBe(beforeReturn);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem("publish-resume-v1"))).toBeNull();
+  await expect(page.getByTestId("preview-modal-action-button")).toBeEnabled();
   await page.screenshot({ path: testInfo.outputPath("auth-profile-return-preview.png") });
   await testInfo.attach("auth-return-proof", { contentType: "application/json", body: JSON.stringify({
     hostedLogin: "fixture, not real Logto", fullDocumentNavigation: true, locale: "es",
-    profileRefetched: true, createAttemptsBeforeHandoff: 1, createCallsOnReturn: attempts - 1,
+    profileRefetched: true, createAttemptsBeforeHandoff: beforeReturn, createCallsOnReturn: attempts - beforeReturn,
     nativeIndexedDB: true, recoveredImageDecoded: true,
   }) });
   await modal.getByLabel("Tanca").click();
@@ -115,7 +153,7 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   await page.reload();
   await expect(page.getByTestId("preview-modal")).not.toBeVisible();
   await expect(page.getByTestId("draft-save-status")).not.toHaveText(/guardando/i);
-  expect(attempts).toBe(1);
+  expect(attempts).toBe(beforeReturn);
   await page.locator('[data-testid="publish-draft-panel"] button.btn-primary').click();
   await page.getByTestId("next-button").click();
   await page.getByTestId("next-button").click();
@@ -128,6 +166,16 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
   await expect(page.getByTestId("preview-modal")).not.toBeVisible();
   await page.locator('[data-testid="publish-draft-panel"] button.btn-primary').click();
   await expect(page.locator("input#title")).toHaveValue("Cartell conservat després de l'accés");
-  expect(attempts).toBe(2);
+  expect(attempts).toBe(beforeReturn + 1);
   await page.screenshot({ path: testInfo.outputPath("cancelled-auth-manual-recovery.png") });
+  if (guest) {
+    allowCreate = true;
+    await page.getByTestId("next-button").click();
+    await page.getByTestId("next-button").click();
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
+    await page.getByTestId("publish-button").click({ clickCount: 2 });
+    await expect(page).toHaveURL(/\/es\/e\/guest-publish-fixture/);
+    expect(attempts).toBe(beforeReturn + 2);
+  }
 });
+}

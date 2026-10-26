@@ -298,13 +298,15 @@
       "description": "Las últimas noticias y recomendaciones culturales de Cataluña"
     },
     "Publish": {
-      "authGate": {
-        "title": "Inicia sesión para publicar",
-        "description": "Crea una cuenta o inicia sesión para añadir tu evento. Es rápido y después podrás gestionar tus eventos.",
-        "login": "Iniciar sesión",
-        "noAccount": "¿No tienes cuenta?",
-        "register": "Regístrate"
+      "publishCta": {
+        "signIn": "Inicia sesión para publicar",
+        "completeProfile": "Completa el perfil para publicar",
+        "resolving": "Comprobando la sesión..."
       },
+      "accountNotice": "Puedes preparar y previsualizar el evento sin cuenta. Para publicarlo, necesitas una cuenta gratuita y un perfil completo.",
+      "earlySignIn": "Inicia sesión ahora",
+      "optionsFailed": "No hemos podido cargar los municipios o las categorías. Inténtalo de nuevo.",
+      "draftOwnerChanged": "La sesión ha cambiado. Conservamos el formulario, pero no lo guardaremos en otra cuenta. Copia lo que quieras conservar y recarga la página.",
       "completeProfileGate": {
         "title": "Completa tu perfil",
         "description": "Antes de publicar un evento, elige un nombre de usuario y un nombre visible.",

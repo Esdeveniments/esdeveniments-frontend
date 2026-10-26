@@ -32,6 +32,8 @@ export const EventForm: React.FC<EventFormProps> = ({
   analyticsContext,
   isEditMode = false,
   isLoading = false,
+  isSubmitDisabled = false,
+  submitAnalyticsAction,
   isLoadingCities = false,
   isLoadingCategories = false,
   cityOptions,
@@ -158,6 +160,7 @@ export const EventForm: React.FC<EventFormProps> = ({
     if (!isPublishArmed) {
       return;
     }
+    if (isSubmitDisabled) return;
 
     // Run one-off validation to check if we can proceed
     const submitValidation = getZodValidationState(
@@ -535,12 +538,13 @@ export const EventForm: React.FC<EventFormProps> = ({
             <Button
               type="submit"
               variant="primary"
-              disabled={formState.isDisabled || isLoading || isImagePreparing}
+              disabled={formState.isDisabled || isLoading || isImagePreparing || isSubmitDisabled}
               className="min-h-[44px] px-6 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="publish-button"
               data-analytics-event-name={
-                analyticsContext === "publica" ? "publish_submit_click" : undefined
+                analyticsContext === "publica" && !submitAnalyticsAction ? "publish_submit_click" : undefined
               }
+              data-analytics-action={submitAnalyticsAction}
               data-analytics-context={analyticsContext}
               data-analytics-target={
                 analyticsContext === "publica" ? "publish_button" : undefined

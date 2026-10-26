@@ -5,22 +5,24 @@ import { mockAuthenticatedUser } from "./helpers/auth";
 // It avoids asserting on backend behavior to keep CI deterministic.
 
 test.describe("Publish event flow", () => {
-  test("guests see the auth gate, not the form", async ({ page }) => {
-    // No auth mock → unauthenticated. Publishing is gated upfront.
+  test("guests can edit and optionally sign in without a create request", async ({ page }) => {
+    await page.route("**/api/auth/me", (route) => route.fulfill({ status: 401, json: { user: null } }));
+    await page.route("**/api/regions/options", (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/categories", (route) => route.fulfill({ json: [] }));
     await page.goto("/publica", {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
 
-    await expect(page.getByTestId("publish-auth-gate")).toBeVisible({
+    await expect(page.getByTestId("event-form")).toBeVisible({
       timeout: 30000,
     });
-    // The form (and its data hooks) must not mount for guests.
-    await expect(page.getByTestId("event-form")).toHaveCount(0);
+    await expect(page.locator("input#title")).toBeEnabled();
+    await page.locator("input#title").fill("Esborrany incomplet");
     await page.route("**/api/auth/sign-in?*", (route) =>
       route.fulfill({ contentType: "text/html", body: "<main>Sign-in fixture</main>" }));
-    await page.getByTestId("publish-auth-gate").getByRole("button").click();
-    await expect(page).toHaveURL(/\/api\/auth\/sign-in\?redirect=%2Fpublica/);
+    await page.getByTestId("publish-early-sign-in").click();
+    await expect(page).toHaveURL(/\/api\/auth\/sign-in\?redirect=%2Fpublica%3Fresume%3D1/);
   });
 
   test("authenticated users see the form", async ({ page }) => {

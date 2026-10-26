@@ -8,25 +8,35 @@ import type {
 } from "types/publish-draft";
 
 export function usePublishDraft({
-  accountId, form, imageFile, onRestore, onReset,
+  accountId, isAuthLoading = false, form, imageFile, onRestore, onReset,
 }: UsePublishDraftOptions) {
   const [state, setState] = useState(initialPublishDraftState);
   const session = useRef<PublishDraftSession | null>(null);
   const edited = useRef(false);
   const completed = useRef(false);
+  const ownerKey = useRef<string | null>(null);
+  const resolvedOwnerKey = accountId ? `account:${accountId}` : "guest";
+  const ownerChanged = !isAuthLoading && ownerKey.current === "guest" && resolvedOwnerKey !== "guest";
   const [resumeFailed, setResumeFailed] = useState(false);
   const resumeRequest = useRef<ReturnType<typeof takePublishResumeIntent> | null>(null);
   const restoreCallback = useRef(onRestore);
-  useEffect(() => { restoreCallback.current = onRestore; }, [onRestore]);
+  const resetCallback = useRef(onReset);
+  useEffect(() => { restoreCallback.current = onRestore; resetCallback.current = onReset; }, [onRestore, onReset]);
 
   useEffect(() => {
-    if (!accountId) return;
-    const owner = { kind: "account", accountId } as const;
+    if (isAuthLoading || ownerChanged) return;
+    if (ownerKey.current !== null && ownerKey.current !== resolvedOwnerKey) {
+      edited.current = false;
+      completed.current = false;
+      resetCallback.current();
+    }
+    ownerKey.current = resolvedOwnerKey;
+    const owner = accountId ? { kind: "account", accountId } as const : { kind: "guest" } as const;
     let active = true;
-    const current = new PublishDraftSession(owner, setState);
+    const current = new PublishDraftSession(owner, (next) => { if (active) setState(next); });
     session.current = current;
     const url = new URL(window.location.href);
-    const returning = resumeRequest.current !== null || url.searchParams.get("resume") === "1";
+    const returning = !!accountId && (resumeRequest.current !== null || url.searchParams.get("resume") === "1");
     const request = returning
       ? (resumeRequest.current ??= takePublishResumeIntent()) : null;
     if (returning) {
@@ -40,7 +50,9 @@ export function usePublishDraft({
       }
       const result = await current.load(request?.ok ? request.intent : undefined);
       if (!active || !returning) return;
+      resumeRequest.current = null;
       if (result?.resumed && result.status === "found") {
+        setResumeFailed(false);
         restoreCallback.current(result.draft, true);
       } else if (request?.ok || request?.reason !== "missing") {
         setResumeFailed(true);
@@ -52,20 +64,21 @@ export function usePublishDraft({
       if (completed.current) current.dispose();
       else void current.flush().finally(() => current.dispose());
     };
-  }, [accountId]);
+  }, [accountId, isAuthLoading, ownerChanged, resolvedOwnerKey]);
 
   useEffect(() => {
-    if (!edited.current || completed.current) return;
+    if (!edited.current || completed.current || !session.current) return;
     edited.current = false;
     session.current?.edit({ form, imageFile });
-  }, [form, imageFile]);
+  }, [form, imageFile, accountId, isAuthLoading]);
 
+  const hasUnsavedEdits = state.dirty || edited.current;
   useEffect(() => {
-    if (!state.dirty) return;
+    if (!hasUnsavedEdits) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [state.dirty]);
+  }, [hasUnsavedEdits]);
 
   const markEdited = useCallback(() => { edited.current = true; }, []);
   const restore = () => {
@@ -91,7 +104,6 @@ export function usePublishDraft({
     return session.current?.discard() ?? { ok: false, reason: "unavailable" };
   };
   const prepareResume = async (stage: PublishResumeStage): Promise<PublishDraftFlushResult> => {
-    if (!accountId) return { ok: false, reason: "unavailable" };
     const current = session.current;
     const result = await flush();
     if (!current || current !== session.current) return { ok: false, reason: "stale" };
@@ -101,13 +113,13 @@ export function usePublishDraft({
     if (current !== session.current) return { ok: false, reason: "stale" };
     if (!confirmed.ok) return confirmed;
     return savePublishResumeIntent({
-      version: 1, owner: { kind: "account", accountId },
+      version: 1, owner: accountId ? { kind: "account", accountId } : { kind: "guest" },
       revision: confirmed.revision, stage, createdAt: Date.now(),
     });
   };
-  const ownerState: PublishDraftSessionState = accountId ? state : {
-    ...initialPublishDraftState, status: "error", failure: { ok: false, reason: "unavailable" },
+  const ownerState: PublishDraftSessionState = !ownerChanged ? state : {
+    ...initialPublishDraftState, status: "error", dirty: state.dirty, failure: { ok: false, reason: "unavailable" },
   };
-  return { ...ownerState, markEdited, restore, discard, flush, complete, prepareResume, resumeFailed,
+  return { ...ownerState, markEdited, restore, discard, flush, complete, prepareResume, resumeFailed, ownerChanged,
     retry: () => session.current?.retry() };
 }

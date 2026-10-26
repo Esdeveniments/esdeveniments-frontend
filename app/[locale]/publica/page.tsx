@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Suspense, useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { getPathname, Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
@@ -39,9 +39,6 @@ import {
 
 import Modal from "@components/ui/common/modal";
 import { useAuth } from "@components/hooks/useAuth";
-import PublishAuthGate from "./PublishAuthGate";
-import CompleteProfileGate from "./CompleteProfileGate";
-import AuthCheckSkeleton from "@components/ui/common/skeletons/AuthCheckSkeleton";
 import type { PublishResumeStage } from "types/publish-draft";
 
 // Lazy load preview content (only shown in modal when user clicks preview)
@@ -115,8 +112,6 @@ const isCategoryOption = (
     "label" in category
   );
 
-// The form body. Mounted only for authenticated users (see Publica below),
-// so its data hooks (regions/cities, categories) never fire for guests.
 const PublishForm = () => {
   const t = useTranslations("App.Publish");
   const tForm = useTranslations("Components.EventForm");
@@ -126,11 +121,11 @@ const PublishForm = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreparing, setImagePreparing] = useState(false);
   const [imagePreview, updateImagePreview] = useImagePreview(null);
-  const { user, signIn } = useAuth();
+  const { user, signIn, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [restoredDraft, setRestoredDraft] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
   const draft = usePublishDraft({
-    accountId: user?.id, form, imageFile,
+    accountId: isAuthenticated ? user?.id : undefined, isAuthLoading, form, imageFile,
     onRestore: (saved, resumed) => {
       setError(null);
       setEditorVersion((version) => version + 1);
@@ -138,10 +133,16 @@ const PublishForm = () => {
       setImageFile(saved.imageFile);
       updateImagePreview(saved.imageFile);
       setRestoredDraft(true);
-      if (resumed) setShowPreview(true);
+      if (resumed) {
+        handoffStartedRef.current = handedOffRef.current = false;
+        setHandingOff(false);
+        setAuthStage(null);
+        setShowPreview(true);
+      }
     },
     onReset: () => {
       setError(null);
+      setShowPreview(false);
       setEditorVersion((version) => version + 1);
       setForm({ ...defaultForm });
       setImageFile(null);
@@ -156,6 +157,11 @@ const PublishForm = () => {
   const [handingOff, setHandingOff] = useState(false);
   const handoffStartedRef = useRef(false);
   const handedOffRef = useRef(false);
+  const creatingRef = useRef(false);
+  // Unknown profile enrichment stays eligible; a typed server rejection is authoritative.
+  const requiredAuthStage = authStage ?? (!isAuthenticated ? "login"
+    : user?.profileCompleted === false ? "profile" : null);
+  const submitAnalyticsAction = requiredAuthStage ? `publish_cta_${requiredAuthStage}` : undefined;
 
   // Funnel tracking refs (no re-render needed)
   const formStartedRef = useRef(false);
@@ -196,13 +202,14 @@ const PublishForm = () => {
     regionsWithCities,
     isLoading: isLoadingRegionsWithCities,
     isError: isErrorRegionsWithCities,
+    mutate: retryCities,
   } = useGetRegionsWithCities();
 
   const isLoadingCities =
     isLoadingRegionsWithCities ||
     (!regionsWithCities && !isErrorRegionsWithCities);
 
-  const { categories, isLoading: isLoadingCategories, isError: isErrorCategories } = useCategories();
+  const { categories, isLoading: isLoadingCategories, isError: isErrorCategories, refetch: retryCategories } = useCategories();
 
   const { cityOptions, cityToRegionOptionMap } = useMemo(
     () => generateCityOptionsWithRegionMap(regionsWithCities),
@@ -293,20 +300,23 @@ const PublishForm = () => {
   };
 
   const beginAuthReturn = async () => {
-    if (!authStage || imagePreparing || handoffStartedRef.current) return;
+    if (!requiredAuthStage || isAuthLoading || draft.ownerChanged || imagePreparing || handoffStartedRef.current) return;
+    const trigger = document.activeElement;
     handoffStartedRef.current = true;
     setHandingOff(true);
-    const result = await draft.prepareResume(authStage);
+    const result = await draft.prepareResume(requiredAuthStage);
     if (!result.ok) {
       setError(t("draftHandoffFailed"));
       handoffStartedRef.current = false;
       setHandingOff(false);
+      if (trigger instanceof HTMLElement) requestAnimationFrame(() => trigger.focus());
       return;
     }
-    const destination = result.revision ? PUBLISH_RESUME_PATH : "/publica";
+    const destination = result.revision || new URL(window.location.href).searchParams.get("resume") === "1"
+      ? PUBLISH_RESUME_PATH : "/publica";
     try {
       handedOffRef.current = true;
-      if (authStage === "login") signIn(getPathname({ href: destination, locale }));
+      if (requiredAuthStage === "login") signIn(getPathname({ href: destination, locale }));
       else router.push(`/perfil/edita?redirect=${encodeURIComponent(destination)}`);
     } catch (error) {
       captureException(error);
@@ -314,6 +324,7 @@ const PublishForm = () => {
       handoffStartedRef.current = false;
       setHandingOff(false);
       setError(t("draftHandoffFailed"));
+      if (trigger instanceof HTMLElement) requestAnimationFrame(() => trigger.focus());
     }
   };
 
@@ -418,13 +429,13 @@ const PublishForm = () => {
   };
 
   const onSubmit = async () => {
-    if (handingOff || isPending) return;
+    if (handingOff || isPending || creatingRef.current || submittedRef.current || isAuthLoading || draft.ownerChanged) return;
     if (draft.status === "decision" || draft.failure?.reason === "stale") {
       setError(t("draftResolveBeforePublish"));
       return;
     }
     if (draft.status === "loading" || draft.status === "discarding") return;
-    if (authStage) { await beginAuthReturn(); return; }
+    if (requiredAuthStage) { await beginAuthReturn(); return; }
     setError(null); // Clear any previous errors
 
     addBreadcrumb({
@@ -454,6 +465,7 @@ const PublishForm = () => {
       return;
     }
 
+    creatingRef.current = true;
     startTransition(async () => {
       try {
         if (!imageFile) {
@@ -624,15 +636,19 @@ const PublishForm = () => {
             },
           });
         }
+      } finally {
+        creatingRef.current = false;
       }
     });
   };
 
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
-  const isDraftLocked = handingOff || draft.status === "loading" || draft.status === "discarding" ||
+  const isDraftLocked = handingOff || (draft.status === "loading" && !isAuthLoading) || draft.status === "discarding" ||
     (draft.status === "decision" && !draft.dirty);
-  const submitLabel = authStage === "login" ? t("authGate.login")
-    : authStage === "profile" ? t("completeProfileGate.cta") : t("submitLabel");
+  const submitLabel = isAuthLoading ? t("publishCta.resolving")
+    : requiredAuthStage === "login" ? t("publishCta.signIn")
+      : requiredAuthStage === "profile" ? t("publishCta.completeProfile") : t("submitLabel");
+  const isSubmitDisabled = isAuthLoading || draft.ownerChanged;
 
   return (
     <>
@@ -642,13 +658,16 @@ const PublishForm = () => {
           setOpen={setShowPreview}
           title={tForm("previewModalTitle")}
           actionButton={submitLabel}
-          actionButtonDisabled={isDraftLocked || isFormDisabled || isPending}
+          actionButtonDisabled={isDraftLocked || isFormDisabled || isPending || isSubmitDisabled || imagePreparing}
+          actionButtonAnalyticsAction={submitAnalyticsAction}
           onActionButtonClick={async () => {
             await onSubmit();
+            return false;
           }}
           testId="preview-modal"
         >
           <PreviewContent event={previewEvent} />
+          {error && <p className="body-normal text-error" role="alert">{error}</p>}
         </Modal>
       )}
       <div className="container flex flex-col justify-center pt-6 pb-14">
@@ -661,6 +680,16 @@ const PublishForm = () => {
             <p className="body-large text-foreground/80 max-w-xl mx-auto">
               {t("subheading")}
             </p>
+            <div className="stack" role="status">
+              <p className="body-normal text-foreground/80">{t("accountNotice")}</p>
+              {requiredAuthStage === "login" && (
+                <button type="button" className="btn-outline" onClick={onSubmit}
+                  disabled={isAuthLoading || isDraftLocked || imagePreparing || isPending || draft.ownerChanged}
+                  data-testid="publish-early-sign-in" data-analytics-action="publish_early_sign_in">
+                  {t("earlySignIn")}
+                </button>
+              )}
+            </div>
 
             {/* Benefits Pills */}
             <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-center items-center gap-2 sm:gap-3 mt-2">
@@ -709,6 +738,16 @@ const PublishForm = () => {
             </div>
           )}
           {draft.resumeFailed && <p role="status" className="body-normal text-foreground/80">{t("draftResumeFailed")}</p>}
+          {draft.ownerChanged && <p role="alert" className="body-normal text-error">{t("draftOwnerChanged")}</p>}
+          {(isErrorRegionsWithCities || isErrorCategories) && (
+            <div className="stack" role="alert">
+              <p className="body-normal text-error">{t("optionsFailed")}</p>
+              <button type="button" className="btn-outline" onClick={() => {
+                if (isErrorRegionsWithCities) void retryCities();
+                if (isErrorCategories) void retryCategories();
+              }}>{t("draftRetry")}</button>
+            </div>
+          )}
           {authStage && (
             <div className="stack">
               <p className="body-small text-foreground/80">{t("draftAuthNotice")}</p>
@@ -743,9 +782,12 @@ const PublishForm = () => {
               submitLabel={submitLabel}
               analyticsContext="publica"
               isLoading={isPending}
+              isSubmitDisabled={isSubmitDisabled}
+              submitAnalyticsAction={submitAnalyticsAction}
               cityOptions={cityOptions}
               categoryOptions={categoryOptions}
               isLoadingCities={isLoadingCities}
+              isLoadingCategories={isLoadingCategories}
               handleFormChange={handleFormChange}
               handleImageChange={handleImageChange}
               onImagePreparingChange={setImagePreparing}
@@ -778,34 +820,6 @@ const PublishForm = () => {
   );
 };
 
-/**
- * Publishing creates a user-attributed event (the backend returns 401 for
- * guests). Gate upfront so guests never fill the form only to fail at submit
- * — and, by mounting PublishForm only when authenticated, its region/city
- * and category data hooks never fire for guests either. A light skeleton
- * holds while the session resolves so an authenticated user never sees the
- * gate flash.
- */
-const Publica = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
-
-  if (isLoading) {
-    return <AuthCheckSkeleton />;
-  }
-
-  if (!isAuthenticated) {
-    return <Suspense fallback={<AuthCheckSkeleton />}><PublishAuthGate /></Suspense>;
-  }
-
-  // Strict `=== false` (not `!user?.profileCompleted`): the field is absent
-  // during a brief enrichment-failure/loading window, and we'd rather fail
-  // open than block publishing on ambiguous state — the backend's own 403
-  // (caught in createEventAction) is the authoritative fallback.
-  if (user?.profileCompleted === false) {
-    return <CompleteProfileGate redirectTo={PUBLISH_RESUME_PATH} />;
-  }
-
-  return <PublishForm key={user?.id} />;
-};
+const Publica = () => <PublishForm />;
 
 export default Publica;

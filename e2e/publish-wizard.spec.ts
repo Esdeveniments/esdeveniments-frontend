@@ -8,9 +8,14 @@ declare global {
 }
 
 test.describe("Publish wizard UX", () => {
-  // Publishing is gated behind auth — sign the session in before each test.
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
+    await page.route("**/api/regions/options", (route) => route.fulfill({
+      json: [{ id: 1, name: "Barcelonès", cities: [
+        { id: 2, value: "barcelona", label: "Barcelona" },
+      ] }],
+    }));
+    await page.route("**/api/categories", (route) => route.fulfill({ json: [] }));
   });
 
   test("step navigation enables Next after basics and shows location step", async ({
@@ -72,10 +77,6 @@ test.describe("Publish wizard UX", () => {
     await expect(townSelect.getByRole("option").first()).toContainText("Barcelona");
     await page.keyboard.press("Enter");
     await page.locator("#location").fill("Sala de prova");
-    await page.locator("#categories").locator("..").click();
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
-    await page.keyboard.press("Escape");
     await page.getByTestId("next-button").click();
 
     const lastRowDay = page.locator(".rdp-calendar .rdp-week").last().locator(".rdp-day").first();

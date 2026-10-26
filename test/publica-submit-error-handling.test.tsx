@@ -121,7 +121,7 @@ describe("Publica submit-time createEventAction result handling", () => {
     await renderAndSubmit();
 
     await waitFor(() =>
-      expect(screen.getByText("completeProfileGate.cta")).toBeInTheDocument(),
+      expect(screen.getByText("publishCta.completeProfile")).toBeInTheDocument(),
     );
     expect(screen.getByText("set-image-file")).toBeInTheDocument();
     expect(storage.discard).not.toHaveBeenCalled();

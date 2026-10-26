@@ -298,13 +298,15 @@
       "description": "The latest news and cultural recommendations for Catalonia"
     },
     "Publish": {
-      "authGate": {
-        "title": "Sign in to publish",
-        "description": "Create an account or sign in to add your event. It only takes a moment, and you'll be able to manage your events afterwards.",
-        "login": "Sign in",
-        "noAccount": "Don't have an account?",
-        "register": "Sign up"
+      "publishCta": {
+        "signIn": "Sign in to publish",
+        "completeProfile": "Complete profile to publish",
+        "resolving": "Checking your session..."
       },
+      "accountNotice": "You can prepare and preview the event without an account. Publishing requires a free account and a complete profile.",
+      "earlySignIn": "Sign in now",
+      "optionsFailed": "We could not load towns or categories. Please try again.",
+      "draftOwnerChanged": "Your session changed. We kept the form but will not save it to another account. Copy anything you want to keep and reload the page.",
       "completeProfileGate": {
         "title": "Complete your profile",
         "description": "Before publishing an event, choose a username and a display name.",

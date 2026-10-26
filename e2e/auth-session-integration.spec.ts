@@ -43,7 +43,7 @@ test.describe("Session lifecycle (staging)", () => {
   );
   test.setTimeout(240_000);
 
-  test("sign-out clears the session and gates protected pages", async ({
+  test("sign-out clears the session and leaves publishing in guest mode", async ({
     page,
     context,
   }) => {
@@ -61,7 +61,7 @@ test.describe("Session lifecycle (staging)", () => {
     }
 
     await page.goto("/en/publica", { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("publish-auth-gate")).toBeVisible({
+    await expect(page.getByTestId("publish-early-sign-in")).toBeVisible({
       timeout: 30_000,
     });
   });
@@ -132,7 +132,7 @@ test.describe("Session lifecycle (staging)", () => {
       expect(await cookieValue(replay, REFRESH), "dead token is cleared").toBeFalsy();
 
       await replayPage.goto("/en/publica", { waitUntil: "domcontentloaded" });
-      await expect(replayPage.getByTestId("publish-auth-gate")).toBeVisible({
+      await expect(replayPage.getByTestId("publish-early-sign-in")).toBeVisible({
         timeout: 30_000,
       });
     } finally {
@@ -154,7 +154,7 @@ test.describe("Session lifecycle (staging)", () => {
       if (frame === page.mainFrame()) navigations += 1;
     });
     await page.goto("/en/publica", { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("publish-auth-gate")).toBeVisible({
+    await expect(page.getByTestId("publish-early-sign-in")).toBeVisible({
       timeout: 30_000,
     });
     await page.waitForTimeout(3_000);
@@ -177,7 +177,7 @@ test.describe("Session lifecycle (staging)", () => {
     expect(statuses).toEqual([401, 401, 401]);
     expect(Date.now() - started, "no claim wait").toBeLessThan(15_000);
     await page.goto("/en/publica", { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("publish-auth-gate")).toBeVisible({
+    await expect(page.getByTestId("publish-early-sign-in")).toBeVisible({
       timeout: 30_000,
     });
   });
