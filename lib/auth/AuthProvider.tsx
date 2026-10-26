@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthContextValue, AuthUser } from "types/auth";
+import { useLocale } from "next-intl";
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
   undefined,
@@ -17,6 +18,7 @@ export const AuthContext = createContext<AuthContextValue | undefined>(
 // Hydrates the session from the HttpOnly cookie via /api/auth/me, then exposes
 // redirect-based sign-in / logout. Tokens live in cookies, never in JS.
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const locale = useLocale();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -121,11 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [load]);
 
   const signIn = useCallback((redirectTo?: string) => {
-    const query = redirectTo
-      ? `?redirect=${encodeURIComponent(redirectTo)}`
-      : "";
-    window.location.assign(`/api/auth/sign-in${query}`);
-  }, []);
+    const query = new URLSearchParams({ locale });
+    if (redirectTo) query.set("redirect", redirectTo);
+    window.location.assign(`/api/auth/sign-in?${query}`);
+  }, [locale]);
 
   const logout = useCallback(() => {
     window.location.assign("/api/auth/sign-out");

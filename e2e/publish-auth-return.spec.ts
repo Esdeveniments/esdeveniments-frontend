@@ -34,6 +34,7 @@ test("preserves a Spanish draft and real poster across full-document auth and pr
     });
   });
   await page.route("**/api/auth/sign-in?*", (route) => {
+    expect(new URL(route.request().url()).searchParams.get("locale")).toBe("es");
     const destination = new URL(route.request().url()).searchParams.get("redirect");
     expect(destination).toBe("/es/publica?resume=1");
     return route.fulfill({ contentType: "text/html", body:

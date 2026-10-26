@@ -20,7 +20,8 @@ test.describe("Publish event flow", () => {
     await page.route("**/api/auth/sign-in?*", (route) =>
       route.fulfill({ contentType: "text/html", body: "<main>Sign-in fixture</main>" }));
     await page.getByTestId("publish-auth-gate").getByRole("button").click();
-    await expect(page).toHaveURL(/\/api\/auth\/sign-in\?redirect=%2Fpublica/);
+    await expect(page).toHaveURL((url) => url.pathname === "/api/auth/sign-in" &&
+      url.searchParams.get("redirect") === "/publica" && url.searchParams.get("locale") === "ca");
   });
 
   test("authenticated users see the form", async ({ page }) => {
