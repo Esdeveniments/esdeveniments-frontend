@@ -821,6 +821,21 @@ video {
 .rdp-calendar .rdp-day_button {
   outline: none !important;
   border: none;
+  margin-inline: auto;
+}
+
+/* Fill the container: the library sizes the grid to its content. */
+.rdp-calendar .rdp-months {
+  max-width: none;
+}
+
+.rdp-calendar .rdp-month,
+.rdp-calendar .rdp-month_grid {
+  width: 100%;
+}
+
+.rdp-calendar .rdp-month_grid {
+  table-layout: fixed;
 }
 
 .rdp-calendar .rdp-month_caption {

@@ -165,15 +165,15 @@ export default function DatePickerImpl({
                 type="checkbox"
                 role="switch"
                 aria-checked={isAllDay}
-                className="sr-only"
+                className="peer sr-only"
                 checked={isAllDay}
                 onChange={(e) => onToggleAllDay?.(e.target.checked)}
               />
               <div
-                className={`w-10 h-6 rounded-full transition-colors ${isAllDay ? "bg-primary" : "bg-muted"}`}
+                className={`w-11 h-6 rounded-full border-2 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 ${isAllDay ? "bg-primary border-primary" : "bg-background border-muted-foreground"}`}
               />
               <div
-                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isAllDay ? "transform translate-x-4" : ""}`}
+                className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform ${isAllDay ? "bg-white translate-x-5" : "bg-muted-foreground"}`}
               />
             </div>
             <span className="text-sm text-foreground-strong">
