@@ -123,7 +123,10 @@ export async function loginViaUI(page: Page, email: string, password: string) {
       "Could not determine the app origin from the /iniciar-sessio navigation",
     );
   }
+  await completeHostedLogin(page, email, password, appOrigin);
+}
 
+export async function completeHostedLogin(page: Page, email: string, password: string, appOrigin: string) {
   const identifier = page
     .locator('input[name="identifier"], input[type="email"], input[type="text"]')
     .first();
