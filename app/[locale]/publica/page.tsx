@@ -124,6 +124,19 @@ const PublishForm = () => {
   const { user, signIn, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [restoredDraft, setRestoredDraft] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
+  const resetEditor = useCallback(() => {
+    submittedRef.current = false;
+    formStartedRef.current = false;
+    abandonFiredRef.current = false;
+    fieldsInteractedRef.current.clear();
+    setError(null);
+    setShowPreview(false);
+    setEditorVersion((version) => version + 1);
+    setForm({ ...defaultForm });
+    setImageFile(null);
+    updateImagePreview(null);
+    setRestoredDraft(false);
+  }, [updateImagePreview]);
   const draft = usePublishDraft({
     accountId: isAuthenticated ? user?.id : undefined, isAuthLoading, form, imageFile,
     onRestore: (saved, resumed) => {
@@ -133,6 +146,7 @@ const PublishForm = () => {
       setImageFile(saved.imageFile);
       updateImagePreview(saved.imageFile);
       setRestoredDraft(true);
+      submittedRef.current = false;
       if (resumed) {
         handoffStartedRef.current = handedOffRef.current = false;
         setHandingOff(false);
@@ -140,15 +154,7 @@ const PublishForm = () => {
         setShowPreview(true);
       }
     },
-    onReset: () => {
-      setError(null);
-      setShowPreview(false);
-      setEditorVersion((version) => version + 1);
-      setForm({ ...defaultForm });
-      setImageFile(null);
-      updateImagePreview(null);
-      setRestoredDraft(false);
-    },
+    onReset: resetEditor,
   });
   const { markEdited } = draft;
   const [isPending, startTransition] = useTransition();
@@ -171,8 +177,11 @@ const PublishForm = () => {
 
   // Track form abandonment on page unload or SPA navigation
   useEffect(() => {
+    if (submittedRef.current) resetEditor();
     const handlePageShow = (event: PageTransitionEvent) => {
-      if (!event.persisted || !handedOffRef.current) return;
+      if (!event.persisted) return;
+      if (submittedRef.current) resetEditor();
+      if (!handedOffRef.current) return;
       handedOffRef.current = false;
       handoffStartedRef.current = false;
       setHandingOff(false);
@@ -196,7 +205,7 @@ const PublishForm = () => {
       // Also fire on SPA navigation (component unmount)
       handleBeforeUnload();
     };
-  }, []);
+  }, [resetEditor]);
 
   const {
     regionsWithCities,

@@ -57,7 +57,7 @@ export class PublishDraftSession {
     });
     if (result.status !== "found" && this.state.dirty) void this.flush();
     const resumed = prepared?.ok === true && result.status === "found" &&
-      result.revision === prepared.revision;
+      result.revision === prepared.revision && !this.state.dirty;
     if (resumed) this.restore();
     return { ...result, resumed };
   }

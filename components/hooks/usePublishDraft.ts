@@ -4,8 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { initialPublishDraftState, PublishDraftSession } from "@utils/publish-draft-session";
 import { savePublishResumeIntent, takePublishResumeIntent } from "@utils/publish-draft-resume";
 import type {
-  PublishDraftFlushResult, PublishDraftSessionState, PublishResumeStage, UsePublishDraftOptions,
+  PublishDraftFlushResult, PublishDraftInput, PublishDraftSessionState, PublishResumeStage, UsePublishDraftOptions,
 } from "types/publish-draft";
+
+// Auth may still be unresolved when this route unmounts. Do not guess an owner.
+let pendingHydrationDraft: PublishDraftInput | null = null;
+let hydrationGeneration = 0;
+const warnPendingHydration = (event: BeforeUnloadEvent) => {
+  if (!pendingHydrationDraft) return;
+  event.preventDefault();
+  event.returnValue = "";
+};
 
 export function usePublishDraft({
   accountId, isAuthLoading = false, form, imageFile, onRestore, onReset,
@@ -13,6 +22,8 @@ export function usePublishDraft({
   const [state, setState] = useState(initialPublishDraftState);
   const session = useRef<PublishDraftSession | null>(null);
   const edited = useRef(false);
+  const latestInput = useRef({ form, imageFile });
+  const [restoringBuffer, setRestoringBuffer] = useState(() => pendingHydrationDraft !== null);
   const completed = useRef(false);
   const ownerKey = useRef<string | null>(null);
   const resolvedOwnerKey = accountId ? `account:${accountId}` : "guest";
@@ -23,8 +34,30 @@ export function usePublishDraft({
   const resetCallback = useRef(onReset);
   useEffect(() => { restoreCallback.current = onRestore; resetCallback.current = onReset; }, [onRestore, onReset]);
 
+  useEffect(() => { latestInput.current = { form, imageFile }; }, [form, imageFile]);
   useEffect(() => {
-    if (isAuthLoading || ownerChanged) return;
+    if (!pendingHydrationDraft) return;
+    const buffered = pendingHydrationDraft;
+    pendingHydrationDraft = null;
+    window.removeEventListener("beforeunload", warnPendingHydration);
+    edited.current = true;
+    if (buffered.form !== latestInput.current.form || buffered.imageFile !== latestInput.current.imageFile) {
+      restoreCallback.current({ ...buffered, updatedAt: Date.now() });
+    }
+    setRestoringBuffer(false);
+  }, [isAuthLoading]);
+  useEffect(() => {
+    const generation = ++hydrationGeneration;
+    if (!isAuthLoading) return;
+    return () => {
+      if (generation !== hydrationGeneration || !edited.current) return;
+      pendingHydrationDraft = latestInput.current;
+      window.addEventListener("beforeunload", warnPendingHydration);
+    };
+  }, [isAuthLoading]);
+
+  useEffect(() => {
+    if (isAuthLoading || restoringBuffer || ownerChanged) return;
     if (ownerKey.current !== null && ownerKey.current !== resolvedOwnerKey) {
       edited.current = false;
       completed.current = false;
@@ -48,7 +81,7 @@ export function usePublishDraft({
         await Promise.resolve();
         if (!active) return;
       }
-      const result = await current.load(request?.ok ? request.intent : undefined);
+      const result = await current.load(request?.ok && !edited.current ? request.intent : undefined);
       if (!active || !returning) return;
       resumeRequest.current = null;
       if (result?.resumed && result.status === "found") {
@@ -64,13 +97,13 @@ export function usePublishDraft({
       if (completed.current) current.dispose();
       else void current.flush().finally(() => current.dispose());
     };
-  }, [accountId, isAuthLoading, ownerChanged, resolvedOwnerKey]);
+  }, [accountId, isAuthLoading, restoringBuffer, ownerChanged, resolvedOwnerKey]);
 
   useEffect(() => {
     if (!edited.current || completed.current || !session.current) return;
     edited.current = false;
     session.current?.edit({ form, imageFile });
-  }, [form, imageFile, accountId, isAuthLoading]);
+  }, [form, imageFile, accountId, isAuthLoading, restoringBuffer]);
 
   const hasUnsavedEdits = state.dirty || edited.current;
   useEffect(() => {
@@ -80,7 +113,7 @@ export function usePublishDraft({
     return () => window.removeEventListener("beforeunload", warn);
   }, [hasUnsavedEdits]);
 
-  const markEdited = useCallback(() => { edited.current = true; }, []);
+  const markEdited = useCallback(() => { edited.current = true; completed.current = false; }, []);
   const restore = () => {
     const draft = session.current?.restore();
     if (draft) { edited.current = false; setResumeFailed(false); onRestore(draft); }

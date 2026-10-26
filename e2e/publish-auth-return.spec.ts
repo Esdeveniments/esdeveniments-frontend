@@ -176,6 +176,12 @@ test(`preserves a Spanish ${guest ? "guest" : "stale-session"} draft and real po
     await page.getByTestId("publish-button").click({ clickCount: 2 });
     await expect(page).toHaveURL(/\/es\/e\/guest-publish-fixture/);
     expect(attempts).toBe(beforeReturn + 2);
+    await page.goBack();
+    await expect(page.locator("input#title")).toBeEnabled();
+    await expect(page.locator("input#title")).toHaveValue("");
+    await page.locator("input#title").fill("A fresh event after publication");
+    await expect(page.getByTestId("draft-save-status")).toHaveText("Guardado en este dispositivo");
+    expect(attempts).toBe(beforeReturn + 2);
   }
 });
 }

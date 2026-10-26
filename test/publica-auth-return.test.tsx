@@ -1,5 +1,5 @@
 import { Activity, StrictMode } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventFormProps } from "types/event";
 import { PUBLISH_RESUME_STORAGE_KEY } from "@utils/constants";
@@ -94,6 +94,28 @@ async function rejectPublication(reason = "stale-session") {
 }
 
 describe("publish auth handoff", () => {
+  it("allows another explicit publication after a completed cached editor returns", async () => {
+    mocks.create.mockResolvedValue({ success: true, event: { slug: "created" } });
+    mocks.discard.mockImplementation(async () => {
+      mocks.load.mockResolvedValue({ ok: true, status: "empty", revision });
+      return { ok: true, revision };
+    });
+    const view = render(<Activity mode="visible"><Publica /></Activity>);
+    await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+    fireEvent.change(screen.getByLabelText("title"), { target: { value: "First" } });
+    fireEvent.click(screen.getByText("valid-fields"));
+    await act(async () => { fireEvent.click(screen.getByText("submit")); });
+    expect(mocks.create).toHaveBeenCalledTimes(1);
+    view.rerender(<Activity mode="hidden"><Publica /></Activity>);
+    view.rerender(<Activity mode="visible"><Publica /></Activity>);
+    await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+    expect(screen.getByLabelText("title")).toHaveValue("");
+    fireEvent.change(screen.getByLabelText("title"), { target: { value: "Second" } });
+    fireEvent.click(screen.getByText("valid-fields"));
+    await act(async () => { fireEvent.click(screen.getByText("submit")); });
+    expect(mocks.create).toHaveBeenCalledTimes(2);
+  });
+
   it("consumes a fresh profile intent when a cached editor reactivates after login", async () => {
     mocks.user.profileCompleted = false;
     mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
@@ -256,12 +278,65 @@ describe("one-shot publish return", () => {
       expect(screen.getByLabelText("title")).toHaveValue("While loading");
       expect(mocks.load).toHaveBeenCalledWith({ kind: "account", accountId: "a" });
       expect(mocks.create).not.toHaveBeenCalled();
+      expect(mocks.track.mock.calls.filter(([name]) => name === "publish_form_start")).toHaveLength(1);
+    });
+
+    it("keeps newer hydration edits separate from an authenticated resume snapshot", async () => {
+      setReturn();
+      mocks.loading = true;
+      mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
+      const view = render(<Publica />);
+      fireEvent.change(screen.getByLabelText("title"), { target: { value: "Newer input" } });
+      fireEvent.click(screen.getByText("valid-fields"));
+      mocks.loading = false;
+      view.rerender(<Publica />);
+      await screen.findByText("restoreDraftApply");
+      expect(screen.getByLabelText("title")).toHaveValue("Newer input");
+      expect(screen.queryByTestId("preview-modal")).not.toBeInTheDocument();
+      expect(mocks.save).not.toHaveBeenCalled();
+      expect(mocks.create).not.toHaveBeenCalled();
+      expect(mocks.track.mock.calls.filter(([name]) => name === "publish_form_start")).toHaveLength(1);
+    });
+
+    it("retains pre-auth fields and File across a real route unmount without guessing an owner", async () => {
+      mocks.loading = true;
+      const view = render(<Publica />);
+      fireEvent.change(screen.getByLabelText("title"), { target: { value: "Before resolution" } });
+      fireEvent.click(screen.getByText("image"));
+      view.unmount();
+      expect(mocks.load).not.toHaveBeenCalled();
+      expect(mocks.save).not.toHaveBeenCalled();
+      const unloading = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(unloading);
+      expect(unloading.defaultPrevented).toBe(true);
+      mocks.loading = false;
+      render(<Publica />);
+      await waitFor(() => expect(mocks.save).toHaveBeenCalledWith({ kind: "account", accountId: "a" },
+        { form: expect.objectContaining({ title: "Before resolution" }), imageFile: expect.any(File) }, null));
+      expect(screen.getByLabelText("title")).toHaveValue("Before resolution");
+      expect(screen.getByTestId("image")).toHaveTextContent("poster.png");
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("fences an older pre-auth editor cleanup from replacing the newest buffer", async () => {
+      mocks.loading = true;
+      const older = render(<Publica />);
+      fireEvent.change(within(older.container).getByLabelText("title"), { target: { value: "Older" } });
+      const newer = render(<Publica />);
+      fireEvent.change(within(newer.container).getByLabelText("title"), { target: { value: "Newest" } });
+      newer.unmount();
+      older.unmount();
+      mocks.loading = false;
+      render(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+      expect(screen.getByLabelText("title")).toHaveValue("Newest");
     });
 
     it("reports public option failures and retries both without a backend bypass", async () => {
       mocks.authenticated = false;
       mocks.optionsFailed = true;
       render(<Publica />);
+      await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
       expect(screen.getByText("optionsFailed")).toBeVisible();
       fireEvent.click(screen.getByText("draftRetry"));
       expect(mocks.retryOptions).toHaveBeenCalledTimes(2);
@@ -322,12 +397,16 @@ describe("one-shot publish return", () => {
       const view = render(<Publica />);
       await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
       fireEvent.change(screen.getByLabelText("title"), { target: { value: "Guest edits" } });
+      fireEvent.click(screen.getByText("valid-fields"));
+      await waitFor(() => expect(mocks.save).toHaveBeenCalledWith({ kind: "guest" },
+        { form: expect.objectContaining({ title: "Guest edits" }), imageFile: expect.any(File) }, null));
       mocks.authenticated = true;
       view.rerender(<Publica />);
       expect(screen.getByLabelText("title")).toHaveValue("Guest edits");
       expect(screen.getByText("draftOwnerChanged")).toBeVisible();
       await act(async () => { fireEvent.click(screen.getByText("submit")); });
       expect(mocks.save.mock.calls.every(([owner]) => owner.kind === "guest")).toBe(true);
+      expect(mocks.save).not.toHaveBeenCalledWith({ kind: "account", accountId: "a" }, expect.anything(), expect.anything());
       expect(mocks.load).not.toHaveBeenCalledWith({ kind: "account", accountId: "a" });
       expect(mocks.create).not.toHaveBeenCalled();
     });
