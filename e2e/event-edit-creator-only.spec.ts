@@ -78,7 +78,7 @@ test.describe("Creator-only edit access (staging)", () => {
       timeout: 60_000,
     });
 
-    const editLink = page.getByTestId("event-edit-link");
+    const editLink = page.getByTestId("event-edit-link").filter({ visible: true });
     await expect(editLink).toBeVisible({ timeout: 15_000 });
     await expect(editLink).toHaveAttribute("href", `/en/e/${createdEventSlug}/edita`);
 
