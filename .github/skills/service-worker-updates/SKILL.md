@@ -36,11 +36,11 @@ Run `yarn prebuild` after changing `sw-template.js`:
 # After editing sw-template.js
 yarn prebuild
 
-# Or just run dev (includes prebuild)
+# Then start the development server
 yarn dev
 ```
 
-**Note**: `yarn build` alone does NOT run prebuild. Environment-specific builds (`build:development|staging|production`) do include it.
+**Note**: Neither `yarn dev` nor `yarn build` runs prebuild automatically. Run it explicitly on a fresh checkout or after template changes. Environment-specific builds (`build:development|staging|production`) do include it.
 
 ## Service Worker Template Structure
 

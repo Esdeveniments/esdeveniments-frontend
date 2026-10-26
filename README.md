@@ -33,7 +33,7 @@ yarn build && yarn start
 
 ## Scripts
 
-- dev: start Next.js (prebuild generates `public/sw.js` from `public/sw-template.js`)
+- dev: start Next.js. Run `yarn prebuild` first to generate `public/sw.js` from `public/sw-template.js`.
 - dev:inspect: start Next.js with Node.js debugger enabled (`next dev --inspect`)
 - build/start: production build and serve; postbuild runs `next-sitemap`
 - lint/typecheck: ESLint and `tsc --noEmit`

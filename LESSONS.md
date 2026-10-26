@@ -35,6 +35,8 @@ The image-proxy e2e tests skipped on any 502 (`test.skip("Test image service una
 
 Yarn 4 (Berry) dropped automatic `pre*`/`post*` lifecycle scripts — npm runs them, Yarn doesn't. `prebuild` generates `public/sw.js` and `public/robots.txt`, both gitignored. Every deploy path must invoke it explicitly: the Dockerfile/Coolify and CI already do; Vercel needs the `vercel.json` `buildCommand` (`yarn prebuild && yarn build`). The env-specific builds (`build:development|staging|production`) already chain prebuild. A bare `yarn build` ships without the service worker or robots.txt.
 
+`yarn dev` does not generate these files either. A fresh integration runner must run `yarn prebuild` with the same API URL before starting dev. Otherwise `/sw.js` returns 404 and service-worker-enabled recovery never reaches an active controller.
+
 ## Vercel previews are a preview, not production
 
 Production runs on Coolify/Docker/Node 22; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works; gate promotion to `main` on the Coolify/Docker path.

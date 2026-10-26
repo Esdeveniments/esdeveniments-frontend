@@ -39,7 +39,7 @@
 
 ## Build, Test, and Development Commands
 
-- `yarn dev` Start local dev (runs prebuild: service worker generation).
+- `yarn dev` Start local dev. Run `yarn prebuild` first when service-worker assets are needed.
 - `yarn build` Production build; `postbuild` runs `next-sitemap`.
 - `yarn start` Serve built app; `yarn lint` ESLint; `yarn typecheck` TS no‑emit.
 - `yarn test` Vitest; `yarn test:watch`; `yarn test:coverage`.
@@ -111,7 +111,7 @@ See: `docs/incidents/2026-04-23-coolify-pr-preview-empty-html.md`
 ## Security & Configuration Tips
 
 - Never commit secrets. Use `.env.development`, `.env.staging`, `.env.production` (loaded via `env-cmd`).
-- `NEXT_PUBLIC_API_URL` influences the service worker (generated from `public/sw-template.js`) and tests. If it changes, re‑run prebuild/dev.
+- `NEXT_PUBLIC_API_URL` influences the service worker (generated from `public/sw-template.js`) and tests. If it changes, run `yarn prebuild` before restarting dev.
 - Sentry is configured (`sentry.*.config.ts`); set DSN only in non‑local environments.
 - Yarn 4 workspace; prefer `yarn` over `npm`.
 - CSP: Relaxed policy with host allowlisting (see `proxy.ts`). Allows `'unsafe-inline'` for inline scripts/JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains are allowlisted. No nonce required.
@@ -221,7 +221,7 @@ This enables Next.js fetch cache, which stores every unique URL as a separate ca
 - Requirements: Node 22, Yarn 4.12+ (use Corepack).
 - Install: `corepack enable && corepack prepare yarn@4.12.0 --activate && yarn install --immutable`.
 - Env: set `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` (both server‑only), `NEXT_PUBLIC_API_URL` (defaults handled), optional `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `SENTRY_DSN`. Auth (Logto) requires `LOGTO_*` — see `docs/logto-auth-setup.md` and the `env-variable-management` skill; sign-in/profile/favorites features no-op without them.
-- Run: `yarn dev` (generates `public/sw.js` via prebuild). Build: `yarn build`.
+- Run: `yarn prebuild && yarn dev` when service-worker assets are needed. Build: `yarn prebuild && yarn build`.
 - Tests: `yarn test`; E2E: `yarn test:e2e` (local config starts the app).
 
 ## Feature Checklist
@@ -230,7 +230,7 @@ This enables Next.js fetch cache, which stores every unique URL as a separate ca
 - UI/Pages: place components under `components/ui/<feature>/`; routes in `app/<segment>/` (server‑first; add `"use client"` only if needed).
 - API: call from server code via internal API routes (`app/api/*`); these proxy to external backend with HMAC. Use query builders (`buildEventsQuery`, `buildNewsQuery`) from `utils/api-helpers.ts`. Respect HMAC middleware; public GET endpoints are allowlisted.
 - Tests: add unit tests under `test/` and E2E flows under `e2e/` when user‑visible.
-- SW/Caching: if adding external API usage or offline behavior, edit `public/sw-template.js` and re‑run prebuild/dev.
+- SW/Caching: if adding external API usage or offline behavior, edit `public/sw-template.js`, run `yarn prebuild`, then restart dev.
 - Pre‑PR: `yarn lint && yarn typecheck && yarn test` (and E2E if applicable); include screenshots for UI.
 
 ## Cursor Cloud specific instructions
@@ -246,7 +246,7 @@ This enables Next.js fetch cache, which stores every unique URL as a separate ca
 
 | Command          | Purpose                        | Notes                                                                      |
 | ---------------- | ------------------------------ | -------------------------------------------------------------------------- |
-| `yarn dev`       | Next.js dev server (port 3000) | Auto-runs prebuild (service worker generation). Uses Turbopack.            |
+| `yarn dev`       | Next.js dev server (port 3000) | Uses Turbopack. Run `yarn prebuild` first for service-worker assets.       |
 | `yarn lint`      | ESLint                         | 0 errors expected; warnings are pre-existing and acceptable.               |
 | `yarn typecheck` | `tsc --noEmit`                 | Must pass cleanly.                                                         |
 | `yarn test`      | Vitest unit/integration tests  | All 100 test files / 1401 tests should pass with no external dependencies. |
@@ -255,7 +255,7 @@ This enables Next.js fetch cache, which stores every unique URL as a separate ca
 ### Gotchas
 
 - The `yarn dev` command is `next dev` (no env-cmd wrapper). To load `.env.development`, Next.js reads it automatically. For build variants, use `yarn build:development` which explicitly sources it via `env-cmd`.
-- `public/sw.js` is generated, not committed. `yarn dev` runs prebuild automatically, but a standalone `yarn build` does **not** — use `yarn build:development` (or run `yarn prebuild` manually first).
+- `public/sw.js` is generated, not committed. Neither `yarn dev` nor `yarn build` runs prebuild automatically. Use `yarn build:development` or run `yarn prebuild` explicitly first.
 - The pre-push hook runs `yarn typecheck && yarn test --run && yarn i18n:check`. Ensure these pass before pushing.
 - Port 3000 may be occupied by Chrome's network service in the Cloud VM. If `yarn dev` fails with `EADDRINUSE`, use `--port 3001` or kill the conflicting process first. Also remove `/workspace/.next/dev/lock` if a stale lock file blocks startup.
 - The `HMAC_SECRET` environment variable is injected via Cursor Secrets. When writing `.env.development`, populate it from `$HMAC_SECRET` so Next.js picks it up: `echo "HMAC_SECRET=$HMAC_SECRET" > .env.development`.

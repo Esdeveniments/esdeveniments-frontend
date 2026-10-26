@@ -85,6 +85,7 @@ jobs:
         # and the localhost origin is accepted for POST/PUT/DELETE.
         # Secrets/vars are scoped to this step (the only one running the app).
         run: |
+          yarn prebuild
           yarn dev > /tmp/next-dev.log 2>&1 &
           echo $! > .next-server.pid
         env:

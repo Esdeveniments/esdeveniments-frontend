@@ -38,7 +38,11 @@ test("guest poster survives real sign-in with the normal service worker before e
         const accountId = await page.evaluate(async () => {
           const response = await fetch("/api/auth/me");
           if (!response.ok) throw new Error(`Session lookup failed: ${response.status}`);
-          return (await response.json()).user.id as string;
+          const body = await response.json();
+          if (typeof body?.user?.id !== "string" || body.user.id.trim().length === 0) {
+            throw new Error("Session lookup returned no authenticated account ID");
+          }
+          return body.user.id;
         });
         expect(await readSavedDraft(page, accountId)).toEqual(original);
         expect(creates).toBe(0);
