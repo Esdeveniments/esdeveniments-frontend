@@ -5,14 +5,15 @@ import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { Link } from "@i18n/routing";
 import { useTranslations } from "next-intl";
+import EventEditAction from "./EventEditAction";
 import EventPromoteAction from "./EventPromoteAction";
 
 /**
  * Renders ancillary event details: duration + external link + creator info.
  * Status badge and date/time info are intentionally NOT shown here
  * to avoid duplication (they already appear in EventHeader and EventCalendar).
- * Also renders the owner-only Promote action: EventSidebar has one too, but
- * the sidebar is hidden below the lg breakpoint.
+ * Also renders the owner-only Edit and Promote actions: EventSidebar has them
+ * too, but the sidebar is hidden below the lg breakpoint.
  */
 const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
@@ -93,7 +94,10 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
           )}
 
           {owner && (
-            <EventPromoteAction ownerId={owner.id} slug={event.slug ?? ""} />
+            <>
+              <EventEditAction ownerId={owner.id} slug={event.slug ?? ""} />
+              <EventPromoteAction ownerId={owner.id} slug={event.slug ?? ""} />
+            </>
           )}
         </div>
       </div>
