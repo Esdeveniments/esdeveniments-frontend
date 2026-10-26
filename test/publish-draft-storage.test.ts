@@ -86,6 +86,7 @@ describe("publish-specific draft snapshots", () => {
 
   it.each(["version", "form", "bytes", "owner", "future"] as const)(
     "rejects invalid stored %s without inventing defaults", async (field) => {
+      vi.spyOn(Date, "now").mockReturnValue(Date.now());
       const revision = await seedDraft();
       await rawDraft("guest", (raw) => {
         const record = PublishDraftRecordSchema.parse(raw);
