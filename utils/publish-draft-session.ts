@@ -50,6 +50,7 @@ export class PublishDraftSession {
     if (!this.active || generation !== this.generation) return;
     if (!result.ok) {
       if ("revision" in result) this.revision = result.revision ?? null;
+      if ("revision" in result && result.revision === null) this.guestIntent = null;
       const unreadableAccount = this.guestIntent && "revision" in result &&
         (result.reason === "corrupt" || result.reason === "version");
       this.update({ status: unreadableAccount ? "decision" : "error", failure: result, canDiscard: "revision" in result,

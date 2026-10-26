@@ -11,6 +11,26 @@ beforeEach(resetDraftStorage);
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("guest return recovery failures", () => {
+  it.each(["version", "corrupt", "missing"])("offers explicit metadata repair after a %s fence, without losing the guest", async (kind) => {
+    await seedDraft(accountA);
+    const revision = await seedDraft();
+    const intent = { ...resumeIntent(revision), owner: guest };
+    const guestBefore = await rawDraft("guest");
+    await rawDraft("revision", () => kind === "missing" ? undefined :
+      { version: kind === "version" ? 2 : 1, revision: "invalid" }, "metadata");
+    const session = new PublishDraftSession(accountA, vi.fn());
+    try {
+      await session.load(intent);
+      expect(session.state).toMatchObject({
+        status: "error", guestConflict: false, canDiscard: true,
+        failure: { revision: null, reason: kind === "version" ? "version" : "corrupt" },
+      });
+      expect(await session.discard()).toMatchObject({ ok: true });
+      expect(await rawDraft("guest")).toEqual(guestBefore);
+      expect(await publishResume.preparePublishDraftResume(accountA, intent)).toEqual({ ok: false, reason: "stale" });
+    } finally { session.dispose(); }
+  });
+
   it.each(["corrupt", "version"])("offers a fenced guest replacement for an unreadable %s account draft", async (reason) => {
     await seedDraft(accountA);
     const revision = await seedDraft();

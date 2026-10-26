@@ -9,6 +9,7 @@ export default function PublishDraftPanel({
   state, onRestore, onRestoreGuest, onDiscard, onRetry, warnings,
 }: PublishDraftPanelProps) {
   const t = useTranslations("App.Publish");
+  const formT = useTranslations("Components.EventForm");
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const { status, failure, pendingDraft } = state;
   const busy = status === "loading" || status === "discarding";
@@ -36,7 +37,7 @@ export default function PublishDraftPanel({
           <>
             {!state.guestConflict && <h2 className="heading-3">{t("restoreDraftTitle")}</h2>}
             <p className="body-normal">{state.guestConflict
-              ? t("draftAccountTitle", { title: pendingDraft.form.title || t("previewNoTitle") })
+              ? t("draftAccountTitle", { title: pendingDraft.form.title || formT("previewNoTitle") })
               : t("restoreDraftDescription")}</p>
             <button type="button" className="btn-primary" onClick={onRestore} disabled={busy || !!failure}>
               {t(state.guestConflict ? "draftUseAccount" : "restoreDraftApply")}

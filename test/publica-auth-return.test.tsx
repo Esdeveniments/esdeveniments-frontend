@@ -2,6 +2,7 @@ import { Activity, StrictMode } from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventFormProps } from "types/event";
+import type { PublishDraftOwner } from "types/publish-draft";
 import { PUBLISH_RESUME_STORAGE_KEY } from "@utils/constants";
 import * as publishResume from "@utils/publish-draft-resume";
 import Publica from "@app/[locale]/publica/page";
@@ -59,9 +60,9 @@ vi.mock("@components/ui/EventForm", () => ({
 }));
 const revision = "00000000-0000-4000-8000-000000000001";
 const saved = { form: { title: "Preserved" }, imageFile: new File(["image"], "poster.png", { type: "image/png" }), updatedAt: 1 };
-function setReturn(owner = "a", expectedRevision = revision) {
+function setReturn(owner: string | PublishDraftOwner = "a", expectedRevision = revision) {
   sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({
-    version: 1, owner: { kind: "account", accountId: owner },
+    version: 1, owner: typeof owner === "string" ? { kind: "account", accountId: owner } : owner,
     revision: expectedRevision, stage: "login", createdAt: Date.now(),
   }));
   window.history.replaceState(null, "", "/es/publica?resume=1&auth_success=1");
@@ -219,10 +220,20 @@ describe("publish auth handoff", () => {
 });
 
 describe("one-shot publish return", () => {
+  it("keeps the explicit metadata repair action available and clears the unusable return intent", async () => {
+    setReturn({ kind: "guest" });
+    vi.spyOn(publishResume, "preparePublishDraftResume").mockResolvedValue({ ok: false, reason: "version", revision: null });
+    mocks.load.mockResolvedValue({ ok: false, reason: "version", revision: null });
+    render(<Publica />);
+    await screen.findByText("restoreDraftDiscard");
+    expect(screen.queryByTestId("draft-restore-guest")).not.toBeInTheDocument();
+    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull();
+    expect(window.location.search).not.toContain("resume");
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
   it.each(["corrupt", "version"] as const)("allows an explicit guest choice after a %s account read", async (reason) => {
-    setReturn();
-    const intent = JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!);
-    sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({ ...intent, owner: { kind: "guest" } }));
+    setReturn({ kind: "guest" });
     vi.spyOn(publishResume, "preparePublishDraftResume")
       .mockResolvedValueOnce({ ok: false, reason: "account-conflict" })
       .mockResolvedValue({ ok: true, revision });
@@ -240,9 +251,7 @@ describe("one-shot publish return", () => {
   });
 
   it("restores fields, File and preview when an empty-account handoff succeeds on explicit retry", async () => {
-    setReturn();
-    const intent = JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!);
-    sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({ ...intent, owner: { kind: "guest" } }));
+    setReturn({ kind: "guest" });
     vi.spyOn(publishResume, "preparePublishDraftResume")
       .mockResolvedValueOnce({ ok: false, reason: "transaction" })
       .mockResolvedValue({ ok: true, revision });
@@ -261,9 +270,7 @@ describe("one-shot publish return", () => {
   });
 
   it.each(["stale", "transaction"] as const)("handles %s replacement without losing return state", async (reason) => {
-    setReturn();
-    const intent = JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!);
-    sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({ ...intent, owner: { kind: "guest" } }));
+    setReturn({ kind: "guest" });
     vi.spyOn(publishResume, "preparePublishDraftResume")
       .mockResolvedValueOnce({ ok: false, reason: "account-conflict" })
       .mockResolvedValueOnce({ ok: false, reason })

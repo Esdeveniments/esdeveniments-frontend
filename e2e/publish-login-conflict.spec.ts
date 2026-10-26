@@ -2,11 +2,11 @@ import { test, expect } from "@playwright/test";
 import { MOCK_USER } from "./helpers/auth";
 import { dismissEngagementPopups } from "./helpers/login";
 import { DEFAULT_IMAGE, pickEventWhen } from "./helpers/publish";
-import { readSavedDraft } from "./helpers/publish-draft";
+import { readSavedDraft, replaceDraftFence } from "./helpers/publish-draft";
 import type { PublishDraftRecord } from "types/publish-draft";
 import { PUBLISH_DRAFT_TTL_MS } from "@utils/constants";
 
-for (const choice of ["empty-account", "guest", "account", "incomplete-profile", "expired-account", "corrupt-account", "competing-write"]) {
+for (const choice of ["empty-account", "guest", "account", "untitled-account", "incomplete-profile", "expired-account", "corrupt-account", "invalid-fence", "competing-write"]) {
   test.describe(`step-three sign-in with ${choice}`, () => {
     let creates = 0;
     let original: Awaited<ReturnType<typeof readSavedDraft>>;
@@ -29,10 +29,18 @@ for (const choice of ["empty-account", "guest", "account", "incomplete-profile",
         profileComplete = true;
         return route.fulfill({ json: {} });
       });
-      await page.route("**/api/auth/sign-in?*", (route) => {
+      await page.route("**/api/auth/sign-in?*", async (route) => {
         const url = new URL(route.request().url());
         expect(url.searchParams.get("redirect")).toBe("/en/publica?resume=1");
         expect(url.searchParams.get("locale")).toBe("en");
+        if (choice === "invalid-fence") {
+          const storageTab = await page.context().newPage();
+          try {
+            await storageTab.route("**/draft-storage-fixture", (route) => route.fulfill({ contentType: "text/html", body: "<!doctype html>" }));
+            await storageTab.goto("/draft-storage-fixture");
+            await replaceDraftFence(storageTab, 2);
+          } finally { await storageTab.close(); }
+        }
         signedIn = true;
         return route.fulfill({ status: 302, headers: { location: "/en/publica?resume=1&auth_success=1" } });
       });
@@ -76,7 +84,8 @@ for (const choice of ["empty-account", "guest", "account", "incomplete-profile",
             const read: IDBRequest<PublishDraftRecord> = store.get("guest");
             read.onsuccess = () => store.put({
               ...read.result, owner: { kind: "account", accountId },
-              form: { title: "Older account basics", description: "Only step one from an earlier visit." }, image: null,
+              form: { title: scenario === "untitled-account" ? "" : "Older account basics",
+                description: "Only step one from an earlier visit." }, image: null,
               updatedAt: scenario === "expired-account" ? Date.now() - ttl : read.result.updatedAt,
               version: scenario === "corrupt-account" ? 2 : read.result.version,
             }, `account:${accountId}`);
@@ -89,10 +98,10 @@ for (const choice of ["empty-account", "guest", "account", "incomplete-profile",
     test("preserves every step and requires an explicit publication", async ({ page }, testInfo) => {
       await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
       await page.getByTestId("publish-button").click();
-      if (choice !== "empty-account" && choice !== "expired-account") {
+      if (choice !== "empty-account" && choice !== "expired-account" && choice !== "invalid-fence") {
         await expect(page.getByTestId("draft-restore-guest")).toBeVisible();
         if (choice !== "corrupt-account") {
-          await expect(page.getByText("Previous account draft: Older account basics")).toBeVisible();
+          await expect(page.getByText(`Previous account draft: ${choice === "untitled-account" ? "No title" : "Older account basics"}`)).toBeVisible();
         } else {
           await expect(page.getByTestId("publish-draft-panel").getByRole("alert")).toBeVisible();
           await expect(page.getByTestId("draft-restore-guest")).toBeEnabled();
@@ -102,22 +111,20 @@ for (const choice of ["empty-account", "guest", "account", "incomplete-profile",
         await expect(page.getByTestId("draft-restore-guest")).toBeVisible();
         await page.screenshot({ path: testInfo.outputPath("explicit-draft-choice.png") });
       }
-      if (choice === "competing-write") {
-        await page.evaluate(() => new Promise<void>((resolve, reject) => {
-          const open = indexedDB.open("esdeveniments-publish-drafts");
-          open.onerror = () => reject(open.error);
-          open.onsuccess = () => {
-            const db = open.result;
-            const tx = db.transaction("metadata", "readwrite");
-            tx.objectStore("metadata").put({ version: 1, revision: crypto.randomUUID() }, "revision");
-            tx.oncomplete = () => { db.close(); resolve(); };
-            tx.onabort = () => { db.close(); reject(tx.error); };
-          };
-        }));
+      if (choice === "invalid-fence") {
+        await expect(page.getByTestId("publish-draft-panel").getByRole("alert")).toBeVisible();
+        await expect(page.getByTestId("draft-restore-guest")).not.toBeVisible();
+        await page.getByRole("button", { name: "Discard", exact: true }).click();
+        await page.getByTestId("draft-discard-modal").getByRole("button", { name: "Discard", exact: true }).click();
+        await expect(page.getByTestId("draft-discard-modal")).not.toBeVisible();
+        expect(await readSavedDraft(page)).toEqual(original);
+        await expect(page.getByTestId("preview-modal")).not.toBeVisible();
+      } else if (choice === "competing-write") {
+        await replaceDraftFence(page);
         await page.getByTestId("draft-restore-guest").click();
         await expect(page.getByTestId("publish-draft-panel").getByRole("alert")).toBeVisible();
         await expect(page.getByTestId("preview-modal")).not.toBeVisible();
-      } else if (choice !== "account") {
+      } else if (choice !== "account" && choice !== "untitled-account") {
         if (choice !== "empty-account" && choice !== "expired-account") {
           await page.getByTestId("draft-restore-guest").click();
         }
@@ -145,7 +152,7 @@ for (const choice of ["empty-account", "guest", "account", "incomplete-profile",
         await expect(page.getByLabel("End time", { exact: true })).toHaveValue("14:45");
       } else {
         await page.getByRole("button", { name: "Restore the account's previous draft", exact: true }).click();
-        await expect(page.locator("#title")).toHaveValue("Older account basics");
+        await expect(page.locator("#title")).toHaveValue(choice === "untitled-account" ? "" : "Older account basics");
       }
       await expect(page.getByTestId("draft-restore-guest")).not.toBeVisible();
       await expect(page).not.toHaveURL(/resume=1/);
