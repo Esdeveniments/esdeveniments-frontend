@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { initialPublishDraftState, PublishDraftSession } from "@utils/publish-draft-session";
+import { savePublishResumeIntent, takePublishResumeIntent } from "@utils/publish-draft-resume";
 import type {
-  PublishDraftFlushResult, PublishDraftSessionState, UsePublishDraftOptions,
+  PublishDraftFlushResult, PublishDraftSessionState, PublishResumeStage, UsePublishDraftOptions,
 } from "types/publish-draft";
 
 export function usePublishDraft({
@@ -13,13 +14,40 @@ export function usePublishDraft({
   const session = useRef<PublishDraftSession | null>(null);
   const edited = useRef(false);
   const completed = useRef(false);
+  const [resumeFailed, setResumeFailed] = useState(false);
+  const resumeRequest = useRef<ReturnType<typeof takePublishResumeIntent> | null>(null);
+  const restoreCallback = useRef(onRestore);
+  useEffect(() => { restoreCallback.current = onRestore; }, [onRestore]);
 
   useEffect(() => {
     if (!accountId) return;
-    const current = new PublishDraftSession({ kind: "account", accountId }, setState);
+    const owner = { kind: "account", accountId } as const;
+    let active = true;
+    const current = new PublishDraftSession(owner, setState);
     session.current = current;
-    void current.load();
+    const url = new URL(window.location.href);
+    const returning = resumeRequest.current !== null || url.searchParams.get("resume") === "1";
+    const request = returning
+      ? (resumeRequest.current ??= takePublishResumeIntent()) : null;
+    if (returning) {
+      url.searchParams.delete("resume");
+      window.history.replaceState(window.history.state, "", url);
+    }
+    void (async () => {
+      if (request?.ok) {
+        await Promise.resolve();
+        if (!active) return;
+      }
+      const result = await current.load(request?.ok ? request.intent : undefined);
+      if (!active || !returning) return;
+      if (result?.resumed && result.status === "found") {
+        restoreCallback.current(result.draft, true);
+      } else if (request?.ok || request?.reason !== "missing") {
+        setResumeFailed(true);
+      }
+    })();
     return () => {
+      active = false;
       session.current = null;
       if (completed.current) current.dispose();
       else void current.flush().finally(() => current.dispose());
@@ -42,12 +70,12 @@ export function usePublishDraft({
   const markEdited = useCallback(() => { edited.current = true; }, []);
   const restore = () => {
     const draft = session.current?.restore();
-    if (draft) { edited.current = false; onRestore(draft); }
+    if (draft) { edited.current = false; setResumeFailed(false); onRestore(draft); }
   };
   const discard = async () => {
     edited.current = false;
     const result = await session.current?.discard();
-    if (result?.ok) onReset();
+    if (result?.ok) { setResumeFailed(false); onReset(); }
     return result;
   };
   const flush = async (): Promise<PublishDraftFlushResult> => {
@@ -62,9 +90,24 @@ export function usePublishDraft({
     edited.current = false;
     return session.current?.discard() ?? { ok: false, reason: "unavailable" };
   };
+  const prepareResume = async (stage: PublishResumeStage): Promise<PublishDraftFlushResult> => {
+    if (!accountId) return { ok: false, reason: "unavailable" };
+    const current = session.current;
+    const result = await flush();
+    if (!current || current !== session.current) return { ok: false, reason: "stale" };
+    if (!result.ok) return result;
+    if (!session.current?.state.canDiscard) return { ok: true, revision: null };
+    const confirmed = await current.confirmSaved();
+    if (current !== session.current) return { ok: false, reason: "stale" };
+    if (!confirmed.ok) return confirmed;
+    return savePublishResumeIntent({
+      version: 1, owner: { kind: "account", accountId },
+      revision: confirmed.revision, stage, createdAt: Date.now(),
+    });
+  };
   const ownerState: PublishDraftSessionState = accountId ? state : {
     ...initialPublishDraftState, status: "error", failure: { ok: false, reason: "unavailable" },
   };
-  return { ...ownerState, markEdited, restore, discard, flush, complete,
+  return { ...ownerState, markEdited, restore, discard, flush, complete, prepareResume, resumeFailed,
     retry: () => session.current?.retry() };
 }

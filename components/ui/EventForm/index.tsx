@@ -38,6 +38,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   categoryOptions,
   handleFormChange,
   handleImageChange,
+  onImagePreparingChange,
   handleTownChange,
   handleCategoriesChange,
   handleUseGeolocation,
@@ -441,7 +442,10 @@ export const EventForm: React.FC<EventFormProps> = ({
           <ImageUpload
             value={imageToUpload}
             onUpload={handleImageChange}
-            onPreparingChange={setIsImagePreparing}
+            onPreparingChange={(preparing) => {
+              setIsImagePreparing(preparing);
+              onImagePreparingChange?.(preparing);
+            }}
           />
           {helperImage ? (
             <p className="text-[12px] text-foreground/80 w-full px-2 -mt-2">

@@ -1,7 +1,10 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Link } from "@i18n/routing";
+import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { getPathname, Link } from "@i18n/routing";
+import { useAuth } from "@components/hooks/useAuth";
+import { PUBLISH_RESUME_PATH } from "@utils/constants";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 const REDIRECT = "/publica";
@@ -15,6 +18,13 @@ const REDIRECT = "/publica";
  */
 export default function PublishAuthGate() {
   const t = useTranslations("App.Publish.authGate");
+  const locale = useLocale();
+  const searchParams = useSearchParams();
+  const { signIn } = useAuth();
+  const redirectTo = getPathname({
+    href: searchParams.get("resume") === "1" ? PUBLISH_RESUME_PATH : REDIRECT,
+    locale,
+  });
 
   return (
     <div className="container flex-center pt-[6rem] pb-section-y">
@@ -31,13 +41,14 @@ export default function PublishAuthGate() {
         <h1 className="heading-2 text-foreground">{t("title")}</h1>
         <p className="body-normal text-foreground/80">{t("description")}</p>
 
-        <Link
-          href={`/iniciar-sessio?redirect=${encodeURIComponent(REDIRECT)}`}
+        <button
+          type="button"
+          onClick={() => signIn(redirectTo)}
           className="btn-primary w-full"
           data-analytics-action="publish_gate_login"
         >
           {t("login")}
-        </Link>
+        </button>
 
         <p className="body-small text-foreground/60">
           {t("noAccount")}{" "}

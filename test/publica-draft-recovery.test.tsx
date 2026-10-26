@@ -20,7 +20,7 @@ vi.mock("@components/hooks/useGetRegionsWithCities", () => ({
 vi.mock("@components/hooks/useCategories", () => ({
   useCategories: () => ({ categories: [], isLoading: false, isError: false }),
 }));
-vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
+vi.mock("next-intl", () => ({ useLocale: () => "ca", useTranslations: () => (key: string) => key }));
 vi.mock("@i18n/routing", () => ({ Link: "a", useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
 vi.mock("@sentry/nextjs", () => ({ addBreadcrumb: vi.fn(), captureException: vi.fn() }));
@@ -50,6 +50,21 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("publish draft recovery UI", () => {
+  it.each(["restoreDraftApply", "restoreDraftDiscard"])("clears failed resume feedback after %s succeeds", async (choice) => {
+    window.history.replaceState(null, "", "/publica?resume=1");
+    sessionStorage.setItem("publish-resume-v1", "{");
+    render(<Publica />);
+    await screen.findByText("draftResumeFailed");
+    fireEvent.click(screen.getByText(choice));
+    if (choice === "restoreDraftDiscard") {
+      mocks.discard.mockResolvedValueOnce({ ok: false, reason: "transaction" });
+      await act(async () => { fireEvent.click(screen.getByTestId("draft-discard-modal-action-button")); });
+      expect(screen.getByText("draftResumeFailed")).toBeInTheDocument();
+      await act(async () => { fireEvent.click(screen.getByTestId("draft-discard-modal-action-button")); });
+    }
+    await waitFor(() => expect(screen.queryByText("draftResumeFailed")).not.toBeInTheDocument());
+  });
+
   it("does not overwrite state or save defaults during a delayed read; restores File and preview", async () => {
     let resolve!: (value: PublishDraftLoadResult) => void;
     mocks.load.mockReturnValue(new Promise<PublishDraftLoadResult>((done) => { resolve = done; }));

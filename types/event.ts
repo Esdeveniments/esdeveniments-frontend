@@ -309,6 +309,7 @@ export interface EventFormProps {
     value: FormData[K],
   ) => void;
   handleImageChange: (file: File | null) => void;
+  onImagePreparingChange?: (preparing: boolean) => void;
   handleTownChange: (town: Option | null) => void;
   handleCategoriesChange: (categories: Option[]) => void;
   handleUseGeolocation?: () => void;

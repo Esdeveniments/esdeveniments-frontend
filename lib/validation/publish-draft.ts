@@ -36,6 +36,14 @@ export const PublishDraftFormSchema = EventFormSchema.omit({ id: true })
 
 export const PublishDraftRevisionSchema = z.string().uuid().nullable();
 
+export const PublishResumeIntentSchema = z.object({
+  version: z.literal(1),
+  owner: PublishDraftOwnerSchema,
+  revision: z.string().uuid(),
+  stage: z.enum(["login", "profile"]),
+  createdAt: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+}).strict();
+
 export const PublishDraftMetadataSchema = z.object({
   version: z.literal(PUBLISH_DRAFT_FENCE_VERSION),
   revision: z.string().uuid(),
