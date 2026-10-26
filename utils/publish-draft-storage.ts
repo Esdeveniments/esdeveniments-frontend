@@ -14,6 +14,7 @@ import type {
 } from "types/publish-draft";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
+  PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS,
   PUBLISH_DRAFT_MAX_COUNT,
   PUBLISH_DRAFT_TTL_MS,
   PUBLISH_DRAFT_VERSION,
@@ -46,7 +47,8 @@ export async function loadPublishDraft(
         return;
       }
       const record = parsed.data;
-      if (getPublishDraftOwnerKey(record.owner) !== key || record.updatedAt > Date.now()) {
+      if (getPublishDraftOwnerKey(record.owner) !== key ||
+          record.updatedAt > Date.now() + PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS) {
         finish({ ok: false, reason: "corrupt", revision });
         return;
       }
@@ -166,5 +168,5 @@ export async function discardPublishDraft(
     store.delete(getPublishDraftOwnerKey(parsedOwner.data));
     // Keep a bounded, database-wide fence even when every payload is deleted.
     finish({ ok: true, revision: advance() });
-  });
+  }, expectedRevision === null);
 }

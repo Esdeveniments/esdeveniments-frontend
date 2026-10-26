@@ -3,6 +3,7 @@ import { EventFormSchema } from "types/event";
 import type { PublishDraftOwner } from "types/publish-draft";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
+  PUBLISH_DRAFT_FENCE_VERSION,
   PUBLISH_DRAFT_MAX_FORM_BYTES,
   PUBLISH_DRAFT_VERSION,
 } from "@utils/constants";
@@ -36,7 +37,7 @@ export const PublishDraftFormSchema = EventFormSchema.omit({ id: true })
 export const PublishDraftRevisionSchema = z.string().uuid().nullable();
 
 export const PublishDraftMetadataSchema = z.object({
-  version: z.literal(PUBLISH_DRAFT_VERSION),
+  version: z.literal(PUBLISH_DRAFT_FENCE_VERSION),
   revision: z.string().uuid(),
 });
 

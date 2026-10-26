@@ -2,7 +2,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PublishDraftRecordSchema } from "@lib/validation/publish-draft";
 import { discardPublishDraft, loadPublishDraft, savePublishDraft } from "@utils/publish-draft-storage";
-import { MAX_TOTAL_UPLOAD_BYTES, PUBLISH_DRAFT_TTL_MS } from "@utils/constants";
+import {
+  MAX_TOTAL_UPLOAD_BYTES, PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS, PUBLISH_DRAFT_TTL_MS,
+} from "@utils/constants";
 import {
   accountA, accountB, guest, loadedRevision, rawDraft,
   resetDraftStorage, savedRevision, seedDraft,
@@ -90,7 +92,7 @@ describe("publish-specific draft snapshots", () => {
         if (field === "version") return { ...record, version: 999 };
         if (field === "form") return { ...record, form: { title: 17 } };
         if (field === "owner") return { ...record, owner: accountA };
-        if (field === "future") return { ...record, updatedAt: Date.now() + 60_000 };
+        if (field === "future") return { ...record, updatedAt: Date.now() + PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS + 1 };
         return { ...record, image: {
           bytes: new ArrayBuffer(2), size: 1, name: "p.png", type: "image/png", lastModified: 0,
         } };
@@ -136,13 +138,37 @@ describe("publish-specific draft snapshots", () => {
       .toEqual({ ok: false, reason: "invalid-input" });
   });
 
-  it.each(["missing", "version", "corrupt"])("rejects %s revision metadata rather than resetting the fence", async (kind) => {
-    await seedDraft();
+  it.each(["missing", "version", "corrupt"])("recovers %s metadata only on explicit owner-scoped discard", async (kind) => {
+    await seedDraft(accountA);
+    const revision = await seedDraft();
+    const previous = await rawDraft("guest");
     await rawDraft("revision", () => kind === "missing" ? undefined :
       { version: kind === "version" ? 999 : 1, revision: "invalid" }, "metadata");
     expect(await loadPublishDraft(guest)).toEqual({
-      ok: false, reason: kind === "version" ? "version" : "corrupt",
+      ok: false, reason: kind === "version" ? "version" : "corrupt", revision: null,
     });
-    expect(await discardPublishDraft(guest, null)).toMatchObject({ ok: false });
+    expect(await savePublishDraft(guest, { form: {}, imageFile: null }, null)).toMatchObject({ ok: false });
+    expect(await rawDraft("guest")).toEqual(previous);
+    const repaired = savedRevision(await discardPublishDraft(guest, null));
+    expect(await loadPublishDraft(guest)).toMatchObject({ status: "empty", revision: repaired });
+    expect(await loadPublishDraft(accountA)).toMatchObject({ status: "found" });
+    expect(await savePublishDraft(guest, { form: {}, imageFile: null }, revision))
+      .toEqual({ ok: false, reason: "stale" });
+    expect(await savePublishDraft(guest, { form: {}, imageFile: null }, null))
+      .toEqual({ ok: false, reason: "stale" });
+    savedRevision(await savePublishDraft(guest, { form: {}, imageFile: null }, repaired));
+  });
+
+  it.each([1, PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS])("preserves a draft after a %sms backward clock correction", async (skew) => {
+    const now = Date.now();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+    const revision = await seedDraft();
+    clock.mockReturnValue(now - skew);
+    expect(await loadPublishDraft(guest)).toMatchObject({
+      status: "found", revision, draft: { updatedAt: now },
+    });
+    expect(PublishDraftRecordSchema.parse(await rawDraft("guest")).updatedAt).toBe(now);
+    clock.mockReturnValue(now + PUBLISH_DRAFT_TTL_MS);
+    expect(await loadPublishDraft(guest)).toMatchObject({ status: "expired" });
   });
 });

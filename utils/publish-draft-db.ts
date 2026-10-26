@@ -6,7 +6,7 @@ import type {
   PublishDraftWriteResult,
 } from "types/publish-draft";
 import { PublishDraftMetadataSchema } from "@lib/validation/publish-draft";
-import { PUBLISH_DRAFT_VERSION } from "./constants";
+import { PUBLISH_DRAFT_FENCE_VERSION } from "./constants";
 
 export const PUBLISH_DRAFT_DB_NAME = "esdeveniments-publish-drafts";
 
@@ -40,6 +40,7 @@ export function handlePublishDraftRequest<T>(
 
 export async function transactPublishDraft<T extends PublishDraftLoadResult | PublishDraftWriteResult>(
   action: PublishDraftTransactionAction<T>,
+  repairMetadata = false,
 ): Promise<T | PublishDraftFailure> {
   return new Promise((resolve) => {
     let settled = false;
@@ -85,12 +86,13 @@ export async function transactPublishDraft<T extends PublishDraftLoadResult | Pu
           const read = metadata.get("revision");
           handlePublishDraftRequest(read, (raw: unknown) => {
             const parsed = PublishDraftMetadataSchema.safeParse(raw);
-            if (raw !== undefined && !parsed.success) {
+            if (raw !== undefined && !parsed.success && !repairMetadata) {
               result = {
                 ok: false,
                 reason: typeof raw === "object" && raw !== null &&
-                  "version" in raw && raw.version !== PUBLISH_DRAFT_VERSION
+                  "version" in raw && raw.version !== PUBLISH_DRAFT_FENCE_VERSION
                   ? "version" : "corrupt",
+                revision: null,
               };
               return;
             }
@@ -103,13 +105,13 @@ export async function transactPublishDraft<T extends PublishDraftLoadResult | Pu
               },
               () => {
                 const revision = crypto.randomUUID();
-                metadata.put({ version: PUBLISH_DRAFT_VERSION, revision }, "revision");
+                metadata.put({ version: PUBLISH_DRAFT_FENCE_VERSION, revision }, "revision");
                 return revision;
               },
             );
             if (raw === undefined) {
               handlePublishDraftRequest(tx.objectStore("drafts").count(), (count) => {
-                if (count > 0) result = { ok: false, reason: "corrupt" };
+                if (count > 0 && !repairMetadata) result = { ok: false, reason: "corrupt", revision: null };
                 else run();
               }, (failure) => { callbackFailure = failure; });
             } else {

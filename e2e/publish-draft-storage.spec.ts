@@ -144,3 +144,33 @@ test("real transactions reject competing revisions and isolate guest/account pay
     return storage.loadPublishDraft({ kind: "account", accountId: "different-account" });
   })).toMatchObject({ ok: true, status: "empty" });
 });
+
+test("explicit discard repairs a missing fence and rejects pre-recovery writes", async ({ page }) => {
+  expect(await page.evaluate(async () => {
+    const url = "/__publish-draft-storage.js";
+    const storage: typeof import("../utils/publish-draft-storage") = await import(url);
+    const owner = { kind: "guest" } as const;
+    const saved = await storage.savePublishDraft(owner, { form: { title: "draft" }, imageFile: null }, null);
+    if (!saved.ok) throw new Error(saved.reason);
+    await new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open("esdeveniments-publish-drafts", 1);
+      open.onerror = () => reject(open.error);
+      open.onsuccess = () => {
+        const db = open.result;
+        const tx = db.transaction("metadata", "readwrite");
+        tx.objectStore("metadata").delete("revision");
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onabort = () => { db.close(); reject(tx.error); };
+      };
+    });
+    const invalid = await storage.loadPublishDraft(owner);
+    const discarded = await storage.discardPublishDraft(owner, null);
+    const stale = await storage.savePublishDraft(owner, { form: {}, imageFile: null }, saved.revision);
+    return { invalid, discarded, stale, loaded: await storage.loadPublishDraft(owner) };
+  })).toMatchObject({
+    invalid: { ok: false, reason: "corrupt", revision: null },
+    discarded: { ok: true },
+    stale: { ok: false, reason: "stale" },
+    loaded: { ok: true, status: "empty" },
+  });
+});
