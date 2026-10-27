@@ -132,7 +132,7 @@ export default function EventStickyCTA({
       aria-label={t("toolbarAriaLabel")}
     >
       <div className="bg-background/95 backdrop-blur-md border-t border-border shadow-lg">
-        <div className="flex items-center justify-evenly gap-1 px-section-x py-2">
+        <div className="flex items-stretch justify-evenly gap-1 px-section-x py-2">
           {/* More info - links to external event URL */}
           {eventUrl && /^https?:\/\//i.test(eventUrl) && (
             <a
@@ -140,7 +140,7 @@ export default function EventStickyCTA({
               target="_blank"
               rel="noreferrer"
               onClick={handleMoreInfo}
-              className="btn-primary flex-1 flex-center gap-1 py-2 px-3 label font-semibold"
+              className="btn-primary flex-1 gap-1 px-1.5 text-xs"
               data-analytics-link-type="sticky_cta_more_info"
             >
               <ArrowTopRightOnSquareIcon className="w-4 h-4" />
@@ -151,7 +151,7 @@ export default function EventStickyCTA({
           {/* Add to calendar - scrolls to calendar section */}
           <button
             onClick={handleCalendar}
-            className="btn-outline flex-1 flex-center gap-1 py-2 px-3 label font-semibold"
+            className="btn-outline flex-1 gap-1 px-1.5 text-xs"
             aria-label={labels.calendar}
           >
             <CalendarIcon className="w-4 h-4" />
@@ -162,7 +162,7 @@ export default function EventStickyCTA({
               to avoid the hover:bg-primary fill that sticks on mobile touch */}
           <button
             onClick={handleSave}
-            className={`inline-flex items-center justify-center gap-1 rounded-button px-button-x py-2 border-2 label font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+            className={`inline-flex items-center justify-center gap-1 min-h-button rounded-button px-1.5 border-2 label font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
               isFavorite
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-primary text-primary bg-transparent"

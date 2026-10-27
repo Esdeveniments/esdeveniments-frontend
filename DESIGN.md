@@ -181,10 +181,12 @@ components:
   button-primary:
     background: "{colors.primary}"
     color: "{colors.on-primary}"
-    fontSize: "{typography.label.fontSize}"
+    fontSize: "14px"
     fontWeight: 600
-    letterSpacing: "{typography.label.letterSpacing}"
+    letterSpacing: "0.025em"
     textTransform: "uppercase"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
+    border: "2px solid transparent"
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -204,8 +206,10 @@ components:
     background: "transparent"
     color: "{colors.primary}"
     border: "2px solid {colors.primary}"
+    fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -217,8 +221,10 @@ components:
     background: "transparent"
     color: "{colors.foreground}"
     border: "2px solid {colors.border}"
+    fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -228,13 +234,22 @@ components:
   button-ghost:
     background: "transparent"
     color: "{colors.foreground}"
+    fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
   button-ghost-hover:
     background: "{colors.surface-muted}"
+
+  button-sm:
+    # Size modifier, combined with any variant above.
+    fontSize: "12px"
+    minHeight: "36px"
+    paddingX: "12px"
+    paddingY: "4px"
 
   button-category:
     background: "{colors.background}"
@@ -633,10 +648,10 @@ The type scale follows a four-level heading model:
 - **heading-4** (16/500 mobile → 18/500 desktop) — card titles, footer
   block titles.
 
-UI chrome — nav links, footer links, button labels — uses a small **label**
-style: 12/500, **uppercase**, with widened tracking. This is the one place
-the type design speaks loudly, and it gives buttons their characteristic
-civic-poster confidence. A `label-tight` (11/600) is reserved for category
+UI chrome — nav links and footer links — uses a small **label** style:
+12/500, **uppercase**, with widened tracking. Button labels use the same
+uppercase voice one step up, at 14/600, which gives buttons their
+characteristic civic-poster confidence without shouting. A `label-tight` (11/600) is reserved for category
 badges on cards.
 
 Body inputs are pinned to **16px** to defeat iOS Safari's focus auto-zoom.
@@ -719,7 +734,14 @@ red on white; outline is a 2px red border that fills on hover; neutral is a
 2px gray border that shades; ghost is fill-only-on-hover; category is the
 softer chip variant for filter-style picks. Pressing translates the button
 1px down with a hint of scale-down (0.995) — fast, 100ms. Disabled buttons
-drop to 50% opacity and lock the cursor.
+drop to 50% opacity and lock the cursor. Every variant shares one box: a 14px
+label, a 2px border (transparent on filled variants) and one minimum height:
+40px with a mouse or trackpad, 44px on touch screens (`--button-height`
+switches on `pointer: coarse`). A primary and an outline button side by side
+line up exactly, and the hero CTA uses the same box as every other button.
+`btn-sm` (36px, 12px label) is the only other size, for dense secondary
+rows. Confirm dialogs stack their actions full width, primary on top, so a
+long label never wraps inside a pill.
 
 **Cards** are an article tile: 3:2 image on top, category pill, then a
 muted metadata row (`date · time · price · multi-day`), a 2-line title, and

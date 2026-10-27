@@ -180,7 +180,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             <button
               ref={changeButtonRef}
               type="button"
-              className="btn-neutral bg-background shadow-sm py-1.5"
+              className="btn-neutral bg-background shadow-sm"
               onClick={() => void handleImageUpload()}
               disabled={isInteractionDisabled}
             >
@@ -190,7 +190,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               type="button"
               onClick={handleRemoveImage}
               aria-label={t("remove")}
-              className="flex-center h-10 w-10 rounded-full bg-background text-foreground shadow-sm hover:bg-muted focus-ring"
+              className="flex-center h-button w-button rounded-full bg-background text-foreground shadow-sm hover:bg-muted focus-ring"
             >
               <XMarkIcon className="h-5 w-5" aria-hidden="true" />
             </button>

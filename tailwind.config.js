@@ -134,6 +134,19 @@ module.exports = {
         "badge-y": "0.25rem", // 4px - Badge vertical padding
       },
 
+      // === MIN HEIGHT === //
+      // --button-height: 40px (mouse) / 44px (touch), set in globals.css
+      height: {
+        button: "var(--button-height)",
+      },
+      width: {
+        button: "var(--button-height)",
+      },
+      minHeight: {
+        button: "var(--button-height)", // 40px mouse, 44px touch (WCAG 2.5.5)
+        "button-sm": "2.25rem", // 36px - Compact button (.btn-sm)
+      },
+
       // === BORDER RADIUS === //
       borderRadius: {
         button: "9999px", // Full - Buttons, small elements

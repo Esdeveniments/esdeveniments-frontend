@@ -131,9 +131,15 @@ module.exports = {
         "badge-y": "0.25rem", // 4px - Badge vertical padding
       },
 
+      // === MIN HEIGHT === //
+      minHeight: {
+        button: "var(--button-height)", // 40px mouse, 44px touch (pointer: coarse)
+        "button-sm": "2.25rem", // 36px - Compact button (.btn-sm)
+      },
+
       // === BORDER RADIUS === //
       borderRadius: {
-        button: "0.5rem", // 8px - Buttons, small elements
+        button: "9999px", // Full pill - Buttons
         card: "0.75rem", // 12px - Cards, containers
         input: "0.5rem", // 8px - Form inputs
         badge: "9999px", // Full - Pills, badges
@@ -261,19 +267,32 @@ module.exports = {
   /* ===================================== */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-transparent bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-muted {
-    @apply inline-flex items-center justify-center gap-2 font-barlow font-semibold italic uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-transparent bg-muted text-foreground hover:bg-border/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-category {
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-badge px-4 py-2.5 border border-border/80 bg-background text-foreground hover:border-primary hover:text-primary transition-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-transparent bg-transparent text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Compact size for secondary actions in dense rows. Combine with a variant. */
+  .btn-sm {
+    @apply min-h-button-sm gap-1.5 px-3 py-1 text-xs;
   }
 
   /* ===================================== */

@@ -292,7 +292,8 @@ Adding a new filter:
 3. **Buttons**: Transitional policy → use semantic classes now; component available after Week 4
 
    - Component (after Week 4): `<Button variant="primary|neutral|outline|muted">`
-   - Classes: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`
+   - Classes: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`, `.btn-ghost`; size modifier `.btn-sm`
+   - All variants share one box: 14px label, 40px min height (44px on touch screens). Use `.btn-sm` for compact actions; don't resize with `py-*`/`text-*`/`min-h-*`
    - NO manual button styling with inline utilities
 
 4. **Cards**: Use semantic card classes
@@ -326,7 +327,7 @@ Adding a new filter:
      - If repeated → create/extend a semantic token instead
 
 8. **Border Radius**: Use semantic tokens
-   - `rounded-button` for buttons (8px)
+   - `rounded-button` for buttons (full pill)
    - `rounded-card` for cards (12px)
    - `rounded-input` for form inputs (8px)
    - `rounded-badge` for pills/badges (full)

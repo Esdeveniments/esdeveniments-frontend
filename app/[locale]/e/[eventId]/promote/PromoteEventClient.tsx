@@ -128,7 +128,7 @@ export default function PromoteEventClient({
             </p>
             <a
               href={pendingCheckoutUrl}
-              className="btn-outline w-full min-h-[44px] justify-center"
+              className="btn-outline w-full"
               data-testid="promote-resume-checkout"
             >
               {t("resumeCheckout")}
@@ -205,7 +205,7 @@ export default function PromoteEventClient({
           <Button
             type="button"
             variant="primary"
-            className="w-full min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full"
             disabled={isSubmitting || !selectedId}
             data-testid="promote-confirm-button"
             onClick={handleConfirm}

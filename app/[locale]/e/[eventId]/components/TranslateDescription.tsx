@@ -114,7 +114,7 @@ export default function TranslateDescription({
         variant="ghost"
         onClick={handleTranslate}
         disabled={isPending}
-        className="w-fit py-1 px-2 h-auto text-xs normal-case tracking-normal font-normal whitespace-nowrap"
+        className="btn-sm w-fit normal-case tracking-normal font-normal whitespace-nowrap"
       >
         {isPending
           ? t("translating")

@@ -89,6 +89,17 @@ Use semantic button classes:
 | `.btn-neutral` | Secondary actions    |
 | `.btn-outline` | Tertiary actions     |
 | `.btn-muted`   | Low-emphasis actions |
+| `.btn-ghost`   | Quiet actions, no border until hover |
+| `.btn-sm`      | Size modifier (36px, 12px label). Combine with a variant for dense rows |
+
+Every variant has the same box: 14px uppercase label, 2px border (transparent on
+filled variants) and one minimum height (`min-h-button`): 40px with a mouse,
+44px on touch screens via `--button-height` and `pointer: coarse`.
+`min-h-button-sm` is 36px. Use `h-button w-button` for icon-only buttons. Do not add
+`min-h-[44px]`, `py-*` or `text-*` overrides to resize a button. Use `.btn-sm`
+for compact actions. Don't override `display` (`inline-block`/`block`), because
+it breaks vertical centering. In narrow dialogs, stack the actions full width
+so long labels never wrap inside a pill.
 
 ```tsx
 // ✅ CORRECT
@@ -175,7 +186,7 @@ Replace repetitive flex patterns:
 
 | Token            | Usage        | Value |
 | ---------------- | ------------ | ----- |
-| `rounded-button` | Buttons      | 8px   |
+| `rounded-button` | Buttons      | full pill |
 | `rounded-card`   | Cards        | 12px  |
 | `rounded-input`  | Form inputs  | 8px   |
 | `rounded-badge`  | Pills/badges | full  |

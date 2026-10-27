@@ -82,7 +82,7 @@ export default function FavoriteButton({
       <Button
         type="button"
         variant="ghost"
-        className={["group p-2", className].filter(Boolean).join(" ")}
+        className={["group", className || "h-button w-button p-0"].join(" ")}
         aria-label={ariaLabel}
         aria-pressed={isFavorite}
         disabled={isPending}

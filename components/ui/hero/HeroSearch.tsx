@@ -208,14 +208,14 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
         <h1 className="heading-1 text-white drop-shadow-lg flex flex-wrap items-center justify-center gap-2">
           <span>{t("titlePrefix")}</span>
           <div className="relative inline-block">
-            <Button
-              variant="ghost"
+            <button
+              type="button"
               onClick={() => {
                 setLocalPlaceValue(place === "catalunya" ? "" : place);
                 setHasOpenedModal(true);
                 setIsModalOpen(true);
               }}
-              className="flex flex-wrap items-center justify-center gap-2 text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all hover:bg-transparent px-0 py-0 rounded-none"
+              className="flex flex-wrap items-center justify-center gap-2 font-semibold uppercase tracking-wide text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
               aria-expanded={isModalOpen}
             >
               {displayLabel}
@@ -223,7 +223,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                 className={`h-8 w-8 transition-transform duration-200 ${isModalOpen ? "rotate-180" : ""
                   }`}
               />
-            </Button>
+            </button>
 
             {/* Mounted on first open, then kept for the close animation. While
                 closed, the ssr:false Modal's bailout sat inside the hero <h1>
@@ -294,7 +294,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             <Button
               variant="ghost"
               onClick={handleClearSearch}
-              className="absolute inset-y-0 right-12 flex items-center px-2 text-muted-foreground hover:text-foreground transition-colors hover:bg-transparent"
+              className="absolute inset-y-0 right-12 flex items-center px-1.5 text-muted-foreground hover:text-foreground transition-colors hover:bg-transparent"
               aria-label={t("clearSearch")}
             >
               <XIcon className="h-4 w-4" />
@@ -303,7 +303,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           <Button
             variant="primary"
             onClick={handleSearchSubmit}
-            className="absolute inset-y-1 right-1 px-4 flex items-center justify-center rounded-full"
+            className="absolute inset-y-1 right-1 min-h-0 px-3.5 flex items-center justify-center rounded-full"
             data-testid="search-button"
             aria-label={t("search")}
           >

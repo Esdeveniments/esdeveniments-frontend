@@ -468,7 +468,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             data-testid="prev-button"
             disabled={isImagePreparing}
             onClick={goPrev}
-            className="min-h-[44px] w-full sm:w-auto"
+            className="w-full sm:w-auto"
           >
             {tForm.has("previous") ? tForm("previous") : "Enrere"}
           </Button>
@@ -480,7 +480,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             <Button
               type="button"
               variant="neutral"
-              className="min-h-[44px] w-full sm:w-auto"
+              className="w-full sm:w-auto"
               disabled={!isPreviewReady || isLoading || isImagePreparing}
               data-testid={previewTestId || "preview-button"}
               data-analytics-event-name={
@@ -501,7 +501,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               variant="primary"
               data-testid="next-button"
               onClick={goNext}
-              className="min-h-[44px] w-full sm:w-auto"
+              className="w-full sm:w-auto"
             >
               {tForm.has("next") ? tForm("next") : "Següent"}
             </Button>
@@ -510,7 +510,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               type="submit"
               variant="primary"
               disabled={isLoading || isImagePreparing || isSubmitDisabled}
-              className="min-h-[44px] w-full sm:w-auto"
+              className="w-full sm:w-auto"
               data-testid="publish-button"
               data-analytics-event-name={
                 analyticsContext === "publica" && !submitAnalyticsAction ? "publish_submit_click" : undefined
