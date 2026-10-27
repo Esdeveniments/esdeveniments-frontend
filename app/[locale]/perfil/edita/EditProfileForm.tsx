@@ -155,7 +155,7 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
           <button
             type="button"
             onClick={() => logout()}
-            className="btn-outline btn-sm self-center"
+            className="btn-outline self-center"
             data-analytics-action="edit_profile_logout_cta"
           >
             {tAuth("logout")}

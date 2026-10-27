@@ -56,7 +56,7 @@ export default function PublishDraftPanel({
   // Save status sits next to the form actions, like "Draft saved" beside Send in Gmail.
   if (variant === "status") {
     return (
-      <div className="flex items-center justify-between gap-2 min-h-[44px]">
+      <div className="flex-between gap-2 min-h-button">
         <p className="body-small text-muted-foreground" role="status" aria-live="polite" data-testid="draft-save-status">
           {statusText}
         </p>

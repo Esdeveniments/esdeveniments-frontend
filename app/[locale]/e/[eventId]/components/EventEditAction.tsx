@@ -21,7 +21,7 @@ export default function EventEditAction({ ownerId, slug }: EventEditActionProps)
   return (
     <Link
       href={`/e/${slug}/edita`}
-      className="inline-flex items-center gap-2 btn-outline btn-sm"
+      className="btn-outline"
       data-testid="event-edit-link"
     >
       <PencilIcon className="w-4 h-4" aria-hidden="true" />

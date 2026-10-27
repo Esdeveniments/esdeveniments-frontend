@@ -54,7 +54,7 @@ export default function SocialLinksSection({
               href={social.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-center gap-1.5 px-3 py-2.5 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-[transform,background-color,border-color] duration-normal text-foreground body-small font-medium no-underline focus-ring"
+              className="flex-center gap-1.5 min-h-button px-3 rounded-card border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 hover:scale-105 transition-[transform,background-color,border-color] duration-normal text-foreground body-small font-medium no-underline focus-ring"
               aria-label={social.label}
             >
               <span className="text-primary">

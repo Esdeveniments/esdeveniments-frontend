@@ -54,7 +54,7 @@ export default function PwaBackButton({ fallbackHref = "/" }: PwaBackButtonProps
     <button
       type="button"
       onClick={handleBack}
-      className="md:hidden flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors min-h-[44px] px-section-x pt-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-button"
+      className="md:hidden flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors min-h-button px-section-x pt-3 focus-ring rounded-button"
       aria-label={t("ariaLabel")}
     >
       <ChevronLeftIcon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />

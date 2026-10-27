@@ -247,7 +247,7 @@ components:
   button-sm:
     # Size modifier, combined with any variant above.
     fontSize: "12px"
-    minHeight: "36px"
+    minHeight: "36px"  # 44px on touch screens (pointer: coarse)
     paddingX: "12px"
     paddingY: "4px"
 
@@ -739,7 +739,7 @@ label, a 2px border (transparent on filled variants) and one minimum height:
 40px with a mouse or trackpad, 44px on touch screens (`--button-height`
 switches on `pointer: coarse`). A primary and an outline button side by side
 line up exactly, and the hero CTA uses the same box as every other button.
-`btn-sm` (36px, 12px label) is the only other size, for dense secondary
+`btn-sm` (36px, 12px label; 44px tall on touch) is the only other size, for dense secondary
 rows. Confirm dialogs stack their actions full width, primary on top, so a
 long label never wraps inside a pill.
 

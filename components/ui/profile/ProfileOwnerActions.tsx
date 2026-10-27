@@ -21,13 +21,13 @@ export default function ProfileOwnerActions({
 
   return (
     <div ref={ctaRef} className="inline-flex items-center gap-2">
-      <Link href="/perfil/edita" className="btn-outline btn-sm" onClick={trackClick}>
+      <Link href="/perfil/edita" className="btn-outline" onClick={trackClick}>
         {t("editProfile")}
       </Link>
       <button
         type="button"
         onClick={() => logout()}
-        className="btn-outline btn-sm"
+        className="btn-outline"
         data-analytics-action="profile_logout_cta"
       >
         {tAuth("logout")}
