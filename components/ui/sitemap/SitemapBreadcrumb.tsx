@@ -24,7 +24,7 @@ export default function SitemapBreadcrumb({ items }: SitemapBreadcrumbProps) {
                   >
                     {item.name}
                   </PressableAnchor>
-                  <span className="text-foreground/60">/</span>
+                  <span className="text-muted-foreground">/</span>
                 </>
               ) : (
                 <span className="text-foreground">{item.name}</span>

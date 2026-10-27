@@ -82,7 +82,7 @@ export default function EventLocation({
               </PressableAnchor>
             )}
             {cityHref && regionHref && cityLabel && regionLabel && (
-              <span className="text-foreground/40">|</span>
+              <span className="text-muted-foreground">|</span>
             )}
             {regionHref && regionLabel && (
               <PressableAnchor
@@ -142,7 +142,7 @@ export default function EventLocation({
                   </PressableAnchor>
                 )}
                 {cityHref && regionHref && cityLabel && regionLabel && (
-                  <span className="text-foreground/40">|</span>
+                  <span className="text-muted-foreground">|</span>
                 )}
                 {regionHref && regionLabel && (
                   <PressableAnchor

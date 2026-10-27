@@ -21,22 +21,35 @@ Enforce consistent styling using semantic design system classes. Prevent arbitra
 | ------------------- | -------------------------- | --------------- |
 | Primary text        | `text-foreground`          | Main content    |
 | Strong text         | `text-foreground-strong`   | Headings        |
-| Muted text          | `text-foreground/80`       | Secondary       |
+| Secondary text      | `text-muted-foreground`    | Hints, metadata |
 | Background          | `bg-background`            | Page background |
 | Muted background    | `bg-muted`                 | Cards, sections |
-| Border              | `border-border`            | All borders     |
+| Decorative border   | `border-border`            | Cards, dividers |
+| Form control border | `border-input`             | Inputs, selects |
 | Primary button text | `text-primary-foreground`  | Button labels   |
 
-### Opacity Variants
+### Text Contrast (WCAG AA)
 
-Use `/80`, `/70`, `/60` suffixes for opacity:
+Use two text grays: `text-foreground` (9.59:1) and `text-muted-foreground`
+(5.74:1). `text-foreground/80` (5.41:1) is an older equivalent of
+`text-muted-foreground`; prefer `text-muted-foreground` in new code.
+
+ESLint blocks `text-foreground/70` and lighter (4.12:1 or less) and
+`text-foreground-strong/50` and lighter. They fail 4.5:1. For disabled
+states, use `opacity-50` (the existing disabled convention).
+
+Status text and icons on light backgrounds use the `-dark` variants
+(`text-error-dark`, `text-warning-dark`, `text-success-dark`). Base
+`text-error`, `text-warning` and `text-success` fail AA and are blocked.
 
 ```tsx
 // ✅ CORRECT
-<p className="text-foreground/80">Secondary text</p>
+<p className="text-muted-foreground">Secondary text</p>
+<button disabled className="text-muted-foreground opacity-50">Unavailable</button>
 
 // ❌ WRONG
 <p className="text-gray-600">Secondary text</p>
+<p className="text-foreground/60">Secondary text</p>
 ```
 
 ## Typography Classes

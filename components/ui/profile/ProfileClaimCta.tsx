@@ -16,7 +16,7 @@ export default function ProfileClaimCta({
   if (status !== "unauthenticated") return null;
 
   return (
-    <p ref={ctaRef} className="body-small text-foreground/60 mb-element-gap">
+    <p ref={ctaRef} className="body-small text-muted-foreground mb-element-gap">
       {t("claimQuestion")}{" "}
       <Link
         href={`/iniciar-sessio?redirect=/perfil/${encodeURIComponent(username)}`}

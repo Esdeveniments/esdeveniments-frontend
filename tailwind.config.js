@@ -68,9 +68,13 @@ module.exports = {
         background: "#ffffff",
         foreground: `rgb(${foregroundRgb} / <alpha-value>)`,
         "foreground-strong": "rgb(0 0 0 / <alpha-value>)",
-        "muted-foreground": "#6B7280", // gray-500: WCAG AA compliant (~4.6:1 on white)
+        // The only secondary text gray. Neutral to match foreground; 5.74:1 on
+        // white, 5.36:1 on muted (WCAG AA with margin). Don't use
+        // text-foreground/70 or lighter for text: ESLint blocks it.
+        "muted-foreground": "#666666",
         muted: "#F7F7F7",
-        border: "#CCCCCC",
+        border: "#CCCCCC", // Decorative: cards, dividers, popovers
+        input: "#8C8C8C", // Form control outlines: 3.36:1 on white (WCAG 1.4.11)
         "primary-foreground": "#ffffff",
         "error-foreground": "#ffffff",
 
@@ -80,14 +84,14 @@ module.exports = {
 
         // Semantic colors (NEW)
         success: "#10B981",
-        "success-dark": "#059669",
+        "success-dark": "#047857", // Text on white: 5.48:1
         "success-light": "#ECFDF5",
         "success-muted": "#D1FAE5",
         "success-border": "#A7F3D0",
         error: "#EF4444",
         "error-dark": "#DC2626",
         warning: "#F59E0B",
-        "warning-dark": "#D97706",
+        "warning-dark": "#B45309", // Text on white: 5.02:1
         "warning-light": "#FFFBEB",
         "warning-muted": "#FEF3C7",
         "warning-border": "#FDE68A",

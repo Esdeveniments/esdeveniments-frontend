@@ -5,6 +5,17 @@ import * as espree from "espree";
 import { fixupConfigRules } from "@eslint/compat";
 import eslintReact from "@eslint-react/eslint-plugin";
 
+// Text colors below WCAG AA (4.5:1) on white. foreground/70 is 4.12:1,
+// foreground-strong/50 is 3.95:1, and base status colors are 2.15-3.76:1.
+// See DESIGN.md "Colors".
+const LOW_CONTRAST_TEXT = String.raw`/(^|[\s:"'])text-(foreground(\/[1-7]|-strong\/[1-5])\d(?!\d)|(success|warning|error)(?![\w-]))/`;
+const LOW_CONTRAST_MESSAGE =
+  "Text color below WCAG AA (4.5:1). Use text-muted-foreground for secondary text, text-{success,warning,error}-dark for status text, or opacity-50 for disabled states.";
+const lowContrastTextRules = [
+  { selector: `Literal[value=${LOW_CONTRAST_TEXT}]`, message: LOW_CONTRAST_MESSAGE },
+  { selector: `TemplateElement[value.raw=${LOW_CONTRAST_TEXT}]`, message: LOW_CONTRAST_MESSAGE },
+];
+
 export default [
   {
     ignores: [
@@ -98,7 +109,7 @@ export default [
             ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug|fetchEvents|fetchEventBySlug|fetchEventBySlugWithStatus|fetchNews|fetchNewsBySlug|fetchNewsCities)$/]",
           message:
             "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
-        },
+        },        ...lowContrastTextRules,
       ],
     },
   },
@@ -212,7 +223,7 @@ export default [
           selector: "Identifier[name='searchParams']",
           message:
             "⚠️ COST ALERT: Do NOT use searchParams in app/[locale]/[place]/* pages! This makes pages dynamic and creates millions of cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
-        },
+        },        ...lowContrastTextRules,
       ],
     },
   },

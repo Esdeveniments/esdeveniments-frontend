@@ -131,7 +131,7 @@ export default function LocationDropdown({
               value={searchTerm}
               onChange={handleSearchChange}
               placeholder="Escriu per cercar..."
-              className="w-full px-3 py-2 border border-border border-opacity-50 rounded-md focus:outline-none focus:border-primary text-base"
+              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:border-primary text-base"
               inputMode="search"
               autoFocus
             />

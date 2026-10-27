@@ -245,7 +245,7 @@ export default function PlaceSelector({
         <div className="card-bordered p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CheckIcon className="h-5 w-5 text-success" />
+              <CheckIcon className="h-5 w-5 text-success-dark" />
               <span className="font-medium">{selectedPlace.name}</span>
               <span className="badge-default text-xs">
                 {getTypeLabel(selectedPlace.type)}
@@ -253,7 +253,7 @@ export default function PlaceSelector({
             </div>
             <button
               onClick={handleClear}
-              className="text-foreground/50 hover:text-foreground p-1"
+              className="text-muted-foreground hover:text-foreground p-1"
               aria-label={t("placeSelector.clear")}
             >
               <XMarkIcon className="h-5 w-5" />
@@ -282,7 +282,7 @@ export default function PlaceSelector({
                   >
                     {t("placeSelector.catalunya.title")}
                   </div>
-                  <div className="body-small text-foreground/60">
+                  <div className="body-small text-muted-foreground">
                     {t("placeSelector.catalunya.subtitle")}
                   </div>
                 </div>
@@ -300,7 +300,7 @@ export default function PlaceSelector({
           </button>
 
           {/* Divider with "or" */}
-          <div className="flex items-center gap-3 text-foreground/50">
+          <div className="flex items-center gap-3 text-muted-foreground">
             <div className="flex-1 h-px bg-border" />
             <span className="body-small">{t("placeSelector.orSpecific")}</span>
             <div className="flex-1 h-px bg-border" />
@@ -309,7 +309,7 @@ export default function PlaceSelector({
           {/* Search input */}
           <div className="relative">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground/50" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 ref={inputRef}
                 type="text"
@@ -320,7 +320,7 @@ export default function PlaceSelector({
                 }}
                 onFocus={() => setIsOpen(true)}
                 placeholder={t("placeSelector.placeholder")}
-                className="w-full pl-10 pr-4 py-3 rounded-input border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className="w-full pl-10 pr-4 py-3 rounded-input border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 disabled={isLoading || !isAvailabilityLoaded}
               />
             </div>
@@ -349,7 +349,7 @@ export default function PlaceSelector({
                               {getOccupiedLabel(daysLeft)}
                             </span>
                           )}
-                          <span className="text-xs text-foreground/50">
+                          <span className="text-xs text-muted-foreground">
                             {getTypeLabel(place.type)}
                           </span>
                         </span>
@@ -357,7 +357,7 @@ export default function PlaceSelector({
                     );
                   })
                 ) : (
-                  <div className="px-4 py-3 text-foreground/50 text-center">
+                  <div className="px-4 py-3 text-muted-foreground text-center">
                     {t("placeSelector.noResults")}
                   </div>
                 )}
@@ -366,7 +366,7 @@ export default function PlaceSelector({
 
             {/* Popular places */}
             <div className="mt-3">
-              <span className="body-small text-foreground/60">
+              <span className="body-small text-muted-foreground">
                 {t("placeSelector.popular")}:{" "}
               </span>
               <div className="inline-flex flex-wrap gap-2 mt-1">
@@ -378,7 +378,7 @@ export default function PlaceSelector({
                       key={place.slug}
                       onClick={() => handlePopularClick(place)}
                       className={`text-sm ${isOccupied
-                          ? "text-foreground/40 cursor-not-allowed line-through"
+                          ? "text-muted-foreground opacity-50 cursor-not-allowed line-through"
                           : "text-primary hover:text-primary/80 hover:underline"
                         }`}
                       disabled={isLoading || !isAvailabilityLoaded || isOccupied}

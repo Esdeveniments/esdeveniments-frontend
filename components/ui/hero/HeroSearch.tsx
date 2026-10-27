@@ -279,11 +279,11 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       <div className="w-full max-w-2xl mx-auto relative">
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <SearchIcon className="h-5 w-5 text-foreground/40 group-focus-within:text-primary transition-colors" />
+            <SearchIcon className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           </div>
           <input
             type="text"
-            className="w-full pl-11 pr-12 py-3 bg-background border border-border rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-foreground/40"
+            className="w-full pl-11 pr-12 py-3 bg-background border border-input rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-muted-foreground"
             placeholder={t("searchPlaceholder", { location: label })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -294,7 +294,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             <Button
               variant="ghost"
               onClick={handleClearSearch}
-              className="absolute inset-y-0 right-12 flex items-center px-2 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
+              className="absolute inset-y-0 right-12 flex items-center px-2 text-muted-foreground hover:text-foreground transition-colors hover:bg-transparent"
               aria-label={t("clearSearch")}
             >
               <XIcon className="h-4 w-4" />

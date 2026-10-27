@@ -183,12 +183,12 @@ export default function TikTokPostForm({
           )}
           <div>
             <p className="body-normal font-medium">{creatorInfo.creator_nickname}</p>
-            <p className="body-small text-foreground/60">
+            <p className="body-small text-muted-foreground">
               @{creatorInfo.creator_username}
             </p>
           </div>
         </div>
-        <p className="body-small text-foreground/60 px-card-padding pb-card-padding">
+        <p className="body-small text-muted-foreground px-card-padding pb-card-padding">
           Max video duration: {creatorInfo.max_video_post_duration_sec}s
         </p>
       </div>
@@ -204,9 +204,9 @@ export default function TikTokPostForm({
             placeholder="Add a caption..."
             rows={3}
             maxLength={2200}
-            className="bg-background border border-border rounded-input py-2 px-3 body-normal text-foreground w-full"
+            className="bg-background border border-input rounded-input py-2 px-3 body-normal text-foreground w-full"
           />
-          <span className="body-small text-foreground/50">{title.length}/2200</span>
+          <span className="body-small text-muted-foreground">{title.length}/2200</span>
         </label>
 
         {/* 2b: Privacy — show all options, disable SELF_ONLY when branded content */}
@@ -216,7 +216,7 @@ export default function TikTokPostForm({
             value={privacyLevel}
             onChange={(e) => setPrivacyLevel(e.target.value as TikTokPrivacyLevel)}
             required
-            className="bg-background border border-border rounded-input py-2 px-3 body-normal text-foreground w-full"
+            className="bg-background border border-input rounded-input py-2 px-3 body-normal text-foreground w-full"
           >
             <option value="" disabled>Select privacy level</option>
             {creatorInfo.privacy_level_options.map((opt) => (
@@ -237,12 +237,12 @@ export default function TikTokPostForm({
           </select>
         </label>
         {brandContent && (
-          <p className="body-small text-foreground/60">
+          <p className="body-small text-muted-foreground">
             Note: &quot;Only me&quot; privacy is not available for branded content.
           </p>
         )}
         {isPrivate && (
-          <p className="body-small text-foreground/60">
+          <p className="body-small text-muted-foreground">
             Private videos have limited interaction options. Comment, Duet, and Stitch are disabled.
           </p>
         )}
@@ -271,7 +271,7 @@ export default function TikTokPostForm({
       {/* ── Point 3: Commercial Content Disclosure ── */}
       <Section title="Commercial Content Disclosure">
         {/* 3a: Master toggle */}
-        <p className="body-small text-foreground/70">
+        <p className="body-small text-muted-foreground">
           Indicate if this video promotes a business or brand.
         </p>
         <Checkbox
@@ -287,7 +287,7 @@ export default function TikTokPostForm({
               label="Your brand — promotes your own business"
             />
             {brandOrganic && !brandContent && (
-              <p className="body-small text-foreground/70" style={{ paddingLeft: 24 }}>
+              <p className="body-small text-muted-foreground" style={{ paddingLeft: 24 }}>
                 Your video will be labeled as &quot;Promotional content&quot;
               </p>
             )}
@@ -299,12 +299,12 @@ export default function TikTokPostForm({
               label="Branded content — paid partnership"
             />
             {isPrivate && (
-              <p className="body-small text-foreground/60" style={{ paddingLeft: 24 }}>
+              <p className="body-small text-muted-foreground" style={{ paddingLeft: 24 }}>
                 Branded content is not available when visibility is set to &quot;Only me&quot;.
               </p>
             )}
             {brandContent && (
-              <p className="body-small text-foreground/70" style={{ paddingLeft: 24 }}>
+              <p className="body-small text-muted-foreground" style={{ paddingLeft: 24 }}>
                 Your video will be labeled as &quot;Paid partnership&quot;
               </p>
             )}
@@ -354,14 +354,14 @@ export default function TikTokPostForm({
       </Section>
 
       {/* 5d: Processing notice */}
-      <p className="body-small text-foreground/50">
+      <p className="body-small text-muted-foreground">
         After publishing, it may take a few minutes for the content to process
         and be visible on your TikTok profile.
       </p>
 
       {/* ── Point 4: Consent Declaration (placed directly before publish button) ── */}
       <Section title="Consent">
-        <p className="body-small text-foreground/70">
+        <p className="body-small text-muted-foreground">
           {commercialToggle && brandContent ? (
             <>
               By posting, you agree to TikTok&apos;s{" "}

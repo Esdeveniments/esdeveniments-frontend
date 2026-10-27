@@ -228,7 +228,8 @@ export default function HorizontalScroll({
           <div
             className={[
               "h-full w-full flex items-center justify-end pr-1",
-              showHint ? "text-muted-foreground" : "text-foreground/40",
+              "text-muted-foreground",
+              showHint ? "" : "opacity-60",
             ].join(" ")}
           >
             {!(isFinePointer && showDesktopArrows) && (

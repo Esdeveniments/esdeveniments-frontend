@@ -17,10 +17,11 @@ colors:
   surface-muted:     "#F7F7F7"
   foreground:        "#454545"
   foreground-strong: "#000000"
-  foreground-muted:  "#6B7280"
+  foreground-muted:  "#666666"
   on-primary:        "#FFFFFF"
   on-photo:          "#FFFFFF"
   border:            "#CCCCCC"
+  border-input:      "#8C8C8C"
   border-strong:     "#454545"
   border-subtle:     "#CCCCCC66"
   border-soft:       "#CCCCCC33"
@@ -31,14 +32,14 @@ colors:
   glass-border:      "#FFFFFF4D"
   glass-border-hover:"#FFFFFF99"
   success:           "#10B981"
-  success-dark:      "#059669"
+  success-dark:      "#047857"
   success-light:     "#ECFDF5"
   success-muted:     "#D1FAE5"
   success-border:    "#A7F3D0"
   error:             "#EF4444"
   error-dark:        "#DC2626"
   warning:           "#F59E0B"
-  warning-dark:      "#D97706"
+  warning-dark:      "#B45309"
   warning-light:     "#FFFBEB"
   warning-muted:     "#FEF3C7"
   warning-border:    "#FDE68A"
@@ -382,7 +383,7 @@ components:
   input-default:
     background: "{colors.background}"
     color: "{colors.foreground}"
-    border: "1px solid {colors.border}"
+    border: "1px solid {colors.border-input}"
     rounded: "{rounded.sm}"
     fontSize: "{typography.body.fontSize}"
     paddingX: "{spacing.md}"
@@ -390,7 +391,7 @@ components:
     height: "40px"
     transition: "border-color {motion.duration-normal} {motion.easing-smooth}, box-shadow {motion.duration-normal} {motion.easing-smooth}"
   input-default-hover:
-    borderColor: "{colors.border}"
+    borderColor: "{colors.foreground}"
   input-default-focus:
     borderColor: "{colors.primary}"
     boxShadow: "{elevation.focus}"
@@ -577,8 +578,11 @@ Everything else is neutral. The canvas is true `#FFFFFF`; chrome and
 disabled fills sit on `#F7F7F7`. Body text is **`#454545`** — never pure
 black — which gives the page a slightly softer, paper-like cast and pairs
 naturally with the warm red. Headings and form labels go to true black for
-hierarchy. Borders are `#CCCCCC` at full strength but more often appear at
-20–60% alpha as hairlines that frame cards without competing with them.
+hierarchy. Secondary text (hints, metadata, timestamps) uses one neutral gray,
+**`#666666`** (`muted-foreground`). Decorative borders are `#CCCCCC` at full
+strength but more often appear at 20–60% alpha as hairlines that frame cards
+without competing with them. Form controls are the exception: their outline
+must be visible, so inputs and selects use the darker `#8C8C8C` (`input`).
 
 Status colors (success green, warning amber, error red, info blue) are
 imported from a conventional palette and are *only* used for their meaning —
@@ -593,9 +597,17 @@ carries `text-shadow`, and inactive filter chips take on a glassmorphic look
 brightens on hover. The active filter chip drops the glass and goes solid
 red with a leading checkmark.
 
-Contrast budget: body on white ≈ 7.5:1 (AAA); primary on white ≈ 5.2:1
-(AA); muted-foreground on white ≈ 4.6:1 (AA). No token below AA is used for
-text.
+Contrast budget (on white / on `#F7F7F7`): body `#454545` 9.59 / 8.95
+(AAA); primary 5.2:1 (AA); muted-foreground `#666666` 5.74 / 5.36 (AA);
+input border `#8C8C8C` 3.36 / 3.14 (meets the 3:1 rule for control
+boundaries). There are only two text grays: `foreground` and
+`muted-foreground` (`foreground/80` is an older equivalent). Lighter alphas
+fail AA (`foreground/70` is 4.12:1, `/60` 3.23:1), so ESLint blocks
+`text-foreground/70` and lighter, and `text-foreground-strong/50` and
+lighter. Disabled states use `opacity-50`, which WCAG exempts. Status text
+and status icons on light surfaces use the `-dark` variants (error-dark
+4.83:1, warning-dark 5.02:1, success-dark 5.48:1). The base status colors
+(2.15–3.76:1) are for fills and borders only, and ESLint blocks them as text.
 
 ## Typography
 
@@ -736,13 +748,13 @@ below. Title uses `heading-3` in `foreground-strong`; description sits in
 regular `foreground`.
 
 **Modals** on mobile take the full `100dvh` and read like a screen, not a
-popup; on **sm+** they cap at 500px wide with a 16px-radius card. Header is
+popup; on **sm+** they cap at 500px wide with a 12px-radius card. Header is
 sticky (back arrow + centered uppercase title), footer is sticky and
 safe-area-inset aware (single primary action button, full width). The
 backdrop is the scrim color at 60%.
 
 **Inputs** are 40px tall by default (48px in `input-large`), 8px corners,
-`#CCCCCC` border. Focus glows red, error glows feedback-error. Range slider
+`#8C8C8C` border that darkens to body color on hover. Focus glows red, error glows feedback-error. Range slider
 thumbs are 24-px circles in primary red.
 
 **Date picker** is a high-touch primitive: red selected days as solid

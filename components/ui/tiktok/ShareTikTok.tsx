@@ -172,7 +172,7 @@ export default function ShareTikTok() {
 
   if (!clientKey) {
     return (
-      <p className="body-normal text-foreground/60">
+      <p className="body-normal text-muted-foreground">
         TikTok integration not configured (missing NEXT_PUBLIC_TIKTOK_CLIENT_KEY).
       </p>
     );

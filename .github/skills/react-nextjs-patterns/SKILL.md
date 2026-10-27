@@ -375,7 +375,7 @@ export function MyComponent({ title, items, onSelect }: MyComponentProps) {
 
   // 6. Early returns for edge cases
   if (items.length === 0) {
-    return <p className="body-normal text-foreground/60">No items</p>;
+    return <p className="body-normal text-muted-foreground">No items</p>;
   }
 
   // 7. Main render

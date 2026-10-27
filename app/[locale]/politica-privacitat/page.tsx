@@ -45,7 +45,7 @@ const PoliticaPrivacitat: NextPage = async () => {
         <div className="stack gap-6 max-w-3xl mx-auto">
           <div className="stack gap-2">
             <h1 className="heading-1">{t("heading")}</h1>
-            <p className="body-small text-foreground/60">{t("lastUpdated")}</p>
+            <p className="body-small text-muted-foreground">{t("lastUpdated")}</p>
           </div>
 
           <div className="stack gap-8">
@@ -114,7 +114,7 @@ const PoliticaPrivacitat: NextPage = async () => {
                   {t("thirdPartySentry")}
                 </li>
               </ul>
-              <p className="body-small text-foreground/60">
+              <p className="body-small text-muted-foreground">
                 {t("thirdPartyNote")}
               </p>
             </section>

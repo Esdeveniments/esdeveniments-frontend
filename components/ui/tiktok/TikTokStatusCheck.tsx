@@ -68,11 +68,11 @@ export default function TikTokStatusCheck({
         </p>
       )}
       {!isComplete && !isFailed && (
-        <p className="body-small text-foreground/50">
+        <p className="body-small text-muted-foreground">
           Checking status every 5 seconds...
         </p>
       )}
-      <p className="body-small text-foreground/50">Publish ID: {publishId}</p>
+      <p className="body-small text-muted-foreground">Publish ID: {publishId}</p>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export function getSelectClassNames<IsMulti extends boolean>(
           ? `border-error ${isFocused ? "ring-2 ring-error ring-offset-2" : ""}`
           : isFocused
             ? "border-primary ring-2 ring-primary ring-offset-2"
-            : "border-border hover:border-foreground/40"
+            : "border-input hover:border-foreground"
       } ${isDisabled ? "bg-muted opacity-60 cursor-not-allowed" : "cursor-pointer"}`,
     valueContainer: () => "gap-1 py-1",
     placeholder: () => "text-base text-muted-foreground",
