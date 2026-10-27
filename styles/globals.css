@@ -26,6 +26,8 @@ html {
 }
 
 :root {
+  /* Button height: 40px for mouse/trackpad, 44px touch target on touch screens */
+  --button-height: 2.5rem;
   --mobile-nav-height: 4rem;
   --mobile-nav-safe-area: env(safe-area-inset-bottom, 0px);
   --mobile-nav-clearance: calc(
@@ -36,6 +38,12 @@ html {
 @media (min-width: 950px) {
   :root {
     --mobile-nav-clearance: 0px;
+  }
+}
+
+@media (pointer: coarse) {
+  :root {
+    --button-height: 2.75rem;
   }
 }
 

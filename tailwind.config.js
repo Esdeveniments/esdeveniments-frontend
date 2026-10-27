@@ -131,8 +131,15 @@ module.exports = {
       },
 
       // === MIN HEIGHT === //
+      // --button-height: 40px (mouse) / 44px (touch), set in globals.css
+      height: {
+        button: "var(--button-height)",
+      },
+      width: {
+        button: "var(--button-height)",
+      },
       minHeight: {
-        button: "2.75rem", // 44px - Button touch target (WCAG 2.5.5)
+        button: "var(--button-height)", // 40px mouse, 44px touch (WCAG 2.5.5)
         "button-sm": "2.25rem", // 36px - Compact button (.btn-sm)
       },
 

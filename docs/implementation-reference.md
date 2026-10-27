@@ -131,7 +131,7 @@ module.exports = {
 
       // === MIN HEIGHT === //
       minHeight: {
-        button: "2.75rem", // 44px - Button touch target (WCAG 2.5.5)
+        button: "var(--button-height)", // 40px mouse, 44px touch (pointer: coarse)
         "button-sm": "2.25rem", // 36px - Compact button (.btn-sm)
       },
 

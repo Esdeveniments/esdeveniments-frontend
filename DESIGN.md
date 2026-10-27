@@ -184,7 +184,7 @@ components:
     fontWeight: 600
     letterSpacing: "0.025em"
     textTransform: "uppercase"
-    minHeight: "44px"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     border: "2px solid transparent"
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
@@ -208,7 +208,7 @@ components:
     fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
-    minHeight: "44px"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -223,7 +223,7 @@ components:
     fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
-    minHeight: "44px"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -236,7 +236,7 @@ components:
     fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
-    minHeight: "44px"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -723,8 +723,10 @@ red on white; outline is a 2px red border that fills on hover; neutral is a
 softer chip variant for filter-style picks. Pressing translates the button
 1px down with a hint of scale-down (0.995) — fast, 100ms. Disabled buttons
 drop to 50% opacity and lock the cursor. Every variant shares one box: a 14px
-label, a 2px border (transparent on filled variants) and a 44px minimum
-height, so a primary and an outline button side by side line up exactly.
+label, a 2px border (transparent on filled variants) and one minimum height:
+40px with a mouse or trackpad, 44px on touch screens (`--button-height`
+switches on `pointer: coarse`). A primary and an outline button side by side
+line up exactly, and the hero CTA uses the same box as every other button.
 `btn-sm` (36px, 12px label) is the only other size, for dense secondary
 rows. Confirm dialogs stack their actions full width, primary on top, so a
 long label never wraps inside a pill.

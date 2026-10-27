@@ -80,8 +80,9 @@ Use semantic button classes:
 | `.btn-sm`      | Size modifier (36px, 12px label). Combine with a variant for dense rows |
 
 Every variant has the same box: 14px uppercase label, 2px border (transparent on
-filled variants) and a 44px minimum height (`min-h-button`, the touch
-target; `min-h-button-sm` is 36px). Tailwind 3.3 has no `min-h-11`. Do not add
+filled variants) and one minimum height (`min-h-button`): 40px with a mouse,
+44px on touch screens via `--button-height` and `pointer: coarse`.
+`min-h-button-sm` is 36px. Use `h-button w-button` for icon-only buttons. Do not add
 `min-h-[44px]`, `py-*` or `text-*` overrides to resize a button. Use `.btn-sm`
 for compact actions. Don't override `display` (`inline-block`/`block`), because
 it breaks vertical centering. In narrow dialogs, stack the actions full width

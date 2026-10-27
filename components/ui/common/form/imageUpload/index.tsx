@@ -190,7 +190,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               type="button"
               onClick={handleRemoveImage}
               aria-label={t("remove")}
-              className="flex-center h-11 w-11 rounded-full bg-background text-foreground shadow-sm hover:bg-muted focus-ring"
+              className="flex-center h-button w-button rounded-full bg-background text-foreground shadow-sm hover:bg-muted focus-ring"
             >
               <XMarkIcon className="h-5 w-5" aria-hidden="true" />
             </button>
