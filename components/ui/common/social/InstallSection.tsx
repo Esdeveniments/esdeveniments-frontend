@@ -48,7 +48,7 @@ export default function InstallSection({
         <IosInstallSteps isIpad={isIpad} shareLocation={iosShareLocation} />
       ) : null}
       {showOpenInSafariHint ? (
-        <p className="body-small text-foreground/70 text-center leading-relaxed">
+        <p className="body-small text-muted-foreground text-center leading-relaxed">
           {t("installInAppHelp")}
         </p>
       ) : null}

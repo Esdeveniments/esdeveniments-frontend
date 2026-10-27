@@ -91,7 +91,7 @@ export const PreviewContent = ({
             context="detail"
           />
         ) : (
-          <div className="w-full h-48 flex-center flex-col gap-2 text-error/70">
+          <div className="w-full h-48 flex-center flex-col gap-2 text-error-dark">
             <PhotographIcon className="w-12 h-12" />
             <p className="body-normal font-medium">
               {tForm("previewRequiredImage")}
@@ -106,7 +106,7 @@ export const PreviewContent = ({
           <p className="label text-muted-foreground">
             {tForm("reviewTitle")}
           </p>
-          <h2 className="heading-2">{event.title || <span className="text-error/70">{tForm("previewNoTitle")}</span>}</h2>
+          <h2 className="heading-2">{event.title || <span className="text-error-dark">{tForm("previewNoTitle")}</span>}</h2>
         </div>
 
         {/* Event details card */}
@@ -161,13 +161,13 @@ export const PreviewContent = ({
               <p className="body-normal text-foreground/80 ml-6">
                 {event.city.name}
                 {event.region?.name && (
-                  <span className="text-foreground/60">
+                  <span className="text-muted-foreground">
                     {" "}· {event.region.name}
                   </span>
                 )}
               </p>
             ) : (
-              <p className="body-small text-error/80 ml-6 italic">
+              <p className="body-small text-error-dark ml-6 italic">
                 {tForm("previewRequired")}
               </p>
             )}
@@ -246,7 +246,7 @@ export const PreviewContent = ({
         {/* Required items missing - RED warning box */}
         {requiredMissing.length > 0 && (
           <div className="card-body space-y-2 bg-error/10 border border-error/30 rounded-card">
-            <p className="body-normal font-semibold text-error flex items-center gap-2">
+            <p className="body-normal font-semibold text-error-dark flex items-center gap-2">
               <XCircleIcon className="w-5 h-5" />
               {tForm("previewRequired")}
             </p>
@@ -254,7 +254,7 @@ export const PreviewContent = ({
               {requiredMissing.map((item) => (
                 <li
                   key={item}
-                  className="body-small text-error/80 list-disc list-inside ml-2"
+                  className="body-small text-error-dark list-disc list-inside ml-2"
                 >
                   {item}
                 </li>

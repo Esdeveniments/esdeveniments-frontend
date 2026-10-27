@@ -320,7 +320,7 @@ export default function SponsorImageUpload({
       <div className="text-center space-y-4">
         <div>
           <h3 className="heading-3 mb-2">{t("upload.title")}</h3>
-          <p className="body-normal text-foreground/70">
+          <p className="body-normal text-muted-foreground">
             {t("upload.subtitle")}
           </p>
         </div>
@@ -342,7 +342,7 @@ export default function SponsorImageUpload({
           <div className="space-y-6">
             <div className="flex items-center gap-3 p-4 bg-success-light border border-success-border rounded-card">
               <div className="flex-shrink-0 w-10 h-10 bg-success-muted rounded-full flex items-center justify-center">
-                <CheckIcon className="w-6 h-6 text-success" />
+                <CheckIcon className="w-6 h-6 text-success-dark" />
               </div>
               <div>
                 <p className="body-normal font-medium text-success-dark">
@@ -358,7 +358,7 @@ export default function SponsorImageUpload({
 
             {/* Preview uploaded image */}
             <div className="rounded-card border border-border bg-muted/20 overflow-hidden">
-              <p className="body-small text-foreground/60 px-3 py-2 border-b border-border bg-muted/30">
+              <p className="body-small text-muted-foreground px-3 py-2 border-b border-border bg-muted/30">
                 {t("upload.previewAlt")}
               </p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -438,9 +438,9 @@ export default function SponsorImageUpload({
                     alt={t("upload.previewAlt")}
                     className="max-h-32 mx-auto object-contain rounded"
                   />
-                  <p className="body-small text-foreground/70">{file?.name}</p>
+                  <p className="body-small text-muted-foreground">{file?.name}</p>
                   {validation && (
-                    <p className="body-small text-foreground/50">
+                    <p className="body-small text-muted-foreground">
                       {validation.width}×{validation.height}px (
                       {validation.aspectRatio.toFixed(1)}:1)
                     </p>
@@ -459,22 +459,22 @@ export default function SponsorImageUpload({
               ) : (
                 /* Empty state */
                 <div className="space-y-3">
-                  <CloudArrowUpIcon className="w-12 h-12 text-foreground/30 mx-auto" />
+                  <CloudArrowUpIcon className="w-12 h-12 text-muted-foreground mx-auto" />
                   <div>
-                    <p className="body-normal text-foreground/70">
+                    <p className="body-normal text-muted-foreground">
                       {t("upload.dropzone.title")}
                     </p>
-                    <p className="body-small text-foreground/50 mt-1">
+                    <p className="body-small text-muted-foreground mt-1">
                       {t("upload.dropzone.formats")}
                     </p>
                   </div>
-                  <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 body-small text-foreground/50">
+                  <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 body-small text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <StarIcon className="w-3.5 h-3.5 text-primary" />
                       {t("upload.dropzone.optimal")}
                     </span>
                     <span className="flex items-center gap-1">
-                      <CheckCircleIcon className="w-3.5 h-3.5 text-success" />
+                      <CheckCircleIcon className="w-3.5 h-3.5 text-success-dark" />
                       {t("upload.dropzone.minimum")}
                     </span>
                   </div>
@@ -485,7 +485,7 @@ export default function SponsorImageUpload({
             {/* Validation warnings */}
             {validation && !validation.isOptimal && (
               <div className="flex gap-3 p-3 bg-warning-light border border-warning-border rounded-card">
-                <ExclamationTriangleIcon className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+                <ExclamationTriangleIcon className="w-5 h-5 text-warning-dark flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="body-small font-medium text-warning-dark">
                     {t("upload.validation.warning")}
@@ -497,7 +497,7 @@ export default function SponsorImageUpload({
                       </li>
                     ))}
                   </ul>
-                  <p className="body-small text-warning">
+                  <p className="body-small text-warning-dark">
                     {t("upload.validation.canContinue")}
                   </p>
                 </div>
@@ -535,7 +535,7 @@ export default function SponsorImageUpload({
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <p className="body-small text-foreground/60 text-center">
+                <p className="body-small text-muted-foreground text-center">
                   {t("upload.progress", { percent: progress })}
                 </p>
               </div>
@@ -544,8 +544,8 @@ export default function SponsorImageUpload({
             {/* Error message */}
             {error && (
               <div className="flex items-center gap-2 p-3 bg-error/10 border border-error/30 rounded-card">
-                <ExclamationTriangleIcon className="w-5 h-5 text-error flex-shrink-0" />
-                <p className="body-small text-error">{error}</p>
+                <ExclamationTriangleIcon className="w-5 h-5 text-error-dark flex-shrink-0" />
+                <p className="body-small text-error-dark">{error}</p>
               </div>
             )}
           </div>

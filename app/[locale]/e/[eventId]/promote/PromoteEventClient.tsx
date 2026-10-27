@@ -98,7 +98,7 @@ export default function PromoteEventClient({
     <div className="max-w-[520px] mx-auto py-section-y px-section-x">
       <Link
         href={`/e/${slug}`}
-        className="inline-flex items-center gap-1 body-small text-foreground/70 hover:text-foreground mb-4"
+        className="inline-flex items-center gap-1 body-small text-muted-foreground hover:text-foreground mb-4"
       >
         <ArrowLeftIcon className="w-4 h-4" />
         {t("backToEvent")}
@@ -164,7 +164,7 @@ export default function PromoteEventClient({
                     {t("duration", { days: option.durationDays })}
                   </span>
                   {!option.available && option.unavailableReason && (
-                    <span className="body-small text-foreground/60">
+                    <span className="body-small text-muted-foreground">
                       {describeCode(option.unavailableReason)}
                     </span>
                   )}
@@ -175,7 +175,7 @@ export default function PromoteEventClient({
               </label>
             ))}
             {catalog.every((option) => option.taxIncluded) && (
-              <p className="body-small text-foreground/60">{t("taxIncluded")}</p>
+              <p className="body-small text-muted-foreground">{t("taxIncluded")}</p>
             )}
           </fieldset>
         ) : (
@@ -195,7 +195,7 @@ export default function PromoteEventClient({
             className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg"
             role="alert"
           >
-            <p className="text-sm font-medium text-error">
+            <p className="text-sm font-medium text-error-dark">
               {describeCode(errorCode)}
             </p>
           </div>

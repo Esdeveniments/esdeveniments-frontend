@@ -73,8 +73,10 @@ module.exports = {
         background: "#ffffff",
         foreground: `rgb(${foregroundRgb} / <alpha-value>)`,
         "foreground-strong": "rgb(0 0 0 / <alpha-value>)",
+        "muted-foreground": "#666666",
         muted: "#F7F7F7",
-        border: "#CCCCCC",
+        border: "#CCCCCC", // Decorative: cards, dividers, popovers
+        input: "#8C8C8C", // Form control outlines (3:1)
         "primary-foreground": "#ffffff",
         "error-foreground": "#ffffff",
 
@@ -84,11 +86,11 @@ module.exports = {
 
         // Semantic colors (NEW)
         success: "#10B981",
-        "success-dark": "#059669",
+        "success-dark": "#047857",
         error: "#EF4444",
-        "error-dark": "#DC2626",
+        "error-dark": "#B91C1C",
         warning: "#F59E0B",
-        "warning-dark": "#D97706",
+        "warning-dark": "#B45309",
         info: "#3B82F6",
         "info-dark": "#2563EB",
 
@@ -405,7 +407,7 @@ module.exports = {
   /* ===================================== */
 
   .input {
-    @apply w-full rounded-input border border-border bg-background text-foreground px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
+    @apply w-full rounded-input border border-input bg-background text-foreground px-input-x py-input-y h-10 placeholder:text-muted-foreground transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-foreground;
   }
 
   .input-lg {
@@ -762,11 +764,11 @@ Opacity modifier note: the `/NN` suffix (e.g., `text-foreground/80`, `bg-border/
 | Token          | Value     | Usage                           |
 | -------------- | --------- | ------------------------------- |
 | `success`      | `#10B981` | Success messages, confirmations |
-| `success-dark` | `#059669` | Hover state                     |
+| `success-dark` | `#047857` | Status text on light backgrounds |
 | `error`        | `#EF4444` | Error messages, validation      |
-| `error-dark`   | `#DC2626` | Hover state                     |
+| `error-dark`   | `#B91C1C` | Status text on light backgrounds |
 | `warning`      | `#F59E0B` | Warnings, alerts                |
-| `warning-dark` | `#D97706` | Hover state                     |
+| `warning-dark` | `#B45309` | Status text on light backgrounds |
 | `info`         | `#3B82F6` | Info messages, tips             |
 | `info-dark`    | `#2563EB` | Hover state                     |
 
@@ -788,9 +790,10 @@ Opacity modifier note: the `/NN` suffix (e.g., `text-foreground/80`, `bg-border/
 
 - Use `text-primary-foreground` on `bg-primary`; use `text-error-foreground` on `bg-error` (verify contrast on small text).
 - Prefer `text-foreground` on `bg-muted` and `bg-background`.
-- For muted text, use opacity suffixes on `foreground` (`/80`, `/70`, `/60`) instead of lighter grays.
+- For secondary text, use `text-muted-foreground` (5.74:1). `text-foreground/75` and lighter fail AA and are blocked by ESLint.
+- Form control outlines use `border-input` (3.36:1, WCAG 1.4.11). `border-border` is for decorative card borders and dividers only.
 - Interactive states should keep a minimum AA contrast ratio; when unsure, test tokens quickly with a contrast checker.
-- Avoid mixing generic `gray-*` for text; rely on `foreground` with opacity for hierarchy.
+- Avoid mixing generic `gray-*` for text; use `foreground` and `muted-foreground` for hierarchy.
 - Reduced motion: honor `prefers-reduced-motion`; see globals.css snippet above to dampen or remove animations/transitions.
 
 ---

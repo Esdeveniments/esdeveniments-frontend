@@ -139,7 +139,7 @@ export default async function Page({
               >
                 {t("seeAgenda", { place: placeLabel })}
               </PressableAnchor>
-              <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              <span className="hidden sm:inline text-muted-foreground" aria-hidden="true">
                 ·
               </span>
               <PressableAnchor
@@ -150,7 +150,7 @@ export default async function Page({
               >
                 {t("seeAll")}
               </PressableAnchor>
-              {/* <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              {/* <span className="hidden sm:inline text-muted-foreground" aria-hidden="true">
               ·
             </span>
             <PressableAnchor

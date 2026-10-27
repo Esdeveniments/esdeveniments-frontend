@@ -16,7 +16,7 @@ export default function ProfileVisitsStat({
   return (
     <div className="flex flex-col items-center">
       <span className="heading-3 text-foreground-strong">{visits}</span>
-      <span className="body-small text-foreground/60">{t("statsVisits")}</span>
+      <span className="body-small text-muted-foreground">{t("statsVisits")}</span>
     </div>
   );
 }

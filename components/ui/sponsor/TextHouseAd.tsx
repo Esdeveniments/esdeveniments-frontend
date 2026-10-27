@@ -39,7 +39,7 @@ export default function TextHouseAd({ houseAd, place }: TextHouseAdProps) {
               {t(`houseAd.${houseAd.subtitleKey}`)}
             </span>
             <ChevronRightIcon
-              className="h-4 w-4 shrink-0 text-foreground/60 group-hover:text-primary"
+              className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary"
               aria-hidden="true"
             />
           </div>
