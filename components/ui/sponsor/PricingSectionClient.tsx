@@ -88,7 +88,7 @@ export default function PricingSectionClient() {
 
       {/* Message when no place selected */}
       {!selectedPlace && (
-        <p className="text-center body-normal text-foreground/60">
+        <p className="text-center body-normal text-muted-foreground">
           {t("placeSelector.selectFirst")}
         </p>
       )}
@@ -118,7 +118,7 @@ export default function PricingSectionClient() {
                 </h3>
                 <div className="mb-4">
                   <span className="heading-2">€{getPrice(plan.duration)}</span>
-                  <p className="body-small text-foreground/50 mt-1">
+                  <p className="body-small text-muted-foreground mt-1">
                     {t("pricing.perDay", {
                       price: `€${getPerDayPrice(plan.duration)}`,
                     })}
@@ -129,7 +129,7 @@ export default function PricingSectionClient() {
                     </span>
                   )}
                 </div>
-                <p className="body-small text-foreground/70 mb-6">
+                <p className="body-small text-muted-foreground mb-6">
                   {t(`pricing.plans.${plan.duration}.description`)}
                 </p>
                 <CheckoutButton
@@ -148,7 +148,7 @@ export default function PricingSectionClient() {
       </div>
 
       {/* Trust signals */}
-      <p className="text-center body-small text-foreground/50 mt-8">
+      <p className="text-center body-small text-muted-foreground mt-8">
         {t("pricing.guarantee")}
       </p>
     </div>

@@ -167,7 +167,7 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
             className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg"
             role="alert"
           >
-            <p className="text-sm font-medium text-error">{submitError}</p>
+            <p className="text-sm font-medium text-error-dark">{submitError}</p>
           </div>
         )}
         {success && (

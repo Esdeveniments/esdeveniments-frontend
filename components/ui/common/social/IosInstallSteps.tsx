@@ -41,7 +41,7 @@ export default function IosInstallSteps({
           >
             Esdeveniments
           </p>
-          <p className="body-small text-foreground/60 leading-tight" translate="no">
+          <p className="body-small text-muted-foreground leading-tight" translate="no">
             esdeveniments.cat
           </p>
         </div>
@@ -49,7 +49,7 @@ export default function IosInstallSteps({
 
       <ol className="flex flex-col" aria-label={t("installEnable")}>
         <li className="flex items-center gap-3 py-2.5 border-t border-border/40">
-          <span className="body-small text-foreground/50 w-4 text-center flex-shrink-0">
+          <span className="body-small text-muted-foreground w-4 text-center flex-shrink-0">
             1
           </span>
           {shareLocation === "menu" ? (
@@ -90,7 +90,7 @@ export default function IosInstallSteps({
           </span>
         </li>
         <li className="flex items-center gap-3 py-2.5 border-t border-border/40">
-          <span className="body-small text-foreground/50 w-4 text-center flex-shrink-0">
+          <span className="body-small text-muted-foreground w-4 text-center flex-shrink-0">
             2
           </span>
           {/* iOS "Add to Home Screen" plus-square glyph */}

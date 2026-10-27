@@ -100,7 +100,7 @@ export default function FavoriteLoginNudge() {
           type="button"
           onClick={dismiss}
           aria-label={t("dismiss")}
-          className="p-1 text-foreground/60 hover:text-foreground transition-interactive"
+          className="p-1 text-muted-foreground hover:text-foreground transition-interactive"
         >
           <XMarkIcon className="h-5 w-5" />
         </button>

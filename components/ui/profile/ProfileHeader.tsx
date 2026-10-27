@@ -77,7 +77,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
           <ProfileOwnerActions username={profile.username} />
         </div>
 
-        <p className="body-small text-foreground/60 mb-1">@{profile.username}</p>
+        <p className="body-small text-muted-foreground mb-1">@{profile.username}</p>
 
         {bioText && (
           <p
@@ -100,7 +100,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
                   <span className="heading-3 text-foreground-strong">
                     {profile.eventCount}
                   </span>
-                  <span className="body-small text-foreground/60">
+                  <span className="body-small text-muted-foreground">
                     {t("statsPublished")}
                   </span>
                 </div>
@@ -110,7 +110,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
                   <span className="heading-3 text-foreground-strong">
                     {profile.upcomingEventCount}
                   </span>
-                  <span className="body-small text-foreground/60">
+                  <span className="body-small text-muted-foreground">
                     {t("statsUpcoming")}
                   </span>
                 </div>
@@ -125,7 +125,7 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
           )}
 
         {joinedDateText && (
-          <p className="body-small-italic text-foreground/50">
+          <p className="body-small-italic text-muted-foreground">
             {t("joinedDate", { date: joinedDateText })}
           </p>
         )}

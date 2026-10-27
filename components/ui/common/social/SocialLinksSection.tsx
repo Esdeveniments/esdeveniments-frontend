@@ -20,7 +20,7 @@ export default function SocialLinksSection({
   const t = useTranslations("Components.SocialFollowPopup");
   return (
     <div className="flex flex-col gap-2.5">
-      <p className="body-small font-semibold text-foreground/60 text-center uppercase tracking-wide">
+      <p className="body-small font-semibold text-muted-foreground text-center uppercase tracking-wide">
         {t("followLabel")}
       </p>
       {variant === "mobile" ? (

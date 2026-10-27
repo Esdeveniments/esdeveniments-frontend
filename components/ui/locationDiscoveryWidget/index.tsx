@@ -132,7 +132,7 @@ export default function LocationDiscoveryWidget({
                   {/* Search input */}
                   <div className="p-input-x border-b border-border border-opacity-30">
                     <div className="relative">
-                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 w-4 h-4" />
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <input
                         type="text"
                         value={searchTerm}
@@ -187,7 +187,7 @@ export default function LocationDiscoveryWidget({
                               }
                               className="w-full px-input-x py-input-y hover:bg-muted cursor-pointer body-small text-foreground-strong flex items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                             >
-                              <LocationMarkerIcon className="h-4 w-4 text-foreground/60 flex-shrink-0" />
+                              <LocationMarkerIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                               {location.label}
                             </button>
                           </li>

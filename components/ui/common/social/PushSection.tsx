@@ -44,7 +44,7 @@ export default function PushSection({
         </button>
       ) : null}
       {pushState === "denied" ? (
-        <p className="body-small text-foreground/70 text-center">
+        <p className="body-small text-muted-foreground text-center">
           {t("pushBlockedHelp")}
         </p>
       ) : null}
@@ -54,12 +54,12 @@ export default function PushSection({
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="currentColor"
-            className="w-5 h-5 text-success"
+            className="w-5 h-5 text-success-dark"
             aria-hidden="true"
           >
             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
           </svg>
-          <p className="body-small text-success font-medium">
+          <p className="body-small text-success-dark font-medium">
             {t("pushEnabled")}
           </p>
         </div>

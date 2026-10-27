@@ -407,7 +407,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             {/* Close button */}
             <button
               onClick={() => dismiss()}
-              className="absolute top-4 right-4 p-1 rounded-full text-foreground/60 hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="absolute top-4 right-4 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               aria-label={t("close")}
             >
               <CloseIcon />
@@ -418,7 +418,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
               <h2 className="heading-3 text-foreground-strong mb-2 text-balance">
                 {headlineText}
               </h2>
-              <p className="body-small text-foreground/75 text-pretty">{subtextText}</p>
+              <p className="body-small text-muted-foreground text-pretty">{subtextText}</p>
             </div>
 
             <InstallSection
@@ -444,7 +444,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             {/* Dismiss */}
             <button
               onClick={() => dismiss()}
-              className="body-small text-foreground/50 hover:text-foreground/70 transition-colors duration-fast py-1.5 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="body-small text-muted-foreground hover:text-foreground transition-colors duration-fast py-1.5 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {t("close")}
             </button>
@@ -486,7 +486,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         {/* Close button */}
         <button
           onClick={() => dismiss()}
-          className="absolute top-4 right-4 z-10 p-1 rounded-full text-foreground/60 hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="absolute top-4 right-4 z-10 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           aria-label={t("close")}
         >
           <CloseIcon />
@@ -521,7 +521,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
             </h2>
 
             {/* Subtext */}
-            <p className="body-normal text-foreground/75 leading-relaxed text-pretty">
+            <p className="body-normal text-muted-foreground leading-relaxed text-pretty">
               {subtextText}
             </p>
           </div>
@@ -549,7 +549,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
           {/* Dismiss button */}
           <button
             onClick={() => dismiss()}
-            className="body-small text-foreground/50 hover:text-foreground/70 transition-colors duration-fast py-2 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="body-small text-muted-foreground hover:text-foreground transition-colors duration-fast py-2 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             {t("close")}
           </button>

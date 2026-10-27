@@ -5,6 +5,18 @@ import * as espree from "espree";
 import { fixupConfigRules } from "@eslint/compat";
 import eslintReact from "@eslint-react/eslint-plugin";
 
+// Text colors below WCAG AA (4.5:1) on white or muted (#F7F7F7).
+// foreground/75 is 4.49:1 on muted (/76 is 4.62), foreground-strong/54 is
+// 4.49:1 (/55 is 4.69), and base status colors are 2.15-3.76:1.
+// See DESIGN.md "Colors".
+const LOW_CONTRAST_TEXT = String.raw`/(^|[\s:"'])text-(foreground(\/(\d|[1-6]\d|7[0-5])|-strong\/(\d|[1-4]\d|5[0-4]))(?!\d)|(success|warning|error)(?![\w-]))/`;
+const LOW_CONTRAST_MESSAGE =
+  "Text color below WCAG AA (4.5:1). Use text-muted-foreground for secondary text, text-{success,warning,error}-dark for status text, or opacity-50 for disabled states.";
+const lowContrastTextRules = [
+  { selector: `Literal[value=${LOW_CONTRAST_TEXT}]`, message: LOW_CONTRAST_MESSAGE },
+  { selector: `TemplateElement[value.raw=${LOW_CONTRAST_TEXT}]`, message: LOW_CONTRAST_MESSAGE },
+];
+
 export default [
   {
     ignores: [
@@ -99,6 +111,7 @@ export default [
           message:
             "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
         },
+        ...lowContrastTextRules,
       ],
     },
   },
@@ -213,6 +226,7 @@ export default [
           message:
             "⚠️ COST ALERT: Do NOT use searchParams in app/[locale]/[place]/* pages! This makes pages dynamic and creates millions of cache entries ($300+ cost spike on Dec 28, 2025). Handle query params in middleware (proxy.ts) or client-side (SWR) instead.",
         },
+        ...lowContrastTextRules,
       ],
     },
   },

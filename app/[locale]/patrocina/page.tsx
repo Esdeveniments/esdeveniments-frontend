@@ -89,7 +89,7 @@ export default async function PatrocinaPage() {
           <p className="body-large text-foreground/80 mb-8 max-w-2xl mx-auto">
             {t("hero.subtitle")}
           </p>
-          <p className="body-normal text-foreground/60 mb-8">
+          <p className="body-normal text-muted-foreground mb-8">
             {t("hero.stats")}
           </p>
           <a
@@ -111,7 +111,7 @@ export default async function PatrocinaPage() {
                 <UserGroupIcon className="h-12 w-12 text-primary" />
               </div>
               <h3 className="heading-4 mb-2">{t("benefits.targeted.title")}</h3>
-              <p className="body-small text-foreground/70">
+              <p className="body-small text-muted-foreground">
                 {t("benefits.targeted.description")}
               </p>
             </div>
@@ -120,7 +120,7 @@ export default async function PatrocinaPage() {
                 <CurrencyEuroIcon className="h-12 w-12 text-primary" />
               </div>
               <h3 className="heading-4 mb-2">{t("benefits.affordable.title")}</h3>
-              <p className="body-small text-foreground/70">
+              <p className="body-small text-muted-foreground">
                 {t("benefits.affordable.description")}
               </p>
             </div>
@@ -129,7 +129,7 @@ export default async function PatrocinaPage() {
                 <ChartBarIcon className="h-12 w-12 text-primary" />
               </div>
               <h3 className="heading-4 mb-2">{t("benefits.visibility.title")}</h3>
-              <p className="body-small text-foreground/70">
+              <p className="body-small text-muted-foreground">
                 {t("benefits.visibility.description")}
               </p>
             </div>
@@ -141,7 +141,7 @@ export default async function PatrocinaPage() {
       <section id="pricing" className="py-section-y px-section-x bg-muted/30">
         <div className="max-w-5xl mx-auto">
           <h2 className="heading-2 text-center mb-4">{t("pricing.title")}</h2>
-          <p className="body-normal text-foreground/70 text-center mb-12 max-w-2xl mx-auto">
+          <p className="body-normal text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
             {t("pricing.subtitle")}
           </p>
 
@@ -166,7 +166,7 @@ export default async function PatrocinaPage() {
                   <h3 className="heading-4 mb-1">
                     {t(`howItWorks.steps.${step}.title`)}
                   </h3>
-                  <p className="body-normal text-foreground/70">
+                  <p className="body-normal text-muted-foreground">
                     {t(`howItWorks.steps.${step}.description`)}
                   </p>
                 </div>
@@ -188,11 +188,11 @@ export default async function PatrocinaPage() {
               >
                 <summary className="heading-4 cursor-pointer list-none flex justify-between items-center">
                   {t(`faq.items.${faq}.question`)}
-                  <span className="text-foreground/50 group-open:rotate-180 transition-transform">
+                  <span className="text-muted-foreground group-open:rotate-180 transition-transform">
                     ▼
                   </span>
                 </summary>
-                <p className="body-normal text-foreground/70 mt-4">
+                <p className="body-normal text-muted-foreground mt-4">
                   {t(`faq.items.${faq}.answer`)}
                 </p>
               </details>
@@ -205,7 +205,7 @@ export default async function PatrocinaPage() {
       <section className="py-section-y px-section-x">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="heading-2 mb-4">{t("contact.title")}</h2>
-          <p className="body-normal text-foreground/70 mb-6">
+          <p className="body-normal text-muted-foreground mb-6">
             {t("contact.description")}
           </p>
           <a

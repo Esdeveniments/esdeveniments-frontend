@@ -26,7 +26,7 @@ export default function PastEventBanner({
           {/* Visual indicator with icon */}
           <div className="flex sm:items-start md:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
             <div className="flex-shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-muted flex items-center justify-center">
-              <ClockIcon className="w-5 h-5 text-foreground/60" />
+              <ClockIcon className="w-5 h-5 text-muted-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="heading-5 sm:heading-4 text-foreground-strong mb-1 sm:mb-1.5">

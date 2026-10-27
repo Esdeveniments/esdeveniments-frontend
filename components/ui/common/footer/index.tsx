@@ -128,7 +128,7 @@ export default async function Footer(): Promise<JSX.Element> {
               <h2 id="footer-sponsor-cta" className="heading-4 text-foreground-strong">
                 {t("sponsorCta.title")}
               </h2>
-              <p className="body-small text-foreground/70 max-w-2xl">
+              <p className="body-small text-muted-foreground max-w-2xl">
                 {t("sponsorCta.description")}
               </p>
               <PressableAnchorClient href="/patrocina" className="btn-primary">

@@ -85,7 +85,7 @@ export default function CheckoutButton({
         {isLoading ? t("checkout.processing") : t("pricing.cta")}
       </button>
       {error && (
-        <p className="text-sm text-error mt-2 text-center">{error}</p>
+        <p className="text-sm text-error-dark mt-2 text-center">{error}</p>
       )}
     </div>
   );
