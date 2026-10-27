@@ -88,7 +88,7 @@ module.exports = {
         success: "#10B981",
         "success-dark": "#047857",
         error: "#EF4444",
-        "error-dark": "#DC2626",
+        "error-dark": "#B91C1C",
         warning: "#F59E0B",
         "warning-dark": "#B45309",
         info: "#3B82F6",
@@ -766,7 +766,7 @@ Opacity modifier note: the `/NN` suffix (e.g., `text-foreground/80`, `bg-border/
 | `success`      | `#10B981` | Success messages, confirmations |
 | `success-dark` | `#047857` | Status text on light backgrounds |
 | `error`        | `#EF4444` | Error messages, validation      |
-| `error-dark`   | `#DC2626` | Hover state                     |
+| `error-dark`   | `#B91C1C` | Status text on light backgrounds |
 | `warning`      | `#F59E0B` | Warnings, alerts                |
 | `warning-dark` | `#B45309` | Status text on light backgrounds |
 | `info`         | `#3B82F6` | Info messages, tips             |

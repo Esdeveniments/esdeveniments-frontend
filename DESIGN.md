@@ -37,7 +37,7 @@ colors:
   success-muted:     "#D1FAE5"
   success-border:    "#A7F3D0"
   error:             "#EF4444"
-  error-dark:        "#DC2626"
+  error-dark:        "#B91C1C"
   warning:           "#F59E0B"
   warning-dark:      "#B45309"
   warning-light:     "#FFFBEB"
@@ -606,7 +606,7 @@ fail AA (`foreground/70` is 4.12:1, `/60` 3.23:1), so ESLint blocks
 `text-foreground/70` and lighter, and `text-foreground-strong/50` and
 lighter. Disabled states use `opacity-50`, which WCAG exempts. Status text
 and status icons on light surfaces use the `-dark` variants (error-dark
-4.83:1, warning-dark 5.02:1, success-dark 5.48:1). The base status colors
+6.47:1, warning-dark 5.02:1, success-dark 5.48:1). The base status colors
 (2.15–3.76:1) are for fills and borders only, and ESLint blocks them as text.
 
 ## Typography

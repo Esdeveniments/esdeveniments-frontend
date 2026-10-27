@@ -89,7 +89,7 @@ module.exports = {
         "success-muted": "#D1FAE5",
         "success-border": "#A7F3D0",
         error: "#EF4444",
-        "error-dark": "#DC2626",
+        "error-dark": "#B91C1C", // Text: 6.47:1 on white, 5.66:1 on error/10
         warning: "#F59E0B",
         "warning-dark": "#B45309", // Text on white: 5.02:1
         "warning-light": "#FFFBEB",
