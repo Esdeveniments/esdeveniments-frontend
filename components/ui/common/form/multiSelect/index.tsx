@@ -1,68 +1,11 @@
 import { useState, useEffect } from "react";
-import CreatableSelect from "react-select/creatable";
-import { components, StylesConfig, GroupBase } from "react-select";
+import ReactSelect, { components } from "react-select";
+import { getSelectClassNames } from "../selectClassNames";
 import { Option } from "types/common";
 import { MultiSelectProps } from "types/props";
 import { useTranslations } from "next-intl";
 
-const borderColor = "#CCC !important";
-
-const customStyles: StylesConfig<Option, true, GroupBase<Option>> = {
-  container: (provided) => ({
-    ...provided,
-    borderColor: "#FFF !important",
-    border: "0px",
-  }),
-  input: (provided) => ({
-    ...provided,
-    fontSize: "16px",
-    padding: "0px 15px",
-  }),
-  control: (provided, state) => ({
-    ...provided,
-    borderColor: state.isFocused ? borderColor : borderColor,
-    boxShadow: state.isFocused ? "#000 !important" : "#CCC !important",
-    borderRadius: "8px",
-  }),
-  placeholder: (provided) => ({
-    ...provided,
-    fontSize: "16px",
-    color: "#CCC",
-    padding: "0px 15px",
-  }),
-  option: (provided, state) => ({
-    ...provided,
-    fontSize: "16px",
-    background: state.isFocused ? "#D6002F" : "#FFF",
-    color: state.isFocused ? "#FFF" : "#454545",
-  }),
-  multiValue: (provided) => ({
-    ...provided,
-    backgroundColor: "#D6002F",
-    borderRadius: "4px",
-  }),
-  multiValueLabel: (provided) => ({
-    ...provided,
-    color: "#FFF",
-    fontSize: "14px",
-  }),
-  multiValueRemove: (provided) => ({
-    ...provided,
-    color: "#FFF",
-    ":hover": {
-      backgroundColor: "#CC002E",
-      color: "#FFF",
-    },
-  }),
-  menu: (provided) => ({
-    ...provided,
-    border: "0px",
-    borderRadius: "0px",
-    boxShadow: "0px 10px 30px -25px #454545",
-    background: "#FFF",
-    padding: "0px 10px 30px",
-  }),
-};
+const selectClassNames = getSelectClassNames<true>();
 
 const Input = components.Input;
 
@@ -75,8 +18,10 @@ export default function MultiSelectComponent({
   isDisabled = false,
   placeholder = "Selecciona categories",
   isLoading = false,
+  optionalLabel,
 }: MultiSelectProps) {
   const t = useTranslations("Components.MultiSelect");
+  const inputId = `${id}-input`;
   const [selectedOptions, setSelectedOptions] = useState<Option[]>(value);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -96,17 +41,21 @@ export default function MultiSelectComponent({
 
   return (
     <div className="w-full">
-      <label htmlFor={id} className="text-foreground-strong font-bold">
+      <label htmlFor={inputId} className="form-label">
         {title}
+        {optionalLabel ? (
+          <span className="font-normal text-muted-foreground"> {optionalLabel}</span>
+        ) : null}
       </label>
       <div className="mt-2">
         {!isMounted ? (
-          <div className="h-[42px] bg-muted border border-border rounded-lg animate-pulse" />
+          <div className="h-12 bg-muted border border-border rounded-input animate-pulse" />
         ) : (
-          <CreatableSelect<Option, true>
+          <ReactSelect<Option, true>
             key={`multiselect-${id}-${isMounted}`}
             id={id}
             instanceId={id}
+            inputId={inputId}
             isMulti
             isSearchable
             isClearable
@@ -117,7 +66,8 @@ export default function MultiSelectComponent({
             value={selectedOptions}
             onChange={handleChange}
             options={options}
-            styles={customStyles}
+            unstyled
+            classNames={selectClassNames}
             isDisabled={isDisabled || isLoading}
             noOptionsMessage={() => t("noOptions")}
             loadingMessage={() => t("loadingShort")}

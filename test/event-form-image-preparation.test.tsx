@@ -73,7 +73,7 @@ describe("EventForm image preparation", () => {
     Object.defineProperty(large, "size", { value: 9 * 1024 * 1024 });
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [large] } });
     expect(screen.getByTestId("publish-button")).toBeDisabled();
-    fireEvent.click(screen.getAllByRole("button", { name: /\(pending\)|\(completed\)/ })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /, completat$/ })[0]);
     expect(document.querySelector('input[type="file"]')).toBeNull();
     await act(async () => pending.resolve(new File(["ready"], "ready.jpg", { type: "image/jpeg" })));
     expect(onImage).not.toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe("EventForm publish arming", () => {
         handleImageChange={vi.fn()} handleTownChange={vi.fn()} handleCategoriesChange={vi.fn()}
         imageToUpload="https://example.com/old.jpg" initialStep={2} onStepChange={onStepChange} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /\(current\)/ }));
+    fireEvent.click(screen.getByRole("button", { name: /, pas actual$/ }));
     expect(onStepChange).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId("prev-button"));
     expect(onStepChange).toHaveBeenCalledExactlyOnceWith(1);

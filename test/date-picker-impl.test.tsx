@@ -81,7 +81,7 @@ describe("DatePickerImpl", () => {
     it("renders the label, an inline calendar and both time inputs", () => {
       render(<DatePickerImpl {...baseProps} />);
 
-      expect(screen.getByText("Data i hora *")).toBeInTheDocument();
+      expect(screen.getByText("Data i hora")).toBeInTheDocument();
       expect(screen.getByRole("grid")).toBeInTheDocument();
       expect(screen.getByLabelText("Hora d'inici")).toHaveValue("10:00");
       expect(screen.getByLabelText("Hora de fi")).toHaveValue("11:00");

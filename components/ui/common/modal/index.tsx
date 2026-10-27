@@ -7,7 +7,8 @@ import {
   DialogTitle,
   Transition,
 } from "@headlessui/react";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 import { ModalProps } from "types/props";
 import Button from "@components/ui/common/button";
 
@@ -22,6 +23,7 @@ export default function Modal({
   actionButtonAnalyticsAction,
   testId,
 }: ModalProps) {
+  const t = useTranslations("Components.Modal");
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +36,7 @@ export default function Modal({
       data-testid={testId}
     >
       <div
-        className="w-full bg-border opacity-60 fixed inset-0 z-0"
+        className="w-full bg-foreground-strong/40 fixed inset-0 z-0"
         aria-hidden="true"
         onClick={() => setOpen(false)}
         onTouchStart={(e) => {
@@ -50,9 +52,9 @@ export default function Modal({
               as={Fragment}
               enter="transition-modal"
               enterFrom="opacity-0 translate-y-4 sm:translate-y-0"
-              enterTo="opacity-70 translate-y-0"
+              enterTo="opacity-100 translate-y-0"
               leave="transition-modal"
-              leaveFrom="opacity-70 translate-y-0"
+              leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0"
             >
               <DialogPanel
@@ -60,24 +62,24 @@ export default function Modal({
                 onClick={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
               >
-                <div className="w-full h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-lg shadow-xl relative">
+                <div className="w-full h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-card shadow-xl relative">
                   <div className="sticky top-0 bg-background px-4 z-10 flex-shrink-0">
-                    <div className="relative min-h-12 flex items-center py-2">
+                    <div className="relative min-h-[56px] flex items-center py-2">
+                      <DialogTitle
+                        as="h2"
+                        className="flex-1 text-center body-normal font-semibold text-foreground-strong px-10 break-words"
+                      >
+                        {title}
+                      </DialogTitle>
                       <Button
                         ref={cancelButtonRef}
                         variant="ghost"
                         onClick={() => setOpen(false)}
-                        className="absolute left-2 p-3 z-20 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-                        aria-label="Tanca"
+                        className="absolute right-0 p-2.5 rounded-full"
+                        aria-label={t("close")}
                       >
-                        <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
+                        <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                       </Button>
-                      <DialogTitle
-                        as="h3"
-                        className="flex-1 text-center font-barlow uppercase font-semibold px-10 break-words"
-                      >
-                        {title}
-                      </DialogTitle>
                     </div>
                   </div>
                   <div
@@ -102,7 +104,7 @@ export default function Modal({
                           setOpen(false);
                         }}
                         data-testid={testId ? `${testId}-action-button` : undefined}
-                        className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full"
                         disabled={actionButtonDisabled}
                         data-analytics-action={actionButtonAnalyticsAction}
                       >

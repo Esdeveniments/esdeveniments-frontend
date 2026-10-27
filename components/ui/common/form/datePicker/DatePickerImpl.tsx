@@ -79,7 +79,7 @@ function TimeSelector({
         value={value}
         min={minTime}
         onChange={(e) => onChange(e.target.value)}
-        className="input h-12 text-base"
+        className="input input-lg"
       />
     </div>
   );

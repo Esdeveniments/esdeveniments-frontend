@@ -128,6 +128,25 @@ export function normalizeUrl(url: string): string {
   return `https://${trimmed}`;
 }
 
+/**
+ * True for a public web link such as "exemple.cat" or "https://www.x.com/a?b".
+ * Rejects free text ("hola"), bare hosts ("https://x"), IPs, handles ("@insta")
+ * and credentials or other schemes smuggled in as "user:pass@host".
+ */
+export function isValidEventUrl(url: string): boolean {
+  const normalized = normalizeUrl(url);
+  if (!normalized || /\s/.test(normalized)) return false;
+  try {
+    const { protocol, hostname, username, password } = new URL(normalized);
+    if (protocol !== "https:" && protocol !== "http:") return false;
+    if (username || password) return false;
+    const tld = hostname.split(".").at(-1) ?? "";
+    return hostname.includes(".") && /^([a-z]{2,}|xn--[a-z0-9-]+)$/i.test(tld);
+  } catch {
+    return false;
+  }
+}
+
 /* =========================================================
  * Catalan grammar helpers
  * ======================================================= */

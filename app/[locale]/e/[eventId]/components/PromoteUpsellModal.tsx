@@ -74,8 +74,8 @@ export default function PromoteUpsellModal({
         </ul>
         <Button
           type="button"
-          variant="neutral"
-          className="btn-outline w-full"
+          variant="outline"
+          className="w-full"
           data-testid="promote-modal-keep-free"
           onClick={handleKeepFree}
         >

@@ -717,82 +717,42 @@ const PublishForm = () => {
           testId="preview-modal"
         >
           <PreviewContent event={previewEvent} />
-          {error && <p className="body-normal text-error" role="alert">{error}</p>}
+          {error && <p className="helper-text-error" role="alert">{error}</p>}
         </Modal>
       )}
       <div className="container flex flex-col justify-center pt-6 pb-14">
-        <div className="flex flex-col gap-6 px-2 lg:px-0">
-          {/* Hero Header Section */}
-          <div className="flex flex-col items-center text-center gap-4 mb-2">
+        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 px-2 lg:px-0">
+          <header className="flex flex-col gap-2 text-center">
             <h1 className="heading-1 text-foreground-strong">
               {t("heading")}
             </h1>
-            <p className="body-large text-foreground/80 max-w-xl mx-auto">
+            <p className="body-normal text-foreground/80">
               {t("subheading")}
             </p>
-            <div className="stack" role="status">
-              <p className="body-normal text-foreground/80">{t("accountNotice")}</p>
-              {requiredAuthStage === "login" && (
-                <button type="button" className="btn-outline" onClick={() => { void beginAuthReturn(); }}
-                  disabled={isAuthLoading || isDraftLocked || imagePreparing || isPending || draft.ownerChanged}
+            {!authStage && !isAuthLoading && !isAuthenticated && !isDraftLocked && !draft.ownerChanged && (
+              <p className="body-small text-muted-foreground">
+                {t("accountNotice")}{" "}
+                <button type="button"
+                  className="font-medium text-primary underline underline-offset-4 hover:text-primary-dark rounded-sm focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => { void beginAuthReturn(); }}
+                  disabled={imagePreparing || isPending}
                   data-testid="publish-early-sign-in" data-analytics-action="publish_early_sign_in">
                   {t("earlySignIn")}
                 </button>
-              )}
-            </div>
-
-            {/* Benefits Pills */}
-            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-center items-center gap-2 sm:gap-3 mt-2">
-              <span className="badge-default gap-2 w-fit">
-                <svg className="w-4 h-4 text-primary shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                {t("benefits.free")}
-              </span>
-              <span className="badge-default gap-2 w-fit">
-                <svg className="w-4 h-4 text-primary shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                </svg>
-                {t("benefits.fast")}
-              </span>
-              <span className="badge-default gap-2 w-fit">
-                <svg className="w-4 h-4 text-primary shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                </svg>
-                {t("benefits.reach")}
-              </span>
-            </div>
-
-            <p className="body-small text-foreground/60 mt-2">{t("requiredNote")}</p>
-          </div>
+              </p>
+            )}
+          </header>
           {error && (
-            <div
-              className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg flex items-start gap-3"
-              role="alert"
-            >
-              <svg
-                className="w-5 h-5 text-error flex-shrink-0 mt-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <p className="text-sm font-medium text-error">{error}</p>
-            </div>
+            <p className="w-full rounded-card border border-error/40 bg-error/5 px-4 py-3 body-small font-medium text-error-dark" role="alert">
+              {error}
+            </p>
           )}
-          {draft.resumeFailed && <p role="status" className="body-normal text-foreground/80">{t("draftResumeFailed")}</p>}
-          {draft.ownerChanged && <p role="alert" className="body-normal text-error">{t("draftOwnerChanged")}</p>}
+          {draft.resumeFailed && <p role="status" className="body-small text-foreground/80">{t("draftResumeFailed")}</p>}
+          {draft.ownerChanged && <p role="alert" className="body-small font-medium text-error-dark">{t("draftOwnerChanged")}</p>}
           {(isErrorRegionsWithCities || isErrorCategories) && (
             <div className="stack" role="alert">
-              <p className="body-normal text-error">{t("optionsFailed")}</p>
-              <button type="button" className="btn-outline" onClick={() => {
+              <p className="body-small font-medium text-error-dark">{t("optionsFailed")}</p>
+              <button type="button" className="btn-neutral self-start" onClick={() => {
                 if (isErrorRegionsWithCities) void retryCities();
                 if (isErrorCategories) void retryCategories();
               }}>{t("draftRetry")}</button>
@@ -814,6 +774,7 @@ const PublishForm = () => {
           )}
           <fieldset disabled={handingOff} inert={handingOff}>
           <PublishDraftPanel
+            variant="decision"
             state={draft}
             onRestore={draft.restore}
             onRestoreGuest={draft.restoreGuest}
@@ -824,8 +785,10 @@ const PublishForm = () => {
               !isLoadingCategories && !isErrorCategories) : []}
           />
           </fieldset>
-          <fieldset disabled={isDraftLocked || isPending} inert={isDraftLocked}>
-          <div className="w-full flex flex-col gap-y-4 pt-4">
+          {/* Until the user picks restore or discard, show only that choice instead of a locked form. */}
+          <fieldset disabled={isDraftLocked || isPending} inert={isDraftLocked}
+            hidden={draft.status === "decision" && !draft.dirty}>
+          <div className="w-full">
             <EventForm
               key={editorVersion}
               initialStep={wizardStep}
@@ -854,14 +817,25 @@ const PublishForm = () => {
             />
           </div>
           </fieldset>
-          <div className="flex-center pt-2 text-center">
-            <p className="body-small text-foreground/70">
+          <fieldset disabled={handingOff} inert={handingOff}>
+            <PublishDraftPanel
+              variant="status"
+              state={draft}
+              onRestore={draft.restore}
+              onRestoreGuest={draft.restoreGuest}
+              onDiscard={draft.discard}
+              onRetry={() => { void draft.retry(); }}
+              warnings={[]}
+            />
+          </fieldset>
+          <div className="flex-center text-center">
+            <p className="body-small text-muted-foreground">
               {t("sponsorTitle")}{" "}
               <Link
                 href="/patrocina"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="body-small text-primary hover:text-primary/80 transition-interactive pressable-inline focus-ring"
+                className="text-primary underline underline-offset-4 hover:text-primary-dark transition-interactive focus-ring"
               >
                 {t("sponsorLink")}
               </Link>

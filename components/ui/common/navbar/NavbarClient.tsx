@@ -94,7 +94,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     href={profileHref || "/perfil/edita"}
                     prefetch={false}
                     variant="inline"
-                    className="flex-center w-11 h-11 rounded-full bg-primary text-white text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    className="flex-center w-11 h-11 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     aria-label={labels.myProfile}
                     data-testid="mobile-avatar-link"
                   >
@@ -102,16 +102,18 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                       <img
                         src={user.avatarUrl}
                         alt=""
-                        className="w-11 h-11 rounded-full object-cover bg-background"
+                        className="w-9 h-9 rounded-full object-cover bg-background"
                       />
                     ) : (
-                      (user.name || user.email).charAt(0).toUpperCase()
+                      <span className="flex-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                        {(user.name || user.email).charAt(0).toUpperCase()}
+                      </span>
                     )}
                   </PressableLink>
                 ) : (
                   <ActiveLink
                     href="/iniciar-sessio"
-                    className="flex-center w-11 h-11 rounded-button hover:bg-muted transition-interactive focus:outline-none"
+                    className="flex-center w-11 h-11 rounded-full text-foreground hover:bg-muted transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     aria-label={
                       user?.profileEnrichmentFailed
                         ? labels.incompleteProfile
@@ -120,7 +122,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     data-testid="mobile-login-link"
                     data-analytics-action="navbar_login_mobile_header"
                   >
-                    <UserCircleIcon className="h-10 w-10" />
+                    <UserCircleIcon className="h-6 w-6" aria-hidden="true" />
                   </ActiveLink>
                 )
               )}

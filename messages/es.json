@@ -208,8 +208,7 @@
       "heading": "Edita tu evento",
       "subheading": "Actualiza los detalles, la ubicación o la imagen de tu evento.",
       "backToEvent": "Volver al evento",
-      "myEvents": "Mis eventos",
-      "requiredNote": "* campos obligatorios"
+      "myEvents": "Mis eventos"
     },
     "PublishPage": {
       "metaTitle": "Publica tu evento gratis en Cataluña | Agenda cultural - Esdeveniments.cat",
@@ -301,10 +300,10 @@
       "publishCta": {
         "signIn": "Inicia sesión para publicar",
         "completeProfile": "Completa el perfil para publicar",
-        "resolving": "Comprobando la sesión..."
+        "resolving": "Comprobando la sesión…"
       },
-      "accountNotice": "Puedes preparar y previsualizar el evento sin cuenta. Para publicarlo, necesitas una cuenta gratuita y un perfil completo.",
-      "earlySignIn": "Inicia sesión ahora",
+      "accountNotice": "¿Ya tienes cuenta?",
+      "earlySignIn": "Inicia sesión",
       "optionsFailed": "No hemos podido cargar los municipios o las categorías. Inténtalo de nuevo.",
       "draftOwnerChanged": "La sesión ha cambiado. Conservamos el formulario, pero no lo guardaremos en otra cuenta. Copia lo que quieras conservar y recarga la página.",
       "completeProfileGate": {
@@ -313,47 +312,38 @@
         "cta": "Completar perfil"
       },
       "heading": "Publica tu evento en Cataluña",
-      "subheading": "Añade tu concierto, exposición, teatro, taller o actividad cultural a la agenda más grande de Cataluña. ¡Es gratis!",
+      "subheading": "Añádelo a la agenda cultural más grande de Cataluña. Es gratis.",
       "sponsorTitle": "¿Tienes un negocio local?",
       "sponsorLink": "Ver opciones de patrocinio",
-      "benefits": {
-        "title": "¿Por qué publicar en Esdeveniments.cat?",
-        "free": "100% gratuito - sin costes ocultos",
-        "reach": "Llega a miles de personas interesadas en cultura",
-        "fast": "Publicación rápida en menos de un minuto",
-        "visibility": "Visibilidad en Google y redes sociales"
-      },
-      "requiredNote": "* campos obligatorios",
-      "errorCreate": "Error al crear el evento. Por favor, inténtalo de nuevo.",
-      "errorBodyLimit": "El tamaño total de la solicitud (imagen + datos) supera el límite permitido de 10 MB. Por favor, reduce el tamaño de la imagen o elimina datos innecesarios.",
-      "errorGeneric": "Ha habido un error al publicar el evento. Por favor, inténtalo de nuevo.",
+      "errorCreate": "No hemos podido crear el evento. Inténtalo de nuevo.",
+      "errorBodyLimit": "La imagen y los datos superan el límite de 10 MB. Elige una imagen más pequeña.",
+      "errorGeneric": "No hemos podido publicar el evento. Inténtalo de nuevo.",
       "errorFormParsing": "Se cortó la conexión mientras se enviaba el formulario. Recarga la página e inténtalo de nuevo.",
       "errorDuplicate": "Este evento ya existe. Si crees que es un error, contáctanos.",
       "errorStaleSession": "La sesión ha caducado. Vuelve a iniciar sesión para continuar.",
       "submitLabel": "Publicar",
-      "imageTooLarge": "La imagen supera el límite permitido de {limit} MB. Por favor, elige una imagen más pequeña.",
+      "imageTooLarge": "La imagen supera el límite de {limit} MB. Elige una más pequeña.",
       "uploadSuccess": "Imagen subida correctamente.",
       "uploadFailed": "No hemos podido subir la imagen. Revisa la conexión e inténtalo de nuevo.",
       "imageRequired": "La imagen es obligatoria.",
       "fallbackRegion": "Región {id}",
       "fallbackCity": "Ciudad {id}",
-      "noEventsFound": "No hemos encontrado eventos recientes para esta zona. Inténtalo más tarde.",
+      "noEventsFound": "No hemos encontrado eventos recientes en esta zona. Inténtalo de nuevo más tarde.",
       "restoreDraftTitle": "Tienes un borrador guardado",
       "draftChooseTitle": "¿Qué borrador quieres continuar?",
-      "draftChooseDescription": "Hemos conservado el evento que has rellenado antes de iniciar sesión, pero esta cuenta ya tenía un borrador. Si continúas con el nuevo, sustituirás el borrador anterior de la cuenta.",
-      "draftUseGuest": "Continuar con el nuevo y sustituir el anterior",
-      "draftUseAccount": "Recuperar el borrador anterior de la cuenta",
+      "draftChooseDescription": "Hemos conservado el evento que rellenaste antes de iniciar sesión, pero esta cuenta ya tenía un borrador. Si continúas con el nuevo, sustituirás el anterior.",
+      "draftUseGuest": "Continuar con el nuevo",
+      "draftUseAccount": "Recuperar el anterior",
       "draftAccountTitle": "Borrador anterior de la cuenta: {title}",
       "restoreDraftDescription": "Puedes recuperar lo que estabas escribiendo o empezar de cero.",
       "restoreDraftApply": "Recuperar borrador",
       "restoreDraftDiscard": "Descartar",
       "draftHeading": "Borrador local",
       "draftRestoreReplacesEdits": "Si recuperas el borrador guardado, sustituirás los cambios que tienes ahora en el formulario. Copia antes cualquier texto que quieras conservar.",
-      "draftDeviceOnlyNote": "El borrador se guarda solo en este navegador. Caduca tras siete días sin cambios y puede perderse si se borran los datos del navegador.",
-      "draftLoading": "Buscando un borrador...",
-      "draftSaving": "Guardando...",
+      "draftLoading": "Buscando un borrador…",
+      "draftSaving": "Guardando…",
       "draftSaved": "Guardado en este dispositivo",
-      "draftDiscarding": "Descartando el borrador...",
+      "draftDiscarding": "Descartando el borrador…",
       "draftSaveFailed": "El navegador no ha podido completar la operación con el borrador. No cierres esta página. Revisa los permisos de almacenamiento del navegador y vuelve a intentarlo.",
       "draftStorageFull": "No hay espacio suficiente, el borrador supera el límite o ya hay cinco borradores guardados. No cierres la página. Libera espacio, reduce el texto o la imagen, o descarta otro borrador y vuelve a intentarlo.",
       "draftRecordInvalid": "No se puede leer el borrador guardado. Puedes volver a intentarlo o descartarlo para empezar de nuevo. No cierres la página si tienes cambios.",
@@ -361,12 +351,12 @@
       "draftReviewConflict": "Revisar el borrador guardado",
       "draftResolveBeforePublish": "Revisa el borrador guardado y elige si quieres recuperarlo o descartarlo antes de publicar.",
       "draftAutoPublishStopped": "No hemos publicado el evento automáticamente. Revisa el formulario y pulsa Publicar para continuar.",
-      "draftHandoffFailed": "No hemos podido preparar el regreso al formulario. No hemos salido de esta página. Vuelve a intentarlo o descarta el borrador antes de continuar.",
+      "draftHandoffFailed": "No hemos podido continuar. Inténtalo de nuevo o descarta el borrador.",
       "draftResumeFailed": "No hemos podido recuperar el borrador de este regreso. Puede haber caducado, cambiado o pertenecer a otra cuenta. Puedes revisar el borrador disponible o empezar de nuevo.",
-      "draftAuthNotice": "Guardaremos el borrador antes de continuar. La publicación continuará automáticamente después de iniciar sesión o crear una cuenta y completar el perfil, si es necesario.",
+      "draftAuthNotice": "Guardaremos el borrador. Cuando hayas iniciado sesión, continuaremos con la publicación.",
       "draftRetry": "Volver a intentarlo",
       "draftDiscardConfirm": "¿Descartar el borrador?",
-      "draftDiscardDescription": "Se eliminarán el borrador guardado y los cambios de este formulario, incluida la imagen.",
+      "draftDiscardDescription": "Se borrarán el formulario y la imagen. No se puede deshacer.",
       "draftKeep": "Conservar el borrador",
       "draftDateExpired": "Revisa las fechas: el borrador empieza en una fecha pasada. No las hemos cambiado.",
       "draftCityUnavailable": "El municipio guardado ya no está en la lista. Revísalo y vuelve a seleccionarlo. Hemos conservado el valor original.",
@@ -375,10 +365,10 @@
       "geoNotSupported": "Tu navegador no permite obtener la ubicación.",
       "geoDenied": "No hemos podido obtener la ubicación. Revisa los permisos.",
       "promoteUpsell": {
-        "title": "¡Impulsa tu evento!",
-        "description": "Promociona tu evento ahora para llegar a mucha más gente y aparecer en los primeros puestos de la plataforma.",
-        "promoteButton": "Promocionar evento",
-        "keepFreeButton": "Mantener gratis"
+        "title": "Impulsa tu evento",
+        "description": "Promociónalo para llegar a más gente y salir en los primeros puestos.",
+        "promoteButton": "Promocionar",
+        "keepFreeButton": "Ahora no"
       }
     },
     "PlaceFallback": {
@@ -872,18 +862,18 @@
       }
     },
     "ImageUploader": {
-      "label": "Imagen *",
-      "unsupported": "El archivo seleccionado no es una imagen soportada. Por favor, sube un archivo JPEG o PNG.",
-      "originalTooLarge": "La imagen supera el límite máximo de {limit} MB. Reduce el tamaño de la imagen antes de volver a intentarlo.",
-      "tooLarge": "El tamaño de la imagen supera el límite permitido de {limit} MB. Por favor, elige una imagen más pequeña.",
-      "compressFailed": "No hemos podido reducir la imagen. Revisa la conexión e inténtalo de nuevo.",
-      "optimizing": "Optimizando la imagen para cumplir el límite de {limit} MB...",
+      "label": "Imagen",
+      "unsupported": "Este archivo no es compatible. Elige una imagen JPG o PNG.",
+      "originalTooLarge": "La imagen supera el límite de {limit} MB. Elige una más pequeña.",
+      "tooLarge": "No hemos podido reducir la imagen por debajo de {limit} MB. Elige una más pequeña.",
+      "compressFailed": "No hemos podido reducir la imagen. Inténtalo de nuevo.",
+      "optimizing": "Optimizando la imagen…",
       "remove": "Eliminar imagen",
       "altPreview": "Imagen",
-      "uploadDropCta": "Arrastra tu imagen aquí",
-      "uploadDropHelper": "o haz clic para seleccionar",
-      "selectButton": "Seleccionar archivo",
-      "formatHelper": "Formato: JPEG o PNG"
+      "uploadDropCta": "o arrástrala aquí",
+      "selectButton": "Elegir imagen",
+      "formatHelper": "JPG o PNG",
+      "change": "Cambiar"
     },
     "HeroCTA": {
       "buttonBase": "Ver eventos",
@@ -1027,14 +1017,12 @@
       "promoted": "Patrocinado"
     },
     "EventForm": {
-      "title": "Título *",
+      "title": "Título",
       "url": "Enlace del evento",
-      "region": "Comarca *",
-      "town": "Población",
-      "titleHint": "Ejemplo: Fiesta mayor del barrio",
-      "locationHint": "Añade el punto exacto: plaza, calle o equipamiento",
-      "urlHint": "Opcional: enlace oficial o redes del evento",
-      "imageHint": "Formatos JPG/PNG. Una imagen clara ayuda a encontrarlo.",
+      "region": "Comarca",
+      "town": "Municipio",
+      "locationHint": "Plaza, calle o equipamiento",
+      "urlHint": "Web o redes sociales del evento",
       "reviewTitle": "Antes de publicar",
       "reviewReady": "¡Todo listo! Revisa y publica.",
       "reviewMissing": "{count, plural, one {Falta: {fields}} other {Faltan: {fields}}}",
@@ -1061,18 +1049,22 @@
       "previous": "Atrás",
       "next": "Siguiente",
       "useLocation": "Usar mi ubicación",
-      "locating": "Localizando...",
+      "locating": "Localizando…",
       "testLink": "Probar enlace",
-      "regionPlaceholder": "Selecciona una comarca",
-      "townPlaceholder": "Selecciona un pueblo",
-      "categoriesPlaceholder": "Selecciona categorías",
+      "regionPlaceholder": "Elige una comarca",
+      "townPlaceholder": "Elige un municipio",
+      "categoriesPlaceholder": "Elige categorías",
       "categories": "Categorías",
       "location": "Lugar",
       "email": "Correo electrónico",
       "emailSubtitle": "¿Quieres que te avisemos cuando el evento se haya actualizado? (no guardamos los datos)",
-      "publishing": "Publicando...",
-      "regionSkeleton": "Comarca *",
-      "townSkeleton": "Población *"
+      "publishing": "Publicando…",
+      "regionSkeleton": "Comarca",
+      "townSkeleton": "Municipio",
+      "optional": "(opcional)",
+      "stepDone": "completado",
+      "stepCurrent": "paso actual",
+      "stepTodo": "pendiente"
     },
     "Layout": {
       "rss": "RSS",
@@ -1106,13 +1098,8 @@
       "loadingShort": "Cargando..."
     },
     "TextArea": {
-      "label": "Descripción *",
-      "edit": "✏️ Editar",
-      "preview": "👁️ Previsualizar",
-      "emptyPreview": "Escribe algo para ver la previsualización...",
-      "placeholder": "Describe tu evento...",
-      "helperPreview": "Así es como verán la descripción los visitantes",
-      "helperEdit": "Pulsa Enter para hacer saltos de línea."
+      "label": "Descripción",
+      "placeholder": "Describe tu evento…"
     },
     "DateRangeCalendar": {
       "pickStart": "Elige el primer día",
@@ -1122,7 +1109,7 @@
     "DatePicker": {
       "startTime": "Hora de inicio",
       "endTime": "Hora de fin",
-      "dateAndTime": "Fecha y hora *",
+      "dateAndTime": "Fecha y hora",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "Todo el día (sin hora de fin)",
@@ -1220,6 +1207,9 @@
     },
     "PromotedEvents": {
       "title": "Eventos destacados"
+    },
+    "Modal": {
+      "close": "Cerrar"
     }
   },
   "Partials": {
@@ -1506,12 +1496,13 @@
     },
     "Validation": {
       "genericError": "Hay errores de validación",
-      "imageRequired": "La imagen es obligatoria",
-      "titleRequired": "El título es obligatorio",
-      "descriptionRequired": "La descripción es obligatoria",
-      "locationRequired": "La ubicación es obligatoria",
-      "invalidUrl": "URL inválida",
-      "invalidEmail": "Email inválido"
+      "imageRequired": "Añade una imagen",
+      "titleRequired": "Escribe un título",
+      "descriptionRequired": "Escribe una descripción",
+      "locationRequired": "Indica el lugar",
+      "invalidUrl": "Escribe un enlace válido, como ejemplo.com",
+      "invalidEmail": "Escribe un correo electrónico válido",
+      "townRequired": "Elige un municipio"
     },
     "EventStatus": {
       "past": "Evento finalizado",

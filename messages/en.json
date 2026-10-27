@@ -208,8 +208,7 @@
       "heading": "Edit your event",
       "subheading": "Update the details, location, or image of your event.",
       "backToEvent": "Back to event",
-      "myEvents": "My events",
-      "requiredNote": "* required fields"
+      "myEvents": "My events"
     },
     "PublishPage": {
       "metaTitle": "Publish your event for free in Catalonia | Cultural agenda - Esdeveniments.cat",
@@ -301,10 +300,10 @@
       "publishCta": {
         "signIn": "Sign in to publish",
         "completeProfile": "Complete profile to publish",
-        "resolving": "Checking your session..."
+        "resolving": "Checking your session…"
       },
-      "accountNotice": "You can prepare and preview the event without an account. Publishing requires a free account and a complete profile.",
-      "earlySignIn": "Sign in now",
+      "accountNotice": "Already have an account?",
+      "earlySignIn": "Sign in",
       "optionsFailed": "We could not load towns or categories. Please try again.",
       "draftOwnerChanged": "Your session changed. We kept the form but will not save it to another account. Copy anything you want to keep and reload the page.",
       "completeProfileGate": {
@@ -313,25 +312,17 @@
         "cta": "Complete profile"
       },
       "heading": "Publish your event in Catalonia",
-      "subheading": "Add your concert, exhibition, theatre, workshop or cultural activity to Catalonia's largest agenda. It's free!",
+      "subheading": "Add it to Catalonia's biggest cultural events listing. It's free.",
       "sponsorTitle": "Have a local business?",
       "sponsorLink": "See sponsorship options",
-      "benefits": {
-        "title": "Why publish on Esdeveniments.cat?",
-        "free": "100% free - no hidden costs",
-        "reach": "Reach thousands of people interested in culture",
-        "fast": "Quick publication in less than a minute",
-        "visibility": "Visibility on Google and social media"
-      },
-      "requiredNote": "* required fields",
-      "errorCreate": "Error creating the event. Please try again.",
-      "errorBodyLimit": "The total request size (image + data) exceeds the allowed limit of 10 MB. Please reduce the image size or remove unnecessary data.",
-      "errorGeneric": "There was an error publishing the event. Please try again.",
+      "errorCreate": "We couldn't create the event. Please try again.",
+      "errorBodyLimit": "The image and details exceed the 10 MB limit. Choose a smaller image.",
+      "errorGeneric": "We couldn't publish the event. Please try again.",
       "errorFormParsing": "The connection was interrupted while sending the form. Reload the page and try again.",
       "errorDuplicate": "This event already exists. If you think this is an error, please contact us.",
       "errorStaleSession": "Your session has expired. Sign in again to continue.",
       "submitLabel": "Publish",
-      "imageTooLarge": "The image exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
+      "imageTooLarge": "The image is over {limit} MB. Choose a smaller one.",
       "uploadSuccess": "Image uploaded successfully.",
       "uploadFailed": "We couldn't upload the image. Check your connection and try again.",
       "imageRequired": "Image is required.",
@@ -340,20 +331,19 @@
       "noEventsFound": "We couldn't find recent events for this area. Please try again later.",
       "restoreDraftTitle": "You have a saved draft",
       "draftChooseTitle": "Which draft do you want to continue?",
-      "draftChooseDescription": "The event you filled in before signing in is safe, but this account already had a draft. Continuing with the new draft will replace the account's previous draft.",
-      "draftUseGuest": "Continue with the new draft and replace the previous one",
-      "draftUseAccount": "Restore the account's previous draft",
+      "draftChooseDescription": "We kept the event you filled in before signing in, but this account already had a draft. If you continue with the new one, it replaces the old one.",
+      "draftUseGuest": "Continue with new",
+      "draftUseAccount": "Restore previous",
       "draftAccountTitle": "Previous account draft: {title}",
       "restoreDraftDescription": "Recover what you were writing or start fresh.",
       "restoreDraftApply": "Restore draft",
       "restoreDraftDiscard": "Discard",
       "draftHeading": "Local draft",
       "draftRestoreReplacesEdits": "Restoring the saved draft will replace your current form changes. First copy any text you want to keep.",
-      "draftDeviceOnlyNote": "This draft is saved only in this browser. It expires after seven days without changes and can be lost if browser data is cleared.",
-      "draftLoading": "Looking for a draft...",
-      "draftSaving": "Saving...",
+      "draftLoading": "Looking for a draft…",
+      "draftSaving": "Saving…",
       "draftSaved": "Saved on this device",
-      "draftDiscarding": "Discarding draft...",
+      "draftDiscarding": "Discarding draft…",
       "draftSaveFailed": "The browser could not complete the draft operation. Do not close this page. Check browser storage permissions and try again.",
       "draftStorageFull": "Storage is full, the draft exceeds the limit, or five drafts are already saved. Do not close this page. Free up space, reduce the text or image, or discard another draft, then try again.",
       "draftRecordInvalid": "The saved draft cannot be read. Try again or discard it to start fresh. Do not close this page if you have changes.",
@@ -361,12 +351,12 @@
       "draftReviewConflict": "Review saved draft",
       "draftResolveBeforePublish": "Review the saved draft and choose Restore or Discard before publishing.",
       "draftAutoPublishStopped": "We did not publish automatically. Check the form and press Publish to continue.",
-      "draftHandoffFailed": "We could not prepare your return to the form. You are still on this page. Try again or discard the draft before continuing.",
+      "draftHandoffFailed": "We couldn't continue. Try again or discard the draft.",
       "draftResumeFailed": "We could not restore the draft for this return. It may have expired, changed or belong to another account. Review any available draft or start again.",
-      "draftAuthNotice": "We will save the draft before continuing. Publishing will continue automatically after you sign in or create an account and complete your profile if needed.",
+      "draftAuthNotice": "We'll save your draft. Once you've signed in, we'll continue publishing.",
       "draftRetry": "Try again",
       "draftDiscardConfirm": "Discard this draft?",
-      "draftDiscardDescription": "The saved draft and this form's changes, including the image, will be deleted.",
+      "draftDiscardDescription": "The form and image will be deleted. This can't be undone.",
       "draftKeep": "Keep draft",
       "draftDateExpired": "Check the dates: this draft starts in the past. We have not changed them.",
       "draftCityUnavailable": "The saved town is no longer listed. Check and select it again. We have kept the original value.",
@@ -375,10 +365,10 @@
       "geoNotSupported": "Your browser does not allow location access.",
       "geoDenied": "We couldn't get your location. Please check permissions.",
       "promoteUpsell": {
-        "title": "Boost your event!",
-        "description": "Promote your event now to reach way more people and appear at the top of the platform.",
-        "promoteButton": "Promote Event",
-        "keepFreeButton": "Keep it free"
+        "title": "Boost your event",
+        "description": "Promote it to reach more people and appear near the top.",
+        "promoteButton": "Promote",
+        "keepFreeButton": "Not now"
       }
     },
     "PlaceFallback": {
@@ -872,18 +862,18 @@
       }
     },
     "ImageUploader": {
-      "label": "Image *",
-      "unsupported": "The selected file is not a supported image. Please upload a JPEG or PNG file.",
-      "originalTooLarge": "The image exceeds the maximum limit of {limit} MB. Reduce the image size before retrying.",
-      "tooLarge": "The image size exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
-      "compressFailed": "We couldn't reduce the image. Check your connection and try again.",
-      "optimizing": "Optimizing the image to meet the {limit} MB limit...",
+      "label": "Image",
+      "unsupported": "This file isn't supported. Choose a JPG or PNG image.",
+      "originalTooLarge": "The image is over {limit} MB. Choose a smaller one.",
+      "tooLarge": "We couldn't shrink the image below {limit} MB. Choose a smaller one.",
+      "compressFailed": "We couldn't shrink the image. Please try again.",
+      "optimizing": "Optimizing image…",
       "remove": "Remove image",
       "altPreview": "Image",
-      "uploadDropCta": "Drop your image here",
-      "uploadDropHelper": "or click to select",
-      "selectButton": "Select file",
-      "formatHelper": "Format: JPEG or PNG"
+      "uploadDropCta": "or drag it here",
+      "selectButton": "Choose image",
+      "formatHelper": "JPG or PNG",
+      "change": "Change"
     },
     "HeroCTA": {
       "buttonBase": "See events",
@@ -1027,14 +1017,12 @@
       "promoted": "Sponsored"
     },
     "EventForm": {
-      "title": "Title *",
+      "title": "Title",
       "url": "Event link",
-      "region": "County *",
+      "region": "County",
       "town": "Town",
-      "titleHint": "Example: Summer street festival",
-      "locationHint": "Add the exact spot: square, street or venue",
-      "urlHint": "Optional: official link or social post",
-      "imageHint": "JPG/PNG. A clear image helps people find it.",
+      "locationHint": "Square, street or venue",
+      "urlHint": "Event website or social media",
       "reviewTitle": "Before publishing",
       "reviewReady": "All set! Review and publish.",
       "reviewMissing": "Missing: {fields}",
@@ -1061,18 +1049,22 @@
       "previous": "Back",
       "next": "Next",
       "useLocation": "Use my location",
-      "locating": "Locating...",
+      "locating": "Locating…",
       "testLink": "Test link",
-      "regionPlaceholder": "Select a county",
-      "townPlaceholder": "Select a town",
-      "categoriesPlaceholder": "Select categories",
+      "regionPlaceholder": "Choose a county",
+      "townPlaceholder": "Choose a town",
+      "categoriesPlaceholder": "Choose categories",
       "categories": "Categories",
       "location": "Venue",
       "email": "Email",
       "emailSubtitle": "Do you want us to notify you when the event is updated? (we don't store the data)",
-      "publishing": "Publishing...",
-      "regionSkeleton": "County *",
-      "townSkeleton": "Town *"
+      "publishing": "Publishing…",
+      "regionSkeleton": "County",
+      "townSkeleton": "Town",
+      "optional": "(optional)",
+      "stepDone": "completed",
+      "stepCurrent": "current step",
+      "stepTodo": "not started"
     },
     "Layout": {
       "rss": "RSS",
@@ -1106,13 +1098,8 @@
       "loadingShort": "Loading..."
     },
     "TextArea": {
-      "label": "Description *",
-      "edit": "✏️ Edit",
-      "preview": "👁️ Preview",
-      "emptyPreview": "Write something to see the preview...",
-      "placeholder": "Describe your event...",
-      "helperPreview": "This is how visitors will see the description",
-      "helperEdit": "Press Enter for line breaks."
+      "label": "Description",
+      "placeholder": "Describe your event…"
     },
     "DateRangeCalendar": {
       "pickStart": "Pick the first day",
@@ -1122,7 +1109,7 @@
     "DatePicker": {
       "startTime": "Start time",
       "endTime": "End time",
-      "dateAndTime": "Date and time *",
+      "dateAndTime": "Date and time",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "All day (no end time)",
@@ -1220,6 +1207,9 @@
     },
     "PromotedEvents": {
       "title": "Featured events"
+    },
+    "Modal": {
+      "close": "Close"
     }
   },
   "Partials": {
@@ -1506,12 +1496,13 @@
     },
     "Validation": {
       "genericError": "There are validation errors",
-      "imageRequired": "Image is required",
-      "titleRequired": "Title is required",
-      "descriptionRequired": "Description is required",
-      "locationRequired": "Location is required",
-      "invalidUrl": "Invalid URL",
-      "invalidEmail": "Invalid email"
+      "imageRequired": "Add an image",
+      "titleRequired": "Enter a title",
+      "descriptionRequired": "Enter a description",
+      "locationRequired": "Enter the venue",
+      "invalidUrl": "Enter a valid link, like example.com",
+      "invalidEmail": "Enter a valid email address",
+      "townRequired": "Choose a town"
     },
     "EventStatus": {
       "past": "Event finished",
