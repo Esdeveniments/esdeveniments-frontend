@@ -294,7 +294,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             <Button
               variant="ghost"
               onClick={handleClearSearch}
-              className="absolute inset-y-0 right-12 flex items-center px-1.5 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
+              className="absolute inset-y-0 right-12 flex items-center px-1.5 text-muted-foreground hover:text-foreground transition-colors hover:bg-transparent"
               aria-label={t("clearSearch")}
             >
               <XIcon className="h-4 w-4" />
