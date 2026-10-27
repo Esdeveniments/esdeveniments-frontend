@@ -6,8 +6,10 @@ import { readSavedDraft, replaceDraftFence } from "./helpers/publish-draft";
 import type { PublishDraftRecord } from "types/publish-draft";
 import { PUBLISH_DRAFT_TTL_MS } from "@utils/constants";
 
-for (const choice of ["empty-account", "guest", "account", "untitled-account", "incomplete-profile", "expired-account", "corrupt-account", "invalid-fence", "competing-write"]) {
-  test.describe(`step-three sign-in with ${choice}`, () => {
+for (const scenario of ["empty-account", "guest", "account", "untitled-account", "incomplete-profile", "expired-account", "corrupt-account", "invalid-fence", "competing-write", "publish-guest", "publish-account", "publish-competing-write"]) {
+  const publishing = scenario.startsWith("publish-");
+  const choice = scenario.replace(/^publish-/, "");
+  test.describe(`step-three sign-in with ${scenario}`, () => {
     let creates = 0;
     let original: Awaited<ReturnType<typeof readSavedDraft>>;
     test.beforeEach(async ({ page }) => {
@@ -44,10 +46,12 @@ for (const choice of ["empty-account", "guest", "account", "untitled-account", "
         signedIn = true;
         return route.fulfill({ status: 302, headers: { location: "/en/publica?resume=1&auth_success=1" } });
       });
-      await page.route("**/en/publica", (route) => {
+      await page.route("**/en/publica**", async (route) => {
         if (route.request().method() !== "POST") return route.continue();
         creates++;
-        return route.abort();
+        expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(original);
+        return route.fulfill({ contentType: "text/x-component",
+          body: '0:{"a":{"success":true,"event":{"slug":"guest-choice-published"}},"f":[]}\n' });
       });
       await page.goto("/en/publica");
       await page.locator("#title").fill("New guest event");
@@ -83,7 +87,7 @@ for (const choice of ["empty-account", "guest", "account", "untitled-account", "
             const store = tx.objectStore("drafts");
             const read: IDBRequest<PublishDraftRecord> = store.get("guest");
             read.onsuccess = () => store.put({
-              ...read.result, owner: { kind: "account", accountId },
+              ...read.result, step: 0, owner: { kind: "account", accountId },
               form: { title: scenario === "untitled-account" ? "" : "Older account basics",
                 description: "Only step one from an earlier visit." }, image: null,
               updatedAt: scenario === "expired-account" ? Date.now() - ttl : read.result.updatedAt,
@@ -95,9 +99,12 @@ for (const choice of ["empty-account", "guest", "account", "untitled-account", "
         } finally { db.close(); }
       }, { accountId: MOCK_USER.id, scenario: choice, ttl: PUBLISH_DRAFT_TTL_MS });
     });
-    test("preserves every step and requires an explicit publication", async ({ page }, testInfo) => {
+    test("preserves every step and only continues the chosen guest's explicit publication", async ({ page }, testInfo) => {
       await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
-      await page.getByTestId("publish-button").click();
+      await Promise.all([
+        page.waitForURL(/resume=1/, { waitUntil: "commit" }),
+        page.getByTestId(publishing ? "publish-button" : "publish-early-sign-in").click(),
+      ]);
       if (choice !== "empty-account" && choice !== "expired-account" && choice !== "invalid-fence") {
         await expect(page.getByTestId("draft-restore-guest")).toBeVisible();
         if (choice !== "corrupt-account") {
@@ -124,21 +131,23 @@ for (const choice of ["empty-account", "guest", "account", "untitled-account", "
         await page.getByTestId("draft-restore-guest").click();
         await expect(page.getByTestId("publish-draft-panel").getByRole("alert")).toBeVisible();
         await expect(page.getByTestId("preview-modal")).not.toBeVisible();
+      } else if (publishing && choice === "guest") {
+        await page.getByTestId("draft-restore-guest").click();
+        await expect(page).toHaveURL(/\/en\/e\/guest-choice-published/);
+        expect(creates).toBe(1);
       } else if (choice !== "account" && choice !== "untitled-account") {
         if (choice !== "empty-account" && choice !== "expired-account") {
           await page.getByTestId("draft-restore-guest").click();
         }
-        await expect(page.getByTestId("preview-modal")).toBeVisible();
+        await expect(page.getByTestId("publish-button")).toBeVisible();
         if (choice === "incomplete-profile") {
-          await page.getByTestId("preview-modal-action-button").click();
-          await expect(page).toHaveURL(/\/en\/perfil\/edita/);
-          await page.locator("#displayName").fill("Test User");
-          await page.getByRole("button", { name: "Save changes", exact: true }).click();
+          await page.getByTestId("preview-button").click();
           await expect(page.getByTestId("preview-modal")).toBeVisible();
-          await expect(page.getByTestId("preview-modal-action-button")).toHaveText("Publish");
+          await page.getByTestId("preview-modal").getByLabel("Tanca").click();
         }
         expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(original);
-        await page.getByTestId("preview-modal").getByLabel("Tanca").click();
+        await page.getByTestId("prev-button").click();
+        await page.getByTestId("prev-button").click();
         await expect(page.locator("#title")).toHaveValue("New guest event");
         await page.getByTestId("next-button").click();
         await expect(page.getByTestId("town-select")).toContainText("Mataró");
@@ -158,7 +167,7 @@ for (const choice of ["empty-account", "guest", "account", "untitled-account", "
       await expect(page.getByTestId("draft-restore-guest")).not.toBeVisible();
       await expect(page).not.toHaveURL(/resume=1/);
       expect(await page.evaluate(() => sessionStorage.getItem("publish-resume-v1"))).toBeNull();
-      expect(creates).toBe(0);
+      expect(creates).toBe(publishing && choice === "guest" ? 1 : 0);
       await page.screenshot({ path: testInfo.outputPath(`restored-${choice}-draft.png`) });
     });
   });

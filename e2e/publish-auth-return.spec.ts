@@ -35,9 +35,10 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
     ] }],
   }));
   await page.route("**/api/categories", (route) => route.fulfill({ json: [] }));
-  await page.route("**/es/publica", (route) => {
+  await page.route("**/es/publica**", async (route) => {
     if (route.request().method() !== "POST") return route.continue();
     attempts++;
+    if (allowCreate) expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(originalDraft);
     return route.fulfill({
       contentType: "text/x-component",
       body: allowCreate ? '0:{"a":{"success":true,"event":{"slug":"guest-publish-fixture"}},"f":[]}\n'
@@ -75,7 +76,6 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
   await page.setInputFiles('input[type="file"]', path.join(process.cwd(), "public/static/icons/icon-192x192.png"));
   await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
   await expect(page.getByTestId("publish-button")).toBeEnabled();
-  const originalImage = await page.locator('main img[src^="data:image/"]').first().getAttribute("src");
   await page.getByTestId("preview-button").click();
   await expect(page.getByTestId("preview-modal")).toBeVisible();
   expect(attempts).toBe(0);
@@ -92,10 +92,10 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
   const originalDraft = await readSavedDraft(page);
   await page.goBack();
   const restoreAfterBack = page.locator('[data-testid="publish-draft-panel"] button.btn-primary');
-  await expect(page.locator("input#title:enabled").or(restoreAfterBack)).toBeVisible();
+  await expect(page.locator('[data-testid="publish-button"]:enabled').or(restoreAfterBack)).toBeVisible();
   if (await restoreAfterBack.isVisible()) await restoreAfterBack.click();
-  await expect(page.locator("input#title")).toBeEnabled();
-  await expect(page.locator("input#title")).toHaveValue("Cartell conservat després de l'accés");
+  await expect(page.getByTestId("publish-button")).toBeEnabled();
+  expect(await readSavedDraft(page)).toEqual(originalDraft);
   expect(attempts).toBe(beforeReturn);
   await page.screenshot({ path: testInfo.outputPath("auth-back-editor-unlocked.png") });
   await page.goForward();
@@ -121,68 +121,34 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
     expect(attempts).toBe(0);
     await page.screenshot({ path: testInfo.outputPath("hydration-edits-explicit-restore.png") });
     await pendingGuest.click();
-    await page.getByTestId("next-button").click();
-    await page.getByTestId("next-button").click();
-    await page.getByTestId("preview-button").click();
   }
-  await expect(page.getByTestId("preview-modal")).toBeVisible();
-  await page.getByTestId("preview-modal-action-button").click();
+  if (guest) {
+    await page.getByTestId("preview-button").click();
+    await expect(page.getByTestId("preview-modal")).toBeVisible();
+    const image = page.getByTestId("preview-modal").locator('img[src^="data:image/"]:visible').first();
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+    await page.getByTestId("preview-modal-action-button").click();
+  }
   await expect(page).toHaveURL(/\/es\/perfil\/edita/);
+  expect(attempts).toBe(beforeReturn);
+  allowCreate = true;
   await page.locator("#displayName").fill("Test User");
   await page.getByRole("button", { name: "Guardar cambios", exact: true }).click();
-  const modal = page.getByTestId("preview-modal");
-  await expect(modal).toBeVisible();
-  await expect(page).toHaveURL(/\/es\/publica/);
+  await expect(page).toHaveURL(/\/es\/e\/guest-publish-fixture/);
   expect(authReadsAfterProfile).toBeGreaterThan(0);
-  await expect(modal).toContainText("Cartell conservat després de l'accés");
-  const image = modal.locator('img[src^="data:image/"]:visible').first();
-  await expect(image).toBeVisible();
-  await expect(image).toHaveAttribute("src", originalImage!);
-  expect(await image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
-  expect(await readSavedDraft(page)).toEqual(originalDraft);
-  expect(attempts).toBe(beforeReturn);
+  expect(attempts).toBe(beforeReturn + 1);
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem("publish-resume-v1"))).toBeNull();
-  await expect(page.getByTestId("preview-modal-action-button")).toBeEnabled();
-  await page.screenshot({ path: testInfo.outputPath("auth-profile-return-preview.png") });
+  await page.screenshot({ path: testInfo.outputPath("auth-profile-return-published.png") });
   await testInfo.attach("auth-return-proof", { contentType: "application/json", body: JSON.stringify({
     hostedLogin: "fixture, not real Logto", fullDocumentNavigation: true, locale: "es",
     profileRefetched: true, createAttemptsBeforeHandoff: beforeReturn, createCallsOnReturn: attempts - beforeReturn,
     nativeIndexedDB: true, recoveredImageDecoded: true,
   }) });
-  await modal.getByLabel("Tanca").click();
-  await expect(page.locator("input#title")).toHaveValue("Cartell conservat després de l'accés");
-  await page.reload();
-  await expect(page.getByTestId("preview-modal")).not.toBeVisible();
-  await expect(page.getByTestId("draft-save-status")).not.toHaveText(/guardando/i);
-  expect(attempts).toBe(beforeReturn);
-  await page.locator('[data-testid="publish-draft-panel"] button.btn-primary').click();
-  await page.getByTestId("next-button").click();
-  await page.getByTestId("next-button").click();
-  await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
-  await page.getByTestId("publish-button").click();
-  await page.getByTestId("publish-resume-action").click();
-  await page.getByRole("link", { name: "Cancel login" }).click();
-  await expect(page).toHaveURL(/auth_error=fixture_cancelled/);
-  await page.goto("/es/publica");
-  await expect(page.getByTestId("preview-modal")).not.toBeVisible();
-  await page.locator('[data-testid="publish-draft-panel"] button.btn-primary').click();
-  await expect(page.locator("input#title")).toHaveValue("Cartell conservat després de l'accés");
+  await page.goBack();
+  await expect(page.locator("input#title")).toBeEnabled();
+  await expect(page.locator("input#title")).toHaveValue("");
+  await page.locator("input#title").fill("A fresh event after publication");
+  await expect(page.getByTestId("draft-save-status")).toHaveText("Guardado en este dispositivo");
   expect(attempts).toBe(beforeReturn + 1);
-  await page.screenshot({ path: testInfo.outputPath("cancelled-auth-manual-recovery.png") });
-  if (guest) {
-    allowCreate = true;
-    await page.getByTestId("next-button").click();
-    await page.getByTestId("next-button").click();
-    await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
-    await page.getByTestId("publish-button").click({ clickCount: 2 });
-    await expect(page).toHaveURL(/\/es\/e\/guest-publish-fixture/);
-    expect(attempts).toBe(beforeReturn + 2);
-    await page.goBack();
-    await expect(page.locator("input#title")).toBeEnabled();
-    await expect(page.locator("input#title")).toHaveValue("");
-    await page.locator("input#title").fill("A fresh event after publication");
-    await expect(page.getByTestId("draft-save-status")).toHaveText("Guardado en este dispositivo");
-    expect(attempts).toBe(beforeReturn + 2);
-  }
 });
 }

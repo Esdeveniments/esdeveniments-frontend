@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useState, useMemo, useTransition, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useTransition, useCallback, useRef, useEffect, useEffectEvent } from "react";
 import dynamic from "next/dynamic";
 import { getPathname, Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
@@ -39,7 +39,7 @@ import {
 
 import Modal from "@components/ui/common/modal";
 import { useAuth } from "@components/hooks/useAuth";
-import type { PublishResumeStage } from "types/publish-draft";
+import type { PublishResumeAction, PublishResumeIntent, PublishResumeStage } from "types/publish-draft";
 
 // Lazy load preview content (only shown in modal when user clicks preview)
 // Client component, so we can use dynamic directly with ssr: false
@@ -124,7 +124,12 @@ const PublishForm = () => {
   const { user, signIn, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [restoredDraft, setRestoredDraft] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
+  const [wizardStep, setWizardStep] = useState(0);
+  const [publishAfterReturn, setPublishAfterReturn] = useState<PublishResumeIntent | null>(null);
+  const [continuingPublication, setContinuingPublication] = useState(false);
   const resetEditor = useCallback(() => {
+    setWizardStep(0);
+    setPublishAfterReturn(null);
     submittedRef.current = false;
     formStartedRef.current = false;
     abandonFiredRef.current = false;
@@ -138,12 +143,14 @@ const PublishForm = () => {
     setRestoredDraft(false);
   }, [updateImagePreview]);
   const draft = usePublishDraft({
-    accountId: isAuthenticated ? user?.id : undefined, isAuthLoading, form, imageFile,
-    onRestore: (saved, resumed) => {
+    accountId: isAuthenticated ? user?.id : undefined, isAuthLoading, form, imageFile, step: wizardStep,
+    onRestore: (saved, resumed, intent) => {
       setError(null);
       setEditorVersion((version) => version + 1);
       setForm({ ...defaultForm, ...saved.form });
       setImageFile(saved.imageFile);
+      setWizardStep(saved.step ?? 0);
+      setPublishAfterReturn(intent?.action === "publish" ? intent : null);
       updateImagePreview(saved.imageFile);
       setRestoredDraft(true);
       submittedRef.current = false;
@@ -151,7 +158,7 @@ const PublishForm = () => {
         handoffStartedRef.current = handedOffRef.current = false;
         setHandingOff(false);
         setAuthStage(null);
-        setShowPreview(true);
+        setShowPreview(intent?.action === undefined);
       }
     },
     onReset: resetEditor,
@@ -236,6 +243,7 @@ const PublishForm = () => {
   );
 
   const trackFieldInteraction = useCallback((fieldName: string) => {
+    setPublishAfterReturn(null);
     markEdited();
     if (!formStartedRef.current) {
       formStartedRef.current = true;
@@ -249,6 +257,11 @@ const PublishForm = () => {
         source: "publica",
       });
     }
+  }, [markEdited]);
+  const handleStepChange = useCallback((step: number) => {
+    markEdited();
+    setPublishAfterReturn(null);
+    setWizardStep(step);
   }, [markEdited]);
 
   const handleFormChange = useCallback(<K extends keyof FormData>(
@@ -309,12 +322,12 @@ const PublishForm = () => {
     setShowPreview(true);
   };
 
-  const beginAuthReturn = async () => {
+  const beginAuthReturn = async (action: PublishResumeAction = "restore") => {
     if (!requiredAuthStage || isAuthLoading || draft.ownerChanged || imagePreparing || handoffStartedRef.current) return;
     const trigger = document.activeElement;
     handoffStartedRef.current = true;
     setHandingOff(true);
-    const result = await draft.prepareResume(requiredAuthStage);
+    const result = await draft.prepareResume(requiredAuthStage, action);
     if (!result.ok) {
       setError(t("draftHandoffFailed"));
       handoffStartedRef.current = false;
@@ -445,7 +458,7 @@ const PublishForm = () => {
       return;
     }
     if (draft.status === "loading" || draft.status === "discarding") return;
-    if (requiredAuthStage) { await beginAuthReturn(); return; }
+    if (requiredAuthStage) { await beginAuthReturn("publish"); return; }
     setError(null); // Clear any previous errors
 
     addBreadcrumb({
@@ -653,12 +666,39 @@ const PublishForm = () => {
   };
 
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
-  const isDraftLocked = handingOff || (draft.status === "loading" && !isAuthLoading) || draft.status === "discarding" ||
+  const isDraftLocked = handingOff || continuingPublication || (draft.status === "loading" && !isAuthLoading) || draft.status === "discarding" ||
     (draft.status === "decision" && !draft.dirty);
   const submitLabel = isAuthLoading ? t("publishCta.resolving")
     : requiredAuthStage === "login" ? t("publishCta.signIn")
       : requiredAuthStage === "profile" ? t("publishCta.completeProfile") : t("submitLabel");
   const isSubmitDisabled = isAuthLoading || draft.ownerChanged;
+  const continuePublication = useEffectEvent(async (intent: PublishResumeIntent) => {
+    setPublishAfterReturn(null);
+    const warnings = getPublishDraftWarnings(form, cityOptions, categoryOptions, true, true);
+    if (draft.ownerChanged || !isAuthenticated || draft.failure ||
+        isFormDisabled || !form.town || !form.region || !form.startDate || !form.endDate ||
+        isErrorRegionsWithCities || isErrorCategories || warnings.length > 0 ||
+        (intent.stage === "profile" && requiredAuthStage === "profile")) {
+      setError(t("draftResolveBeforePublish"));
+      return;
+    }
+    setContinuingPublication(true);
+    try {
+      const saved = await draft.claimPublication();
+      if (!saved?.ok) {
+        setError(t("draftResolveBeforePublish"));
+        return;
+      }
+      await onSubmit();
+    } finally {
+      setContinuingPublication(false);
+    }
+  });
+  useEffect(() => {
+    if (!publishAfterReturn || isAuthLoading || imagePreparing || isLoadingCities || isLoadingCategories ||
+        draft.status === "loading" || draft.status === "saving") return;
+    void continuePublication(publishAfterReturn);
+  }, [publishAfterReturn, isAuthLoading, imagePreparing, isLoadingCities, isLoadingCategories, draft.status]);
 
   return (
     <>
@@ -693,7 +733,7 @@ const PublishForm = () => {
             <div className="stack" role="status">
               <p className="body-normal text-foreground/80">{t("accountNotice")}</p>
               {requiredAuthStage === "login" && (
-                <button type="button" className="btn-outline" onClick={onSubmit}
+                <button type="button" className="btn-outline" onClick={() => { void beginAuthReturn(); }}
                   disabled={isAuthLoading || isDraftLocked || imagePreparing || isPending || draft.ownerChanged}
                   data-testid="publish-early-sign-in" data-analytics-action="publish_early_sign_in">
                   {t("earlySignIn")}
@@ -788,6 +828,8 @@ const PublishForm = () => {
           <div className="w-full flex flex-col gap-y-4 pt-4">
             <EventForm
               key={editorVersion}
+              initialStep={wizardStep}
+              onStepChange={handleStepChange}
               form={form}
               onSubmit={onSubmit}
               submitLabel={submitLabel}

@@ -52,6 +52,8 @@ export const EventForm: React.FC<EventFormProps> = ({
   canPreview,
   previewLabel,
   previewTestId,
+  initialStep = 0,
+  onStepChange,
 }) => {
   const t = useTranslations("Utils.Validation");
   const tForm = useTranslations("Components.EventForm");
@@ -61,7 +63,11 @@ export const EventForm: React.FC<EventFormProps> = ({
     () => true,
     () => false
   );
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
+  const changeStep = (next: number) => {
+    setStep(next);
+    onStepChange?.(next);
+  };
   const [isImagePreparing, setIsImagePreparing] = useState(false);
   // The last step whose publish button is armed; e2e waits on data-publish-armed.
   const [armedStep, setArmedStep] = useState<number | null>(null);
@@ -251,16 +257,16 @@ export const EventForm: React.FC<EventFormProps> = ({
       // but usually keeping it true is safer to show errors immediately. 
       // However, design pattern usually suggests showing errors only after interaction on that step?
       // For now, let's keep hasInteracted=true if we clicked next.
-      setStep((prev) => prev + 1);
+      changeStep(step + 1);
     }
   };
 
-  const goPrev = () => setStep((prev) => Math.max(0, prev - 1));
+  const goPrev = () => changeStep(Math.max(0, step - 1));
 
   const handleStepClick = (targetStep: number) => {
     // Only allow navigation to previous steps or current step
     if (targetStep <= step) {
-      setStep(targetStep);
+      changeStep(targetStep);
     }
   };
 

@@ -322,6 +322,8 @@ export interface EventFormProps {
   canPreview?: boolean;
   previewLabel?: string;
   previewTestId?: string;
+  initialStep?: number;
+  onStepChange?: (step: number) => void;
 }
 
 export type CoverImageIntent = "keep" | "replace" | "remove";

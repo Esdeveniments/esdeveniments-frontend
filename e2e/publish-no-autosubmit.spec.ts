@@ -173,6 +173,9 @@ test.describe("Publish wizard should not auto publish", () => {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByRole("button", { name: "Recupera esborrany" })).toBeVisible();
     await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await expect(page.getByTestId("publish-button")).toBeVisible();
+    await page.getByTestId("prev-button").click();
+    await page.getByTestId("prev-button").click();
     await expect(page.locator("input#title")).not.toHaveValue("");
     expect(attempts).toBe(1);
   });

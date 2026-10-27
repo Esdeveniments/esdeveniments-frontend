@@ -12,6 +12,7 @@ export type PublishDraftRevision = string | null;
 export type PublishResumeIntent = z.infer<typeof PublishResumeIntentSchema>;
 export type PublishDraftRecord = z.infer<typeof PublishDraftRecordSchema>;
 export type PublishResumeStage = PublishResumeIntent["stage"];
+export type PublishResumeAction = NonNullable<PublishResumeIntent["action"]>;
 export type PublishResumeReadResult =
   | { ok: true; intent: PublishResumeIntent }
   | { ok: false; reason: "missing" | "invalid" | "unavailable" };
@@ -19,6 +20,7 @@ export type PublishResumeReadResult =
 export interface PublishDraftInput {
   form: PublishDraftForm;
   imageFile: File | null;
+  step?: number;
 }
 
 export interface PublishDraft extends PublishDraftInput {
@@ -88,7 +90,8 @@ export interface UsePublishDraftOptions {
   isAuthLoading?: boolean;
   form: FormData;
   imageFile: File | null;
-  onRestore: (draft: PublishDraft, resumed?: boolean) => void;
+  step?: number;
+  onRestore: (draft: PublishDraft, resumed?: boolean, intent?: PublishResumeIntent) => void;
   onReset: () => void;
 }
 

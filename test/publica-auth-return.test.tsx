@@ -2,7 +2,7 @@ import { Activity, StrictMode } from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventFormProps } from "types/event";
-import type { PublishDraftOwner } from "types/publish-draft";
+import type { PublishDraftOwner, PublishResumeAction } from "types/publish-draft";
 import { PUBLISH_RESUME_STORAGE_KEY } from "@utils/constants";
 import * as publishResume from "@utils/publish-draft-resume";
 import Publica from "@app/[locale]/publica/page";
@@ -26,7 +26,8 @@ vi.mock("@i18n/routing", () => ({
   getPathname: ({ href, locale }: { href: string; locale: string }) => locale === "ca" ? href : `/${locale}${href}`,
 }));
 vi.mock("@components/hooks/useGetRegionsWithCities", () => ({
-  useGetRegionsWithCities: () => ({ regionsWithCities: [], isLoading: false, isError: mocks.optionsFailed, mutate: mocks.retryOptions }),
+  useGetRegionsWithCities: () => ({ regionsWithCities: [{ id: 2, name: "Region", cities: [{ id: 1, value: "town", label: "Town" }] }],
+    isLoading: false, isError: mocks.optionsFailed, mutate: mocks.retryOptions }),
 }));
 vi.mock("@components/hooks/useCategories", () => ({
   useCategories: () => ({ categories: [], isLoading: false, isError: mocks.optionsFailed, refetch: mocks.retryOptions }),
@@ -36,10 +37,13 @@ vi.mock("@sentry/nextjs", () => ({ addBreadcrumb: vi.fn(), captureException: vi.
 vi.mock("@app/[locale]/publica/actions", () => ({ createEventAction: mocks.create }));
 vi.mock("next/dynamic", () => ({ default: () => () => <div>preview-content</div> }));
 vi.mock("@components/ui/EventForm", () => ({
-  default: ({ form, imageFile, imageToUpload, handleFormChange, handleImageChange, onSubmit, onImagePreparingChange, submitLabel, isSubmitDisabled, onPreview }: EventFormProps) => (
+  default: ({ form, imageFile, imageToUpload, handleFormChange, handleImageChange, onSubmit, onImagePreparingChange, submitLabel, isSubmitDisabled, onPreview, initialStep, onStepChange }: EventFormProps) => (
     <div>
       <input aria-label="title" value={form.title} onChange={(e) => handleFormChange("title", e.target.value)} />
       <output data-testid="image">{imageFile?.name}</output>
+      <output data-testid="step">{initialStep}</output>
+      <button onClick={() => onStepChange?.(1)}>step-two</button>
+      <button onClick={() => onStepChange?.(2)}>step-three</button>
       <output data-testid="preview-image">{imageToUpload}</output>
       <button onClick={() => handleImageChange(new File(["image"], "poster.png", { type: "image/png" }))}>image</button>
       <button onClick={() => onImagePreparingChange?.(true)}>prepare-image</button>
@@ -60,10 +64,12 @@ vi.mock("@components/ui/EventForm", () => ({
 }));
 const revision = "00000000-0000-4000-8000-000000000001";
 const saved = { form: { title: "Preserved" }, imageFile: new File(["image"], "poster.png", { type: "image/png" }), updatedAt: 1 };
-function setReturn(owner: string | PublishDraftOwner = "a", expectedRevision = revision) {
+const completeSaved = { ...saved, step: 2, form: { ...saved.form, description: "Description", location: "Park",
+  town: { value: "1", label: "Town" }, region: { value: "2", label: "Region" } } };
+function setReturn(owner: string | PublishDraftOwner = "a", expectedRevision = revision, action?: PublishResumeAction) {
   sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({
     version: 1, owner: typeof owner === "string" ? { kind: "account", accountId: owner } : owner,
-    revision: expectedRevision, stage: "login", createdAt: Date.now(),
+    revision: expectedRevision, stage: "login", createdAt: Date.now(), ...(action ? { action } : {}),
   }));
   window.history.replaceState(null, "", "/es/publica?resume=1&auth_success=1");
 }
@@ -118,7 +124,7 @@ describe("publish auth handoff", () => {
     expect(mocks.create).toHaveBeenCalledTimes(2);
   });
 
-  it("consumes a fresh profile intent when a cached editor reactivates after login", async () => {
+  it("consumes a fresh profile publish intent and continues once when a cached editor reactivates", async () => {
     mocks.user.profileCompleted = false;
     mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
     setReturn();
@@ -134,9 +140,9 @@ describe("publish auth handoff", () => {
     view.rerender(<Activity mode="visible"><Publica /></Activity>);
     await waitFor(() => expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull());
     expect(screen.queryByText("draftResumeFailed")).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByTestId("preview-modal-action-button")).toBeEnabled());
-    expect(screen.getByTestId("preview-modal-action-button")).toHaveTextContent("submitLabel");
-    expect(mocks.create).not.toHaveBeenCalled();
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
+    expect(screen.getByLabelText("title")).toHaveValue("Preserved");
+    expect(screen.queryByTestId("preview-modal")).not.toBeInTheDocument();
   });
 
   it("uses shared conflict guidance on repeated auth actions", async () => {
@@ -157,7 +163,7 @@ describe("publish auth handoff", () => {
     expect(JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!)).toMatchObject({ revision, owner: { accountId: "a" } });
     expect(mocks.create).toHaveBeenCalledTimes(1);
     expect(mocks.save).toHaveBeenCalledWith({ kind: "account", accountId: "a" },
-      { form: expect.objectContaining({ title: "Latest" }), imageFile: expect.any(File) }, null);
+      { form: expect.objectContaining({ title: "Latest" }), imageFile: expect.any(File), step: 0 }, null);
   });
 
   it.each(["retry", "discard"])("blocks failed navigation until explicit %s", async (action) => {
@@ -199,7 +205,7 @@ describe("publish auth handoff", () => {
     mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: saved });
     await act(async () => { finish({ ok: true, revision }); });
     expect(mocks.save).toHaveBeenCalledWith({ kind: "account", accountId: "a" },
-      { form: expect.objectContaining({ title: "Latest" }), imageFile: expect.any(File) }, null);
+      { form: expect.objectContaining({ title: "Latest" }), imageFile: expect.any(File), step: 0 }, null);
     expect(mocks.push).toHaveBeenCalledWith("/perfil/edita?redirect=%2Fpublica%3Fresume%3D1");
     expect(mocks.signIn).not.toHaveBeenCalled();
     expect(mocks.create).toHaveBeenCalledTimes(1);
@@ -220,6 +226,80 @@ describe("publish auth handoff", () => {
 });
 
 describe("one-shot publish return", () => {
+  it.each(["publish", "restore"] as const)("returns to the saved step with %s intent and only continues an explicit publication", async (action) => {
+    setReturn("a", revision, action);
+    mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: completeSaved });
+    const view = render(<StrictMode><Publica /></StrictMode>);
+    await waitFor(() => expect(screen.getByTestId("step")).toHaveTextContent("2"));
+    if (action === "publish") await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1));
+    else expect(mocks.create).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("title")).toHaveValue("Preserved");
+    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull();
+    view.unmount();
+    render(<Publica />);
+    await screen.findByText("restoreDraftApply");
+    expect(mocks.create).toHaveBeenCalledTimes(action === "publish" ? 1 : 0);
+  });
+
+  it.each(["invalid", "stale", "options", "profile", "missing-image", "past-date", "unknown-city", "unknown-category"])("does not automatically create after a %s return", async (scenario) => {
+    setReturn("a", revision, "publish");
+    if (scenario === "profile") {
+      const intent = JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!);
+      sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({ ...intent, stage: "profile" }));
+      mocks.user.profileCompleted = false;
+    }
+    mocks.optionsFailed = scenario === "options";
+    mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: {
+      ...completeSaved, imageFile: scenario === "missing-image" ? null : completeSaved.imageFile,
+      form: { ...completeSaved.form, description: scenario === "invalid" ? "" : "Description",
+        ...(scenario === "past-date" ? { startDate: "2000-01-01T10:00" } : {}),
+        ...(scenario === "unknown-city" ? { town: { value: "999", label: "Unknown" } } : {}),
+        ...(scenario === "unknown-category" ? { categories: [{ value: "999", label: "Unknown" }] } : {}),
+      },
+    } });
+    if (scenario === "stale") mocks.save.mockResolvedValue({ ok: false, reason: "stale" });
+    render(<Publica />);
+    await screen.findByText("draftResolveBeforePublish");
+    expect(screen.getByTestId("step")).toHaveTextContent("2");
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it("does not repeat an automatic create after an uncertain network failure or a rerender", async () => {
+    setReturn("a", revision, "publish");
+    mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: completeSaved });
+    mocks.create.mockRejectedValue(new Error("network disconnected"));
+    const view = render(<StrictMode><Publica /></StrictMode>);
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
+    await screen.findByText("errorGeneric");
+    view.rerender(<StrictMode><Publica /></StrictMode>);
+    expect(mocks.create).toHaveBeenCalledOnce();
+    expect(mocks.discard).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)).toBeNull();
+    expect(screen.getByTestId("step")).toHaveTextContent("2");
+  });
+
+  it("carries an explicit publish intent through the required profile completion", async () => {
+    setReturn("a", revision, "publish");
+    mocks.user.profileCompleted = false;
+    mocks.load.mockResolvedValue({ ok: true, status: "found", revision, draft: completeSaved });
+    render(<Publica />);
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/perfil/edita?redirect=%2Fpublica%3Fresume%3D1"));
+    expect(JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!)).toMatchObject({ stage: "profile", action: "publish" });
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it.each([1, 2])("saves step %s during early sign-in without a publish intent", async (step) => {
+    mocks.authenticated = false;
+    render(<Publica />);
+    await waitFor(() => expect(screen.getByLabelText("title")).toBeEnabled());
+    fireEvent.click(screen.getByText(step === 1 ? "step-two" : "step-three"));
+    await act(async () => { fireEvent.click(screen.getByTestId("publish-early-sign-in")); });
+    expect(mocks.save).toHaveBeenCalledWith({ kind: "guest" }, expect.objectContaining({ step }), null);
+    expect(JSON.parse(sessionStorage.getItem(PUBLISH_RESUME_STORAGE_KEY)!)).toMatchObject({ action: "restore" });
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
   it("keeps the explicit metadata repair action available and clears the unusable return intent", async () => {
     setReturn({ kind: "guest" });
     vi.spyOn(publishResume, "preparePublishDraftResume").mockResolvedValue({ ok: false, reason: "version", revision: null });
@@ -394,7 +474,7 @@ describe("one-shot publish return", () => {
       mocks.loading = false;
       render(<Publica />);
       await waitFor(() => expect(mocks.save).toHaveBeenCalledWith({ kind: "account", accountId: "a" },
-        { form: expect.objectContaining({ title: "Before resolution" }), imageFile: expect.any(File) }, null));
+        { form: expect.objectContaining({ title: "Before resolution" }), imageFile: expect.any(File), step: 0 }, null));
       expect(screen.getByLabelText("title")).toHaveValue("Before resolution");
       expect(screen.getByTestId("image")).toHaveTextContent("poster.png");
       expect(mocks.create).not.toHaveBeenCalled();
@@ -448,7 +528,7 @@ describe("one-shot publish return", () => {
       fireEvent.change(screen.getByLabelText("title"), { target: { value: "Incomplete guest" } });
       await act(async () => { fireEvent.click(screen.getByTestId("publish-early-sign-in")); });
       expect(mocks.save).toHaveBeenCalledWith({ kind: "guest" },
-        { form: expect.objectContaining({ title: "Incomplete guest" }), imageFile: null }, null);
+        { form: expect.objectContaining({ title: "Incomplete guest" }), imageFile: null, step: 0 }, null);
       expect(mocks.signIn).toHaveBeenCalledWith(`${locale === "ca" ? "" : `/${locale}`}/publica?resume=1`);
       act(() => { window.dispatchEvent(new Event("beforeunload")); });
       expect(mocks.track.mock.calls.some(([name]) => name === "publish_submit_attempt" || name === "publish_success" || name === "publish_form_abandon")).toBe(false);
@@ -481,7 +561,7 @@ describe("one-shot publish return", () => {
       fireEvent.change(screen.getByLabelText("title"), { target: { value: "Guest edits" } });
       fireEvent.click(screen.getByText("valid-fields"));
       await waitFor(() => expect(mocks.save).toHaveBeenCalledWith({ kind: "guest" },
-        { form: expect.objectContaining({ title: "Guest edits" }), imageFile: expect.any(File) }, null));
+        { form: expect.objectContaining({ title: "Guest edits" }), imageFile: expect.any(File), step: 0 }, null));
       mocks.authenticated = true;
       view.rerender(<Publica />);
       expect(screen.getByLabelText("title")).toHaveValue("Guest edits");

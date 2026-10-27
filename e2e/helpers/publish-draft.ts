@@ -20,8 +20,8 @@ export async function readSavedDraft(page: Page, accountId?: string, draftKey?: 
       if (expectedAccount && (records[0].owner.kind !== "account" || records[0].owner.accountId !== expectedAccount)) {
         throw new Error("Expected the poster draft to transfer to the authenticated account");
       }
-      const { form, image } = records[0];
-      return { form, image: { ...image, bytes: Array.from(new Uint8Array(image.bytes)) } };
+      const { form, image, step } = records[0];
+      return { form, step, image: { ...image, bytes: Array.from(new Uint8Array(image.bytes)) } };
     } finally { db.close(); }
   }, { expectedAccount: accountId, dbName: PUBLISH_DRAFT_DB_NAME, draftKey });
 }

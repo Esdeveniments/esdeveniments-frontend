@@ -41,6 +41,7 @@ export const PublishResumeIntentSchema = z.object({
   owner: PublishDraftOwnerSchema,
   revision: z.string().uuid(),
   stage: z.enum(["login", "profile"]),
+  action: z.enum(["restore", "publish"]).optional(),
   createdAt: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
 }).strict();
 
@@ -55,6 +56,7 @@ export const PublishDraftRecordSchema = z.object({
   revision: z.string().uuid(),
   updatedAt: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   form: PublishDraftFormSchema,
+  step: z.number().int().min(0).max(2).optional(),
   image: z
     .object({
       bytes: z.instanceof(ArrayBuffer),

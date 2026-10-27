@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { initialPublishDraftState, PublishDraftSession } from "@utils/publish-draft-session";
 import { savePublishResumeIntent, takePublishResumeIntent } from "@utils/publish-draft-resume";
 import type {
-  PublishDraft, PublishDraftFlushResult, PublishDraftInput, PublishDraftSessionState, PublishResumeStage, UsePublishDraftOptions,
+  PublishDraft, PublishDraftFlushResult, PublishDraftInput, PublishDraftSessionState, PublishResumeAction, PublishResumeStage, UsePublishDraftOptions,
 } from "types/publish-draft";
 
 // Auth may still be unresolved when this route unmounts. Do not guess an owner.
@@ -17,12 +17,12 @@ const warnPendingHydration = (event: BeforeUnloadEvent) => {
 };
 
 export function usePublishDraft({
-  accountId, isAuthLoading = false, form, imageFile, onRestore, onReset,
+  accountId, isAuthLoading = false, form, imageFile, step, onRestore, onReset,
 }: UsePublishDraftOptions) {
   const [state, setState] = useState(initialPublishDraftState);
   const session = useRef<PublishDraftSession | null>(null);
   const edited = useRef(false);
-  const latestInput = useRef({ form, imageFile });
+  const latestInput = useRef({ form, imageFile, step });
   const [restoringBuffer, setRestoringBuffer] = useState(() => pendingHydrationDraft !== null);
   const completed = useRef(false);
   const ownerKey = useRef<string | null>(null);
@@ -34,14 +34,15 @@ export function usePublishDraft({
   const resetCallback = useRef(onReset);
   useEffect(() => { restoreCallback.current = onRestore; resetCallback.current = onReset; }, [onRestore, onReset]);
 
-  useEffect(() => { latestInput.current = { form, imageFile }; }, [form, imageFile]);
+  useEffect(() => { latestInput.current = { form, imageFile, step }; }, [form, imageFile, step]);
   useEffect(() => {
     if (!pendingHydrationDraft) return;
     const buffered = pendingHydrationDraft;
     pendingHydrationDraft = null;
     window.removeEventListener("beforeunload", warnPendingHydration);
     edited.current = true;
-    if (buffered.form !== latestInput.current.form || buffered.imageFile !== latestInput.current.imageFile) {
+    if (buffered.form !== latestInput.current.form || buffered.imageFile !== latestInput.current.imageFile ||
+        buffered.step !== latestInput.current.step) {
       restoreCallback.current({ ...buffered, updatedAt: Date.now() });
     }
     setRestoringBuffer(false);
@@ -89,7 +90,9 @@ export function usePublishDraft({
       resumeRequest.current = null;
       if (result?.matchesResume) {
         setResumeFailed(false);
-        if (result.resumed && result.status === "found") restoreCallback.current(result.draft, true);
+        if (result.resumed && result.status === "found") {
+          restoreCallback.current(result.draft, true, request?.ok ? request.intent : undefined);
+        }
       } else if (request?.ok || request?.reason !== "missing") {
         setResumeFailed(true);
       }
@@ -105,8 +108,8 @@ export function usePublishDraft({
   useEffect(() => {
     if (!edited.current || completed.current || !session.current) return;
     edited.current = false;
-    session.current?.edit({ form, imageFile });
-  }, [form, imageFile, accountId, isAuthLoading, restoringBuffer]);
+    session.current?.edit({ form, imageFile, step });
+  }, [form, imageFile, step, accountId, isAuthLoading, restoringBuffer]);
 
   const hasUnsavedEdits = state.dirty || edited.current;
   useEffect(() => {
@@ -131,11 +134,12 @@ export function usePublishDraft({
   };
   const finishGuestReturn = (current: PublishDraftSession | null, draft: PublishDraft | null = null) => {
     if (!current || current !== session.current) return;
+    const intent = resumeRequest.current?.ok ? resumeRequest.current.intent : undefined;
     if (!current.state.guestConflict) clearGuestReturn();
     if (draft) {
       edited.current = false;
       setResumeFailed(false);
-      onRestore(draft, true);
+      onRestore(draft, true, intent);
     }
   };
   const restoreGuest = async () => {
@@ -156,7 +160,7 @@ export function usePublishDraft({
   const flush = async (): Promise<PublishDraftFlushResult> => {
     if (edited.current) {
       edited.current = false;
-      session.current?.edit({ form, imageFile });
+      session.current?.edit({ form, imageFile, step });
     }
     return session.current?.flush() ?? { ok: false, reason: "unavailable" };
   };
@@ -165,7 +169,7 @@ export function usePublishDraft({
     edited.current = false;
     return session.current?.discard() ?? { ok: false, reason: "unavailable" };
   };
-  const prepareResume = async (stage: PublishResumeStage): Promise<PublishDraftFlushResult> => {
+  const prepareResume = async (stage: PublishResumeStage, action: PublishResumeAction = "restore"): Promise<PublishDraftFlushResult> => {
     const current = session.current;
     const result = await flush();
     if (!current || current !== session.current) return { ok: false, reason: "stale" };
@@ -176,11 +180,12 @@ export function usePublishDraft({
     if (!confirmed.ok) return confirmed;
     return savePublishResumeIntent({
       version: 1, owner: accountId ? { kind: "account", accountId } : { kind: "guest" },
-      revision: confirmed.revision, stage, createdAt: Date.now(),
+      revision: confirmed.revision, stage, action, createdAt: Date.now(),
     });
   };
   const ownerState: PublishDraftSessionState = !ownerChanged ? state : {
     ...initialPublishDraftState, status: "error", dirty: state.dirty, failure: { ok: false, reason: "unavailable" },
   };
-  return { ...ownerState, markEdited, restore, restoreGuest, discard, flush, complete, prepareResume, resumeFailed, ownerChanged, retry };
+  return { ...ownerState, markEdited, restore, restoreGuest, discard, flush, complete, prepareResume, resumeFailed, ownerChanged, retry,
+    claimPublication: () => session.current?.claimPublication() };
 }

@@ -11,6 +11,17 @@ the user chooses one. Replacing the account draft must check the saved revision
 again. Browser checks need both slots populated, a full login navigation and
 assertions on the restored controls as well as the stored bytes.
 
+## Auth return must preserve the user's publish choice and wizard step
+
+Saving the fields and poster does not save the wizard position. Store the step
+in the same snapshot and restore it when the editor remounts. Early sign-in and
+ordinary Restore must not publish. Only an explicit Publish click records a
+one-use publish intent, tied to the exact draft revision. Claim that revision
+atomically before continuing, since two tabs can copy the same sessionStorage
+intent. Consume the intent before creation and do not retry an uncertain network
+response automatically; backend idempotency is still needed for exactly-once
+creation.
+
 ## The edit form holds one local datetime per field
 
 `eventDtoToFormData` used to put the stored `startTime` and `endTime` next to a

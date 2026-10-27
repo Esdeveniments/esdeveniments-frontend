@@ -159,6 +159,22 @@ export class PublishDraftSession {
     return failure;
   }
 
+  async claimPublication(): Promise<PublishDraftWriteResult> {
+    const { generation, version } = this;
+    const confirmed = await this.confirmSaved();
+    if (!confirmed.ok) return confirmed;
+    if (!this.input || this.state.dirty || this.state.pendingDraft || this.state.guestConflict) {
+      return { ok: false, reason: "stale" };
+    }
+    const claimed = await savePublishDraft(this.owner, this.input, confirmed.revision);
+    if (claimed.ok) this.revision = claimed.revision;
+    if (!this.active || generation !== this.generation || version !== this.version) {
+      return { ok: false, reason: "stale" };
+    }
+    if (!claimed.ok) this.update({ status: "error", failure: claimed });
+    return claimed;
+  }
+
   discard() {
     ++this.generation;
     clearTimeout(this.timer);

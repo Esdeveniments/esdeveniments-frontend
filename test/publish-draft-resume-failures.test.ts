@@ -11,6 +11,19 @@ beforeEach(resetDraftStorage);
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("guest return recovery failures", () => {
+  it("allows only one copied account return to claim publication and retains the exact saved snapshot", async () => {
+    const revision = await seedDraft(accountA, { title: "Account event" });
+    const first = new PublishDraftSession(accountA, vi.fn());
+    const second = new PublishDraftSession(accountA, vi.fn());
+    try {
+      const intent = { ...resumeIntent(revision), action: "publish" as const };
+      await Promise.all([first.load(intent), second.load(intent)]);
+      const results = await Promise.all([first.claimPublication(), second.claimPublication()]);
+      expect(results.filter((result) => result.ok)).toHaveLength(1);
+      expect(results.filter((result) => !result.ok && result.reason === "stale")).toHaveLength(1);
+      expect(await storage.loadPublishDraft(accountA)).toMatchObject({ status: "found", draft: { form: { title: "Account event" } } });
+    } finally { first.dispose(); second.dispose(); }
+  });
   it.each(["version", "corrupt", "missing"])("offers explicit metadata repair after a %s fence, without losing the guest", async (kind) => {
     await seedDraft(accountA, { title: "Older account basics" });
     const revision = await seedDraft();
