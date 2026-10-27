@@ -208,14 +208,14 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
         <h1 className="heading-1 text-white drop-shadow-lg flex flex-wrap items-center justify-center gap-2">
           <span>{t("titlePrefix")}</span>
           <div className="relative inline-block">
-            <Button
-              variant="ghost"
+            <button
+              type="button"
               onClick={() => {
                 setLocalPlaceValue(place === "catalunya" ? "" : place);
                 setHasOpenedModal(true);
                 setIsModalOpen(true);
               }}
-              className="flex flex-wrap items-center justify-center gap-2 text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all hover:bg-transparent px-0 py-0 rounded-none"
+              className="flex flex-wrap items-center justify-center gap-2 font-semibold uppercase tracking-wide text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
               aria-expanded={isModalOpen}
             >
               {displayLabel}
@@ -223,7 +223,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                 className={`h-8 w-8 transition-transform duration-200 ${isModalOpen ? "rotate-180" : ""
                   }`}
               />
-            </Button>
+            </button>
 
             {/* Mounted on first open, then kept for the close animation. While
                 closed, the ssr:false Modal's bailout sat inside the hero <h1>

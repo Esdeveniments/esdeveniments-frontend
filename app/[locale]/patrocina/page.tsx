@@ -94,7 +94,7 @@ export default async function PatrocinaPage() {
           </p>
           <a
             href="#pricing"
-            className="btn-primary inline-block"
+            className="btn-primary"
           >
             {t("hero.cta")}
           </a>
@@ -210,7 +210,7 @@ export default async function PatrocinaPage() {
           </p>
           <a
             href="mailto:hola@esdeveniments.cat"
-            className="btn-primary inline-block"
+            className="btn-primary"
           >
             {t("contact.cta")}
           </a>

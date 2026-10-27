@@ -65,7 +65,7 @@ export default async function NewsCard({
                   </span>
                 )}
               </div>
-              <span className="btn-primary text-xs sm:text-sm inline-block w-fit">
+              <span className="btn-primary btn-sm sm:text-sm w-fit">
                 {t("readMore")}
               </span>
             </div>

@@ -168,7 +168,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 ) : (
                   <ActiveLink
                     href="/iniciar-sessio"
-                    className="btn-outline label font-semibold whitespace-nowrap"
+                    className="btn-outline text-xs whitespace-nowrap"
                     data-testid="desktop-login-link"
                     data-analytics-action="navbar_login_desktop"
                   >

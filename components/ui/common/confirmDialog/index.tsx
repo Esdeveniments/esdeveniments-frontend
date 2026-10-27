@@ -67,11 +67,11 @@ export default function ConfirmDialog({
               {error}
             </p>
           )}
-          {/* Stacked on mobile (action on top), side by side from sm with the action on the right. */}
-          <div className="flex flex-col gap-2 pt-2 sm:flex-row-reverse">
+          {/* Always stacked, action on top: the panel is narrow and labels can be long. */}
+          <div className="flex flex-col gap-2 pt-2">
             <button
               type="button"
-              className="btn-primary w-full sm:w-auto"
+              className="btn-primary w-full"
               onClick={handleConfirm}
               disabled={busy}
               data-testid={testId ? `${testId}-action-button` : undefined}
@@ -81,7 +81,7 @@ export default function ConfirmDialog({
             <button
               ref={cancelRef}
               type="button"
-              className="btn-ghost w-full sm:w-auto"
+              className="btn-ghost w-full"
               onClick={() => setOpen(false)}
               disabled={busy}
             >

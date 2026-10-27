@@ -67,7 +67,7 @@ export default function HeroCTA() {
         type="button"
         variant="primary"
         onClick={handleSearch}
-        className="text-base sm:text-lg leading-tight sm:leading-snug px-6 py-3 sm:px-8 sm:py-4 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 w-full max-w-[20rem] sm:max-w-xl text-center gap-2 sm:gap-3"
+        className="text-base sm:text-lg leading-tight sm:leading-snug px-6 py-2.5 sm:px-8 sm:py-3.5 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 w-full max-w-[20rem] sm:max-w-xl text-center gap-2 sm:gap-3"
       >
         <SearchIcon className="w-5 h-5 flex-shrink-0" />
         <span className="whitespace-normal break-words leading-snug sm:leading-normal">
