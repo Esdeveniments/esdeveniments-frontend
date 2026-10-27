@@ -363,7 +363,7 @@
       "draftAutoPublishStopped": "No hem publicat l'esdeveniment automàticament. Revisa el formulari i prem Publica per continuar.",
       "draftHandoffFailed": "No hem pogut preparar el retorn al formulari. No hem sortit d'aquesta pàgina. Torna-ho a provar o descarta l'esborrany abans de continuar.",
       "draftResumeFailed": "No hem pogut recuperar l'esborrany d'aquest retorn. Pot haver caducat, canviat o pertànyer a un altre compte. Pots revisar l'esborrany disponible o començar de nou.",
-      "draftAuthNotice": "Desarem l'esborrany abans de continuar. La publicació continuarà automàticament després d'iniciar sessió i completar el perfil, si cal.",
+      "draftAuthNotice": "Desarem l'esborrany abans de continuar. La publicació continuarà automàticament després d'iniciar sessió o crear un compte i completar el perfil, si cal.",
       "draftRetry": "Torna-ho a provar",
       "draftDiscardConfirm": "Vols descartar l'esborrany?",
       "draftDiscardDescription": "S'eliminaran l'esborrany desat i els canvis d'aquest formulari, inclosa la imatge.",

@@ -363,7 +363,7 @@
       "draftAutoPublishStopped": "No hemos publicado el evento automáticamente. Revisa el formulario y pulsa Publicar para continuar.",
       "draftHandoffFailed": "No hemos podido preparar el regreso al formulario. No hemos salido de esta página. Vuelve a intentarlo o descarta el borrador antes de continuar.",
       "draftResumeFailed": "No hemos podido recuperar el borrador de este regreso. Puede haber caducado, cambiado o pertenecer a otra cuenta. Puedes revisar el borrador disponible o empezar de nuevo.",
-      "draftAuthNotice": "Guardaremos el borrador antes de continuar. La publicación continuará automáticamente después de iniciar sesión y completar el perfil, si es necesario.",
+      "draftAuthNotice": "Guardaremos el borrador antes de continuar. La publicación continuará automáticamente después de iniciar sesión o crear una cuenta y completar el perfil, si es necesario.",
       "draftRetry": "Volver a intentarlo",
       "draftDiscardConfirm": "¿Descartar el borrador?",
       "draftDiscardDescription": "Se eliminarán el borrador guardado y los cambios de este formulario, incluida la imagen.",
