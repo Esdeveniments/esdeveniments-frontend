@@ -285,7 +285,7 @@ Adding a new filter:
 
    - ✅ Use: `text-foreground`, `text-foreground-strong`, `text-muted-foreground` (secondary text), `bg-background`, `bg-muted`, `border-border` (decorative), `border-input` (form controls), `text-primary-foreground`
    - ❌ Forbidden: `text-gray-*`, `bg-gray-*`, `border-gray-*`
-   - ❌ Forbidden: `text-foreground/75` or lighter, `text-foreground-strong/50` or lighter (below WCAG AA; ESLint blocks them). Use `opacity-50` for disabled states.
+   - ❌ Forbidden: `text-foreground/75` or lighter, `text-foreground-strong/54` or lighter (below WCAG AA; ESLint blocks them). Use `opacity-50` for disabled states.
    - ❌ Forbidden: `text-error`, `text-warning`, `text-success` (fail AA). Use the `-dark` variants for status text and icons.
    - Reference: Brand colors defined in `tailwind.config.js`
 

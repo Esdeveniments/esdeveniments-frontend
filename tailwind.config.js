@@ -70,7 +70,7 @@ module.exports = {
         "foreground-strong": "rgb(0 0 0 / <alpha-value>)",
         // The only secondary text gray. Neutral to match foreground; 5.74:1 on
         // white, 5.36:1 on muted (WCAG AA with margin). Don't use
-        // text-foreground/70 or lighter for text: ESLint blocks it.
+        // text-foreground/75 or lighter for text: ESLint blocks it.
         "muted-foreground": "#666666",
         muted: "#F7F7F7",
         border: "#CCCCCC", // Decorative: cards, dividers, popovers

@@ -790,7 +790,7 @@ Opacity modifier note: the `/NN` suffix (e.g., `text-foreground/80`, `bg-border/
 
 - Use `text-primary-foreground` on `bg-primary`; use `text-error-foreground` on `bg-error` (verify contrast on small text).
 - Prefer `text-foreground` on `bg-muted` and `bg-background`.
-- For secondary text, use `text-muted-foreground` (5.74:1). `text-foreground/70` and lighter fail AA and are blocked by ESLint.
+- For secondary text, use `text-muted-foreground` (5.74:1). `text-foreground/75` and lighter fail AA and are blocked by ESLint.
 - Form control outlines use `border-input` (3.36:1, WCAG 1.4.11). `border-border` is for decorative card borders and dividers only.
 - Interactive states should keep a minimum AA contrast ratio; when unsure, test tokens quickly with a contrast checker.
 - Avoid mixing generic `gray-*` for text; use `foreground` and `muted-foreground` for hierarchy.

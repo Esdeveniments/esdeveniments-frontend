@@ -604,7 +604,7 @@ boundaries). There are only two text grays: `foreground` and
 `muted-foreground` (`foreground/80` is an older equivalent). Lighter alphas
 fail AA (`foreground/75` is 4.49:1 on muted, `/70` 4.12:1 on white), so
 ESLint blocks `text-foreground/75` and lighter, and
-`text-foreground-strong/50` and lighter. Disabled states use `opacity-50`, which WCAG exempts. Status text
+`text-foreground-strong/54` and lighter. Disabled states use `opacity-50`, which WCAG exempts. Status text
 and status icons on light surfaces use the `-dark` variants (error-dark
 6.47:1, warning-dark 5.02:1, success-dark 5.48:1). The base status colors
 (2.15–3.76:1) are for fills and borders only, and ESLint blocks them as text.
