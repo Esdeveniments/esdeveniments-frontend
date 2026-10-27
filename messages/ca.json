@@ -1626,7 +1626,7 @@
         "outlook": "Outlook",
         "other": "Altres"
       },
-      "ariaAdd": "Add to {name}"
+      "ariaAdd": "Afegeix a {name}"
     },
     "LocationHelpers": {
       "newsAll": "Notícies de Catalunya",

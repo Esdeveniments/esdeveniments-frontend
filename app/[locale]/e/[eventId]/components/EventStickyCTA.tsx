@@ -16,6 +16,8 @@ import { useTranslations } from "next-intl";
  * Returns the real FavoriteButton element on the page.
  * We look for the button with aria-label matching the favorite labels.
  */
+const STICKY_BUTTON = "flex-1 gap-1 px-1.5 text-xs whitespace-nowrap";
+
 function findFavoriteButton(): HTMLButtonElement | null {
   return document.querySelector<HTMLButtonElement>(
     "[data-favorite-button]"
@@ -140,7 +142,7 @@ export default function EventStickyCTA({
               target="_blank"
               rel="noreferrer"
               onClick={handleMoreInfo}
-              className="btn-primary flex-1 gap-1 px-1.5 text-xs"
+              className={`btn-primary ${STICKY_BUTTON}`}
               data-analytics-link-type="sticky_cta_more_info"
             >
               <ArrowTopRightOnSquareIcon className="w-4 h-4" />
@@ -151,21 +153,20 @@ export default function EventStickyCTA({
           {/* Add to calendar - scrolls to calendar section */}
           <button
             onClick={handleCalendar}
-            className="btn-outline flex-1 gap-1 px-1.5 text-xs"
+            className={`btn-outline ${STICKY_BUTTON}`}
             aria-label={labels.calendar}
           >
             <CalendarIcon className="w-4 h-4" />
             <span>{labels.calendar}</span>
           </button>
 
-          {/* Save / Favorite — uses custom styling instead of btn-outline
-              to avoid the hover:bg-primary fill that sticks on mobile touch */}
+          {/* Save / Favorite — hover fill is disabled because it sticks after a tap */}
           <button
             onClick={handleSave}
-            className={`inline-flex items-center justify-center gap-1 min-h-button rounded-button px-1.5 border-2 label font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+            className={`${STICKY_BUTTON} ${
               isFavorite
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-primary text-primary bg-transparent"
+                ? "btn-primary hover:bg-primary"
+                : "btn-outline hover:bg-transparent hover:text-primary"
             }`}
             aria-label={isFavorite ? labels.favoriteRemove : labels.favoriteAdd}
             aria-pressed={isFavorite}

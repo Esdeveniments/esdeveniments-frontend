@@ -19,7 +19,7 @@ export default function EventPromoteAction({
   return (
     <Link
       href={`/e/${slug}/promote`}
-      className="inline-flex items-center gap-2 btn-outline btn-sm"
+      className="btn-outline"
       data-testid="event-promote-link"
     >
       <MegaphoneIcon className="w-4 h-4" aria-hidden="true" />

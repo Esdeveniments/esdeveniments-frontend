@@ -1,6 +1,8 @@
 import type { ClassNamesConfig, GroupBase } from "react-select";
 import type { Option } from "types/common";
 
+const MESSAGE_CLASS = "px-3 py-2 body-small text-muted-foreground";
+
 /** Design-system classes for react-select (used with `unstyled`). */
 export function getSelectClassNames<IsMulti extends boolean>(
   hasError = false
@@ -34,8 +36,8 @@ export function getSelectClassNames<IsMulti extends boolean>(
       `px-3 py-2 text-base cursor-pointer ${
         isSelected ? "font-semibold text-primary" : "text-foreground"
       } ${isFocused ? "bg-muted" : ""}`,
-    noOptionsMessage: () => "px-3 py-2 body-small text-muted-foreground",
-    loadingMessage: () => "px-3 py-2 body-small text-muted-foreground",
+    noOptionsMessage: () => MESSAGE_CLASS,
+    loadingMessage: () => MESSAGE_CLASS,
     multiValue: () => "items-center gap-1 rounded-badge bg-muted pl-2.5 pr-1 py-0.5",
     multiValueLabel: () => "body-small text-foreground",
     multiValueRemove: () =>

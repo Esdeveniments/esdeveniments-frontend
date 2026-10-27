@@ -134,7 +134,7 @@ module.exports = {
       // === MIN HEIGHT === //
       minHeight: {
         button: "var(--button-height)", // 40px mouse, 44px touch (pointer: coarse)
-        "button-sm": "2.25rem", // 36px - Compact button (.btn-sm)
+        "button-sm": "var(--button-sm-height)", // 36px mouse, 44px touch (.btn-sm)
       },
 
       // === BORDER RADIUS === //
@@ -266,20 +266,25 @@ module.exports = {
   /* BUTTONS */
   /* ===================================== */
 
+  /* Shared shape for every btn-* variant; variants add only colours. */
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-transparent bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply btn-base border-transparent bg-primary text-primary-foreground hover:bg-primary-dark focus-visible:ring-primary;
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply btn-base border-border text-foreground hover:bg-muted focus-visible:ring-foreground;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply btn-base border-primary text-primary hover:bg-primary hover:text-primary-foreground focus-visible:ring-primary;
   }
 
   .btn-muted {
-    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-transparent bg-muted text-foreground hover:bg-border/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply btn-base border-transparent bg-muted text-foreground hover:bg-border/40 focus-visible:ring-foreground;
   }
 
   .btn-category {
@@ -287,7 +292,7 @@ module.exports = {
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-transparent bg-transparent text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply btn-base border-transparent bg-transparent text-foreground hover:bg-muted focus-visible:ring-foreground;
   }
 
   /* Compact size for secondary actions in dense rows. Combine with a variant. */

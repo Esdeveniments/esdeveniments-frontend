@@ -90,12 +90,13 @@ Use semantic button classes:
 | `.btn-outline` | Tertiary actions     |
 | `.btn-muted`   | Low-emphasis actions |
 | `.btn-ghost`   | Quiet actions, no border until hover |
-| `.btn-sm`      | Size modifier (36px, 12px label). Combine with a variant for dense rows |
+| `.btn-sm`      | Size modifier (36px, 12px label; 44px on touch). Combine with a variant for dense rows, not for a page's main actions |
 
-Every variant has the same box: 14px uppercase label, 2px border (transparent on
+Every variant `@apply`s the shared `.btn-base` (in `styles/globals.css`) and
+adds only colours, so a new variant must do the same. The shared box: 14px uppercase label, 2px border (transparent on
 filled variants) and one minimum height (`min-h-button`): 40px with a mouse,
 44px on touch screens via `--button-height` and `pointer: coarse`.
-`min-h-button-sm` is 36px. Use `h-button w-button` for icon-only buttons. Do not add
+`min-h-button-sm` is 36px (44px on touch). Use `h-button w-button` for icon-only buttons. Do not add
 `min-h-[44px]`, `py-*` or `text-*` overrides to resize a button. Use `.btn-sm`
 for compact actions. Don't override `display` (`inline-block`/`block`), because
 it breaks vertical centering. In narrow dialogs, stack the actions full width

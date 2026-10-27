@@ -144,7 +144,7 @@ module.exports = {
       },
       minHeight: {
         button: "var(--button-height)", // 40px mouse, 44px touch (WCAG 2.5.5)
-        "button-sm": "2.25rem", // 36px - Compact button (.btn-sm)
+        "button-sm": "var(--button-sm-height)", // 36px mouse, 44px touch (.btn-sm)
       },
 
       // === BORDER RADIUS === //
