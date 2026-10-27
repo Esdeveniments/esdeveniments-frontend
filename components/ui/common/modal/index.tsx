@@ -75,7 +75,7 @@ export default function Modal({
                         ref={cancelButtonRef}
                         variant="ghost"
                         onClick={() => setOpen(false)}
-                        className="absolute right-0 p-2.5 rounded-full"
+                        className="absolute right-0 p-2 rounded-full"
                         aria-label={t("close")}
                       >
                         <XMarkIcon className="h-6 w-6" aria-hidden="true" />

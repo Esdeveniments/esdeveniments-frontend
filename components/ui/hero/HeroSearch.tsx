@@ -294,7 +294,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             <Button
               variant="ghost"
               onClick={handleClearSearch}
-              className="absolute inset-y-0 right-12 flex items-center px-2 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
+              className="absolute inset-y-0 right-12 flex items-center px-1.5 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
               aria-label={t("clearSearch")}
             >
               <XIcon className="h-4 w-4" />
@@ -303,7 +303,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           <Button
             variant="primary"
             onClick={handleSearchSubmit}
-            className="absolute inset-y-1 right-1 px-4 flex items-center justify-center rounded-full"
+            className="absolute inset-y-1 right-1 min-h-0 px-3.5 flex items-center justify-center rounded-full"
             data-testid="search-button"
             aria-label={t("search")}
           >
