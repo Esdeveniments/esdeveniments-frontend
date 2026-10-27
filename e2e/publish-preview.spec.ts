@@ -138,6 +138,9 @@ test.describe("Publish - Preview", () => {
     await expect(page.getByRole("button", { name: "Recupera esborrany" })).toBeVisible();
     await expect(page.locator("input#title")).toHaveValue("");
     await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await expect(page.getByTestId("publish-button")).toBeVisible();
+    await page.getByTestId("prev-button").click();
+    await page.getByTestId("prev-button").click();
     await expect(page.locator("input#title")).toHaveValue(title);
     await expect(page.locator("textarea#description")).toHaveValue(desc);
     await page.fill("input#title", `${title} recuperat`);
@@ -161,6 +164,8 @@ test.describe("Publish - Preview", () => {
     await mockAuthenticatedUser(other);
     await other.goto("/publica");
     await other.getByRole("button", { name: "Recupera esborrany" }).click();
+    await other.getByTestId("prev-button").click();
+    await other.getByTestId("prev-button").click();
     await other.locator("input#title").fill("Newer stored draft");
     await expect(other.getByTestId("draft-save-status")).toHaveText("Desat en aquest dispositiu");
     await page.getByTestId("prev-button").click();

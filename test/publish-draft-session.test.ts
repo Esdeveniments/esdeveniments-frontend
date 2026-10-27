@@ -24,6 +24,42 @@ beforeEach(() => {
 afterEach(() => { session.dispose(); vi.useRealTimers(); });
 
 describe("create-only draft autosave session", () => {
+  it.each(["edit", "discard", "dispose"])("rejects a publication claim after %s while its revision check is pending", async (change) => {
+    storage.load.mockResolvedValue({ ok: true, status: "found", revision: "r0", draft: saved });
+    await session.load();
+    session.restore();
+    let resolve!: (result: PublishDraftLoadResult) => void;
+    storage.load.mockReturnValueOnce(new Promise<PublishDraftLoadResult>((done) => { resolve = done; }));
+    const claiming = session.claimPublication();
+    if (change === "edit") session.edit(input);
+    else if (change === "discard") await session.discard();
+    else session.dispose();
+    resolve({ ok: true, status: "found", revision: "r0", draft: saved });
+    expect(await claiming).toEqual({ ok: false, reason: "stale" });
+    expect(storage.save).not.toHaveBeenCalled();
+  });
+
+  it.each(["edit", "dispose"])("does not allow creation after %s while a publication claim is committing", async (change) => {
+    storage.load.mockResolvedValue({ ok: true, status: "found", revision: "r0", draft: saved });
+    await session.load();
+    session.restore();
+    let resolve!: (result: PublishDraftWriteResult) => void;
+    storage.save.mockReturnValueOnce(new Promise<PublishDraftWriteResult>((done) => { resolve = done; }));
+    const claiming = session.claimPublication();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(storage.save).toHaveBeenCalledOnce();
+    if (change === "edit") session.edit(input);
+    else session.dispose();
+    resolve({ ok: true, revision: "claimed" });
+    expect(await claiming).toEqual({ ok: false, reason: "stale" });
+    if (change === "edit") {
+      await session.flush();
+      expect(storage.save).toHaveBeenLastCalledWith(owner, input, "claimed");
+      expect(session.state.dirty).toBe(false);
+    }
+  });
+
   it("keeps edits made during resume lookup for an explicit restore decision", async () => {
     const revision = "00000000-0000-4000-8000-000000000001";
     let resolve!: (result: PublishDraftLoadResult) => void;

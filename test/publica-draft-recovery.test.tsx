@@ -108,7 +108,7 @@ describe("publish draft recovery UI", () => {
     await act(async () => { view.unmount(); });
     expect(mocks.save).toHaveBeenCalledWith(
       { kind: "account", accountId: "a" },
-      { form: expect.objectContaining({ title: "Leaving now" }), imageFile: null }, "r0",
+      { form: expect.objectContaining({ title: "Leaving now" }), imageFile: null, step: 0 }, "r0",
     );
   });
 
@@ -154,7 +154,7 @@ describe("publish draft recovery UI", () => {
     await act(async () => { fireEvent.click(screen.getByText("draftRetry")); });
     expect(mocks.save).toHaveBeenLastCalledWith(
       { kind: "account", accountId: "a" },
-      { form: expect.objectContaining({ title: "Still editing" }), imageFile: null }, "r0",
+      { form: expect.objectContaining({ title: "Still editing" }), imageFile: null, step: 0 }, "r0",
     );
     expect(screen.getByText("draftSaved")).toBeInTheDocument();
   });

@@ -21,6 +21,12 @@ beforeEach(async () => {
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("tab-local publish return intent", () => {
+  it.each(["restore", "publish"] as const)("round-trips an explicit %s action only once", (action) => {
+    const saved = { ...intent(), action };
+    expect(savePublishResumeIntent(saved)).toMatchObject({ ok: true });
+    expect(takePublishResumeIntent()).toEqual({ ok: true, intent: saved });
+    expect(takePublishResumeIntent()).toEqual({ ok: false, reason: "missing" });
+  });
   it("round-trips once without form data, credentials or URL destinations", () => {
     const saved = intent();
     expect(savePublishResumeIntent(saved)).toMatchObject({ ok: true });
@@ -29,10 +35,11 @@ describe("tab-local publish return intent", () => {
     expect(takePublishResumeIntent()).toEqual({ ok: false, reason: "missing" });
   });
 
-  it.each(["json", "version", "revision", "extra", "expired", "future"])("rejects %s intent once", (field) => {
+  it.each(["json", "version", "revision", "action", "extra", "expired", "future"])("rejects %s intent once", (field) => {
     const saved = intent();
     const raw = field === "version" ? { ...saved, version: 2 }
       : field === "revision" ? { ...saved, revision: null }
+      : field === "action" ? { ...saved, action: "retry-until-published" }
       : field === "extra" ? { ...saved, accessToken: "not-accepted" }
       : field === "expired" ? { ...saved, createdAt: Date.now() - PUBLISH_RESUME_TTL_MS }
       : field === "future" ? { ...saved, createdAt: Date.now() + 600_000 } : saved;

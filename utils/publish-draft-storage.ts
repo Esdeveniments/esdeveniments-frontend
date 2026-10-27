@@ -64,6 +64,7 @@ export async function loadPublishDraft(
         revision,
         draft: {
           form: record.form,
+          ...(record.step !== undefined ? { step: record.step } : {}),
           updatedAt: record.updatedAt,
           imageFile: image
             ? new File([image.bytes], image.name, {
@@ -114,6 +115,7 @@ export async function savePublishDraft(
       revision: crypto.randomUUID(),
       updatedAt: Date.now(),
       form: form.data,
+      ...(input.step !== undefined ? { step: input.step } : {}),
       image,
     });
     if (!record.success) return { ok: false, reason: "invalid-input" };

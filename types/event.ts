@@ -292,6 +292,9 @@ export interface EventLocationProps {
   compact?: boolean;
 }
 
+export const EventFormStepSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
+export type EventFormStep = z.infer<typeof EventFormStepSchema>;
+
 export interface EventFormProps {
   form: FormData;
   onSubmit: (e: React.FormEvent) => Promise<void> | void;
@@ -322,6 +325,8 @@ export interface EventFormProps {
   canPreview?: boolean;
   previewLabel?: string;
   previewTestId?: string;
+  initialStep?: EventFormStep;
+  onStepChange?: (step: EventFormStep) => void;
 }
 
 export type CoverImageIntent = "keep" | "replace" | "remove";

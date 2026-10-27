@@ -78,6 +78,20 @@ export async function publishTestEvent(
     beforePublish?: (page: Page) => Promise<void>;
   } = {},
 ): Promise<string> {
+  await prepareTestEvent(page, title, options);
+  await options.beforePublish?.(page);
+  await clickArmedPublish(page);
+  await page.waitForURL((url) => /\/e\/[^/]+$/.test(url.pathname), { timeout: 60_000 });
+  const slugMatch = page.url().match(/\/e\/([^/?#]+)/);
+  if (!slugMatch) throw new Error(`Expected an event detail URL, got ${page.url()}`);
+  return slugMatch[1];
+}
+
+export async function prepareTestEvent(
+  page: Page,
+  title: string,
+  options: NonNullable<Parameters<typeof publishTestEvent>[2]> = {},
+) {
   await page.goto("/en/publica", {
     waitUntil: "domcontentloaded",
     timeout: 60_000,
@@ -128,19 +142,6 @@ export async function publishTestEvent(
   );
 
   await pickEventWhen(page, options.when);
-  await options.beforePublish?.(page);
-
-  await clickArmedPublish(page);
-
-  await page.waitForURL((url) => !url.pathname.includes("/publica"), {
-    timeout: 60_000,
-  });
-
-  const currentUrl = page.url();
-  const slugMatch = currentUrl.match(/\/e\/([^/?#]+)/);
-  expect(slugMatch, `expected to land on /e/{slug}, got: ${currentUrl}`).not.toBeNull();
-  if (!slugMatch) throw new Error("unreachable: slug match guard");
-  return slugMatch[1];
 }
 
 /**

@@ -11,6 +11,25 @@ beforeEach(resetDraftStorage);
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("guest return recovery failures", () => {
+  it("allows only one copied account return to claim publication and retains the exact saved snapshot", async () => {
+    const revision = savedRevision(await storage.savePublishDraft(accountA, {
+      form: { title: "Account event", location: "Theatre" }, step: 2,
+      imageFile: new File([new Uint8Array([1, 2, 3])], "poster.png", { type: "image/png", lastModified: 123 }),
+    }, loadedRevision(await storage.loadPublishDraft(accountA))));
+    const before = PublishDraftRecordSchema.parse(await rawDraft("account:account-a"));
+    const first = new PublishDraftSession(accountA, vi.fn());
+    const second = new PublishDraftSession(accountA, vi.fn());
+    try {
+      const intent = { ...resumeIntent(revision), action: "publish" as const };
+      await Promise.all([first.load(intent), second.load(intent)]);
+      const results = await Promise.all([first.claimPublication(), second.claimPublication()]);
+      expect(results.filter((result) => result.ok)).toHaveLength(1);
+      expect(results.filter((result) => !result.ok && result.reason === "stale")).toHaveLength(1);
+      const after = PublishDraftRecordSchema.parse(await rawDraft("account:account-a"));
+      expect(after).toEqual({ ...before, revision: after.revision, updatedAt: after.updatedAt });
+      expect(after.revision).not.toBe(revision);
+    } finally { first.dispose(); second.dispose(); }
+  });
   it.each(["version", "corrupt", "missing"])("offers explicit metadata repair after a %s fence, without losing the guest", async (kind) => {
     await seedDraft(accountA, { title: "Older account basics" });
     const revision = await seedDraft();
