@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidEventUrl, normalizeUrl } from "@utils/string-helpers";
+import { isValidEventUrl, normalizeUrl } from "@utils/event-url";
 
 describe("normalizeUrl", () => {
   it("should add https:// to URLs without protocol", () => {
@@ -78,7 +78,7 @@ describe("isValidEventUrl", () => {
     (url) => expect(isValidEventUrl(url)).toBe(true),
   );
 
-  it.each(["hola", "ja", "https://x", "@insta", "127.0.0.1", "mailto:a@b.com", "https://exemple .cat", "ftp://exemple.cat", "javascript:alert(1)"])(
+  it.each(["hola", "ja", "https://x", "@insta", "127.0.0.1", "mailto:a@b.com", "https://exemple .cat", "ftp://exemple.cat", "javascript:alert(1)", "https://user:pass@exemple.cat", "https://.com", "foo..com", "-x.com"])(
     "rejects %s",
     (url) => expect(isValidEventUrl(url)).toBe(false),
   );

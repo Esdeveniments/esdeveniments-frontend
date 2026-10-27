@@ -439,7 +439,7 @@ p {
   }
 
   .input-error {
-    @apply border-error focus-visible:ring-error focus-visible:border-error;
+    @apply border-error hover:border-error focus-visible:ring-error focus-visible:border-error;
   }
 
   .input-disabled {

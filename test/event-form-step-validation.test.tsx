@@ -1,13 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import type { FormData } from "types/event";
+import type { EventFormStep, FormData } from "types/event";
 
 vi.mock("@components/ui/common/form", async () => ({
   Input: (await import("@components/ui/common/form/input")).default,
   TextArea: (await import("@components/ui/common/form/textarea")).default,
   ImageUpload: () => null, Select: () => null, MultiSelect: () => null, DatePicker: () => null,
 }));
+const sendGoogleEvent = vi.hoisted(() => vi.fn());
+vi.mock("@utils/analytics", () => ({ sendGoogleEvent }));
 import EventForm from "@components/ui/EventForm";
 
 const empty: FormData = {
@@ -15,10 +17,11 @@ const empty: FormData = {
   location: "", town: null, region: null, categories: [], url: "",
 };
 
-function Harness({ initial }: { initial: FormData }) {
+function Harness({ initial, initialStep = 0 }: { initial: FormData; initialStep?: EventFormStep }) {
   const [form, setForm] = useState(initial);
   return (
     <EventForm form={form} onSubmit={vi.fn()} submitLabel="Publica" cityOptions={[]} categoryOptions={[]}
+      analyticsContext="publica" initialStep={initialStep}
       handleFormChange={(name, value) => setForm((prev) => ({ ...prev, [name]: value }))}
       handleImageChange={vi.fn()} handleTownChange={vi.fn()} handleCategoriesChange={vi.fn()} imageToUpload={null} />
   );
@@ -56,5 +59,23 @@ describe("EventForm step validation", () => {
     fireEvent.click(screen.getByTestId("next-button"));
 
     expect(screen.getByText("Pas 2 de 3")).toBeInTheDocument();
+  });
+
+  it("sends a restored draft back to the first step with a missing field", () => {
+    vi.useFakeTimers();
+    try {
+      render(<Harness initial={{ ...empty, description: "Una descripció" }} initialStep={2} />);
+      act(() => { vi.advanceTimersByTime(300); });
+
+      fireEvent.click(screen.getByTestId("publish-button"));
+
+      expect(screen.getByText("Pas 1 de 3")).toBeInTheDocument();
+      expect(screen.getByText("Escriu un títol")).toBeInTheDocument();
+      expect(document.activeElement).toBe(document.getElementById("title"));
+      expect(sendGoogleEvent).toHaveBeenCalledWith("publish_submit_blocked",
+        expect.objectContaining({ reason: "client_validation", source: "publica" }));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isValidEventUrl } from "@utils/string-helpers";
+import { isValidEventUrl } from "@utils/event-url";
 import type {
   RegionSummaryResponseDTO,
   EventDetailResponseDTO,

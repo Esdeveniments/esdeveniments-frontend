@@ -4,6 +4,7 @@ import React, {
   useState,
   useMemo,
   useEffect,
+  useRef,
   useSyncExternalStore,
 } from "react";
 import { setHours, setMinutes, setSeconds } from "date-fns";
@@ -22,7 +23,9 @@ import type { EventFormProps } from "types/event";
 import { EventFormStepSchema } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
-import { isValidEventUrl } from "@utils/string-helpers";
+import { isValidEventUrl } from "@utils/event-url";
+import { sendGoogleEvent } from "@utils/analytics";
+import { buildPublishContext } from "@utils/publica-analytics";
 import { useTranslations } from "next-intl";
 
 const subscribeNoop = () => () => {};
@@ -83,6 +86,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   // Errors appear only after the user tries to leave a step (GOV.UK pattern),
   // then update live so they disappear as soon as the field is fixed.
   const [attemptedSteps, setAttemptedSteps] = useState<ReadonlySet<number>>(() => new Set());
+  const pendingFocusStepRef = useRef<number | null>(null);
   const steps = ["stepBasics", "stepLocation", "stepImage"];
   const helperLocation = tForm.has("locationHint") ? tForm("locationHint") : "";
   const helperUrl = tForm.has("urlHint") ? tForm("urlHint") : "";
@@ -179,6 +183,21 @@ export const EventForm: React.FC<EventFormProps> = ({
       onSubmit(e);
       return;
     }
+    if (analyticsContext === "publica") {
+      sendGoogleEvent("publish_submit_blocked", {
+        ...buildPublishContext({ form, imageFile: imageFile ?? null }),
+        source: "publica",
+        reason: "client_validation",
+      });
+    }
+    // A restored draft can reach the last step with earlier fields empty: send the user there.
+    const firstInvalidStep = STEP_FIELDS.findIndex((fields) => fields.some((field) => fieldErrors[field]));
+    if (firstInvalidStep !== -1 && firstInvalidStep < step) {
+      markAttempted(firstInvalidStep);
+      pendingFocusStepRef.current = firstInvalidStep;
+      changeStep(firstInvalidStep);
+      return;
+    }
     markAttempted(step);
   };
 
@@ -221,6 +240,13 @@ export const EventForm: React.FC<EventFormProps> = ({
       ? tForm("reviewMissing", { count: lastStepMissing.length, fields: lastStepMissing.join(", ") })
       : getZodValidationState(form, false, imageFile, isEditMode, validationLabels, zodLabels).message
     : "";
+
+  useEffect(() => {
+    if (pendingFocusStepRef.current !== step) return;
+    pendingFocusStepRef.current = null;
+    const invalid = STEP_FIELDS[step]?.find((field) => fieldErrors[field]);
+    if (invalid) document.getElementById(FIELD_FOCUS_IDS[invalid])?.focus();
+  });
 
   const goNext = () => {
     const invalid = STEP_FIELDS[step]?.filter((field) => fieldErrors[field]) ?? [];

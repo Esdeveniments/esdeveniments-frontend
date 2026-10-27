@@ -114,7 +114,7 @@ typography:
     lineHeight: "1.25"
     letterSpacing: "0"
   form-label:
-    fontSize: "18px"
+    fontSize: "16px"
     fontWeight: 600
     lineHeight: "1.4"
     letterSpacing: "0"

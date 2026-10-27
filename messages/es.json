@@ -354,6 +354,7 @@
       "draftHandoffFailed": "No hemos podido continuar. Inténtalo de nuevo o descarta el borrador.",
       "draftResumeFailed": "No hemos podido recuperar el borrador de este regreso. Puede haber caducado, cambiado o pertenecer a otra cuenta. Puedes revisar el borrador disponible o empezar de nuevo.",
       "draftAuthNotice": "Guardaremos el borrador. Cuando hayas iniciado sesión, continuaremos con la publicación.",
+      "draftProfileNotice": "Guardaremos el borrador. Cuando hayas completado el perfil, continuaremos con la publicación.",
       "draftRetry": "Volver a intentarlo",
       "draftDiscardConfirm": "¿Descartar el borrador?",
       "draftDiscardDescription": "Se borrarán el formulario y la imagen. No se puede deshacer.",

@@ -6,10 +6,10 @@ import {
   truncateString,
   normalizeForSearch,
   matchSearchToPlace,
-  normalizeUrl,
   formatPlaceName,
   slug,
 } from "../utils/string-helpers";
+import { normalizeUrl } from "../utils/event-url";
 
 describe("slugifySegment", () => {
   it("lowercases and removes diacritics", () => {

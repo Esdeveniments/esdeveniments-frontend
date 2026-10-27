@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { captureException } from "@sentry/nextjs";
 import {
   Dialog,
   DialogBackdrop,
@@ -25,8 +26,13 @@ export default function ConfirmDialog({
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   const handleConfirm = async () => {
-    const result = await onConfirm();
-    if (result !== false) setOpen(false);
+    try {
+      const result = await onConfirm();
+      if (result !== false) setOpen(false);
+    } catch (error) {
+      // Keep the dialog open so the user can retry or cancel.
+      captureException(error, { tags: { component: "ConfirmDialog" } });
+    }
   };
 
   return (

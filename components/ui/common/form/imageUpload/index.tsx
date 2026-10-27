@@ -23,6 +23,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const selectionVersionRef = useRef(0);
+  const dropzoneRef = useRef<HTMLDivElement>(null);
+  const changeButtonRef = useRef<HTMLButtonElement>(null);
+  // Set only by user actions, so a restored draft never steals focus.
+  const pendingFocusRef = useRef<"dropzone" | "change" | null>(null);
   const onPreparingChangeRef = useRef(onPreparingChange);
   useEffect(() => {
     onPreparingChangeRef.current = onPreparingChange;
@@ -32,6 +36,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     selectionVersionRef.current += 1;
     onPreparingChangeRef.current?.(false);
   }, []);
+
+  const hasPreview = Boolean(
+    value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("/"))
+  );
 
   const resetMessages = () => {
     setError(null);
@@ -80,6 +88,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         setError(t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
         return;
       }
+      // Replacing via Change keeps that button mounted, so only the first upload moves focus.
+      if (!hasPreview) pendingFocusRef.current = "change";
       onUpload(workingFile);
     } catch (compressionError) {
       console.error("Image preparation failed", compressionError);
@@ -126,13 +136,20 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     if (fileSelect.current) {
       fileSelect.current.value = "";
     }
+    pendingFocusRef.current = "dropzone";
     onUpload(null);
   };
 
   const isInteractionDisabled = isPreparing;
-  const hasPreview = Boolean(
-    value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("/"))
-  );
+
+  useEffect(() => {
+    const target = pendingFocusRef.current === "change" && hasPreview ? changeButtonRef.current
+      : pendingFocusRef.current === "dropzone" && !hasPreview ? dropzoneRef.current
+      : null;
+    if (!target) return;
+    pendingFocusRef.current = null;
+    target.focus();
+  }, [hasPreview]);
 
   return (
     <div className="w-full">
@@ -161,6 +178,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           />
           <div className="absolute right-2 top-2 flex gap-2">
             <button
+              ref={changeButtonRef}
               type="button"
               className="btn-neutral bg-background shadow-sm py-1.5"
               onClick={() => void handleImageUpload()}
@@ -180,6 +198,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         </div>
       ) : (
         <div
+          ref={dropzoneRef}
           className={`mt-2 border-2 border-dashed rounded-card ${dragOver ? "border-primary bg-primary/5" : "border-border hover:border-foreground/40"
             } ${isInteractionDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"} transition-colors focus-ring`}
           onDragOver={(e) => {
@@ -205,12 +224,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           role="button"
           tabIndex={isInteractionDisabled ? -1 : 0}
           aria-disabled={isInteractionDisabled}
-          aria-labelledby="image-label"
+          aria-labelledby="image-label image-action"
           aria-describedby="image-format"
         >
           <div className="flex-center flex-col gap-2 p-6 text-center">
             <PhotoIcon className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-            <span className="btn-neutral">{t("selectButton")}</span>
+            <span id="image-action" className="btn-neutral">{t("selectButton")}</span>
             <p className="hidden md:block body-small text-muted-foreground">
               {t("uploadDropCta")}
             </p>

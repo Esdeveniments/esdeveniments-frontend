@@ -354,6 +354,7 @@
       "draftHandoffFailed": "No hem pogut continuar. Torna-ho a provar o descarta l'esborrany.",
       "draftResumeFailed": "No hem pogut recuperar l'esborrany d'aquest retorn. Pot haver caducat, canviat o pertànyer a un altre compte. Pots revisar l'esborrany disponible o començar de nou.",
       "draftAuthNotice": "Desarem l'esborrany. Quan hagis iniciat sessió, continuarem amb la publicació.",
+      "draftProfileNotice": "Desarem l'esborrany. Quan hagis completat el perfil, continuarem amb la publicació.",
       "draftRetry": "Torna-ho a provar",
       "draftDiscardConfirm": "Vols descartar l'esborrany?",
       "draftDiscardDescription": "S'esborraran el formulari i la imatge. No es pot desfer.",

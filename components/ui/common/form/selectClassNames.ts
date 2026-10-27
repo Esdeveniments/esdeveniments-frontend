@@ -12,10 +12,10 @@ export function getSelectClassNames<IsMulti extends boolean>(
   return {
     control: ({ isFocused, isDisabled }) =>
       `min-h-[48px] rounded-input border bg-background px-3 transition-[box-shadow,border-color] duration-normal ease-smooth ${
-        isFocused
-          ? "border-primary ring-2 ring-primary ring-offset-2"
-          : hasError
-            ? "border-error"
+        hasError
+          ? `border-error ${isFocused ? "ring-2 ring-error ring-offset-2" : ""}`
+          : isFocused
+            ? "border-primary ring-2 ring-primary ring-offset-2"
             : "border-border hover:border-foreground/40"
       } ${isDisabled ? "bg-muted opacity-60 cursor-not-allowed" : "cursor-pointer"}`,
     valueContainer: () => "gap-1 py-1",

@@ -7,7 +7,8 @@ import { getPathname, Link, useRouter } from "@i18n/routing";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { getRegionValue, formDataToBackendDTO, getTownValue } from "@utils/helpers";
 import { generateCityOptionsWithRegionMap } from "@utils/options-helpers";
-import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
+import { normalizeUrl } from "@utils/event-url";
+import { slugifySegment } from "@utils/string-helpers";
 import { getZodValidationState } from "@utils/form-validation";
 import { toLocalDateTimeString } from "@utils/date-helpers";
 import EventForm from "@components/ui/EventForm";
@@ -760,7 +761,7 @@ const PublishForm = () => {
           )}
           {authStage && (
             <div className="stack">
-              <p className="body-small text-foreground/80">{t("draftAuthNotice")}</p>
+              <p className="body-small text-foreground/80">{t(authStage === "profile" ? "draftProfileNotice" : "draftAuthNotice")}</p>
               <button
                 type="button"
                 className="btn-primary"
@@ -817,7 +818,7 @@ const PublishForm = () => {
             />
           </div>
           </fieldset>
-          <fieldset disabled={handingOff} inert={handingOff}>
+          <fieldset disabled={handingOff || isPending} inert={handingOff || isPending}>
             <PublishDraftPanel
               variant="status"
               state={draft}

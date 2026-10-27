@@ -8,7 +8,7 @@ import EventForm from "@components/ui/EventForm";
 import type { FormData, CoverImageIntent } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
-import { normalizeUrl } from "@utils/string-helpers";
+import { normalizeUrl } from "@utils/event-url";
 import { Option } from "types/common";
 import type { EditEventClientProps } from "types/props";
 import { useCategories } from "@components/hooks/useCategories";

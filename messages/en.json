@@ -354,6 +354,7 @@
       "draftHandoffFailed": "We couldn't continue. Try again or discard the draft.",
       "draftResumeFailed": "We could not restore the draft for this return. It may have expired, changed or belong to another account. Review any available draft or start again.",
       "draftAuthNotice": "We'll save your draft. Once you've signed in, we'll continue publishing.",
+      "draftProfileNotice": "We'll save your draft. Once you've completed your profile, we'll continue publishing.",
       "draftRetry": "Try again",
       "draftDiscardConfirm": "Discard this draft?",
       "draftDiscardDescription": "The form and image will be deleted. This can't be undone.",
