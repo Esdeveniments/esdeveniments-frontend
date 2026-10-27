@@ -24,8 +24,7 @@ export function normalizeUrl(url: string): string {
   }
 
   // Add https:// protocol if missing, unless it's localhost (allow http)
-  if (trimmed.startsWith("localhost") || trimmed.includes("://localhost")) {
-    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^localhost(?=[:/?#]|$)/i.test(trimmed)) {
     return `http://${trimmed}`;
   }
 
@@ -47,6 +46,7 @@ export function isValidEventUrl(url: string): boolean {
     const labels = hostname.split(".");
     const tld = labels.at(-1) ?? "";
     return (
+      hostname.length <= 253 &&
       labels.length > 1 &&
       labels.every((label) => /^(?!-)[a-z0-9-]{1,63}(?<!-)$/i.test(label)) &&
       /^([a-z]{2,}|xn--[a-z0-9-]+)$/i.test(tld)
