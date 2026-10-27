@@ -27,7 +27,7 @@ This directory contains all TypeScript type definitions for the project. Types a
 ### `types/event.ts`
 
 - **Purpose**: Event-specific types and form schemas
-- **Contains**: Event form types, validation schemas, and event-related utilities
+- **Contains**: Event form types, validation schemas, and event-related utilities. `EventFormStepSchema` and its inferred `EventFormStep` type define the shared zero-based wizard steps for the form and saved drafts.
 
 ### `types/filters.ts`
 

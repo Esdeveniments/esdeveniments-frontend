@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { MOCK_USER } from "./helpers/auth";
 import { dismissEngagementPopups } from "./helpers/login";
 import { DEFAULT_IMAGE, pickEventWhen } from "./helpers/publish";
-import { readSavedDraft, replaceDraftFence } from "./helpers/publish-draft";
+import { expectPublishRequest, readPublishRequest, readSavedDraft, replaceDraftFence } from "./helpers/publish-draft";
 import type { PublishDraftRecord } from "types/publish-draft";
 import { PUBLISH_DRAFT_TTL_MS } from "@utils/constants";
 
@@ -12,6 +12,7 @@ for (const scenario of ["empty-account", "guest", "account", "untitled-account",
   test.describe(`step-three sign-in with ${scenario}`, () => {
     let creates = 0;
     let original: Awaited<ReturnType<typeof readSavedDraft>>;
+    let submitted: Awaited<ReturnType<typeof readPublishRequest>> | undefined;
     test.beforeEach(async ({ page }) => {
       await dismissEngagementPopups(page);
       let signedIn = false;
@@ -49,9 +50,12 @@ for (const scenario of ["empty-account", "guest", "account", "untitled-account",
       await page.route("**/en/publica**", async (route) => {
         if (route.request().method() !== "POST") return route.continue();
         creates++;
-        expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(original);
-        return route.fulfill({ contentType: "text/x-component",
-          body: '0:{"a":{"success":true,"event":{"slug":"guest-choice-published"}},"f":[]}\n' });
+        try {
+          submitted = await readPublishRequest(page, route.request(), MOCK_USER.id);
+        } finally {
+          await route.fulfill({ contentType: "text/x-component",
+            body: '0:{"a":{"success":true,"event":{"slug":"guest-choice-published"}},"f":[]}\n' });
+        }
       });
       await page.goto("/en/publica");
       await page.locator("#title").fill("New guest event");
@@ -135,6 +139,7 @@ for (const scenario of ["empty-account", "guest", "account", "untitled-account",
         await page.getByTestId("draft-restore-guest").click();
         await expect(page).toHaveURL(/\/en\/e\/guest-choice-published/);
         expect(creates).toBe(1);
+        expectPublishRequest(submitted, original);
       } else if (choice !== "account" && choice !== "untitled-account") {
         if (choice !== "empty-account" && choice !== "expired-account") {
           await page.getByTestId("draft-restore-guest").click();

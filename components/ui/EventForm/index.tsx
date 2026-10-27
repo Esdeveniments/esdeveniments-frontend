@@ -19,6 +19,7 @@ import {
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import Button from "@components/ui/common/button";
 import type { EventFormProps } from "types/event";
+import { EventFormStepSchema } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
 import { useTranslations } from "next-intl";
@@ -65,8 +66,10 @@ export const EventForm: React.FC<EventFormProps> = ({
   );
   const [step, setStep] = useState(initialStep);
   const changeStep = (next: number) => {
-    setStep(next);
-    onStepChange?.(next);
+    if (next === step) return;
+    const nextStep = EventFormStepSchema.parse(next);
+    setStep(nextStep);
+    onStepChange?.(nextStep);
   };
   const [isImagePreparing, setIsImagePreparing] = useState(false);
   // The last step whose publish button is armed; e2e waits on data-publish-armed.

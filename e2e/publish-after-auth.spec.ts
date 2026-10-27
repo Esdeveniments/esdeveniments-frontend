@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { MOCK_USER } from "./helpers/auth";
 import { dismissEngagementPopups } from "./helpers/login";
 import { prepareTestEvent } from "./helpers/publish";
-import { readSavedDraft } from "./helpers/publish-draft";
+import { expectPublishRequest, readPublishRequest, readSavedDraft } from "./helpers/publish-draft";
 
 for (const scenario of ["login", "register-profile", "network-failure", "restore-step-two", "restore-step-three", "cancelled-login"]) {
   test(`continues ${scenario} with the saved step and the original poster`, async ({ page }, testInfo) => {
@@ -10,6 +10,7 @@ for (const scenario of ["login", "register-profile", "network-failure", "restore
     let complete = scenario !== "register-profile";
     let creates = 0;
     let original: Awaited<ReturnType<typeof readSavedDraft>>;
+    let submitted: Awaited<ReturnType<typeof readPublishRequest>> | undefined;
     const cancelled = scenario === "cancelled-login";
     const restoring = scenario.startsWith("restore") || cancelled;
     await dismissEngagementPopups(page);
@@ -35,20 +36,13 @@ for (const scenario of ["login", "register-profile", "network-failure", "restore
     await page.route("**/en/publica**", async (route) => {
       if (route.request().method() !== "POST") return route.continue();
       creates++;
-      expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(original);
-      expect(await page.evaluate(() => sessionStorage.getItem("publish-resume-v1"))).toBeNull();
-      const request = route.request();
-      const parts = await new Response(new Uint8Array(request.postDataBuffer()!), {
-        headers: { "content-type": request.headers()["content-type"]! },
-      }).formData();
-      const poster = [...parts.values()].find((part) => typeof part !== "string" && part.name === original.image.name);
-      if (!poster || typeof poster === "string") throw new Error("Missing recovered poster in the publication request");
-      expect(poster.type).toBe(original.image.type);
-      expect(Array.from(new Uint8Array(await poster.arrayBuffer()))).toEqual(original.image.bytes);
-      expect(request.postData()).toContain("Publish after authentication");
-      if (scenario === "network-failure") return route.abort();
-      return route.fulfill({ contentType: "text/x-component",
-        body: '0:{"a":{"success":true,"event":{"slug":"auto-publish-fixture"}},"f":[]}\n' });
+      try {
+        submitted = await readPublishRequest(page, route.request(), MOCK_USER.id);
+      } finally {
+        if (scenario === "network-failure") await route.abort();
+        else await route.fulfill({ contentType: "text/x-component",
+          body: '0:{"a":{"success":true,"event":{"slug":"auto-publish-fixture"}},"f":[]}\n' });
+      }
     });
     await prepareTestEvent(page, "Publish after authentication");
     if (scenario === "restore-step-two") await page.getByTestId("prev-button").click();
@@ -99,6 +93,7 @@ for (const scenario of ["login", "register-profile", "network-failure", "restore
         expect(creates).toBe(1);
       }
     }
+    if (!restoring) expectPublishRequest(submitted, original);
     await page.screenshot({ path: testInfo.outputPath("after-return.png") });
   });
 }

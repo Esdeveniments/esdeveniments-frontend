@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import path from "node:path";
 import { MOCK_USER } from "./helpers/auth";
 import { dismissEngagementPopups } from "./helpers/login";
-import { readSavedDraft } from "./helpers/publish-draft";
+import { expectPublishRequest, readPublishRequest, readSavedDraft } from "./helpers/publish-draft";
 
 for (const scenario of ["stale-session", "guest", "guest-typing"]) {
 test(`preserves a Spanish ${scenario} draft and real poster across full-document auth and profile return`, async ({ page }, testInfo) => {
@@ -12,6 +12,7 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
   let attempts = 0;
   let signedIn = !guest;
   let allowCreate = false;
+  let submitted: Awaited<ReturnType<typeof readPublishRequest>> | undefined;
   const beforeReturn = guest ? 0 : 1;
   let profileComplete = true;
   let profileSaved = false;
@@ -38,12 +39,15 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
   await page.route("**/es/publica**", async (route) => {
     if (route.request().method() !== "POST") return route.continue();
     attempts++;
-    if (allowCreate) expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(originalDraft);
-    return route.fulfill({
-      contentType: "text/x-component",
-      body: allowCreate ? '0:{"a":{"success":true,"event":{"slug":"guest-publish-fixture"}},"f":[]}\n'
-        : '0:{"a":{"success":false,"reason":"stale-session"},"f":[]}\n',
-    });
+    try {
+      if (allowCreate) submitted = await readPublishRequest(page, route.request(), MOCK_USER.id);
+    } finally {
+      await route.fulfill({
+        contentType: "text/x-component",
+        body: allowCreate ? '0:{"a":{"success":true,"event":{"slug":"guest-publish-fixture"}},"f":[]}\n'
+          : '0:{"a":{"success":false,"reason":"stale-session"},"f":[]}\n',
+      });
+    }
   });
   await page.route("**/api/auth/sign-in?*", (route) => {
     expect(new URL(route.request().url()).searchParams.get("locale")).toBe("es");
@@ -78,6 +82,8 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
   await expect(page.getByTestId("publish-button")).toBeEnabled();
   await page.getByTestId("preview-button").click();
   await expect(page.getByTestId("preview-modal")).toBeVisible();
+  const originalImage = page.getByTestId("preview-modal").locator('img[src^="data:image/"]:visible').first();
+  await expect.poll(() => originalImage.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
   expect(attempts).toBe(0);
   if (!guest) {
     await page.getByTestId("preview-modal-action-button").click();
@@ -137,6 +143,7 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
   await expect(page).toHaveURL(/\/es\/e\/guest-publish-fixture/);
   expect(authReadsAfterProfile).toBeGreaterThan(0);
   expect(attempts).toBe(beforeReturn + 1);
+  expectPublishRequest(submitted, originalDraft);
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem("publish-resume-v1"))).toBeNull();
   await page.screenshot({ path: testInfo.outputPath("auth-profile-return-published.png") });
   await testInfo.attach("auth-return-proof", { contentType: "application/json", body: JSON.stringify({

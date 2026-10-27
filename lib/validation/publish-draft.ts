@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EventFormSchema } from "types/event";
+import { EventFormSchema, EventFormStepSchema } from "types/event";
 import type { PublishDraftOwner } from "types/publish-draft";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
@@ -56,7 +56,7 @@ export const PublishDraftRecordSchema = z.object({
   revision: z.string().uuid(),
   updatedAt: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   form: PublishDraftFormSchema,
-  step: z.number().int().min(0).max(2).optional(),
+  step: EventFormStepSchema.optional(),
   image: z
     .object({
       bytes: z.instanceof(ArrayBuffer),

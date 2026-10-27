@@ -64,7 +64,7 @@ vi.mock("@components/ui/EventForm", () => ({
 }));
 const revision = "00000000-0000-4000-8000-000000000001";
 const saved = { form: { title: "Preserved" }, imageFile: new File(["image"], "poster.png", { type: "image/png" }), updatedAt: 1 };
-const completeSaved = { ...saved, step: 2, form: { ...saved.form, description: "Description", location: "Park",
+const completeSaved = { ...saved, step: 2 as const, form: { ...saved.form, description: "Description", location: "Park",
   town: { value: "1", label: "Town" }, region: { value: "2", label: "Region" } } };
 function setReturn(owner: string | PublishDraftOwner = "a", expectedRevision = revision, action?: PublishResumeAction) {
   sessionStorage.setItem(PUBLISH_RESUME_STORAGE_KEY, JSON.stringify({
@@ -259,7 +259,7 @@ describe("one-shot publish return", () => {
     } });
     if (scenario === "stale") mocks.save.mockResolvedValue({ ok: false, reason: "stale" });
     render(<Publica />);
-    await screen.findByText("draftResolveBeforePublish");
+    await screen.findByText(scenario === "stale" ? "draftResolveBeforePublish" : "draftAutoPublishStopped");
     expect(screen.getByTestId("step")).toHaveTextContent("2");
     expect(mocks.create).not.toHaveBeenCalled();
     expect(mocks.push).not.toHaveBeenCalled();

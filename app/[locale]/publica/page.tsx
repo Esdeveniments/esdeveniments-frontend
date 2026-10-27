@@ -18,7 +18,7 @@ import { getPublishDraftWarnings } from "@utils/publish-draft-warnings";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
-import type { FormData } from "types/event";
+import type { EventFormStep, FormData } from "types/event";
 import { Option } from "types/common";
 import type { E2EEventExtras } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
@@ -124,7 +124,7 @@ const PublishForm = () => {
   const { user, signIn, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [restoredDraft, setRestoredDraft] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
-  const [wizardStep, setWizardStep] = useState(0);
+  const [wizardStep, setWizardStep] = useState<EventFormStep>(0);
   const [publishAfterReturn, setPublishAfterReturn] = useState<PublishResumeIntent | null>(null);
   const [continuingPublication, setContinuingPublication] = useState(false);
   const resetEditor = useCallback(() => {
@@ -258,7 +258,7 @@ const PublishForm = () => {
       });
     }
   }, [markEdited]);
-  const handleStepChange = useCallback((step: number) => {
+  const handleStepChange = useCallback((step: EventFormStep) => {
     markEdited();
     setPublishAfterReturn(null);
     setWizardStep(step);
@@ -679,14 +679,14 @@ const PublishForm = () => {
         isFormDisabled || !form.town || !form.region || !form.startDate || !form.endDate ||
         isErrorRegionsWithCities || isErrorCategories || warnings.length > 0 ||
         (intent.stage === "profile" && requiredAuthStage === "profile")) {
-      setError(t("draftResolveBeforePublish"));
+      setError(t("draftAutoPublishStopped"));
       return;
     }
     setContinuingPublication(true);
     try {
       const saved = await draft.claimPublication();
       if (!saved?.ok) {
-        setError(t("draftResolveBeforePublish"));
+        setError(t(saved?.reason === "stale" ? "draftResolveBeforePublish" : "draftAutoPublishStopped"));
         return;
       }
       await onSubmit();

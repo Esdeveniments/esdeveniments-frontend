@@ -1,5 +1,5 @@
 import type { AuthUser } from "./auth";
-import type { FormData } from "./event";
+import type { EventFormStep, FormData } from "./event";
 import type { z } from "zod";
 import type { PublishDraftRecordSchema, PublishResumeIntentSchema } from "@lib/validation/publish-draft";
 
@@ -20,7 +20,7 @@ export type PublishResumeReadResult =
 export interface PublishDraftInput {
   form: PublishDraftForm;
   imageFile: File | null;
-  step?: number;
+  step?: EventFormStep;
 }
 
 export interface PublishDraft extends PublishDraftInput {
@@ -90,7 +90,7 @@ export interface UsePublishDraftOptions {
   isAuthLoading?: boolean;
   form: FormData;
   imageFile: File | null;
-  step?: number;
+  step?: EventFormStep;
   onRestore: (draft: PublishDraft, resumed?: boolean, intent?: PublishResumeIntent) => void;
   onReset: () => void;
 }

@@ -14,12 +14,13 @@ beforeEach(resetDraftStorage);
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("publish-specific draft snapshots", () => {
-  it.each([0, 1, 2])("round-trips wizard step %s with the fields", async (step) => {
+  it.each([0, 1, 2] as const)("round-trips wizard step %s with the fields", async (step) => {
     savedRevision(await savePublishDraft(guest, { form: { title: "unfinished" }, imageFile: null, step }, null));
     expect(await loadPublishDraft(guest)).toMatchObject({ status: "found", draft: { step, form: { title: "unfinished" } } });
   });
   it.each([-1, 3, 0.5])("rejects invalid wizard step %s without replacing the saved draft", async (step) => {
     const revision = await seedDraft();
+    // @ts-expect-error Exercise runtime validation of untyped input.
     expect(await savePublishDraft(guest, { form: {}, imageFile: null, step }, revision)).toEqual({ ok: false, reason: "invalid-input" });
     expect(await loadPublishDraft(guest)).toMatchObject({ status: "found", draft: { form: { title: "unfinished" } } });
   });

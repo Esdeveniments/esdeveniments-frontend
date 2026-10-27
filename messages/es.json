@@ -360,6 +360,7 @@
       "draftConflict": "Otra pestaña ha cambiado los borradores guardados. Tus cambios no se han sobrescrito ni guardado. No cierres esta página; revisa el borrador guardado antes de decidir qué conservar.",
       "draftReviewConflict": "Revisar el borrador guardado",
       "draftResolveBeforePublish": "Revisa el borrador guardado y elige si quieres recuperarlo o descartarlo antes de publicar.",
+      "draftAutoPublishStopped": "No hemos publicado el evento automáticamente. Revisa el formulario y pulsa Publicar para continuar.",
       "draftHandoffFailed": "No hemos podido preparar el regreso al formulario. No hemos salido de esta página. Vuelve a intentarlo o descarta el borrador antes de continuar.",
       "draftResumeFailed": "No hemos podido recuperar el borrador de este regreso. Puede haber caducado, cambiado o pertenecer a otra cuenta. Puedes revisar el borrador disponible o empezar de nuevo.",
       "draftAuthNotice": "Guardaremos el borrador antes de continuar. Al volver, podrás revisar la vista previa y tendrás que pulsar Publicar.",

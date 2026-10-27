@@ -85,6 +85,19 @@ describe("EventForm image preparation", () => {
 });
 
 describe("EventForm publish arming", () => {
+  it("does not mark an unchanged progress step as edited", () => {
+    const onStepChange = vi.fn();
+    render(
+      <EventForm form={form} onSubmit={vi.fn()} submitLabel="Save" isEditMode
+        cityOptions={[]} categoryOptions={[]} handleFormChange={vi.fn()}
+        handleImageChange={vi.fn()} handleTownChange={vi.fn()} handleCategoriesChange={vi.fn()}
+        imageToUpload="https://example.com/old.jpg" initialStep={2} onStepChange={onStepChange} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /\(current\)/ }));
+    expect(onStepChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("prev-button"));
+    expect(onStepChange).toHaveBeenCalledExactlyOnceWith(1);
+  });
   it("marks the form armed only once it accepts a publish click", () => {
     vi.useFakeTimers();
     const onSubmit = vi.fn();

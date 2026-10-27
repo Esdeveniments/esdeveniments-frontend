@@ -360,6 +360,7 @@
       "draftConflict": "Another tab changed the saved drafts. Your changes have not been overwritten or saved. Do not close this page; review the saved draft before deciding what to keep.",
       "draftReviewConflict": "Review saved draft",
       "draftResolveBeforePublish": "Review the saved draft and choose Restore or Discard before publishing.",
+      "draftAutoPublishStopped": "We did not publish automatically. Check the form and press Publish to continue.",
       "draftHandoffFailed": "We could not prepare your return to the form. You are still on this page. Try again or discard the draft before continuing.",
       "draftResumeFailed": "We could not restore the draft for this return. It may have expired, changed or belong to another account. Review any available draft or start again.",
       "draftAuthNotice": "We will save the draft before continuing. When you return, review the preview and click Publish to send it.",
