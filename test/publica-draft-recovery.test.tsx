@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventFormProps } from "types/event";
 import type { PublishDraftLoadResult } from "types/publish-draft";
@@ -60,6 +60,7 @@ describe("publish draft recovery UI", () => {
       mocks.discard.mockResolvedValueOnce({ ok: false, reason: "transaction" });
       await act(async () => { fireEvent.click(screen.getByTestId("draft-discard-modal-action-button")); });
       expect(screen.getByText("draftResumeFailed")).toBeInTheDocument();
+      expect(within(screen.getByTestId("draft-discard-modal")).getByRole("alert")).toHaveTextContent("draftSaveFailed");
       await act(async () => { fireEvent.click(screen.getByTestId("draft-discard-modal-action-button")); });
     }
     await waitFor(() => expect(screen.queryByText("draftResumeFailed")).not.toBeInTheDocument());

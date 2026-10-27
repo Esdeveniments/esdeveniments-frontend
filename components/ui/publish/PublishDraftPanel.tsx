@@ -11,12 +11,13 @@ export default function PublishDraftPanel({
   const t = useTranslations("App.Publish");
   const formT = useTranslations("Components.EventForm");
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [discardFailed, setDiscardFailed] = useState(false);
   const { status, failure, pendingDraft, guestConflict } = state;
   const busy = status === "loading" || status === "discarding";
   const needsDecision = guestConflict || !!pendingDraft;
   const canDiscard = !guestConflict && (state.canDiscard || state.dirty);
   const discardButton = (
-    <button type="button" onClick={() => setConfirmDiscard(true)} disabled={busy}
+    <button type="button" onClick={() => { setDiscardFailed(false); setConfirmDiscard(true); }} disabled={busy}
       className={`btn-ghost normal-case tracking-normal font-medium text-foreground/80${needsDecision ? " w-full sm:w-auto" : ""}`}>
       {t("restoreDraftDiscard")}
     </button>
@@ -40,10 +41,14 @@ export default function PublishDraftPanel({
       confirmLabel={t("restoreDraftDiscard")}
       cancelLabel={t("draftKeep")}
       busy={busy}
+      // The panel's own failure message sits behind the modal, so repeat it here.
+      error={discardFailed ? t(failureKey) : undefined}
       testId="draft-discard-modal"
       onConfirm={async () => {
         const result = await onDiscard();
-        return result?.ok ?? false;
+        const ok = result?.ok ?? false;
+        setDiscardFailed(!ok);
+        return ok;
       }}
     />
   );

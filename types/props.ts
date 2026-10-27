@@ -239,7 +239,10 @@ export interface ConfirmDialogProps {
   cancelLabel: string;
   /** Return false to keep the dialog open (e.g. the action failed). */
   onConfirm: () => boolean | void | Promise<boolean | void>;
+  /** Disables both buttons and blocks Escape/backdrop dismissal while the action runs. */
   busy?: boolean;
+  /** Shown inside the dialog when the action failed. */
+  error?: string;
   testId?: string;
 }
 

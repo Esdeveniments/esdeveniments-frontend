@@ -21,6 +21,7 @@ export default function ConfirmDialog({
   cancelLabel,
   onConfirm,
   busy = false,
+  error,
   testId,
 }: ConfirmDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -38,7 +39,7 @@ export default function ConfirmDialog({
   return (
     <Dialog
       open={open}
-      onClose={() => setOpen(false)}
+      onClose={() => { if (!busy) setOpen(false); }}
       initialFocus={cancelRef}
       role="alertdialog"
       className="relative z-modal"
@@ -61,6 +62,11 @@ export default function ConfirmDialog({
               {description}
             </Description>
           )}
+          {error && (
+            <p className="body-small font-medium text-error-dark" role="alert">
+              {error}
+            </p>
+          )}
           {/* Stacked on mobile (action on top), side by side from sm with the action on the right. */}
           <div className="flex flex-col gap-2 pt-2 sm:flex-row-reverse">
             <button
@@ -77,6 +83,7 @@ export default function ConfirmDialog({
               type="button"
               className="btn-ghost w-full sm:w-auto"
               onClick={() => setOpen(false)}
+              disabled={busy}
             >
               {cancelLabel}
             </button>
