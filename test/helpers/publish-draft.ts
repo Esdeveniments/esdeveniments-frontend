@@ -2,8 +2,10 @@ import { expect, vi } from "vitest";
 import { IDBFactory } from "fake-indexeddb";
 import type {
   PublishDraftLoadResult,
+  PublishDraftForm,
   PublishDraftOwner,
   PublishDraftWriteResult,
+  PublishResumeIntent,
 } from "types/publish-draft";
 import { loadPublishDraft, savePublishDraft } from "@utils/publish-draft-storage";
 import { PUBLISH_DRAFT_DB_NAME } from "@utils/publish-draft-db";
@@ -11,6 +13,10 @@ import { PUBLISH_DRAFT_DB_NAME } from "@utils/publish-draft-db";
 export const guest: PublishDraftOwner = { kind: "guest" };
 export const accountA: PublishDraftOwner = { kind: "account", accountId: "account-a" };
 export const accountB: PublishDraftOwner = { kind: "account", accountId: "account-b" };
+
+export const resumeIntent = (revision = crypto.randomUUID()): PublishResumeIntent => ({
+  version: 1, owner: accountA, revision, stage: "login", createdAt: Date.now(),
+});
 
 export async function resetDraftStorage() {
   vi.restoreAllMocks();
@@ -30,10 +36,10 @@ export function loadedRevision(result: PublishDraftLoadResult): string | null {
   return result.revision;
 }
 
-export async function seedDraft(owner = guest) {
+export async function seedDraft(owner = guest, form: PublishDraftForm = { title: "unfinished" }) {
   return savedRevision(await savePublishDraft(
     owner,
-    { form: { title: "unfinished" }, imageFile: null },
+    { form, imageFile: null },
     loadedRevision(await loadPublishDraft(owner)),
   ));
 }

@@ -8,6 +8,7 @@ export interface LatestNewsSectionProps {
 export interface PublishDraftPanelProps {
   state: import("./publish-draft").PublishDraftSessionState;
   onRestore: () => void;
+  onRestoreGuest: () => Promise<void>;
   onDiscard: () => Promise<import("./publish-draft").PublishDraftFlushResult | undefined>;
   onRetry: () => void;
   warnings: import("./publish-draft").PublishDraftWarning[];

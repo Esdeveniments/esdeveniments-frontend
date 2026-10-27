@@ -8,6 +8,7 @@ import type {
 
 export const initialPublishDraftState: PublishDraftSessionState = {
   status: "loading", pendingDraft: null, failure: null, dirty: false, canDiscard: false,
+  guestConflict: false,
 };
 
 /** One mounted editor owns its queue; IndexedDB revisions fence other tabs. */
@@ -20,6 +21,7 @@ export class PublishDraftSession {
   private version = 0;
   private savedVersion = 0;
   private input: PublishDraftInput | null = null;
+  private guestIntent: PublishResumeIntent | null = null;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private queue: Promise<PublishDraftFlushResult> = Promise.resolve({ ok: true, revision: null });
 
@@ -41,26 +43,36 @@ export class PublishDraftSession {
     this.update({ status: "loading", failure: null });
     const prepared = intent ? await preparePublishDraftResume(this.owner, intent) : null;
     if (!this.active || generation !== this.generation) return;
+    const handoffFailure = prepared && !prepared.ok ? prepared : null;
+    this.guestIntent = intent?.owner.kind === "guest" && handoffFailure &&
+      handoffFailure.reason !== "stale" && handoffFailure.reason !== "invalid-input" ? intent : null;
     const result = await loadPublishDraft(this.owner);
     if (!this.active || generation !== this.generation) return;
     if (!result.ok) {
       if ("revision" in result) this.revision = result.revision ?? null;
-      this.update({ status: "error", failure: result, canDiscard: "revision" in result });
-      return;
+      if ("revision" in result && result.revision === null) this.guestIntent = null;
+      const unreadableAccount = this.guestIntent && "revision" in result &&
+        (result.reason === "corrupt" || result.reason === "version");
+      this.update({ status: unreadableAccount ? "decision" : "error", failure: result, canDiscard: "revision" in result,
+        guestConflict: this.guestIntent !== null });
+      return { ...result, resumed: false as const, matchesResume: false as const, guestConflict: this.guestIntent !== null };
     }
     this.loaded = true;
     this.revision = result.revision;
     this.update({
-      status: result.status === "found" ? "decision" : "idle",
+      status: this.guestIntent && handoffFailure?.reason !== "account-conflict" ? "error"
+        : result.status === "found" || this.guestIntent ? "decision" : "idle",
+      failure: this.guestIntent && handoffFailure?.reason !== "account-conflict" ? handoffFailure : null,
       pendingDraft: result.status === "found" ? result.draft : null,
       canDiscard: result.status === "found",
+      guestConflict: this.guestIntent !== null,
     });
-    if (result.status !== "found" && this.state.dirty) void this.flush();
+    if (result.status !== "found" && this.state.dirty && !this.guestIntent) void this.flush();
     const matchesResume = prepared?.ok === true && result.status === "found" &&
       result.revision === prepared.revision;
     const resumed = matchesResume && !this.state.dirty;
     if (resumed) this.restore();
-    return { ...result, resumed, matchesResume };
+    return { ...result, resumed, matchesResume, guestConflict: this.guestIntent !== null };
   }
 
   edit(input: PublishDraftInput) {
@@ -77,14 +89,39 @@ export class PublishDraftSession {
     const draft = this.state.pendingDraft;
     if (!draft) return null;
     this.input = draft;
+    this.guestIntent = null;
     this.savedVersion = this.version;
-    this.update({ status: "saved", pendingDraft: null, dirty: false });
+    this.update({ status: "saved", pendingDraft: null, dirty: false, guestConflict: false });
     return draft;
+  }
+
+  async restoreGuest() {
+    const intent = this.guestIntent;
+    const { revision, version } = this;
+    if (!intent || !revision || this.state.status !== "decision") return null;
+    const generation = ++this.generation;
+    this.update({ status: "loading", failure: null });
+    const prepared = await preparePublishDraftResume(this.owner, intent, revision);
+    if (!this.active || generation !== this.generation) return null;
+    if (!prepared.ok) {
+      const retryable = prepared.reason !== "stale" && prepared.reason !== "invalid-input";
+      if (!retryable) this.guestIntent = null;
+      this.update({ status: "error", failure: prepared, guestConflict: retryable });
+      return null;
+    }
+    const result = await this.load({ ...intent, owner: this.owner, revision: prepared.revision });
+    if (result?.matchesResume && result.status === "found" && version === this.version) {
+      return this.restore() ?? result.draft;
+    }
+    if (result?.ok && !result.matchesResume) {
+      this.update({ status: "error", failure: { ok: false, reason: "stale" } });
+    }
+    return null;
   }
 
   flush(): Promise<PublishDraftFlushResult> {
     clearTimeout(this.timer);
-    if (!this.active || !this.loaded || this.state.pendingDraft) {
+    if (!this.active || !this.loaded || this.state.pendingDraft || this.state.guestConflict) {
       return Promise.resolve({ ok: false, reason: "unavailable" });
     }
     if (this.state.failure?.reason === "stale") return Promise.resolve(this.state.failure);
@@ -133,8 +170,9 @@ export class PublishDraftSession {
         this.revision = result.revision;
         this.loaded = true;
         this.input = null;
+        this.guestIntent = null;
         this.savedVersion = ++this.version;
-        this.update({ status: "idle", pendingDraft: null, dirty: false, failure: null, canDiscard: false });
+        this.update({ status: "idle", pendingDraft: null, dirty: false, failure: null, canDiscard: false, guestConflict: false });
       } else {
         this.update({ status: "error", failure: result });
       }
@@ -144,8 +182,9 @@ export class PublishDraftSession {
   }
 
   async retry() {
-    if (!this.loaded || this.state.pendingDraft || this.state.failure?.reason === "stale") return this.load();
-    return this.flush();
+    if (this.guestIntent || !this.loaded || this.state.pendingDraft || this.state.failure?.reason === "stale") return this.load(this.guestIntent ?? undefined);
+    await this.flush();
+    return undefined;
   }
 
   dispose() {

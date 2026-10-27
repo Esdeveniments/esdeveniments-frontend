@@ -2,6 +2,14 @@
 
 Repo-specific gotchas worth sharing. Read this during research on any task here.
 
+## Guest and account publish drafts need an explicit choice after login
+
+A guest can finish all three steps while the same browser still holds an older
+account draft. Rejecting the handoff and offering a generic Restore loaded that
+older draft, which looked like lost location, dates and image. Keep both until
+the user chooses one. Replacing the account draft must check the saved revision
+again. Browser checks need both slots populated, a full login navigation and
+assertions on the restored controls as well as the stored bytes.
 
 ## The edit form holds one local datetime per field
 

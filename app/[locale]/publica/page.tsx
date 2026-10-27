@@ -776,6 +776,7 @@ const PublishForm = () => {
           <PublishDraftPanel
             state={draft}
             onRestore={draft.restore}
+            onRestoreGuest={draft.restoreGuest}
             onDiscard={draft.discard}
             onRetry={() => { void draft.retry(); }}
             warnings={restoredDraft ? getPublishDraftWarnings(form, cityOptions, categoryOptions,
