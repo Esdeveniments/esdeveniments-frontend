@@ -8,7 +8,7 @@ import EventForm from "@components/ui/EventForm";
 import type { FormData, CoverImageIntent } from "types/event";
 import { editEvent } from "./actions";
 import { formDataToBackendDTO, eventDtoToFormData } from "@utils/helpers";
-import { normalizeUrl } from "@utils/string-helpers";
+import { normalizeUrl } from "@utils/event-url";
 import { Option } from "types/common";
 import type { EditEventClientProps } from "types/props";
 import { useCategories } from "@components/hooks/useCategories";
@@ -118,19 +118,15 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
 
   return (
     <div className="container flex flex-col justify-center pt-6 pb-14">
-      <div className="flex flex-col gap-6 px-2 lg:px-0">
-        {/* Hero Header Section — matches publica page */}
-        <div className="flex flex-col items-center text-center gap-4 mb-2">
+      <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 px-2 lg:px-0">
+        <header className="flex flex-col gap-2 text-center">
           <h1 className="heading-1 text-foreground-strong">
             {tEdit("heading")}
           </h1>
-          <p className="body-large text-foreground/80 max-w-xl mx-auto">
+          <p className="body-normal text-foreground/80">
             {tEdit("subheading")}
           </p>
-          <p className="body-small text-foreground/60 mt-2">
-            {tEdit("requiredNote")}
-          </p>
-        </div>
+        </header>
 
         {/* Navigation links — back to event + my events */}
         <div className="flex flex-col sm:flex-row sm:justify-center items-center gap-3">
@@ -153,37 +149,20 @@ export default function EditEventClient({ event, regions }: EditEventClientProps
 
         {/* Edit title — shows which event is being edited */}
         <div className="flex flex-col gap-y-4 pt-4">
-          <div className="w-full px-4 py-3 bg-primary-tint rounded-lg flex items-center gap-3">
+          <div className="w-full px-4 py-3 bg-primary-tint rounded-card flex items-center gap-3">
             <PencilIcon
               className="w-5 h-5 text-primary flex-shrink-0"
               aria-hidden="true"
             />
-            <p className="text-sm font-medium text-foreground-strong text-left">
+            <p className="body-small font-medium text-foreground-strong text-left">
               {t("editTitle", { title: event.title })}
             </p>
           </div>
 
           {submitError && (
-            <div
-              className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg flex items-start gap-3"
-              role="alert"
-            >
-              <svg
-                className="w-5 h-5 text-error flex-shrink-0 mt-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <p className="text-sm font-medium text-error">{submitError}</p>
-            </div>
+            <p className="w-full rounded-card border border-error/40 bg-error/5 px-4 py-3 body-small font-medium text-error-dark" role="alert">
+              {submitError}
+            </p>
           )}
 
           <EventForm

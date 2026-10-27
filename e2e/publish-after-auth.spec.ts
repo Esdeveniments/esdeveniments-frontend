@@ -77,7 +77,7 @@ for (const scenario of ["login", "register-profile", "network-failure", "restore
         await page.getByRole("button", { name: "Save changes", exact: true }).click();
       }
       if (scenario === "network-failure") {
-        await expect(page.getByTestId("publish-draft-panel")).toBeVisible();
+        await expect(page.getByTestId("draft-save-status")).toHaveText("Saved on this device");
         await expect.poll(() => creates).toBe(1);
         await expect(page.getByTestId("publish-button")).toBeEnabled();
         expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(original);

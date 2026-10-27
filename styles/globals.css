@@ -217,7 +217,7 @@ p {
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-outline {
@@ -225,15 +225,15 @@ p {
   }
 
   .btn-muted {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground hover:bg-border/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-category {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-badge px-4 py-2.5 border border-border/80 bg-background text-foreground hover:border-primary hover:text-primary transition-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-badge px-4 py-2.5 border border-border/80 bg-background text-foreground hover:border-primary hover:text-primary transition-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-transparent text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-transparent text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   /* ===================================== */
@@ -431,7 +431,7 @@ p {
 
   .input {
     /* Enforce 16px to avoid iOS Safari auto-zoom on focus */
-    @apply w-full rounded-input border border-border bg-background text-foreground text-base px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
+    @apply w-full rounded-input border border-border bg-background text-foreground text-base px-input-x py-input-y h-10 placeholder:text-muted-foreground transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
   }
 
   .input-lg {
@@ -439,7 +439,7 @@ p {
   }
 
   .input-error {
-    @apply border-error focus-visible:ring-error focus-visible:border-error;
+    @apply border-error hover:border-error focus-visible:ring-error focus-visible:border-error;
   }
 
   .input-disabled {
@@ -455,16 +455,16 @@ p {
   }
 
   .helper-text-error {
-    @apply body-small text-error mt-1;
+    @apply body-small text-error-dark mt-1;
   }
 
   /* Form-specific typography for accessibility */
   .form-label {
-    @apply text-base md:text-lg font-semibold text-foreground-strong;
+    @apply text-base font-semibold text-foreground-strong;
   }
 
   .form-helper {
-    @apply text-sm md:text-base text-muted-foreground;
+    @apply text-sm text-muted-foreground;
   }
 
   /* ===================================== */

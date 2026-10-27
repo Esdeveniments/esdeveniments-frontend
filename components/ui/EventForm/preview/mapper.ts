@@ -1,6 +1,7 @@
 import { getRegionValue, getTownValue } from "@utils/form-helpers";
 import { splitLocalDateTime, toLocalDateTimeString } from "@utils/date-helpers";
-import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
+import { normalizeUrl } from "@utils/event-url";
+import { slugifySegment } from "@utils/string-helpers";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { EventDetailResponseDTO, RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";

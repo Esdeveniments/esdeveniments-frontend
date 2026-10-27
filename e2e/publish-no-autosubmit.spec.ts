@@ -171,8 +171,8 @@ test.describe("Publish wizard should not auto publish", () => {
     await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
     expect(attempts).toBe(1);
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("button", { name: "Recupera esborrany" })).toBeVisible();
-    await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await expect(page.getByRole("button", { name: "Recupera l'esborrany" })).toBeVisible();
+    await page.getByRole("button", { name: "Recupera l'esborrany" }).click();
     await expect(page.getByTestId("publish-button")).toBeVisible();
     await page.getByTestId("prev-button").click();
     await page.getByTestId("prev-button").click();

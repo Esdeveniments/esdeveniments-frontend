@@ -148,7 +148,7 @@ for (const scenario of ["empty-account", "guest", "account", "untitled-account",
         if (choice === "incomplete-profile") {
           await page.getByTestId("preview-button").click();
           await expect(page.getByTestId("preview-modal")).toBeVisible();
-          await page.getByTestId("preview-modal").getByLabel("Tanca").click();
+          await page.getByTestId("preview-modal").getByLabel("Close").click();
         }
         expect(await readSavedDraft(page, MOCK_USER.id)).toEqual(original);
         await page.getByTestId("prev-button").click();
@@ -165,7 +165,7 @@ for (const scenario of ["empty-account", "guest", "account", "untitled-account",
         await expect(page.getByLabel("Start time", { exact: true })).toHaveValue("12:30");
         await expect(page.getByLabel("End time", { exact: true })).toHaveValue("14:45");
       } else {
-        await page.getByRole("button", { name: "Restore the account's previous draft", exact: true }).click();
+        await page.getByRole("button", { name: "Restore previous", exact: true }).click();
         await expect(page.locator("#title")).toHaveValue(choice === "untitled-account" ? "" : "Older account basics");
         expect(await readSavedDraft(page, undefined, "guest")).toEqual(original);
       }

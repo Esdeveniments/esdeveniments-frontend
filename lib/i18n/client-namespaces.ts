@@ -34,6 +34,7 @@ export const CLIENT_COMPONENT_KEYS = [
   "ImageUploader",
   "LoadMoreButton",
   "LocationDiscovery",
+  "Modal",
   "MultiSelect",
   "Navbar",
   "NoEventsFound",

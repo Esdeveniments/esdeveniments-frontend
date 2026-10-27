@@ -4,13 +4,14 @@ import { useState, type ReactElement } from "react";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import { useLocale, useTranslations } from "next-intl";
-import { ca, es, enUS } from "date-fns/locale";
-import type { Locale } from "date-fns";
+import { ca, es, enUS } from "react-day-picker/locale";
+import type { DayPickerLocale } from "react-day-picker/locale";
 import type { DateRangeCalendarProps } from "types/props";
 import { nowInMadrid } from "@utils/constants";
 import "react-day-picker/style.css";
 
-const LOCALE_MAP: Record<string, Locale> = { ca, es, en: enUS };
+// DayPicker locales extend date-fns with translated aria labels.
+const LOCALE_MAP: Record<string, DayPickerLocale> = { ca, es, en: enUS };
 
 function toYMD(d: Date): string {
   const y = d.getFullYear();

@@ -5,7 +5,7 @@ import {
   type EventFormZodLabels,
   type ValidationLabels,
 } from "types/event";
-import { normalizeUrl } from "./string-helpers";
+import { normalizeUrl } from "./event-url";
 
 const defaultValidationLabels: ValidationLabels = {
   genericError: "There are validation errors",

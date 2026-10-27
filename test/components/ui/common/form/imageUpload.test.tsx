@@ -141,7 +141,7 @@ describe("ImageUploader file validation", () => {
       target: { files: [createMockFile("large.jpg", "image/jpeg", 9 * 1024 * 1024)] },
     });
     expect(preparing).toHaveBeenLastCalledWith(true);
-    fireEvent.click(screen.getByRole("button", { name: "Eliminar imatge" }));
+    fireEvent.click(screen.getByRole("button", { name: "Elimina la imatge" }));
     await act(async () => pending.resolve(createMockFile("small.jpg", "image/jpeg", 100)));
     expect(onUpload.mock.calls).toEqual([[null]]);
     expect(preparing).toHaveBeenLastCalledWith(false);
@@ -155,7 +155,7 @@ describe("ImageUploader file validation", () => {
     fireEvent.change(document.querySelector('input[type="file"]')!, {
       target: { files: [createMockFile("new.jpg", "image/jpeg", 100)] },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Eliminar imatge" }));
+    fireEvent.click(screen.getByRole("button", { name: "Elimina la imatge" }));
     act(() => MockFileReader.instances[0].complete());
     expect(onUpload).toHaveBeenLastCalledWith(null);
     expect(MockFileReader.instances[0].abort).toHaveBeenCalled();
@@ -214,7 +214,7 @@ describe("ImageUploader file validation", () => {
     // Should not show error message
     expect(
       screen.queryByText(
-        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i"),
+        new RegExp(`per sota de ${MAX_LIMIT_LABEL} MB`, "i"),
       ),
     ).not.toBeInTheDocument();
   });
@@ -247,7 +247,7 @@ describe("ImageUploader file validation", () => {
       expect(
         screen.getByText(
           new RegExp(
-            `La mida de la imatge supera el límit permès de ${MAX_LIMIT_LABEL} MB`,
+            `No hem pogut reduir la imatge per sota de ${MAX_LIMIT_LABEL} MB`,
             "i",
           ),
         ),
@@ -293,7 +293,7 @@ describe("ImageUploader file validation", () => {
     // Should not show error message
     expect(
       screen.queryByText(
-        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i"),
+        new RegExp(`per sota de ${MAX_LIMIT_LABEL} MB`, "i"),
       ),
     ).not.toBeInTheDocument();
   });
@@ -332,7 +332,7 @@ describe("ImageUploader file validation", () => {
 
     expect(
       screen.queryByText(
-        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i"),
+        new RegExp(`per sota de ${MAX_LIMIT_LABEL} MB`, "i"),
       ),
     ).not.toBeInTheDocument();
   });
@@ -426,7 +426,7 @@ describe("ImageUploader file validation", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/no és una imatge suportada/i),
+        screen.getByText(/no és compatible/i),
       ).toBeInTheDocument();
     });
 

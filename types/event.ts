@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidEventUrl } from "@utils/event-url";
 import type {
   RegionSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -73,10 +74,7 @@ export const createEventFormSchema = (
     location: z.string().min(1, labels.locationRequired),
     url: z
       .string()
-      .refine(
-        (val) => !val || z.string().url().safeParse(val).success,
-        labels.invalidUrl,
-      ),
+      .refine((val) => !val || isValidEventUrl(val), labels.invalidUrl),
     categories: z.array(CategoryFormItemSchema),
     email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
     isAllDay: z.boolean().optional(),

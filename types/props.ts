@@ -6,6 +6,8 @@ export interface LatestNewsSectionProps {
 }
 
 export interface PublishDraftPanelProps {
+  /** "decision": restore choice, failures and warnings. "status": save status and discard. */
+  variant: "decision" | "status";
   state: import("./publish-draft").PublishDraftSessionState;
   onRestore: () => void;
   onRestoreGuest: () => Promise<void>;
@@ -47,7 +49,7 @@ export interface ClientImageInnerProps {
   date?: string;
 }
 
-import { ChangeEvent, MouseEvent, ReactNode } from "react";
+import { ChangeEvent, InputHTMLAttributes, MouseEvent, ReactNode } from "react";
 
 // Detail page section tracker
 export interface DetailSectionTrackerProps {
@@ -93,6 +95,7 @@ export interface SelectComponentProps {
   testId?: string;
   autoFocus?: boolean;
   menuPosition?: "fixed" | "absolute";
+  error?: string;
 }
 
 export interface SelectSkeletonProps {
@@ -109,6 +112,7 @@ export interface MultiSelectProps {
   isDisabled?: boolean;
   placeholder?: string;
   isLoading?: boolean;
+  optionalLabel?: string;
 }
 
 export interface ReportViewProps {
@@ -226,6 +230,22 @@ export interface ModalProps {
   testId?: string;
 }
 
+export interface ConfirmDialogProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  title: string;
+  description?: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  /** Return false to keep the dialog open (e.g. the action failed). */
+  onConfirm: () => boolean | void | Promise<boolean | void>;
+  /** Disables both buttons and blocks Escape/backdrop dismissal while the action runs. */
+  busy?: boolean;
+  /** Shown inside the dialog when the action failed. */
+  error?: string;
+  testId?: string;
+}
+
 export interface TextAreaProps {
   id: string;
   value: string;
@@ -320,10 +340,15 @@ export interface InputProps {
   id: string;
   title: string;
   subtitle?: string;
+  /** Shown after the label for optional fields, e.g. "(opcional)". */
+  optionalLabel?: string;
   value: string | number;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   onBlur?: () => void;
+  inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
+  maxLength?: number;
 }
 
 export type RadioInputValue = string | number;

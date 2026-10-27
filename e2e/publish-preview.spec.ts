@@ -21,7 +21,7 @@ test.describe("Publish - Preview", () => {
     await page.locator('a[href="/"]').first().click();
     await expect(page).not.toHaveURL(/\/publica$/);
     await page.goto("/publica");
-    await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await page.getByRole("button", { name: "Recupera l'esborrany" }).click();
     await expect(page.locator("input#title")).toHaveValue("Pending SPA draft");
   });
 
@@ -43,7 +43,7 @@ test.describe("Publish - Preview", () => {
     expect(await title.evaluate((input: HTMLInputElement) =>
       input.value.slice(input.selectionStart ?? 0, input.selectionEnd ?? 0))).toBe("My unsaved text");
     await page.screenshot({ path: test.info().outputPath("conflict-copyable.png") });
-    await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await page.getByRole("button", { name: "Recupera l'esborrany" }).click();
     await expect(title).toHaveValue("Other tab draft");
     await other.close();
   });
@@ -135,9 +135,9 @@ test.describe("Publish - Preview", () => {
     expect(storedImage).toMatchObject({ type: "image/png", name: expect.any(String), size: expect.any(Number) });
 
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("button", { name: "Recupera esborrany" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Recupera l'esborrany" })).toBeVisible();
     await expect(page.locator("input#title")).toHaveValue("");
-    await page.getByRole("button", { name: "Recupera esborrany" }).click();
+    await page.getByRole("button", { name: "Recupera l'esborrany" }).click();
     await expect(page.getByTestId("publish-button")).toBeVisible();
     await page.getByTestId("prev-button").click();
     await page.getByTestId("prev-button").click();
@@ -163,7 +163,7 @@ test.describe("Publish - Preview", () => {
     const other = await page.context().newPage();
     await mockAuthenticatedUser(other);
     await other.goto("/publica");
-    await other.getByRole("button", { name: "Recupera esborrany" }).click();
+    await other.getByRole("button", { name: "Recupera l'esborrany" }).click();
     await other.getByTestId("prev-button").click();
     await other.getByTestId("prev-button").click();
     await other.locator("input#title").fill("Newer stored draft");

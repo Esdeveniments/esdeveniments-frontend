@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowUpTrayIcon as UploadIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ImageUploaderProps } from "types/props";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
@@ -23,6 +23,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const selectionVersionRef = useRef(0);
+  const dropzoneRef = useRef<HTMLDivElement>(null);
+  const changeButtonRef = useRef<HTMLButtonElement>(null);
+  // Set only by user actions, so a restored draft never steals focus.
+  const pendingFocusRef = useRef<"dropzone" | "change" | null>(null);
   const onPreparingChangeRef = useRef(onPreparingChange);
   useEffect(() => {
     onPreparingChangeRef.current = onPreparingChange;
@@ -32,6 +36,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     selectionVersionRef.current += 1;
     onPreparingChangeRef.current?.(false);
   }, []);
+
+  const hasPreview = Boolean(
+    value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("/"))
+  );
 
   const resetMessages = () => {
     setError(null);
@@ -80,6 +88,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         setError(t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
         return;
       }
+      // Replacing via Change keeps that button mounted, so only the first upload moves focus.
+      if (!hasPreview) pendingFocusRef.current = "change";
       onUpload(workingFile);
     } catch (compressionError) {
       console.error("Image preparation failed", compressionError);
@@ -126,140 +136,124 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     if (fileSelect.current) {
       fileSelect.current.value = "";
     }
+    pendingFocusRef.current = "dropzone";
     onUpload(null);
   };
 
   const isInteractionDisabled = isPreparing;
 
+  useEffect(() => {
+    const target = pendingFocusRef.current === "change" && hasPreview ? changeButtonRef.current
+      : pendingFocusRef.current === "dropzone" && !hasPreview ? dropzoneRef.current
+      : null;
+    if (!target) return;
+    pendingFocusRef.current = null;
+    target.focus();
+  }, [hasPreview]);
+
   return (
-    <div className="w-full text-foreground-strong">
-      <label htmlFor="image" className="form-label">
+    <div className="w-full">
+      <span id="image-label" className="form-label block">
         {t("label")}
-      </label>
+      </span>
+      <input
+        ref={fileSelect}
+        id="image"
+        type="file"
+        accept="image/png, image/jpeg"
+        className="hidden"
+        aria-labelledby="image-label"
+        onChange={(event) => {
+          void onChangeImage(event);
+        }}
+        disabled={isInteractionDisabled}
+      />
 
-      <div
-        className={`mt-3 border-2 border-dashed rounded-card ${dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50"
-          } ${isInteractionDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"} transition-all`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(event) => {
-          void handleDrop(event);
-        }}
-        onClick={() => {
-          if (isInteractionDisabled) return;
-          void handleImageUpload();
-        }}
-        onKeyDown={(event) => {
-          if (isInteractionDisabled) return;
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            void handleImageUpload();
-          }
-        }}
-        role="button"
-        tabIndex={isInteractionDisabled ? -1 : 0}
-        aria-disabled={isInteractionDisabled}
-      >
-        <div className="flex-center flex-col gap-3 p-8 text-center">
-          <UploadIcon className="w-10 h-10 text-muted-foreground" />
-          <p className="body-normal text-muted-foreground">
-            {t("uploadDropCta")}
-          </p>
-          <p className="body-small text-muted-foreground">
-            {t("uploadDropHelper")}
-          </p>
-          {/* Clear CTA Button */}
-          <span className="inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-6 py-3 bg-primary text-primary-foreground min-h-[44px]">
-            {t("selectButton")}
-          </span>
-          <p className="body-small text-muted-foreground mt-1">
-            {t("formatHelper")}
-          </p>
-
-          <input
-            ref={fileSelect}
-            type="file"
-            accept="image/png, image/jpeg"
-            style={{ display: "none" }}
-            onChange={(event) => {
-              void onChangeImage(event);
-            }}
-            disabled={isInteractionDisabled}
+      {hasPreview && value ? (
+        <div className="relative mt-2 overflow-hidden rounded-card border border-border bg-muted">
+          <img
+            alt={t("altPreview")}
+            src={value}
+            className="mx-auto max-h-72 w-auto object-contain"
           />
+          <div className="absolute right-2 top-2 flex gap-2">
+            <button
+              ref={changeButtonRef}
+              type="button"
+              className="btn-neutral bg-background shadow-sm py-1.5"
+              onClick={() => void handleImageUpload()}
+              disabled={isInteractionDisabled}
+            >
+              {t("change")}
+            </button>
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              aria-label={t("remove")}
+              className="flex-center h-10 w-10 rounded-full bg-background text-foreground shadow-sm hover:bg-muted focus-ring"
+            >
+              <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div
+          ref={dropzoneRef}
+          className={`mt-2 border-2 border-dashed rounded-card ${dragOver ? "border-primary bg-primary/5" : "border-border hover:border-foreground/40"
+            } ${isInteractionDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"} transition-colors focus-ring`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(event) => {
+            void handleDrop(event);
+          }}
+          onClick={() => {
+            if (isInteractionDisabled) return;
+            void handleImageUpload();
+          }}
+          onKeyDown={(event) => {
+            if (isInteractionDisabled) return;
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              void handleImageUpload();
+            }
+          }}
+          role="button"
+          tabIndex={isInteractionDisabled ? -1 : 0}
+          aria-disabled={isInteractionDisabled}
+          aria-labelledby="image-label image-action"
+          aria-describedby="image-format"
+        >
+          <div className="flex-center flex-col gap-2 p-6 text-center">
+            <PhotoIcon className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+            <span id="image-action" className="btn-neutral">{t("selectButton")}</span>
+            <p className="hidden md:block body-small text-muted-foreground">
+              {t("uploadDropCta")}
+            </p>
+            <p id="image-format" className="body-small text-muted-foreground">
+              {t("formatHelper")}
+            </p>
+          </div>
+        </div>
+      )}
       {isOptimizing && (
-        <p className="text-sm text-muted-foreground mt-2">
-          {t("optimizing", { limit: MAX_UPLOAD_LIMIT_LABEL })}
+        <p className="helper-text" role="status">
+          {t("optimizing")}
         </p>
       )}
       {status && (
-        <p className="text-sm text-foreground/80 mt-2" data-testid="image-upload-status">
+        <p className="helper-text" data-testid="image-upload-status">
           {status}
         </p>
       )}
       {error && (
-        <div
-          className="mt-3 px-4 py-3 bg-error/10 border border-error rounded-lg flex items-start gap-3"
-          role="alert"
-        >
-          <svg
-            className="w-5 h-5 text-error flex-shrink-0 mt-0.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <p className="text-sm font-medium text-error">{error}</p>
-        </div>
+        <p className="helper-text-error" role="alert">
+          {error}
+        </p>
       )}
-      {value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("/")) ? (
-        <div className="flex justify-center items-start p-4">
-          <button
-            onClick={handleRemoveImage}
-            aria-label={t("remove")}
-            className="bg-background rounded-full p-1 hover:bg-primary"
-            type="button"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-foreground-strong hover:text-background"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-          <img
-            alt={t("altPreview")}
-            height={100}
-            width={100}
-            className="object-contain"
-            src={value}
-            style={{
-              maxWidth: "100%",
-              height: "auto",
-            }}
-          />
-        </div>
-      ) : null}
     </div>
   );
 };

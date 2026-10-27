@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizeUrl } from "@utils/string-helpers";
+import { isValidEventUrl, normalizeUrl } from "@utils/event-url";
 
 describe("normalizeUrl", () => {
   it("should add https:// to URLs without protocol", () => {
@@ -71,3 +71,23 @@ describe("normalizeUrl", () => {
   });
 });
 
+
+describe("normalizeUrl localhost detection", () => {
+  it("only treats the localhost host as local", () => {
+    expect(normalizeUrl("localhost")).toBe("http://localhost");
+    expect(normalizeUrl("localhost/agenda")).toBe("http://localhost/agenda");
+    expect(normalizeUrl("localhostcat.org")).toBe("https://localhostcat.org");
+  });
+});
+
+describe("isValidEventUrl", () => {
+  it.each(["exemple.cat", "www.exemple.cat/agenda", "https://www.x.com/a?b=1", "http://bücher.de"])(
+    "accepts %s",
+    (url) => expect(isValidEventUrl(url)).toBe(true),
+  );
+
+  it.each(["hola", "ja", "https://x", "@insta", "127.0.0.1", "mailto:a@b.com", "https://exemple .cat", "ftp://exemple.cat", "javascript:alert(1)", "https://user:pass@exemple.cat", "https://.com", "foo..com", "-x.com", `${Array(4).fill("a".repeat(63)).join(".")}.cat`])(
+    "rejects %s",
+    (url) => expect(isValidEventUrl(url)).toBe(false),
+  );
+});

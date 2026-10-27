@@ -1,57 +1,13 @@
 import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
-import { components, StylesConfig, GroupBase } from "react-select";
+import { components } from "react-select";
+import { getSelectClassNames } from "../selectClassNames";
 import { SelectComponentProps } from "types/props";
 import { Option } from "types/common";
 import { useTranslations } from "next-intl";
 
-const borderColor = "#CCC !important";
-
-const customStyles: StylesConfig<Option, false, GroupBase<Option>> = {
-  container: (provided) => ({
-    ...provided,
-    borderColor: "#FFF !important",
-    border: "0px",
-  }),
-  input: (provided) => ({
-    ...provided,
-    fontSize: "16px",
-    padding: "0px 15px",
-  }),
-  control: (provided, state) => ({
-    ...provided,
-    borderColor: state.isFocused ? borderColor : borderColor,
-    boxShadow: state.isFocused ? "#000 !important" : "#CCC !important",
-    borderRadius: "8px",
-    minHeight: "42px",
-    height: "42px",
-  }),
-  placeholder: (provided) => ({
-    ...provided,
-    fontSize: "16px",
-    color: "#CCC",
-    padding: "0px 15px",
-  }),
-  option: (provided, state) => ({
-    ...provided,
-    fontSize: "16px",
-    background: state.isFocused ? "#D6002F" : "#FFF",
-    color: state.isFocused ? "#FFF" : "#454545",
-  }),
-  singleValue: (provided) => ({
-    ...provided,
-    fontSize: "16px",
-    color: "#454545",
-  }),
-  menu: (provided) => ({
-    ...provided,
-    border: "0px",
-    borderRadius: "0px",
-    boxShadow: "0px 10px 30px -25px #454545",
-    background: "#FFF",
-    padding: "0px 10px 30px",
-  }),
-};
+const selectClassNames = getSelectClassNames<false>();
+const selectErrorClassNames = getSelectClassNames<false>(true);
 
 const Input = components.Input;
 
@@ -68,9 +24,11 @@ export default function SelectComponent({
   testId,
   autoFocus = false,
   menuPosition = "absolute",
+  error,
 }: SelectComponentProps) {
   const t = useTranslations("Components.Select");
   const inputId = `${id}-input`;
+  const errorId = `${id}-error`;
 
   // Removed setState - no longer needed for page/scroll reset
   const [selectedOption, setSelectedOption] = useState<Option | null>(
@@ -96,13 +54,13 @@ export default function SelectComponent({
   return (
     <div className="w-full" data-testid={testId}>
       {title ? (
-        <label htmlFor={inputId} className="text-foreground-strong font-bold">
+        <label htmlFor={inputId} className="form-label">
           {title}
         </label>
       ) : null}
       <div className={title ? "mt-2" : undefined}>
         {!isMounted ? (
-          <div className="h-[42px] bg-muted border border-border rounded-lg animate-pulse" />
+          <div className="h-12 bg-muted border border-border rounded-input animate-pulse" />
         ) : (
           <CreatableSelect<Option>
             key={`select-${id}-${isMounted}`}
@@ -119,7 +77,10 @@ export default function SelectComponent({
             value={selectedOption || initialValue}
             onChange={handleChange}
             options={options}
-            styles={customStyles}
+            unstyled
+            classNames={error ? selectErrorClassNames : selectClassNames}
+            aria-invalid={error ? true : undefined}
+            aria-errormessage={error ? errorId : undefined}
             isDisabled={isDisabled}
             isValidNewOption={() => isValidNewOption}
             noOptionsMessage={() => t("noOptions")}
@@ -131,6 +92,11 @@ export default function SelectComponent({
           />
         )}
       </div>
+      {error && (
+        <p id={errorId} className="helper-text-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
