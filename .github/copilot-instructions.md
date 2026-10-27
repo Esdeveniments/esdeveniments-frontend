@@ -283,9 +283,9 @@ Adding a new filter:
 
 2. **Colors**: ALWAYS use semantic tokens, NEVER generic Tailwind grays
 
-   - ✅ Use: `text-foreground`, `text-foreground-strong`, `text-muted-foreground` (secondary text), `bg-background`, `bg-muted`, `border-border` (decorative), `border-input` (form controls), `primary-foreground`
+   - ✅ Use: `text-foreground`, `text-foreground-strong`, `text-muted-foreground` (secondary text), `bg-background`, `bg-muted`, `border-border` (decorative), `border-input` (form controls), `text-primary-foreground`
    - ❌ Forbidden: `text-gray-*`, `bg-gray-*`, `border-gray-*`
-   - ❌ Forbidden: `text-foreground/70` or lighter, `text-foreground-strong/50` or lighter (below WCAG AA; ESLint blocks them). Use `opacity-50` for disabled states.
+   - ❌ Forbidden: `text-foreground/75` or lighter, `text-foreground-strong/50` or lighter (below WCAG AA; ESLint blocks them). Use `opacity-50` for disabled states.
    - ❌ Forbidden: `text-error`, `text-warning`, `text-success` (fail AA). Use the `-dark` variants for status text and icons.
    - Reference: Brand colors defined in `tailwind.config.js`
 
@@ -362,7 +362,7 @@ When modifying existing components:
 <p className="text-gray-600">Secondary text</p>
 
 // ✅ Good
-<p className="text-foreground/80">Secondary text</p>
+<p className="text-muted-foreground">Secondary text</p>
 ```
 
 **Buttons**:

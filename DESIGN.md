@@ -407,7 +407,7 @@ components:
 
   modal-panel:
     background: "{colors.background}"
-    rounded: "{rounded.lg}"
+    rounded: "{rounded.md}"
     shadow: "{elevation.lg}"
     width: "500px"
   modal-panel-mobile:
@@ -602,9 +602,9 @@ Contrast budget (on white / on `#F7F7F7`): body `#454545` 9.59 / 8.95
 input border `#8C8C8C` 3.36 / 3.14 (meets the 3:1 rule for control
 boundaries). There are only two text grays: `foreground` and
 `muted-foreground` (`foreground/80` is an older equivalent). Lighter alphas
-fail AA (`foreground/70` is 4.12:1, `/60` 3.23:1), so ESLint blocks
-`text-foreground/70` and lighter, and `text-foreground-strong/50` and
-lighter. Disabled states use `opacity-50`, which WCAG exempts. Status text
+fail AA (`foreground/75` is 4.49:1 on muted, `/70` 4.12:1 on white), so
+ESLint blocks `text-foreground/75` and lighter, and
+`text-foreground-strong/50` and lighter. Disabled states use `opacity-50`, which WCAG exempts. Status text
 and status icons on light surfaces use the `-dark` variants (error-dark
 6.47:1, warning-dark 5.02:1, success-dark 5.48:1). The base status colors
 (2.15–3.76:1) are for fills and borders only, and ESLint blocks them as text.
@@ -701,8 +701,8 @@ category buttons alike. Pills paired with a cherry-red fill read as
 confident and a touch festive without tipping into playful, which is the
 tonal target.
 
-Cards and content containers use **`rounded.md`** (12px). Inputs settle at
-**`rounded.sm`** (8px); modals and the rich-text editor sit at
+Cards, content containers and modals use **`rounded.md`** (12px). Inputs
+settle at **`rounded.sm`** (8px); the rich-text editor sits at
 **`rounded.lg`** (16px). Badges and chips share the button's full-pill
 shape. There are no sharp 90° corners anywhere except inside the
 date-picker's range-middle days (intentional — it stitches the range

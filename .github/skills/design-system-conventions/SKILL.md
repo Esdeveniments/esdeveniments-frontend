@@ -34,8 +34,8 @@ Use two text grays: `text-foreground` (9.59:1) and `text-muted-foreground`
 (5.74:1). `text-foreground/80` (5.41:1) is an older equivalent of
 `text-muted-foreground`; prefer `text-muted-foreground` in new code.
 
-ESLint blocks `text-foreground/70` and lighter (4.12:1 or less) and
-`text-foreground-strong/50` and lighter. They fail 4.5:1. For disabled
+ESLint blocks `text-foreground/75` and lighter (4.49:1 on `muted`) and
+`text-foreground-strong/50` and lighter (below `/55`). They fail 4.5:1. For disabled
 states, use `opacity-50` (the existing disabled convention).
 
 Status text and icons on light backgrounds use the `-dark` variants

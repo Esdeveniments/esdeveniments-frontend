@@ -5,10 +5,11 @@ import * as espree from "espree";
 import { fixupConfigRules } from "@eslint/compat";
 import eslintReact from "@eslint-react/eslint-plugin";
 
-// Text colors below WCAG AA (4.5:1) on white. foreground/70 is 4.12:1,
-// foreground-strong/50 is 3.95:1, and base status colors are 2.15-3.76:1.
+// Text colors below WCAG AA (4.5:1) on white or muted (#F7F7F7).
+// foreground/75 is 4.49:1 on muted (/76 is 4.62), foreground-strong/54 is
+// 4.49:1 (/55 is 4.69), and base status colors are 2.15-3.76:1.
 // See DESIGN.md "Colors".
-const LOW_CONTRAST_TEXT = String.raw`/(^|[\s:"'])text-(foreground(\/[1-7]|-strong\/[1-5])\d(?!\d)|(success|warning|error)(?![\w-]))/`;
+const LOW_CONTRAST_TEXT = String.raw`/(^|[\s:"'])text-(foreground(\/([1-6]\d|7[0-5])|-strong\/([1-4]\d|5[0-4]))(?!\d)|(success|warning|error)(?![\w-]))/`;
 const LOW_CONTRAST_MESSAGE =
   "Text color below WCAG AA (4.5:1). Use text-muted-foreground for secondary text, text-{success,warning,error}-dark for status text, or opacity-50 for disabled states.";
 const lowContrastTextRules = [

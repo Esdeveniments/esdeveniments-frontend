@@ -140,7 +140,7 @@ module.exports = {
         card: "0.75rem", // 12px - Cards, containers
         input: "0.5rem", // 8px - Form inputs
         badge: "9999px", // Full - Pills, badges
-        modal: "1rem", // 16px - Modals, dialogs
+        modal: "0.75rem", // 12px - Modals, dialogs (same as card)
       },
 
       // === SHADOWS (PROFESSIONAL SYSTEM) === //
