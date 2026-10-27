@@ -58,11 +58,11 @@ export default function Modal({
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0"
             >
               <DialogPanel
-                className="flex justify-center items-center relative z-10 pointer-events-auto"
+                className="w-full sm:w-auto flex justify-center items-center relative z-10 pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
               >
-                <div className="w-full h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-card shadow-xl relative">
+                <div className="w-full h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] sm:h-auto flex flex-col sm:w-[500px] bg-background rounded-none sm:rounded-card overflow-hidden shadow-xl relative">
                   <div className="sticky top-0 bg-background px-4 z-10 flex-shrink-0">
                     <div className="relative min-h-[56px] flex items-center py-2">
                       <DialogTitle
