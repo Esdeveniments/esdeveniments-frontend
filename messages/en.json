@@ -363,7 +363,7 @@
       "draftAutoPublishStopped": "We did not publish automatically. Check the form and press Publish to continue.",
       "draftHandoffFailed": "We could not prepare your return to the form. You are still on this page. Try again or discard the draft before continuing.",
       "draftResumeFailed": "We could not restore the draft for this return. It may have expired, changed or belong to another account. Review any available draft or start again.",
-      "draftAuthNotice": "We will save the draft before continuing. When you return, review the preview and click Publish to send it.",
+      "draftAuthNotice": "We will save the draft before continuing. Publishing will continue automatically after you sign in and complete your profile if needed.",
       "draftRetry": "Try again",
       "draftDiscardConfirm": "Discard this draft?",
       "draftDiscardDescription": "The saved draft and this form's changes, including the image, will be deleted.",
