@@ -76,7 +76,7 @@
     "tailwindcss": "3.3.6",
     "undici": "^8.10.2",
     "web-push": "^3.6.7",
-    "web-vitals": "^5.2.0",
+    "web-vitals": "^6.2.3",
     "zod": "3.24.3"
   },
   "devDependencies": {
