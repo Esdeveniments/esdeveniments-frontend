@@ -62,6 +62,11 @@ export default async function PromotePage({
             ? status.data.checkoutUrl
             : null
         }
+        placeNames={{
+          CITY: event.city?.name,
+          REGION: event.region?.name,
+          PROVINCE: event.province?.name,
+        }}
       />
     </>
   );

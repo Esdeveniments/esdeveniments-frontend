@@ -1016,6 +1016,10 @@ export interface PromoteEventClientProps {
     import("types/api/promotion").PromotionOptionsDTO
   >;
   pendingCheckoutUrl: string | null;
+  /** Event's own town/region/province names, shown on the scope tabs. */
+  placeNames: Partial<
+    Record<import("types/api/promotion").PromotionPlacement, string>
+  >;
 }
 
 // /e/[eventId]/promote/{success,cancel} status panel

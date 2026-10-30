@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import PromoteEventClient from "../app/[locale]/e/[eventId]/promote/PromoteEventClient";
-import type { PromotionOptionsDTO } from "types/api/promotion";
+import type { PromotionOptionDTO, PromotionOptionsDTO } from "types/api/promotion";
 
 const mockCheckout = vi.fn();
 vi.mock("../app/[locale]/e/[eventId]/promote/actions", () => ({
@@ -33,6 +33,47 @@ const catalog: PromotionOptionsDTO = {
   eventEndsAt: "2026-10-30T22:00:00Z",
 };
 
+const placeNames = { CITY: "Mataró", REGION: "Maresme", PROVINCE: "Barcelona" };
+
+const option = (
+  id: string,
+  scope: PromotionOptionDTO["scope"],
+  durationDays: number,
+  available = true,
+): PromotionOptionDTO => ({
+  id,
+  scope,
+  durationDays,
+  amountMinor: 999,
+  currency: "EUR",
+  taxIncluded: true,
+  available,
+  unavailableReason: available ? null : "INSUFFICIENT_EVENT_DURATION",
+});
+
+const multiScopeCatalog: PromotionOptionsDTO = {
+  ...catalog,
+  options: [
+    option("city-30d", "CITY", 30),
+    option("city-1d", "CITY", 1),
+    option("city-7d", "CITY", 7),
+    option("region-7d", "REGION", 7, false),
+    option("region-1d", "REGION", 1),
+    option("catalonia-7d", "CATALONIA", 7),
+  ],
+};
+
+const renderMultiScope = () =>
+  render(
+    <PromoteEventClient
+      eventId="uuid-1"
+      slug="concert"
+      options={{ ok: true, data: multiScopeCatalog }}
+      pendingCheckoutUrl={null}
+      placeNames={placeNames}
+    />,
+  );
+
 describe("PromoteEventClient", () => {
   beforeEach(() => mockCheckout.mockReset());
 
@@ -44,6 +85,7 @@ describe("PromoteEventClient", () => {
         slug="concert"
         options={{ ok: true, data: catalog }}
         pendingCheckoutUrl={null}
+        placeNames={placeNames}
       />,
     );
 
@@ -68,6 +110,7 @@ describe("PromoteEventClient", () => {
         slug="concert"
         options={{ ok: true, data: catalog }}
         pendingCheckoutUrl={null}
+        placeNames={placeNames}
       />,
     );
 
@@ -76,5 +119,103 @@ describe("PromoteEventClient", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Aquest esdeveniment ja està promocionat.",
     );
+  });
+
+  it("renders one tab per scope in order, labelled with the event's places", () => {
+    renderMultiScope();
+
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.map((tab) => tab.dataset.testid)).toEqual([
+      "promote-tab-CITY",
+      "promote-tab-REGION",
+      "promote-tab-CATALONIA",
+    ]);
+    expect(tabs[0]).toHaveTextContent("Mataró");
+    expect(tabs[1]).toHaveTextContent("Maresme");
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("shows only the active scope's durations, shortest first", () => {
+    renderMultiScope();
+
+    const panel = screen.getByRole("tabpanel");
+    const radios = within(panel).getAllByRole("radio");
+    expect(radios.map((radio) => (radio as HTMLInputElement).value)).toEqual([
+      "city-1d",
+      "city-7d",
+      "city-30d",
+    ]);
+  });
+
+  it("preselects the shortest available option, matching the card order", () => {
+    renderMultiScope();
+
+    expect(screen.getByDisplayValue("city-1d")).toBeChecked();
+  });
+
+  it("keeps the picked option when the active tab is clicked again", () => {
+    renderMultiScope();
+
+    fireEvent.click(screen.getByDisplayValue("city-7d"));
+    fireEvent.click(screen.getByTestId("promote-tab-CITY"));
+
+    expect(screen.getByDisplayValue("city-7d")).toBeChecked();
+  });
+
+  it("opens on the first scope that has an available option", () => {
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{
+          ok: true,
+          data: {
+            ...catalog,
+            options: [option("city-7d", "CITY", 7, false), option("region-7d", "REGION", 7)],
+          },
+        }}
+        pendingCheckoutUrl={null}
+        placeNames={placeNames}
+      />,
+    );
+
+    expect(screen.getByTestId("promote-tab-REGION")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByDisplayValue("region-7d")).toBeChecked();
+  });
+
+  it("switching tab selects that scope's first available option", async () => {
+    mockCheckout.mockResolvedValue({ ok: false, code: "PAYMENT_PROCESSING" });
+    renderMultiScope();
+
+    fireEvent.click(screen.getByTestId("promote-tab-REGION"));
+
+    expect(screen.getByTestId("promote-tab-REGION")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByDisplayValue("region-7d")).toBeDisabled();
+    expect(screen.getByDisplayValue("region-1d")).toBeChecked();
+
+    fireEvent.click(screen.getByTestId("promote-confirm-button"));
+    await waitFor(() =>
+      expect(mockCheckout).toHaveBeenCalledWith(
+        "uuid-1",
+        "region-1d",
+        expect.any(String),
+      ),
+    );
+  });
+
+  it("moves between tabs with the arrow keys", () => {
+    renderMultiScope();
+
+    fireEvent.keyDown(screen.getByTestId("promote-tab-CITY"), { key: "ArrowLeft" });
+
+    const catalonia = screen.getByTestId("promote-tab-CATALONIA");
+    expect(catalonia).toHaveAttribute("aria-selected", "true");
+    expect(catalonia).toHaveFocus();
   });
 });
