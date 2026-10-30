@@ -54,8 +54,6 @@ export default async function PromotePage({
         <RefreshSession />
       )}
       <PromoteEventClient
-        // A session refresh re-renders with new options; remount to reset the picks.
-        key={options.ok ? "options" : options.code}
         eventId={event.id}
         slug={event.slug}
         options={options}

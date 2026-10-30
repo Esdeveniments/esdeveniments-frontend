@@ -4,6 +4,12 @@ import PromotePage from "../app/[locale]/e/[eventId]/promote/page";
 import type { PromotionOptionsDTO } from "types/api/promotion";
 
 const getPromotionOptions = vi.fn();
+const sendGoogleEvent = vi.fn();
+
+vi.mock("@utils/analytics", () => ({
+  sendGoogleEvent: (...args: unknown[]) => sendGoogleEvent(...args),
+  ensureGtag: vi.fn(),
+}));
 
 vi.mock("next/root-params", () => ({ locale: vi.fn() }));
 vi.mock("@lib/auth/owned-event", () => ({
@@ -63,5 +69,8 @@ describe("PromotePage", () => {
 
     expect(screen.getByDisplayValue("city-7d")).toBeChecked();
     expect(screen.getByTestId("promote-confirm-button")).toBeEnabled();
+    expect(
+      sendGoogleEvent.mock.calls.filter(([name]) => name === "promote_page_view"),
+    ).toHaveLength(1);
   });
 });

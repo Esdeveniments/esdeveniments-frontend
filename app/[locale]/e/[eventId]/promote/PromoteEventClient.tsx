@@ -46,12 +46,21 @@ export default function PromoteEventClient({
   const firstAvailableIn = (scope: PromotionPlacement | null) =>
     optionsIn(scope).find((option) => option.available)?.id ?? null;
 
-  const [activeScope, setActiveScope] = useState<PromotionPlacement | null>(
-    () => scopes.find((scope) => firstAvailableIn(scope)) ?? scopes[0] ?? null,
-  );
-  const [selectedId, setSelectedId] = useState<string | null>(() =>
+  const defaultScope = () =>
+    scopes.find((scope) => firstAvailableIn(scope)) ?? scopes[0] ?? null;
+
+  const [activeScope, setActiveScope] = useState(defaultScope);
+  const [selectedId, setSelectedId] = useState(() =>
     firstAvailableIn(activeScope),
   );
+  // A session refresh re-renders with the options; re-pick once they arrive.
+  const [hadOptions, setHadOptions] = useState(options.ok);
+  if (options.ok !== hadOptions) {
+    setHadOptions(options.ok);
+    const scope = defaultScope();
+    setActiveScope(scope);
+    setSelectedId(firstAvailableIn(scope));
+  }
   const scopeOptions = optionsIn(activeScope);
 
   const selectScope = (scope: PromotionPlacement) => {
