@@ -56,6 +56,7 @@ const multiScopeCatalog: PromotionOptionsDTO = {
   options: [
     option("city-30d", "CITY", 30),
     option("city-1d", "CITY", 1),
+    option("city-7d", "CITY", 7),
     option("region-7d", "REGION", 7, false),
     option("region-1d", "REGION", 1),
     option("catalonia-7d", "CATALONIA", 7),
@@ -141,8 +142,48 @@ describe("PromoteEventClient", () => {
     const radios = within(panel).getAllByRole("radio");
     expect(radios.map((radio) => (radio as HTMLInputElement).value)).toEqual([
       "city-1d",
+      "city-7d",
       "city-30d",
     ]);
+  });
+
+  it("preselects the shortest available option, matching the card order", () => {
+    renderMultiScope();
+
+    expect(screen.getByDisplayValue("city-1d")).toBeChecked();
+  });
+
+  it("keeps the picked option when the active tab is clicked again", () => {
+    renderMultiScope();
+
+    fireEvent.click(screen.getByDisplayValue("city-7d"));
+    fireEvent.click(screen.getByTestId("promote-tab-CITY"));
+
+    expect(screen.getByDisplayValue("city-7d")).toBeChecked();
+  });
+
+  it("opens on the first scope that has an available option", () => {
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{
+          ok: true,
+          data: {
+            ...catalog,
+            options: [option("city-7d", "CITY", 7, false), option("region-7d", "REGION", 7)],
+          },
+        }}
+        pendingCheckoutUrl={null}
+        placeNames={placeNames}
+      />,
+    );
+
+    expect(screen.getByTestId("promote-tab-REGION")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByDisplayValue("region-7d")).toBeChecked();
   });
 
   it("switching tab selects that scope's first available option", async () => {

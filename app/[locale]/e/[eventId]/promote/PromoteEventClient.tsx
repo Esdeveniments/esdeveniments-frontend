@@ -38,37 +38,36 @@ export default function PromoteEventClient({
   const scopes = SCOPE_ORDER.filter((scope) =>
     catalog.some((option) => option.scope === scope),
   );
-  const [selectedId, setSelectedId] = useState<string | null>(
-    () => catalog.find((option) => option.available)?.id ?? null,
-  );
+  // Cards render shortest first, so the default pick follows that order.
+  const optionsIn = (scope: PromotionPlacement | null) =>
+    catalog
+      .filter((option) => option.scope === scope)
+      .sort((a, b) => a.durationDays - b.durationDays);
+  const firstAvailableIn = (scope: PromotionPlacement | null) =>
+    optionsIn(scope).find((option) => option.available)?.id ?? null;
+
   const [activeScope, setActiveScope] = useState<PromotionPlacement | null>(
-    () =>
-      catalog.find((option) => option.id === selectedId)?.scope ??
-      scopes[0] ??
-      null,
+    () => scopes.find((scope) => firstAvailableIn(scope)) ?? scopes[0] ?? null,
   );
-  const tabsRef = useRef(new Map<PromotionPlacement, HTMLButtonElement>());
-  const scopeOptions = catalog
-    .filter((option) => option.scope === activeScope)
-    .sort((a, b) => a.durationDays - b.durationDays);
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    firstAvailableIn(activeScope),
+  );
+  const scopeOptions = optionsIn(activeScope);
 
   const selectScope = (scope: PromotionPlacement) => {
+    if (scope === activeScope) return;
     setActiveScope(scope);
-    setSelectedId(
-      catalog.find((option) => option.scope === scope && option.available)
-        ?.id ?? null,
-    );
+    setSelectedId(firstAvailableIn(scope));
   };
 
   // Arrow keys move between tabs (WAI-ARIA tabs pattern).
   const handleTabKeyDown = (event: KeyboardEvent, index: number) => {
-    const offset =
-      event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
-    if (!offset) return;
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     event.preventDefault();
+    const offset = event.key === "ArrowRight" ? 1 : -1;
     const next = scopes[(index + offset + scopes.length) % scopes.length];
     selectScope(next);
-    tabsRef.current.get(next)?.focus();
+    document.getElementById(`promote-tab-${next}`)?.focus();
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
@@ -189,7 +188,7 @@ export default function PromoteEventClient({
             <div
               role="tablist"
               aria-label={t("chooseOption")}
-              className="flex overflow-x-auto border-b border-border"
+              className="grid grid-cols-2 sm:flex border-b border-border"
             >
               {scopes.map((scope, index) => {
                 const isActive = scope === activeScope;
@@ -197,21 +196,19 @@ export default function PromoteEventClient({
                 return (
                   <button
                     key={scope}
-                    ref={(node) => {
-                      if (node) tabsRef.current.set(scope, node);
-                      else tabsRef.current.delete(scope);
-                    }}
                     type="button"
                     role="tab"
                     id={`promote-tab-${scope}`}
                     aria-selected={isActive}
-                    aria-controls={`promote-panel-${scope}`}
+                    aria-controls={
+                      isActive ? `promote-panel-${scope}` : undefined
+                    }
                     tabIndex={isActive ? 0 : -1}
                     disabled={isSubmitting}
                     onClick={() => selectScope(scope)}
                     onKeyDown={(event) => handleTabKeyDown(event, index)}
                     data-testid={`promote-tab-${scope}`}
-                    className={`flex-1 min-w-[8rem] flex flex-col items-center gap-0.5 px-3 py-3 -mb-px border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    className={`sm:flex-1 min-w-0 flex flex-col items-center gap-0.5 px-3 py-3 text-center -mb-px border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                       isActive
                         ? "border-primary text-primary"
                         : "border-transparent text-muted-foreground hover:text-foreground"
@@ -233,7 +230,7 @@ export default function PromoteEventClient({
                 role="tabpanel"
                 id={`promote-panel-${activeScope}`}
                 aria-labelledby={`promote-tab-${activeScope}`}
-                className="grid grid-flow-col auto-cols-[minmax(9rem,1fr)] gap-3 overflow-x-auto snap-x pb-1"
+                className="grid gap-3 sm:grid-flow-col sm:auto-cols-[minmax(9rem,1fr)] sm:overflow-x-auto sm:snap-x sm:pb-1"
               >
                 {scopeOptions.map((option) => {
                   const isSelected = selectedId === option.id;
@@ -254,7 +251,7 @@ export default function PromoteEventClient({
                         checked={isSelected}
                         disabled={!option.available || isSubmitting}
                         onChange={() => setSelectedId(option.id)}
-                        className="accent-primary"
+                        className="text-primary focus:ring-primary"
                       />
                       <span className="body-normal text-foreground-strong">
                         {t("duration", { days: option.durationDays })}
