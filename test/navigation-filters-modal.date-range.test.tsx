@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
+import type { ModalProps } from "types/props";
+import type { URLQueryParams } from "types/url-filters";
+import type { buildFilterUrl } from "@utils/url-filters";
 
 // The modal and select are loaded via next/dynamic; in unit tests we just need a
 // predictable wrapper that exposes the action button.
@@ -10,12 +13,7 @@ vi.mock("next/dynamic", () => {
     default:
       () =>
       (props: unknown) => {
-        const p = props as {
-          testId?: string;
-          children?: React.ReactNode;
-          onActionButtonClick?: () => void;
-          actionButton?: string;
-        };
+        const p = props as Partial<ModalProps>;
 
         return (
         <div data-testid={p.testId ?? "dynamic"}>
@@ -36,7 +34,7 @@ vi.mock("next/dynamic", () => {
 });
 
 const mockPush = vi.fn();
-const mockBuildFilterUrl = vi.fn((..._args: unknown[]) => "/catalunya");
+const mockBuildFilterUrl = vi.fn<typeof buildFilterUrl>(() => "/catalunya");
 vi.mock("../i18n/routing", async () => {
   const actual = await vi.importActual<typeof import("../i18n/routing")>(
     "../i18n/routing"
@@ -60,7 +58,8 @@ vi.mock("@utils/url-filters", async () => {
   );
   return {
     ...actual,
-    buildFilterUrl: (...args: unknown[]) => mockBuildFilterUrl(...args),
+    buildFilterUrl: (...args: Parameters<typeof buildFilterUrl>) =>
+      mockBuildFilterUrl(...args),
   };
 });
 
@@ -68,7 +67,7 @@ import * as nextIntl from "next-intl";
 
 const segments = { place: "catalunya", date: "tots", category: "tots" };
 
-function renderModal(currentQueryParams: Record<string, string>) {
+function renderModal(currentQueryParams: URLQueryParams) {
   const props = {
     isOpen: true,
     onClose: vi.fn(),
@@ -80,15 +79,15 @@ function renderModal(currentQueryParams: Record<string, string>) {
     <NavigationFiltersModal {...props} currentQueryParams={currentQueryParams} />
   );
   return {
-    rerender: (next: Record<string, string>) =>
+    rerender: (next: URLQueryParams) =>
       view.rerender(<NavigationFiltersModal {...props} currentQueryParams={next} />),
   };
 }
 
 function appliedRange() {
   fireEvent.click(screen.getByTestId("modal-action"));
-  const changes = mockBuildFilterUrl.mock.lastCall?.[2] as { from?: string; to?: string };
-  return { from: changes.from, to: changes.to };
+  const changes = mockBuildFilterUrl.mock.lastCall?.[2];
+  return { from: changes?.from, to: changes?.to };
 }
 
 describe("NavigationFiltersModal - date range", () => {
