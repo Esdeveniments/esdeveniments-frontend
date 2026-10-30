@@ -28,6 +28,11 @@ Enforce consistent styling using semantic design system classes. Prevent arbitra
 | Form control border | `border-input`             | Inputs, selects |
 | Primary button text | `text-primary-foreground`  | Button labels   |
 
+Checkboxes and radios get the brand color and a `:focus-visible` ring from
+the base layer in `styles/globals.css`. Don't add `accent-*`, because the
+forms plugin ignores it. Don't add `focus:ring-0`, because it hides keyboard
+focus.
+
 ### Text Contrast (WCAG AA)
 
 Use two text grays: `text-foreground` (9.59:1) and `text-muted-foreground`

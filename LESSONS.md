@@ -461,11 +461,13 @@ so with `resetOnSelect` the next tap starts over instead of picking the end.
 
 ## `@tailwindcss/forms` ignores `accent-*` on radios and checkboxes
 
-The plugin resets their `appearance` and paints the checked state with
-`currentColor`, so `accent-primary` does nothing and they stay the plugin's
-blue. Color them with `text-primary` and set the focus ring with
-`focus:ring-primary`. `NavigationFiltersModal` still uses `accent-primary` on
-its checkbox.
+The plugin resets their `appearance`, sets `color: #2563eb` on the input
+itself and paints the checked state with `currentColor`. So `accent-primary`
+does nothing, and a `text-primary` on the parent label does not reach the
+input. It also rings them on every `:focus`, mouse clicks included. The base
+layer in `styles/globals.css` now makes every checkbox and radio brand red and
+rings them only on `:focus-visible`. Do not add `accent-*`, and never
+`focus:ring-0`: that left the filters modal options with no keyboard focus.
 
 ## After `router.refresh()`, a client component keeps its state
 
