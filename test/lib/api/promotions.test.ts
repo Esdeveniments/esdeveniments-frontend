@@ -99,7 +99,9 @@ describe("isStripeCheckoutUrl", () => {
 });
 
 describe("createPromotionCheckout", () => {
-  beforeEach(() => mockFetch.mockReset());
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
 
   it("posts the option with the caller's Idempotency-Key to the event UUID", async () => {
     mockFetch.mockResolvedValue(
@@ -167,7 +169,9 @@ describe("createPromotionCheckout", () => {
 });
 
 describe("promotion reads during a server render", () => {
-  beforeEach(() => mockFetch.mockReset());
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
 
   it("use the cookie token and never refresh it", async () => {
     vi.mocked(events.requireAuth).mockClear();
@@ -213,7 +217,9 @@ describe("promotion reads during a server render", () => {
 });
 
 describe("promotion response validation", () => {
-  beforeEach(() => mockFetch.mockReset());
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
 
   it("accepts complete options and an empty promotion status", async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse(200, options));
