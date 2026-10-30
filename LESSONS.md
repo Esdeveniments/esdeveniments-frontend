@@ -470,8 +470,19 @@ its checkbox.
 ## After `router.refresh()`, a client component keeps its state
 
 The server re-renders with new props, but React keeps the same client
-instance, so `useState` initializers do not run again. The promote page started
-with no options while `RefreshSession` renews the token, and kept no tab or
-card picked after the refresh. A changing `key` fixes the state but remounts
-the component, which resets its refs and sent `promote_page_view` twice.
-`PromoteEventClient` instead re-picks during render when `options.ok` changes.
+instance, so `useState` initializers do not run again. A server action that
+writes a cookie (a token refresh in `promotionRequest`) re-renders the page the
+same way. The promote page started with no options while `RefreshSession`
+renewed the token, and kept no tab or card picked after the refresh. A
+changing `key` fixes the state but remounts the component, which resets its
+refs and sent `promote_page_view` twice.
+`PromoteEventClient` instead compares the `options` prop during render and
+re-picks only when the picked option is gone or no longer available.
+
+## A Vitest hook must not return a mock
+
+`beforeEach(() => mock.mockReset())` returns the mock, and Vitest runs a
+function returned from `beforeEach` as that test's cleanup. So the mock is
+called once more after every test, and a test that makes it return a promise
+that never settles times out in the hook. Use a block body:
+`beforeEach(() => { mock.mockReset(); })`.

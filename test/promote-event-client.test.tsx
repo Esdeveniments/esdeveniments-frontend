@@ -75,7 +75,9 @@ const renderMultiScope = () =>
   );
 
 describe("PromoteEventClient", () => {
-  beforeEach(() => mockCheckout.mockReset());
+  beforeEach(() => {
+    mockCheckout.mockReset();
+  });
 
   it("reuses the same Idempotency-Key when retrying the same option", async () => {
     mockCheckout.mockResolvedValue({ ok: false, code: "PAYMENT_PROCESSING" });
@@ -217,5 +219,73 @@ describe("PromoteEventClient", () => {
     const catalonia = screen.getByTestId("promote-tab-CATALONIA");
     expect(catalonia).toHaveAttribute("aria-selected", "true");
     expect(catalonia).toHaveFocus();
+  });
+
+  it.each(["CHECKOUT_EXPIRED", "ORDER_NOT_PENDING"])(
+    "starts a new Idempotency-Key after %s",
+    async (code) => {
+      mockCheckout.mockResolvedValue({ ok: false, code });
+      renderMultiScope();
+
+      const button = screen.getByTestId("promote-confirm-button");
+      fireEvent.click(button);
+      await waitFor(() => expect(button).not.toBeDisabled());
+      fireEvent.click(button);
+      await waitFor(() => expect(mockCheckout).toHaveBeenCalledTimes(2));
+
+      const [first, second] = mockCheckout.mock.calls;
+      expect(second[1]).toBe(first[1]);
+      expect(second[2]).not.toBe(first[2]);
+    },
+  );
+
+  it("unlocks the confirm button when the page returns from the bfcache", async () => {
+    mockCheckout.mockReturnValue(new Promise(() => {}));
+    renderMultiScope();
+
+    const button = screen.getByTestId("promote-confirm-button");
+    fireEvent.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+
+    const pageshow = new Event("pageshow");
+    Object.defineProperty(pageshow, "persisted", { value: true });
+    fireEvent(window, pageshow);
+
+    await waitFor(() => expect(button).not.toBeDisabled());
+  });
+
+  it("re-picks when new options make the picked one unavailable", () => {
+    const { rerender } = renderMultiScope();
+    fireEvent.click(screen.getByDisplayValue("city-7d"));
+
+    const props = {
+      eventId: "uuid-1",
+      slug: "concert",
+      pendingCheckoutUrl: null,
+      placeNames,
+    };
+    rerender(
+      <PromoteEventClient
+        {...props}
+        options={{ ok: true, data: { ...multiScopeCatalog } }}
+      />,
+    );
+    expect(screen.getByDisplayValue("city-7d")).toBeChecked();
+
+    rerender(
+      <PromoteEventClient
+        {...props}
+        options={{
+          ok: true,
+          data: {
+            ...multiScopeCatalog,
+            options: multiScopeCatalog.options.map((o) =>
+              o.id === "city-7d" ? { ...o, available: false } : o,
+            ),
+          },
+        }}
+      />,
+    );
+    expect(screen.getByDisplayValue("city-1d")).toBeChecked();
   });
 });

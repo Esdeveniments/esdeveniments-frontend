@@ -18,7 +18,9 @@ const mockFetch = vi.mocked(fetchWrapper.fetchWithHmac);
 const png = () => new File([new Uint8Array([1])], "c.png", { type: "image/png" });
 
 describe("event cover endpoints", () => {
-  beforeEach(() => mockFetch.mockReset());
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
 
   it("PUTs the file as imageFile to /events/{uuid}/image", async () => {
     mockFetch.mockResolvedValue(
