@@ -795,7 +795,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     checked={isDistanceActive && !disableDistance}
                     onChange={toggleDistanceActive}
                     disabled={disableDistance}
-                    className="h-4 w-4 accent-primary rounded border-border"
+                    className="h-4 w-4 rounded border-border"
                     data-testid="distance-toggle"
                   />
                   {t("distance.toggle")}
