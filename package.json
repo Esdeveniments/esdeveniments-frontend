@@ -61,7 +61,7 @@
     "cssnano": "^8.0.1",
     "date-fns": "^4.1.0",
     "fast-xml-parser": "^5.7.0",
-    "feed": "^5.1.0",
+    "feed": "^6.0.0",
     "next": "16.4.1",
     "next-intl": "^4.9.2",
     "postcss": "^8.5.23",
