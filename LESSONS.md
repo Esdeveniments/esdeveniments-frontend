@@ -377,6 +377,9 @@ The artifact lists `routes` as an array; the baseline keys them by route and
 keeps its own `version` and `thresholds`. Copy the artifact's
 `client.totalBytes` into the top-level `clientTotalBytes` too: the gate reads
 that field, and without it the client check is skipped.
+`yarn build` itself fails in such a worktree. Turbopack rejects the symlink
+("the symlink target leaves the configured filesystem roots"), so build in the
+main checkout or run a real `yarn install` in the worktree.
 
 ## `vi.resetModules()` keeps `vi.mock` factories
 
@@ -455,3 +458,20 @@ arrows stayed the library's blue. Set the variables on `.rdp-calendar .rdp-root`
 In range mode, a controlled `selected` with `to === from` counts as a full range,
 so with `resetOnSelect` the next tap starts over instead of picking the end.
 `DateRangeCalendar` keeps `to` undefined while it waits for the second tap.
+
+## `@tailwindcss/forms` ignores `accent-*` on radios and checkboxes
+
+The plugin resets their `appearance` and paints the checked state with
+`currentColor`, so `accent-primary` does nothing and they stay the plugin's
+blue. Color them with `text-primary` and set the focus ring with
+`focus:ring-primary`. `NavigationFiltersModal` still uses `accent-primary` on
+its checkbox.
+
+## After `router.refresh()`, a client component keeps its state
+
+The server re-renders with new props, but React keeps the same client
+instance, so `useState` initializers do not run again. The promote page started
+with no options while `RefreshSession` renews the token, and kept no tab or
+card picked after the refresh. A changing `key` fixes the state but remounts
+the component, which resets its refs and sent `promote_page_view` twice.
+`PromoteEventClient` instead re-picks during render when `options.ok` changes.
