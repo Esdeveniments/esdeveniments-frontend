@@ -121,6 +121,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     const fromDate = hasExplicitDateRange
       ? currentQueryParams.from || ""
       : "";
+    const toDate = hasExplicitDateRange ? currentQueryParams.to || "" : "";
     const distance =
       currentQueryParams.distance ||
       (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
@@ -133,6 +134,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       category,
       price,
       fromDate,
+      toDate,
       distance,
       userLocation: initialUserLocation,
       selectOption: regionOption || null,
@@ -174,7 +176,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   // TODO: Re-enable when backend supports the `type` query param
   // const [localPrice, setLocalPrice] = useState<string>(defaults.price);
   const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
-  const [localToDate, setLocalToDate] = useState<string>(currentQueryParams.to || defaults.fromDate);
+  const [localToDate, setLocalToDate] = useState<string>(defaults.toDate);
   // Which date control the user touched last, for GA: preset, shortcut or calendar.
   const [dateSource, setDateSource] = useState("unchanged");
   const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
@@ -211,8 +213,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       // TODO: Re-enable when backend supports the `type` query param
       // setLocalPrice(defaults.price);
       setLocalFromDate(defaults.fromDate);
-      const hasExplicitRange = Boolean(currentQueryParams.from && currentQueryParams.to);
-      setLocalToDate(hasExplicitRange ? (currentQueryParams.to || defaults.fromDate) : defaults.fromDate);
+      setLocalToDate(defaults.toDate);
       setDateSource("unchanged");
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
@@ -230,11 +231,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.category,
     defaults.price,
     defaults.fromDate,
+    defaults.toDate,
     defaults.distance,
     defaults.userLocation,
     defaults.placeType,
     defaults.placeCoords,
-    currentQueryParams.to,
     initialUseCurrentLocation,
   ]);
 

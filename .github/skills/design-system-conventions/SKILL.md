@@ -1,6 +1,6 @@
 ---
 name: design-system-conventions
-description: Guide for UI styling with semantic design system classes. Never use gray-* colors or arbitrary Tailwind utilities.
+description: Guide for UI styling with semantic design system classes. Use when adding or changing Tailwind classes, colors, text contrast, focus rings, form controls, or UI components. Never use gray-* colors or arbitrary Tailwind utilities.
 ---
 
 # Design System Conventions Skill
