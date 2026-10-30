@@ -92,7 +92,7 @@ export default function PromoteEventClient({
     return () => window.removeEventListener("pageshow", unlock);
   }, []);
   // One Idempotency-Key per option, stable across retries of that purchase.
-  const idempotencyKeys = useRef(new Map<string, string>());
+  const idempotencyKeysRef = useRef(new Map<string, string>());
 
   const hasTrackedPageViewRef = useRef(false);
   useEffect(() => {
@@ -116,10 +116,10 @@ export default function PromoteEventClient({
 
   const handleConfirm = async () => {
     if (!selectedId) return;
-    let idempotencyKey = idempotencyKeys.current.get(selectedId);
+    let idempotencyKey = idempotencyKeysRef.current.get(selectedId);
     if (!idempotencyKey) {
       idempotencyKey = crypto.randomUUID();
-      idempotencyKeys.current.set(selectedId, idempotencyKey);
+      idempotencyKeysRef.current.set(selectedId, idempotencyKey);
     }
 
     setErrorCode(null);
@@ -143,7 +143,7 @@ export default function PromoteEventClient({
         // The backend ties a key to one order; once it expired or closed,
         // the same key can only return ORDER_NOT_PENDING.
         if (result.code === "CHECKOUT_EXPIRED" || result.code === "ORDER_NOT_PENDING") {
-          idempotencyKeys.current.delete(selectedId);
+          idempotencyKeysRef.current.delete(selectedId);
         }
         setErrorCode(result.code);
         setIsSubmitting(false);
@@ -276,7 +276,6 @@ export default function PromoteEventClient({
                         checked={isSelected}
                         disabled={!option.available || isSubmitting}
                         onChange={() => setSelectedId(option.id)}
-                        className="text-primary focus:ring-primary"
                       />
                       <span className="body-normal text-foreground-strong">
                         {t("duration", { days: option.durationDays })}
