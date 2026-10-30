@@ -53,13 +53,16 @@ export default function PromoteEventClient({
   const [selectedId, setSelectedId] = useState(() =>
     firstAvailableIn(activeScope),
   );
-  // A session refresh re-renders with the options; re-pick once they arrive.
-  const [hadOptions, setHadOptions] = useState(options.ok);
-  if (options.ok !== hadOptions) {
-    setHadOptions(options.ok);
-    const scope = defaultScope();
-    setActiveScope(scope);
-    setSelectedId(firstAvailableIn(scope));
+  // A server re-render (session refresh, or a server action that renews the
+  // token cookie) brings new options. Keep the pick only while it is buyable.
+  const [prevOptions, setPrevOptions] = useState(options);
+  if (options !== prevOptions) {
+    setPrevOptions(options);
+    if (!catalog.some((option) => option.id === selectedId && option.available)) {
+      const scope = defaultScope();
+      setActiveScope(scope);
+      setSelectedId(firstAvailableIn(scope));
+    }
   }
   const scopeOptions = optionsIn(activeScope);
 
@@ -80,6 +83,14 @@ export default function PromoteEventClient({
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  // Back from Stripe can restore this page from the bfcache, still submitting.
+  useEffect(() => {
+    const unlock = (event: PageTransitionEvent) => {
+      if (event.persisted) setIsSubmitting(false);
+    };
+    window.addEventListener("pageshow", unlock);
+    return () => window.removeEventListener("pageshow", unlock);
+  }, []);
   // One Idempotency-Key per option, stable across retries of that purchase.
   const idempotencyKeys = useRef(new Map<string, string>());
 
@@ -129,6 +140,11 @@ export default function PromoteEventClient({
           event_slug: slug,
           reason: result.code,
         });
+        // The backend ties a key to one order; once it expired or closed,
+        // the same key can only return ORDER_NOT_PENDING.
+        if (result.code === "CHECKOUT_EXPIRED" || result.code === "ORDER_NOT_PENDING") {
+          idempotencyKeys.current.delete(selectedId);
+        }
         setErrorCode(result.code);
         setIsSubmitting(false);
         return;

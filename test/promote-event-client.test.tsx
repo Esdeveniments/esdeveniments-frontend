@@ -75,7 +75,9 @@ const renderMultiScope = () =>
   );
 
 describe("PromoteEventClient", () => {
-  beforeEach(() => mockCheckout.mockReset());
+  beforeEach(() => {
+    mockCheckout.mockReset();
+  });
 
   it("reuses the same Idempotency-Key when retrying the same option", async () => {
     mockCheckout.mockResolvedValue({ ok: false, code: "PAYMENT_PROCESSING" });

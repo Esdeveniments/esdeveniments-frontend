@@ -63,9 +63,9 @@ export default async function PromotePage({
             : null
         }
         placeNames={{
-          CITY: event.city?.name,
-          REGION: event.region?.name,
-          PROVINCE: event.province?.name,
+          CITY: event.city.name,
+          REGION: event.region.name,
+          PROVINCE: event.province.name,
         }}
       />
     </>

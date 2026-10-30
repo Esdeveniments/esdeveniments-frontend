@@ -17,6 +17,8 @@ vi.mock("@lib/auth/owned-event", () => ({
     id: "uuid-1",
     slug: "concert",
     city: { name: "Mataró" },
+    region: { name: "Maresme" },
+    province: { name: "Barcelona" },
   }),
   ownerCheckNeedsRefresh: vi.fn(),
 }));
