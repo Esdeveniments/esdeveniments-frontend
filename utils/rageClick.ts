@@ -14,7 +14,7 @@ const CLICK_THRESHOLD = 3;
 // Selectors for stable interactive ancestors. Clicks on children (icons,
 // text spans) are folded up to the nearest interactive element so rapid
 // clicks don't split across multiple DOM nodes and hide the rage pattern.
-const INTERACTIVE_SELECTORS =
+export const INTERACTIVE_SELECTORS =
   'button, a, [role="button"], [role="link"], input, [data-rage-id]';
 
 let initialized = false;
@@ -22,7 +22,7 @@ let initialized = false;
 const recentClicks = new WeakMap<Element, number[]>();
 const reportedElements = new Set<string>();
 
-function getElementKey(el: Element): string {
+export function getElementKey(el: Element): string {
   const rageId = el.getAttribute("data-rage-id");
   if (rageId) return `rage-id:${rageId}`;
 

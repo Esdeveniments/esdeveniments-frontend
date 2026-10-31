@@ -143,12 +143,21 @@ jobs:
           NODE_ENV: production
         run: yarn lighthouse:ci
 
+      # Warn only: thresholds sit just below a local mobile run (perf 78-82,
+      # LCP 4.8-5.4 s). The move keeps desktop asserts off the mobile reports.
+      - name: Run Lighthouse CI (mobile, warn only)
+        env:
+          NODE_ENV: production
+        run: mv .lighthouseci .lighthouseci-desktop && yarn lighthouse:ci:mobile
+
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: lighthouseci-report
-          path: .lighthouseci/
+          path: |
+            .lighthouseci-desktop/
+            .lighthouseci/
           retention-days: 14
           if-no-files-found: ignore
 

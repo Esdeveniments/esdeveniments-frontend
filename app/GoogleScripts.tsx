@@ -7,7 +7,7 @@ import { useAdContext } from "@lib/context/AdContext";
 import { isE2ETestMode } from "@utils/env";
 import { isProductionHost } from "@utils/production-host";
 import { scheduleIdleCallback } from "@utils/browser";
-import { ensureGtag, CONSENT_MODE_DEFAULTS } from "@utils/analytics";
+import { ensureGtag, CONSENT_MODE_DEFAULTS, GA_CONFIG } from "@utils/analytics";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -26,7 +26,10 @@ const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
 // nav) is the only one that ever pushes the default. Consent Mode only
 // honors the first 'default' command; a second one would reset an
 // already-granted consent state back to denied.
-const GTAG_SHIM = `window.dataLayer=window.dataLayer||[];if(typeof window.gtag!=='function'){window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('consent','default',${JSON.stringify(CONSENT_MODE_DEFAULTS)});}`;
+// It also pushes 'js' + 'config' in that branch, like ensureGtag(): gtag.js
+// drops any event queued before 'config'. This script only renders on the
+// production host, so it needs no host check of its own.
+const GTAG_SHIM = `window.dataLayer=window.dataLayer||[];if(typeof window.gtag!=='function'){window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('consent','default',${JSON.stringify(CONSENT_MODE_DEFAULTS)});window.gtag('js',new Date());window.gtag('config','${GA_MEASUREMENT_ID}',${JSON.stringify(GA_CONFIG)});}`;
 
 // Debounce tracking: store path + timestamp to allow re-visits but prevent duplicates
 // Key = path, Value = timestamp of last track
@@ -204,19 +207,6 @@ export default function GoogleScripts() {
             strategy="lazyOnload"
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
           />
-          <Script id="google-analytics-lazy-load" strategy="lazyOnload">
-            {`
-              ${GTAG_SHIM}
-              // Note: GTAG_SHIM is included here defensively, even though it's already in
-              // google-analytics-consent script. This ensures gtag is available if script
-              // loading order varies or the consent script fails to load.
-              gtag('js', new Date());
-              gtag('config', '${GA_MEASUREMENT_ID}', {
-                cookie_domain: 'auto',
-                send_pageview: false
-              });
-            `}
-          </Script>
         </>
       )}
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ensureGtag, sendGoogleEvent, CONSENT_MODE_DEFAULTS } from "@utils/analytics";
 import type { WindowWithGtag } from "types/common";
 
@@ -60,8 +60,21 @@ describe("sendGoogleEvent", () => {
     delete (window as unknown as { dataLayer?: unknown }).dataLayer;
   });
 
-  it("no-ops when gtag was never installed", () => {
-    expect(() => sendGoogleEvent("test_event", {})).not.toThrow();
+  it("queues the event when gtag was never installed", () => {
+    sendGoogleEvent("test_event", { foo: "bar" });
+    expect(Array.from(win().dataLayer.at(-1) as ArrayLike<unknown>)).toEqual([
+      "event",
+      "test_event",
+      { foo: "bar" },
+    ]);
+  });
+
+  it("does not push GA config off the production host", () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_ANALYTICS", "G-TEST");
+    sendGoogleEvent("test_event", {});
+    const commands = win().dataLayer.map((c) => (c as ArrayLike<unknown>)[0]);
+    expect(commands).not.toContain("config");
+    vi.unstubAllEnvs();
   });
 
   it("forwards to gtag when it has been installed", () => {
