@@ -2,7 +2,7 @@ import {
   MONTHS_URL as MONTHS,
   DEFAULT_FILTER_VALUE,
   getMonthUrlNames,
-  nowInMadrid,
+  TIMEZONE_MADRID,
 } from "@utils/constants";
 import { DateRange } from "types/common";
 import type { ValidDateSlug } from "types/dates";
@@ -71,41 +71,48 @@ export const getDaylightSaving = (): number => {
   return Math.max(jan, jul) != date.getTimezoneOffset() ? 2 : 1;
 };
 
-// Ranges hold Madrid calendar days at noon, both ends inclusive, so the
-// API date is right whatever time zone the server or browser runs in.
+// Ranges hold Madrid calendar days at 12:00 UTC, both ends inclusive, so
+// toISOString() gives the Madrid date in any server or browser time zone.
+const madridToday = (): Date => {
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE_MADRID,
+  }).format(new Date());
+  return new Date(`${ymd}T12:00:00Z`);
+};
+
 const addDays = (date: Date, days: number): Date => {
   const result = new Date(date);
-  result.setDate(result.getDate() + days);
+  result.setUTCDate(result.getUTCDate() + days);
   return result;
 };
 
-const daysUntilSunday = (date: Date): number => (7 - date.getDay()) % 7;
+const daysUntilSunday = (date: Date): number => (7 - date.getUTCDay()) % 7;
 
 export const today = (): DateRange => {
-  const day = nowInMadrid();
+  const day = madridToday();
   return { from: day, until: day };
 };
 
 export const tomorrow = (): DateRange => {
-  const day = addDays(nowInMadrid(), 1);
+  const day = addDays(madridToday(), 1);
   return { from: day, until: day };
 };
 
 export const week = (): DateRange => {
-  const from = nowInMadrid();
+  const from = madridToday();
   return { from, until: addDays(from, daysUntilSunday(from)) };
 };
 
 /** Friday to Sunday; from today when today is already Friday, Saturday or Sunday. */
 export const weekend = (): DateRange => {
-  const now = nowInMadrid();
-  const weekday = now.getDay();
+  const now = madridToday();
+  const weekday = now.getUTCDay();
   const from = weekday === 0 || weekday >= 5 ? now : addDays(now, 5 - weekday);
   return { from, until: addDays(now, daysUntilSunday(now)) };
 };
 
 export const twoWeeksDefault = (): DateRange => {
-  const from = nowInMadrid();
+  const from = madridToday();
   return { from, until: addDays(from, 14) };
 };
 

@@ -14,7 +14,7 @@ const at = (iso: string, byDate: string) => {
   return toApi(getDateRangeFromByDate(byDate));
 };
 
-describe.each(["UTC", "Europe/Madrid"])(
+describe.each(["UTC", "Europe/Madrid", "Pacific/Kiritimati", "Pacific/Honolulu"])(
   "date ranges sent to the API (process TZ %s)",
   (tz) => {
     const originalTz = process.env.TZ;
