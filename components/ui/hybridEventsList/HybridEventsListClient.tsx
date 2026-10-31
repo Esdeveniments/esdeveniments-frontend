@@ -52,6 +52,9 @@ function HybridEventsListClientContent({
   const locale = useLocale() as AppLocale;
   const searchResultsTrackedRef = useRef(false);
   const zeroResultsTrackedRef = useRef(false);
+  const statusRef = useRef<HTMLParagraphElement>(null);
+  const [retried, setRetried] = useState(false);
+  const focusAfterRetryRef = useRef(false);
   const [listingContainer, setListingContainer] = useState<HTMLDivElement | null>(null);
 
   const search = parsed.queryParams.search;
@@ -69,7 +72,7 @@ function HybridEventsListClientContent({
   // Check if client-side filters are active
   const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
 
-  const { events, hasMore, loadMore, isLoading, isLoadingMore, error } =
+  const { events, totalEvents, hasMore, loadMore, retry, isLoading, isLoadingMore, error } =
     useEvents({
       place,
       category,
@@ -171,6 +174,15 @@ function HybridEventsListClientContent({
     date: date || undefined,
   });
 
+  // A successful retry unmounts the focused button; move focus to the list
+  // so keyboard users stay in place, and let the status read the count.
+  useEffect(() => {
+    if (focusAfterRetryRef.current && !error) {
+      focusAfterRetryRef.current = false;
+      (listingContainer ?? statusRef.current)?.focus();
+    }
+  }, [error, listingContainer]);
+
   // Log errors for debugging
   if (error) {
     console.error("Events loading error:", error);
@@ -195,6 +207,11 @@ function HybridEventsListClientContent({
 
   return (
     <>
+      <p role="status" className="sr-only" ref={statusRef} tabIndex={-1}>
+        {(hasClientFilters || retried) && !isLoading && !error
+          ? t("resultsCount", { count: totalEvents })
+          : ""}
+      </p>
       {isLoading ? (
         // Show skeleton immediately while fetching filtered events
         <EventsGridSkeleton />
@@ -214,7 +231,7 @@ function HybridEventsListClientContent({
       ) : (
         <>
           {displayedEvents.length > 0 ? (
-            <div ref={setListingContainer}>
+            <div ref={setListingContainer} tabIndex={-1}>
               <ClientCardsList events={displayedEvents} />
             </div>
           ) : null}
@@ -247,6 +264,17 @@ function HybridEventsListClientContent({
             <p className="body-small text-foreground/80">
               {t("error")}
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setRetried(true);
+                focusAfterRetryRef.current = true;
+                retry();
+              }}
+              className="btn-outline mt-element-gap"
+            >
+              {t("retry")}
+            </button>
           </div>
         </div>
       ) : null}

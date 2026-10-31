@@ -22,12 +22,38 @@ const getMessage = (messages: Messages, path?: string, key?: string) => {
   }, messages);
 };
 
+const pluralRules = new Intl.PluralRules("ca");
+
+const formatPlural = (template: string, key: string, count: number): string => {
+  const start = template.indexOf(`{${key}, plural,`);
+  if (start === -1) return template;
+  let depth = 0;
+  let end = start;
+  for (; end < template.length; end++) {
+    if (template[end] === "{") depth++;
+    if (template[end] === "}" && --depth === 0) break;
+  }
+  const body = template.slice(start + `{${key}, plural,`.length, end);
+  const options: Record<string, string> = {};
+  for (const [, selector, text] of body.matchAll(/(=\d+|\w+)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g)) {
+    options[selector] = text;
+  }
+  const chosen =
+    options[`=${count}`] ?? options[pluralRules.select(count)] ?? options.other ?? "";
+  return (
+    template.slice(0, start) +
+    chosen.replace(/#/g, String(count)) +
+    template.slice(end + 1)
+  );
+};
+
 const formatTemplate = (
   template: string,
   values?: Record<string, any>
 ): string => {
   if (!values) return template;
   return Object.entries(values).reduce((acc, [k, v]) => {
+    if (typeof v === "number") acc = formatPlural(acc, k, v);
     if (typeof v === "string" || typeof v === "number") {
       return acc.replace(new RegExp(`{${k}}`, "g"), String(v));
     }
