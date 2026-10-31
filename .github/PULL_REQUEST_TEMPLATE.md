@@ -21,6 +21,6 @@
 
 <!-- Delete if none. Otherwise fill what applies. -->
 
-- Client bundle: <!-- `yarn analyze:cli` before and after, or "no new client code" -->
+- Client bundle: <!-- `yarn build && yarn analyze:cli` on the base branch and on this branch, or "no new client code" -->
 - Interactions (INP): <!-- which clicks or inputs change, measured how (DevTools at 4x/20x CPU, React Scan) -->
 - Field data to watch after deploy: <!-- GA4 `web_vitals` event, metric and page -->
