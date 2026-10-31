@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import HybridEventsListClient from "@components/ui/hybridEventsList/HybridEventsListClient";
 import { useEvents } from "@components/hooks/useEvents";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
@@ -54,6 +54,7 @@ beforeEach(() => {
     isLoading: false,
     isLoadingMore: false,
     loadMore: vi.fn(),
+    retry: vi.fn(),
     error: new Error("Failed to fetch events: 503"),
   });
 });
@@ -95,5 +96,40 @@ describe("listing outage UI", () => {
       expect.anything(),
     );
     expect(sendGoogleEvent).not.toHaveBeenCalledWith("zero_results", expect.anything());
+  });
+
+  it("retries the request from the error notice", () => {
+    render(<HybridEventsListClient initialEvents={[]} place="barcelona" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Torna-ho a provar" }));
+
+    expect(useEvents({ place: "barcelona" }).retry).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("filtered results count", () => {
+  it("announces the total after a filter change", () => {
+    vi.mocked(useEvents).mockReturnValue({
+      ...useEvents({ place: "barcelona" }),
+      events: [event],
+      totalEvents: 42,
+      error: undefined,
+    });
+
+    render(<HybridEventsListClient initialEvents={[]} place="barcelona" />);
+
+    expect(screen.getByRole("status")).not.toBeEmptyDOMElement();
+  });
+
+  it("stays silent while the filtered list loads", () => {
+    vi.mocked(useEvents).mockReturnValue({
+      ...useEvents({ place: "barcelona" }),
+      isLoading: true,
+      error: undefined,
+    });
+
+    render(<HybridEventsListClient initialEvents={[]} place="barcelona" />);
+
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 });

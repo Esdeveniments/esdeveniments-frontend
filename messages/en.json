@@ -1122,7 +1122,9 @@
     },
     "HybridEventsListClient": {
       "errorTitle": "Error loading events",
-      "error": "Please try again later."
+      "error": "Please try again later.",
+      "resultsCount": "{count, plural, =0 {No events} one {# event} other {# events}}",
+      "retry": "Try again"
     },
     "Hero": {
       "options": {

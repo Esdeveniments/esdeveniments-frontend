@@ -69,7 +69,7 @@ function HybridEventsListClientContent({
   // Check if client-side filters are active
   const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
 
-  const { events, hasMore, loadMore, isLoading, isLoadingMore, error } =
+  const { events, totalEvents, hasMore, loadMore, retry, isLoading, isLoadingMore, error } =
     useEvents({
       place,
       category,
@@ -195,6 +195,11 @@ function HybridEventsListClientContent({
 
   return (
     <>
+      <p role="status" className="sr-only">
+        {hasClientFilters && !isLoading && !error
+          ? t("resultsCount", { count: totalEvents })
+          : ""}
+      </p>
       {isLoading ? (
         // Show skeleton immediately while fetching filtered events
         <EventsGridSkeleton />
@@ -247,6 +252,13 @@ function HybridEventsListClientContent({
             <p className="body-small text-foreground/80">
               {t("error")}
             </p>
+            <button
+              type="button"
+              onClick={retry}
+              className="btn-outline mt-element-gap"
+            >
+              {t("retry")}
+            </button>
           </div>
         </div>
       ) : null}

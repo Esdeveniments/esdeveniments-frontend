@@ -1130,7 +1130,9 @@
     },
     "HybridEventsListClient": {
       "errorTitle": "Error al carregar esdeveniments",
-      "error": "Si us plau, torna-ho a intentar més tard."
+      "error": "Si us plau, torna-ho a intentar més tard.",
+      "resultsCount": "{count, plural, =0 {Cap esdeveniment} one {# esdeveniment} other {# esdeveniments}}",
+      "retry": "Torna-ho a provar"
     },
     "Hero": {
       "options": {

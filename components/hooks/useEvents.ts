@@ -125,6 +125,7 @@ export const useEvents = ({
     error,
     isLoading: isSWRLoading,
     setSize,
+    mutate,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
     getKey,
     ([
@@ -239,6 +240,7 @@ export const useEvents = ({
     isLoading,
     isLoadingMore,
     loadMore,
+    retry: () => void mutate(),
     error: error as Error | undefined,
   };
 };
