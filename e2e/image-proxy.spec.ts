@@ -1,6 +1,7 @@
 import {
   test,
   expect,
+  request as playwrightRequest,
   type Page,
   type APIRequestContext,
   type APIResponse,
@@ -69,14 +70,47 @@ test.describe("Image Proxy", () => {
     context: string,
     selector = "img",
   ) {
-    const firstImage = page.locator(selector).filter({ visible: true }).first();
-    await expect(firstImage).toBeVisible({ timeout: 10000 });
-    await firstImage.scrollIntoViewIfNeeded();
+    const images = page.locator(selector).filter({ visible: true });
+    await expect(images.first()).toBeVisible({ timeout: 10000 });
 
+    const srcs = await Promise.all(
+      (await images.all()).slice(0, 5).map((img) => img.getAttribute("src")),
+    );
+
+    // A clean context: the config's extraHTTPHeaders carry the Vercel bypass
+    // secret, which must never reach third-party image hosts.
+    const probe = await playwrightRequest.newContext();
+    const live = await Promise.all(
+      srcs.map(async (src) => {
+        const upstream = src?.includes("/api/image-proxy")
+          ? new URL(src, page.url()).searchParams.get("url")
+          : null;
+        if (!upstream) return true;
+        // Same URL the proxy fetches: it strips the `v` cache key first.
+        const target = new URL(upstream);
+        target.searchParams.delete("v");
+        return probe.get(target.toString(), { timeout: 5000 }).then(
+          (r) => r.ok(),
+          () => false,
+        );
+      }),
+    );
+    await probe.dispose();
+
+    // A third-party image that is gone at its source is not a proxy failure.
+    // Located by position: the src changes after hydration.
+    const index = live.indexOf(true);
+    if (index === -1) {
+      test.skip(true, `No image with a live upstream in ${context}`);
+      return;
+    }
+
+    const image = images.nth(index);
+    await image.scrollIntoViewIfNeeded();
     await expect
       .poll(
         () =>
-          firstImage.evaluate(
+          image.evaluate(
             (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
           ),
         { message: `Image should load in ${context}`, timeout: 15000 },
