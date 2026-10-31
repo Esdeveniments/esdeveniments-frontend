@@ -25,6 +25,7 @@ export const CLIENT_COMPONENT_KEYS = [
   "EventPage",
   "FavoriteButton",
   "FavoritesLoginNudge",
+  "Filters",
   "FiltersModal",
   "Footer",
   "HeroCTA",

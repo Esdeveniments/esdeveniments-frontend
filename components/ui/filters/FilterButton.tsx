@@ -11,6 +11,10 @@ import {
 import { FilterButtonProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
 import { scheduleIdleCallback } from "@utils/browser";
+import { useTranslations } from "next-intl";
+
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
 const FilterButton = ({
   filterKey,
@@ -20,6 +24,7 @@ const FilterButton = ({
   onOpenModal,
   testId,
 }: FilterButtonProps): JSX.Element => {
+  const t = useTranslations("Components.Filters");
   const router = useRouter();
   const { handlers, isPressed } = usePressFeedback();
   const { setLoading } = useFilterLoading();
@@ -65,29 +70,41 @@ const FilterButton = ({
       data-testid={testId}
     >
       <div
-        className={`flex justify-center items-center gap-element-gap-sm px-badge-x py-badge-y rounded-badge ease-in-out duration-300 focus:outline-none font-medium whitespace-nowrap border pressable-chip transition-interactive cursor-pointer ${enabled
+        className={`flex justify-center items-center rounded-badge ease-in-out duration-300 font-medium whitespace-nowrap border pressable-chip transition-interactive ${enabled
           ? "border-primary bg-primary/5 text-foreground-strong"
           : "border-border text-foreground-strong hover:bg-muted"
           }`}
         data-pressed={isPressed ? "true" : undefined}
-        onClick={handleChipClick}
-        {...handlers}
       >
-        <span className="text-center body-small">
-          {text}
-        </span>
-        {enabled ? (
-          <XIcon
-            className="h-4 w-4 cursor-pointer ml-1 p-0.5 hover:bg-muted rounded"
-            aria-hidden="true"
+        <button
+          type="button"
+          className={`flex items-center py-badge-y pl-badge-x rounded-badge cursor-pointer ${FOCUS_RING} ${enabled ? "pr-1" : "pr-badge-x gap-element-gap-sm"}`}
+          onClick={handleChipClick}
+          {...handlers}
+        >
+          <span className="text-center body-small">
+            {text}
+          </span>
+          {!enabled && (
+            <ChevronDownIcon
+              className="h-4 w-4"
+              aria-hidden="true"
+            />
+          )}
+        </button>
+        {enabled && (
+          <button
+            type="button"
+            className={`flex items-center py-badge-y pl-element-gap-sm pr-badge-x rounded-badge cursor-pointer ${FOCUS_RING}`}
             onClick={handleRemove}
+            aria-label={t("removeFilter", { filter: text })}
             data-testid={`${testId}-remove`}
-          />
-        ) : (
-          <ChevronDownIcon
-            className="h-4 w-4"
-            aria-hidden="true"
-          />
+          >
+            <XIcon
+              className="h-4 w-4 p-0.5 hover:bg-muted rounded"
+              aria-hidden="true"
+            />
+          </button>
         )}
       </div>
     </div>

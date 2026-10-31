@@ -753,6 +753,7 @@
     },
     "Filters": {
       "triggerLabel": "Filtres",
+      "removeFilter": "Elimina el filtre {filter}",
       "priceFree": "Gratuït",
       "pricePaid": "De pagament"
     },
