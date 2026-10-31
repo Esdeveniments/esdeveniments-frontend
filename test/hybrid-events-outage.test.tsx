@@ -105,6 +105,29 @@ describe("listing outage UI", () => {
 
     expect(useEvents({ place: "barcelona" }).retry).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps keyboard focus on the list when a retry succeeds", () => {
+    vi.mocked(useEvents).mockReturnValue({
+      ...useEvents({ place: "barcelona" }),
+      events: [event],
+    });
+    const { rerender } = render(
+      <HybridEventsListClient initialEvents={[]} place="barcelona" />,
+    );
+    const button = screen.getByRole("button", { name: "Torna-ho a provar" });
+    button.focus();
+    fireEvent.click(button);
+
+    vi.mocked(useEvents).mockReturnValue({
+      ...useEvents({ place: "barcelona" }),
+      error: undefined,
+    });
+    rerender(<HybridEventsListClient initialEvents={[]} place="barcelona" />);
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByTestId("client-cards").parentElement).toHaveFocus();
+    expect(screen.getByRole("status")).toHaveTextContent("Cap esdeveniment");
+  });
 });
 
 describe("filtered results count", () => {
@@ -118,7 +141,7 @@ describe("filtered results count", () => {
 
     render(<HybridEventsListClient initialEvents={[]} place="barcelona" />);
 
-    expect(screen.getByRole("status")).not.toBeEmptyDOMElement();
+    expect(screen.getByRole("status")).toHaveTextContent("42 esdeveniments");
   });
 
   it("stays silent while the filtered list loads", () => {
