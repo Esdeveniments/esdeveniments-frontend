@@ -174,18 +174,6 @@ export const getFormattedDate = (
   };
 };
 
-export const nextDay = (x: number): Date => {
-  const now = new Date();
-  now.setDate(now.getDate() + ((x + (7 - now.getDay())) % 7));
-  const convertedDate = convertTZ(now, "Europe/Madrid");
-  return convertedDate;
-};
-
-export const isWeekend = (): boolean => {
-  const today = new Date();
-  return today.getDay() === 0 || today.getDay() === 5 || today.getDay() === 6;
-};
-
 /**
  * Converts ISO time string or Date to EventTimeDTO shape for backend requests.
  * Provides a default fallback for invalid or empty input.
