@@ -111,9 +111,11 @@ const FiltersClient = ({
   return (
     <div className="w-full bg-background flex justify-center items-center mt-element-gap">
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
-        <div
+        <button
+          type="button"
           onClick={handleOpenModal}
-          className="mr-element-gap flex justify-center items-center gap-element-gap cursor-pointer"
+          aria-label={triggerLabel || undefined}
+          className="mr-element-gap flex justify-center items-center gap-element-gap cursor-pointer rounded-badge focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           data-testid="filters-open"
         >
           <AdjustmentsIcon
@@ -124,10 +126,10 @@ const FiltersClient = ({
             }
             aria-hidden="true"
           />
-          <p className="hidden md:block body-small font-medium">
+          <span className="hidden md:block body-small font-medium">
             {triggerLabel}
-          </p>
-        </div>
+          </span>
+        </button>
         <div
           className="flex-1 flex items-center gap-element-gap-sm border-0 placeholder:text-border overflow-x-auto"
           style={{
