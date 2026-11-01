@@ -74,6 +74,10 @@ const nextConfig = {
   reactCompiler: true,
 
   cacheComponents: true,
+  // Links prefetch the shared App Shell of a route, not each URL. Safe here:
+  // no <Link> uses prefetch={true} (the Pressable/Card primitives default to
+  // false). Requires cacheComponents.
+  partialPrefetching: true,
 
   // --- HTML-limited bots (blocking render, no streaming) ---
   // With cacheComponents (PPR) + self-hosted cache handler, streamed HTML arrives
