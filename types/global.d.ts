@@ -10,6 +10,7 @@ declare global {
     __adsConsentGranted?: boolean;
     __autoAdsInitialized?: boolean;
     __autoAdsInitPending?: symbol;
+    __adsScriptSettled?: boolean;
     dataLayer?: unknown[];
     __tcfapi?: (
       command: "addEventListener" | "removeEventListener" | "getTCData",

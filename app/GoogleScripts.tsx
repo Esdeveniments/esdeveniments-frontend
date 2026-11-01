@@ -5,8 +5,12 @@ import Script from "next/script";
 import { useAdContext } from "@lib/context/AdContext";
 import { isE2ETestMode } from "@utils/env";
 import { isProductionHost } from "@utils/production-host";
-import { scheduleIdleCallback } from "@utils/browser";
+import {
+  onFirstInteractionOrTimeout,
+  scheduleIdleCallback,
+} from "@utils/browser";
 import { ensureGtag, CONSENT_MODE_DEFAULTS } from "@utils/analytics";
+import type { GoogleScriptsHeavyProps } from "types/ads";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -33,6 +37,11 @@ const GTAG_SHIM = `window.dataLayer=window.dataLayer||[];if(typeof window.gtag!=
 // Idle timeout for consent state updates (allows main thread work to complete first)
 const CONSENT_UPDATE_IDLE_TIMEOUT_MS = 1000;
 
+// adsbygoogle.js waits for the first tap, key press or scroll, so it does not
+// compete with the user's first interactions. Without one, it loads this long
+// after the window load event.
+const ADS_SCRIPT_FALLBACK_MS = 4500;
+
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
 
@@ -50,8 +59,25 @@ export default function GoogleScripts() {
   }, []);
 
   const [HeavyComponent, setHeavyComponent] = useState<
-    React.ComponentType<{ adsAllowed: boolean }> | null
+    React.ComponentType<GoogleScriptsHeavyProps> | null
   >(null);
+  // Armed at mount, not in GoogleScriptsHeavy: that mounts only after consent,
+  // so it would miss the first interaction (often the consent click itself).
+  const [adsScriptReady, setAdsScriptReady] = useState(false);
+  useEffect(() => {
+    if (isE2ETestMode) return;
+    let cancelIdle: (() => void) | undefined;
+    const cancelTrigger = onFirstInteractionOrTimeout(() => {
+      // Off the event task, so the first tap's INP does not pay for it.
+      cancelIdle = scheduleIdleCallback(() => setAdsScriptReady(true), {
+        timeout: 500,
+      });
+    }, ADS_SCRIPT_FALLBACK_MS);
+    return () => {
+      cancelTrigger();
+      cancelIdle?.();
+    };
+  }, []);
   // Track last consent state to avoid duplicate consent updates
   // Using useRef (not module-level) to handle React Strict Mode correctly
   const lastConsentStateRef = useRef<"granted" | "denied" | null>(null);
@@ -183,7 +209,10 @@ export default function GoogleScripts() {
 
       {/* Heavy tracking + Auto Ads: only load after consent */}
       {!isE2ETestMode && isProdHost && adsAllowed && HeavyComponent && (
-        <HeavyComponent adsAllowed={adsAllowed} />
+        <HeavyComponent
+          adsAllowed={adsAllowed}
+          adsScriptReady={adsScriptReady}
+        />
       )}
     </>
   );

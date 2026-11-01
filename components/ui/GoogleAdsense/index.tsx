@@ -8,7 +8,10 @@ import {
 } from "react";
 import { AdStatus, GoogleAdsenseContainerProps } from "types/common";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
-import { useAdContext } from "../../../lib/context/AdContext";
+import {
+  ADS_SCRIPT_SETTLED_EVENT,
+  useAdContext,
+} from "../../../lib/context/AdContext";
 
 const GoogleAdsenseContainer = ({
   id,
@@ -101,14 +104,29 @@ const GoogleAdsenseContainer = ({
       onDisplayAdChange(false);
     }
 
-    // Fallback: if no status arrives within a few seconds, show fallback content
-    fallbackTimer.current = setTimeout(() => {
-      const status = adRef.current?.getAttribute("data-ad-status");
-      const hasChildren =
-        !!adRef.current?.children && adRef.current.children.length > 0;
-      if (status === "filled" || hasChildren) return;
-      onDisplayAdChange(false);
-    }, 6000);
+    // Fallback: if no status arrives within a few seconds, show fallback content.
+    // The clock starts once adsbygoogle.js has loaded (or failed): it now waits
+    // for the first user interaction, and a slot pushed before that must not
+    // collapse while the script is still on its way.
+    const startFallbackTimer = () => {
+      fallbackTimer.current = setTimeout(() => {
+        const status = adRef.current?.getAttribute("data-ad-status");
+        const hasChildren =
+          !!adRef.current?.children && adRef.current.children.length > 0;
+        if (status === "filled" || hasChildren) return;
+        onDisplayAdChange(false);
+      }, 6000);
+    };
+    if (window.__adsScriptSettled) {
+      startFallbackTimer();
+      return;
+    }
+    window.addEventListener(ADS_SCRIPT_SETTLED_EVENT, startFallbackTimer, {
+      once: true,
+    });
+    return () => {
+      window.removeEventListener(ADS_SCRIPT_SETTLED_EVENT, startFallbackTimer);
+    };
   }, [adsAllowed, shouldRenderSlot]);
 
   // Mutation Observer (Ad Status)
