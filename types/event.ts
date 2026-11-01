@@ -375,6 +375,7 @@ export interface UseEventsReturn {
   isLoading: boolean;
   isLoadingMore: boolean;
   loadMore: () => void | Promise<void>;
+  retry: () => void;
   error: Error | undefined;
 }
 
