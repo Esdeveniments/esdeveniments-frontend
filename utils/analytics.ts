@@ -1,14 +1,13 @@
 import { GoogleAnalyticsEvent, WindowWithGtag } from "../types/common";
 import { isE2ETestMode } from "./env";
+import { isProductionHost } from "./production-host";
 
 export const sendGoogleEvent = (
   event: string,
   obj: GoogleAnalyticsEvent
 ): void => {
   if (isE2ETestMode) return;
-  if (typeof window !== "undefined" && typeof window.gtag === "function") {
-    window.gtag("event", event, obj);
-  }
+  ensureGtag()?.gtag("event", event, obj);
 };
 
 // Consent Mode v2 baseline, pushed once by ensureGtag() below. Exported so
@@ -45,6 +44,13 @@ export const ensureGtag = (): WindowWithGtag | null => {
       win.dataLayer.push(arguments);
     };
     win.gtag("consent", "default", CONSENT_MODE_DEFAULTS);
+    // gtag.js drops events queued before 'config', so config goes in right
+    // after the default instead of waiting for the lazyOnload scripts.
+    const gaId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
+    if (gaId && isProductionHost(win.location.hostname)) {
+      win.gtag("js", new Date());
+      win.gtag("config", gaId);
+    }
   }
 
   return win;

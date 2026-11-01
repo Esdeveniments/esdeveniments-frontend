@@ -4,6 +4,13 @@ import { CategorySummaryResponseDTO } from "types/api/category";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import type { CalendarUrls } from "types/calendar";
 import type { AppLocale } from "types/i18n";
+import type {
+  CLSMetricWithAttribution,
+  FCPMetricWithAttribution,
+  INPMetricWithAttribution,
+  LCPMetricWithAttribution,
+  TTFBMetricWithAttribution,
+} from "web-vitals/attribution";
 
 export interface Option {
   label: string;
@@ -65,6 +72,13 @@ export interface NetworkInformation {
 }
 
 // Google Analytics types
+export type MetricWithAttribution =
+  | CLSMetricWithAttribution
+  | FCPMetricWithAttribution
+  | INPMetricWithAttribution
+  | LCPMetricWithAttribution
+  | TTFBMetricWithAttribution;
+
 export interface WindowWithGtag extends Window {
   gtag: (...args: unknown[]) => void;
   dataLayer: unknown[];

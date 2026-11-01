@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, Suspense, useMemo, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
-import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
 import { isE2ETestMode } from "@utils/env";
 import { isProductionHost } from "@utils/production-host";
@@ -26,82 +25,13 @@ const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
 // nav) is the only one that ever pushes the default. Consent Mode only
 // honors the first 'default' command; a second one would reset an
 // already-granted consent state back to denied.
-const GTAG_SHIM = `window.dataLayer=window.dataLayer||[];if(typeof window.gtag!=='function'){window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('consent','default',${JSON.stringify(CONSENT_MODE_DEFAULTS)});}`;
+// It also pushes 'js' + 'config' in that branch, like ensureGtag(): gtag.js
+// drops any event queued before 'config'. This script only renders on the
+// production host, so it needs no host check of its own.
+const GTAG_SHIM = `window.dataLayer=window.dataLayer||[];if(typeof window.gtag!=='function'){window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('consent','default',${JSON.stringify(CONSENT_MODE_DEFAULTS)});window.gtag('js',new Date());window.gtag('config','${GA_MEASUREMENT_ID}');}`;
 
-// Debounce tracking: store path + timestamp to allow re-visits but prevent duplicates
-// Key = path, Value = timestamp of last track
-const pageViewTimestamps = new Map<string, number>();
-// Minimum ms between tracking same path (prevents duplicates from re-renders/strict mode)
-const DEBOUNCE_MS = 1000;
 // Idle timeout for consent state updates (allows main thread work to complete first)
 const CONSENT_UPDATE_IDLE_TIMEOUT_MS = 1000;
-
-/**
- * Check if we should track this page view.
- * Returns true if:
- * - Path hasn't been tracked before, OR
- * - Path was tracked more than DEBOUNCE_MS ago (legitimate re-visit)
- */
-function shouldTrackPageView(pagePath: string): boolean {
-  const now = Date.now();
-  const lastTracked = pageViewTimestamps.get(pagePath);
-
-  if (lastTracked === undefined || now - lastTracked > DEBOUNCE_MS) {
-    pageViewTimestamps.set(pagePath, now);
-
-    // Cleanup: remove entries older than 5 minutes to prevent memory growth
-    if (pageViewTimestamps.size > 100) {
-      const fiveMinutesAgo = now - 5 * 60 * 1000;
-      for (const [path, timestamp] of pageViewTimestamps) {
-        if (timestamp < fiveMinutesAgo) {
-          pageViewTimestamps.delete(path);
-        }
-      }
-    }
-
-    return true;
-  }
-
-  return false;
-}
-
-// Separate component for pageview tracking that uses useSearchParams (requires Suspense)
-function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  // Normalize search params: sort by key and use consistent encoding to prevent
-  // spurious pageview events from parameter order/encoding variations
-  const searchParamsString = useMemo(() => {
-    if (!searchParams) return "";
-    // Create a mutable copy from the read-only searchParams and sort it
-    const params = new URLSearchParams(searchParams);
-    params.sort();
-    return params.toString();
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
-    if (!adsAllowed) return; // Don't track when consent is not given
-
-    const win = ensureGtag();
-    if (!win) return;
-
-    const query = searchParamsString ? `?${searchParamsString}` : "";
-    const pagePath = `${pathname || "/"}` + query;
-
-    // Time-based debounce: prevents duplicates from React re-renders/Strict Mode
-    // but allows legitimate re-visits (user navigates away and back)
-    if (!shouldTrackPageView(pagePath)) {
-      return;
-    }
-
-    win.gtag("event", "page_view", {
-      page_path: pagePath,
-    });
-  }, [adsAllowed, pathname, searchParamsString]);
-
-  return null;
-}
 
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
@@ -204,19 +134,6 @@ export default function GoogleScripts() {
             strategy="lazyOnload"
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
           />
-          <Script id="google-analytics-lazy-load" strategy="lazyOnload">
-            {`
-              ${GTAG_SHIM}
-              // Note: GTAG_SHIM is included here defensively, even though it's already in
-              // google-analytics-consent script. This ensures gtag is available if script
-              // loading order varies or the consent script fails to load.
-              gtag('js', new Date());
-              gtag('config', '${GA_MEASUREMENT_ID}', {
-                cookie_domain: 'auto',
-                send_pageview: false
-              });
-            `}
-          </Script>
         </>
       )}
 
@@ -263,12 +180,6 @@ export default function GoogleScripts() {
         </>
       )}
 
-      {/* Pageview tracking - wrapped in Suspense for useSearchParams */}
-      {GA_MEASUREMENT_ID && !isE2ETestMode && isProdHost && (
-        <Suspense fallback={null}>
-          <GoogleAnalyticsPageview adsAllowed={adsAllowed} />
-        </Suspense>
-      )}
 
       {/* Heavy tracking + Auto Ads: only load after consent */}
       {!isE2ETestMode && isProdHost && adsAllowed && HeavyComponent && (
