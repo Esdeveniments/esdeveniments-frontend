@@ -17,6 +17,7 @@ import AuthEventTracker from "@components/analytics/AuthEventTracker";
 import { AdProvider } from "@lib/context/AdContext";
 import { AuthProvider } from "@lib/auth/AuthProvider";
 import BaseLayout from "@components/ui/layout/base";
+import IconSprite from "@components/ui/common/IconSprite";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
 import WebMcpTools from "@components/partials/WebMcpTools";
@@ -225,6 +226,7 @@ export default async function LocaleLayout({
             `,
           }}
         />
+        <IconSprite />
         <Suspense fallback={<AppShellSkeleton />}>
           <I18nProvider locale={locale}>
             <AdProvider>

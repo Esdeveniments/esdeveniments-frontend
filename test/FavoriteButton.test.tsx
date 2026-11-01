@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Link from "next/link";
-import type { SVGProps } from "react";
 import { SWRConfig } from "swr";
 
 const fetchMock = vi.fn<
@@ -28,18 +27,6 @@ vi.mock("@utils/analytics", () => ({
 const isAuthenticatedMock = vi.fn(() => false);
 vi.mock("@components/hooks/useAuth", () => ({
   useAuth: () => ({ isAuthenticated: isAuthenticatedMock() }),
-}));
-
-vi.mock("@heroicons/react/24/solid", () => ({
-  HeartIcon: (props: SVGProps<SVGSVGElement>) => (
-    <svg data-testid="heart-solid" {...props} />
-  ),
-}));
-
-vi.mock("@heroicons/react/24/outline", () => ({
-  HeartIcon: (props: SVGProps<SVGSVGElement>) => (
-    <svg data-testid="heart-outline" {...props} />
-  ),
 }));
 
 describe("FavoriteButton", () => {
@@ -85,7 +72,7 @@ describe("FavoriteButton", () => {
 
     const button = screen.getByRole("button", { name: "Afegeix a preferits" });
     expect(button).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByTestId("heart-outline")).toBeInTheDocument();
+    expect(button.querySelector("use")).toHaveAttribute("href", "#icon-heart-outline");
 
     fireEvent.click(button);
 
@@ -106,7 +93,7 @@ describe("FavoriteButton", () => {
       "aria-pressed",
       "true"
     );
-    expect(screen.getByTestId("heart-solid")).toBeInTheDocument();
+    expect(button.querySelector("use")).toHaveAttribute("href", "#icon-heart-solid");
   });
 
   it("rolls back optimistic state when server action fails", async () => {

@@ -2,7 +2,7 @@ import Image from "@components/ui/common/image";
 import CardLink from "./CardLink";
 import { prepareCardContentData } from "./prepareCardContentData";
 import type { CompactCardProps } from "types/props";
-import { MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
+import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 
 export default function CompactCard({
   event,
@@ -60,7 +60,9 @@ export default function CompactCard({
           </h3>
           {primaryLocation && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <LocationMarkerIcon className="w-3 h-3 flex-shrink-0" />
+              <svg className="w-3 h-3 flex-shrink-0" aria-hidden="true">
+                <use href={`#${SPRITE_ICON.mapPin}`} />
+              </svg>
               <span className="truncate">{primaryLocation}</span>
             </div>
           )}
