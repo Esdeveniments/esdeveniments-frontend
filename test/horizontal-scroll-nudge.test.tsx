@@ -16,11 +16,13 @@ class FakeIntersectionObserver {
 const scrollBy = vi.fn();
 const scrollTo = vi.fn();
 
-function intersectAll() {
+function intersectAll(intersectionRatio = 0.6) {
   act(() => {
     observerCallbacks.forEach((cb) =>
       cb(
-        [{ isIntersecting: true } as IntersectionObserverEntry],
+        [
+          { isIntersecting: true, intersectionRatio } as IntersectionObserverEntry,
+        ],
         {} as IntersectionObserver,
       ),
     );
@@ -57,6 +59,8 @@ describe("HorizontalScroll nudge", () => {
     vi.unstubAllGlobals();
     Reflect.deleteProperty(HTMLElement.prototype, "scrollWidth");
     Reflect.deleteProperty(HTMLElement.prototype, "clientWidth");
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollBy");
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollTo");
   });
 
   const renderCarousel = () =>
@@ -84,5 +88,39 @@ describe("HorizontalScroll nudge", () => {
     expect(scrollBy).toHaveBeenCalledWith({ left: 16, behavior: "smooth" });
     expect(scrollTo).toHaveBeenCalledWith({ left: 0, behavior: "smooth" });
     expect(sessionStorage.getItem("k")).toBe("1");
+  });
+
+  it("waits until half the carousel is visible", () => {
+    renderCarousel();
+    intersectAll(0.1);
+    act(() => vi.advanceTimersByTime(1000));
+
+    expect(scrollBy).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem("k")).toBeNull();
+
+    intersectAll(0.6);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+  });
+
+  it("nudges only one of two carousels that share a storage key", () => {
+    renderCarousel();
+    renderCarousel();
+    intersectAll();
+    act(() => vi.advanceTimersByTime(1000));
+
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not scroll back over a swipe made during the nudge", () => {
+    const { getByRole } = renderCarousel();
+    intersectAll();
+    act(() => {
+      getByRole("list").dispatchEvent(new Event("touchstart"));
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(scrollBy).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 });

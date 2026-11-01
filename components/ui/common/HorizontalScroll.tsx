@@ -101,6 +101,11 @@ export default function HorizontalScroll({
     let backward: number | undefined;
     let hintTimeout: number | undefined;
     let nudgeObserver: IntersectionObserver | undefined;
+    // A swipe during the nudge wins: do not scroll back over it.
+    const cancelNudge = () => {
+      window.clearTimeout(forward);
+      window.clearTimeout(backward);
+    };
     try {
       const storageKey =
         hintStorageKey ||
@@ -123,16 +128,25 @@ export default function HorizontalScroll({
       ) {
         nudgeObserver = new IntersectionObserver(
           (entries) => {
-            if (!entries.some((entry) => entry.isIntersecting)) return;
+            // The first callback arrives on observe() even below the
+            // threshold, and isIntersecting is true for any overlap.
+            const halfVisible = entries.some(
+              (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5
+            );
+            if (!halfVisible) return;
             nudgeObserver?.disconnect();
             const hasOverflow = el.scrollWidth > el.clientWidth + 2;
             if (!hasOverflow || el.scrollLeft > 1) return;
             try {
+              // Another carousel with the same key may have nudged meanwhile.
+              if (sessionStorage.getItem(storageKey) === "1") return;
               sessionStorage.setItem(storageKey, "1");
             } catch {
               // noop: the nudge may repeat this session
             }
             setShowHint(true);
+            el.addEventListener("pointerdown", cancelNudge, { passive: true });
+            el.addEventListener("touchstart", cancelNudge, { passive: true });
             const nudgePx = 16;
             const nudgeDelay = 250;
             const backDelay = 500;
@@ -178,6 +192,8 @@ export default function HorizontalScroll({
       if (forward) window.clearTimeout(forward);
       if (backward) window.clearTimeout(backward);
       nudgeObserver?.disconnect();
+      el.removeEventListener("pointerdown", cancelNudge);
+      el.removeEventListener("touchstart", cancelNudge);
       if (scrollRaf) window.cancelAnimationFrame(scrollRaf);
       if (measureRaf) window.cancelAnimationFrame(measureRaf);
       el.removeEventListener("scroll", onScroll);
