@@ -89,7 +89,6 @@ export default function SponsorBanner({
         )}
         <picture key={getImageKey(sources.fallback)}>
           <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
-          <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
           <img
             className="object-contain w-full h-full absolute inset-0"
             src={sources.fallback}
