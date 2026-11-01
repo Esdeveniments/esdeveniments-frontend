@@ -86,4 +86,27 @@ describe("FilterButton (black-box)", () => {
       window.scrollTo = originalWindowScrollTo;
     }
   });
+
+  it("exposes the chip and the remove action as separate named buttons", () => {
+    const onOpenModal = vi.fn();
+    renderWithProviders(
+      <FilterButton
+        text="Categoria"
+        filterKey="category"
+        enabled={true}
+        removeUrl="/barcelona"
+        onOpenModal={onOpenModal}
+        testId="filter-pill-category"
+      />
+    );
+    document.body.scrollTo = vi.fn();
+    window.scrollTo = vi.fn();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Elimina el filtre Categoria" })
+    );
+    expect(onOpenModal).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Categoria" }));
+    expect(onOpenModal).toHaveBeenCalledTimes(1);
+  });
 });
