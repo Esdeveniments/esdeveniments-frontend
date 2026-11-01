@@ -30,7 +30,6 @@ import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
 import { hasCardImage } from "@utils/event-helpers";
 import { connection } from "next/server";
-import { getPlaceExpandability } from "@lib/seo/place-expandability";
 
 // Lazy load below-the-fold client component via client component wrapper
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -259,18 +258,15 @@ async function PlacePageContent({
   await connection();
 
   // Await shell data and events in parallel
-  const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, ssrPageSize, structuredScripts }] =
-    await Promise.all([shellDataPromise, eventsPromise]);
-
-  // Gate filter quicklinks on event depth. Mirrors sitemap policy: cities with
-  // fewer than SITEMAP_MIN_EVENTS_FOR_EXPANSION (40) events shouldn't emit
-  // /[place]/[date] or /[place]/[category] internal links — those URLs are
-  // near-duplicates of the parent page and end up in GSC's "Crawled — currently
-  // not indexed" bucket. Regions always expand.
-  const placeIsExpandable = await getPlaceExpandability(
-    place,
-    placeTypeLabel.type,
-  );
+  // placeIsExpandable gates filter quicklinks on event depth. Mirrors sitemap
+  // policy: cities with fewer than SITEMAP_MIN_EVENTS_FOR_EXPANSION (40) events
+  // shouldn't emit /[place]/[date] or /[place]/[category] internal links — those
+  // URLs are near-duplicates of the parent page and end up in GSC's "Crawled —
+  // currently not indexed" bucket. Regions always expand.
+  const [
+    { placeTypeLabel, pageData },
+    { events, noEventsFound, serverHasMore, ssrPageSize, structuredScripts, placeIsExpandable },
+  ] = await Promise.all([shellDataPromise, eventsPromise]);
 
   const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
   const tByDates = await getTranslations("Config.ByDates");

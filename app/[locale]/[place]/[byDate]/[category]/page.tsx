@@ -270,6 +270,7 @@ export default async function FilteredPage({
     pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
     categoryName: categoryData?.name,
     locale,
+    placeIsExpandable: isExpandableForFetch,
   });
 
   // Late existence check to preserve UX without creating an early oracle
@@ -399,12 +400,14 @@ async function buildCategoryEventsPromise({
   pageDataPromise,
   categoryName,
   locale,
+  placeIsExpandable,
 }: {
   filters: { place: string; byDate: string; category: string };
   fetchParams: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
   categoryName?: string;
   locale: AppLocale;
+  placeIsExpandable: boolean;
 }): Promise<PlacePageEventsResult> {
   const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
@@ -469,5 +472,6 @@ async function buildCategoryEventsPromise({
     serverHasMore,
     ssrPageSize: fetchParams.size as number,
     structuredScripts: structuredScripts.length ? structuredScripts : undefined,
+    placeIsExpandable,
   };
 }

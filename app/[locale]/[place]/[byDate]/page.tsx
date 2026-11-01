@@ -280,6 +280,7 @@ export default async function ByDatePage({
     paramsForFetch,
     pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
     locale,
+    placeIsExpandable: isExpandableForFetch,
   });
 
 
@@ -407,6 +408,7 @@ async function buildPlaceByDateEventsPromise({
   paramsForFetch,
   pageDataPromise,
   locale,
+  placeIsExpandable,
 }: {
   place: string;
   finalCategory?: string;
@@ -414,6 +416,7 @@ async function buildPlaceByDateEventsPromise({
   paramsForFetch: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
   locale: AppLocale;
+  placeIsExpandable: boolean;
 }): Promise<PlacePageEventsResult> {
   const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
@@ -480,5 +483,6 @@ async function buildPlaceByDateEventsPromise({
     structuredScripts: structuredScripts.length
       ? structuredScripts
       : undefined,
+    placeIsExpandable,
   };
 }
