@@ -9,7 +9,7 @@ import type { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 export const hasCardImage = (
   event: ListEvent
 ): event is EventSummaryResponseDTO & { imageUrl: string } =>
-  isEventSummaryResponseDTO(event) && Boolean(event.imageUrl);
+  isEventSummaryResponseDTO(event) && Boolean(event.imageUrl?.trim());
 
 /**
  * Returns true when the provided event is still live or upcoming.

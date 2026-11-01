@@ -305,7 +305,8 @@ export function buildOptimizedImageUrl(
 }
 
 /**
- * Generate URLs for <picture> element sources: WebP plus a JPEG fallback.
+ * Generate URLs for <picture> element sources: WebP plus a fallback URL
+ * without a format param (the proxy picks the format from the Accept header).
  * No AVIF source: listed after WebP it is never picked, since every browser
  * that supports AVIF also supports WebP.
  *
