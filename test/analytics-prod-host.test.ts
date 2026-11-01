@@ -1,6 +1,6 @@
 // @vitest-environment-options {"url":"https://www.esdeveniments.cat/catalunya"}
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { sendGoogleEvent, GA_CONFIG } from "@utils/analytics";
+import { sendGoogleEvent } from "@utils/analytics";
 import type { WindowWithGtag } from "types/common";
 
 const win = () => window as unknown as WindowWithGtag;
@@ -20,11 +20,15 @@ describe("sendGoogleEvent on the production host", () => {
     sendGoogleEvent("web_vitals", { metric: "FCP" });
     const names = commands().map((c) => c[0]);
     expect(names).toEqual(["consent", "js", "config", "event"]);
-    expect(commands()[2]).toEqual(["config", "G-TEST", GA_CONFIG]);
+    expect(commands()[2]).toEqual(["config", "G-TEST"]);
   });
 
-  it("turns off the automatic page_view with the key GA4 reads", () => {
-    expect(GA_CONFIG).toMatchObject({ send_page_view: false });
+  // GA sends page_view itself: on config, and on history changes (enhanced
+  // measurement "page changes"), for every visitor. A param here that turns
+  // it off would drop page views for visitors who deny consent.
+  it("pushes 'config' without params, so GA sends the page_view", () => {
+    sendGoogleEvent("x", {});
+    expect(commands().find((c) => c[0] === "config")).toHaveLength(2);
   });
 
   it("pushes 'config' only once", () => {

@@ -20,9 +20,6 @@ export const CONSENT_MODE_DEFAULTS = {
   analytics_storage: "denied",
 } as const;
 
-// GoogleAnalyticsPageview sends page_view by hand, so config must not send one.
-export const GA_CONFIG = { cookie_domain: "auto", send_page_view: false } as const;
-
 /**
  * Installs the gtag dataLayer-queueing shim if it isn't there yet, so
  * `sendGoogleEvent` calls that fire before GoogleScripts' own `lazyOnload`
@@ -52,7 +49,7 @@ export const ensureGtag = (): WindowWithGtag | null => {
     const gaId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
     if (gaId && isProductionHost(win.location.hostname)) {
       win.gtag("js", new Date());
-      win.gtag("config", gaId, GA_CONFIG);
+      win.gtag("config", gaId);
     }
   }
 

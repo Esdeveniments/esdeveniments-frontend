@@ -71,10 +71,13 @@ describe("sendGoogleEvent", () => {
 
   it("does not push GA config off the production host", () => {
     vi.stubEnv("NEXT_PUBLIC_GOOGLE_ANALYTICS", "G-TEST");
-    sendGoogleEvent("test_event", {});
-    const commands = win().dataLayer.map((c) => (c as ArrayLike<unknown>)[0]);
-    expect(commands).not.toContain("config");
-    vi.unstubAllEnvs();
+    try {
+      sendGoogleEvent("test_event", {});
+      const commands = win().dataLayer.map((c) => (c as ArrayLike<unknown>)[0]);
+      expect(commands).not.toContain("config");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("forwards to gtag when it has been installed", () => {
