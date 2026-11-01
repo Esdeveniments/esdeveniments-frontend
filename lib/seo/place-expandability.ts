@@ -28,8 +28,8 @@ export function isExpandableByCount(
  * issues don't silently hide internal links or shrink the sitemap.
  *
  * Single source of truth: used by /[place] pages (SSR depth + noindex meta),
- * PlacePageShell (explore-nav internal links), and app/sitemap-places/[...parts]
- * (sitemap entries). All four surfaces stay in lock-step — if sitemap drops a
+ * PlacePageShell (explore-nav internal links, via the events result's
+ * placeIsExpandable), and app/sitemap-places/[...parts] (sitemap entries). All four surfaces stay in lock-step — if sitemap drops a
  * URL, the page also stops emitting internal links to it. Otherwise Googlebot
  * keeps discovering them via crawl, treats them as near-duplicates of the
  * parent, and buckets them as "Crawled — currently not indexed" (Dec 2025–May
