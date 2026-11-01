@@ -96,39 +96,22 @@ async function HybridEventsList({
       {headingSection}
       {sponsorSlot}
 
-      {/* Initial SSR list with ads (no hydration beyond card internals) */}
-      {/* Hidden when client filters are active (handled declaratively by SsrListWrapper) */}
-      {/* Wrapped in Suspense because SsrListWrapper uses useSearchParams() */}
-      {/* Fallback renders SSR content directly to ensure SEO visibility */}
-      <Suspense
-        fallback={
-          <div data-ssr-list-wrapper>
-            <List events={initialEvents}>
-              {(event: ListEvent, index: number) => (
-                <CardServer
-                  key={`${event.id ?? "ad"}-${index}`}
-                  event={event}
-                  isPriority={index === priorityIndex}
-                />
-              )}
-            </List>
-            <AdArticle slot="9643657007" />
-          </div>
-        }
-      >
-        <SsrListWrapper categories={categories}>
-          <List events={initialEvents}>
-            {(event: ListEvent, index: number) => (
-              <CardServer
-                key={`${event.id ?? "ad"}-${index}`}
-                event={event}
-                isPriority={index === priorityIndex}
-              />
-            )}
-          </List>
-          <AdArticle slot="9643657007" />
-        </SsrListWrapper>
-      </Suspense>
+      {/* Initial SSR list with ads (no hydration beyond card internals).
+          Hidden when client filters are active (SsrListWrapper). No Suspense
+          here: SsrListWrapper reads the shared URL filters context, and a
+          fallback that repeated the list sent every card twice in the HTML. */}
+      <SsrListWrapper categories={categories}>
+        <List events={initialEvents}>
+          {(event: ListEvent, index: number) => (
+            <CardServer
+              key={`${event.id ?? "ad"}-${index}`}
+              event={event}
+              isPriority={index === priorityIndex}
+            />
+          )}
+        </List>
+        <AdArticle slot="9643657007" />
+      </SsrListWrapper>
 
       {/* Client enhancer for pagination */}
       <HybridEventsListClient
