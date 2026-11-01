@@ -59,7 +59,7 @@ export const CLIENT_UTILS_KEYS = [
 ] as const;
 
 // Top-level namespaces that are shipped to the client in full (no sub-key pick).
-// If you drop one here, add the specific sub-keys it needs in its own constant.
+// If you drop one here, list the paths it needs in CLIENT_PARTIAL_PATHS.
 export const CLIENT_FULL_TOP_LEVEL = ["Config", "Sponsor"] as const;
 
 // Namespaces shipped in part: each entry is a dotted path into the messages.
