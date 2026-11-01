@@ -33,7 +33,6 @@ export default function EventHeroImageClient({
   return (
     <picture>
       <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
-      <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
       <img
         src={sources.fallback}
         alt={safeTitle}

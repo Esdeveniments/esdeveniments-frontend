@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   getOptimalImageQuality,
-  getServerImageQuality,
   getQualityPreset,
   getOptimalImageWidth,
   getOptimalImageSizes,
@@ -94,32 +93,6 @@ describe("image-quality utils", () => {
           networkQuality: 70,
         })
       ).toBe(70);
-    });
-  });
-
-  describe("getServerImageQuality", () => {
-    it("returns 85 for high network quality", () => {
-      expect(getServerImageQuality("high")).toBe(85);
-    });
-
-    it("returns 75 for medium network quality", () => {
-      expect(getServerImageQuality("medium")).toBe(75);
-    });
-
-    it("returns 50 for low network quality", () => {
-      expect(getServerImageQuality("low")).toBe(50);
-    });
-
-    it("returns 75 for unknown network quality", () => {
-      expect(getServerImageQuality("unknown")).toBe(75);
-    });
-
-    it("defaults to 75 when no argument provided", () => {
-      expect(getServerImageQuality()).toBe(75);
-    });
-
-    it("handles explicit undefined", () => {
-      expect(getServerImageQuality(undefined)).toBe(75);
     });
   });
 

@@ -10,6 +10,7 @@ import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+import { hasCardImage } from "@utils/event-helpers";
 
 async function HybridEventsList({
   initialEvents = [],
@@ -23,6 +24,7 @@ async function HybridEventsList({
   ssrPageSize,
   categories,
 }: HybridEventsListProps): Promise<ReactElement> {
+  const priorityIndex = initialEvents.findIndex(hasCardImage);
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
 
@@ -73,7 +75,7 @@ async function HybridEventsList({
             <CardServer
               key={`${event.id}-${index}`}
               event={event}
-              isPriority={index === 0}
+              isPriority={index === priorityIndex}
             />
           )}
         </List>
@@ -106,7 +108,7 @@ async function HybridEventsList({
                 <CardServer
                   key={`${event.id ?? "ad"}-${index}`}
                   event={event}
-                  isPriority={index === 0}
+                  isPriority={index === priorityIndex}
                 />
               )}
             </List>
@@ -120,7 +122,7 @@ async function HybridEventsList({
               <CardServer
                 key={`${event.id ?? "ad"}-${index}`}
                 event={event}
-                isPriority={index === 0}
+                isPriority={index === priorityIndex}
               />
             )}
           </List>
