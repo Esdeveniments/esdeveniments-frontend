@@ -60,9 +60,16 @@ export const CLIENT_UTILS_KEYS = [
 
 // Top-level namespaces that are shipped to the client in full (no sub-key pick).
 // If you drop one here, add the specific sub-keys it needs in its own constant.
-export const CLIENT_FULL_TOP_LEVEL = [
-  "Config",
-  "Partials",
-  "Sponsor",
-  "Sponsorship",
+export const CLIENT_FULL_TOP_LEVEL = ["Config", "Sponsor"] as const;
+
+// Namespaces shipped in part: each entry is a dotted path into the messages.
+// The guard test checks that every key a client file reads from these
+// namespaces resolves under one of the paths.
+export const CLIENT_PARTIAL_PATHS = [
+  "Partials.GeneratePagesData.categories",
+  "Sponsorship.checkout",
+  "Sponsorship.placeSelector",
+  "Sponsorship.pricing",
+  "Sponsorship.upload",
+  "Sponsorship.uploadPage",
 ] as const;

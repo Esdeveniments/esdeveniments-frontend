@@ -28,6 +28,7 @@ import {
   CLIENT_COMPONENT_KEYS,
   CLIENT_UTILS_KEYS,
   CLIENT_FULL_TOP_LEVEL,
+  CLIENT_PARTIAL_PATHS,
 } from "@lib/i18n/client-namespaces";
 
 async function I18nProvider({
@@ -76,6 +77,17 @@ function pickClientMessages(
   };
   for (const key of CLIENT_FULL_TOP_LEVEL) {
     if (m[key] !== undefined) picked[key] = m[key];
+  }
+  for (const path of CLIENT_PARTIAL_PATHS) {
+    const keys = path.split(".");
+    const leaf = keys.pop() as string;
+    let source: Record<string, unknown> | undefined = m;
+    let target = picked;
+    for (const key of keys) {
+      source = source?.[key] as Record<string, unknown> | undefined;
+      target = (target[key] ??= {}) as Record<string, unknown>;
+    }
+    if (source?.[leaf] !== undefined) target[leaf] = source[leaf];
   }
   return picked as Partial<typeof messages>;
 }

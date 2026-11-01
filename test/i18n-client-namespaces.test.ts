@@ -6,6 +6,7 @@ import {
   CLIENT_COMPONENT_KEYS,
   CLIENT_UTILS_KEYS,
   CLIENT_FULL_TOP_LEVEL,
+  CLIENT_PARTIAL_PATHS,
 } from "../lib/i18n/client-namespaces";
 
 // Directories that can contain client-rendered code. The Provider `messages`
@@ -235,6 +236,42 @@ function scanCallsites(): Callsite[] {
   return results;
 }
 
+// A namespace is partly shipped when some CLIENT_PARTIAL_PATHS entry sits
+// below it; key-level coverage is then checked by readKeys().
+function isPartialNamespace(namespace: string): boolean {
+  return CLIENT_PARTIAL_PATHS.some((p) => p.startsWith(`${namespace}.`));
+}
+
+function isShippedPath(path: string): boolean {
+  return CLIENT_PARTIAL_PATHS.some((p) => path === p || path.startsWith(`${p}.`));
+}
+
+// Static keys passed to the translator bound to `namespace` in `source`.
+// A template literal yields its prefix up to the first `${`. An identifier
+// argument resolves through `const id = "..."` or a template in the same file.
+// Returns null for an argument that can't be resolved statically.
+function readKeys(source: string, namespace: string): (string | null)[] | null {
+  const escaped = namespace.replace(/\./g, "\\.");
+  const binding = source.match(
+    new RegExp(`(?:const|let)\\s+(\\w+)\\s*=\\s*useTranslations\\(\\s*["']${escaped}["']\\s*\\)`),
+  );
+  if (!binding) return null;
+  const literal = (text: string): string | null => {
+    const m = text.match(/^\s*(["'`])((?:(?!\1)[^$]|\$(?!\{))*)/);
+    return m ? m[2] : null;
+  };
+  const calls = source.matchAll(
+    new RegExp(`\\b${binding[1]}(?:\\.(?:rich|markup|raw|has))?\\(([^)]*)`, "g"),
+  );
+  return Array.from(calls, ([, arg]) => {
+    const direct = literal(arg);
+    if (direct !== null) return direct;
+    const id = arg.match(/^\s*(\w+)\s*$/)?.[1];
+    const decl = id && source.match(new RegExp(`const\\s+${id}\\s*=([^;]*)`));
+    return decl ? literal(decl[1]) : null;
+  });
+}
+
 function relPath(absolute: string): string {
   return absolute.replace(`${process.cwd()}/`, "");
 }
@@ -286,6 +323,9 @@ describe("i18n client namespace whitelist", () => {
       const [top, sub] = cs.namespace.split(".", 2);
 
       if (fullTopLevel.has(top)) continue; // whole namespace shipped
+      if (isPartialNamespace(cs.namespace) || isShippedPath(cs.namespace)) {
+        continue; // keys checked in the partial-namespace test below
+      }
 
       // These top-levels use sub-key whitelists.
       if (top === "App") {
@@ -325,6 +365,34 @@ describe("i18n client namespace whitelist", () => {
       `Client components reference namespaces that are NOT in the Provider ` +
         `whitelist. These would throw MISSING_MESSAGE at render time. Fix by ` +
         `updating lib/i18n/client-namespaces.ts:\n${missing.join("\n")}`,
+    ).toEqual([]);
+  });
+
+  it("every key read from a partly shipped namespace is shipped", () => {
+    const problems: string[] = [];
+
+    for (const cs of callsites) {
+      if (cs.namespace === null || !isPartialNamespace(cs.namespace)) continue;
+      const keys = readKeys(readFileSync(cs.file, "utf8"), cs.namespace);
+      const where = `  ${relPath(cs.file)}:${cs.line}  namespace="${cs.namespace}"`;
+      if (keys === null) {
+        problems.push(`${where} — bind it with \`const t = useTranslations(...)\``);
+        continue;
+      }
+      for (const key of keys) {
+        if (key === null) {
+          problems.push(`${where} — pass keys as literals so this test can read them`);
+        } else if (!isShippedPath(`${cs.namespace}.${key}`)) {
+          problems.push(`${where} — key "${key}" is not under CLIENT_PARTIAL_PATHS`);
+        }
+      }
+    }
+
+    expect(
+      problems,
+      `Client components read keys that the Provider does not ship. These ` +
+        `would throw MISSING_MESSAGE at render time. Add the path to ` +
+        `CLIENT_PARTIAL_PATHS in lib/i18n/client-namespaces.ts:\n${problems.join("\n")}`,
     ).toEqual([]);
   });
 
@@ -403,6 +471,20 @@ describe("i18n client namespace whitelist", () => {
       check("App", CLIENT_APP_KEYS);
       check("Components", CLIENT_COMPONENT_KEYS);
       check("Utils", CLIENT_UTILS_KEYS);
+
+      for (const path of CLIENT_PARTIAL_PATHS) {
+        const value = path
+          .split(".")
+          .reduce<unknown>(
+            (node, key) => (node as Record<string, unknown> | undefined)?.[key],
+            messages,
+          );
+        if (value === undefined) {
+          problems.push(
+            `  ${locale}.json: missing "${path}" (listed in CLIENT_PARTIAL_PATHS)`,
+          );
+        }
+      }
 
       for (const top of CLIENT_FULL_TOP_LEVEL) {
         if (!(top in messages)) {
