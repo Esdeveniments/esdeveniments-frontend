@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import CardLayout from "@components/ui/common/cardContent/CardLayout";
+import IconSprite, { SPRITE_ICON } from "@components/ui/common/IconSprite";
 
 vi.mock("@components/ui/common/image", () => ({
   default: () => <span />,
@@ -44,5 +45,14 @@ describe("CardLayout icons", () => {
     expect(html).toContain('<use href="#icon-map-pin"></use>');
     expect(html).toContain('<use href="#icon-heart-outline"></use>');
     expect(html).not.toContain("<path");
+  });
+
+  it("defines a symbol for every icon the card can reference", () => {
+    const sprite = renderToStaticMarkup(<IconSprite />);
+    const symbolIds = [...sprite.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1]);
+    const usedIds = [...renderCard().matchAll(/<use href="#([^"]+)"/g)].map((m) => m[1]);
+
+    expect(symbolIds.sort()).toEqual(Object.values(SPRITE_ICON).sort());
+    expect(symbolIds).toEqual(expect.arrayContaining(usedIds));
   });
 });
