@@ -745,6 +745,7 @@
     },
     "Filters": {
       "triggerLabel": "Filters",
+      "removeFilter": "Remove filter {filter}",
       "priceFree": "Free",
       "pricePaid": "Paid"
     },
