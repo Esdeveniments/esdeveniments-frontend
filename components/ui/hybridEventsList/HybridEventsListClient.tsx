@@ -176,10 +176,15 @@ function HybridEventsListClientContent({
 
   // A successful retry unmounts the focused button; move focus to the list
   // so keyboard users stay in place, and let the status read the count.
+  // Only when focus was lost: a later automatic recovery must not pull focus
+  // away from where the user moved it.
   useEffect(() => {
     if (focusAfterRetryRef.current && !error) {
       focusAfterRetryRef.current = false;
-      (listingContainer ?? statusRef.current)?.focus();
+      const active = document.activeElement;
+      if (!active || active === document.body) {
+        (listingContainer ?? statusRef.current)?.focus();
+      }
     }
   }, [error, listingContainer]);
 

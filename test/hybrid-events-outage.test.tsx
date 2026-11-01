@@ -128,6 +128,35 @@ describe("listing outage UI", () => {
     expect(screen.getByTestId("client-cards").parentElement).toHaveFocus();
     expect(screen.getByRole("status")).toHaveTextContent("Cap esdeveniment");
   });
+
+  it("leaves focus alone when the user moved it before a late recovery", () => {
+    vi.mocked(useEvents).mockReturnValue({
+      ...useEvents({ place: "barcelona" }),
+      events: [event],
+    });
+    const { rerender } = render(
+      <>
+        <HybridEventsListClient initialEvents={[]} place="barcelona" />
+        <input aria-label="elsewhere" />
+      </>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Torna-ho a provar" }));
+    const elsewhere = screen.getByLabelText("elsewhere");
+    elsewhere.focus();
+
+    vi.mocked(useEvents).mockReturnValue({
+      ...useEvents({ place: "barcelona" }),
+      error: undefined,
+    });
+    rerender(
+      <>
+        <HybridEventsListClient initialEvents={[]} place="barcelona" />
+        <input aria-label="elsewhere" />
+      </>,
+    );
+
+    expect(elsewhere).toHaveFocus();
+  });
 });
 
 describe("filtered results count", () => {
