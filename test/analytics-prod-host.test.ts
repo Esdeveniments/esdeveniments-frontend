@@ -23,6 +23,10 @@ describe("sendGoogleEvent on the production host", () => {
     expect(commands()[2]).toEqual(["config", "G-TEST", GA_CONFIG]);
   });
 
+  it("turns off the automatic page_view with the key GA4 reads", () => {
+    expect(GA_CONFIG).toMatchObject({ send_page_view: false });
+  });
+
   it("pushes 'config' only once", () => {
     sendGoogleEvent("a", {});
     sendGoogleEvent("b", {});

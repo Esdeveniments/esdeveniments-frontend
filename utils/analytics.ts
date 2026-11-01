@@ -20,10 +20,8 @@ export const CONSENT_MODE_DEFAULTS = {
   analytics_storage: "denied",
 } as const;
 
-// GA4 ignores `send_pageview` (its key is `send_page_view`), so config also
-// sends an automatic page_view. Fixing the key changes page_view counts, so
-// it is a separate decision.
-export const GA_CONFIG = { cookie_domain: "auto", send_pageview: false } as const;
+// GoogleAnalyticsPageview sends page_view by hand, so config must not send one.
+export const GA_CONFIG = { cookie_domain: "auto", send_page_view: false } as const;
 
 /**
  * Installs the gtag dataLayer-queueing shim if it isn't there yet, so
