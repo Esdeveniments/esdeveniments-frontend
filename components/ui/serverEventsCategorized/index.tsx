@@ -208,6 +208,12 @@ async function ServerEventsCategorized({
             media={HERO_IMAGE.mobile.media}
             srcSet={HERO_IMAGE.mobile.srcSet}
             sizes={HERO_IMAGE.mobile.sizes}
+            type={HERO_IMAGE.mobile.type}
+          />
+          <source
+            media={HERO_IMAGE.mobile.media}
+            srcSet={HERO_IMAGE.mobile.fallbackSrcSet}
+            sizes={HERO_IMAGE.mobile.sizes}
             type="image/webp"
           />
           <img
