@@ -97,7 +97,6 @@ const nextConfig = {
   experimental: {
     rootParams: true,
     scrollRestoration: true,
-    inlineCss: true,
     // Tree-shake heavy libraries to reduce bundle size
     optimizePackageImports: [
       "@headlessui/react",
