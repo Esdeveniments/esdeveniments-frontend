@@ -3,6 +3,15 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import type { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 
 /**
+ * The card that gets the LCP preload and fetchPriority="high". Ads and events
+ * without an image cannot be the LCP image, so the first card is not enough.
+ */
+export const hasCardImage = (
+  event: ListEvent
+): event is EventSummaryResponseDTO & { imageUrl: string } =>
+  isEventSummaryResponseDTO(event) && Boolean(event.imageUrl);
+
+/**
  * Returns true when the provided event is still live or upcoming.
  * Uses computeTemporalStatus so logic stays consistent across the app.
  */

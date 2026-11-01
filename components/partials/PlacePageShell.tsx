@@ -28,7 +28,7 @@ import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
-import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { hasCardImage } from "@utils/event-helpers";
 import { connection } from "next/server";
 import { getPlaceExpandability } from "@lib/seo/place-expandability";
 
@@ -276,13 +276,13 @@ async function PlacePageContent({
   const tByDates = await getTranslations("Config.ByDates");
   const locale = await getLocaleSafely();
 
-  // Preload LCP image — first real event card image.
+  // Preload LCP image: the same card HybridEventsList marks as priority.
   // Uses responsive srcSet so the browser picks the right width for the viewport.
-  const firstRealEvent = events.find(isEventSummaryResponseDTO);
-  const lcpSources = firstRealEvent?.imageUrl
+  const firstImageEvent = events.find(hasCardImage);
+  const lcpSources = firstImageEvent
     ? buildResponsivePictureSourceUrls(
-      firstRealEvent.imageUrl,
-      firstRealEvent.hash || firstRealEvent.updatedAt,
+      firstImageEvent.imageUrl,
+      firstImageEvent.hash || firstImageEvent.updatedAt,
       {
         quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
       },

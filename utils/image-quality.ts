@@ -3,7 +3,7 @@
  * Optimized for performance with external images based on 2024 best practices
  */
 
-import { QualityOptions, QualityPreset, ImageSizeContext, NetworkQuality } from "types/common";
+import { QualityOptions, QualityPreset, ImageSizeContext } from "types/common";
 
 /**
  * Determines optimal image quality based on context
@@ -43,20 +43,6 @@ export function getOptimalImageQuality({
 
   // For internal images (rare in this app), use network-based quality
   return normalizedNetworkQuality;
-}
-
-// Network-aware quality mapping
-// NOTE: Values must match allowed qualities in next.config.js: [35, 50, 60, 75, 85]
-const QUALITY_MAP: Record<NetworkQuality, number> = {
-  high: 85,
-  medium: 75,
-  low: 50,
-  unknown: 75, // Default to medium quality
-};
-
-export function getServerImageQuality(networkQuality?: NetworkQuality): number {
-  const clampQuality = (value: number) => Math.max(0, Math.min(value, 100));
-  return clampQuality(QUALITY_MAP[networkQuality || "unknown"]);
 }
 
 /**
