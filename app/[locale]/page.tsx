@@ -119,7 +119,7 @@ export default function Page({
           media={source.media}
           imageSrcSet={source.srcSet}
           imageSizes={source.sizes}
-          type="image/webp"
+          type={source.type}
           fetchPriority="high"
         />
       ))}
