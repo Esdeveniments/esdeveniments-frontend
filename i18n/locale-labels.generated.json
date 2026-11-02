@@ -1,6 +1,39 @@
 {
   "constants": {
     "ca": {
+      "newsHubs": {
+        "mataro": "Mataró",
+        "barcelona": "Barcelona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida"
+      },
+      "nearbyHubs": {
+        "mataro": {
+          "vilassar-de-mar": "Vilassar de Mar",
+          "premia-de-dalt": "Premià de Dalt",
+          "argentona": "Argentona",
+          "calella": "Calella",
+          "canet-de-mar": "Canet de Mar"
+        },
+        "barcelona": {
+          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
+          "badalona": "Badalona",
+          "sant-just-desvern": "Sant Just Desvern",
+          "cardedeu": "Cardedeu",
+          "granollers": "Granollers",
+          "castelldefels": "Castelldefels"
+        },
+        "tarragona": {
+          "reus": "Reus",
+          "cambrils": "Cambrils",
+          "salou": "Salou"
+        },
+        "lleida": {
+          "balaguer": "Balaguer",
+          "tremp": "Tremp",
+          "tarrega": "Tàrrega"
+        }
+      },
       "days": [
         "Diumenge",
         "Dilluns",
@@ -19,20 +52,6 @@
         "Dv.",
         "Ds."
       ],
-      "monthsShort": [
-        "gen.",
-        "feb.",
-        "març",
-        "abr.",
-        "maig",
-        "juny",
-        "jul.",
-        "ag.",
-        "set.",
-        "oct.",
-        "nov.",
-        "des."
-      ],
       "months": [
         "gener",
         "febrer",
@@ -47,6 +66,20 @@
         "novembre",
         "desembre"
       ],
+      "monthsShort": [
+        "gen.",
+        "feb.",
+        "març",
+        "abr.",
+        "maig",
+        "juny",
+        "jul.",
+        "ag.",
+        "set.",
+        "oct.",
+        "nov.",
+        "des."
+      ],
       "monthsUrl": [
         "gener",
         "febrer",
@@ -60,7 +93,9 @@
         "octubre",
         "novembre",
         "desembre"
-      ],
+      ]
+    },
+    "es": {
       "newsHubs": {
         "mataro": "Mataró",
         "barcelona": "Barcelona",
@@ -93,9 +128,7 @@
           "tremp": "Tremp",
           "tarrega": "Tàrrega"
         }
-      }
-    },
-    "es": {
+      },
       "days": [
         "Domingo",
         "Lunes",
@@ -114,20 +147,6 @@
         "Vie.",
         "Sáb."
       ],
-      "monthsShort": [
-        "ene.",
-        "feb.",
-        "mar.",
-        "abr.",
-        "may.",
-        "jun.",
-        "jul.",
-        "ago.",
-        "sep.",
-        "oct.",
-        "nov.",
-        "dic."
-      ],
       "months": [
         "enero",
         "febrero",
@@ -142,6 +161,20 @@
         "noviembre",
         "diciembre"
       ],
+      "monthsShort": [
+        "ene.",
+        "feb.",
+        "mar.",
+        "abr.",
+        "may.",
+        "jun.",
+        "jul.",
+        "ago.",
+        "sep.",
+        "oct.",
+        "nov.",
+        "dic."
+      ],
       "monthsUrl": [
         "enero",
         "febrero",
@@ -155,7 +188,9 @@
         "octubre",
         "noviembre",
         "diciembre"
-      ],
+      ]
+    },
+    "en": {
       "newsHubs": {
         "mataro": "Mataró",
         "barcelona": "Barcelona",
@@ -188,9 +223,7 @@
           "tremp": "Tremp",
           "tarrega": "Tàrrega"
         }
-      }
-    },
-    "en": {
+      },
       "days": [
         "Sunday",
         "Monday",
@@ -209,20 +242,6 @@
         "Fri",
         "Sat"
       ],
-      "monthsShort": [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
-      ],
       "months": [
         "January",
         "February",
@@ -237,6 +256,20 @@
         "November",
         "December"
       ],
+      "monthsShort": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ],
       "monthsUrl": [
         "january",
         "february",
@@ -250,40 +283,7 @@
         "october",
         "november",
         "december"
-      ],
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
-      }
+      ]
     }
   },
   "utils": {

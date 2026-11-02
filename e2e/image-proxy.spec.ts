@@ -366,6 +366,10 @@ test.describe("Image Proxy", () => {
       });
       test.skip((await heading.count()) === 0, "No related events available");
       await expect(heading).toBeVisible();
+      test.skip(
+        (await page.locator('[data-analytics-context="related_events"] img').count()) === 0,
+        "The related events have no images (cards show placeholders)",
+      );
       await verifyImagesLoad(
         page,
         "related events",

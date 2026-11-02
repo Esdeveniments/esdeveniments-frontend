@@ -293,6 +293,9 @@ export interface PrepositionLabels {
   deL: string;
 }
 
+export type CategorySeoSlug =
+  keyof IntlMessages["Partials"]["GeneratePagesData"]["categories"];
+
 export interface StringHelperLabels {
   articles: ArticleLabels;
   prepositions: PrepositionLabels;

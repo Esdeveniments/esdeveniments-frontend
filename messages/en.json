@@ -636,66 +636,6 @@
       "active": "active"
     },
     "Constants": {
-      "days": [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday"
-      ],
-      "daysShort": [
-        "Sun",
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat"
-      ],
-      "monthsShort": [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
-      ],
-      "months": [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
-      ],
-      "monthsUrl": [
-        "january",
-        "february",
-        "march",
-        "april",
-        "may",
-        "june",
-        "july",
-        "august",
-        "september",
-        "october",
-        "november",
-        "december"
-      ],
       "newsHubs": {
         "mataro": "Mataró",
         "barcelona": "Barcelona",
@@ -1583,41 +1523,9 @@
         "deLa": "of the",
         "deLes": "of the",
         "deL": "of the"
-      },
-      "capitalizePrepositions": [
-        "to the",
-        "to",
-        "of the",
-        "of",
-        "for the",
-        "by the"
-      ],
-      "feminineExceptions": [
-        "gent gran",
-        "dansa"
-      ],
-      "masculineExceptions": [
-        "penedès",
-        "alt penedès",
-        "baix penedès",
-        "rosselló",
-        "urgell",
-        "alt urgell",
-        "pla d'urgell",
-        "vallès",
-        "vallès oriental",
-        "vallès occidental",
-        "gironès",
-        "barcelonès",
-        "tarragonès",
-        "montsià",
-        "baix ebre",
-        "maresme",
-        "bages"
-      ]
+      }
     },
     "Calendar": {
-      "moreInfoHtml": "More information: <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">Esdeveniments.cat</a>",
       "moreInfoText": "More information: {url}",
       "dateRange": "From {start} to {end}",
       "dateSingle": "From {start}",
