@@ -611,6 +611,8 @@ export interface PlacePageEventsResult {
   /** Page size used for the initial SSR fetch (threaded to SWR initialSize) */
   ssrPageSize: number;
   structuredScripts?: JsonLdScript[];
+  /** Gates date/category explore links (see lib/seo/place-expandability.ts) */
+  placeIsExpandable: boolean;
 }
 
 export interface PlaceShellData {
