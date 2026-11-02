@@ -221,6 +221,11 @@ test.describe("Load more with filters via proxy", () => {
     await expect(page.getByTestId("hasMore")).toHaveText("true");
     const loadMore = page.getByTestId("load-more-button");
     await expect(loadMore).toBeVisible();
+    // A click before hydration is dropped, and nothing retries it.
+    await expect(page.getByTestId("load-more-harness")).toHaveAttribute(
+      "data-hydrated",
+      "true",
+    );
 
     // First click activates and fetches page=1 (fallbackData is treated as page 0)
     // Set up listener before clicking
