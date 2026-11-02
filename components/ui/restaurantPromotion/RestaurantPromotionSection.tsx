@@ -161,8 +161,9 @@ export default function RestaurantPromotionSection({
             titleClassName="heading-2"
           />
           {hasRequested ? (
-            // The route fails soft (quota, timeout, missing key → empty
-            // results), so this copy must hold for both "none" and "failed".
+            // Google errors reach us as empty results (the route fails soft);
+            // non-OK responses and network errors leave placesResp null. Both
+            // land here, so this copy must hold for "none" and "failed".
             <p className="body-small text-muted-foreground px-section-x">
               {t("empty")}
             </p>
