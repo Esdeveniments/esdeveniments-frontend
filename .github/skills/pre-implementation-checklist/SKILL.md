@@ -37,7 +37,7 @@ Search for the concept, name patterns (`isValid*`, `format*`, `build*`, `get*`, 
 - **Duplicated literals.** Hardcoding `50`, `"tots"` or the byDate list instead of importing from `config/filters.ts` / `utils/constants.ts`.
 - **One-use helpers.** Inline simple logic; extract only when reused.
 - **Barrel files.** Never add an `index.ts` that re-exports `"use client"` components from different routes; import files directly. (Historical: `components/ui/sponsor/index.ts`, now deleted, added 24 KB to `/[place]`.) See AGENTS.md › Hard rules.
-- **Time-dependent rendering without `connection()`.** A server component that branches on `new Date()` must `await connection()` first or use `"use cache"` with `cacheLife`. See AGENTS.md › Hard rules.
+- **Time-dependent rendering without `connection()`.** A server component that branches on `new Date()` or `Date.now()` must `await connection()` first or use `"use cache"` with `cacheLife`. See AGENTS.md › Hard rules.
 
 ## 4. Before the PR
 

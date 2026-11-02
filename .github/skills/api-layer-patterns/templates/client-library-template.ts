@@ -1,8 +1,11 @@
 /**
- * Client library template: lib/api/RESOURCE.ts
+ * Client library template: lib/api/RESOURCE.ts (detail-by-slug reader only)
  *
- * Replace RESOURCE / Resource with your names. Mirrors lib/api/categories.ts.
- * Pages and components import from here, never from *-external.ts.
+ * Replace RESOURCE / Resource with your names. Mirrors fetchCategoryById in
+ * lib/api/categories.ts; for a list reader copy fetchCategories there.
+ * Server Components and other server code import from here, never from
+ * *-external.ts. Client components fetch the relative /api/RESOURCE route
+ * instead (SWR, e.g. components/hooks/useEvents.ts).
  * Not type-checked by the project (.github is outside tsc).
  *
  * isBuildPhase is true during `next build` AND at runtime on Coolify
@@ -17,8 +20,10 @@ import {
   getVercelProtectionBypassHeaders,
 } from "@utils/api-helpers";
 import { isBuildPhase } from "@utils/constants";
+// Add these next to placesTag/placeTag in lib/cache/tags.ts.
+import { resourcesTag, resourceTag } from "@lib/cache/tags";
 import { parseResourceDetail } from "lib/validation/RESOURCE";
-import { fetchResourceBySlugExternal } from "./RESOURCE-external";
+import { fetchResourceBySlugExternalResult } from "./RESOURCE-external";
 
 // 24 h in-memory TTL: only for low-cardinality data (one entry per slug here).
 const { cache: resourceBySlugCache, clear: clearResourceBySlugCache } =
@@ -36,11 +41,16 @@ async function fetchResourceBySlugApi(
     `/api/RESOURCE/${encodeURIComponent(String(slug))}`,
   );
   // Plain fetch to our own internal route. `next` is fine here; it is never
-  // allowed on fetchWithHmac.
+  // allowed on fetchWithHmac in a *-external.ts wrapper.
   const response = await fetch(url, {
     headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 86400, tags: ["RESOURCE", `RESOURCE:${slug}`] },
+    next: {
+      revalidate: 86400,
+      tags: [resourcesTag, resourceTag(String(slug))],
+    },
   });
+  // The detail route answers 404 only when the backend did, so caching null
+  // is safe. Any other error throws, and createKeyedCache stores nothing.
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return parseResourceDetail(await response.json());
@@ -51,12 +61,8 @@ export async function fetchResourceBySlug(
 ): Promise<ResourceDetailResponseDTO | null> {
   // Internal routes don't exist during the build: call the wrapper directly.
   if (isBuildPhase) {
-    try {
-      return await fetchResourceBySlugExternal(slug);
-    } catch (error) {
-      console.error("fetchResourceBySlug: external fetch failed", error);
-      return null;
-    }
+    const { data } = await fetchResourceBySlugExternalResult(slug);
+    return data;
   }
   try {
     return await resourceBySlugCache(slug, fetchResourceBySlugApi);

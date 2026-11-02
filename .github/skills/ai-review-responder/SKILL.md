@@ -74,7 +74,7 @@ Before making changes, present a summary table:
 
 ### Step 5: Apply Fixes
 
-For agreed suggestions:
+For AGREE and PARTIAL suggestions (PARTIAL: apply only the part you agree with, and say in the thread reply what you left out and why):
 1. Read the relevant code sections (parallel reads for efficiency)
 2. Make the minimal fix
 3. Validate (syntax check, lint, typecheck as appropriate for the language)

@@ -38,9 +38,12 @@ const lcp = buildResponsivePictureSourceUrls(
   getResponsiveWidths("list")
 );
 
+// `href` (a URL from the set) lets React hoist the preload into <head>; without
+// it the <link> stays where it is rendered and is found later.
 <link
   rel="preload"
   as="image"
+  href={lcp.webp}
   imageSrcSet={lcp.webpSrcSet}
   imageSizes={getOptimalImageSizes("list")}
   type="image/webp"
@@ -48,7 +51,7 @@ const lcp = buildResponsivePictureSourceUrls(
 />
 ```
 
-Real code: `components/partials/PlacePageShell.tsx` (listings), `app/[locale]/e/[eventId]/page.tsx` (event hero). The home hero is a static AVIF/WebP set in `config/hero-image.ts`, with one preload per `<picture>` source.
+Real code: `components/partials/PlacePageShell.tsx` (listings), `app/[locale]/e/[eventId]/page.tsx` (event hero); both still omit `href`, add it when you touch them. The home hero is a static AVIF/WebP set in `config/hero-image.ts`, with one preload per `<picture>` source.
 
 ## Repeated icons
 

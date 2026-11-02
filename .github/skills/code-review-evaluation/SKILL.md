@@ -30,13 +30,13 @@ Review bots see the code and are usually right about generic issues. They don't 
 | Declare a type inline | All types in `types/` (ESLint) | `type-system-governance` |
 | Use `gray-*`, hex or arbitrary utilities | Semantic tokens, e.g. `text-muted-foreground` | `design-system-conventions` |
 | Read `searchParams` in a listing page | Never: makes pages dynamic ($300+ incident) | `url-canonicalization` |
-| Add `next: { revalidate }` to an external fetch | Never: fetch-cache explosion | `api-layer-patterns` |
-| Call the backend directly, or use raw `fetch()`/axios | `lib/api` → `app/api` → `*-external.ts`; `fetchWithHmac` / `safeFetch` | `api-layer-patterns`, `security-headers-csp` |
+| Add `next: { revalidate }` to a `fetchWithHmac` call in `lib/api/*-external.ts` | Never: fetch-cache explosion (`revalidate` on same-origin `fetch()` in `lib/api/*.ts` is fine) | `api-layer-patterns` |
+| Call the backend directly, or use raw `fetch()`/axios for the backend or other services | `lib/api` → `app/api` → `*-external.ts`; `fetchWithHmac` / `safeFetch`. Plain `fetch()` to same-origin internal routes is fine | `api-layer-patterns`, `security-headers-csp` |
 | Skip Zod on external data | Zod in `lib/validation/`, safe fallback | `data-validation-patterns` |
 | Add an env var in one place | Update all 5 places | `env-variable-management` |
-| Add a barrel `index.ts` | Direct file imports | AGENTS.md › Hard rules |
+| Add an `index.ts` re-exporting `"use client"` components used by different routes | Direct file imports (single-component entry points like `components/ui/addToCalendar/index.tsx` are fine) | AGENTS.md › Hard rules |
 | `prefetch={true}` on a link | Never (`partialPrefetching`) | `react-nextjs-patterns` |
-| Move a script to a Next `<Script>` / change consent loading | Funding Choices stays a plain `<script async>` in `<head>` | AGENTS.md › Performance |
+| Move Funding Choices into a Next `<Script>` or change how consent loads | FC stays a plain `<script async>` in `<head>`. GA keeps `lazyOnload`; AdSense keeps waiting for consent + first interaction | AGENTS.md › Performance |
 | Use `@types/*` alias instead of `types/*` | `@types/*` clashes with npm type packages | `type-system-governance` |
 | Add a new helper | Search for an existing one first | `pre-implementation-checklist` |
 

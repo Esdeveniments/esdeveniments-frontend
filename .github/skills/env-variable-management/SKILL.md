@@ -7,7 +7,7 @@ description: How to add, rename or remove an environment variable in esdevenimen
 
 A variable missing from one location breaks a build or crashes the container. Update every location that applies. Basics (local env files, required secrets): AGENTS.md › Commands; hosting: AGENTS.md › Hosting and deploys.
 
-`.env.example` is the inventory of every variable and its purpose. It is the only tracked env file; `.env`, `.env.local`, `.env.development`, `.env.staging` and `.env.production` are gitignored.
+`.env.example` lists every variable a deploy must set, with its purpose. Optional tuning and platform values (`STRIPE_TAX_MODE`, `HMAC_*_TOLERANCE_MS`, `VERCEL_*`, …) are read only in code; grep `process.env` for the full set. It is the only tracked env file; `.env`, `.env.local`, `.env.development`, `.env.staging` and `.env.production` are gitignored.
 
 ## How values reach the app
 
@@ -17,8 +17,10 @@ Coolify does **not** build. `deploy-coolify.yml` builds a Docker image in GitHub
 | --- | --- | --- |
 | `NEXT_PUBLIC_*` | Build time (inlined in the client bundle) | GitHub secret → workflow `build-args:` → Dockerfile `ARG` + `ENV` in the builder stage |
 | Build-time private secret (`HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `SENTRY_AUTH_TOKEN`) | Build time (prerender, source maps) | GitHub secret → workflow `secrets:` → Dockerfile `RUN --mount=type=secret,...` |
-| Server-only runtime value (`LOGTO_*`, `STRIPE_*`, `REDIS_URL`, `TURSO_*`, `API_URL`, `SENTRY_DSN`, …) | Runtime, by the Node server | Coolify → Application → Environment |
-| Workflow-only (`COOLIFY_TOKEN`, `COOLIFY_WEBHOOK_URL`, `CLOUDFLARE_*`, `REVALIDATE_SECRET` for post-deploy calls) | During the workflow | GitHub secret → step `env:` |
+| Server-only runtime value (`LOGTO_*`, `STRIPE_*`, `REDIS_URL`, `TURSO_*`, `API_URL`, `SENTRY_DSN`, `REVALIDATE_SECRET`, …) | Runtime, by the Node server | Coolify → Application → Environment |
+| Workflow-only (`COOLIFY_TOKEN`, `COOLIFY_WEBHOOK_URL`, `CLOUDFLARE_*`) | During the workflow | GitHub secret → step `env:` |
+
+`REVALIDATE_SECRET` is both: `app/api/revalidate/route.ts` and `app/api/health/route.ts` read it at runtime (Coolify), and `deploy-coolify.yml` sends the same value from a GitHub secret on post-deploy calls.
 
 The build secrets are also needed at runtime, so set them in Coolify too. The `e2e-tests` job's "Build Next.js application" step in `deploy-coolify.yml` gets `HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `NEXT_PUBLIC_API_URL` and `SENTRY_AUTH_TOKEN` as step `env:`; add a new build-time value there as well if the CI build needs it.
 

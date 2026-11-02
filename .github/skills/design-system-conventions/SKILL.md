@@ -34,12 +34,12 @@ Never `text-gray-*`, `bg-gray-*`, `border-gray-*`, hex values, or the removed al
 
 - Plain `<button>`: use `Button` (`components/ui/common/button`, `variant`: `neutral` default, `primary`, `outline`, `muted`, `ghost`, `category`, `solid` = primary; `hasIcon`). Links styled as buttons: the classes directly.
 - Classes: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`, `.btn-ghost` (fill only on hover), `.btn-category`; size modifier `.btn-sm` (36px, 12px label; 44px on touch) for dense rows, not a page's main action.
-- Every variant `@apply`s `.btn-base` and adds only colors; a new variant must do the same. Shared box: 14px uppercase label, 2px border, `min-h-button` (40px mouse, 44px touch). Icon-only: `h-button w-button`.
+- Every standard variant `@apply`s `.btn-base` and adds only colors; a new variant must do the same. Shared box: 14px uppercase label, 2px border, `min-h-button` (40px mouse, 44px touch). Icon-only: `h-button w-button`. Exception: `.btn-category` is a compact pill chip with its own box (1px border, no min height); leave it as is and don't copy it for new variants.
 - Don't resize with `py-*`, `text-*` or `min-h-[44px]`, and don't override `display`. In narrow dialogs, stack actions full width so labels never wrap.
 
 ## Cards, badges, layout
 
-- Cards: `.card-bordered` (border + subtle shadow) or `.card-elevated` (stronger shadow), with `.card-body` and `.card-footer`. There is no `.card-header`.
+- Cards: `.card-bordered` (border only, no shadow) or `.card-elevated` (shadow, no border), with `.card-body` and `.card-footer`. There is no `.card-header`.
 - Badges: `.badge-primary`, `.badge-default`. Clickable chips/pills: `Badge` (`components/ui/common/badge`, renders a link when given `href`).
 - Layout: `.flex-center`, `.flex-between`, `.flex-start`, `.flex-center-col`, `.stack` (= `flex flex-col gap-element-gap`).
 - Spacing tokens: `py-section-y`, `px-section-x`, `p-card-padding`, `gap-element-gap`. Raw Tailwind spacing (`gap-1`/`2`, `p-1`/`2`) only for one-off micro-spacing inside a leaf; never for section, card, button or input padding or shared components. Repeated? Add a token.

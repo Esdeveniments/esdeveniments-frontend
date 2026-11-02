@@ -5,7 +5,7 @@ description: Where TypeScript types, interfaces, props and DTOs live in this rep
 
 # Type System Governance
 
-All type aliases and interfaces live in `types/`. No `any`: use `unknown` and narrow. Summary in AGENTS.md › Types; layout in `types/README.md`.
+Shared and application types (anything used in `app/`, `components/`, `lib/`, `utils/`) live in `types/`. A few config-only types stay next to their config (`config/pricing.ts`, `config/categories.ts`). No `any`: use `unknown` and narrow. Summary in AGENTS.md › Types; layout in `types/README.md`.
 
 ## Where a new type goes
 

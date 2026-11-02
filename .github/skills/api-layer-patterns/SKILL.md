@@ -9,8 +9,8 @@ license: MIT
 The rules live in AGENTS.md › API layer and › Hard rules. In one line each:
 
 - Pages and components never call the backend. They call `lib/api/*.ts`, which calls `app/api/*`, which calls `lib/api/*-external.ts`.
-- Never add `next: { revalidate, tags }` to a `fetchWithHmac` call (fetch-cache explosion, Jan 2026).
-- Every `lib/api/*.ts` reader that calls an internal route needs the `isBuildPhase` bypass.
+- Never add `next: { revalidate, tags }` to `fetchWithHmac` in `lib/api/*-external.ts` (fetch-cache explosion, Jan 2026). The direct backend path in `lib/api/events.ts` still passes `next`; don't copy it.
+- A `lib/api/*.ts` reader that calls an internal route and runs during `next build` needs the `isBuildPhase` bypass. `isBuildPhase` is also true at runtime on Coolify, where the bypass skips the internal route's cache; `news.ts` and `profiles.ts` do without it (see [`isBuildPhase`](#isbuildphase)).
 - Never use raw `fetch()` to reach the backend; use `fetchWithHmac`. Client libraries do use plain `fetch()`, but only to reach internal routes.
 
 This skill is the how-to. Copy a real file before you copy a template.
@@ -64,7 +64,7 @@ export async function fetchCategoriesExternal(): Promise<CategorySummaryResponse
 
 ### `fetchWithHmac` (`lib/api/fetch-wrapper.ts`)
 
-- Takes an absolute backend URL. Sends `X-Backend-Key` (`BACKEND_SERVICE_SECRET`, only to the `getApiUrl()` origin) and, while `HMAC_SECRET` is set, legacy `x-hmac`/`x-timestamp` (signs `timestamp + pathAndQuery`).
+- Takes an absolute backend URL. Sends `X-Backend-Key` (`BACKEND_SERVICE_SECRET`, only to the `getApiUrl()` origin) and, while `HMAC_SECRET` is set, legacy `x-hmac`/`x-timestamp` (signs `body + timestamp + pathAndQuery`; FormData and `skipBodySigning: true` sign an empty body, which is what the legacy backend checks).
 - `cache: "no-store"`, 10 s timeout. Options: `timeout`, `skipBodySigning`, `skipConnection`.
 - It calls `await connection()` first. Inside `"use cache"` that throws, so pass `skipConnection: true` there (see `getCachedEventsPage` in `lib/api/events.ts`).
 
@@ -94,8 +94,8 @@ export async function GET() {
 }
 ```
 
-- **Cache-Control** is set per route; read the neighbours in `app/api/**/route.ts` before picking values. Always start with `public,`. Two examples: `/api/events` uses `s-maxage=1800, stale-while-revalidate=3600`; `/api/categories` uses `86400, 86400`. Per-user or auth routes use `no-store`.
-- **Don't let the CDN cache a failure.** If the success response is cacheable and the backend failed, return the error status with `Cache-Control: no-store`, not a cached empty list. See `app/api/events/route.ts`.
+- **Cache-Control** is set per route; read the neighbours in `app/api/**/route.ts` before picking values. Successful public GETs start with `public,`. Two examples: `/api/events` uses `s-maxage=1800, stale-while-revalidate=3600`; `/api/categories` uses `86400, 86400`. Per-user, auth and mutation responses use `no-store`.
+- **Don't let the CDN cache a failure.** If the success response is cacheable and the backend failed, return the error status with `Cache-Control: no-store`, not a cached empty list. See `app/api/events/route.ts`. `/api/categories` above doesn't do this yet: `fetchCategoriesExternal` returns `[]` on failure, so an outage is cached for a day.
 - `handleApiError` (`utils/api-error-handler.ts`) logs, reports to Sentry and returns a JSON error.
 - Parse and clamp query params in the route (see the `page`/`size` clamp in `app/api/events/route.ts`).
 
@@ -154,7 +154,7 @@ export const getCategories = reactCache(fetchCategories); // per-request dedupe
 ```
 
 - `getInternalApiUrl(path)` is async and returns an absolute URL to this app.
-- `next: { revalidate, tags }` here is on the plain `fetch()` to the internal route, as in the real client libraries. It is never allowed on `fetchWithHmac`.
+- `next: { revalidate, tags }` here is on the plain `fetch()` to the internal route, as in the real client libraries. It is never allowed on `fetchWithHmac` in a `*-external.ts` wrapper.
 - `createCache`/`createKeyedCache` (`lib/api/cache.ts`) give a 24 h in-memory TTL for low-cardinality data (categories, cities, regions, places). Export a `clear*Caches()` for `/api/revalidate`.
 - Wrap readers used by both `generateMetadata` and the page in React `cache()`.
 - Browser code (SWR hooks) fetches relative `/api/...` URLs directly, e.g. `components/hooks/useEvents.ts`.

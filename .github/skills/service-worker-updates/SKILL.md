@@ -40,7 +40,7 @@ public/sw-template.js → scripts/generate-sw.mjs (yarn prebuild) → public/sw.
 | `url.origin === "{{API_ORIGIN}}"` | StaleWhileRevalidate | `esdeveniments-external-api-cache` | 100 / 30 min |
 | anything else (`setDefaultHandler`) | NetworkFirst | `esdeveniments-default-cache` | 50 / 24 h |
 
-API TTLs match the `s-maxage` of the matching `app/api/*` route; change both together.
+Service-worker TTLs are set on purpose and don't always match the route's `s-maxage` (events: 10 min in the SW vs 30 min on `/api/events`; news: 3 min vs 10 min on `/api/news`), even where template comments say "matches server cache TTL". Check both when you change either.
 
 **Any new per-user or auth endpoint must be added to the NetworkOnly route at the top.** The `/api/*` catch-all caches by URL and ignores cookies, so it once kept users "logged in" after logout (see LESSONS.md).
 

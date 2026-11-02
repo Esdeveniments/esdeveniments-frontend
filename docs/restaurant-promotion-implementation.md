@@ -25,8 +25,11 @@ and the backend never stored promotions.
   `lib/cache/redis-client.ts`.
 
 Google Places rules: store only `place_id` indefinitely and `lat/lng` for at
-most 30 days; never persist names, addresses, ratings or photos; always show
-the attribution.
+most 30 days; always show the attribution. Note: the nearby route does cache
+the raw Google response (names, addresses, ratings, photo references,
+coordinates) in Redis for 12 h. That is a short-lived cache, not durable
+storage; check it against Google's caching terms before extending the TTL or
+storing more.
 
 ## Dormant code (not reachable from the UI)
 

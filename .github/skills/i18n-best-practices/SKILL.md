@@ -30,7 +30,7 @@ Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/ro
 1. `SUPPORTED_LOCALES` in `types/i18n.ts` (`AppLocale` derives from it), plus `localeToOgLocale` and `localeToHrefLang` there. `i18n/routing.ts` reads these.
 2. `messages/<locale>.json` with every key, and the loader in `i18n/request.ts`.
 3. The locale's entry in `i18n/locale-lists.json`; add it to `LOCALES` in `scripts/generate-locale-labels.mjs` and run `yarn i18n:labels`.
-4. Search for other hardcoded lists: `grep -rn '"ca", "es", "en"' app components scripts`.
+4. Search the whole repo for other hardcoded lists, including root scripts like `check-locales.mjs` and tests: `git grep -nE "['\"]ca['\"], ?['\"]es['\"], ?['\"]en['\"]"`.
 
 ## Key files
 

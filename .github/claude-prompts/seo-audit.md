@@ -21,7 +21,7 @@ For each pair, locate the source generating each URL by inspecting:
 - proxy.ts and utils/middleware-redirects.ts (canonical 301s, locale handling)
 - next.config.js (redirects, rewrites)
 - sitemap routes: app/sitemap.xml, app/server-*-sitemap.xml, app/sitemap-events/, app/sitemap-places/
-- page routes under app/[locale]/ (generateMetadata sets canonical and hreflang)
+- page routes under app/[locale]/ (read each route's generateMetadata and the shared buildPageMeta helper in components/partials/seo-meta.ts; some routes set only alternates.canonical, without hreflang)
 Propose ONE of: canonical tag, 301 redirect, or merge. Must cite file:line (Read the file first).
 
 STEP 4 — Striking distance analysis:

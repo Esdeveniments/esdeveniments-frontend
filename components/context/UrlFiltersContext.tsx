@@ -6,7 +6,7 @@
  * Problem: 4 components independently call `useUrlFilters()`, each subscribing
  * to `useSearchParams` and running `extractURLSegments` + `parseFiltersFromUrl`.
  * On a filter change, all 4 re-compute synchronously — ~4-8ms of duplicated
- * work per interaction (measured in the 2026-03 performance audit).
+ * work per interaction (estimated in the 2026-03 performance audit).
  *
  * Solution: Parse once here, share via context.  Consumers that previously
  * called `useUrlFilters(categories)` now call `useSharedUrlFilters()`.

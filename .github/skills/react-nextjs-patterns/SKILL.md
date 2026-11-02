@@ -40,7 +40,7 @@ Never read `searchParams` in `app/[locale]/[place]/**`: see the `url-canonicaliz
 
 Don't build a new list or `useSWR` call for events. Reuse:
 
-- `components/ui/hybridEventsList/index.tsx` (`HybridEventsList`, server): renders the SSR list with ads from `insertAds`.
+- `components/ui/hybridEventsList/index.tsx` (`HybridEventsList`, server): renders `initialEvents` as given. The page calls `insertAds` (`lib/api/events.ts`) before passing them, as `app/[locale]/[place]/page.tsx` does; a new listing that skips it has no SSR ad slots.
 - `components/ui/hybridEventsList/HybridEventsListClient.tsx` + `components/hooks/useEvents.ts` (`useSWRInfinite`): load more and client filters (`search`, `distance`, `lat`, `lon`, `from`, `to`).
 
 The append/dedupe/ads contract is in AGENTS.md › Rendering. `getInternalApiUrl` (`utils/api-helpers.ts`) is async and server-only; client code calls the `lib/api/*` helpers or relative `/api/*` URLs.

@@ -5,7 +5,7 @@ description: How to validate untrusted data with Zod in esdeveniments.cat - back
 
 # Data validation patterns
 
-Rule (AGENTS.md › API layer): every backend response is parsed with Zod in the external wrapper, and reads return a safe fallback instead of throwing. Where the parse call sits in the three layers: `api-layer-patterns` skill.
+Rule (AGENTS.md › API layer): parse every backend response with Zod in the external wrapper, and have reads return a safe fallback instead of throwing. Some older readers still cast raw JSON (`lib/api/news-external.ts`, `fetchCategorizedEventsExternal` in `lib/api/events-external.ts`); don't copy them, and add a parser when you touch them. Where the parse call sits in the three layers: `api-layer-patterns` skill.
 
 ## Where schemas live
 
@@ -44,7 +44,7 @@ Fallbacks by shape:
 | Array where one bad item must not drop the rest | valid items only | `parseEventSummaryList` (parses item by item) |
 | Paged response | `null`; the caller decides | `parsePagedEvents` → `PagedResponseDTO<EventSummaryResponseDTO> \| null` |
 
-`fetchEventsExternal` (`lib/api/events-external.ts`) turns a `null` into a 502 result, and the client library falls back to an empty page.
+`fetchEventsExternalResult` (`lib/api/events-external.ts`) returns a 502 status on upstream or validation failure; `fetchEventsExternal` unwraps that result and falls back to an empty page.
 
 Parsers may also normalize after validation: `parseEventDetail` and `parsePagedEvents` add image cache keys, `parseRegionsGrouped` fills a missing `slug` from `name`. Keep that logic in the parser so every caller gets the same shape.
 

@@ -20,7 +20,7 @@ Copy `.env.example` to `.env.development` (gitignored) and set:
 - HMAC_SECRET=your-server-secret
 - BACKEND_SERVICE_SECRET=your-backend-service-key (must match the v2 backend)
 - NEXT_PUBLIC_API_URL=`https://api.esdeveniments.cat/api`
-- Optional: NEXT_PUBLIC_GOOGLE_ANALYTICS, NEXT_PUBLIC_GOOGLE_ADS, NEXT_PUBLIC_SENTRY_DSN, REDIS_URL
+- Optional: NEXT_PUBLIC_GOOGLE_ANALYTICS, NEXT_PUBLIC_GOOGLE_ADS, NEXT_PUBLIC_SENTRY_DSN (browser/edge), SENTRY_DSN (Node server), REDIS_URL
 - Auth (sign-in, profile, favorites): LOGTO_* — see `docs/logto-auth-setup.md`
 
 1. Run
@@ -28,8 +28,8 @@ Copy `.env.example` to `.env.development` (gitignored) and set:
 ```bash
 yarn prebuild   # generates public/sw.js and public/robots.txt
 yarn dev
-# production build
-yarn prebuild && yarn build && yarn start
+# production build (plain `yarn build` doesn't read .env.development)
+yarn build:development && yarn start:development
 ```
 
 ## Scripts

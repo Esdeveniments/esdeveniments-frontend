@@ -12,7 +12,7 @@ Rule (AGENTS.md › Security): the CSP is a relaxed host allowlist with `'unsafe
 All of it is in `proxy.ts`:
 
 - `getCsp()` builds a `cspDirectives` object and joins it into a string. `CACHED_CSP = getCsp()` is computed once at module load.
-- `applySecurityHeaders(response)` sets the headers below on every proxied response.
+- `applySecurityHeaders(response)` sets the headers below on page responses that reach it (the main locale path and `/ask`). Branches that return earlier don't get them: `/api/*` (`gateApiRequest`), `/sw.js`, the bypassed `/openapi`, `/docs/*`, `/index.md` routes, and the redirects/rewrites before it.
 
 Read `getCsp()` for the current allowlist; don't copy it into docs or other files.
 
@@ -60,7 +60,7 @@ These were tuned for Core Web Vitals. Keep each where it is:
 
 ## JSON-LD
 
-Render structured data only with `components/partials/JsonLdServer.tsx` (server component). It escapes `</script>` and `<` before `dangerouslySetInnerHTML`. Never hand-roll a `<script type="application/ld+json">`. URLs inside it use `toLocalizedUrl` (see the `i18n-best-practices` skill).
+Render structured data only with `components/partials/JsonLdServer.tsx` (server component). It escapes `</script>` and `<` before `dangerouslySetInnerHTML`. Never hand-roll a `<script type="application/ld+json">`. Internal site paths inside it go through `toLocalizedUrl` (see the `i18n-best-practices` skill); external absolute URLs (images, `sameAs`, ticket links) stay as they are.
 
 ## Checklist
 

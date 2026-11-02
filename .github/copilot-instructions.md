@@ -6,8 +6,8 @@ The rules that most often break things:
 
 - Never read `searchParams` in listing pages (`app/[locale]/[place]/**`); query filters are client-side (SWR).
 - Never add `next: { revalidate, tags }` to `fetchWithHmac` calls in `lib/api/*-external.ts`.
-- Pages → `lib/api/*.ts` → `app/api/*` → `lib/api/*-external.ts` (`fetchWithHmac`, Zod, safe fallback). `lib/api` readers need the `isBuildPhase` bypass.
-- All types in `types/`. No `any`. No local barrel files re-exporting `"use client"` components.
+- Pages → `lib/api/*.ts` → `app/api/*` → `lib/api/*-external.ts` (`fetchWithHmac`, Zod, safe fallback). `lib/api` readers that run during `next build` need the `isBuildPhase` bypass.
+- All types in `types/`. No `any`. No local barrel files that mix `"use client"` components from different routes.
 - Server Components by default; `"use client"` only at leaves. Never `prefetch={true}` on links.
 - Internal links: `Link` from `@i18n/routing`. Text in `messages/*.json`.
 - UI: semantic classes and tokens from `DESIGN.md`; never `gray-*`.

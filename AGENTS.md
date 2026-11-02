@@ -57,7 +57,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 | `yarn analyze`, `analyze:experimental` | Bundle analysis |
 
 - The pre-push hook runs `yarn typecheck && yarn test --run && yarn i18n:check`.
-- Env: `.env.development|staging|production` (loaded via `env-cmd` for builds; `next dev` reads `.env.development` itself). Server-only secrets: `BACKEND_SERVICE_SECRET`, `HMAC_SECRET`. Without them the backend returns 401: pages still render but with no events. `NEXT_PUBLIC_API_URL` falls back to `config/api-defaults.json`. Auth needs `LOGTO_*` (see `docs/logto-auth-setup.md`). `test/setup.ts` seeds `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` for unit tests.
+- Env: `.env.development|staging|production` (loaded via `env-cmd` for builds; `next dev` reads `.env.development` itself). Server-only secrets: `BACKEND_SERVICE_SECRET`, `HMAC_SECRET`. Without them the backend returns 401: pages still render but with no events. `NEXT_PUBLIC_API_URL` falls back to `config/api-defaults.json` and is inlined at build time (and `prebuild` writes it into the service worker), so set it before `yarn build`, E2E or verification builds; `API_URL` overrides it at runtime on the server. Auth needs `LOGTO_*` (see `docs/logto-auth-setup.md`). `test/setup.ts` seeds `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` for unit tests.
 
 ## Project map
 
@@ -72,17 +72,17 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 - **Never read `searchParams` in listing pages** (`app/[locale]/[place]/**`). It makes them dynamic: one cache entry per URL+query ($300+ spike, Dec 2025). Query params (`search`, `distance`, `lat`, `lon`, `price`, `from`, `to`) are handled client-side with SWR; `noindex` for filtered URLs is an `X-Robots-Tag` set in `proxy.ts`.
 - **Never add `next: { revalidate, tags }` to `fetchWithHmac` calls in `lib/api/*-external.ts`.** It turns on Next's fetch cache with one entry per URL (146K entries per build, Jan 2026; write-up: `git show ad044ed6^:docs/incidents/2026-01-20-fetch-cache-explosion.md`). External wrappers stay `no-store`; cache with `Cache-Control` in `app/api/*` routes and with `createCache`/`createKeyedCache` (`lib/api/cache.ts`).
-- **`isBuildPhase` bypass**: every `lib/api/*.ts` reader that calls an internal route must call the `*-external.ts` wrapper directly when `isBuildPhase` (`utils/constants.ts`) is true; internal routes don't exist during the build (`"<!DOCTYPE"... is not valid JSON`). Note that on Coolify it is also true at runtime (see LESSONS.md).
-- **No local barrel files** (`index.ts` re-exports) mixing `"use client"` components from different routes: each re-export lands in the client manifest of every importing route (+24 KB on `/[place]` from `components/ui/sponsor/index.ts`). Import files directly. `optimizePackageImports` only helps npm packages.
+- **`isBuildPhase` bypass**: a `lib/api/*.ts` reader that calls an internal route and runs during `next build` must call the `*-external.ts` wrapper directly when `isBuildPhase` (`utils/constants.ts`) is true; internal routes don't exist during the build (`"<!DOCTYPE"... is not valid JSON`). On Coolify it is also true at runtime, so the bypass skips the route's cache (see LESSONS.md).
+- **No local barrel files** (`index.ts` re-exports) mixing `"use client"` components from different routes: each re-export lands in the client manifest of every importing route (+24 KB on `/[place]` from a `components/ui/sponsor/index.ts` barrel, since deleted). Import files directly. `optimizePackageImports` only helps npm packages.
 - **`cacheComponents` determinism**: a server component that uses `new Date()`/`Date.now()` to decide *what renders* must call `await connection()` first, or run inside `"use cache"` with an explicit `cacheLife` (time is then frozen per entry). Otherwise the replayed tree differs ("Couldn't find all resumable slots") and the page falls back to client rendering. Using dates only for text is fine. Inside `"use cache"`, get the locale with `rootLocale()` + `setRequestLocale(locale)`; `headers()` is not allowed there. The event page body uses `"use cache"` so it can be stored (ISR); request-time parts (sponsor, news) are passed in as slots.
 - **`"use cache"` store**: `cacheMaxMemorySize: 0` (needed for the Redis page cache in `cache-handler.mjs`) also disables Next's built-in `"use cache"` store. `next.config.js` registers `use-cache-handler.mjs` as `cacheHandlers.default` (in-memory LRU, 64 MB per process, lost on deploy). Don't remove it.
 - **Sharp** must stay in the Docker image and in `serverExternalPackages`; `/api/image-proxy` depends on it.
-- **Raw `fetch()`** can hang forever in containers. Use `fetchWithHmac` (`lib/api/fetch-wrapper.ts`, 10 s timeout) for the backend, `safeFetch`/`fireAndForgetFetch` (`utils/safe-fetch.ts`, 5 s) for other services. ESLint warns on raw `fetch()`.
+- **Raw `fetch()`** can hang forever in containers. Use `fetchWithHmac` (`lib/api/fetch-wrapper.ts`, 10 s timeout) for the backend, `safeFetch`/`fireAndForgetFetch` (`utils/safe-fetch.ts`, 5 s) for other services. ESLint warns on raw `fetch()`; plain `fetch()` to same-origin internal routes (`lib/api/*.ts`, SWR hooks) is allowed.
 
 ## API layer
 
 - Pages and components → `lib/api/*.ts` (client libraries, `getInternalApiUrl` + query builders `buildEventsQuery`/`buildNewsQuery` from `utils/api-helpers.ts`) → `app/api/*` routes (set `Cache-Control: s-maxage, stale-while-revalidate` per route) → `lib/api/*-external.ts` (`fetchWithHmac`, Zod parse, safe fallback). Never call the backend from pages or the browser.
-- External wrappers: if `NEXT_PUBLIC_API_URL` is missing or the call fails, return a safe empty value (`[]`, `{}`, `null`) for reads; only mutations throw. On a non-OK mutation, read `response.text()` before throwing.
+- External wrappers: if `NEXT_PUBLIC_API_URL` is missing or the call fails, return a safe empty value (`[]`, `{}`, `null`) for reads; mutations throw. Read exceptions: `fetchPlaceBySlugExternal` returns `null` only on 404 and throws on other errors (so callers can tell "not found" from an outage), and the authenticated reads in `users-external.ts` rethrow the HTTP status. On a non-OK mutation, read `response.text()` before throwing.
 - Backend auth: `fetchWithHmac` sends `X-Backend-Key` (`BACKEND_SERVICE_SECRET`; the v2 backend rejects every request without it). While `HMAC_SECRET` is set it also sends legacy `x-hmac`/`x-timestamp` (prod still checks them; remove once prod runs v2). Legacy HMAC signs only `timestamp + pathAndQuery`, so JSON POST/PUT/DELETE pass `skipBodySigning: true`.
 - `proxy.ts`/`utils/api-gate.ts` gate most internal `/api/*` routes; public GETs (events, news, categories, places, regions, cities) are allowlisted.
 - Mapping: UI `distance` + `lat/lon` → API `radius/lat/lon` via `distanceToRadius` (`types/event.ts`), sent only when set; filter `searchTerm` → API `term`; `byDate` (`avui`, `dema`, `setmana`, `cap-de-setmana`) or explicit `from/to`, not both. Pagination uses `PagedResponseDTO.last`.
@@ -93,7 +93,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 - Canonical URL: `/place(/date)?(/category)?`, omitting `tots`. Filter configs live in `config/filters.ts` and drive the filter chips through `FilterOperations` (`utils/filter-operations.ts`). URL parsing/building and the API mapping are still written per filter; the `filter-system-dev` skill lists every file a new filter touches. `test/filter-system.test.ts` covers the configs.
 - Build URLs with `buildFilterUrl`/`buildCanonicalUrlDynamic`; parse with `parseFiltersFromUrl`, `urlToFilterState`, `getRedirectUrl` (`utils/url-filters.ts`). Validate category slugs with `isValidCategorySlug`. `distance` is omitted at its default (50).
-- `proxy.ts` → `handleCanonicalRedirects` (`utils/middleware-redirects.ts`) 301-redirects legacy `?category=&date=` and `/tots` segments to canonical paths, keeping other query params. byDate + `catalunya` + `tots` may redirect home.
+- `proxy.ts` → `handleCanonicalRedirects` (`utils/middleware-redirects.ts`) 301-redirects legacy `?category=&date=` and `/tots` segments to canonical paths, keeping only the client filter params in `ALLOWED_QUERY_PARAMS`. byDate + `catalunya` + `tots` may redirect home.
 
 ## Rendering
 
@@ -101,7 +101,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - Listings are hybrid: the server fetches events, calls `insertAds` once and renders the list (`HybridEventsList`). On the client, `HybridEventsListClient` + `useEvents` (SWR) use the same page size as SSR. Without client filters, it appends only events whose `id` is not already on screen and never inserts ads again; with client filters, it replaces the SSR list.
 - `partialPrefetching` is on: links prefetch a route's shared shell. Never set `prefetch={true}` on a `<Link>`; `PressableAnchor` (`components/ui/primitives/`) defaults to `false`.
 - Hooks: `useRef` for flags that don't affect rendering (analytics sent, effect ran); memoize only what profiling shows.
-- News: `app/[locale]/noticies/[slug]` tries the article, then treats `slug` as a place listing, then 404s.
+- News: `app/[locale]/noticies/` (all news), `noticies/[place]` (news for a place), `noticies/[place]/[article]` (one article).
 
 ## Performance (measured; see `docs/performance/baselines.md`)
 
@@ -125,7 +125,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 ## Types
 
-- No `any`; use `unknown` and narrow. All type aliases and interfaces live in `types/` (ESLint enforces it): DTOs in `types/api/`, shared UI types and props in `types/common.ts`/`types/props.ts`. Define each type once and import it; see `types/README.md`.
+- No `any`; use `unknown` and narrow. Type aliases and interfaces live in `types/` (ESLint enforces it in `app/`, `components/`, `lib/`, `utils/`; a few config-only types stay in `config/`): DTOs in `types/api/`, shared UI types and props in `types/common.ts`/`types/props.ts`. Define each type once and import it; see `types/README.md`.
 
 ## UI
 
