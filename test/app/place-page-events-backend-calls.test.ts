@@ -27,8 +27,9 @@ const event = (i: number): EventSummaryResponseDTO => ({
   categories: [],
 });
 
-function mockEventsBackend(totalElements: number) {
+function mockEventsBackend(totalElements: number, status = 200) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    if (status !== 200) return new Response("down", { status });
     const url = new URL(String(input));
     const size = Number(url.searchParams.get("size"));
     const count = Math.min(size, totalElements);
@@ -46,7 +47,10 @@ function mockEventsBackend(totalElements: number) {
   });
   vi.stubGlobal("fetch", fetchMock);
   return () =>
-    fetchMock.mock.calls.filter(([input]) => String(input).includes("/events?"));
+    fetchMock.mock.calls
+      .map(([input]) => new URL(String(input)))
+      .filter((url) => url.pathname.endsWith("/events"))
+      .map((url) => url.searchParams);
 }
 
 const realEvents = (events: unknown[]) =>
@@ -69,7 +73,10 @@ describe("buildPlaceEventsPromise backend calls for a town", () => {
 
     const result = await buildPlaceEventsPromise({ place: "begues" });
 
-    expect(eventsCalls()).toHaveLength(1);
+    const calls = eventsCalls();
+    expect(calls).toHaveLength(1);
+    expect(calls[0].get("place")).toBe("begues");
+    expect(calls[0].get("size")).toBe("30");
     expect(result.placeIsExpandable).toBe(false);
     expect(result.ssrPageSize).toBe(12);
     expect(realEvents(result.events)).toHaveLength(12);
@@ -81,7 +88,10 @@ describe("buildPlaceEventsPromise backend calls for a town", () => {
 
     const result = await buildPlaceEventsPromise({ place: "sabadell" });
 
-    expect(eventsCalls()).toHaveLength(1);
+    const calls = eventsCalls();
+    expect(calls).toHaveLength(1);
+    expect(calls[0].get("place")).toBe("sabadell");
+    expect(calls[0].get("size")).toBe("30");
     expect(result.placeIsExpandable).toBe(true);
     expect(result.ssrPageSize).toBe(30);
     expect(realEvents(result.events)).toHaveLength(30);
@@ -95,5 +105,23 @@ describe("buildPlaceEventsPromise backend calls for a town", () => {
 
     expect(realEvents(result.events)).toHaveLength(12);
     expect(result.serverHasMore).toBe(false);
+  });
+
+  it("should hide explore links for a town with no events", async () => {
+    const eventsCalls = mockEventsBackend(0);
+
+    const result = await buildPlaceEventsPromise({ place: "begues" });
+
+    expect(eventsCalls().some((q) => q.get("size") === "1")).toBe(true);
+    expect(result.placeIsExpandable).toBe(false);
+  });
+
+  it("should keep explore links when the events API is down", async () => {
+    mockEventsBackend(0, 500);
+
+    const result = await buildPlaceEventsPromise({ place: "begues" });
+
+    expect(result.noEventsFound).toBe(true);
+    expect(result.placeIsExpandable).toBe(true);
   });
 });

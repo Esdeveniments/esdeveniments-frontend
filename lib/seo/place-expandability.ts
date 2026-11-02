@@ -35,8 +35,9 @@ export function isExpandableByCount(
  * parent, and buckets them as "Crawled — currently not indexed" (Dec 2025–May
  * 2026 GSC drop, ~93K URLs).
  *
- * The /[place] page skips the count call: its unfiltered events response
- * already carries `totalElements`, so it calls `isExpandableByCount` directly.
+ * The /[place] page skips the count call when its unfiltered events response
+ * has events: that response already carries `totalElements`, so it calls
+ * `isExpandableByCount` directly.
  *
  * Lives in `lib/seo/` rather than `utils/` because it depends on React caching
  * and API I/O; `utils/` is reserved for deterministic, side-effect-free

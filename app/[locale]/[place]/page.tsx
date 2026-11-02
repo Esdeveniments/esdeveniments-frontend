@@ -35,7 +35,10 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { isExpandableByCount } from "@lib/seo/place-expandability";
+import {
+  getPlaceExpandability,
+  isExpandableByCount,
+} from "@lib/seo/place-expandability";
 import {
   SSR_EVENTS_SIZE_EXPANDABLE,
   SSR_EVENTS_SIZE_THIN,
@@ -254,15 +257,16 @@ export async function buildPlaceEventsPromise({
         place: undefined,
       },
     });
-  // When noEventsFound, eventsResponse holds a region/fallback total, not
-  // this place's. fetchEvents reports API failures as an empty page, so a
-  // failure here reads as a thin place.
-  const placeTotal = noEventsFound ? 0 : (eventsResponse?.totalElements ?? 0);
-  const placeIsExpandable = isExpandableByCount(
-    place,
-    placeTypeLabel.type,
-    placeTotal
-  );
+  // An empty first page is either a real zero or an API failure (fetchEvents
+  // returns an empty page for both), and eventsResponse then holds a fallback
+  // total. Ask the count endpoint so failures fail open, as in the sitemap.
+  const placeIsExpandable = noEventsFound
+    ? await getPlaceExpandability(place, placeTypeLabel.type)
+    : isExpandableByCount(
+      place,
+      placeTypeLabel.type,
+      eventsResponse?.totalElements ?? null
+    );
   const ssrPageSize = placeIsExpandable
     ? SSR_EVENTS_SIZE_EXPANDABLE
     : SSR_EVENTS_SIZE_THIN;
