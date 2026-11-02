@@ -7,7 +7,7 @@ import { test, expect, Page } from "@playwright/test";
  * Does NOT test sponsor banners on place pages (those require active sponsors
  * in config/sponsors.ts which we don't want in production).
  *
- * @see /strategy-pricing.md for system documentation
+ * @see docs/strategy-pricing.md for system documentation
  */
 
 /**

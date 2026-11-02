@@ -161,3 +161,26 @@ Not measured. It needs GA `web_vitals` INP attribution (#591) from production fi
 - Block ads and analytics requests, keep FC: `/googlesyndication|doubleclick|google-analytics|googletagmanager|adtrafficquality|googleadservices|\/pagead\//`.
 
 **Next check:** after develop reaches main: CrUX weekly; Cloudflare cache status and full-HTML time for `/e/*` misses vs hits; production Redis `used_memory`; GA `web_vitals` LCP element and INP attribution (#591).
+
+## 2026-11-02 (3): #608, #612, #613
+
+Lab, same session, same slugs. Before = develop `700d65ff` (before #608), after = develop `28f493a6`. Both are E2E builds (Google scripts off), `yarn start`, `scripts/perf-lab.mjs`, Pixel 7, 4x CPU, 1.6 Mbps / 150 ms, median of 3.
+
+- #608: "Where to eat" restaurants load on click (no Places call on page load).
+- #612: next-intl messages precompiled at build time (the `t.raw()` lists moved to `i18n/locale-lists.json`). This is the precompile item from the TBT section above.
+- #613: `"use cache"` works in production; town listing events are cached.
+
+| Page | Before LCP / TBT / JS | After LCP / TBT / JS | Server warm before → after |
+|---|---|---|---|
+| `/` | 1280 / 70 ms / 311 KB | 1280 / 67 ms / 301 KB | 299 → 193 ms |
+| `/catalunya` | 904 / 52 ms / 346 KB | 876 / 57 ms / 337 KB | 187 → 169 ms |
+| `/barcelona` | 1176 / 54 ms / 346 KB | 1176 / 51 ms / 337 KB | 713 → 483 ms |
+| Event with image | 940 / 69 ms / 340 KB | 932 / 46 ms / 330 KB | 38 → 22 ms |
+| Event without image | 880 / 57 ms / 340 KB | 616 / 52 ms / 330 KB | 41 → 34 ms |
+
+- JS is 9-10 KB smaller on every page (#612).
+- `/barcelona` server time drops by about 230 ms (#613). Lab LCP does not move because the listing still reveals through Suspense (see "Listings: static shell?" above).
+- TBT moves within noise except the event with image (69 → 46 ms). TBT in this session runs higher than the previous session for both builds; compare only within a session.
+- The event-without-image LCP of 880 ms "before" is above the 596-632 ms seen in earlier sessions, so treat that row's gain as noise.
+
+Cloudflare: the production `/api/image-proxy` cache rule for `www.esdeveniments.cat` exists but stays **disabled** until develop reaches main. Main picks the image format from the `Accept` header and sends `Vary: Accept`; develop picks it from the URL `format` param, which is safe to edge-cache. Enable it at release, then check `cf-cache-status: HIT` on a repeated image URL.

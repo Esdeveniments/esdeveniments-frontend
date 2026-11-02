@@ -1,83 +1,44 @@
 /**
- * Internal API Route Template
+ * Internal route template: app/api/RESOURCE/route.ts
  *
- * Copy this template when adding a new internal API route.
- * Replace RESOURCE_NAME placeholders with your resource name.
+ * Replace RESOURCE / Resource with your names. Mirrors app/api/categories/route.ts.
+ * Not type-checked by the project (.github is outside tsc).
  *
- * Location: app/api/RESOURCE_NAME/route.ts
- *
- * NOTE: This is a documentation template. When implementing, use these imports:
- * - import { NextResponse } from "next/server";
- * - import type { NextRequest } from "next/server";
- * - import { fetchRESOURCE_NAME } from "@lib/api/RESOURCE_NAME-external";
+ * Pick Cache-Control values by reading neighbouring app/api route.ts files.
+ * If browsers call this route, add it to the lists in utils/api-gate.ts.
  */
+import { NextResponse } from "next/server";
+import { fetchResourcesExternal } from "@lib/api/RESOURCE-external";
+import { handleApiError } from "@utils/api-error-handler";
 
-// Mock types for template validation
-type NextRequest = { url: string };
-const NextResponse = {
-  json: <T>(
-    data: T,
-    init?: { headers?: Record<string, string>; status?: number }
-  ) => ({ data, ...init }),
-};
-
-// This would be imported from your external wrapper
-declare function fetchRESOURCE_NAME(params: {
-  page: number;
-  size: number;
-}): Promise<{
-  content: unknown[];
-  currentPage: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
-}>;
-
-// Cache configuration - adjust TTL based on data freshness needs
-const CACHE_MAX_AGE = 600; // 10 minutes
-const STALE_WHILE_REVALIDATE = 300; // 5 minutes
-
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    // Extract query parameters with safe parsing
-    // Note: Number("abc") returns NaN, so || 0 provides fallback
-    const { searchParams } = new URL(request.url);
-    const rawPage = searchParams.get("page");
-    const rawSize = searchParams.get("size");
+    const search = new URL(request.url).searchParams;
 
-    // Parse with fallbacks - Number(null) = 0, Number("abc") = NaN
-    const page = rawPage ? Number(rawPage) || 0 : 0;
-    const size = rawSize ? Number(rawSize) || 20 : 20;
-    // Add more params as needed
+    // Parse and clamp params; treat invalid values as undefined.
+    const rawPage = search.get("page");
+    const page =
+      rawPage !== null && Number.isFinite(parseInt(rawPage, 10))
+        ? Math.max(0, parseInt(rawPage, 10))
+        : undefined;
 
-    // Call external wrapper (handles HMAC signing)
-    const data = await fetchRESOURCE_NAME({
+    const data = await fetchResourcesExternal({
       page,
-      size,
-      // Pass other params
+      place: search.get("place") || undefined,
     });
 
-    // Return with cache headers
     return NextResponse.json(data, {
+      status: 200,
       headers: {
-        "Cache-Control": `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate=${STALE_WHILE_REVALIDATE}`,
+        "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600",
       },
     });
-  } catch (error) {
-    console.error("[API] RESOURCE_NAME fetch error:", error);
-
-    // Return safe fallback for read endpoints
-    return NextResponse.json(
-      {
-        content: [],
-        currentPage: 0,
-        pageSize: 20,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      },
-      { status: 200 } // Don't fail - return empty data
-    );
+  } catch (e) {
+    const response = handleApiError(e, "/api/RESOURCE", {
+      errorMessage: "Failed to load RESOURCE",
+    });
+    // Never let the CDN cache an error.
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   }
 }

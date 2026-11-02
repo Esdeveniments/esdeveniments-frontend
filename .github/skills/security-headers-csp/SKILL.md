@@ -1,196 +1,71 @@
 ---
 name: security-headers-csp
-description: Guide for CSP, security headers, and external scripts. Use fetchWithHmac for APIs, safeFetch for external services.
+description: How the Content Security Policy and security headers are built in proxy.ts, and how to add a third-party script, domain or iframe without breaking the CSP or Core Web Vitals. Use when touching CSP, security headers, script-src/connect-src/frame-src, adding an external script or domain, Google Analytics/AdSense/Funding Choices loading, or JSON-LD output.
 ---
 
-# Security Headers & CSP Skill
+# Security headers & CSP
 
-## Purpose
+Rule (AGENTS.md › Security): the CSP is a relaxed host allowlist with `'unsafe-inline'` so pages stay cacheable (ISR/PPR). No nonces. Backend calls go through `fetchWithHmac`, other outbound calls through `safeFetch`; see the `api-layer-patterns` skill.
 
-Guide for managing Content Security Policy (CSP), security headers, and safe external script loading.
+## Where it lives
 
-## CSP Policy Overview
+All of it is in `proxy.ts`:
 
-This project uses a **relaxed CSP policy with host allowlisting**:
+- `getCsp()` builds a `cspDirectives` object and joins it into a string. `CACHED_CSP = getCsp()` is computed once at module load.
+- `applySecurityHeaders(response)` sets the headers below on every proxied response.
 
-- Allows `'unsafe-inline'` for inline scripts and JSON-LD
-- Enables ISR/PPR caching (strict CSP would break this)
-- Security maintained through explicit host allowlisting
-- **No nonce required** for scripts
+Read `getCsp()` for the current allowlist; don't copy it into docs or other files.
 
-## Allowlisted Domains
+## CSP facts that matter
 
-The following domains are trusted in `script-src` and `script-src-elem`:
+- `script-src` and `script-src-elem` carry the same host list. A new script host goes in **both**, or the browser blocks it.
+- `'unsafe-eval'` is added only when `NEXT_PUBLIC_GOOGLE_ADS` is set (AdSense needs it) and in dev.
+- `vercel.live` is added on preview only.
+- `connect-src` is `'self'`, the API origin (`getApiOrigin()`), and `https:`. Any HTTPS XHR/fetch target already works.
+- `img-src https: data: blob:` and `frame-src 'self' https:` are broad already. New image or iframe hosts usually need no change.
+- `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'self'`.
+- The policy is sent as `Content-Security-Policy-Report-Only` when `NEXT_PUBLIC_CSP_REPORT_ONLY=1` or on a Vercel preview. Use that flag to trial a stricter policy without breaking pages.
 
-| Domain                              | Purpose               |
-| ----------------------------------- | --------------------- |
-| `googletagmanager.com`              | Google Tag Manager    |
-| `google-analytics.com`              | Google Analytics      |
-| `googlesyndication.com`             | Google Ads            |
-| `googleadservices.com`              | Google Ads conversion |
-| `fundingchoicesmessages.google.com` | Google consent        |
-| `www.gstatic.com`                   | Google static assets  |
-| `tpc.googlesyndication.com`         | Ad personalization    |
+## Headers set by `applySecurityHeaders`
 
-## Adding External Scripts
+| Header | Value |
+| --- | --- |
+| `Content-Security-Policy` (or `-Report-Only`) | `CACHED_CSP` |
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `SAMEORIGIN` (matches `frame-ancestors 'self'`) |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(self)` |
 
-### Using Next.js Script Component
+`X-XSS-Protection` is not set on purpose (obsolete). Keep `X-Frame-Options` and `frame-ancestors` in sync.
 
-```tsx
-import Script from "next/script";
+## Adding a third-party script or domain
 
-// ✅ CORRECT - afterInteractive for most scripts
-<Script
-  src="https://example.com/script.js"
-  strategy="afterInteractive"
-/>
+1. Ask whether it is needed at all. Every script costs main-thread time; this site is judged on Core Web Vitals.
+2. Add the host to `script-src` **and** `script-src-elem` in `getCsp()`. Add it to `connect-src` only if it is not HTTPS.
+3. Load it with `next/script` and the latest strategy that works (`lazyOnload` for analytics). Gate ad/tracking scripts on consent (`useAdContext().adsAllowed`) and on `isProductionHost()`, like `app/GoogleScripts.tsx`.
+4. Check the browser console on a real page for CSP violations. Try `NEXT_PUBLIC_CSP_REPORT_ONLY=1` first if unsure.
 
-// ✅ CORRECT - lazyOnload for non-critical analytics
-<Script
-  src="https://www.googletagmanager.com/gtag/js?id=GA_ID"
-  strategy="lazyOnload"
-/>
-```
+## Google scripts: where each one loads
 
-### Strategy Selection
+These were tuned for Core Web Vitals. Keep each where it is:
 
-| Strategy            | When to Use                                   |
-| ------------------- | --------------------------------------------- |
-| `afterInteractive`  | Default for most scripts                      |
-| `lazyOnload`        | Non-critical analytics, helps Core Web Vitals |
-| `beforeInteractive` | Critical scripts (rarely needed)              |
+| Script | Where | Why |
+| --- | --- | --- |
+| Funding Choices (consent box) | Plain `<script async src={FUNDING_CHOICES_SRC}>` in the `<head>` of `app/[locale]/layout.tsx`, next to the `googlefcPresent` iframe script | As a `<Script>` in the client tree it waited for hydration and the load event; on a first visit the consent box became the LCP (about 5 s on a slow phone). |
+| AdSense | `app/GoogleScripts.tsx` arms the trigger at mount: first tap/key/scroll or `ADS_SCRIPT_FALLBACK_MS` (4.5 s), via `onFirstInteractionOrTimeout` (`utils/browser.ts`), then an idle callback. `app/GoogleScriptsHeavy.tsx` mounts after consent and injects `adsbygoogle.js` once the trigger fired. | Keeps the ads script off the main thread during page load. |
+| GA (gtag) | `<Script strategy="lazyOnload">` in `app/GoogleScripts.tsx`, production host only | Not needed until the page is idle. |
 
-### No Nonce Required
+`armConsentFallback` (`app/GoogleScripts.tsx`) handles pages where Funding Choices shows no box. Test consent changes against the real FC host, not `localhost`: see LESSONS.md "Funding Choices: `googlefcInactive` is no signal".
 
-Due to relaxed CSP, scripts work without nonce props:
+## JSON-LD
 
-```tsx
-// ✅ CORRECT - No nonce needed
-<Script src="https://trusted.com/script.js" strategy="afterInteractive" />
+Render structured data only with `components/partials/JsonLdServer.tsx` (server component). It escapes `</script>` and `<` before `dangerouslySetInnerHTML`. Never hand-roll a `<script type="application/ld+json">`. URLs inside it use `toLocalizedUrl` (see the `i18n-best-practices` skill).
 
-// ❌ UNNECESSARY - Don't add nonce
-<Script src="https://trusted.com/script.js" nonce={nonce} />
-```
+## Checklist
 
-## JSON-LD Implementation
-
-JSON-LD is rendered server-side via `JsonLdServer` component:
-
-```tsx
-import { JsonLdServer } from "@components/partials/JsonLdServer";
-
-// ✅ CORRECT - Server-rendered, no nonce needed
-<JsonLdServer data={structuredData} />;
-```
-
-The component:
-
-- Escapes `</script>` and `<` to prevent XSS
-- Data comes from server-side API responses
-- No nonce required due to relaxed CSP
-
-## Security Headers (proxy.ts)
-
-The proxy middleware (`proxy.ts`) injects these headers:
-
-```typescript
-// Key security headers
-"X-Content-Type-Options": "nosniff"
-"X-Frame-Options": "DENY"
-"X-XSS-Protection": "1; mode=block"  // Deprecated but harmless - see note below
-"Referrer-Policy": "strict-origin-when-cross-origin"
-"Permissions-Policy": "camera=(), microphone=(), geolocation=(self)"
-```
-
-> **Note**: `X-XSS-Protection` is deprecated. Chrome removed XSS Auditor in 2019, and modern browsers ignore this header. It's kept for legacy browser compatibility but provides no security benefit in current browsers. The real XSS protection comes from CSP and proper output escaping.
-
-## Adding New External Domains
-
-If you need to add a new external service:
-
-1. **Evaluate necessity** - Is it really needed?
-
-2. **Add to CSP in proxy.ts**:
-
-   ```typescript
-   // Find the CSP construction in proxy.ts
-   const csp = [
-     // ... existing directives
-     `script-src 'self' 'unsafe-inline' https://newdomain.com`,
-   ].join("; ");
-   ```
-
-3. **Document the purpose** in this skill file
-
-4. **Test in development** before deploying
-
-## HMAC Security for APIs
-
-All internal API calls use HMAC signing:
-
-```typescript
-import { fetchWithHmac } from "@lib/api/fetch-wrapper";
-
-// ✅ CORRECT - Uses HMAC signing with timeout
-const data = await fetchWithHmac("/api/events");
-
-// ❌ WRONG - Raw fetch without security
-const data = await fetch("/api/events");
-```
-
-The `fetchWithHmac` function:
-
-- Signs requests with HMAC
-- Has built-in 10s timeout
-- Validates responses
-
-## Safe Fetch Patterns
-
-For external webhooks/services, use safe fetch utilities:
-
-```typescript
-import { safeFetch, fireAndForgetFetch } from "@utils/safe-fetch";
-
-// ✅ For external services with response handling
-const result = await safeFetch("https://webhook.example.com/notify", {
-  method: "POST",
-  body: JSON.stringify(data),
-});
-
-// ✅ For fire-and-forget notifications
-await fireAndForgetFetch("https://webhook.example.com/ping");
-```
-
-Features:
-
-- 5s default timeout
-- Response validation
-- Sentry error logging
-- Never hangs (timeout-protected)
-
-## Rationale for Relaxed CSP
-
-For a cultural events site with:
-
-- HMAC-protected backend
-- No user-generated content in scripts
-- Need for ISR/PPR caching
-
-Relaxed CSP enables better performance while maintaining security through host allowlisting.
-
-## Checklist for Security Changes
-
-- [ ] Adding new external script? → Add domain to CSP
-- [ ] Using Script component? → Choose correct strategy
-- [ ] Making API calls? → Use `fetchWithHmac`
-- [ ] External webhooks? → Use `safeFetch` or `fireAndForgetFetch`
-- [ ] JSON-LD data? → Use `JsonLdServer` component
-- [ ] New security header? → Add to `proxy.ts`
-
-## Files to Reference
-
-- [proxy.ts](../../../proxy.ts) - CSP and security headers
-- [lib/api/fetch-wrapper.ts](../../../lib/api/fetch-wrapper.ts) - `fetchWithHmac`
-- [utils/safe-fetch.ts](../../../utils/safe-fetch.ts) - Safe fetch utilities
-- [components/partials/JsonLdServer.tsx](../../../components/partials/JsonLdServer.tsx) - JSON-LD component
-- [app/GoogleScripts.tsx](../../../app/GoogleScripts.tsx) - Analytics script loading
+- [ ] New script host in both `script-src` and `script-src-elem`
+- [ ] Script gated on consent / production host if it tracks or serves ads
+- [ ] No new `'unsafe-*'` keyword without a reason in a code comment
+- [ ] No CSP violations in the console on a real page
+- [ ] Header changes made in `applySecurityHeaders`, not per route

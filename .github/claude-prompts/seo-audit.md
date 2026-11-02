@@ -18,9 +18,10 @@ STEP 2 — Parse from the issue body:
 
 STEP 3 — Cannibalization analysis (highest priority):
 For each pair, locate the source generating each URL by inspecting:
+- proxy.ts and utils/middleware-redirects.ts (canonical 301s, locale handling)
 - next.config.js (redirects, rewrites)
-- next-sitemap.config.*
-- app/ or pages/ routing directories
+- sitemap routes: app/sitemap.xml, app/server-*-sitemap.xml, app/sitemap-events/, app/sitemap-places/
+- page routes under app/[locale]/ (generateMetadata sets canonical and hreflang)
 Propose ONE of: canonical tag, 301 redirect, or merge. Must cite file:line (Read the file first).
 
 STEP 4 — Striking distance analysis:

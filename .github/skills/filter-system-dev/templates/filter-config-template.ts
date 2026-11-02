@@ -1,172 +1,57 @@
 /**
- * Filter Configuration Template
+ * Filter configuration template.
  *
- * Copy this template when adding a new filter to the system.
- * Replace ALL_CAPS placeholders with your filter's values.
+ * Copy the object into FILTER_CONFIGURATIONS in config/filters.ts and replace
+ * the FILTER_KEY / DEFAULT_VALUE placeholders. The key must exist in
+ * URLFilterState (types/url-filters.ts). See the filter-system-dev skill for
+ * the other files a new filter touches (URL parse/build, modal, useEvents).
  *
- * Add the resulting config to config/filters.ts in the FILTER_CONFIGURATIONS array.
- *
- * NOTE: This is a documentation template. When implementing, import actual types from:
- * - types/filters.ts (FilterState, FilterConfig, FilterDisplayState)
- * - types/url-filters.ts (URLFilterState, URLQueryParams, RouteSegments)
+ * This file is documentation: it is not type-checked or imported.
  */
+import type { FilterConfig, FilterDisplayState } from "types/filters";
+import type { RouteSegments } from "types/url-filters";
 
-// =============================================================================
-// Type definitions (SIMPLIFIED for reference only)
-// In actual code, import canonical types from:
-// - types/filters.ts (FilterState, FilterConfig, FilterDisplayState)
-// - types/url-filters.ts (URLFilterState, URLQueryParams, RouteSegments)
-// These reference types may not include all fields (e.g., extraData, computed)
-// =============================================================================
+export const exampleFilterConfig: FilterConfig = {
+  // Key in URLFilterState, e.g. "price".
+  key: "FILTER_KEY",
 
-/** Filter state from URL parsing (simplified) */
-interface URLFilterState {
-  place: string;
-  byDate: string;
-  category: string;
-  searchTerm?: string;
-  distance?: string;
-  lat?: string;
-  lon?: string;
-}
+  // Short internal name (used by validateConfiguration and logs).
+  displayName: "FILTER_KEY",
 
-/** Query parameters from URL */
-interface URLQueryParams {
-  search?: string;
-  distance?: string;
-  lat?: string;
-  lon?: string;
-  from?: string;
-  to?: string;
-}
-
-/** Route path segments */
-interface RouteSegments {
-  place: string;
-  byDate?: string;
-  category?: string;
-}
-
-/** Display state passed to filter config functions */
-interface FilterDisplayState {
-  filters: URLFilterState;
-  queryParams: URLQueryParams;
-  segments: RouteSegments;
-}
-
-// =============================================================================
-// Template: Copy and modify this for your new filter
-// =============================================================================
-
-export const exampleFilterConfig = {
-  /**
-   * Unique identifier for this filter.
-   * Use camelCase. Examples: 'price', 'accessibility', 'venueType'
-   */
-  key: "FILTER_KEY" as keyof URLFilterState,
-
-  /**
-   * Display name for the filter (used in UI).
-   */
-  displayName: "Filter Display Name",
-
-  /**
-   * Default value when filter is not specified.
-   * This value will be OMITTED from canonical URLs.
-   * Common defaults: 'all', 'tots', 0, false
-   */
+  // Value when the filter is not set. URL builders must omit it.
   defaultValue: "DEFAULT_VALUE",
 
-  /**
-   * Filter type for categorization.
-   */
-  type: "search" as const,
+  // One of: place, category, date, distance, search, coordinates, price.
+  type: "price",
 
-  /**
-   * Conditional enablement logic.
-   * Return true if filter should be available given current filter state.
-   *
-   * Examples:
-   * - Always enabled: (_state) => true
-   * - Requires location: (state) => Boolean(state.filters.lat && state.filters.lon)
-   * - Mutually exclusive: (state) => !state.filters.otherFilter
-   */
-  isEnabled: (_state: FilterDisplayState): boolean => true,
+  // true = the filter is active and FiltersClient shows a removable chip.
+  // Usually "value differs from the default".
+  isEnabled: (state: FilterDisplayState) =>
+    state.filters.FILTER_KEY !== "DEFAULT_VALUE",
 
-  /**
-   * Human-readable display text for the filter value.
-   * Used in UI pills, labels, and aria-labels.
-   * Should be in Catalan for this project.
-   *
-   * Example for price filter:
-   * getDisplayText: (state) => {
-   *   const labels: Record<string, string> = {
-   *     all: 'Tots els preus',
-   *     free: 'Gratuït',
-   *     paid: 'De pagament',
-   *   };
-   *   return labels[state.filters.price] || state.filters.price;
-   * }
-   */
-  getDisplayText: (state: FilterDisplayState): string | undefined => {
-    const labels: Record<string, string> = {
-      DEFAULT_VALUE: "LABEL_FOR_DEFAULT",
-      // Add more value → label mappings
-    };
-    const value = state.filters.YOUR_FILTER_KEY; // Replace YOUR_FILTER_KEY with your filter key
-    return value ? labels[value] || value : undefined;
+  // Chip text, or undefined for no chip. Return a raw value or label key when
+  // FiltersClient translates it (see how byDate and price do it).
+  getDisplayText: (state: FilterDisplayState) => {
+    if (state.filters.FILTER_KEY === "DEFAULT_VALUE") return undefined;
+    return String(state.filters.FILTER_KEY);
   },
 
-  /**
-   * Define what changes when this filter is removed.
-   * Return an object with the filter keys to clear.
-   *
-   * IMPORTANT: If this filter has dependencies, remove them too!
-   *
-   * Examples:
-   *
-   * Simple filter:
-   * getRemovalChanges: () => ({ FILTER_KEY: undefined })
-   *
-   * Filter with dependencies (e.g., distance requires lat/lon):
-   * getRemovalChanges: () => ({
-   *   distance: undefined,
-   *   lat: undefined,
-   *   lon: undefined,
-   * })
-   */
-  getRemovalChanges: (): Partial<URLFilterState> => ({
-    YOUR_FILTER_KEY: undefined, // Replace YOUR_FILTER_KEY with your filter key
-  }),
+  // Flat object of URL state changes applied when the chip is removed
+  // (FilterOperations.getRemovalUrl → buildFilterUrl). Clear dependent values
+  // too, e.g. distance: () => ({ distance: undefined, lat: undefined, lon: undefined }).
+  getRemovalChanges: () => ({ FILTER_KEY: undefined }),
 
-  /**
-   * OPTIONAL: List of other filters this filter depends on.
-   * When those are removed, this filter should also be removed.
-   *
-   * Example:
-   * dependencies: ['lat', 'lon']
-   *
-   * Remove this property if no dependencies.
-   */
-  dependencies: ["lat", "lon"] as Array<keyof URLFilterState>,
+  // Optional: keys that only make sense with this filter (cleared above too).
+  // dependencies: ["lat", "lon"],
 
-  /**
-   * OPTIONAL: Special case logic for complex scenarios.
-   *
-   * Example: Redirect to home when specific filter combination
-   * specialCases: {
-   *   homeRedirect: (segments) =>
-   *     segments.byDate === 'avui' &&
-   *     segments.place === 'catalunya' &&
-   *     segments.category === 'tots'
-   * }
-   *
-   * Remove this property if no special cases.
-   */
+  // Optional: value check.
+  // validation: (value) => value === "gratis" || value === "pagament",
+
+  // Optional: removing this filter goes to "/" instead of a listing URL.
   specialCases: {
-    homeRedirect: (_segments: RouteSegments): boolean => {
-      // Your custom logic here
-      return false;
-    },
+    homeRedirect: (segments: RouteSegments) =>
+      segments.place === "catalunya" &&
+      segments.date === "avui" &&
+      segments.category === "tots",
   },
 };

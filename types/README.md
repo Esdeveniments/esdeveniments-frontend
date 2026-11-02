@@ -24,6 +24,11 @@ This directory contains all TypeScript type definitions for the project. Types a
   - `types/api/place.ts`: Place DTOs
   - `types/api/news.ts`: News DTOs
 
+### `types/props.ts`
+
+- **Purpose**: Feature component props (e.g. `CompactCardProps`, `FavoriteButtonProps`) and derived props (`Pick`s of existing props)
+- Shared generic UI props (`ButtonProps`, `CardProps`) stay in `types/common.ts`
+
 ### `types/event.ts`
 
 - **Purpose**: Event-specific types and form schemas
@@ -77,66 +82,10 @@ This directory contains all TypeScript type definitions for the project. Types a
    - `NavigationItem` → `types/common.ts`
    - `SocialLinks` → `types/common.ts`
 4. **Import from canonical sources**: Always import from the canonical location
-5. **No types outside `/types`**: ESLint enforces this rule
+5. **No types outside `/types`**: ESLint blocks type/interface declarations in `components/`, `app/`, `utils/` and `lib/` (`eslint.config.mjs`)
 
 ## Linting Rules
 
-The project includes ESLint rules that:
+`eslint.config.mjs` blocks type and interface declarations in `components/`, `app/`, `utils/` and `lib/`, and guards a few canonical names against duplicates inside `types/`.
 
-- Prevent type/interface declarations outside `/types/`
-- Prevent duplicate interface definitions for common types
-- Enforce unused variable detection in type files
-
-## Migration Guide
-
-When consolidating duplicate types:
-
-1. Identify the canonical source (usually the most complete definition)
-2. Move shared types to `types/common.ts`
-3. Update all imports to use the canonical source
-4. Remove duplicate definitions
-5. Run `yarn typecheck` and `yarn lint` to verify
-
-## Common Patterns
-
-### API DTOs
-
-```typescript
-// ✅ Correct: Single canonical definition
-export interface CitySummaryResponseDTO {
-  id: number;
-  name: string;
-  slug: string;
-  // ... other properties
-}
-
-// ❌ Wrong: Duplicate definition
-export interface CitySummaryResponseDTO {
-  /* duplicate */
-}
-```
-
-### UI Props
-
-```typescript
-// ✅ Correct: In types/common.ts for shared usage
-export interface NavigationItem {
-  name: string;
-  href?: Href;
-  url?: string;
-  current?: boolean;
-}
-
-// ❌ Wrong: Duplicate in multiple files
-```
-
-### Form Types
-
-```typescript
-// ✅ Correct: Domain-specific in types/event.ts
-export interface FormData {
-  title: string;
-  description: string;
-  // ... event-specific properties
-}
-```
+When consolidating duplicates: pick the most complete definition as canonical, move it here, update imports, delete the copies, then run `yarn typecheck && yarn lint`.

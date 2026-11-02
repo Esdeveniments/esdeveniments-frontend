@@ -4,10 +4,8 @@ applyTo: "test/**/*.{test,spec}.{ts,tsx}"
 
 # Testing Conventions
 
-- Test framework: **Vitest** with jsdom environment. Use React Testing Library for component tests.
-- Follow **Arrange → Act → Assert** pattern.
-- Use `vi.mock()` and `vi.fn()` for mocking; clear mocks between tests with `beforeEach(() => vi.clearAllMocks())`.
-- Test bootstrap in `test/setup.ts` seeds `HMAC_SECRET` — do not override.
-- Place unit/integration tests under `test/`; E2E tests (Playwright) under `e2e/`.
-- Run with `yarn test` (all), `yarn test:watch` (watch mode), `yarn test:coverage` (coverage).
-- next-intl mocks live in `test/mocks/next-intl.ts` and `test/mocks/next-intl-server.ts` — import from there.
+- Vitest + jsdom + React Testing Library. Copy the closest existing test; see the `testing-patterns` skill.
+- `test/setup.ts` sets `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` and mocks `next-intl`, `next-intl/server` and `connection()`. Don't override them.
+- `vitest.config.ts` auto-aliases `next-intl*` and `server-only` to `test/mocks/*`: import them normally.
+- Mock backend calls with `vi.mock("@lib/api/fetch-wrapper", ...)`, not `fetch`.
+- Run one file with `yarn test test/<file>`. Use Node 22.

@@ -1,505 +1,118 @@
 ---
 name: react-nextjs-patterns
-description: Best practices for React 19 and Next.js 16 App Router. Use when creating components, hooks, or pages. Enforces server-first rendering, proper client boundaries, and modern React patterns.
+description: Repo-specific React 19 + Next.js 16 App Router patterns for esdeveniments.cat. Use when creating or editing pages, layouts, Server/Client Components, hooks, "use cache" functions, Suspense boundaries, links/prefetch, or when you hit cacheComponents/PPR errors ("Couldn't find all resumable slots", "Expected the resume to render"), client manifest bloat, or barrel-file imports.
 ---
 
-# React 19 & Next.js 16 Best Practices
+# React and Next.js patterns
 
-This skill enforces modern React and Next.js patterns for this project. Follow these guidelines to ensure optimal performance, proper server/client boundaries, and idiomatic code.
+Next 16 App Router with `cacheComponents: true` and `partialPrefetching: true` (`next.config.js`). Pages live under `app/[locale]/`. Base rules are in AGENTS.md › Rendering and › Hard rules; this skill shows how they look in this repo.
 
----
+## Pages and params
 
-## 🎯 Core Principles
+`params` is a Promise: `await` it in async code, or `use(params)` in a sync component (the `[place]` page does this). Get the locale from `next/root-params`, not from `params` or headers.
 
-1. **Server-First**: Default to Server Components
-2. **Minimal Client**: Add `"use client"` only at leaf components
-3. **No Legacy Patterns**: Use App Router conventions, not Pages Router
-4. **Modern React**: Use React 19 features (use hook, actions, etc.)
+```tsx
+// app/[locale]/[place]/page.tsx (shortened)
+import { locale as rootLocale } from "next/root-params";
+import type { PlaceStaticPathParams } from "types/common";
 
----
-
-## 📦 Server Components (Default)
-
-### ✅ When to Use Server Components
-
-- Data fetching
-- Accessing backend resources
-- Rendering static content
-- SEO-critical content
-- Any component that doesn't need:
-  - `useState`
-  - `useEffect`
-  - Browser APIs
-  - Event handlers (onClick, onChange, etc.)
-
-### Example: Server Component (Default)
-
-```typescript
-// app/[place]/page.tsx - Server Component by default
-import { fetchEvents } from "@lib/api/events";
-import { EventList } from "@components/ui/events/EventList";
-
-export default async function PlacePage({
+export async function generateMetadata({
   params,
 }: {
-  params: { place: string };
+  params: Promise<PlaceStaticPathParams>;
 }) {
-  const events = await fetchEvents({ place: params.place });
-
-  return (
-    <main>
-      <h1 className="heading-1">{params.place}</h1>
-      <EventList events={events} />
-    </main>
-  );
+  const { place } = await params;
+  const locale = (await rootLocale()) as AppLocale;
+  // ...
 }
 ```
 
-**Key Points:**
+Never read `searchParams` in `app/[locale]/[place]/**`: see the `url-canonicalization` skill.
 
-- No `"use client"` directive
-- Can use `async/await` directly
-- Data fetching at component level
-- Pass data down to children
+## Server first, small client leaves
 
----
+- Server Component by default. Add `"use client"` only to the smallest leaf that needs state, effects, event handlers or browser APIs. Props types go in `types/props.ts`.
+- Pass server data down as props, or pass server-rendered JSX into client components as `children`/slots.
+- `next/dynamic` is fine inside client components (e.g. `components/ui/card/AdCardClient.tsx`). Never use `next/dynamic` with `ssr: false` in a Server Component: import a `"use client"` component directly instead.
+- Internal links: `Link` from `@i18n/routing`, never `next/link` (AGENTS.md › i18n).
 
-## 🖥️ Client Components (Minimal)
+## Listings: SSR list + SWR
 
-### ✅ When to Add `"use client"`
+Don't build a new list or `useSWR` call for events. Reuse:
 
-**ONLY add `"use client"` when you need:**
+- `components/ui/hybridEventsList/index.tsx` (`HybridEventsList`, server): renders the SSR list with ads from `insertAds`.
+- `components/ui/hybridEventsList/HybridEventsListClient.tsx` + `components/hooks/useEvents.ts` (`useSWRInfinite`): load more and client filters (`search`, `distance`, `lat`, `lon`, `from`, `to`).
 
-- `useState`, `useReducer`
-- `useEffect`, `useLayoutEffect`
-- Browser APIs (`window`, `document`, `localStorage`)
-- Event handlers (onClick, onChange, onSubmit)
-- Third-party libraries that require client-side
+The append/dedupe/ads contract is in AGENTS.md › Rendering. `getInternalApiUrl` (`utils/api-helpers.ts`) is async and server-only; client code calls the `lib/api/*` helpers or relative `/api/*` URLs.
 
-### ✅ Pattern: Small Client Boundaries
+## Prefetch
 
-```typescript
-// ❌ WRONG: Large client component
-"use client";
+`partialPrefetching` makes links prefetch the route's shared shell. Never set `prefetch={true}` on a `<Link>`. `PressableAnchor` (`components/ui/primitives/PressableAnchor.tsx`) defaults to `prefetch={false}`; keep it.
 
-export function EventPage({ events }) {
-  const [filter, setFilter] = useState("all");
+## cacheComponents: time and data must not change the tree
 
-  return (
-    <div>
-      <h1>Events</h1> {/* Could be server-rendered */}
-      <p>Description...</p> {/* Could be server-rendered */}
-      <FilterSelect value={filter} onChange={setFilter} /> {/* Needs client */}
-      <EventList events={events} filter={filter} /> {/* Could be partially server */}
-    </div>
-  );
+With `cacheComponents`, React stores a prerendered tree and later resumes it. If a server component renders a *different shape* on resume (an element appears, disappears or changes type), you get "Couldn't find all resumable slots" or "Expected the resume to render `<Fragment>` … but instead it rendered `<script>`", and the page falls back to client rendering (bad for SEO and LCP).
+
+Triggers: `new Date()`/`Date.now()` deciding what renders, or data that changes over time deciding whether an element exists (e.g. JSON-LD only when there are events).
+
+Fix one of two ways:
+
+```tsx
+import { connection } from "next/server";
+
+async function StructuredData({ eventsPromise }: StructuredDataProps) {
+  await connection(); // render at request time, never from a stored tree
+  const events = await eventsPromise;
+  return events.length > 0 ? <JsonLdServer data={buildSchema(events)} /> : null;
 }
 ```
 
-```typescript
-// ✅ CORRECT: Small client boundary at leaf
-// components/ui/filters/FilterSelect.tsx
-"use client";
+Or run the code inside `"use cache"` with an explicit `cacheLife` (time is then frozen per cache entry). Real `connection()` uses: `app/[locale]/page.tsx`, `components/ui/sponsor/SponsorBannerSlot.tsx`, `components/noticies/NewsList.tsx`. Dates used only for text are fine without either.
 
-import type { FilterSelectProps } from "types/props";
+## "use cache"
 
-export function FilterSelect({ value, onChange }: FilterSelectProps) {
-  return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="all">All</option>
-      <option value="free">Free</option>
-    </select>
-  );
-}
+Used to make pages storable (ISR) while still reading time or data: `app/[locale]/e/[eventId]/page.tsx` (`EventPageBody`), `lib/api/events.ts`, `lib/api/news.ts`, `lib/api/profiles.ts`, `components/ui/common/footer/index.tsx`.
 
-// app/[place]/page.tsx - Server Component
-import { FilterSelect } from "@components/ui/filters/FilterSelect";
-
-export default async function PlacePage() {
-  const events = await fetchEvents();
-
-  return (
-    <div>
-      <h1>Events</h1> {/* Server-rendered */}
-      <p>Description...</p> {/* Server-rendered */}
-      <FilterSelect /> {/* Client island */}
-      <EventList events={events} /> {/* Server-rendered */}
-    </div>
-  );
+```tsx
+async function EventPageBody({ slug, locale, sidebarSponsorSlot }: EventPageBodyProps) {
+  "use cache";
+  cacheLife({ stale: 300, revalidate: 900, expire: 86400 });
+  cacheTag(eventsTag, eventTag(slug));
+  setRequestLocale(locale); // the layout's call does not reach inside "use cache"
+  // ...render; {sidebarSponsorSlot} is passed through untouched
 }
 ```
 
----
+Rules:
 
-## 🔗 Link Component (i18n)
+- No `headers()`, `cookies()` or `connection()` inside. Read the locale outside (`rootLocale()`) and pass it in, then call `setRequestLocale(locale)` inside so next-intl doesn't fall back to `headers()`.
+- Request-time parts (sponsor banner, latest news) are rendered outside and passed in as slot props; the cache stores them as holes.
+- Always set `cacheLife`; add `cacheTag` when something revalidates it.
+- The store is `use-cache-handler.mjs` (registered as `cacheHandlers.default` in `next.config.js`, in-memory, per process). Don't remove it: `cacheMaxMemorySize: 0` disables the built-in store (AGENTS.md › Hard rules).
 
-### ⚠️ CRITICAL: Always Use i18n Link
+## No local barrel files
 
-```typescript
-// ❌ WRONG: Using next/link directly
-import Link from "next/link";
+Never add an `index.ts` that re-exports `"use client"` components used by different routes. In the RSC build, every `"use client"` module re-exported by a barrel is registered in the client reference manifest of every route that imports the barrel, even if that route uses one export. In Feb 2026 `components/ui/sponsor/index.ts` (since removed) pulled `CheckoutButton`, `PlaceSelector` and `PricingSectionClient` (only used on `/patrocina`) into `/[place]`: +24 KB. `optimizePackageImports` only helps npm packages.
 
-<Link href="/barcelona">Barcelona</Link>; // Loses locale!
-
-// ✅ CORRECT: Using i18n routing Link
-import { Link } from "@i18n/routing";
-
-<Link href="/barcelona">Barcelona</Link>; // Auto locale handling
-```
-
-**ESLint warns** on `import Link from 'next/link'` - use `@i18n/routing` instead.
-
----
-
-## 🪝 Hooks Best Practices
-
-### useRef vs useState for Flags
-
-```typescript
-// ❌ WRONG: useState for tracking flags (causes re-render)
-const [hasTracked, setHasTracked] = useState(false);
-
-useEffect(() => {
-  if (!hasTracked) {
-    trackAnalytics();
-    setHasTracked(true); // Causes unnecessary re-render!
-  }
-}, [hasTracked]);
-
-// ✅ CORRECT: useRef for tracking flags (no re-render)
-const hasTracked = useRef(false);
-
-useEffect(() => {
-  if (!hasTracked.current) {
-    trackAnalytics();
-    hasTracked.current = true; // No re-render
-  }
-}, []); // Refs don't need to be in dependencies
-```
-
-### Dependency Arrays
-
-```typescript
-// ❌ WRONG: Missing dependencies
-useEffect(() => {
-  fetchData(userId); // userId missing from deps!
-}, []);
-
-// ✅ CORRECT: Complete dependencies
-useEffect(() => {
-  fetchData(userId);
-}, [userId]);
-
-// ✅ CORRECT: Refs don't need to be in deps
-const isMounted = useRef(true);
-useEffect(() => {
-  if (isMounted.current) {
-    fetchData();
-  }
-}, []); // isMounted is stable, not needed in deps
-```
-
-### Memoization (Don't Over-Optimize)
-
-```typescript
-// ❌ WRONG: Premature optimization
-const formattedDate = useMemo(() => date.toLocaleDateString(), [date]);
-
-// ✅ CORRECT: Only memoize expensive computations
-const sortedEvents = useMemo(
-  () => events.sort((a, b) => new Date(a.date) - new Date(b.date)),
-  [events]
-);
-
-// ✅ CORRECT: useCallback for callbacks passed to children
-const handleClick = useCallback(() => {
-  setCount((c) => c + 1);
-}, []); // Stable reference for memoized children
-```
-
----
-
-## 🚫 Forbidden Patterns
-
-### ❌ No `next/dynamic` with `ssr: false` in Server Components
-
-```typescript
-// ❌ WRONG: Dynamic import in Server Component
-import dynamic from "next/dynamic";
-
-const ClientComponent = dynamic(() => import("./ClientComponent"), {
-  ssr: false,
-});
-
-export default function ServerPage() {
-  return <ClientComponent />; // ERROR!
-}
-
-// ✅ CORRECT: Import client component directly
-import { ClientComponent } from "./ClientComponent"; // Has "use client"
-
-export default function ServerPage() {
-  return <ClientComponent />; // Works!
-}
-```
-
-### ❌ No Local Barrel Files Mixing Route Contexts
-
-```typescript
-// ❌ WRONG: Barrel re-exports "use client" components from different routes
-// components/ui/sponsor/index.ts
-export { default as SponsorBannerSlot } from "./SponsorBannerSlot";  // /[place]
-export { default as CheckoutButton } from "./CheckoutButton";        // /patrocina only
-export { default as PricingSectionClient } from "./PricingSectionClient"; // /patrocina only
-
-// Importing from barrel in /[place] leaks CheckoutButton + PricingSectionClient
-// into /[place]'s client-reference-manifest (+24 KB bloat)
-import { SponsorBannerSlot } from "@components/ui/sponsor";
-
-// ✅ CORRECT: Direct file imports
+```ts
+// ❌ import { SponsorBannerSlot } from "@components/ui/sponsor";
+// ✅
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 ```
 
-**Why**: In Next.js RSC, every `"use client"` module re-exported from a barrel gets registered in the `client-reference-manifest` of every route that imports from that barrel — even unused exports. `optimizePackageImports` (next.config.js) only works for npm packages, not local barrels.
+A folder `index.tsx` that *is* a component (e.g. `components/ui/hybridEventsList/index.tsx`) is fine; re-export-only barrels are not.
 
-### ❌ No Reading `searchParams` in Listing Pages
+## Hooks
 
-```typescript
-// ❌ WRONG: Reading searchParams makes page dynamic ($300 cost spike!)
-export default function PlacePage({
-  params,
-  searchParams, // FORBIDDEN in app/[place]/*
-}: {
-  params: { place: string };
-  searchParams: { search?: string };
-}) {
-  const events = await fetchEvents({ search: searchParams.search });
-  // Creates DynamoDB entry for EVERY unique URL+query!
-}
+- `useRef` for flags that don't affect rendering (analytics sent, effect ran); refs don't go in dependency arrays.
+- Complete dependency arrays. The React Compiler is on (`reactCompiler: true`), so add `useMemo`/`useCallback` only when profiling shows a need.
 
-// ✅ CORRECT: Handle query params client-side with SWR
-// app/[place]/page.tsx (Server Component)
-export default async function PlacePage({
-  params,
-}: {
-  params: { place: string };
-}) {
-  const events = await fetchEvents({ place: params.place }); // Static (ISR)
-  return <EventsPageClient initialEvents={events} />;
-}
+## Checklist
 
-// components/EventsPageClient.tsx
-("use client");
-
-export function EventsPageClient({ initialEvents }) {
-  const searchParams = useSearchParams();
-  const { data } = useSWR(
-    `/api/events?search=${searchParams.get("search") || ""}`,
-    fetcher
-  );
-  return <EventList events={data || initialEvents} />;
-}
-```
-
-### ❌ No Legacy Pages Router Patterns
-
-```typescript
-// ❌ WRONG: getServerSideProps (Pages Router)
-export async function getServerSideProps() {
-  const events = await fetchEvents();
-  return { props: { events } };
-}
-
-// ✅ CORRECT: Direct data fetching (App Router)
-export default async function Page() {
-  const events = await fetchEvents();
-  return <EventList events={events} />;
-}
-```
-
-### ❌ No Conditional `<script>` Rendering Without `connection()` (cacheComponents)
-
-With `cacheComponents: true`, React caches server component output and expects identical tree structure on replay. If a server component conditionally renders `<JsonLdServer>` (which outputs `<script>`) based on data that changes over time, the cached tree shape can differ from the replayed one → "Expected the resume to render `<Fragment>` in this slot but instead it rendered `<script>`" errors → full client-side fallback (kills SSR + SEO).
-
-```typescript
-// ❌ WRONG: Conditional JsonLdServer without connection()
-async function StructuredData({ dataPromise }) {
-  const events = await dataPromise;
-  const schema = events.length > 0 ? generateSchema(events) : null;
-  return schema ? <JsonLdServer data={schema} /> : null;
-  // Cached with 5 events → replayed with 0 events → tree mismatch!
-}
-
-// ✅ CORRECT: Opt out of caching before conditional tree
-import { connection } from "next/server";
-
-async function StructuredData({ dataPromise }) {
-  await connection(); // Ensures fresh render, no cached tree reuse
-  const events = await dataPromise;
-  const schema = events.length > 0 ? generateSchema(events) : null;
-  return schema ? <JsonLdServer data={schema} /> : null;
-}
-```
-
-**Rule**: Any server component with conditional rendering that produces different element types/counts based on data or time **must** call `await connection()` before the conditional logic.
-
----
-
-## 📝 Component Structure Template
-
-```typescript
-// components/ui/feature/MyComponent.tsx
-
-// 1. Client directive FIRST (only if needed - must be before any imports)
-"use client";
-
-// 2. Imports (grouped)
-import type { MyComponentProps } from "types/props";
-import { useCallback, useState } from "react";
-import { Link } from "@i18n/routing";
-import { formatDate } from "@utils/date-helpers";
-
-// 3. Component
-export function MyComponent({ title, items, onSelect }: MyComponentProps) {
-  // 4. State/hooks at top
-  const [selected, setSelected] = useState<string | null>(null);
-
-  // 5. Callbacks (memoized if passed to children)
-  const handleSelect = useCallback(
-    (id: string) => {
-      setSelected(id);
-      onSelect?.(id);
-    },
-    [onSelect]
-  );
-
-  // 6. Early returns for edge cases
-  if (items.length === 0) {
-    return <p className="body-normal text-muted-foreground">No items</p>;
-  }
-
-  // 7. Main render
-  return (
-    <div className="card-bordered">
-      <h2 className="heading-3">{title}</h2>
-      <ul className="stack">
-        {items.map((item) => (
-          <li key={item.id}>
-            <button onClick={() => handleSelect(item.id)}>{item.name}</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-```
-
----
-
-## 🔄 Data Fetching Patterns
-
-### Server Component (Recommended)
-
-```typescript
-// Direct async/await in component
-export default async function EventsPage() {
-  const events = await fetchEvents(); // Server-side
-  return <EventList events={events} />;
-}
-```
-
-### Client Component with SWR
-
-```typescript
-"use client";
-
-import useSWR from "swr";
-import { getInternalApiUrl } from "@utils/api-helpers";
-
-export function EventsFeed({ place }: { place: string }) {
-  const { data, error, isLoading } = useSWR(
-    getInternalApiUrl("/api/events", { place }),
-    fetcher
-  );
-
-  if (isLoading) return <Skeleton />;
-  if (error) return <ErrorMessage />;
-
-  return <EventList events={data?.content || []} />;
-}
-```
-
-### Hybrid Pattern (SSR + Client Enhancement)
-
-```typescript
-// Server Component fetches initial data
-export default async function PlacePage({ params }) {
-  const events = await fetchEvents({ place: params.place });
-
-  return (
-    <>
-      {/* Static SSR list */}
-      <EventList events={events} />
-
-      {/* Client enhancement for infinite scroll */}
-      <ClientInfiniteScroll initialEvents={events} place={params.place} />
-    </>
-  );
-}
-```
-
----
-
-## ✅ Checklist Before Committing
-
-- [ ] Server Components by default (no `"use client"` unless necessary)
-- [ ] Client boundaries at smallest possible scope
-- [ ] Using `Link` from `@i18n/routing` (not `next/link`)
-- [ ] No `searchParams` in `app/[place]/*` pages
-- [ ] **No local barrel files (`index.ts`) re-exporting `"use client"` components from different routes** (causes manifest bloat)
-- [ ] All component imports use direct file paths, not barrel re-exports
-- [ ] `useRef` for tracking flags (not `useState`)
-- [ ] Complete dependency arrays in hooks
-- [ ] No premature memoization
-- [ ] Props types in `types/props.ts`
-- [ ] Following design system classes (see `design-system-conventions` skill)
-
----
-
-## 🆕 React 19 Features (Use When Appropriate)
-
-### `use` Hook (Suspense Integration)
-
-```typescript
-import { use } from "react";
-
-function EventDetails({ eventPromise }) {
-  const event = use(eventPromise); // Suspends until resolved
-  return <h1>{event.title}</h1>;
-}
-```
-
-### Server Actions
-
-```typescript
-// actions.ts
-"use server";
-
-export async function createEvent(formData: FormData) {
-  const title = formData.get("title");
-  await db.events.create({ title });
-  revalidatePath("/events");
-}
-
-// component
-<form action={createEvent}>
-  <input name="title" />
-  <button type="submit">Create</button>
-</form>;
-```
-
----
-
-**Remember**: Server-first, minimal client boundaries, modern patterns.
-
-**Last Updated**: January 15, 2026
+- [ ] Server Component unless it needs client APIs; `"use client"` at the leaf
+- [ ] `params` awaited; locale from `rootLocale()`
+- [ ] No `searchParams` in listing pages
+- [ ] Time or changing data that affects the tree → `connection()` or `"use cache"` + `cacheLife`
+- [ ] No `prefetch={true}`; `Link` from `@i18n/routing`
+- [ ] Direct file imports, no re-export barrels
+- [ ] Props types in `types/props.ts`; UI classes per `design-system-conventions`

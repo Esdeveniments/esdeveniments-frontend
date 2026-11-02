@@ -1,115 +1,43 @@
 # Agent Skills Index
 
-This directory contains **18 Agent Skills** that guide AI coding agents (GitHub Copilot, Claude, etc.) when working on this project.
+18 task guides for AI coding agents (Copilot, Claude Code, Codex, Cursor) working on this repo. Each folder holds a `SKILL.md`. Agents load the frontmatter (`name`, `description`) up front and read the full file when a task matches. Repo-wide rules live in [AGENTS.md](../../AGENTS.md); skills add task detail and should not repeat it.
 
-## How Skills Work
+| Skill | Use for | Key rule |
+| --- | --- | --- |
+| [pre-implementation-checklist](pre-implementation-checklist/SKILL.md) | Any new code | Search for existing code first |
+| [type-system-governance](type-system-governance/SKILL.md) | Types, props, DTOs | All types in `types/` |
+| [react-nextjs-patterns](react-nextjs-patterns/SKILL.md) | Pages, components, caching | Server Component by default |
+| [filter-system-dev](filter-system-dev/SKILL.md) | Filters | Change `config/filters.ts` only |
+| [api-layer-patterns](api-layer-patterns/SKILL.md) | API calls and routes | Three-layer proxy pattern |
+| [auth-patterns](auth-patterns/SKILL.md) | Login, session | `useAuth()` / `getAccessTokenFromCookies()` |
+| [url-canonicalization](url-canonicalization/SKILL.md) | URLs, routing, redirects | Never read `searchParams` in listing pages |
+| [i18n-best-practices](i18n-best-practices/SKILL.md) | Links, translations, locales | `Link` from `@i18n/routing` |
+| [design-system-conventions](design-system-conventions/SKILL.md) | Styling, UI | Semantic classes, no `gray-*` |
+| [testing-patterns](testing-patterns/SKILL.md) | Unit and E2E tests | Vitest unit, Playwright E2E |
+| [verify-que-fer](verify-que-fer/SKILL.md) | Proving a change works | Drive the built app, capture evidence |
+| [security-headers-csp](security-headers-csp/SKILL.md) | CSP, scripts, fetch | `fetchWithHmac`, allowlist CSP hosts |
+| [service-worker-updates](service-worker-updates/SKILL.md) | Service worker | Edit `public/sw-template.js`, run `yarn prebuild` |
+| [bundle-optimization](bundle-optimization/SKILL.md) | Performance, images | Image proxy, one LCP image, server-first |
+| [env-variable-management](env-variable-management/SKILL.md) | Env variables | Update all 5 places |
+| [data-validation-patterns](data-validation-patterns/SKILL.md) | External data | Zod in `lib/validation/`, safe fallbacks |
+| [code-review-evaluation](code-review-evaluation/SKILL.md) | Judging review suggestions | Check against repo rules |
+| [ai-review-responder](ai-review-responder/SKILL.md) | Handling bot review threads on a PR | Fix or decline, resolve, re-request |
 
-1. **Discovery**: VS Code loads skill names/descriptions from frontmatter
-2. **Activation**: When a task matches a skill, the AI loads the full SKILL.md
-3. **Enforcement**: Skills contain checklists and rules the AI must follow
+## Adding a skill
 
-## Available Skills
+1. Create `.github/skills/<name>/SKILL.md`; the folder name must equal `name`.
+2. Write it:
 
-### Core Development (6)
+   ```markdown
+   ---
+   name: my-skill
+   description: What it covers and when to use it, with the words a task would contain (files, errors, features). Under 1024 characters.
+   ---
 
-| Skill                                                                 | Purpose            | Key Rule                        |
-| --------------------------------------------------------------------- | ------------------ | ------------------------------- |
-| [pre-implementation-checklist](pre-implementation-checklist/SKILL.md) | DRY enforcement    | Search existing patterns FIRST  |
-| [type-system-governance](type-system-governance/SKILL.md)             | Type organization  | ALL types in `/types` directory |
-| [react-nextjs-patterns](react-nextjs-patterns/SKILL.md)               | Component patterns | Server Component by default     |
-| [filter-system-dev](filter-system-dev/SKILL.md)                       | Filter system      | `config/filters.ts` only        |
-| [api-layer-patterns](api-layer-patterns/SKILL.md)                     | API architecture   | Three-layer proxy pattern       |
-| [auth-patterns](auth-patterns/SKILL.md)                               | Auth and session   | `useAuth()` / server cookies    |
+   # My Skill
 
-### Infrastructure (4)
+   One line pointing to the relevant AGENTS.md section, then only repo-specific rules, real file paths and real examples to copy.
+   ```
 
-| Skill                                                     | Purpose              | Key Rule                                   |
-| --------------------------------------------------------- | -------------------- | ------------------------------------------ |
-| [url-canonicalization](url-canonicalization/SKILL.md)     | URL/routing rules    | NEVER add `searchParams` to listing pages  |
-| [i18n-best-practices](i18n-best-practices/SKILL.md)       | Internationalization | Use `Link` from `@i18n/routing`            |
-| [security-headers-csp](security-headers-csp/SKILL.md)     | Security patterns    | Use `fetchWithHmac`, allowlist CSP domains |
-| [service-worker-updates](service-worker-updates/SKILL.md) | Service worker       | Edit `sw-template.js`, run `prebuild`      |
-
-### Quality & Testing (4)
-
-| Skill                                                           | Purpose     | Key Rule                            |
-| --------------------------------------------------------------- | ----------- | ----------------------------------- |
-| [design-system-conventions](design-system-conventions/SKILL.md) | UI styling  | Semantic classes, no `gray-*`       |
-| [testing-patterns](testing-patterns/SKILL.md)                   | Testing     | Vitest for unit, Playwright for E2E |
-| [bundle-optimization](bundle-optimization/SKILL.md)             | Performance | Quality caps, Server Components     |
-| [verify-que-fer](verify-que-fer/SKILL.md)                       | Proof gate  | Drive the running app, keep evidence |
-
-### Operations (4)
-
-| Skill                                                         | Purpose          | Key Rule                       |
-| ------------------------------------------------------------- | ---------------- | ------------------------------ |
-| [env-variable-management](env-variable-management/SKILL.md)   | Environment vars | Update 5 locations             |
-| [data-validation-patterns](data-validation-patterns/SKILL.md) | Data validation  | Zod schemas, safe fallbacks    |
-| [code-review-evaluation](code-review-evaluation/SKILL.md)     | PR reviews       | Cross-reference against skills |
-| [ai-review-responder](ai-review-responder/SKILL.md)           | AI review replies | Fix or decline each thread     |
-
-## Adding a New Skill
-
-### 1. Create Directory Structure
-
-```bash
-mkdir -p .github/skills/my-new-skill
-touch .github/skills/my-new-skill/SKILL.md
-```
-
-### 2. Add Frontmatter (Required for VS Code)
-
-```markdown
----
-name: my-new-skill
-description: Brief description of when to use this skill. Be specific about triggers.
----
-
-# My New Skill
-
-## Purpose
-
-[What this skill enforces]
-
-## Key Rules
-
-[The critical rules to follow]
-
-## Checklist
-
-- [ ] [Actionable items]
-```
-
-### 3. Update System Prompts
-
-Add to the skills table in:
-
-- `.github/copilot-instructions.md`
-- `AGENTS.md`
-
-### 4. Test the Skill
-
-Ask the AI: "What skills are available for [your topic]?"
-
-## Skill Structure Best Practices
-
-1. **Start with Purpose** - Why does this skill exist?
-2. **Lead with Critical Rules** - Most important constraints first
-3. **Include Examples** - Show correct AND incorrect patterns
-4. **End with Checklist** - Actionable verification steps
-5. **Reference Files** - Link to relevant codebase files
-
-## Frontmatter Schema
-
-```yaml
----
-name: skill-name # kebab-case, matches directory
-description: > # 1-2 sentences describing triggers
-  When to use this skill and what problem it solves.
----
-```
-
-## Related Documentation
-
-- [Main Project Documentation](../../docs/README.md) - Project overview and guides
-- [Copilot Instructions](../copilot-instructions.md) - AI coding agent guidelines
+3. Keep it short (well under 500 lines). No generic tutorials, no invented code, no "last updated" footers. Link to real tests and files instead.
+4. Add a row to the skills table in `AGENTS.md` and to the table above.

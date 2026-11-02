@@ -1,230 +1,68 @@
 ---
 name: service-worker-updates
-description: Guide for modifying service worker caching. Edit sw-template.js (not sw.js), run yarn prebuild after changes.
+description: How to change the Workbox service worker (caching routes, offline page, update lifecycle, push notifications). Use when editing public/sw-template.js, adding or changing a SW cache rule, debugging stale pages/API responses served by the SW, offline behavior, or when public/sw.js looks wrong. Edit the template, never public/sw.js, then run yarn prebuild.
 ---
 
-# Service Worker Updates Skill
+# Service worker updates
 
-## Purpose
-
-Guide for modifying the service worker caching strategy. Prevent common mistakes that break offline functionality.
-
-## ⚠️ CRITICAL: Never Edit public/sw.js Directly
-
-The `public/sw.js` file is **generated** and will be **overwritten**.
-
-**Always edit**: `public/sw-template.js`
-
-## How Service Worker Generation Works
+## Generation
 
 ```text
-public/sw-template.js  →  scripts/generate-sw.mjs  →  public/sw.js
-       (source)              (build script)           (generated)
+public/sw-template.js → scripts/generate-sw.mjs (yarn prebuild) → public/sw.js
 ```
 
-The build script:
+- `public/sw.js` is build output: never edit or commit it.
+- `generate-sw.mjs` replaces two placeholders:
+  - `{{API_ORIGIN}}`: origin of `NEXT_PUBLIC_API_URL`, or of `apiUrl` in `config/api-defaults.json` when the env var is unset.
+  - `{{BUILD_VERSION}}`: `BUILD_VERSION` → `VERCEL_GIT_COMMIT_SHA` → `VERCEL_DEPLOYMENT_ID` → `Date.now()`. It makes `sw.js` change on every deploy, so browsers install the new SW.
+- It uses `String.replace`, which replaces only the **first** match. Use each placeholder once (today `{{API_ORIGIN}}` appears only in the external API route).
+- `yarn dev` and `yarn build` don't run prebuild; `build:development|staging|production` do. After editing the template: `yarn prebuild`, then restart dev.
 
-1. Reads `sw-template.js`
-2. Replaces `{{API_ORIGIN}}` placeholder with `NEXT_PUBLIC_API_URL` origin
-3. Writes output to `public/sw.js`
+## Template layout
 
-## When to Run Regeneration
+- Loads Workbox 7.1.0 from Google's CDN with `importScripts`. If it fails, `if (!self.workbox)` leaves a no-op SW. Keep new code inside the `else` branch.
+- Precaches `/offline` and `/static/css/offline.css`; `cleanupOutdatedCaches()` removes old precaches.
+- Routes use `workbox.routing.registerRoute(...)` and `new workbox.strategies.X(...)` directly. The first matching route wins, so order matters.
 
-Run `yarn prebuild` after changing `sw-template.js`:
+## Routes (in order)
 
-```bash
-# After editing sw-template.js
-yarn prebuild
+| Match | Strategy | Cache name | Expiry |
+| --- | --- | --- | --- |
+| `/api/auth/*`, `/api/favorites` | NetworkOnly | – | – |
+| Navigations (`request.mode === "navigate"`) | navigation preload, then NetworkFirst + `BroadcastUpdatePlugin` + skip `private`/`no-store` | `esdeveniments-pages-cache` | 50 / 7 d |
+| Google ads/analytics, Sentry | NetworkOnly | – | – |
+| style, script, worker, font | CacheFirst | `esdeveniments-static-assets-cache` | 100 / 30 d |
+| images | StaleWhileRevalidate | `esdeveniments-images-cache` | 200 / 7 d |
+| `/api/events`, `/api/events/categorized` | StaleWhileRevalidate | `esdeveniments-events-api-cache` | 50 / 10 min |
+| `/api/news`, `/api/news/*` | StaleWhileRevalidate | `esdeveniments-news-api-cache` | 30 / 3 min |
+| `/api/image-proxy*` | NetworkFirst (5 s timeout) | `esdeveniments-image-proxy-cache` | 100 / 7 d |
+| other `/api/*` | StaleWhileRevalidate | `esdeveniments-local-api-cache` | 50 / 24 h |
+| `url.origin === "{{API_ORIGIN}}"` | StaleWhileRevalidate | `esdeveniments-external-api-cache` | 100 / 30 min |
+| anything else (`setDefaultHandler`) | NetworkFirst | `esdeveniments-default-cache` | 50 / 24 h |
 
-# Then start the development server
-yarn dev
-```
+API TTLs match the `s-maxage` of the matching `app/api/*` route; change both together.
 
-**Note**: Neither `yarn dev` nor `yarn build` runs prebuild automatically. Run it explicitly on a fresh checkout or after template changes. Environment-specific builds (`build:development|staging|production`) do include it.
+**Any new per-user or auth endpoint must be added to the NetworkOnly route at the top.** The `/api/*` catch-all caches by URL and ignores cookies, so it once kept users "logged in" after logout (see LESSONS.md).
 
-## Service Worker Template Structure
+## Offline
 
-```javascript
-// public/sw-template.js
-const API_ORIGIN = "{{API_ORIGIN}}"; // Replaced at build time
+The navigation route catches network errors and returns `cache.match("/offline")` from the precache. `setCatchHandler` does the same for `document` requests that other routes fail. The page is `app/[locale]/offline/` (served at `/offline` for the default locale).
 
-// Workbox 7 configuration
-importScripts(
-  "https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js"
-);
+## Update lifecycle
 
-const { registerRoute } = workbox.routing;
-const { CacheFirst, NetworkFirst, StaleWhileRevalidate } = workbox.strategies;
+- `install` calls `skipWaiting()`, and a `{ type: "SKIP_WAITING" }` message does the same (sent by the registration script in `app/[locale]/layout.tsx`).
+- `activate` calls `clients.claim()` and deletes `esdeveniments-pages-cache` (old HTML would cause hydration mismatches after a deploy) and `esdeveniments-local-api-cache` (hard-coded name, so a Workbox suffix bump doesn't clear it).
+- `push` and `notificationclick` handle web push; only same-origin relative URLs from the payload are opened.
 
-// Cache strategies for different routes
-registerRoute(
-  ({ url }) => url.origin === API_ORIGIN && url.pathname.startsWith("/api/"),
-  new NetworkFirst({ cacheName: "api-cache" })
-);
-```
+## Adding a cache rule
 
-## Caching Strategies
+1. Add a `registerRoute` in the template, above any broader route that would match first.
+2. Use a cache name starting with `esdeveniments-`, an `ExpirationPlugin` (`maxEntries` + `maxAgeSeconds`) and `CacheableResponsePlugin({ statuses: [0, 200] })` like the neighbours.
+3. Set `matchOptions: { ignoreVary: true }`. Next responses vary on `rsc`, `next-router-state-tree`, `next-router-prefetch` and similar headers; without it the same URL misses the cache or is stored many times.
+4. If old entries must go on deploy, delete the cache in `activate`.
+5. `yarn prebuild`, restart, and check DevTools › Application › Service Workers and Cache Storage.
 
-| Strategy               | Use Case                | Example        |
-| ---------------------- | ----------------------- | -------------- |
-| `CacheFirst`           | Static assets, images   | Fonts, icons   |
-| `NetworkFirst`         | API calls, dynamic data | Events, news   |
-| `StaleWhileRevalidate` | Balance freshness/speed | Category lists |
+## Files
 
-## Adding New Cache Rules
-
-### 1. Edit Template
-
-```javascript
-// public/sw-template.js
-
-// Add new route
-registerRoute(
-  ({ url }) => url.pathname.startsWith("/new-feature/"),
-  new StaleWhileRevalidate({
-    cacheName: "new-feature-cache",
-    matchOptions: { ignoreVary: true }, // REQUIRED for Next.js App Router
-    plugins: [
-      new workbox.expiration.ExpirationPlugin({
-        maxEntries: 50,
-        maxAgeSeconds: 24 * 60 * 60, // 24 hours
-      }),
-    ],
-  })
-);
-```
-
-### 2. Regenerate
-
-```bash
-yarn prebuild
-```
-
-### 3. Test
-
-```bash
-yarn dev
-# Check DevTools > Application > Service Workers
-```
-
-## Common Patterns
-
-### Cache API Responses
-
-```javascript
-registerRoute(
-  ({ url }) => url.origin === API_ORIGIN && url.pathname.includes("/events"),
-  new NetworkFirst({
-    cacheName: "events-cache",
-    networkTimeoutSeconds: 3,
-    matchOptions: { ignoreVary: true }, // REQUIRED for Next.js App Router
-    plugins: [
-      new workbox.expiration.ExpirationPlugin({
-        maxEntries: 100,
-        maxAgeSeconds: 60 * 60, // 1 hour
-      }),
-    ],
-  })
-);
-```
-
-### Cache Static Assets
-
-```javascript
-registerRoute(
-  ({ request }) => request.destination === "image",
-  new CacheFirst({
-    cacheName: "images-cache",
-    matchOptions: { ignoreVary: true }, // REQUIRED for Next.js App Router
-    plugins: [
-      new workbox.expiration.ExpirationPlugin({
-        maxEntries: 60,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-      }),
-    ],
-  })
-);
-```
-
-### Offline Fallback
-
-```javascript
-// Offline page fallback
-workbox.routing.setCatchHandler(async ({ event }) => {
-  if (event.request.destination === "document") {
-    return caches.match("/offline");
-  }
-  return Response.error();
-});
-```
-
-## Environment Variable
-
-The `{{API_ORIGIN}}` placeholder is replaced with the origin from `NEXT_PUBLIC_API_URL`:
-
-```bash
-# .env
-NEXT_PUBLIC_API_URL=https://api.example.com/v1
-
-# Results in sw.js:
-const API_ORIGIN = "https://api.example.com";
-```
-
-## Debugging Service Worker
-
-1. **Chrome DevTools** > Application > Service Workers
-2. Check "Update on reload" during development
-3. Use "Bypass for network" to test without caching
-4. Clear storage if seeing stale behavior
-
-## ⚠️ CRITICAL: Always Use `ignoreVary: true`
-
-Next.js App Router adds `Vary` headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, etc.) to responses. Without `ignoreVary: true`, **service worker cache matching** fails because these headers differ between request types (RSC navigation vs client fetch vs direct load).
-
-**Note**: This addresses Workbox service worker cache matching, not the underlying Next.js dynamic route issue (which relates to `Cache-Control: private/no-store` when Server Components call `headers()` or `cookies()`). The `ignoreVary: true` option allows the SW to treat the same URL as one cache entry regardless of Vary header differences.
-
-**Always add `matchOptions` with `ignoreVary: true`:**
-
-```javascript
-new workbox.strategies.StaleWhileRevalidate({
-  cacheName: "my-cache",
-  matchOptions: {
-    ignoreVary: true, // REQUIRED for Next.js App Router compatibility
-  },
-  plugins: [
-    /* ... */
-  ],
-});
-```
-
-**Without this**, the same URL may be fetched multiple times and cached as separate entries, causing:
-
-- Wasted bandwidth
-- Slower navigation (false cache misses)
-- Unreliable offline behavior
-
-## Common Mistakes
-
-1. **Editing sw.js directly** → Changes lost on rebuild
-2. **Forgetting yarn prebuild** → Template changes not applied
-3. **Wrong API_ORIGIN** → Cache rules don't match
-4. **Too aggressive caching** → Users see stale data
-5. **No cache expiration** → Cache grows forever
-6. **Missing `ignoreVary: true`** → Cache misses due to Next.js `Vary` headers
-
-## Checklist for SW Changes
-
-- [ ] Editing `sw-template.js` (not `sw.js`)?
-- [ ] Running `yarn prebuild` after changes?
-- [ ] Using appropriate cache strategy?
-- [ ] Setting cache expiration limits?
-- [ ] Adding `matchOptions: { ignoreVary: true }` to strategies?
-- [ ] Testing in DevTools > Application?
-- [ ] Testing offline behavior?
-
-## Files to Reference
-
-- [public/sw-template.js](public/sw-template.js) - Source template (EDIT THIS)
-- [public/sw.js](public/sw.js) - Generated output (DO NOT EDIT)
-- [scripts/generate-sw.mjs](scripts/generate-sw.mjs) - Build script
-- [app/offline/page.tsx](app/offline/page.tsx) - Offline fallback page
+- `public/sw-template.js` (edit this), `scripts/generate-sw.mjs`, `config/api-defaults.json`
+- `app/[locale]/offline/`, `app/[locale]/layout.tsx` (registration)
