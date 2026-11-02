@@ -899,6 +899,9 @@
     },
     "WhereToEatSection": {
       "showPhoto": "Show photo",
+      "loadIntro": "Find places to eat near the event.",
+      "loadCta": "Show nearby restaurants",
+      "empty": "We couldn't find restaurants nearby.",
       "title": "Where you can eat",
       "promote": "Promote your restaurant"
     },

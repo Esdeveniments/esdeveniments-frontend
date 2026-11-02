@@ -88,7 +88,11 @@ It's tempting to drop a threshold (e.g. `SITEMAP_MIN_EVENTS_FOR_EXPANSION`) or r
 
 1. **Code** — `lib/cache/redis-client.ts` + `lib/places/nearby-cache-key.ts` cache results in Redis keyed by `~1.1km-snapped` coordinates. This is a **separate Redis layer from `cache-handler.mjs`** on purpose: the Next handler scopes keys by `buildId` and wipes them every deploy, which is wrong for data that should outlive deploys. The app cache is deploy-independent (12h TTL) and fails open.
 2. **Cloudflare WAF** (dashboard, zone `esdeveniments.cat`) — managed-challenge for SG/JP/CN bot traffic + a per-IP rate-limit on the endpoint.
-3. **GCP quota** (`places.googleapis.com/SearchNearbyRequest`, project `esdeveniments-3`) — **50/day** consumer override. This is the hard ceiling. The €10 "budget" is only an alert, never a cap.
+3. **GCP quota** (`places.googleapis.com/SearchNearbyRequest`, project **`esdeveniments`** under `albertolivecorbella@gmail.com` — not `esdeveniments-3`, which has no Places API) — **50/day** consumer override. This is the hard ceiling. The €10 "budget" is only an alert, never a cap. Verify it exists: `curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" "https://serviceusage.googleapis.com/v1beta1/projects/esdeveniments/services/places.googleapis.com/consumerQuotaMetrics/places.googleapis.com%2FSearchNearbyRequest/limits/%2Fd%2Fproject/consumerOverrides"` (expects `"overrideValue": "50"`). On Oct 27 2026 it was found missing (default 75,000/day) and re-applied.
+
+Staging and prod share one API key ("API key 1") but have **separate Redis caches**, so each ~1km cell is billed once per environment, and staging sits outside the `www`-scoped WAF. The SKU is Nearby Search *Enterprise* (the field mask asks for rating/price/opening hours): 1,000 free calls/month, then billed per call — so cost appears only once a month's cumulative calls pass ~1,000.
+
+Since Nov 2026 the widget is click-to-load (`restaurant_load_click`): Google is only called when a person clicks, so scroll-triggered bot calls are gone. Don't revert to an `IntersectionObserver` trigger.
 
 So if restaurants suddenly stop showing, or a request 429s, the cause may be the WAF or the quota — not the code. See [docs/incidents/2026-06-26-places-api-cost.md](docs/incidents/2026-06-26-places-api-cost.md).
 

@@ -908,7 +908,10 @@
     "WhereToEatSection": {
       "title": "On pots menjar",
       "promote": "Promociona el teu restaurant",
-      "showPhoto": "Veure foto"
+      "showPhoto": "Veure foto",
+      "loadIntro": "Troba on menjar a prop de l'esdeveniment.",
+      "loadCta": "Mostra restaurants a prop",
+      "empty": "No hem trobat restaurants a prop."
     },
     "FeaturedPlaceSection": {
       "seeMore": "Veure més",
