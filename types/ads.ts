@@ -1,6 +1,8 @@
 export interface TcfData {
   eventStatus?: "tcloaded" | "useractioncomplete" | "cmpuishown" | string;
   listenerId?: number;
+  tcString?: string;
+  gdprApplies?: boolean;
   purpose?: { consents?: Record<string, boolean> };
   vendor?: { consents?: Record<string, boolean> };
 }

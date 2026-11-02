@@ -12,6 +12,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { routing } from "@i18n/routing";
 import { isE2ETestMode } from "@utils/env";
+import { FUNDING_CHOICES_SRC } from "@utils/analytics";
 import GoogleScripts from "../GoogleScripts";
 import AuthEventTracker from "@components/analytics/AuthEventTracker";
 import { AdProvider } from "@lib/context/AdContext";
@@ -199,6 +200,14 @@ export default async function LocaleLayout({
             `,
             }}
           />
+        )}
+        {/* Funding Choices (consent box) as Google's snippet places it: async
+            in <head>. Loaded from the client tree it waited for hydration and
+            the load event, and on a first visit its box became the LCP at
+            about 5 s on a slow phone. GoogleScripts keeps the
+            fallback for pages where FC shows no box. */}
+        {!isE2ETestMode && FUNDING_CHOICES_SRC && (
+          <script async src={FUNDING_CHOICES_SRC} />
         )}
       </head>
       <body>

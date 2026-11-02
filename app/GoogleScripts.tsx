@@ -9,16 +9,14 @@ import {
   onFirstInteractionOrTimeout,
   scheduleIdleCallback,
 } from "@utils/browser";
-import { ensureGtag, CONSENT_MODE_DEFAULTS } from "@utils/analytics";
-import type { GoogleScriptsHeavyProps } from "types/ads";
+import {
+  ensureGtag,
+  CONSENT_MODE_DEFAULTS,
+  FUNDING_CHOICES_SRC,
+} from "@utils/analytics";
+import type { GoogleScriptsHeavyProps, TcfCallback } from "types/ads";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
-const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
-// FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
-const FUNDING_CHOICES_PUB_ID = ADS_CLIENT?.replace(/^ca-/, "") ?? "";
-const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
-  ? `https://fundingchoicesmessages.google.com/i/${FUNDING_CHOICES_PUB_ID}?ers=1`
-  : "";
 
 // Google Analytics gtag shim - reused across multiple Script components.
 // Conditionally defines gtag only if it doesn't already exist (avoids
@@ -41,6 +39,63 @@ const CONSENT_UPDATE_IDLE_TIMEOUT_MS = 1000;
 // compete with the user's first interactions. Without one, it loads this long
 // after the window load event.
 const ADS_SCRIPT_FALLBACK_MS = 4500;
+
+// On a slow phone FC's own box reports "cmpuishown" up to ~1.2 s after its
+// first TCF event; wait longer than that before showing the box by hand.
+const CONSENT_FALLBACK_DELAY_MS = 3000;
+
+// WORKAROUND: on some pages (seen on "/") Funding Choices loads but never
+// shows its box to a new visitor, so show it by hand. Only when FC's first TCF
+// event says GDPR applies and there is no stored consent string, and FC has
+// not shown its own box since. The wait starts at that first event, not at a
+// fixed time, so a slow FC cannot reopen the box for a visitor who already
+// chose. (The googlefcInactive frame is no signal: it is there for everyone.)
+export function armConsentFallback(): () => void {
+  if (typeof window.__tcfapi !== "function") return () => {};
+  let settled = false;
+  let listenerId: number | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const stopListening = () => {
+    if (listenerId === undefined) return;
+    window.__tcfapi?.("removeEventListener", 2, () => {}, listenerId);
+    listenerId = undefined;
+  };
+  const onTcData: TcfCallback = (tcData, success) => {
+    if (!success || !tcData) return;
+    if (typeof tcData.listenerId === "number") listenerId = tcData.listenerId;
+    if (settled) {
+      stopListening();
+      return;
+    }
+    if (
+      tcData.tcString ||
+      tcData.gdprApplies === false ||
+      tcData.eventStatus === "cmpuishown"
+    ) {
+      settled = true;
+      clearTimeout(timer);
+      stopListening();
+      return;
+    }
+    // undefined means "not known yet": wait for a later event.
+    if (tcData.gdprApplies !== true) return;
+    timer ??= setTimeout(() => {
+      stopListening();
+      if (settled || document.querySelector(".fc-consent-root")) return;
+      try {
+        window.googlefc?.showRevocationMessage?.();
+      } catch {
+        // Consent UI trigger failed silently
+      }
+    }, CONSENT_FALLBACK_DELAY_MS);
+  };
+  window.__tcfapi("addEventListener", 2, onTcData);
+  return () => {
+    settled = true;
+    clearTimeout(timer);
+    stopListening();
+  };
+}
 
 export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
@@ -78,6 +133,28 @@ export default function GoogleScripts() {
       cancelIdle?.();
     };
   }, []);
+  // The Funding Choices loader is in the root layout <head>. Arm the consent
+  // fallback once it has loaded.
+  useEffect(() => {
+    if (isE2ETestMode || !FUNDING_CHOICES_SRC) return;
+    const script = document.querySelector<HTMLScriptElement>(
+      `script[src="${FUNDING_CHOICES_SRC}"]`
+    );
+    if (!script) return;
+    let disarm: (() => void) | undefined;
+    const arm = () => {
+      disarm = armConsentFallback();
+    };
+    // Usually loaded before hydration: the loader defines __tcfapi, and there
+    // is no load event left to wait for.
+    if (typeof window.__tcfapi === "function") arm();
+    else script.addEventListener("load", arm, { once: true });
+    return () => {
+      script.removeEventListener("load", arm);
+      disarm?.();
+    };
+  }, []);
+
   // Track last consent state to avoid duplicate consent updates
   // Using useRef (not module-level) to handle React Strict Mode correctly
   const lastConsentStateRef = useRef<"granted" | "denied" | null>(null);
@@ -162,50 +239,6 @@ export default function GoogleScripts() {
           />
         </>
       )}
-
-      {!isE2ETestMode && (
-        <>
-
-          {/* Funding Choices (CMP) - loads with lazyOnload for PageSpeed.
-              The googlefcPresent iframe script runs earlier, in the root layout <head>.
-              AdContext polls for __tcfapi and falls back after 5s. */}
-          {FUNDING_CHOICES_SRC && (
-            <Script
-              src={FUNDING_CHOICES_SRC}
-              strategy="lazyOnload"
-              onLoad={() => {
-                // WORKAROUND: Google FC sometimes marks the page as "inactive" on root paths
-                // due to script loading order issues from performance optimizations.
-                // When this happens, googlefcInactive iframe exists but consent banner doesn't show.
-                // Detect this condition and manually trigger the consent UI.
-                setTimeout(() => {
-                  const win = window as unknown as {
-                    googlefc?: { showRevocationMessage?: () => void };
-                    __tcfapi?: unknown;
-                    frames?: Record<string, unknown>;
-                  };
-
-                  const hasInactiveFrame = Boolean(window.frames && 'googlefcInactive' in window.frames);
-                  // Check if consent UI is already visible (Google FC uses .fc-consent-root)
-                  const consentUIAlreadyVisible = Boolean(document.querySelector('.fc-consent-root'));
-
-                  // Only trigger if: inactive frame exists AND consent UI is not showing
-                  if (hasInactiveFrame && !consentUIAlreadyVisible && win.googlefc?.showRevocationMessage) {
-                    try {
-                      win.googlefc.showRevocationMessage();
-                    } catch {
-                      // Consent UI trigger failed silently
-                    }
-                  }
-                }, 500);
-              }}
-            />
-          )}
-
-
-        </>
-      )}
-
 
       {/* Heavy tracking + Auto Ads: only load after consent */}
       {!isE2ETestMode && isProdHost && adsAllowed && HeavyComponent && (
