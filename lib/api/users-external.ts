@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseAuthenticatedUser, parseUserPublic } from "@lib/validation/user";
 import { parsePagedEvents } from "@lib/validation/event";
-import { getApiUrl, isApiUrlConfigured } from "@utils/api-helpers";
+import { getApiUrl, isApiUrlConfigured, emptyPagedResponse } from "@utils/api-helpers";
 import type {
   AuthenticatedUserDTO,
   ProfileUpdateRequestDTO,
@@ -365,14 +365,7 @@ export async function getUserEventsExternal(
   size = 20,
   status: ProfileEventStatus = "upcoming",
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const empty: PagedResponseDTO<EventSummaryResponseDTO> = {
-    content: [],
-    currentPage: page,
-    pageSize: size,
-    totalElements: 0,
-    totalPages: 0,
-    last: true,
-  };
+  const empty = emptyPagedResponse<EventSummaryResponseDTO>(page, size);
   const trimmed = username?.trim();
   if (!trimmed) return empty;
   // Return an empty page (no fetch) when the backend URL is unconfigured —

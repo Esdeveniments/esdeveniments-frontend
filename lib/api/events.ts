@@ -10,6 +10,7 @@ import {
   getVercelProtectionBypassHeaders,
   getApiUrl,
   isApiUrlConfigured,
+  emptyPagedResponse,
 } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import { eventsTag, eventTag } from "@lib/cache/tags";
@@ -90,14 +91,7 @@ const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYT
 async function fetchEventsInternal(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
-    content: [],
-    currentPage: params.page ?? 0,
-    pageSize: params.size ?? 12,
-    totalElements: 0,
-    totalPages: 0,
-    last: true,
-  };
+  const fallbackResponse = emptyPagedResponse<EventSummaryResponseDTO>(params.page ?? 0, params.size ?? 12);
 
   const fetchExternalWithValidation = async () => {
     try {
@@ -226,14 +220,7 @@ export async function fetchEventsCached(
     // production, so detect a timeout by the time spent. A retry would only
     // time out again and double the wait on each fallback stage.
     if (Date.now() - startedAt >= CACHED_EVENTS_TIMEOUT_MS) {
-      return {
-        content: [],
-        currentPage: params.page ?? 0,
-        pageSize: params.size ?? 12,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      };
+      return emptyPagedResponse(params.page ?? 0, params.size ?? 12);
     }
     return fetchEvents(params);
   }

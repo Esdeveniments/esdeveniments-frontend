@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchNewsExternal } from "@lib/api/news-external";
 import { handleApiError } from "@utils/api-error-handler";
+import { emptyPagedResponse } from "@utils/api-helpers";
 
 export async function GET(request: Request) {
   try {
@@ -23,14 +24,7 @@ export async function GET(request: Request) {
     });
   } catch (e) {
     return handleApiError(e, "/api/news", {
-      fallbackData: {
-        content: [],
-        currentPage: 0,
-        pageSize: 0,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      },
+      fallbackData: emptyPagedResponse(),
     });
   }
 }

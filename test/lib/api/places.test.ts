@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-vi.mock("@utils/api-helpers", () => ({
+vi.mock("@utils/api-helpers", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@utils/api-helpers")>()),
   getInternalApiUrl: vi.fn((path: string) =>
     Promise.resolve(`http://localhost:3000${path}`),
   ),
