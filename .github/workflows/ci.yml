@@ -237,6 +237,9 @@ jobs:
           E2E_TEST_MODE: "1"
           NEXT_PUBLIC_E2E_TEST_MODE: "1"
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          # Server-side reads of the app's own /api go to this build, not to
+          # production www (cached readers skip the request Host header).
+          INTERNAL_SITE_URL: http://localhost:3000
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
