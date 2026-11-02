@@ -70,6 +70,7 @@ vi.mock("@components/partials/generatePagesData", () => {
 vi.mock("@lib/api/events", () => {
   return {
     insertAds: <T,>(events: T[]) => events,
+    fetchEventsCached: vi.fn(),
   };
 });
 
