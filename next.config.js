@@ -43,7 +43,7 @@ const nextConfig = {
   // Required for Docker/Coolify deployment (standalone server.js output)
   output: "standalone",
   outputFileTracingIncludes: {
-    "/*": ["./cache-handler.mjs"],
+    "/*": ["./cache-handler.mjs", "./use-cache-handler.mjs"],
   },
   // Mark sharp and its native dependencies as external
   // Sharp has native binaries that must be bundled separately for the target platform
@@ -68,6 +68,8 @@ const nextConfig = {
         // at build time, but Redis env vars are only available at container runtime.
         cacheHandler: require.resolve("./cache-handler.mjs"),
         cacheMaxMemorySize: 0,
+        // cacheMaxMemorySize: 0 also disables the built-in "use cache" store.
+        cacheHandlers: { default: require.resolve("./use-cache-handler.mjs") },
       }),
 
   // --- React Compiler (Next 16: moved to top-level) ---
