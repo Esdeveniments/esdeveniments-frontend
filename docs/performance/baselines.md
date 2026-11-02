@@ -39,7 +39,7 @@ Lab numbers (this machine, `scripts/perf-lab.mjs`) are proxies. They explain why
 
 A local build of main could not be used: main still uses backend contract v1, so against the v2 test API its event pages render as 404 and its listings are empty.
 
-Lab: Pixel 7, 4x CPU, 1.6 Mbps / 150 ms, median of 3. HTML is raw (uncompressed) size.
+Lab: Pixel 7, 4x CPU, 1.6 Mbps / 150 ms, median of 3. HTML is raw (uncompressed) size; total is transferred (compressed) bytes for the HTML plus all resources.
 
 | Page | Metric | Live | Before | Now |
 |---|---|---|---|---|

@@ -4,7 +4,7 @@ Usage: CRUX_API_KEY=... python3 scripts/crux-check.py
 The key is free (Google Cloud, "Chrome UX Report API"). Without the env var the
 script reads ~/.config/crux/api-key. Results: docs/performance/baselines.md
 """
-import json, os, urllib.request
+import json, os, urllib.error, urllib.request
 key = os.environ.get("CRUX_API_KEY")
 if not key:
     with open(os.path.expanduser("~/.config/crux/api-key")) as f:
@@ -14,7 +14,9 @@ def q(body, hist=False):
     url = f"https://chromeuxreport.googleapis.com/v1/records:{'queryHistoryRecord' if hist else 'queryRecord'}?key={key}"
     req = urllib.request.Request(url, data=json.dumps({**body, "formFactor": "PHONE"}).encode(), headers={"Content-Type": "application/json"})
     try: return json.load(urllib.request.urlopen(req))["record"]
-    except Exception: return None
+    except urllib.error.HTTPError as e:
+        if e.code == 404: return None  # CrUX: not enough traffic for this URL/origin
+        raise
 for name, body in [("origin", {"origin": "https://www.esdeveniments.cat"})] + [(u, {"url": "https://www.esdeveniments.cat" + u}) for u in ["/", "/catalunya", "/barcelona", "/es/catalunya"]]:
     r = q(body)
     if not r: print(f"{name}: no data"); continue
