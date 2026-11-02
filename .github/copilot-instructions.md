@@ -94,11 +94,9 @@ Adding a new filter:
 - Adding new API call (pattern):
   1. Define DTO in `types/api/*`
   2. Create `*-external.ts` wrapper with env guard + `fetchWithHmac` + Zod parsing + safe fallback
-  3. Create internal API route in `app/api/*` that calls external wrapper and sets cache headers
-  4. Update client library in `lib/api/*.ts` to call internal route via `getInternalApiUrl` and query builders
-  5. **CRITICAL: Add `isBuildPhase` bypass** - during build, internal routes don't exist; call external wrapper directly
-  6. Use `next: { revalidate, tags }` for Next.js fetch caching
-- **Build-time bypass pattern**: Client libraries (`lib/api/*.ts`) MUST check `isBuildPhase` from `@utils/constants` and call `*-external.ts` directly during build. Without this, builds fail with `"<!DOCTYPE "... is not valid JSON` because internal routes aren't available yet.
+  3. If client components need it, create an internal API route in `app/api/*` that calls the external wrapper and sets cache headers
+  4. Server reader in `lib/api/*.ts`: call the external wrapper directly through `createCache`/`createKeyedCache` (`storeEmpty: false` when the wrapper returns `[]`/`null` on failure), after `await connection()`
+- **One server read path**: our `/api/*` routes do not exist during `next build`, so server readers never call them; see the api-layer-patterns skill.
 - **Fetch best practices**: Never use raw `fetch()` without timeout and response validation. Use `fetchWithHmac` for internal API calls (has built-in 10s timeout), or `safeFetch`/`fireAndForgetFetch` from `utils/safe-fetch.ts` for external webhooks/services (5s default timeout, response validation, Sentry logging).
 - Avoid: calling external API directly from pages/components (use internal routes), duplicating manual query string concatenation (use query builders), bypassing cache wrappers, throwing raw fetch errors without fallback object.
 
@@ -203,7 +201,7 @@ Adding a new filter:
 - Not setting appropriate cache headers (`s-maxage`, `stale-while-revalidate`) in internal API routes.
 - **⚠️ CRITICAL - Adding `searchParams` to listing pages**: Reading `searchParams` in `app/[place]/*` page components makes pages dynamic, creating millions of cache entries (one per unique URL+query). This caused a $300+ spike on Dec 28, 2025. Query-dependent behavior must be handled in middleware (`proxy.ts`) or client-side (SWR).
 - **⚠️ CRITICAL - Adding `next: { revalidate }` to external fetches**: NEVER add `next: { revalidate, tags }` to `fetchWithHmac` calls in `lib/api/*-external.ts`. This enables Next.js fetch cache, which creates a separate cache entry for every unique URL. With high-cardinality APIs (100+ places × categories × pages), this caused 146K cache entries per build and a cost spike on Jan 20, 2026. External wrappers must use default `cache: "no-store"`; caching is handled via `Cache-Control` headers in internal API routes instead.
-- **⚠️ CRITICAL - Missing `isBuildPhase` bypass in client libraries**: All `lib/api/*.ts` files that call internal routes MUST check `isBuildPhase` and call `*-external.ts` directly during build. Without this, builds fail with `"<!DOCTYPE "... is not valid JSON` because internal routes don't exist during static generation.
+- **⚠️ CRITICAL - Server readers calling `/api/*` routes**: those routes do not exist during static generation (`"<!DOCTYPE "... is not valid JSON`). Server readers call the `*-external.ts` wrapper directly.
 - **Raw fetch() without timeout**: Always use `fetchWithHmac` (internal API, 10s timeout) or `safeFetch`/`fireAndForgetFetch` (external webhooks, 5s timeout). Raw `fetch()` can hang indefinitely in containers. ESLint warns on raw `fetch()`.
 - **Custom implementations over stdlib**: Prefer built-in APIs (e.g., `AbortSignal.any()` over custom signal merging, `after()` from `next/server` over fire-and-forget promises).
 - **Swallowing stack traces**: Pass original error to `captureException(error)`, not `new Error(error.message)`.

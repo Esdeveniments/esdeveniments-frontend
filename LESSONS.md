@@ -541,11 +541,13 @@ a separate layer. To check: log server `fetch` calls (`NODE_OPTIONS=--require`
 with a small fetch wrapper) and load a page twice; a cached reader must not
 fetch the second time.
 
-## `isBuildPhase` is true at runtime on Coolify
+## Server readers have one path: the external wrapper
 
-`utils/constants.ts` sets `isBuildPhase` when `NODE_ENV` is production and
-`VERCEL_URL` is not set, which is always the case on Coolify. Readers that
-branch on it (events, places, categories, regions) take the "external" path on
-every request, with `no-store` fetches, and skip the in-memory caches of the
-internal path. A listing render makes 6 to 8 backend calls for places,
-categories and regions, even on a repeat visit.
+`utils/constants.ts` used to set `isBuildPhase` when `NODE_ENV` was production
+and `VERCEL_URL` was not set, which is always the case on Coolify. So the
+"internal route + in-memory cache" path never ran in production, and a town
+page made 6 to 8 uncached backend calls for places, categories and regions.
+The readers now always call the `*-external.ts` wrapper through the in-memory
+cache. The wrappers return `[]`/`null` on failure, so those caches use
+`storeEmpty: false`, and each reader calls `connection()` before the cache so
+a warm cache cannot change what Next prerenders.

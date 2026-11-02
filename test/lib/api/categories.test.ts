@@ -1,21 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock modules before importing
-vi.mock("@utils/api-helpers", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@utils/api-helpers")>()),
-  getInternalApiUrl: vi.fn((path: string) =>
-    Promise.resolve(`http://localhost:3000${path}`),
-  ),
-  getVercelProtectionBypassHeaders: vi.fn(() => ({})),
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  connection: vi.fn(async () => {}),
 }));
 
 vi.mock("lib/validation/category", () => ({
   parseCategories: vi.fn((data: unknown) => data),
-}));
-
-vi.mock("./categories-external", () => ({
-  fetchCategoriesExternal: vi.fn(),
-  fetchCategoryByIdExternal: vi.fn(),
 }));
 
 vi.mock("react", async () => {
@@ -78,31 +70,26 @@ describe("lib/api/categories", () => {
     expect(result).toEqual([]);
   });
 
-  it("fetchCategoryById returns null on non-OK response", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-      }),
-    );
-    const { fetchCategoryById } = await import("lib/api/categories");
-    const result = await fetchCategoryById(999);
-    expect(result).toBeNull();
+  it("does not cache a failure, so the next call retries", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 500 })
+      .mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve([{ id: 1, name: "Música", slug: "musica" }]),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+    const { fetchCategories } = await import("lib/api/categories");
+    expect(await fetchCategories()).toEqual([]);
+    expect(await fetchCategories()).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("fetchCategoryById returns data on success", async () => {
-    const mockCategory = { id: 1, name: "Música", slug: "musica" };
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockCategory),
-      }),
-    );
-    const { fetchCategoryById } = await import("lib/api/categories");
-    const result = await fetchCategoryById(1);
-    expect(result).toEqual(mockCategory);
+  it("caches a successful list", async () => {
+    const { fetchCategories } = await import("lib/api/categories");
+    await fetchCategories();
+    await fetchCategories();
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
   });
 
   it("clearCategoriesCaches runs without error", async () => {

@@ -1,16 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-vi.mock("@utils/api-helpers", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@utils/api-helpers")>()),
-  getInternalApiUrl: vi.fn((path: string) =>
-    Promise.resolve(`http://localhost:3000${path}`),
-  ),
-  getVercelProtectionBypassHeaders: vi.fn(() => ({})),
-}));
-
-vi.mock("./places-external", () => ({
-  fetchPlaceBySlugExternal: vi.fn(),
-  fetchPlacesAggregatedExternal: vi.fn(),
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  connection: vi.fn(async () => {}),
 }));
 
 vi.mock("react", async () => {
@@ -77,22 +69,40 @@ describe("lib/api/places", () => {
     expect(result).toEqual([]);
   });
 
-  it("fetchPlaces returns place list on success", async () => {
-    const mockPlaces = [
-      { id: 1, name: "Barcelona", slug: "barcelona", type: "CITY" },
-      { id: 2, name: "Girona", slug: "girona", type: "CITY" },
-    ];
+  it("fetchPlaces merges regions and cities from the backend", async () => {
+    const byUrl = (url: string) =>
+      url.endsWith("/places/regions")
+        ? [{ id: 1, name: "Maresme", slug: "maresme" }]
+        : [{ id: 2, name: "Girona", slug: "girona" }];
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockPlaces),
-      }),
+      vi.fn((url: string) =>
+        Promise.resolve({ ok: true, json: () => Promise.resolve(byUrl(String(url))) }),
+      ),
     );
 
     const { fetchPlaces } = await import("lib/api/places");
     const result = await fetchPlaces();
-    expect(result).toEqual(mockPlaces);
+    expect(result).toEqual([
+      { id: 1, name: "Maresme", slug: "maresme", type: "REGION" },
+      { id: 2, name: "Girona", slug: "girona", type: "CITY" },
+    ]);
+  });
+
+  it("fetchPlaces does not cache a failure, so the next call retries", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 500 })
+      .mockResolvedValueOnce({ ok: false, status: 500 })
+      .mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve([{ id: 2, name: "Girona", slug: "girona" }]),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { fetchPlaces } = await import("lib/api/places");
+    expect(await fetchPlaces()).toEqual([]);
+    expect(await fetchPlaces()).toHaveLength(1);
   });
 
   it("fetchPlaces returns empty array on fetch error", async () => {

@@ -6,9 +6,8 @@ applyTo: "lib/api/**/*.ts"
 
 ## Client libraries (`lib/api/*.ts` — non-`-external` files)
 
-- Call internal API routes via `getInternalApiUrl()` — never the external API directly.
+- Server readers for reference data and event lists (places, categories, regions, cities, `fetchEvents`) call the `*-external.ts` wrapper directly, through an in-memory cache with `storeEmpty: false`, after `await connection()`. Our `/api/*` routes do not exist at build time; they are for client components.
 - Use query builders (`buildEventsQuery`, `buildNewsQuery`) from `utils/api-helpers.ts` — never construct URLSearchParams manually.
-- **CRITICAL:** Check `isBuildPhase` from `@utils/constants` and call the `*-external.ts` wrapper directly during build (internal routes don't exist at build time).
 
 ## External wrappers (`lib/api/*-external.ts`)
 

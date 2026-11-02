@@ -1,10 +1,21 @@
-import type { CacheEntry, CacheFn, KeyedCacheFn } from "types/cache";
+import type {
+  CacheEntry,
+  CacheFn,
+  CacheOptions,
+  KeyedCacheFn,
+} from "types/cache";
+
+const isEmpty = (data: unknown) =>
+  data == null || (Array.isArray(data) && data.length === 0);
 
 /**
  * Simple time-based cache for single values.
  * Returns an object with both the cache function and a clear function.
  */
-export function createCache<T>(ttlMs: number): {
+export function createCache<T>(
+  ttlMs: number,
+  { storeEmpty = true }: CacheOptions = {},
+): {
   cache: CacheFn<T>;
   clear: () => void;
 } {
@@ -15,7 +26,9 @@ export function createCache<T>(ttlMs: number): {
       return cacheEntry.data;
     }
     const data = await fetcher();
-    cacheEntry = { data, timestamp: performance.now() };
+    if (storeEmpty || !isEmpty(data)) {
+      cacheEntry = { data, timestamp: performance.now() };
+    }
     return data;
   };
 
@@ -30,7 +43,10 @@ export function createCache<T>(ttlMs: number): {
  * Keyed cache for values by key (e.g. by ID).
  * Returns an object with both the cache function and a clear function.
  */
-export function createKeyedCache<T>(ttlMs: number): {
+export function createKeyedCache<T>(
+  ttlMs: number,
+  { storeEmpty = true }: CacheOptions = {},
+): {
   cache: KeyedCacheFn<T>;
   clear: () => void;
   delete: (key: string | number) => void;
@@ -43,7 +59,9 @@ export function createKeyedCache<T>(ttlMs: number): {
       return entry.data;
     }
     const data = await fetcher(key);
-    cacheMap.set(key, { data, timestamp: performance.now() });
+    if (storeEmpty || !isEmpty(data)) {
+      cacheMap.set(key, { data, timestamp: performance.now() });
+    }
     return data;
   };
 

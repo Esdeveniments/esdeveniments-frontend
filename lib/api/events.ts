@@ -29,7 +29,6 @@ import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
-  isBuildPhase,
 } from "@utils/constants";
 import { filterActiveEvents } from "@utils/event-helpers";
 import {
@@ -91,100 +90,29 @@ const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYT
 async function fetchEventsInternal(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const fallbackResponse = emptyPagedResponse<EventSummaryResponseDTO>(params.page ?? 0, params.size ?? 12);
-
-  const fetchExternalWithValidation = async () => {
-    try {
-      const data = await fetchEventsExternal(params);
-      const validated = parsePagedEvents(data);
-      if (!validated) {
-        console.error("fetchEvents: external validation failed");
-        captureException(new Error("fetchEvents: external validation failed"), {
-          tags: {
-            section: "events-fetch",
-            fallback: "external-validation-failed",
-          },
-          extra: { params },
-        });
-        return null;
-      }
-      return validated;
-    } catch (error) {
-      const errorMessage = getSanitizedErrorMessage(error);
-      console.error("fetchEvents: external fetch failed", errorMessage);
-      captureException(error, {
-        tags: { section: "events-fetch", fallback: "external-fetch-failed" },
-        extra: { params },
-      });
-      return null;
-    }
-  };
-
-  if (isBuildPhase) {
-    const externalResult = await fetchExternalWithValidation();
-    return externalResult ?? fallbackResponse;
-  }
-
   try {
-    const queryString = buildEventsQuery(params);
-    const apiUrl = getApiUrl();
-
-    const finalUrl = `${apiUrl}/events?${queryString}`;
-
-    const response = await fetchWithHmac(finalUrl, {
-      next: { revalidate: 600, tags: ["events"] },
-      headers: {
-        Accept: "application/json",
-      },
+    const validated = parsePagedEvents(await fetchEventsExternal(params));
+    if (validated) return validated;
+    console.error("fetchEvents: external validation failed");
+    captureException(new Error("fetchEvents: external validation failed"), {
+      tags: { section: "events-fetch", fallback: "external-validation-failed" },
+      extra: { params },
     });
-
-    if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => "Unable to read error response");
-      console.error(
-        `fetchEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`,
-      );
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const validated = parsePagedEvents(data);
-    if (!validated) {
-      console.error("fetchEvents: validation failed, returning fallback");
-      return fallbackResponse;
-    }
-    return validated;
-  } catch (e) {
-    console.error("Error fetching events via external API (direct):", e);
-    captureException(e, {
-      tags: { section: "events-fetch", fallback: "direct-api-failed" },
-      extra: {
-        params,
-        fallbackTriggered: true,
-      },
+  } catch (error) {
+    console.error("fetchEvents: external fetch failed", getSanitizedErrorMessage(error));
+    captureException(error, {
+      tags: { section: "events-fetch", fallback: "external-fetch-failed" },
+      extra: { params },
     });
-    // Fallback to the original external fetch function (which uses fetchWithHmac but no-store)
-    // This is just a safety net
-    const externalResult = await fetchExternalWithValidation();
-    if (!externalResult) {
-      captureException(
-        new Error("Both direct and fallback external API failed"),
-        {
-          tags: { section: "events-fetch", fallback: "external-also-failed" },
-          extra: { params },
-        },
-      );
-    }
-    return externalResult ?? fallbackResponse;
   }
+  return emptyPagedResponse(params.page ?? 0, params.size ?? 12);
 }
 
 export const fetchEvents = cache(fetchEventsInternal);
 
-// fetchEvents is not cached on Coolify: isBuildPhase is true at runtime there
-// (no VERCEL_URL), so it takes the no-store external path and every listing
-// render waits for the backend. This reader caches one events page per query
+// fetchEvents is not cached (no-store, so each query does not get its own
+// fetch-cache entry), and every listing render waits for the backend. This
+// reader caches one events page per query
 // (no locale in it) in the shared cache handler. It throws on failure so an
 // error is never cached; fetchEventsCached then falls back to fetchEvents.
 const CACHED_EVENTS_TIMEOUT_MS = 8000;
@@ -629,88 +557,26 @@ function createE2EEvent(
 }
 
 /**
- * Fetch events categorized by category.
- * During build phase (SSG), calls external API directly to avoid internal proxy issues.
- * At runtime (ISR/SSR), uses internal API proxy for better caching and security.
+ * Fetch events categorized by category, straight from the backend (no-store;
+ * the home page caches its render).
  */
 export async function fetchCategorizedEvents(
   maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
-  const apiUrl = getApiUrl();
-
-  // During build phase, bypass internal proxy and call external API directly
-  // This ensures SSG pages (homepage) can fetch data during next build
-  if (isBuildPhase) {
-    try {
-      const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
-      const validated = parseCategorizedEvents(data);
-      if (!validated) {
-        console.error("fetchCategorizedEvents: Build phase validation failed");
-        return {};
-      }
-      return validated;
-    } catch (e) {
-      console.error(
-        "fetchCategorizedEvents: Build phase external fetch failed:",
-        e,
-      );
-      return {};
-    }
-  }
-
-  // Runtime: use direct external API call with caching
-  // This avoids internal API proxy issues
   try {
-    const params = new URLSearchParams();
-    if (maxEventsPerCategory !== undefined) {
-      params.append("maxEventsPerCategory", String(maxEventsPerCategory));
-    }
-
-    const queryString = params.toString() ? `?${params.toString()}` : "";
-    const finalUrl = `${apiUrl}/events/categorized${queryString}`;
-
-    const response = await fetchWithHmac(finalUrl, {
-      next: { revalidate: 600, tags: ["events", "events:categorized"] },
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => "Unable to read error response");
-      console.error(
-        `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`,
-      );
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
+    const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
     const validated = parseCategorizedEvents(data);
-    if (!validated || Object.keys(validated).length === 0) {
-      console.error("fetchCategorizedEvents: Runtime validation failed");
-      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
+    if (validated && Object.keys(validated).length > 0) {
+      return validated;
     }
-    return validated;
-  } catch {
-    // If direct fetch fails, try external API helper as fallback (handles edge cases)
-    try {
-      const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
-      const validated = parseCategorizedEvents(data);
-      if (validated && Object.keys(validated).length > 0) {
-        return validated;
-      }
-      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
-    } catch (fallbackError) {
-      // Sanitize error logging to prevent information disclosure
-      const errorMessage = getSanitizedErrorMessage(fallbackError);
-      console.error(
-        "fetchCategorizedEvents: Both direct and external API failed:",
-        errorMessage,
-      );
-      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
-    }
+    console.error("fetchCategorizedEvents: validation failed or empty");
+  } catch (e) {
+    console.error(
+      "fetchCategorizedEvents: external fetch failed:",
+      getSanitizedErrorMessage(e),
+    );
   }
+  return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
 }
 
 // Cached wrapper to deduplicate categorized events within the same request

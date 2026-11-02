@@ -4,6 +4,12 @@
 export type CacheFn<T> = (fetcher: () => Promise<T>) => Promise<T>;
 
 /**
+ * storeEmpty: false skips null, undefined and [] results, for fetchers that
+ * return those on failure. Defaults to true.
+ */
+export type CacheOptions = { storeEmpty?: boolean };
+
+/**
  * Keyed cache function type that fetches and caches data by key
  */
 export type KeyedCacheFn<T> = (
