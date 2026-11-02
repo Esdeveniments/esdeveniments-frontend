@@ -18,6 +18,7 @@ declare global {
       callback: import("./ads").TcfCallback,
       listenerId?: number
     ) => void;
+    googlefc?: { showRevocationMessage?: () => void };
     requestIdleCallback?: (
       callback: () => void,
       options?: { timeout: number }

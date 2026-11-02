@@ -20,6 +20,14 @@ export const CONSENT_MODE_DEFAULTS = {
   analytics_storage: "denied",
 } as const;
 
+// Funding Choices (Google CMP) loader. The URL uses the AdSense publisher ID
+// without the "ca-" prefix.
+const FUNDING_CHOICES_PUB_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_ADS?.replace(/^ca-/, "") ?? "";
+export const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
+  ? `https://fundingchoicesmessages.google.com/i/${FUNDING_CHOICES_PUB_ID}?ers=1`
+  : "";
+
 /**
  * Installs the gtag dataLayer-queueing shim if it isn't there yet, so
  * `sendGoogleEvent` calls that fire before GoogleScripts' own `lazyOnload`
