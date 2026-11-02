@@ -278,16 +278,12 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
   }
 }
 
-// Cached wrapper to deduplicate event fetches within the same request.
-// Used by the page component (which is explicitly dynamic via connection()).
-export const getEventBySlug = cache(fetchEventBySlug);
-
-// Metadata-only reader: resolves the API origin from configuration instead of
-// request headers(), so generateMetadata stays prerenderable under
-// cacheComponents. Reading headers() there would make the metadata boundary
+// Cached reader for the event page and its metadata: resolves the API origin
+// from configuration instead of request headers(), so both stay prerenderable
+// under cacheComponents. Reading headers() in metadata would make its boundary
 // dynamic and mismatch the static shell ("Expected the resume to render <div>
 // ... but instead it rendered <__next_metadata_boundary__>").
-export async function getEventBySlugForMetadata(
+export async function getCachedEventBySlug(
   slug: string,
 ): Promise<EventDetailResponseDTO | null> {
   "use cache";

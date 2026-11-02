@@ -2,7 +2,8 @@ import Image from "@components/ui/common/image";
 import { getTranslations } from "next-intl/server";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
 import CategoryBadge from "@components/ui/common/cardContent/CategoryBadge";
 import { SPRITE_ICON } from "@components/ui/common/IconSprite";
@@ -13,7 +14,7 @@ const CardHorizontalServer = async ({
   isPriority = false,
   initialIsFavorite,
 }: CardHorizontalServerProps) => {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const tCategories = await getTranslations({ locale, namespace: "Config.Categories" });
