@@ -102,7 +102,7 @@ The Funding Choices (FC) loader moved from a `lazyOnload` script (after hydratio
 
 Bug found on production: the old fallback opened the box whenever the `googlefcInactive` frame existed. FC creates that frame for every visitor, so returning visitors got the box on every page view. On slow phones it also opened before FC's own box, so two boxes opened and the first "Consentir" did not close it. The new fallback listens to TCF events. It shows the box only when FC's first event says GDPR applies and has no stored consent string, and FC has not reported `cmpuishown` 3 s later.
 
-Lab: local build served under the production host name (see method below), Pixel 7, 4x CPU, 1.6 Mbps / 150 ms, median of 3. Ads and analytics requests blocked; FC real.
+Lab: before = develop `a1ea418d`, after = `2f91ca83` (first #609 commit; the review fixes merged as `99021ff0` only change when the 3 s wait starts and were re-checked against the real FC). Local build served under the production host name (see method below), Pixel 7, 4x CPU, 1.6 Mbps / 150 ms, median of 3. Ads and analytics requests blocked; FC real.
 
 | Page | First visit: box / LCP before | After | Returning visitor LCP before | After |
 |---|---|---|---|---|
@@ -146,7 +146,7 @@ Lab: local build served under the production host name (see method below), Pixel
 | Event without image (ISR) | 0.60 s | 0.60 s | 0 | 27 ms |
 
 Listings render their events on each request and reveal them through Suspense, 0.3-0.6 s after the first paint. That gap includes the React 19.2 reveal throttle (up to 300 ms). The ISR event page has no gap. A static listing shell would likely save 0.3-0.6 s of LCP. The cost:
-- Every listing reader needs `"use cache"`, and the `connection()` calls on the listing path must go or move into a smaller dynamic part: `fetchWithHmac`, `generatePagesData`, `PlacePageShell` and `HomeStructuredData` (`app/[locale]/page.tsx`; the last two were added for tree mismatches), plus `SponsorBannerSlot` and `lib/api/promotions.ts` for the sponsor banner.
+- Every listing reader needs `"use cache"`, and the `connection()` calls on the listing path must go or move into a smaller dynamic part: `fetchWithHmac`, `generatePagesData`, `PlacePageShell` and `HomeStructuredData` (`app/[locale]/page.tsx`; the last two were added for tree mismatches), plus `SponsorBannerSlot` (sponsor lookup) and `lib/api/promotions.ts` (promoted events).
 - Date filters ("avui", "demà") change at midnight, so they need a cached date.
 - Cache size: a listing is 0.3-0.7 MB of HTML plus a similar RSC payload. The production Redis is 450 MB `allkeys-lru`, shared with event ISR pages. Places × dates × categories × 3 languages is far more than fits, so caching only the plain place pages (or the busiest places) is the realistic first step.
 
