@@ -986,13 +986,22 @@ export interface EventDetailsSectionProps {
   event: import("./api/event").EventDetailResponseDTO;
 }
 
+// Cached body of the event detail page; slots are request-time parts.
+export interface EventPageBodyProps {
+  slug: string;
+  locale: import("./i18n").AppLocale;
+  mobileSponsorSlot: import("react").ReactNode;
+  sidebarSponsorSlot: import("react").ReactNode;
+  latestNewsSlot: import("react").ReactNode;
+}
+
 // Sticky sidebar for event detail page (desktop)
 export interface EventSidebarProps {
   event: import("./api/event").EventDetailResponseDTO;
   cityName: string;
   regionName: string;
-  primaryPlaceSlug: string;
-  sponsorFallbackPlaces?: string[];
+  // Rendered outside the cached event body: the sponsor slot is request-time.
+  sponsorSlot: import("react").ReactNode;
 }
 
 // Owner-only edit action, event detail sidebar client island

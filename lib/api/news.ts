@@ -132,12 +132,12 @@ export const getNewsBySlug = cache(fetchNewsBySlug);
 // Metadata-only reader: resolves the API origin from configuration instead of
 // request headers(), so generateMetadata stays prerenderable under
 // cacheComponents (reading headers() would make the metadata boundary dynamic
-// and mismatch the static shell). Mirrors getEventBySlugForMetadata.
+// and mismatch the static shell). Mirrors getCachedEventBySlug.
 export async function getNewsBySlugForMetadata(
   slug: string,
 ): Promise<NewsDetailResponseDTO | null> {
   "use cache";
-  // See getEventBySlugForMetadata: "use cache" (not React cache) is what makes
+  // See getCachedEventBySlug: "use cache" (not React cache) is what makes
   // metadata prerenderable under cacheComponents.
   cacheTag(newsTag, newsSlugTag(slug));
   const detail = await fetchNewsBySlug(slug, {

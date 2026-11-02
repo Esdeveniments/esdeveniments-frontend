@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   ClockIcon,
@@ -8,14 +7,14 @@ import { Link } from "@i18n/routing";
 import EventCalendar from "./EventCalendar";
 import EventLocation from "./EventLocation";
 import Weather from "components/ui/weather";
-import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
 import { getProfileSlug } from "@utils/user-helpers";
 import EventEditAction from "./EventEditAction";
 import EventPromoteAction from "./EventPromoteAction";
 import type { EventSidebarProps } from "types/props";
+import type { AppLocale } from "types/i18n";
 
 /**
  * Sidebar for the event detail page (desktop only).
@@ -29,10 +28,9 @@ export default async function EventSidebar({
   event,
   cityName,
   regionName,
-  primaryPlaceSlug,
-  sponsorFallbackPlaces,
+  sponsorSlot,
 }: EventSidebarProps) {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
 
   // Build a URL-safe slug for the creator profile link.
@@ -142,12 +140,7 @@ export default async function EventSidebar({
         </div>
 
         {/* Sponsor card (outside main card for visual separation) */}
-        <Suspense fallback={null}>
-          <SponsorBannerSlot
-            place={primaryPlaceSlug}
-            fallbackPlaces={sponsorFallbackPlaces}
-          />
-        </Suspense>
+        {sponsorSlot}
       </div>
     </aside>
   );

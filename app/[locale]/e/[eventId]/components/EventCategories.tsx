@@ -4,7 +4,8 @@ import type { EventCategoriesProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
 
 export default async function EventCategories({
@@ -13,7 +14,7 @@ export default async function EventCategories({
 }: EventCategoriesProps) {
   if (!categories || categories.length === 0) return null;
 
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({
     locale,
     namespace: "Components.EventCategories",

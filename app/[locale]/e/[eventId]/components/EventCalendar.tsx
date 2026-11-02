@@ -6,10 +6,11 @@ import { getTranslations } from "next-intl/server";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 
 export default async function EventCalendar({ event, compact = false }: EventCalendarProps) {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({
     locale,
     namespace: "Components.EventCalendar",

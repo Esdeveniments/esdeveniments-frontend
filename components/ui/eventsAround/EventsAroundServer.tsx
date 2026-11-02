@@ -7,7 +7,8 @@ import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const isHorizontal = layout === "horizontal";
@@ -44,7 +45,7 @@ async function EventsAroundServer({
   jsonLdId,
   title,
 }: EventsAroundServerProps) {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const uniqueEvents = dedupeEvents(events);
 
   const generateJsonLdData = () => {

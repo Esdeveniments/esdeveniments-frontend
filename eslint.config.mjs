@@ -109,7 +109,7 @@ export default [
           selector:
             ":matches(FunctionDeclaration[id.name='generateMetadata'], VariableDeclarator[id.name='generateMetadata']) CallExpression[callee.name=/^(getEventBySlug|getNewsBySlug|fetchEvents|fetchEventBySlug|fetchEventBySlugWithStatus|fetchNews|fetchNewsBySlug|fetchNewsCities)$/]",
           message:
-            "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getEventBySlugForMetadata / getNewsBySlugForMetadata instead.",
+            "Do not call event/news data readers inside generateMetadata — they read request data (headers()/connection()) and make metadata dynamic under cacheComponents, breaking PPR. Use the request-independent getCachedEventBySlug / getNewsBySlugForMetadata instead.",
         },
         ...lowContrastTextRules,
       ],
