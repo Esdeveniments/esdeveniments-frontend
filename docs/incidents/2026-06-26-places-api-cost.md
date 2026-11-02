@@ -71,8 +71,8 @@ Defense in depth — no single layer is load-bearing:
 3. **Provider (GCP, not in the repo)** — `places.googleapis.com/SearchNearbyRequest`
    daily quota capped at **50/day** via a Service Usage consumer override (default was
    100). This is the hard ceiling; a `429` stops calls and billing for the day.
-   The Places API lives in GCP project **`esdeveniments`** (account
-   `albertolivecorbella@gmail.com`), not `esdeveniments-3`.
+   The Places API lives in GCP project **`esdeveniments`** (the project
+   owner's personal account), not `esdeveniments-3`.
 
 ## Follow-up (Oct 27, 2026)
 

@@ -425,7 +425,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
 
-    it("shows an empty message when no restaurants are found", async () => {
+    it("shows the unavailable message when no restaurants are found", async () => {
       const today = baseNow.toISOString().split("T")[0];
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,
@@ -442,7 +442,37 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       fireEvent.click(screen.getByRole("button"));
 
       expect(
-        await screen.findByText("No hem trobat restaurants a prop.")
+        await screen.findByText("Ara mateix no podem mostrar restaurants a prop.")
+      ).toBeInTheDocument();
+    });
+
+    it("keeps focus inside the widget after the button unmounts", async () => {
+      const today = baseNow.toISOString().split("T")[0];
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ results: [] }),
+      });
+
+      const { container } = render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      fireEvent.click(screen.getByRole("button"));
+
+      expect(document.activeElement).toBe(container.firstChild);
+      await screen.findByText("Ara mateix no podem mostrar restaurants a prop.");
+    });
+
+    it("shows the same message when the lookup fails", async () => {
+      const today = baseNow.toISOString().split("T")[0];
+      global.fetch = vi.fn().mockResolvedValueOnce({ ok: false });
+
+      render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      fireEvent.click(screen.getByRole("button"));
+
+      expect(
+        await screen.findByText("Ara mateix no podem mostrar restaurants a prop.")
       ).toBeInTheDocument();
     });
   });

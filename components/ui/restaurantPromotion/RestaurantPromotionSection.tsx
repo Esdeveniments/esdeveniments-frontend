@@ -20,6 +20,8 @@ import dynamic from "next/dynamic";
 const PromotionInfoModal = dynamic(() => import("./PromotionInfoModal"), {
   ssr: false,
 });
+// The route's own Google call times out at 5s; leave headroom for the hop.
+const PLACES_FETCH_TIMEOUT_MS = 8000;
 // import RestaurantPromotionForm from "./RestaurantPromotionForm";
 // import PromotedRestaurantCard from "./PromotedRestaurantCard";
 
@@ -44,6 +46,7 @@ export default function RestaurantPromotionSection({
   const [isLoading, setIsLoading] = useState(false);
   const [openPromoInfo, setOpenPromoInfo] = useState(false);
   const [hasRequested, setHasRequested] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Memoize derived state to avoid recalculating on every render
   // We keep two booleans:
@@ -110,6 +113,8 @@ export default function RestaurantPromotionSection({
     if (hasRequested || !canLoadPlaces || !eventStartDate) return;
     setHasRequested(true);
     setIsLoading(true);
+    // The clicked button unmounts; keep keyboard focus inside the widget.
+    containerRef.current?.focus();
     sendGoogleEvent("restaurant_load_click", { context: "event_detail" });
 
     try {
@@ -117,7 +122,9 @@ export default function RestaurantPromotionSection({
       const usedDate = isValid(parsed) ? parsed : new Date(eventStartDate);
       const dateParam = `&date=${format(usedDate, "yyyy-MM-dd")}`;
       const url = `/api/places/nearby?lat=${eventLat}&lng=${eventLng}&limit=2${dateParam}`;
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(PLACES_FETCH_TIMEOUT_MS),
+      });
 
       if (res.ok) {
         const data = await res.json();
@@ -138,7 +145,12 @@ export default function RestaurantPromotionSection({
   }
 
   return (
-    <div className="w-full flex justify-center items-start gap-2 min-w-0">
+    <div
+      ref={containerRef}
+      tabIndex={-1}
+      aria-busy={isLoading}
+      className="w-full flex justify-center items-start gap-2 min-w-0 outline-none"
+    >
       {canLoadPlaces && (!hasRequested || (!isLoading && !hasPlaces)) && (
         <section className="stack w-full min-w-0" aria-labelledby="where-to-eat">
           <SectionHeading
@@ -149,6 +161,8 @@ export default function RestaurantPromotionSection({
             titleClassName="heading-2"
           />
           {hasRequested ? (
+            // The route fails soft (quota, timeout, missing key → empty
+            // results), so this copy must hold for both "none" and "failed".
             <p className="body-small text-muted-foreground px-section-x">
               {t("empty")}
             </p>
