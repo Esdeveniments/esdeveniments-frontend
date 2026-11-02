@@ -16,16 +16,16 @@ class FakeIntersectionObserver {
 const scrollBy = vi.fn();
 const scrollTo = vi.fn();
 
-function intersectAll(intersectionRatio = 0.6) {
+function intersectAll(...ratios: number[]) {
+  const entries = (ratios.length ? ratios : [0.6]).map(
+    (intersectionRatio) =>
+      ({
+        isIntersecting: intersectionRatio > 0,
+        intersectionRatio,
+      }) as IntersectionObserverEntry,
+  );
   act(() => {
-    observerCallbacks.forEach((cb) =>
-      cb(
-        [
-          { isIntersecting: true, intersectionRatio } as IntersectionObserverEntry,
-        ],
-        {} as IntersectionObserver,
-      ),
-    );
+    observerCallbacks.forEach((cb) => cb(entries, {} as IntersectionObserver));
   });
 }
 
@@ -101,6 +101,31 @@ describe("HorizontalScroll nudge", () => {
     intersectAll(0.6);
     act(() => vi.advanceTimersByTime(1000));
     expect(scrollBy).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the nudge when the carousel leaves before it runs", () => {
+    renderCarousel();
+    intersectAll(0.6);
+    act(() => vi.advanceTimersByTime(100));
+    intersectAll(0);
+    act(() => vi.advanceTimersByTime(1000));
+
+    expect(scrollBy).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem("k")).toBeNull();
+
+    intersectAll(0.6);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.getItem("k")).toBe("1");
+  });
+
+  it("uses the last entry when one callback holds several crossings", () => {
+    renderCarousel();
+    intersectAll(0.6, 0);
+    act(() => vi.advanceTimersByTime(1000));
+
+    expect(scrollBy).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem("k")).toBeNull();
   });
 
   it("nudges only one of two carousels that share a storage key", () => {
