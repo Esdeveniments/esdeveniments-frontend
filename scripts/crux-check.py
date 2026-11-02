@@ -5,7 +5,10 @@ The key is free (Google Cloud, "Chrome UX Report API"). Without the env var the
 script reads ~/.config/crux/api-key. Results: docs/performance/baselines.md
 """
 import json, os, urllib.request
-key = os.environ.get("CRUX_API_KEY") or open(os.path.expanduser("~/.config/crux/api-key")).read().strip()
+key = os.environ.get("CRUX_API_KEY")
+if not key:
+    with open(os.path.expanduser("~/.config/crux/api-key")) as f:
+        key = f.read().strip()
 M = [("largest_contentful_paint","LCP"),("interaction_to_next_paint","INP"),("cumulative_layout_shift","CLS"),("first_contentful_paint","FCP"),("experimental_time_to_first_byte","TTFB")]
 def q(body, hist=False):
     url = f"https://chromeuxreport.googleapis.com/v1/records:{'queryHistoryRecord' if hist else 'queryRecord'}?key={key}"
