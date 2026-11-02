@@ -58,7 +58,7 @@ Yarn 4 (Berry) dropped automatic `pre*`/`post*` lifecycle scripts — npm runs t
 
 ## Vercel previews are a preview, not production
 
-Production runs on Coolify/Docker/Node 22; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works; gate promotion to `main` on the Coolify/Docker path.
+Production runs on Coolify/Docker/Node 22; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works (PR E2E no longer uses previews); gate promotion to `main` on the Coolify/Docker path.
 
 ## Image-proxy/dispatcher bugs only surface through a real socket
 
@@ -142,12 +142,6 @@ Also: Coolify's "Deploy Webhook" is a distinct URL from the app's public FQDN
 and from the "Manual Git Webhooks" section on the same page — grab it from the
 top of the app's Webhooks tab, it needs the `Authorization: Bearer` header the
 same way `COOLIFY_WEBHOOK_URL`/`_STAGING` are consumed in the workflow.
-
-## A duplicate personal Vercel project posts a second preview status that can block the E2E gate
-
-There are two Vercel projects wired to this GitHub repo: the **team** one (`esdeveniments` scope, the correct one — its previews are opened by `VERCEL_AUTOMATION_BYPASS_SECRET`) and a leftover **personal** duplicate (`albertolives-projects` scope, auth-protected, the bypass secret does not open it). Both build every commit and both post a `success` status to the **same** `vercel[bot]` GitHub deployment, about a second apart. The personal status lands last, so it's the newest.
-
-The E2E "Wait for Vercel preview" step must use the **team** preview, never the personal one. It read statuses with `per_page=1` and inspected only `.[0]` (newest) — always the personal URL — rejected it as an unexpected scope, and timed out at 900s without ever looking at the team status behind it. This wasn't flaky: it blocked *every* PR deterministically once #388 added the fail-closed scope filter. Fix (this PR): fetch `per_page=20` and scan **all** success statuses for the one whose host ends with `-esdeveniments.vercel.app`. The real cleanup is to disconnect the personal project's Git integration in Vercel so it stops building/posting at all; until then the CI scan is the safety net. If the team scope/domain ever moves, update `EXPECTED_PREVIEW_HOST_SUFFIX` in `.github/workflows/ci.yml`.
 
 ## PR review-loop must wait for AI bot re-reviews to settle before declaring convergence
 After a push that should re-trigger bots, the GitHub review-thread stream
@@ -299,19 +293,30 @@ Derive the lease from `TURSO_TIMEOUT_MS` and `LOGTO_TOKEN_TIMEOUT_MS`, never a
 separate number, so a longer timeout cannot make the lease shorter than a live
 owner.
 
-## PR E2E needs `BACKEND_SERVICE_SECRET` in the Vercel Preview env
+## PR E2E builds and runs the app in the runner
 
-PR E2E runs against the Vercel preview, and the preview calls the pre-production
-backend, which rejects every request without `X-Backend-Key`. Without the secret
-in Vercel's Preview environment, backend-backed data GETs return 200 with empty
-data and the same 11 data specs fail on every PR, develop-based ones included. Vercel
-applies env changes only to new deployments, so push to get a fresh preview.
+The required "E2E tests (Playwright)" check no longer waits for a Vercel
+preview (the Vercel quota ran out and previews stopped). The job in `ci.yml`
+runs `yarn build` and `yarn start` with `E2E_TEST_MODE=1` and
+`NEXT_PUBLIC_E2E_TEST_MODE=1`, then Playwright against `http://localhost:3000`.
+`NEXT_PUBLIC_API_URL` is inlined by `yarn build`, so the build step sets it.
+The secrets are read at runtime, so the start step needs `HMAC_SECRET`,
+`BACKEND_SERVICE_SECRET` and the `*_TEST` Stripe and Turso secrets. It also
+sets `INTERNAL_SITE_URL=http://localhost:3000`: cached readers resolve the
+app's own `/api` from config, not from the request Host, so without it they
+read production `www` instead of the build under test. If the
+backend rejects the request, safe-fallback routes (categories, places, news)
+return 200 with empty data, while `/api/events` passes the upstream error on;
+either way the data specs fail. The job does not reuse the quality job's build
+or its `.next/cache` key, because `NEXT_PUBLIC_E2E_TEST_MODE` is inlined at
+build time.
 
-## A green E2E check on a push run means nothing ran
+## E2E runs on pull requests only
 
-On PR runs, `ci.yml` fails the E2E job when no preview is ready. On push runs it
-skips the preview lookup, so the Playwright step is skipped and the job still
-passes. A green E2E check is evidence only on a PR run.
+The E2E job has `if: github.event_name == 'pull_request'`. On a code push to
+`main` the Coolify deploy workflow runs its own build and E2E (it ignores
+`**/*.md`, so docs-only pushes run no E2E). A skipped E2E check on a
+push run is expected, not a pass.
 
 ## Test-mode specs read `E2E_TEST_MODE` in the Playwright process
 
