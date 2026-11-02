@@ -25,6 +25,8 @@ import type {
 const PROMOTED_EVENTS_SIZE = 8;
 // Place pages render the list together with this optional row, so a slow
 // backend must not hold the list: past this, the row is skipped (normal ~0.12 s).
+// The [] from a timeout or error is cached like a real result (60 s): while the
+// backend is slow, renders skip the row at once instead of each waiting 800 ms.
 const PROMOTED_EVENTS_TIMEOUT_MS = 800;
 // The backend reshuffles promoted events every 5 minutes; one call per minute
 // per placement and process keeps listing renders off the backend.
