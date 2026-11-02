@@ -493,3 +493,11 @@ function returned from `beforeEach` as that test's cleanup. So the mock is
 called once more after every test, and a test that makes it return a promise
 that never settles times out in the hook. Use a block body:
 `beforeEach(() => { mock.mockReset(); })`.
+
+## Performance numbers: three traps
+
+Baselines, Google's limits and the method live in `docs/performance/baselines.md`; scripts are `scripts/perf-lab.mjs` (lab) and `scripts/crux-check.py` (field).
+
+- A local build of `main` is not a valid baseline while `main` uses backend contract v1: against the v2 API its event pages render as 404 and listings are empty, so it looks fast. Compare develop commits locally and use the live site as the production reference.
+- Lab runs in E2E mode have no Google consent box, ads or analytics. On real first visits the consent box text is often the LCP (6-7 s on a slow phone), so field LCP is much worse than lab LCP.
+- Start local builds with `INTERNAL_SITE_URL=http://localhost:<port>`. Cached readers resolve the app's own `/api` from config, not the request Host, so without it they read another environment.
