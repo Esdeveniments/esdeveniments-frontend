@@ -62,11 +62,11 @@ export const CLIENT_UTILS_KEYS = [
 // If you drop one here, list the paths it needs in CLIENT_PARTIAL_PATHS.
 export const CLIENT_FULL_TOP_LEVEL = ["Config", "Sponsor"] as const;
 
-// Namespaces shipped in part: each entry is a dotted path into the messages.
-// The guard test checks that every key a client file reads from these
+// Namespaces shipped in part: each entry is a dotted path into the messages,
+// where a "*" segment matches every key at that level. The guard test checks that every key a client file reads from these
 // namespaces resolves under one of the paths.
 export const CLIENT_PARTIAL_PATHS = [
-  "Partials.GeneratePagesData.categories",
+  "Partials.GeneratePagesData.categories.*.titleSuffix",
   "Sponsorship.checkout",
   "Sponsorship.placeSelector",
   "Sponsorship.pricing",

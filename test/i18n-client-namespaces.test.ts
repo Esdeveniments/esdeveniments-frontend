@@ -242,26 +242,42 @@ function isPartialNamespace(namespace: string): boolean {
   return CLIENT_PARTIAL_PATHS.some((p) => p.startsWith(`${namespace}.`));
 }
 
+// A key is shipped when a path is a segment-wise prefix of it. A "*" path
+// segment matches any key segment; a dynamic key segment ("*") needs one.
 function isShippedPath(path: string): boolean {
-  return CLIENT_PARTIAL_PATHS.some((p) => path === p || path.startsWith(`${p}.`));
+  const keySegments = path.split(".");
+  return CLIENT_PARTIAL_PATHS.some((p) => {
+    const pathSegments = p.split(".");
+    return (
+      pathSegments.length <= keySegments.length &&
+      pathSegments.every((seg, i) => seg === "*" || seg === keySegments[i])
+    );
+  });
 }
 
-// Static keys passed to the translator bound to `namespace` in `source`.
-// A template literal yields its prefix up to the first `${`. An identifier
+// Static keys passed to every translator bound to `namespace` in `source`.
+// A template literal's `${...}` turns its segment into "*". An identifier
 // argument resolves through `const id = "..."` or a template in the same file.
 // Returns null for an argument that can't be resolved statically.
 function readKeys(source: string, namespace: string): (string | null)[] | null {
   const escaped = namespace.replace(/\./g, "\\.");
-  const binding = source.match(
-    new RegExp(`(?:const|let)\\s+(\\w+)\\s*=\\s*useTranslations\\(\\s*["']${escaped}["']\\s*\\)`),
+  const names = Array.from(
+    source.matchAll(
+      new RegExp(`(?:const|let)\\s+(\\w+)\\s*=\\s*useTranslations\\(\\s*["']${escaped}["']\\s*\\)`, "g"),
+    ),
+    (m) => m[1],
   );
-  if (!binding) return null;
+  if (names.length === 0) return null;
   const literal = (text: string): string | null => {
-    const m = text.match(/^\s*(["'`])((?:(?!\1)[^$]|\$(?!\{))*)/);
-    return m ? m[2] : null;
+    const m = text.match(/^\s*(["'`])((?:(?!\1)[^\n])*)\1/);
+    if (!m) return null;
+    return m[2]
+      .split(".")
+      .map((seg) => (seg.includes("${") ? "*" : seg))
+      .join(".");
   };
   const calls = source.matchAll(
-    new RegExp(`\\b${binding[1]}(?:\\.(?:rich|markup|raw|has))?\\(([^)]*)`, "g"),
+    new RegExp(`\\b(?:${names.join("|")})(?:\\.(?:rich|markup|raw|has))?\\(([^)]*)`, "g"),
   );
   return Array.from(calls, ([, arg]) => {
     const direct = literal(arg);
@@ -472,14 +488,16 @@ describe("i18n client namespace whitelist", () => {
       check("Components", CLIENT_COMPONENT_KEYS);
       check("Utils", CLIENT_UTILS_KEYS);
 
+      const resolves = (node: unknown, keys: string[]): boolean => {
+        if (keys.length === 0) return node !== undefined;
+        const [key, ...rest] = keys;
+        const obj = (node ?? {}) as Record<string, unknown>;
+        return key === "*"
+          ? Object.values(obj).some((child) => resolves(child, rest))
+          : resolves(obj[key], rest);
+      };
       for (const path of CLIENT_PARTIAL_PATHS) {
-        const value = path
-          .split(".")
-          .reduce<unknown>(
-            (node, key) => (node as Record<string, unknown> | undefined)?.[key],
-            messages,
-          );
-        if (value === undefined) {
+        if (!resolves(messages, path.split("."))) {
           problems.push(
             `  ${locale}.json: missing "${path}" (listed in CLIENT_PARTIAL_PATHS)`,
           );
