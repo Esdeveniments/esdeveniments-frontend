@@ -19,7 +19,7 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-function renderCard() {
+function renderCard(isFavorite = false) {
   return renderToStaticMarkup(
     <CardLayout
       slug="concert-de-nadal"
@@ -32,7 +32,7 @@ function renderCard() {
       timeDisplay="18:00"
       primaryLocation="Cardedeu"
       shouldShowFavoriteButton
-      isFavorite={false}
+      isFavorite={isFavorite}
       favoriteLabels={{ add: "Afegeix", remove: "Treu" }}
       renderLink={({ children, ...props }) => <a {...props}>{children}</a>}
     />
@@ -50,7 +50,11 @@ describe("CardLayout icons", () => {
   it("defines a symbol for every icon the card can reference", () => {
     const sprite = renderToStaticMarkup(<IconSprite />);
     const symbolIds = [...sprite.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1]);
-    const usedIds = [...renderCard().matchAll(/<use href="#([^"]+)"/g)].map((m) => m[1]);
+    const usedIds = [false, true].flatMap((isFavorite) =>
+      [...renderCard(isFavorite).matchAll(/<use href="#([^"]+)"/g)].map((m) => m[1]),
+    );
+
+    expect(usedIds).toContain(SPRITE_ICON.heartSolid);
 
     expect(symbolIds.sort()).toEqual(Object.values(SPRITE_ICON).sort());
     expect(symbolIds).toEqual(expect.arrayContaining(usedIds));
