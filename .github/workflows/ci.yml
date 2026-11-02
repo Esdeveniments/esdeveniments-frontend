@@ -165,15 +165,12 @@ jobs:
 
   e2e:
     name: E2E tests (Playwright)
+    # Push runs are covered by the Coolify deploy workflow (main) and add
+    # nothing on develop, so only PRs pay for a build plus Playwright.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs: quality
     timeout-minutes: 35
-
-    # deployments: read is required so we can query the Vercel-GitHub integration's
-    # deployment status via `gh api` and reuse its preview URL.
-    permissions:
-      contents: read
-      deployments: read
 
     steps:
       - name: Checkout repository
@@ -204,130 +201,60 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Wait for Vercel preview deployment
-        # Reuse the preview already created by the Vercel-GitHub integration
-        # (visible as the "Vercel Preview Comments" / vercel[bot] deployment on
-        # the PR) instead of redeploying via the CLI. This removes the need for
-        # VERCEL_TOKEN/ORG_ID/PROJECT_ID in CI and cuts ~2 min off every run.
-        #
-        # Note: STRIPE_*_TEST and TURSO_*_TEST values are no longer injected
-        # per-deployment. For payment E2E (only runs on PRs targeting main) to
-        # work, those values must be set as Preview-scoped env vars on the
-        # Vercel project itself (named STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET
-        # / TURSO_DATABASE_URL / TURSO_AUTH_TOKEN). Dependabot PRs target
-        # develop and don't run payment tests, so this doesn't block them.
-        if: github.event_name == 'pull_request'
-        id: vercel_preview
+      - name: Cache Next.js build cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
+
+      - name: Generate service worker and robots.txt (prebuild)
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          REPO: ${{ github.repository }}
-          # Only accept previews from the team Vercel project. A duplicate
-          # esdeveniments-frontend project under a personal account was also
-          # building previews; those are auth-protected (302 on readiness) and
-          # the bypass secret doesn't open them, so CI silently skipped E2E.
-          # Match the team scope's host suffix; update if the scope/domain moves.
-          EXPECTED_PREVIEW_HOST_SUFFIX: "-esdeveniments.vercel.app"
-        run: |
-          set -e
-          MAX_WAIT=900   # 15 minutes total wait budget
-          INTERVAL=15    # poll every 15s
-          ELAPSED=0
-          URL=""
-          echo "Polling Vercel-GitHub integration for preview of $HEAD_SHA..."
-          while [ $ELAPSED -lt $MAX_WAIT ]; do
-            DEPLOYMENTS=$(gh api "repos/$REPO/deployments?sha=$HEAD_SHA&per_page=30" 2>/dev/null || echo "[]")
-            # Pick deployments created by vercel[bot] only.
-            IDS=$(echo "$DEPLOYMENTS" | jq -r '.[] | select(.creator.login == "vercel[bot]") | .id')
-            FAILED=""
-            for ID in $IDS; do
-              # per_page=20, not 1: a single GitHub deployment can carry
-              # several success statuses when both the team project and a
-              # duplicate personal-account project post to it. The personal
-              # status is posted a beat later, so it's newest — reading only
-              # .[0] always saw the personal URL and rejected it, masking the
-              # team preview sitting behind it. Scan every success status.
-              STATUS=$(gh api "repos/$REPO/deployments/$ID/statuses?per_page=20" 2>/dev/null || echo "[]")
-              SUCCESS_URLS=$(echo "$STATUS" | jq -r '.[] | select(.state == "success") | .environment_url // empty')
-              for CANDIDATE in $SUCCESS_URLS; do
-                # Match on the host only (ends-with), not anywhere in the URL,
-                # so the suffix can't match inside a path or a lookalike domain.
-                CANDIDATE_HOST="${CANDIDATE#*://}"
-                CANDIDATE_HOST="${CANDIDATE_HOST%%/*}"
-                case "$CANDIDATE_HOST" in
-                  *"$EXPECTED_PREVIEW_HOST_SUFFIX")
-                    URL="$CANDIDATE"
-                    break
-                    ;;
-                  *)
-                    echo "  Ignoring preview from unexpected scope: $CANDIDATE"
-                    ;;
-                esac
-              done
-              [ -n "$URL" ] && break
-              # Only treat this deployment as failed when nothing succeeded yet.
-              if [ -z "$SUCCESS_URLS" ]; then
-                STATE=$(echo "$STATUS" | jq -r '.[0].state // empty')
-                case "$STATE" in
-                  failure|error) FAILED="$ID:$STATE" ;;
-                esac
-              fi
-            done
-            [ -n "$URL" ] && break
-            if [ -n "$FAILED" ] && [ -z "$URL" ]; then
-              # Vercel reports failure but no other deployment succeeded yet —
-              # keep polling briefly in case the integration retries, but if
-              # this persists we'll fail out below at MAX_WAIT.
-              echo "Vercel deployment $FAILED reported, waiting for retry..."
-            fi
-            echo "  ${ELAPSED}s elapsed, no successful Vercel preview yet..."
-            sleep $INTERVAL
-            ELAPSED=$((ELAPSED + INTERVAL))
-          done
-          if [ -z "$URL" ]; then
-            echo "::error::No successful Vercel preview found for $HEAD_SHA after ${MAX_WAIT}s."
-            echo "::error::Check the Vercel-GitHub integration status on the PR."
-            exit 1
-          fi
-          echo "Vercel preview ready: $URL"
-          echo "PREVIEW_URL=$URL" >> $GITHUB_ENV
-          echo "preview-url=$URL" >> $GITHUB_OUTPUT
-      - name: Verify preview readiness
-        if: ${{ env.PREVIEW_URL != '' }}
-        id: readiness
+          BUILD_VERSION: ${{ github.sha }}
+        run: yarn prebuild
+
+      # Built here, not reused from the quality job: NEXT_PUBLIC_E2E_TEST_MODE
+      # is inlined at build time and must not reach a build that others reuse.
+      - name: Build application (E2E test mode)
         env:
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-        run: |
-          echo "Verifying deployment at ${{ env.PREVIEW_URL }}"
-          MAX_RETRIES=5
-          RETRY=0
-          while [ $RETRY -lt $MAX_RETRIES ]; do
-            HTTP_CODE=$(curl -s --connect-timeout 5 --max-time 15 -o /tmp/readiness-resp.txt -w "%{http_code}" \
-              -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" \
-              -H "x-vercel-set-bypass-cookie: true" \
-              "${{ env.PREVIEW_URL }}/api/events?size=1" 2>/dev/null || echo "000")
-            RESP=$(cat /tmp/readiness-resp.txt 2>/dev/null || true)
-            if [ "$HTTP_CODE" = "200" ] && echo "$RESP" | head -c 1 | grep -q "{"; then
-              echo "Preview is ready (HTTP $HTTP_CODE, valid JSON)"
-              echo "ready=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            echo "Attempt $((RETRY + 1))/$MAX_RETRIES: HTTP $HTTP_CODE (body: $(echo "$RESP" | head -c 200))"
-            RETRY=$((RETRY + 1))
-            if [ $RETRY -lt $MAX_RETRIES ]; then
-              sleep $((2 ** RETRY))
-            fi
-          done
-          echo "::error::Preview API not ready after $MAX_RETRIES attempts (last HTTP $HTTP_CODE). Failing fast: a green E2E check must mean tests ran, not that they were skipped."
-          echo "ready=false" >> $GITHUB_OUTPUT
-          exit 1
-      - name: Run E2E tests (Playwright) against Vercel Preview
-        if: ${{ env.PREVIEW_URL != '' && steps.readiness.outputs.ready == 'true' }}
+          NODE_ENV: production
+          E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
+        run: yarn build
+
+      # The app reads the backend and test-database settings at runtime, so
+      # they go on the step that starts it. The *_TEST Stripe and Turso values
+      # serve the payment specs and session refresh.
+      - name: Start application (background)
+        env:
+          NODE_ENV: production
+          PORT: "3000"
+          E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET_TEST }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL_TEST }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN_TEST }}
+        run: yarn start > /tmp/next-start.log 2>&1 &
+
+      - name: Wait for application to be ready
+        run: npx wait-on http://localhost:3000 --timeout 90000
+
+      - name: Run E2E tests (Playwright)
         env:
           CI: true
-          PLAYWRIGHT_TEST_BASE_URL: ${{ env.PREVIEW_URL }}
-          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          # publica_to_event.flow.spec.ts skips unless this process sees it.
+          E2E_TEST_MODE: "1"
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           # Enable payment E2E only on PRs targeting main — lets PRs to develop
           # iterate fast without hitting Stripe test mode every push.
           RUN_PAYMENT_E2E: ${{ github.event.pull_request.base.ref == 'main' && '1' || '' }}
@@ -336,6 +263,11 @@ jobs:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL_TEST }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN_TEST }}
         run: yarn test:e2e -c playwright.remote.config.ts --workers=2
+
+      - name: Show application log (on failure)
+        if: failure()
+        run: tail -n 200 /tmp/next-start.log || true
+
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
