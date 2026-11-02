@@ -10,8 +10,9 @@ import {
 import { formatPlacePreposition } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical } from "@utils/i18n-seo";
-import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { DEFAULT_FILTER_VALUE, getMonthNames } from "@utils/constants";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import type { CategorySeoSlug } from "types/common";
 
 // Normalize subtitles for LLM/AI SEO extractability:
 // - Remove HTML
@@ -88,17 +89,10 @@ export async function generatePagesData({
 }): Promise<PageData> {
   const resolvedLocale = locale || DEFAULT_LOCALE;
 
-  // Parallelize translation fetches to eliminate waterfall (2 calls → 1 round trip)
-  const [t, tConstants] = await Promise.all([
-    getTranslations({
-      locale: resolvedLocale,
-      namespace: "Partials.GeneratePagesData",
-    }),
-    getTranslations({
-      locale: resolvedLocale,
-      namespace: "Components.Constants",
-    }),
-  ]);
+  const t = await getTranslations({
+    locale: resolvedLocale,
+    namespace: "Partials.GeneratePagesData",
+  });
 
   await connection();
   const now = new Date();
@@ -137,7 +131,7 @@ export async function generatePagesData({
       }
     })();
 
-  const months = (tConstants.raw("months") as string[]) || [];
+  const months = getMonthNames(resolvedLocale);
   const monthIndex = (() => {
     try {
       const parts = new Intl.DateTimeFormat(intlNumberLocale, {
@@ -161,18 +155,15 @@ export async function generatePagesData({
 
   const month = months[monthIndex] || "";
 
-  const categoryTemplates = (t.raw("categories") || {}) as Record<
-    string,
-    {
-      titleSuffix: string;
-      description: string;
-      context: string;
-      noEvents: string;
-    }
-  >;
   const getCategorySEO = (categorySlug?: string) => {
-    if (!categorySlug) return null;
-    return categoryTemplates[categorySlug] || null;
+    const slug = categorySlug as CategorySeoSlug | undefined;
+    if (!slug || !t.has(`categories.${slug}`)) return null;
+    return {
+      titleSuffix: t(`categories.${slug}.titleSuffix`),
+      description: t(`categories.${slug}.description`),
+      context: t(`categories.${slug}.context`),
+      noEvents: t(`categories.${slug}.noEvents`),
+    };
   };
   if (
     typeof currentYear === "number" &&

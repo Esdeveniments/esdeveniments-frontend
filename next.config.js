@@ -7,7 +7,14 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
     process.env.BUNDLE_ANALYZE === "server",
 });
 
-const withNextIntl = createNextIntlPlugin();
+// Precompiled messages skip ICU parsing at runtime (about 23 ms per page on a
+// slow phone). Messages must be plain strings: no t.raw(), no arrays (lists
+// live in i18n/locale-lists.json).
+const withNextIntl = createNextIntlPlugin({
+  experimental: {
+    messages: { path: "./messages", format: "json", precompile: true },
+  },
+});
 const isDev = process.env.NODE_ENV === "development";
 const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
 const vercelPreviewImagePatterns = process.env.VERCEL_URL

@@ -36,6 +36,7 @@ import {
   MONTHS_URL as DEFAULT_MONTHS_URL,
   MIN_VALID_YEAR,
   MAX_VALID_YEAR,
+  getMonthNames,
 } from "@utils/constants";
 import { connection } from "next/server";
 import { cache } from "react";
@@ -61,10 +62,6 @@ export async function generateMetadata({
 }) {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
-  const tConstants = await getTranslations({
-    locale,
-    namespace: "Components.Constants",
-  });
   const tNotFound = await getTranslations({ locale, namespace: "App.NotFound" });
   const { town, year, month } = await params;
 
@@ -85,7 +82,7 @@ export async function generateMetadata({
     };
   }
 
-  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthLabels = getMonthNames(locale);
   const monthIndex = resolveMonthIndexFromSlug(month);
   if (monthIndex === null) {
     return {
@@ -154,10 +151,6 @@ export default async function Page({
   const { town, year, month } = await params;
   const locale: AppLocale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
-  const tConstants = await getTranslations({
-    locale,
-    namespace: "Components.Constants",
-  });
   const withLocale = (path: string) => withLocalePath(path, locale);
 
   // Validate required params
@@ -171,7 +164,7 @@ export default async function Page({
     notFound();
   }
 
-  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthLabels = getMonthNames(locale);
   const monthIndex = resolveMonthIndexFromSlug(month);
   if (monthIndex === null) {
     notFound();

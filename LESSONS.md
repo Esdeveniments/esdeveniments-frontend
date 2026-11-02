@@ -405,6 +405,16 @@ component that reached them loaded a 72 KB gzip chunk holding `ca`, `es` and
 it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
 Outside tests, only `i18n/request.ts` loads the full message files.
 
+## Messages are precompiled: strings only, no `t.raw()`
+
+`next.config.js` turns on next-intl `experimental.messages.precompile`, so the
+build compiles every message in `messages/*.json` to ICU code. The build fails
+on an array, a non-string value, or HTML with attributes (`<a href=...>`), and
+`t.raw()` returns compiled data instead of the string. Put lists (month names,
+word lists) in `i18n/locale-lists.json` and read them through
+`utils/constants.ts`; read nested strings with `t.has()` plus `t()`. Unit tests
+use the raw JSON and do not catch this, so run `yarn build`.
+
 ## The backend looks events up by slug only
 
 `GET /api/events/{slug}` returns 404 for an event UUID on the v2 backend. Docs and

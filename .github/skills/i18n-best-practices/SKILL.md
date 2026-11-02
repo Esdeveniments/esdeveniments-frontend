@@ -180,6 +180,7 @@ const breadcrumbs = generateBreadcrumbList(items, locale);
 - [ ] New strings added to ALL locale files?
 - [ ] Server component using `getTranslations`?
 - [ ] Client component using `useTranslations`?
+- [ ] Message values are plain strings (no arrays, no `<a href>`), and no `t.raw()`? Messages are precompiled; lists go in `i18n/locale-lists.json`.
 
 ## Files to Reference
 
