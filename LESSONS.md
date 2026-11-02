@@ -508,7 +508,7 @@ FC adds the `googlefcInactive` frame for every visitor, also for those who
 already chose, so a fallback keyed on it reopens the consent box on every page
 (on production until #609). Use the TCF `addEventListener` events instead: the
 first event has `gdprApplies`, and a returning visitor's first event is
-`tcloaded` with a `tcString`. `getTCData` always fails (deprecated in TCF 2.2),
+`tcloaded` with a `tcString`. With FC on our site `getTCData` always fails (it is deprecated in TCF 2.2; use `addEventListener`),
 and the `FCCDCF` cookie is set on a first visit too. FC shows no box on
 `localhost`: map the production host to the local build with Chromium's
 `--host-resolver-rules`, and serve it over HTTPS for returning-visitor tests

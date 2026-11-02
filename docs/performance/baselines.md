@@ -114,7 +114,7 @@ Lab: local build served under the production host name (see method below), Pixel
 - Cost: domInteractive +0.1-0.2 s (the FC script now loads during parsing).
 - `fetchPriority="high"` on the loader was tested and rejected: domInteractive +0.3-0.5 s and home LCP 1.28 → 1.61 s.
 - On `/`, FC itself shows no box to a new visitor (one TCF event, no `cmpuishown`). That is why the fallback exists. Its cause is likely a setting in AdSense "Privacy & messaging".
-- TCF on production: `gdprApplies` is true on FC's first event; a returning visitor's first event is `tcloaded` with the consent string. `getTCData` always fails (deprecated in TCF 2.2). The `FCCDCF` cookie is set on a first visit too, so it does not mean "already chose".
+- TCF on production: `gdprApplies` is true on FC's first event; a returning visitor's first event is `tcloaded` with the consent string. With FC on our site `getTCData` always fails (deprecated in TCF 2.2; use `addEventListener`). The `FCCDCF` cookie is set on a first visit too, so it does not mean "already chose".
 
 ### Event page image
 
@@ -146,7 +146,7 @@ Lab: local build served under the production host name (see method below), Pixel
 | Event without image (ISR) | 0.60 s | 0.60 s | 0 | 27 ms |
 
 Listings render their events on each request and reveal them through Suspense, 0.3-0.6 s after the first paint. That gap includes the React 19.2 reveal throttle (up to 300 ms). The ISR event page has no gap. A static listing shell would likely save 0.3-0.6 s of LCP. The cost:
-- Every listing reader needs `"use cache"`, and the `connection()` calls in `fetchWithHmac`, `generatePagesData` and `PlacePageShell` must go. The last one was added for a tree mismatch.
+- Every listing reader needs `"use cache"`, and the `connection()` calls on the listing path must go or move into a smaller dynamic part: `fetchWithHmac`, `generatePagesData`, `PlacePageShell` and `HomeStructuredData` (`app/[locale]/page.tsx`; the last two were added for tree mismatches), plus `SponsorBannerSlot` and `lib/api/promotions.ts` for the sponsor banner.
 - Date filters ("avui", "demà") change at midnight, so they need a cached date.
 - Cache size: a listing is 0.3-0.7 MB of HTML plus a similar RSC payload. The production Redis is 450 MB `allkeys-lru`, shared with event ISR pages. Places × dates × categories × 3 languages is far more than fits, so caching only the plain place pages (or the busiest places) is the realistic first step.
 
