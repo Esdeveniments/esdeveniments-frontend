@@ -5,13 +5,15 @@ import { connection } from "next/server";
 import {
   fetchPlaceBySlugExternal,
   fetchPlacesAggregatedExternal,
+  isSuspiciousPlaceSlug,
 } from "./places-external";
 
 // fetchPlaceBySlugExternal returns null only for a real 404 (or a bot slug)
 // and throws on errors, so null is cached and errors are not. The aggregate
 // throws when an endpoint fails; storeEmpty: false also skips an empty list.
+// maxEntries bounds the cached 404s for made-up slugs (~1,000 real places).
 const { cache: placeBySlugCache, clear: clearPlaceBySlugCache } =
-  createKeyedCache<PlaceResponseDTO | null>(86400000);
+  createKeyedCache<PlaceResponseDTO | null>(86400000, { maxEntries: 5000 });
 const { cache: placesCache, clear: clearPlacesListCache } =
   createCache<PlaceResponseDTO[]>(86400000, { storeEmpty: false });
 
@@ -36,6 +38,7 @@ export async function fetchPlaceBySlug(
   // warm cache cannot change what Next prerenders. Errors propagate: callers
   // tell "not found" (null) from a transient failure (throw).
   await connection();
+  if (isSuspiciousPlaceSlug(slug)) return null;
   return placeBySlugCache(slug, (key) => fetchPlaceBySlugExternal(String(key)));
 }
 

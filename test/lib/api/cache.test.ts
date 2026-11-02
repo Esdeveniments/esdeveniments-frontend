@@ -188,3 +188,16 @@ describe("storeEmpty option", () => {
     expect(keyedFetcher).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("maxEntries option", () => {
+  it("drops the oldest key beyond the cap", async () => {
+    const keyed = createKeyedCache<string>(5000, { maxEntries: 2 });
+    const fetcher = vi.fn(async (key: string | number) => `v${key}`);
+    await keyed.cache("a", fetcher);
+    await keyed.cache("b", fetcher);
+    await keyed.cache("c", fetcher);
+    await keyed.cache("b", fetcher);
+    await keyed.cache("a", fetcher);
+    expect(fetcher.mock.calls.map(([k]) => k)).toEqual(["a", "b", "c", "a"]);
+  });
+});

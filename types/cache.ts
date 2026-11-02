@@ -6,8 +6,9 @@ export type CacheFn<T> = (fetcher: () => Promise<T>) => Promise<T>;
 /**
  * storeEmpty: false skips null, undefined and [] results, for fetchers that
  * return those on failure. Defaults to true.
+ * maxEntries (keyed cache only): drop the oldest entry beyond this size.
  */
-export type CacheOptions = { storeEmpty?: boolean };
+export type CacheOptions = { storeEmpty?: boolean; maxEntries?: number };
 
 /**
  * Keyed cache function type that fetches and caches data by key

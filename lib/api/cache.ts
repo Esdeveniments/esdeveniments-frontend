@@ -45,7 +45,7 @@ export function createCache<T>(
  */
 export function createKeyedCache<T>(
   ttlMs: number,
-  { storeEmpty = true }: CacheOptions = {},
+  { storeEmpty = true, maxEntries }: CacheOptions = {},
 ): {
   cache: KeyedCacheFn<T>;
   clear: () => void;
@@ -60,7 +60,12 @@ export function createKeyedCache<T>(
     }
     const data = await fetcher(key);
     if (storeEmpty || !isEmpty(data)) {
+      cacheMap.delete(key);
       cacheMap.set(key, { data, timestamp: performance.now() });
+      if (maxEntries && cacheMap.size > maxEntries) {
+        // Map keeps insertion order, so the first key is the oldest.
+        cacheMap.delete(cacheMap.keys().next().value!);
+      }
     }
     return data;
   };
