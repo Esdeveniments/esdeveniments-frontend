@@ -13,6 +13,7 @@ import ca from "../messages/ca.json";
 import es from "../messages/es.json";
 import en from "../messages/en.json";
 import localeLabels from "../i18n/locale-labels.generated.json";
+import localeLists from "../i18n/locale-lists.json";
 
 const STALE = "stale: run `yarn i18n:labels`";
 const SKIP_DIRS = new Set(["node_modules", "test", "e2e", "scripts", "public"]);
@@ -61,17 +62,23 @@ function importsMessagesJson(file: string): boolean {
 }
 
 describe("i18n/locale-labels.generated.json", () => {
-  it("matches Components.Constants in every locale", () => {
-    expect(localeLabels.constants.ca, STALE).toEqual(ca.Components.Constants);
-    expect(localeLabels.constants.es, STALE).toEqual(es.Components.Constants);
-    expect(localeLabels.constants.en, STALE).toEqual(en.Components.Constants);
+  it("matches Components.Constants plus the lists in every locale", () => {
+    for (const [locale, messages] of Object.entries({ ca, es, en })) {
+      const l = locale as keyof typeof localeLists.constants;
+      expect(localeLabels.constants[l], STALE).toEqual({
+        ...messages.Components.Constants,
+        ...localeLists.constants[l],
+      });
+    }
   });
 
   it("matches the Catalan Utils sections it copies", () => {
     for (const [key, value] of Object.entries(localeLabels.utils)) {
-      expect(value, `Utils.${key} ${STALE}`).toEqual(
-        ca.Utils[key as keyof typeof ca.Utils],
-      );
+      const expected =
+        key === "StringHelpers"
+          ? { ...ca.Utils.StringHelpers, ...localeLists.stringHelpers }
+          : ca.Utils[key as keyof typeof ca.Utils];
+      expect(value, `Utils.${key} ${STALE}`).toEqual(expected);
     }
   });
 

@@ -644,66 +644,6 @@
       "active": "actiu"
     },
     "Constants": {
-      "days": [
-        "Diumenge",
-        "Dilluns",
-        "Dimarts",
-        "Dimecres",
-        "Dijous",
-        "Divendres",
-        "Dissabte"
-      ],
-      "daysShort": [
-        "Dg.",
-        "Dl.",
-        "Dt.",
-        "Dc.",
-        "Dj.",
-        "Dv.",
-        "Ds."
-      ],
-      "monthsShort": [
-        "gen.",
-        "feb.",
-        "març",
-        "abr.",
-        "maig",
-        "juny",
-        "jul.",
-        "ag.",
-        "set.",
-        "oct.",
-        "nov.",
-        "des."
-      ],
-      "months": [
-        "gener",
-        "febrer",
-        "març",
-        "abril",
-        "maig",
-        "juny",
-        "juliol",
-        "agost",
-        "setembre",
-        "octubre",
-        "novembre",
-        "desembre"
-      ],
-      "monthsUrl": [
-        "gener",
-        "febrer",
-        "marc",
-        "abril",
-        "maig",
-        "juny",
-        "juliol",
-        "agost",
-        "setembre",
-        "octubre",
-        "novembre",
-        "desembre"
-      ],
       "newsHubs": {
         "mataro": "Mataró",
         "barcelona": "Barcelona",
@@ -1583,45 +1523,9 @@
         "deLa": "de la",
         "deLes": "de les",
         "deL": "de l'"
-      },
-      "capitalizePrepositions": [
-        "al",
-        "a",
-        "del",
-        "dels",
-        "de la",
-        "de les",
-        "de l’",
-        "de l'",
-        "pel",
-        "pels"
-      ],
-      "feminineExceptions": [
-        "gent gran",
-        "dansa"
-      ],
-      "masculineExceptions": [
-        "penedès",
-        "alt penedès",
-        "baix penedès",
-        "rosselló",
-        "urgell",
-        "alt urgell",
-        "pla d'urgell",
-        "vallès",
-        "vallès oriental",
-        "vallès occidental",
-        "gironès",
-        "barcelonès",
-        "tarragonès",
-        "montsià",
-        "baix ebre",
-        "maresme",
-        "bages"
-      ]
+      }
     },
     "Calendar": {
-      "moreInfoHtml": "Més informació: <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">Esdeveniments.cat</a>",
       "moreInfoText": "Més informació: {url}",
       "dateRange": "Del {start} al {end}",
       "dateSingle": "Del {start}",

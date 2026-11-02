@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { siteUrl } from "@config/index";
 import { getAllYears, normalizeMonthParam } from "@lib/dates";
-import { MONTHS_URL as DEFAULT_MONTHS_URL } from "@utils/constants";
+import {
+  MONTHS_URL as DEFAULT_MONTHS_URL,
+  getMonthNames,
+} from "@utils/constants";
 // No headers/nonce needed with relaxed CSP
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getPlaceBySlug } from "@lib/api/places";
@@ -72,12 +75,8 @@ async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) 
   const locale: AppLocale = (await rootLocale()) as AppLocale;
   const years: number[] = getAllYears();
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
-  const tConstants = await getTranslations({
-    locale,
-    namespace: "Components.Constants",
-  });
   const withLocale = (path: string) => withLocalePath(path, locale);
-  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthLabels = getMonthNames(locale);
   const months = DEFAULT_MONTHS_URL.map((slug, index) => {
     const fallback = normalizeMonthParam(slug);
     return {
