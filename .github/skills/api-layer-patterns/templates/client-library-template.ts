@@ -29,7 +29,9 @@ import { fetchResourceBySlugExternalResult } from "./RESOURCE-external";
 const { cache: resourceBySlugCache, clear: clearResourceBySlugCache } =
   createKeyedCache<ResourceDetailResponseDTO | null>(86400000);
 
-// Called by app/api/revalidate/route.ts.
+// Not called automatically. To clear it on revalidation, add the tag to
+// CacheTag/RevalidatableTag (types/cache.ts), then to ALLOWED_TAGS and
+// TAG_TO_CLEAR_FN in app/api/revalidate/route.ts.
 export function clearResourceCaches(): void {
   clearResourceBySlugCache();
 }

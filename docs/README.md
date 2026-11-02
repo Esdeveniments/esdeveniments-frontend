@@ -1,8 +1,8 @@
 # Project Documentation
 
-Index of `docs/`. Agent rules live in `AGENTS.md` (repo root) and the skills in
-`.github/skills/*/SKILL.md`. Hard-won gotchas live in `LESSONS.md`. Design
-tokens live in `DESIGN.md`.
+Index of `docs/`. Agent rules live in [AGENTS.md](../AGENTS.md) and the skills in
+[.github/skills](../.github/skills/README.md). Hard-won gotchas live in
+[LESSONS.md](../LESSONS.md). Design tokens live in [DESIGN.md](../DESIGN.md).
 
 Finished plans, audits and specs are deleted once shipped; git history keeps
 them (`git log --diff-filter=D --name-only -- docs/`).

@@ -48,7 +48,8 @@ Stop and propose an alternative when you see a helper used only once, a componen
 | --- | --- |
 | `yarn install --immutable` | After `corepack enable` |
 | `yarn dev` | `next dev` (Turbopack). Run `yarn prebuild` first if you need the service worker |
-| `yarn build` / `yarn start` | `next build` only. `build:development\|staging\|production` also run `prebuild` with that env file |
+| `yarn build` | `next build` only. `build:development\|staging\|production` also run `prebuild` with that env file |
+| `yarn start` | `next start`: serves the built app. `start:development\|staging\|production` load that env file |
 | `yarn prebuild` | Generates `public/sw.js` and `public/robots.txt` (build output, never edit them; `app/robots.txt/route.ts` is the fallback, keep both in sync) |
 | `yarn lint` / `yarn typecheck` | 0 errors expected; old warnings are acceptable |
 | `yarn test` | Vitest + jsdom, `test/**/*.{test,spec}.{ts,tsx}`. Needs Node 22: newer Node breaks the `localStorage` tests |
@@ -82,6 +83,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 ## API layer
 
 - Pages and components → `lib/api/*.ts` (client libraries, `getInternalApiUrl` + query builders `buildEventsQuery`/`buildNewsQuery` from `utils/api-helpers.ts`) → `app/api/*` routes (set `Cache-Control: s-maxage, stale-while-revalidate` per route) → `lib/api/*-external.ts` (`fetchWithHmac`, Zod parse, safe fallback). Never call the backend from pages or the browser.
+- Reader exceptions (details in `api-layer-patterns`): `fetchEvents` (`lib/api/events.ts`) skips the internal route and calls the backend directly, and the `[place]` page wraps it in the `"use cache"` reader `fetchEventsCached`; categories, cities, regions and places add a 24 h in-memory `createCache`; `news.ts` and `profiles.ts` have no `isBuildPhase` bypass; `promotions.ts` calls `fetchWithHmac` with no internal route. New endpoints follow the three-layer path.
 - External wrappers: if `NEXT_PUBLIC_API_URL` is missing or the call fails, return a safe empty value (`[]`, `{}`, `null`) for reads; mutations throw. Read exceptions: `fetchPlaceBySlugExternal` returns `null` only on 404 and throws on other errors (so callers can tell "not found" from an outage), and the authenticated reads in `users-external.ts` rethrow the HTTP status. On a non-OK mutation, read `response.text()` before throwing.
 - Backend auth: `fetchWithHmac` sends `X-Backend-Key` (`BACKEND_SERVICE_SECRET`; the v2 backend rejects every request without it). While `HMAC_SECRET` is set it also sends legacy `x-hmac`/`x-timestamp` (prod still checks them; remove once prod runs v2). Legacy HMAC signs only `timestamp + pathAndQuery`, so JSON POST/PUT/DELETE pass `skipBodySigning: true`.
 - `proxy.ts`/`utils/api-gate.ts` gate most internal `/api/*` routes; public GETs (events, news, categories, places, regions, cities) are allowlisted.

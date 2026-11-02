@@ -43,7 +43,7 @@ Don't build a new list or `useSWR` call for events. Reuse:
 - `components/ui/hybridEventsList/index.tsx` (`HybridEventsList`, server): renders `initialEvents` as given. The page calls `insertAds` (`lib/api/events.ts`) before passing them, as `app/[locale]/[place]/page.tsx` does; a new listing that skips it has no SSR ad slots.
 - `components/ui/hybridEventsList/HybridEventsListClient.tsx` + `components/hooks/useEvents.ts` (`useSWRInfinite`): load more and client filters (`search`, `distance`, `lat`, `lon`, `from`, `to`).
 
-The append/dedupe/ads contract is in AGENTS.md › Rendering. `getInternalApiUrl` (`utils/api-helpers.ts`) is async and server-only; client code calls the `lib/api/*` helpers or relative `/api/*` URLs.
+The append/dedupe/ads contract is in AGENTS.md › Rendering. `getInternalApiUrl` (`utils/api-helpers.ts`) is async and server-only, and so are the `lib/api/*` helpers; client code fetches relative `/api/*` URLs (e.g. `components/hooks/useEvents.ts`).
 
 ## Prefetch
 
@@ -110,7 +110,7 @@ A folder `index.tsx` that *is* a component (e.g. `components/ui/hybridEventsList
 ## Checklist
 
 - [ ] Server Component unless it needs client APIs; `"use client"` at the leaf
-- [ ] `params` awaited; locale from `rootLocale()`
+- [ ] `params` awaited in async components or unwrapped with `use(params)` in sync ones; locale from `rootLocale()`
 - [ ] No `searchParams` in listing pages
 - [ ] Time or changing data that affects the tree → `connection()` or `"use cache"` + `cacheLife`
 - [ ] No `prefetch={true}`; `Link` from `@i18n/routing`

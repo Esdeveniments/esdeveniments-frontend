@@ -20,7 +20,7 @@ public/sw-template.js → scripts/generate-sw.mjs (yarn prebuild) → public/sw.
 
 ## Template layout
 
-- Loads Workbox 7.1.0 from Google's CDN with `importScripts`. If it fails, `if (!self.workbox)` leaves a no-op SW. Keep new code inside the `else` branch.
+- Loads Workbox 7.1.0 from Google's CDN with `importScripts`. If the CDN fetch fails, `importScripts` throws and the new SW fails to install (the old one, if any, stays). `if (!self.workbox)` only covers a script that loads but doesn't define `self.workbox`; it then registers a no-op SW. Keep new code inside the `else` branch.
 - Precaches `/offline` and `/static/css/offline.css`; `cleanupOutdatedCaches()` removes old precaches.
 - Routes use `workbox.routing.registerRoute(...)` and `new workbox.strategies.X(...)` directly. The first matching route wins, so order matters.
 

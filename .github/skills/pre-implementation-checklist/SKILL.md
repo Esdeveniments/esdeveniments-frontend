@@ -5,7 +5,7 @@ description: Mandatory search-before-coding checklist for this repo — where ex
 
 # Pre-Implementation Checklist
 
-Workflow (search → plan → wait for confirmation → implement → verify) and the red-flag list: AGENTS.md › Workflow.
+Workflow (search → plan → wait for confirmation on non-trivial work → implement → verify) and the red-flag list: AGENTS.md › Workflow.
 
 ## 1. Search before writing
 

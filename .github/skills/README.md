@@ -1,6 +1,6 @@
 # Agent Skills Index
 
-18 task guides for AI coding agents (Copilot, Claude Code, Codex, Cursor) working on this repo. Each folder holds a `SKILL.md`. Agents load the frontmatter (`name`, `description`) up front and read the full file when a task matches. Repo-wide rules live in [AGENTS.md](../../AGENTS.md); skills add task detail and should not repeat it.
+18 task guides for AI coding agents (Copilot, Claude Code, Codex, Cursor) working on this repo. Each folder holds a `SKILL.md`. Copilot discovers `.github/skills` itself: it loads the frontmatter (`name`, `description`) up front and reads the full file when a task matches. Other agents don't scan this folder; they find the skill in the AGENTS.md table and read it. Repo-wide rules live in [AGENTS.md](../../AGENTS.md); skills add task detail and should not repeat it.
 
 | Skill | Use for | Key rule |
 | --- | --- | --- |

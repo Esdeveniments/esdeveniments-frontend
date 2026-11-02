@@ -155,7 +155,8 @@ export const getCategories = reactCache(fetchCategories); // per-request dedupe
 
 - `getInternalApiUrl(path)` is async and returns an absolute URL to this app.
 - `next: { revalidate, tags }` here is on the plain `fetch()` to the internal route, as in the real client libraries. It is never allowed on `fetchWithHmac` in a `*-external.ts` wrapper.
-- `createCache`/`createKeyedCache` (`lib/api/cache.ts`) give a 24 h in-memory TTL for low-cardinality data (categories, cities, regions, places). Export a `clear*Caches()` for `/api/revalidate`.
+- `createCache`/`createKeyedCache` (`lib/api/cache.ts`) give a 24 h in-memory TTL for low-cardinality data (categories, cities, regions, places). Export a `clear*Caches()` and register it: add the tag to `CacheTag`/`RevalidatableTag` (`types/cache.ts`), then to `ALLOWED_TAGS` and `TAG_TO_CLEAR_FN` in `app/api/revalidate/route.ts`. Unregistered caches only expire after 24 h.
+- Caveat: `/api/categories` answers 200 `[]` on an outage, so `categoriesListCache` can hold `[]` for 24 h. With a route that returns an error status (see the templates), the fetch throws and nothing is cached.
 - Wrap readers used by both `generateMetadata` and the page in React `cache()`.
 - Browser code (SWR hooks) fetches relative `/api/...` URLs directly, e.g. `components/hooks/useEvents.ts`.
 
