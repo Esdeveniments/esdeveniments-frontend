@@ -66,4 +66,13 @@ describe("fetchEventsCached", () => {
     expect(result.content[0]).toMatchObject({ title: "Fresh" });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("returns an empty page after a timeout instead of waiting for a second one", async () => {
+    fetchMock.mockRejectedValue(new DOMException("aborted", "AbortError"));
+
+    const result = await fetchEventsCached({ page: 0, size: 10, place: "cardedeu" });
+
+    expect(result.content).toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });

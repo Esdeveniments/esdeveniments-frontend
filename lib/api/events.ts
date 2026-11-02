@@ -213,7 +213,23 @@ export async function fetchEventsCached(
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   try {
     return await getCachedEventsPage(buildEventsQuery(params).toString());
-  } catch {
+  } catch (error) {
+    captureException(error, {
+      tags: { section: "events-fetch", fallback: "cached-read-failed" },
+      extra: { params },
+    });
+    // A timeout would only time out again; return an empty page instead of
+    // doubling the wait on each fallback stage.
+    if ((error as { name?: string } | null)?.name === "AbortError") {
+      return {
+        content: [],
+        currentPage: params.page ?? 0,
+        pageSize: params.size ?? 12,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      };
+    }
     return fetchEvents(params);
   }
 }

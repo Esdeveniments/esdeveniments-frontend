@@ -11,6 +11,7 @@ vi.mock("@lib/helpers/event-fallback", () => ({
 
 vi.mock("@lib/api/events", () => ({
   insertAds: (events: EventSummaryResponseDTO[]) => events,
+  fetchEventsCached: vi.fn(),
 }));
 
 vi.mock("@components/partials/seo-meta", () => ({
