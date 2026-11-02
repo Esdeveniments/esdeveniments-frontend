@@ -493,7 +493,7 @@ describe("i18n client namespace whitelist", () => {
         const [key, ...rest] = keys;
         const obj = (node ?? {}) as Record<string, unknown>;
         return key === "*"
-          ? Object.values(obj).some((child) => resolves(child, rest))
+          ? Object.values(obj).every((child) => resolves(child, rest))
           : resolves(obj[key], rest);
       };
       for (const path of CLIENT_PARTIAL_PATHS) {

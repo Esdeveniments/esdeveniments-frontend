@@ -29,6 +29,7 @@ import {
   CLIENT_UTILS_KEYS,
   CLIENT_FULL_TOP_LEVEL,
   CLIENT_PARTIAL_PATHS,
+  pickPath,
 } from "@lib/i18n/client-namespaces";
 
 async function I18nProvider({
@@ -80,22 +81,6 @@ function pickClientMessages(
   }
   for (const path of CLIENT_PARTIAL_PATHS) pickPath(m, picked, path.split("."));
   return picked as Partial<typeof messages>;
-}
-
-// Copies the value at `keys` from source into target. "*" matches every child.
-function pickPath(
-  source: unknown,
-  target: Record<string, unknown>,
-  keys: string[],
-): void {
-  const [key, ...rest] = keys;
-  const node = source as Record<string, unknown> | undefined;
-  for (const name of key === "*" ? Object.keys(node ?? {}) : [key]) {
-    const value = node?.[name];
-    if (value === undefined) continue;
-    if (rest.length === 0) target[name] = value;
-    else pickPath(value, (target[name] ??= {}) as Record<string, unknown>, rest);
-  }
 }
 
 export async function generateMetadata(): Promise<Metadata> {

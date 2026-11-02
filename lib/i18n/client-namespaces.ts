@@ -73,3 +73,19 @@ export const CLIENT_PARTIAL_PATHS = [
   "Sponsorship.upload",
   "Sponsorship.uploadPage",
 ] as const;
+
+// Copies the value at `keys` from source into target. "*" matches every child.
+export function pickPath(
+  source: unknown,
+  target: Record<string, unknown>,
+  keys: string[],
+): void {
+  const [key, ...rest] = keys;
+  const node = source as Record<string, unknown> | undefined;
+  for (const name of key === "*" ? Object.keys(node ?? {}) : [key]) {
+    const value = node?.[name];
+    if (value === undefined) continue;
+    if (rest.length === 0) target[name] = value;
+    else pickPath(value, (target[name] ??= {}) as Record<string, unknown>, rest);
+  }
+}
