@@ -7,7 +7,7 @@
 | [pre-implementation-checklist](pre-implementation-checklist/SKILL.md) | Any new code | Search for existing code first |
 | [type-system-governance](type-system-governance/SKILL.md) | Types, props, DTOs | All types in `types/` |
 | [react-nextjs-patterns](react-nextjs-patterns/SKILL.md) | Pages, components, caching | Server Component by default |
-| [filter-system-dev](filter-system-dev/SKILL.md) | Filters | Change `config/filters.ts` only |
+| [filter-system-dev](filter-system-dev/SKILL.md) | Filters | Start in `config/filters.ts`; follow the skill's file list |
 | [api-layer-patterns](api-layer-patterns/SKILL.md) | API calls and routes | Three-layer proxy pattern |
 | [auth-patterns](auth-patterns/SKILL.md) | Login, session | `useAuth()` / `getAccessTokenFromCookies()` |
 | [url-canonicalization](url-canonicalization/SKILL.md) | URLs, routing, redirects | Never read `searchParams` in listing pages |

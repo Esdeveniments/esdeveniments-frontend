@@ -20,7 +20,7 @@ Coolify does **not** build. `deploy-coolify.yml` builds a Docker image in GitHub
 | Server-only runtime value (`LOGTO_*`, `STRIPE_*`, `REDIS_URL`, `TURSO_*`, `API_URL`, `SENTRY_DSN`, …) | Runtime, by the Node server | Coolify → Application → Environment |
 | Workflow-only (`COOLIFY_TOKEN`, `COOLIFY_WEBHOOK_URL`, `CLOUDFLARE_*`, `REVALIDATE_SECRET` for post-deploy calls) | During the workflow | GitHub secret → step `env:` |
 
-The build secrets are also needed at runtime, so set them in Coolify too. The `ci` job's "Build Next.js application" step gets `HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `NEXT_PUBLIC_API_URL` and `SENTRY_AUTH_TOKEN` as step `env:`; add a new build-time value there as well if the CI build needs it.
+The build secrets are also needed at runtime, so set them in Coolify too. The `e2e-tests` job's "Build Next.js application" step in `deploy-coolify.yml` gets `HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `NEXT_PUBLIC_API_URL` and `SENTRY_AUTH_TOKEN` as step `env:`; add a new build-time value there as well if the CI build needs it.
 
 GitHub secrets resolve per Environment (`production` on `main`, `staging` otherwise) and fall back to repo-level values. The workflow blanks `NEXT_PUBLIC_GOOGLE_ANALYTICS`/`_ADS` on non-`main` builds so prod IDs never land in staging.
 
