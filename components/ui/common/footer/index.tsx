@@ -1,9 +1,8 @@
 import { cacheLife } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { JSX } from "react";
-import ActiveLink from "@components/ui/common/link";
+import { Link } from "@i18n/routing";
 import Social from "@components/ui/common/social";
-import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClient";
 import CopyrightNotice from "./CopyrightYear";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 import { contactEmail, socialLinks } from "@config/index";
@@ -101,16 +100,18 @@ export default async function Footer(): Promise<JSX.Element> {
                 {item.name}
               </a>
             ) : (
-              <ActiveLink
+              <Link
                 href={item.href}
                 key={item.name}
-                className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive"
+                prefetch={false}
+                data-pressable-link="inline"
+                className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive pressable-inline"
                 {...(item.href === "/iniciar-sessio"
                   ? { "data-analytics-action": "footer_login" }
                   : {})}
               >
                 {item.name}
-              </ActiveLink>
+              </Link>
             )
           )}
         </nav>
@@ -131,9 +132,14 @@ export default async function Footer(): Promise<JSX.Element> {
               <p className="body-small text-muted-foreground max-w-2xl">
                 {t("sponsorCta.description")}
               </p>
-              <PressableAnchorClient href="/patrocina" className="btn-primary">
+              <Link
+                href="/patrocina"
+                prefetch={false}
+                data-pressable-link="inline"
+                className="btn-primary pressable-inline"
+              >
                 {tSponsor("cta")}
-              </PressableAnchorClient>
+              </Link>
             </div>
           </div>
         </section>
@@ -152,14 +158,15 @@ export default async function Footer(): Promise<JSX.Element> {
           <div className="w-full max-w-5xl bg-background/50 rounded-card p-6 shadow-sm border border-border/40">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3">
               {TOP_AGENDA_LINKS.map((item) => (
-                <PressableAnchorClient
+                <Link
                   key={item.href}
                   href={item.href}
                   prefetch={false}
-                  className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1"
+                  data-pressable-link="inline"
+                  className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1 pressable-inline"
                 >
                   {`${agendaLabel} ${item.name}`}
-                </PressableAnchorClient>
+                </Link>
               ))}
             </div>
           </div>
