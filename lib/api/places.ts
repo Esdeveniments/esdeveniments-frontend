@@ -7,10 +7,11 @@ import {
   fetchPlacesAggregatedExternal,
 } from "./places-external";
 
-// The external fetchers return null/[] on failure; storeEmpty: false keeps a
-// failure from being cached for a day.
+// fetchPlaceBySlugExternal returns null only for a real 404 (or a bot slug)
+// and throws on errors, so null is cached and errors are not. The aggregate
+// throws when an endpoint fails; storeEmpty: false also skips an empty list.
 const { cache: placeBySlugCache, clear: clearPlaceBySlugCache } =
-  createKeyedCache<PlaceResponseDTO | null>(86400000, { storeEmpty: false });
+  createKeyedCache<PlaceResponseDTO | null>(86400000);
 const { cache: placesCache, clear: clearPlacesListCache } =
   createCache<PlaceResponseDTO[]>(86400000, { storeEmpty: false });
 
@@ -31,17 +32,11 @@ export function clearPlacesCaches(): void {
 export async function fetchPlaceBySlug(
   slug: string
 ): Promise<PlaceResponseDTO | null> {
-  try {
-    // Keep the request-time signal fetchWithHmac gives on a cache miss, so a
-    // warm cache cannot change what Next prerenders.
-    await connection();
-    return await placeBySlugCache(slug, (key) =>
-      fetchPlaceBySlugExternal(String(key))
-    );
-  } catch (error) {
-    console.error("fetchPlaceBySlug: fetch failed", error);
-    return null;
-  }
+  // Keep the request-time signal fetchWithHmac gives on a cache miss, so a
+  // warm cache cannot change what Next prerenders. Errors propagate: callers
+  // tell "not found" (null) from a transient failure (throw).
+  await connection();
+  return placeBySlugCache(slug, (key) => fetchPlaceBySlugExternal(String(key)));
 }
 
 // Per-request memoized wrapper for metadata + page deduplication

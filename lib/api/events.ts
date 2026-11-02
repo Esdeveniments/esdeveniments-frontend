@@ -23,7 +23,7 @@ import {
 } from "@lib/validation/event";
 import {
   fetchCategorizedEventsExternal,
-  fetchEventsExternal,
+  fetchEventsExternalResult,
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
@@ -90,21 +90,12 @@ const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYT
 async function fetchEventsInternal(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  try {
-    const validated = parsePagedEvents(await fetchEventsExternal(params));
-    if (validated) return validated;
-    console.error("fetchEvents: external validation failed");
-    captureException(new Error("fetchEvents: external validation failed"), {
-      tags: { section: "events-fetch", fallback: "external-validation-failed" },
-      extra: { params },
-    });
-  } catch (error) {
-    console.error("fetchEvents: external fetch failed", getSanitizedErrorMessage(error));
-    captureException(error, {
-      tags: { section: "events-fetch", fallback: "external-fetch-failed" },
-      extra: { params },
-    });
-  }
+  const { data, error } = await fetchEventsExternalResult(params);
+  if (data) return data;
+  captureException(error ?? new Error("fetchEvents: no data"), {
+    tags: { section: "events-fetch", fallback: "external-fetch-failed" },
+    extra: { params },
+  });
   return emptyPagedResponse(params.page ?? 0, params.size ?? 12);
 }
 

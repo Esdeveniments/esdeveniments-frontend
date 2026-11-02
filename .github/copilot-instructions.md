@@ -70,10 +70,11 @@ Adding a new filter:
 
 ## 4. Data Fetch & API Layer
 
-- **Architecture**: Internal API proxy layer pattern. Client libraries (`lib/api/*.ts`) call internal Next.js API routes (`app/api/*`) which proxy to external backend via `*-external.ts` wrappers using `fetchWithHmac`.
-- Location: `lib/api/*` (events, categories, regions, cities, places, cache helpers, news) call internal routes via `getInternalApiUrl` from `utils/api-helpers.ts`.
+- **Architecture**: two kinds of caller.
+  - **Server readers** (`lib/api/places.ts`, `categories.ts`, `regions.ts`, `cities.ts`, and `fetchEvents`/`fetchCategorizedEvents`/`fetchEventsCached` in `events.ts`) call the `*-external.ts` wrappers directly. Our `/api/*` routes do not exist during `next build`. The reference-data readers cache in memory (`storeEmpty: false`) after `await connection()`; `fetchEventsCached` uses `"use cache"`; `fetchEvents`/`fetchCategorizedEvents` are `no-store`.
+  - **Internal API routes** (`app/api/*`) proxy to the same wrappers for client components and set `Cache-Control`. A few server readers still read through them: event/news detail (`getInternalApiUrl` with `preferConfiguredOrigin`) and profiles.
 - Internal API routes: `app/api/*` (events, events/[slug], events/categorized, news, news/[slug], places, places/[slug], categories, categories/[id], cities, cities/[id], regions, regions/[id], regions/options, visits). These routes use `*-external.ts` wrappers that call `fetchWithHmac` against `NEXT_PUBLIC_API_URL`, parse with Zod, and return safe fallbacks.
-- External API wrappers: `lib/api/*-external.ts` (e.g., `events-external.ts`, `news-external.ts`) handle direct external API calls with HMAC signing. Used only by internal API routes, never called directly from pages/components.
+- External API wrappers: `lib/api/*-external.ts` (e.g., `events-external.ts`, `news-external.ts`) handle direct external API calls with HMAC signing. Called by internal API routes and by the server readers above, never from pages/components.
 - Query builders: Use `buildEventsQuery`, `buildNewsQuery` from `utils/api-helpers.ts` to construct URLSearchParams. Centralizes query string construction and eliminates duplication.
 - Env guard: External wrappers check `NEXT_PUBLIC_API_URL`; if missing return safe empty shape (prevents build/runtime crashes on preview environments). Internal routes handle missing env gracefully.
 - Guarded pattern (required for external wrappers):

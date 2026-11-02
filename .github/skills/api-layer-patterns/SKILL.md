@@ -750,10 +750,15 @@ return NextResponse.json(data, {
 Our own `/api/*` routes do not exist during `next build`, and on Coolify the
 old `isBuildPhase` check was true at runtime too, so the "internal route"
 path never ran in production. Server readers for shared reference data and
-event lists (`lib/api/places.ts`, `categories.ts`, `regions.ts`, `cities.ts`,
-`fetchEvents`, `fetchCategorizedEvents`) have one path: the `*-external.ts`
-wrapper, at build and at runtime. The `/api/*` routes stay for client
-components.
+event lists call the `*-external.ts` wrapper directly, at build and at
+runtime. The `/api/*` routes stay for client components.
+
+| Reader | Cache |
+|---|---|
+| `places.ts`, `categories.ts`, `regions.ts`, `cities.ts` | in-memory, after `connection()` (pattern below) |
+| `fetchEventsCached` (town listings) | `"use cache"`, `skipConnection: true`, throws on failure |
+| `fetchEvents`, `fetchCategorizedEvents` | none (`no-store`) |
+| event/news detail, profiles | still via `/api/*` with `getInternalApiUrl({ preferConfiguredOrigin })` |
 
 ```typescript
 import { connection } from "next/server";
@@ -814,7 +819,7 @@ export async function fetchYourResource(): Promise<YourDTO[]> {
 A: When adding a new backend resource or endpoint variant. Example: `/api/events/trending`.
 
 **Q: Can I skip the internal route and call external wrapper directly?**  
-A: No. Pages/components should never import `*-external.ts`. Always go through `/api/*`.
+A: No. Pages/components should never import `*-external.ts`. Client components go through `/api/*`; server readers in `lib/api/*.ts` call the wrapper (see "Server readers call the backend directly").
 
 **Q: What if I need to call a third-party API (not our backend)?**  
 A: Create an internal route (`/api/third-party`) that proxies the call. Use `safeFetch` if no HMAC needed.

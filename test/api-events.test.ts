@@ -52,7 +52,7 @@ describe("lib/api/events", () => {
     expect(result).toEqual({
       content: [],
       currentPage: 0,
-      pageSize: 12,
+      pageSize: 10,
       totalElements: 0,
       totalPages: 0,
       last: true,

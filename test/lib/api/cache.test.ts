@@ -153,3 +153,38 @@ describe("createKeyedCache", () => {
     expect(result).toBe("numeric");
   });
 });
+
+describe("storeEmpty option", () => {
+  it("caches null and [] by default", async () => {
+    const list = createCache<string[]>(5000);
+    const listFetcher = vi.fn().mockResolvedValue([]);
+    await list.cache(listFetcher);
+    await list.cache(listFetcher);
+    expect(listFetcher).toHaveBeenCalledOnce();
+
+    const keyed = createKeyedCache<string | null>(5000);
+    const keyedFetcher = vi.fn().mockResolvedValue(null);
+    await keyed.cache("a", keyedFetcher);
+    await keyed.cache("a", keyedFetcher);
+    expect(keyedFetcher).toHaveBeenCalledOnce();
+  });
+
+  it("refetches null and [] when storeEmpty is false, and still caches real data", async () => {
+    const list = createCache<string[]>(5000, { storeEmpty: false });
+    const listFetcher = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValue(["x"]);
+    expect(await list.cache(listFetcher)).toEqual([]);
+    expect(await list.cache(listFetcher)).toEqual(["x"]);
+    await list.cache(listFetcher);
+    expect(listFetcher).toHaveBeenCalledTimes(2);
+
+    const keyed = createKeyedCache<string | null>(5000, { storeEmpty: false });
+    const keyedFetcher = vi.fn().mockResolvedValueOnce(null).mockResolvedValue("v");
+    expect(await keyed.cache("a", keyedFetcher)).toBeNull();
+    expect(await keyed.cache("a", keyedFetcher)).toBe("v");
+    await keyed.cache("a", keyedFetcher);
+    expect(keyedFetcher).toHaveBeenCalledTimes(2);
+  });
+});

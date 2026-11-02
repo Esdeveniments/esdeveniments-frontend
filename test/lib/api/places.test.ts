@@ -61,8 +61,8 @@ describe("lib/api/places", () => {
     expect(result).toBeNull();
   });
 
-  it("fetchPlaces returns empty array when NEXT_PUBLIC_API_URL is missing", async () => {
-    delete process.env.NEXT_PUBLIC_API_URL;
+  it("fetchPlaces returns empty array when the backend fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("fetch failed")));
 
     const { fetchPlaces } = await import("lib/api/places");
     const result = await fetchPlaces();
@@ -89,20 +89,43 @@ describe("lib/api/places", () => {
     ]);
   });
 
-  it("fetchPlaces does not cache a failure, so the next call retries", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: false, status: 500 })
-      .mockResolvedValueOnce({ ok: false, status: 500 })
-      .mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve([{ id: 2, name: "Girona", slug: "girona" }]),
-      });
-    vi.stubGlobal("fetch", fetchMock);
+  it("fetchPlaces does not cache a partial list when one endpoint fails", async () => {
+    let regionsDown = true;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (String(url).endsWith("/places/regions") && regionsDown) {
+          return Promise.resolve({ ok: false, status: 500 });
+        }
+        const body = String(url).endsWith("/places/regions")
+          ? [{ id: 1, name: "Maresme", slug: "maresme" }]
+          : [{ id: 2, name: "Girona", slug: "girona" }];
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
+      }),
+    );
 
     const { fetchPlaces } = await import("lib/api/places");
     expect(await fetchPlaces()).toEqual([]);
-    expect(await fetchPlaces()).toHaveLength(1);
+    regionsDown = false;
+    expect(await fetchPlaces()).toHaveLength(2);
+  });
+
+  it("fetchPlaceBySlug throws on a server error, so callers can tell it from a 404", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+
+    const { fetchPlaceBySlug } = await import("lib/api/places");
+    await expect(fetchPlaceBySlug("barcelona")).rejects.toThrow("503");
+  });
+
+  it("fetchPlaceBySlug caches a 404 and skips bot-style slugs", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { fetchPlaceBySlug } = await import("lib/api/places");
+    expect(await fetchPlaceBySlug("poble-que-no-existeix")).toBeNull();
+    expect(await fetchPlaceBySlug("poble-que-no-existeix")).toBeNull();
+    expect(await fetchPlaceBySlug("wp-admin.php")).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("fetchPlaces returns empty array on fetch error", async () => {
@@ -124,21 +147,12 @@ describe("lib/api/places", () => {
     expect(() => clearPlacesCaches()).not.toThrow();
   });
 
-  it("fetchPlaceBySlug encodes slug in URL", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({ id: 1, name: "Sant Cugat", slug: "sant-cugat" }),
-    });
+  it("fetchPlaceBySlug does not call the backend for a slug with spaces", async () => {
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
     const { fetchPlaceBySlug } = await import("lib/api/places");
-    await fetchPlaceBySlug("sant cugat");
-
-    // Verify the URL was encoded
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("sant%20cugat"),
-      expect.anything(),
-    );
+    expect(await fetchPlaceBySlug("sant cugat")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

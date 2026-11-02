@@ -4,10 +4,11 @@ applyTo: "app/api/**/*.ts"
 
 # Internal API Route Rules
 
-- These routes form the middle layer of the three-layer API proxy pattern:
-  1. Client code (`lib/api/*.ts`) → calls internal route
+- These routes are the proxy for client components:
+  1. Client component → calls internal route
   2. **Internal route** (`app/api/*`) → calls external wrapper, sets cache headers
   3. External wrapper (`lib/api/*-external.ts`) → HMAC signing, Zod parsing, safe fallback
+- Server readers (`lib/api/*.ts`) mostly call the external wrapper directly, because these routes do not exist during `next build` (see `lib-api.instructions.md`).
 - Always call the corresponding `*-external.ts` wrapper — never call the external API directly.
 - Set `Cache-Control` headers with appropriate TTLs (events 600s, news 60s, categories 3600s).
 - Use `stale-while-revalidate` for resilience.

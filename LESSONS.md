@@ -547,7 +547,10 @@ fetch the second time.
 and `VERCEL_URL` was not set, which is always the case on Coolify. So the
 "internal route + in-memory cache" path never ran in production, and a town
 page made 6 to 8 uncached backend calls for places, categories and regions.
-The readers now always call the `*-external.ts` wrapper through the in-memory
-cache. The wrappers return `[]`/`null` on failure, so those caches use
-`storeEmpty: false`, and each reader calls `connection()` before the cache so
-a warm cache cannot change what Next prerenders.
+The reference-data readers (places, categories, regions, cities) now always
+call the `*-external.ts` wrapper through the in-memory cache, and each calls
+`connection()` before the cache so a warm cache cannot change what Next
+prerenders. The list wrappers return `[]` on failure, so their caches use
+`storeEmpty: false`; a place 404 (`null`) is a real answer and stays cached.
+Town event lists use `"use cache"` instead (`fetchEventsCached`); the
+promoted-events cache keeps `[]` on purpose.
