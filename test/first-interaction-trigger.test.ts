@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { onFirstInteractionOrTimeout } from "@utils/browser";
+import { onFirstInteractionOrTimeout as arm } from "@utils/browser";
+
+const cleanups: Array<() => void> = [];
+const onFirstInteractionOrTimeout = (callback: () => void, ms: number) => {
+  const cleanup = arm(callback, ms);
+  cleanups.push(cleanup);
+  return cleanup;
+};
 
 describe("onFirstInteractionOrTimeout", () => {
   beforeEach(() => {
@@ -7,6 +14,7 @@ describe("onFirstInteractionOrTimeout", () => {
   });
 
   afterEach(() => {
+    cleanups.splice(0).forEach((cleanup) => cleanup());
     vi.useRealTimers();
     Reflect.deleteProperty(document, "readyState");
   });
