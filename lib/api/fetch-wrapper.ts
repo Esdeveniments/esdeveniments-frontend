@@ -4,10 +4,15 @@ import { connection } from "next/server";
 
 export async function fetchWithHmac(
   url: string,
-  options: RequestInit & { skipBodySigning?: boolean; timeout?: number } = {}
+  options: RequestInit & {
+    skipBodySigning?: boolean;
+    timeout?: number;
+    // Set inside "use cache", where connection() throws.
+    skipConnection?: boolean;
+  } = {}
 ): Promise<Response> {
   // Signal dynamic rendering before accessing current time (required by cacheComponents)
-  await connection();
+  if (!options.skipConnection) await connection();
   const timestamp = Date.now();
   let bodyToSign = "";
   let normalizedBody: BodyInit | null | undefined = options.body;

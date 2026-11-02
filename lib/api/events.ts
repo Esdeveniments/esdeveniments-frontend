@@ -188,6 +188,36 @@ async function fetchEventsInternal(
 
 export const fetchEvents = cache(fetchEventsInternal);
 
+// fetchEvents is not cached on Coolify: isBuildPhase is true at runtime there
+// (no VERCEL_URL), so it takes the no-store external path and every listing
+// render waits for the backend. This reader caches one events page per query
+// (no locale in it) in the shared cache handler. It throws on failure so an
+// error is never cached; fetchEventsCached then falls back to fetchEvents.
+async function getCachedEventsPage(
+  query: string,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  "use cache";
+  cacheTag(eventsTag);
+  cacheLife({ stale: 300, revalidate: 600, expire: 3600 });
+  const res = await fetchWithHmac(`${getApiUrl()}/events?${query}`, {
+    skipConnection: true,
+  });
+  if (!res.ok) throw new Error(`getCachedEventsPage: HTTP ${res.status}`);
+  const page = parsePagedEvents(await res.json());
+  if (!page) throw new Error("getCachedEventsPage: invalid payload");
+  return page;
+}
+
+export async function fetchEventsCached(
+  params: FetchEventsParams,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  try {
+    return await getCachedEventsPage(buildEventsQuery(params).toString());
+  } catch {
+    return fetchEvents(params);
+  }
+}
+
 export async function fetchEventBySlug(
   fullSlug: string,
   options: InternalOriginOptions = {},
