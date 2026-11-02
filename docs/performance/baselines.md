@@ -91,3 +91,73 @@ FCP 1.27 s (89% good), TTFB 0.53 s (89% good).
 - ISR on event pages (#605) cannot be measured on this machine, because the server renders in about 30 ms anyway. On staging (no Cloudflare cache), full-HTML median was 0.72 s on the first visit vs 0.53 s on a repeat visit, but there is no same-method "before". Check production after release: Cloudflare served only 15% of Spanish event views from cache (7 days to 2026-11-01), and a miss took 0.28-0.53 s vs 0.11-0.15 s for a hit.
 
 **Next check:** CrUX weekly after develop reaches main; GA `web_vitals` with the LCP element (#591) to measure the consent box share.
+
+## 2026-11-02 (2): consent box, event image, TBT, listings
+
+**Field (CrUX, production, phone, p75, period to 2026-10-31):** no change. LCP 2.58 s, INP 189 ms, CLS 0.28, FCP 1.27 s, TTFB 0.53 s. develop is not on main yet, so ISR, Redis memory and GA `web_vitals` (#591) could not be checked on production.
+
+### Consent box (#609)
+
+The Funding Choices (FC) loader moved from a `lazyOnload` script (after hydration and the load event) to `<script async>` in `<head>`, as in Google's snippet. The "show the box by hand" fallback was rewritten.
+
+Bug found on production: the old fallback opened the box whenever the `googlefcInactive` frame existed. FC creates that frame for every visitor, so returning visitors got the box on every page view. On slow phones it also opened before FC's own box, so two boxes opened and the first "Consentir" did not close it. The new fallback listens to TCF events. It shows the box only when FC's first event says GDPR applies and has no stored consent string, and FC has not reported `cmpuishown` 3 s later.
+
+Lab: before = develop `a1ea418d`, after = `2f91ca83` (first #609 commit; the review fixes merged as `99021ff0` only change when the 3 s wait starts and were re-checked against the real FC). Local build served under the production host name (see method below), Pixel 7, 4x CPU, 1.6 Mbps / 150 ms, median of 3. Ads and analytics requests blocked; FC real.
+
+| Page | First visit: box / LCP before | After | Returning visitor LCP before | After |
+|---|---|---|---|---|
+| `/` | box 5.21 s, LCP 1.26 s (image) | box 7.16 s (fallback, not LCP), LCP 1.34 s | 1.26 s, box shown again | 1.34 s, no box |
+| `/barcelona` | 4.18 / 4.20 s (box) | **3.62 / 3.64 s** | 4.86 s (box) | **1.44 s** |
+| Event with image | box 5.08 s, LCP 0.97 s | box 3.74 s, LCP 0.97 s | 0.96 s, box shown | 0.96 s, no box |
+| Event without image | 4.52 / 4.53 s (box) | **3.83 / 3.84 s** | 5.01 s (box) | **0.88 s** |
+
+- Cost: domInteractive +0.1-0.2 s (the FC script now loads during parsing).
+- `fetchPriority="high"` on the loader was tested and rejected: domInteractive +0.3-0.5 s and home LCP 1.28 → 1.61 s.
+- On `/`, FC itself shows no box to a new visitor (one TCF event, no `cmpuishown`). That is why the fallback exists. Its cause is likely a setting in AdSense "Privacy & messaging".
+- TCF on production: `gdprApplies` is true on FC's first event; a returning visitor's first event is `tcloaded` with the consent string. With FC on our site `getTCData` always fails (deprecated in TCF 2.2; use `addEventListener`). The `FCCDCF` cookie is set on a first visit too, so it does not mean "already chose".
+
+### Event page image
+
+- Same session, same slug: LCP 1.28 s (`1ee9aa30`) → **0.94 s** (develop). The earlier 3.0 s was not reproduced; it was likely a slow, uncached image fetch.
+- Hero preload and `<img>` use the same `sizes`; a Pixel 7 picks the 1200w WebP at q50 (28 KB, from a 60 KB JPEG).
+- `/api/image-proxy` has no cache at the origin: each request fetches the original and runs Sharp. Locally 150-270 ms per request, vs 80-160 ms for the original file. On www, Cloudflare returns `DYNAMIC` for it (not cached), although the response has a 1-year `immutable` header when `?v=` is present. A Cloudflare cache rule for `/api/image-proxy*` is the fix (pending).
+
+### TBT
+
+| Page | Before (`1ee9aa30`) LCP / TBT / domInteractive | Now (develop `a1ea418d`) |
+|---|---|---|
+| `/` | 1956 / 41 / 3123 ms | 1272 / 46 / 3030 ms |
+| `/catalunya` | 2084 / 43 / 2995 ms | 884 / 46 / 2287 ms |
+| `/barcelona` | 1736 / 38 / 1695 ms | 1172 / 43 / 1178 ms |
+| Event with image | 1284 / 46 / 1995 ms | 940 / 49 / 1577 ms |
+| Event without image | 632 / 37 / 1621 ms | 596 / 43 / 1327 ms |
+
+- A performance trace shows **no new long task**. Both versions have one long task: evaluating the react-dom chunk plus its microtasks (hydration start), about 90 ms before and 95 ms now. That is the +5 ms TBT.
+- Total JavaScript time is lower now (CPU profile on `/catalunya`: react-dom chunk 233 → 135 ms, all JS 297 → 221 ms).
+- Largest avoidable item: about 23 ms per page in `IntlMessageFormat.resolveLocale` (next-intl formats ICU messages at runtime). next-intl 4.14 can precompile messages at build time (`experimental.messages.precompile`, about 9 KB less JS and no runtime parsing). It does not support `t.raw()`, which we use in 5 places (month names, category templates), so those need to move to plain keys first.
+
+### Listings: static shell?
+
+| Page | FCP | LCP | Gap | Server time (warm) |
+|---|---|---|---|---|
+| `/` | 0.68 s | 1.27 s | 0.60 s | 312 ms |
+| `/catalunya` | 0.58 s | 0.88 s | 0.31 s | 188 ms |
+| `/barcelona` | 0.58 s | 1.17 s | 0.60 s | 702 ms |
+| Event without image (ISR) | 0.60 s | 0.60 s | 0 | 27 ms |
+
+Listings render their events on each request and reveal them through Suspense, 0.3-0.6 s after the first paint. That gap includes the React 19.2 reveal throttle (up to 300 ms). The ISR event page has no gap. A static listing shell would likely save 0.3-0.6 s of LCP. The cost:
+- Every listing reader needs `"use cache"`, and the `connection()` calls on the listing path must go or move into a smaller dynamic part: `fetchWithHmac`, `generatePagesData`, `PlacePageShell` and `HomeStructuredData` (`app/[locale]/page.tsx`; the last two were added for tree mismatches), plus `SponsorBannerSlot` (sponsor lookup) and `lib/api/promotions.ts` (promoted events).
+- Date filters ("avui", "demà") change at midnight, so they need a cached date.
+- Cache size: a listing is 0.3-0.7 MB of HTML plus a similar RSC payload. The production Redis is 450 MB `allkeys-lru`, shared with event ISR pages. Places × dates × categories × 3 languages is far more than fits, so caching only the plain place pages (or the busiest places) is the realistic first step.
+
+### INP
+
+Not measured. It needs GA `web_vitals` INP attribution (#591) from production first, then a lab check of the slowest interactions at 20x CPU.
+
+### Method: consent box in the lab
+
+- FC shows no box on `localhost`. Serve the local build under the real host name: start Chromium with `--host-resolver-rules=MAP www.esdeveniments.cat 127.0.0.1:<port>`.
+- For returning-visitor tests use HTTPS: over plain http FC's consent cookies do not persist, and the box reappears. A small local TLS proxy with a self-signed certificate plus Playwright `ignoreHTTPSErrors` works.
+- Block ads and analytics requests, keep FC: `/googlesyndication|doubleclick|google-analytics|googletagmanager|adtrafficquality|googleadservices|\/pagead\//`.
+
+**Next check:** after develop reaches main: CrUX weekly; Cloudflare cache status and full-HTML time for `/e/*` misses vs hits; production Redis `used_memory`; GA `web_vitals` LCP element and INP attribution (#591).
