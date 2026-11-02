@@ -899,6 +899,9 @@
     },
     "WhereToEatSection": {
       "showPhoto": "Ver foto",
+      "loadIntro": "Encuentra dónde comer cerca del evento.",
+      "loadCta": "Mostrar restaurantes cercanos",
+      "empty": "Ahora mismo no podemos mostrar restaurantes cercanos.",
       "title": "Dónde puedes comer",
       "promote": "Promociona tu restaurante"
     },

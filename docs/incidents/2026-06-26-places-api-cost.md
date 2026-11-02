@@ -71,6 +71,31 @@ Defense in depth — no single layer is load-bearing:
 3. **Provider (GCP, not in the repo)** — `places.googleapis.com/SearchNearbyRequest`
    daily quota capped at **50/day** via a Service Usage consumer override (default was
    100). This is the hard ceiling; a `429` stops calls and billing for the day.
+   The Places API lives in GCP project **`esdeveniments`** (the project
+   owner's personal account), not `esdeveniments-3`.
+
+## Follow-up (Oct 27, 2026)
+
+October billed again (€2.6 Oct 25, €2.3 Oct 26). Findings from Cloud Monitoring:
+
+- The 50/day override was **not present** on `esdeveniments` (limit was the default
+  75,000/day), so nothing bounded the climb. Re-applied 50/day.
+- `SearchNearby` calls rose from ~10–20/day (Aug–Sep) to 60–109/day (late Oct). Spread
+  round the clock, not bursts — not CI/e2e (CI never gets `GOOGLE_PLACES_API_KEY`).
+- Cost only appears after the month's cumulative calls pass the **1,000 free** Nearby
+  Search Enterprise calls (crossed Oct 25), then ~$35/1,000.
+- Staging and prod use the same key but **separate Redis caches**: every cell is billed
+  twice, and staging (no real users, outside the `www`-scoped WAF) still makes calls.
+
+## Follow-up (Nov 2, 2026): click-to-load
+
+October: 1,476 billed `SearchNearby` calls → 530 `restaurant_section_view` → **4**
+restaurant clicks to Maps (GA4). Billed calls exceeded tracked views, so most spend was
+on visitors GA never sees (no consent or JS bots). The 50/day quota was also hiding the
+section from real users. The widget now fetches only when the user clicks "Show nearby
+restaurants" (`restaurant_load_click`), for everyone; no login gate. A login gate was
+rejected: ~€17/month max saving, and GA had no auth events yet. Staging returns
+`notConfigured`, so it no longer calls Google.
 
 ## Prevention
 

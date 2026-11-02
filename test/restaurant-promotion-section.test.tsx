@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import RestaurantPromotionSection from "../components/ui/restaurantPromotion/RestaurantPromotionSection";
 
@@ -16,10 +16,6 @@ vi.mock("../components/ui/restaurantPromotion/WhereToEatSkeleton", () => ({
 
 vi.mock("../components/ui/restaurantPromotion/PromotionInfoModal", () => ({
   default: () => null,
-}));
-
-vi.mock("../components/hooks/useOnScreen", () => ({
-  default: () => true, // Always visible for testing
 }));
 
 // Mock computeTemporalStatus to use mocked time
@@ -142,8 +138,9 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           eventStartDate={startDate}
         />
       );
-      // Component should render (not return null)
-      await screen.findByTestId("loading-skeleton");
+      // Component should render the load button, without calling Google yet
+      expect(screen.getByRole("button")).toBeInTheDocument();
+      expect(global.fetch).not.toHaveBeenCalled();
     });
 
     it("shows component for events happening today that haven't finished", async () => {
@@ -165,7 +162,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           eventEndTime={endTime}
         />
       );
-      await screen.findByTestId("loading-skeleton");
+      expect(screen.getByRole("button")).toBeInTheDocument();
     });
 
     it("does not show component for events that finished today", () => {
@@ -227,7 +224,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           eventStartTime={null}
         />
       );
-      await screen.findByTestId("loading-skeleton");
+      expect(screen.getByRole("button")).toBeInTheDocument();
     });
   });
 
@@ -247,6 +244,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       render(
         <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
       );
+      fireEvent.click(screen.getByRole("button"));
 
       await waitFor(
         () => {
@@ -274,6 +272,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           eventStartDate={futureDate}
         />
       );
+      fireEvent.click(screen.getByRole("button"));
 
       await waitFor(
         () => {
@@ -294,6 +293,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
           eventStartDate={farFutureDate}
         />
       );
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
 
       // Wait a bit to ensure fetch is not called
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -314,7 +314,8 @@ describe("RestaurantPromotionSection - Date Logic", () => {
         />
       );
 
-      // Component should render (event is still ongoing) but not fetch
+      // Component should render (event is still ongoing) but offer no load button
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
       await new Promise((resolve) => setTimeout(resolve, 500));
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -385,6 +386,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       render(
         <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
       );
+      fireEvent.click(screen.getByRole("button"));
 
       await waitFor(
         () => {
@@ -394,6 +396,84 @@ describe("RestaurantPromotionSection - Date Logic", () => {
         },
         { timeout: 3000 }
       );
+    });
+  });
+  describe("Click-to-load", () => {
+    it("renders restaurants only after the user clicks", async () => {
+      const today = baseNow.toISOString().split("T")[0];
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [{ place_id: "a", name: "A" }, { place_id: "b", name: "B" }],
+          status: "OK",
+          attribution: "Powered by Google",
+        }),
+      });
+      global.fetch = mockFetch;
+
+      render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      expect(screen.queryByTestId("where-to-eat-section")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button"));
+
+      expect(await screen.findByTestId("where-to-eat-section")).toHaveTextContent(
+        "2 restaurants"
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    });
+
+    it("shows the unavailable message when no restaurants are found", async () => {
+      const today = baseNow.toISOString().split("T")[0];
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [],
+          status: "OK",
+          attribution: "Powered by Google",
+        }),
+      });
+
+      render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      fireEvent.click(screen.getByRole("button"));
+
+      expect(
+        await screen.findByText("Ara mateix no podem mostrar restaurants a prop.")
+      ).toBeInTheDocument();
+    });
+
+    it("keeps focus inside the widget after the button unmounts", async () => {
+      const today = baseNow.toISOString().split("T")[0];
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ results: [] }),
+      });
+
+      const { container } = render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      fireEvent.click(screen.getByRole("button"));
+
+      expect(document.activeElement).toBe(container.firstChild);
+      await screen.findByText("Ara mateix no podem mostrar restaurants a prop.");
+    });
+
+    it("shows the same message when the lookup fails", async () => {
+      const today = baseNow.toISOString().split("T")[0];
+      global.fetch = vi.fn().mockResolvedValueOnce({ ok: false });
+
+      render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      fireEvent.click(screen.getByRole("button"));
+
+      expect(
+        await screen.findByText("Ara mateix no podem mostrar restaurants a prop.")
+      ).toBeInTheDocument();
     });
   });
 });
