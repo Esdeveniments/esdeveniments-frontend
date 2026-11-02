@@ -5,7 +5,7 @@ import CardLink from "@components/ui/common/cardContent/CardLink";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
 import CategoryBadge from "@components/ui/common/cardContent/CategoryBadge";
-import { MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
+import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 import { prepareCardContentData } from "@components/ui/common/cardContent/prepareCardContentData";
 
 const CardHorizontalServer = async ({
@@ -104,7 +104,9 @@ const CardHorizontalServer = async ({
 
         {primaryLocation && (
           <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0">
-            <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <svg className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true">
+              <use href={`#${SPRITE_ICON.mapPin}`} />
+            </svg>
             <span className="truncate">{primaryLocation}</span>
           </div>
         )}

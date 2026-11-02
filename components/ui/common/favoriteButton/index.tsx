@@ -4,10 +4,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import useSWR from "swr";
-import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
-import { HeartIcon as HeartIconOutline } from "@heroicons/react/24/outline";
 
 import Button from "@components/ui/common/button";
+import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 import { sendGoogleEvent } from "@utils/analytics";
 import useTrackedCta from "@components/hooks/useTrackedCta";
 import { queueFavoriteRequest } from "@utils/favorites-queue";
@@ -75,7 +74,6 @@ export default function FavoriteButton({
   }, [favoritesData, eventSlug]);
 
   const ariaLabel = isFavorite ? labels.remove : labels.add;
-  const Icon = isFavorite ? HeartIconSolid : HeartIconOutline;
 
   return (
     <div ref={ctaRef} className="relative">
@@ -219,7 +217,12 @@ export default function FavoriteButton({
           });
         }}
       >
-        <Icon className={`h-6 w-6 text-primary transition-[transform,color] duration-200 group-hover:scale-[1.06] group-active:scale-[0.96] ${isFavorite ? "animate-heartBeat" : ""}`} />
+        <svg
+          className={`h-6 w-6 text-primary transition-[transform,color] duration-200 group-hover:scale-[1.06] group-active:scale-[0.96] ${isFavorite ? "animate-heartBeat" : ""}`}
+          aria-hidden="true"
+        >
+          <use href={`#${isFavorite ? SPRITE_ICON.heartSolid : SPRITE_ICON.heartOutline}`} />
+        </svg>
       </Button>
 
       {limitMessage && (
