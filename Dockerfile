@@ -70,6 +70,7 @@ COPY --chown=nextjs:nodejs --from=builder /app/.next/standalone ./
 COPY --chown=nextjs:nodejs --from=builder /app/.next/static ./.next/static
 COPY --chown=nextjs:nodejs --from=builder /app/public ./public
 COPY --chown=nextjs:nodejs --from=builder /app/cache-handler.mjs ./cache-handler.mjs
+COPY --chown=nextjs:nodejs --from=builder /app/use-cache-handler.mjs ./use-cache-handler.mjs
 # Entrypoint caps V8's heap to a fraction of the container memory limit so the
 # GC runs before the kernel OOM-kills the container (see docker-entrypoint.sh).
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh

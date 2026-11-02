@@ -15,6 +15,8 @@ This note covers the **Next.js frontend** side. Container CPU/memory caps and Re
 - `sharp` (image optimization) allocates **off-heap** native memory that still
   counts against the cgroup limit. Leave headroom for it on top of the V8 heap.
 - The in-process LRU cache (`cache-handler.mjs`) is bounded to 50 MB total.
+- The `"use cache"` store (`use-cache-handler.mjs`, in-process LRU) is bounded
+  to 64 MB.
 - The optimized-image disk cache is capped at 2 GB (`next.config.js`,
   `images.maximumDiskCacheSize`) — disk, not RAM.
 

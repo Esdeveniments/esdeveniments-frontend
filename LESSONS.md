@@ -529,3 +529,23 @@ and the `FCCDCF` cookie is set on a first visit too. FC shows no box on
 `--host-resolver-rules`, and serve it over HTTPS for returning-visitor tests
 (over http FC's consent cookies do not stick). Method in
 `docs/performance/baselines.md` (2026-11-02 (2)).
+
+## `"use cache"` needs its own handler here
+
+`cacheMaxMemorySize: 0` (set so the Redis page cache keeps no per-process copy)
+also turns Next's built-in `"use cache"` store into a no-op in production.
+Until `use-cache-handler.mjs` was registered as `cacheHandlers.default`, no
+`"use cache"` function was cached at runtime: every call ran again. Pages that
+Next stores whole (the event page) were fast anyway, because the route cache is
+a separate layer. To check: log server `fetch` calls (`NODE_OPTIONS=--require`
+with a small fetch wrapper) and load a page twice; a cached reader must not
+fetch the second time.
+
+## `isBuildPhase` is true at runtime on Coolify
+
+`utils/constants.ts` sets `isBuildPhase` when `NODE_ENV` is production and
+`VERCEL_URL` is not set, which is always the case on Coolify. Readers that
+branch on it (events, places, categories, regions) take the "external" path on
+every request, with `no-store` fetches, and skip the in-memory caches of the
+internal path. A listing render makes 6 to 8 backend calls for places,
+categories and regions, even on a repeat visit.

@@ -1,4 +1,4 @@
-import { insertAds } from "@lib/api/events";
+import { fetchEventsCached, insertAds } from "@lib/api/events";
 import { Suspense, use } from "react";
 import type { JSX } from "react";
 import { fetchCategories } from "@lib/api/categories";
@@ -244,6 +244,7 @@ export async function buildPlaceEventsPromise({
     await fetchEventsWithFallback({
       place,
       initialParams: fetchParams,
+      fetcher: fetchEventsCached,
       regionFallback: {
         size: 7,
         includeCategory: false,

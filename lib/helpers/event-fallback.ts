@@ -18,8 +18,8 @@ const DEFAULT_STAGE_SIZE = 7;
 export async function fetchEventsWithFallback(
   options: FetchEventsWithFallbackOptions
 ): Promise<FetchEventsWithFallbackResult> {
-  const { initialParams, place } = options;
-  const initialResponse = await fetchEvents(initialParams);
+  const { initialParams, place, fetcher = fetchEvents } = options;
+  const initialResponse = await fetcher(initialParams);
 
   if (hasEvents(initialResponse)) {
     return {
@@ -47,7 +47,7 @@ export async function fetchEventsWithFallback(
         options.regionFallback
       );
 
-      latestResponse = await fetchEvents(regionParams);
+      latestResponse = await fetcher(regionParams);
 
       if (hasEvents(latestResponse)) {
         return {
@@ -78,7 +78,7 @@ export async function fetchEventsWithFallback(
     finalOptions
   );
 
-  latestResponse = await fetchEvents(finalParams);
+  latestResponse = await fetcher(finalParams);
 
   return {
     eventsResponse: latestResponse,

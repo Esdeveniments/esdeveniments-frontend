@@ -172,6 +172,10 @@ export interface FetchEventsWithFallbackOptions {
   initialParams: FetchEventsParams;
   regionFallback?: EventFallbackStageOptions;
   finalFallback?: EventFallbackStageOptions;
+  /** Defaults to fetchEvents. */
+  fetcher?: (
+    params: FetchEventsParams,
+  ) => Promise<PagedResponseDTO<EventSummaryResponseDTO>>;
 }
 
 export interface FetchEventsWithFallbackResult {

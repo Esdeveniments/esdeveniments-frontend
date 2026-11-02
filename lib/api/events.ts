@@ -188,6 +188,57 @@ async function fetchEventsInternal(
 
 export const fetchEvents = cache(fetchEventsInternal);
 
+// fetchEvents is not cached on Coolify: isBuildPhase is true at runtime there
+// (no VERCEL_URL), so it takes the no-store external path and every listing
+// render waits for the backend. This reader caches one events page per query
+// (no locale in it) in the shared cache handler. It throws on failure so an
+// error is never cached; fetchEventsCached then falls back to fetchEvents.
+const CACHED_EVENTS_TIMEOUT_MS = 8000;
+
+async function getCachedEventsPage(
+  query: string,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  "use cache";
+  cacheTag(eventsTag);
+  cacheLife({ stale: 300, revalidate: 600, expire: 3600 });
+  const res = await fetchWithHmac(`${getApiUrl()}/events?${query}`, {
+    skipConnection: true,
+    timeout: CACHED_EVENTS_TIMEOUT_MS,
+  });
+  if (!res.ok) throw new Error(`getCachedEventsPage: HTTP ${res.status}`);
+  const page = parsePagedEvents(await res.json());
+  if (!page) throw new Error("getCachedEventsPage: invalid payload");
+  return page;
+}
+
+export async function fetchEventsCached(
+  params: FetchEventsParams,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  const startedAt = Date.now();
+  try {
+    return await getCachedEventsPage(buildEventsQuery(params).toString());
+  } catch (error) {
+    captureException(error, {
+      tags: { section: "events-fetch", fallback: "cached-read-failed" },
+      extra: { params },
+    });
+    // Errors thrown inside "use cache" reach us without their type in
+    // production, so detect a timeout by the time spent. A retry would only
+    // time out again and double the wait on each fallback stage.
+    if (Date.now() - startedAt >= CACHED_EVENTS_TIMEOUT_MS) {
+      return {
+        content: [],
+        currentPage: params.page ?? 0,
+        pageSize: params.size ?? 12,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      };
+    }
+    return fetchEvents(params);
+  }
+}
+
 export async function fetchEventBySlug(
   fullSlug: string,
   options: InternalOriginOptions = {},
