@@ -11,6 +11,9 @@ import {
 } from "react";
 import type { TcfCallback, AdContextType } from "types/ads";
 
+/** Fired on window once adsbygoogle.js loads or fails to load. */
+export const ADS_SCRIPT_SETTLED_EVENT = "ads-script-settled";
+
 const AdContext = createContext<AdContextType | undefined>(undefined);
 
 export const useAdContext = () => {

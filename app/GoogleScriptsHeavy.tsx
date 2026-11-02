@@ -7,6 +7,8 @@ import { useEffect, useRef } from "react";
 
 import { isE2ETestMode } from "@utils/env";
 import { ensureGtag } from "@utils/analytics";
+import { ADS_SCRIPT_SETTLED_EVENT } from "@lib/context/AdContext";
+import type { GoogleScriptsHeavyProps } from "types/ads";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
@@ -59,9 +61,8 @@ function classifyOutboundLinkType(hostname: string, pathname: string): string {
 
 export default function GoogleScriptsHeavy({
   adsAllowed,
-}: {
-  adsAllowed: boolean;
-}) {
+  adsScriptReady,
+}: GoogleScriptsHeavyProps) {
   const autoAdsInitRef = useRef(false);
   const autoAdsPendingToken = useRef<symbol | null>(null);
 
@@ -209,23 +210,6 @@ export default function GoogleScriptsHeavy({
 
     const pendingToken = setPendingToken();
 
-    const injectAdsScript = () => {
-      if (ADS_SRC && !document.querySelector(`script[src="${ADS_SRC}"]`)) {
-        const script = document.createElement("script");
-        script.src = ADS_SRC;
-        script.async = true;
-        script.crossOrigin = "anonymous";
-        document.head.appendChild(script);
-      }
-    };
-
-    if ("requestIdleCallback" in window) {
-      window.requestIdleCallback(() => injectAdsScript(), { timeout: 4000 });
-    } else {
-      const id = setTimeout(injectAdsScript, 2000);
-      timeoutIds.push(id);
-    }
-
     const pushAutoAds = () => {
       if (autoAdsInitRef.current || window.__autoAdsInitialized) {
         clearPendingToken(pendingToken);
@@ -289,6 +273,26 @@ export default function GoogleScriptsHeavy({
       }
     };
   }, [adsAllowed]);
+
+  // Load adsbygoogle.js after consent and the first interaction (or the load
+  // fallback). The pushes above queue in window.adsbygoogle until it runs.
+  useEffect(() => {
+    if (isE2ETestMode) return;
+    if (!adsAllowed || !adsScriptReady || !ADS_SRC) return;
+    if (document.querySelector(`script[src="${ADS_SRC}"]`)) return;
+
+    const script = document.createElement("script");
+    script.src = ADS_SRC;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    const settle = () => {
+      window.__adsScriptSettled = true;
+      window.dispatchEvent(new Event(ADS_SCRIPT_SETTLED_EVENT));
+    };
+    script.onload = settle;
+    script.onerror = settle;
+    document.head.appendChild(script);
+  }, [adsAllowed, adsScriptReady]);
 
   useEffect(() => {
     if (isE2ETestMode) return;

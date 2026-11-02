@@ -21,3 +21,44 @@ export function scheduleIdleCallback(
   const id = setTimeout(callback, options?.timeout ?? 100);
   return () => clearTimeout(id);
 }
+
+const FIRST_INTERACTION_EVENTS = ["pointerdown", "keydown", "touchstart"] as const;
+
+/**
+ * Run a callback once: on the first tap, key press or page scroll, or
+ * `timeoutMs` after the window load event, whichever comes first.
+ * Returns a cleanup function.
+ */
+export function onFirstInteractionOrTimeout(
+  callback: () => void,
+  timeoutMs: number
+): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const options: AddEventListenerOptions = { capture: true, passive: true };
+
+  const cleanup = () => {
+    clearTimeout(timer);
+    FIRST_INTERACTION_EVENTS.forEach((type) =>
+      window.removeEventListener(type, fire, options)
+    );
+    window.removeEventListener("scroll", fire);
+    window.removeEventListener("load", startTimer);
+  };
+  function fire() {
+    cleanup();
+    callback();
+  }
+  function startTimer() {
+    timer = setTimeout(fire, timeoutMs);
+  }
+
+  FIRST_INTERACTION_EVENTS.forEach((type) =>
+    window.addEventListener(type, fire, options)
+  );
+  // Not captured: element scrolls (carousels) must not count, only the page.
+  window.addEventListener("scroll", fire, { passive: true });
+  if (document.readyState === "complete") startTimer();
+  else window.addEventListener("load", startTimer, { once: true });
+
+  return cleanup;
+}
