@@ -123,4 +123,14 @@ describe("HorizontalScroll nudge", () => {
     expect(scrollBy).not.toHaveBeenCalled();
     expect(scrollTo).not.toHaveBeenCalled();
   });
+
+  it("removes its touch listeners once the nudge ends", () => {
+    const { getByRole } = renderCarousel();
+    const removeSpy = vi.spyOn(getByRole("list"), "removeEventListener");
+    intersectAll();
+    act(() => vi.advanceTimersByTime(1000));
+
+    expect(removeSpy).toHaveBeenCalledWith("pointerdown", expect.any(Function));
+    expect(removeSpy).toHaveBeenCalledWith("touchstart", expect.any(Function));
+  });
 });

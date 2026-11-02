@@ -101,11 +101,16 @@ export default function HorizontalScroll({
     let backward: number | undefined;
     let hintTimeout: number | undefined;
     let nudgeObserver: IntersectionObserver | undefined;
+    const removeNudgeListeners = () => {
+      el.removeEventListener("pointerdown", cancelNudge);
+      el.removeEventListener("touchstart", cancelNudge);
+    };
     // A swipe during the nudge wins: do not scroll back over it.
-    const cancelNudge = () => {
+    function cancelNudge() {
       window.clearTimeout(forward);
       window.clearTimeout(backward);
-    };
+      removeNudgeListeners();
+    }
     try {
       const storageKey =
         hintStorageKey ||
@@ -155,6 +160,7 @@ export default function HorizontalScroll({
             }, nudgeDelay);
             backward = window.setTimeout(() => {
               el.scrollTo({ left: 0, behavior: "smooth" });
+              removeNudgeListeners();
             }, nudgeDelay + backDelay);
             hintTimeout = window.setTimeout(() => setShowHint(false), 2500);
           },
