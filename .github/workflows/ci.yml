@@ -206,9 +206,11 @@ jobs:
         with:
           path: |
             ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          # Own key: this build inlines NEXT_PUBLIC_E2E_TEST_MODE, the quality
+          # build does not, so the two must never share a compilation cache.
+          key: ${{ runner.os }}-nextjs-e2e-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
+            ${{ runner.os }}-nextjs-e2e-${{ hashFiles('**/yarn.lock') }}-
 
       - name: Generate service worker and robots.txt (prebuild)
         env:

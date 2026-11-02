@@ -301,16 +301,21 @@ runs `yarn build` and `yarn start` with `E2E_TEST_MODE=1` and
 `NEXT_PUBLIC_E2E_TEST_MODE=1`, then Playwright against `http://localhost:3000`.
 `NEXT_PUBLIC_API_URL` is inlined by `yarn build`, so the build step sets it.
 The secrets are read at runtime, so the start step needs `HMAC_SECRET`,
-`BACKEND_SERVICE_SECRET` and the `*_TEST` Stripe and Turso secrets. If the
+`BACKEND_SERVICE_SECRET` and the `*_TEST` Stripe and Turso secrets. It also
+sets `INTERNAL_SITE_URL=http://localhost:3000`: cached readers resolve the
+app's own `/api` from config, not from the request Host, so without it they
+read production `www` instead of the build under test. If the
 backend rejects the request, safe-fallback routes (categories, places, news)
 return 200 with empty data, while `/api/events` passes the upstream error on;
-either way the data specs fail. The job does not reuse the quality job's build,
-because `NEXT_PUBLIC_E2E_TEST_MODE` is inlined at build time.
+either way the data specs fail. The job does not reuse the quality job's build
+or its `.next/cache` key, because `NEXT_PUBLIC_E2E_TEST_MODE` is inlined at
+build time.
 
 ## E2E runs on pull requests only
 
-The E2E job has `if: github.event_name == 'pull_request'`. On push to `main`
-the Coolify deploy workflow runs its own build and E2E. A skipped E2E check on a
+The E2E job has `if: github.event_name == 'pull_request'`. On a code push to
+`main` the Coolify deploy workflow runs its own build and E2E (it ignores
+`**/*.md`, so docs-only pushes run no E2E). A skipped E2E check on a
 push run is expected, not a pass.
 
 ## Test-mode specs read `E2E_TEST_MODE` in the Playwright process
