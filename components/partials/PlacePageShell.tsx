@@ -2,7 +2,10 @@ import { Suspense } from "react";
 import type { JSX } from "react";
 import dynamic from "next/dynamic";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import PromotedEventsSection from "@components/ui/promotedEvents/PromotedEventsSection";
+import {
+  getPromotedEvents,
+  PromotedEventsRow,
+} from "@components/ui/promotedEvents/PromotedEventsSection";
 import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
@@ -263,10 +266,13 @@ async function PlacePageContent({
   // shouldn't emit /[place]/[date] or /[place]/[category] internal links — those
   // URLs are near-duplicates of the parent page and end up in GSC's "Crawled —
   // currently not indexed" bucket. Regions always expand.
+  // Promoted events load with the list (not in their own Suspense), so the
+  // row never pops in later and pushes the list down.
   const [
     { placeTypeLabel, pageData },
     { events, noEventsFound, serverHasMore, ssrPageSize, structuredScripts, placeIsExpandable },
-  ] = await Promise.all([shellDataPromise, eventsPromise]);
+    promotedEvents,
+  ] = await Promise.all([shellDataPromise, eventsPromise, getPromotedEvents(place)]);
 
   const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
   const tByDates = await getTranslations("Config.ByDates");
@@ -348,10 +354,6 @@ async function PlacePageContent({
       ))}
 
       <FilterLoadingGate>
-        <Suspense fallback={null}>
-          <PromotedEventsSection placeSlug={place} />
-        </Suspense>
-
         <HybridEventsList
           initialEvents={events}
           placeTypeLabel={placeTypeLabel}
@@ -363,6 +365,7 @@ async function PlacePageContent({
           serverHasMore={serverHasMore}
           ssrPageSize={ssrPageSize}
           categories={categories}
+          promotedSlot={<PromotedEventsRow events={promotedEvents} placeSlug={place} />}
         />
       </FilterLoadingGate>
 

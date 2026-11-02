@@ -591,6 +591,8 @@ export interface HybridEventsListProps {
    */
   ssrPageSize?: number;
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
+  // Rendered below the page heading, inside the space kept for the fixed filter bar.
+  promotedSlot?: import("react").ReactNode;
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
@@ -1058,6 +1060,10 @@ export type PromotionReturnRouteProps = Pick<PromotionReturnPageProps, "params">
 export interface PromotedEventsSectionProps {
   /** Place page slug; omit (or "catalunya") for the Catalonia-wide list. */
   placeSlug?: string;
+}
+
+export interface PromotedEventsRowProps extends PromotedEventsSectionProps {
+  events: import("./api/event").EventSummaryResponseDTO[];
 }
 
 // /e/[eventId]/edita client form

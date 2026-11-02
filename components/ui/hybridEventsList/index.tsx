@@ -23,6 +23,7 @@ async function HybridEventsList({
   serverHasMore = false,
   ssrPageSize,
   categories,
+  promotedSlot,
 }: HybridEventsListProps): Promise<ReactElement> {
   const priorityIndex = initialEvents.findIndex(hasCardImage);
   const titleClass = place ? "heading-2" : "heading-1";
@@ -65,6 +66,7 @@ async function HybridEventsList({
         data-analytics-date-slug={date || undefined}
       >
         {headingSection}
+        {promotedSlot}
         {sponsorSlot}
         <NoEventsFound
           title={pageData?.notFoundTitle}
@@ -94,6 +96,7 @@ async function HybridEventsList({
       data-analytics-date-slug={date || undefined}
     >
       {headingSection}
+      {promotedSlot}
       {sponsorSlot}
 
       {/* Initial SSR list with ads (no hydration beyond card internals).

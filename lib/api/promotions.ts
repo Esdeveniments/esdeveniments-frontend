@@ -23,6 +23,11 @@ import type {
 } from "types/api/promotion";
 
 const PROMOTED_EVENTS_SIZE = 8;
+// Place pages render the list together with this optional row, so a slow
+// backend must not hold the list: past this, the row is skipped (normal ~0.12 s).
+// The [] from a timeout or error is cached like a real result (60 s): while the
+// backend is slow, renders skip the row at once instead of each waiting 800 ms.
+const PROMOTED_EVENTS_TIMEOUT_MS = 800;
 // The backend reshuffles promoted events every 5 minutes; one call per minute
 // per placement and process keeps listing renders off the backend.
 const { cache: promotedEventsCache } =
@@ -197,7 +202,7 @@ async function fetchPromotedEventsApi(
     // docs/incidents/2026-01-20-fetch-cache-explosion.md).
     const response = await fetchWithHmac(
       `${getApiUrl()}/events/promoted?${key}`,
-      { headers: { Accept: "application/json" } },
+      { headers: { Accept: "application/json" }, timeout: PROMOTED_EVENTS_TIMEOUT_MS },
     );
     if (!response.ok) {
       console.warn(`fetchPromotedEvents: HTTP ${response.status}`);
