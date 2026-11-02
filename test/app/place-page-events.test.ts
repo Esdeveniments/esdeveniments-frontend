@@ -9,9 +9,9 @@ vi.mock("@lib/helpers/event-fallback", () => ({
   fetchEventsWithFallback: vi.fn(),
 }));
 
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   insertAds: (events: EventSummaryResponseDTO[]) => events,
-  fetchEventsCached: vi.fn(),
 }));
 
 vi.mock("@components/partials/seo-meta", () => ({

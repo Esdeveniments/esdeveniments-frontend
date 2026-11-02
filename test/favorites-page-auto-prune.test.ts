@@ -53,7 +53,8 @@ vi.mock("@utils/event-helpers", () => ({
   isEventActive: vi.fn((_event: EventSummaryResponseDTO) => true),
 }));
 
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   fetchEventBySlugWithStatus: vi.fn(async (_slug: string) => ({
     event: null,
     notFound: false,
