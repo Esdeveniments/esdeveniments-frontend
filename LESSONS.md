@@ -408,8 +408,9 @@ Outside tests, only `i18n/request.ts` loads the full message files.
 ## Messages are precompiled: strings only, no `t.raw()`
 
 `next.config.js` turns on next-intl `experimental.messages.precompile`, so the
-build compiles every message in `messages/*.json` to ICU code. The build fails
-on an array, a non-string value, or HTML with attributes (`<a href=...>`), and
+build compiles every message in `messages/*.json` to ICU code. Nested objects
+(namespaces) are fine, but the build fails when a leaf is an array or another
+non-string value, or holds an HTML tag with attributes (`<a href=...>`), and
 `t.raw()` returns compiled data instead of the string. Put lists (month names,
 word lists) in `i18n/locale-lists.json` and read them through
 `utils/constants.ts`; read nested strings with `t.has()` plus `t()`. Unit tests
