@@ -299,10 +299,12 @@ The required "E2E tests (Playwright)" check no longer waits for a Vercel
 preview (the Vercel quota ran out and previews stopped). The job in `ci.yml`
 runs `yarn build` and `yarn start` with `E2E_TEST_MODE=1` and
 `NEXT_PUBLIC_E2E_TEST_MODE=1`, then Playwright against `http://localhost:3000`.
-The app reads its backend and test-database settings at runtime, so the start
-step needs `HMAC_SECRET`, `BACKEND_SERVICE_SECRET` and the `*_TEST` Stripe and
-Turso secrets. A missing backend secret makes data GETs return 200 with empty
-data and fails the data specs. The job does not reuse the quality job's build,
+`NEXT_PUBLIC_API_URL` is inlined by `yarn build`, so the build step sets it.
+The secrets are read at runtime, so the start step needs `HMAC_SECRET`,
+`BACKEND_SERVICE_SECRET` and the `*_TEST` Stripe and Turso secrets. If the
+backend rejects the request, safe-fallback routes (categories, places, news)
+return 200 with empty data, while `/api/events` passes the upstream error on;
+either way the data specs fail. The job does not reuse the quality job's build,
 because `NEXT_PUBLIC_E2E_TEST_MODE` is inlined at build time.
 
 ## E2E runs on pull requests only
