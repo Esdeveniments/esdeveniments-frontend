@@ -43,6 +43,28 @@ describe("armConsentFallback", () => {
     expect(show).not.toHaveBeenCalled();
   });
 
+  it("does not show the box when GDPR does not apply", () => {
+    const show = installCmp([{ gdprApplies: false }]);
+    armConsentFallback();
+    vi.advanceTimersByTime(3000);
+    expect(show).not.toHaveBeenCalled();
+  });
+
+  it("waits for FC's first event, so a slow FC cannot reopen the box", () => {
+    let send: ((data: TcfData) => void) | undefined;
+    window.__tcfapi = (command, _version, callback) => {
+      if (command === "addEventListener")
+        send = (data) => callback({ ...data, listenerId: 1 }, true);
+    };
+    const show = vi.fn();
+    window.googlefc = { showRevocationMessage: show };
+    armConsentFallback();
+    vi.advanceTimersByTime(5000);
+    send?.({ eventStatus: "tcloaded", gdprApplies: true, tcString: "CQ..." });
+    vi.advanceTimersByTime(3000);
+    expect(show).not.toHaveBeenCalled();
+  });
+
   it("does not open a second box when FC shows its own", () => {
     const show = installCmp([
       { gdprApplies: true },

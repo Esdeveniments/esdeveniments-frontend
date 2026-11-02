@@ -40,46 +40,52 @@ const CONSENT_UPDATE_IDLE_TIMEOUT_MS = 1000;
 // after the window load event.
 const ADS_SCRIPT_FALLBACK_MS = 4500;
 
-// On a slow phone FC's own box reports "cmpuishown" up to ~1.2 s after the
-// loader script; wait longer than that before showing the box by hand.
+// On a slow phone FC's own box reports "cmpuishown" up to ~1.2 s after its
+// first TCF event; wait longer than that before showing the box by hand.
 const CONSENT_FALLBACK_DELAY_MS = 3000;
 
 // WORKAROUND: on some pages (seen on "/") Funding Choices loads but never
-// shows its box to a new visitor, so show it by hand. Only when TCF has no
-// stored consent string and FC has not shown its own box: the googlefcInactive
-// frame is also there for visitors who already chose, and they must not get
-// the box again on every page.
+// shows its box to a new visitor, so show it by hand. Only when FC's first TCF
+// event says GDPR applies and there is no stored consent string, and FC has
+// not shown its own box since. The wait starts at that first event, not at a
+// fixed time, so a slow FC cannot reopen the box for a visitor who already
+// chose. (The googlefcInactive frame is no signal: it is there for everyone.)
 export function armConsentFallback(): () => void {
   if (typeof window.__tcfapi !== "function") return () => {};
   let settled = false;
   let listenerId: number | undefined;
-  const onTcData: TcfCallback = (tcData, success) => {
-    if (!success || !tcData) return;
-    if (typeof tcData.listenerId === "number") listenerId = tcData.listenerId;
-    if (
-      tcData.tcString ||
-      tcData.gdprApplies === false ||
-      tcData.eventStatus === "cmpuishown"
-    ) {
-      settled = true;
-    }
-  };
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const stopListening = () => {
     if (listenerId === undefined) return;
     window.__tcfapi?.("removeEventListener", 2, () => {}, listenerId);
     listenerId = undefined;
   };
-  window.__tcfapi("addEventListener", 2, onTcData);
-  const timer = setTimeout(() => {
-    stopListening();
-    if (settled || document.querySelector(".fc-consent-root")) return;
-    try {
-      window.googlefc?.showRevocationMessage?.();
-    } catch {
-      // Consent UI trigger failed silently
+  const onTcData: TcfCallback = (tcData, success) => {
+    if (!success || !tcData || settled) return;
+    if (typeof tcData.listenerId === "number") listenerId = tcData.listenerId;
+    if (
+      tcData.tcString ||
+      tcData.gdprApplies !== true ||
+      tcData.eventStatus === "cmpuishown"
+    ) {
+      settled = true;
+      clearTimeout(timer);
+      stopListening();
+      return;
     }
-  }, CONSENT_FALLBACK_DELAY_MS);
+    timer ??= setTimeout(() => {
+      stopListening();
+      if (settled || document.querySelector(".fc-consent-root")) return;
+      try {
+        window.googlefc?.showRevocationMessage?.();
+      } catch {
+        // Consent UI trigger failed silently
+      }
+    }, CONSENT_FALLBACK_DELAY_MS);
+  };
+  window.__tcfapi("addEventListener", 2, onTcData);
   return () => {
+    settled = true;
     clearTimeout(timer);
     stopListening();
   };
@@ -133,8 +139,9 @@ export default function GoogleScripts() {
     const arm = () => {
       disarm = armConsentFallback();
     };
-    // Usually loaded before hydration: then there is no load event to wait for.
-    if (performance.getEntriesByName(script.src).length > 0) arm();
+    // Usually loaded before hydration: the loader defines __tcfapi, and there
+    // is no load event left to wait for.
+    if (typeof window.__tcfapi === "function") arm();
     else script.addEventListener("load", arm, { once: true });
     return () => {
       script.removeEventListener("load", arm);
