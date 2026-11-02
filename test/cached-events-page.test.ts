@@ -68,7 +68,10 @@ describe("fetchEventsCached", () => {
   });
 
   it("returns an empty page after a timeout instead of waiting for a second one", async () => {
-    fetchMock.mockRejectedValue(new DOMException("aborted", "AbortError"));
+    const now = vi.spyOn(Date, "now");
+    now.mockReturnValueOnce(0);
+    now.mockReturnValue(8000);
+    fetchMock.mockRejectedValue(new Error("generic error, as after use cache"));
 
     const result = await fetchEventsCached({ page: 0, size: 10, place: "cardedeu" });
 
