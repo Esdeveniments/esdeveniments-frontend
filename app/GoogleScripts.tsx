@@ -61,11 +61,15 @@ export function armConsentFallback(): () => void {
     listenerId = undefined;
   };
   const onTcData: TcfCallback = (tcData, success) => {
-    if (!success || !tcData || settled) return;
+    if (!success || !tcData) return;
     if (typeof tcData.listenerId === "number") listenerId = tcData.listenerId;
+    if (settled) {
+      stopListening();
+      return;
+    }
     if (
       tcData.tcString ||
-      tcData.gdprApplies !== true ||
+      tcData.gdprApplies === false ||
       tcData.eventStatus === "cmpuishown"
     ) {
       settled = true;
@@ -73,6 +77,8 @@ export function armConsentFallback(): () => void {
       stopListening();
       return;
     }
+    // undefined means "not known yet": wait for a later event.
+    if (tcData.gdprApplies !== true) return;
     timer ??= setTimeout(() => {
       stopListening();
       if (settled || document.querySelector(".fc-consent-root")) return;

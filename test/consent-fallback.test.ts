@@ -60,9 +60,31 @@ describe("armConsentFallback", () => {
     window.googlefc = { showRevocationMessage: show };
     armConsentFallback();
     vi.advanceTimersByTime(5000);
+    expect(send).toBeDefined();
     send?.({ eventStatus: "tcloaded", gdprApplies: true, tcString: "CQ..." });
     vi.advanceTimersByTime(3000);
     expect(show).not.toHaveBeenCalled();
+  });
+
+  it("waits while GDPR applicability is still unknown", () => {
+    const show = installCmp([{}, { gdprApplies: true }]);
+    armConsentFallback();
+    vi.advanceTimersByTime(3000);
+    expect(show).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes a listener whose first event comes after disarm", () => {
+    let send: ((data: TcfData) => void) | undefined;
+    const removed = vi.fn();
+    window.__tcfapi = (command, _version, callback, parameter) => {
+      if (command === "addEventListener")
+        send = (data) => callback({ ...data, listenerId: 7 }, true);
+      if (command === "removeEventListener") removed(parameter);
+    };
+    const disarm = armConsentFallback();
+    disarm();
+    send?.({ gdprApplies: true });
+    expect(removed).toHaveBeenCalledWith(7);
   });
 
   it("does not open a second box when FC shows its own", () => {
