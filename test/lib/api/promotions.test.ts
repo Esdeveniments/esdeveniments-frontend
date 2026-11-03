@@ -122,6 +122,18 @@ describe("createPromotionCheckout", () => {
     });
   });
 
+  it("accepts a backend order id that is not an RFC 9562 UUID", async () => {
+    const legacyOrderId = "11111111-1111-1111-1111-111111111111";
+    mockFetch.mockResolvedValue(
+      jsonResponse(200, { orderId: legacyOrderId, url: "https://checkout.stripe.com/x" }),
+    );
+
+    expect(await createPromotionCheckout(eventId, "city-7d", "key-1")).toEqual({
+      ok: true,
+      data: { orderId: legacyOrderId, url: "https://checkout.stripe.com/x" },
+    });
+  });
+
   it("never sends a non-UUID event id to the backend", async () => {
     expect(await createPromotionCheckout("..", "city-7d", "key-1")).toEqual({ ok: false, code: "UNKNOWN" });
     expect(await getPromotionStatus("../users/me")).toEqual({ ok: false, code: "UNKNOWN" });
