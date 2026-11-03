@@ -1,4 +1,32 @@
-import type { Event, EventHint, ErrorEvent } from "@sentry/nextjs";
+import type {
+  Event,
+  EventHint,
+  ErrorEvent,
+  NodeOptions,
+} from "@sentry/nextjs";
+
+const V10_SENSITIVE_HEADERS = ["forwarded", "-ip", "remote-", "via", "-user"];
+
+/**
+ * Sentry v11 replaced sendDefaultPii with dataCollection, whose unset default
+ * collects cookies, user info, HTTP bodies and DB query data. This is the
+ * documented v10 sendDefaultPii:false baseline; pass it in every init.
+ */
+export const SENTRY_DATA_COLLECTION: NonNullable<NodeOptions["dataCollection"]> =
+  {
+    userInfo: false,
+    cookies: false,
+    httpHeaders: {
+      request: { deny: V10_SENSITIVE_HEADERS },
+      response: { deny: V10_SENSITIVE_HEADERS },
+    },
+    httpBodies: [],
+    urlQueryParams: { deny: V10_SENSITIVE_HEADERS },
+    genAI: { inputs: false, outputs: false },
+    databaseQueryData: false,
+    queues: false,
+    graphQL: { document: false, variables: false },
+  };
 
 /**
  * Well-known error patterns to ignore at SDK level (before serialization).

@@ -25,6 +25,7 @@ import {
 } from "@sentry/nextjs";
 import {
   beforeSendClient,
+  SENTRY_DATA_COLLECTION,
   SENTRY_IGNORE_ERRORS,
   SENTRY_DENY_URLS,
   sentryTunnelFor,
@@ -49,7 +50,7 @@ if (process.env.NODE_ENV === "production") {
       dedupeIntegration(),
       httpContextIntegration(),
     ],
-    sendDefaultPii: false,
+    dataCollection: SENTRY_DATA_COLLECTION,
     ignoreErrors: SENTRY_IGNORE_ERRORS,
     denyUrls: SENTRY_DENY_URLS,
     beforeSend: beforeSendClient,

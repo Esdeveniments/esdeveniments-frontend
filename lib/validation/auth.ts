@@ -9,7 +9,7 @@ export const LogtoTokenResponseSchema = z.object({
   scope: z.string().optional(),
   id_token: z.string().min(1).optional(),
   refresh_token: z.string().min(1).optional(),
-}) satisfies z.ZodType<LogtoTokenResponse, z.ZodTypeDef, unknown>;
+}) satisfies z.ZodType<LogtoTokenResponse, unknown>;
 
 /**
  * Schema for PATCH /api/users/me/profile.
