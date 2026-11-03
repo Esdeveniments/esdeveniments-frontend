@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useIsClient } from "@components/hooks/useIsClient";
 import CreatableSelect from "react-select/creatable";
 import { components } from "react-select";
 import { getSelectClassNames } from "../selectClassNames";
@@ -30,19 +31,18 @@ export default function SelectComponent({
   const inputId = `${id}-input`;
   const errorId = `${id}-error`;
 
-  // Removed setState - no longer needed for page/scroll reset
   const [selectedOption, setSelectedOption] = useState<Option | null>(
     initialValue
   );
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useIsClient();
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
+  // A new value from the parent replaces the local selection
+  // (react.dev: "Adjusting some state when a prop changes").
+  const [prevInitialValue, setPrevInitialValue] = useState(initialValue);
+  if (initialValue !== prevInitialValue) {
+    setPrevInitialValue(initialValue);
     setSelectedOption(initialValue);
-  }, [initialValue]);
+  }
 
   const handleChange = (newValue: Option | null) => {
     setSelectedOption(newValue);

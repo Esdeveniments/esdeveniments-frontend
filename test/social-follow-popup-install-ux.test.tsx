@@ -21,11 +21,14 @@ import SocialFollowPopup, {
 import type { PwaInstallState } from "types/pwa";
 
 // ── Mocks ───────────────────────────────────────────────────────────
-const { mockUsePwaInstall, mockUsePush, mockUseMobile } = vi.hoisted(() => ({
+const { mockUsePwaInstall, mockUsePush, mockUseMobile, mockSendGoogleEvent } = vi.hoisted(() => ({
   mockUsePwaInstall: vi.fn(),
   mockUsePush: vi.fn(),
   mockUseMobile: vi.fn(() => false),
+  mockSendGoogleEvent: vi.fn(),
 }));
+
+vi.mock("@utils/analytics", () => ({ sendGoogleEvent: mockSendGoogleEvent }));
 
 vi.mock("@components/hooks/useCheckMobileScreen", () => ({
   default: mockUseMobile,
@@ -218,5 +221,30 @@ describe("SocialFollowPopup – push CTA", () => {
     expect(
       screen.queryByRole("button", { name: /activa notificacions/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+// =====================================================================
+// Dismiss analytics use the latest device and install state
+// =====================================================================
+describe("SocialFollowPopup – dismiss analytics", () => {
+  it("reports the device and install state current at dismiss time", () => {
+    setInstall({ installState: "prompt", canPromptInstall: true });
+    sessionStorage.setItem(PAGE_VIEW_KEY, "1");
+    sessionStorage.setItem(PAGE_VIEW_KEY + "-path", "/other");
+    const { rerender } = render(<SocialFollowPopup pathname="/page-b" />);
+    act(() => {
+      vi.advanceTimersByTime(DELAY_MS + 100);
+    });
+
+    mockUseMobile.mockReturnValue(true);
+    setInstall({ installState: "installed", isInstalled: true });
+    rerender(<SocialFollowPopup pathname="/page-b" />);
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(mockSendGoogleEvent).toHaveBeenCalledWith(
+      "push_optin_dismiss",
+      expect.objectContaining({ device: "mobile", install_state: "installed" }),
+    );
   });
 });

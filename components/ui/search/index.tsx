@@ -2,7 +2,6 @@
 
 import {
   useCallback,
-  useEffect,
   useMemo,
   useState,
   startTransition,
@@ -57,6 +56,14 @@ export default function Search(): JSX.Element {
 
   const [inputValue, setInputValue] = useState<string>(urlSearchTerm);
 
+  // Sync input with URL search term when URL changes
+  // (react.dev: "Adjusting some state when a prop changes").
+  const [prevUrlSearchTerm, setPrevUrlSearchTerm] = useState(urlSearchTerm);
+  if (urlSearchTerm !== prevUrlSearchTerm) {
+    setPrevUrlSearchTerm(urlSearchTerm);
+    setInputValue(urlSearchTerm);
+  }
+
   // Function to update URL with search parameter
   const updateSearchUrl = useCallback(
     (value: string) => {
@@ -110,11 +117,6 @@ export default function Search(): JSX.Element {
 
     updateSearchUrl(value);
   }, [inputValue, updateSearchUrl, urlSearchTerm, places, hasSearched, setLoading, router]);
-
-  // Sync input with URL search term when URL changes
-  useEffect(() => {
-    setInputValue(urlSearchTerm);
-  }, [urlSearchTerm]);
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

@@ -43,15 +43,6 @@ export default [
     },
   },
   {
-    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
-    rules: {
-      // react-hooks 7.1 (via eslint-config-next 16.4) enables these as errors; warn until existing code is migrated
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/immutability": "warn",
-      "react-hooks/refs": "warn",
-    },
-  },
-  {
     files: ["public/sw.js", "public/sw-template.js"],
 
     languageOptions: {

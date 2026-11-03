@@ -128,6 +128,19 @@ const PublishForm = () => {
   const [wizardStep, setWizardStep] = useState<EventFormStep>(0);
   const [publishAfterReturn, setPublishAfterReturn] = useState<PublishResumeIntent | null>(null);
   const [continuingPublication, setContinuingPublication] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [authStage, setAuthStage] = useState<PublishResumeStage | null>(null);
+  const [handingOff, setHandingOff] = useState(false);
+  const handoffStartedRef = useRef(false);
+  const handedOffRef = useRef(false);
+  const creatingRef = useRef(false);
+  const [showPreview, setShowPreview] = useState(false);
+  // Funnel tracking refs (no re-render needed)
+  const formStartedRef = useRef(false);
+  const fieldsInteractedRef = useRef<Set<string>>(new Set());
+  const submittedRef = useRef(false);
+  const abandonFiredRef = useRef(false);
+
   const resetEditor = useCallback(() => {
     setWizardStep(0);
     setPublishAfterReturn(null);
@@ -166,22 +179,10 @@ const PublishForm = () => {
   });
   const { markEdited } = draft;
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [authStage, setAuthStage] = useState<PublishResumeStage | null>(null);
-  const [handingOff, setHandingOff] = useState(false);
-  const handoffStartedRef = useRef(false);
-  const handedOffRef = useRef(false);
-  const creatingRef = useRef(false);
   // Unknown profile enrichment stays eligible; a typed server rejection is authoritative.
   const requiredAuthStage = authStage ?? (!isAuthenticated ? "login"
     : user?.profileCompleted === false ? "profile" : null);
   const submitAnalyticsAction = requiredAuthStage ? `publish_cta_${requiredAuthStage}` : undefined;
-
-  // Funnel tracking refs (no re-render needed)
-  const formStartedRef = useRef(false);
-  const fieldsInteractedRef = useRef<Set<string>>(new Set());
-  const submittedRef = useRef(false);
-  const abandonFiredRef = useRef(false);
 
   // Track form abandonment on page unload or SPA navigation
   useEffect(() => {
@@ -309,7 +310,6 @@ const PublishForm = () => {
     });
   };
 
-  const [showPreview, setShowPreview] = useState(false);
   const previewEvent = useMemo(() => mapDraftToPreviewEvent({
     form, imageUrl: imagePreview,
   }), [form, imagePreview]);
@@ -698,6 +698,7 @@ const PublishForm = () => {
   useEffect(() => {
     if (!publishAfterReturn || isAuthLoading || imagePreparing || isLoadingCities || isLoadingCategories ||
         draft.status === "loading" || draft.status === "saving") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot publish after auth return; clearing the intent synchronously prevents a double create
     void continuePublication(publishAfterReturn);
   }, [publishAfterReturn, isAuthLoading, imagePreparing, isLoadingCities, isLoadingCategories, draft.status]);
 
