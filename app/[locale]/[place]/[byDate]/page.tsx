@@ -31,7 +31,6 @@ import {
   parseFiltersFromUrl,
   getRedirectUrl,
 } from "@utils/url-filters";
-import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
@@ -288,11 +287,6 @@ export default async function ByDatePage({
     locale,
     rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}/${actualDate}`,
-    buildFallbackUrlForInvalidPlace: () =>
-      buildFallbackUrlForInvalidPlace({
-        byDate,
-        rawSearchParams: {},
-      }),
     fetchPlaceBySlug,
   });
   if (placeRedirectUrl) {

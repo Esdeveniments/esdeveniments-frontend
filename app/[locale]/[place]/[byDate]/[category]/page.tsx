@@ -22,7 +22,6 @@ import {
   urlToFilterState,
   getRedirectUrl,
 } from "@utils/url-filters";
-import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -277,12 +276,6 @@ export default async function FilteredPage({
     locale,
     rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}/${filters.byDate}/${filters.category}`,
-    buildFallbackUrlForInvalidPlace: () =>
-      buildFallbackUrlForInvalidPlace({
-        byDate,
-        category,
-        rawSearchParams: {},
-      }),
     fetchPlaceBySlug,
   });
   if (placeRedirectUrl) {

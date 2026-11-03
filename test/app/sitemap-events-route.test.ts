@@ -14,7 +14,13 @@ vi.mock("@lib/api/events", () => ({
         title: "Upcoming",
         startDate: tomorrow,
         endDate: tomorrow,
-        updatedAt: null,
+      },
+      {
+        slug: "upcoming-future-updated-at",
+        title: "Future edit date",
+        startDate: tomorrow,
+        endDate: tomorrow,
+        updatedAt: `${tomorrow}T10:00:00Z`,
       },
       {
         slug: "upcoming-edited",
@@ -44,6 +50,7 @@ describe("app/sitemap-events/[...parts]/route", () => {
       urls.map((url) => [url.loc.split("/e/")[1], url.lastmod])
     );
     expect(bySlug["upcoming-without-updated-at"]).toBeUndefined();
+    expect(bySlug["upcoming-future-updated-at"]).toBeUndefined();
     expect(bySlug["upcoming-edited"]).toBe("2026-01-02T10:00:00.000Z");
   });
 });

@@ -11,7 +11,9 @@ the first as a Soft 404 and the second as a weak redirect. Unknown place slugs
 are therefore resolved in Proxy (`resolvePlaceForProxy`, `lib/api/places-proxy.ts`):
 an alias gets a 301 and a missing place gets
 `NextResponse.rewrite(url, { status: 404 })`. `NextResponse.next()` can't set a
-status, but a rewrite can and still renders the page. The check fails open
+status, but a rewrite can and still renders the page. The page itself must then render
+`notFound()`, not redirect: a page `redirect()` under the 404 becomes a meta
+refresh that sends visitors (and mixed signals) to another URL. The check fails open
 (`unknown`) on any backend error or after 1.5 s, then skips the backend for
 30 s, so an outage never serves a false 404 or slows every request. Proxy is bundled apart from the app, so `/api/revalidate` doesn't
 clear its 1 h place cache: a new place can 404 for up to an hour plus CDN TTL.
