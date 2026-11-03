@@ -16,9 +16,8 @@ import {
   MAX_PARAM_KEY_LENGTH,
 } from "./constants";
 
-// Client filter query params (security: allowlist only). Canonical redirects
-// keep only these; proxy.ts marks listing URLs that carry any of them noindex.
-export const ALLOWED_QUERY_PARAMS: ReadonlySet<string> = new Set([
+// Allowed query parameters to preserve in redirects (security: allowlist only)
+const ALLOWED_QUERY_PARAMS = new Set([
   "search",
   "distance",
   "price",

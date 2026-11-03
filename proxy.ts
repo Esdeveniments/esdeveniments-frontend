@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiOrigin } from "@utils/api-helpers";
 import { sanitizeReturnTo } from "@utils/redirect-safety";
-import {
-  ALLOWED_QUERY_PARAMS,
-  handleCanonicalRedirects,
-} from "@utils/middleware-redirects";
+import { handleCanonicalRedirects } from "@utils/middleware-redirects";
 import { isProductionHost } from "@utils/production-host";
 import {
   isDev,
@@ -41,11 +38,9 @@ function parseAcceptLanguage(header: string | null): AppLocale | null {
   const candidates = header
     .split(",")
     .map((raw) => {
-      // RFC 9110 allows optional whitespace around ";" (e.g. "en; q=0.8").
-      const [langPart, ...params] = raw.split(";").map((part) => part.trim());
-      const qParam = params.find((param) => /^q=/i.test(param));
+      const [langPart, qValue] = raw.trim().split(";q=");
       const base = langPart.split("-")[0]?.toLowerCase();
-      const quality = qParam ? Number.parseFloat(qParam.slice(2)) : 1;
+      const quality = qValue ? Number.parseFloat(qValue) : 1;
       return {
         base,
         quality: Number.isFinite(quality) ? quality : 0,
@@ -97,38 +92,56 @@ function getCsp() {
     process.env.NEXT_PUBLIC_GOOGLE_ADS &&
     String(process.env.NEXT_PUBLIC_GOOGLE_ADS).trim() !== "";
 
-  // One list for script-src and script-src-elem: a host missing from either
-  // one is blocked by browsers that check element scripts separately.
-  const scriptSources = [
-    "'self'",
-    // Relaxed policy: allow inline scripts and trusted third-parties
-    // This enables ISR/PPR caching while maintaining security through host allowlisting
-    "'unsafe-inline'",
-    "https://www.googletagmanager.com",
-    "https://www.google-analytics.com",
-    "https://www.gstatic.com",
-    "https://static.cloudflareinsights.com",
-    "https://pagead2.googlesyndication.com",
-    "https://*.googlesyndication.com",
-    "https://fundingchoicesmessages.google.com",
-    "https://*.adtrafficquality.google",
-    "https://*.doubleclick.net",
-    "https://*.googleadservices.com",
-    "https://*.googletagservices.com",
-    "https://*.google.com",
-    // Vercel preview feedback script
-    ...(isVercelPreview ? ["https://vercel.live"] : []),
-    // Only include unsafe-eval if ads truly require it
-    adsEnabled ? "'unsafe-eval'" : "",
-    isDev ? "'unsafe-eval'" : "",
-    isDev ? "localhost:*" : "",
-    isDev ? "127.0.0.1:*" : "",
-  ];
-
   const cspDirectives = {
     "default-src": ["'self'"],
-    "script-src": scriptSources,
-    "script-src-elem": scriptSources,
+    "script-src": [
+      "'self'",
+      // Relaxed policy: allow inline scripts and trusted third-parties
+      // This enables ISR/PPR caching while maintaining security through host allowlisting
+      "'unsafe-inline'",
+      "https://www.googletagmanager.com",
+      "https://www.google-analytics.com",
+      "https://www.gstatic.com",
+      "https://static.cloudflareinsights.com",
+      "https://pagead2.googlesyndication.com",
+      "https://*.googlesyndication.com",
+      "https://fundingchoicesmessages.google.com",
+      "https://*.adtrafficquality.google",
+      "https://*.doubleclick.net",
+      "https://*.googleadservices.com",
+      "https://*.googletagservices.com",
+      "https://*.google.com",
+      // Vercel preview feedback script
+      ...(isVercelPreview ? ["https://vercel.live"] : []),
+      // Only include unsafe-eval if ads truly require it
+      adsEnabled ? "'unsafe-eval'" : "",
+      isDev ? "'unsafe-eval'" : "",
+      isDev ? "localhost:*" : "",
+      isDev ? "127.0.0.1:*" : "",
+    ],
+    // Be explicit for browsers that differentiate element/script contexts
+    "script-src-elem": [
+      "'self'",
+      "'unsafe-inline'",
+      "https://www.googletagmanager.com",
+      "https://www.google-analytics.com",
+      "https://www.gstatic.com",
+      "https://static.cloudflareinsights.com",
+      "https://pagead2.googlesyndication.com",
+      "https://*.googlesyndication.com",
+      "https://fundingchoicesmessages.google.com",
+      "https://*.adtrafficquality.google",
+      "https://*.doubleclick.net",
+      "https://*.googleadservices.com",
+      "https://*.googletagservices.com",
+      "https://*.google.com",
+      // Vercel preview feedback script
+      ...(isVercelPreview ? ["https://vercel.live"] : []),
+      adsEnabled ? "'unsafe-eval'" : "",
+      isDev ? "'unsafe-eval'" : "",
+      isDev ? "localhost:*" : "",
+      isDev ? "127.0.0.1:*" : "",
+    ],
     "style-src": [
       "'self'",
       "'unsafe-inline'",
@@ -164,14 +177,14 @@ function getCsp() {
 
 // Cache CSP string at module load to avoid recomputing on every request
 const CACHED_CSP = getCsp();
-// Use Report-Only in preview (or when explicitly requested), enforce otherwise
-const CSP_REPORT_ONLY =
-  process.env.NEXT_PUBLIC_CSP_REPORT_ONLY === "1" ||
-  process.env.VERCEL_ENV === "preview" ||
-  process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
 
 function applySecurityHeaders(response: NextResponse): NextResponse {
-  if (CSP_REPORT_ONLY) {
+  // Use Report-Only in preview (or when explicitly requested), enforce otherwise
+  const reportOnly =
+    process.env.NEXT_PUBLIC_CSP_REPORT_ONLY === "1" ||
+    process.env.VERCEL_ENV === "preview" ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+  if (reportOnly) {
     response.headers.set("Content-Security-Policy-Report-Only", CACHED_CSP);
   } else {
     response.headers.set("Content-Security-Policy", CACHED_CSP);
@@ -201,27 +214,6 @@ const AI_BOT_UA_RE =
 // Localized sign-in entry route (with or without a locale prefix), e.g.
 // /iniciar-sessio, /ca/iniciar-sessio, /es/iniciar-sessio. Captures the locale.
 const LOGIN_ENTRY_PATTERN = /^\/(?:([a-z]{2})\/)?iniciar-sessio\/?$/;
-
-// Trust anchor page aliases: standard English paths → Catalan equivalents
-// Enables orank and AI agents to find About/Contact/Privacy at conventional URLs
-const TRUST_ANCHOR_REDIRECTS: Readonly<Record<string, string>> = {
-  "/about": "/qui-som",
-  "/contact": "/qui-som",
-  "/privacy": "/politica-privacitat",
-  "/terms": "/termes-servei",
-};
-
-// Hidden tool pages that should never be indexed by crawlers
-const NOINDEX_PATHS = ["/compartir-tiktok", "/callback"];
-
-// SEO: 3-segment listing paths /[place]/[date]/[category] with a non-default
-// date (avui|dema|setmana|cap-de-setmana) generate thin/duplicate content
-// that GSC flags as "Crawled - currently not indexed". Mark noindex,follow
-// so crawlers can still discover the canonical /[place]/[category] page.
-// Note: /[place]/tots/[category] is already 301'd to /[place]/[category] by
-// handleCanonicalRedirects, so we only need to match non-tots dates.
-const THREE_SEGMENT_NOINDEX_RE =
-  /^\/[a-z0-9-]+\/(?:avui|dema|setmana|cap-de-setmana)\/[a-z0-9-]+$/;
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -294,7 +286,15 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
-  const trustTarget = TRUST_ANCHOR_REDIRECTS[pathname];
+  // Trust anchor page aliases: standard English paths → Catalan equivalents
+  // Enables orank and AI agents to find About/Contact/Privacy at conventional URLs
+  const trustAnchorMap: Record<string, string> = {
+    "/about": "/qui-som",
+    "/contact": "/qui-som",
+    "/privacy": "/politica-privacitat",
+    "/terms": "/termes-servei",
+  };
+  const trustTarget = trustAnchorMap[pathname];
   if (trustTarget) {
     return NextResponse.redirect(new URL(trustTarget, request.url), 301);
   }
@@ -303,6 +303,7 @@ export default async function proxy(request: NextRequest) {
   // The proxy.ts rewrite needs to run AFTER stripLocalePrefix(pathname)
   // is in scope so /es/usuarios/alex is resolved correctly. Tracking
   // in PR review checklist item 3.
+
 
   // OpenAPI spec: bypass locale handling so route handler is used
   if (pathname === "/openapi") {
@@ -391,6 +392,24 @@ export default async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
+  // Redirect legacy /verify-email (backend email links) to /verificar-email
+  if (pathnameWithoutLocale === "/verify-email") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/verificar-email`
+      : "/verificar-email";
+    return NextResponse.redirect(url, 301);
+  }
+
+  // Redirect legacy /reset-password (backend email links) to /restablir-contrasenya
+  if (pathnameWithoutLocale === "/reset-password") {
+    const url = new URL(request.url);
+    url.pathname = localeFromPath
+      ? `/${localeFromPath}/restablir-contrasenya`
+      : "/restablir-contrasenya";
+    return NextResponse.redirect(url, 301);
+  }
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);
@@ -448,9 +467,10 @@ export default async function proxy(request: NextRequest) {
   //
   // s-maxage=1800 (30 min): Cultural events are published days in advance, so
   // 30 min staleness is invisible to users. With stale-while-revalidate=3600,
-  // the CDN (Cloudflare) can serve the stale page instantly for up to 60 min
-  // after expiry while revalidating in the background, avoiding TTFB spikes
-  // from synchronous revalidation and reducing origin renders.
+  // CloudFront serves the stale page instantly for up to 60 min after expiry
+  // while revalidating in the background — eliminating TTFB spikes from
+  // synchronous revalidation. This raises CloudFront cache-hit ratio and
+  // reduces Lambda invocations significantly.
   //
   // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
   // still serve quickly and revalidate in the background.
@@ -513,15 +533,27 @@ export default async function proxy(request: NextRequest) {
   // Required for markdown content negotiation to work through Cloudflare
   response.headers.append("Vary", "Accept");
 
-  // SEO: noindex filtered listing URLs (client filter query params) without
-  // making pages dynamic. Same allowlist the canonical redirects preserve.
-  const hasNonCanonicalParams = [...ALLOWED_QUERY_PARAMS].some((param) => {
+  // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, price, lat, lon)
+  // This prevents indexing of filtered/personalized URLs without making pages dynamic
+  const NON_CANONICAL_PARAMS = [
+    "search",
+    "distance",
+    "price",
+    "from",
+    "to",
+    "lat",
+    "lon",
+  ];
+  const hasNonCanonicalParams = NON_CANONICAL_PARAMS.some((param) => {
     const value = request.nextUrl.searchParams.get(param);
     return value !== null && value.trim().length > 0;
   });
 
-  const pathToCheck = pathnameWithoutLocale || pathname;
-  const isNoindexPath = NOINDEX_PATHS.some((p) => pathToCheck.startsWith(p));
+  // Hidden tool pages that should never be indexed by crawlers
+  const NOINDEX_PATHS = ["/compartir-tiktok", "/callback"];
+  const isNoindexPath = NOINDEX_PATHS.some((p) =>
+    (pathnameWithoutLocale || pathname).startsWith(p),
+  );
 
   // Block all non-production hosts from indexing (staging, preview deployments).
   // GSC reported ~7,800 staging URLs leaking into Google's "Crawled - currently
@@ -529,6 +561,15 @@ export default async function proxy(request: NextRequest) {
   // Default-deny: anything not on the production allowlist is noindexed.
   const isNonProductionHost = !isProductionHost(request.headers.get("host"));
 
+  // SEO: 3-segment listing paths /[place]/[date]/[category] with a non-default
+  // date (avui|dema|setmana|cap-de-setmana) generate thin/duplicate content
+  // that GSC flags as "Crawled - currently not indexed". Mark noindex,follow
+  // so crawlers can still discover the canonical /[place]/[category] page.
+  // Note: /[place]/tots/[category] is already 301'd to /[place]/[category] by
+  // handleCanonicalRedirects above, so we only need to match non-tots dates.
+  const THREE_SEGMENT_NOINDEX_RE =
+    /^\/[a-z0-9-]+\/(?:avui|dema|setmana|cap-de-setmana)\/[a-z0-9-]+$/;
+  const pathToCheck = pathnameWithoutLocale || pathname;
   const isThreeSegmentListing = THREE_SEGMENT_NOINDEX_RE.test(pathToCheck);
 
   if (isNonProductionHost || isNoindexPath) {
