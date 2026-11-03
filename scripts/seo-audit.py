@@ -35,7 +35,13 @@ from google.analytics.data_v1beta.types import (
 SITE = os.environ.get("GSC_SITE_URL", "https://www.esdeveniments.cat/")
 GA_PROPERTY = f"properties/{os.environ.get('GA4_PROPERTY_ID', '406884331')}"
 OUTPUT_DIR = os.environ.get("SEO_AUDIT_OUTPUT_DIR", ".")
-BRAND_TERM = os.environ.get("SEO_BRAND_TERM", "esdeveniment")
+BRAND_TERM = os.environ.get("SEO_BRAND_TERM", "esdevenimentscat")
+
+
+def is_brand_query(query):
+    # "esdeveniments" alone is the generic Catalan word for "events"; only the
+    # domain form ("esdeveniments.cat", "esdeveniments cat") is the brand.
+    return BRAND_TERM in re.sub(r"[^a-z]", "", query.lower())
 
 # Detection thresholds
 QUICK_WIN_MIN_IMPRESSIONS = 100
@@ -1264,7 +1270,7 @@ def generate_markdown(data, previous=None):
             lines.append("")
             lines.append("⚠️ **No Event rich results** despite having Event JSON-LD. Only non-Event types appearing.")
     else:
-        lines.append("⚠️ No rich results detected. JSON-LD structured data may need review.")
+        lines.append("ℹ️ No search appearance types reported. Event rich results don't show up here; check URL Inspection.")
     lines.append("")
 
     # ── i18n Cannibalization ──
@@ -1544,11 +1550,11 @@ def generate_actions(data, previous=None):
     # Check for brand term visibility (search all query-bearing datasets)
     all_brand = [
         q for q in data["gsc"].get("striking_distance", [])
-        if BRAND_TERM in q.get("query", "").lower()
+        if is_brand_query(q.get("query", ""))
     ]
     # Also check cannibalization data for brand queries at any position
     for c in data["gsc"].get("cannibalization", []):
-        if BRAND_TERM in c["query"].lower():
+        if is_brand_query(c["query"]):
             for p in c["pages"]:
                 all_brand.append({"query": c["query"], "position": p["position"]})
     if all_brand:
@@ -1560,12 +1566,13 @@ def generate_actions(data, previous=None):
                 "description": f"Brand-related query \"{all_brand[0].get('query', BRAND_TERM)}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
             })
 
-    # Check for no rich results
+    # Search Analytics doesn't report Event rich results as a search appearance,
+    # so an empty list is not proof that Event JSON-LD is broken.
     if not data["gsc"]["search_appearance"]:
         actions.append({
-            "priority": "P1",
-            "title": "No rich results in search",
-            "description": "JSON-LD structured data is not generating rich results. Review Event schema markup, test with Rich Results Test tool.",
+            "priority": "INFO",
+            "title": "No search appearance types reported",
+            "description": "Check Event rich results with URL Inspection (richResultsResult) or the Rich Results Test before changing JSON-LD.",
         })
 
     # Check for dead features
@@ -1611,9 +1618,9 @@ def generate_actions(data, previous=None):
     i18n = data["gsc"].get("i18n_cannibalization", [])
     if i18n:
         actions.append({
-            "priority": "P1",
-            "title": f"i18n cannibalization: {len(i18n)} events with competing locale URLs",
-            "description": "Same event pages indexed under /e/, /es/e/, /en/e/ split ranking signals. Review hreflang tags and canonical URLs to consolidate.",
+            "priority": "INFO",
+            "title": f"i18n: {len(i18n)} events rank under more than one locale URL",
+            "description": "Expected with hreflang (each locale has a self-canonical). Act only if hreflang/canonical tags are wrong or one locale ranks for queries in another language.",
         })
 
     # 3-segment URLs indexed
