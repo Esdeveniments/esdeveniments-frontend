@@ -1,4 +1,4 @@
-const { withSentryConfig } = require("@sentry/nextjs");
+const { withSentryConfig } = require("@sentry/nextjs/config");
 const createNextIntlPlugin = require("next-intl/plugin");
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled:
@@ -260,7 +260,6 @@ module.exports = withSentryConfig(
         // Remove all Session Replay code (replay is fully disabled)
         excludeReplayIframe: true,
         excludeReplayShadowDOM: true,
-        excludeReplayCanvas: true,
       },
       automaticVercelMonitors: true,
     },

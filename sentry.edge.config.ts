@@ -6,6 +6,7 @@ import { init } from "@sentry/nextjs";
 import type { EdgeOptions } from "@sentry/nextjs";
 import {
   beforeSendEdge,
+  SENTRY_DATA_COLLECTION,
   SENTRY_IGNORE_ERRORS,
 } from "@utils/sentry-helpers";
 
@@ -21,13 +22,11 @@ if (process.env.NODE_ENV === "production") {
       undefined,
     // Errors-only: disable performance tracing.
     tracesSampleRate: 0,
-    // Privacy: explicitly disable sending PII by default
-    sendDefaultPii: false,
+    // Privacy: keep the v10 no-PII baseline (v11 default collects more)
+    dataCollection: SENTRY_DATA_COLLECTION,
     debug: false,
     // SDK-level filtering: drop well-known noise before serialization (more performant than beforeSend)
     ignoreErrors: SENTRY_IGNORE_ERRORS,
-    // Errors-only: do not send console logs as Sentry logs.
-    enableLogs: false,
     // Filter and sanitize events before sending (removes sensitive data, filters non-critical errors)
     beforeSend: beforeSendEdge,
   };

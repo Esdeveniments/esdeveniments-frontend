@@ -48,8 +48,6 @@ export function handleApiError(
   const errorObj =
     error instanceof Error ? error : new Error(getSanitizedErrorMessage(error));
 
-  // Log to console - consoleLoggingIntegration will automatically send to Sentry in production
-  // when enableLogs: true is set in config. This is the recommended approach for v10.27.0+
   console.error(`${routePath} error:`, errorObj);
 
   // Capture exception to Sentry in production

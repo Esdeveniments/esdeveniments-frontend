@@ -30,7 +30,7 @@ const StripeWebhookEventSchema = z.object({
   id: z.string().min(1),
   type: z.string().min(1),
   data: z.object({
-    object: z.record(z.unknown()),
+    object: z.record(z.string(), z.unknown()),
   }),
 });
 
