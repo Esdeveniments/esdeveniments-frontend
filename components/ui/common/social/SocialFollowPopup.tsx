@@ -109,9 +109,11 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   // installState resolves, that effect would tear down and re-run mid-popup
   // (stealing focus / toggling the scroll lock).
   const isMobileRef = useRef(isMobile);
-  isMobileRef.current = isMobile;
   const installStateRef = useRef(installState);
-  installStateRef.current = installState;
+  useEffect(() => {
+    isMobileRef.current = isMobile;
+    installStateRef.current = installState;
+  }, [isMobile, installState]);
 
   // Show the push CTA once there's no pending install path: app installed,
   // or no install prompt available (incl. after the user dismissed the
