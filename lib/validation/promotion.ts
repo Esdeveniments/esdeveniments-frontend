@@ -31,7 +31,7 @@ export const PromotionOptionsSchema = z.object({
 }) satisfies z.ZodType<PromotionOptionsDTO>;
 
 export const PromotionStatusSchema = z.object({
-  orderId: z.guid().nullable(),
+  orderId: z.string().uuid().nullable(),
   paymentStatus: z.enum([
     "NONE", "PENDING", "PAID", "EXPIRED", "FAILED", "REFUND_PENDING", "REFUNDED",
   ]),
@@ -44,6 +44,6 @@ export const PromotionStatusSchema = z.object({
 }) satisfies z.ZodType<PromotionStatusDTO>;
 
 export const PromotionCheckoutSchema = z.object({
-  orderId: z.guid(),
+  orderId: z.string().uuid(),
   url: z.string().url(),
 }) satisfies z.ZodType<PromotionCheckoutResponseDTO>;
