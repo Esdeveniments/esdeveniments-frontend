@@ -28,7 +28,7 @@ function subscribeStandalone(cb: () => void) {
 // ponytail: navigator.standalone covers iOS 11–13 where display-mode: standalone is unreliable
 const getSnapshot = () =>
   (getMQ()?.matches ?? false) ||
-  ("standalone" in navigator && (navigator as { standalone?: boolean }).standalone === true);
+  navigator.standalone === true;
 const getServerSnapshot = () => false;
 
 export default function PwaBackButton({ fallbackHref = "/" }: PwaBackButtonProps) {

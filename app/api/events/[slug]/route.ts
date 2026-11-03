@@ -11,7 +11,7 @@ import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 // GET /api/events/[slug] - server-only proxy with server-side HMAC and stable caching
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ slug: string }> }
+  context: RouteContext<"/api/events/[slug]">
 ) {
   try {
     const { slug } = await context.params;
@@ -35,7 +35,7 @@ export async function GET(
 // The backend enforces the creator check; we fail fast if no session exists.
 export async function DELETE(
   _request: Request,
-  context: { params: Promise<{ slug: string }> }
+  context: RouteContext<"/api/events/[slug]">
 ) {
   try {
     const [currentUser, { slug }] = await Promise.all([

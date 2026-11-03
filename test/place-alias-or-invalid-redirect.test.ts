@@ -4,6 +4,12 @@ import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-in
 
 import { getPlaceAliasRedirectUrl } from "@utils/place-alias-redirect";
 
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(() => {
+    throw new Error("NEXT_HTTP_ERROR_FALLBACK;404");
+  }),
+}));
+
 vi.mock("@utils/place-alias-redirect", () => {
   return {
     getPlaceAliasRedirectUrl: vi.fn(),
@@ -25,7 +31,6 @@ describe("getPlaceAliasOrInvalidPlaceRedirectUrl", () => {
       locale: "ca",
       rawSearchParams: { search: "teatre" },
       buildTargetPath: (alias) => `/${alias}`,
-      buildFallbackUrlForInvalidPlace: () => "/catalunya",
       fetchPlaceBySlug,
     });
 
@@ -47,7 +52,6 @@ describe("getPlaceAliasOrInvalidPlaceRedirectUrl", () => {
       locale: "ca",
       rawSearchParams,
       buildTargetPath: (alias) => `/${alias}`,
-      buildFallbackUrlForInvalidPlace: () => "/catalunya",
       fetchPlaceBySlug,
     });
 
@@ -61,23 +65,19 @@ describe("getPlaceAliasOrInvalidPlaceRedirectUrl", () => {
     });
   });
 
-  test("returns fallback url when place is invalid and no alias redirect", async () => {
+  test("calls notFound when place is missing and no alias redirect", async () => {
     const fetchPlaceBySlug = vi.fn().mockResolvedValue(null);
     getPlaceAliasRedirectUrlMock.mockResolvedValue(null);
 
-    const buildFallbackUrlForInvalidPlace = vi.fn(() => "/catalunya?search=x");
-
-    const result = await getPlaceAliasOrInvalidPlaceRedirectUrl({
-      place: "invalid-place",
-      locale: "ca",
-      rawSearchParams: { search: "x" },
-      buildTargetPath: (alias) => `/${alias}`,
-      buildFallbackUrlForInvalidPlace,
-      fetchPlaceBySlug,
-    });
-
-    expect(result).toBe("/catalunya?search=x");
-    expect(buildFallbackUrlForInvalidPlace).toHaveBeenCalledTimes(1);
+    await expect(
+      getPlaceAliasOrInvalidPlaceRedirectUrl({
+        place: "invalid-place",
+        locale: "ca",
+        rawSearchParams: { search: "x" },
+        buildTargetPath: (alias) => `/${alias}`,
+        fetchPlaceBySlug,
+      }),
+    ).rejects.toThrow("NEXT_HTTP_ERROR_FALLBACK;404");
   });
 
   test("returns null when place exists", async () => {
@@ -88,7 +88,6 @@ describe("getPlaceAliasOrInvalidPlaceRedirectUrl", () => {
       locale: "ca",
       rawSearchParams: { search: "x" },
       buildTargetPath: (alias) => `/${alias}`,
-      buildFallbackUrlForInvalidPlace: () => "/catalunya",
       fetchPlaceBySlug,
     });
 
@@ -107,7 +106,6 @@ describe("getPlaceAliasOrInvalidPlaceRedirectUrl", () => {
       locale: "ca",
       rawSearchParams,
       buildTargetPath: (alias) => `/${alias}`,
-      buildFallbackUrlForInvalidPlace: () => "/catalunya",
       fetchPlaceBySlug,
     });
 

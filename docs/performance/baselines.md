@@ -184,3 +184,26 @@ Lab, same session, same slugs. Before = develop `700d65ff` (before #608), after 
 - The event-without-image LCP of 880 ms "before" is above the 596-632 ms seen in earlier sessions, so treat that row's gain as noise.
 
 Cloudflare: the production `/api/image-proxy` cache rule for `www.esdeveniments.cat` exists but stays **disabled** until develop reaches main. Main picks the image format from the `Accept` header and sends `Vary: Accept`; develop picks it from the URL `format` param, which is safe to edge-cache. Enable it at release, then check `cf-cache-status: HIT` on a repeated image URL.
+
+## 2026-11-03: SEO fixes (place 404/301 in Proxy)
+
+Server-only change: no client JS, no new LCP work. Proxy now checks the first path segment of listing URLs against the places list (see LESSONS.md, "A page can't set its own 404 or 301").
+
+Local production build (`yarn build:development`, `yarn start:development`, dev backend), curl `time_total`, one run:
+
+| Request | First hit (cold process) | Warm |
+|---|---|---|
+| `/barcelona` | 794 ms (includes the one places list call) | 83 ms |
+| `/girona/concerts` | 140 ms | 69 ms |
+| `/no-such-place-xyz` (404) | 1036 ms | 79 ms |
+| `/lagarriga` (301) | 65 ms | |
+
+- Warm cost is an in-memory scan of ~1,000 slugs. A cold process pays one `/places` + `/regions` list call per hour; a slug not in the list (a province) pays one `/places/{slug}` call, cached for 1 h. Both are bounded by a 1.5 s abort signal, after which the page renders as before.
+- 513 of the 515 Catalan place URLs in the production place sitemap return 200 on this build; the other 2 (`campdevanol`, `torrebeses`) are missing from the dev backend only and return 200 in production.
+
+What to watch after release (field data needs days to weeks):
+
+- Search Console → Pages: "Not found (404)" should rise (junk place URLs that used to return 200), "Soft 404" and "Crawled – currently not indexed" should fall. "Page with redirect" rises by the alias URLs.
+- Search Console → Enhancements → Events: valid items stay stable; no new "misleading" or invalid `image`/`performer`/`organizer` warnings.
+- GA4 `web_vitals` TTFB and LCP on place pages, and `python3 scripts/crux-check.py` after 4 weeks: no regression.
+- Backend: request volume on `/places/{slug}` should not grow (the list answers most lookups).

@@ -11,7 +11,6 @@ import {
 } from "@utils/constants";
 import { getPlaceExpandability } from "@lib/seo/place-expandability";
 import type { SitemapField } from "types/sitemap";
-import type { SitemapPartsRouteContext } from "types/props";
 import type { PlaceResponseDTO } from "types/api/place";
 import type { PlaceType } from "types/common";
 import { buildAlternateLinks } from "@utils/i18n-seo";
@@ -55,7 +54,7 @@ async function getExpandablePlaces(
 
 export async function GET(
   _request: Request,
-  context: SitemapPartsRouteContext,
+  context: RouteContext<"/sitemap-places/[...parts]">,
 ) {
   const { parts } = await context.params;
 

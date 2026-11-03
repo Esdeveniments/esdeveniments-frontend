@@ -1,6 +1,5 @@
 import { cache } from "react";
 import type {
-  PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
   FetchNewsParams,
@@ -24,7 +23,7 @@ export type { FetchNewsParams } from "types/api/news";
 
 export async function fetchNews(
   params: FetchNewsParams
-): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
+): Promise<PagedResponseDTO<NewsSummaryResponseDTO>> {
   // Use internal API route for stable caching
 
   try {
@@ -42,7 +41,7 @@ export async function fetchNews(
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data: PagedNewsResponseDTO<NewsSummaryResponseDTO> =
+    const data: PagedResponseDTO<NewsSummaryResponseDTO> =
       await response.json();
     return {
       ...data,

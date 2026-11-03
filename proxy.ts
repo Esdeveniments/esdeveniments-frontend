@@ -6,21 +6,19 @@ import { getAgentRewrite } from "@utils/proxy-agent";
 import { applyCsp } from "@utils/proxy-csp";
 import {
   getLocaleFromCookie,
-  parseAcceptLanguage,
+  getLocaleRedirect,
   persistLocaleCookie,
 } from "@utils/proxy-locale";
 import { getLoginEntryRedirect } from "@utils/proxy-login";
 import { applyPageHeaders } from "@utils/proxy-page-headers";
+import { checkPlace } from "@utils/proxy-place";
 import { DEFAULT_LOCALE } from "types/i18n";
-
-// Stripe promotion return pages: the backend builds them without a locale.
-const PROMOTION_RETURN_PATH = /^\/e\/[^/]+\/promote\/(success|cancel)$/;
 
 // Static headers, trust-page redirects and the /openapi.json and
 // /.well-known/mcp rewrites live in next.config.js. This file only holds
 // per-request logic.
-export default function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+export default async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
   const loginRedirect = getLoginEntryRedirect(request);
   if (loginRedirect) return loginRedirect;
@@ -47,34 +45,13 @@ export default function proxy(request: NextRequest) {
     stripLocalePrefix(pathname);
   const localeFromCookie = getLocaleFromCookie(request);
 
-  // The default locale has no prefix: /ca/foo → /foo.
-  if (localeFromPath === DEFAULT_LOCALE) {
-    const response = NextResponse.redirect(
-      new URL(`${pathnameWithoutLocale}${search}`, request.url),
-      308,
-    );
-    persistLocaleCookie(response, DEFAULT_LOCALE);
-    return response;
-  }
-
-  // Send / and the Stripe return pages to the visitor's preferred locale.
-  const isPromotionReturn = PROMOTION_RETURN_PATH.test(pathname);
-  if (!localeFromPath && (pathname === "/" || isPromotionReturn)) {
-    const preferred =
-      localeFromCookie ??
-      parseAcceptLanguage(request.headers.get("accept-language"));
-    if (preferred && preferred !== DEFAULT_LOCALE) {
-      const response = NextResponse.redirect(
-        new URL(
-          `/${preferred}${isPromotionReturn ? pathname : ""}${search}`,
-          request.url,
-        ),
-        302,
-      );
-      persistLocaleCookie(response, preferred);
-      return response;
-    }
-  }
+  const localeRedirect = getLocaleRedirect(
+    request,
+    localeFromPath,
+    pathnameWithoutLocale,
+    localeFromCookie,
+  );
+  if (localeRedirect) return localeRedirect;
 
   // A prefixed path that differs from the cookie updates the cookie.
   const pathLocaleToPersist =
@@ -88,6 +65,19 @@ export default function proxy(request: NextRequest) {
     return canonicalRedirect;
   }
 
+  const placeCheck = await checkPlace(
+    request,
+    pathnameWithoutLocale,
+    localeFromPath,
+  );
+  if (placeCheck?.kind === "alias") {
+    const response = NextResponse.redirect(placeCheck.url, 301);
+    if (pathLocaleToPersist) {
+      persistLocaleCookie(response, pathLocaleToPersist);
+    }
+    return response;
+  }
+
   const locale = localeFromPath ?? DEFAULT_LOCALE;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
@@ -95,15 +85,18 @@ export default function proxy(request: NextRequest) {
   const init = { request: { headers: requestHeaders } };
 
   // Pages live under app/[locale]/. Prefixed paths (/es/foo) already match;
-  // unprefixed ones (/foo) are rewritten to /ca/foo.
-  let response: NextResponse;
-  if (localeFromPath) {
-    response = NextResponse.next(init);
-  } else {
-    const url = request.nextUrl.clone();
+  // unprefixed ones (/foo) are rewritten to /ca/foo. Unknown places render
+  // the same page with a 404 status (NextResponse.next() can't set one).
+  const url = request.nextUrl.clone();
+  if (!localeFromPath) {
     url.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
-    response = NextResponse.rewrite(url, init);
   }
+  const response =
+    placeCheck?.kind === "missing"
+      ? NextResponse.rewrite(url, { ...init, status: 404 })
+      : localeFromPath
+        ? NextResponse.next(init)
+        : NextResponse.rewrite(url, init);
 
   if (pathLocaleToPersist) {
     persistLocaleCookie(response, pathLocaleToPersist);

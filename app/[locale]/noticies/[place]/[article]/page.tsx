@@ -47,9 +47,7 @@ const getCanonicalPlaceSlugFromDetail = (
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ place: string; article: string }>;
-}): Promise<Metadata> {
+}: PageProps<"/[locale]/noticies/[place]/[article]">): Promise<Metadata> {
   const { place, article } = await params;
   // Request-independent reader: headers() here would make metadata dynamic
   // under cacheComponents and mismatch the prerendered shell. It throws on
@@ -99,9 +97,7 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
-}: {
-  params: Promise<{ place: string; article: string }>;
-}) {
+}: PageProps<"/[locale]/noticies/[place]/[article]">) {
   // Parallelize params and locale resolution (independent operations).
   const [{ place, article }, locale] = await Promise.all([
     params,

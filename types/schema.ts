@@ -60,7 +60,8 @@ export interface SchemaOrgEvent {
       addressRegion: string;
     };
   };
-  image: string[];
+  /** Real event images only; omitted when the event has none. */
+  image?: string[];
   description: string;
   inLanguage: string;
   /**
@@ -68,15 +69,6 @@ export interface SchemaOrgEvent {
    * More semantically appropriate for schema.org Event type.
    */
   genre?: string[];
-  performer: {
-    "@type": "PerformingGroup";
-    name: string;
-  };
-  organizer: {
-    "@type": "Organization";
-    name: string;
-    url: string;
-  };
   offers?: {
     "@type": "Offer";
     price: number | string;

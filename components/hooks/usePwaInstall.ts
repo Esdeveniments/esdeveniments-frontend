@@ -14,7 +14,7 @@ function detectInstalledMode(): boolean {
     window.matchMedia("(display-mode: standalone)").matches;
   const iosStandalone =
     "standalone" in navigator &&
-    (navigator as { standalone?: boolean }).standalone === true;
+    navigator.standalone === true;
   return inDisplayMode || iosStandalone || window.__pwaInstalled === true;
 }
 

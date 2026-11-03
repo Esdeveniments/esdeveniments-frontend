@@ -56,9 +56,7 @@ import EventDetailsSection from "./components/EventDetailsSection";
 // This allows us to use ssr: false in Next.js 16 (required for client components)
 import LazyRestaurantPromotion from "./components/LazyRestaurantPromotion";
 
-export async function generateMetadata(props: {
-  params: Promise<{ eventId: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/[locale]/e/[eventId]">): Promise<Metadata> {
   const slug = (await props.params).eventId;
   const locale = (await rootLocale()) as AppLocale;
   // Use the request-independent reader: reading headers() here would make
@@ -80,9 +78,7 @@ export async function generateMetadata(props: {
 // inside EventPageContent and streams in under the EventDetailSkeleton fallback.
 export default function EventPage({
   params,
-}: {
-  params: Promise<{ eventId: string }>;
-}) {
+}: PageProps<"/[locale]/e/[eventId]">) {
   const { eventId: slug } = use(params);
 
   // Fallback combines the visual skeleton (aria-hidden) with a minimal

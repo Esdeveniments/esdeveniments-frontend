@@ -1,5 +1,4 @@
 import type {
-  PagedResponseDTO as EventPagedResponseDTO,
   RegionSummaryResponseDTO,
   ProvinceSummaryResponseDTO,
 } from "./event";
@@ -62,8 +61,6 @@ export interface NewsDetailResponseDTO {
   region?: RegionSummaryResponseDTO;
   province?: ProvinceSummaryResponseDTO;
 }
-
-export type PagedResponseDTO<T> = EventPagedResponseDTO<T>;
 
 export interface FetchNewsParams {
   page?: number;

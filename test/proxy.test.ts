@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import proxy from "../proxy";
+import { resolvePlaceForProxy } from "../lib/api/places-proxy";
 import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -65,6 +66,10 @@ vi.mock("../utils/api-helpers", () => ({
   getApiOrigin: vi.fn().mockReturnValue("https://api.example.com"),
 }));
 
+vi.mock("../lib/api/places-proxy", () => ({
+  resolvePlaceForProxy: vi.fn(),
+}));
+
 describe("proxy", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -87,6 +92,8 @@ describe("proxy", () => {
     (NextResponse.next as any).mockReset();
     (NextResponse.redirect as any).mockReset();
     (NextResponse.rewrite as any).mockReset();
+    (resolvePlaceForProxy as Mock).mockReset();
+    (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "unknown" });
   });
 
   afterEach(() => {
@@ -383,6 +390,68 @@ describe("proxy", () => {
         new URL("/barcelona", "https://example.com/barcelona?date=invalid"),
         301,
       );
+    });
+  });
+
+  describe("place existence (real 404 / alias 301)", () => {
+    function placeRequest(pathname: string, method = "GET", search = "") {
+      return {
+        nextUrl: mockNextUrl({ pathname, search }),
+        headers: new Headers({ accept: "text/html" }),
+        method,
+      } as unknown as NextRequest;
+    }
+
+    it("301s an alias to the real slug, keeping locale, segments and query", async () => {
+      (resolvePlaceForProxy as Mock).mockResolvedValue({
+        kind: "alias",
+        slug: "la-garriga",
+      });
+
+      await proxy(placeRequest("/es/lagarriga/avui", "GET", "?search=jazz"));
+
+      expect(resolvePlaceForProxy).toHaveBeenCalledWith("lagarriga");
+      const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+      expect(status).toBe(301);
+      expect(url.pathname).toBe("/es/la-garriga/avui");
+      expect(url.search).toBe("?search=jazz");
+    });
+
+    it("rewrites a missing place with a 404 status and keeps page headers", async () => {
+      (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      const result = await proxy(placeRequest("/no-such-place"));
+
+      const [url, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe("/ca/no-such-place");
+      expect(init.status).toBe(404);
+      expect(init.request.headers.get("x-next-intl-locale")).toBe("ca");
+      expect(result.headers.get("content-security-policy")).toContain(
+        "default-src 'self'",
+      );
+    });
+
+    it("serves the page as before when the check can't decide", async () => {
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      await proxy(placeRequest("/barcelona"));
+
+      const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(init.status).toBeUndefined();
+    });
+
+    it.each([
+      ["a non-GET request", "/barcelona", "POST"],
+      ["an app route", "/noticies", "GET"],
+      ["catalunya", "/catalunya", "GET"],
+      ["a deep path", "/barcelona/avui/teatre/extra", "GET"],
+    ])("skips the backend check for %s", async (_, pathname, method) => {
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      await proxy(placeRequest(pathname, method));
+
+      expect(resolvePlaceForProxy).not.toHaveBeenCalled();
     });
   });
 

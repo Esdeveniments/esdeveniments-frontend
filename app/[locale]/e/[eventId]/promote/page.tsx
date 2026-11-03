@@ -17,9 +17,7 @@ import SessionRefreshNotice from "./SessionRefreshNotice";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ eventId: string }>;
-}): Promise<Metadata> {
+}: PageProps<"/[locale]/e/[eventId]/promote">): Promise<Metadata> {
   const { eventId } = await params;
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.EventPromote" });
@@ -34,9 +32,7 @@ export async function generateMetadata({
 
 export default async function PromotePage({
   params,
-}: {
-  params: Promise<{ eventId: string }>;
-}) {
+}: PageProps<"/[locale]/e/[eventId]/promote">) {
   const slug = (await params).eventId;
   // Owner only; the backend has no admin exemption for promotions.
   const event = await getOwnedEventBySlug(slug);

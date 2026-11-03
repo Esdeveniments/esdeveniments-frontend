@@ -14,7 +14,8 @@ export interface SitemapImage {
 
 export interface SitemapField {
   loc: string;
-  lastmod: string;
+  /** Omitted when there is no real modification date (Google ignores or distrusts guessed values). */
+  lastmod?: string;
   changefreq: ChangeFreq;
   priority: number;
   image?: SitemapImage;

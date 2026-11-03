@@ -11,14 +11,12 @@ import {
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
 import type {
-  PlaceStaticPathParams,
   PlaceTypeAndLabel,
   PageData,
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -50,9 +48,7 @@ import {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/[place]">) {
   const { place } = await params;
 
   const validation = validatePlaceForMetadata(place);
@@ -85,9 +81,7 @@ export async function generateMetadata({
 // shell data, and events fetch — lives inside PlacePageGate and streams in.
 export default function Page({
   params,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/[place]">) {
   const { place } = use(params);
 
   // Minimal SEO-safe fallback: if the streamed gate fails (broken env,
@@ -149,10 +143,6 @@ export async function PlacePageGate({ place }: { place: string }): Promise<JSX.E
     locale,
     rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}`,
-    buildFallbackUrlForInvalidPlace: () =>
-      buildFallbackUrlForInvalidPlace({
-        rawSearchParams: {},
-      }),
     fetchPlaceBySlug,
   });
   if (placeRedirectUrl) {
