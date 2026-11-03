@@ -7,9 +7,9 @@ applyTo: "lib/api/**/*.ts"
 ## Client libraries (`lib/api/*.ts` — non-`-external` files)
 
 - Our `/api/*` routes do not exist at build time, so server readers call the `*-external.ts` wrapper directly:
-  - reference data (places, categories, regions, cities): in-memory cache after `await connection()`; `storeEmpty: false` where the wrapper returns `[]` on failure (a `null` 404 for a place is a real answer and stays cached);
+  - reference data (places, categories, regions, cities): in-memory cache after `await connection()`; the list readers use `storeEmpty: false` so a failed (empty) list is not cached; `fetchPlaceBySlug` keeps the default, because its `null` is a real 404;
   - `fetchEvents`, `fetchCategorizedEvents`: `no-store`, no cache;
-  - `fetchEventsCached`: `"use cache"`, `fetchWithHmac(..., { skipConnection: true })`, throws on failure.
+  - `fetchEventsCached`: its inner `"use cache"` read uses `fetchWithHmac(..., { skipConnection: true })` and throws on failure so nothing bad is cached; `fetchEventsCached` itself never throws (it falls back to `fetchEvents` or an empty page).
 - Exceptions that still read through internal routes: event and news detail (`getInternalApiUrl` with `preferConfiguredOrigin`), profiles.
 - Use query builders (`buildEventsQuery`, `buildNewsQuery`) from `utils/api-helpers.ts` — never construct URLSearchParams manually.
 

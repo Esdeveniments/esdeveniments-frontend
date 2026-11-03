@@ -756,7 +756,7 @@ runtime. The `/api/*` routes stay for client components.
 | Reader | Cache |
 |---|---|
 | `places.ts`, `categories.ts`, `regions.ts`, `cities.ts` | in-memory, after `connection()` (pattern below) |
-| `fetchEventsCached` (town listings) | `"use cache"`, `skipConnection: true`, throws on failure |
+| `fetchEventsCached` (town listings) | inner `"use cache"` read (`skipConnection: true`) throws on failure; `fetchEventsCached` falls back to `fetchEvents` or an empty page and never throws |
 | `fetchEvents`, `fetchCategorizedEvents` | none (`no-store`) |
 | event/news detail, profiles | still via `/api/*` with `getInternalApiUrl({ preferConfiguredOrigin })` |
 

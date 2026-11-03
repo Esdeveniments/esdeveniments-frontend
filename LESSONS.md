@@ -550,7 +550,9 @@ page made 6 to 8 uncached backend calls for places, categories and regions.
 The reference-data readers (places, categories, regions, cities) now always
 call the `*-external.ts` wrapper through the in-memory cache, and each calls
 `connection()` before the cache so a warm cache cannot change what Next
-prerenders. The list wrappers return `[]` on failure, so their caches use
-`storeEmpty: false`; a place 404 (`null`) is a real answer and stays cached.
+prerenders. The list readers fall back to `[]` on failure (the categories,
+regions and cities wrappers return it; `fetchPlacesAggregatedExternal` throws
+and `fetchPlaces` catches), so their caches use `storeEmpty: false`. A place
+404 (`null`) is a real answer and stays cached.
 Town event lists use `"use cache"` instead (`fetchEventsCached`); the
 promoted-events cache keeps `[]` on purpose.

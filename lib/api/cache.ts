@@ -3,6 +3,7 @@ import type {
   CacheFn,
   CacheOptions,
   KeyedCacheFn,
+  KeyedCacheOptions,
 } from "types/cache";
 
 const isEmpty = (data: unknown) =>
@@ -45,7 +46,7 @@ export function createCache<T>(
  */
 export function createKeyedCache<T>(
   ttlMs: number,
-  { storeEmpty = true, maxEntries }: CacheOptions = {},
+  { storeEmpty = true, maxEntries }: KeyedCacheOptions = {},
 ): {
   cache: KeyedCacheFn<T>;
   clear: () => void;
@@ -62,7 +63,7 @@ export function createKeyedCache<T>(
     if (storeEmpty || !isEmpty(data)) {
       cacheMap.delete(key);
       cacheMap.set(key, { data, timestamp: performance.now() });
-      if (maxEntries && cacheMap.size > maxEntries) {
+      if (maxEntries !== undefined && cacheMap.size > maxEntries) {
         // Map keeps insertion order, so the first key is the oldest.
         cacheMap.delete(cacheMap.keys().next().value!);
       }

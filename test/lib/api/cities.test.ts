@@ -48,6 +48,9 @@ describe("lib/api/cities", () => {
     const result = await fetchCities();
     // With getApiUrl() fallback to api-defaults.json, the fetch still works
     expect(result.length).toBeGreaterThan(0);
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).toBe(
+      "https://api.esdeveniments.cat/api/places/cities",
+    );
   });
 
   it("fetchCities makes fetch call and returns parsed data", async () => {
