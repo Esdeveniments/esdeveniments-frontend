@@ -1,10 +1,11 @@
 import "server-only";
 import { captureException } from "@sentry/nextjs";
-import { getSiteUrl } from "@config/index";
-import { buildEventCdnTags, cdnHost, cdnTag } from "@lib/cdn/cache-tags";
+import { buildEventCdnTags, cdnTag, getCdnHost } from "@lib/cdn/cache-tags";
+import { getCloudflarePurgeConfig } from "@lib/cdn/cloudflare-config";
 import { parseCloudflarePurgeResponse } from "@lib/validation/cloudflare";
 import { safeFetch } from "@utils/safe-fetch";
 import type {
+  CloudflarePurgeConfig,
   CloudflarePurgeOutcome,
   CloudflarePurgeTarget,
   EventCdnScope,
@@ -14,21 +15,6 @@ const PURGE_TIMEOUT_MS = 10_000;
 // Free plan: 100 tags or prefixes per request, 5 requests/min (bucket of 25),
 // shared by every purge on the account. Callers send one request per change.
 const MAX_ITEMS_PER_REQUEST = 100;
-
-export function isCloudflarePurgeConfigured(): boolean {
-  return Boolean(
-    process.env.CLOUDFLARE_ZONE_ID && process.env.CLOUDFLARE_API_TOKEN,
-  );
-}
-
-/** The host Cloudflare caches this deployment's pages under. */
-export function getCdnHost(): string {
-  try {
-    return cdnHost(new URL(getSiteUrl()).host);
-  } catch {
-    return "";
-  }
-}
 
 /** `<host>:html`: every public HTML page of this deployment. */
 export function getAllHtmlCdnTag(): string | null {
@@ -53,8 +39,7 @@ export function buildPurgeBodies(
 }
 
 async function sendPurge(
-  zoneId: string,
-  apiToken: string,
+  { zoneId, apiToken }: CloudflarePurgeConfig,
   body: Record<string, unknown>,
 ): Promise<string | null> {
   const { data, error, status } = await safeFetch<unknown>(
@@ -96,15 +81,14 @@ async function sendPurge(
 export async function purgeCloudflareCache(
   target: CloudflarePurgeTarget,
 ): Promise<CloudflarePurgeOutcome> {
-  const zoneId = process.env.CLOUDFLARE_ZONE_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-  if (!zoneId || !apiToken) return { success: true, skipped: true };
+  const config = getCloudflarePurgeConfig();
+  if (!config) return { success: true, skipped: true };
 
   const bodies = buildPurgeBodies(target);
   if (bodies.length === 0) return { success: true, skipped: true };
 
   for (const body of bodies) {
-    const error = await sendPurge(zoneId, apiToken, body);
+    const error = await sendPurge(config, body);
     if (error) return { success: false, error };
   }
   return { success: true };

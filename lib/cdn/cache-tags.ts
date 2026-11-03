@@ -5,11 +5,14 @@
  *
  * Format: `<host>:<kind>[:<value>]`. The host prefix keeps a staging purge
  * from clearing production pages: cache purges are zone-wide and every
- * environment shares the esdeveniments.cat zone.
+ * environment shares the esdeveniments.cat zone. Both sides take the host from
+ * the configured site URL, not the request's Host header, so a proxy that
+ * rewrites Host can't make the labels and the purge disagree.
  */
+import { getSiteUrl } from "@config/index";
 import { normalizeHost } from "@utils/host-validation";
 import { shortTagHash } from "@lib/cache/tags";
-import type { EventCdnScope } from "types/cdn";
+import type { CdnTagKind, EventCdnScope } from "types/cdn";
 
 /** The Catalonia listing shows events from every place. */
 const CATALONIA_PLACE_SLUG = "catalunya";
@@ -39,14 +42,21 @@ function decodeSegment(segment: string): string {
   }
 }
 
-/** Lowercased hostname without port, or "" when the input is unusable. */
-export function cdnHost(host: string | null | undefined): string {
-  return host ? normalizeHost(host) : "";
+/**
+ * The host Cloudflare caches this deployment's pages under (lowercase, no
+ * port), or "" when the site URL is unusable.
+ */
+export function getCdnHost(): string {
+  try {
+    return normalizeHost(new URL(getSiteUrl()).host);
+  } catch {
+    return "";
+  }
 }
 
 export function cdnTag(
   host: string,
-  kind: "html" | "home" | "place" | "event" | "user",
+  kind: CdnTagKind,
   value?: string,
 ): string {
   return value === undefined
@@ -61,11 +71,10 @@ export function cdnTag(
  * the `<host>:html` tag, used to clear all HTML at once.
  */
 export function buildPageCdnTags(
-  rawHost: string | null | undefined,
+  host: string,
   segments: readonly string[],
   isPlacePath: boolean,
 ): string[] {
-  const host = cdnHost(rawHost);
   if (!host) return [];
 
   const tags = [cdnTag(host, "html")];
@@ -88,10 +97,9 @@ export function buildPageCdnTags(
  * owner's profile. Pass the old and new event on edit.
  */
 export function buildEventCdnTags(
-  rawHost: string | null | undefined,
+  host: string,
   events: readonly (EventCdnScope | null | undefined)[],
 ): string[] {
-  const host = cdnHost(rawHost);
   if (!host) return [];
 
   const tags = new Set([

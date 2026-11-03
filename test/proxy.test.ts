@@ -149,11 +149,13 @@ describe("proxy", () => {
 
     describe("Cloudflare Cache-Tag", () => {
       async function cacheTagFor(pathname: string, headers: Record<string, string> = {}) {
+        process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
         const mockRequest = {
           nextUrl: mockNextUrl({ pathname }),
           headers: new Headers({
             accept: "text/html",
-            host: "www.esdeveniments.cat",
+            // Tags use the configured site host, never the request Host.
+            host: "internal-proxy:3000",
             ...headers,
           }),
           method: "GET",

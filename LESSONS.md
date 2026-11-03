@@ -600,7 +600,9 @@ HTML for `s-maxage=1800`. `proxy.ts` now sends a `Cache-Tag` header
 - Cloudflare ignores `stale-while-revalidate` when `s-maxage` is set, so an
   expired page is refetched while the visitor waits (`cf-cache-status:
   EXPIRED`), and "invalidate" (mark stale) behaves like a purge for us.
-- Tags start with the host: purges are zone-wide and staging shares the zone.
+- Tags start with the configured site host (`getCdnHost`), not the request's
+  Host header: purges are zone-wide and staging shares the zone, and a proxy
+  that rewrites Host must not make the labels and the purge disagree.
 - `/api/*` is never edge-cached (DYNAMIC), so a prefix purge of an API URL does
   nothing; only HTML needs purging.
 - Free plan: 5 purge requests/min per account, 100 tags each. Batch.

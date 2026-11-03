@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createConnection } from "node:net";
 import { connect as tlsConnect } from "node:tls";
 import { isApiUrlConfigured } from "@utils/api-helpers";
-import { isCloudflarePurgeConfigured } from "@lib/cdn/cloudflare-purge";
+import { isCloudflarePurgeConfigured } from "@lib/cdn/cloudflare-config";
 
 /**
  * Health check endpoint for monitoring runtime configuration.

@@ -4,7 +4,7 @@ import { sanitizeReturnTo } from "@utils/redirect-safety";
 import { handleCanonicalRedirects, NON_PLACE_FIRST_SEGMENTS } from "@utils/middleware-redirects";
 import { isValidPlace } from "@utils/route-validation";
 import { resolvePlaceForProxy } from "@lib/api/places-proxy";
-import { buildPageCdnTags } from "@lib/cdn/cache-tags";
+import { buildPageCdnTags, getCdnHost } from "@lib/cdn/cache-tags";
 import { isProductionHost } from "@utils/production-host";
 import {
   isDev,
@@ -556,7 +556,7 @@ export default async function proxy(request: NextRequest) {
     // stays. Cloudflare strips this header before it reaches visitors.
     if (isCdnCacheable) {
       const cacheTags = buildPageCdnTags(
-        request.headers.get("host"),
+        getCdnHost(),
         placeSegments,
         isPlacePath,
       );

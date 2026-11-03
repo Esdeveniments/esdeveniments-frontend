@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { buildEventCdnTags, buildPageCdnTags } from "@lib/cdn/cache-tags";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  buildEventCdnTags,
+  buildPageCdnTags,
+  getCdnHost,
+} from "@lib/cdn/cache-tags";
 import type { EventCdnScope } from "types/cdn";
 
 const HOST = "www.esdeveniments.cat";
@@ -23,11 +27,8 @@ describe("buildPageCdnTags", () => {
     ]);
   });
 
-  it("namespaces tags by host without the port, so staging never purges production", () => {
-    expect(buildPageCdnTags("Staging.Esdeveniments.cat:3000", [], false)).toEqual([
-      "staging.esdeveniments.cat:html",
-      "staging.esdeveniments.cat:home",
-    ]);
+  it("tags the home page", () => {
+    expect(buildPageCdnTags(HOST, [], false)).toEqual([`${HOST}:html`, `${HOST}:home`]);
   });
 
   it("only adds the html tag to other public pages", () => {
@@ -36,7 +37,7 @@ describe("buildPageCdnTags", () => {
   });
 
   it("sends no tags without a host", () => {
-    expect(buildPageCdnTags(null, ["barcelona"], true)).toEqual([]);
+    expect(buildPageCdnTags("", ["barcelona"], true)).toEqual([]);
   });
 
   it("matches the event purge for encoded and unsafe slugs", () => {
@@ -93,5 +94,26 @@ describe("buildEventCdnTags", () => {
       `${HOST}:place:catalunya`,
     ]);
     expect(buildEventCdnTags("", [event()])).toEqual([]);
+  });
+});
+
+describe("getCdnHost", () => {
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  afterEach(() => {
+    if (originalSiteUrl === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+    else process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+  });
+
+  it("namespaces tags by the configured site host, so staging never purges production", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://Staging.Esdeveniments.cat:8443/";
+
+    expect(getCdnHost()).toBe("staging.esdeveniments.cat");
+  });
+
+  it("returns no host for an unusable site URL", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "not a url";
+
+    expect(getCdnHost()).toBe("");
   });
 });
