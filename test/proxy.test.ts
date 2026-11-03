@@ -185,6 +185,7 @@ describe("proxy", () => {
         ["/es/catalunya/avui/musica", "www.esdeveniments.cat:html,www.esdeveniments.cat:place:catalunya"],
         ["/e/concert-a-girona", "www.esdeveniments.cat:html,www.esdeveniments.cat:event:concert-a-girona"],
         ["/en/perfil/creator", "www.esdeveniments.cat:html,www.esdeveniments.cat:user:creator"],
+        ["/perfil/creator/passats", "www.esdeveniments.cat:html,www.esdeveniments.cat:user:creator"],
       ])("tags the public page %s", async (pathname, expected) => {
         const { cacheTag, cacheControl } = await cacheTagFor(pathname);
 
@@ -192,7 +193,7 @@ describe("proxy", () => {
         expect(cacheTag).toBe(expected);
       });
 
-      it.each(["/preferits", "/e/concert/edita", "/e/concert/promote"])(
+      it.each(["/preferits", "/perfil/edita", "/e/concert/edita", "/e/concert/promote"])(
         "does not tag the private page %s",
         async (pathname) => {
           const { cacheTag, cacheControl } = await cacheTagFor(pathname);

@@ -54,11 +54,7 @@ export function getCdnHost(): string {
   }
 }
 
-export function cdnTag(
-  host: string,
-  kind: CdnTagKind,
-  value?: string,
-): string {
+export function cdnTag(host: string, kind: CdnTagKind, value?: string): string {
   return value === undefined
     ? `${host}:${kind}`
     : `${host}:${kind}:${tagValue(value)}`;
@@ -85,7 +81,9 @@ export function buildPageCdnTags(
     tags.push(cdnTag(host, "place", decodeSegment(first)));
   } else if (segments.length === 2 && first === "e" && second) {
     tags.push(cdnTag(host, "event", decodeSegment(second)));
-  } else if (segments.length === 2 && first === "perfil" && second) {
+  } else if (segments.length >= 2 && first === "perfil" && second) {
+    // /perfil/<username> and /perfil/<username>/passats both list the owner's
+    // events. /perfil/edita is private, so it never reaches this.
     tags.push(cdnTag(host, "user", decodeSegment(second)));
   }
   return tags;
