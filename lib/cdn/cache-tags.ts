@@ -1,5 +1,5 @@
 /**
- * Cloudflare `Cache-Tag` values for public HTML. proxy.ts labels each
+ * Cloudflare `Cache-Tag` values for public HTML. utils/proxy-page-headers.ts labels each
  * CDN-cacheable page; lib/cdn/cloudflare-purge.ts purges the same labels when
  * an event changes. Both sides must build tags here so they always match.
  *
@@ -66,7 +66,7 @@ export function cdnTag(
 
 /**
  * Tags for a public HTML response. `segments` is the locale-less path split
- * on "/" (still URL-encoded); `isPlacePath` is proxy.ts's own place check, so
+ * on "/" (still URL-encoded); `isPlacePath` (utils/proxy-place.ts) is the proxy's own place check, so
  * the place is read exactly as the place routes read it. Every page also gets
  * the `<host>:html` tag, used to clear all HTML at once.
  */

@@ -34,7 +34,7 @@ const ALLOWED_TAGS = [
  * These are structural data (places, regions, cities, categories) that affect
  * navigation, filters and place pages across ALL locales. A prefix purge can't
  * target the default locale (no prefix with next-intl's "as-needed"), so we
- * purge the `<host>:html` Cache-Tag that proxy.ts puts on every public page.
+ * purge the `<host>:html` Cache-Tag that the proxy (utils/proxy-page-headers.ts) puts on every public page.
  * These revalidations are rare (only when new towns/places are added).
  */
 const HTML_PURGE_TAGS: ReadonlySet<RevalidatableTag> = new Set([
@@ -103,7 +103,7 @@ function validateTags(tags: unknown): tags is RevalidatableTag[] {
 
 /**
  * Purge every public HTML page of this deployment by its `<host>:html`
- * Cache-Tag (set in proxy.ts). Purging everything also drops cached images and
+ * Cache-Tag (set by utils/proxy-page-headers.ts). Purging everything also drops cached images and
  * other hosts in the zone, so it's only the fallback when the tag purge fails.
  */
 async function purgeAllHtml(): Promise<CloudflarePurgeResult> {

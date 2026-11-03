@@ -113,7 +113,7 @@ updateTag(eventsTag);
 after(() => purgeEventPagesFromCdn([oldEvent, updatedEvent]));
 ```
 
-- Tags are built in `lib/cdn/cache-tags.ts` and shared by `proxy.ts` (labels) and the purge (so both always match). Add a page kind there, not ad hoc.
+- Tags are built in `lib/cdn/cache-tags.ts` and shared by `utils/proxy-page-headers.ts` (labels, from `proxy.ts`) and the purge (so both always match). Add a page kind there, not ad hoc.
 - `purgeCloudflareCache` (`lib/cdn/cloudflare-purge.ts`, server-only) takes `{ tags }`, `{ prefixes }` or `{ purgeEverything: true }`, uses `safeFetch`, validates the reply with Zod, reports failures to Sentry and never throws.
 - Free plan: 5 purge requests/min for the whole account, 100 tags per request. One batched call per change; never purge in a loop.
 

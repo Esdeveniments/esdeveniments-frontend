@@ -226,16 +226,8 @@
       "serverBytes": 171195,
       "fileCount": 8
     },
-    "/[locale]/compartir-tiktok": {
-      "serverBytes": 170134,
-      "fileCount": 8
-    },
     "/[locale]/sitemap": {
       "serverBytes": 170077,
-      "fileCount": 8
-    },
-    "/[locale]/callback": {
-      "serverBytes": 170068,
       "fileCount": 8
     },
     "/[locale]/offline": {
@@ -422,10 +414,6 @@
       "serverBytes": 99044,
       "fileCount": 6
     },
-    "/api/tiktok/creator-info": {
-      "serverBytes": 97964,
-      "fileCount": 6
-    },
     "/api/promotions/active": {
       "serverBytes": 97952,
       "fileCount": 6
@@ -436,22 +424,6 @@
     },
     "/api/cloudinary/sign": {
       "serverBytes": 97940,
-      "fileCount": 6
-    },
-    "/api/tiktok/publish": {
-      "serverBytes": 97934,
-      "fileCount": 6
-    },
-    "/api/tiktok/status": {
-      "serverBytes": 97928,
-      "fileCount": 6
-    },
-    "/api/tiktok/upload": {
-      "serverBytes": 97928,
-      "fileCount": 6
-    },
-    "/api/tiktok/token": {
-      "serverBytes": 97920,
       "fileCount": 6
     },
     "/sitemap-places/[...parts]": {

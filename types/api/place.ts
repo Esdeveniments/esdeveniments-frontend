@@ -14,3 +14,6 @@ export type ProxyPlaceResolution =
   | { kind: "alias"; slug: string }
   | { kind: "missing" }
   | { kind: "unknown" };
+
+/** What Proxy does with a place path: 301 to the real slug, or 404. */
+export type ProxyPlaceCheck = { kind: "alias"; url: URL } | { kind: "missing" };

@@ -593,7 +593,7 @@ promoted-events cache keeps `[]` on purpose.
 Publish and edit called `updateTag`, and the event page was fresh, but listings
 stayed old for up to 30 min: `updateTag`/`revalidateTag` clear Next's caches
 (Redis page cache, `"use cache"` store), not Cloudflare, which caches public
-HTML for `s-maxage=1800`. `proxy.ts` now sends a `Cache-Tag` header
+HTML for `s-maxage=1800`. `proxy.ts` (`utils/proxy-page-headers.ts`) now sends a `Cache-Tag` header
 (`lib/cdn/cache-tags.ts`) and publish/edit/delete purge the event's tags in
 `after()` (`lib/cdn/cloudflare-purge.ts`). Things checked on the way:
 

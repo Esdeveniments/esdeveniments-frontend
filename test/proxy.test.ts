@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import proxy from "../proxy";
+import { resolvePlaceForProxy } from "../lib/api/places-proxy";
 import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -65,6 +66,10 @@ vi.mock("../utils/api-helpers", () => ({
   getApiOrigin: vi.fn().mockReturnValue("https://api.example.com"),
 }));
 
+vi.mock("../lib/api/places-proxy", () => ({
+  resolvePlaceForProxy: vi.fn(),
+}));
+
 describe("proxy", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -87,6 +92,8 @@ describe("proxy", () => {
     (NextResponse.next as any).mockReset();
     (NextResponse.redirect as any).mockReset();
     (NextResponse.rewrite as any).mockReset();
+    (resolvePlaceForProxy as Mock).mockReset();
+    (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "unknown" });
   });
 
   afterEach(() => {
@@ -294,6 +301,43 @@ describe("proxy", () => {
       );
     });
 
+    it("reads Accept-Language q-values written with spaces (RFC 9110)", async () => {
+      const mockRequest = {
+        nextUrl: mockNextUrl({ pathname: "/" }),
+        url: "https://example.com/",
+        headers: new Headers({ "accept-language": "ca;q=0.5, es; q=0.9" }),
+        method: "GET",
+      } as unknown as NextRequest;
+      (NextResponse.redirect as Mock).mockReturnValue({
+        headers: new Headers(),
+        cookies: { set: vi.fn() },
+      });
+
+      await proxy(mockRequest);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL("/es", "https://example.com/"),
+        302,
+      );
+    });
+
+    it("keeps AI-bot renders out of the CDN cache without touching the UA", async () => {
+      const ua = "Mozilla/5.0 (compatible; GPTBot/1.2; +https://openai.com/gptbot)";
+      const mockRequest = {
+        nextUrl: mockNextUrl({ pathname: "/barcelona" }),
+        headers: new Headers({ "user-agent": ua }),
+        method: "GET",
+      } as unknown as NextRequest;
+      const mockResponse = { headers: new Headers() };
+      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
+
+      const result = await proxy(mockRequest);
+
+      expect(result.headers.get("Cache-Control")).toBe("private, no-store");
+      const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(init.request.headers.get("user-agent")).toBe(ua);
+    });
+
     it("redirects legacy /tots/ routes", async () => {
       const mockRequest = {
         nextUrl: mockNextUrl({
@@ -407,6 +451,68 @@ describe("proxy", () => {
     });
   });
 
+  describe("place existence (real 404 / alias 301)", () => {
+    function placeRequest(pathname: string, method = "GET", search = "") {
+      return {
+        nextUrl: mockNextUrl({ pathname, search }),
+        headers: new Headers({ accept: "text/html" }),
+        method,
+      } as unknown as NextRequest;
+    }
+
+    it("301s an alias to the real slug, keeping locale, segments and query", async () => {
+      (resolvePlaceForProxy as Mock).mockResolvedValue({
+        kind: "alias",
+        slug: "la-garriga",
+      });
+
+      await proxy(placeRequest("/es/lagarriga/avui", "GET", "?search=jazz"));
+
+      expect(resolvePlaceForProxy).toHaveBeenCalledWith("lagarriga");
+      const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+      expect(status).toBe(301);
+      expect(url.pathname).toBe("/es/la-garriga/avui");
+      expect(url.search).toBe("?search=jazz");
+    });
+
+    it("rewrites a missing place with a 404 status and keeps page headers", async () => {
+      (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      const result = await proxy(placeRequest("/no-such-place"));
+
+      const [url, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe("/ca/no-such-place");
+      expect(init.status).toBe(404);
+      expect(init.request.headers.get("x-next-intl-locale")).toBe("ca");
+      expect(result.headers.get("content-security-policy")).toContain(
+        "default-src 'self'",
+      );
+    });
+
+    it("serves the page as before when the check can't decide", async () => {
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      await proxy(placeRequest("/barcelona"));
+
+      const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(init.status).toBeUndefined();
+    });
+
+    it.each([
+      ["a non-GET request", "/barcelona", "POST"],
+      ["an app route", "/noticies", "GET"],
+      ["catalunya", "/catalunya", "GET"],
+      ["a deep path", "/barcelona/avui/teatre/extra", "GET"],
+    ])("skips the backend check for %s", async (_, pathname, method) => {
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      await proxy(placeRequest(pathname, method));
+
+      expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+    });
+  });
+
   describe("X-Robots-Tag (production-host allowlist)", () => {
     /** Build a minimal page request hitting a given Host header. */
     function buildPageRequest(host: string): NextRequest {
@@ -481,28 +587,6 @@ describe("proxy", () => {
           searchParams: new URLSearchParams(),
         }),
         headers: new Headers({ accept: "text/html" }),
-        method: "GET",
-      } as unknown as NextRequest;
-
-      const result = await proxy(request);
-
-      expect(result.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
-    });
-
-    it("sets noindex,nofollow on /compartir-tiktok even on production host", async () => {
-      const mockResponse = { headers: new Headers() };
-      (NextResponse.rewrite as Mock).mockReturnValue(mockResponse);
-
-      const request = {
-        nextUrl: mockNextUrl({
-          pathname: "/compartir-tiktok",
-          search: "",
-          searchParams: new URLSearchParams(),
-        }),
-        headers: new Headers({
-          host: "www.esdeveniments.cat",
-          accept: "text/html",
-        }),
         method: "GET",
       } as unknown as NextRequest;
 
@@ -975,8 +1059,10 @@ describe("proxy", () => {
     });
   });
 
-  describe("CSP and security headers", () => {
-    it("adds security headers to non-API routes", async () => {
+  // The static security headers (HSTS, X-Frame-Options, …) come from
+  // next.config.js headers(); Proxy only adds the CSP to pages.
+  describe("CSP", () => {
+    it("adds an enforced CSP to page responses", async () => {
       const mockRequest = {
         nextUrl: mockNextUrl({
           pathname: "/home",
@@ -995,25 +1081,12 @@ describe("proxy", () => {
       await proxy(mockRequest);
 
       // In test env (non-preview), CSP must be enforced, not report-only
-      expect(
-        mockResponse.headers.get("Content-Security-Policy"),
-      ).toBeDefined();
+      const csp = mockResponse.headers.get("Content-Security-Policy") ?? "";
+      expect(csp).toContain("default-src 'self'");
+      expect(csp).toContain("frame-ancestors 'self'");
       expect(
         mockResponse.headers.get("Content-Security-Policy-Report-Only"),
       ).toBeNull();
-      expect(
-        mockResponse.headers.get("Strict-Transport-Security"),
-      ).toBeDefined();
-      expect(mockResponse.headers.get("X-Content-Type-Options")).toBe(
-        "nosniff",
-      );
-      expect(mockResponse.headers.get("X-Frame-Options")).toBe("SAMEORIGIN");
-      expect(mockResponse.headers.get("Referrer-Policy")).toBe(
-        "strict-origin-when-cross-origin",
-      );
-      expect(mockResponse.headers.get("Permissions-Policy")).toBe(
-        "camera=(), microphone=(), geolocation=(self)",
-      );
     });
 
     it("CSP includes unsafe-inline for ISR compatibility", async () => {
