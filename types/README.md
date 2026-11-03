@@ -82,7 +82,9 @@ This directory contains all TypeScript type definitions for the project. Types a
    - `NavigationItem` → `types/common.ts`
    - `SocialLinks` → `types/common.ts`
 4. **Import from canonical sources**: Always import from the canonical location
-5. **No types outside `/types`**: ESLint blocks type/interface declarations in `components/`, `app/`, `utils/` and `lib/` (`eslint.config.mjs`)
+5. **No types outside `/types`**: ESLint blocks type/interface declarations in `components/`, `app/`, `utils/`, `lib/` and `**/store.ts` (`eslint.config.mjs`). A few config-only types stay in `config/` (`config/pricing.ts`, `config/categories.ts`). The rule matches declarations only: an inline object type in a generic argument (e.g. `forwardRef<HTMLButtonElement, {...}>` in `components/ui/common/button/index.tsx`) slips through; don't copy it, use a named type from `types/`.
+6. **Import path**: `import type { CardProps } from "types/common"`. Use the bare `types/*` alias, never `@types/*` (clashes with npm type packages). There is no `types/index.ts`; import from the file that defines the type.
+7. **Reuse before adding**: search `types/` for the name and a similar shape, then extend (`extends`, `Pick`, `Omit`). Derived props types also live in `types/`, usually `types/props.ts`.
 
 ## Linting Rules
 

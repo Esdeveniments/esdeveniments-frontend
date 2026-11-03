@@ -1,5 +1,5 @@
 // Client-side validation types for the 2026-07-25 Logto/Auth handoff.
-// Lives in /types/ per the project's type-system-governance rule
+// Lives in /types/ per the project's type rule (AGENTS.md › Types)
 // (no TSTypeAliasDeclaration / TSInterfaceDeclaration outside /types/).
 //
 // Modules that previously declared these types re-export them here so

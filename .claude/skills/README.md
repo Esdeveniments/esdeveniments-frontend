@@ -1,11 +1,9 @@
 # Agent Skills Index
 
-18 task guides for AI coding agents (Copilot, Claude Code, Codex, Cursor) working on this repo. Each folder holds a `SKILL.md`. Claude Code and Copilot (CLI, cloud agent, VS Code) discover `.claude/skills` themselves: they load the frontmatter (`name`, `description`) up front and read the full file when a task matches. Agents that don't scan this folder (e.g. Codex) find the skill in the AGENTS.md table and read it. Keep skills here only: a second copy or symlink in `.github/skills` or `.agents/skills` makes Copilot load each skill twice. Repo-wide rules live in [AGENTS.md](../../AGENTS.md); skills add task detail and should not repeat it.
+15 task guides for AI coding agents (Copilot, Claude Code, Codex, Cursor) working on this repo. Each folder holds a `SKILL.md`. Claude Code and Copilot (CLI, cloud agent, VS Code) discover `.claude/skills` themselves: they load the frontmatter (`name`, `description`) up front and read the full file when a task matches. Agents that don't scan this folder (e.g. Codex) find the skill in the AGENTS.md table and read it. Keep skills here only: a second copy or symlink in `.github/skills` or `.agents/skills` makes Copilot load each skill twice. Repo-wide rules live in [AGENTS.md](../../AGENTS.md); skills add task detail and should not repeat it.
 
 | Skill | Use for | Key rule |
 | --- | --- | --- |
-| [pre-implementation-checklist](pre-implementation-checklist/SKILL.md) | Any new code | Search for existing code first |
-| [type-system-governance](type-system-governance/SKILL.md) | Types, props, DTOs | All types in `types/` |
 | [react-nextjs-patterns](react-nextjs-patterns/SKILL.md) | Pages, components, caching | Server Component by default |
 | [filter-system-dev](filter-system-dev/SKILL.md) | Filters | Start in `config/filters.ts`; follow the skill's file list |
 | [api-layer-patterns](api-layer-patterns/SKILL.md) | API calls and routes | Three-layer proxy pattern |
@@ -20,7 +18,6 @@
 | [bundle-optimization](bundle-optimization/SKILL.md) | Performance, images | Image proxy, one LCP image, server-first |
 | [env-variable-management](env-variable-management/SKILL.md) | Env variables | Update all 5 places |
 | [data-validation-patterns](data-validation-patterns/SKILL.md) | External data | Zod in `lib/validation/`, safe fallbacks |
-| [code-review-evaluation](code-review-evaluation/SKILL.md) | Judging review suggestions | Check against repo rules |
 | [ai-review-responder](ai-review-responder/SKILL.md) | Handling bot review threads on a PR | Fix or decline, resolve, re-request |
 
 ## Adding a skill
