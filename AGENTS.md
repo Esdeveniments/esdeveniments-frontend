@@ -50,7 +50,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 | `yarn start` | `next start`: serves the built app. `start:development\|staging\|production` load that env file |
 | `yarn prebuild` | Generates `public/sw.js` and `public/robots.txt` (build output, never edit them; `app/robots.txt/route.ts` is the fallback, keep both in sync) |
 | `yarn lint` / `yarn typecheck` | 0 errors expected; old warnings are acceptable |
-| `yarn test` | Vitest + jsdom, `test/**/*.{test,spec}.{ts,tsx}`. CI runs Node 26 (`engines.node`) |
+| `yarn test` | Vitest + jsdom, `test/**/*.{test,spec}.{ts,tsx}`. CI runs Node 26 (`NODE_VERSION` in the workflows; keep it in sync with `engines.node`, `.nvmrc` and the Dockerfile base image) |
 | `yarn test:e2e` | Playwright in `e2e/`. Needs a running app and API credentials. Remote: `playwright.remote.config.ts` + `PLAYWRIGHT_TEST_BASE_URL` |
 | `yarn i18n:check` | Missing/invalid message keys |
 | `yarn analyze`, `analyze:experimental` | Bundle analysis |
