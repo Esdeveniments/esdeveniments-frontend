@@ -1,5 +1,7 @@
 import type { NextRequest, NextResponse } from "next/server";
+import { buildPageCdnTags, getCdnHost } from "@lib/cdn/cache-tags";
 import { ALLOWED_QUERY_PARAMS } from "@utils/middleware-redirects";
+import { isPlacePath } from "@utils/proxy-place";
 import { isProductionHost } from "@utils/production-host";
 import botUserAgents from "@config/bot-user-agents.json";
 
@@ -58,21 +60,36 @@ export function applyPageHeaders(
   path: string,
   locale: string,
 ): void {
-  // s-maxage=1800 (30 min): events are published days ahead, so 30 min of
-  // staleness is invisible; stale-while-revalidate=3600 lets the CDN serve
-  // instantly while it revalidates. Browsers revalidate on every navigation.
+  // s-maxage=1800 (30 min) keeps Cloudflare's hit ratio high and TTFB low.
+  // Publish/edit/delete purge the affected pages by Cache-Tag (below), so a
+  // change shows up straight away without a shorter TTL. Cloudflare ignores
+  // stale-while-revalidate when s-maxage is set, so an expired page is
+  // refetched while the visitor waits (cf-cache-status: EXPIRED). Browsers
+  // revalidate on every navigation.
   //
   // AI bots get a full render (htmlLimitedBots) that must not enter the
   // shared CDN cache. This doesn't stop the CDN from serving a cached browser
   // shell to bots; the Cloudflare cache rule handles that
   // (docs/incidents/2026-04-24-ai-bot-cdn-cache-mix.md).
   const isAiBot = AI_BOT_UA_RE.test(request.headers.get("user-agent") ?? "");
+  const isCdnCacheable = !isPersonalizedPath(path) && !isAiBot;
   response.headers.set(
     "Cache-Control",
-    isPersonalizedPath(path) || isAiBot
-      ? "private, no-store"
-      : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
+    isCdnCacheable
+      ? "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600"
+      : "private, no-store",
   );
+  // Labels for lib/cdn/cloudflare-purge.ts. Cloudflare strips this header
+  // before it reaches visitors. Never on private responses.
+  if (isCdnCacheable) {
+    const segments = path.split("/").filter(Boolean);
+    const tags = buildPageCdnTags(
+      getCdnHost(),
+      segments,
+      isPlacePath(segments),
+    );
+    if (tags.length > 0) response.headers.set("Cache-Tag", tags.join(","));
+  }
 
   response.headers.set("Content-Language", locale);
   response.headers.set("Link", AGENT_DISCOVERY_LINKS);

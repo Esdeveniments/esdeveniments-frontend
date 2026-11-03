@@ -8,6 +8,7 @@ import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import type { CreateEventActionResult } from "types/event";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
+import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
 import { env } from "@utils/misc-helpers";
 import { getValidatedImageFile } from "@utils/image-validation";
@@ -119,6 +120,9 @@ export async function createEventAction(
   // This ensures read-your-own-writes: the new event appears immediately
   updateTag(eventsTag);
   updateTag(eventsCategorizedTag);
+  // Next's tags don't reach Cloudflare: purge the listings that show the
+  // event. after() runs once the action's revalidations are applied.
+  after(() => purgeEventPagesFromCdn([created]));
   // Refresh the current request to reflect changes
   refresh();
 

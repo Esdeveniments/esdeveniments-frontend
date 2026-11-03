@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
 import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
@@ -79,6 +80,10 @@ export async function DELETE(
     } catch {
       // revalidatePath is a no-op outside of a render context in some environments
     }
+    // Next's tags don't reach Cloudflare: purge the pages that showed the
+    // event. Next starts the revalidations above before the response is sent,
+    // and after() runs once it has been sent.
+    after(() => purgeEventPagesFromCdn([event]));
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     return handleApiError(e, "/api/events/[slug] DELETE");

@@ -551,6 +551,13 @@ jobs:
             exit 1
           fi
 
+          # Publish/edit/delete purge Cloudflare by Cache-Tag at runtime
+          # (lib/cdn/cloudflare-purge.ts). Without the Coolify env vars that
+          # purge is skipped and listings stay stale until s-maxage expires.
+          if ! echo "$RESPONSE" | grep -q '"cloudflarePurgeConfigured":true'; then
+            echo "::warning::CLOUDFLARE_ZONE_ID/CLOUDFLARE_API_TOKEN are not set in Coolify: event changes won't purge Cloudflare (listings stay stale up to 30 min)."
+          fi
+
       - name: Smoke — OIDC sign-in redirects to Logto (guards public host + LOGTO_* env)
         env:
           SITE_URL: ${{ env.DEPLOY_URL }}

@@ -87,6 +87,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - `proxy.ts`/`utils/api-gate.ts` gate most internal `/api/*` routes; public GETs (events, news, categories, places, regions, cities) are allowlisted.
 - Mapping: UI `distance` + `lat/lon` → API `radius/lat/lon` via `distanceToRadius` (`types/event.ts`), sent only when set; filter `searchTerm` → API `term`; `byDate` (`avui`, `dema`, `setmana`, `cap-de-setmana`) or explicit `from/to`, not both. Pagination uses `PagedResponseDTO.last`.
 - Place page fallback chain: requested place → its region → latest events overall. Keep this order.
+- Next's `updateTag`/`revalidateTag` don't reach Cloudflare. A mutation that changes public HTML must also purge its Cloudflare tags (see Hosting and deploys); `/api/revalidate` purges `<host>:html` for places/regions/cities/categories and falls back to purge-everything.
 - New endpoint: DTO in `types/api/` → `*-external.ts` → `lib/api/*.ts` reader that calls the wrapper (+ cache) → `app/api/` route only if browser code needs it.
 
 ## Filters and URLs
@@ -136,6 +137,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 ## Hosting and deploys
 
 - Docker on Hetzner via Coolify, behind Cloudflare (DNS, edge cache, TLS). Redis holds the Next page cache. `develop` deploys to staging; `main` is production. Infra limits: `docs/self-hosted-resource-limits.md`.
+- Cloudflare caches public HTML on www for `s-maxage=1800` (not `/api/*`, RSC requests, staging or AI bots). `applyPageHeaders` (`utils/proxy-page-headers.ts`, called from `proxy.ts`) labels each CDN-cacheable page with a `Cache-Tag` (`<host>:html` plus `home`, `place:<slug>`, `event:<slug>` or `user:<username>`, built in `lib/cdn/cache-tags.ts`; never on `private, no-store` responses). Publish, edit and delete purge the event's tags in `after()` through `purgeEventPagesFromCdn` (`lib/cdn/cloudflare-purge.ts`). Keep the long `s-maxage`; purge instead of shortening it. Free plan: 5 purge requests/min, 100 tags each, so send one batched request per change. Needs `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` (Cache Purge) at runtime in Coolify; `/api/health` reports `cloudflarePurgeConfigured`.
 - Rollback: Coolify → Deployments → Rollback, or GitHub Actions "Deploy to Coolify" with `skip_ci`. It does not undo backend or DB changes.
 - Coolify PR previews may lack runtime secrets, so they serve an empty `<main>`. Don't use them for SEO/SSR checks unless `curl -sS https://pr-XXX.esdeveniments.cat/ | grep -c '<h1'` is above 0 (`docs/incidents/2026-04-23-coolify-pr-preview-empty-html.md`).
 
