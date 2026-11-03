@@ -58,7 +58,8 @@ try {
  *   sim-chatgpt / sim-claude) can reach our content. Our data is
  *   public cultural-events information; training protection has
  *   lower value than broad agent reach.
- * - Block /_next/ static files (JS chunks, CSS, build artifacts)
+ * - Allow /_next/static/ (JS/CSS Google needs to render pages); block the
+ *   rest of /_next/ (build internals)
  * - Block /api/ routes (internal endpoints, not for indexing)
  */
 const robotsConfig = {
@@ -66,7 +67,7 @@ const robotsConfig = {
     // Default rules for all crawlers (including search engines)
     {
       userAgent: "*",
-      allow: ["/"],
+      allow: ["/", "/_next/static/"],
       disallow: ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"],
     },
     // AI agent BROWSING/SEARCH crawlers — explicit allow (agent readiness)
