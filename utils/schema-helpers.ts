@@ -1,6 +1,7 @@
 import { siteUrl } from "@config/index";
 import { normalizeEndTime } from "@utils/date-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
+import { TIMEZONE_MADRID } from "@utils/constants";
 import type {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -57,6 +58,52 @@ export const ensureTime = (value?: string | null): string | undefined => {
   const trimmed = sanitizeText(value);
   if (!trimmed) return undefined;
   return /^\d{2}:\d{2}(:\d{2})?$/.test(trimmed) ? trimmed : undefined;
+};
+
+const madridOffsetFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: TIMEZONE_MADRID,
+  timeZoneName: "longOffset",
+});
+
+const madridOffsetMinutesAt = (epochMs: number): number => {
+  const name =
+    madridOffsetFormatter
+      .formatToParts(new Date(epochMs))
+      .find((part) => part.type === "timeZoneName")?.value ?? "";
+  const match = /([+-])(\d{2}):(\d{2})/.exec(name);
+  if (!match) return 0;
+  const minutes = Number(match[2]) * 60 + Number(match[3]);
+  return match[1] === "-" ? -minutes : minutes;
+};
+
+/**
+ * Appends the Europe/Madrid UTC offset (DST-aware) to a local
+ * "YYYY-MM-DDTHH:mm[:ss]" value, as Google's Event docs recommend.
+ * Date-only and already-offset values are returned unchanged.
+ */
+export const withMadridOffset = (value: string): string => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(
+    value
+  );
+  if (!match) return value;
+  const [, y, mo, d, h, mi, s] = match;
+  const wallClockAsUtc = Date.UTC(
+    Number(y),
+    Number(mo) - 1,
+    Number(d),
+    Number(h),
+    Number(mi),
+    Number(s ?? 0)
+  );
+  // Second pass corrects the guess when the wall-clock time and its UTC
+  // reading fall on different sides of a DST switch.
+  const guess = madridOffsetMinutesAt(wallClockAsUtc);
+  const offset = madridOffsetMinutesAt(wallClockAsUtc - guess * 60000);
+  const sign = offset < 0 ? "-" : "+";
+  const abs = Math.abs(offset);
+  const hh = String(Math.floor(abs / 60)).padStart(2, "0");
+  const mm = String(abs % 60).padStart(2, "0");
+  return `${value}${sign}${hh}:${mm}`;
 };
 
 export const buildDateTime = (
@@ -126,15 +173,10 @@ export const generateJsonData = (
     }
   };
 
-  // Enhanced image handling with validation, de-duplication and fallback
-  const imageCandidates = [imageUrl, defaultImage];
-  const images = Array.from(
-    new Set(imageCandidates.filter((src): src is string => isValidHttpUrl(src)))
-  );
-  if (images.length === 0 && isValidHttpUrl(defaultImage)) {
-    images.push(defaultImage);
-  }
-  if (!imageUrl || !isValidHttpUrl(imageUrl)) {
+  // Google: event images "must represent the marked up content", so the site
+  // logo is never used as an event image; `image` is omitted instead.
+  const images = imageUrl && isValidHttpUrl(imageUrl) ? [imageUrl] : [];
+  if (images.length === 0) {
     logSchemaWarning(slug, "image");
   }
 
@@ -175,7 +217,7 @@ export const generateJsonData = (
           contentUrl: videoUrl,
           description: descriptionValue,
           thumbnailUrl: images[0] || defaultImage,
-          uploadDate: resolvedStartDate,
+          uploadDate: withMadridOffset(resolvedStartDate),
         }
       : null;
 
@@ -202,8 +244,6 @@ export const generateJsonData = (
     return unique.length > 0 ? unique : undefined;
   })();
 
-  const organizerName =
-    sanitizedLocation || cityName || regionName || "Esdeveniments Catalunya";
   if (!trimmedTitle) {
     logSchemaWarning(slug, "name");
   }
@@ -228,8 +268,8 @@ export const generateJsonData = (
     "@id": eventUrl,
     name: schemaName,
     url: eventUrl,
-    startDate: resolvedStartDate,
-    endDate: resolvedEndDate,
+    startDate: withMadridOffset(resolvedStartDate),
+    endDate: withMadridOffset(resolvedEndDate),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
     location: {
@@ -252,19 +292,12 @@ export const generateJsonData = (
         addressRegion,
       },
     },
-    image: images,
+    ...(images.length > 0 && { image: images }),
     description: descriptionValue,
     inLanguage,
     ...(genre && { genre }),
-    performer: {
-      "@type": "PerformingGroup" as const,
-      name: organizerName,
-    },
-    organizer: {
-      "@type": "Organization" as const,
-      name: organizerName,
-      url: siteUrl,
-    },
+    // performer/organizer are omitted: the backend has no performer or
+    // organizer data, and the venue name is neither (Google sd-policies).
     // isAccessibleForFree removed: event.type defaults to "FREE" so this is unreliable.
     // We only want to claim "Free" when we are 100% sure.
     ...(isValidHttpUrl(event.url) && {

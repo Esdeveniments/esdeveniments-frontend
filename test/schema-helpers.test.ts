@@ -53,7 +53,7 @@ describe("generateJsonData", () => {
 
     expect(schema.location.address.addressLocality).toBe("Catalunya");
     expect(schema.description).toBe("Test Event a Catalunya");
-    expect(schema.image[0]).toMatch(/logo-seo-meta\.webp$/);
+    expect(schema.image).toBeUndefined();
     expect(schema.endDate).toBe(schema.startDate);
     expect(schema.offers).toBeUndefined();
   });
@@ -69,8 +69,35 @@ describe("generateJsonData", () => {
     // Per Google sd-policies: emitting price:0 for an unknown price is
     // misleading. offers is recommended, not required.
     expect(schema.offers).toBeUndefined();
-    expect(schema.performer.name).toBe("Palau de la Música");
     expect(schema.location.address.streetAddress).toBe("Palau de la Música");
+  });
+
+  it("does not present the venue as performer or organizer", () => {
+    const schema = generateJsonData(
+      createEvent({ location: "Palau de la Música" })
+    );
+
+    expect(schema).not.toHaveProperty("performer");
+    expect(schema).not.toHaveProperty("organizer");
+  });
+
+  it("adds the Madrid UTC offset to timed dates, DST-aware", () => {
+    const winter = generateJsonData(
+      createEvent({ startTime: "19:00", endTime: "21:00" })
+    );
+    expect(winter.startDate).toBe("2025-01-10T19:00+01:00");
+    expect(winter.endDate).toBe("2025-01-10T21:00+01:00");
+
+    const summer = generateJsonData(
+      createEvent({
+        startDate: "2025-07-10",
+        endDate: "2025-07-10",
+        startTime: "19:00",
+      })
+    );
+    expect(summer.startDate).toBe("2025-07-10T19:00+02:00");
+    // Unknown end time stays date-only (Google: don't invent a time).
+    expect(summer.endDate).toBe("2025-07-10");
   });
 
   it("normalizes endDate format even when backend omits it", () => {
@@ -82,8 +109,8 @@ describe("generateJsonData", () => {
       })
     );
 
-    expect(schema.endDate).toBe("2025-01-10T12:00");
-    expect(schema.startDate).toBe("2025-01-10T10:00");
+    expect(schema.endDate).toBe("2025-01-10T12:00+01:00");
+    expect(schema.startDate).toBe("2025-01-10T10:00+01:00");
   });
 });
 
