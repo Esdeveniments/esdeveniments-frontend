@@ -1,0 +1,32 @@
+{
+  "$comment": "User-agent tokens (letters, digits, hyphens only; matched case-insensitively). next.config.js adds both lists to Next's default htmlLimitedBots so these crawlers get a fully rendered page instead of the PPR shell. proxy.ts also sends Cache-Control: private, no-store to aiCrawlers so their full render never lands in the CDN cache. The Cloudflare 'Bypass cache for AI bots' rule must list the same aiCrawlers (docs/incidents/2026-04-24-ai-bot-cdn-cache-mix.md).",
+  "searchCrawlers": ["Googlebot", "GoogleOther"],
+  "aiCrawlers": [
+    "GPTBot",
+    "ChatGPT-User",
+    "OAI-SearchBot",
+    "Claude-Web",
+    "ClaudeBot",
+    "anthropic-ai",
+    "PerplexityBot",
+    "Perplexity-User",
+    "ora-scan",
+    "ora-agent",
+    "DeepSeekBot",
+    "Qwen-Agent",
+    "Bytespider",
+    "CCBot",
+    "Meta-ExternalAgent",
+    "Meta-ExternalFetcher",
+    "Applebot-Extended",
+    "cohere-ai",
+    "Omgilibot",
+    "YouBot",
+    "Diffbot",
+    "Amazonbot",
+    "Timpibot",
+    "ImagesiftBot",
+    "PetalBot",
+    "Novellum"
+  ]
+}

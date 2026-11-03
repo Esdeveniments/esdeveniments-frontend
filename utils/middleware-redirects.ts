@@ -16,8 +16,9 @@ import {
   MAX_PARAM_KEY_LENGTH,
 } from "./constants";
 
-// Allowed query parameters to preserve in redirects (security: allowlist only)
-const ALLOWED_QUERY_PARAMS = new Set([
+// Client filter query params (security: allowlist only). Redirects keep only
+// these; proxy.ts marks listings that carry any of them as noindex.
+export const ALLOWED_QUERY_PARAMS: ReadonlySet<string> = new Set([
   "search",
   "distance",
   "price",
@@ -81,8 +82,6 @@ export const NON_PLACE_FIRST_SEGMENTS: ReadonlySet<string> = new Set([
   "server-static-sitemap.xml",
   "preferits",
   "llms.txt",
-  "callback",
-  "compartir-tiktok",
   "patrocina",
   "perfil",
   "iniciar-sessio",

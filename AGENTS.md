@@ -63,7 +63,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - `app/[locale]/`: pages. Listings `[place]/(byDate)/(category)`, events `e/[eventId]`, news `noticies/`. `app/api/`: internal API routes. Sitemaps are routes too (`app/sitemap.xml`, `app/server-*-sitemap.xml`).
 - `components/ui/<feature>/`, `components/partials/`, `components/hooks/`, `components/context/`.
 - `lib/api/`: client libraries + `*-external.ts` backend wrappers. `lib/validation/`: Zod. `utils/`, `config/`, `types/` (all types).
-- `proxy.ts`: Next 16 middleware (redirects, locale, security headers, CSP, API gate).
+- `proxy.ts`: Next 16 Proxy (locale, canonical redirects, place 404/301, CSP, page cache/robots headers, API gate); its helpers are `utils/proxy-*.ts` and `utils/api-gate.ts`. Static security headers, fixed redirects and fixed rewrites live in `next.config.js` (`headers`, `redirects`, `rewrites`).
 - `public/sw-template.js` → `public/sw.js` (Workbox from CDN). `scripts/`: build and perf scripts.
 - Path aliases in `tsconfig.json` (`@components/*`, `@utils/*`, `@lib/*`, `@i18n/*`, …).
 
@@ -94,7 +94,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - Canonical URL: `/place(/date)?(/category)?`, omitting `tots`. Filter configs live in `config/filters.ts` and drive the filter chips through `FilterOperations` (`utils/filter-operations.ts`). URL parsing/building and the API mapping are still written per filter; the `filter-system-dev` skill lists every file a new filter touches. `test/filter-system.test.ts` covers the configs.
 - Build URLs with `buildFilterUrl`/`buildCanonicalUrlDynamic`; parse with `parseFiltersFromUrl`, `urlToFilterState`, `getRedirectUrl` (`utils/url-filters.ts`). Validate category slugs with `isValidCategorySlug`. `distance` is omitted at its default (50).
 - `proxy.ts` → `handleCanonicalRedirects` (`utils/middleware-redirects.ts`) 301-redirects legacy `?category=&date=` and `/tots` segments to canonical paths, keeping only the client filter params in `ALLOWED_QUERY_PARAMS`. byDate + `catalunya` + `tots` may redirect home.
-- Unknown places get their status in `proxy.ts`, not the page (the root layout's `<Suspense>` turns a page `notFound()` into 200): `resolvePlaceForProxy` (`lib/api/places-proxy.ts`) 301s an alias and rewrites a missing place with `status: 404`; it fails open on errors or after 1.5 s. Add every new top-level route folder to `NON_PLACE_FIRST_SEGMENTS` (`utils/middleware-redirects.ts`); a test enforces it.
+- Unknown places get their status in `proxy.ts`, not the page (the root layout's `<Suspense>` turns a page `notFound()` into 200): `checkPlace` (`utils/proxy-place.ts`) → `resolvePlaceForProxy` (`lib/api/places-proxy.ts`) 301s an alias and rewrites a missing place with `status: 404`; it fails open on errors or after 1.5 s. Add every new top-level route folder to `NON_PLACE_FIRST_SEGMENTS` (`utils/middleware-redirects.ts`); a test enforces it.
 
 ## Rendering
 
@@ -114,7 +114,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 ## Security
 
-- CSP lives in `proxy.ts`: host allowlist with `'unsafe-inline'` (keeps pages cacheable for ISR/PPR); no nonces. Add new script/connect hosts there.
+- CSP lives in `utils/proxy-csp.ts` (applied to pages by `proxy.ts`): host allowlist with `'unsafe-inline'` (keeps pages cacheable for ISR/PPR); no nonces. Add new script/connect hosts there. The other security headers are in `next.config.js` `headers()`.
 - JSON-LD is rendered server-side by `components/partials/JsonLdServer.tsx`, which escapes `<`. Use `toLocalizedUrl(path, locale)` (`utils/i18n-seo.ts`) for its URLs and `generateBreadcrumbList()` (`components/partials/seo-meta.ts`) for breadcrumbs.
 - Errors: pass the original error to `captureException(error)`. Wrap `new URL()` in try/catch inside error handlers.
 

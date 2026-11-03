@@ -60,7 +60,8 @@ orank.ai score blocked at **79/100 (B)**. The checks above sum to roughly
 ### Part 1: In-repo (this PR)
 
 `proxy.ts` now sets `Cache-Control: private, no-store` on HTML responses when
-the User-Agent matches `AI_BOT_UA_RE`. This prevents a **bot-rendered
+the User-Agent matches `AI_BOT_UA_RE` (now built from `aiCrawlers` in
+`config/bot-user-agents.json`, in `utils/proxy-page-headers.ts`). This prevents a **bot-rendered
 response** from being cached and served to browsers.
 
 ```ts
@@ -107,6 +108,7 @@ Cache Rules → Create rule.
   (http.user_agent contains "Meta-ExternalFetcher") or
   (http.user_agent contains "Applebot-Extended") or
   (http.user_agent contains "cohere-ai") or
+  (http.user_agent contains "Omgilibot") or
   (http.user_agent contains "YouBot") or
   (http.user_agent contains "Diffbot") or
   (http.user_agent contains "Amazonbot") or
@@ -118,7 +120,7 @@ Cache Rules → Create rule.
 - **Then**: **Bypass cache**
 - **Save and Deploy**
 
-Keep this list in sync with `AI_BOT_UA_RE` in [proxy.ts](../../proxy.ts).
+Keep this list in sync with `aiCrawlers` in [config/bot-user-agents.json](../../config/bot-user-agents.json) (formerly `AI_BOT_UA_RE` in `proxy.ts`).
 
 ## Verification
 

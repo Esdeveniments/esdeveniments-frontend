@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { EVENTS_PATTERN, PUBLIC_API_PATTERNS } from "../proxy";
+import { EVENTS_PATTERN, PUBLIC_API_PATTERNS } from "../utils/api-gate";
 
 const matchesPublicApi = (pathname: string) =>
   PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname));
