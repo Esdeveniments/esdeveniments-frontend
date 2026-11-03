@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { captureException } from "@sentry/nextjs";
-import { getErrorStatus } from "@utils/api-error-handler";
+import { getErrorStatus } from "@utils/error-status";
 import type { z } from "zod";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { requireAuth } from "./events";

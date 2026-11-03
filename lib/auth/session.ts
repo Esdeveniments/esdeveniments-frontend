@@ -11,7 +11,7 @@ import {
   getAccessTokenFromCookies,
   getIdTokenFromCookies,
 } from "@utils/auth-cookies";
-import { getErrorStatus } from "@utils/api-error-handler";
+import { getErrorStatus } from "@utils/error-status";
 import type { AuthUser, ResolveSessionInput, SessionResolution } from "types/auth";
 
 /**

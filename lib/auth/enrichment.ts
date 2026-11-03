@@ -1,6 +1,6 @@
 import "server-only";
 import { getAuthenticatedUserExternal } from "@lib/api/users-external";
-import { getErrorStatus } from "@utils/api-error-handler";
+import { getErrorStatus } from "@utils/error-status";
 import type { AuthenticatedUserDTO } from "types/api/user";
 import type { AuthUser } from "types/auth";
 

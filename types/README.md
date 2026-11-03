@@ -86,7 +86,7 @@ This directory contains all TypeScript type definitions for the project. Types a
 6. **Import path**: `import type { CardProps } from "types/common"`. Use the bare `types/*` alias, never `@types/*` (clashes with npm type packages). There is no `types/index.ts`; import from the file that defines the type.
 7. **Reuse before adding**: search `types/` for the name and a similar shape, then extend (`extends`, `Pick`, `Omit`). Derived props types also live in `types/`, usually `types/props.ts`.
 8. **Route props come from Next**: type pages, layouts and route handlers with the global `PageProps<"/[locale]/…">`, `LayoutProps<…>` and `RouteContext<"/api/…">` that `next typegen` generates (`yarn typecheck` runs it). Don't hand-write `{ params: Promise<{ … }> }`.
-9. **No inline casts for known shapes**: read an error's HTTP status with `getErrorStatus(error)` from `utils/api-error-handler.ts`, not `(error as { status?: number }).status`. Missing browser globals go in `types/navigator.d.ts`.
+9. **No inline casts for known shapes**: read an error's HTTP status with `getErrorStatus(error)` from `utils/error-status.ts`, not `(error as { status?: number }).status`. Missing browser globals go in `types/navigator.d.ts`.
 
 ## Linting Rules
 

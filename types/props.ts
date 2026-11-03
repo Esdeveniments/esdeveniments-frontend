@@ -418,21 +418,6 @@ export interface FilterLoadingGateProps {
   children: ReactNode;
 }
 
-// Next.js App Router page props interfaces
-export interface FilteredPageProps {
-  params: Promise<{
-    place: string;
-    byDate: string;
-    category: string;
-  }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-// Route handler context for catch-all sitemap routes
-export interface SitemapPartsRouteContext {
-  params: Promise<{ parts: string[] }>;
-}
-
 export interface NavbarLabels {
   logoAlt: string;
   home: string;
@@ -1050,12 +1035,9 @@ export interface RefreshSessionProps {
 }
 
 export interface PromotionReturnPageProps {
-  params: Promise<{ eventId: string }>;
+  params: PageProps<"/[locale]/e/[eventId]/promote/success">["params"];
   variant: PromotionStatusPanelProps["variant"];
 }
-
-/** Route props of the promote success and cancel pages. */
-export type PromotionReturnRouteProps = Pick<PromotionReturnPageProps, "params">;
 
 export interface PromotedEventsSectionProps {
   /** Place page slug; omit (or "catalunya") for the Catalonia-wide list. */

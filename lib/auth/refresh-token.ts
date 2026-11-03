@@ -5,7 +5,7 @@ import { execute, TURSO_TIMEOUT_MS } from "@lib/db/turso";
 import { AUTH_SESSION_MAX_AGE, LOGTO_TOKEN_TIMEOUT_MS } from "@utils/constants";
 import { LogtoTokenResponseSchema } from "@lib/validation/auth";
 import { openToken, sealToken } from "./token-encryption";
-import { getErrorStatus } from "@utils/api-error-handler";
+import { getErrorStatus } from "@utils/error-status";
 import type { LogtoConfig, LogtoTokenResponse } from "types/auth";
 
 const SCHEMA = `CREATE TABLE IF NOT EXISTS auth_refresh (

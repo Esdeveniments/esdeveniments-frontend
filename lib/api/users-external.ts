@@ -4,7 +4,7 @@ import { fetchWithHmac } from "./fetch-wrapper";
 import { parseAuthenticatedUser, parseUserPublic } from "@lib/validation/user";
 import { parsePagedEvents } from "@lib/validation/event";
 import { getApiUrl, isApiUrlConfigured, emptyPagedResponse } from "@utils/api-helpers";
-import { getErrorStatus } from "@utils/api-error-handler";
+import { getErrorStatus } from "@utils/error-status";
 import type {
   AuthenticatedUserDTO,
   ProfileUpdateRequestDTO,

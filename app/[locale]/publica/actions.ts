@@ -3,7 +3,7 @@ import { updateTag, refresh } from "next/cache";
 import { after } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
-import { getErrorStatus } from "@utils/api-error-handler";
+import { getErrorStatus } from "@utils/error-status";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import type { CreateEventActionResult } from "types/event";

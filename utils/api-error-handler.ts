@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import type { ApiErrorOptions } from "types/api-error";
+import { getErrorStatus } from "./error-status";
 
 /**
  * Sanitizes error messages before logging to prevent information disclosure.
@@ -17,18 +18,6 @@ export function getSanitizedErrorMessage(error: unknown): string {
     return error;
   }
   return "Unknown error";
-}
-
-/**
- * Reads the HTTP status attached to a thrown error (e.g. via
- * `Object.assign(new Error(msg), { status })`). Returns undefined when absent
- * or not a number.
- */
-export function getErrorStatus(error: unknown): number | undefined {
-  if (typeof error !== "object" || error === null || !("status" in error)) {
-    return undefined;
-  }
-  return typeof error.status === "number" ? error.status : undefined;
 }
 
 /**

@@ -236,6 +236,22 @@ describe("proxy", () => {
       );
     });
 
+    it("reads Accept-Language q-values with whitespace around ';'", async () => {
+      const mockRequest = {
+        nextUrl: mockNextUrl({ pathname: "/" }),
+        url: "https://example.com/",
+        headers: new Headers({ "accept-language": "ca;q=0.5, es; q=0.9" }),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      await proxy(mockRequest);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL("/es", "https://example.com/"),
+        302,
+      );
+    });
+
     it("redirects legacy /tots/ routes", async () => {
       const mockRequest = {
         nextUrl: mockNextUrl({
