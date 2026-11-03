@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { PlaceResponseDTO } from "types/api/place";
 
 const fetchPlaceBySlugExternal = vi.fn();
@@ -24,12 +24,17 @@ describe("resolvePlaceForProxy", () => {
     vi.resetModules();
     fetchPlaceBySlugExternal.mockReset();
     fetchPlacesAggregatedExternal.mockReset();
+    fetchPlacesAggregatedExternal.mockResolvedValue(places);
   });
-  afterEach(() => vi.useRealTimers());
 
-  it("returns exists for a known place", async () => {
-    fetchPlaceBySlugExternal.mockResolvedValue(places[1]);
+  it("answers listed places from the cached list, without a per-slug call", async () => {
     expect(await (await load())("barcelona")).toEqual({ kind: "exists" });
+    expect(fetchPlaceBySlugExternal).not.toHaveBeenCalled();
+  });
+
+  it("looks up places missing from the list (e.g. provinces)", async () => {
+    fetchPlaceBySlugExternal.mockResolvedValue({ id: 3, type: "PROVINCE", name: "Girona", slug: "girona" });
+    expect(await (await load())("girona")).toEqual({ kind: "exists" });
   });
 
   it("returns the canonical slug for an alias", async () => {
@@ -52,16 +57,21 @@ describe("resolvePlaceForProxy", () => {
     fetchPlaceBySlugExternal.mockRejectedValueOnce(new Error("HTTP 500"));
     expect(await resolve("a-place")).toEqual({ kind: "unknown" });
 
+    vi.resetModules();
+    fetchPlacesAggregatedExternal.mockRejectedValue(new Error("HTTP 500"));
     fetchPlaceBySlugExternal.mockResolvedValue(null);
+    expect(await (await load())("c-place")).toEqual({ kind: "unknown" });
+
+    vi.resetModules();
     fetchPlacesAggregatedExternal.mockResolvedValue([]);
-    expect(await resolve("b-place")).toEqual({ kind: "unknown" });
+    expect(await (await load())("b-place")).toEqual({ kind: "unknown" });
   });
 
-  it("fails open when the backend is slow", async () => {
-    vi.useFakeTimers();
-    fetchPlaceBySlugExternal.mockReturnValue(new Promise(() => {}));
-    const pending = (await load())("slow-place");
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(await pending).toEqual({ kind: "unknown" });
+  it("bounds both backend calls with one abort signal", async () => {
+    fetchPlaceBySlugExternal.mockResolvedValue(null);
+    await (await load())("no-such-place");
+    const listSignal = fetchPlacesAggregatedExternal.mock.calls[0][0].signal;
+    expect(listSignal).toBeInstanceOf(AbortSignal);
+    expect(fetchPlaceBySlugExternal.mock.calls[0][1].signal).toBe(listSignal);
   });
 });

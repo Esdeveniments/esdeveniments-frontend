@@ -2,6 +2,8 @@ import { siteUrl } from "@config/index";
 import { normalizeEndTime } from "@utils/date-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { TIMEZONE_MADRID } from "@utils/constants";
+import { TZDate } from "@date-fns/tz";
+import { format } from "date-fns";
 import type {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -60,22 +62,6 @@ export const ensureTime = (value?: string | null): string | undefined => {
   return /^\d{2}:\d{2}(:\d{2})?$/.test(trimmed) ? trimmed : undefined;
 };
 
-const madridOffsetFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZone: TIMEZONE_MADRID,
-  timeZoneName: "longOffset",
-});
-
-const madridOffsetMinutesAt = (epochMs: number): number => {
-  const name =
-    madridOffsetFormatter
-      .formatToParts(new Date(epochMs))
-      .find((part) => part.type === "timeZoneName")?.value ?? "";
-  const match = /([+-])(\d{2}):(\d{2})/.exec(name);
-  if (!match) return 0;
-  const minutes = Number(match[2]) * 60 + Number(match[3]);
-  return match[1] === "-" ? -minutes : minutes;
-};
-
 /**
  * Appends the Europe/Madrid UTC offset (DST-aware) to a local
  * "YYYY-MM-DDTHH:mm[:ss]" value, as Google's Event docs recommend.
@@ -86,24 +72,9 @@ export const withMadridOffset = (value: string): string => {
     value
   );
   if (!match) return value;
-  const [, y, mo, d, h, mi, s] = match;
-  const wallClockAsUtc = Date.UTC(
-    Number(y),
-    Number(mo) - 1,
-    Number(d),
-    Number(h),
-    Number(mi),
-    Number(s ?? 0)
-  );
-  // Second pass corrects the guess when the wall-clock time and its UTC
-  // reading fall on different sides of a DST switch.
-  const guess = madridOffsetMinutesAt(wallClockAsUtc);
-  const offset = madridOffsetMinutesAt(wallClockAsUtc - guess * 60000);
-  const sign = offset < 0 ? "-" : "+";
-  const abs = Math.abs(offset);
-  const hh = String(Math.floor(abs / 60)).padStart(2, "0");
-  const mm = String(abs % 60).padStart(2, "0");
-  return `${value}${sign}${hh}:${mm}`;
+  const [y, mo, d, h, mi, s] = match.slice(1).map((part) => Number(part ?? 0));
+  const local = new TZDate(y, mo - 1, d, h, mi, s, TIMEZONE_MADRID);
+  return `${value}${format(local, "xxx")}`;
 };
 
 export const buildDateTime = (

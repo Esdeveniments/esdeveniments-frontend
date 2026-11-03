@@ -33,7 +33,8 @@ export function isSuspiciousPlaceSlug(rawSlug: string): boolean {
 }
 
 export async function fetchPlaceBySlugExternal(
-  slug: string
+  slug: string,
+  { signal }: Pick<RequestInit, "signal"> = {}
 ): Promise<PlaceResponseDTO | null> {
   // "catalunya" is a frontend-only SEO concept, not a real place in the backend
   // Return null early to avoid unnecessary API calls
@@ -46,7 +47,7 @@ export async function fetchPlaceBySlugExternal(
   try {
     const encodedSlug = encodeURIComponent(slug);
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const res = await fetchWithHmac(`${api}/places/${encodedSlug}`);
+    const res = await fetchWithHmac(`${api}/places/${encodedSlug}`, { signal });
     if (res.status === 404) {
       // Place definitively doesn't exist - return null to signal not found
       return null;
@@ -72,9 +73,9 @@ export async function fetchPlaceBySlugExternal(
   }
 }
 
-export async function fetchPlacesAggregatedExternal(): Promise<
-  PlaceResponseDTO[]
-> {
+export async function fetchPlacesAggregatedExternal({
+  signal,
+}: Pick<RequestInit, "signal"> = {}): Promise<PlaceResponseDTO[]> {
   const api = getApiUrl();
   const endpoints: Array<{ path: string; type: "REGION" | "CITY" }> = [
     { path: "/places/regions", type: "REGION" },
@@ -86,7 +87,7 @@ export async function fetchPlacesAggregatedExternal(): Promise<
     endpoints.map(async ({ path, type }) => {
       const endpoint = `${api}${path}`;
       // No `next: { revalidate }` - uses no-store to avoid cache explosion
-      const response = await fetchWithHmac(endpoint);
+      const response = await fetchWithHmac(endpoint, { signal });
       if (!response.ok) {
         throw new Error(
           `fetchPlacesAggregatedExternal: ${endpoint} HTTP ${response.status}`

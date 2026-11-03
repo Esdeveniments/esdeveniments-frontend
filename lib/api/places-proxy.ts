@@ -10,7 +10,7 @@ import {
 // caches. The short TTL bounds how long a newly added place can 404.
 const PROXY_PLACE_TTL_MS = 60 * 60 * 1000;
 // Proxy runs before every page request; a slow backend must not delay pages.
-// On timeout the page is served as before (the fetch still fills the cache).
+// On timeout the page is served as before.
 const PROXY_PLACE_TIMEOUT_MS = 1500;
 const { cache: placeExistsCache } = createKeyedCache<boolean>(
   PROXY_PLACE_TTL_MS,
@@ -29,26 +29,24 @@ const { cache: placesCache } = createCache<PlaceResponseDTO[]>(
 export async function resolvePlaceForProxy(
   slug: string,
 ): Promise<ProxyPlaceResolution> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<ProxyPlaceResolution>((resolve) => {
-    timer = setTimeout(() => resolve({ kind: "unknown" }), PROXY_PLACE_TIMEOUT_MS);
-  });
-  try {
-    return await Promise.race([resolvePlace(slug), timeout]);
-  } finally {
-    clearTimeout(timer);
-  }
-}
+  // One deadline for the whole check; fetchWithHmac aborts the fetch on it.
+  const signal = AbortSignal.timeout(PROXY_PLACE_TIMEOUT_MS);
 
-async function resolvePlace(slug: string): Promise<ProxyPlaceResolution> {
+  // The list of all regions/cities answers most lookups from memory, so a
+  // cold process makes one list call instead of one call per place.
+  const places = await placesCache(() =>
+    fetchPlacesAggregatedExternal({ signal }),
+  ).catch(() => [] as PlaceResponseDTO[]);
+  if (places.some((place) => place.slug === slug)) return { kind: "exists" };
+
   try {
+    // Places missing from the list (e.g. provinces) need a direct lookup.
     const exists = await placeExistsCache(
       slug,
-      async (key) => (await fetchPlaceBySlugExternal(String(key))) !== null,
+      async (key) =>
+        (await fetchPlaceBySlugExternal(String(key), { signal })) !== null,
     );
     if (exists) return { kind: "exists" };
-
-    const places = await placesCache(fetchPlacesAggregatedExternal);
     if (places.length === 0) return { kind: "unknown" };
 
     const alias = resolvePlaceSlugAliasFromPlaces(slug, places);
