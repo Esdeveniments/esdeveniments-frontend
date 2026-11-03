@@ -45,29 +45,30 @@ export default function TikTokPostForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const prevUrlRef = useRef<string | null>(null);
 
-  // Reset sub-options when commercial toggle turned off
-  useEffect(() => {
-    if (!commercialToggle) {
-      setBrandOrganic(false);
-      setBrandContent(false);
-    }
-  }, [commercialToggle]);
-
-  // UX 3b: Clear SELF_ONLY privacy when branded content is selected
-  useEffect(() => {
-    if (brandContent && privacyLevel === "SELF_ONLY") {
-      setPrivacyLevel("");
-    }
-  }, [brandContent, privacyLevel]);
-
-  // UX 2/3b: Disable interactions for private videos (SELF_ONLY)
-  useEffect(() => {
-    if (privacyLevel === "SELF_ONLY") {
+  // UX 2/3b: Private videos (SELF_ONLY) disable interactions
+  function handlePrivacyChange(next: TikTokPrivacyLevel) {
+    setPrivacyLevel(next);
+    if (next === "SELF_ONLY") {
       setAllowComment(false);
       setAllowDuet(false);
       setAllowStitch(false);
     }
-  }, [privacyLevel]);
+  }
+
+  // Reset sub-options when commercial toggle turned off
+  function handleCommercialToggleChange(next: boolean) {
+    setCommercialToggle(next);
+    if (!next) {
+      setBrandOrganic(false);
+      setBrandContent(false);
+    }
+  }
+
+  // UX 3b: Clear SELF_ONLY privacy when branded content is selected
+  function handleBrandContentChange(next: boolean) {
+    setBrandContent(next);
+    if (next && privacyLevel === "SELF_ONLY") setPrivacyLevel("");
+  }
 
   // Cleanup preview URL on unmount
   useEffect(() => {
@@ -214,7 +215,7 @@ export default function TikTokPostForm({
           <span className="label">Who can view this video</span>
           <select
             value={privacyLevel}
-            onChange={(e) => setPrivacyLevel(e.target.value as TikTokPrivacyLevel)}
+            onChange={(e) => handlePrivacyChange(e.target.value as TikTokPrivacyLevel)}
             required
             className="bg-background border border-input rounded-input py-2 px-3 body-normal text-foreground w-full"
           >
@@ -276,7 +277,7 @@ export default function TikTokPostForm({
         </p>
         <Checkbox
           checked={commercialToggle}
-          onChange={setCommercialToggle}
+          onChange={handleCommercialToggleChange}
           label="This video contains commercial content"
         />
         {commercialToggle && (
@@ -294,7 +295,7 @@ export default function TikTokPostForm({
             {/* 3b: Branded Content — disabled when privacy is private */}
             <Checkbox
               checked={brandContent}
-              onChange={setBrandContent}
+              onChange={handleBrandContentChange}
               disabled={isPrivate}
               label="Branded content — paid partnership"
             />
