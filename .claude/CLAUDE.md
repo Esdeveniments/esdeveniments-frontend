@@ -2,4 +2,4 @@
 
 @../AGENTS.md
 
-Project skills live in `.github/skills/*/SKILL.md` (shared with Copilot). Load the one that matches the task, as listed in the AGENTS.md skills table. Repo gotchas are in `LESSONS.md`.
+Project skills live in `.claude/skills/*/SKILL.md`. Claude Code and Copilot both discover them there; the AGENTS.md skills table says which one fits each task. Repo gotchas are in `LESSONS.md`.

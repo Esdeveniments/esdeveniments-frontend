@@ -7,7 +7,7 @@ Single source of truth for AI agents working in this repo (Copilot, Claude Code,
 **Where else to look**
 
 - `LESSONS.md`: repo gotchas learned the hard way. Read the relevant ones during research.
-- `.github/skills/*/SKILL.md`: how-to guides per task (table below).
+- `.claude/skills/*/SKILL.md`: how-to guides per task (table below).
 - `DESIGN.md`: design tokens and UI rules.
 - `docs/README.md`: index of setup guides, incidents (`docs/incidents/`) and perf baselines (`docs/performance/baselines.md`).
 

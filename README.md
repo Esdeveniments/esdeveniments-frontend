@@ -98,7 +98,7 @@ Deployed via **Docker on Coolify** (self-hosted PaaS).
 - **CI**: `.github/workflows/ci.yml` runs lint, typecheck, tests, build, bundle size check
 - **Deploy workflow**: `.github/workflows/deploy-coolify.yml` builds and deploys on push to `main` (production) and `develop` (staging)
 - **Health check**: `/api/health` — Docker HEALTHCHECK and deploy verification endpoint
-- **Environment variables**: See `.github/skills/env-variable-management/SKILL.md` for the 5-location checklist
+- **Environment variables**: See `.claude/skills/env-variable-management/SKILL.md` for the 5-location checklist
 
 ### Docker build locally
 

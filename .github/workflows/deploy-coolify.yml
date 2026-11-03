@@ -7,7 +7,6 @@ on:
       - "**/*.md"
       - "docs/**"
       - ".claude/**"
-      - ".github/skills/**"
       - ".vscode/**"
       - "LICENSE"
   workflow_dispatch:

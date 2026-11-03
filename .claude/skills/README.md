@@ -1,6 +1,6 @@
 # Agent Skills Index
 
-18 task guides for AI coding agents (Copilot, Claude Code, Codex, Cursor) working on this repo. Each folder holds a `SKILL.md`. Copilot discovers `.github/skills` itself: it loads the frontmatter (`name`, `description`) up front and reads the full file when a task matches. Other agents don't scan this folder; they find the skill in the AGENTS.md table and read it. Repo-wide rules live in [AGENTS.md](../../AGENTS.md); skills add task detail and should not repeat it.
+18 task guides for AI coding agents (Copilot, Claude Code, Codex, Cursor) working on this repo. Each folder holds a `SKILL.md`. Claude Code and Copilot (CLI, cloud agent, VS Code) discover `.claude/skills` themselves: they load the frontmatter (`name`, `description`) up front and read the full file when a task matches. Agents that don't scan this folder (e.g. Codex) find the skill in the AGENTS.md table and read it. Keep skills here only: a second copy or symlink in `.github/skills` or `.agents/skills` makes Copilot load each skill twice. Repo-wide rules live in [AGENTS.md](../../AGENTS.md); skills add task detail and should not repeat it.
 
 | Skill | Use for | Key rule |
 | --- | --- | --- |
@@ -25,7 +25,7 @@
 
 ## Adding a skill
 
-1. Create `.github/skills/<name>/SKILL.md`; the folder name must equal `name`.
+1. Create `.claude/skills/<name>/SKILL.md`; the folder name must equal `name`.
 2. Write it:
 
    ```markdown
