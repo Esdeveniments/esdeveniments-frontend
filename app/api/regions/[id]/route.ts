@@ -4,7 +4,7 @@ import { handleApiError } from "@utils/api-error-handler";
 
 export async function GET(
   _req: Request,
-  ctx: { params: Promise<{ id: string }> }
+  ctx: RouteContext<"/api/regions/[id]">
 ) {
   try {
     const { id } = await ctx.params;

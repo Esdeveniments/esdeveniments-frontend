@@ -55,9 +55,7 @@ import {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ place: string; byDate: string }>;
-}) {
+}: PageProps<"/[locale]/[place]/[byDate]">) {
   const { place, byDate } = await params;
 
   const validation = validatePlaceForMetadata(place);
@@ -134,9 +132,7 @@ export async function generateMetadata({
 
 export default async function ByDatePage({
   params,
-}: {
-  params: Promise<{ place: string; byDate: string }>;
-}) {
+}: PageProps<"/[locale]/[place]/[byDate]">) {
   // Parallelize independent operations: params, locale, and categories fetch.
   const [resolvedParams, locale, categoriesResult] = await Promise.all([
     params,

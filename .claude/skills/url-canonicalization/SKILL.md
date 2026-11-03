@@ -16,17 +16,11 @@ Reading `searchParams` makes the page dynamic: Next renders and stores one entry
 export default async function Page({
   params,
   searchParams,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-  searchParams: Promise<{ search?: string }>;
-}) { /* ... */ }
+}: PageProps<"/[locale]/[place]">) { /* ... */ }
 
 // ✅ Only params; the page stays cacheable
-export default function Page({
-  params,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-}) {
+// (`PageProps` types `searchParams` too; reading it is what makes the page dynamic)
+export default function Page({ params }: PageProps<"/[locale]/[place]">) {
   const { place } = use(params);
   return (
     <Suspense fallback={<h1 className="sr-only">{formatPlaceName(place)}</h1>}>

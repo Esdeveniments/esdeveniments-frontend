@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import ProfileHeader from "@components/ui/profile/ProfileHeader";
 import ProfileClaimCta from "@components/ui/profile/ProfileClaimCta";
 import { getUserByUsernameCached } from "@lib/api/profiles";
@@ -12,10 +11,7 @@ import { getUserByUsernameCached } from "@lib/api/profiles";
 export default async function ProfileLayout({
   children,
   params,
-}: {
-  children: ReactNode;
-  params: Promise<{ username: string }>;
-}) {
+}: LayoutProps<"/[locale]/perfil/[username]">) {
   const { username } = await params;
   const profile = await getUserByUsernameCached(username);
 

@@ -11,6 +11,7 @@ import {
   getAccessTokenFromCookies,
   getIdTokenFromCookies,
 } from "@utils/auth-cookies";
+import { getErrorStatus } from "@utils/error-status";
 import type { AuthUser, ResolveSessionInput, SessionResolution } from "types/auth";
 
 /**
@@ -151,7 +152,7 @@ export async function resolveSession(
     );
     return { kind: "ok", user: refreshedUser, refreshedTokens: refreshed };
   } catch (e) {
-    const status = (e as { status?: number })?.status;
+    const status = getErrorStatus(e);
     // Definitive auth failure (e.g. refresh token revoked/expired). Only log
     // out if we never had a valid id_token-derived session to fall back on.
     if (status === 400 || status === 401 || status === 403) {

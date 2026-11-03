@@ -352,7 +352,7 @@ export default function GoogleScriptsHeavy({
       typeof window.matchMedia === "function" &&
       window.matchMedia("(display-mode: standalone)").matches;
     const iosStandalone =
-      (window.navigator as { standalone?: boolean }).standalone === true;
+      window.navigator.standalone === true;
     if (!mediaStandalone && !iosStandalone) return;
 
     win.gtag("event", "pwa_standalone_launch", {

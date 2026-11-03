@@ -6,7 +6,6 @@ import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
 import { EXPIRED_EVENT_NOINDEX_DAYS } from "@lib/meta";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
-import type { SitemapPartsRouteContext } from "types/props";
 
 // Chunk size chosen to keep response sizes manageable
 // With image URLs and hreflang alternates, ~500 events per chunk is safe
@@ -14,7 +13,7 @@ const EVENTS_PER_CHUNK = 500;
 
 export async function GET(
   _request: Request,
-  context: SitemapPartsRouteContext
+  context: RouteContext<"/sitemap-events/[...parts]">
 ) {
   const { parts } = await context.params;
 

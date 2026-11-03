@@ -51,9 +51,7 @@ import {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ place: string; byDate: string; category: string }>;
-}) {
+}: PageProps<"/[locale]/[place]/[byDate]/[category]">) {
   const { place, byDate, category } = await params;
 
   // 🛡️ SECURITY: Validate place parameter
@@ -131,9 +129,7 @@ export async function generateMetadata({
 
 export default async function FilteredPage({
   params,
-}: {
-  params: Promise<{ place: string; byDate: string; category: string }>;
-}) {
+}: PageProps<"/[locale]/[place]/[byDate]/[category]">) {
   // Parallelize independent operations: params, locale, and categories fetch.
   const [resolvedParams, locale, categoriesResult] = await Promise.all([
     params,

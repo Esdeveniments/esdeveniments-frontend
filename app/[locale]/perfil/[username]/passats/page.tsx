@@ -15,9 +15,7 @@ import ProfilePageTracker from "../ProfilePageTracker";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+}: PageProps<"/[locale]/perfil/[username]/passats">) {
   const { username } = await params;
   const [profile, locale, t] = await Promise.all([
     getUserByUsernameCached(username),
@@ -50,9 +48,7 @@ export async function generateMetadata({
 
 export default async function ProfilePastEventsPage({
   params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+}: PageProps<"/[locale]/perfil/[username]/passats">) {
   const { username } = await params;
 
   const [profile, tProfile] = await Promise.all([

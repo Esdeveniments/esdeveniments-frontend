@@ -11,9 +11,7 @@ import EditEventClient from "./EditEventClient";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ eventId: string }>;
-}): Promise<Metadata> {
+}: PageProps<"/[locale]/e/[eventId]/edita">): Promise<Metadata> {
   const { eventId } = await params;
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.EventEdit" });
@@ -28,9 +26,7 @@ export async function generateMetadata({
 
 export default async function EditaPage({
   params,
-}: {
-  params: Promise<{ eventId: string }>;
-}) {
+}: PageProps<"/[locale]/e/[eventId]/edita">) {
   const slug = (await params).eventId;
   const event = await getOwnedEventBySlug(slug);
   if (!event) return notFound();

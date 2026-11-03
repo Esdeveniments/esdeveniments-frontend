@@ -430,27 +430,6 @@ export interface RssEvent {
   imageUrl?: string;
 }
 
-export interface MonthStaticPathParams {
-  town: string;
-  year: string;
-  month: string;
-  [key: string]: string | undefined;
-}
-
-export interface TownStaticPathParams {
-  town: string;
-  year?: string;
-  month?: string;
-  [key: string]: string | undefined;
-}
-
-export interface PlaceStaticPathParams {
-  place: string;
-  [key: string]: string | string[] | undefined;
-}
-
-export type PlaceStaticPath = { params: PlaceStaticPathParams };
-
 // Generic query-string record used by route-handler pages that accept
 // Next.js's `searchParams` prop. Declared here (not inline) so reviews
 // don't flag it as an inline union type.

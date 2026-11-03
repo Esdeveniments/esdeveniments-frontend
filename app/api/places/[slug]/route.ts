@@ -9,7 +9,7 @@ import { handleApiError } from "@utils/api-error-handler";
 
 export async function GET(
   _req: Request,
-  ctx: { params: Promise<{ slug: string }> }
+  ctx: RouteContext<"/api/places/[slug]">
 ) {
   try {
     const { slug } = await ctx.params;

@@ -7,7 +7,7 @@ import { localeToHrefLang } from "types/i18n";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ place: string }> }
+  { params }: RouteContext<"/[locale]/noticies/[place]/rss.xml">
 ) {
   const { place } = await params;
   const locale = await getLocaleSafely();

@@ -1,8 +1,7 @@
 import { PromotionReturnPage, promotionReturnMetadata } from "../PromotionStatusPanel";
-import type { PromotionReturnRouteProps } from "types/props";
 
 export const generateMetadata = () => promotionReturnMetadata("cancel");
 
-export default function PromoteCancelPage({ params }: PromotionReturnRouteProps) {
+export default function PromoteCancelPage({ params }: PageProps<"/[locale]/e/[eventId]/promote/cancel">) {
   return <PromotionReturnPage params={params} variant="cancel" />;
 }
