@@ -62,7 +62,7 @@ Parsers may also normalize after validation: `parseEventDetail` and `parsePagedE
 
 ## Logging
 
-Parsers only `console.error("<parserName>: invalid … payload", result.error)`. Console output is not sent to Sentry (`enableLogs: false` in `sentry.server.config.ts`). If a validation failure needs an alert, call `captureException` in the wrapper with the real error and a `section` tag (see `lib/api/events.ts`).
+Parsers only `console.error("<parserName>: invalid … payload", result.error)`. Console output is not sent to Sentry: no init adds `consoleLoggingIntegration` and nothing calls `Sentry.logger`. If a validation failure needs an alert, call `captureException` in the wrapper with the real error and a `section` tag (see `lib/api/events.ts`).
 
 ## Checklist
 
