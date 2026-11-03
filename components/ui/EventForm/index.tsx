@@ -5,8 +5,8 @@ import React, {
   useMemo,
   useEffect,
   useRef,
-  useSyncExternalStore,
 } from "react";
+import { useIsClient } from "@components/hooks/useIsClient";
 import { setHours, setMinutes, setSeconds } from "date-fns";
 import { parseLocalDateTime, toLocalDateTimeString } from "@utils/date-helpers";
 import {
@@ -28,7 +28,6 @@ import { sendGoogleEvent } from "@utils/analytics";
 import { buildPublishContext } from "@utils/publica-analytics";
 import { useTranslations } from "next-intl";
 
-const subscribeNoop = () => () => {};
 // Fields checked when leaving each step, and the element to focus first.
 const STEP_FIELDS = [["title", "description", "url"], ["town", "location"], []] as const;
 const FIELD_FOCUS_IDS = {
@@ -68,11 +67,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   const t = useTranslations("Utils.Validation");
   const tForm = useTranslations("Components.EventForm");
   // true on the client, false during SSR: marks the form interactive for e2e.
-  const isHydrated = useSyncExternalStore(
-    subscribeNoop,
-    () => true,
-    () => false
-  );
+  const isHydrated = useIsClient();
   const [step, setStep] = useState(initialStep);
   const changeStep = (next: number) => {
     if (next === step) return;

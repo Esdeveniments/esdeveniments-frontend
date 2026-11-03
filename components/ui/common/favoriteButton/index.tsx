@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import useSWR from "swr";
@@ -42,7 +42,6 @@ export default function FavoriteButton({
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const isMutatingRef = useRef(false);
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const t = useTranslations("Components.FavoriteButton");
@@ -67,11 +66,18 @@ export default function FavoriteButton({
     }
   );
 
-  useEffect(() => {
-    if (isMutatingRef.current) return;
-    if (!favoritesData || favoritesData.ok !== true) return;
-    setIsFavorite(favoritesData.favorites.includes(eventSlug));
-  }, [favoritesData, eventSlug]);
+  // Adopt the shared favorites list when it changes, except while our own
+  // toggle is in flight (react.dev: "Adjusting some state when a prop changes").
+  const [syncedFavorites, setSyncedFavorites] = useState<{
+    data: typeof favoritesData | null;
+    slug: string;
+  }>({ data: null, slug: eventSlug });
+  if (syncedFavorites.data !== favoritesData || syncedFavorites.slug !== eventSlug) {
+    setSyncedFavorites({ data: favoritesData, slug: eventSlug });
+    if (!isPending && favoritesData?.ok === true) {
+      setIsFavorite(favoritesData.favorites.includes(eventSlug));
+    }
+  }
 
   const ariaLabel = isFavorite ? labels.remove : labels.add;
 
@@ -113,7 +119,6 @@ export default function FavoriteButton({
           }
 
           startTransition(async () => {
-            isMutatingRef.current = true;
             try {
               const response = await queueFavoriteRequest(() =>
                 fetch("/api/favorites", {
@@ -211,8 +216,6 @@ export default function FavoriteButton({
                 },
               });
               setIsFavorite(!nextIsFavorite);
-            } finally {
-              isMutatingRef.current = false;
             }
           });
         }}

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
 import { useAdContext } from "@lib/context/AdContext";
+import { useIsClient } from "@components/hooks/useIsClient";
 import { isE2ETestMode } from "@utils/env";
 import { isProductionHost } from "@utils/production-host";
 import {
@@ -103,15 +104,13 @@ export default function GoogleScripts() {
   // Gate GA (pageviews + consent) and Auto Ads to the production host so they
   // never fire on Vercel previews, staging, or the app embedded in the Coolify
   // dashboard, all of which inline the same prod measurement ID. Reuses the
-  // existing prod-host allowlist (covers www + apex). Resolved after mount so
-  // the first client render matches SSR (both render nothing) — no hydration
-  // mismatch. The CMP/consent banner is intentionally NOT gated (its
-  // googlefcPresent script runs in the root layout <head>, and it sends
-  // nothing to GA on its own).
-  const [isProdHost, setIsProdHost] = useState(false);
-  useEffect(() => {
-    setIsProdHost(isProductionHost(window.location.hostname));
-  }, []);
+  // existing prod-host allowlist (covers www + apex). False on the server and
+  // during hydration, so the first client render matches SSR (both render
+  // nothing) — no hydration mismatch. The CMP/consent banner is intentionally
+  // NOT gated (its googlefcPresent script runs in the root layout <head>, and
+  // it sends nothing to GA on its own).
+  const isClient = useIsClient();
+  const isProdHost = isClient && isProductionHost(window.location.hostname);
 
   const [HeavyComponent, setHeavyComponent] = useState<
     React.ComponentType<GoogleScriptsHeavyProps> | null
