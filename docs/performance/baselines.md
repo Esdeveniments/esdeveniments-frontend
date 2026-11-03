@@ -207,3 +207,29 @@ What to watch after release (field data needs days to weeks):
 - Search Console → Enhancements → Events: valid items stay stable; no new "misleading" or invalid `image`/`performer`/`organizer` warnings.
 - GA4 `web_vitals` TTFB and LCP on place pages, and `python3 scripts/crux-check.py` after 4 weeks: no regression.
 - Backend: request volume on `/places/{slug}` should not grow (the list answers most lookups).
+
+## 2026-11-03: Cloudflare Cache-Tag purge
+
+Publish, edit and delete now purge the affected pages from Cloudflare by `Cache-Tag` instead of waiting for `s-maxage=1800` (see LESSONS.md, "Next's `updateTag` doesn't clear Cloudflare"). `s-maxage` is unchanged.
+
+Baseline before the change, production, curl from a home connection, 2026-11-03 17:40 UTC, two runs each:
+
+| Request | First run | Second run |
+|---|---|---|
+| `/` | HIT, 250 ms | HIT, 119 ms |
+| `/es` | EXPIRED, 254 ms | HIT, 119 ms |
+| `/barcelona` | EXPIRED, 268 ms | HIT, 113 ms |
+| `/es/barcelona` | EXPIRED, 263 ms | HIT, 106 ms |
+| `/catalunya` | EXPIRED, 251 ms | HIT, 97 ms |
+| `/girona/avui` | MISS, 255 ms | HIT, 87 ms |
+| `/api/events?page=0&size=10` | DYNAMIC, 768 ms | DYNAMIC, 861 ms |
+
+- A HIT costs about 100 ms TTFB; a MISS or EXPIRED about 250 ms. A purge turns the next request for each purged page into a MISS, so watch the hit ratio.
+- Cloudflare caches HTML only on www. `/api/*`, RSC requests, staging HTML and AI bots are DYNAMIC.
+- Before: a new or edited event reached its place listing after up to 30 min (the page's remaining `s-maxage`). Each publish or delete now purges up to 7 tags (home, `catalunya`, city, region, province, event, owner) in one request; an edit that moves the event sends both sets, still one request.
+
+Still to record after the production deploy:
+
+- Time from publishing a test event to seeing it on its place listing through Cloudflare (expected: seconds).
+- Cloudflare cache hit ratio and TTFB over 48 h, compared with the 48 h before.
+

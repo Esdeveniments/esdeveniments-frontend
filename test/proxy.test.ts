@@ -147,6 +147,62 @@ describe("proxy", () => {
       );
     });
 
+    describe("Cloudflare Cache-Tag", () => {
+      async function cacheTagFor(pathname: string, headers: Record<string, string> = {}) {
+        const mockRequest = {
+          nextUrl: mockNextUrl({ pathname }),
+          headers: new Headers({
+            accept: "text/html",
+            host: "www.esdeveniments.cat",
+            ...headers,
+          }),
+          method: "GET",
+        } as unknown as NextRequest;
+        const mockResponse = () => ({ headers: new Headers(), cookies: { set: vi.fn() } });
+        (NextResponse.rewrite as Mock).mockReturnValue(mockResponse());
+        (NextResponse.next as Mock).mockReturnValue(mockResponse());
+
+        const result = await proxy(mockRequest);
+        return {
+          cacheTag: result.headers.get("Cache-Tag"),
+          cacheControl: result.headers.get("Cache-Control"),
+        };
+      }
+
+      it.each([
+        ["/", "www.esdeveniments.cat:html,www.esdeveniments.cat:home"],
+        ["/es", "www.esdeveniments.cat:html,www.esdeveniments.cat:home"],
+        ["/catalunya", "www.esdeveniments.cat:html,www.esdeveniments.cat:place:catalunya"],
+        ["/es/catalunya/avui/musica", "www.esdeveniments.cat:html,www.esdeveniments.cat:place:catalunya"],
+        ["/e/concert-a-girona", "www.esdeveniments.cat:html,www.esdeveniments.cat:event:concert-a-girona"],
+        ["/en/perfil/creator", "www.esdeveniments.cat:html,www.esdeveniments.cat:user:creator"],
+      ])("tags the public page %s", async (pathname, expected) => {
+        const { cacheTag, cacheControl } = await cacheTagFor(pathname);
+
+        expect(cacheControl).toContain("s-maxage=1800");
+        expect(cacheTag).toBe(expected);
+      });
+
+      it.each(["/preferits", "/e/concert/edita", "/e/concert/promote"])(
+        "does not tag the private page %s",
+        async (pathname) => {
+          const { cacheTag, cacheControl } = await cacheTagFor(pathname);
+
+          expect(cacheControl).toBe("private, no-store");
+          expect(cacheTag).toBeNull();
+        },
+      );
+
+      it("does not tag AI-bot responses, which are never CDN-cached", async () => {
+        const { cacheTag, cacheControl } = await cacheTagFor("/catalunya", {
+          "user-agent": "Mozilla/5.0 (compatible; GPTBot/1.2; +https://openai.com/gptbot)",
+        });
+
+        expect(cacheControl).toBe("private, no-store");
+        expect(cacheTag).toBeNull();
+      });
+    });
+
     it("handles /sw.js route with cache headers", async () => {
       const mockRequest = {
         nextUrl: mockNextUrl({

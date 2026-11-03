@@ -6,7 +6,9 @@ import type { RevalidatableTag } from "types/cache";
 export interface CloudflarePurgeResult {
   /** Whether the purge was executed successfully */
   purged: boolean;
-  /** URL prefixes that were purged */
+  /** Cache-Tags that were purged */
+  tags?: string[];
+  /** URL prefixes that were purged (`["*"]` = everything) */
   prefixes?: string[];
   /** Whether purge was skipped (e.g., not configured) */
   skipped?: boolean;

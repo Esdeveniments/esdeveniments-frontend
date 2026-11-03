@@ -1,5 +1,6 @@
 "use server";
 import { updateTag, refresh, revalidatePath } from "next/cache";
+import { after } from "next/server";
 import {
   updateEventById,
   fetchEventBySlug,
@@ -10,6 +11,7 @@ import type { EventBaseRequestDTO, EventUpdateRequestDTO } from "types/api/event
 import type { EditEventResult } from "types/event";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import { deleteEventDetailCache } from "@lib/cache/event-detail-cache";
+import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { getCurrentUser } from "@lib/auth/session";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 import { getValidatedImageFile } from "@utils/image-validation";
@@ -105,6 +107,9 @@ export async function editEvent(
   } catch {
     // revalidatePath is a no-op outside of a render context in some environments
   }
+  // Next's tags don't reach Cloudflare: purge the pages that showed the old
+  // event and those that show the new one (place or slug may have changed).
+  after(() => purgeEventPagesFromCdn([event, updatedEvent]));
   // Refresh the current request to reflect changes
   refresh();
 

@@ -4,6 +4,7 @@ import { sanitizeReturnTo } from "@utils/redirect-safety";
 import { handleCanonicalRedirects, NON_PLACE_FIRST_SEGMENTS } from "@utils/middleware-redirects";
 import { isValidPlace } from "@utils/route-validation";
 import { resolvePlaceForProxy } from "@lib/api/places-proxy";
+import { buildPageCdnTags } from "@lib/cdn/cache-tags";
 import { isProductionHost } from "@utils/production-host";
 import {
   isDev,
@@ -418,13 +419,15 @@ export default async function proxy(request: NextRequest) {
   // checking the slug here instead.
   const placeSegments = pathnameWithoutLocale.split("/").filter(Boolean);
   const placeSlug = placeSegments[0] ?? "";
-  const placeResolution =
-    (request.method === "GET" || request.method === "HEAD") &&
+  const isPlacePath =
     placeSegments.length >= 1 &&
     placeSegments.length <= 3 &&
-    placeSlug !== "catalunya" &&
     !NON_PLACE_FIRST_SEGMENTS.has(placeSlug) &&
-    isValidPlace(placeSlug)
+    isValidPlace(placeSlug);
+  const placeResolution =
+    (request.method === "GET" || request.method === "HEAD") &&
+    isPlacePath &&
+    placeSlug !== "catalunya"
       ? await resolvePlaceForProxy(placeSlug)
       : null;
 
@@ -502,15 +505,13 @@ export default async function proxy(request: NextRequest) {
 
   // Cache-Control for public HTML pages (excluding API and Next assets).
   //
-  // s-maxage=1800 (30 min): Cultural events are published days in advance, so
-  // 30 min staleness is invisible to users. With stale-while-revalidate=3600,
-  // CloudFront serves the stale page instantly for up to 60 min after expiry
-  // while revalidating in the background — eliminating TTFB spikes from
-  // synchronous revalidation. This raises CloudFront cache-hit ratio and
-  // reduces Lambda invocations significantly.
+  // s-maxage=1800 (30 min) keeps Cloudflare's hit ratio high and TTFB low.
+  // Publish/edit/delete purge the affected pages by Cache-Tag (below), so a
+  // change shows up straight away without a shorter TTL. Cloudflare ignores
+  // stale-while-revalidate when s-maxage is set (it implies proxy-revalidate),
+  // so an expired page is refetched synchronously (cf-cache-status: EXPIRED).
   //
-  // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
-  // still serve quickly and revalidate in the background.
+  // Browser cache is set to 0 so users revalidate on navigation.
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
     const normalizedPath = pathnameWithoutLocale || pathname;
     const isFavoritesPage = normalizedPath === "/preferits";
@@ -543,12 +544,26 @@ export default async function proxy(request: NextRequest) {
     //   stop Cloudflare from serving an already-cached browser shell to bots.
     //   A Cloudflare Cache Rule must also bypass cache when User-Agent matches
     //   the bot regex. See docs/incidents/2026-04-24-ai-bot-cdn-cache-mix.md.
+    const isCdnCacheable = !isPersonalizedHtml && !isAiBot;
     response.headers.set(
       "Cache-Control",
-      isPersonalizedHtml || isAiBot
-        ? "private, no-store"
-        : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
+      isCdnCacheable
+        ? "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600"
+        : "private, no-store",
     );
+    // Cloudflare Cache-Tags let publish/edit/delete purge just the listings
+    // an event appears on (lib/cdn/cloudflare-purge.ts), so the long s-maxage
+    // stays. Cloudflare strips this header before it reaches visitors.
+    if (isCdnCacheable) {
+      const cacheTags = buildPageCdnTags(
+        request.headers.get("host"),
+        placeSegments,
+        isPlacePath,
+      );
+      if (cacheTags.length > 0) {
+        response.headers.set("Cache-Tag", cacheTags.join(","));
+      }
+    }
   }
 
   // Set Content-Language header for SEO and accessibility

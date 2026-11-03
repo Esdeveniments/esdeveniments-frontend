@@ -101,6 +101,28 @@ export async function GET() {
 - `handleApiError` (`utils/api-error-handler.ts`) logs, reports to Sentry and returns a JSON error.
 - Parse and clamp query params in the route (see the `page`/`size` clamp in `app/api/events/route.ts`).
 
+### Cloudflare cache and mutations
+
+Cloudflare caches public HTML pages for `s-maxage=1800`, but not `/api/*` (cf-cache-status: DYNAMIC, no Cache Rule). `updateTag`/`revalidateTag` clear only Next's caches, so a mutation that changes what a public page shows must also purge Cloudflare:
+
+```ts
+import { after } from "next/server";
+import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
+
+updateTag(eventsTag);
+after(() => purgeEventPagesFromCdn([oldEvent, updatedEvent]));
+```
+
+- Tags are built in `lib/cdn/cache-tags.ts` and shared by `proxy.ts` (labels) and the purge (so both always match). Add a page kind there, not ad hoc.
+- `purgeCloudflareCache` (`lib/cdn/cloudflare-purge.ts`, server-only) takes `{ tags }`, `{ prefixes }` or `{ purgeEverything: true }`, uses `safeFetch`, validates the reply with Zod, reports failures to Sentry and never throws.
+- Free plan: 5 purge requests/min for the whole account, 100 tags per request. One batched call per change; never purge in a loop.
+
+Other caches an event change passes through (checked 2026-11-03):
+
+- Redis page cache (`cache-handler.mjs`): shared by every process; `updateTag`/`revalidateTag` expire its entries.
+- `"use cache"` store (`use-cache-handler.mjs`, Next's default handler, 64 MB per process): tags are tracked in that process. Production runs one Node process per container (`docker-entrypoint.sh`), so `updateTag` reaches it. With more processes or replicas, the other ones would keep entries until `cacheLife` expires.
+- Service worker (`public/sw-template.js`): pages are NetworkFirst, so they don't hide a purge. `/api/events` and `/api/events/categorized` are StaleWhileRevalidate for 10 min, so a client-side list (filters, next page) can show the old list once on that device and update on the next fetch.
+
 ### The `/api` gate
 
 `proxy.ts` runs `utils/api-gate.ts`. Any `/api/*` route that is not allowlisted requires the frontend HMAC header, so a browser `fetch` to it fails. To make a route public, add it to one of the lists in `utils/api-gate.ts`:

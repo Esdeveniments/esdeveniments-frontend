@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createConnection } from "node:net";
 import { connect as tlsConnect } from "node:tls";
 import { isApiUrlConfigured } from "@utils/api-helpers";
+import { isCloudflarePurgeConfigured } from "@lib/cdn/cloudflare-purge";
 
 /**
  * Health check endpoint for monitoring runtime configuration.
@@ -143,6 +144,7 @@ export async function GET(request: NextRequest) {
         hmacConfigured,
         backendKeyConfigured: Boolean(process.env.BACKEND_SERVICE_SECRET),
         revalidateSecretConfigured: Boolean(process.env.REVALIDATE_SECRET),
+        cloudflarePurgeConfigured: isCloudflarePurgeConfigured(),
         redisConfigured,
       },
       buildVersion: process.env.BUILD_VERSION || "unknown",
