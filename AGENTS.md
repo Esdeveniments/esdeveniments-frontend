@@ -7,7 +7,7 @@ Single source of truth for AI agents working in this repo (Copilot, Claude Code,
 **Where else to look**
 
 - `LESSONS.md`: repo gotchas learned the hard way. Read the relevant ones during research.
-- `.github/skills/*/SKILL.md`: how-to guides per task (table below).
+- `.claude/skills/*/SKILL.md`: how-to guides per task (table below).
 - `DESIGN.md`: design tokens and UI rules.
 - `docs/README.md`: index of setup guides, incidents (`docs/incidents/`) and perf baselines (`docs/performance/baselines.md`).
 
@@ -15,8 +15,6 @@ Single source of truth for AI agents working in this repo (Copilot, Claude Code,
 
 | Task | Skill | Key rule |
 | --- | --- | --- |
-| Any new code | `pre-implementation-checklist` | Search for existing code first |
-| Types/interfaces | `type-system-governance` | All types in `types/` |
 | Components | `react-nextjs-patterns` | Server Component by default |
 | Filters | `filter-system-dev` | Start in `config/filters.ts`; follow the skill's file list |
 | API calls | `api-layer-patterns` | Three-layer proxy pattern |
@@ -31,7 +29,7 @@ Single source of truth for AI agents working in this repo (Copilot, Claude Code,
 | Performance/images | `bundle-optimization` | Image proxy, one LCP image, server-first |
 | Env variables | `env-variable-management` | Update all 5 places |
 | API data validation | `data-validation-patterns` | Zod in `lib/validation/`, safe fallbacks |
-| PR review comments | `code-review-evaluation`, `ai-review-responder` | Check suggestions against these rules |
+| PR review comments | `ai-review-responder` | Check suggestions against these rules, then fix or decline |
 
 ## Workflow
 
@@ -127,7 +125,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 ## Types
 
-- No `any`; use `unknown` and narrow. Type aliases and interfaces live in `types/` (ESLint enforces it in `app/`, `components/`, `lib/`, `utils/`; a few config-only types stay in `config/`): DTOs in `types/api/`, shared UI types and props in `types/common.ts`/`types/props.ts`. Define each type once and import it; see `types/README.md`.
+- No `any`; use `unknown` and narrow. Type aliases and interfaces live in `types/` (ESLint enforces it in `app/`, `components/`, `lib/`, `utils/`; a few config-only types stay in `config/`): DTOs in `types/api/`, shared UI types and props in `types/common.ts`/`types/props.ts`. Define each type once and import it; see `types/README.md` for where each kind goes.
 
 ## UI
 
