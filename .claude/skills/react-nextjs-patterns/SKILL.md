@@ -11,16 +11,15 @@ Next 16 App Router with `cacheComponents: true` and `partialPrefetching: true` (
 
 `params` is a Promise: `await` it in async code, or `use(params)` in a sync component (the `[place]` page does this). Get the locale from `next/root-params`, not from `params` or headers.
 
+Type props with the global helpers that `next typegen` generates (`yarn typecheck` runs it): `PageProps<"/[locale]/…">`, `LayoutProps<…>`, and `RouteContext<"/api/…">` for route handlers. Don't hand-write `{ params: Promise<{ … }> }`.
+
 ```tsx
 // app/[locale]/[place]/page.tsx (shortened)
 import { locale as rootLocale } from "next/root-params";
-import type { PlaceStaticPathParams } from "types/common";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/[place]">) {
   const { place } = await params;
   const locale = (await rootLocale()) as AppLocale;
   // ...

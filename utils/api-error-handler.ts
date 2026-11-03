@@ -20,6 +20,18 @@ export function getSanitizedErrorMessage(error: unknown): string {
 }
 
 /**
+ * Reads the HTTP status attached to a thrown error (e.g. via
+ * `Object.assign(new Error(msg), { status })`). Returns undefined when absent
+ * or not a number.
+ */
+export function getErrorStatus(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null || !("status" in error)) {
+    return undefined;
+  }
+  return typeof error.status === "number" ? error.status : undefined;
+}
+
+/**
  * Shared error handler for API routes that:
  * 1. Captures exceptions to Sentry (production only)
  * 2. Logs errors using Sentry logger (when available) or console
@@ -35,10 +47,8 @@ export function handleApiError(
   routePath: string,
   options: ApiErrorOptions = {}
 ): NextResponse {
-  const rawStatus = error instanceof Error && "status" in error
-    ? (error as Error & { status: unknown }).status
-    : undefined;
-  const errorStatus = typeof rawStatus === "number" && rawStatus >= 400 && rawStatus < 600
+  const rawStatus = error instanceof Error ? getErrorStatus(error) : undefined;
+  const errorStatus = rawStatus !== undefined && rawStatus >= 400 && rawStatus < 600
     ? rawStatus
     : undefined;
   const { status = errorStatus ?? 500, errorMessage, fallbackData, sentryContext } = options;

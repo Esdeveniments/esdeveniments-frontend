@@ -780,7 +780,7 @@ export interface NewsCitiesSectionProps {
 
 export interface NewsListProps {
   newsPromise: Promise<
-    import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>
+    import("./api/event").PagedResponseDTO<NewsSummaryResponseDTO>
   >;
   placeTypePromise: Promise<PlaceTypeAndLabel>;
   place: string;

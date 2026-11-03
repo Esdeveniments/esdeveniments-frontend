@@ -7,7 +7,7 @@ import { getSiteUrlFromRequest } from "@config/index";
  */
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ slug: string[] }> },
+  { params }: RouteContext<"/.well-known/[...slug]">,
 ) {
   const { slug } = await params;
   const path = slug.join("/");

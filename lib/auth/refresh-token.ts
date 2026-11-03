@@ -5,6 +5,7 @@ import { execute, TURSO_TIMEOUT_MS } from "@lib/db/turso";
 import { AUTH_SESSION_MAX_AGE, LOGTO_TOKEN_TIMEOUT_MS } from "@utils/constants";
 import { LogtoTokenResponseSchema } from "@lib/validation/auth";
 import { openToken, sealToken } from "./token-encryption";
+import { getErrorStatus } from "@utils/api-error-handler";
 import type { LogtoConfig, LogtoTokenResponse } from "types/auth";
 
 const SCHEMA = `CREATE TABLE IF NOT EXISTS auth_refresh (
@@ -60,7 +61,7 @@ export async function coordinateRefresh(
     try {
       tokens = LogtoTokenResponseSchema.parse(await exchange());
     } catch (error) {
-      const status = (error as { status?: unknown }).status;
+      const status = getErrorStatus(error);
       // Share the failure, then release the claim. If a 5xx or timeout spent
       // the token, the retry gets invalid_grant: a clean sign-out, not a claim
       // that blocks every later request.
@@ -68,7 +69,7 @@ export async function coordinateRefresh(
         `UPDATE auth_refresh SET result = ?, result_until = unixepoch() + 5, reusable = 1
          WHERE token_key = ? AND owner = ?`,
         [
-          sealToken(JSON.stringify({ status: typeof status === "number" ? status : null }), key, tokenKey),
+          sealToken(JSON.stringify({ status: status ?? null }), key, tokenKey),
           tokenKey,
           owner,
         ],

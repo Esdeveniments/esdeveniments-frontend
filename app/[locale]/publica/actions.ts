@@ -3,6 +3,7 @@ import { updateTag, refresh } from "next/cache";
 import { after } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
+import { getErrorStatus } from "@utils/api-error-handler";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import type { CreateEventActionResult } from "types/event";
@@ -74,7 +75,7 @@ export async function createEventAction(
     // 1. Create the event in your backend
     created = await createEvent(data, imageFile, e2eExtras);
   } catch (err) {
-    const status = (err as { status?: number })?.status;
+    const status = getErrorStatus(err);
     if (status === 401 || status === 403) {
       const nextAction =
         status === 401 ? "logout-and-relogin" : "complete-profile";

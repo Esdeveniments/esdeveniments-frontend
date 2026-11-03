@@ -11,7 +11,6 @@ import {
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
 import type {
-  PlaceStaticPathParams,
   PlaceTypeAndLabel,
   PageData,
 } from "types/common";
@@ -50,9 +49,7 @@ import {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/[place]">) {
   const { place } = await params;
 
   const validation = validatePlaceForMetadata(place);
@@ -85,9 +82,7 @@ export async function generateMetadata({
 // shell data, and events fetch — lives inside PlacePageGate and streams in.
 export default function Page({
   params,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/[place]">) {
   const { place } = use(params);
 
   // Minimal SEO-safe fallback: if the streamed gate fails (broken env,

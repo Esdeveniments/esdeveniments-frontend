@@ -1,5 +1,6 @@
 import "server-only";
 import { getAuthenticatedUserExternal } from "@lib/api/users-external";
+import { getErrorStatus } from "@utils/api-error-handler";
 import type { AuthenticatedUserDTO } from "types/api/user";
 import type { AuthUser } from "types/auth";
 
@@ -38,7 +39,7 @@ export async function enrichWithBackendProfile(
   try {
     backendUser = await getAuthenticatedUserExternal(accessToken);
   } catch (err) {
-    const status = (err as { status?: number })?.status;
+    const status = getErrorStatus(err);
     if (status === 401 || status === 403 || status === 400) {
       // Backend rejected the Bearer. Future Bearer calls will also fail;
       // surface an honest warning in the navbar so the user can tell the
