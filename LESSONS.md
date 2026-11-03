@@ -2,6 +2,37 @@
 
 Repo-specific gotchas worth sharing. Read this during research on any task here.
 
+## A page can't set its own 404 or 301: decide it in `proxy.ts`
+
+`app/[locale]/layout.tsx` wraps every page in `<Suspense>`, so the status line
+is sent before the page runs. A page-level `notFound()` then serves 200 with
+`noindex`, and `redirect()` becomes a client-side meta refresh. Google files
+the first as a Soft 404 and the second as a weak redirect. Unknown place slugs
+are therefore resolved in Proxy (`resolvePlaceForProxy`, `lib/api/places-proxy.ts`):
+an alias gets a 301 and a missing place gets
+`NextResponse.rewrite(url, { status: 404 })`. `NextResponse.next()` can't set a
+status, but a rewrite can and still renders the page. The page itself must then render
+`notFound()`, not redirect: a page `redirect()` under the 404 becomes a meta
+refresh that sends visitors (and mixed signals) to another URL. The check fails open
+(`unknown`) on any backend error or after 1.5 s, then skips the backend for
+30 s, so an outage never serves a false 404 or slows every request. Proxy is bundled apart from the app, so `/api/revalidate` doesn't
+clear its 1 h place cache: a new place can 404 for up to an hour plus CDN TTL.
+A new top-level route folder must be added to `NON_PLACE_FIRST_SEGMENTS`
+(`utils/middleware-redirects.ts`, guarded by
+`test/middleware-redirects-non-place.test.ts`) or it would be checked as a place.
+Missing events still serve 200 + `noindex`: a 404 there would need a full event
+fetch in Proxy.
+
+## Event JSON-LD must only state what the backend knows
+
+Google's Event rich results read `performer`, `organizer`, `image` and the
+date offsets literally. We used to put the venue name in `performer` and
+`organizer`, and the site logo in `image` (also in the event sitemap's
+`<image:image>`), which Search Console can flag as misleading. Leave a property
+out when there is no real value. Timed `startDate`/`endDate` carry the
+Europe/Madrid offset (`withMadridOffset`, `@date-fns/tz`, DST-aware); date-only
+values stay plain dates.
+
 ## Guest and account publish drafts need an explicit choice after login
 
 A guest can finish all three steps while the same browser still holds an older

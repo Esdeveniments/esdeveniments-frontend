@@ -92,6 +92,8 @@ describe("app/robots.txt/route (production-host allowlist)", () => {
     const body = await response.text();
     // Default allowlist policy is present
     expect(body).toMatch(/User-Agent: \*\nAllow: \//);
+    // Google needs JS/CSS to render; only other Next internals are blocked
+    expect(body).toContain("Allow: /_next/static/\nDisallow: /_next/\n");
     // Sitemaps are declared
     expect(body).toContain(
       "Sitemap: https://www.esdeveniments.cat/sitemap.xml",

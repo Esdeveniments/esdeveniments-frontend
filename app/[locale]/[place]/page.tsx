@@ -17,7 +17,6 @@ import type {
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -144,10 +143,6 @@ export async function PlacePageGate({ place }: { place: string }): Promise<JSX.E
     locale,
     rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}`,
-    buildFallbackUrlForInvalidPlace: () =>
-      buildFallbackUrlForInvalidPlace({
-        rawSearchParams: {},
-      }),
     fetchPlaceBySlug,
   });
   if (placeRedirectUrl) {
