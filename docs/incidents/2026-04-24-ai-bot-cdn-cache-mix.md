@@ -60,7 +60,8 @@ orank.ai score blocked at **79/100 (B)**. The checks above sum to roughly
 ### Part 1: In-repo (this PR)
 
 `proxy.ts` now sets `Cache-Control: private, no-store` on HTML responses when
-the User-Agent matches `AI_BOT_UA_RE`. This prevents a **bot-rendered
+the User-Agent matches `AI_BOT_UA_RE` (now built from `aiCrawlers` in
+`config/bot-user-agents.json`, in `utils/proxy-page-headers.ts`). This prevents a **bot-rendered
 response** from being cached and served to browsers.
 
 ```ts
