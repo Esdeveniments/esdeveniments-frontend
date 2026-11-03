@@ -12,8 +12,8 @@ are therefore resolved in Proxy (`resolvePlaceForProxy`, `lib/api/places-proxy.t
 an alias gets a 301 and a missing place gets
 `NextResponse.rewrite(url, { status: 404 })`. `NextResponse.next()` can't set a
 status, but a rewrite can and still renders the page. The check fails open
-(`unknown`) on any backend error or after 1.5 s, so an outage never serves a
-false 404. Proxy is bundled apart from the app, so `/api/revalidate` doesn't
+(`unknown`) on any backend error or after 1.5 s, then skips the backend for
+30 s, so an outage never serves a false 404 or slows every request. Proxy is bundled apart from the app, so `/api/revalidate` doesn't
 clear its 1 h place cache: a new place can 404 for up to an hour plus CDN TTL.
 A new top-level route folder must be added to `NON_PLACE_FIRST_SEGMENTS`
 (`utils/middleware-redirects.ts`, guarded by

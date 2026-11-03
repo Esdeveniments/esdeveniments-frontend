@@ -20,6 +20,26 @@ const { cache: placesCache } = createCache<PlaceResponseDTO[]>(
   PROXY_PLACE_TTL_MS,
   { storeEmpty: false },
 );
+// After a failure, skip the backend for a while so an outage doesn't add the
+// timeout to every request or pile more calls onto a struggling backend.
+const PROXY_PLACE_BACKOFF_MS = 30 * 1000;
+let backoffUntil = 0;
+let placesRequest: Promise<PlaceResponseDTO[]> | null = null;
+
+// Concurrent requests on a cold process share one list call.
+function loadPlaces(signal: AbortSignal): Promise<PlaceResponseDTO[]> {
+  placesRequest ??= placesCache(() =>
+    fetchPlacesAggregatedExternal({ signal }),
+  ).finally(() => {
+    placesRequest = null;
+  });
+  return placesRequest;
+}
+
+function failOpen(): ProxyPlaceResolution {
+  backoffUntil = Date.now() + PROXY_PLACE_BACKOFF_MS;
+  return { kind: "unknown" };
+}
 
 /**
  * Decides whether a place slug exists, is an alias of a real place, or is
@@ -29,17 +49,17 @@ const { cache: placesCache } = createCache<PlaceResponseDTO[]>(
 export async function resolvePlaceForProxy(
   slug: string,
 ): Promise<ProxyPlaceResolution> {
+  if (Date.now() < backoffUntil) return { kind: "unknown" };
   // One deadline for the whole check; fetchWithHmac aborts the fetch on it.
   const signal = AbortSignal.timeout(PROXY_PLACE_TIMEOUT_MS);
 
-  // The list of all regions/cities answers most lookups from memory, so a
-  // cold process makes one list call instead of one call per place.
-  const places = await placesCache(() =>
-    fetchPlacesAggregatedExternal({ signal }),
-  ).catch(() => [] as PlaceResponseDTO[]);
-  if (places.some((place) => place.slug === slug)) return { kind: "exists" };
-
   try {
+    // The list of all regions/cities answers most lookups from memory, so a
+    // cold process makes one list call instead of one call per place.
+    const places = await loadPlaces(signal);
+    if (places.length === 0) return failOpen();
+    if (places.some((place) => place.slug === slug)) return { kind: "exists" };
+
     // Places missing from the list (e.g. provinces) need a direct lookup.
     const exists = await placeExistsCache(
       slug,
@@ -47,11 +67,10 @@ export async function resolvePlaceForProxy(
         (await fetchPlaceBySlugExternal(String(key), { signal })) !== null,
     );
     if (exists) return { kind: "exists" };
-    if (places.length === 0) return { kind: "unknown" };
 
     const alias = resolvePlaceSlugAliasFromPlaces(slug, places);
     return alias ? { kind: "alias", slug: alias } : { kind: "missing" };
   } catch {
-    return { kind: "unknown" };
+    return failOpen();
   }
 }

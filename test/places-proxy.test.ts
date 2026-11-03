@@ -53,18 +53,42 @@ describe("resolvePlaceForProxy", () => {
   });
 
   it("fails open on errors or an empty place list", async () => {
-    const resolve = await load();
     fetchPlaceBySlugExternal.mockRejectedValueOnce(new Error("HTTP 500"));
-    expect(await resolve("a-place")).toEqual({ kind: "unknown" });
+    expect(await (await load())("a-place")).toEqual({ kind: "unknown" });
 
     vi.resetModules();
+    fetchPlaceBySlugExternal.mockClear();
     fetchPlacesAggregatedExternal.mockRejectedValue(new Error("HTTP 500"));
-    fetchPlaceBySlugExternal.mockResolvedValue(null);
     expect(await (await load())("c-place")).toEqual({ kind: "unknown" });
+    expect(fetchPlaceBySlugExternal).not.toHaveBeenCalled();
 
     vi.resetModules();
     fetchPlacesAggregatedExternal.mockResolvedValue([]);
     expect(await (await load())("b-place")).toEqual({ kind: "unknown" });
+  });
+
+  it("skips the backend for a while after a failure", async () => {
+    vi.useFakeTimers();
+    try {
+      const resolve = await load();
+      fetchPlacesAggregatedExternal.mockRejectedValueOnce(new Error("timeout"));
+      expect(await resolve("barcelona")).toEqual({ kind: "unknown" });
+      expect(await resolve("barcelona")).toEqual({ kind: "unknown" });
+      expect(fetchPlacesAggregatedExternal).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(31_000);
+      expect(await resolve("barcelona")).toEqual({ kind: "exists" });
+      expect(fetchPlacesAggregatedExternal).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shares one list call between concurrent cold requests", async () => {
+    const resolve = await load();
+    const results = await Promise.all([resolve("barcelona"), resolve("barcelona")]);
+    expect(results).toEqual([{ kind: "exists" }, { kind: "exists" }]);
+    expect(fetchPlacesAggregatedExternal).toHaveBeenCalledTimes(1);
   });
 
   it("bounds both backend calls with one abort signal", async () => {

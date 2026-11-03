@@ -35,13 +35,14 @@ from google.analytics.data_v1beta.types import (
 SITE = os.environ.get("GSC_SITE_URL", "https://www.esdeveniments.cat/")
 GA_PROPERTY = f"properties/{os.environ.get('GA4_PROPERTY_ID', '406884331')}"
 OUTPUT_DIR = os.environ.get("SEO_AUDIT_OUTPUT_DIR", ".")
-BRAND_TERM = os.environ.get("SEO_BRAND_TERM", "esdevenimentscat")
+BRAND_NAME = "esdeveniments.cat"
 
 
 def is_brand_query(query):
     # "esdeveniments" alone is the generic Catalan word for "events"; only the
-    # domain form ("esdeveniments.cat", "esdeveniments cat") is the brand.
-    return BRAND_TERM in re.sub(r"[^a-z]", "", query.lower())
+    # domain form ("esdeveniments.cat", "esdeveniments cat") is the brand, not
+    # "esdeveniments catalunya".
+    return re.search(r"\besdeveniments\W*cat\b", query.lower()) is not None
 
 # Detection thresholds
 QUICK_WIN_MIN_IMPRESSIONS = 100
@@ -1563,7 +1564,7 @@ def generate_actions(data, previous=None):
             actions.append({
                 "priority": "P0",
                 "title": f"Brand term at position {worst_pos:.0f}",
-                "description": f"Brand-related query \"{all_brand[0].get('query', BRAND_TERM)}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
+                "description": f"Brand-related query \"{all_brand[0].get('query', BRAND_NAME)}\" is not in top 5. Optimize homepage meta title/H1 to include brand name.",
             })
 
     # Search Analytics doesn't report Event rich results as a search appearance,
