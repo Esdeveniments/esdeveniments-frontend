@@ -25,7 +25,7 @@ async function importIsOriginAllowed(env: Record<string, string>) {
   vi.stubEnv("NEXT_PUBLIC_SITE_URL", env.NEXT_PUBLIC_SITE_URL ?? SITE);
   vi.stubEnv("E2E_TEST_MODE", env.E2E_TEST_MODE ?? "");
   vi.stubEnv("NEXT_PUBLIC_E2E_TEST_MODE", env.NEXT_PUBLIC_E2E_TEST_MODE ?? "");
-  const mod = await import("../proxy");
+  const mod = await import("../utils/api-gate");
   return mod.isOriginAllowed;
 }
 

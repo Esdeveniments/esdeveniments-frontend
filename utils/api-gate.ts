@@ -108,12 +108,6 @@ export const PUBLIC_API_EXACT_PATHS = [
   "/api/sponsors/image-upload",
   // Stripe webhook (signature verified by endpoint, not HMAC)
   "/api/sponsors/webhook",
-  // TikTok share page API routes (browser-initiated, proxies to TikTok API)
-  "/api/tiktok/token",
-  "/api/tiktok/creator-info",
-  "/api/tiktok/publish",
-  "/api/tiktok/upload",
-  "/api/tiktok/status",
   // Web Push subscription (browser-initiated; VAPID send route protects itself with PUSH_SEND_SECRET)
   "/api/push/subscribe",
   "/api/push/send",

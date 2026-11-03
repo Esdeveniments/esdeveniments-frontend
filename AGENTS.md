@@ -63,7 +63,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - `app/[locale]/`: pages. Listings `[place]/(byDate)/(category)`, events `e/[eventId]`, news `noticies/`. `app/api/`: internal API routes. Sitemaps are routes too (`app/sitemap.xml`, `app/server-*-sitemap.xml`).
 - `components/ui/<feature>/`, `components/partials/`, `components/hooks/`, `components/context/`.
 - `lib/api/`: client libraries + `*-external.ts` backend wrappers. `lib/validation/`: Zod. `utils/`, `config/`, `types/` (all types).
-- `proxy.ts`: Next 16 middleware (redirects, locale, security headers, CSP, API gate).
+- `proxy.ts`: Next 16 Proxy (locale, canonical redirects, CSP, page cache/robots headers, API gate); its helpers are `utils/proxy-*.ts` and `utils/api-gate.ts`. Static security headers, fixed redirects and fixed rewrites live in `next.config.js` (`headers`, `redirects`, `rewrites`).
 - `public/sw-template.js` → `public/sw.js` (Workbox from CDN). `scripts/`: build and perf scripts.
 - Path aliases in `tsconfig.json` (`@components/*`, `@utils/*`, `@lib/*`, `@i18n/*`, …).
 
@@ -113,7 +113,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 ## Security
 
-- CSP lives in `proxy.ts`: host allowlist with `'unsafe-inline'` (keeps pages cacheable for ISR/PPR); no nonces. Add new script/connect hosts there.
+- CSP lives in `utils/proxy-csp.ts` (applied to pages by `proxy.ts`): host allowlist with `'unsafe-inline'` (keeps pages cacheable for ISR/PPR); no nonces. Add new script/connect hosts there. The other security headers are in `next.config.js` `headers()`.
 - JSON-LD is rendered server-side by `components/partials/JsonLdServer.tsx`, which escapes `<`. Use `toLocalizedUrl(path, locale)` (`utils/i18n-seo.ts`) for its URLs and `generateBreadcrumbList()` (`components/partials/seo-meta.ts`) for breadcrumbs.
 - Errors: pass the original error to `captureException(error)`. Wrap `new URL()` in try/catch inside error handlers.
 

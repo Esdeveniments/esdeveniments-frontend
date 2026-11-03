@@ -61,15 +61,15 @@ All in `utils/url-filters.ts`:
 
 `utils/url-parsing.ts` only has `extractURLSegments` (and a debug helper). Never build listing URLs with template strings like `` `/${place}/${date}/${category}` ``.
 
-## Redirects and noindex (`proxy.ts`)
+## Redirects and noindex (`proxy.ts`, `utils/proxy-page-headers.ts`)
 
 - `handleCanonicalRedirects` (`utils/middleware-redirects.ts`) sends 301s for legacy `?category=&date=` query params and `tots` segments (`/barcelona/tots/concerts` → `/barcelona/concerts`). Only the params in `ALLOWED_QUERY_PARAMS` (same file: `search`, `distance`, `price`, `from`, `to`, `lat`, `lon`) survive the redirect; any other param is dropped.
-- `X-Robots-Tag: noindex, follow` for listings with any of `search`, `distance`, `price`, `from`, `to`, `lat`, `lon` (`NON_CANONICAL_PARAMS`), and for `/place/<avui|dema|setmana|cap-de-setmana>/category`. Non-production hosts get `noindex, nofollow`.
-- A new client query param must be added to both `NON_CANONICAL_PARAMS` (`proxy.ts`) and `ALLOWED_QUERY_PARAMS`.
+- `X-Robots-Tag: noindex, follow` for listings with any of `search`, `distance`, `price`, `from`, `to`, `lat`, `lon` (`ALLOWED_QUERY_PARAMS`), and for `/place/<avui|dema|setmana|cap-de-setmana>/category`. Non-production hosts get `noindex, nofollow`.
+- A new client query param goes in `ALLOWED_QUERY_PARAMS` (`utils/middleware-redirects.ts`): that one list drives both the redirect allowlist and the noindex check.
 
 ## Checklist
 
 - [ ] No `searchParams` in `app/[locale]/[place]/**`
-- [ ] New query param: parsed/built in `utils/url-filters.ts`, handled client-side, added to `NON_CANONICAL_PARAMS` and `ALLOWED_QUERY_PARAMS`
+- [ ] New query param: parsed/built in `utils/url-filters.ts`, handled client-side, added to `ALLOWED_QUERY_PARAMS`
 - [ ] URLs built with the helpers, no `/tots/` segments
 - [ ] Filter changes: see `filter-system-dev`

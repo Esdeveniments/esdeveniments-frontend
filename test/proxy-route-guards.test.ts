@@ -6,7 +6,7 @@ import {
   EVENTS_PATTERN,
   ORIGIN_CHECK_EXEMPT,
   isOriginAllowed,
-} from "../proxy";
+} from "../utils/api-gate";
 
 // ── Helpers ──────────────────────────────────────────────────
 

@@ -107,6 +107,7 @@ Cache Rules → Create rule.
   (http.user_agent contains "Meta-ExternalFetcher") or
   (http.user_agent contains "Applebot-Extended") or
   (http.user_agent contains "cohere-ai") or
+  (http.user_agent contains "Omgilibot") or
   (http.user_agent contains "YouBot") or
   (http.user_agent contains "Diffbot") or
   (http.user_agent contains "Amazonbot") or
@@ -118,7 +119,7 @@ Cache Rules → Create rule.
 - **Then**: **Bypass cache**
 - **Save and Deploy**
 
-Keep this list in sync with `AI_BOT_UA_RE` in [proxy.ts](../../proxy.ts).
+Keep this list in sync with `aiCrawlers` in [config/bot-user-agents.json](../../config/bot-user-agents.json) (formerly `AI_BOT_UA_RE` in `proxy.ts`).
 
 ## Verification
 

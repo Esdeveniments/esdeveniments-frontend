@@ -15,6 +15,14 @@ const withNextIntl = createNextIntlPlugin({
     messages: { path: "./messages", format: "json", precompile: true },
   },
 });
+// Next's default HTML-limited bot list (the file its htmlLimitedBots docs link
+// to). If a Next upgrade moves it, the build fails here instead of silently
+// dropping the defaults.
+const {
+  HTML_LIMITED_BOT_UA_RE: NEXT_DEFAULT_HTML_LIMITED_BOTS,
+} = require("next/dist/shared/lib/router/utils/html-bots");
+const botUserAgents = require("./config/bot-user-agents.json");
+
 const isDev = process.env.NODE_ENV === "development";
 const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
 const vercelPreviewImagePatterns = process.env.VERCEL_URL
@@ -95,12 +103,17 @@ const nextConfig = {
   // don't execute JS, so they see an empty <main>. Forcing a blocking render for
   // these user agents makes the full HTML available to them, restoring SEO/AI
   // discoverability without disabling PPR for real users.
-  // NOTE: Setting this OVERRIDES the Next.js default list, so we must include
-  // the upstream defaults (kept verbatim from
-  // https://github.com/vercel/next.js/blob/canary/packages/next/src/shared/lib/router/utils/html-bots.ts)
-  // and extend them with AI / scanner UAs.
-  htmlLimitedBots:
-    /[\w-]+-Google|Google-[\w-]+|GoogleOther|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight|Googlebot|GPTBot|ChatGPT-User|OAI-SearchBot|Claude-Web|ClaudeBot|anthropic-ai|PerplexityBot|Perplexity-User|ora-scan|ora-agent|DeepSeekBot|Qwen-Agent|Bytespider|CCBot|Meta-ExternalAgent|Meta-ExternalFetcher|Applebot-Extended|cohere-ai|Omgilibot|YouBot|Diffbot|Amazonbot|Timpibot|ImagesiftBot/i,
+  // NOTE: Setting this OVERRIDES the Next.js default list, so we extend Next's
+  // own default regex (read from the installed version, so it never goes
+  // stale) with the crawlers in config/bot-user-agents.json.
+  htmlLimitedBots: new RegExp(
+    [
+      NEXT_DEFAULT_HTML_LIMITED_BOTS.source,
+      ...botUserAgents.searchCrawlers,
+      ...botUserAgents.aiCrawlers,
+    ].join("|"),
+    "i",
+  ),
 
   // --- Experimental Features ---
   experimental: {
@@ -177,13 +190,58 @@ const nextConfig = {
     ],
   },
 
-  // The `headers` block has been removed.
-  // Security and caching headers are now managed dynamically in `proxy.ts` (Next.js 16: renamed from middleware.ts).
-  // CSP uses a relaxed policy with host allowlisting to enable ISR/PPR caching.
+  // --- Headers ---
+  // Static security headers for every response (pages, API, assets). The CSP
+  // is HTML-only and lives in proxy.ts (utils/proxy-csp.ts); per-page caching
+  // headers are set there too.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // Keep in sync with frame-ancestors in utils/proxy-csp.ts
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self)",
+          },
+        ],
+      },
+    ];
+  },
 
   // --- Redirects ---
+  // Run before proxy.ts. Conventional English trust-page URLs (used by AI
+  // agents and site scanners) → the Catalan pages.
   async redirects() {
-    return [];
+    return [
+      { source: "/about", destination: "/qui-som", statusCode: 301 },
+      { source: "/contact", destination: "/qui-som", statusCode: 301 },
+      {
+        source: "/privacy",
+        destination: "/politica-privacitat",
+        statusCode: 301,
+      },
+      { source: "/terms", destination: "/termes-servei", statusCode: 301 },
+    ];
+  },
+
+  // --- Rewrites ---
+  // beforeFiles so they win over app routes. proxy.ts's matcher skips both
+  // sources. A rewrite keeps the POST body, which the MCP transport needs.
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: "/openapi.json", destination: "/openapi" },
+        { source: "/.well-known/mcp", destination: "/mcp" },
+      ],
+    };
   },
 };
 

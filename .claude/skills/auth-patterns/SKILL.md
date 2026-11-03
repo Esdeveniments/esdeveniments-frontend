@@ -41,7 +41,7 @@ through four route handlers:
    `AuthProvider` calls this once on mount to hydrate client state.
 
 Entry points: `/iniciar-sessio` (proxy-rewritten to `/api/auth/sign-in` — see
-`LOGIN_ENTRY_PATTERN` in `proxy.ts`). There is currently **no working
+`LOGIN_ENTRY_PATTERN` in `utils/proxy-login.ts`). There is currently **no working
 `/registre` route**. Logto's own hosted UI is where the actual login/signup choice
 happens; the app cannot distinguish login vs. signup intent client-side.
 

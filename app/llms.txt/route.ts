@@ -141,17 +141,23 @@ export async function GET(request: NextRequest) {
 
   const llmsTxt = lines.join("\n");
 
-  const cacheControl = getCacheControlHeader(request, 300);
-
   // Support Markdown for Agents content negotiation
   // When proxy.ts rewrites with _accept=text/markdown or x-markdown-negotiation header
-  const isMarkdownNegotiation =
+  const isNegotiatedRewrite =
     request.nextUrl.searchParams.get("_accept") === "text/markdown" ||
-    request.headers.get("x-markdown-negotiation") === "1" ||
+    request.headers.get("x-markdown-negotiation") === "1";
+  const isMarkdownNegotiation =
+    isNegotiatedRewrite ||
     request.headers.get("accept")?.includes("text/markdown");
   const contentType = isMarkdownNegotiation
     ? "text/markdown; charset=utf-8"
     : "text/plain; charset=utf-8";
+  // A negotiated response is served under another page's URL. The CDN keys on
+  // the URL only (Cloudflare ignores Vary: Accept), so a shared copy would
+  // replace that page's HTML for every visitor.
+  const cacheControl = isNegotiatedRewrite
+    ? "private, no-store"
+    : getCacheControlHeader(request, 300);
 
   return new NextResponse(llmsTxt, {
     status: 200,
