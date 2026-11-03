@@ -18,6 +18,19 @@ describe("GET /llms.txt", () => {
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
   });
 
+  it("keeps a direct markdown /llms.txt out of the CDN", async () => {
+    const response = await GET(
+      new NextRequest("https://example.com/llms.txt", {
+        headers: { accept: "text/markdown" },
+      }),
+    );
+
+    expect(response.headers.get("Content-Type")).toBe(
+      "text/markdown; charset=utf-8",
+    );
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+
   it("stays CDN-cacheable when /llms.txt is requested directly", async () => {
     const response = await GET(new NextRequest("https://example.com/llms.txt"));
 

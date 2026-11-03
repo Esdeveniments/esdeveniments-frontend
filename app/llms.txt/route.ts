@@ -152,10 +152,10 @@ export async function GET(request: NextRequest) {
   const contentType = isMarkdownNegotiation
     ? "text/markdown; charset=utf-8"
     : "text/plain; charset=utf-8";
-  // A negotiated response is served under another page's URL. The CDN keys on
-  // the URL only (Cloudflare ignores Vary: Accept), so a shared copy would
-  // replace that page's HTML for every visitor.
-  const cacheControl = isNegotiatedRewrite
+  // A markdown response shares its URL with the HTML page (or the plain-text
+  // /llms.txt). The CDN keys on the URL only (Cloudflare ignores
+  // Vary: Accept), so a shared copy would be served to every visitor.
+  const cacheControl = isMarkdownNegotiation
     ? "private, no-store"
     : getCacheControlHeader(request, 300);
 
