@@ -6,10 +6,10 @@ For contribution rules and architecture, see AGENTS.md (the single source of tru
 
 ## Quickstart
 
-1. Requirements: Node 22 and Yarn 4 (Corepack)
+1. Requirements: Node 26 and Yarn 4 (Corepack)
 
 ```bash
-corepack enable && corepack prepare yarn@4.12.0 --activate
+npm install -g corepack && corepack enable && corepack prepare yarn@4.12.0 --activate
 yarn install --immutable
 ```
 
@@ -93,7 +93,7 @@ Update the baseline (only when the increase is intentional):
 
 Deployed via **Docker on Coolify** (self-hosted PaaS).
 
-- **Dockerfile**: Multi-stage build → `node:22-slim` with standalone output
+- **Dockerfile**: Multi-stage build → `node:26-slim` with standalone output
 - **Cache handler**: `@fortedigital/nextjs-cache-handler` with Redis (falls back to LRU when Redis is unavailable)
 - **CI**: `.github/workflows/ci.yml` runs lint, typecheck, tests, build, bundle size check
 - **Deploy workflow**: `.github/workflows/deploy-coolify.yml` builds and deploys on push to `main` (production) and `develop` (staging)
