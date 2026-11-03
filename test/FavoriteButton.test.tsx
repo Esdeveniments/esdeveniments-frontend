@@ -96,6 +96,32 @@ describe("FavoriteButton", () => {
     expect(button.querySelector("use")).toHaveAttribute("href", "#icon-heart-solid");
   });
 
+  it("adopts the saved favorites list once it loads", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true, favorites: ["test-event"] }),
+    });
+
+    const { default: FavoriteButton } = await import(
+      "@components/ui/common/favoriteButton"
+    );
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="test-event"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Elimina de preferits" })
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("rolls back optimistic state when server action fails", async () => {
     fetchMock
       // Initial hydration: GET /api/favorites
