@@ -10,7 +10,6 @@ Commands and the Node version: AGENTS.md › Commands. Add tests only for behavi
 ## Unit tests (Vitest)
 
 - Files: `test/**/*.{test,spec}.{ts,tsx}` (`vitest.config.ts`, jsdom). Run one file: `yarn test test/url-filters.test.ts`. Watch: `yarn test:watch`.
-- Use Node 22 (`engines.node`), the version CI runs.
 - `test/setup.ts` runs first. It sets `HMAC_SECRET` and `BACKEND_SERVICE_SECRET`, deletes `API_URL` (so `NEXT_PUBLIC_API_URL` stubs win), mocks `next-intl`, `next-intl/server`, `connection()` from `next/server` and `next/root-params` (`locale` → `"ca"`), and polyfills `Blob.arrayBuffer`. Don't override these secrets.
 - `vitest.config.ts` aliases `server-only`, `next-intl`, `next-intl/server`, `next-intl/navigation` and `next-intl/routing` to `test/mocks/*` (so `@i18n/routing` gets mocked `Link`/router too). Import them normally in tests; don't import from `test/mocks/`.
 - Backend calls: mock the wrapper module, not `fetch`:

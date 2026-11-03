@@ -53,7 +53,7 @@ yarn start -p 3000
 lsof -i :3000 -sTCP:LISTEN     # is the port owned by your dev server?
 grep -cE '^(HMAC_SECRET|BACKEND_SERVICE_SECRET)=.+' .env.local   # expect 2; .env.development does not count
 yarn --version                 # expect the version in package.json "packageManager"
-node --version                 # expect v22, the version CI runs
+node --version                 # expect the major in package.json "engines.node"
 ```
 
 ## Drive
