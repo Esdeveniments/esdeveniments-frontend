@@ -1,6 +1,6 @@
 ---
 name: api-layer-patterns
-description: How backend data flows in esdeveniments.cat - client library (lib/api/*.ts) → internal route (app/api/*) → external wrapper (lib/api/*-external.ts) with fetchWithHmac, per-route Cache-Control, the isBuildPhase bypass and the query builders. Use when adding or changing an API endpoint, fetching backend data, touching lib/api/* or app/api/*, fetchWithHmac, X-Backend-Key/HMAC, the /api gate, or when debugging API caching or build errors like '"<!DOCTYPE"... is not valid JSON'.
+description: How backend data flows in esdeveniments.cat - server readers (lib/api/*.ts) and internal routes (app/api/*, for browser code) both call the external wrapper (lib/api/*-external.ts) with fetchWithHmac; reader caches (createCache, storeEmpty, "use cache"), per-route Cache-Control and the query builders. Use when adding or changing an API endpoint, fetching backend data, touching lib/api/* or app/api/*, fetchWithHmac, X-Backend-Key/HMAC, the /api gate, or when debugging API caching or build errors like '"<!DOCTYPE"... is not valid JSON'.
 license: MIT
 ---
 
@@ -8,20 +8,22 @@ license: MIT
 
 The rules live in AGENTS.md › API layer and › Hard rules. In one line each:
 
-- Pages and components never call the backend. They call `lib/api/*.ts`, which calls `app/api/*`, which calls `lib/api/*-external.ts`.
-- Never add `next: { revalidate, tags }` to `fetchWithHmac` in `lib/api/*-external.ts` (fetch-cache explosion, Jan 2026). The direct backend path in `lib/api/events.ts` still passes `next`; don't copy it.
-- A `lib/api/*.ts` reader that calls an internal route and runs during `next build` needs the `isBuildPhase` bypass. `isBuildPhase` is also true at runtime on Coolify, where the bypass skips the internal route's cache; `news.ts` and `profiles.ts` do without it (see [`isBuildPhase`](#isbuildphase)).
-- Never use raw `fetch()` to reach the backend; use `fetchWithHmac`. Client libraries do use plain `fetch()`, but only to reach internal routes.
+- Pages and components never call the backend. Server code calls a `lib/api/*.ts` reader, which calls `lib/api/*-external.ts`. Browser code calls `app/api/*`, which calls the same wrapper.
+- Our `/api/*` routes don't exist during `next build`, so server readers don't call them (see [Server readers](#layer-1-server-reader-libapiresourcets)). `news.ts`, `profiles.ts` and event/news detail still do, through `getInternalApiUrl({ preferConfiguredOrigin })`.
+- Never add `next: { revalidate, tags }` to `fetchWithHmac` in `lib/api/*-external.ts` (fetch-cache explosion, Jan 2026).
+- Never use raw `fetch()` to reach the backend; use `fetchWithHmac`.
 
 This skill is the how-to. Copy a real file before you copy a template.
 
 ## The three layers
 
 ```text
-Page / Server Component / SWR hook
-  └─ lib/api/<resource>.ts          client library: getInternalApiUrl, createCache, isBuildPhase bypass
-       └─ app/api/<resource>/route.ts   internal route: Cache-Control per route, error status
-            └─ lib/api/<resource>-external.ts   fetchWithHmac + Zod parse + safe fallback
+Server Component                  SWR hook (browser)
+  └─ lib/api/<resource>.ts          └─ app/api/<resource>/route.ts
+     server reader: connection(),      internal route: Cache-Control per
+     createCache / "use cache"         route, error status
+       └──────────────┬─────────────────┘
+            lib/api/<resource>-external.ts   fetchWithHmac + Zod parse + safe fallback
                  └─ backend (getApiUrl(), e.g. https://api.esdeveniments.cat/api)
 ```
 
@@ -114,36 +116,22 @@ Tests: `test/proxy-public-api-patterns.test.ts`. Auth routes are not part of thi
 
 For per-request-billed APIs (Google Places), CDN headers are not enough: on Cloudflare Free `/api/*` is not edge-cached without a Cache Rule, and the Next cache is wiped on every deploy. Read through the app Redis cache (`lib/cache/redis-client.ts`) with a coarse key and cap cost at the provider. See `app/api/places/nearby/route.ts` and `docs/incidents/2026-06-26-places-api-cost.md`.
 
-## Layer 1: client library (`lib/api/<resource>.ts`)
+## Layer 1: server reader (`lib/api/<resource>.ts`)
 
-From `lib/api/categories.ts` (trimmed):
+From `lib/api/categories.ts`:
 
 ```typescript
+// fetchCategoriesExternal returns [] on failure; storeEmpty: false keeps a
+// failure from being cached for a day.
 const { cache: categoriesListCache, clear: clearCategoriesListCache } =
-  createCache<CategorySummaryResponseDTO[]>(86400000);
-
-async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {
-  const url = await getInternalApiUrl(`/api/categories`);
-  const response = await fetch(url, {
-    headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 86400, tags: ["categories"] },
-  });
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return parseCategories(await response.json());
-}
+  createCache<CategorySummaryResponseDTO[]>(86400000, { storeEmpty: false });
 
 export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
-  // During build, bypass internal API (server not running) and call external directly
-  if (isBuildPhase) {
-    try {
-      return await fetchCategoriesExternal();
-    } catch (error) {
-      console.error("fetchCategories: external fetch failed during build", error);
-      return [];
-    }
-  }
   try {
-    return await categoriesListCache(fetchCategoriesFromApi);
+    // Keep the request-time signal fetchWithHmac gives on a cache miss, so a
+    // warm cache cannot change what Next prerenders.
+    await connection();
+    return await categoriesListCache(fetchCategoriesExternal);
   } catch (e) {
     console.error("Error fetching categories:", e);
     return [];
@@ -153,38 +141,16 @@ export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
 export const getCategories = reactCache(fetchCategories); // per-request dedupe
 ```
 
-- `getInternalApiUrl(path)` is async and returns an absolute URL to this app.
-- `next: { revalidate, tags }` here is on the plain `fetch()` to the internal route, as in the real client libraries. It is never allowed on `fetchWithHmac` in a `*-external.ts` wrapper.
-- `createCache`/`createKeyedCache` (`lib/api/cache.ts`) give a 24 h in-memory TTL for low-cardinality data (categories, cities, regions, places). Export a `clear*Caches()` and register it: add the tag to `CacheTag`/`RevalidatableTag` (`types/cache.ts`), then to `ALLOWED_TAGS` and `TAG_TO_CLEAR_FN` in `app/api/revalidate/route.ts`. Unregistered caches only expire after 24 h.
-- Caveat: `/api/categories` answers 200 `[]` on an outage, so `categoriesListCache` can hold `[]` for 24 h. With a route that returns an error status (see the templates), the fetch throws and nothing is cached.
+- The reader calls the wrapper directly, at build and at runtime. The old `isBuildPhase` switch (build → wrapper, runtime → internal route) was also true at runtime on Coolify, so the internal-route path never ran in production; it is gone.
+- `createCache`/`createKeyedCache` (`lib/api/cache.ts`) give a 24 h in-memory TTL for low-cardinality data (categories, cities, regions, places).
+  - `storeEmpty: false` skips `null`/`undefined`/`[]`: use it where the wrapper returns those on failure. Keep the default where empty is a real answer (`fetchPlaceBySlug` caches a 404 `null`; promoted events cache `[]`).
+  - `maxEntries` (keyed only) drops the oldest entry: bound caches keyed by user input (`fetchPlaceBySlug` uses 5,000).
+  - Export a `clear*Caches()` and register it: add the tag to `CacheTag`/`RevalidatableTag` (`types/cache.ts`), then to `ALLOWED_TAGS` and `TAG_TO_CLEAR_FN` in `app/api/revalidate/route.ts`. Unregistered caches only expire after 24 h.
+- A wrapper behind a cache must not hide a failure as a valid value: `fetchPlaceBySlugExternal` and `fetchPlacesAggregatedExternal` throw on errors and invalid payloads.
 - Wrap readers used by both `generateMetadata` and the page in React `cache()`.
+- Inside `"use cache"`, `connection()` throws: call `fetchWithHmac(url, { skipConnection: true })` and throw on failure, so the error is not cached. See `getCachedEventsPage`/`fetchEventsCached` in `lib/api/events.ts` (the `[place]` page's events).
+- `fetchEvents` and `fetchCategorizedEvents` have no cache (`no-store`).
 - Browser code (SWR hooks) fetches relative `/api/...` URLs directly, e.g. `components/hooks/useEvents.ts`.
-
-### `isBuildPhase`
-
-`utils/constants.ts`:
-
-```typescript
-export const isBuildPhase =
-  process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
-  (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
-```
-
-| Where | Value | Effect |
-| --- | --- | --- |
-| `next build` (Docker or local) | `true` | Calls the external wrapper; internal routes don't exist yet |
-| Production runtime on Coolify (no `VERCEL_URL`) | `true` | Also calls the external wrapper, so wrappers carry real traffic and skip the internal route's CDN cache |
-| `next dev` | `false` | Goes through the internal route |
-
-Because of the Coolify case, `lib/api/events.ts` adds `fetchEventsCached` (a `"use cache"` reader) so listing renders don't wait on the backend every time; read the comment above `getCachedEventsPage`.
-
-Who uses it today:
-
-- Imported from `@utils/constants`: `events.ts`, `categories.ts`, `places.ts`.
-- Local copy of the same expression: `cities.ts`, `regions.ts`.
-- No bypass: `news.ts` and `profiles.ts` (internal-route readers), `promotions.ts` (calls `fetchWithHmac` directly, no internal route).
-
-Missing bypass symptom: `SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON` during the build.
 
 ## Query builders and parameter mapping
 
@@ -207,8 +173,8 @@ const qs = buildEventsQuery(params); // URLSearchParams, page defaults to 0, siz
 1. DTO in `types/api/<resource>.ts`.
 2. Zod schema + `parse*` helper in `lib/validation/<resource>.ts`.
 3. `lib/api/<resource>-external.ts`: `fetchWithHmac(`${getApiUrl()}/...`)`, parse, safe fallback. No `next`.
-4. `app/api/<resource>/route.ts`: call the wrapper, set `Cache-Control`. If browsers call it, add it to the gate lists.
-5. `lib/api/<resource>.ts`: `getInternalApiUrl` + `isBuildPhase` bypass (+ `createCache` if the data is low-cardinality).
+4. `app/api/<resource>/route.ts`, only if browser code needs it: call the wrapper, set `Cache-Control`, add it to the gate lists.
+5. `lib/api/<resource>.ts`: call the wrapper directly (+ `connection()` and `createCache` if the data is low-cardinality).
 6. Test the wrapper's fallback and the route's headers (patterns: `test/api-events.test.ts`, `test/events-api-outage.test.ts`, `test/favorites-external.test.ts`).
 
 Templates with placeholders: `templates/external-wrapper-template.ts`, `templates/internal-route-template.ts`, `templates/client-library-template.ts`.

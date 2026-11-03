@@ -3,7 +3,8 @@ import { getOwnedEventBySlug, ownerCheckNeedsRefresh } from "@lib/auth/owned-eve
 
 const mockFetchEvent = vi.fn();
 const mockCurrentUser = vi.fn();
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   fetchEventBySlug: (slug: string) => mockFetchEvent(slug),
 }));
 vi.mock("@lib/auth/session", () => ({

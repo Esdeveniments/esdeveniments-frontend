@@ -2,7 +2,7 @@
  * External wrapper template: lib/api/RESOURCE-external.ts
  *
  * Replace RESOURCE / Resource with your names. Mirrors lib/api/events-external.ts.
- * Only internal routes (app/api/*) and the isBuildPhase branch of lib/api/RESOURCE.ts
+ * Only internal routes (app/api/*) and the server reader lib/api/RESOURCE.ts
  * may import this file. Not type-checked by the project (.github is outside tsc).
  *
  * Never add `next: { revalidate, tags }` to fetchWithHmac: it turns on Next's fetch
@@ -61,7 +61,7 @@ export async function fetchResourcesExternalResult(
   }
 }
 
-// Server-only callers (isBuildPhase branch) that just want a safe empty value.
+// Server-only callers that just want a safe empty value.
 export async function fetchResourcesExternal(
   params: Record<string, string | number | undefined>,
 ): Promise<PagedResponseDTO<ResourceSummaryResponseDTO>> {
@@ -70,8 +70,8 @@ export async function fetchResourcesExternal(
 }
 
 // Detail read: status 404 means "not found"; any other null is a failure.
-// The detail route must answer 404 only for status 404, so lib/api/RESOURCE.ts
-// never caches a backend error as "not found".
+// The detail route and lib/api/RESOURCE.ts treat only status 404 as "not
+// found", so a backend error is never cached as missing.
 export async function fetchResourceBySlugExternalResult(
   slug: string,
 ): Promise<SafeFetchResult<ResourceDetailResponseDTO>> {

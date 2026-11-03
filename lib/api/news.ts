@@ -11,6 +11,7 @@ import {
   getInternalApiUrl,
   buildNewsQuery,
   getVercelProtectionBypassHeaders,
+  emptyPagedResponse,
 } from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
@@ -49,14 +50,7 @@ export async function fetchNews(
     };
   } catch (e) {
     console.error("Error fetching news:", e);
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    return emptyPagedResponse();
   }
 }
 
@@ -114,14 +108,7 @@ export async function fetchNewsCities(params?: {
     return (await response.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
   } catch (e) {
     console.error("Error fetching news cities:", e);
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    return emptyPagedResponse();
   }
 }
 

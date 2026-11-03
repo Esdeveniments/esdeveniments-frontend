@@ -21,7 +21,8 @@ vi.mock("@utils/api-helpers", async (importOriginal) => ({
   getApiUrl: () => "https://api.example.com/api",
   isApiUrlConfigured: vi.fn(() => true),
 }));
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   requireAuth: vi.fn().mockResolvedValue({
     apiUrl: "https://api.example.com/api",
     authToken: "token",

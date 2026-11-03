@@ -4,7 +4,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 const mockGetInternalApiUrl = vi.fn();
 const mockGetVercelProtectionBypassHeaders = vi.fn();
 
-vi.mock("@utils/api-helpers", () => ({
+vi.mock("@utils/api-helpers", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@utils/api-helpers")>()),
   getInternalApiUrl: (path: string, opts?: { preferConfiguredOrigin?: boolean }) =>
     mockGetInternalApiUrl(path, opts),
   getVercelProtectionBypassHeaders: () => mockGetVercelProtectionBypassHeaders(),

@@ -15,7 +15,8 @@ vi.mock("@lib/api/events-external", () => ({
 
 // Mock lib/api/events for the delete handler (deleteEventById)
 const mockDeleteEventById = vi.fn();
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   deleteEventById: (...args: unknown[]) => mockDeleteEventById(...args),
   fetchEventBySlug: vi.fn(),
 }));

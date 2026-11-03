@@ -1,6 +1,6 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseEventDetail, parsePagedEvents } from "lib/validation/event";
-import { buildEventsQuery, getApiUrl } from "@utils/api-helpers";
+import { buildEventsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helpers";
 import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
@@ -37,14 +37,7 @@ export async function fetchEventsExternal(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   const { data } = await fetchEventsExternalResult(params);
-  return data ?? {
-    content: [],
-    currentPage: 0,
-    pageSize: 12,
-    totalElements: 0,
-    totalPages: 0,
-    last: true,
-  };
+  return data ?? emptyPagedResponse(0, 12);
 }
 
 export async function fetchEventsExternalResult(

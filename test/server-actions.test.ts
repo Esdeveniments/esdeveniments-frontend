@@ -39,7 +39,8 @@ const mockFetchEventBySlug = vi.fn();
 const mockReplaceEventImage = vi.fn();
 const mockDeleteEventImage = vi.fn();
 
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   createEvent: (data: EventCreateRequestDTO, imageFile?: File) =>
     mockCreateEvent(data, imageFile),
   updateEventById: (uuid: string, data: EventUpdateRequestDTO) =>

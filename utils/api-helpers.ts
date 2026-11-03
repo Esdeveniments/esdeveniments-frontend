@@ -11,6 +11,7 @@ import { distanceToRadius } from "types/event";
 import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
 import type { InternalOriginOptions } from "types/api/internal";
+import type { PagedResponseDTO } from "types/api/event";
 
 /** Default API URL used as fallback when neither API_URL nor NEXT_PUBLIC_API_URL is set. */
 const DEFAULT_API_URL = apiDefaults.apiUrl;
@@ -313,4 +314,19 @@ export function applyDistanceToParams(
   }
 
   return params;
+}
+
+/** An empty page, for fallbacks when a paged read fails. */
+export function emptyPagedResponse<T>(
+  currentPage = 0,
+  pageSize = 0,
+): PagedResponseDTO<T> {
+  return {
+    content: [],
+    currentPage,
+    pageSize,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  };
 }
