@@ -1,21 +1,19 @@
-import React, { forwardRef } from "react";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import type { BadgeProps } from "types/common";
 
 // Base classes aligned with design tokens (badge sizing + transitions)
 const BASE_CLASS =
   "rounded-badge px-badge-x py-badge-y text-xs font-medium border border-border hover:bg-muted transition-interactive cursor-pointer";
 
-const Badge = forwardRef<
-  HTMLSpanElement,
-  React.PropsWithChildren<{
-    href?: string;
-    className?: string;
-    variant?: "outline" | "solid";
-    onClick?: () => void;
-    ariaLabel?: string;
-    [key: `data-${string}`]: string | undefined;
-  }>
->(({ href, children, className = "", onClick, ariaLabel, ...rest }, ref) => {
+const Badge = ({
+  href,
+  children,
+  className = "",
+  onClick,
+  ariaLabel,
+  ref,
+  ...rest
+}: BadgeProps) => {
   const combined = `${BASE_CLASS} ${className}`.trim();
 
   // Separate data-* attributes to forward to the underlying element
@@ -54,8 +52,6 @@ const Badge = forwardRef<
       {children}
     </span>
   );
-});
-
-Badge.displayName = "Badge";
+};
 
 export default Badge;

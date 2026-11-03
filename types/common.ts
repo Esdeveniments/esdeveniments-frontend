@@ -530,10 +530,21 @@ export interface BadgeProps {
   variant?: "outline" | "solid";
   onClick?: () => void;
   ariaLabel?: string;
+  children?: React.ReactNode;
+  ref?: React.Ref<HTMLSpanElement>;
+  [key: `data-${string}`]: string | undefined;
 }
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "neutral" | "primary" | "muted" | "outline" | "solid";
+export interface ButtonProps extends React.ComponentProps<"button"> {
+  variant?:
+    | "neutral"
+    | "primary"
+    | "muted"
+    | "outline"
+    | "solid"
+    | "category"
+    | "ghost";
+  hasIcon?: boolean;
 }
 
 // Hook return types
