@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiOrigin } from "@utils/api-helpers";
 import { sanitizeReturnTo } from "@utils/redirect-safety";
-import { handleCanonicalRedirects } from "@utils/middleware-redirects";
+import { handleCanonicalRedirects, NON_PLACE_FIRST_SEGMENTS } from "@utils/middleware-redirects";
+import { isValidPlace } from "@utils/route-validation";
+import { resolvePlaceForProxy } from "@lib/api/places-proxy";
 import { isProductionHost } from "@utils/production-host";
 import {
   isDev,
@@ -410,6 +412,36 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
+  // Unknown places: real 404 (aliases: 301). Pages stream inside the root
+  // layout's Suspense, so notFound()/redirect() there can't set a status
+  // (they become 200 + noindex / a client redirect). Next's docs recommend
+  // checking the slug here instead.
+  const placeSegments = pathnameWithoutLocale.split("/").filter(Boolean);
+  const placeSlug = placeSegments[0] ?? "";
+  const placeResolution =
+    (request.method === "GET" || request.method === "HEAD") &&
+    placeSegments.length >= 1 &&
+    placeSegments.length <= 3 &&
+    placeSlug !== "catalunya" &&
+    !NON_PLACE_FIRST_SEGMENTS.has(placeSlug) &&
+    isValidPlace(placeSlug)
+      ? await resolvePlaceForProxy(placeSlug)
+      : null;
+
+  if (placeResolution?.kind === "alias") {
+    const url = request.nextUrl.clone();
+    url.pathname = [
+      localeFromPath ? `/${localeFromPath}` : "",
+      `/${placeResolution.slug}`,
+      ...placeSegments.slice(1).map((segment) => `/${segment}`),
+    ].join("");
+    const aliasResponse = NextResponse.redirect(url, 301);
+    if (shouldPersistLocaleFromPath && localeFromPath) {
+      persistLocaleCookie(aliasResponse, localeFromPath);
+    }
+    return aliasResponse;
+  }
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
   requestHeaders.set("x-next-intl-locale", resolvedLocale);
@@ -439,13 +471,18 @@ export default async function proxy(request: NextRequest) {
   //   to /ca/barcelona so it matches app/[locale=ca]/[place=barcelona]/page.tsx
   // - Paths with locale prefix (e.g., /es/barcelona) → pass through, already
   //   matches app/[locale=es]/[place=barcelona]/page.tsx
-  const response = localeFromPath
-    ? NextResponse.next(baseResponseInit)
-    : (() => {
-        const rewriteUrl = request.nextUrl.clone();
-        rewriteUrl.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
-        return NextResponse.rewrite(rewriteUrl, baseResponseInit);
-      })();
+  // - Unknown places render the same page with a 404 status (the rewrite
+  //   status is kept; NextResponse.next() can't set one).
+  const localizedUrl = request.nextUrl.clone();
+  if (!localeFromPath) {
+    localizedUrl.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
+  }
+  const response =
+    placeResolution?.kind === "missing"
+      ? NextResponse.rewrite(localizedUrl, { ...baseResponseInit, status: 404 })
+      : localeFromPath
+        ? NextResponse.next(baseResponseInit)
+        : NextResponse.rewrite(localizedUrl, baseResponseInit);
 
   if (shouldPersistLocaleFromPath && localeFromPath) {
     persistLocaleCookie(response, localeFromPath);
