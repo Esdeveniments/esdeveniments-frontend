@@ -4,11 +4,13 @@ import "@testing-library/jest-dom";
 import Search from "../components/ui/search";
 import { renderWithProviders } from "./utils/renderWithProviders";
 
+const nav = vi.hoisted(() => ({ search: "" }));
+
 vi.mock("next/navigation", () => {
   const push = vi.fn();
   return {
     useRouter: () => ({ push }),
-    useSearchParams: () => new URLSearchParams(""),
+    useSearchParams: () => new URLSearchParams(nav.search),
     usePathname: () => "/",
   };
 });
@@ -23,5 +25,20 @@ describe("Search component", () => {
     expect(input).toBeInTheDocument();
     fireEvent.change(input, { target: { value: "fira" } });
     expect(input.value).toBe("fira");
+  });
+
+  it("shows the new search term when the URL changes", () => {
+    nav.search = "search=fira";
+    const { rerender } = renderWithProviders(<Search />);
+    const input = screen.getByTestId("search-input") as HTMLInputElement;
+    expect(input.value).toBe("fira");
+
+    fireEvent.change(input, { target: { value: "fir" } });
+    expect(input.value).toBe("fir");
+
+    nav.search = "search=concert";
+    rerender(<Search />);
+    expect(input.value).toBe("concert");
+    nav.search = "";
   });
 });
