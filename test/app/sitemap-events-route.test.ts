@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
 import { XMLParser } from "fast-xml-parser";
-import type { SitemapPartsRouteContext } from "types/props";
 
 const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
   .toISOString()
@@ -36,7 +35,7 @@ vi.mock("@lib/api/events", () => ({
 describe("app/sitemap-events/[...parts]/route", () => {
   it("never emits a future lastmod and only uses real edit dates", async () => {
     const { GET } = await import("../../app/sitemap-events/[...parts]/route");
-    const context: SitemapPartsRouteContext = {
+    const context: RouteContext<"/sitemap-events/[...parts]"> = {
       params: Promise.resolve({ parts: ["1.xml"] }),
     };
 
