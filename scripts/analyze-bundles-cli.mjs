@@ -15,6 +15,7 @@
 import { readFileSync, statSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { gzipSync } from 'zlib';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -91,6 +92,33 @@ function getRouteOwnFiles(dir, fileList = []) {
 }
 
 // Analyze client bundles
+// SEO landing pages. A shared chunk that grows here hides inside client.totalBytes.
+const KEY_PAGES = {
+  '/ca': 'ca.html',
+  '/ca/[place]': 'ca/[place].html',
+  '/ca/e/[eventId]': 'ca/e/[eventId].html',
+};
+
+// ponytail: counts every chunk the prerendered HTML names, including lazy ones in
+// the RSC payload. Good enough to catch growth; switch to a browser trace if it misleads.
+function analyzeKeyPagesClientJs() {
+  const appDir = join(projectRoot, '.next', 'server', 'app');
+  const chunksDir = join(projectRoot, '.next', 'static', 'chunks');
+  return Object.entries(KEY_PAGES).flatMap(([page, htmlFile]) => {
+    const htmlPath = join(appDir, htmlFile);
+    if (!statSync(htmlPath, { throwIfNoEntry: false })) return [];
+    const html = readFileSync(htmlPath, 'utf-8');
+    const chunks = new Set(html.match(/(?<=\/_next\/static\/chunks\/)[\w.-]+\.js/g) ?? []);
+    const jsGzipBytes = [...chunks].reduce((sum, chunk) => {
+      const chunkPath = join(chunksDir, chunk);
+      return statSync(chunkPath, { throwIfNoEntry: false })
+        ? sum + gzipSync(readFileSync(chunkPath)).length
+        : sum;
+    }, 0);
+    return [{ page, jsGzipBytes, chunkCount: chunks.size }];
+  });
+}
+
 function analyzeClientBundles() {
   const staticDir = join(projectRoot, '.next', 'static');
   const chunksDir = join(staticDir, 'chunks');
@@ -263,6 +291,7 @@ function analyzeBundles(options = {}) {
         totalBytes: totalClientBytes,
         topBundles: topClientBundles,
       },
+      pages: analyzeKeyPagesClientJs(),
       routes: routesSummary,
     };
 
