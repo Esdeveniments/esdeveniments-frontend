@@ -58,7 +58,7 @@ Yarn 4 (Berry) dropped automatic `pre*`/`post*` lifecycle scripts — npm runs t
 
 ## Vercel previews are a preview, not production
 
-Production runs on Coolify/Docker/Node 22; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works (PR E2E no longer uses previews); gate promotion to `main` on the Coolify/Docker path.
+Production runs on Coolify/Docker/Node 26; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works (PR E2E no longer uses previews); gate promotion to `main` on the Coolify/Docker path.
 
 ## Image-proxy/dispatcher bugs only surface through a real socket
 

@@ -1,15 +1,17 @@
 # syntax=docker/dockerfile:1
-FROM node:22-slim AS base
+FROM node:26-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   curl \
   && rm -rf /var/lib/apt/lists/*
+# Node 25+ no longer bundles Corepack, so install it to get Yarn 4 (packageManager).
+RUN npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 WORKDIR /app
 
 FROM base AS deps
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
-RUN corepack enable && yarn install --immutable
+RUN yarn install --immutable
 
 FROM base AS builder
 # Build-time arguments for Next.js static optimization.
@@ -53,7 +55,7 @@ COPY . .
 RUN --mount=type=secret,id=HMAC_SECRET,env=HMAC_SECRET,required=true \
     --mount=type=secret,id=BACKEND_SERVICE_SECRET,env=BACKEND_SERVICE_SECRET,required=true \
     --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN \
-    node scripts/verify-backend-build.mjs && corepack enable && yarn prebuild && yarn build
+    node scripts/verify-backend-build.mjs && yarn prebuild && yarn build
 
 FROM base AS runner
 ENV NODE_ENV=production

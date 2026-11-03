@@ -4,7 +4,7 @@ import "server-only";
  * Minimal Turso HTTP client using raw fetch().
  *
  * Replaces @libsql/client (25 MB with native bindings) with ~50 lines
- * of fetch() to Turso's pipeline HTTP API. Node 22 has fetch() built in.
+ * of fetch() to Turso's pipeline HTTP API. Node has fetch() built in.
  *
  * Uses environment variables:
  * - TURSO_DATABASE_URL: Database URL (libsql:// or https://)

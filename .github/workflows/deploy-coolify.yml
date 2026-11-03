@@ -40,7 +40,7 @@ permissions:
   actions: read
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "26"
   IS_PRODUCTION: ${{ github.ref_name == 'main' }}
   DEPLOY_URL: ${{ github.ref_name == 'main' && 'https://www.esdeveniments.cat' || 'https://staging.esdeveniments.cat' }}
 
@@ -64,7 +64,8 @@ jobs:
           cache: yarn
 
       - name: Enable Corepack (Yarn 4)
-        run: corepack enable
+        # Node 25+ no longer bundles Corepack.
+        run: npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -96,7 +97,8 @@ jobs:
           cache: yarn
 
       - name: Enable Corepack (Yarn 4)
-        run: corepack enable
+        # Node 25+ no longer bundles Corepack.
+        run: npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -128,7 +130,8 @@ jobs:
           cache: yarn
 
       - name: Enable Corepack (Yarn 4)
-        run: corepack enable
+        # Node 25+ no longer bundles Corepack.
+        run: npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable

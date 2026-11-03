@@ -2,7 +2,7 @@
 
 Single source of truth for AI agents working in this repo (Copilot, Claude Code, Codex, Cursor and others all read this file). Keep it current: when code changes a rule below, change the rule in the same PR.
 
-**What this is**: esdeveniments.cat, a Catalan events site. Next.js 16 App Router (`cacheComponents`, `partialPrefetching`), React 19, TypeScript strict, next-intl 4 (`ca` default, `es`, `en`), Tailwind, SWR, Vitest, Playwright. Node 22, Yarn 4.12 (Corepack). Priorities: SEO, Core Web Vitals, low hosting cost.
+**What this is**: esdeveniments.cat, a Catalan events site. Next.js 16 App Router (`cacheComponents`, `partialPrefetching`), React 19, TypeScript strict, next-intl 4 (`ca` default, `es`, `en`), Tailwind, SWR, Vitest, Playwright. Node 26, Yarn 4.12 (Corepack). Priorities: SEO, Core Web Vitals, low hosting cost.
 
 **Where else to look**
 
@@ -44,13 +44,13 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 | Command | Notes |
 | --- | --- |
-| `yarn install --immutable` | After `corepack enable` |
+| `yarn install --immutable` | After `npm i -g corepack && corepack enable` (Node 25+ no longer bundles Corepack) |
 | `yarn dev` | `next dev` (Turbopack). Run `yarn prebuild` first if you need the service worker |
 | `yarn build` | `next build` only. `build:development\|staging\|production` also run `prebuild` with that env file |
 | `yarn start` | `next start`: serves the built app. `start:development\|staging\|production` load that env file |
 | `yarn prebuild` | Generates `public/sw.js` and `public/robots.txt` (build output, never edit them; `app/robots.txt/route.ts` is the fallback, keep both in sync) |
 | `yarn lint` / `yarn typecheck` | 0 errors expected; old warnings are acceptable |
-| `yarn test` | Vitest + jsdom, `test/**/*.{test,spec}.{ts,tsx}`. CI runs Node 22. Since Vitest 5 the suite also passes on Node 24 and 26 |
+| `yarn test` | Vitest + jsdom, `test/**/*.{test,spec}.{ts,tsx}`. CI runs Node 26 (`NODE_VERSION` in the workflows; keep it in sync with `engines.node`, `.nvmrc` and the Dockerfile base image) |
 | `yarn test:e2e` | Playwright in `e2e/`. Needs a running app and API credentials. Remote: `playwright.remote.config.ts` + `PLAYWRIGHT_TEST_BASE_URL` |
 | `yarn i18n:check` | Missing/invalid message keys |
 | `yarn analyze`, `analyze:experimental` | Bundle analysis |
