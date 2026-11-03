@@ -155,4 +155,20 @@ describe("lib/api/places", () => {
     expect(await fetchPlaceBySlug("sant cugat")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("fetchPlaceBySlug throws (and caches nothing) on an invalid 200 payload", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ bogus: true }) })
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ id: 1, name: "Barcelona", slug: "barcelona", type: "CITY" }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { fetchPlaceBySlug } = await import("lib/api/places");
+    await expect(fetchPlaceBySlug("barcelona")).rejects.toThrow("Invalid place payload");
+    expect(await fetchPlaceBySlug("barcelona")).toMatchObject({ slug: "barcelona" });
+  });
 });

@@ -57,7 +57,10 @@ export async function fetchPlaceBySlugExternal(
       throw new Error(`Failed to fetch place ${slug}: HTTP ${res.status}`);
     }
     const json = await res.json();
-    return parsePlace(json);
+    const place = parsePlace(json);
+    // An invalid 200 is a failure, not "not found": throw so it is not cached.
+    if (!place) throw new Error(`Invalid place payload for ${slug} (HTTP 200)`);
+    return place;
   } catch (error) {
     // Network errors or other exceptions - rethrow to distinguish from 404
     // Only log if it's not already an Error with message (to avoid double logging)
@@ -90,14 +93,20 @@ export async function fetchPlacesAggregatedExternal(): Promise<
         );
       }
       const json = await response.json();
+      if (!Array.isArray(json)) {
+        throw new Error(`fetchPlacesAggregatedExternal: ${endpoint} not a list`);
+      }
       // Add type field to each place based on the endpoint
-      const placesWithType = Array.isArray(json)
-        ? json.map((place: unknown) => ({
-            ...(place as Record<string, unknown>),
-            type,
-          }))
-        : [];
-      return parsePlaces(placesWithType);
+      const placesWithType = json.map((place: unknown) => ({
+        ...(place as Record<string, unknown>),
+        type,
+      }));
+      const places = parsePlaces(placesWithType);
+      // parsePlaces returns [] for an invalid payload; only a real [] is empty.
+      if (placesWithType.length > 0 && places.length === 0) {
+        throw new Error(`fetchPlacesAggregatedExternal: ${endpoint} invalid payload`);
+      }
+      return places;
     })
   );
   const all = results.flat();
