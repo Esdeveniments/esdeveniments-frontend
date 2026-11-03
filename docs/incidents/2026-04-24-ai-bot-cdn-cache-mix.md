@@ -142,6 +142,6 @@ these checks flip to pass: `content-no-js`, `semantic-indexing`,
 
 ## Related
 
-- `.github/skills/security-headers-csp/SKILL.md`
+- `.claude/skills/security-headers-csp/SKILL.md`
 - `docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md` (same class
   of issue: CF cache keyed only by URL, served wrong response type)

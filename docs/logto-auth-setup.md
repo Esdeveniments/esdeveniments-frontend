@@ -101,7 +101,7 @@ Forget a host's callback and that environment fails closed with Logto's
 
 ## The 5 secret locations (keep in sync)
 
-Per `.github/skills/env-variable-management`, every `LOGTO_*` var must be set in:
+Per `.claude/skills/env-variable-management`, every `LOGTO_*` var must be set in:
 
 1. **Code** — read via `process.env` (`lib/auth/logto.ts`, fail-fast).
 2. **Env files** — `.env.example` (committed placeholders) and the gitignored

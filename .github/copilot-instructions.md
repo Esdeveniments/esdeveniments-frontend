@@ -1,6 +1,6 @@
 # Copilot instructions
 
-The full rules for this repo are in `AGENTS.md` at the repo root, and the how-to guides are in `.github/skills/*/SKILL.md`. Copilot's cloud agent, CLI, code review and VS Code chat read `AGENTS.md` directly; this file only exists for Copilot surfaces that don't (github.com chat, JetBrains, Visual Studio, Xcode). Don't add rules here: add them to `AGENTS.md`.
+The full rules for this repo are in `AGENTS.md` at the repo root, and the how-to guides are in `.claude/skills/*/SKILL.md`. Copilot's cloud agent, CLI, code review and VS Code chat read `AGENTS.md` directly; this file only exists for Copilot surfaces that don't (github.com chat, JetBrains, Visual Studio, Xcode). Don't add rules here: add them to `AGENTS.md`.
 
 The rules that most often break things:
 
