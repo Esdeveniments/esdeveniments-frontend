@@ -52,7 +52,7 @@ yarn start -p 3000
 ```bash
 lsof -i :3000 -sTCP:LISTEN     # is the port owned by your dev server?
 grep -cE '^(HMAC_SECRET|BACKEND_SERVICE_SECRET)=.+' .env.local   # expect 2; .env.development does not count
-yarn --version                 # expect 4.12.x
+yarn --version                 # expect the version in package.json "packageManager"
 node --version                 # expect v22; Node 25+ breaks the jsdom localStorage tests
 ```
 
@@ -65,9 +65,10 @@ Two harnesses, both already in the repo.
 ```bash
 yarn test:e2e e2e/smoke.spec.ts   # home renders and the search input is visible
 ```
-To test a deployed site instead, set the base URL. No local server starts:
+To test a deployed site instead, use the remote config. It never starts a local
+server (it also works against your own `yarn start` on `localhost:3000`):
 ```bash
-PLAYWRIGHT_TEST_BASE_URL=https://staging.esdeveniments.cat yarn test:e2e e2e/smoke.spec.ts
+PLAYWRIGHT_TEST_BASE_URL=https://staging.esdeveniments.cat yarn test:e2e --config playwright.remote.config.ts e2e/smoke.spec.ts
 ```
 
 **2. SSR bot check (SEO path).** Fetches the home page with AI crawler user

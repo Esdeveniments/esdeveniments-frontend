@@ -1,168 +1,119 @@
 /**
- * External API Wrapper Template
+ * External wrapper template: lib/api/RESOURCE-external.ts
  *
- * Copy this template when adding a new external API wrapper.
- * Replace RESOURCE_NAME placeholders with your resource name.
+ * Replace RESOURCE / Resource with your names. Mirrors lib/api/events-external.ts.
+ * Only internal routes (app/api/*) and the isBuildPhase branch of lib/api/RESOURCE.ts
+ * may import this file. Not type-checked by the project (.github is outside tsc).
  *
- * Location: lib/api/RESOURCE_NAME-external.ts
- *
- * NOTE: This is a documentation template. When implementing, use these imports:
- * - import { fetchWithHmac } from "@lib/api/fetch-wrapper";
- * - import { captureException } from "@sentry/nextjs";
- * - import { RESOURCE_NAMEResponseSchema } from "@lib/validation/RESOURCE_NAME"; // Optional Zod schema
+ * Never add `next: { revalidate, tags }` to fetchWithHmac: it turns on Next's fetch
+ * cache with one entry per URL. Cache with Cache-Control in the internal route.
  */
+import type {
+  ResourceSummaryResponseDTO,
+  ResourceDetailResponseDTO,
+} from "types/api/RESOURCE";
+import type { PagedResponseDTO } from "types/api/event";
+import type { SafeFetchResult } from "types/fetch";
+import { fetchWithHmac } from "lib/api/fetch-wrapper";
+// Add buildResourceQuery next to buildEventsQuery in utils/api-helpers.ts.
+import {
+  getApiUrl,
+  isApiUrlConfigured,
+  buildResourceQuery,
+} from "@utils/api-helpers";
+import {
+  parsePagedResources,
+  parseResourceDetail,
+} from "lib/validation/RESOURCE";
 
-// Mock functions for template validation
-declare function fetchWithHmac(
-  url: string,
-  options?: RequestInit & {
-    skipBodySigning?: boolean;
-    next?: {
-      revalidate?: number;
-      tags?: string[];
-    };
-  }
-): Promise<Response>;
-declare function captureException(
-  error: unknown,
-  context?: { tags?: Record<string, string>; extra?: Record<string, unknown> }
-): void;
+const EMPTY_PAGE: PagedResponseDTO<ResourceSummaryResponseDTO> = {
+  content: [],
+  currentPage: 0,
+  pageSize: 0,
+  totalElements: 0,
+  totalPages: 0,
+  last: true,
+};
 
-// Type definitions - ideally import from types/api/RESOURCE_NAME.ts
-interface RESOURCE_NAMEParams {
-  page?: number;
-  size?: number;
-  // Add other params
+function failure<T>(error: unknown, status: number): SafeFetchResult<T> {
+  const err = error instanceof Error ? error : new Error(String(error));
+  return { data: null, error: err, status: status >= 400 ? status : 502 };
 }
 
-interface RESOURCE_NAMEDTO {
-  id: string;
-  // Add other fields
-}
-
-interface PagedResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-  last: boolean;
-}
-
-// Environment guard - CRITICAL for preventing build failures
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-/**
- * Fetch RESOURCE_NAME from external API
- *
- * @param params - Query parameters
- * @returns Paged response with RESOURCE_NAME data, or empty fallback on error
- */
-export async function fetchRESOURCE_NAME(
-  params: RESOURCE_NAMEParams = {}
-): Promise<PagedResponse<RESOURCE_NAMEDTO>> {
-  // Environment guard - return safe fallback if API URL not configured
-  if (!API_URL) {
-    console.warn("[fetchRESOURCE_NAME] API URL not configured");
-    return {
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
-      currentPage: 0,
-      pageSize: 20,
-      last: true,
-    };
-  }
-
+// Read with status: never throws. The internal route answers non-2xx +
+// no-store when data is null, so the CDN never caches an outage.
+export async function fetchResourcesExternalResult(
+  params: Record<string, string | number | undefined>,
+): Promise<SafeFetchResult<PagedResponseDTO<ResourceSummaryResponseDTO>>> {
+  const query = buildResourceQuery(params); // URLSearchParams
   try {
-    // Build query string using shared query builder
-    // Prefer using centralized query builders like buildEventsQuery, buildNewsQuery
-    // from utils/api-helpers.ts to ensure consistent parameter handling
-    const searchParams = new URLSearchParams();
-    if (params.page !== undefined)
-      searchParams.set("page", String(params.page));
-    if (params.size !== undefined)
-      searchParams.set("size", String(params.size));
-    // Add more params as needed
-
-    const queryString = searchParams.toString();
-    const url = `${API_URL}/api/RESOURCE_NAME${
-      queryString ? `?${queryString}` : ""
-    }`;
-
-    // Fetch with HMAC signing and timeout
-    // Include ISR cache options for Next.js caching
-    const response = await fetchWithHmac(url, {
-      next: {
-        revalidate: 600, // ISR: revalidate every 10 minutes
-        tags: ["RESOURCE_NAME"], // For on-demand revalidation
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    const res = await fetchWithHmac(`${getApiUrl()}/RESOURCE?${query}`);
+    if (!res.ok) {
+      console.error(`fetchResourcesExternal: HTTP ${res.status}`);
+      return failure(new Error(`HTTP ${res.status}`), res.status);
     }
-
-    const data = await response.json();
-
-    // Optional: Validate with Zod schema
-    // const validated = RESOURCE_NAMEResponseSchema.safeParse(data);
-    // if (!validated.success) {
-    //   console.error("[fetchRESOURCE_NAME] Validation error:", validated.error);
-    //   throw new Error("Invalid API response");
-    // }
-    // return validated.data;
-
-    return data;
+    const data = parsePagedResources(await res.json());
+    if (!data) return failure(new Error("invalid payload"), 502);
+    return { data, error: null, status: 200 };
   } catch (error) {
-    // Log to Sentry with context
-    captureException(error, {
-      tags: { api: "RESOURCE_NAME" },
-      extra: { params },
-    });
-
-    console.error("[fetchRESOURCE_NAME] Error:", error);
-
-    // Return safe fallback - never throw for read endpoints
-    return {
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
-      currentPage: 0,
-      pageSize: 20,
-      last: true,
-    };
+    console.error("fetchResourcesExternal: failed", error);
+    return failure(error, 502);
   }
 }
 
-/**
- * Fetch single RESOURCE_NAME by ID/slug
- */
-export async function fetchRESOURCE_NAMEById(
-  id: string
-): Promise<RESOURCE_NAMEDTO | null> {
-  if (!API_URL) {
-    console.warn("[fetchRESOURCE_NAMEById] API URL not configured");
-    return null;
-  }
+// Server-only callers (isBuildPhase branch) that just want a safe empty value.
+export async function fetchResourcesExternal(
+  params: Record<string, string | number | undefined>,
+): Promise<PagedResponseDTO<ResourceSummaryResponseDTO>> {
+  const { data } = await fetchResourcesExternalResult(params);
+  return data ?? EMPTY_PAGE;
+}
 
+// Detail read: status 404 means "not found"; any other null is a failure.
+// The detail route must answer 404 only for status 404, so lib/api/RESOURCE.ts
+// never caches a backend error as "not found".
+export async function fetchResourceBySlugExternalResult(
+  slug: string,
+): Promise<SafeFetchResult<ResourceDetailResponseDTO>> {
   try {
-    const url = `${API_URL}/api/RESOURCE_NAME/${encodeURIComponent(id)}`;
-    const response = await fetchWithHmac(url);
-
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error(`API error: ${response.status}`);
+    const res = await fetchWithHmac(
+      `${getApiUrl()}/RESOURCE/${encodeURIComponent(slug)}`,
+    );
+    if (!res.ok) {
+      if (res.status !== 404) {
+        console.error("fetchResourceBySlugExternal:", slug, "HTTP", res.status);
+      }
+      return failure(new Error(`HTTP ${res.status}`), res.status);
     }
-
-    return await response.json();
+    const data = parseResourceDetail(await res.json());
+    if (!data) return failure(new Error("invalid payload"), 502);
+    return { data, error: null, status: 200 };
   } catch (error) {
-    captureException(error, {
-      tags: { api: "RESOURCE_NAME" },
-      extra: { id },
-    });
-
-    console.error("[fetchRESOURCE_NAMEById] Error:", error);
-    return null;
+    console.error("fetchResourceBySlugExternal:", slug, "failed", error);
+    return failure(error, 502);
   }
+}
+
+// Mutation: throws with the backend's error text. See lib/api/sponsors-external.ts.
+export async function createResourceExternal(
+  payload: unknown,
+): Promise<ResourceDetailResponseDTO> {
+  // getApiUrl() falls back to the prod default; never send a write there by accident.
+  if (!isApiUrlConfigured()) {
+    throw new Error("NEXT_PUBLIC_API_URL or API_URL is not set");
+  }
+  const res = await fetchWithHmac(`${getApiUrl()}/RESOURCE`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(payload),
+    skipBodySigning: true, // the legacy backend verifies only timestamp + pathAndQuery
+  });
+  if (!res.ok) {
+    const detail = (await res.text().catch(() => "<unreadable>")).slice(0, 200);
+    console.error(`createResourceExternal: HTTP ${res.status}, body=${detail}`);
+    throw new Error(`createResourceExternal: HTTP ${res.status}, ${detail}`);
+  }
+  const parsed = parseResourceDetail(await res.json());
+  if (!parsed) throw new Error("createResourceExternal: invalid response");
+  return parsed;
 }

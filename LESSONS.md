@@ -196,7 +196,7 @@ enough for anything read from `useAuth()`.
 
 ## The profile events endpoint takes `period=active|past`, not `status=upcoming|past`
 
-`docs/plans/2026-07-30-profile-events-split.md` was drafted against a param
+The profile events split plan (2026-07-30, now in git history) was drafted against a param
 named `status`. Gerard's actual contract (confirmed 2026-07-30, live on PRE)
 is `period`, required, lowercase, on both
 `/api/users/{username}/events?period=active|past` and

@@ -1,325 +1,73 @@
 ---
 name: data-validation-patterns
-description: Guide for validating external data with Zod. Use when fetching from APIs, processing webhooks, or handling user input.
+description: How to validate untrusted data with Zod in esdeveniments.cat - backend API responses, webhook payloads and request bodies - using the parse* helpers in lib/validation/ and safe fallbacks. Use when adding or changing a backend call or DTO, writing a lib/validation schema, parsing a webhook or a route's JSON body, or debugging "invalid payload" logs.
 ---
 
-# Data Validation Patterns Skill
+# Data validation patterns
 
-## Purpose
+Rule (AGENTS.md › API layer): parse every backend response with Zod in the external wrapper, and have reads return a safe fallback instead of throwing. Some older readers still cast raw JSON (`lib/api/news-external.ts`, `fetchCategorizedEventsExternal` in `lib/api/events-external.ts`); don't copy them, and add a parser when you touch them. Where the parse call sits in the three layers: `api-layer-patterns` skill.
 
-Ensure all external data is validated using Zod schemas before use. Prevents runtime type errors and provides safe fallbacks.
+## Where schemas live
 
-## ⚠️ CRITICAL: Always Validate External Data
+- Backend DTO schemas and their `parse*` helpers: `lib/validation/<resource>.ts`, one file per resource. Run `ls lib/validation/` to see them all (event, category, city, place, region, user, profile, favorites, promotion, upload, auth, username, publish-draft).
+- TypeScript types stay in `types/` (DTOs in `types/api/`). Schemas import the DTO type and the parser returns it; don't declare `z.infer` aliases in `lib/validation/` (ESLint only allows type aliases in `types/`).
+- Shared building blocks are exported and reused: `EventSummaryResponseDTOSchema`, `CitySummaryResponseDTOSchema` and `CategorySummaryResponseDTOSchema` live in `lib/validation/event.ts` and are imported by `city.ts` and `category.ts`.
+- A request-body schema used by a single route may sit at the top of that route (`ToggleFavoriteSchema` in `app/api/favorites/route.ts`). Move it to `lib/validation/` once a second file needs it (`profileUpdateSchema` in `lib/validation/auth.ts`).
 
-**ALL data from external sources MUST be validated:**
+## The parser pattern
 
-- API responses (backend, third-party)
-- Webhook payloads
-- User input (forms, query params)
-- URL parameters
-
-## Zod Schema Location
-
-All validation schemas live in `lib/validation/`:
-
-```text
-lib/validation/
-├── event.ts      # Event DTOs, paged responses
-├── city.ts       # City/region DTOs
-├── place.ts      # Place DTOs
-└── category.ts   # Category DTOs
-```
-
-**Rule**: Create schemas alongside the API client that uses them.
-
-## Basic Validation Pattern
-
-### 1. Define Schema
+Always `safeParse`, log with the function name, return the fallback. From `lib/validation/city.ts`:
 
 ```typescript
-// lib/validation/my-resource.ts
 import { z } from "zod";
+import type { CitySummaryResponseDTO } from "types/api/city";
+import { CitySummaryResponseDTOSchema } from "./event";
 
-export const MyResourceSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  count: z.number(),
-  optional: z.string().optional(),
-  nullable: z.string().nullable(),
-});
+export const CitySummaryArraySchema = z.array(CitySummaryResponseDTOSchema);
 
-export type MyResource = z.infer<typeof MyResourceSchema>;
-
-// For arrays
-export const MyResourceArraySchema = z.array(MyResourceSchema);
-
-// For paged responses
-export const PagedMyResourceSchema = z.object({
-  content: z.array(MyResourceSchema),
-  currentPage: z.number(),
-  pageSize: z.number(),
-  totalElements: z.number(),
-  totalPages: z.number(),
-  last: z.boolean(),
-});
-```
-
-### 2. Create Parser Function
-
-```typescript
-// lib/validation/my-resource.ts
-
-export function parseMyResource(data: unknown): MyResource | null {
-  const result = MyResourceSchema.safeParse(data);
+export function parseCities(input: unknown): CitySummaryResponseDTO[] {
+  const result = CitySummaryArraySchema.safeParse(input);
   if (!result.success) {
-    console.error("MyResource validation failed:", result.error.format());
-    return null;
-  }
-  return result.data;
-}
-
-export function parseMyResourceArray(data: unknown): MyResource[] {
-  const result = MyResourceArraySchema.safeParse(data);
-  if (!result.success) {
-    console.error("MyResource array validation failed:", result.error.format());
-    return []; // Safe fallback
+    console.error("parseCities: invalid cities payload", result.error.format());
+    return [];
   }
   return result.data;
 }
 ```
 
-### 3. Use in External Wrapper (Layer 3 - Calls External API)
+Fallbacks by shape:
 
-```typescript
-// lib/api/my-resource-external.ts
-// NOTE: fetchWithHmac is ONLY used in external wrappers (Layer 3)
-// See api-layer-patterns skill for the three-layer architecture
-import { captureException } from "@sentry/nextjs";
-import { fetchWithHmac } from "@lib/api/fetch-wrapper";
-import { parseMyResource } from "@lib/validation/my-resource";
+| Shape | Return on failure | Example |
+| --- | --- | --- |
+| Single object | `null` | `parseEventDetail`, `parseCity`, `parsePlace`, `parseCategoryDetail`, `parseUserPublic` |
+| Array | `[]` | `parseCities`, `parseCategories`, `parsePlaces`, `parseRegionsGrouped` |
+| Array where one bad item must not drop the rest | valid items only | `parseEventSummaryList` (parses item by item) |
+| Paged response | `null`; the caller decides | `parsePagedEvents` → `PagedResponseDTO<EventSummaryResponseDTO> \| null` |
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+`fetchEventsExternalResult` (`lib/api/events-external.ts`) returns a 502 status on upstream or validation failure; `fetchEventsExternal` unwraps that result and falls back to an empty page.
 
-export async function fetchMyResourceExternal(id: string): Promise<MyResource | null> {
-  if (!API_URL) return null; // Environment guard
+Parsers may also normalize after validation: `parseEventDetail` and `parsePagedEvents` add image cache keys, `parseRegionsGrouped` fills a missing `slug` from `name`. Keep that logic in the parser so every caller gets the same shape.
 
-  try {
-    const response = await fetchWithHmac(`${API_URL}/api/my-resource/${id}`);
-    const data = await response.json();
+## Writing a schema for a backend DTO
 
-    const validated = parseMyResource(data);
-    if (!validated) {
-      captureException(new Error("MyResource validation failed"), {
-        tags: { section: "my-resource", type: "validation-failed" },
-        extra: { id, data },
-      });
-      return null;
-    }
+- Match what the backend really sends, not what you wish it sent. The backend writes unset fields as explicit `null`, so optional fields are usually `.nullish()`, often with `.transform((v) => v ?? undefined)` to fit an optional DTO field (see `lib/validation/user.ts`).
+- Use `.passthrough()` when extra fields must survive (`CategoryDetailResponseDTOSchema`); the parser then needs a cast to the DTO type.
+- Sanitize free text that ends up in `<head>` or JSON-LD in the schema (see `sanitizeMetaField` in `lib/validation/event.ts`).
+- When the backend changes a field, accept both shapes during the transition rather than failing the whole payload (see the comments on `UserPublicResponseDTOSchema`).
 
-    return validated;
-  } catch (error) {
-    captureException(error, {
-      tags: { section: "my-resource", type: "fetch-failed" },
-      extra: { id },
-    });
-    return null;
-  }
-}
-```
+## Webhooks and request bodies
 
-## Existing Parser Functions
+- Parse JSON in a `try/catch`, then `safeParse`. Bad input → `400` with a short error code, never a 500. See `app/api/favorites/route.ts`.
+- Stripe: `lib/stripe/webhook.ts` verifies the signature, then runs `StripeWebhookEventSchema.safeParse(parsed)` inline and throws on failure; `app/api/sponsors/webhook/route.ts` turns that into an error response.
 
-Reference these existing patterns:
+## Logging
 
-| Parser                     | Location                  | Returns                    |
-| -------------------------- | ------------------------- | -------------------------- |
-| `parsePagedEvents`         | `lib/validation/event.ts` | Paged events or null       |
-| `parseEventDetail`         | `lib/validation/event.ts` | Event detail or null       |
-| `parseCategorizedEvents`   | `lib/validation/event.ts` | Categorized events or null |
-| `PlaceResponseArraySchema` | `lib/validation/place.ts` | Place array                |
-| `CitySummaryArraySchema`   | `lib/validation/city.ts`  | City array                 |
+Parsers only `console.error("<parserName>: invalid … payload", result.error)`. Console output is not sent to Sentry (`enableLogs: false` in `sentry.server.config.ts`). If a validation failure needs an alert, call `captureException` in the wrapper with the real error and a `section` tag (see `lib/api/events.ts`).
 
-## Validation with Sentry Integration
+## Checklist
 
-Always capture validation failures to Sentry:
-
-```typescript
-import { captureException } from "@sentry/nextjs";
-
-export function parseWithSentry<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown,
-  context: { section: string; extra?: Record<string, unknown> }
-): T | null {
-  const result = schema.safeParse(data);
-
-  if (!result.success) {
-    console.error(
-      `${context.section} validation failed:`,
-      result.error.format()
-    );
-
-    // Create error with validation details for better Sentry context
-    const validationError = new Error(
-      `${context.section} validation failed: ${result.error.message}`
-    );
-    validationError.cause = result.error; // Preserve original Zod error
-
-    captureException(validationError, {
-      tags: {
-        section: context.section,
-        type: "validation-failed",
-      },
-      extra: {
-        ...context.extra,
-        zodErrors: result.error.format(),
-      },
-    });
-
-    return null;
-  }
-
-  return result.data;
-}
-```
-
-## Safe Fallback Patterns
-
-### For Single Objects → Return `null`
-
-```typescript
-export function parseEvent(data: unknown): EventDetail | null {
-  const result = EventDetailSchema.safeParse(data);
-  return result.success ? result.data : null;
-}
-
-// Usage
-const event = parseEvent(data);
-if (!event) {
-  return notFound(); // or handle gracefully
-}
-```
-
-### For Arrays → Return `[]`
-
-```typescript
-export function parseEvents(data: unknown): Event[] {
-  const result = EventArraySchema.safeParse(data);
-  return result.success ? result.data : [];
-}
-
-// Usage - always safe to map
-const events = parseEvents(data);
-return events.map((e) => <EventCard key={e.id} event={e} />);
-```
-
-### For Paged Responses → Return Empty Page
-
-```typescript
-const emptyPage: PagedResponse<Event> = {
-  content: [],
-  currentPage: 0,
-  pageSize: 10,
-  totalElements: 0,
-  totalPages: 0,
-  last: true,
-};
-
-export function parsePagedEvents(data: unknown): PagedResponse<Event> {
-  const result = PagedEventSchema.safeParse(data);
-  return result.success ? result.data : emptyPage;
-}
-```
-
-## Common Zod Patterns
-
-### Optional vs Nullable
-
-```typescript
-z.string().optional(); // string | undefined
-z.string().nullable(); // string | null
-z.string().nullish(); // string | null | undefined
-```
-
-### Default Values
-
-```typescript
-z.number().default(0);
-z.string().default("");
-z.array(z.string()).default([]);
-```
-
-### Transformations
-
-```typescript
-// Coerce string to number
-z.coerce.number();
-
-// Transform after validation
-z.string().transform((s) => s.toLowerCase());
-
-// Date from string
-z.string()
-  .datetime()
-  .transform((s) => new Date(s));
-```
-
-### Discriminated Unions
-
-```typescript
-const ResponseSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("success"), data: DataSchema }),
-  z.object({ type: z.literal("error"), message: z.string() }),
-]);
-```
-
-## Webhook Validation Example
-
-From `lib/stripe/webhook.ts`:
-
-```typescript
-const StripeWebhookEventSchema = z.object({
-  id: z.string().min(1),
-  type: z.string().min(1),
-  data: z.object({
-    object: z.record(z.unknown()),
-  }),
-});
-
-export type StripeWebhookEvent = z.infer<typeof StripeWebhookEventSchema>;
-
-export function validateWebhookEvent(
-  payload: unknown
-): StripeWebhookEvent | null {
-  const result = StripeWebhookEventSchema.safeParse(payload);
-  if (!result.success) {
-    console.error("Webhook validation failed:", result.error.format());
-    return null;
-  }
-  return result.data;
-}
-```
-
-## Checklist for New API Endpoint
-
-- [ ] Created Zod schema in `lib/validation/`?
-- [ ] Created parser function with safe fallback?
-- [ ] Using `safeParse` (not `parse`) to avoid throws?
-- [ ] Capturing validation failures to Sentry?
-- [ ] Returning safe fallback (null, [], empty page)?
-- [ ] Type exported via `z.infer<typeof Schema>`?
-
-## Common Mistakes
-
-1. **Using `parse` instead of `safeParse`** → Throws on invalid data
-2. **Not logging validation errors** → Silent failures
-3. **Returning `undefined` instead of `null`** → Inconsistent handling
-4. **Forgetting Sentry capture** → No visibility into prod issues
-5. **Defining types separately from schema** → Type drift
-
-## Files to Reference
-
-- [lib/validation/event.ts](../../../lib/validation/event.ts) - Complete example
-- [lib/validation/city.ts](../../../lib/validation/city.ts) - Simple schema
-- [lib/api/events.ts](../../../lib/api/events.ts) - Usage pattern
-- [lib/stripe/webhook.ts](../../../lib/stripe/webhook.ts) - Webhook validation
+- [ ] DTO type in `types/api/`, schema + `parse*` in `lib/validation/<resource>.ts`
+- [ ] `safeParse`, never `parse`, on backend data
+- [ ] Fallback matches the shape (`null`, `[]`, valid items, or `null` → empty page in the caller)
+- [ ] Nullable backend fields modelled with `.nullish()`
+- [ ] Test the parser with a real (trimmed) backend payload and a broken one

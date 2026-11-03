@@ -1,261 +1,148 @@
-# Repository Guidelines
-
-## ⚠️ CRITICAL: Load Agent Skills FIRST
+# AGENTS.md
+
+Single source of truth for AI agents working in this repo (Copilot, Claude Code, Codex, Cursor and others all read this file). Keep it current: when code changes a rule below, change the rule in the same PR.
+
+**What this is**: esdeveniments.cat, a Catalan events site. Next.js 16 App Router (`cacheComponents`, `partialPrefetching`), React 19, TypeScript strict, next-intl 4 (`ca` default, `es`, `en`), Tailwind, SWR, Vitest, Playwright. Node 22, Yarn 4.12 (Corepack). Priorities: SEO, Core Web Vitals, low hosting cost.
+
+**Where else to look**
+
+- `LESSONS.md`: repo gotchas learned the hard way. Read the relevant ones during research.
+- `.github/skills/*/SKILL.md`: how-to guides per task (table below).
+- `DESIGN.md`: design tokens and UI rules.
+- `docs/README.md`: index of setup guides, incidents (`docs/incidents/`) and perf baselines (`docs/performance/baselines.md`).
+
+## Skills: load before coding
+
+| Task | Skill | Key rule |
+| --- | --- | --- |
+| Any new code | `pre-implementation-checklist` | Search for existing code first |
+| Types/interfaces | `type-system-governance` | All types in `types/` |
+| Components | `react-nextjs-patterns` | Server Component by default |
+| Filters | `filter-system-dev` | Start in `config/filters.ts`; follow the skill's file list |
+| API calls | `api-layer-patterns` | Three-layer proxy pattern |
+| Auth/session | `auth-patterns` | `useAuth()` (client) or `getAccessTokenFromCookies()` (server); never call `/api/auth/*` directly |
+| URL/routing | `url-canonicalization` | Never read `searchParams` in listing pages |
+| i18n | `i18n-best-practices` | `Link` from `@i18n/routing` |
+| Styling/UI | `design-system-conventions` | Semantic classes, no `gray-*` |
+| Tests | `testing-patterns` | Vitest unit, Playwright E2E |
+| Proving a change works | `verify-que-fer` | Drive the built app, capture evidence |
+| Security/CSP/scripts | `security-headers-csp` | `fetchWithHmac`, allowlist CSP hosts |
+| Service worker | `service-worker-updates` | Edit `public/sw-template.js`, run `yarn prebuild` |
+| Performance/images | `bundle-optimization` | Image proxy, one LCP image, server-first |
+| Env variables | `env-variable-management` | Update all 5 places |
+| API data validation | `data-validation-patterns` | Zod in `lib/validation/`, safe fallbacks |
+| PR review comments | `code-review-evaluation`, `ai-review-responder` | Check suggestions against these rules |
+
+## Workflow
+
+1. **Search first.** Look for existing code before writing new code: the concept name, name patterns (`isValid*`, `format*`, `build*`, `use*`) and literal values. Canonical places: types → `types/`; helpers → `utils/`, `lib/`; constants → `utils/constants.ts`, `config/`; components → `components/ui/`; hooks → `components/hooks/`. Report what you found ("found `isValidCategorySlug` in `utils/url-filters.ts`, will reuse").
+2. **Plan** in 2–4 steps and wait for confirmation on anything non-trivial.
+3. **Implement** with surgical diffs, following the skills.
+4. **Verify**: `yarn lint && yarn typecheck && yarn test`, plus `verify-que-fer` for UI or behavior changes.
+
+Stop and propose an alternative when you see a helper used only once, a component with more than 10 props, a file over 200 lines, a function over 100 lines, duplicated logic, or abstractions deeper than 3 levels. Don't create generic utilities without an immediate use. Prefer composition, the standard library and platform APIs (`AbortSignal.any()`, `after()` from `next/server`).
+
+## Commands
+
+| Command | Notes |
+| --- | --- |
+| `yarn install --immutable` | After `corepack enable` |
+| `yarn dev` | `next dev` (Turbopack). Run `yarn prebuild` first if you need the service worker |
+| `yarn build` | `next build` only. `build:development\|staging\|production` also run `prebuild` with that env file |
+| `yarn start` | `next start`: serves the built app. `start:development\|staging\|production` load that env file |
+| `yarn prebuild` | Generates `public/sw.js` and `public/robots.txt` (build output, never edit them; `app/robots.txt/route.ts` is the fallback, keep both in sync) |
+| `yarn lint` / `yarn typecheck` | 0 errors expected; old warnings are acceptable |
+| `yarn test` | Vitest + jsdom, `test/**/*.{test,spec}.{ts,tsx}`. Needs Node 22: newer Node breaks the `localStorage` tests |
+| `yarn test:e2e` | Playwright in `e2e/`. Needs a running app and API credentials. Remote: `playwright.remote.config.ts` + `PLAYWRIGHT_TEST_BASE_URL` |
+| `yarn i18n:check` | Missing/invalid message keys |
+| `yarn analyze`, `analyze:experimental` | Bundle analysis |
+
+- The pre-push hook runs `yarn typecheck && yarn test --run && yarn i18n:check`.
+- Env: `.env.development|staging|production` (loaded via `env-cmd` for builds; `next dev` reads `.env.development` itself). Server-only secrets: `BACKEND_SERVICE_SECRET`, `HMAC_SECRET`. Without them the backend returns 401: pages still render but with no events. `NEXT_PUBLIC_API_URL` falls back to `config/api-defaults.json` and is inlined at build time (and `prebuild` writes it into the service worker), so set it before `yarn build`, E2E or verification builds; `API_URL` overrides it at runtime on the server. Auth needs `LOGTO_*` (see `docs/logto-auth-setup.md`). `test/setup.ts` seeds `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` for unit tests.
+
+## Project map
+
+- `app/[locale]/`: pages. Listings `[place]/(byDate)/(category)`, events `e/[eventId]`, news `noticies/`. `app/api/`: internal API routes. Sitemaps are routes too (`app/sitemap.xml`, `app/server-*-sitemap.xml`).
+- `components/ui/<feature>/`, `components/partials/`, `components/hooks/`, `components/context/`.
+- `lib/api/`: client libraries + `*-external.ts` backend wrappers. `lib/validation/`: Zod. `utils/`, `config/`, `types/` (all types).
+- `proxy.ts`: Next 16 middleware (redirects, locale, security headers, CSP, API gate).
+- `public/sw-template.js` → `public/sw.js` (Workbox from CDN). `scripts/`: build and perf scripts.
+- Path aliases in `tsconfig.json` (`@components/*`, `@utils/*`, `@lib/*`, `@i18n/*`, …).
+
+## Hard rules (each one caused an incident)
+
+- **Never read `searchParams` in listing pages** (`app/[locale]/[place]/**`). It makes them dynamic: one cache entry per URL+query ($300+ spike, Dec 2025). Query params (`search`, `distance`, `lat`, `lon`, `price`, `from`, `to`) are handled client-side with SWR; `noindex` for filtered URLs is an `X-Robots-Tag` set in `proxy.ts`.
+- **Never add `next: { revalidate, tags }` to `fetchWithHmac` calls in `lib/api/*-external.ts`.** It turns on Next's fetch cache with one entry per URL (146K entries per build, Jan 2026; write-up: `git show ad044ed6^:docs/incidents/2026-01-20-fetch-cache-explosion.md`). External wrappers stay `no-store`; cache with `Cache-Control` in `app/api/*` routes and with `createCache`/`createKeyedCache` (`lib/api/cache.ts`).
+- **`isBuildPhase` bypass**: a `lib/api/*.ts` reader that calls an internal route and runs during `next build` must call the `*-external.ts` wrapper directly when `isBuildPhase` (`utils/constants.ts`) is true; internal routes don't exist during the build (`"<!DOCTYPE"... is not valid JSON`). On Coolify it is also true at runtime, so the bypass skips the route's cache (see LESSONS.md).
+- **No local barrel files** (`index.ts` re-exports) mixing `"use client"` components from different routes: each re-export lands in the client manifest of every importing route (+24 KB on `/[place]` from a `components/ui/sponsor/index.ts` barrel, since deleted). Import files directly. `optimizePackageImports` only helps npm packages.
+- **`cacheComponents` determinism**: a server component that uses `new Date()`/`Date.now()` to decide *what renders* must call `await connection()` first, or run inside `"use cache"` with an explicit `cacheLife` (time is then frozen per entry). Otherwise the replayed tree differs ("Couldn't find all resumable slots") and the page falls back to client rendering. Using dates only for text is fine. Inside `"use cache"`, get the locale with `rootLocale()` + `setRequestLocale(locale)`; `headers()` is not allowed there. The event page body uses `"use cache"` so it can be stored (ISR); request-time parts (sponsor, news) are passed in as slots.
+- **`"use cache"` store**: `cacheMaxMemorySize: 0` (needed for the Redis page cache in `cache-handler.mjs`) also disables Next's built-in `"use cache"` store. `next.config.js` registers `use-cache-handler.mjs` as `cacheHandlers.default` (in-memory LRU, 64 MB per process, lost on deploy). Don't remove it.
+- **Sharp** must stay in the Docker image and in `serverExternalPackages`; `/api/image-proxy` depends on it.
+- **Raw `fetch()`** can hang forever in containers. Use `fetchWithHmac` (`lib/api/fetch-wrapper.ts`, 10 s timeout) for the backend, `safeFetch`/`fireAndForgetFetch` (`utils/safe-fetch.ts`, 5 s) for other services. ESLint warns on raw `fetch()`; plain `fetch()` to same-origin internal routes (`lib/api/*.ts`, SWR hooks) is allowed.
+
+## API layer
+
+- Pages and components → `lib/api/*.ts` (client libraries, `getInternalApiUrl` + query builders `buildEventsQuery`/`buildNewsQuery` from `utils/api-helpers.ts`) → `app/api/*` routes (set `Cache-Control: s-maxage, stale-while-revalidate` per route) → `lib/api/*-external.ts` (`fetchWithHmac`, Zod parse, safe fallback). Never call the backend from pages or the browser.
+- Reader exceptions (details in `api-layer-patterns`): `fetchEvents` (`lib/api/events.ts`) skips the internal route and calls the backend directly, and the `[place]` page wraps it in the `"use cache"` reader `fetchEventsCached`; categories, cities, regions and places add a 24 h in-memory `createCache`; `news.ts` and `profiles.ts` have no `isBuildPhase` bypass; `promotions.ts` calls `fetchWithHmac` with no internal route. New endpoints follow the three-layer path.
+- External wrappers: if `NEXT_PUBLIC_API_URL` is missing or the call fails, return a safe empty value (`[]`, `{}`, `null`) for reads; mutations throw. Read exceptions: `fetchPlaceBySlugExternal` returns `null` only on 404 and throws on other errors (so callers can tell "not found" from an outage), and the authenticated reads in `users-external.ts` rethrow the HTTP status. On a non-OK mutation, read `response.text()` before throwing.
+- Backend auth: `fetchWithHmac` sends `X-Backend-Key` (`BACKEND_SERVICE_SECRET`; the v2 backend rejects every request without it). While `HMAC_SECRET` is set it also sends legacy `x-hmac`/`x-timestamp` (prod still checks them; remove once prod runs v2). Legacy HMAC signs only `timestamp + pathAndQuery`, so JSON POST/PUT/DELETE pass `skipBodySigning: true`.
+- `proxy.ts`/`utils/api-gate.ts` gate most internal `/api/*` routes; public GETs (events, news, categories, places, regions, cities) are allowlisted.
+- Mapping: UI `distance` + `lat/lon` → API `radius/lat/lon` via `distanceToRadius` (`types/event.ts`), sent only when set; filter `searchTerm` → API `term`; `byDate` (`avui`, `dema`, `setmana`, `cap-de-setmana`) or explicit `from/to`, not both. Pagination uses `PagedResponseDTO.last`.
+- Place page fallback chain: requested place → its region → latest events overall. Keep this order.
+- New endpoint: DTO in `types/api/` → `*-external.ts` → `app/api/` route → `lib/api/*.ts` with the `isBuildPhase` bypass.
+
+## Filters and URLs
+
+- Canonical URL: `/place(/date)?(/category)?`, omitting `tots`. Filter configs live in `config/filters.ts` and drive the filter chips through `FilterOperations` (`utils/filter-operations.ts`). URL parsing/building and the API mapping are still written per filter; the `filter-system-dev` skill lists every file a new filter touches. `test/filter-system.test.ts` covers the configs.
+- Build URLs with `buildFilterUrl`/`buildCanonicalUrlDynamic`; parse with `parseFiltersFromUrl`, `urlToFilterState`, `getRedirectUrl` (`utils/url-filters.ts`). Validate category slugs with `isValidCategorySlug`. `distance` is omitted at its default (50).
+- `proxy.ts` → `handleCanonicalRedirects` (`utils/middleware-redirects.ts`) 301-redirects legacy `?category=&date=` and `/tots` segments to canonical paths, keeping only the client filter params in `ALLOWED_QUERY_PARAMS`. byDate + `catalunya` + `tots` may redirect home.
+
+## Rendering
+
+- Server Components by default; `"use client"` only on the smallest leaf that needs state, effects or browser APIs. Never `next/dynamic` with `ssr: false` inside a Server Component: make a client component and import it.
+- Listings are hybrid: the server fetches events, calls `insertAds` once and renders the list (`HybridEventsList`). On the client, `HybridEventsListClient` + `useEvents` (SWR) use the same page size as SSR. Without client filters, it appends only events whose `id` is not already on screen and never inserts ads again; with client filters, it replaces the SSR list.
+- `partialPrefetching` is on: links prefetch a route's shared shell. Never set `prefetch={true}` on a `<Link>`; `PressableAnchor` (`components/ui/primitives/`) defaults to `false`.
+- Hooks: `useRef` for flags that don't affect rendering (analytics sent, effect ran); memoize only what profiling shows.
+- News: `app/[locale]/noticies/` (all news), `noticies/[place]` (news for a place), `noticies/[place]/[article]` (one article).
 
-**Before writing ANY code**, check `.github/skills/` for relevant skills:
+## Performance (measured; see `docs/performance/baselines.md`)
 
-| Task                      | Skill                          | Key Rule                                  |
-| ------------------------- | ------------------------------ | ----------------------------------------- |
-| Any new code              | `pre-implementation-checklist` | Search existing patterns FIRST            |
-| Types/interfaces          | `type-system-governance`       | ALL types in `/types` directory           |
-| Components                | `react-nextjs-patterns`        | Server Component default                  |
-| Filters                   | `filter-system-dev`            | `config/filters.ts` only                  |
-| API calls                 | `api-layer-patterns`           | Three-layer proxy pattern                 |
-| Auth/session               | `auth-patterns`                | Use `useAuth()` (client) or `getAccessTokenFromCookies()` (server); never call `/api/auth/*` directly |
-| URL/routing               | `url-canonicalization`         | NEVER add `searchParams` to listing pages |
-| i18n/translations         | `i18n-best-practices`          | Use `Link` from `@i18n/routing`           |
-| Styling/UI                | `design-system-conventions`    | Semantic classes, no `gray-*`             |
-| Tests                     | `testing-patterns`             | Vitest for unit, Playwright for E2E       |
-| Proving a change works    | `verify-que-fer`               | Drive the running app, capture evidence   |
-| Security/CSP              | `security-headers-csp`         | Use `fetchWithHmac`, allowlist domains    |
-| Service worker            | `service-worker-updates`       | Edit `sw-template.js`, run `prebuild`     |
-| Performance/images        | `bundle-optimization`          | Quality caps, Server Components default   |
-| Env variables             | `env-variable-management`      | Update 5 locations: code, env files, Coolify, workflow, GitHub secrets |
-| API data validation       | `data-validation-patterns`     | Zod in `lib/validation/`, safe fallbacks  |
-| Evaluating PR suggestions | `code-review-evaluation`       | Cross-reference against project skills    |
+- **Google scripts load at three different times.** Funding Choices (consent box) is a plain `<script async>` in the `<head>` of `app/[locale]/layout.tsx`, next to the `googlefcPresent` iframe script. Never move it into a Next `<Script>`: it then waits for hydration and on a first visit the consent box becomes the LCP (~5 s on a slow phone). `armConsentFallback` (`app/GoogleScripts.tsx`) covers pages where FC shows no box. AdSense (`app/GoogleScriptsHeavy.tsx`) loads only after consent, on the first tap/key/scroll or 4.5 s after load (`onFirstInteractionOrTimeout`, `utils/browser.ts`). GA and other analytics use `<Script strategy="lazyOnload">`.
+- **Images**: external images go through `/api/image-proxy` (Sharp) and render as `<picture>` via `ImageServer`/`ClientImage` (`components/ui/common/image/`), not `next/image`. Build URLs with `buildResponsivePictureSourceUrls` (`utils/image-cache.ts`). Quality is 50 everywhere (`getOptimalImageQuality`); allowed values are `images.qualities` in `next.config.js`. Retries: `useImageRetry`.
+- **One LCP image per page** gets `priority` (eager, `fetchPriority="high"`) plus a matching `<link rel="preload" as="image" imageSrcSet>` built with the same helper, widths and quality (see `PlacePageShell.tsx`, `app/[locale]/e/[eventId]/page.tsx`). On listings it is the first card with an image (`hasCardImage`, `utils/event-helpers.ts`). The home hero is a static AVIF/WebP set in `config/hero-image.ts`.
+- **Icons repeated on every card** (map pin, hearts) come from the sprite in `components/ui/common/IconSprite.tsx`: `<svg><use href={`#${SPRITE_ICON.mapPin}`} /></svg>`.
+- **i18n payload**: client components receive only the namespaces in `lib/i18n/client-namespaces.ts`. Messages are precompiled: plain ICU strings, no `t.raw()`, lists in `i18n/locale-lists.json`.
 
-**Mandatory workflow**: Search → Plan → Confirm → Implement → Verify
+## Security
 
----
+- CSP lives in `proxy.ts`: host allowlist with `'unsafe-inline'` (keeps pages cacheable for ISR/PPR); no nonces. Add new script/connect hosts there.
+- JSON-LD is rendered server-side by `components/partials/JsonLdServer.tsx`, which escapes `<`. Use `toLocalizedUrl(path, locale)` (`utils/i18n-seo.ts`) for its URLs and `generateBreadcrumbList()` (`components/partials/seo-meta.ts`) for breadcrumbs.
+- Errors: pass the original error to `captureException(error)`. Wrap `new URL()` in try/catch inside error handlers.
 
-## Project Structure & Module Organization
+## i18n
 
-- `app/` Next.js App Router (layouts, routes, API under `app/api`). Example: `app/[place]/page.tsx`.
-- `components/` Reusable UI (`ui/`, `partials/`, `hooks/`). Prefer feature folders under `components/ui/...`.
-- `lib/`, `utils/` shared logic; `config/` app config; `types/` all canonical TypeScript types.
-- `public/` static assets; `styles/` Tailwind; `docs/` notes; `scripts/` build utilities (e.g., `generate-sw.mjs`).
-- `test/` unit/integration (Vitest); `e2e/` Playwright.
-- Path aliases in `tsconfig.json` (e.g., `@components/*`, `@utils/*`).
-
-## Build, Test, and Development Commands
+- Locales in `i18n/routing.ts` (`as-needed` prefix). Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/routing`, never `next/link` (ESLint warns).
+- Server: `getTranslations` (`next-intl/server`); client: `useTranslations`/`useLocale`. Never pass messages down manually. Text lives in `messages/{ca,es,en}.json`; reuse keys.
+- `proxy.ts` sets `x-next-intl-locale`; don't write your own locale detection. Vitest aliases `next-intl` to `test/mocks/next-intl*.ts`.
 
-- `yarn dev` Start local dev. Run `yarn prebuild` first when service-worker assets are needed.
-- `yarn build` Production build; `postbuild` runs `next-sitemap`.
-- `yarn start` Serve built app; `yarn lint` ESLint; `yarn typecheck` TS no‑emit.
-- `yarn test` Vitest; `yarn test:watch`; `yarn test:coverage`.
-- `yarn test:e2e` Playwright; `yarn test:e2e:ui` UI runner. Remote: `playwright.remote.config.ts` with `PLAYWRIGHT_TEST_BASE_URL`.
-- Extras: `yarn analyze` bundle analysis; `yarn scan` run react‑scan on `localhost:3000`.
-- CI: Docker/Coolify builds use Node 22 + Yarn 4; prebuild generates `public/sw.js` and postbuild runs sitemap.
+## Types
 
-## Rollback Procedure
+- No `any`; use `unknown` and narrow. Type aliases and interfaces live in `types/` (ESLint enforces it in `app/`, `components/`, `lib/`, `utils/`; a few config-only types stay in `config/`): DTOs in `types/api/`, shared UI types and props in `types/common.ts`/`types/props.ts`. Define each type once and import it; see `types/README.md`.
 
-If a production deploy causes issues (broken pages, Sharp failure, performance regression):
+## UI
 
-1. **Quick rollback** (recommended): In the **Coolify dashboard**, go to your application → **Deployments** → click **Rollback** on a previous successful deployment.
-2. **Redeploy via workflow**: Go to **GitHub Actions → "Deploy to Coolify" → Run workflow** with `skip_ci` checked for fastest recovery.
+- Read `DESIGN.md` and the `design-system-conventions` skill. Semantic classes (`heading-*`, `body-*`, `btn-*`, `card-*`, `badge-*`, `flex-center`, `stack`) and tokens (`text-foreground`, `text-muted-foreground`, `bg-muted`, `border-border`, …). Never `gray-*`, hex colors or the removed aliases (`primarydark`, `whiteCorp`, …). Components: `Button` and `Badge` in `components/ui/common/`.
+- Dates in UI: `getFormattedDate(start, end)` from `utils/date-helpers.ts`, not `toLocaleDateString`.
 
-**What it does NOT do**: It does not revert database migrations or external API changes. It only redeploys the frontend Docker container.
-
-## PR Preview Limitations
-
-Coolify PR preview deployments (`pr-XXX.esdeveniments.cat`) may **not have runtime env vars** (`NEXT_PUBLIC_API_URL`, `HMAC_SECRET`). Without these, all server-side data fetches fail silently (safe fallbacks return empty data), causing:
-- Empty `<main>` tag (only nav bar renders as HTML)
-- 5 `$RX` Suspense boundary errors in the HTML response
-- Page content exists only in RSC flight data (JS payloads), invisible to crawlers
+## Hosting and deploys
 
-**Do not use PR previews for SEO or SSR testing** unless you verify env vars are set in the Coolify dashboard first. Quick check: `curl -sS "https://pr-XXX.esdeveniments.cat/" | grep -c '<h1'` — should be >0.
-
-See: `docs/incidents/2026-04-23-coolify-pr-preview-empty-html.md`
-
-## Coding Style & Naming Conventions
-
-- TypeScript strict; prefer server components by default. Add `"use client"` only when needed.
-- ESLint extends `next/core-web-vitals` + TS + `@eslint-react`. Fix warnings before merge.
-- Define all type aliases/interfaces in `types/` (ESLint‑enforced).
-- Components: PascalCase; hooks: `useXxx`; helpers: lowerCamelCase.
-- Indentation: 2 spaces; prefer path aliases; Tailwind utilities for styling; globals in `styles/`.
-- **No barrel files (`index.ts` re-exports) that mix components from different routes.** Local barrels leak all `"use client"` re-exports into every importing route's `client-reference-manifest`, inflating server bundles. Always use direct file imports (e.g., `from "@components/ui/sponsor/SponsorBannerSlot"` not `from "@components/ui/sponsor"`).
-
-## Internationalization (i18n) Rules
+- Docker on Hetzner via Coolify, behind Cloudflare (DNS, edge cache, TLS). Redis holds the Next page cache. `develop` deploys to staging; `main` is production. Infra limits: `docs/self-hosted-resource-limits.md`.
+- Rollback: Coolify → Deployments → Rollback, or GitHub Actions "Deploy to Coolify" with `skip_ci`. It does not undo backend or DB changes.
+- Coolify PR previews may lack runtime secrets, so they serve an empty `<main>`. Don't use them for SEO/SSR checks unless `curl -sS https://pr-XXX.esdeveniments.cat/ | grep -c '<h1'` is above 0 (`docs/incidents/2026-04-23-coolify-pr-preview-empty-html.md`).
 
-- **Links: Always use `Link` from `@i18n/routing`** for internal navigation (not `next/link`). This ensures locale prefixes (`/es/`, `/en/`) are automatically handled. ESLint warns on `next/link` imports.
-  - ✅ `import { Link } from "@i18n/routing"` - auto locale handling
-  - ❌ `import Link from "next/link"` - loses locale on navigation
-  - Exceptions: primitives with manual locale handling, external-only links
-- **JSON-LD URLs: Use `toLocalizedUrl(path, locale)`** from `@utils/i18n-seo` for all URLs in structured data (breadcrumbs, events, etc.).
-- **Breadcrumbs**: Use `generateBreadcrumbList()` from `@components/partials/seo-meta` for JSON-LD breadcrumbs—it's tested and handles locale correctly.
+## Conventions
 
-## React Hooks Best Practices
-
-- **useRef vs useState for tracking flags**: Use `useRef` (not `useState`) for one-time tracking flags that don't affect rendering (e.g., analytics fired, effect ran). A ref update doesn't trigger a re-render.
-  - ✅ `const hasTracked = useRef(false)` - for analytics, one-time effects
-  - ❌ `const [hasTracked, setHasTracked] = useState(false)` - causes unnecessary re-render
-- **Dependency arrays**: Refs don't need to be in dependency arrays (they're stable). Only include values that should trigger the effect.
-- **Memoization**: Use `useMemo` for expensive computations, `useCallback` for callbacks passed to children. Don't over-optimize—profile first.
-
-## Testing Guidelines
-
-- Unit tests: Vitest + jsdom; React Testing Library. Files: `test/**/*.{test,spec}.{ts,tsx}`.
-- Aim for meaningful coverage on new code (`yarn test:coverage`).
-- E2E: Playwright in `e2e/`. Local config starts the app; remote config targets an existing URL via `PLAYWRIGHT_TEST_BASE_URL`.
-- Test bootstrap: `test/setup.ts` seeds `HMAC_SECRET` for HMAC utilities.
-
-## Commit & Pull Request Guidelines
-
-- Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`. Use scope when helpful (e.g., `feat(ui): ShareButton`).
-- Keep messages imperative and specific; avoid `wip` on mainline branches.
-- PRs include: summary, linked issues, screenshots for UI, and test plan.
-- Run `yarn lint && yarn typecheck && yarn test` (and E2E if relevant) before pushing.
-- Branching: use short‑lived `feat/*` or `fix/*` branches; target the default branch (or `develop` if active).
-
-## Security & Configuration Tips
-
-- Never commit secrets. Use `.env.development`, `.env.staging`, `.env.production` (loaded via `env-cmd`).
-- `NEXT_PUBLIC_API_URL` influences the service worker (generated from `public/sw-template.js`) and tests. If it changes, run `yarn prebuild` before restarting dev.
-- Sentry is configured (`sentry.*.config.ts`); set DSN only in non‑local environments.
-- Yarn 4 workspace; prefer `yarn` over `npm`.
-- CSP: Relaxed policy with host allowlisting (see `proxy.ts`). Allows `'unsafe-inline'` for inline scripts/JSON-LD to enable ISR/PPR caching. Google Analytics, Ads, and trusted domains are allowlisted. No nonce required.
-- API security: server-side calls to the backend go through `fetchWithHmac`, which sends `X-Backend-Key` from the server-only `BACKEND_SERVICE_SECRET` (the v2 backend rejects every request without it, public GETs included). While `HMAC_SECRET` is set it also sends the legacy `x-hmac`/`x-timestamp` headers, because the prod backend still verifies HMAC; delete that once prod runs v2. Client libraries call internal routes, never the backend directly. Middleware enforces the frontend's own HMAC gate on most internal `/api/*` routes; public endpoints (GET events, news, categories, etc.) are allowlisted.
-- **HMAC body signing**: The legacy backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. All JSON POST/PUT/DELETE calls to `fetchWithHmac` pass `skipBodySigning: true`.
-- **Fetch best practices**: Never use raw `fetch()` without timeout and response validation. Use `fetchWithHmac` for internal API calls (has built-in 10s timeout), or `safeFetch`/`fireAndForgetFetch` from `utils/safe-fetch.ts` for external webhooks/services (5s default timeout, response validation, Sentry logging).
-
-## Agent-Specific Instructions
-
-### Pre-Implementation Checklist (MANDATORY)
-
-Before writing ANY new code, ALWAYS search first:
-
-1. **Search for existing patterns** using `grep_search` or `semantic_search`:
-   - The concept name (e.g., "slug validation", "price formatting")
-   - Function name patterns (`isValid*`, `format*`, `build*`, `use*`)
-   - The literal value (regex pattern, constant)
-
-2. **Check canonical locations** based on what you're creating:
-   - Type/interface → search `types/`
-   - Validation function → search `utils/` for `isValid*`, `validate*`
-   - Helper/utility → search `utils/`, `lib/`
-   - Constant/config → search `utils/constants.ts`, `config/`
-   - Component → search `components/ui/`
-   - Hook → search `components/hooks/`
-
-3. **Report findings** before proposing implementation:
-   - "Found `isValidCategorySlugFormat` in `utils/category-mapping.ts` - will reuse"
-   - "No existing pattern found - will create new utility in `utils/`"
-
-4. **Wait for confirmation** before implementing (per copilot-instructions.md §19)
-
-**Anti-pattern**: Writing inline code first, then searching only when asked.
-
-### General Rules
-
-- Prefer surgical diffs; keep file moves/renames minimal and scoped.
-- Do not edit generated or build output (`public/sw.js`, `.next/**`, `tsconfig.tsbuildinfo`, `server-place-sitemap.xml`). Edit `public/sw-template.js` and run prebuild instead.
-- **Sharp image optimization**: Sharp is installed via the Dockerfile and configured in `next.config.js` (`serverExternalPackages`). Ensure Sharp remains in the Docker image and the `serverExternalPackages` config.
-- Types live only in `types/`; avoid redefining `NavigationItem`, `SocialLinks`, `EventProps`, `CitySummaryResponseDTO` (see `types/common.ts`, `types/api/city.ts`).
-- Any reusable/derived props types (e.g., Picks of an existing props interface) must be declared in `types/` (typically `types/props.ts`) rather than inline within components.
-- Before introducing a new type/interface, search `types/` (and related feature folders) for existing candidates to reuse/extend, and place additions in the most appropriate shared file (e.g., `types/props.ts` for UI props, `types/api/*` for DTOs).
-- Server-first by default; mark client components with `"use client"` only when necessary. Avoid exposing secrets in client code.
-- **`cacheComponents` determinism**: With `cacheComponents: true`, server components that use `new Date()` / `Date.now()` for **conditional rendering** (different tree structure) MUST call `await connection()` from `next/server` before the time-dependent code, OR run inside a `"use cache"` scope with an explicit `cacheLife` (the time is frozen per cache entry, so the tree is deterministic). The event page body uses the second option so Next can store the page (ISR); request-time parts (sponsor, news) are passed into it as slots. Inside `"use cache"`, read the locale with `rootLocale()` and call `setRequestLocale(locale)`: `headers()` is not allowed there. Content-only date usage (text formatting) is fine without either.
-- **No local barrel files** that re-export `"use client"` components from different route contexts. Use direct file imports to prevent manifest bloat (see Feb 2026 incident: `components/ui/sponsor/index.ts` leaked 3 `/patrocina`-only components into `/[place]` manifest, adding 24 KB).
-- API security: Internal API routes (`app/api/*`) handle HMAC signing server-side via `*-external.ts` wrappers. Middleware enforces HMAC on most `/api/*` routes; public GET endpoints (events, news, categories, places, regions, cities) are allowlisted. Never sign requests in the browser—always use internal API routes.
-- Use Yarn 4 commands and Node 22 locally; run `yarn lint && yarn typecheck && yarn test` before finalizing changes.
-
-## Architecture Overview
-
-- **Hosting**: Docker container on Hetzner via Coolify (self-hosted PaaS). Cloudflare for DNS, CDN edge caching, and TLS termination. Origin certificate (Cloudflare → Traefik) for Full (Strict) SSL.
-- **CDN**: Cloudflare caches HTML pages and static assets at the edge. `_next/image` paths bypass CF cache (cache rule) to preserve format negotiation (avif/webp/jpeg via `Vary: Accept`). Origin handles image caching via Next.js 1-year `Cache-Control`.
-- Next.js App Router with server‑first rendering; client state via Zustand (`store.ts`) and client data fetching via SWR.
-- API layer: Internal proxy pattern—client libraries (`lib/api/*`) call internal Next.js API routes (`app/api/*`) which proxy to external backend via `*-external.ts` wrappers with HMAC signing.
-- Auth: Logto OIDC (Authorization Code + PKCE), session in HttpOnly cookies, client state via `useAuth()` (`lib/auth/AuthProvider.tsx`). See the `auth-patterns` skill.
-- SEO & sitemaps: `next-sitemap` runs after build; sitemap routes under `app/`; `proxy.ts` handles canonical redirects, security headers, and CSP.
-- URL canonicalization: Proxy automatically redirects legacy query params and `/tots` segments to canonical paths (301 redirects).
-
-## ⚠️ CRITICAL: ISR/Caching Cost Prevention
-
-### Issue 1: Dynamic Pages from `searchParams`
-
-**NEVER add `searchParams` to page components in `app/[place]/` routes.**
-
-Reading `searchParams` in a page component makes the page **dynamic**, creating a separate cache entry for every unique URL+query combination. This caused a **$300+ cost spike** on Dec 28, 2025.
-
-**Rules:**
-
-1. Listing pages (`app/[place]/*`) must NOT read `searchParams` - keep them static (ISR)
-2. Query params (`search`, `distance`, `lat`, `lon`) are handled **client-side only** via SWR
-3. SEO robots `noindex` for filtered URLs is handled via `X-Robots-Tag` header in `proxy.ts`
-4. Monitor cache usage via the `/api/health` endpoint and Coolify resource metrics
-
-**If you need query-dependent behavior:**
-
-- Handle it in middleware (`proxy.ts`) for headers/redirects
-- Handle it client-side for data fetching
-- NEVER make the page component read `searchParams`
-
-### Issue 2: Fetch Cache Explosion from `next: { revalidate }`
-
-**NEVER add `next: { revalidate, tags }` to external API fetches in `lib/api/*-external.ts` files.**
-
-This enables Next.js fetch cache, which stores every unique URL as a separate cache entry. With high-cardinality APIs (100+ places × categories × dates × pages), this caused a cost spike on Jan 20, 2026 (146K cache entries per build vs baseline 150).
-
-**Rules:**
-
-1. External wrappers (`*-external.ts`) must use `fetchWithHmac` WITHOUT `next:` option
-2. This defaults to `cache: "no-store"` which prevents unbounded cache growth
-3. Internal API routes handle caching via `Cache-Control` headers instead
-4. See incident: `docs/incidents/2026-01-20-fetch-cache-explosion.md`
-
-**If you want to improve API caching:**
-
-- Add/adjust `Cache-Control` headers in internal API routes (`app/api/*`)
-- Use in-memory TTL caches (`createCache`/`createKeyedCache`) in client libraries
-- NEVER use `next: { revalidate }` on external fetches
-
-**If you need query-dependent behavior:**
-
-- Handle it in middleware (`proxy.ts`) for headers/redirects
-- Handle it client-side for data fetching
-- NEVER make the page component read `searchParams`
-
-## Local Setup
-
-- Requirements: Node 22, Yarn 4.12+ (use Corepack).
-- Install: `corepack enable && corepack prepare yarn@4.12.0 --activate && yarn install --immutable`.
-- Env: set `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` (both server‑only), `NEXT_PUBLIC_API_URL` (defaults handled), optional `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_GOOGLE_ADS`, `SENTRY_DSN`. Auth (Logto) requires `LOGTO_*` — see `docs/logto-auth-setup.md` and the `env-variable-management` skill; sign-in/profile/favorites features no-op without them.
-- Run: `yarn prebuild && yarn dev` when service-worker assets are needed. Build: `yarn prebuild && yarn build`.
-- Tests: `yarn test`; E2E: `yarn test:e2e` (local config starts the app).
-
-## Feature Checklist
-
-- Types: add/extend only in `types/` (no inline app/component types).
-- UI/Pages: place components under `components/ui/<feature>/`; routes in `app/<segment>/` (server‑first; add `"use client"` only if needed).
-- API: call from server code via internal API routes (`app/api/*`); these proxy to external backend with HMAC. Use query builders (`buildEventsQuery`, `buildNewsQuery`) from `utils/api-helpers.ts`. Respect HMAC middleware; public GET endpoints are allowlisted.
-- Tests: add unit tests under `test/` and E2E flows under `e2e/` when user‑visible.
-- SW/Caching: if adding external API usage or offline behavior, edit `public/sw-template.js`, run `yarn prebuild`, then restart dev.
-- Pre‑PR: `yarn lint && yarn typecheck && yarn test` (and E2E if applicable); include screenshots for UI.
-
-## Cursor Cloud specific instructions
-
-### Environment
-
-- **Node 22** and **Yarn 4.12.0** (via Corepack) are required. The VM ships with both pre-installed via nvm.
-- Dependencies: `corepack enable && yarn install --immutable` from the repo root.
-- A `.env.development` file must exist with at least `HMAC_SECRET=<any-value>`. The app falls back to the default API URL in `config/api-defaults.json` when `NEXT_PUBLIC_API_URL` is not set.
-- Without `BACKEND_SERVICE_SECRET` (v2 backend) or `HMAC_SECRET` (legacy backend), the external backend returns HTTP 401. The app still renders (pages return 200) but with empty event/news data. Unit tests are unaffected (test setup seeds its own `HMAC_SECRET`).
-
-### Running services
-
-| Command          | Purpose                        | Notes                                                                      |
-| ---------------- | ------------------------------ | -------------------------------------------------------------------------- |
-| `yarn dev`       | Next.js dev server (port 3000) | Uses Turbopack. Run `yarn prebuild` first for service-worker assets.       |
-| `yarn lint`      | ESLint                         | 0 errors expected; warnings are pre-existing and acceptable.               |
-| `yarn typecheck` | `tsc --noEmit`                 | Must pass cleanly.                                                         |
-| `yarn test`      | Vitest unit/integration tests  | All 100 test files / 1401 tests should pass with no external dependencies. |
-| `yarn test:e2e`  | Playwright E2E                 | Requires a running app and valid API credentials.                          |
-
-### Gotchas
-
-- The `yarn dev` command is `next dev` (no env-cmd wrapper). To load `.env.development`, Next.js reads it automatically. For build variants, use `yarn build:development` which explicitly sources it via `env-cmd`.
-- `public/sw.js` is generated, not committed. Neither `yarn dev` nor `yarn build` runs prebuild automatically. Use `yarn build:development` or run `yarn prebuild` explicitly first.
-- The pre-push hook runs `yarn typecheck && yarn test --run && yarn i18n:check`. Ensure these pass before pushing.
-- Port 3000 may be occupied by Chrome's network service in the Cloud VM. If `yarn dev` fails with `EADDRINUSE`, use `--port 3001` or kill the conflicting process first. Also remove `/workspace/.next/dev/lock` if a stale lock file blocks startup.
-- The `HMAC_SECRET` environment variable is injected via Cursor Secrets. When writing `.env.development`, populate it from `$HMAC_SECRET` so Next.js picks it up: `echo "HMAC_SECRET=$HMAC_SECRET" > .env.development`.
+- Components PascalCase, hooks `useXxx`, helpers lowerCamelCase, 2-space indent, path aliases.
+- Constants in `utils/constants.ts`; config over conditionals; no duplicated literals.
+- Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`). Short-lived `feat/*`/`fix/*` branches into `develop`. PRs follow `.github/PULL_REQUEST_TEMPLATE.md` (summary, screenshots for UI, test plan).
+- Never commit secrets or env files; never edit build output (`public/sw.js`, `public/robots.txt`, `.next/`).

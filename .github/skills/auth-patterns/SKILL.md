@@ -3,19 +3,29 @@ name: auth-patterns
 description: Logto OIDC auth flow, useAuth() contract, session cookies, and the auth-CTA analytics convention. Use for anything touching login/logout, session state, or auth-gated pages/routes.
 ---
 
-# Auth Patterns Skill
+# Auth patterns
 
-## Purpose
-
-Document how authentication works in this app so new auth-gated features
-follow the existing Logto OIDC flow instead of reinventing it, and don't
-regress the session-sync and analytics conventions already in place.
+Follow the existing Logto OIDC flow for any auth-gated feature. Don't reinvent
+it, and keep the session-sync and analytics conventions below.
 
 ## The flow (server-side OIDC, not a client SDK)
 
 We integrate with Logto directly over standard OAuth 2.0 / OpenID Connect —
-no `@logto/*` SDK — to keep the client bundle untouched. All of it lives in
-`lib/auth/logto.ts` (server-only) and four route handlers:
+no `@logto/*` SDK — to keep the client bundle untouched. Server code lives in
+`lib/auth/`:
+
+| File | Role |
+| --- | --- |
+| `logto.ts` | Server-only OIDC client: PKCE, authorization URL, token exchange, `id_token` checks |
+| `session.ts` | `getCurrentUser` / `resolveSession` from the session cookies |
+| `refresh-token.ts` | `coordinateRefresh`: one refresh per refresh token across instances (claim stored in Turso, not Redis) |
+| `token-encryption.ts` | `sealToken` / `openToken`: encrypts tokens in cookies and in the refresh store |
+| `enrichment.ts` | `enrichWithBackendProfile`: adds backend UUID, role, profile state to the Logto user |
+| `owned-event.ts` | `getOwnedEventBySlug` for owner-only event pages |
+| `AuthProvider.tsx` | Client provider behind `useAuth()` |
+
+`getAccessTokenFromCookies` is in `utils/auth-cookies.ts`. The flow runs
+through four route handlers:
 
 1. `GET /api/auth/sign-in` — starts Authorization Code + PKCE. Stashes
    `state`/`codeVerifier`/`nonce`/`returnTo` in short-lived HttpOnly cookies,
@@ -49,8 +59,9 @@ const { status, user, isAuthenticated, isLoading, signIn, logout, refetchUser } 
 
 ### The hydrate-once gotcha
 
-`AuthProvider` fetches `/api/auth/me` **exactly once**, on mount. `user`
-never updates on its own after that. Any mutation that changes
+`AuthProvider` fetches `/api/auth/me` **once**, on mount (with one retry on a
+503 from a Logto outage or a network error). `user` never updates on its own
+after that. Any mutation that changes
 session-derived fields (profile PATCH, avatar upload/remove) **must** call
 `await refetchUser()` afterward — `router.refresh()` is not enough, it only
 re-runs Server Component data fetching, and `AuthProvider` sits above the

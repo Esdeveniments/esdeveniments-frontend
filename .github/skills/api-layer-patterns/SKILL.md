@@ -1,871 +1,229 @@
 ---
 name: api-layer-patterns
-description: Enforce the internal API proxy layer pattern. Use when adding API endpoints, fetching data from backend, implementing HMAC signing, or working with lib/api/* or app/api/*.
+description: How backend data flows in esdeveniments.cat - client library (lib/api/*.ts) → internal route (app/api/*) → external wrapper (lib/api/*-external.ts) with fetchWithHmac, per-route Cache-Control, the isBuildPhase bypass and the query builders. Use when adding or changing an API endpoint, fetching backend data, touching lib/api/* or app/api/*, fetchWithHmac, X-Backend-Key/HMAC, the /api gate, or when debugging API caching or build errors like '"<!DOCTYPE"... is not valid JSON'.
 license: MIT
 ---
 
-# API Layer Patterns Guide
+# API layer patterns
 
-This skill enforces the **internal API proxy layer architecture** - a critical security and performance pattern in this Next.js application.
+The rules live in AGENTS.md › API layer and › Hard rules. In one line each:
 
-## When to Use This Skill
+- Pages and components never call the backend. They call `lib/api/*.ts`, which calls `app/api/*`, which calls `lib/api/*-external.ts`.
+- Never add `next: { revalidate, tags }` to `fetchWithHmac` in `lib/api/*-external.ts` (fetch-cache explosion, Jan 2026). The direct backend path in `lib/api/events.ts` still passes `next`; don't copy it.
+- A `lib/api/*.ts` reader that calls an internal route and runs during `next build` needs the `isBuildPhase` bypass. `isBuildPhase` is also true at runtime on Coolify, where the bypass skips the internal route's cache; `news.ts` and `profiles.ts` do without it (see [`isBuildPhase`](#isbuildphase)).
+- Never use raw `fetch()` to reach the backend; use `fetchWithHmac`. Client libraries do use plain `fetch()`, but only to reach internal routes.
 
-- Adding a new API endpoint
-- Fetching data from the backend
-- Implementing HMAC authentication
-- Working with `lib/api/*` or `app/api/*`
-- Debugging API calls or caching issues
-- Implementing query builders
+This skill is the how-to. Copy a real file before you copy a template.
 
----
-
-## Core Architecture: The Proxy Pattern
-
-**CRITICAL**: Never call external API directly from pages/components. Always use the three-layer pattern.
+## The three layers
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ Layer 1: Client Code (Pages/Components)                    │
-│ - Calls internal API routes only                           │
-│ - Uses getInternalApiUrl() for URL construction            │
-│ - No HMAC signing (server-side only)                       │
-└─────────────────┬───────────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Layer 2: Internal API Routes (app/api/*)                   │
-│ - Next.js route handlers (edge-friendly)                   │
-│ - Call external wrappers                                   │
-│ - Set cache headers (s-maxage, stale-while-revalidate)     │
-│ - Return safe fallbacks on errors, unless the success      │
-│   response is CDN-cached: then return the error status     │
-│   with no-store (see app/api/events/route.ts)              │
-└─────────────────┬───────────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Layer 3: External Wrappers (lib/api/*-external.ts)         │
-│ - X-Backend-Key (+ legacy HMAC) via fetchWithHmac          │
-│ - Env guard (NEXT_PUBLIC_API_URL check)                    │
-│ - Zod parsing for type safety                              │
-│ - Safe fallback DTOs on failure                            │
-│ - Call NEXT_PUBLIC_API_URL directly                        │
-└─────────────────────────────────────────────────────────────┘
+Page / Server Component / SWR hook
+  └─ lib/api/<resource>.ts          client library: getInternalApiUrl, createCache, isBuildPhase bypass
+       └─ app/api/<resource>/route.ts   internal route: Cache-Control per route, error status
+            └─ lib/api/<resource>-external.ts   fetchWithHmac + Zod parse + safe fallback
+                 └─ backend (getApiUrl(), e.g. https://api.esdeveniments.cat/api)
 ```
 
-**Why this pattern?**
+Reference set to copy: `lib/api/categories-external.ts`, `app/api/categories/route.ts`, `lib/api/categories.ts`.
 
-- **Security**: HMAC signing happens server-side only
-- **Caching**: Internal routes set optimal cache headers
-- **Resilience**: Graceful degradation when backend unavailable
-- **DRY**: Shared logic in wrappers, reused across routes
+## Layer 3: external wrapper (`lib/api/*-external.ts`)
 
----
-
-## Layer 1: Client Code
-
-### Fetching Data from Pages/Components
-
-**DO**:
+From `lib/api/categories-external.ts`:
 
 ```typescript
-// In a Server Component
-import { fetchEvents } from "@lib/api/events";
+import { CategorySummaryResponseDTO } from "types/api/category";
+import { fetchWithHmac } from "lib/api/fetch-wrapper";
+import { getApiUrl } from "@utils/api-helpers";
+import { parseCategories } from "lib/validation/category";
 
-export default async function EventsPage() {
-  const events = await fetchEvents({ place: "barcelona" });
-  return <EventList events={events} />;
-}
-
-// In a Client Component (with SWR)
-import useSWR from "swr";
-import { getInternalApiUrl } from "@utils/api-helpers";
-
-function EventsFeed() {
-  const { data } = useSWR(
-    getInternalApiUrl("/api/events", { place: "barcelona" }),
-    fetcher
-  );
-  return <EventList events={data?.content || []} />;
-}
-```
-
-**DON'T**:
-
-```typescript
-// ❌ WRONG: Direct external API call
-const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`);
-
-// ❌ WRONG: Manual HMAC signing in client code
-const signature = createHmacSignature(url, secret); // NEVER expose secret!
-
-// ❌ WRONG: Hardcoded internal URL
-const { data } = useSWR("/api/events?place=barcelona", fetcher);
-// Use getInternalApiUrl() instead
-```
-
-### Using Query Builders
-
-**DO**:
-
-```typescript
-import { buildEventsQuery, buildNewsQuery } from "@utils/api-helpers";
-
-// Build query params for events
-const params = buildEventsQuery({
-  place: "barcelona",
-  byDate: "avui",
-  searchTerm: "jazz",
-  distance: 10,
-  lat: 41.3851,
-  lon: 2.1734,
-});
-
-const url = `/api/events?${params.toString()}`;
-```
-
-**DON'T**:
-
-```typescript
-// ❌ WRONG: Manual URLSearchParams construction
-const params = new URLSearchParams();
-params.set("place", "barcelona");
-params.set("searchTerm", "jazz"); // Wrong! API expects 'term' not 'searchTerm'
-// Manual construction duplicates logic and is error-prone - use query builders
-```
-
----
-
-## Layer 2: Internal API Routes
-
-### File Structure
-
-```text
-app/api/
-├── events/
-│   ├── route.ts              # GET /api/events
-│   ├── [slug]/route.ts       # GET /api/events/[slug]
-│   └── categorized/route.ts  # GET /api/events/categorized
-├── news/
-│   ├── route.ts              # GET /api/news
-│   └── [slug]/route.ts       # GET /api/news/[slug]
-├── categories/
-│   ├── route.ts              # GET /api/categories
-│   └── [id]/route.ts         # GET /api/categories/[id]
-└── visits/
-    └── route.ts              # POST /api/visits
-```
-
-### Route Template
-
-**File**: `app/api/YOUR_RESOURCE/route.ts`
-
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { fetchYourResourceExternal } from "@lib/api/your-resource-external";
-import { buildYourResourceQuery } from "@utils/api-helpers";
-
-export const runtime = "edge"; // Edge-friendly
-
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-
-  // Build query using query builder
-  const query = buildYourResourceQuery({
-    param1: searchParams.get("param1") || undefined,
-    param2: searchParams.get("param2") || undefined,
-  });
-
-  // Call external wrapper
-  const data = await fetchYourResourceExternal(query);
-
-  // Set cache headers
-  return NextResponse.json(data, {
-    headers: {
-      "Cache-Control": "s-maxage=600, stale-while-revalidate=3600",
-    },
-  });
-}
-```
-
-### Cache Headers Strategy
-
-| Resource   | s-maxage     | stale-while-revalidate | Rationale          |
-| ---------- | ------------ | ---------------------- | ------------------ |
-| Events     | 600s (10m)   | 3600s (1h)             | Frequently updated |
-| News       | 60s (1m)     | 300s (5m)              | Very dynamic       |
-| Categories | 3600s (1h)   | 86400s (24h)           | Rarely change      |
-| Sitemaps   | 86400s (24h) | 604800s (7d)           | Static structure   |
-
-**Template**:
-
-```typescript
-headers: {
-  'Cache-Control': 's-maxage=<SECONDS>, stale-while-revalidate=<SECONDS>',
-}
-```
-
-**Per-request-billed upstreams (e.g. Google Places):** CDN headers aren't enough — on Cloudflare's Free plan `/api/*` isn't edge-cached without a Cache Rule (only `/api/image-proxy` has one; see LESSONS.md), and the Next fetch cache is wiped every deploy (`cache-handler.mjs` scopes keys by `buildId`). For a paid upstream, read through the **deploy-independent** app Redis cache (`lib/cache/redis-client.ts`) with a coarse key, and cap cost at the provider (GCP quota). See `app/api/places/nearby/route.ts` and [the Places cost incident](../../../docs/incidents/2026-06-26-places-api-cost.md).
-
----
-
-## Layer 3: External Wrappers
-
-### External Wrapper File Structure
-
-```text
-lib/api/
-├── events-external.ts
-├── news-external.ts
-├── categories-external.ts
-├── cities-external.ts
-├── regions-external.ts
-└── places-external.ts
-```
-
-### Wrapper Template (Guarded Pattern)
-
-**File**: `lib/api/your-resource-external.ts`
-
-```typescript
-import { fetchWithHmac } from "@lib/api/fetch-wrapper";
-import { z } from "zod";
-import type {
-  YourResourceDTO,
-  PagedYourResourceDTO,
-} from "types/api/your-resource";
-
-// Zod schema for runtime validation (single item)
-const YourResourceSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  // ... other fields
-});
-
-// Paged response schema
-const PagedResponseSchema = z.object({
-  content: z.array(YourResourceSchema),
-  currentPage: z.number(),
-  pageSize: z.number(),
-  totalElements: z.number(),
-  totalPages: z.number(),
-  last: z.boolean(),
-});
-
-export async function fetchYourResourceExternal(
-  query?: URLSearchParams
-): Promise<PagedYourResourceDTO> {
-  // 1. ENV GUARD (critical for preview environments)
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    console.warn(
-      "[YourResource] NEXT_PUBLIC_API_URL not set, returning empty data"
-    );
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 20,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
-  }
-
-  // 2. BUILD URL
-  const baseUrl = `${process.env.NEXT_PUBLIC_API_URL}/your-resource`;
-  const url = query ? `${baseUrl}?${query.toString()}` : baseUrl;
-
+export async function fetchCategoriesExternal(): Promise<CategorySummaryResponseDTO[]> {
+  const api = getApiUrl();
   try {
-    // 3. FETCH WITH HMAC (10s timeout, no-store by default)
-    // ⚠️ DO NOT add `next: { revalidate }` - causes cache explosion!
-    // Caching is handled via Cache-Control headers in internal API routes.
-    const response = await fetchWithHmac(url, {
-      method: "GET",
-    });
-
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
+    // No `next: { revalidate }` - uses no-store to avoid cache explosion
+    const res = await fetchWithHmac(`${api}/categories`);
+    if (!res.ok) {
+      console.error(`Failed to fetch categories: HTTP ${res.status}`);
+      return [];
     }
-
-    const data = await response.json();
-
-    // 4. ZOD PARSING (runtime validation)
-    const parsed = PagedResponseSchema.parse(data);
-
-    return parsed;
+    const json = await res.json();
+    return parseCategories(json);
   } catch (error) {
-    console.error("[YourResource] Fetch failed:", error);
-
-    // 5. SAFE FALLBACK (resilience)
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 20,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
-  }
-}
-```
-
-### Guarded Pattern Checklist
-
-- [x] **Env guard**: Check `NEXT_PUBLIC_API_URL`, return safe fallback if missing
-- [x] **Query builder**: Use `buildEventsQuery` / `buildNewsQuery` from caller
-- [x] **HMAC fetch**: Use `fetchWithHmac` (NOT raw `fetch()`)
-- [x] **Timeout**: `fetchWithHmac` has built-in 10s timeout
-- [x] **Zod parsing**: Validate response shape at runtime
-- [x] **Safe fallback**: Return empty DTO on error (never throw)
-- [x] **NO fetch cache**: Do NOT use `next: { revalidate }` (causes cache explosion!)
-- [x] **Error logging**: Log errors for debugging
-
----
-
-## ⚠️ CRITICAL: Fetch Cache Warning
-
-**NEVER add `next: { revalidate, tags }` to `fetchWithHmac` calls in external wrappers!**
-
-This enables Next.js fetch cache, which stores **every unique URL** as a separate cache entry. With high-cardinality APIs (100+ places × categories × dates × pages × event slugs), this creates **hundreds of thousands of cache entries**.
-
-**Jan 20, 2026 Incident**: Adding `next: { revalidate }` to external wrappers caused:
-- 146,394 fetch cache entries per build (vs baseline 150)
-- S3 objects: 400K → 1.46M (3.6x increase)
-- DynamoDB writes: 16K → 280K/day (17x increase)
-- See: `docs/incidents/2026-01-20-fetch-cache-explosion.md`
-
-**Correct caching approach**:
-```typescript
-// ❌ WRONG - causes unbounded cache growth
-const response = await fetchWithHmac(url, {
-  next: { revalidate: 600, tags: ["events"] },  // NEVER DO THIS!
-});
-
-// ✅ CORRECT - uses no-store (fetchWithHmac default)
-const response = await fetchWithHmac(url);
-// Caching handled via Cache-Control headers in internal API routes
-```
-
----
-
-## Common Patterns
-
-### Pagination
-
-```typescript
-export async function fetchEventsExternal(
-  query?: URLSearchParams
-): Promise<PagedResponseDTO<Event>> {
-  // ... fetch logic
-
-  const parsed = PagedResponseSchema.parse(data);
-
-  // Use 'last' property to stop infinite scroll
-  return parsed; // { content[], last: boolean }
-}
-```
-
-**Client-side infinite scroll**:
-
-```typescript
-const { data, size, setSize } = useSWRInfinite((pageIndex) => {
-  const params = buildEventsQuery({ place, page: pageIndex });
-  return getInternalApiUrl("/api/events", params);
-}, fetcher);
-
-const isReachedEnd = data?.[data.length - 1]?.last;
-```
-
-### Search Term Mapping
-
-**IMPORTANT**: Internal filter key `searchTerm` maps to API param `term`.
-
-```typescript
-// In buildEventsQuery()
-if (filters.searchTerm) {
-  params.set("term", filters.searchTerm); // NOT 'searchTerm'
-}
-```
-
-### Distance & Geolocation
-
-**UI filter** uses `distance` + `lat` + `lon`.  
-**API** expects `radius` + `lat` + `lon`.
-
-```typescript
-import { distanceToRadius } from "types/event";
-
-if (filters.distance && filters.lat && filters.lon) {
-  params.set("radius", distanceToRadius(filters.distance).toString());
-  params.set("lat", filters.lat.toString());
-  params.set("lon", filters.lon.toString());
-}
-```
-
-**Never send default distance (50)** - omit to reduce URL bloat.
-
-### Date Filtering
-
-```typescript
-if (filters.byDate) {
-  params.set("byDate", filters.byDate); // Shortcuts: avui, dema, setmana
-} else if (filters.from || filters.to) {
-  if (filters.from) params.set("from", filters.from);
-  if (filters.to) params.set("to", filters.to);
-}
-```
-
-**Don't send both `byDate` and `from/to`** unless intentional.
-
----
-
-## Security Best Practices
-
-### HMAC Signing
-
-**DO**:
-
-```typescript
-// In external wrapper
-import { fetchWithHmac } from "@lib/api/fetch-wrapper";
-
-const response = await fetchWithHmac(url, {
-  method: "GET",
-  next: { revalidate: 600 },
-});
-```
-
-**DON'T**:
-
-```typescript
-// ❌ WRONG: Raw fetch without HMAC
-const response = await fetch(url);
-
-// ❌ WRONG: Manual HMAC signing
-import crypto from "crypto";
-const signature = crypto.createHmac("sha256", secret).update(url).digest("hex");
-// Use fetchWithHmac() which handles this automatically
-```
-
-### Middleware HMAC Enforcement
-
-**Public endpoints** (GET, no auth needed):
-
-- `/api/events`
-- `/api/news`
-- `/api/categories`
-- `/api/places`
-- `/api/regions`
-- `/api/cities`
-
-**Protected endpoints** (POST/PUT/DELETE, HMAC required):
-
-- `/api/visits` (POST)
-- `/api/events/*` (POST/PUT/DELETE)
-
-**Auth does not go through this pattern.** `/api/auth/*` is a Logto OIDC
-redirect flow (sign-in/callback/sign-out/me), not HMAC-signed proxy calls —
-see the `auth-patterns` skill.
-
-**IMPORTANT: `skipBodySigning: true` is required on all POST/PUT/DELETE calls.**
-The backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. Without this flag, mutation requests fail with 401 "Invalid HMAC".
-
-```typescript
-// ✅ Correct — always pass skipBodySigning for mutations
-const response = await fetchWithHmac(`${apiUrl}/events`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(eventPayload),
-  skipBodySigning: true, // backend ignores body for signature
-});
-
-// ❌ Wrong — will fail with 401 "Invalid HMAC"
-const response = await fetchWithHmac(`${apiUrl}/events`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(eventPayload),
-});
-```
-
-**Implementation**: `proxy.ts` allowlists public GET routes and `/api/auth/*`; all other `/api/*` routes require HMAC.
-
----
-
-## Fetch Best Practices
-
-### ✅ ALWAYS Use Safe Fetch
-
-**DO**:
-
-```typescript
-// For internal API calls (Layer 3)
-import { fetchWithHmac } from "@lib/api/fetch-wrapper";
-const response = await fetchWithHmac(url, {
-  /* options */
-});
-// Built-in 10s timeout, HMAC signing
-
-// For external webhooks/services (fire-and-forget)
-import { safeFetch, fireAndForgetFetch } from "@utils/safe-fetch";
-const response = await safeFetch(url, {
-  /* options */
-});
-// Built-in 5s timeout, response validation, Sentry logging
-
-await fireAndForgetFetch(url, { method: "POST", body: data });
-// Fire-and-forget pattern for webhooks
-```
-
-**DON'T**:
-
-```typescript
-// ❌ WRONG: Raw fetch (can hang indefinitely without timeout)
-const response = await fetch(url);
-
-// ❌ WRONG: Manual AbortSignal (duplicates safeFetch logic)
-const controller = new AbortController();
-setTimeout(() => controller.abort(), 5000);
-const response = await fetch(url, { signal: controller.signal });
-```
-
-**ESLint warns on raw `fetch()`** - always use wrappers.
-
----
-
-## Error Handling & Sentry
-
-### Sentry Tagging Conventions
-
-Always include consistent tags for searchability:
-
-```typescript
-import { captureException } from "@sentry/nextjs";
-
-captureException(error, {
-  tags: {
-    section: "events-fetch", // Feature area
-    type: "validation-failed", // Error type
-    layer: "external-wrapper", // Architecture layer
-  },
-  extra: {
-    params, // Request context
-    responseStatus: response.status, // API response info
-  },
-});
-```
-
-**Standard tags**:
-
-| Tag       | Values                                                       |
-| --------- | ------------------------------------------------------------ |
-| `section` | `events-fetch`, `news-fetch`, `categories`, `webhooks`       |
-| `type`    | `validation-failed`, `fetch-failed`, `timeout`, `hmac-error` |
-| `layer`   | `external-wrapper`, `internal-route`, `client-lib`           |
-
-### ⚠️ Preserve Stack Traces
-
-**DO**:
-
-```typescript
-// Pass original error - preserves stack trace
-captureException(error, {
-  tags: { section: "events-fetch" },
-  extra: { params },
-});
-```
-
-**DON'T**:
-
-```typescript
-// ❌ WRONG: Loses original stack trace
-captureException(new Error(error.message), {
-  tags: { section: "events-fetch" },
-});
-
-// ❌ WRONG: Swallows error details
-captureException(new Error("Fetch failed"));
-```
-
-### Validation Failure Pattern
-
-When Zod validation fails, capture with context:
-
-```typescript
-const result = PagedResponseSchema.safeParse(data);
-
-if (!result.success) {
-  console.error("Validation failed:", result.error.format());
-
-  captureException(new Error("API response validation failed"), {
-    tags: {
-      section: "events-fetch",
-      type: "validation-failed",
-    },
-    extra: {
-      zodErrors: result.error.format(),
-      rawData: JSON.stringify(data).slice(0, 1000), // Truncate for safety
-    },
-  });
-
-  return safeFallback;
-}
-```
-
-### Error Message Sanitization
-
-Use the helper to prevent leaking sensitive data:
-
-```typescript
-import { getSanitizedErrorMessage } from "@utils/api-error-handler";
-
-catch (error) {
-  const errorMessage = getSanitizedErrorMessage(error);
-  console.error("Fetch failed:", errorMessage);
-  // Safe to log - sensitive info removed
-}
-```
-
----
-
-## Testing
-
-### Unit Test (External Wrapper)
-
-```typescript
-import { fetchYourResourceExternal } from "@lib/api/your-resource-external";
-
-describe("fetchYourResourceExternal", () => {
-  it("returns empty data when NEXT_PUBLIC_API_URL missing", async () => {
-    delete process.env.NEXT_PUBLIC_API_URL;
-
-    const result = await fetchYourResourceExternal();
-
-    expect(result.content).toEqual([]);
-    expect(result.last).toBe(true);
-  });
-
-  it("handles API errors gracefully", async () => {
-    // Mock fetch to throw
-    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
-
-    const result = await fetchYourResourceExternal();
-
-    expect(result.content).toEqual([]); // Safe fallback
-  });
-});
-```
-
-### Integration Test (Internal Route)
-
-```typescript
-import { GET } from "@app/api/your-resource/route";
-import { NextRequest } from "next/server";
-
-describe("GET /api/your-resource", () => {
-  it("returns cached response with correct headers", async () => {
-    const request = new NextRequest("http://localhost:3000/api/your-resource");
-
-    const response = await GET(request);
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get("Cache-Control")).toContain("s-maxage=600");
-    expect(data).toHaveProperty("content");
-  });
-});
-```
-
----
-
-## Common Mistakes
-
-### ❌ Calling External API from Pages
-
-```typescript
-// WRONG: Direct call in page component
-export default async function EventsPage() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`);
-  const events = await res.json();
-  return <EventList events={events} />;
-}
-
-// CORRECT: Use internal API client
-import { fetchEvents } from "@lib/api/events";
-
-export default async function EventsPage() {
-  const events = await fetchEvents({ place: "barcelona" });
-  return <EventList events={events} />;
-}
-```
-
-### ❌ Duplicating Query Logic
-
-```typescript
-// WRONG: Manual URLSearchParams in multiple places
-const params = new URLSearchParams();
-params.set("place", "barcelona");
-params.set("term", searchTerm);
-
-// CORRECT: Use query builder
-const params = buildEventsQuery({ place: "barcelona", searchTerm });
-```
-
-### ❌ Missing Env Guard
-
-```typescript
-// WRONG: Direct API call without guard
-export async function fetchData() {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/data`;
-  const res = await fetch(url); // Crashes if env var missing
-  return res.json();
-}
-
-// CORRECT: Guard first
-export async function fetchData() {
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    console.warn("[Data] API URL not set");
-    return { content: [] }; // Safe fallback
-  }
-  // ... fetch logic
-}
-```
-
-### ❌ Forgetting Cache Headers
-
-```typescript
-// WRONG: No cache headers
-return NextResponse.json(data);
-
-// CORRECT: Set appropriate cache headers
-return NextResponse.json(data, {
-  headers: {
-    "Cache-Control": "s-maxage=600, stale-while-revalidate=3600",
-  },
-});
-```
-
----
-
-## ⚠️ CRITICAL: Build-Time vs Runtime Behavior
-
-### The Problem: Internal Routes Don't Exist During Build
-
-During `next build` (static generation), internal API routes (`/api/*`) are **not available** because the Next.js server isn't running yet. This causes a **chicken-and-egg problem**:
-
-1. Build tries to generate static pages
-2. Pages call client libraries (`lib/api/events.ts`, `lib/api/places.ts`, etc.)
-3. Client libraries call internal routes via `getInternalApiUrl("/api/...")`
-4. Internal routes don't exist yet → returns HTML error page
-5. JSON parse fails: `"<!DOCTYPE "... is not valid JSON`
-
-### Environment-Specific Behavior
-
-| Environment | `isBuildPhase` | Behavior |
-|-------------|----------------|----------|
-| **Docker build** | `true` (no running server) | Bypasses internal routes ✅ |
-| **Local dev** | `false` | Uses internal routes (server running) ✅ |
-
-### The Solution: `isBuildPhase` Bypass Pattern
-
-Every client library in `lib/api/*.ts` MUST check `isBuildPhase` and call external wrappers directly during build:
-
-```typescript
-import { isBuildPhase } from "@utils/constants";
-import { fetchYourResourceExternal } from "./your-resource-external";
-
-export async function fetchYourResource(): Promise<YourDTO[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) return [];
-
-  // ⚠️ CRITICAL: During build, bypass internal API (server not running)
-  if (isBuildPhase) {
-    try {
-      return await fetchYourResourceExternal();
-    } catch (error) {
-      console.error("fetchYourResource: external fetch failed during build", error);
-      return []; // Safe fallback
-    }
-  }
-
-  // Runtime: use internal API route (with caching benefits)
-  try {
-    return await resourceCache(fetchFromInternalApi);
-  } catch (e) {
-    console.error("Error fetching resource:", e);
+    console.error("fetchCategoriesExternal: failed", error);
     return [];
   }
 }
 ```
 
-### Files That MUST Have This Pattern
+- **Base URL**: `getApiUrl()` (`utils/api-helpers.ts`) resolves `API_URL` → `NEXT_PUBLIC_API_URL` → `config/api-defaults.json`. It already ends in `/api`, so write `${getApiUrl()}/categories`, not `/api/categories`.
+- **Missing config**: `getApiUrl()` never returns empty. If a missing config must take the fallback path, check `isApiUrlConfigured()` first (see `lib/api/users-external.ts`, `lib/api/promotions.ts`).
+- **Validation**: parse with a helper from `lib/validation/<resource>.ts` (`parseCategories`, `parsePagedEvents`, …). See the `data-validation-patterns` skill.
+- **Reads** never throw: `!res.ok` → log and return `[]`/`null`/empty page; `catch` → log and return the same.
+- **Mutations** throw. On a non-OK response read `response.text()` first and put it in the error. JSON/FormData POST/PUT/DELETE pass `skipBodySigning: true`. Copy `lib/api/sponsors-external.ts` or `lib/api/favorites-external.ts`.
+- **Need the status upstream?** Return a result object instead of a fallback, like `fetchEventsExternalResult` in `lib/api/events-external.ts`, so the route can answer with an error status.
 
-| File | Functions | Status |
-|------|-----------|--------|
-| `lib/api/events.ts` | `fetchEvents`, `getCategorizedEvents` | ✅ Has pattern |
-| `lib/api/regions.ts` | `fetchRegionsWithCities`, `fetchRegionsOptions` | ✅ Has pattern |
-| `lib/api/cities.ts` | `fetchCities` | ✅ Has pattern |
-| `lib/api/places.ts` | `fetchPlaceBySlug`, `fetchPlaces` | ✅ Has pattern |
-| `lib/api/categories.ts` | `fetchCategories`, `fetchCategoryById` | ✅ Has pattern |
-| `lib/api/news.ts` | Check if needed | Verify |
+### `fetchWithHmac` (`lib/api/fetch-wrapper.ts`)
 
-### How to Verify
+- Takes an absolute backend URL. Sends `X-Backend-Key` (`BACKEND_SERVICE_SECRET`, only to the `getApiUrl()` origin) and, while `HMAC_SECRET` is set, legacy `x-hmac`/`x-timestamp` (signs `body + timestamp + pathAndQuery`; FormData and `skipBodySigning: true` sign an empty body, which is what the legacy backend checks).
+- `cache: "no-store"`, 10 s timeout. Options: `timeout`, `skipBodySigning`, `skipConnection`.
+- It calls `await connection()` first. Inside `"use cache"` that throws, so pass `skipConnection: true` there (see `getCachedEventsPage` in `lib/api/events.ts`).
 
-```bash
-# Check all client libraries have the pattern
-grep -l "isBuildPhase" lib/api/*.ts | grep -v external
+## Layer 2: internal route (`app/api/*/route.ts`)
 
-# Expected: events.ts, regions.ts, cities.ts, places.ts, categories.ts
+From `app/api/categories/route.ts`:
+
+```typescript
+import { NextResponse } from "next/server";
+import { fetchCategoriesExternal } from "@lib/api/categories-external";
+import { handleApiError } from "@utils/api-error-handler";
+
+export async function GET() {
+  try {
+    const data = await fetchCategoriesExternal();
+    return NextResponse.json(data, {
+      status: 200,
+      headers: {
+        "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=86400",
+      },
+    });
+  } catch (e) {
+    return handleApiError(e, "/api/categories", {
+      errorMessage: "Failed to load categories",
+    });
+  }
+}
 ```
 
-### Symptoms of Missing Pattern
+- **Cache-Control** is set per route; read the neighbours in `app/api/**/route.ts` before picking values. Successful public GETs start with `public,`. Two examples: `/api/events` uses `s-maxage=1800, stale-while-revalidate=3600`; `/api/categories` uses `86400, 86400`. Per-user, auth and mutation responses use `no-store`.
+- **Don't let the CDN cache a failure.** If the success response is cacheable and the backend failed, return the error status with `Cache-Control: no-store`, not a cached empty list. See `app/api/events/route.ts`. `/api/categories` above doesn't do this yet: `fetchCategoriesExternal` returns `[]` on failure, so an outage is cached for a day.
+- `handleApiError` (`utils/api-error-handler.ts`) logs, reports to Sentry and returns a JSON error.
+- Parse and clamp query params in the route (see the `page`/`size` clamp in `app/api/events/route.ts`).
 
-- Build error: `SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON`
-- Build error: `Error fetching X by slug: HTTP 401` (if HMAC secret missing)
-- Error only appears when Next.js cache is cleared or on fresh deploy
+### The `/api` gate
 
----
+`proxy.ts` runs `utils/api-gate.ts`. Any `/api/*` route that is not allowlisted requires the frontend HMAC header, so a browser `fetch` to it fails. To make a route public, add it to one of the lists in `utils/api-gate.ts`:
 
-## Resources
+- `PUBLIC_API_PATTERNS`: GET-only regexes (regions, categories, cities, news, places, users).
+- `PUBLIC_API_EXACT_PATHS`: exact paths, any method (promotions, favorites, sponsors, push, …). The route must protect itself (cookie auth, Origin check, signature).
+- `PUBLIC_API_GET_EXACT_PATHS`: GET-only exact paths (the Logto `/api/auth/*` routes).
+- Events (`EVENTS_PATTERN`, GET) and `/api/image-proxy` are allowed inline in the same file.
 
-### Templates
+Tests: `test/proxy-public-api-patterns.test.ts`. Auth routes are not part of this proxy pattern; see the `auth-patterns` skill.
 
-- [external-wrapper-template.ts](./templates/external-wrapper-template.ts)
-- [internal-route-template.ts](./templates/internal-route-template.ts)
-- [client-library-template.ts](./templates/client-library-template.ts)
+### Paid upstreams
 
-### Examples
+For per-request-billed APIs (Google Places), CDN headers are not enough: on Cloudflare Free `/api/*` is not edge-cached without a Cache Rule, and the Next cache is wiped on every deploy. Read through the app Redis cache (`lib/cache/redis-client.ts`) with a coarse key and cap cost at the provider. See `app/api/places/nearby/route.ts` and `docs/incidents/2026-06-26-places-api-cost.md`.
 
-- [correct-api-call-flow.md](./examples/correct-api-call-flow.md)
-- [query-builder-usage.md](./examples/query-builder-usage.md)
+## Layer 1: client library (`lib/api/<resource>.ts`)
 
-### Reference Files
+From `lib/api/categories.ts` (trimmed):
 
-- `lib/api/*-external.ts` - External wrappers
-- `app/api/*` - Internal routes
-- `utils/api-helpers.ts` - Query builders
-- `utils/fetch-with-hmac.ts` - HMAC fetch utility
-- `utils/safe-fetch.ts` - Safe fetch wrappers
+```typescript
+const { cache: categoriesListCache, clear: clearCategoriesListCache } =
+  createCache<CategorySummaryResponseDTO[]>(86400000);
 
----
+async function fetchCategoriesFromApi(): Promise<CategorySummaryResponseDTO[]> {
+  const url = await getInternalApiUrl(`/api/categories`);
+  const response = await fetch(url, {
+    headers: getVercelProtectionBypassHeaders(),
+    next: { revalidate: 86400, tags: ["categories"] },
+  });
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  return parseCategories(await response.json());
+}
 
-## FAQ
+export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
+  // During build, bypass internal API (server not running) and call external directly
+  if (isBuildPhase) {
+    try {
+      return await fetchCategoriesExternal();
+    } catch (error) {
+      console.error("fetchCategories: external fetch failed during build", error);
+      return [];
+    }
+  }
+  try {
+    return await categoriesListCache(fetchCategoriesFromApi);
+  } catch (e) {
+    console.error("Error fetching categories:", e);
+    return [];
+  }
+}
 
-**Q: When do I need a new API route?**  
-A: When adding a new backend resource or endpoint variant. Example: `/api/events/trending`.
+export const getCategories = reactCache(fetchCategories); // per-request dedupe
+```
 
-**Q: Can I skip the internal route and call external wrapper directly?**  
-A: No. Pages/components should never import `*-external.ts`. Always go through `/api/*`.
+- `getInternalApiUrl(path)` is async and returns an absolute URL to this app.
+- `next: { revalidate, tags }` here is on the plain `fetch()` to the internal route, as in the real client libraries. It is never allowed on `fetchWithHmac` in a `*-external.ts` wrapper.
+- `createCache`/`createKeyedCache` (`lib/api/cache.ts`) give a 24 h in-memory TTL for low-cardinality data (categories, cities, regions, places). Export a `clear*Caches()` and register it: add the tag to `CacheTag`/`RevalidatableTag` (`types/cache.ts`), then to `ALLOWED_TAGS` and `TAG_TO_CLEAR_FN` in `app/api/revalidate/route.ts`. Unregistered caches only expire after 24 h.
+- Caveat: `/api/categories` answers 200 `[]` on an outage, so `categoriesListCache` can hold `[]` for 24 h. With a route that returns an error status (see the templates), the fetch throws and nothing is cached.
+- Wrap readers used by both `generateMetadata` and the page in React `cache()`.
+- Browser code (SWR hooks) fetches relative `/api/...` URLs directly, e.g. `components/hooks/useEvents.ts`.
 
-**Q: What if I need to call a third-party API (not our backend)?**  
-A: Create an internal route (`/api/third-party`) that proxies the call. Use `safeFetch` if no HMAC needed.
+### `isBuildPhase`
 
-**Q: How do I debug HMAC signature mismatches?**  
-A: Check middleware logs (`proxy.ts`). Ensure `HMAC_SECRET` matches between client and server.
+`utils/constants.ts`:
 
-**Q: Should I use `fetch` or `axios`?**  
-A: Use `fetchWithHmac` (for internal API with HMAC) or `safeFetch` (for external APIs). Never raw `fetch`.
+```typescript
+export const isBuildPhase =
+  process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD ||
+  (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL);
+```
 
----
+| Where | Value | Effect |
+| --- | --- | --- |
+| `next build` (Docker or local) | `true` | Calls the external wrapper; internal routes don't exist yet |
+| Production runtime on Coolify (no `VERCEL_URL`) | `true` | Also calls the external wrapper, so wrappers carry real traffic and skip the internal route's CDN cache |
+| `next dev` | `false` | Goes through the internal route |
 
-**Last Updated**: January 15, 2026  
-**Maintainer**: Development Team  
-**Related Skills**: `filter-system-dev`, `type-system-governance`
+Because of the Coolify case, `lib/api/events.ts` adds `fetchEventsCached` (a `"use cache"` reader) so listing renders don't wait on the backend every time; read the comment above `getCachedEventsPage`.
+
+Who uses it today:
+
+- Imported from `@utils/constants`: `events.ts`, `categories.ts`, `places.ts`.
+- Local copy of the same expression: `cities.ts`, `regions.ts`.
+- No bypass: `news.ts` and `profiles.ts` (internal-route readers), `promotions.ts` (calls `fetchWithHmac` directly, no internal route).
+
+Missing bypass symptom: `SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON` during the build.
+
+## Query builders and parameter mapping
+
+Build query strings with the helpers in `utils/api-helpers.ts`; never hand-build `URLSearchParams` for events or news.
+
+```typescript
+import { buildEventsQuery, applyDistanceToParams } from "@utils/api-helpers";
+
+const params: FetchEventsParams = { place: "barcelona", byDate: "avui", term: "jazz" };
+applyDistanceToParams(params, { lat, lon, distance }); // sets radius/lat/lon only when given
+const qs = buildEventsQuery(params); // URLSearchParams, page defaults to 0, size to 10
+```
+
+- `FetchEventsParams` (`types/event.ts`) already uses the API names: `term` (UI filter `searchTerm`) and `radius` (UI `distance`, via `distanceToRadius`).
+- `buildNewsQuery(params, setDefaults = true)` defaults `page` 0 and `size` 100.
+- Mapping rules (byDate vs from/to, default distance, pagination via `last`): AGENTS.md › API layer.
+
+## Adding an endpoint
+
+1. DTO in `types/api/<resource>.ts`.
+2. Zod schema + `parse*` helper in `lib/validation/<resource>.ts`.
+3. `lib/api/<resource>-external.ts`: `fetchWithHmac(`${getApiUrl()}/...`)`, parse, safe fallback. No `next`.
+4. `app/api/<resource>/route.ts`: call the wrapper, set `Cache-Control`. If browsers call it, add it to the gate lists.
+5. `lib/api/<resource>.ts`: `getInternalApiUrl` + `isBuildPhase` bypass (+ `createCache` if the data is low-cardinality).
+6. Test the wrapper's fallback and the route's headers (patterns: `test/api-events.test.ts`, `test/events-api-outage.test.ts`, `test/favorites-external.test.ts`).
+
+Templates with placeholders: `templates/external-wrapper-template.ts`, `templates/internal-route-template.ts`, `templates/client-library-template.ts`.
+
+## Errors
+
+- Pass the original error to `captureException(error, { tags: { section: "events-fetch" }, extra: { params } })`; never `new Error(error.message)`.
+- Use `getSanitizedErrorMessage` (`utils/api-error-handler.ts`) before logging unknown errors.
+- Log a backend outage once, in the wrapper. `app/api/events/route.ts` skips `handleApiError` for that reason, so one outage doesn't send one Sentry event per request.
+
+## Reference files
+
+- `lib/api/fetch-wrapper.ts`: `fetchWithHmac`
+- `utils/api-helpers.ts`: `getApiUrl`, `isApiUrlConfigured`, `getInternalApiUrl`, query builders
+- `utils/api-gate.ts`: public route lists
+- `utils/api-error-handler.ts`: `handleApiError`, `getSanitizedErrorMessage`
+- `lib/api/cache.ts`: `createCache`, `createKeyedCache`
+- `utils/safe-fetch.ts`: `safeFetch`/`fireAndForgetFetch` for non-backend services

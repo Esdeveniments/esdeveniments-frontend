@@ -1,6 +1,6 @@
 /**
  * Sponsor configuration for the self-service advertising system.
- * @see /docs/strategy-pricing.md for full system documentation
+ * @see docs/strategy-pricing.md for full system documentation
  *
  * IMPORTANT: Active sponsors are now stored in the Turso database,
  * NOT in this file. The Stripe webhook handler automatically creates
