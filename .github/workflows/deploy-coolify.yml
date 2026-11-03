@@ -9,7 +9,6 @@ on:
       - ".claude/**"
       - ".github/skills/**"
       - ".vscode/**"
-      - ".cursor/**"
       - "LICENSE"
   workflow_dispatch:
     inputs:

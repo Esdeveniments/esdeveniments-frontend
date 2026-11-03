@@ -2,7 +2,7 @@
  * Unit tests for the sponsor banner system.
  * Tests the core logic: date filtering, place matching, and geo scope handling.
  *
- * @see /strategy-pricing.md for system documentation
+ * @see docs/strategy-pricing.md for system documentation
  */
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import type { SponsorConfig } from "types/sponsor";

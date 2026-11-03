@@ -7,7 +7,7 @@ import "server-only";
  * a database-backed store. Sponsors are automatically created by
  * the Stripe webhook on payment and activated after image upload.
  *
- * @see /docs/strategy-pricing.md for system documentation
+ * @see docs/strategy-pricing.md for system documentation
  */
 
 import { captureException } from "@sentry/nextjs";

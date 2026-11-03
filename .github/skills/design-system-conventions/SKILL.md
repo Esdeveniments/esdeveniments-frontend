@@ -1,229 +1,68 @@
 ---
 name: design-system-conventions
-description: Guide for UI styling with semantic design system classes. Use when adding or changing Tailwind classes, colors, text contrast, focus rings, form controls, or UI components. Never use gray-* colors or arbitrary Tailwind utilities.
+description: Semantic Tailwind classes, color tokens, text contrast rules and the Button/Badge components for this repo's UI. Use when adding or changing Tailwind classes, colors, typography, buttons, cards, badges, spacing, focus rings, form controls or any UI component. Never use gray-* colors or arbitrary Tailwind utilities.
 ---
 
-# Design System Conventions Skill
+# Design System Conventions
 
-## Purpose
+Full design rules and tokens: `DESIGN.md`. Classes: `styles/globals.css`. Tokens: `tailwind.config.js`. Summary: AGENTS.md › UI.
 
-Enforce consistent styling using semantic design system classes. Prevent arbitrary Tailwind utilities and ensure visual consistency.
+## Colors
 
-## ⚠️ CRITICAL: Never Use Generic Grays
+Never `text-gray-*`, `bg-gray-*`, `border-gray-*`, hex values, or the removed aliases (`primarydark`, `primarySoft`, `whiteCorp`, `darkCorp`, `blackCorp`, `fullBlackCorp`, `bColor`).
 
-**FORBIDDEN**: `text-gray-*`, `bg-gray-*`, `border-gray-*`
+| Purpose | Token |
+| --- | --- |
+| Primary text | `text-foreground` |
+| Strong text / headings | `text-foreground-strong` |
+| Secondary text (hints, metadata) | `text-muted-foreground` |
+| Page background | `bg-background` |
+| Muted background | `bg-muted` |
+| Decorative border | `border-border` |
+| Form control border | `border-input` |
+| Text on primary | `text-primary-foreground` |
 
-**USE INSTEAD**: Semantic tokens from the design system.
+**Contrast (WCAG AA).** Two text grays only: `text-foreground` (9.59:1) and `text-muted-foreground` (5.74:1). `text-foreground/80` is an older equivalent; use `text-muted-foreground` in new code. ESLint blocks `text-foreground/75` and lighter, and `text-foreground-strong/54` and lighter. Disabled: `opacity-50`. Status text and icons use `text-error-dark`, `text-warning-dark`, `text-success-dark`; the base `text-error`/`-warning`/`-success` fail AA and are blocked.
 
-## Color Token Reference
+**Forms.** Checkboxes and radios get the brand color and a `:focus-visible` ring from the base layer in `globals.css`. Don't add `accent-*` (the forms plugin ignores it) or `focus:ring-0` (hides keyboard focus).
 
-| Purpose             | Token                      | Example         |
-| ------------------- | -------------------------- | --------------- |
-| Primary text        | `text-foreground`          | Main content    |
-| Strong text         | `text-foreground-strong`   | Headings        |
-| Secondary text      | `text-muted-foreground`    | Hints, metadata |
-| Background          | `bg-background`            | Page background |
-| Muted background    | `bg-muted`                 | Cards, sections |
-| Decorative border   | `border-border`            | Cards, dividers |
-| Form control border | `border-input`             | Inputs, selects |
-| Primary button text | `text-primary-foreground`  | Button labels   |
+## Typography
 
-Checkboxes and radios get the brand color and a `:focus-visible` ring from
-the base layer in `styles/globals.css`. Don't add `accent-*`, because the
-forms plugin ignores it. Don't add `focus:ring-0`, because it hides keyboard
-focus.
+`.heading-1`…`.heading-4`, `.body-large`, `.body-normal`, `.body-small`, `.label`. Not `text-3xl font-bold` and friends.
 
-### Text Contrast (WCAG AA)
+## Buttons
 
-Use two text grays: `text-foreground` (9.59:1) and `text-muted-foreground`
-(5.74:1). `text-foreground/80` (5.41:1) is an older equivalent of
-`text-muted-foreground`; prefer `text-muted-foreground` in new code.
+- Plain `<button>`: use `Button` (`components/ui/common/button`, `variant`: `neutral` default, `primary`, `outline`, `muted`, `ghost`, `category`, `solid` = primary; `hasIcon`). Links styled as buttons: the classes directly.
+- Classes: `.btn-primary`, `.btn-neutral`, `.btn-outline`, `.btn-muted`, `.btn-ghost` (fill only on hover), `.btn-category`; size modifier `.btn-sm` (36px, 12px label; 44px on touch) for dense rows, not a page's main action.
+- Every standard variant `@apply`s `.btn-base` and adds only colors; a new variant must do the same. Shared box: 14px uppercase label, 2px border, `min-h-button` (40px mouse, 44px touch). Icon-only: `h-button w-button`. Exception: `.btn-category` is a compact pill chip with its own box (1px border, no min height); leave it as is and don't copy it for new variants.
+- Don't resize with `py-*`, `text-*` or `min-h-[44px]`, and don't override `display`. In narrow dialogs, stack actions full width so labels never wrap.
 
-ESLint blocks `text-foreground/75` and lighter (4.49:1 on `muted`) and
-`text-foreground-strong/54` and lighter. They fail 4.5:1. For disabled
-states, use `opacity-50` (the existing disabled convention).
+## Cards, badges, layout
 
-Status text and icons on light backgrounds use the `-dark` variants
-(`text-error-dark`, `text-warning-dark`, `text-success-dark`). Base
-`text-error`, `text-warning` and `text-success` fail AA and are blocked.
+- Cards: `.card-bordered` (border only, no shadow) or `.card-elevated` (shadow, no border), with `.card-body` and `.card-footer`. There is no `.card-header`.
+- Badges: `.badge-primary`, `.badge-default`. Clickable chips/pills: `Badge` (`components/ui/common/badge`, renders a link when given `href`).
+- Layout: `.flex-center`, `.flex-between`, `.flex-start`, `.flex-center-col`, `.stack` (= `flex flex-col gap-element-gap`).
+- Spacing tokens: `py-section-y`, `px-section-x`, `p-card-padding`, `gap-element-gap`. Raw Tailwind spacing (`gap-1`/`2`, `p-1`/`2`) only for one-off micro-spacing inside a leaf; never for section, card, button or input padding or shared components. Repeated? Add a token.
+- Radius: `rounded-button` (pill), `rounded-card` (12px), `rounded-input` (8px), `rounded-badge` (pill).
 
-```tsx
-// ✅ CORRECT
-<p className="text-muted-foreground">Secondary text</p>
-<button disabled className="text-muted-foreground opacity-50">Unavailable</button>
-
-// ❌ WRONG
-<p className="text-gray-600">Secondary text</p>
-<p className="text-foreground/60">Secondary text</p>
-```
-
-## Typography Classes
-
-**ALWAYS use semantic classes, NEVER arbitrary text-\* utilities for typography.**
-
-| Class          | Usage                  |
-| -------------- | ---------------------- |
-| `.heading-1`   | Page titles (h1)       |
-| `.heading-2`   | Section titles (h2)    |
-| `.heading-3`   | Subsection titles (h3) |
-| `.heading-4`   | Minor headings (h4)    |
-| `.body-large`  | Large body text        |
-| `.body-normal` | Default body text      |
-| `.body-small`  | Small body text        |
-| `.label`       | Form labels, captions  |
-
-### Examples
+## Example
 
 ```tsx
-// ✅ CORRECT
-<h1 className="heading-1">Page Title</h1>
-<p className="body-normal">Content here</p>
-
-// ❌ WRONG
-<h1 className="text-3xl md:text-4xl font-bold">Page Title</h1>
-<p className="text-base">Content here</p>
-```
-
-## Button Classes
-
-Use semantic button classes:
-
-| Class          | Usage                |
-| -------------- | -------------------- |
-| `.btn-primary` | Primary actions      |
-| `.btn-neutral` | Secondary actions    |
-| `.btn-outline` | Tertiary actions     |
-| `.btn-muted`   | Low-emphasis actions |
-| `.btn-ghost`   | Quiet actions, no border until hover |
-| `.btn-sm`      | Size modifier (36px, 12px label; 44px on touch). Combine with a variant for dense rows, not for a page's main actions |
-
-Every variant `@apply`s the shared `.btn-base` (in `styles/globals.css`) and
-adds only colours, so a new variant must do the same. The shared box: 14px uppercase label, 2px border (transparent on
-filled variants) and one minimum height (`min-h-button`): 40px with a mouse,
-44px on touch screens via `--button-height` and `pointer: coarse`.
-`min-h-button-sm` is 36px (44px on touch). Use `h-button w-button` for icon-only buttons. Do not add
-`min-h-[44px]`, `py-*` or `text-*` overrides to resize a button. Use `.btn-sm`
-for compact actions. Don't override `display` (`inline-block`/`block`), because
-it breaks vertical centering. In narrow dialogs, stack the actions full width
-so long labels never wrap inside a pill.
-
-```tsx
-// ✅ CORRECT
-<button className="btn-primary">Submit</button>
-
-// ❌ WRONG
-<button className="bg-primary text-whiteCorp px-6 py-3 rounded-xl hover:bg-primarydark">
-  Submit
-</button>
-```
-
-## Card Classes
-
-| Class            | Usage                      |
-| ---------------- | -------------------------- |
-| `.card-bordered` | Border + subtle shadow     |
-| `.card-elevated` | Stronger shadow, no border |
-| `.card-body`     | Inner padding              |
-| `.card-footer`   | Footer section             |
-
-```tsx
-// ✅ CORRECT
+// ✅
 <div className="card-bordered">
-  <div className="card-body">
-    <h3 className="heading-3">Card Title</h3>
-    <p className="body-normal">Content</p>
+  <div className="card-body stack">
+    <h3 className="heading-3">Title</h3>
+    <p className="body-small text-muted-foreground">Meta</p>
+    <Button variant="primary">Desa</Button>
   </div>
 </div>
-```
 
-## Badge Classes
-
-| Class            | Usage                     |
-| ---------------- | ------------------------- |
-| `.badge-primary` | Red background (emphasis) |
-| `.badge-default` | Gray background (neutral) |
-
-## Layout Utilities
-
-Replace repetitive flex patterns:
-
-| Semantic Class  | Replaces                            |
-| --------------- | ----------------------------------- |
-| `.flex-center`  | `flex justify-center items-center`  |
-| `.flex-between` | `flex justify-between items-center` |
-| `.flex-start`   | `flex justify-start items-center`   |
-| `.stack`        | `flex flex-col gap-element-gap`     |
-
-```tsx
-// ✅ CORRECT
-<div className="flex-center gap-element-gap">
-  <Icon />
-  <span>Text</span>
-</div>
-
-// ❌ WRONG
-<div className="flex justify-center items-center gap-4">
-  <Icon />
-  <span>Text</span>
+// ❌
+<div className="rounded-xl border border-gray-200 p-6 flex flex-col gap-4">
+  <h3 className="text-xl font-bold">Title</h3>
+  <p className="text-sm text-gray-500">Meta</p>
+  <button className="bg-primary text-whiteCorp px-6 py-3">Desa</button>
 </div>
 ```
 
-## Spacing Tokens
-
-| Token                          | Usage              |
-| ------------------------------ | ------------------ |
-| `py-section-y`, `px-section-x` | Section spacing    |
-| `p-card-padding`               | Card inner padding |
-| `gap-element-gap`              | Default gaps       |
-
-### Tailwind Spacing Exception
-
-**Allowed**: One-off micro-spacing inside leaf components (`gap-1`, `gap-2`, `p-1`, `p-2`)
-
-**Not allowed**:
-
-- Section/page/layout spacing
-- Card/button/input paddings
-- Shared components
-
-**Rule**: If repeated → create/extend a semantic token instead.
-
-## Border Radius Tokens
-
-| Token            | Usage        | Value |
-| ---------------- | ------------ | ----- |
-| `rounded-button` | Buttons      | full pill |
-| `rounded-card`   | Cards        | 12px  |
-| `rounded-input`  | Form inputs  | 8px   |
-| `rounded-badge`  | Pills/badges | full  |
-
-## Deprecated Aliases - DO NOT USE
-
-❌ `primarydark`, `primarySoft`, `whiteCorp`, `darkCorp`, `blackCorp`, `fullBlackCorp`, `bColor`
-
-Use semantic tokens instead.
-
-## Migration Context
-
-Semantic classes are already the established convention across the codebase (heading/body classes, `.btn-*`, `.card-*` all in active use). When modifying existing components:
-
-1. Prefer semantic classes over inline utilities
-2. Keep changes incremental
-3. Consult `/docs/reference-data.md` for priority
-4. Use new semantic color tokens
-
-## Checklist Before Styling
-
-- [ ] Using semantic typography classes? (not `text-xl font-bold`)
-- [ ] Using semantic color tokens? (not `gray-*`)
-- [ ] Using button classes? (not inline utilities)
-- [ ] Using card classes? (not custom shadows/borders)
-- [ ] Using layout utilities? (`flex-center` vs manual flex)
-- [ ] Using spacing tokens? (for consistent spacing)
-
-## Files to Reference
-
-- [styles/globals.css](../../../styles/globals.css) - Design system classes
-- [tailwind.config.js](../../../tailwind.config.js) - Theme tokens
-- [docs/design-system-overview.md](../../../docs/design-system-overview.md) - Full documentation
-- [docs/implementation-reference.md](../../../docs/implementation-reference.md) - Code examples
+The migration to semantic classes is finished. When touching old code, switch it to these classes in small steps.

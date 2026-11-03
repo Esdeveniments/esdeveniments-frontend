@@ -1,191 +1,47 @@
 ---
 name: i18n-best-practices
-description: Guide for internationalization with next-intl. Use when adding links, translations, or localized URLs. Always use Link from @i18n/routing.
+description: next-intl rules for this repo — localized links and navigation, server vs client translations, message namespaces, precompiled messages, localized JSON-LD URLs, and adding a locale. Use when adding links, translation keys, useTranslations/getTranslations calls, localized URLs, hreflang, or a new language.
 ---
 
-# Internationalization (i18n) Best Practices Skill
+# i18n Best Practices
 
-## Purpose
+Basics (locales `ca` default/`es`/`en`, `as-needed` prefix, server vs client APIs): AGENTS.md › i18n.
 
-Enforce correct i18n patterns using `next-intl` to prevent broken navigation and SEO issues.
+## Links and navigation
 
-## ⚠️ CRITICAL: Always Use Link from @i18n/routing
+Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/routing` (`i18n/routing.ts`). `next/link` drops the locale: on `/es/barcelona` a link to `/girona` goes to Catalan `/girona`. ESLint warns on `next/link`. Exceptions: primitives that add the locale themselves, and external links (`<a>`).
 
-**For ALL internal navigation, use `Link` from `@i18n/routing`, NOT `next/link`.**
+## Translations
 
-ESLint will warn on `next/link` imports in components.
+- Server: `const t = await getTranslations("Components.Filters")` (`next-intl/server`). Client: `const t = useTranslations("Components.Filters")`.
+- Top-level namespaces in `messages/*.json`: `App`, `Components`, `Partials`, `Pages`, `Utils`, `Config`, `Sponsor`, `Sponsorship`, `Auth`. Use the dotted path, e.g. `useTranslations("Partials.GeneratePagesData")`.
+- Add every key to `messages/ca.json`, `es.json` and `en.json`; reuse keys first. `yarn i18n:check` (also in pre-push) finds missing keys.
+- Messages are precompiled (`precompile: true` in `next.config.js`): every leaf is a plain ICU string. No arrays, no `t.raw()`. Lists (days, months, word lists) go in `i18n/locale-lists.json`.
+- A client component that uses a new namespace: add it to `lib/i18n/client-namespaces.ts`. The layout sends the client only those namespaces; `test/i18n-client-namespaces.test.ts` fails otherwise.
+- Shared utils that need labels at import time read `i18n/locale-labels.generated.json`, not `messages/*.json` (which would ship all locales to the browser). After editing the source keys (see `scripts/generate-locale-labels.mjs`) or `i18n/locale-lists.json`, run `yarn i18n:labels`.
 
-### Why This Matters
+## SEO URLs
 
-Using `next/link` directly loses the locale prefix on navigation:
+- JSON-LD and other absolute URLs: `toLocalizedUrl(path, locale)` from `@utils/i18n-seo`.
+- Breadcrumbs: `generateBreadcrumbList(breadcrumbs)` from `@components/partials/seo-meta`. It takes no locale; pass items whose URLs are already localized with `toLocalizedUrl`.
 
-- User on `/es/barcelona` clicks link
-- With `next/link`: Goes to `/barcelona` (loses Spanish locale)
-- With `@i18n/routing Link`: Goes to `/es/barcelona` (correct)
+## Adding a locale
 
-### Correct Pattern
+1. `SUPPORTED_LOCALES` in `types/i18n.ts` (`AppLocale` derives from it), plus `localeToOgLocale` and `localeToHrefLang` there. `i18n/routing.ts` reads these.
+2. `messages/<locale>.json` with every key, and the loader in `i18n/request.ts`.
+3. The locale's entry in `i18n/locale-lists.json`; add it to `LOCALES` in `scripts/generate-locale-labels.mjs` and run `yarn i18n:labels`.
+4. Search the whole repo for other hardcoded lists, including root scripts like `check-locales.mjs` and tests: `git grep -nE "['\"]ca['\"], ?['\"]es['\"], ?['\"]en['\"]"`.
 
-```tsx
-// ✅ CORRECT - Always use this
-import { Link } from "@i18n/routing";
+## Key files
 
-export function MyComponent() {
-  return <Link href="/barcelona">Barcelona</Link>;
-}
-```
-
-### Wrong Pattern
-
-```tsx
-// ❌ WRONG - Loses locale on navigation
-import Link from "next/link";
-
-export function MyComponent() {
-  return <Link href="/barcelona">Barcelona</Link>;
-}
-```
-
-### Exceptions (Rare)
-
-- Primitives with manual locale handling
-- External-only links (use `<a>` tag)
-
-## Project i18n Setup
-
-| Aspect          | Configuration                            |
-| --------------- | ---------------------------------------- |
-| Library         | `next-intl` ^4.6.1                       |
-| Locales         | `ca` (default), `es`, `en`               |
-| Prefix Strategy | `as-needed` (no prefix for default `ca`) |
-| Routing Config  | `i18n/routing.ts`                        |
-| Messages        | `messages/{locale}.json`                 |
-
-## Navigation Exports from @i18n/routing
-
-```typescript
-import {
-  Link, // Use for all internal links
-  redirect, // Server-side redirects
-  usePathname, // Get current path (client)
-  useRouter, // Programmatic navigation (client)
-  getPathname, // Build localized paths
-} from "@i18n/routing";
-```
-
-## Server vs Client Components
-
-### Server Components
-
-```typescript
-import { getTranslations, getLocale } from "next-intl/server";
-
-export default async function ServerComponent() {
-  const locale = await getLocale();
-  const t = await getTranslations("common");
-
-  return <h1>{t("title")}</h1>;
-}
-```
-
-### Client Components
-
-```typescript
-"use client";
-import { useTranslations, useLocale } from "next-intl";
-
-export function ClientComponent() {
-  const locale = useLocale();
-  const t = useTranslations("common");
-
-  return <button>{t("submit")}</button>;
-}
-```
-
-## JSON-LD URLs Must Be Localized
-
-For structured data (JSON-LD), always use `toLocalizedUrl`:
-
-```typescript
-import { toLocalizedUrl } from "@utils/i18n-seo";
-
-// ✅ CORRECT
-const url = toLocalizedUrl("/barcelona/avui", locale);
-// Returns: "https://example.com/es/barcelona/avui" for Spanish
-
-// ❌ WRONG - Missing locale prefix
-const url = `https://example.com/barcelona/avui`;
-```
-
-## Breadcrumbs in JSON-LD
-
-Use the tested helper function:
-
-```typescript
-import { generateBreadcrumbList } from "@components/partials/seo-meta";
-
-// ✅ CORRECT - Handles locale automatically
-const breadcrumbs = generateBreadcrumbList(items, locale);
-```
-
-## Adding New Translations
-
-1. Add keys to all locale files in `messages/`:
-
-   - `messages/ca.json`
-   - `messages/es.json`
-   - `messages/en.json`
-
-2. Prefer reusing existing keys before adding new ones
-
-3. Use namespaced keys:
-
-   ```json
-   {
-     "common": {
-       "submit": "Enviar",
-       "cancel": "Cancel·lar"
-     },
-     "events": {
-       "title": "Esdeveniments"
-     }
-   }
-   ```
-
-## Adding a New Locale
-
-1. Update `types/i18n.ts`:
-
-   ```typescript
-   export type Locale = "ca" | "es" | "en" | "fr"; // Add new locale
-   ```
-
-2. Create `messages/fr.json` with all translations
-
-3. Update `i18n/routing.ts`:
-
-   ```typescript
-   export const routing = defineRouting({
-     locales: ["ca", "es", "en", "fr"],
-     defaultLocale: "ca",
-   });
-   ```
-
-4. Update loader map in `i18n/request.ts`
-
-## Checklist Before i18n Changes
-
-- [ ] Using `Link` from `@i18n/routing`? (not `next/link`)
-- [ ] JSON-LD URLs using `toLocalizedUrl()`?
-- [ ] Breadcrumbs using `generateBreadcrumbList()`?
-- [ ] New strings added to ALL locale files?
-- [ ] Server component using `getTranslations`?
-- [ ] Client component using `useTranslations`?
-- [ ] Every message leaf is a plain string (no arrays, no HTML tags with attributes), and no `t.raw()`? Messages are precompiled; lists go in `i18n/locale-lists.json`.
-
-## Files to Reference
-
-- [i18n/routing.ts](i18n/routing.ts) - Routing configuration and exports
-- [i18n/request.ts](i18n/request.ts) - Message loading
-- [utils/i18n-seo.ts](utils/i18n-seo.ts) - SEO helpers like `toLocalizedUrl`
-- [types/i18n.ts](types/i18n.ts) - Locale type definitions
-- [messages/\*.json](messages/) - Translation files
+| File | Role |
+| --- | --- |
+| `i18n/routing.ts` | Routing config and navigation exports |
+| `i18n/request.ts` | Loads messages per locale |
+| `types/i18n.ts` | `SUPPORTED_LOCALES`, `AppLocale`, OG/hreflang maps |
+| `next.config.js` | next-intl plugin with `precompile: true` |
+| `i18n/locale-lists.json` | Non-string lists per locale |
+| `i18n/locale-labels.generated.json` | Generated labels for shared utils |
+| `lib/i18n/client-namespaces.ts` | Namespaces sent to client components |
+| `utils/i18n-seo.ts` | `toLocalizedUrl`, `getLocaleSafely` |
+| `proxy.ts` | Sets `x-next-intl-locale` |

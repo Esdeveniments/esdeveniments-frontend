@@ -1,6 +1,6 @@
 /**
  * Stripe utilities for server-side operations.
- * @see /strategy-pricing.md for sponsor system documentation
+ * @see docs/strategy-pricing.md for sponsor system documentation
  */
 
 export {

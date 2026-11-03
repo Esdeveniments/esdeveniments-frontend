@@ -153,7 +153,7 @@ When rendering a banner, the system checks in order:
   - `Sponsor.cta`, `Sponsor.label`, `Sponsor.emptyState`
   - `Patrocina.*` namespace with all landing page content
 
-- [x] **7. app/patrocina/page.tsx** – Landing page
+- [x] **7. app/[locale]/patrocina/page.tsx** – Landing page
 
   - Benefits section with icons (audience, exclusivity, stats)
   - Interactive pricing section with place selector
@@ -187,7 +187,7 @@ When rendering a banner, the system checks in order:
   - Handles `checkout.session.expired`
   - Copies metadata to PaymentIntent for later retrieval
 
-- [x] **12. app/patrocina/upload/page.tsx** – Self-service image upload
+- [x] **12. app/[locale]/patrocina/upload/page.tsx** – Self-service image upload
 
   - Validates Stripe session ID from URL
   - Confirms payment status before allowing upload
@@ -373,16 +373,16 @@ Add a temporary entry in `config/sponsors.ts` so the banner clearly shows a paid
 | `components/ui/sponsor/PlaceSelector.tsx`           | ✅ Created  |
 | `components/ui/sponsor/CheckoutButton.tsx`          | ✅ Created  |
 | `components/ui/sponsor/SponsorUploadPageClient.tsx` | ✅ Created  |
-| `components/ui/sponsor/index.ts`                    | ✅ Created  |
+| `components/ui/sponsor/index.ts`                    | Removed (barrel leaked client code; import files directly) |
 | `components/partials/PlacePageShell.tsx`            | ✅ Modified |
 | `messages/ca.json`                                  | ✅ Modified |
 | `messages/es.json`                                  | ✅ Modified |
 | `messages/en.json`                                  | ✅ Modified |
 | `components/ui/common/footer/index.tsx`             | ✅ Modified |
-| `app/patrocina/page.tsx`                            | ✅ Created  |
-| `app/patrocina/upload/page.tsx`                     | ✅ Created  |
-| `app/patrocina/success/page.tsx`                    | ✅ Created  |
-| `app/patrocina/cancelled/page.tsx`                  | ✅ Created  |
+| `app/[locale]/patrocina/page.tsx`                            | ✅ Created  |
+| `app/[locale]/patrocina/upload/page.tsx`                     | ✅ Created  |
+| `app/[locale]/patrocina/success/page.tsx`                    | ✅ Created  |
+| `app/[locale]/patrocina/cancelled/page.tsx`                  | ✅ Created  |
 | `app/api/sponsors/checkout/route.ts`                | ✅ Created  |
 | `app/api/sponsors/webhook/route.ts`                 | ✅ Created  |
 | `app/api/sponsors/image-upload/route.ts`            | ✅ Created  |

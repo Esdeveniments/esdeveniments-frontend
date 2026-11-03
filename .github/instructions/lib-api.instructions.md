@@ -16,8 +16,8 @@ applyTo: "lib/api/**/*.ts"
 ## External wrappers (`lib/api/*-external.ts`)
 
 - Guard: if `!NEXT_PUBLIC_API_URL` → return safe fallback (empty array, null, etc.).
-- Use `fetchWithHmac` for all external calls (built-in 10s timeout, HMAC signing).
-- **CRITICAL: Always pass `skipBodySigning: true`** on POST/PUT/DELETE calls. The backend HMAC verification ignores the request body — it only signs `timestamp + pathAndQuery`. Without this flag, all mutation requests fail with 401 "Invalid HMAC".
+- Use `fetchWithHmac` (`lib/api/fetch-wrapper.ts`) for all backend calls: 10s timeout, `X-Backend-Key` and legacy HMAC headers.
+- **CRITICAL: pass `skipBodySigning: true`** on JSON POST/PUT/DELETE calls. Legacy HMAC signs only `timestamp + pathAndQuery`; without the flag, mutations fail with 401 "Invalid HMAC".
 - Parse responses with Zod schemas from `lib/validation/`.
 - Return safe fallback DTOs on error, except where a cached reader must tell failure from "empty": `fetchPlaceBySlugExternal` and `fetchPlacesAggregatedExternal` throw on errors so a failure is never cached.
 - NEVER add `next: { revalidate, tags }` — this causes unbounded cache growth (one entry per unique URL).

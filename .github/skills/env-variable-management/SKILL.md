@@ -1,194 +1,59 @@
 ---
 name: env-variable-management
-description: Guide for adding environment variables. Use when adding new env vars to ensure all 5 locations are updated (code, env files, Coolify, workflow, GitHub secrets).
+description: How to add, rename or remove an environment variable in esdeveniments.cat so code, .env.example, Coolify, the deploy workflow/Dockerfile and GitHub secrets stay in sync. Use when code reads a new process.env value, when a NEXT_PUBLIC_* value is missing in production, or when touching .env.example, Dockerfile ARGs, deploy-coolify.yml secrets, Sentry, Redis or Logto config.
 ---
 
-# Environment Variable Management Skill
+# Environment variable management
 
-## Purpose
+A variable missing from one location breaks a build or crashes the container. Update every location that applies. Basics (local env files, required secrets): AGENTS.md › Commands; hosting: AGENTS.md › Hosting and deploys.
 
-Ensure environment variables are properly configured across ALL required locations. Missing a location causes **production runtime crashes**.
+`.env.example` lists every variable a deploy must set, with its purpose. Optional tuning and platform values (`STRIPE_TAX_MODE`, `HMAC_*_TOLERANCE_MS`, `VERCEL_*`, …) are read only in code; grep `process.env` for the full set. It is the only tracked env file; `.env`, `.env.local`, `.env.development`, `.env.staging` and `.env.production` are gitignored.
 
-## ⚠️ CRITICAL: 5 Locations Must Stay in Sync
+## How values reach the app
 
-When adding ANY new environment variable, you MUST update **ALL applicable locations**:
+Coolify does **not** build. `deploy-coolify.yml` builds a Docker image in GitHub Actions, pushes it to GHCR, then pins Coolify to the `sha-<commit>` tag. So:
 
-| #   | Location            | Purpose                          | Where                                        |
-| --- | ------------------- | -------------------------------- | -------------------------------------------- |
-| 1   | **Code**            | Read the variable                | `process.env.VAR_NAME`                       |
-| 2   | **Env files**       | Local dev/build via `env-cmd`    | `.env.development`, `.env.staging`, `.env.production` |
-| 3   | **Coolify**         | Container runtime env            | Coolify dashboard → Application → Environment |
-| 4   | **Deploy Workflow** | CI/CD build secrets              | `.github/workflows/deploy-coolify.yml`       |
-| 5   | **GitHub Secrets**  | Actual secret values             | GitHub repo settings                         |
+| Kind | Read when | Comes from |
+| --- | --- | --- |
+| `NEXT_PUBLIC_*` | Build time (inlined in the client bundle) | GitHub secret → workflow `build-args:` → Dockerfile `ARG` + `ENV` in the builder stage |
+| Build-time private secret (`HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `SENTRY_AUTH_TOKEN`) | Build time (prerender, source maps) | GitHub secret → workflow `secrets:` → Dockerfile `RUN --mount=type=secret,...` |
+| Server-only runtime value (`LOGTO_*`, `STRIPE_*`, `REDIS_URL`, `TURSO_*`, `API_URL`, `SENTRY_DSN`, `REVALIDATE_SECRET`, …) | Runtime, by the Node server | Coolify → Application → Environment |
+| Workflow-only (`COOLIFY_TOKEN`, `COOLIFY_WEBHOOK_URL`, `CLOUDFLARE_*`) | During the workflow | GitHub secret → step `env:` |
 
-> **Note**: `NEXT_PUBLIC_API_URL` must be present in `.env.*` files because it affects the service worker registration and test runs (`build:development`, `build:staging`, etc. use `env-cmd`).
+`REVALIDATE_SECRET` is both: `app/api/revalidate/route.ts` and `app/api/health/route.ts` read it at runtime (Coolify), and `deploy-coolify.yml` sends the same value from a GitHub secret on post-deploy calls.
 
-## Required vs Optional Pattern
+`HMAC_SECRET` and `BACKEND_SERVICE_SECRET` are also needed at runtime, so set them in Coolify too. `SENTRY_AUTH_TOKEN` is build-only (read in `next.config.js`); keep it out of Coolify. The `e2e-tests` job's "Build Next.js application" step in `deploy-coolify.yml` gets `HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `NEXT_PUBLIC_API_URL` and `SENTRY_AUTH_TOKEN` as step `env:`; add a new build-time value there as well if the CI build needs it.
 
-### Required Variables (Fail Fast)
+GitHub secrets resolve per Environment (`production` on `main`, `staging` otherwise) and fall back to repo-level values. The workflow blanks `NEXT_PUBLIC_GOOGLE_ANALYTICS`/`_ADS` on non-`main` builds so prod IDs never land in staging.
 
-For variables that MUST exist in production, validate at startup or usage:
+## Adding a variable: the five locations
 
-```typescript
-const myVar = process.env.MY_REQUIRED_VAR;
-if (!myVar) {
-  throw new Error("MY_REQUIRED_VAR environment variable must be set");
-}
-```
+| # | Location | What to do |
+| --- | --- | --- |
+| 1 | Code | Read `process.env.X` on the server. Optional → safe fallback; required → fail clearly where it is used (backend reads still return a safe fallback, see `api-layer-patterns`). Never prefix a secret with `NEXT_PUBLIC_`. |
+| 2 | `.env.example` (+ your local `.env.local`) | Add a placeholder and a one-line comment in the right section. Never a real value. |
+| 3 | Coolify (staging and production apps) | Runtime values. Redeploy to apply. |
+| 4 | `.github/workflows/deploy-coolify.yml` (+ `Dockerfile`) | Build-time values only: add to `build-args:` and a matching `ARG`/`ENV` in the Dockerfile builder stage, or to `secrets:` plus a `--mount=type=secret` for private ones. |
+| 5 | GitHub secrets | Value for each Environment (`staging`, `production`) or repo-level. |
 
-### Optional Variables (Graceful Fallback)
+A `NEXT_PUBLIC_*` value missing from step 4 is `undefined` in the client bundle even if Coolify has it.
 
-For variables with defaults or optional features:
+## Local files
 
-```typescript
-const myVar = process.env.MY_OPTIONAL_VAR ?? "default-value";
-```
+Copy `.env.example` to `.env.local` and fill in real values. `next dev` reads `.env.development` and `.env.local`; the `build:<env>` / `start:<env>` scripts load `.env.<env>` with `env-cmd`. With no backend secret the app still renders, with empty data.
 
-## Current Required Secrets
+## Notes on specific services
 
-These MUST be set in the location(s) indicated:
+- **Backend**: `NEXT_PUBLIC_API_URL` is the public base (ends in `/api`); server-only `API_URL` overrides it on the server (`getApiUrl()` in `utils/api-helpers.ts`). The default comes from `config/api-defaults.json`.
+- **Sentry**: the browser (`instrumentation-client.ts`) and edge (`sentry.edge.config.ts`) use `NEXT_PUBLIC_SENTRY_DSN` (build arg). The Node server (`sentry.server.config.ts`) uses `SENTRY_DSN` (Coolify runtime). `SENTRY_AUTH_TOKEN` (build secret) turns on source-map upload; org and project are hard-coded in `next.config.js`, so the Dockerfile's `SENTRY_ORG`/`SENTRY_PROJECT` ARGs have no effect.
+- **Redis**: optional. `REDIS_URL` wins; otherwise a plain `redis://` URL is built from `REDIS_HOST`, `REDIS_PORT` (6379), `REDIS_USERNAME`, `REDIS_PASSWORD` (TLS needs `REDIS_URL`). With neither, `cache-handler.mjs` uses an in-process LRU and `lib/cache/redis-client.ts` returns `null` (callers fail open).
+- **Logto**: `LOGTO_*` are runtime-only, never `NEXT_PUBLIC_`. Use one Logto instance per environment; staging GitHub secrets use the `_STAGING` suffix. Setup, guards and the var table: `docs/logto-auth-setup.md`. Token refresh also needs `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN`.
 
-| Secret                  | Purpose                    | Location                   |
-| ----------------------- | -------------------------- | -------------------------- |
-| `NEXT_PUBLIC_API_URL`   | Backend API URL            | Coolify + GitHub Secrets   |
-| `HMAC_SECRET`           | API request signing        | Coolify + GitHub Secrets   |
-| `BACKEND_SERVICE_SECRET` | `X-Backend-Key` for the backend (64 hex, same value as the backend's) | Coolify + GitHub Secrets |
-| `SENTRY_DSN`            | Error tracking             | Coolify + GitHub Secrets   |
-| `DEEPL_API_KEY`         | Translation service        | Coolify                    |
-| `STRIPE_SECRET_KEY`     | Payment processing         | Coolify                    |
-| `STRIPE_WEBHOOK_SECRET` | Webhook verification       | Coolify                    |
-| `REVALIDATE_SECRET`     | Cache revalidation         | Coolify + GitHub Secrets   |
-| `COOLIFY_TOKEN`         | Deployment trigger         | GitHub Secrets only        |
-| `COOLIFY_WEBHOOK_URL`   | Deployment trigger         | GitHub Secrets only        |
+## Checklist
 
-## Current Optional Secrets
-
-| Secret                         | Purpose     | Fallback     |
-| ------------------------------ | ----------- | ------------ |
-| `NEXT_PUBLIC_GOOGLE_ANALYTICS` | Analytics   | Disabled     |
-| `NEXT_PUBLIC_GOOGLE_ADS`       | Ads         | Disabled     |
-| `NEXT_PUBLIC_GOOGLE_MAPS`      | Maps        | Disabled     |
-| `SENTRY_AUTH_TOKEN`            | Source maps | Warning only |
-| `CLOUDFLARE_ZONE_ID`           | CDN purge   | Skipped      |
-| `CLOUDFLARE_API_TOKEN`         | CDN purge   | Skipped      |
-| `GOOGLE_PLACES_API_KEY`        | Places API  | Disabled     |
-| `REDIS_URL`                    | Redis cache | Filesystem   |
-
-## Step-by-Step: Adding a New Environment Variable
-
-### Step 1: Add to Code
-
-```typescript
-// In your code file
-const myVar = process.env.MY_NEW_VAR;
-if (!myVar) {
-  // Handle missing - throw for required, fallback for optional
-}
-```
-
-### Step 2: Add to `.env.*` files
-
-This project uses `env-cmd` for local builds. Add the variable to **all applicable env files**:
-
-- `.env.development` — used by `yarn build:development`, `yarn start:development`
-- `.env.staging` — used by `yarn build:staging`, `yarn start:staging`
-- `.env.production` — used by `yarn build:production`, `yarn start:production`
-
-> **Important**: `NEXT_PUBLIC_*` vars (especially `NEXT_PUBLIC_API_URL`) MUST be in these files because they're inlined at build time and affect the service worker registration and test runs.
-
-### Step 3: Add to Coolify
-
-1. Go to **Coolify dashboard** → your application
-2. Go to **Environment Variables** tab
-3. Add `MY_NEW_VAR` with the production value
-4. Check "Build Variable" if needed during Docker build (e.g., `NEXT_PUBLIC_*` vars)
-5. Redeploy for changes to take effect
-
-### Step 4: Add to `deploy-coolify.yml`
-
-If the variable is needed during CI build/test (e.g., `NEXT_PUBLIC_*` vars baked at build time):
-
-```yaml
-- name: Build Next.js application
-  env:
-    MY_NEW_VAR: ${{ secrets.MY_NEW_VAR }}
-  run: yarn build
-```
-
-### Step 5: Add to GitHub Secrets
-
-1. Go to GitHub repo → Settings → Secrets and variables → Actions
-2. Click "New repository secret"
-3. Add `MY_NEW_VAR` with the actual value
-
-### Step 6: Update Documentation (Optional but Recommended)
-
-Add to the tables in this skill file.
-
-## `NEXT_PUBLIC_` Prefix Rules
-
-| Prefix            | Visibility      | Use Case                   |
-| ----------------- | --------------- | -------------------------- |
-| `NEXT_PUBLIC_*`   | Client + Server | Analytics IDs, public URLs |
-| No prefix         | Server only     | API keys, secrets, tokens  |
-
-**Security**: Never expose secrets to the client. API keys like `STRIPE_SECRET_KEY` must NOT have `NEXT_PUBLIC_` prefix.
-
-**Important**: `NEXT_PUBLIC_*` vars are inlined at **build time**. They must be available both in Coolify (as build variables) and in the GitHub Actions workflow (for CI builds).
-
-## Local Development
-
-Create `.env.local` (gitignored) for overrides, and ensure `.env.development` has the variable:
-
-```bash
-# .env.local (gitignored — personal overrides)
-HMAC_SECRET=dev-secret-for-testing
-
-# .env.development (committed — shared dev config via env-cmd)
-NEXT_PUBLIC_API_URL=https://api.esdeveniments.cat/api
-```
-
-## Common Mistakes
-
-1. **Adding to code but not Coolify** → Runtime crash in container
-2. **Adding to Coolify but not GitHub Secrets** → CI build fails
-3. **Adding to workflow but not GitHub Secrets** → Empty value, validation fails
-4. **Using `NEXT_PUBLIC_` for secrets** → Exposed to browser
-5. **Forgetting `.env.*` files** → `build:development`/`build:staging` broken
-6. **Not marking `NEXT_PUBLIC_*` as build variable in Coolify** → Variable undefined in client bundle
-
-## Checklist for New Env Variable
-
-- [ ] Added `process.env.VAR_NAME` in code?
-- [ ] Added to `.env.development`, `.env.staging`, `.env.production` as applicable?
-- [ ] Added to Coolify environment variables?
-- [ ] If `NEXT_PUBLIC_*`: marked as build variable in Coolify?
-- [ ] Added to `deploy-coolify.yml` if needed for CI?
-- [ ] Added secret value in GitHub repo settings?
-- [ ] Decided: required (throw) or optional (fallback)?
-- [ ] Correct prefix: `NEXT_PUBLIC_` only for public values?
-- [ ] Documented in this skill file (if persistent)?
-
-## Auth (Logto) env vars
-
-`LOGTO_*` are runtime auth secrets. Per-environment secrets use the `_STAGING`
-suffix in GitHub (e.g. `LOGTO_APP_SECRET_STAGING`), matching the existing
-`COOLIFY_TOKEN` / `COOLIFY_TOKEN_STAGING` convention. Best practice is one
-Logto **instance** per environment (not per-env apps in one instance). Full
-setup, the var table, and the CI guard are in
-[docs/logto-auth-setup.md](../../../docs/logto-auth-setup.md).
-
-## Files to Reference
-
-- `.env.development`, `.env.staging`, `.env.production` — local/CI builds via `env-cmd`
-- [.github/workflows/deploy-coolify.yml](../../workflows/deploy-coolify.yml) — CI/CD workflow
-- Coolify dashboard → Application → Environment Variables
-- GitHub repo → Settings → Secrets → Actions
-
-## Testing Your Changes
-
-After adding a new env var:
-
-1. **Local**: Add to `.env.development`, run `yarn dev` or `yarn build:development`
-2. **CI dry-run**: Push to branch, check workflow logs
-3. **Production**: Add to Coolify + `.env.production`, merge to main, verify via `/api/health` endpoint
+- [ ] Code reads it server-side, with a fallback or a clear error
+- [ ] `.env.example` has a placeholder + comment
+- [ ] Coolify staging and production set (runtime values)
+- [ ] Build-time? Workflow `build-args:`/`secrets:` + Dockerfile `ARG`/secret mount (+ `ci` build step `env:` if needed)
+- [ ] GitHub secret set for each Environment
+- [ ] No secret behind a `NEXT_PUBLIC_` prefix

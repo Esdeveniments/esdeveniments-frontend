@@ -1,254 +1,89 @@
 ---
 name: bundle-optimization
-description: Guide for optimizing bundle size and images. Server Components by default, use image quality caps.
+description: Image and bundle performance for esdeveniments.cat. Use when adding or changing images, the LCP image or its preload, card icons, prefetching, new client dependencies, or when checking bundle size, Core Web Vitals (LCP, TBT) or `yarn analyze` output.
 ---
 
-# Bundle Optimization Skill
+# Performance: images and bundles
 
-## Purpose
+Measured rules and numbers are in AGENTS.md › Performance and `docs/performance/baselines.md`. This skill shows how to apply them.
 
-Guide for optimizing bundle size and image performance. Ensure fast page loads and good Core Web Vitals.
+## Images
 
-## Bundle Analysis Commands
-
-```bash
-yarn analyze              # Full bundle analysis (client + server)
-yarn analyze:browser      # Browser bundles only
-yarn analyze:server       # Server bundles only
-yarn analyze:experimental # Next.js 16.1 interactive analyzer (Turbopack-compatible)
-```
-
-## Image Optimization
-
-### Quality Caps
-
-External images use quality caps to reduce bandwidth:
-
-| Context      | Quality | Use Case              |
-| ------------ | ------- | --------------------- |
-| Default      | 50      | Standard images       |
-| Priority/LCP | 50      | Above-the-fold images |
-
-> **Note**: LCP quality was reduced from 60 to 50 based on Lighthouse analysis
-> showing 159 KiB potential savings. See `utils/image-quality.ts` for details.
-
-### Helper Functions
-
-```typescript
-import {
-  getOptimalImageQuality,
-  getOptimalImageSizes,
-} from "@utils/image-quality";
-
-// Get quality based on context (uses options object)
-const heroQuality = getOptimalImageQuality({ isPriority: true }); // 50 (LCP external)
-const cardQuality = getOptimalImageQuality({ isPriority: false }); // 50 (standard external)
-
-// Get responsive sizes
-const sizes = getOptimalImageSizes("card");
-// "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-```
-
-### Image Component Usage
+External images don't use `next/image`. They go through `/api/image-proxy` (Sharp) and render as `<picture>` (WebP + JPEG fallback).
 
 ```tsx
-import Image from "next/image";
-import { getOptimalImageQuality, getOptimalImageSizes } from "@utils/image-quality";
+import Image from "@components/ui/common/image"; // picks ImageServer or ClientImage
 
-// ✅ CORRECT - Using helpers with options object
-<Image
-  src={event.imageUrl}
-  alt={event.title}
-  width={400}
-  height={300}
-  quality={getOptimalImageQuality({ isPriority: false })}
-  sizes={getOptimalImageSizes("card")}
-  loading="lazy"
-/>
+<Image image={event.imageUrl} title={event.title} context="card" />           // lazy
+<Image image={event.imageUrl} title={event.title} context="list" priority />  // the one LCP image
+```
 
-// ✅ CORRECT - Priority for LCP images
-<Image
-  src={event.imageUrl}
-  alt={event.title}
-  fill
-  priority
-  quality={getOptimalImageQuality({ isPriority: true })}
-  sizes={getOptimalImageSizes("hero")}
+- `components/ui/common/image/index.tsx` renders `ImageServer` (no image, no hydration) or `ClientImage` (retries via `useImageRetry`). Use `ImageServer` directly only where no retry is needed.
+- Quality: 50 for every external image, priority or not (`getOptimalImageQuality` in `utils/image-quality.ts`). Allowed values are `images.qualities` in `next.config.js`.
+- Sizes and widths: `getOptimalImageSizes(context)` and `getResponsiveWidths(context)` (`card`, `hero`, `list`, `detail`). Read the strings in `utils/image-quality.ts`; don't copy them.
+- URLs: `buildResponsivePictureSourceUrls` (`utils/image-cache.ts`). Never hand-build `/api/image-proxy` URLs.
+- Retries: see `components/ui/common/image/ClientImage.tsx` (`useImageRetry(2)`, `key={getImageKey(...)}`, `onError={handleError}`).
+
+## One LCP image + preload
+
+`priority` sets `loading="eager"` and `fetchPriority="high"`. Give it to one image per page. On listings that is the first card **with an image** (`hasCardImage`, `utils/event-helpers.ts`); ads and imageless events can't be the LCP.
+
+Preload that same image from the page server component. Use the same helper, widths and quality as the `<img>`, or the browser downloads it twice:
+
+```tsx
+const lcp = buildResponsivePictureSourceUrls(
+  imageUrl,
+  cacheKey,
+  { quality: getOptimalImageQuality({ isPriority: true, isExternal: true }) },
+  getResponsiveWidths("list")
+);
+
+// `href` (a URL from the set) lets React hoist the preload into <head>; without
+// it the <link> stays where it is rendered and is found later.
+<link
+  rel="preload"
+  as="image"
+  href={lcp.webp}
+  imageSrcSet={lcp.webpSrcSet}
+  imageSizes={getOptimalImageSizes("list")}
+  type="image/webp"
+  fetchPriority="high"
 />
 ```
 
-### Image Retry Logic
+Real code: `components/partials/PlacePageShell.tsx` (listings), `app/[locale]/e/[eventId]/page.tsx` (event hero); both still omit `href`, add it when you touch them. The home hero is a static AVIF/WebP set in `config/hero-image.ts`, with one preload per `<picture>` source.
 
-For unreliable image sources:
+## Repeated icons
 
-```typescript
-import { useImageRetry } from "@hooks/useImageRetry";
-
-function EventImage({ src, alt }) {
-  // useImageRetry takes optional maxRetries (default: 2)
-  const {
-    retryCount,
-    hasError,
-    imageLoaded,
-    showSkeleton,
-    handleError,
-    getImageKey,
-  } = useImageRetry();
-
-  return (
-    <Image
-      key={getImageKey(src)} // Forces re-render on retry
-      src={src}
-      alt={alt}
-      onError={handleError}
-      // Exponential backoff on retry (1s, 2s, 4s...)
-    />
-  );
-}
-```
-
-### Preloading Critical Images
-
-```typescript
-import { preloadImage } from "@utils/image-preload";
-
-// Preload LCP image
-preloadImage(heroImageUrl);
-```
-
-**Caution**: `preloadImage` has coupling to internal Next.js `_next/image` URL format. Use sparingly.
-
-## Cache Busting
-
-### Versioned URLs
-
-For static assets that need cache busting, add a version query parameter:
-
-```typescript
-// Pattern: Add version param for cache busting
-// BUILD_VERSION is available via scripts/generate-sw.mjs
-const buildVersion = process.env.BUILD_VERSION || Date.now().toString();
-
-function getVersionedUrl(path: string): string {
-  return `${path}?v=${buildVersion}`;
-}
-
-// Usage
-const url = getVersionedUrl("/static/data.json");
-// "/static/data.json?v=1234567890"
-```
-
-`BUILD_VERSION` resolves to:
-
-- Development: timestamp
-- Production: git SHA (set in CI workflows)
-
-## Code Splitting Best Practices
-
-### Dynamic Imports
-
-```typescript
-import dynamic from "next/dynamic";
-
-// ✅ CORRECT - Lazy load heavy components
-const HeavyChart = dynamic(() => import("@components/ui/HeavyChart"), {
-  loading: () => <ChartSkeleton />,
-});
-
-// ❌ WRONG - ssr: false in Server Components
-// Don't use ssr: false inside Server Components
-// Instead, create a client component wrapper
-```
-
-### Server Component Default
-
-Most components should be Server Components (no JS shipped):
+Icons on every card (map pin, hearts) use the sprite in `components/ui/common/IconSprite.tsx`, rendered once in the root layout:
 
 ```tsx
-// ✅ Server Component - Zero JS
-export function EventList({ events }) {
-  return (
-    <ul>
-      {events.map((event) => (
-        <li key={event.id}>{event.title}</li>
-      ))}
-    </ul>
-  );
-}
+import { SPRITE_ICON } from "@components/ui/common/IconSprite";
+
+<svg aria-hidden="true" className="h-4 w-4">
+  <use href={`#${SPRITE_ICON.mapPin}`} />
+</svg>
 ```
 
-### Client Components - Only When Needed
+Add an icon to the sprite only if it repeats many times per page.
 
-```tsx
-"use client";
+## Bundles
 
-// Only add "use client" for:
-// - useState, useEffect
-// - Event handlers (onClick, etc.)
-// - Browser APIs
-// - Third-party client-only libraries
-```
+- Server Components by default and `"use client"` at the leaf (`react-nextjs-patterns`). No local re-export barrels: see `react-nextjs-patterns` › No local barrel files.
+- Third-party scripts: follow the load timing in AGENTS.md › Performance (Funding Choices in `<head>`, AdSense after consent + interaction, GA `lazyOnload`).
+- Client i18n: only the namespaces in `lib/i18n/client-namespaces.ts` reach the client. Add a namespace there only if a client component needs it.
+- Prefetch: `partialPrefetching` is on. Never `prefetch={true}`; `PressableAnchor` defaults to `false`.
+- Before adding a client dependency, check it with `yarn analyze` (or `yarn analyze:experimental`).
 
-## Bundle Size Targets
+CI (`.github/workflows/ci.yml`) builds, runs `scripts/analyze-bundles-cli.mjs` and compares with `bundle-size-baseline.json` via `scripts/compare-bundle-sizes.mjs`; it fails on regressions above the thresholds there. Update the baseline only for intended growth.
 
-Monitor these in bundle analysis:
+## Cache busting
 
-| Metric        | Target  | Action if Exceeded   |
-| ------------- | ------- | -------------------- |
-| First Load JS | < 100kB | Split or lazy load   |
-| Shared chunks | < 50kB  | Check for large deps |
-| Page-specific | < 30kB  | Review page imports  |
+`BUILD_VERSION` (git SHA in CI/Docker, timestamp locally) is stamped into `public/sw.js` and reported by `/api/health`. There is no versioned-URL helper: `_next/static` files are content-hashed, and a changed public asset should get a new file name.
 
-## Common Bundle Bloaters
+## Files
 
-1. **Large date libraries** → Use native Intl or date-fns (tree-shakeable)
-2. **Full icon libraries** → Import specific icons only
-3. **Unused dependencies** → Audit with `yarn analyze`
-4. **Client-side only code in shared** → Move to client components
-5. **⚠️ Local barrel files (`index.ts` re-exports)** → NEVER create barrel files that re-export `"use client"` components from different route contexts. In Next.js RSC, every `"use client"` module re-exported from a barrel gets registered in the `client-reference-manifest` of **every route** that imports from that barrel — even if the component is never used. `optimizePackageImports` only applies to npm packages, not local barrels. Always use direct file imports.
-
-### ⚠️ Barrel File Incident (Feb 2026)
-
-`components/ui/sponsor/index.ts` re-exported 7 components. Routes like `/[place]` only needed `SponsorBannerSlot`, but importing from the barrel also pulled `CheckoutButton`, `PlaceSelector`, and `PricingSectionClient` (all `"use client"`) into the manifest — adding **24 KB** of bloat.
-
-```typescript
-// ❌ WRONG: Barrel import pulls ALL exports into manifest
-import { SponsorBannerSlot } from "@components/ui/sponsor";
-// → Also registers CheckoutButton, PlaceSelector, PricingSectionClient
-
-// ✅ CORRECT: Direct import only registers what's needed
-import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
-```
-
-**Fix**: Always use direct file imports for local components. Reserve barrels only for npm-published packages.
-
-## Optimization Checklist
-
-### Images
-
-- [ ] Using quality caps via `getOptimalImageQuality`?
-- [ ] Using responsive sizes via `getOptimalImageSizes`?
-- [ ] Priority on LCP images only?
-- [ ] Lazy loading below-the-fold images?
-
-### Bundles
-
-- [ ] Server Component by default?
-- [ ] Dynamic import for heavy components?
-- [ ] Running `yarn analyze` for new dependencies?
-- [ ] Checking First Load JS size?
-- [ ] **No local barrel files (`index.ts`) re-exporting `"use client"` components from different routes?**
-- [ ] All component imports use direct file paths (not barrel re-exports)?
-
-### Caching
-
-- [ ] Using `getVersionedUrl` for static assets?
-- [ ] Appropriate cache headers on API routes?
-
-## Files to Reference
-
-- [utils/image-quality.ts](../../../utils/image-quality.ts) - Image quality helpers
-- [utils/image-preload.ts](../../../utils/image-preload.ts) - Image preloading
-- [components/hooks/useImageRetry.ts](../../../components/hooks/useImageRetry.ts) - Retry logic
-- [next.config.js](../../../next.config.js) - Image domains, optimization config
-- [bundle-size-baseline.json](../../../bundle-size-baseline.json) - Size tracking
+- `utils/image-quality.ts`, `utils/image-cache.ts`
+- `components/ui/common/image/` (`index.tsx`, `ImageServer.tsx`, `ClientImage.tsx`), `components/hooks/useImageRetry.ts`
+- `components/ui/common/IconSprite.tsx`, `config/hero-image.ts`
+- `next.config.js` (`images.qualities`), `bundle-size-baseline.json`

@@ -1,238 +1,50 @@
 ---
 name: code-review-evaluation
-description: Evaluate external PR suggestions (Gemini, CodeRabbit) against project conventions. Use when asked to review or agree with external code review comments.
+description: Decide whether to agree with, partially accept or decline a PR review suggestion from bots (Gemini, CodeRabbit, Cubic, Greptile, Pullfrog, Sentry, Copilot) or humans, by checking it against this repo's conventions. Use when asked "do you agree with this suggestion?", to evaluate review comments, or from ai-review-responder before fixing or declining a thread.
 ---
 
-# Code Review Evaluation Skill
+# Code Review Evaluation
 
-## Purpose
+Review bots see the code and are usually right about generic issues. They don't know this repo's rules (AGENTS.md and the skills). Check a suggestion against those rules only when it touches them.
 
-Evaluate external code review suggestions (Gemini, CodeRabbit, etc.) against project conventions. These tools have access to our codebase and often make valid suggestions - but they don't know our **project-specific conventions**.
+## Default verdicts
 
-## What External Reviewers ARE Good At
+| Suggestion | Default |
+| --- | --- |
+| Bug, type error, missing null check or error handling, edge case | AGREE, fix it |
+| Wrong or missing docs/examples, unused code or imports | AGREE |
+| Extract a repeated literal, remove duplication, batch API calls | AGREE |
+| Too complex (>100-line function, >10 props, >3 levels) | AGREE |
+| Accessibility, generic security issue, missing test | AGREE |
+| Different pattern, new abstraction, architecture change | CHECK the skills below |
+| `useMemo`/`useCallback` without a measured problem | PARTIAL: only if profiling shows it |
+| Cosmetic refactor of working code (rename, reorder) | DECLINE: risk without benefit |
+| Same suggestion already declined in an earlier round | DECLINE: link the earlier reply |
+| Breaks behavior or a project rule | DECLINE: name the rule |
 
-CodeRabbit, Gemini, etc. **can see your code** and are excellent at catching:
+## Project rules bots get wrong
 
-- ✅ **Missing fields** in examples/docs (like missing `geoScope` in docstring)
-- ✅ **Type mismatches** and inconsistencies
-- ✅ **Unused imports/variables**
-- ✅ **Potential null/undefined errors**
-- ✅ **Security vulnerabilities** (generic patterns)
-- ✅ **Documentation gaps**
-- ✅ **Test coverage suggestions**
-- ✅ **General best practices** (accessibility, performance)
+| Suggestion | Our rule | Skill |
+| --- | --- | --- |
+| Use `next/link` | `Link` from `@i18n/routing` keeps the locale | `i18n-best-practices` |
+| Declare a type inline | All types in `types/` (ESLint) | `type-system-governance` |
+| Use `gray-*`, hex or arbitrary utilities | Semantic tokens, e.g. `text-muted-foreground` | `design-system-conventions` |
+| Read `searchParams` in a listing page | Never: makes pages dynamic ($300+ incident) | `url-canonicalization` |
+| Add `next: { revalidate }` to a `fetchWithHmac` call in `lib/api/*-external.ts` | Never: fetch-cache explosion (`revalidate` on same-origin `fetch()` in `lib/api/*.ts` is fine) | `api-layer-patterns` |
+| Call the backend directly, or use raw `fetch()`/axios for the backend or other services | `lib/api` → `app/api` → `*-external.ts`; `fetchWithHmac` / `safeFetch`. Plain `fetch()` to same-origin internal routes is fine | `api-layer-patterns`, `security-headers-csp` |
+| Skip Zod on external data | Zod in `lib/validation/`, safe fallback | `data-validation-patterns` |
+| Add an env var in one place | Update all 5 places | `env-variable-management` |
+| Add an `index.ts` re-exporting `"use client"` components used by different routes | Direct file imports (single-component entry points like `components/ui/addToCalendar/index.tsx` are fine) | AGENTS.md › Hard rules |
+| `prefetch={true}` on a link | Never (`partialPrefetching`) | `react-nextjs-patterns` |
+| Move Funding Choices into a Next `<Script>` or change how consent loads | FC stays a plain `<script async>` in `<head>`. GA keeps `lazyOnload`; AdSense keeps waiting for consent + first interaction | AGENTS.md › Performance |
+| Use `@types/*` alias instead of `types/*` | `@types/*` clashes with npm type packages | `type-system-governance` |
+| Add a new helper | Search for an existing one first | `pre-implementation-checklist` |
 
-**These suggestions are usually VALID - agree with them!**
+Also decline: consolidating queries that need different filters, swapping string ops for a parser on inputs we control, broadening specific `catch` blocks, and splitting small scripts only for style.
 
-## What External Reviewers DON'T Know
-
-They lack context about our **project-specific conventions**:
-
-- ❌ Our `@i18n/routing` Link requirement
-- ❌ Our `/types` directory governance
-- ❌ Our three-layer API proxy pattern
-- ❌ Our design system semantic classes
-- ❌ Our env variable 4-location rule
-- ❌ Our $300 searchParams incident history
-
-**Only check skills when suggestion involves these patterns.**
-
-## Evaluation Framework
-
-When user asks "Do you agree with this suggestion?":
-
-### Step 1: Categorize the Suggestion
-
-| Category            | Examples                                   | Default Response  |
-| ------------------- | ------------------------------------------ | ----------------- |
-| **Bug/Error fix**   | Missing field, type error, null check      | Usually **AGREE** |
-| **Documentation**   | Missing JSDoc, outdated example            | Usually **AGREE** |
-| **Code quality**    | Unused code, simplification                | Usually **AGREE** |
-| **Code complexity** | >100 lines/function, >10 props, >3 nesting | Usually **AGREE** |
-| **Pattern change**  | Different import, new abstraction          | **CHECK SKILLS**  |
-| **Architecture**    | Component structure, API calls             | **CHECK SKILLS**  |
-
-### Step 2: If Pattern/Architecture → Cross-Reference Skills
-
-Only check skills if the suggestion involves patterns we have rules for:
-
-| Skill                          | Check For                                           |
-| ------------------------------ | --------------------------------------------------- |
-| `pre-implementation-checklist` | Does suggestion duplicate existing code?            |
-| `type-system-governance`       | Does it create types outside `/types`?              |
-| `react-nextjs-patterns`        | Does it violate server-first pattern?               |
-| `api-layer-patterns`           | Does it bypass three-layer proxy?                   |
-| `url-canonicalization`         | Does it add `searchParams` to listing pages?        |
-| `i18n-best-practices`          | Does it use `next/link` instead of `@i18n/routing`? |
-| `design-system-conventions`    | Does it use `gray-*` or arbitrary utilities?        |
-| `env-variable-management`      | Does it add env var without all 5 locations?        |
-| `data-validation-patterns`     | Does it skip Zod validation?                        |
-| `security-headers-csp`         | Does it use raw `fetch()` without wrappers?         |
-
-### Step 3: Provide Structured Response
-
-## Response Template
+## Answer format
 
 ```markdown
-## Evaluation: [Suggestion Title/Topic]
-
-### Summary
-
-[1-2 sentence summary of the suggestion]
-
-### Category
-
-[Bug fix / Documentation / Code quality / Pattern change / Architecture]
-
-### Skill Check (if pattern/architecture)
-
-- [ ] [Relevant skill] - [Pass/Conflict: reason]
-
-### Recommendation
-
-**[AGREE / DISAGREE / PARTIAL]**
-
-[Explanation]
+**[AGREE | PARTIAL | DECLINE]**: <one line on the suggestion>
+Reason: <why; name the rule or skill if one applies>
 ```
-
-## Example: Valid Suggestion (AGREE)
-
-**CodeRabbit says**: "Docstring example missing geoScope field"
-
-```markdown
-## Evaluation: Missing geoScope in docstring
-
-### Summary
-
-Example in JSDoc is missing a required field from the type.
-
-### Category
-
-Documentation - external reviewer caught a real inconsistency.
-
-### Skill Check
-
-Not needed - this is a documentation fix, not a pattern change.
-
-### Recommendation
-
-**AGREE** - The docstring example should match the actual type definition.
-```
-
-## Project-Specific Blind Spots (CHECK SKILLS)
-
-Only disagree when suggestion conflicts with our conventions:
-
-### 1. "Use `next/link` directly"
-
-**Our rule**: Always use `Link` from `@i18n/routing`
-**Response**: Disagree - breaks locale handling
-
-### 2. "Add types inline in component"
-
-**Our rule**: All types in `/types` directory
-**Response**: Disagree - violates type governance
-
-### 3. "Use `gray-500` for text"
-
-**Our rule**: Use semantic tokens (`text-foreground/80`)
-**Response**: Disagree - violates design system
-
-### 4. "Add searchParams to page component for filtering"
-
-**Our rule**: NEVER in listing pages (causes $300+ cost spikes)
-**Response**: Disagree - violates url-canonicalization (CRITICAL)
-
-### 5. "Use raw fetch() for this API call"
-
-**Our rule**: Use `fetchWithHmac` or `safeFetch`
-**Response**: Disagree - violates security patterns
-
-### 6. "Create a helper function here"
-
-**Our rule**: Search for existing patterns first
-**Response**: Partial - check if pattern exists before creating
-
-### 7. "Use axios instead of fetch"
-
-**Our rule**: Use `fetchWithHmac` (internal) or `safeFetch` (external)
-**Response**: Disagree - we have standardized fetch wrappers
-
-### 8. "Prefer @types/\* path alias over bare types/ path"
-
-**Our rule**: Use `types/*` not `@types/*`
-**Response**: Disagree - `@types/*` conflicts with TypeScript's convention for type definition packages (e.g., `@types/react`, `@types/node`). We intentionally use `types/*` to avoid this collision.
-
-## Quick Decision Tree
-
-```text
-Is the suggestion about...?
-│
-├─ Bug/error fix → Usually AGREE ✅
-├─ Missing docs/fields → Usually AGREE ✅
-├─ Unused code cleanup → Usually AGREE ✅
-├─ Test coverage → Usually AGREE ✅
-│
-├─ Types/interfaces → Check type-system-governance
-├─ Components → Check react-nextjs-patterns
-├─ Styling → Check design-system-conventions
-├─ API calls → Check api-layer-patterns
-├─ URLs/routing → Check url-canonicalization
-├─ Links → Check i18n-best-practices
-├─ Env vars → Check env-variable-management
-├─ Validation → Check data-validation-patterns
-├─ Security → Check security-headers-csp
-├─ New utility → Check pre-implementation-checklist
-```
-
-## More Examples
-
-### Example: Missing Field in Docstring (AGREE)
-
-**Suggestion**: "Docstring example missing geoScope field"
-
-**Response**: **AGREE** - External reviewer correctly identified inconsistency between example and type.
-
-### Example: Suggestion to use `useMemo` (PARTIAL)
-
-**Suggestion**: "Wrap this computation in useMemo for performance"
-
-**Response**: **PARTIAL** - Only if profiling shows actual bottleneck. Don't prematurely optimize.
-
-### Example: Suggestion to inline styles (DISAGREE)
-
-**Suggestion**: "Use inline className with Tailwind utilities"
-
-**Response**: **DISAGREE** - `design-system-conventions` requires semantic classes.
-
-## When to AGREE (Most Cases)
-
-External reviewers are usually right about:
-
-- Missing fields in docs/examples
-- Type inconsistencies
-- Unused imports/variables
-- Null/undefined safety
-- Documentation improvements
-- Test coverage gaps
-- Accessibility issues
-- General security issues
-
-## When to DISAGREE (Project-Specific)
-
-Only disagree when suggestion conflicts with our skills:
-
-- Uses `next/link` instead of `@i18n/routing`
-- Creates types outside `/types`
-- Uses `gray-*` instead of semantic tokens
-- Adds `searchParams` to listing pages
-- Uses raw `fetch()` instead of our wrappers
-- Bypasses three-layer API pattern
-- Adds env var without 4-location update
-
-## Checklist
-
-- [ ] What category is this? (Bug fix / Docs / Code quality / Pattern)
-- [ ] If pattern change → check relevant skills
-- [ ] Does it conflict with project conventions?
-- [ ] Provide clear AGREE / DISAGREE / PARTIAL response
