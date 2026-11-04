@@ -422,7 +422,11 @@ CI run (`gh run download <id> -n bundle-sizes`), never from a local build.
 The artifact lists `routes` as an array; the baseline keys them by route and
 keeps its own `version` and `thresholds`. Copy the artifact's
 `client.totalBytes` into the top-level `clientTotalBytes` too: the gate reads
-that field, and without it the client check is skipped.
+that field, and without it the client check is skipped. Key the artifact's
+`pages` array by `page` the same way (`{ "/ca": { "jsGzipBytes": … } }`).
+Without `pages`, the per-page JS check is skipped, and that check is the one
+that sees a shared chunk grow on the home and listing pages: zod 4 added
+16 KB gzip there while `client.totalBytes` fell.
 `yarn build` itself fails in such a worktree. Turbopack rejects the symlink
 ("the symlink target leaves the configured filesystem roots"), so build in the
 main checkout or run a real `yarn install` in the worktree.
@@ -616,3 +620,29 @@ HTML for `s-maxage=1800`. `proxy.ts` (`utils/proxy-page-headers.ts`) now sends a
   revalidations; in a route handler they start before `after()` callbacks run.
 - Pages cached before a tag existed have no tags; the post-deploy purge in
   `deploy-coolify.yml` clears them.
+
+## The deploy's own E2E and smokes can hit the old production
+
+Release #630 (2026-11-04, backend v2) failed its first deploy, which kept
+production without events longer than planned. Two gaps, both in
+`deploy-coolify.yml`:
+
+- **E2E without `INTERNAL_SITE_URL`.** The deploy's E2E server set
+  `NEXT_PUBLIC_SITE_URL=https://www.esdeveniments.cat` but not
+  `INTERNAL_SITE_URL`, so cached readers (`preferConfiguredOrigin`) read event
+  details from live `www`. `www` still ran the old container, which could not
+  read backend v2, so every event resolved to "not found" and the deploy
+  stopped before building the image. CI's E2E already set it (see "PR E2E
+  builds and runs the app in the runner"); #631 added it to the deploy. Any
+  server that runs the app for tests must point `INTERNAL_SITE_URL` at itself.
+- **Post-deploy smokes can run before Coolify switches containers.** "Wait for
+  Coolify deployment to complete" passed, but the sign-in smoke a few seconds
+  later still got the old container (HTTP 401) and failed the job. The
+  Cloudflare purge comes after it, so it was skipped and the cached blank home
+  page stayed until a manual "Purge Everything". If a smoke fails right after
+  a deploy, recheck the live site before redeploying; if the new code is live,
+  purge Cloudflare by hand.
+
+When the backend contract changes, production is blank from the backend
+switch until the new frontend is live. Run the release PR's E2E before the
+switch, and have Cloudflare access ready for a manual purge.

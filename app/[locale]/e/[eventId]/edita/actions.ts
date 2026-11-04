@@ -1,5 +1,5 @@
 "use server";
-import { updateTag, refresh, revalidatePath } from "next/cache";
+import { updateTag, refresh } from "next/cache";
 import { after } from "next/server";
 import {
   updateEventById,
@@ -11,9 +11,10 @@ import type { EventBaseRequestDTO, EventUpdateRequestDTO } from "types/api/event
 import type { EditEventResult } from "types/event";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import { deleteEventDetailCache } from "@lib/cache/event-detail-cache";
+import { revalidateEventPages } from "@lib/cache/revalidate-event-pages";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { getCurrentUser } from "@lib/auth/session";
-import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
+import { isEventOwner } from "@utils/event-helpers";
 import { getValidatedImageFile } from "@utils/image-validation";
 
 /**
@@ -38,21 +39,7 @@ export async function editEvent(
     return { success: false, error: "Event not found" };
   }
 
-  if (event.id !== eventId) {
-    return {
-      success: false,
-      error: "Unauthorized: only the event creator can edit this event",
-    };
-  }
-
-  // Require both IDs to be defined and match. A missing creator on a legacy
-  // event must not match a logged-out user (undefined === undefined).
-  const isCreator = Boolean(
-    currentUser?.id &&
-      event.owner?.id &&
-      currentUser.id === event.owner.id,
-  );
-  if (!isCreator) {
+  if (event.id !== eventId || !isEventOwner(currentUser?.id, event.owner?.id)) {
     return {
       success: false,
       error: "Unauthorized: only the event creator can edit this event",
@@ -94,19 +81,9 @@ export async function editEvent(
   // stale data on the next GET (the 30-min TTL would otherwise keep the
   // pre-edit event for up to 30 minutes, even after updateTag/refresh).
   deleteEventDetailCache(updatedEvent.slug);
-  // Revalidate the HTML page for all locales so the user sees changes on
-  // both the old and new slug (if the slug changed from the title update).
-  try {
-    for (const locale of SUPPORTED_LOCALES) {
-      const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-      revalidatePath(`${prefix}/e/${updatedEvent.slug}`);
-      if (updatedEvent.slug !== slug) {
-        revalidatePath(`${prefix}/e/${slug}`);
-      }
-    }
-  } catch {
-    // revalidatePath is a no-op outside of a render context in some environments
-  }
+  // Revalidate the HTML page on both the old and new slug (the title edit may
+  // have changed it).
+  revalidateEventPages([updatedEvent.slug, slug]);
   // Next's tags don't reach Cloudflare: purge the pages that showed the old
   // event and those that show the new one (place or slug may have changed).
   after(() => purgeEventPagesFromCdn([event, updatedEvent]));

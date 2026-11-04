@@ -948,7 +948,13 @@
       "toolbarAriaLabel": "Event actions",
       "sidebarCreatedBy": "Published by",
       "sidebarViewAllEvents": "View all events",
-      "promoteEvent": "Promote"
+      "promoteEvent": "Promote",
+      "deleteEvent": "Delete event",
+      "deleteConfirmTitle": "Delete this event?",
+      "deleteConfirmDescription": "It will no longer appear in the listings and can't be recovered.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deleteError": "The event couldn't be deleted. Please try again."
     },
     "CardContent": {
       "dateRange": "{start} – {end}",
