@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import proxy from "../proxy";
 import { resolvePlaceForProxy } from "../lib/api/places-proxy";
+import { getCategoriesForProxy } from "../lib/api/categories-proxy";
 import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -70,6 +71,10 @@ vi.mock("../lib/api/places-proxy", () => ({
   resolvePlaceForProxy: vi.fn(),
 }));
 
+vi.mock("../lib/api/categories-proxy", () => ({
+  getCategoriesForProxy: vi.fn(),
+}));
+
 describe("proxy", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -94,6 +99,8 @@ describe("proxy", () => {
     (NextResponse.rewrite as any).mockReset();
     (resolvePlaceForProxy as Mock).mockReset();
     (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "unknown" });
+    (getCategoriesForProxy as Mock).mockReset();
+    (getCategoriesForProxy as Mock).mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -511,6 +518,65 @@ describe("proxy", () => {
       await proxy(placeRequest(pathname, method));
 
       expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("unknown category (301 instead of a soft 404)", () => {
+    function listingRequest(pathname: string, search = "") {
+      return {
+        nextUrl: mockNextUrl({ pathname, search }),
+        headers: new Headers({ accept: "text/html" }),
+        method: "GET",
+      } as unknown as NextRequest;
+    }
+
+    beforeEach(() => {
+      (getCategoriesForProxy as Mock).mockResolvedValue([
+        { id: 1, name: "Teatre", slug: "teatre" },
+        { id: 2, name: "Música", slug: "musica" },
+      ]);
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+      (NextResponse.next as Mock).mockReturnValue({ headers: new Headers() });
+    });
+
+    it.each([
+      ["/barcelona/concerts", "", "/barcelona"],
+      ["/es/barcelona/avui/concerts", "?search=jazz", "/es/barcelona/avui"],
+      ["/barcelona/ahir/teatre", "", "/barcelona/teatre"],
+      ["/catalunya/concerts", "", "/catalunya"],
+    ])("301s %s%s to %s", async (pathname, search, target) => {
+      await proxy(listingRequest(pathname, search));
+
+      const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+      expect(status).toBe(301);
+      expect(url.pathname).toBe(target);
+      expect(url.search).toBe(search);
+    });
+
+    it.each(["/barcelona/teatre", "/barcelona/avui/musica"])(
+      "serves %s as before",
+      async (pathname) => {
+        await proxy(listingRequest(pathname));
+        expect(NextResponse.redirect).not.toHaveBeenCalled();
+      },
+    );
+
+    it("skips the category lookup for a date-only path", async () => {
+      await proxy(listingRequest("/barcelona/avui"));
+      expect(getCategoriesForProxy).not.toHaveBeenCalled();
+    });
+
+    it("fails open when the categories can't be loaded", async () => {
+      (getCategoriesForProxy as Mock).mockResolvedValue(null);
+      await proxy(listingRequest("/barcelona/concerts"));
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+    });
+
+    it("keeps the 404 for a missing place", async () => {
+      (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+      await proxy(listingRequest("/no-such-place/concerts"));
+      expect(NextResponse.redirect).not.toHaveBeenCalled();
+      expect((NextResponse.rewrite as Mock).mock.calls[0][1].status).toBe(404);
     });
   });
 

@@ -20,6 +20,9 @@ clear its 1 h place cache: a new place can 404 for up to an hour plus CDN TTL.
 A new top-level route folder must be added to `NON_PLACE_FIRST_SEGMENTS`
 (`utils/middleware-redirects.ts`, guarded by
 `test/middleware-redirects-non-place.test.ts`) or it would be checked as a place.
+Unknown category slugs (`/barcelona/concerts`) get the same treatment: `checkCategory`
+(`utils/proxy-place.ts`) 301s them to the URL the page's `getRedirectUrl` would pick,
+with the same cache, timeout and back-off (`lib/api/proxy-list.ts`).
 Missing events still serve 200 + `noindex`: a 404 there would need a full event
 fetch in Proxy.
 

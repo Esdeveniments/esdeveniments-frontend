@@ -11,11 +11,13 @@ import { parseCategories, parseCategoryDetail } from "lib/validation/category";
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
 
-export async function fetchCategoriesExternal(): Promise<CategorySummaryResponseDTO[]> {
+export async function fetchCategoriesExternal({
+  signal,
+}: Pick<RequestInit, "signal"> = {}): Promise<CategorySummaryResponseDTO[]> {
   const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const res = await fetchWithHmac(`${api}/categories`);
+    const res = await fetchWithHmac(`${api}/categories`, { signal });
     if (!res.ok) {
       console.error(`Failed to fetch categories: HTTP ${res.status}`);
       return [];

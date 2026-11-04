@@ -11,7 +11,7 @@ import {
 } from "@utils/proxy-locale";
 import { getLoginEntryRedirect } from "@utils/proxy-login";
 import { applyPageHeaders } from "@utils/proxy-page-headers";
-import { checkPlace } from "@utils/proxy-place";
+import { checkCategory, checkPlace } from "@utils/proxy-place";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 // Static headers, trust-page redirects and the /openapi.json and
@@ -65,13 +65,19 @@ export default async function proxy(request: NextRequest) {
     return canonicalRedirect;
   }
 
-  const placeCheck = await checkPlace(
-    request,
-    pathnameWithoutLocale,
-    localeFromPath,
-  );
-  if (placeCheck?.kind === "alias") {
-    const response = NextResponse.redirect(placeCheck.url, 301);
+  // Both lists are cached for an hour, so this rarely waits on the backend.
+  const [placeCheck, categoryRedirectUrl] = await Promise.all([
+    checkPlace(request, pathnameWithoutLocale, localeFromPath),
+    checkCategory(request, pathnameWithoutLocale, localeFromPath),
+  ]);
+  const redirectUrl =
+    placeCheck?.kind === "alias"
+      ? placeCheck.url
+      : placeCheck?.kind === "missing"
+        ? null
+        : categoryRedirectUrl;
+  if (redirectUrl) {
+    const response = NextResponse.redirect(redirectUrl, 301);
     if (pathLocaleToPersist) {
       persistLocaleCookie(response, pathLocaleToPersist);
     }

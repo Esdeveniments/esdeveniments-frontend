@@ -20,6 +20,13 @@ export type KeyedCacheFn<T> = (
   fetcher: (_key: string | number) => Promise<T>
 ) => Promise<T>;
 
+/** A cached backend list for Proxy checks (lib/api/proxy-list.ts). */
+export type ProxyListLoader<T> = {
+  isBackingOff: () => boolean;
+  backOff: () => void;
+  load: (signal: AbortSignal) => Promise<T[]>;
+};
+
 /**
  * Centralized cache tag types for Next.js 16 tag-based caching
  * Used with updateTag(), revalidateTag(), and fetch next.tags

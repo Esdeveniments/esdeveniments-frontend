@@ -1,7 +1,10 @@
 import type { NextRequest } from "next/server";
+import { getCategoriesForProxy } from "@lib/api/categories-proxy";
 import { resolvePlaceForProxy } from "@lib/api/places-proxy";
+import { isValidDateSlug } from "@lib/dates";
 import { NON_PLACE_FIRST_SEGMENTS } from "@utils/middleware-redirects";
 import { isValidPlace } from "@utils/route-validation";
+import { getRedirectUrl, parseFiltersFromUrl } from "@utils/url-filters";
 import type { ProxyPlaceCheck } from "types/api/place";
 
 /**
@@ -46,4 +49,41 @@ export async function checkPlace(
     ...segments.slice(1).map((segment) => `/${segment}`),
   ].join("");
   return { kind: "alias", url };
+}
+
+/**
+ * Unknown category slugs (/barcelona/concerts) get a 301 to the canonical
+ * listing, using the same parseFiltersFromUrl/getRedirectUrl as the page. In
+ * the page that redirect streams as 200 + meta refresh, which Google can
+ * index as a soft 404. The query is kept, as in checkPlace. Returns null when
+ * the URL is canonical or the backend can't answer (the page then redirects).
+ */
+export async function checkCategory(
+  request: NextRequest,
+  pathnameWithoutLocale: string,
+  localeFromPath: string | null,
+): Promise<URL | null> {
+  if (request.method !== "GET" && request.method !== "HEAD") return null;
+
+  const segments = pathnameWithoutLocale.split("/").filter(Boolean);
+  if (segments.length < 2 || !isPlacePath(segments)) return null;
+  // /place/date has no category to check: skip the backend.
+  if (segments.length === 2 && isValidDateSlug(segments[1])) return null;
+
+  const categories = await getCategoriesForProxy();
+  if (!categories) return null;
+
+  const [place, date, category] = segments;
+  const canonicalPath = getRedirectUrl(
+    parseFiltersFromUrl(
+      { place, date, category },
+      new URLSearchParams(),
+      categories,
+    ),
+  );
+  if (!canonicalPath || canonicalPath === pathnameWithoutLocale) return null;
+
+  const url = request.nextUrl.clone();
+  url.pathname = `${localeFromPath ? `/${localeFromPath}` : ""}${canonicalPath}`;
+  return url;
 }
