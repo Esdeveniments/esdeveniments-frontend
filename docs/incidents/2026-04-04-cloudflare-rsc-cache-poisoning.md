@@ -61,10 +61,10 @@ The initial fix attempt was to add `Vary: RSC` so Cloudflare would maintain sepa
 
 ## Resolution
 
-Two layers protect HTML URLs. The proxy is not one of them (see "Correction (2026-11-04)").
+One rule protects HTML URLs, and Next adds a mitigation. The proxy does neither (see "Correction (2026-11-04)").
 
-1. **Cloudflare Cache Rule "RSC flight payloads — never cache"** (Bypass). It must sit *below* the broad "Cache HTML pages" rule (last match wins). Live check on 2026-11-04 against `www`: an `RSC: 1` request got `cf-cache-status: DYNAMIC`, and the next plain request to the same fresh URL got `text/html` (`MISS`, then `HIT`).
-2. **Next.js `_rsc` cache-busting** (Next 16.3+, `experimental.validateRSCRequestHeaders` on by default). RSC requests carry `?_rsc=<hash of the router headers>`, so they never share a cache key with the HTML URL. An RSC request with a missing or wrong `_rsc` gets an empty `307` to the correct URL instead of a flight payload. Main ran Next 16.2.6 without this; develop runs 16.4.4. Docs: https://nextjs.org/docs/app/guides/cdn-caching. Don't set `validateRSCRequestHeaders: false`, and keep query strings in the Cloudflare cache key.
+1. **Protection: Cloudflare Cache Rule "RSC flight payloads — never cache"** (Bypass). It is the only thing that keeps responses to `RSC: 1` requests out of the HTML URL's cache key. It must sit *below* the broad "Cache HTML pages" rule (last match wins). Live check on 2026-11-04 against `www`: an `RSC: 1` request got `cf-cache-status: DYNAMIC`, and the next plain request to the same fresh URL got `text/html` (`MISS`, then `HIT`).
+2. **Mitigation: Next.js `_rsc` cache-busting** (Next 16.3+, `experimental.validateRSCRequestHeaders` on by default). Real client navigations carry `?_rsc=<hash of the router headers>`, so they get their own cache key. A request with `RSC: 1` and a missing or wrong `_rsc` gets an empty `307` to the correct URL instead of a flight payload. That `307` is keyed on the plain URL and goes out with the proxy's `public, s-maxage=1800` (Next sets no `Cache-Control` on it). Cloudflare does not cache `307` by default, but without the bypass rule a cache rule could store it, and every visitor would get the redirect. So this narrows the failure; it does not prevent it. Main ran Next 16.2.6 without this; develop runs 16.4.4. Docs: https://nextjs.org/docs/app/guides/cdn-caching. Don't set `validateRSCRequestHeaders: false`, and keep query strings in the Cloudflare cache key.
 
 ## Correction (2026-11-04)
 
@@ -77,8 +77,8 @@ The proxy split (#625) dropped the check from develop, and the develop → main 
 ## Prevention
 
 1. **Cloudflare bypass rule for RSC requests**, ordered below the HTML rule (see Bug B).
-2. **Next 16.3+ `_rsc` validation** stays on (the default).
-3. **Check after any Cloudflare cache rule change or cache purge:** send `RSC: 1` to a fresh, rarely visited URL on `www`, then a plain request to the same URL. The plain one must be `text/html`.
+2. **Next 16.3+ `_rsc` validation** stays on (the default). It is a mitigation, not a replacement for item 1.
+3. **Check after any Cloudflare cache rule change or cache purge:** send `RSC: 1` to a fresh, rarely visited URL on `www`, then a plain request to the same URL. The plain one must be `200 text/html`, never `text/x-component` or a `307`.
 
 ### Cloudflare Cache Rule Reminder
 

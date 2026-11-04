@@ -105,7 +105,7 @@ Merge the back-merge PR with a **merge commit, never squash**. A squash copies m
 
 ## `proxy.ts` can't see RSC requests
 
-Next strips the router headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, `next-router-segment-prefetch`) and the `_rsc` query param before `proxy.ts` runs (`FLIGHT_HEADERS` loop in `next/dist/server/web/adapter.js`). So `request.headers.get("RSC")` is always `null` there. A unit test that builds the request with that header by hand passes anyway. The RSC check from `0cdf6f8e` never fired for this reason. Cloudflare RSC cache poisoning is handled by the Cloudflare bypass rule and Next's `_rsc` validation (`docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md`).
+Next strips the router headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, `next-router-segment-prefetch`) and the `_rsc` query param before `proxy.ts` runs (`FLIGHT_HEADERS` loop in `next/dist/server/web/adapter.js`). So `request.headers.get("RSC")` is always `null` there. A unit test that builds the request with that header by hand passes anyway. The RSC check from `0cdf6f8e` never fired for this reason. Cloudflare RSC cache poisoning is prevented by the Cloudflare bypass rule; Next's `_rsc` validation only narrows it (an empty `307` on the plain URL instead of a flight payload) (`docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md`).
 
 ## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
 
