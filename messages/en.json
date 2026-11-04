@@ -1572,7 +1572,17 @@
       "familiaIInfants": "Family activities",
       "musica": "Concerts",
       "teatre": "Theatre",
-      "exposicions": "Exhibitions"
+      "exposicions": "Exhibitions",
+      "literatura": "Literature and books",
+      "tallersIFormacio": "Workshops and training",
+      "dansa": "Dance",
+      "salutIBenestar": "Health and wellness",
+      "esport": "Sports and physical activity",
+      "patrimoniCultural": "Cultural heritage",
+      "serveisMunicipals": "Municipal services",
+      "gentGran": "Activities for seniors",
+      "cinema": "Cinema and movies",
+      "altres": "Other activities"
     },
     "ByDates": {
       "today": "Today",

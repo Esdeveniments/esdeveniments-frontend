@@ -46,7 +46,6 @@ describe("FiltersClient - Date Filter Capitalization", () => {
         setmana: "Aquesta setmana",
         "cap-de-setmana": "Cap de setmana",
       },
-      categoryLabelsBySlug: {},
     },
   };
 
@@ -174,7 +173,6 @@ describe("FiltersClient - Place Name Capitalization", () => {
         searchTerm: "Cerca",
       },
       byDates: {},
-      categoryLabelsBySlug: {},
     },
   };
 
@@ -236,9 +234,6 @@ describe("FiltersClient - Category Name Capitalization", () => {
         searchTerm: "Cerca",
       },
       byDates: {},
-      categoryLabelsBySlug: {
-        concerts: "Concerts",
-      },
     },
   };
 
@@ -265,9 +260,6 @@ describe("FiltersClient - Category Name Capitalization", () => {
         ]}
         labels={{
           ...baseProps.labels,
-          categoryLabelsBySlug: {
-            "teatre-i-dansa": "Teatre i Dansa",
-          },
         }}
       />
     );
@@ -305,7 +297,6 @@ describe("FiltersClient - Distance Formatting", () => {
         searchTerm: "Cerca",
       },
       byDates: {},
-      categoryLabelsBySlug: {},
     },
   };
 
@@ -367,9 +358,6 @@ describe("FiltersClient - Multiple Filters Capitalization", () => {
           dema: "Demà",
           setmana: "Aquesta setmana",
           "cap-de-setmana": "Cap de setmana",
-        },
-        categoryLabelsBySlug: {
-          concerts: "Concerts",
         },
       },
     };

@@ -9,6 +9,7 @@ import FilterButton from "./FilterButton";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { FiltersClientProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
+import { getCategoryLabel } from "@utils/category-helpers";
 
 const FiltersClient = ({
   segments,
@@ -18,7 +19,7 @@ const FiltersClient = ({
   onOpenModal,
   labels,
 }: FiltersClientProps): JSX.Element => {
-  const tSeoCategoryData = useTranslations("Partials.GeneratePagesData");
+  const tCategories = useTranslations("Config.Categories");
 
   // Convert URL data to filter state for display
   const filters = {
@@ -63,14 +64,10 @@ const FiltersClient = ({
 
   const translatedCategory = (value: string | undefined): string | undefined => {
     if (!value) return value;
-    const normalized = value.toLowerCase();
-
-    const seoKey = `categories.${normalized}.titleSuffix`;
-    if (tSeoCategoryData.has(seoKey)) {
-      return tSeoCategoryData(seoKey);
-    }
-
-    return labels.categoryLabelsBySlug?.[normalized] || value;
+    const backendName = categories.find(
+      (category) => category.slug === value
+    )?.name;
+    return getCategoryLabel(value, backendName, tCategories);
   };
 
   const { displayNameMap, triggerLabel } = labels;
