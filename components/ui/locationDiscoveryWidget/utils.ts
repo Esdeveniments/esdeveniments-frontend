@@ -1,6 +1,7 @@
 import { Option } from "types/common";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { sanitize } from "@utils/string-helpers";
+import { getDistance } from "@utils/location-helpers";
 
 /**
  * Transform regions data to flat Option[] for searchable select
@@ -31,29 +32,30 @@ export function transformRegionsToOptions(
 }
 
 /**
- * Find nearest city using coordinates
- * For now, returns Catalunya as fallback - can be enhanced with actual mapping
+ * Find the closest known city to the given coordinates using straight-line
+ * (haversine) distance. Falls back to Catalunya when no cities are available.
  */
 export function findNearestCity(
-  _coordinates: GeolocationCoordinates,
-  _regions: RegionsGroupedByCitiesResponseDTO[]
+  coordinates: GeolocationCoordinates,
+  regions: RegionsGroupedByCitiesResponseDTO[]
 ): Option | null {
-  // TODO: Implement actual coordinate-to-city mapping logic
-  // For now, return Catalunya as fallback
-  return { value: "catalunya", label: "Catalunya" };
-}
+  const origin = { lat: coordinates.latitude, lng: coordinates.longitude };
 
-/**
- * Debounce function for search input
- */
-export function debounce<T extends (..._args: unknown[]) => void>(
-  func: T,
-  wait: number
-): (..._args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+  let nearest: Option | null = null;
+  let nearestDistance = Infinity;
 
-  return function (...args: Parameters<T>) {
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
+  for (const region of regions) {
+    for (const city of region.cities) {
+      const distance = getDistance(origin, {
+        lat: city.latitude,
+        lng: city.longitude,
+      });
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = { value: city.value, label: city.label };
+      }
+    }
+  }
+
+  return nearest ?? { value: "catalunya", label: "Catalunya" };
 }

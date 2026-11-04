@@ -12,13 +12,16 @@ import {
 } from "types/api/restaurant";
 import WhereToEatSection from "./WhereToEatSection";
 import WhereToEatSkeleton from "./WhereToEatSkeleton";
-import useOnScreen from "components/hooks/useOnScreen";
+import SectionHeading from "@components/ui/common/SectionHeading";
+import { FireIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 
 // Lazy load info modal only when needed
 const PromotionInfoModal = dynamic(() => import("./PromotionInfoModal"), {
   ssr: false,
 });
+// The route's own Google call times out at 5s; leave headroom for the hop.
+const PLACES_FETCH_TIMEOUT_MS = 8000;
 // import RestaurantPromotionForm from "./RestaurantPromotionForm";
 // import PromotedRestaurantCard from "./PromotedRestaurantCard";
 
@@ -34,6 +37,7 @@ export default function RestaurantPromotionSection({
 }: RestaurantPromotionSectionProps) {
   const tStatus = useTranslations("Utils.EventStatus");
   const statusLabels = useMemo(() => buildEventStatusLabels(tStatus), [tStatus]);
+  const t = useTranslations("Components.WhereToEatSection");
 
   // Suppress unused parameter warning - eventId is used in commented-out form
   void eventId;
@@ -41,15 +45,13 @@ export default function RestaurantPromotionSection({
   const [placesResp, setPlacesResp] = useState<PlacesResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [openPromoInfo, setOpenPromoInfo] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const isVisible = useOnScreen(sectionRef as React.RefObject<Element>, {
-    freezeOnceVisible: true,
-  });
+  const [hasRequested, setHasRequested] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Memoize derived state to avoid recalculating on every render
   // We keep two booleans:
   // - eventIsInFuture: whether the event is today (and not finished) or in the future (used to decide render)
-  // - eventIsWithinFetchWindow: whether the event is within the next MAX_DAYS days
+  // - eventIsWithinFetchWindow: whether the event is within the next MAX_DAYS days (enables the load button)
   const { eventIsWithinFetchWindow, eventIsInFuture } = useMemo(() => {
     const MAX_DAYS = 15;
     if (!eventStartDate)
@@ -88,63 +90,54 @@ export default function RestaurantPromotionSection({
     return { eventIsWithinFetchWindow, eventIsInFuture };
   }, [eventStartDate, eventEndDate, eventStartTime, eventEndTime, statusLabels]);
 
-  // Track section view when visible and places are loaded (fire only once)
+  // Track section view once places are loaded (fire only once)
   const hasTrackedViewRef = useRef(false);
   useEffect(() => {
     const placesCount = placesResp?.results?.length ?? 0;
-    if (!hasTrackedViewRef.current && isVisible && placesCount > 0) {
+    if (!hasTrackedViewRef.current && placesCount > 0) {
       sendGoogleEvent("restaurant_section_view", {
         context: "event_detail",
         places_count: placesCount,
       });
       hasTrackedViewRef.current = true;
     }
-  }, [isVisible, placesResp]);
+  }, [placesResp]);
 
-  // Fetch places when section becomes visible and event is in future and within the fetch window
-  useEffect(() => {
-    if (!isVisible || !eventStartDate || !eventLat || !eventLng || placesResp) {
-      return;
-    }
-    // Only fetch if the event is within the configured fetch window (e.g. next 15 days)
-    if (!eventIsWithinFetchWindow) return;
+  // Click-to-load: every cache miss is a billed Google `searchNearby` call, so
+  // we only fetch when a person asks. Bots and passive scrollers never trigger it.
+  const canLoadPlaces = Boolean(
+    eventIsWithinFetchWindow && eventStartDate && eventLat && eventLng
+  );
 
-    const fetchPlaces = async () => {
-      setIsLoading(true);
+  const handleLoadPlaces = async () => {
+    if (hasRequested || !canLoadPlaces || !eventStartDate) return;
+    setHasRequested(true);
+    setIsLoading(true);
+    // The clicked button unmounts; keep keyboard focus inside the widget.
+    containerRef.current?.focus();
+    sendGoogleEvent("restaurant_load_click", { context: "event_detail" });
 
-      try {
-        let dateParam = "";
-        if (eventStartDate) {
-          // Format to YYYY-MM-DD for the API
-          const parsed = parseISO(eventStartDate);
-          const usedDate = isValid(parsed) ? parsed : new Date(eventStartDate);
-          dateParam = `&date=${format(usedDate, "yyyy-MM-dd")}`;
-        }
-        const url = `/api/places/nearby?lat=${eventLat}&lng=${eventLng}&limit=2${dateParam}`;
-        const res = await fetch(url);
+    try {
+      const parsed = parseISO(eventStartDate);
+      const usedDate = isValid(parsed) ? parsed : new Date(eventStartDate);
+      const dateParam = `&date=${format(usedDate, "yyyy-MM-dd")}`;
+      const url = `/api/places/nearby?lat=${eventLat}&lng=${eventLng}&limit=2${dateParam}`;
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(PLACES_FETCH_TIMEOUT_MS),
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          setPlacesResp(data);
-        }
-        // On failure, leave the section hidden — it's a non-critical widget,
-        // not worth showing the user an error.
-      } catch (err) {
-        console.error("Error fetching places", err);
-      } finally {
-        setIsLoading(false);
+      if (res.ok) {
+        const data = await res.json();
+        setPlacesResp(data);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching places", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchPlaces();
-  }, [
-    isVisible,
-    eventLat,
-    eventLng,
-    eventStartDate,
-    placesResp,
-    eventIsWithinFetchWindow,
-  ]);
+  const hasPlaces = (placesResp?.results?.length ?? 0) > 0;
 
   // Don't render if event is in the past
   if (!eventIsInFuture) {
@@ -153,9 +146,42 @@ export default function RestaurantPromotionSection({
 
   return (
     <div
-      ref={sectionRef}
-      className="w-full flex justify-center items-start gap-2 min-w-0"
+      ref={containerRef}
+      tabIndex={-1}
+      aria-busy={isLoading}
+      className="w-full flex justify-center items-start gap-2 min-w-0 outline-none"
     >
+      {canLoadPlaces && (!hasRequested || (!isLoading && !hasPlaces)) && (
+        <section className="stack w-full min-w-0" aria-labelledby="where-to-eat">
+          <SectionHeading
+            headingId="where-to-eat"
+            Icon={FireIcon}
+            iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
+            title={t("title")}
+            titleClassName="heading-2"
+          />
+          {hasRequested ? (
+            // Google errors reach us as empty results (the route fails soft);
+            // non-OK responses and network errors leave placesResp null. Both
+            // land here, so this copy must hold for "none" and "failed".
+            <p className="body-small text-muted-foreground px-section-x">
+              {t("empty")}
+            </p>
+          ) : (
+            <div className="stack px-section-x">
+              <p className="body-small text-muted-foreground">{t("loadIntro")}</p>
+              <button
+                type="button"
+                onClick={handleLoadPlaces}
+                className="btn-outline btn-sm self-start"
+              >
+                {t("loadCta")}
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Loading State */}
       {isLoading && (
         <WhereToEatSkeleton
@@ -175,7 +201,7 @@ export default function RestaurantPromotionSection({
         )} */}
 
       {/* Where to Eat Section */}
-      {placesResp && placesResp.results?.length > 0 && (
+      {placesResp && hasPlaces && (
         <WhereToEatSection
           places={placesResp.results}
           attribution={placesResp.attribution}

@@ -1,9 +1,8 @@
-import { insertAds } from "@lib/api/events";
+import { fetchEventsCached, insertAds } from "@lib/api/events";
 import { Suspense, use } from "react";
 import type { JSX } from "react";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, formatPlaceName } from "@utils/helpers";
-import { getPlaceTypeAndLabelForMetadata } from "@lib/seo/place-metadata";
 import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
@@ -12,14 +11,12 @@ import {
   generateWebPageSchema,
 } from "@components/partials/seo-meta";
 import type {
-  PlaceStaticPathParams,
   PlaceTypeAndLabel,
   PageData,
 } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
-import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -36,7 +33,10 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import { getPlaceExpandability } from "@lib/seo/place-expandability";
+import {
+  getPlaceExpandability,
+  isExpandableByCount,
+} from "@lib/seo/place-expandability";
 import {
   SSR_EVENTS_SIZE_EXPANDABLE,
   SSR_EVENTS_SIZE_THIN,
@@ -48,9 +48,7 @@ import {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/[place]">) {
   const { place } = await params;
 
   const validation = validatePlaceForMetadata(place);
@@ -60,7 +58,7 @@ export async function generateMetadata({
 
   const locale = (await rootLocale()) as AppLocale;
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelForMetadata(
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
     place
   );
   const pageData: PageData = await generatePagesData({
@@ -83,9 +81,7 @@ export async function generateMetadata({
 // shell data, and events fetch — lives inside PlacePageGate and streams in.
 export default function Page({
   params,
-}: {
-  params: Promise<PlaceStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/[place]">) {
   const { place } = use(params);
 
   // Minimal SEO-safe fallback: if the streamed gate fails (broken env,
@@ -147,10 +143,6 @@ export async function PlacePageGate({ place }: { place: string }): Promise<JSX.E
     locale,
     rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}`,
-    buildFallbackUrlForInvalidPlace: () =>
-      buildFallbackUrlForInvalidPlace({
-        rawSearchParams: {},
-      }),
     fetchPlaceBySlug,
   });
   if (placeRedirectUrl) {
@@ -224,19 +216,15 @@ export async function buildPlaceEventsPromise({
   place: string;
   locale?: AppLocale;
 }): Promise<PlacePageEventsResult> {
-  // Both helpers are React cache()-wrapped, so duplicate calls in the same
-  // request (e.g. from PlacePageShell/generateMetadata) are deduplicated.
   const placeTypeLabel = await getPlaceTypeAndLabelCached(place);
-  const expandable = await getPlaceExpandability(
-    place,
-    placeTypeLabel.type
-  );
 
+  // Always fetch the rich page size: the unfiltered response's totalElements
+  // decides expandability, which saves a separate count call. Thin places are
+  // trimmed to SSR_EVENTS_SIZE_THIN below.
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: expandable ? SSR_EVENTS_SIZE_EXPANDABLE : SSR_EVENTS_SIZE_THIN,
+    size: SSR_EVENTS_SIZE_EXPANDABLE,
   };
-  const ssrPageSize = fetchParams.size as number;
 
   if (place !== "catalunya") {
     fetchParams.place = place;
@@ -246,6 +234,7 @@ export async function buildPlaceEventsPromise({
     await fetchEventsWithFallback({
       place,
       initialParams: fetchParams,
+      fetcher: fetchEventsCached,
       regionFallback: {
         size: 7,
         includeCategory: false,
@@ -259,9 +248,25 @@ export async function buildPlaceEventsPromise({
         place: undefined,
       },
     });
-  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
+  // An empty first page is either a real zero or an API failure (fetchEvents
+  // returns an empty page for both), and eventsResponse then holds a fallback
+  // total. Ask the count endpoint so failures fail open, as in the sitemap.
+  const placeIsExpandable = noEventsFound
+    ? await getPlaceExpandability(place, placeTypeLabel.type)
+    : isExpandableByCount(
+      place,
+      placeTypeLabel.type,
+      eventsResponse?.totalElements ?? null
+    );
+  const ssrPageSize = placeIsExpandable
+    ? SSR_EVENTS_SIZE_EXPANDABLE
+    : SSR_EVENTS_SIZE_THIN;
+  const pageEvents = noEventsFound ? events : events.slice(0, ssrPageSize);
+  const serverHasMore = eventsResponse
+    ? !eventsResponse.last || events.length > pageEvents.length
+    : false;
 
-  const localizedEvents = addLocalizedDateFields(events, locale);
+  const localizedEvents = addLocalizedDateFields(pageEvents, locale);
   const eventsWithAds = insertAds(localizedEvents);
   const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
   const pageUrl = toLocalizedUrl(place === "catalunya" ? "/" : `/${place}`, locale);
@@ -287,5 +292,6 @@ export async function buildPlaceEventsPromise({
     serverHasMore,
     ssrPageSize,
     structuredScripts,
+    placeIsExpandable,
   };
 }

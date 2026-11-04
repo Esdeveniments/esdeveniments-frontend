@@ -24,7 +24,7 @@ function DesktopShareIsland({ slug }: CardShareButtonProps) {
   const showNativeOnMobile = isMobile && canNativeShare;
 
   return (
-    <div className="w-[172px] h-8 flex items-center">
+    <div className="min-w-[172px] h-8 flex items-center">
       {!showNativeOnMobile && <ShareButton slug={slug} />}
     </div>
   );

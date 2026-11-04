@@ -5,7 +5,7 @@ import {
   type EventFormZodLabels,
   type ValidationLabels,
 } from "types/event";
-import { normalizeUrl } from "./string-helpers";
+import { normalizeUrl } from "./event-url";
 
 const defaultValidationLabels: ValidationLabels = {
   genericError: "There are validation errors",
@@ -18,8 +18,7 @@ export const getZodValidationState = (
   imageFile?: File | null,
   isEditMode?: boolean,
   labels: ValidationLabels = defaultValidationLabels,
-  formLabels: EventFormZodLabels = defaultEventFormZodLabels,
-  imageUrl?: string | null
+  formLabels: EventFormZodLabels = defaultEventFormZodLabels
 ): { isDisabled: boolean; isPristine: boolean; message: string } => {
   // Normalize URL before validation (auto-add https:// if missing)
   const normalizedForm = {
@@ -37,7 +36,7 @@ export const getZodValidationState = (
   }
 
   // Additional validation for image file (required for new events only)
-  if (!isPristine && !isEditMode && !imageFile && !imageUrl) {
+  if (!isPristine && !isEditMode && !imageFile) {
     return {
       isDisabled: true,
       isPristine,

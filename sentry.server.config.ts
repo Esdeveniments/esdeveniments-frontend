@@ -6,6 +6,7 @@ import { init } from "@sentry/nextjs";
 import type { NodeOptions } from "@sentry/nextjs";
 import {
   beforeSendServer,
+  SENTRY_DATA_COLLECTION,
   SENTRY_IGNORE_ERRORS,
 } from "@utils/sentry-helpers";
 
@@ -24,14 +25,12 @@ if (process.env.NODE_ENV === "production") {
     // Skip OpenTelemetry setup: OTel's trace context propagation calls crypto.randomUUID()
     // during server render, which is incompatible with Next.js 16 cacheComponents.
     // Since tracesSampleRate is 0, we don't need OTel. Error capture still works without it.
-    skipOpenTelemetrySetup: true,
-    // Privacy: explicitly disable sending PII by default
-    sendDefaultPii: false,
+    enableOpenTelemetrySetup: false,
+    // Privacy: keep the v10 no-PII baseline (v11 default collects more)
+    dataCollection: SENTRY_DATA_COLLECTION,
     debug: false,
     // SDK-level filtering: drop well-known noise before serialization (more performant than beforeSend)
     ignoreErrors: SENTRY_IGNORE_ERRORS,
-    // Errors-only: do not send console logs as Sentry logs.
-    enableLogs: false,
     // Filter and sanitize events before sending (removes sensitive data, filters non-critical errors)
     beforeSend: beforeSendServer,
   };

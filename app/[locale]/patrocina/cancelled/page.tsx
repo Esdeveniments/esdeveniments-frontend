@@ -27,8 +27,8 @@ export default async function PatrocinaCancelledPage() {
         <p className="body-large text-foreground/80">{t("cancelPage.subtitle")}</p>
 
         <div className="card-bordered card-body text-left space-y-2">
-          <p className="body-normal text-foreground/70">{t("cancelPage.note1")}</p>
-          <p className="body-normal text-foreground/70">{t("cancelPage.note2")}</p>
+          <p className="body-normal text-muted-foreground">{t("cancelPage.note1")}</p>
+          <p className="body-normal text-muted-foreground">{t("cancelPage.note2")}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

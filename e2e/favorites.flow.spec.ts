@@ -27,7 +27,7 @@ test.describe("Favorites flow", () => {
   test("clicking favorite button does not navigate", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
 
-    await expect(page.getByTestId("search-input")).toBeVisible({
+    await expect(page.getByTestId("search-input").filter({ visible: true })).toBeVisible({
       timeout: process.env.CI ? 60000 : 30000,
     });
 
@@ -52,7 +52,7 @@ test.describe("Favorites flow", () => {
     const urlBefore = page.url();
     await favButton.click();
     await expect(page).toHaveURL(urlBefore);
-    await expect(page.getByTestId("search-input")).toBeVisible({
+    await expect(page.getByTestId("search-input").filter({ visible: true })).toBeVisible({
       timeout: process.env.CI ? 60000 : 30000,
     });
   });

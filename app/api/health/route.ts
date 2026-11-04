@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createConnection } from "node:net";
 import { connect as tlsConnect } from "node:tls";
+import { isApiUrlConfigured } from "@utils/api-helpers";
+import { isCloudflarePurgeConfigured } from "@lib/cdn/cloudflare-config";
 
 /**
  * Health check endpoint for monitoring runtime configuration.
@@ -123,9 +125,9 @@ export async function GET(request: NextRequest) {
   const redisReachable = redisConfigured ? await checkRedisConnectivity() : false;
   // Degrade status when Redis is expected but unreachable (cache layer is down)
   const isFullyHealthy = isHealthy && (!redisConfigured || redisReachable);
-  // Use indirect access for diagnostic display — avoids Turbopack inlining
-  const apiUrlKey = "NEXT_PUBLIC_API_URL";
-  const apiUrlConfigured = Boolean(process.env[apiUrlKey]);
+  // Use the same validated resolution as the app: isApiUrlConfigured() treats a
+  // malformed URL as not configured, so diagnostics match runtime behavior.
+  const apiUrlConfigured = isApiUrlConfigured();
 
   return NextResponse.json(
     {
@@ -140,7 +142,9 @@ export async function GET(request: NextRequest) {
       config: {
         apiUrlConfigured,
         hmacConfigured,
+        backendKeyConfigured: Boolean(process.env.BACKEND_SERVICE_SECRET),
         revalidateSecretConfigured: Boolean(process.env.REVALIDATE_SECRET),
+        cloudflarePurgeConfigured: isCloudflarePurgeConfigured(),
         redisConfigured,
       },
       buildVersion: process.env.BUILD_VERSION || "unknown",

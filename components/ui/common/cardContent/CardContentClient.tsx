@@ -24,7 +24,7 @@ export default function CardContentClient({
     shouldShowFavoriteButton,
     categoryLabel,
     categorySlug,
-    priceLabel,
+    promotedLabel,
     urgencyLabel,
     urgencyType,
     multiDayLabel,
@@ -49,7 +49,7 @@ export default function CardContentClient({
       primaryLocation={primaryLocation}
       categoryLabel={categoryLabel}
       categorySlug={categorySlug}
-      priceLabel={priceLabel}
+      promotedLabel={promotedLabel}
       urgencyLabel={urgencyLabel}
       urgencyType={urgencyType}
       multiDayLabel={multiDayLabel}

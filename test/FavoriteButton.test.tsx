@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Link from "next/link";
-import type { SVGProps } from "react";
 import { SWRConfig } from "swr";
 
 const fetchMock = vi.fn<
@@ -25,21 +24,15 @@ vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: sendGoogleEventMock,
 }));
 
-vi.mock("@heroicons/react/24/solid", () => ({
-  HeartIcon: (props: SVGProps<SVGSVGElement>) => (
-    <svg data-testid="heart-solid" {...props} />
-  ),
-}));
-
-vi.mock("@heroicons/react/24/outline", () => ({
-  HeartIcon: (props: SVGProps<SVGSVGElement>) => (
-    <svg data-testid="heart-outline" {...props} />
-  ),
+const isAuthenticatedMock = vi.fn(() => false);
+vi.mock("@components/hooks/useAuth", () => ({
+  useAuth: () => ({ isAuthenticated: isAuthenticatedMock() }),
 }));
 
 describe("FavoriteButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isAuthenticatedMock.mockReturnValue(false);
     (globalThis as unknown as { fetch?: unknown }).fetch = fetchMock;
     // Simulate being on the /preferits page so router.refresh() is triggered
     Object.defineProperty(window, "location", {
@@ -79,7 +72,7 @@ describe("FavoriteButton", () => {
 
     const button = screen.getByRole("button", { name: "Afegeix a preferits" });
     expect(button).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByTestId("heart-outline")).toBeInTheDocument();
+    expect(button.querySelector("use")).toHaveAttribute("href", "#icon-heart-outline");
 
     fireEvent.click(button);
 
@@ -100,7 +93,33 @@ describe("FavoriteButton", () => {
       "aria-pressed",
       "true"
     );
-    expect(screen.getByTestId("heart-solid")).toBeInTheDocument();
+    expect(button.querySelector("use")).toHaveAttribute("href", "#icon-heart-solid");
+  });
+
+  it("adopts the saved favorites list once it loads", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true, favorites: ["test-event"] }),
+    });
+
+    const { default: FavoriteButton } = await import(
+      "@components/ui/common/favoriteButton"
+    );
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="test-event"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Elimina de preferits" })
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("rolls back optimistic state when server action fails", async () => {
@@ -220,5 +239,49 @@ describe("FavoriteButton", () => {
     expect(
       screen.getByText(/Has arribat al límit de 10 preferits/i)
     ).toBeInTheDocument();
+  });
+
+  it("blocks adding past the authenticated soft limit without calling the API", async () => {
+    isAuthenticatedMock.mockReturnValue(true);
+
+    const manyFavorites = Array.from({ length: 50 }, (_, i) => `event-${i}`);
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true, favorites: manyFavorites }),
+    });
+
+    const { default: FavoriteButton } = await import(
+      "@components/ui/common/favoriteButton"
+    );
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="new-event"
+          eventId="new-event-id"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
+    );
+
+    const button = await screen.findByRole("button", { name: "Afegeix a preferits" });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1); // only the GET hydration call
+    });
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Has arribat al límit de 50 preferits/i)
+      ).toBeInTheDocument();
+    });
+
+    // No POST fired — blocked client-side before the network call.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(button).toHaveAttribute("aria-pressed", "false");
   });
 });

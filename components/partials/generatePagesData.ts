@@ -1,18 +1,18 @@
 import { siteUrl } from "@config/index";
+import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
-import { cacheLife, cacheTag } from "next/cache";
-import { placesTag, placeTag } from "@lib/cache/tags";
+import { connection } from "next/server";
 import {
   PageData,
+  GeneratePagesDataProps,
   PlaceTypeAndLabel,
-  GeneratePagesDataCachedProps,
-  GeneratePagesDataPublicProps,
 } from "types/common";
 import { formatPlacePreposition } from "@utils/helpers";
-import { splitNotFoundText, appendSearchQuery } from "@utils/notFoundMessaging";
+import { splitNotFoundText } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical } from "@utils/i18n-seo";
-import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { DEFAULT_FILTER_VALUE, getMonthNames } from "@utils/constants";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import type { CategorySeoSlug } from "types/common";
 
 // Normalize subtitles for LLM/AI SEO extractability:
 // - Remove HTML
@@ -74,53 +74,27 @@ const baseCreatePageData = (
   };
 };
 
-// Cached body, deliberately excluding `search`: it's free-text user input
-// (a query-string param), and "use cache" derives its cache key from the
-// function's arguments — including it here would create one cache entry per
-// unique search string, unbounded cardinality on the data cache. `search`
-// only ever affects notFoundTitle (via appendSearchQuery), so the exported
-// generatePagesData wrapper below appends it AFTER reading from the cache,
-// outside the cache boundary. See the Jan 20 2026 fetch-cache-cardinality
-// incident referenced in lib/api's external-fetch caching rules for the
-// same class of bug.
-async function generatePagesDataCached({
+export async function generatePagesData({
   currentYear,
   place = "",
   byDate = "",
   placeTypeLabel,
   category,
   categoryName,
+  search,
   locale,
-}: GeneratePagesDataCachedProps): Promise<PageData> {
-  // No dynamic API (headers/cookies/searchParams) is read here — the only
-  // request-time value is `now`, used solely as a fallback for the current
-  // month/year label on pages with no explicit date/year/month segment (see
-  // effectiveYear/monthIndex below). Caching this "hours" trades exact
-  // per-request freshness for prerenderability: on a calendar-month rollover,
-  // the label can lag by up to ~1h (the "hours" profile's revalidate window)
-  // before self-correcting, same eventual-consistency tradeoff already made
-  // for places/regions/categories elsewhere in this fix. connection() here
-  // used to force this dynamic for every caller, including metadata, which
-  // broke the PPR static shell. See
-  // docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
-  "use cache";
-  cacheTag(placesTag, placeTag(place || "catalunya"));
-  cacheLife("hours");
-
+}: GeneratePagesDataProps & {
+  placeTypeLabel?: PlaceTypeAndLabel;
+  locale?: AppLocale;
+}): Promise<PageData> {
   const resolvedLocale = locale || DEFAULT_LOCALE;
 
-  // Parallelize translation fetches to eliminate waterfall (2 calls → 1 round trip)
-  const [t, tConstants] = await Promise.all([
-    getTranslations({
-      locale: resolvedLocale,
-      namespace: "Partials.GeneratePagesData",
-    }),
-    getTranslations({
-      locale: resolvedLocale,
-      namespace: "Components.Constants",
-    }),
-  ]);
+  const t = await getTranslations({
+    locale: resolvedLocale,
+    namespace: "Partials.GeneratePagesData",
+  });
 
+  await connection();
   const now = new Date();
 
   // Used only for parsing numeric month/year parts deterministically.
@@ -157,7 +131,7 @@ async function generatePagesDataCached({
       }
     })();
 
-  const months = (tConstants.raw("months") as string[]) || [];
+  const months = getMonthNames(resolvedLocale);
   const monthIndex = (() => {
     try {
       const parts = new Intl.DateTimeFormat(intlNumberLocale, {
@@ -181,18 +155,15 @@ async function generatePagesDataCached({
 
   const month = months[monthIndex] || "";
 
-  const categoryTemplates = (t.raw("categories") || {}) as Record<
-    string,
-    {
-      titleSuffix: string;
-      description: string;
-      context: string;
-      noEvents: string;
-    }
-  >;
   const getCategorySEO = (categorySlug?: string) => {
-    if (!categorySlug) return null;
-    return categoryTemplates[categorySlug] || null;
+    const slug = categorySlug as CategorySeoSlug | undefined;
+    if (!slug || !t.has(`categories.${slug}`)) return null;
+    return {
+      titleSuffix: t(`categories.${slug}.titleSuffix`),
+      description: t(`categories.${slug}.description`),
+      context: t(`categories.${slug}.context`),
+      noEvents: t(`categories.${slug}.noEvents`),
+    };
   };
   if (
     typeof currentYear === "number" &&
@@ -201,7 +172,8 @@ async function generatePagesDataCached({
     throw new Error("Invalid year range");
   }
 
-  const { type, label }: PlaceTypeAndLabel = placeTypeLabel;
+  const { type, label }: PlaceTypeAndLabel =
+    placeTypeLabel || (await getPlaceTypeAndLabel(place));
   // keep legacy naming compatibility without unused var warnings
   const labelWithArticle = formatPlacePreposition(
     label,
@@ -227,7 +199,7 @@ async function generatePagesDataCached({
       metaDescription,
       applyLocaleToCanonical(canonical, resolvedLocale),
       notFoundText,
-      undefined,
+      search,
       resolvedLocale
     );
 
@@ -534,25 +506,4 @@ async function generatePagesDataCached({
     siteUrl,
     t("fallback.notFound")
   );
-}
-
-// Thin uncached wrapper: reads the cached PageData (search-independent, see
-// generatePagesDataCached above), then appends the search query to
-// notFoundTitle outside the cache boundary. appendSearchQuery is pure and
-// idempotent, so calling it here has no caching implications.
-export async function generatePagesData({
-  search,
-  ...rest
-}: GeneratePagesDataPublicProps): Promise<PageData> {
-  const pageData = await generatePagesDataCached(rest);
-  if (!search) return pageData;
-  const resolvedLocale = rest.locale || DEFAULT_LOCALE;
-  return {
-    ...pageData,
-    notFoundTitle: appendSearchQuery(
-      pageData.notFoundTitle,
-      search,
-      resolvedLocale
-    ),
-  };
 }

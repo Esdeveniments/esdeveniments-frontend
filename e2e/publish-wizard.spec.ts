@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mockAuthenticatedUser } from "./helpers/auth";
 
 declare global {
   interface Window {
@@ -7,6 +8,16 @@ declare global {
 }
 
 test.describe("Publish wizard UX", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+    await page.route("**/api/regions/options", (route) => route.fulfill({
+      json: [{ id: 1, name: "Barcelonès", cities: [
+        { id: 2, value: "barcelona", label: "Barcelona" },
+      ] }],
+    }));
+    await page.route("**/api/categories", (route) => route.fulfill({ json: [] }));
+  });
+
   test("step navigation enables Next after basics and shows location step", async ({
     page,
   }) => {
@@ -39,35 +50,85 @@ test.describe("Publish wizard UX", () => {
       });
     await page.locator("textarea#description").blur();
 
-    // Wait for validation to clear
-    await page.waitForTimeout(1000);
-
     await expect(next).toBeEnabled({ timeout: 10000 });
     await next.click();
-
-    await page.waitForTimeout(500);
   });
 
-  test("test link button opens normalized URL", async ({ page }) => {
+  test("date picker on the last step is not hidden under the footer", async ({
+    page,
+  }) => {
     await page.goto("/publica", {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30000,
+    });
+
+    await page.locator("input#title").fill("Concert de prova");
+    await page
+      .locator("textarea#description")
+      .fill("Descripció de prova amb prou caràcters.");
+    await page.getByTestId("next-button").click();
+    const townSelect = page.getByTestId("town-select");
+    await expect(townSelect).toBeVisible({ timeout: 15000 });
+    await townSelect.click();
+    await page.keyboard.type("Barcelona");
+    await expect(townSelect.getByRole("option").first()).toContainText("Barcelona");
+    await page.keyboard.press("Enter");
+    await page.locator("#location").fill("Sala de prova");
+    await page.getByTestId("next-button").click();
+
+    const lastRowDay = page.locator(".rdp-calendar .rdp-week").last().locator(".rdp-day").first();
+    await expect(lastRowDay).toBeAttached({ timeout: 15000 });
+
+    // Scroll with the wheel like a user. scrollIntoView, hover() and click()
+    // would also scroll an overflow-hidden <main> and hide the clipping.
+    const viewportHeight = page.viewportSize()!.height;
+    // Move the mouse by coordinates: hover() would scroll the target into view.
+    const formBox = (await page.getByTestId("event-form").boundingBox())!;
+    await page.mouse.move(formBox.x + formBox.width / 2, Math.min(formBox.y + 100, viewportHeight / 2));
+    await expect
+      .poll(async () => {
+        const box = await lastRowDay.boundingBox();
+        if (box && box.y + box.height <= viewportHeight - 20) return true;
+        await page.mouse.wheel(0, 200);
+        return false;
+      })
+      .toBe(true);
+    const lastRowOnTop = await lastRowDay.evaluate((cell) => {
+      const box = cell.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return cell.contains(hit);
+    });
+    expect(lastRowOnTop, "last calendar row is covered by another element").toBe(true);
+  });
+
+  test("test link button opens normalized URL", async ({ page }) => {
+    // Init scripts run on the next navigation, so stub window.open before it.
     await page.addInitScript(() => {
       window.__OPENED_URLS__ = [];
-      const originalOpen = window.open;
       window.open = (...args) => {
         const urlArg = args[0];
         if (urlArg) {
           const value = typeof urlArg === "string" ? urlArg : urlArg.toString();
           window.__OPENED_URLS__?.push(value);
         }
-        return originalOpen ? originalOpen(...args) : null;
+        return null;
       };
+    });
+    await page.goto("/publica", {
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
+    });
+    await expect(page.getByTestId("event-form")).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30000,
     });
     await page.fill("input#url", "example.com");
 
     await page.getByTestId("test-link-button").click();
-    await page.waitForTimeout(300);
+    await expect
+      .poll(() => page.evaluate(() => window.__OPENED_URLS__))
+      .toEqual(["https://example.com"]);
   });
 });

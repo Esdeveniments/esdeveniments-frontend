@@ -33,12 +33,11 @@ export default function EventHeroImageClient({
   return (
     <picture>
       <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
-      <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
       <img
         src={sources.fallback}
         alt={safeTitle}
         loading="eager"
-        decoding="sync"
+        decoding="async"
         fetchPriority="high"
         sizes={sizes}
         className="object-cover w-full h-full absolute inset-0 z-10"

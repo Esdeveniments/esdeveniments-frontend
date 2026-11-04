@@ -54,7 +54,7 @@ export default async function OfflinePage() {
       >
         <div className="text-center">
           <h1
-            className="text-4xl font-bold text-foreground-strong mb-4"
+            className="heading-1 text-foreground-strong mb-4"
             data-testid="offline-title"
           >
             {t("heading")}

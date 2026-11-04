@@ -9,7 +9,8 @@ vi.mock("@lib/helpers/event-fallback", () => ({
   fetchEventsWithFallback: vi.fn(),
 }));
 
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   insertAds: (events: EventSummaryResponseDTO[]) => events,
 }));
 
@@ -28,7 +29,7 @@ const baseEvent: EventSummaryResponseDTO = {
   hash: "hash-1",
   slug: "event-1",
   title: "Sample",
-  type: "FREE",
+  isPromoted: false,
   url: "https://example.com",
   description: "",
   imageUrl: "",

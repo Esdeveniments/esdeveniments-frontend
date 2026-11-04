@@ -7,9 +7,8 @@ import {
 } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
-import { fetchEvents, fetchEventsForMetadata } from "@lib/api/events";
+import { fetchEvents } from "@lib/api/events";
 import { getPlaceBySlug } from "@lib/api/places";
-import { fetchPlaceBySlugForMetadata } from "@lib/seo/place-metadata";
 import {
   getHistoricDates,
   normalizeMonthParam,
@@ -18,7 +17,6 @@ import {
 import dynamic from "next/dynamic";
 import { isValidPlace } from "@utils/route-validation";
 import { notFound, permanentRedirect } from "next/navigation";
-import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import {
   buildPageMeta,
@@ -37,6 +35,7 @@ import {
   MONTHS_URL as DEFAULT_MONTHS_URL,
   MIN_VALID_YEAR,
   MAX_VALID_YEAR,
+  getMonthNames,
 } from "@utils/constants";
 import { connection } from "next/server";
 import { cache } from "react";
@@ -57,15 +56,9 @@ const fetchMonthEvents = cache(
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<MonthStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/sitemap/[town]/[year]/[month]">) {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
-  const tConstants = await getTranslations({
-    locale,
-    namespace: "Components.Constants",
-  });
   const tNotFound = await getTranslations({ locale, namespace: "App.NotFound" });
   const { town, year, month } = await params;
 
@@ -86,7 +79,7 @@ export async function generateMetadata({
     };
   }
 
-  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthLabels = getMonthNames(locale);
   const monthIndex = resolveMonthIndexFromSlug(month);
   if (monthIndex === null) {
     return {
@@ -97,36 +90,10 @@ export async function generateMetadata({
   const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
   const monthLabel =
     monthLabels[monthIndex] || normalizeMonthParam(canonicalMonthSlug).label;
-
-  // Probe events to set robots policy: noindex empty months so GSC stops
-  // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
-  // metadata-safe fetchEventsForMetadata, not the fetchMonthEvents wrapper
-  // Page uses below — fetchMonthEvents goes through fetchWithHmac, which
-  // unconditionally calls connection() and breaks the static shell if
-  // called from generateMetadata. See docs/incidents/
-  // 2026-06-13-cachecomponents-metadata-resume-mismatch.md.
-  const { from, until } = getHistoricDates(
-    canonicalMonthSlug,
-    Number(year),
-    DEFAULT_MONTHS_URL
-  );
-  const fromStr = from.toISOString().split("T")[0];
-  const toStr = until.toISOString().split("T")[0];
-
-  // Place lookup and the events probe are independent — parallelize instead
-  // of awaiting sequentially.
-  const [place, events] = await Promise.all([
-    // Tolerate backend 5xx for place lookup (cosmetic; town slug is an
-    // acceptable fallback). Prevents archive 500s from intermittent backend
-    // errors — the main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
-    fetchPlaceBySlugForMetadata(town).catch(() => null),
-    fetchEventsForMetadata({
-      place: town,
-      from: fromStr,
-      to: toStr,
-      size: MAX_EVENTS_PER_PAGE,
-    }),
-  ]);
+  // Tolerate backend 5xx for place lookup (cosmetic; town slug is an acceptable
+  // fallback). Prevents archive 500s from intermittent backend errors — the
+  // main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
+  const place = await getPlaceBySlug(town).catch(() => null);
   const townLabel = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
@@ -136,15 +103,22 @@ export async function generateMetadata({
     locale,
     false
   );
-  // `events === null` means the probe itself failed (upstream outage, bad
-  // payload) — fail open (no robots override) rather than noindex a page
-  // that may well have real content; only a confirmed empty result should
-  // noindex.
-  const realEventCount =
-    events && Array.isArray(events.content)
-      ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
-        .length
-      : null;
+
+  // Probe events to set robots policy: noindex empty months so GSC stops
+  // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
+  // primitive-keyed fetchMonthEvents wrapper so Page reuses the same response.
+  const { from, until } = getHistoricDates(
+    canonicalMonthSlug,
+    Number(year),
+    DEFAULT_MONTHS_URL
+  );
+  const fromStr = from.toISOString().split("T")[0];
+  const toStr = until.toISOString().split("T")[0];
+  const events = await fetchMonthEvents(town, fromStr, toStr);
+  const realEventCount = Array.isArray(events.content)
+    ? (events.content as EventSummaryResponseDTO[]).filter((e) => !e.isAd)
+      .length
+    : 0;
   const robotsOverride = realEventCount === 0 ? "noindex, follow" : undefined;
 
   return buildPageMeta({
@@ -163,9 +137,7 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
-}: {
-  params: Promise<MonthStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/sitemap/[town]/[year]/[month]">) {
   // Opt out of cacheComponents caching — conditional JsonLdServer rendering
   // below depends on event count (jsonData.length, eventsItemList). Without this,
   // cached tree shape can differ from replay → "Expected Fragment but got script".
@@ -174,10 +146,6 @@ export default async function Page({
   const { town, year, month } = await params;
   const locale: AppLocale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
-  const tConstants = await getTranslations({
-    locale,
-    namespace: "Components.Constants",
-  });
   const withLocale = (path: string) => withLocalePath(path, locale);
 
   // Validate required params
@@ -191,7 +159,7 @@ export default async function Page({
     notFound();
   }
 
-  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthLabels = getMonthNames(locale);
   const monthIndex = resolveMonthIndexFromSlug(month);
   if (monthIndex === null) {
     notFound();
@@ -281,11 +249,15 @@ export default async function Page({
     breadcrumbs,
     locale,
     numberOfItems: filteredEvents.length,
-    mainEntity: eventsItemList || {
-      "@type": "Thing",
-      name: t("itemListTitle", { town: townLabel, month: monthLabel, year }),
-      description: t("collectionFallbackDescription"),
-    },
+    // Reference the ItemList by @id instead of inlining it: it is emitted
+    // standalone below, so inlining it here duplicated the event payload.
+    mainEntity: eventsItemList
+      ? { "@id": eventsItemList["@id"] }
+      : {
+          "@type": "Thing",
+          name: t("itemListTitle", { town: townLabel, month: monthLabel, year }),
+          description: t("collectionFallbackDescription"),
+        },
   });
 
   return (

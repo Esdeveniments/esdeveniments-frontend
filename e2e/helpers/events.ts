@@ -1,12 +1,13 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 /**
  * Fetch candidate event slugs from the internal API proxy (HMAC is signed
- * server-side). Returns an empty array if the API is unreachable or empty.
+ * server-side). Returns an empty array only when the API lists no events.
  */
 export async function fetchEventSlugs(page: Page, size = 5): Promise<string[]> {
   const res = await page.request.get(`/api/events?size=${size}`);
-  if (!res.ok()) return [];
+  // A failing events API must fail the caller, not read as "no data" and skip it.
+  expect(res.ok(), `GET /api/events returned ${res.status()}`).toBeTruthy();
   const data = (await res.json()) as { content?: Array<{ slug?: string }> };
   return (data?.content ?? [])
     .map((event) => event?.slug)
@@ -15,7 +16,9 @@ export async function fetchEventSlugs(page: Page, size = 5): Promise<string[]> {
 
 /**
  * Navigate to the detail page of the first event whose `/e/[slug]` actually
- * resolves, returning the slug used (or `null` if none of the candidates do).
+ * resolves, returning the slug used, or `null` when the API lists no events.
+ * Throws when events are listed but none of their pages resolves: that is the
+ * broken detail page these tests exist to catch.
  *
  * The event detail page renders the calendar button and Event JSON-LD
  * unconditionally, so the only way they go missing is a `notFound()` (a
@@ -44,6 +47,9 @@ export async function gotoFirstResolvableEvent(
       .then(() => true)
       .catch(() => false);
     if (!isNotFound) return slug;
+  }
+  if (slugs.length > 0) {
+    throw new Error(`None of ${slugs.length} listed events resolved: ${slugs.join(", ")}`);
   }
   return null;
 }

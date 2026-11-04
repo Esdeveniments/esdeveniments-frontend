@@ -16,8 +16,9 @@ import {
   MAX_PARAM_KEY_LENGTH,
 } from "./constants";
 
-// Allowed query parameters to preserve in redirects (security: allowlist only)
-const ALLOWED_QUERY_PARAMS = new Set([
+// Client filter query params (security: allowlist only). Redirects keep only
+// these; proxy.ts marks listings that carry any of them as noindex.
+export const ALLOWED_QUERY_PARAMS: ReadonlySet<string> = new Set([
   "search",
   "distance",
   "price",
@@ -60,6 +61,36 @@ function validateQueryParams(
 }
 
 /**
+ * First path segments that are app routes, not places. Every static folder in
+ * app/[locale]/ must be listed (test/middleware-redirects-non-place.test.ts).
+ */
+export const NON_PLACE_FIRST_SEGMENTS: ReadonlySet<string> = new Set([
+  "noticies",
+  "publica",
+  "login",
+  "offline",
+  "e",
+  "e2e",
+  "sitemap",
+  "sitemap-places",
+  "rss.xml",
+  "qui-som",
+  "server-sitemap.xml",
+  "server-news-sitemap.xml",
+  "server-place-sitemap.xml",
+  "server-google-news-sitemap.xml",
+  "server-static-sitemap.xml",
+  "preferits",
+  "llms.txt",
+  "patrocina",
+  "perfil",
+  "iniciar-sessio",
+  "registre",
+  "politica-privacitat",
+  "termes-servei",
+]);
+
+/**
  * Handles canonical redirects for place routes
  * Returns a redirect response if the URL needs to be canonicalized, null otherwise
  */
@@ -77,32 +108,9 @@ export function handleCanonicalRedirects(
 
   // Skip known non-place top-level routes early (performance: avoid query validation)
   const firstSegment = segments[0] || "";
-  const nonPlaceFirstSegments = new Set([
-    "noticies",
-    "publica",
-    "login",
-    "offline",
-    "e",
-    "sitemap",
-    "sitemap-places",
-    "rss.xml",
-    "qui-som",
-    "server-sitemap.xml",
-    "server-news-sitemap.xml",
-    "server-place-sitemap.xml",
-    "server-google-news-sitemap.xml",
-    "server-static-sitemap.xml",
-    "preferits",
-    "llms.txt",
-    "callback",
-    "compartir-tiktok",
-    "patrocina",
-    "politica-privacitat",
-    "termes-servei",
-  ]);
 
   // Only process redirects for place routes
-  if (nonPlaceFirstSegments.has(firstSegment)) {
+  if (NON_PLACE_FIRST_SEGMENTS.has(firstSegment)) {
     return null;
   }
 

@@ -1,15 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
-
-// generatePagesData is "use cache" (cacheComponents) so it can stay
-// prerenderable when called from generateMetadata — see
-// docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
-// cacheTag/cacheLife are no-ops outside a real Next.js cacheComponents
-// runtime, which vitest doesn't provide.
-vi.mock("next/cache", () => ({
-  cacheTag: vi.fn(),
-  cacheLife: vi.fn(),
-}));
-
+import { describe, it, expect } from "vitest";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import type {
   GeneratePagesDataProps,

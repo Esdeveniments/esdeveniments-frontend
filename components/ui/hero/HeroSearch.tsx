@@ -46,6 +46,11 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const [localPlaceValue, setLocalPlaceValue] = useState<string>("");
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
 
+  // The Modal mounts on first open; fetch its chunk now so that open is instant.
+  useEffect(() => {
+    void import("@components/ui/common/modal");
+  }, []);
+
   // --- Location Logic ---
   const isPlacePage = useMemo(() => {
     const { pathnameWithoutLocale } = stripLocalePrefix(pathname || "/");
@@ -203,14 +208,14 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
         <h1 className="heading-1 text-white drop-shadow-lg flex flex-wrap items-center justify-center gap-2">
           <span>{t("titlePrefix")}</span>
           <div className="relative inline-block">
-            <Button
-              variant="ghost"
+            <button
+              type="button"
               onClick={() => {
                 setLocalPlaceValue(place === "catalunya" ? "" : place);
                 setHasOpenedModal(true);
                 setIsModalOpen(true);
               }}
-              className="flex flex-wrap items-center justify-center gap-2 text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all hover:bg-transparent px-0 py-0 rounded-none"
+              className="flex flex-wrap items-center justify-center gap-2 font-semibold uppercase tracking-wide text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
               aria-expanded={isModalOpen}
             >
               {displayLabel}
@@ -218,46 +223,51 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                 className={`h-8 w-8 transition-transform duration-200 ${isModalOpen ? "rotate-180" : ""
                   }`}
               />
-            </Button>
+            </button>
 
-            <Modal
-              open={isModalOpen}
-              setOpen={setIsModalOpen}
-              title={t("modalTitle")}
-              actionButton={t("modalAction")}
-              onActionButtonClick={handleApplyLocation}
-              testId="location-modal"
-            >
-              <div className="w-full flex flex-col justify-start items-start gap-4 py-4">
-                <div className="w-full flex flex-col px-0">
-                  {isLoadingRegions ? (
-                    <SelectSkeleton />
-                  ) : regionsError ? (
-                    <div className="flex flex-col items-center gap-2 text-center py-4">
-                      <p className="text-destructive">
-                        {t("errorLoadingLocations")}
-                      </p>
-                      <Button onClick={() => mutate()} variant="outline" className="text-sm">
-                        {t("retry")}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Select
-                      id="hero-location-select"
-                      title=""
-                      options={regionsAndCitiesArray}
-                      value={selectedOption}
-                      onChange={handlePlaceChange}
-                      isClearable
-                      placeholder={t("selectPlaceholder")}
-                      testId="hero-location-select"
-                      autoFocus
-                      menuPosition="fixed"
-                    />
-                  )}
+            {/* Mounted on first open, then kept for the close animation. While
+                closed, the ssr:false Modal's bailout sat inside the hero <h1>
+                and caused hydration error #418 on the home page. */}
+            {hasOpenedModal && (
+              <Modal
+                open={isModalOpen}
+                setOpen={setIsModalOpen}
+                title={t("modalTitle")}
+                actionButton={t("modalAction")}
+                onActionButtonClick={handleApplyLocation}
+                testId="location-modal"
+              >
+                <div className="w-full flex flex-col justify-start items-start gap-4 py-4">
+                  <div className="w-full flex flex-col px-0">
+                    {isLoadingRegions ? (
+                      <SelectSkeleton />
+                    ) : regionsError ? (
+                      <div className="flex flex-col items-center gap-2 text-center py-4">
+                        <p className="text-destructive">
+                          {t("errorLoadingLocations")}
+                        </p>
+                        <Button onClick={() => mutate()} variant="outline" className="text-sm">
+                          {t("retry")}
+                        </Button>
+                      </div>
+                    ) : (
+                      <Select
+                        id="hero-location-select"
+                        title=""
+                        options={regionsAndCitiesArray}
+                        value={selectedOption}
+                        onChange={handlePlaceChange}
+                        isClearable
+                        placeholder={t("selectPlaceholder")}
+                        testId="hero-location-select"
+                        autoFocus
+                        menuPosition="fixed"
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Modal>
+              </Modal>
+            )}
           </div>
         </h1>
         <p className="body-large text-white/90 drop-shadow-md max-w-xl mx-auto" data-speakable="description">
@@ -269,11 +279,11 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       <div className="w-full max-w-2xl mx-auto relative">
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <SearchIcon className="h-5 w-5 text-foreground/40 group-focus-within:text-primary transition-colors" />
+            <SearchIcon className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           </div>
           <input
             type="text"
-            className="w-full pl-11 pr-12 py-3 bg-background border border-border rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-foreground/40"
+            className="w-full pl-11 pr-12 py-3 bg-background border border-input rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-muted-foreground"
             placeholder={t("searchPlaceholder", { location: label })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -284,7 +294,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             <Button
               variant="ghost"
               onClick={handleClearSearch}
-              className="absolute inset-y-0 right-12 flex items-center px-2 text-foreground/40 hover:text-foreground transition-colors hover:bg-transparent"
+              className="absolute inset-y-0 right-12 flex items-center px-1.5 text-muted-foreground hover:text-foreground transition-colors hover:bg-transparent"
               aria-label={t("clearSearch")}
             >
               <XIcon className="h-4 w-4" />
@@ -293,7 +303,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           <Button
             variant="primary"
             onClick={handleSearchSubmit}
-            className="absolute inset-y-1 right-1 px-4 flex items-center justify-center rounded-full"
+            className="absolute inset-y-1 right-1 min-h-0 px-3.5 flex items-center justify-center rounded-full"
             data-testid="search-button"
             aria-label={t("search")}
           >

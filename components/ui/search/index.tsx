@@ -2,7 +2,6 @@
 
 import {
   useCallback,
-  useEffect,
   useMemo,
   useState,
   startTransition,
@@ -56,6 +55,14 @@ export default function Search(): JSX.Element {
   const urlSearchTerm = searchParams?.get("search") || "";
 
   const [inputValue, setInputValue] = useState<string>(urlSearchTerm);
+
+  // Sync input with URL search term when URL changes
+  // (react.dev: "Adjusting some state when a prop changes").
+  const [prevUrlSearchTerm, setPrevUrlSearchTerm] = useState(urlSearchTerm);
+  if (urlSearchTerm !== prevUrlSearchTerm) {
+    setPrevUrlSearchTerm(urlSearchTerm);
+    setInputValue(urlSearchTerm);
+  }
 
   // Function to update URL with search parameter
   const updateSearchUrl = useCallback(
@@ -111,11 +118,6 @@ export default function Search(): JSX.Element {
     updateSearchUrl(value);
   }, [inputValue, updateSearchUrl, urlSearchTerm, places, hasSearched, setLoading, router]);
 
-  // Sync input with URL search term when URL changes
-  useEffect(() => {
-    setInputValue(urlSearchTerm);
-  }, [urlSearchTerm]);
-
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
@@ -142,7 +144,7 @@ export default function Search(): JSX.Element {
 
   return (
     <div
-      className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${isSearchActive ? "border-primary border-2" : "border-border"
+      className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${isSearchActive ? "border-primary border-2" : "border-input"
         }`}
       data-testid="search-bar"
     >
@@ -158,7 +160,7 @@ export default function Search(): JSX.Element {
         {/* Input field in the middle */}
         <input
           type="text"
-          className="w-full border-0 placeholder:text-foreground/60 body-normal focus:outline-none"
+          className="w-full border-0 placeholder:text-muted-foreground body-normal focus:outline-none"
           placeholder={t("placeholder")}
           value={inputValue}
           onKeyDown={handleKeyPress}

@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "26"
 
 jobs:
   prod-arch-smoke:
@@ -35,12 +35,13 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Enable Corepack (Yarn 4)
-        run: corepack enable
+        # Node 25+ no longer bundles Corepack.
+        run: npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -54,6 +55,7 @@ jobs:
       - name: Build Next.js application
         env:
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -62,12 +64,20 @@ jobs:
       - name: Start server against Redis (background)
         env:
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
           # Activates the Redis cacheHandler — the self-hosted path that
           # Vercel and local dev never exercise. This is the whole point.
           REDIS_URL: redis://localhost:6379
+          # Logto OIDC runtime env — lets the smoke step assert the auth routes
+          # boot (a missing LOGTO_* makes /api/auth/sign-in 500, not 307).
+          LOGTO_ENDPOINT: ${{ secrets.LOGTO_ENDPOINT_STAGING }}
+          LOGTO_APP_ID: ${{ secrets.LOGTO_APP_ID_STAGING }}
+          LOGTO_APP_SECRET: ${{ secrets.LOGTO_APP_SECRET_STAGING }}
+          LOGTO_API_RESOURCE: ${{ secrets.LOGTO_API_RESOURCE_STAGING }}
+          LOGTO_COOKIE_SECRET: ${{ secrets.LOGTO_COOKIE_SECRET_STAGING }}
         run: |
           yarn start &
           echo $! > /tmp/next.pid
@@ -76,6 +86,8 @@ jobs:
         run: npx wait-on http://localhost:3000/api/health --timeout 90000
 
       - name: Assert health, SSR metadata, and image proxy
+        env:
+          LOGTO_ENDPOINT: ${{ secrets.LOGTO_ENDPOINT_STAGING }}
         run: |
           fail() { echo "❌ $1"; exit 1; }
 
@@ -104,7 +116,21 @@ jobs:
           { [ "$code" = "200" ] && echo "$ctype" | grep -qi 'image/'; } \
             || fail "image-proxy returned HTTP $code ($ctype) for a first-party image"
 
-          echo "✅ Prod-arch smoke passed: health, SSR metadata, and image proxy all good."
+          # 4) Auth routes boot: /api/auth/sign-in must 307-redirect to Logto.
+          #    getLogtoConfig fails fast on a missing LOGTO_* env, returning 500,
+          #    so this catches a forgotten/typo'd auth secret before deploy.
+          # Body to /dev/null, headers to their own file — writing both to the
+          # same path clobbers the header dump, so the Location grep finds
+          # nothing and a correct 307 looks like a failure.
+          code=$(curl -s -o /dev/null -D /tmp/signin.head -w "%{http_code}" \
+            "http://localhost:3000/api/auth/sign-in") || code="000"
+          loc=$(grep -i '^location:' /tmp/signin.head | tail -1 | tr -d '\r' || true)
+          # Must 307 to the *configured* issuer's /oidc/auth — not just any URL
+          # containing the path (guards a wrong endpoint/protocol that still 307s).
+          { [ "$code" = "307" ] && echo "$loc" | grep -qiF "${LOGTO_ENDPOINT}/oidc/auth"; } \
+            || fail "/api/auth/sign-in returned HTTP $code, location '$loc' (expected 307 → ${LOGTO_ENDPOINT}/oidc/auth). Missing/wrong LOGTO_* env?"
+
+          echo "✅ Prod-arch smoke passed: health, SSR metadata, image proxy, and auth boot all good."
 
       - name: Stop server
         if: always()

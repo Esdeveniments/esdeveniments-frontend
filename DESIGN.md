@@ -17,10 +17,11 @@ colors:
   surface-muted:     "#F7F7F7"
   foreground:        "#454545"
   foreground-strong: "#000000"
-  foreground-muted:  "#6B7280"
+  foreground-muted:  "#666666"
   on-primary:        "#FFFFFF"
   on-photo:          "#FFFFFF"
   border:            "#CCCCCC"
+  border-input:      "#8C8C8C"
   border-strong:     "#454545"
   border-subtle:     "#CCCCCC66"
   border-soft:       "#CCCCCC33"
@@ -31,14 +32,14 @@ colors:
   glass-border:      "#FFFFFF4D"
   glass-border-hover:"#FFFFFF99"
   success:           "#10B981"
-  success-dark:      "#059669"
+  success-dark:      "#047857"
   success-light:     "#ECFDF5"
   success-muted:     "#D1FAE5"
   success-border:    "#A7F3D0"
   error:             "#EF4444"
-  error-dark:        "#DC2626"
+  error-dark:        "#B91C1C"
   warning:           "#F59E0B"
-  warning-dark:      "#D97706"
+  warning-dark:      "#B45309"
   warning-light:     "#FFFBEB"
   warning-muted:     "#FEF3C7"
   warning-border:    "#FDE68A"
@@ -114,7 +115,7 @@ typography:
     lineHeight: "1.25"
     letterSpacing: "0"
   form-label:
-    fontSize: "18px"
+    fontSize: "16px"
     fontWeight: 600
     lineHeight: "1.4"
     letterSpacing: "0"
@@ -166,6 +167,7 @@ breakpoints:
   xs: "360px"
   sm: "576px"
   md: "768px"
+  nav: "950px"
   lg: "1024px"
   xl: "1280px"
 
@@ -179,10 +181,12 @@ components:
   button-primary:
     background: "{colors.primary}"
     color: "{colors.on-primary}"
-    fontSize: "{typography.label.fontSize}"
+    fontSize: "14px"
     fontWeight: 600
-    letterSpacing: "{typography.label.letterSpacing}"
+    letterSpacing: "0.025em"
     textTransform: "uppercase"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
+    border: "2px solid transparent"
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -202,8 +206,10 @@ components:
     background: "transparent"
     color: "{colors.primary}"
     border: "2px solid {colors.primary}"
+    fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -215,8 +221,10 @@ components:
     background: "transparent"
     color: "{colors.foreground}"
     border: "2px solid {colors.border}"
+    fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
@@ -226,13 +234,22 @@ components:
   button-ghost:
     background: "transparent"
     color: "{colors.foreground}"
+    fontSize: "14px"
     fontWeight: 600
     textTransform: "uppercase"
+    minHeight: "40px"  # 44px on touch screens (pointer: coarse)
     paddingX: "{spacing.lg}"
     paddingY: "{spacing.sm}"
     rounded: "{rounded.full}"
   button-ghost-hover:
     background: "{colors.surface-muted}"
+
+  button-sm:
+    # Size modifier, combined with any variant above.
+    fontSize: "12px"
+    minHeight: "36px"  # 44px on touch screens (pointer: coarse)
+    paddingX: "12px"
+    paddingY: "4px"
 
   button-category:
     background: "{colors.background}"
@@ -322,6 +339,31 @@ components:
     paddingX: "{spacing.sm}"
     paddingY: "2px"
 
+  tab-bar:
+    borderBottom: "1px solid {colors.border}"
+    itemPaddingX: "{spacing.lg}"
+    itemPaddingY: "{spacing.sm}"
+    itemBorderBottom: "2px solid transparent"
+    countFontSize: "{typography.heading-3.fontSize}"
+    countFontWeight: "{typography.heading-3.fontWeight}"
+    labelFontSize: "{typography.heading-3.fontSize}"
+    color: "{colors.foreground}"
+    opacity: 0.8
+  tab-bar-active:
+    itemBorderBottom: "2px solid {colors.primary}"
+    color: "{colors.foreground-strong}"
+    opacity: 1
+
+  empty-state:
+    paddingY: "{spacing.3xl}"
+    gap: "{spacing.lg}"
+    titleFontSize: "{typography.heading-3.fontSize}"
+    titleColor: "{colors.foreground-strong}"
+    descriptionColor: "{colors.foreground}"
+    ctaBackground: "{colors.primary}"
+    ctaColor: "{colors.on-primary}"
+    ctaRounded: "{rounded.full}"
+
   chip-on-light:
     background: "{colors.background}"
     color: "{colors.foreground}"
@@ -356,7 +398,7 @@ components:
   input-default:
     background: "{colors.background}"
     color: "{colors.foreground}"
-    border: "1px solid {colors.border}"
+    border: "1px solid {colors.border-input}"
     rounded: "{rounded.sm}"
     fontSize: "{typography.body.fontSize}"
     paddingX: "{spacing.md}"
@@ -364,7 +406,7 @@ components:
     height: "40px"
     transition: "border-color {motion.duration-normal} {motion.easing-smooth}, box-shadow {motion.duration-normal} {motion.easing-smooth}"
   input-default-hover:
-    borderColor: "{colors.border}"
+    borderColor: "{colors.foreground}"
   input-default-focus:
     borderColor: "{colors.primary}"
     boxShadow: "{elevation.focus}"
@@ -380,7 +422,7 @@ components:
 
   modal-panel:
     background: "{colors.background}"
-    rounded: "{rounded.lg}"
+    rounded: "{rounded.md}"
     shadow: "{elevation.lg}"
     width: "500px"
   modal-panel-mobile:
@@ -551,8 +593,11 @@ Everything else is neutral. The canvas is true `#FFFFFF`; chrome and
 disabled fills sit on `#F7F7F7`. Body text is **`#454545`** — never pure
 black — which gives the page a slightly softer, paper-like cast and pairs
 naturally with the warm red. Headings and form labels go to true black for
-hierarchy. Borders are `#CCCCCC` at full strength but more often appear at
-20–60% alpha as hairlines that frame cards without competing with them.
+hierarchy. Secondary text (hints, metadata, timestamps) uses one neutral gray,
+**`#666666`** (`muted-foreground`). Decorative borders are `#CCCCCC` at full
+strength but more often appear at 20–60% alpha as hairlines that frame cards
+without competing with them. Form controls are the exception: their outline
+must be visible, so inputs and selects use the darker `#8C8C8C` (`input`).
 
 Status colors (success green, warning amber, error red, info blue) are
 imported from a conventional palette and are *only* used for their meaning —
@@ -567,9 +612,17 @@ carries `text-shadow`, and inactive filter chips take on a glassmorphic look
 brightens on hover. The active filter chip drops the glass and goes solid
 red with a leading checkmark.
 
-Contrast budget: body on white ≈ 7.5:1 (AAA); primary on white ≈ 5.2:1
-(AA); muted-foreground on white ≈ 4.6:1 (AA). No token below AA is used for
-text.
+Contrast budget (on white / on `#F7F7F7`): body `#454545` 9.59 / 8.95
+(AAA); primary 5.2:1 (AA); muted-foreground `#666666` 5.74 / 5.36 (AA);
+input border `#8C8C8C` 3.36 / 3.14 (meets the 3:1 rule for control
+boundaries). There are only two text grays: `foreground` and
+`muted-foreground` (`foreground/80` is an older equivalent). Lighter alphas
+fail AA (`foreground/75` is 4.49:1 on muted, `/70` 4.12:1 on white), so
+ESLint blocks `text-foreground/75` and lighter, and
+`text-foreground-strong/54` and lighter. Disabled states use `opacity-50`, which WCAG exempts. Status text
+and status icons on light surfaces use the `-dark` variants (error-dark
+6.47:1, warning-dark 5.02:1, success-dark 5.48:1). The base status colors
+(2.15–3.76:1) are for fills and borders only, and ESLint blocks them as text.
 
 ## Typography
 
@@ -595,10 +648,10 @@ The type scale follows a four-level heading model:
 - **heading-4** (16/500 mobile → 18/500 desktop) — card titles, footer
   block titles.
 
-UI chrome — nav links, footer links, button labels — uses a small **label**
-style: 12/500, **uppercase**, with widened tracking. This is the one place
-the type design speaks loudly, and it gives buttons their characteristic
-civic-poster confidence. A `label-tight` (11/600) is reserved for category
+UI chrome — nav links and footer links — uses a small **label** style:
+12/500, **uppercase**, with widened tracking. Button labels use the same
+uppercase voice one step up, at 14/600, which gives buttons their
+characteristic civic-poster confidence without shouting. A `label-tight` (11/600) is reserved for category
 badges on cards.
 
 Body inputs are pinned to **16px** to defeat iOS Safari's focus auto-zoom.
@@ -628,13 +681,13 @@ titles vary.
 Z-layers are explicit: 10 sticky chrome, 100 dropdowns, 900 modals, 1000
 tooltips. Anything above 1000 is forbidden.
 
-Navigation is a top sticky bar on desktop, a fixed bottom tab bar on mobile
-— a deliberate native-app affordance for a product that's used walking
-around towns. The desktop bar is 56px tall with a backdrop blur and a
-hairline border. The mobile bar is 64px tall with five circular icon-only
-buttons (Home, Agenda, Favorites, Publish, News), each at least 44×44 px;
-the active route fills with `colors.primary-tint` and tints its icon
-primary red.
+Navigation is a top sticky bar on desktop, a fixed bottom tab bar below the
+950px navigation breakpoint — a deliberate native-app affordance for a
+product that's used walking around towns. The desktop bar is 56px tall with
+a backdrop blur and a hairline border. The mobile bar is 64px tall with five
+circular icon-only buttons (Home, Agenda, Favorites, Publish, News), each at
+least 44×44 px; the active route fills with `colors.primary-tint` and tints
+its icon primary red.
 
 ## Elevation & Depth
 
@@ -663,8 +716,8 @@ category buttons alike. Pills paired with a cherry-red fill read as
 confident and a touch festive without tipping into playful, which is the
 tonal target.
 
-Cards and content containers use **`rounded.md`** (12px). Inputs settle at
-**`rounded.sm`** (8px); modals and the rich-text editor sit at
+Cards, content containers and modals use **`rounded.md`** (12px). Inputs
+settle at **`rounded.sm`** (8px); the rich-text editor sits at
 **`rounded.lg`** (16px). Badges and chips share the button's full-pill
 shape. There are no sharp 90° corners anywhere except inside the
 date-picker's range-middle days (intentional — it stitches the range
@@ -681,7 +734,14 @@ red on white; outline is a 2px red border that fills on hover; neutral is a
 2px gray border that shades; ghost is fill-only-on-hover; category is the
 softer chip variant for filter-style picks. Pressing translates the button
 1px down with a hint of scale-down (0.995) — fast, 100ms. Disabled buttons
-drop to 50% opacity and lock the cursor.
+drop to 50% opacity and lock the cursor. Every variant shares one box: a 14px
+label, a 2px border (transparent on filled variants) and one minimum height:
+40px with a mouse or trackpad, 44px on touch screens (`--button-height`
+switches on `pointer: coarse`). A primary and an outline button side by side
+line up exactly, and the hero CTA uses the same box as every other button.
+`btn-sm` (36px, 12px label; 44px tall on touch) is the only other size, for dense secondary
+rows. Confirm dialogs stack their actions full width, primary on top, so a
+long label never wraps inside a pill.
 
 **Cards** are an article tile: 3:2 image on top, category pill, then a
 muted metadata row (`date · time · price · multi-day`), a 2-line title, and
@@ -695,14 +755,28 @@ heart-beats (1 → 1.15 → 1) on activation.
 shades to muted) and on-photo (glassmorphic over hero photography). The
 active variant in on-photo flips to solid red with a leading check icon.
 
+**Tab bar** is a count-over-label navigation strip (e.g. profile Propers /
+Passats), not a client-side tabpanel switch — each item is a link to its own
+route. A full-width hairline rail (`border-border`) carries items with a
+2px bottom border; the active item's border goes solid red with
+`foreground-strong` text, inactive items sit at `foreground/80` on a
+transparent border. The count and label both use `heading-3` for a stronger, consistent tab hierarchy.
+Wrapped in the horizontal-scroll primitive on narrow screens so it never
+breaks the rail's height.
+
+**Empty states** (e.g. "no events yet") center a title + description with
+generous vertical padding (`spacing.3xl`) and an optional primary-pill CTA
+below. Title uses `heading-3` in `foreground-strong`; description sits in
+regular `foreground`.
+
 **Modals** on mobile take the full `100dvh` and read like a screen, not a
-popup; on **sm+** they cap at 500px wide with a 16px-radius card. Header is
+popup; on **sm+** they cap at 500px wide with a 12px-radius card. Header is
 sticky (back arrow + centered uppercase title), footer is sticky and
 safe-area-inset aware (single primary action button, full width). The
 backdrop is the scrim color at 60%.
 
 **Inputs** are 40px tall by default (48px in `input-large`), 8px corners,
-`#CCCCCC` border. Focus glows red, error glows feedback-error. Range slider
+`#8C8C8C` border that darkens to body color on hover. Focus glows red, error glows feedback-error. Range slider
 thumbs are 24-px circles in primary red.
 
 **Date picker** is a high-touch primitive: red selected days as solid

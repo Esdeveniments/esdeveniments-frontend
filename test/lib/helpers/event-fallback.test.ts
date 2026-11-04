@@ -7,7 +7,8 @@ import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
 import { twoWeeksDefault } from "@lib/dates";
 import type { FetchEventsParams } from "types/event";
 
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   fetchEvents: vi.fn(),
 }));
 
@@ -32,7 +33,7 @@ function createEvent(id: string): EventSummaryResponseDTO {
     hash: id,
     slug: id,
     title: `Event ${id}`,
-    type: "FREE",
+    isPromoted: false,
     url: `https://example.com/${id}`,
     description: "demo",
     imageUrl: "",

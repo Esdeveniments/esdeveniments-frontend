@@ -80,7 +80,18 @@
       "subtitle": "Only upcoming events are shown. When an event ends, it is automatically removed from favorites.",
       "countLabel": "{count}/{max} saved",
       "emptyTitle": "No upcoming favorites yet",
-      "emptyDescription": "Tap the heart on an event to save it here. Past events are automatically removed from favorites."
+      "emptyDescription": "Tap the heart on an event to save it here. Past events are automatically removed from favorites.",
+      "errorTitle": "We couldn't load your favorites",
+      "errorDescription": "Please try again in a moment. Your favorites are safe.",
+      "tabUpcoming": "Upcoming",
+      "tabPast": "Past",
+      "pastTitle": "Past favorites - Esdeveniments.cat",
+      "pastDescription": "Your saved past events",
+      "pastEmptyTitle": "No past favorites yet",
+      "pastEmptyDescription": "Events you save with the heart will show up here once they've ended.",
+      "pastAuthGateTitle": "Sign in to see your past favorites",
+      "pastAuthGateDescription": "Past favorites are only available to signed-in accounts.",
+      "pastAuthGateLogin": "Sign in"
     },
     "About": {
       "metaTitle": "About us - Cultural agenda of Catalonia | Esdeveniments.cat",
@@ -191,8 +202,13 @@
       "nearbyLabel": "Nearby:"
     },
     "EventEdit": {
+      "coverUpdateFailed": "The event was saved, but the image could not be updated.",
       "title": "Edit event",
-      "description": "Secure panel to edit Esdeveniments.cat events."
+      "description": "Secure panel to edit Esdeveniments.cat events.",
+      "heading": "Edit your event",
+      "subheading": "Update the details, location, or image of your event.",
+      "backToEvent": "Back to event",
+      "myEvents": "My events"
     },
     "PublishPage": {
       "metaTitle": "Publish your event for free in Catalonia | Cultural agenda - Esdeveniments.cat",
@@ -200,6 +216,56 @@
       "schemaName": "Publish a cultural event in Catalonia",
       "schemaDescription": "Official form to add concerts, exhibitions, theatre and cultural activities to the collaborative Catalonia agenda.",
       "schemaAction": "Publish cultural event"
+    },
+    "EditProfile": {
+      "title": "Edit your profile",
+      "description": "Update your name, username, bio and profile photo.",
+      "heading": "Edit your profile",
+      "subheading": "This information is public and will appear on your profile.",
+      "onboardingHeading": "Complete your profile",
+      "onboardingSubheading": "To finish setting up your account, choose a username and a display name.",
+      "usernameHint": "Temporary auto-generated username — pick your own.",
+      "usernameLockedHint": "Once set, your username can't be changed again.",
+      "submitLabel": "Save changes",
+      "savingLabel": "Saving...",
+      "success": "Profile updated successfully.",
+      "fields": {
+        "username": "Username",
+        "displayName": "Display name",
+        "bio": "Bio"
+      },
+      "usernameErrors": {
+        "usernameTooShort": "Must be at least 3 characters.",
+        "usernameTooLong": "Must be at most 30 characters.",
+        "usernameInvalidChars": "Lowercase letters, numbers and hyphens only, no consecutive or leading/trailing hyphens.",
+        "usernameReservedPrefix": "Can't start with \"user-\".",
+        "usernameReserved": "This username is reserved."
+      },
+      "errors": {
+        "displayNameRequired": "Display name is required.",
+        "displayNameTooLong": "Too long (max 80 characters).",
+        "bioTooLong": "Too long (max 500 characters).",
+        "usernameTaken": "This username is already taken.",
+        "sessionExpired": "Your session expired. Please log in again.",
+        "generic": "Couldn't save your profile. Please try again."
+      },
+      "avatar": {
+        "label": "Profile photo",
+        "uploadButton": "Upload photo",
+        "removeButton": "Remove photo",
+        "uploading": "Uploading...",
+        "removing": "Removing...",
+        "altPreview": "Profile photo",
+        "errorUnsupported": "Unsupported format. Use JPG or PNG.",
+        "errorTooLarge": "Image exceeds the 2 MB limit.",
+        "errorUploadFailed": "Couldn't upload the photo. Please try again.",
+        "errorRemoveFailed": "Couldn't remove the photo. Please try again."
+      },
+      "authGate": {
+        "title": "Log in to edit your profile",
+        "description": "You need to log in to complete or edit your profile.",
+        "login": "Log in"
+      }
     },
     "PlacesNearby": {
       "invalidNumber": "Invalid coordinates: lat,lng must be numbers",
@@ -231,25 +297,32 @@
       "description": "The latest news and cultural recommendations for Catalonia"
     },
     "Publish": {
+      "publishCta": {
+        "signIn": "Sign in to publish",
+        "completeProfile": "Complete profile to publish",
+        "resolving": "Checking your session…"
+      },
+      "accountNotice": "Already have an account?",
+      "earlySignIn": "Sign in",
+      "optionsFailed": "We could not load towns or categories. Please try again.",
+      "draftOwnerChanged": "Your session changed. We kept the form but will not save it to another account. Copy anything you want to keep and reload the page.",
+      "completeProfileGate": {
+        "title": "Complete your profile",
+        "description": "Before publishing an event, choose a username and a display name.",
+        "cta": "Complete profile"
+      },
       "heading": "Publish your event in Catalonia",
-      "subheading": "Add your concert, exhibition, theatre, workshop or cultural activity to Catalonia's largest agenda. It's free!",
+      "subheading": "Add it to Catalonia's biggest cultural events listing. It's free.",
       "sponsorTitle": "Have a local business?",
       "sponsorLink": "See sponsorship options",
-      "benefits": {
-        "title": "Why publish on Esdeveniments.cat?",
-        "free": "100% free - no hidden costs",
-        "reach": "Reach thousands of people interested in culture",
-        "fast": "Quick publication in less than a minute",
-        "visibility": "Visibility on Google and social media"
-      },
-      "requiredNote": "* required fields",
-      "errorCreate": "Error creating the event. Please try again.",
-      "errorBodyLimit": "The total request size (image + data) exceeds the allowed limit of 10 MB. Please reduce the image size or remove unnecessary data.",
-      "errorGeneric": "There was an error publishing the event. Please try again.",
+      "errorCreate": "We couldn't create the event. Please try again.",
+      "errorBodyLimit": "The image and details exceed the 10 MB limit. Choose a smaller image.",
+      "errorGeneric": "We couldn't publish the event. Please try again.",
       "errorFormParsing": "The connection was interrupted while sending the form. Reload the page and try again.",
       "errorDuplicate": "This event already exists. If you think this is an error, please contact us.",
+      "errorStaleSession": "Your session has expired. Sign in again to continue.",
       "submitLabel": "Publish",
-      "imageTooLarge": "The image exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
+      "imageTooLarge": "The image is over {limit} MB. Choose a smaller one.",
       "uploadSuccess": "Image uploaded successfully.",
       "uploadFailed": "We couldn't upload the image. Check your connection and try again.",
       "imageRequired": "Image is required.",
@@ -257,11 +330,47 @@
       "fallbackCity": "City {id}",
       "noEventsFound": "We couldn't find recent events for this area. Please try again later.",
       "restoreDraftTitle": "You have a saved draft",
+      "draftChooseTitle": "Which draft do you want to continue?",
+      "draftChooseDescription": "We kept the event you filled in before signing in, but this account already had a draft. If you continue with the new one, it replaces the old one.",
+      "draftUseGuest": "Continue with new",
+      "draftUseAccount": "Restore previous",
+      "draftAccountTitle": "Previous account draft: {title}",
       "restoreDraftDescription": "Recover what you were writing or start fresh.",
       "restoreDraftApply": "Restore draft",
       "restoreDraftDiscard": "Discard",
+      "draftHeading": "Local draft",
+      "draftRestoreReplacesEdits": "Restoring the saved draft will replace your current form changes. First copy any text you want to keep.",
+      "draftLoading": "Looking for a draft…",
+      "draftSaving": "Saving…",
+      "draftSaved": "Saved on this device",
+      "draftDiscarding": "Discarding draft…",
+      "draftSaveFailed": "The browser could not complete the draft operation. Do not close this page. Check browser storage permissions and try again.",
+      "draftStorageFull": "Storage is full, the draft exceeds the limit, or five drafts are already saved. Do not close this page. Free up space, reduce the text or image, or discard another draft, then try again.",
+      "draftRecordInvalid": "The saved draft cannot be read. Try again or discard it to start fresh. Do not close this page if you have changes.",
+      "draftConflict": "Another tab changed the saved drafts. Your changes have not been overwritten or saved. Do not close this page; review the saved draft before deciding what to keep.",
+      "draftReviewConflict": "Review saved draft",
+      "draftResolveBeforePublish": "Review the saved draft and choose Restore or Discard before publishing.",
+      "draftAutoPublishStopped": "We did not publish automatically. Check the form and press Publish to continue.",
+      "draftHandoffFailed": "We couldn't continue. Try again or discard the draft.",
+      "draftResumeFailed": "We could not restore the draft for this return. It may have expired, changed or belong to another account. Review any available draft or start again.",
+      "draftAuthNotice": "We'll save your draft. Once you've signed in, we'll continue publishing.",
+      "draftProfileNotice": "We'll save your draft. Once you've completed your profile, we'll continue publishing.",
+      "draftRetry": "Try again",
+      "draftDiscardConfirm": "Discard this draft?",
+      "draftDiscardDescription": "The form and image will be deleted. This can't be undone.",
+      "draftKeep": "Keep draft",
+      "draftDateExpired": "Check the dates: this draft starts in the past. We have not changed them.",
+      "draftCityUnavailable": "The saved town is no longer listed. Check and select it again. We have kept the original value.",
+      "draftCategoryUnavailable": "A saved category is no longer listed. Check the categories. We have kept the original values.",
+      "draftCleanupFailed": "Your event was published, but the local draft could not be removed. Discard it when you return to the form. Do not publish the event again.",
       "geoNotSupported": "Your browser does not allow location access.",
-      "geoDenied": "We couldn't get your location. Please check permissions."
+      "geoDenied": "We couldn't get your location. Please check permissions.",
+      "promoteUpsell": {
+        "title": "Boost your event",
+        "description": "Promote it to reach more people and appear near the top.",
+        "promoteButton": "Promote",
+        "keepFreeButton": "Not now"
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " in {place}",
@@ -309,6 +418,67 @@
       "notFoundTitle": "No events available",
       "notFoundDescriptionWithDate": "We couldn't find {activitiesLabel} for {date} in {place}.",
       "notFoundDescriptionFallback": "We couldn't find {activitiesLabel} for the coming days in {place}."
+    },
+    "EventPromote": {
+      "refreshingSession": "Restoring your session...",
+      "title": "Promote your event",
+      "description": "Reach more people by promoting your event on Esdeveniments.cat.",
+      "heading": "Promote your event",
+      "subheading": "Stand out to reach more people and appear at the top.",
+      "benefit1": "More visibility in the agenda",
+      "benefit2": "Priority over other events",
+      "benefit3": "More interested people",
+      "backToEvent": "Back to event",
+      "confirmButton": "Confirm and pay",
+      "confirmButtonLoading": "Redirecting to payment...",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "chooseOption": "Choose where and for how long",
+      "taxIncluded": "Prices include VAT. One-off payment.",
+      "duration": "{days, plural, one {# day} other {# days}}",
+      "scope": {
+        "CITY": "Your town",
+        "REGION": "Your region",
+        "PROVINCE": "Your province",
+        "CATALONIA": "All of Catalonia"
+      },
+      "pendingCheckout": "You have a pending payment for this event.",
+      "resumeCheckout": "Continue payment",
+      "refreshStatus": "Refresh status",
+      "tryAgain": "Try again",
+      "errors": {
+        "PROMOTION_ALREADY_ACTIVE": "This event is already promoted.",
+        "CHECKOUT_ALREADY_PENDING": "You already have a pending payment for this event.",
+        "REFUND_PENDING": "A refund is in progress for this event.",
+        "PROMOTIONS_DISABLED": "Promotions are not available right now.",
+        "MISSING_EVENT_LOCATION": "The event needs a town before it can be promoted.",
+        "MISSING_EVENT_DATE": "The event needs a date before it can be promoted.",
+        "INSUFFICIENT_EVENT_DURATION": "The event ends before this promotion would.",
+        "NO_AVAILABLE_OPTIONS": "No promotion is available for this event right now.",
+        "AUTHENTICATION_REQUIRED": "Your session has expired. Please sign in again.",
+        "NOT_EVENT_OWNER": "Only the person who created the event can promote it.",
+        "INVALID_OPTION": "This option is no longer available. Choose another one.",
+        "CHECKOUT_EXPIRED": "The payment expired. Please try again.",
+        "PAYMENT_PROCESSING": "We are processing the payment. Wait a few seconds."
+      },
+      "status": {
+        "ACTIVE": "Your event is promoted until {endsAt}.",
+        "PENDING": "We are confirming the payment. It can take a few seconds.",
+        "PAID": "Payment received. The promotion will start shortly.",
+        "EXPIRED": "The payment expired and you were not charged.",
+        "FAILED": "The payment could not be completed.",
+        "REFUND_PENDING": "We are processing the refund.",
+        "REFUNDED": "We have refunded the payment.",
+        "NONE": "There is no payment for this event.",
+        "unknown": "We can't check the payment status right now. Try again in a while.",
+        "promotionEXPIRED": "This event's promotion has ended.",
+        "promotionREVOKED": "This event's promotion was withdrawn."
+      },
+      "successPage": {
+        "title": "Thank you!"
+      },
+      "cancelPage": {
+        "title": "Payment cancelled"
+      }
     }
   },
   "Components": {
@@ -320,6 +490,32 @@
     },
     "Breadcrumbs": {
       "home": "Home"
+    },
+    "Profile": {
+      "title": "{name} — Profile",
+      "metaDescription": "Discover events by {name}. Browse their upcoming events, concerts, exhibitions and more.",
+      "events": "Events",
+      "verified": "Verified",
+      "verifiedOrganizer": "Verified organizer",
+      "joinedDate": "Joined {date}",
+      "noEvents": "No events yet",
+      "website": "Website",
+      "totalEvents": "{count, plural, one {# event} other {# events}}",
+      "notFound": "Profile not found",
+      "notFoundDescription": "The profile you're looking for doesn't exist or has been removed.",
+      "backHome": "Back to home",
+      "editProfile": "Edit profile",
+      "claimQuestion": "Is this your venue?",
+      "claimLogin": "Log in",
+      "tabUpcoming": "Upcoming",
+      "tabPast": "Past",
+      "noUpcomingEvents": "No upcoming events yet",
+      "noPastEvents": "No past events yet",
+      "statsPublished": "Published",
+      "statsUpcoming": "Upcoming",
+      "statsVisits": "Visits",
+      "pastTitle": "{name}'s past events — Profile",
+      "pastMetaDescription": "Check out {name}'s past events: concerts, exhibitions and activities they've already organized."
     },
     "Footer": {
       "navigation": {
@@ -333,7 +529,8 @@
         "contact": "Contact",
         "archive": "Archive",
         "terms": "Terms",
-        "privacy": "Privacy"
+        "privacy": "Privacy",
+        "login": "Log in"
       },
       "sponsorCta": {
         "title": "Make your local business visible",
@@ -354,8 +551,6 @@
       },
       "logoAlt": "Esdeveniments.cat logo",
       "aria": {
-        "openMenu": "Open menu",
-        "closeMenu": "Close menu",
         "home": "Home",
         "agenda": "Agenda",
         "favorites": "Favorites",
@@ -373,7 +568,14 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publish"
+      "mobilePublishLabel": "Publish",
+      "auth": {
+        "login": "Log in",
+        "logout": "Log out",
+        "userMenu": "User menu",
+        "myProfile": "My profile",
+        "incompleteProfile": "⚠️ Incomplete session — log out and log in again to load your profile."
+      }
     },
     "NoEventsFound": {
       "cta": "Add an event",
@@ -392,6 +594,11 @@
     },
     "FavoriteButton": {
       "maxReached": "You've reached the limit of {max} favorites. Remove one to add more."
+    },
+    "FavoritesLoginNudge": {
+      "message": "Saved! Sign in to sync your favorites across devices.",
+      "login": "Sign in",
+      "dismiss": "Dismiss"
     },
     "EventNotifications": {
       "thankYou": "Thanks for helping improve Esdeveniments.cat! Your change will be live within 24 hours."
@@ -429,58 +636,6 @@
       "active": "active"
     },
     "Constants": {
-      "days": [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday"
-      ],
-      "daysShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-      "monthsShort": [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
-      ],
-      "months": [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
-      ],
-      "monthsUrl": [
-        "january",
-        "february",
-        "march",
-        "april",
-        "may",
-        "june",
-        "july",
-        "august",
-        "september",
-        "october",
-        "november",
-        "december"
-      ],
       "newsHubs": {
         "mataro": "Mataró",
         "barcelona": "Barcelona",
@@ -530,6 +685,7 @@
     },
     "Filters": {
       "triggerLabel": "Filters",
+      "removeFilter": "Remove filter {filter}",
       "priceFree": "Free",
       "pricePaid": "Paid"
     },
@@ -644,34 +800,22 @@
         "priceHeading": "Price",
         "priceFree": "Free",
         "pricePaid": "Paid",
-        "calendarLabel": "Or pick from calendar:",
-        "pickDate": "Pick a date...",
-        "viewMore": "View more",
-        "viewLess": "View less"
+        "calendarLabel": "Or pick from calendar:"
       }
     },
     "ImageUploader": {
-      "label": "Image *",
-      "unsupported": "The selected file is not a supported image. Please upload a JPEG, PNG, JPG, or WEBP file.",
-      "originalTooLarge": "The image exceeds the maximum limit of {limit} MB. Reduce the image size before retrying.",
-      "tooLarge": "The image size exceeds the allowed limit of {limit} MB. Please choose a smaller image.",
-      "compressFailed": "We couldn't reduce the image. Check your connection and try again.",
-      "optimizing": "Optimizing the image to meet the {limit} MB limit...",
-      "progress": "{progress}%",
-      "uploading": "Uploading the image ({progress}%)...",
-      "uploadSuccess": "Image uploaded successfully.",
-      "uploadMode": "Upload a file",
-      "urlMode": "Use an image URL",
-      "imageUrlLabel": "Image URL",
-      "imageUrlPlaceholder": "https://example.com/image.jpg",
-      "imageUrlHelper": "If your image is already online, paste the link and we'll use it directly without uploading.",
-      "imageUrlInvalid": "Add a valid image URL",
+      "label": "Image",
+      "unsupported": "This file isn't supported. Choose a JPG or PNG image.",
+      "originalTooLarge": "The image is over {limit} MB. Choose a smaller one.",
+      "tooLarge": "We couldn't shrink the image below {limit} MB. Choose a smaller one.",
+      "compressFailed": "We couldn't shrink the image. Please try again.",
+      "optimizing": "Optimizing image…",
       "remove": "Remove image",
       "altPreview": "Image",
-      "uploadDropCta": "Drop your image here",
-      "uploadDropHelper": "or click to select",
-      "selectButton": "Select file",
-      "formatHelper": "Format: JPEG, PNG, JPG, or WEBP"
+      "uploadDropCta": "or drag it here",
+      "selectButton": "Choose image",
+      "formatHelper": "JPG or PNG",
+      "change": "Change"
     },
     "HeroCTA": {
       "buttonBase": "See events",
@@ -695,6 +839,9 @@
     },
     "WhereToEatSection": {
       "showPhoto": "Show photo",
+      "loadIntro": "Find places to eat near the event.",
+      "loadCta": "Show nearby restaurants",
+      "empty": "We can't show nearby restaurants right now.",
       "title": "Where you can eat",
       "promote": "Promote your restaurant"
     },
@@ -779,6 +926,10 @@
     },
     "EventPage": {
       "sponsored": "Sponsored content",
+      "editEvent": "Edit event",
+      "editTitle": "Edit: {title}",
+      "editError": "Error updating event",
+      "editSave": "Save changes",
       "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
       "stickyMoreInfo": "More info",
       "stickyCalendar": "Calendar",
@@ -794,28 +945,29 @@
       "readLess": "Read less",
       "durationLabel": "Duration: {duration}",
       "sidebarAriaLabel": "Event details",
-      "toolbarAriaLabel": "Event actions"
+      "toolbarAriaLabel": "Event actions",
+      "sidebarCreatedBy": "Published by",
+      "sidebarViewAllEvents": "View all events",
+      "promoteEvent": "Promote"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Add to favorites",
       "favoriteRemoveAria": "Remove from favorites",
-      "free": "Free",
       "today": "Today",
       "tomorrow": "Tomorrow",
       "multipleDates": "Multiple dates",
-      "viewCountAria": "{count, plural, one {{count} view} other {{count} views}}"
+      "viewCountAria": "{count, plural, one {{count} view} other {{count} views}}",
+      "promoted": "Sponsored"
     },
     "EventForm": {
-      "title": "Title *",
+      "title": "Title",
       "url": "Event link",
-      "region": "County *",
+      "region": "County",
       "town": "Town",
-      "titleHint": "Example: Summer street festival",
-      "locationHint": "Add the exact spot: square, street or venue",
-      "urlHint": "Optional: official link or social post",
-      "imageHint": "JPG/PNG/WebP. A clear image helps people find it.",
+      "locationHint": "Square, street or venue",
+      "urlHint": "Event website or social media",
       "reviewTitle": "Before publishing",
       "reviewReady": "All set! Review and publish.",
       "reviewMissing": "Missing: {fields}",
@@ -842,18 +994,22 @@
       "previous": "Back",
       "next": "Next",
       "useLocation": "Use my location",
-      "locating": "Locating...",
+      "locating": "Locating…",
       "testLink": "Test link",
-      "regionPlaceholder": "Select a county",
-      "townPlaceholder": "Select a town",
-      "categoriesPlaceholder": "Select categories",
+      "regionPlaceholder": "Choose a county",
+      "townPlaceholder": "Choose a town",
+      "categoriesPlaceholder": "Choose categories",
       "categories": "Categories",
       "location": "Venue",
       "email": "Email",
       "emailSubtitle": "Do you want us to notify you when the event is updated? (we don't store the data)",
-      "publishing": "Publishing...",
-      "regionSkeleton": "County *",
-      "townSkeleton": "Town *"
+      "publishing": "Publishing…",
+      "regionSkeleton": "County",
+      "townSkeleton": "Town",
+      "optional": "(optional)",
+      "stepDone": "completed",
+      "stepCurrent": "current step",
+      "stepTodo": "not started"
     },
     "Layout": {
       "rss": "RSS",
@@ -862,13 +1018,15 @@
     "EventDetailsSection": {
       "title": "Event details",
       "eventLink": "Event link:",
-      "duration": "Approximate duration: {duration}"
+      "duration": "Approximate duration: {duration}",
+      "createdBy": "Published by <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
       "hideMap": "Close map",
-      "getDirections": "Get directions"
+      "getDirections": "Get directions",
+      "profileLink": "Profile of {name}"
     },
     "EventCalendar": {
       "title": "Date and time"
@@ -885,18 +1043,18 @@
       "loadingShort": "Loading..."
     },
     "TextArea": {
-      "label": "Description *",
-      "edit": "✏️ Edit",
-      "preview": "👁️ Preview",
-      "emptyPreview": "Write something to see the preview...",
-      "placeholder": "Describe your event...",
-      "helperPreview": "This is how visitors will see the description",
-      "helperEdit": "Press Enter for line breaks."
+      "label": "Description",
+      "placeholder": "Describe your event…"
+    },
+    "DateRangeCalendar": {
+      "pickStart": "Pick the first day",
+      "pickEnd": "Now pick the last day (or tap the same day for a one-day event)",
+      "clear": "Clear dates"
     },
     "DatePicker": {
-      "dateAndTime": "Date and time *",
-      "start": "Start *",
-      "end": "End *",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "dateAndTime": "Date and time",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "All day (no end time)",
@@ -908,7 +1066,9 @@
     },
     "HybridEventsListClient": {
       "errorTitle": "Error loading events",
-      "error": "Please try again later."
+      "error": "Please try again later.",
+      "resultsCount": "{count, plural, =0 {No events} one {# event} other {# events}}",
+      "retry": "Try again"
     },
     "Hero": {
       "options": {
@@ -987,6 +1147,16 @@
       "unavailable": "Location unavailable. Try selecting a town instead of using distance.",
       "timeout": "Timeout. Try again or select a town.",
       "genericError": "Error getting location. Try selecting a town instead of using distance."
+    },
+    "PwaBackButton": {
+      "label": "Back",
+      "ariaLabel": "Go back"
+    },
+    "PromotedEvents": {
+      "title": "Featured events"
+    },
+    "Modal": {
+      "close": "Close"
     }
   },
   "Partials": {
@@ -1273,12 +1443,13 @@
     },
     "Validation": {
       "genericError": "There are validation errors",
-      "imageRequired": "Image is required",
-      "titleRequired": "Title is required",
-      "descriptionRequired": "Description is required",
-      "locationRequired": "Location is required",
-      "invalidUrl": "Invalid URL",
-      "invalidEmail": "Invalid email"
+      "imageRequired": "Add an image",
+      "titleRequired": "Enter a title",
+      "descriptionRequired": "Enter a description",
+      "locationRequired": "Enter the venue",
+      "invalidUrl": "Enter a valid link, like example.com",
+      "invalidEmail": "Enter a valid email address",
+      "townRequired": "Choose a town"
     },
     "EventStatus": {
       "past": "Event finished",
@@ -1352,38 +1523,9 @@
         "deLa": "of the",
         "deLes": "of the",
         "deL": "of the"
-      },
-      "capitalizePrepositions": [
-        "to the",
-        "to",
-        "of the",
-        "of",
-        "for the",
-        "by the"
-      ],
-      "feminineExceptions": ["gent gran", "dansa"],
-      "masculineExceptions": [
-        "penedès",
-        "alt penedès",
-        "baix penedès",
-        "rosselló",
-        "urgell",
-        "alt urgell",
-        "pla d'urgell",
-        "vallès",
-        "vallès oriental",
-        "vallès occidental",
-        "gironès",
-        "barcelonès",
-        "tarragonès",
-        "montsià",
-        "baix ebre",
-        "maresme",
-        "bages"
-      ]
+      }
     },
     "Calendar": {
-      "moreInfoHtml": "More information: <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">Esdeveniments.cat</a>",
       "moreInfoText": "More information: {url}",
       "dateRange": "From {start} to {end}",
       "dateSingle": "From {start}",
@@ -1594,7 +1736,7 @@
       "doneCta": "Finish",
       "dropzone": {
         "title": "Drag image here or click to select",
-        "formats": "Horizontal format • JPG, PNG or WebP",
+        "formats": "Horizontal format • JPG or PNG",
         "optimal": "Optimal: 728×150px",
         "minimum": "Min: 400×80px"
       },
@@ -1602,7 +1744,7 @@
         "title": "Image recommendations:",
         "recommended": "Optimal: {width}×{height}px (5:1 ratio)",
         "horizontal": "Wide horizontal banner format",
-        "formats": "Formats: JPG, PNG or WebP",
+        "formats": "Formats: JPG or PNG",
         "minimum": "Minimum accepted: 400×80px"
       },
       "validation": {
@@ -1664,5 +1806,87 @@
       "backHome": "Back to home"
     },
     "backToHome": "Back to home"
+  },
+  "Auth": {
+    "login": {
+      "title": "Log in",
+      "subtitle": "Access your account to manage your events",
+      "submit": "Log in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Create one",
+      "magicLinkSent": "Check your email for the login link"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Join the community and publish your events",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "passwordHint": "At least 8 characters"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "name": "Name (optional)",
+      "passwordShow": "Show password",
+      "passwordHide": "Hide password"
+    },
+    "errors": {
+      "invalid-credentials": "Incorrect email or password.",
+      "invalid-email": "That doesn't look like a valid email.",
+      "email-taken": "An account with this email already exists.",
+      "weak-password": "Password must be at least 8 characters.",
+      "network-error": "You appear to be offline. Check your connection and try again.",
+      "server-error": "The service isn't available right now. Please try again in a few moments.",
+      "not-configured": "Authentication isn't configured yet.",
+      "rate-limited": "Too many attempts. Please wait a moment before trying again.",
+      "rate-limited-seconds": "Too many attempts. Try again in {seconds}s.",
+      "email-not-verified": "Please verify your email before signing in.",
+      "account-locked": "Your account is locked. Please contact support.",
+      "unknown": "We couldn't complete that. Please try again."
+    },
+    "actions": {
+      "forgotPassword": "Forgot password?",
+      "forgotPasswordSent": "We sent a reset link to {email}.",
+      "resendVerification": "Resend verification email",
+      "verificationSent": "Verification email resent to {email}.",
+      "contactSupport": "Contact support"
+    },
+    "meta": {
+      "loginTitle": "Log in | Esdeveniments.cat",
+      "loginDescription": "Log in to your Esdeveniments.cat account",
+      "registerTitle": "Create account | Esdeveniments.cat",
+      "registerDescription": "Create your Esdeveniments.cat account to publish events",
+      "verifyEmailTitle": "Verify email | Esdeveniments.cat",
+      "verifyEmailDescription": "Verify your email to activate your Esdeveniments.cat account",
+      "resetPasswordTitle": "Reset password | Esdeveniments.cat",
+      "resetPasswordDescription": "Reset your Esdeveniments.cat account password"
+    },
+    "verification": {
+      "checkEmailTitle": "Check your email",
+      "checkEmailDescription": "We sent a verification email to {email}. Click the link to activate your account.",
+      "resend": "Resend verification email",
+      "resent": "Email sent!",
+      "successTitle": "Email verified!",
+      "successDescription": "Your account has been verified. You can now log in.",
+      "errorTitle": "Verification failed",
+      "errorDescription": "We couldn't verify your email. The link may have expired or already been used.",
+      "invalidToken": "Invalid link",
+      "invalidTokenDescription": "The verification link is not valid. Please register again or request a new verification email."
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "subtitle": "Enter your new password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Change password",
+      "passwordMismatch": "Passwords do not match",
+      "successTitle": "Password changed!",
+      "successDescription": "Your password has been updated. You can now log in.",
+      "errorTitle": "Reset failed",
+      "errorDescription": "We couldn't reset your password. The link may have expired or already been used.",
+      "invalidToken": "Invalid link",
+      "invalidTokenDescription": "The password reset link is not valid. Please request a new one."
+    }
   }
 }

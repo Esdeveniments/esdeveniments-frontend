@@ -16,7 +16,7 @@ function createMockEvent(
     hash: `hash-${id}`,
     slug,
     title,
-    type: "FREE",
+    isPromoted: false,
     url: `https://example.com/${slug}`,
     description: "",
     imageUrl: "",

@@ -261,116 +261,109 @@ describe("/api/revalidate", () => {
   });
 
   describe("Cloudflare Integration", () => {
-    it("skips Cloudflare purge when not configured", async () => {
-      // Ensure Cloudflare env vars are not set
-      delete process.env.CLOUDFLARE_ZONE_ID;
-      delete process.env.CLOUDFLARE_API_TOKEN;
+    const HTML_TAG = "www.esdeveniments.cat:html";
+    const originalFetch = global.fetch;
 
-      // Mock fetch to verify it's NOT called for Cloudflare
-      const originalFetch = global.fetch;
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ success: true }),
+    function cloudflareResponse(status: number, body: unknown): Response {
+      return new Response(JSON.stringify(body), {
+        status,
+        headers: { "content-type": "application/json" },
       });
-      global.fetch = mockFetch;
+    }
 
+    async function revalidate(tags: string[]) {
       vi.resetModules();
       const { POST } = await import("../app/api/revalidate/route");
-      const request = createMockRequest({
-        headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
-        body: { tags: ["places"] },
-      });
-
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.cloudflare).toBeDefined();
-      // Structural tags trigger full purge (prefixes = ["*"]), even when CF is skipped
-      expect(data.cloudflare.prefixes).toEqual(["*"]);
-      expect(data.cloudflare.purged).toBe(false);
-      expect(data.cloudflare.skipped).toBe(true);
-      // The Cloudflare API should NOT have been called
-      expect(mockFetch).not.toHaveBeenCalledWith(
-        expect.stringContaining("api.cloudflare.com"),
-        expect.anything()
+      const response = await POST(
+        createMockRequest({
+          headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
+          body: { tags },
+        })
       );
+      return { status: response.status, data: await response.json() };
+    }
 
+    function purgeBodies(mockFetch: ReturnType<typeof vi.fn>): unknown[] {
+      return mockFetch.mock.calls.map(([, init]) => JSON.parse(init.body));
+    }
+
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+    });
+
+    afterEach(() => {
       global.fetch = originalFetch;
     });
 
-    it("attempts Cloudflare purge when configured", async () => {
-      process.env.CLOUDFLARE_ZONE_ID = "test-zone-id";
-      process.env.CLOUDFLARE_API_TOKEN = "test-api-token";
-
-      // Mock global fetch for Cloudflare API call
-      const originalFetch = global.fetch;
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ success: true }),
-      });
+    it("skips Cloudflare purge when not configured", async () => {
+      delete process.env.CLOUDFLARE_ZONE_ID;
+      delete process.env.CLOUDFLARE_API_TOKEN;
+      const mockFetch = vi.fn();
       global.fetch = mockFetch;
 
-      vi.resetModules();
-      const { POST } = await import("../app/api/revalidate/route");
-      const request = createMockRequest({
-        headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
-        body: { tags: ["places", "regions"] },
-      });
+      const { status, data } = await revalidate(["places"]);
 
-      const response = await POST(request);
-      const data = await response.json();
+      expect(status).toBe(200);
+      expect(data.cloudflare).toEqual({ purged: false, tags: [HTML_TAG], skipped: true });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
 
-      expect(response.status).toBe(200);
-      expect(data.cloudflare.purged).toBe(true);
-      // Structural tags (places, regions) trigger a full purge
-      expect(data.cloudflare.prefixes).toEqual(["*"]);
+    it("purges all HTML by Cache-Tag for structural tags", async () => {
+      process.env.CLOUDFLARE_ZONE_ID = "test-zone-id";
+      process.env.CLOUDFLARE_API_TOKEN = "test-api-token";
+      const mockFetch = vi.fn(async () =>
+        cloudflareResponse(200, { success: true, errors: [], result: { id: "x" } })
+      );
+      global.fetch = mockFetch;
 
-      // Verify Cloudflare API was called with purge_everything
+      const { status, data } = await revalidate(["places", "regions"]);
+
+      expect(status).toBe(200);
+      expect(data.cloudflare).toEqual({ purged: true, tags: [HTML_TAG] });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("api.cloudflare.com"),
+        "https://api.cloudflare.com/client/v4/zones/test-zone-id/purge_cache",
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
             Authorization: "Bearer test-api-token",
           }),
-          body: JSON.stringify({ purge_everything: true }),
         })
       );
-
-      global.fetch = originalFetch;
+      expect(purgeBodies(mockFetch)).toEqual([{ tags: [HTML_TAG] }]);
     });
 
-    it("handles Cloudflare API errors gracefully", async () => {
+    it("falls back to purging everything when the tag purge fails", async () => {
       process.env.CLOUDFLARE_ZONE_ID = "test-zone-id";
       process.env.CLOUDFLARE_API_TOKEN = "test-api-token";
-
-      const originalFetch = global.fetch;
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 403,
-        json: () => Promise.resolve({ errors: ["Forbidden"] }),
-      });
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce(cloudflareResponse(500, { success: false }))
+        .mockResolvedValueOnce(cloudflareResponse(200, { success: true, errors: [] }));
       global.fetch = mockFetch;
 
-      vi.resetModules();
-      const { POST } = await import("../app/api/revalidate/route");
-      const request = createMockRequest({
-        headers: { "x-revalidate-secret": "test-revalidate-secret-12345678" },
-        body: { tags: ["places"] },
-      });
+      const { data } = await revalidate(["categories"]);
 
-      const response = await POST(request);
-      const data = await response.json();
+      expect(purgeBodies(mockFetch)).toEqual([
+        { tags: [HTML_TAG] },
+        { purge_everything: true },
+      ]);
+      expect(data.cloudflare).toEqual({ purged: true, prefixes: ["*"] });
+    });
 
-      // Should still succeed overall (Next.js cache was revalidated)
-      expect(response.status).toBe(200);
+    it("reports a Cloudflare failure without failing the revalidation", async () => {
+      process.env.CLOUDFLARE_ZONE_ID = "test-zone-id";
+      process.env.CLOUDFLARE_API_TOKEN = "test-api-token";
+      global.fetch = vi.fn(async () =>
+        cloudflareResponse(403, { success: false, errors: [{ code: 10000, message: "Authentication error" }] })
+      );
+
+      const { status, data } = await revalidate(["places"]);
+
+      expect(status).toBe(200);
       expect(data.revalidated).toBe(true);
-      // But Cloudflare should report failure
       expect(data.cloudflare.purged).toBe(false);
-      expect(data.cloudflare.error).toBeDefined();
-
-      global.fetch = originalFetch;
+      expect(data.cloudflare.error).toBe("Cloudflare purge failed: 403");
     });
   });
 });

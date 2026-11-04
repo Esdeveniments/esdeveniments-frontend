@@ -12,7 +12,7 @@ function createMockEvent(id: string, title: string, slug: string): EventSummaryR
     hash: `hash-${id}`,
     slug,
     title,
-    type: "FREE",
+    isPromoted: false,
     url: `https://example.com/${slug}`,
     description: "",
     imageUrl: "",
@@ -275,10 +275,10 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("includes type=FREE when price is gratis", async () => {
+  it("does not send a type param when price is gratis", async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input), "http://localhost");
-      expect(url.searchParams.get("type")).toBe("FREE");
+      expect(url.searchParams.get("type")).toBeNull();
       return new Response(
         JSON.stringify({
           content: [createMockEvent("p1", "Free Event", "free-event")],
@@ -314,10 +314,10 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("includes type=PAID when price is pagament", async () => {
+  it("does not send a type param when price is pagament", async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input), "http://localhost");
-      expect(url.searchParams.get("type")).toBe("PAID");
+      expect(url.searchParams.get("type")).toBeNull();
       return new Response(
         JSON.stringify({
           content: [createMockEvent("p2", "Paid Event", "paid-event")],

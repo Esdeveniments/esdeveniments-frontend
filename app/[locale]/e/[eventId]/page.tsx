@@ -2,12 +2,13 @@ import { Suspense, use } from "react";
 import type { JSX } from "react";
 import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
-import { getEventBySlug, getEventBySlugForMetadata } from "@lib/api/events";
+import { getCachedEventBySlug } from "@lib/api/events";
+import { cacheLife, cacheTag } from "next/cache";
+import { eventsTag, eventTag } from "@lib/cache/tags";
 import { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "@lib/meta";
 import { redirect, notFound } from "next/navigation";
-import { connection } from "next/server";
 import EventMedia from "./components/EventMedia";
 import EventShareBar from "./components/EventShareBar";
 import EventHeader from "./components/EventHeader";
@@ -17,7 +18,9 @@ import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
 import PastEventBanner from "./components/PastEventBanner";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
-import type { BreadcrumbNavItem } from "types/props";
+import PwaBackButton from "@components/ui/common/PwaBackButton";
+import type { BreadcrumbNavItem, EventPageBodyProps } from "types/props";
+import type { EventDetailResponseDTO } from "types/api/event";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
@@ -32,7 +35,7 @@ import { generateBreadcrumbList } from "@components/partials/seo-meta";
 import ClientEventClient from "./components/ClientEventClient";
 import EventLocation from "./components/EventLocation";
 import EventWeather from "./components/EventWeather";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
@@ -47,14 +50,13 @@ import SocialProofCounter from "./components/SocialProofCounter";
 import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
 import DetailSectionTracker from "./components/DetailSectionTracker";
+import EventDetailsSection from "./components/EventDetailsSection";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
 import LazyRestaurantPromotion from "./components/LazyRestaurantPromotion";
 
-export async function generateMetadata(props: {
-  params: Promise<{ eventId: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/[locale]/e/[eventId]">): Promise<Metadata> {
   const slug = (await props.params).eventId;
   const locale = (await rootLocale()) as AppLocale;
   // Use the request-independent reader: reading headers() here would make
@@ -62,7 +64,7 @@ export async function generateMetadata(props: {
   // It throws on transient errors — let that bubble so Next does NOT cache a
   // broken render (SWR keeps the previous good page); only a genuine 404
   // returns null below.
-  const event = await getEventBySlugForMetadata(slug);
+  const event = await getCachedEventBySlug(slug);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.
@@ -76,9 +78,7 @@ export async function generateMetadata(props: {
 // inside EventPageContent and streams in under the EventDetailSkeleton fallback.
 export default function EventPage({
   params,
-}: {
-  params: Promise<{ eventId: string }>;
-}) {
+}: PageProps<"/[locale]/e/[eventId]">) {
   const { eventId: slug } = use(params);
 
   // Fallback combines the visual skeleton (aria-hidden) with a minimal
@@ -98,28 +98,44 @@ export default function EventPage({
   );
 }
 
+// Place data shared by the request-time slots and the cached body.
+function getPlaceContext(event: EventDetailResponseDTO, locale: AppLocale) {
+  const cityName = formatPlaceName(event.city?.name || "");
+  const regionName = formatPlaceName(event.region?.name || "");
+  const citySlug = event.city?.slug;
+  const regionSlug = event.region?.slug;
+  const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
+  return {
+    cityName,
+    regionName,
+    citySlug,
+    regionSlug,
+    primaryPlaceSlug,
+    sponsorFallbackPlaces:
+      citySlug && regionSlug
+        ? [regionSlug].filter((p) => p !== primaryPlaceSlug)
+        : undefined,
+    placeLabel: cityName || regionName || "Catalunya",
+    placeType: (event.city ? "town" : "region") as "town" | "region",
+    newsHref: withLocalePath(
+      primaryPlaceSlug === "catalunya" ? "/noticies" : `/noticies/${primaryPlaceSlug}`,
+      locale
+    ),
+  };
+}
+
 async function EventPageContent({
   slug,
 }: {
   slug: string;
 }): Promise<JSX.Element> {
-  // Opt out of cacheComponents caching FIRST, before any data fetch whose
-  // result drives JSX shape (relatedEvents JSON-LD, howTo JSON-LD, breadcrumbs,
-  // LCP preload, sticky CTA, weather block, past-event banner — all conditional).
-  // With cacheComponents, every await is a cache point: if connection() runs
-  // after data fetches, the prerender path can cache a tree shape that doesn't
-  // match the resume → "Expected Fragment but got script" PPR errors.
-  await connection();
-
-  // Kick off event fetch and locale resolution in parallel — both are
-  // independent operations and locale resolution shouldn't block the API call.
+  // Cached reader ("use cache" + event tags), so Next can store this page and
+  // serve it without a render. It throws on transient API errors: an outage is
+  // never cached as "not found".
   const [locale, event] = await Promise.all([
     rootLocale() as Promise<AppLocale>,
-    getEventBySlug(slug),
+    getCachedEventBySlug(slug),
   ]);
-
-  // With relaxed CSP we no longer require a nonce here; compute mobile on client
-  const initialIsMobile = false;
 
   if (!event) notFound();
   if (event.title === "CANCELLED") notFound();
@@ -135,19 +151,66 @@ async function EventPageContent({
     redirect(withLocalePath(`/e/${event.slug}`, locale));
   }
 
+  const { primaryPlaceSlug, sponsorFallbackPlaces, placeLabel, placeType, newsHref } =
+    getPlaceContext(event, locale);
+  // Request-time parts stay outside the cached body and pass through it.
+  const sponsorSlot = (
+    <SponsorBannerSlot place={primaryPlaceSlug} fallbackPlaces={sponsorFallbackPlaces} />
+  );
+
+  return (
+    <EventPageBody
+      slug={event.slug || slug}
+      locale={locale}
+      mobileSponsorSlot={sponsorSlot}
+      sidebarSponsorSlot={sponsorSlot}
+      latestNewsSlot={
+        <Suspense fallback={null}>
+          <LatestNewsSection
+            placeSlug={primaryPlaceSlug}
+            placeLabel={placeLabel}
+            placeType={placeType}
+            newsHref={newsHref}
+          />
+        </Suspense>
+      }
+    />
+  );
+}
+
+async function EventPageBody({
+  slug,
+  locale,
+  mobileSponsorSlot,
+  sidebarSponsorSlot,
+  latestNewsSlot,
+}: EventPageBodyProps): Promise<JSX.Element | null> {
+  "use cache";
+  // The body reads the current time (status pill, date copy), which a stored
+  // page may only do inside "use cache". A 15 minute life keeps the status
+  // fresh; Cloudflare already serves copies up to 90 minutes old.
+  cacheLife({ stale: 300, revalidate: 900, expire: 86400 });
+  cacheTag(eventsTag, eventTag(slug));
+  // The layout's setRequestLocale does not reach inside "use cache"; without
+  // it next-intl falls back to reading headers(), which is not allowed here.
+  setRequestLocale(locale);
+
+  const event = await getCachedEventBySlug(slug);
+  if (!event) return null;
+
+  // With relaxed CSP we no longer require a nonce here; compute mobile on client
+  const initialIsMobile = false;
+  const {
+    cityName,
+    regionName,
+    citySlug,
+    regionSlug,
+    primaryPlaceSlug,
+    placeLabel,
+    placeType,
+  } = getPlaceContext(event, locale);
   const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";
-  const rawCityName = event.city?.name || "";
-  const rawRegionName = event.region?.name || "";
-  const cityName = formatPlaceName(rawCityName);
-  const regionName = formatPlaceName(rawRegionName);
-  const citySlug = event.city?.slug;
-  const regionSlug = event.region?.slug;
-  const primaryPlaceSlug = citySlug || regionSlug || "catalunya";
-  const sponsorFallbackPlaces =
-    citySlug && regionSlug
-      ? [regionSlug].filter((p) => p !== primaryPlaceSlug)
-      : undefined;
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const clientEvent = {
     id: event.id,
@@ -158,6 +221,7 @@ async function EventPageContent({
     placeSlug: citySlug ?? regionSlug,
     hasImage: Boolean(event.imageUrl),
     origin: event.origin,
+    ownerId: event.owner?.id,
   };
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug
@@ -240,14 +304,6 @@ async function EventPageContent({
 
   // Build intro text via shared utils (no assumptions)
   const introText = await buildEventIntroText(event, eventCopyLabels, locale);
-
-  // Prepare place data for LatestNewsSection (streamed separately)
-  const placeLabel = cityName || regionName || "Catalunya";
-  const placeType: "region" | "town" = event.city ? "town" : "region";
-  const newsHref = withLocalePath(
-    primaryPlaceSlug === "catalunya" ? "/noticies" : `/noticies/${primaryPlaceSlug}`,
-    locale
-  );
 
   // Generate JSON-LD for related events (server-side for SEO)
   const relatedEventsJsonData =
@@ -365,6 +421,8 @@ async function EventPageContent({
       <div className="w-full bg-background pb-10">
         <div className="container flex flex-col gap-section-y min-w-0">
           <article className="w-full flex flex-col gap-section-y">
+            {/* PWA back button — only renders in installed standalone mode */}
+            <PwaBackButton fallbackHref="/" />
             {/* Visible Breadcrumbs for internal linking — full width */}
             <Breadcrumbs
               items={[
@@ -386,7 +444,7 @@ async function EventPageContent({
               className="px-section-x pt-4"
             />
 
-            {/* Two-column layout: Main content + Sticky sidebar (desktop) */}
+            {/* Two-column layout: Main content + sidebar (desktop) */}
             <div className="flex flex-col lg:flex-row lg:gap-8">
               {/* ========== MAIN CONTENT (left column) ========== */}
               <div className="flex-1 min-w-0 flex flex-col gap-section-y-sm">
@@ -450,6 +508,12 @@ async function EventPageContent({
                   </CollapsibleDescription>
                 </DetailSectionTracker>
 
+                {/* Event details: duration, external link, creator profile link.
+                    Mobile only — desktop shows these in EventSidebar to avoid duplication. */}
+                <DetailSectionTracker section="details" className="lg:hidden">
+                  <EventDetailsSection event={event} />
+                </DetailSectionTracker>
+
                 {/* Location — mobile only */}
                 <DetailSectionTracker section="location" className="lg:hidden">
                   <EventLocation
@@ -458,6 +522,7 @@ async function EventPageContent({
                     regionName={regionName}
                     citySlug={event.city?.slug}
                     regionSlug={event.region?.slug}
+                    profile={event.profile}
                   />
                 </DetailSectionTracker>
 
@@ -481,12 +546,7 @@ async function EventPageContent({
                 )}
 
                 {/* Sponsor — mobile only */}
-                <div className="lg:hidden">
-                  <SponsorBannerSlot
-                    place={primaryPlaceSlug}
-                    fallbackPlaces={sponsorFallbackPlaces}
-                  />
-                </div>
+                <div className="lg:hidden">{mobileSponsorSlot}</div>
 
                 {/* Related Events */}
                 {event.relatedEvents && event.relatedEvents.length > 0 && (
@@ -535,33 +595,25 @@ async function EventPageContent({
                 <ClientEventClient event={clientEvent} />
               </div>
 
-              {/* ========== STICKY SIDEBAR (desktop only) ========== */}
+              {/* ========== SIDEBAR (desktop only) ========== */}
               <EventSidebar
                 event={event}
                 cityName={cityName}
                 regionName={regionName}
-                primaryPlaceSlug={primaryPlaceSlug}
-                sponsorFallbackPlaces={sponsorFallbackPlaces}
+                sponsorSlot={sidebarSponsorSlot}
               />
             </div>
           </article>
         </div>
       </div>
 
-      {/* Latest News Section - Streamed separately to improve TTFB */}
-      <Suspense fallback={null}>
-        <LatestNewsSection
-          placeSlug={primaryPlaceSlug}
-          placeLabel={placeLabel}
-          placeType={placeType}
-          newsHref={newsHref}
-        />
-      </Suspense>
+      {/* Latest News Section - request-time, streamed separately */}
+      {latestNewsSlot}
 
       {/* Sticky CTA bar for mobile — sits above bottom nav */}
       {temporalStatus.state !== "past" && (
         <EventStickyCTA
-          eventUrl={event.url}
+          eventUrl={event.url ?? undefined}
           eventSlug={event.slug}
           labels={{
             moreInfo: tEvent("stickyMoreInfo"),

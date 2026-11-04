@@ -94,46 +94,101 @@ export default function HorizontalScroll({
 
     scheduleOverflowAndHint();
 
-    // Optional one-time nudge to hint scroll on touch devices
+    // Optional one-time nudge to hint scroll on touch devices. It waits until
+    // the carousel is on screen: an off-screen nudge does work nobody sees and
+    // marks the hint as seen, so the user never gets it.
     let forward: number | undefined;
     let backward: number | undefined;
     let hintTimeout: number | undefined;
+    let nudgeObserver: IntersectionObserver | undefined;
+    const storageKey =
+      hintStorageKey ||
+      (ariaLabel
+        ? `hs_seen_hint_${ariaLabel.toLowerCase()}`
+        : `hs_seen_hint_${uniqueId.replace(/:/g, "-")}`);
+    const markSeen = () => {
+      try {
+        sessionStorage.setItem(storageKey, "1");
+      } catch {
+        // noop: the nudge may repeat this session
+      }
+    };
+    const removeNudgeListeners = () => {
+      el.removeEventListener("pointerdown", cancelNudge);
+      el.removeEventListener("touchstart", cancelNudge);
+    };
+    // A touch wins: no nudge, and no scroll back over the user's swipe.
+    function cancelNudge() {
+      window.clearTimeout(forward);
+      window.clearTimeout(backward);
+      removeNudgeListeners();
+      nudgeObserver?.disconnect();
+      markSeen();
+    }
+    const nudgePx = 16;
+    const nudgeDelay = 250;
+    const backDelay = 500;
+    // Runs only while the carousel is still half visible; the hint is
+    // marked as seen here, not when the carousel first enters the viewport.
+    const runNudge = () => {
+      nudgeObserver?.disconnect();
+      const hasOverflow = el.scrollWidth > el.clientWidth + 2;
+      if (!hasOverflow || el.scrollLeft > 1) return removeNudgeListeners();
+      try {
+        // Another carousel with the same key may have nudged meanwhile.
+        if (sessionStorage.getItem(storageKey) === "1") {
+          return removeNudgeListeners();
+        }
+      } catch {
+        // noop
+      }
+      markSeen();
+      setShowHint(true);
+      el.scrollBy({ left: nudgePx, behavior: "smooth" });
+      backward = window.setTimeout(() => {
+        el.scrollTo({ left: 0, behavior: "smooth" });
+        removeNudgeListeners();
+      }, backDelay);
+      hintTimeout = window.setTimeout(() => setShowHint(false), 2500);
+    };
     try {
-      const storageKey =
-        hintStorageKey ||
-        (ariaLabel
-          ? `hs_seen_hint_${ariaLabel.toLowerCase()}`
-          : `hs_seen_hint_${uniqueId.replace(/:/g, "-")}`);
       const prefersReduced =
         window.matchMedia &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const prefersCoarse =
         window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
       const hasSeen = sessionStorage.getItem(storageKey) === "1";
-      const hasOverflow = el.scrollWidth > el.clientWidth + 2;
 
       if (
         nudgeOnFirstLoad &&
         !hasSeen &&
         !prefersReduced &&
         prefersCoarse &&
-        hasOverflow &&
-        el.scrollLeft <= 1
+        typeof IntersectionObserver !== "undefined"
       ) {
-        sessionStorage.setItem(storageKey, "1");
-        // Make the hint a bit stronger while nudging (defer to avoid direct setState in effect)
-        // Note: This 0ms timeout is just to defer out of the effect - cleared in cleanup
-        hintTimeout = window.setTimeout(() => setShowHint(true), 0);
-        // small delayed nudge then reset
-        const nudgePx = 16;
-        const nudgeDelay = 250;
-        const backDelay = 500;
-        forward = window.setTimeout(() => {
-          el.scrollBy({ left: nudgePx, behavior: "smooth" });
-        }, nudgeDelay);
-        backward = window.setTimeout(() => {
-          el.scrollTo({ left: 0, behavior: "smooth" });
-        }, nudgeDelay + backDelay);
+        nudgeObserver = new IntersectionObserver(
+          (entries) => {
+            // One callback can hold several crossings: the last one is current.
+            // The first callback arrives on observe() even below the
+            // threshold, and isIntersecting is true for any overlap.
+            const latest = entries[entries.length - 1];
+            const halfVisible =
+              latest.isIntersecting && latest.intersectionRatio >= 0.5;
+            if (!halfVisible) {
+              // Left the viewport before the nudge: keep it for a later entry.
+              window.clearTimeout(forward);
+              forward = undefined;
+              removeNudgeListeners();
+              return;
+            }
+            if (forward !== undefined) return;
+            el.addEventListener("pointerdown", cancelNudge, { passive: true });
+            el.addEventListener("touchstart", cancelNudge, { passive: true });
+            forward = window.setTimeout(runNudge, nudgeDelay);
+          },
+          { threshold: 0.5 }
+        );
+        nudgeObserver.observe(el);
       }
     } catch {
       // noop: sessionStorage or matchMedia may be unavailable
@@ -164,6 +219,9 @@ export default function HorizontalScroll({
       if (hintTimeout) window.clearTimeout(hintTimeout);
       if (forward) window.clearTimeout(forward);
       if (backward) window.clearTimeout(backward);
+      nudgeObserver?.disconnect();
+      el.removeEventListener("pointerdown", cancelNudge);
+      el.removeEventListener("touchstart", cancelNudge);
       if (scrollRaf) window.cancelAnimationFrame(scrollRaf);
       if (measureRaf) window.cancelAnimationFrame(measureRaf);
       el.removeEventListener("scroll", onScroll);
@@ -228,7 +286,8 @@ export default function HorizontalScroll({
           <div
             className={[
               "h-full w-full flex items-center justify-end pr-1",
-              showHint ? "text-muted-foreground" : "text-foreground/40",
+              "text-muted-foreground",
+              showHint ? "" : "opacity-60",
             ].join(" ")}
           >
             {!(isFinePointer && showDesktopArrows) && (

@@ -4,14 +4,14 @@ test.describe("Search end-to-end", () => {
   test("typing updates results list and URL", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
     // Match by explicit data-testid used in component
-    const input = page.getByTestId("search-input");
+    const input = page.getByTestId("search-input").filter({ visible: true });
     await expect(input).toBeVisible({
       timeout: process.env.CI ? 60000 : 30000,
     });
     await input.click();
     await input.fill("castellers");
     // Click search button to trigger search (search component requires button click or Enter)
-    const searchButton = page.getByTestId("search-button");
+    const searchButton = page.getByTestId("search-button").filter({ visible: true });
     await searchButton.click();
     // Wait for navigation - on home page, search navigates to /catalunya?search=...
     await expect(page).toHaveURL(/\/catalunya\?search=castellers/, {

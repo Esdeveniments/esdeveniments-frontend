@@ -1,6 +1,8 @@
 export interface TcfData {
   eventStatus?: "tcloaded" | "useractioncomplete" | "cmpuishown" | string;
   listenerId?: number;
+  tcString?: string;
+  gdprApplies?: boolean;
   purpose?: { consents?: Record<string, boolean> };
   vendor?: { consents?: Record<string, boolean> };
 }
@@ -19,4 +21,10 @@ export interface AdContextType {
     callback: (mutations: MutationRecord[]) => void
   ) => void;
   unobserveMutations: (element: Element) => void;
+}
+
+export interface GoogleScriptsHeavyProps {
+  adsAllowed: boolean;
+  /** True after the first user interaction or the load fallback timeout. */
+  adsScriptReady: boolean;
 }

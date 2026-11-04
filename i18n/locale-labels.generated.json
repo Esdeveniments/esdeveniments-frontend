@@ -1,0 +1,395 @@
+{
+  "constants": {
+    "ca": {
+      "newsHubs": {
+        "mataro": "Mataró",
+        "barcelona": "Barcelona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida"
+      },
+      "nearbyHubs": {
+        "mataro": {
+          "vilassar-de-mar": "Vilassar de Mar",
+          "premia-de-dalt": "Premià de Dalt",
+          "argentona": "Argentona",
+          "calella": "Calella",
+          "canet-de-mar": "Canet de Mar"
+        },
+        "barcelona": {
+          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
+          "badalona": "Badalona",
+          "sant-just-desvern": "Sant Just Desvern",
+          "cardedeu": "Cardedeu",
+          "granollers": "Granollers",
+          "castelldefels": "Castelldefels"
+        },
+        "tarragona": {
+          "reus": "Reus",
+          "cambrils": "Cambrils",
+          "salou": "Salou"
+        },
+        "lleida": {
+          "balaguer": "Balaguer",
+          "tremp": "Tremp",
+          "tarrega": "Tàrrega"
+        }
+      },
+      "days": [
+        "Diumenge",
+        "Dilluns",
+        "Dimarts",
+        "Dimecres",
+        "Dijous",
+        "Divendres",
+        "Dissabte"
+      ],
+      "daysShort": [
+        "Dg.",
+        "Dl.",
+        "Dt.",
+        "Dc.",
+        "Dj.",
+        "Dv.",
+        "Ds."
+      ],
+      "months": [
+        "gener",
+        "febrer",
+        "març",
+        "abril",
+        "maig",
+        "juny",
+        "juliol",
+        "agost",
+        "setembre",
+        "octubre",
+        "novembre",
+        "desembre"
+      ],
+      "monthsShort": [
+        "gen.",
+        "feb.",
+        "març",
+        "abr.",
+        "maig",
+        "juny",
+        "jul.",
+        "ag.",
+        "set.",
+        "oct.",
+        "nov.",
+        "des."
+      ],
+      "monthsUrl": [
+        "gener",
+        "febrer",
+        "marc",
+        "abril",
+        "maig",
+        "juny",
+        "juliol",
+        "agost",
+        "setembre",
+        "octubre",
+        "novembre",
+        "desembre"
+      ]
+    },
+    "es": {
+      "newsHubs": {
+        "mataro": "Mataró",
+        "barcelona": "Barcelona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida"
+      },
+      "nearbyHubs": {
+        "mataro": {
+          "vilassar-de-mar": "Vilassar de Mar",
+          "premia-de-dalt": "Premià de Dalt",
+          "argentona": "Argentona",
+          "calella": "Calella",
+          "canet-de-mar": "Canet de Mar"
+        },
+        "barcelona": {
+          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
+          "badalona": "Badalona",
+          "sant-just-desvern": "Sant Just Desvern",
+          "cardedeu": "Cardedeu",
+          "granollers": "Granollers",
+          "castelldefels": "Castelldefels"
+        },
+        "tarragona": {
+          "reus": "Reus",
+          "cambrils": "Cambrils",
+          "salou": "Salou"
+        },
+        "lleida": {
+          "balaguer": "Balaguer",
+          "tremp": "Tremp",
+          "tarrega": "Tàrrega"
+        }
+      },
+      "days": [
+        "Domingo",
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",
+        "Viernes",
+        "Sábado"
+      ],
+      "daysShort": [
+        "Dom.",
+        "Lun.",
+        "Mar.",
+        "Mié.",
+        "Jue.",
+        "Vie.",
+        "Sáb."
+      ],
+      "months": [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre"
+      ],
+      "monthsShort": [
+        "ene.",
+        "feb.",
+        "mar.",
+        "abr.",
+        "may.",
+        "jun.",
+        "jul.",
+        "ago.",
+        "sep.",
+        "oct.",
+        "nov.",
+        "dic."
+      ],
+      "monthsUrl": [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre"
+      ]
+    },
+    "en": {
+      "newsHubs": {
+        "mataro": "Mataró",
+        "barcelona": "Barcelona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida"
+      },
+      "nearbyHubs": {
+        "mataro": {
+          "vilassar-de-mar": "Vilassar de Mar",
+          "premia-de-dalt": "Premià de Dalt",
+          "argentona": "Argentona",
+          "calella": "Calella",
+          "canet-de-mar": "Canet de Mar"
+        },
+        "barcelona": {
+          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
+          "badalona": "Badalona",
+          "sant-just-desvern": "Sant Just Desvern",
+          "cardedeu": "Cardedeu",
+          "granollers": "Granollers",
+          "castelldefels": "Castelldefels"
+        },
+        "tarragona": {
+          "reus": "Reus",
+          "cambrils": "Cambrils",
+          "salou": "Salou"
+        },
+        "lleida": {
+          "balaguer": "Balaguer",
+          "tremp": "Tremp",
+          "tarrega": "Tàrrega"
+        }
+      },
+      "days": [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ],
+      "daysShort": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "months": [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+      ],
+      "monthsShort": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ],
+      "monthsUrl": [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december"
+      ]
+    }
+  },
+  "utils": {
+    "EventCopy": {
+      "sentence": {
+        "verbSingular": "se celebra",
+        "verbPlural": "se celebren",
+        "dateRange": "del {start} al {end}",
+        "dateSingle": "el {nameDay}, {start}",
+        "sentence": "{title} {verb} {date}{time}{place}.",
+        "timeSuffix": ", a les {time}",
+        "timeSuffixRange": ", de {start} a {end}",
+        "placeSuffix": ", {place}"
+      }
+    },
+    "EventStatus": {
+      "past": "Esdeveniment finalitzat",
+      "live": "En curs",
+      "upcoming": "Properament",
+      "endsInDays": "Acaba en {count} dies",
+      "endsInHours": "Acaba en {count} hores",
+      "endsSoon": "Acaba aviat",
+      "startsInDays": "Comença en {count} dies",
+      "startsInHours": "Comença en {count} hores",
+      "startsToday": "Comença avui",
+      "today": "Avui",
+      "endedOn": "Va finalitzar el",
+      "dateRangePast": "Del {start} al {end}"
+    },
+    "EventTime": {
+      "consult": "Consultar horaris",
+      "startsAt": "Comença a les {time}",
+      "range": "De {start} a {end}",
+      "simpleRange": "{start} - {end}"
+    },
+    "OpeningHours": {
+      "openNow": "Obert ara",
+      "closesAt": "Tanca a les {time}",
+      "closedNow": "Tancat ara",
+      "opensAt": "Obre a les {time}",
+      "unknown": "Horari no disponible",
+      "overnight": "(nit)",
+      "inferred": "(probable)",
+      "confirmed": "(confirmat)",
+      "openConfirmed": "Obert (confirmat)",
+      "openProbable": "Obert (probable)",
+      "closed": "Tancat",
+      "unconfirmed": "Horari no confirmat"
+    },
+    "StringHelpers": {
+      "articles": {
+        "el": "El",
+        "la": "La",
+        "l": "L'",
+        "els": "Els",
+        "les": "Les"
+      },
+      "prepositions": {
+        "a": "a",
+        "al": "al",
+        "als": "als",
+        "aLa": "a la",
+        "aLes": "a les",
+        "aL": "a l'",
+        "de": "de",
+        "del": "del",
+        "dels": "dels",
+        "deLa": "de la",
+        "deLes": "de les",
+        "deL": "de l'"
+      },
+      "capitalizePrepositions": [
+        "al",
+        "a",
+        "del",
+        "dels",
+        "de la",
+        "de les",
+        "de l’",
+        "de l'",
+        "pel",
+        "pels"
+      ],
+      "feminineExceptions": [
+        "gent gran",
+        "dansa"
+      ],
+      "masculineExceptions": [
+        "penedès",
+        "alt penedès",
+        "baix penedès",
+        "rosselló",
+        "urgell",
+        "alt urgell",
+        "pla d'urgell",
+        "vallès",
+        "vallès oriental",
+        "vallès occidental",
+        "gironès",
+        "barcelonès",
+        "tarragonès",
+        "montsià",
+        "baix ebre",
+        "maresme",
+        "bages"
+      ]
+    }
+  }
+}

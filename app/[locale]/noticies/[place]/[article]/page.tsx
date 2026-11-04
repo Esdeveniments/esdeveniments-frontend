@@ -7,7 +7,6 @@ import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
-import { getPlaceTypeAndLabelForMetadata } from "@lib/seo/place-metadata";
 import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
@@ -48,9 +47,7 @@ const getCanonicalPlaceSlugFromDetail = (
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ place: string; article: string }>;
-}): Promise<Metadata> {
+}: PageProps<"/[locale]/noticies/[place]/[article]">): Promise<Metadata> {
   const { place, article } = await params;
   // Request-independent reader: headers() here would make metadata dynamic
   // under cacheComponents and mismatch the prerendered shell. It throws on
@@ -65,7 +62,7 @@ export async function generateMetadata({
     throw error;
   }
   const canonicalPlace = getCanonicalPlaceSlugFromDetail(detail, place);
-  const placeType = await getPlaceTypeAndLabelForMetadata(place);
+  const placeType = await getPlaceTypeAndLabelCached(place);
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({
     locale,
@@ -100,9 +97,7 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
-}: {
-  params: Promise<{ place: string; article: string }>;
-}) {
+}: PageProps<"/[locale]/noticies/[place]/[article]">) {
   // Parallelize params and locale resolution (independent operations).
   const [{ place, article }, locale] = await Promise.all([
     params,

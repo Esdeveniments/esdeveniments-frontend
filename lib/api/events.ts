@@ -1,13 +1,16 @@
 import { cache } from "react";
 import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
+import { getValidAccessToken } from "@utils/auth-cookies";
 import { fetchWithHmac } from "./fetch-wrapper";
+import { decodeSafeJwtClaims } from "./users-external";
 import {
   getInternalApiUrl,
   buildEventsQuery,
   getVercelProtectionBypassHeaders,
   getApiUrl,
   isApiUrlConfigured,
+  emptyPagedResponse,
 } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import { eventsTag, eventTag } from "@lib/cache/tags";
@@ -20,14 +23,13 @@ import {
 } from "@lib/validation/event";
 import {
   fetchCategorizedEventsExternal,
-  fetchEventsExternal,
+  fetchEventsExternalResult,
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
 } from "@utils/constants";
-import { isBuildPhase } from "@utils/build-phase";
 import { filterActiveEvents } from "@utils/event-helpers";
 import {
   ListEvent,
@@ -44,6 +46,7 @@ import {
 import { FetchEventsParams } from "types/event";
 import type { UploadImageResponse } from "types/upload";
 import { isE2ETestMode } from "@utils/env";
+import { UploadImageResponseSchema } from "@lib/validation/upload";
 
 const getE2EGlobal = (): GlobalWithE2EStore => globalThis as GlobalWithE2EStore;
 
@@ -52,10 +55,31 @@ const e2eEventsStore = isE2ETestMode
     (getE2EGlobal().__E2E_EVENTS__ = new Map<string, EventDetailResponseDTO>()))
   : null;
 
+/**
+ * Shared guard for authenticated endpoints: validates API URL and auth cookie.
+ * `forceRefresh` renews a token the backend already rejected.
+ */
+export async function requireAuth({
+  forceRefresh = false,
+}: { forceRefresh?: boolean } = {}): Promise<{ apiUrl: string; authToken: string }> {
+  if (!isApiUrlConfigured()) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+    );
+  }
+  const authToken = await getValidAccessToken({ forceRefresh });
+  if (!authToken) {
+    const err = new Error("Authentication required");
+    (err as Error & { status: number }).status = 401;
+    throw err;
+  }
+  return { apiUrl: getApiUrl(), authToken };
+}
+
 const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYTES) => {
   if (imageFile.size > maxBytes) {
     console.warn(
-      `uploadEventImage: image ${formatMegabytes(
+      `ensureImageWithinLimit: image ${formatMegabytes(
         imageFile.size,
       )}MB exceeds limit ${formatMegabytes(maxBytes)}MB`,
     );
@@ -66,152 +90,58 @@ const ensureImageWithinLimit = (imageFile: File, maxBytes = MAX_TOTAL_UPLOAD_BYT
 async function fetchEventsInternal(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const fallbackResponse: PagedResponseDTO<EventSummaryResponseDTO> = {
-    content: [],
-    currentPage: params.page ?? 0,
-    pageSize: params.size ?? 12,
-    totalElements: 0,
-    totalPages: 0,
-    last: true,
-  };
-
-  const fetchExternalWithValidation = async () => {
-    try {
-      const data = await fetchEventsExternal(params);
-      const validated = parsePagedEvents(data);
-      if (!validated) {
-        console.error("fetchEvents: external validation failed");
-        captureException(new Error("fetchEvents: external validation failed"), {
-          tags: {
-            section: "events-fetch",
-            fallback: "external-validation-failed",
-          },
-          extra: { params },
-        });
-        return null;
-      }
-      return validated;
-    } catch (error) {
-      const errorMessage = getSanitizedErrorMessage(error);
-      console.error("fetchEvents: external fetch failed", errorMessage);
-      captureException(error, {
-        tags: { section: "events-fetch", fallback: "external-fetch-failed" },
-        extra: { params },
-      });
-      return null;
-    }
-  };
-
-  if (isBuildPhase) {
-    const externalResult = await fetchExternalWithValidation();
-    return externalResult ?? fallbackResponse;
-  }
-
-  try {
-    const queryString = buildEventsQuery(params);
-    const apiUrl = getApiUrl();
-
-    const finalUrl = `${apiUrl}/events?${queryString}`;
-
-    const response = await fetchWithHmac(finalUrl, {
-      next: { revalidate: 600, tags: ["events"] },
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => "Unable to read error response");
-      console.error(
-        `fetchEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`,
-      );
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const validated = parsePagedEvents(data);
-    if (!validated) {
-      console.error("fetchEvents: validation failed, returning fallback");
-      return fallbackResponse;
-    }
-    return validated;
-  } catch (e) {
-    console.error("Error fetching events via external API (direct):", e);
-    captureException(e, {
-      tags: { section: "events-fetch", fallback: "direct-api-failed" },
-      extra: {
-        params,
-        fallbackTriggered: true,
-      },
-    });
-    // Fallback to the original external fetch function (which uses fetchWithHmac but no-store)
-    // This is just a safety net
-    const externalResult = await fetchExternalWithValidation();
-    if (!externalResult) {
-      captureException(
-        new Error("Both direct and fallback external API failed"),
-        {
-          tags: { section: "events-fetch", fallback: "external-also-failed" },
-          extra: { params },
-        },
-      );
-    }
-    return externalResult ?? fallbackResponse;
-  }
+  const { data, error } = await fetchEventsExternalResult(params);
+  if (data) return data;
+  captureException(error ?? new Error("fetchEvents: no data"), {
+    tags: { section: "events-fetch", fallback: "external-fetch-failed" },
+    extra: { params },
+  });
+  return emptyPagedResponse(params.page ?? 0, params.size ?? 12);
 }
 
 export const fetchEvents = cache(fetchEventsInternal);
 
-// Metadata-only reader: resolves the API origin from configuration instead of
-// request headers(), and is itself cached, so generateMetadata stays
-// prerenderable under cacheComponents. fetchEvents (above) goes through
-// fetchWithHmac, which unconditionally calls connection() — a genuine dynamic
-// API — so wrapping it in React cache() (as fetchMonthEvents does in the
-// sitemap month page) does NOT make it prerenderable; it still breaks the
-// static shell when called from generateMetadata. This variant hits the
-// internal /api/events route with a plain, tagged fetch instead. See
-// docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
-//
-// Returns `null` (not an empty page) on any failure to fetch/parse, so
-// callers can tell "genuinely no events" apart from "couldn't check" and
-// fail open (e.g. don't noindex a page just because the probe errored) —
-// same convention as getPlaceExpandability's fail-open contract.
-export async function fetchEventsForMetadata(
-  params: FetchEventsParams,
-): Promise<PagedResponseDTO<EventSummaryResponseDTO> | null> {
+// fetchEvents is not cached (no-store, so each query does not get its own
+// fetch-cache entry), and every listing render waits for the backend. This
+// reader caches one events page per query
+// (no locale in it) in the shared cache handler. It throws on failure so an
+// error is never cached; fetchEventsCached then falls back to fetchEvents.
+const CACHED_EVENTS_TIMEOUT_MS = 8000;
+
+async function getCachedEventsPage(
+  query: string,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
   "use cache";
   cacheTag(eventsTag);
+  cacheLife({ stale: 300, revalidate: 600, expire: 3600 });
+  const res = await fetchWithHmac(`${getApiUrl()}/events?${query}`, {
+    skipConnection: true,
+    timeout: CACHED_EVENTS_TIMEOUT_MS,
+  });
+  if (!res.ok) throw new Error(`getCachedEventsPage: HTTP ${res.status}`);
+  const page = parsePagedEvents(await res.json());
+  if (!page) throw new Error("getCachedEventsPage: invalid payload");
+  return page;
+}
+
+export async function fetchEventsCached(
+  params: FetchEventsParams,
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  const startedAt = Date.now();
   try {
-    const queryString = buildEventsQuery(params);
-    const url = await getInternalApiUrl(`/api/events?${queryString}`, {
-      preferConfiguredOrigin: true,
+    return await getCachedEventsPage(buildEventsQuery(params).toString());
+  } catch (error) {
+    captureException(error, {
+      tags: { section: "events-fetch", fallback: "cached-read-failed" },
+      extra: { params },
     });
-    const response = await fetch(url, {
-      headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 600, tags: [eventsTag] },
-    });
-    if (!response.ok) {
-      // Transient upstream failure — cache briefly rather than "hours" so a
-      // recovering backend doesn't leave metadata degraded for a long window.
-      cacheLife("minutes");
-      return null;
+    // Errors thrown inside "use cache" reach us without their type in
+    // production, so detect a timeout by the time spent. A retry would only
+    // time out again and double the wait on each fallback stage.
+    if (Date.now() - startedAt >= CACHED_EVENTS_TIMEOUT_MS) {
+      return emptyPagedResponse(params.page ?? 0, params.size ?? 12);
     }
-    const data = await response.json();
-    const validated = parsePagedEvents(data);
-    if (!validated) {
-      // Malformed 2xx payload — same short-lived treatment as a failed
-      // request, not "hours": a schema/proxy blip shouldn't be cached as
-      // if it were a confirmed empty result.
-      cacheLife("minutes");
-      return null;
-    }
-    cacheLife("hours");
-    return validated;
-  } catch {
-    cacheLife("minutes");
-    return null;
+    return fetchEvents(params);
   }
 }
 
@@ -305,16 +235,12 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
   }
 }
 
-// Cached wrapper to deduplicate event fetches within the same request.
-// Used by the page component (which is explicitly dynamic via connection()).
-export const getEventBySlug = cache(fetchEventBySlug);
-
-// Metadata-only reader: resolves the API origin from configuration instead of
-// request headers(), so generateMetadata stays prerenderable under
-// cacheComponents. Reading headers() there would make the metadata boundary
+// Cached reader for the event page and its metadata: resolves the API origin
+// from configuration instead of request headers(), so both stay prerenderable
+// under cacheComponents. Reading headers() in metadata would make its boundary
 // dynamic and mismatch the static shell ("Expected the resume to render <div>
 // ... but instead it rendered <__next_metadata_boundary__>").
-export async function getEventBySlugForMetadata(
+export async function getCachedEventBySlug(
   slug: string,
 ): Promise<EventDetailResponseDTO | null> {
   "use cache";
@@ -339,25 +265,22 @@ export async function getEventBySlugForMetadata(
 }
 
 export async function updateEventById(
-  uuid: string,
+  id: string,
   data: EventUpdateRequestDTO,
 ): Promise<EventDetailResponseDTO> {
-  // Refuse to mutate against the hardcoded production fallback when the env
-  // is not explicitly configured (e.g., misconfigured preview deployment).
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
+  const { apiUrl, authToken } = await requireAuth();
+
   const response = await fetchWithHmac(
-    `${getApiUrl()}/events/${uuid}`,
+    `${apiUrl}/events/${id}`,
     {
       method: "PUT",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify(data),
+      skipBodySigning: true,
     },
   );
   if (!response.ok) {
@@ -370,116 +293,193 @@ export async function updateEventById(
   return response.json();
 }
 
-export async function createEvent(
-  data: EventCreateRequestDTO,
-  e2eExtras?: E2EEventExtras,
-): Promise<EventDetailResponseDTO> {
-  if (isE2ETestMode && e2eEventsStore) {
-    return createE2EEvent(data, e2eExtras);
-  }
+export async function deleteEventById(id: string): Promise<void> {
+  const { apiUrl, authToken } = await requireAuth();
 
-  if (!isApiUrlConfigured()) {
+  const response = await fetchWithHmac(
+    `${apiUrl}/events/${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      skipBodySigning: true,
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("deleteEventById: error response:", errorText);
     throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
+      `HTTP error! status: ${response.status}, body: ${errorText}`,
     );
   }
+}
 
-  const apiUrl = getApiUrl();
+/**
+ * POST /events is multipart: an `event` part (JSON, must be typed
+ * application/json or the backend answers 415) and an optional `imageFile`.
+ * fetch sets the multipart Content-Type with its boundary; never set it here.
+ */
+export function buildCreateEventFormData(
+  data: EventCreateRequestDTO,
+  imageFile?: File | null,
+): FormData {
+  const formData = new FormData();
+  formData.append(
+    "event",
+    new Blob([JSON.stringify(data)], { type: "application/json" }),
+  );
+  if (imageFile) {
+    formData.append("imageFile", imageFile);
+  }
+  return formData;
+}
+
+export async function createEvent(
+  data: EventCreateRequestDTO,
+  imageFile?: File | null,
+  e2eExtras?: E2EEventExtras,
+): Promise<EventDetailResponseDTO> {
+  if (imageFile) {
+    ensureImageWithinLimit(imageFile);
+  }
+
+  if (isE2ETestMode && e2eEventsStore) {
+    return createE2EEvent(data, imageFile, e2eExtras);
+  }
+
+  const { apiUrl, authToken } = await requireAuth();
 
   const response = await fetchWithHmac(`${apiUrl}/events`, {
     method: "POST",
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
     },
-    body: JSON.stringify(data),
-    skipBodySigning: true, // backend ignores body for signature; align client signing
+    body: buildCreateEventFormData(data, imageFile),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("createEvent: error response:", errorText);
-    throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`,
+    const errorText = await response.text().catch(() => "<unreadable>");
+    // 2026-07-26 round-5 diagnostic: mirror getAuthenticatedUserExternal so
+    // server-side logs (and Sentry) expose the redacted JWT iss/aud/exp/sub
+    // the backend actually rejected. Lets us tell "stale audience" (401) from
+    // "profile incomplete" (403) without a second round-trip.
+    const safeClaims = decodeSafeJwtClaims(authToken);
+    // The backend error body can echo back submitted event fields (title,
+    // description, url, ...) in validation messages, or leak internal
+    // details in an unexpected failure — keep the raw body in the
+    // server-side console.error below, but don't forward it to Sentry
+    // (a third-party service). Status + length are enough to diagnose from
+    // there; the full body is still one grep away in the app's own logs.
+    captureException(
+      new Error(`createEvent: HTTP ${response.status}`),
+      {
+        tags: { section: "events-mutation", endpoint: "createEvent" },
+        extra: {
+          status: response.status,
+          bodyLength: errorText.length,
+          accessTokenClaims: safeClaims,
+        },
+      },
     );
+    // 2026-07-26 round-10 (mirror of uploadEventImage): surface the
+    // WWW-Authenticate header so Spring's resource-server rejection reason
+    // (RFC 6750) is one-grep root-caused. The body's empty on resource-server
+    // failures; the header names invalid_token / insufficient_scope / etc.
+    console.error(
+      `createEvent: HTTP ${response.status} \u2014 body=${errorText.slice(0, 200)} \u2014 www-authenticate=${response.headers.get("www-authenticate") ?? "<none>"} \u2014 access_token=${safeClaims}`,
+    );
+    // Attach `.status` so callers (actions.ts) can distinguish 401 (stale
+    // Bearer) from 403 (profileCompleted gate) and route accordingly.
+    const err = Object.assign(
+      new Error(`HTTP error! status: ${response.status}, body: ${errorText}`),
+      { status: response.status },
+    );
+    throw err;
   }
   return response.json();
 }
 
-export async function uploadEventImage(
+/** PUT /events/{uuid}/image — replaces the cover. Owner or admin only. */
+export async function replaceEventImage(
+  eventId: string,
   imageFile: File,
-  maxBytes?: number,
 ): Promise<UploadImageResponse> {
-  if (!imageFile) {
-    throw new Error("uploadEventImage: imageFile is required");
-  }
-  ensureImageWithinLimit(imageFile, maxBytes);
-
+  ensureImageWithinLimit(imageFile);
   if (isE2ETestMode) {
-    return {
-      url: `https://example.com/${imageFile.name || "e2e-image"}.jpg`,
-      publicId: "e2e-image",
-    };
+    return { url: `https://example.com/${imageFile.name}`, publicId: "e2e-image" };
   }
-
-  if (!isApiUrlConfigured()) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is not set — refusing to run mutation against default production URL",
-    );
-  }
-
-  const apiUrl = getApiUrl();
+  const { apiUrl, authToken } = await requireAuth();
 
   const formData = new FormData();
   formData.append("imageFile", imageFile);
-
-  const response = await fetchWithHmac(`${apiUrl}/events/images`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
+  const response = await fetchWithHmac(
+    `${apiUrl}/events/${encodeURIComponent(eventId)}/image`,
+    {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: formData,
     },
-    body: formData,
-  });
-
+  );
   if (!response.ok) {
-    const errorText = await response
-      .text()
-      .catch(() => "Unable to read error response");
+    const errorText = await response.text().catch(() => "<unreadable>");
     console.error(
-      `uploadEventImage: HTTP error! status: ${response.status}, body: ${errorText}`,
+      `replaceEventImage: HTTP ${response.status} -- body=${errorText.slice(0, 200)}`,
     );
     if (response.status === 413) {
       throw new Error(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR);
     }
-    throw new Error(
-      `HTTP error! status: ${response.status}, body: ${errorText}`,
+    throw Object.assign(
+      new Error(`HTTP error! status: ${response.status}`),
+      { status: response.status },
     );
   }
-
   let payload: unknown;
   try {
     payload = await response.json();
-  } catch {
-    throw new Error("uploadEventImage: invalid JSON response from backend");
+  } catch (cause) {
+    throw new Error("Event image replace returned an invalid response", { cause });
   }
+  const parsed = UploadImageResponseSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error("Event image replace returned an invalid response", { cause: parsed.error });
+  }
+  return parsed.data;
+}
 
-  if (
-    !payload ||
-    typeof payload !== "object" ||
-    typeof (payload as { url?: unknown }).url !== "string" ||
-    typeof (payload as { publicId?: unknown }).publicId !== "string"
-  ) {
-    throw new Error(
-      "uploadEventImage: backend response missing url/publicId fields",
+/** DELETE /events/{uuid}/image — removes the cover (imageUrl becomes null). */
+export async function deleteEventImage(eventId: string): Promise<void> {
+  if (isE2ETestMode) return;
+  const { apiUrl, authToken } = await requireAuth();
+
+  const response = await fetchWithHmac(
+    `${apiUrl}/events/${encodeURIComponent(eventId)}/image`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${authToken}` },
+      skipBodySigning: true,
+    },
+  );
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "<unreadable>");
+    console.error(
+      `deleteEventImage: HTTP ${response.status} -- body=${errorText.slice(0, 200)}`,
+    );
+    throw Object.assign(
+      new Error(`HTTP error! status: ${response.status}`),
+      { status: response.status },
     );
   }
-
-  const { url, publicId } = payload as UploadImageResponse;
-  return { url, publicId };
 }
 
 function createE2EEvent(
   data: EventCreateRequestDTO,
+  imageFile: File | null | undefined,
   extras?: E2EEventExtras,
 ): EventDetailResponseDTO {
   const slug = `e2e-event-${Date.now()}`;
@@ -523,10 +523,10 @@ function createE2EEvent(
     hash: `hash-${slug}`,
     slug,
     title: data.title,
-    type: data.type,
-    url: data.url || "",
+    isPromoted: false,
+    url: data.url,
     description: data.description,
-    imageUrl: data.imageUrl || "",
+    imageUrl: imageFile ? `https://example.com/${imageFile.name}` : null,
     startDate: data.startDate,
     startTime: data.startTime,
     endDate: data.endDate,
@@ -548,88 +548,26 @@ function createE2EEvent(
 }
 
 /**
- * Fetch events categorized by category.
- * During build phase (SSG), calls external API directly to avoid internal proxy issues.
- * At runtime (ISR/SSR), uses internal API proxy for better caching and security.
+ * Fetch events categorized by category, straight from the backend (no-store;
+ * the home page caches its render).
  */
 export async function fetchCategorizedEvents(
   maxEventsPerCategory?: number,
 ): Promise<CategorizedEvents> {
-  const apiUrl = getApiUrl();
-
-  // During build phase, bypass internal proxy and call external API directly
-  // This ensures SSG pages (homepage) can fetch data during next build
-  if (isBuildPhase) {
-    try {
-      const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
-      const validated = parseCategorizedEvents(data);
-      if (!validated) {
-        console.error("fetchCategorizedEvents: Build phase validation failed");
-        return {};
-      }
-      return validated;
-    } catch (e) {
-      console.error(
-        "fetchCategorizedEvents: Build phase external fetch failed:",
-        e,
-      );
-      return {};
-    }
-  }
-
-  // Runtime: use direct external API call with caching
-  // This avoids internal API proxy issues
   try {
-    const params = new URLSearchParams();
-    if (maxEventsPerCategory !== undefined) {
-      params.append("maxEventsPerCategory", String(maxEventsPerCategory));
-    }
-
-    const queryString = params.toString() ? `?${params.toString()}` : "";
-    const finalUrl = `${apiUrl}/events/categorized${queryString}`;
-
-    const response = await fetchWithHmac(finalUrl, {
-      next: { revalidate: 600, tags: ["events", "events:categorized"] },
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => "Unable to read error response");
-      console.error(
-        `fetchCategorizedEvents: HTTP error! status: ${response.status}, url: ${finalUrl}, error: ${errorText}`,
-      );
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
+    const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
     const validated = parseCategorizedEvents(data);
-    if (!validated || Object.keys(validated).length === 0) {
-      console.error("fetchCategorizedEvents: Runtime validation failed");
-      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
+    if (validated && Object.keys(validated).length > 0) {
+      return validated;
     }
-    return validated;
-  } catch {
-    // If direct fetch fails, try external API helper as fallback (handles edge cases)
-    try {
-      const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
-      const validated = parseCategorizedEvents(data);
-      if (validated && Object.keys(validated).length > 0) {
-        return validated;
-      }
-      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
-    } catch (fallbackError) {
-      // Sanitize error logging to prevent information disclosure
-      const errorMessage = getSanitizedErrorMessage(fallbackError);
-      console.error(
-        "fetchCategorizedEvents: Both direct and external API failed:",
-        errorMessage,
-      );
-      return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
-    }
+    console.error("fetchCategorizedEvents: validation failed or empty");
+  } catch (e) {
+    console.error(
+      "fetchCategorizedEvents: external fetch failed:",
+      getSanitizedErrorMessage(e),
+    );
   }
+  return isE2ETestMode ? buildE2EFallbackCategorizedEvents() : {};
 }
 
 // Cached wrapper to deduplicate categorized events within the same request
@@ -644,7 +582,7 @@ function buildE2EFallbackCategorizedEvents(): CategorizedEvents {
     hash: "e2e-fallback",
     slug: "e2e-fallback",
     title: "Esdeveniment de prova E2E",
-    type: "FREE",
+    isPromoted: false,
     url: "https://example.com",
     description: "Esdeveniment de prova per a E2E.",
     imageUrl: "https://via.placeholder.com/800x600",

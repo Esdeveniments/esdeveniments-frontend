@@ -4,7 +4,7 @@ import "server-only";
  * Shared Stripe API utilities for server-side operations.
  * Provides low-level helpers for making authenticated Stripe API calls.
  *
- * @see /strategy-pricing.md for sponsor system documentation
+ * @see docs/strategy-pricing.md for sponsor system documentation
  */
 
 export const STRIPE_API_VERSION = "2025-03-31.basil";

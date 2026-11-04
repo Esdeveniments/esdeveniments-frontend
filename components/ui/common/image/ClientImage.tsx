@@ -1,8 +1,7 @@
 "use client";
 
-import { memo, useState, useCallback, useRef } from "react";
+import { memo, useCallback } from "react";
 import ImgDefault from "@components/ui/imgDefault";
-import { useNetworkSpeed } from "@components/hooks/useNetworkSpeed";
 import { useImageRetry } from "@components/hooks/useImageRetry";
 import { ImageComponentProps } from "types/common";
 import type { ImageSizeContext } from "types/common";
@@ -10,16 +9,13 @@ import type { ClientImageInnerProps } from "types/props";
 import {
   getOptimalImageQuality,
   getOptimalImageSizes,
-  getServerImageQuality,
   getResponsiveWidths,
 } from "@utils/image-quality";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import type { ResponsivePictureSourceUrls } from "types/common";
 
 /**
- * ClientImage with modern format support (WebP > AVIF > JPEG)
- * Uses native <picture> element for proper format fallback.
- * WebP is prioritized over AVIF for faster encoding and more reliable output.
+ * ClientImage: <picture> with a WebP source and a JPEG fallback.
  * Assumes a non-empty image URL is provided. Missing-image cases should be
  * short-circuited by the server wrapper (index.tsx) to avoid unnecessary hydration.
  */
@@ -37,18 +33,15 @@ function ClientImage({
   region,
   date,
 }: ImageComponentProps & { context?: ImageSizeContext }) {
-  const networkQualityString = useNetworkSpeed();
-
   const imageQuality = getOptimalImageQuality({
     isPriority: priority,
     isExternal: true,
-    networkQuality: getServerImageQuality(networkQualityString),
     customQuality,
   });
 
   const responsiveWidths = getResponsiveWidths(context);
 
-  // Generate responsive AVIF, WebP, and JPEG URLs for <picture> element
+  // Generate responsive WebP and JPEG URLs for <picture> element
   const sources = buildResponsivePictureSourceUrls(image, cacheKey, {
     quality: imageQuality,
   }, responsiveWidths);
@@ -90,8 +83,8 @@ function ClientImage({
 }
 
 /**
- * Inner component that handles loading state with <picture> element.
- * Keyed by image URL so all state resets on navigation.
+ * Inner component that handles load errors with <picture> element.
+ * Keyed by image URL so retry state resets on navigation.
  */
 function ClientImageInner({
   sources,
@@ -107,36 +100,13 @@ function ClientImageInner({
 }: Omit<ClientImageInnerProps, "finalImageSrc" | "imageQuality"> & {
   sources: ResponsivePictureSourceUrls;
 }) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [showSkeleton, setShowSkeleton] = useState(true);
-  const imgRef = useRef<HTMLImageElement>(null);
-
   const { hasError, handleError, getImageKey } = useImageRetry(2);
 
   const imageKey = getImageKey(sources.fallback);
 
-  const handleLoad = useCallback(() => {
-    setImageLoaded(true);
-    setShowSkeleton(false);
-  }, []);
-
   const handleImageError = useCallback(() => {
     handleError();
   }, [handleError]);
-
-  // Fix SSR hydration race: if the image loaded before React hydrated
-  // and attached onLoad, the event never fires and the image stays at
-  // opacity:0. A callback ref fires when the DOM node is attached during
-  // hydration, letting us check img.complete to catch already-loaded images.
-  const imgCallbackRef = useCallback(
-    (img: HTMLImageElement | null) => {
-      imgRef.current = img;
-      if (img?.complete && img.naturalWidth > 0) {
-        handleLoad();
-      }
-    },
-    [handleLoad],
-  );
 
   const containerStyle: React.CSSProperties = {
     position: "relative",
@@ -165,22 +135,14 @@ function ClientImageInner({
     );
   }
 
-  // Use native <picture> element for proper format fallback:
-  // - Browser tries WebP first (faster encoding, more reliable)
-  // - Falls back to AVIF (better compression but slower/riskier encoding)
-  // - Falls back to JPEG (100% support)
+  // The image paints as soon as it decodes, without waiting for hydration:
+  // a JS-driven fade kept server-rendered images at opacity 0 until React ran,
+  // which delayed LCP. bg-muted is the placeholder until the image arrives.
   return (
-    <div className={className} style={containerStyle}>
-      {showSkeleton && (
-        <div className="absolute inset-0 flex justify-center items-center bg-muted animate-fast-pulse">
-          <div className="w-full h-full bg-muted animate-fast-pulse"></div>
-        </div>
-      )}
+    <div className={`${className} bg-muted`} style={containerStyle}>
       <picture key={imageKey}>
         <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
-        <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
         <img
-          ref={imgCallbackRef}
           className="object-cover w-full h-full absolute inset-0"
           src={sources.fallback}
           alt={alt}
@@ -189,14 +151,9 @@ function ClientImageInner({
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
           onError={handleImageError}
-          onLoad={handleLoad}
           fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
           sizes={sizes}
-          style={{
-            objectFit: "cover",
-            opacity: imageLoaded ? 1 : 0,
-            transition: "opacity 0.3s ease-in-out",
-          }}
+          style={{ objectFit: "cover" }}
         />
       </picture>
     </div>

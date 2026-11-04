@@ -10,7 +10,6 @@ import { locale as rootLocale } from "next/root-params";
 import { withLocalePath } from "@utils/i18n-seo";
 import { parseNewsPagination } from "@utils/news-helpers";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
-import { getPlaceTypeAndLabelForMetadata } from "@lib/seo/place-metadata";
 import { siteUrl } from "@config/index";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
 import type { AppLocale } from "types/i18n";
@@ -23,11 +22,9 @@ import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ place: string }>;
-}): Promise<Metadata> {
+}: PageProps<"/[locale]/noticies/[place]">): Promise<Metadata> {
   const { place } = await params;
-  const placeType = await getPlaceTypeAndLabelForMetadata(place);
+  const placeType = await getPlaceTypeAndLabelCached(place);
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.NewsPlace" });
   const base = buildPageMeta({
@@ -56,10 +53,7 @@ export async function generateMetadata({
 export default async function Page({
   params,
   searchParams,
-}: {
-  params: Promise<{ place: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+}: PageProps<"/[locale]/noticies/[place]">) {
   // Parallelize independent awaits (params + locale + searchParams) to reduce TTFB.
   const [{ place }, locale, query] = await Promise.all([
     params,
@@ -140,7 +134,7 @@ export default async function Page({
               >
                 {t("seeAgenda", { place: placeLabel })}
               </PressableAnchor>
-              <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              <span className="hidden sm:inline text-muted-foreground" aria-hidden="true">
                 ·
               </span>
               <PressableAnchor
@@ -151,7 +145,7 @@ export default async function Page({
               >
                 {t("seeAll")}
               </PressableAnchor>
-              {/* <span className="hidden sm:inline text-foreground-strong/30" aria-hidden="true">
+              {/* <span className="hidden sm:inline text-muted-foreground" aria-hidden="true">
               ·
             </span>
             <PressableAnchor

@@ -23,7 +23,7 @@ test.describe("Load more with filters via proxy", () => {
                 hash: "hash-1",
                 slug: "e1",
                 title: "Initial Event 1",
-                type: "FREE",
+                isPromoted: false,
                 url: "https://example.com/e1",
                 description: "Event description",
                 imageUrl: "",
@@ -53,7 +53,7 @@ test.describe("Load more with filters via proxy", () => {
                 hash: "hash-2",
                 slug: "e2",
                 title: "Initial Event 2",
-                type: "FREE",
+                isPromoted: false,
                 url: "https://example.com/e2",
                 description: "Event description",
                 imageUrl: "",
@@ -99,7 +99,7 @@ test.describe("Load more with filters via proxy", () => {
                 hash: "hash-3",
                 slug: "e3",
                 title: "E2E Event 3",
-                type: "FREE",
+                isPromoted: false,
                 url: "https://example.com/e3",
                 description: "",
                 imageUrl: "",
@@ -129,7 +129,7 @@ test.describe("Load more with filters via proxy", () => {
                 hash: "hash-4",
                 slug: "e4",
                 title: "E2E Event 4",
-                type: "FREE",
+                isPromoted: false,
                 url: "https://example.com/e4",
                 description: "",
                 imageUrl: "",
@@ -174,7 +174,7 @@ test.describe("Load more with filters via proxy", () => {
                 hash: "hash-5",
                 slug: "e5",
                 title: "E2E Event 5",
-                type: "FREE",
+                isPromoted: false,
                 url: "https://example.com/e5",
                 description: "",
                 imageUrl: "",
@@ -212,11 +212,20 @@ test.describe("Load more with filters via proxy", () => {
       return route.continue();
     });
 
-    await page.goto("/e2e/load-more", { waitUntil: "networkidle" });
+    // domcontentloaded, NOT networkidle: analytics/ads/telemetry keep the
+    // network busy on deployed builds, so networkidle never settles and
+    // page.goto times out (45s) on the Vercel preview. The explicit hasMore
+    // assertion below auto-waits for the harness to be interactive.
+    await page.goto("/e2e/load-more", { waitUntil: "domcontentloaded" });
     // Load more should be available initially
     await expect(page.getByTestId("hasMore")).toHaveText("true");
     const loadMore = page.getByTestId("load-more-button");
     await expect(loadMore).toBeVisible();
+    // A click before hydration is dropped, and nothing retries it.
+    await expect(page.getByTestId("load-more-harness")).toHaveAttribute(
+      "data-hydrated",
+      "true",
+    );
 
     // First click activates and fetches page=1 (fallbackData is treated as page 0)
     // Set up listener before clicking

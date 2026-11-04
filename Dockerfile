@@ -1,20 +1,21 @@
-FROM node:22-slim AS base
+# syntax=docker/dockerfile:1
+FROM node:26-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   curl \
   && rm -rf /var/lib/apt/lists/*
+# Node 25+ no longer bundles Corepack, so install it to get Yarn 4 (packageManager).
+RUN npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 WORKDIR /app
 
 FROM base AS deps
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
-RUN corepack enable && yarn install --immutable
+RUN yarn install --immutable
 
 FROM base AS builder
 # Build-time arguments for Next.js static optimization.
-# ARGs are scoped to the builder stage and do NOT persist in the final runner image.
 # NEXT_PUBLIC_* vars are inlined at build time by Next.js.
-# HMAC_SECRET is needed for ISR static generation (API route HMAC signing).
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_SENTRY_DSN
@@ -22,15 +23,11 @@ ARG NEXT_PUBLIC_GOOGLE_ANALYTICS
 ARG NEXT_PUBLIC_GOOGLE_ADS
 ARG NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
 ARG NEXT_PUBLIC_GOOGLE_MAPS
-ARG NEXT_PUBLIC_TIKTOK_CLIENT_KEY
-ARG NEXT_PUBLIC_TIKTOK_REDIRECT_URI
 ARG NEXT_PUBLIC_CONTACT_EMAIL
 # Web Push: public VAPID key is inlined into the client bundle at build time.
 # Without it, usePushNotifications reports "unsupported" and the push CTA
 # never renders in production.
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
-ARG HMAC_SECRET
-ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
 ARG BUILD_VERSION
@@ -43,19 +40,18 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS \
     NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION \
     NEXT_PUBLIC_GOOGLE_MAPS=$NEXT_PUBLIC_GOOGLE_MAPS \
-    NEXT_PUBLIC_TIKTOK_CLIENT_KEY=$NEXT_PUBLIC_TIKTOK_CLIENT_KEY \
-    NEXT_PUBLIC_TIKTOK_REDIRECT_URI=$NEXT_PUBLIC_TIKTOK_REDIRECT_URI \
     NEXT_PUBLIC_CONTACT_EMAIL=$NEXT_PUBLIC_CONTACT_EMAIL \
     NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY \
-    HMAC_SECRET=$HMAC_SECRET \
-    SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN \
     SENTRY_ORG=$SENTRY_ORG \
     SENTRY_PROJECT=$SENTRY_PROJECT \
     BUILD_VERSION=$BUILD_VERSION
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN corepack enable && yarn prebuild && yarn build
+RUN --mount=type=secret,id=HMAC_SECRET,env=HMAC_SECRET,required=true \
+    --mount=type=secret,id=BACKEND_SERVICE_SECRET,env=BACKEND_SERVICE_SECRET,required=true \
+    --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN \
+    node scripts/verify-backend-build.mjs && yarn prebuild && yarn build
 
 FROM base AS runner
 ENV NODE_ENV=production
@@ -72,6 +68,7 @@ COPY --chown=nextjs:nodejs --from=builder /app/.next/standalone ./
 COPY --chown=nextjs:nodejs --from=builder /app/.next/static ./.next/static
 COPY --chown=nextjs:nodejs --from=builder /app/public ./public
 COPY --chown=nextjs:nodejs --from=builder /app/cache-handler.mjs ./cache-handler.mjs
+COPY --chown=nextjs:nodejs --from=builder /app/use-cache-handler.mjs ./use-cache-handler.mjs
 # Entrypoint caps V8's heap to a fraction of the container memory limit so the
 # GC runs before the kernel OOM-kills the container (see docker-entrypoint.sh).
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh

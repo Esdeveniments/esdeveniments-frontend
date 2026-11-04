@@ -48,16 +48,16 @@ const CalendarList: FC<CalendarListProps> = ({
     },
   ];
 
-  const linkClass = "block mb-6 last:mb-0 hover:underline";
-  const buttonClass = "btn flex items-center justify-center space-x-2";
+  const linkClass =
+    "flex items-center gap-2 min-h-button px-3 rounded-button body-small text-foreground-strong hover:bg-muted transition-colors focus-ring";
 
   useEffect(() => {
     sendGoogleEvent("add_to_calendar_view", { event_title: title });
   }, [title]);
 
   return (
-    <div ref={ctaRef} className="absolute top-full left-0 mt-2 z-10 bg-background">
-      <div className="shadow-md rounded-md p-4 border border-border animate-appear">
+    <div ref={ctaRef} className="absolute top-full left-0 mt-2 z-10">
+      <div className="w-56 bg-background shadow-md rounded-card p-1 border border-border animate-appear flex flex-col">
         {calendarOptions.map(
           (option) =>
             option.url && (
@@ -68,18 +68,16 @@ const CalendarList: FC<CalendarListProps> = ({
                 rel="noopener noreferrer"
                 download={option.download}
                 className={linkClass}
-              onClick={() => handleCalendarClick(option.name)}
-              aria-label={labels.ariaAdd.replace("{name}", option.name)}
+                onClick={() => handleCalendarClick(option.name)}
+                aria-label={labels.ariaAdd.replace("{name}", option.name)}
               >
-                <button className={buttonClass} aria-label={option.name}>
-                  <Image
-                    src={`/static/images/icons/${option.icon}`}
-                    alt={`${option.name} icon`}
-                    width={20}
-                    height={20}
-                  />
-                  <span className="flex items-center">{option.name}</span>
-                </button>
+                <Image
+                  src={`/static/images/icons/${option.icon}`}
+                  alt=""
+                  width={20}
+                  height={20}
+                />
+                <span>{option.name}</span>
               </a>
             )
         )}

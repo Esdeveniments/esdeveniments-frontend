@@ -2,12 +2,18 @@ import type { ByDateOption, DateRangeShortcut } from "types/common";
 import { getTranslations } from "next-intl/server";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
-import caMessages from "../messages/ca.json";
-import esMessages from "../messages/es.json";
-import enMessages from "../messages/en.json";
+// Not messages/*.json: client components import this file, and that would
+// ship all three locale files to the browser. See scripts/generate-locale-labels.mjs.
+import localeLabels from "../i18n/locale-labels.generated.json";
+// Re-exported (not declared here) so existing @utils/constants consumers
+// keep working unchanged. Declared in their own dependency-free module so a
+// client component can import just the number — see utils/favorites-limits.ts.
+export { MAX_FAVORITES, MAX_FAVORITES_AUTHENTICATED } from "./favorites-limits";
 
 export const MAX_RESULTS = 15;
-export const MAX_FAVORITES = 10;
+export const AUTH_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+/** Logto token endpoint timeout. The refresh claim lease is derived from it. */
+export const LOGTO_TOKEN_TIMEOUT_MS = 10_000;
 
 /** Number of days within which news articles are considered "fresh". */
 export const NEWS_FRESHNESS_DAYS = 7;
@@ -23,6 +29,16 @@ export const MIN_VALID_YEAR = 2000;
 export const MAX_VALID_YEAR = 2100;
 // Keep safely under common CDN/body limits
 export const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024; // 2 MB target
+export const PUBLISH_DRAFT_VERSION = 1;
+export const PUBLISH_DRAFT_FENCE_VERSION = 1;
+export const PUBLISH_DRAFT_TTL_MS = 7 * MS_PER_DAY;
+export const PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
+export const PUBLISH_DRAFT_AUTOSAVE_DELAY_MS = 600;
+export const PUBLISH_RESUME_TTL_MS = 60 * 60 * 1000;
+export const PUBLISH_RESUME_STORAGE_KEY = "publish-resume-v1";
+export const PUBLISH_RESUME_PATH = "/publica?resume=1";
+export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
+export const PUBLISH_DRAFT_MAX_COUNT = 5;
 // Sitemap chunking: places per chunk to keep response sizes manageable
 export const SITEMAP_PLACES_PER_CHUNK = 100;
 // Minimum event count for a place to get full date/category expansion in sitemap.
@@ -68,16 +84,7 @@ export const MAX_ORIGINAL_LIMIT_LABEL = formatMegabytesLabel(
   MAX_ORIGINAL_FILE_BYTES,
 );
 
-// isBuildPhase lives in utils/build-phase.ts, not here — the data-fetching
-// layer (lib/api/*) imports it directly from there to avoid pulling in
-// next-intl/server and the full ca/es/en message bundles below.
-export { isBuildPhase } from "./build-phase";
-
-const constantsLabelsByLocale: Record<AppLocale, any> = {
-  ca: (caMessages as any).Components.Constants,
-  es: (esMessages as any).Components.Constants,
-  en: (enMessages as any).Components.Constants,
-};
+const constantsLabelsByLocale: Record<AppLocale, any> = localeLabels.constants;
 
 const defaultConstantsLabels = constantsLabelsByLocale[DEFAULT_LOCALE];
 
@@ -168,7 +175,7 @@ function toYMD(d: Date): string {
 }
 
 /** Create a Date representing "now" in Madrid local time (avoids wrong day at tz boundaries). */
-function nowInMadrid(): Date {
+export function nowInMadrid(): Date {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone: TIMEZONE_MADRID,
     year: "numeric",

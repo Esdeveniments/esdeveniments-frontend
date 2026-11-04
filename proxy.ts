@@ -1,478 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getApiOrigin } from "@utils/api-helpers";
-import {
-  validateTimestamp,
-  buildStringToSign,
-  verifyHmacSignature,
-} from "@utils/hmac";
-import { handleCanonicalRedirects } from "@utils/middleware-redirects";
-import { isProductionHost } from "@utils/production-host";
-import { isE2ETestMode } from "@utils/env";
-import {
-  DEFAULT_LOCALE,
-  LOCALE_COOKIE,
-  LOCALE_COOKIE_MAX_AGE,
-  type AppLocale,
-  SUPPORTED_LOCALES,
-} from "types/i18n";
+import { NextResponse, type NextRequest } from "next/server";
+import { gateApiRequest } from "@utils/api-gate";
 import { stripLocalePrefix } from "@utils/i18n-routing";
+import { handleCanonicalRedirects } from "@utils/middleware-redirects";
+import { getAgentRewrite } from "@utils/proxy-agent";
+import { applyCsp } from "@utils/proxy-csp";
+import {
+  getLocaleFromCookie,
+  getLocaleRedirect,
+  persistLocaleCookie,
+} from "@utils/proxy-locale";
+import { getLoginEntryRedirect } from "@utils/proxy-login";
+import { applyPageHeaders } from "@utils/proxy-page-headers";
+import { checkPlace } from "@utils/proxy-place";
+import { DEFAULT_LOCALE } from "types/i18n";
 
-const isDev = process.env.NODE_ENV !== "production";
-const supportedLocales = new Set<AppLocale>(SUPPORTED_LOCALES);
-function parseAcceptLanguage(header: string | null): AppLocale | null {
-  if (!header) return null;
-
-  const candidates = header
-    .split(",")
-    .map((raw) => {
-      const [langPart, qValue] = raw.trim().split(";q=");
-      const base = langPart.split("-")[0]?.toLowerCase();
-      const quality = qValue ? Number.parseFloat(qValue) : 1;
-      return {
-        base,
-        quality: Number.isFinite(quality) ? quality : 0,
-      };
-    })
-    .filter(
-      (entry): entry is { base: string; quality: number } =>
-        Boolean(entry.base) && entry.quality > 0,
-    )
-    .sort((a, b) => b.quality - a.quality);
-
-  for (const { base } of candidates) {
-    if (supportedLocales.has(base as AppLocale)) {
-      return base as AppLocale;
-    }
-  }
-
-  return null;
-}
-
-function getLocaleFromCookie(request: NextRequest): AppLocale | null {
-  const cookieLocale = request.cookies?.get?.(LOCALE_COOKIE)?.value;
-  if (
-    cookieLocale &&
-    stripLocalePrefix(`/${cookieLocale}`).locale === cookieLocale
-  ) {
-    return cookieLocale as AppLocale;
-  }
-  return null;
-}
-
-function persistLocaleCookie(response: NextResponse, locale: AppLocale) {
-  response.cookies.set(LOCALE_COOKIE, locale, {
-    path: "/",
-    maxAge: LOCALE_COOKIE_MAX_AGE,
-    sameSite: "lax",
-    secure: !isDev,
-  });
-}
-
-function getCsp() {
-  const apiOrigin = getApiOrigin();
-  const isVercelPreview =
-    process.env.VERCEL_ENV === "preview" ||
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
-  const adsEnabled =
-    process.env.NEXT_PUBLIC_GOOGLE_ADS &&
-    String(process.env.NEXT_PUBLIC_GOOGLE_ADS).trim() !== "";
-
-  const cspDirectives = {
-    "default-src": ["'self'"],
-    "script-src": [
-      "'self'",
-      // Relaxed policy: allow inline scripts and trusted third-parties
-      // This enables ISR/PPR caching while maintaining security through host allowlisting
-      "'unsafe-inline'",
-      "https://www.googletagmanager.com",
-      "https://www.google-analytics.com",
-      "https://www.gstatic.com",
-      "https://static.cloudflareinsights.com",
-      "https://pagead2.googlesyndication.com",
-      "https://*.googlesyndication.com",
-      "https://fundingchoicesmessages.google.com",
-      "https://*.adtrafficquality.google",
-      "https://*.doubleclick.net",
-      "https://*.googleadservices.com",
-      "https://*.googletagservices.com",
-      "https://*.google.com",
-      // Vercel preview feedback script
-      ...(isVercelPreview ? ["https://vercel.live"] : []),
-      // Only include unsafe-eval if ads truly require it
-      adsEnabled ? "'unsafe-eval'" : "",
-      isDev ? "'unsafe-eval'" : "",
-      isDev ? "localhost:*" : "",
-      isDev ? "127.0.0.1:*" : "",
-    ],
-    // Be explicit for browsers that differentiate element/script contexts
-    "script-src-elem": [
-      "'self'",
-      "'unsafe-inline'",
-      "https://www.googletagmanager.com",
-      "https://www.google-analytics.com",
-      "https://www.gstatic.com",
-      "https://static.cloudflareinsights.com",
-      "https://pagead2.googlesyndication.com",
-      "https://*.googlesyndication.com",
-      "https://fundingchoicesmessages.google.com",
-      "https://*.adtrafficquality.google",
-      "https://*.doubleclick.net",
-      "https://*.googleadservices.com",
-      "https://*.googletagservices.com",
-      "https://*.google.com",
-      // Vercel preview feedback script
-      ...(isVercelPreview ? ["https://vercel.live"] : []),
-      adsEnabled ? "'unsafe-eval'" : "",
-      isDev ? "'unsafe-eval'" : "",
-      isDev ? "localhost:*" : "",
-      isDev ? "127.0.0.1:*" : "",
-    ],
-    "style-src": [
-      "'self'",
-      "'unsafe-inline'",
-      "https://fonts.googleapis.com",
-      "https://fonts.gstatic.com", // Defensive: some edge cases may require this
-    ],
-    "connect-src": [
-      "'self'",
-      apiOrigin,
-      "https:",
-      isDev ? "wss:" : "",
-      isDev ? "ws:" : "",
-      isDev ? "localhost:*" : "",
-      isDev ? "127.0.0.1:*" : "",
-    ],
-    // Images: allow self, data URIs, HTTPS everywhere; add blob for previews
-    // In development, also allow HTTP to ease testing against non-TLS sources
-    "img-src": ["'self'", "data:", "https:", "blob:", isDev ? "http:" : ""],
-    "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
-    "media-src": ["'self'", "blob:"],
-    "frame-src": ["'self'", "https:"],
-    "worker-src": ["'self'", "blob:"],
-    "object-src": ["'none'"],
-    "base-uri": ["'self'"],
-    "form-action": ["'self'"],
-    "frame-ancestors": ["'self'"],
-  };
-
-  return Object.entries(cspDirectives)
-    .map(([key, value]) => `${key} ${value.filter(Boolean).join(" ")}`)
-    .join("; ");
-}
-
-// Cache CSP string at module load to avoid recomputing on every request
-const CACHED_CSP = getCsp();
-
-function addAllowedOriginHost(hosts: Set<string>, rawUrl: string | undefined) {
-  if (!rawUrl) return;
-  try {
-    const normalizedUrl = /^https?:\/\//i.test(rawUrl)
-      ? rawUrl
-      : `https://${rawUrl}`;
-    hosts.add(new URL(normalizedUrl).host);
-  } catch {
-    // Ignore invalid deployment config here; the route will reject the Origin.
-  }
-}
-
-function getAllowedOriginHosts(): Set<string> {
-  const hosts = new Set<string>();
-  addAllowedOriginHost(
-    hosts,
-    process.env.NEXT_PUBLIC_SITE_URL ||
-      (isDev ? "http://localhost:3000" : "https://www.esdeveniments.cat"),
-  );
-
-  const vercelUrl = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
-  if (vercelUrl) {
-    addAllowedOriginHost(hosts, vercelUrl);
-  }
-
-  // Branch-preview alias (project-git-branch-team.vercel.app). Vercel sets
-  // VERCEL_BRANCH_URL per deployment; VERCEL_URL is the hash deployment URL,
-  // not the alias users actually open. Without this, every browser-initiated
-  // POST (push subscribe, favorites, sponsor checkout) 403s on branch previews.
-  const vercelBranchUrl =
-    process.env.VERCEL_BRANCH_URL || process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL;
-  if (vercelBranchUrl) {
-    addAllowedOriginHost(hosts, vercelBranchUrl);
-  }
-
-  // E2E runs a production build on localhost:3000, so isDev is false there and
-  // the same-origin localhost POST would be rejected. E2E_TEST_MODE is set only
-  // during E2E runs (never in prod), so this widens the allowlist for tests
-  // without touching the production Origin check.
-  if (isDev || isE2ETestMode) {
-    hosts.add("localhost:3000");
-    hosts.add("127.0.0.1:3000");
-    hosts.add("[::1]:3000");
-  }
-
-  return hosts;
-}
-
-function applySecurityHeaders(response: NextResponse): NextResponse {
-  // Use Report-Only in preview (or when explicitly requested), enforce otherwise
-  const reportOnly =
-    process.env.NEXT_PUBLIC_CSP_REPORT_ONLY === "1" ||
-    process.env.VERCEL_ENV === "preview" ||
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
-  if (reportOnly) {
-    response.headers.set("Content-Security-Policy-Report-Only", CACHED_CSP);
-  } else {
-    response.headers.set("Content-Security-Policy", CACHED_CSP);
-  }
-  response.headers.set(
-    "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload",
-  );
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "SAMEORIGIN");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(self)",
-  );
-  return response;
-}
-
-// AI/SEO bots NOT in Next.js's hardcoded html-bots.ts getBotType() regex.
-// These bots receive PPR shells (empty HTML) instead of blocking renders.
-// Matched UAs get "Slurp" appended so getBotType() returns 'html' → full render.
-// Bots already handled by Next.js: Googlebot, Bingbot, BingPreview, Slurp,
-// DuckDuckBot, applebot, facebookexternalhit, LinkedInBot, Twitterbot, etc.
-const AI_BOT_UA_RE =
-  /GPTBot|ChatGPT-User|OAI-SearchBot|Claude-Web|ClaudeBot|anthropic-ai|PerplexityBot|Perplexity-User|ora-scan|ora-agent|DeepSeekBot|Qwen-Agent|Bytespider|CCBot|Meta-ExternalAgent|Meta-ExternalFetcher|Applebot-Extended|cohere-ai|YouBot|Diffbot|Amazonbot|Timpibot|ImagesiftBot|PetalBot|Novellum/i;
-
-// Cache API route patterns at module load to avoid recreating on every request
-// Allowlist public API routes that don't require HMAC from the browser
-// Use regex patterns for precise matching to prevent accidental exposure of
-// deep nested private routes (e.g., /api/regions/admin/users would be blocked).
-// Note: Single-segment routes like /api/regions/admin are still allowed to
-// support dynamic routes like [id] and [slug], but routes must be explicitly
-// created as files in the codebase.
-// Allow percent-encoded slugs (accents, spaces, etc.) by matching any non-slash
-// segment for dynamic route parts.
-// IMPORTANT: These pattern-based routes are restricted to GET-only in the
-// isPublicApiRequest check below for defense-in-depth. If a POST/PUT/DELETE
-// handler is accidentally added to one of these routes, it will still require HMAC.
-export const PUBLIC_API_PATTERNS = [
-  // Regions: base, [id], or /options
-  /^\/api\/regions(\/(options|[^/]+))?$/,
-  // Categories, Cities, News: base or [id/slug]
-  /^\/api\/(categories|cities|news)(\/[^/]+)?$/,
-  // Places: base, [slug], /nearby, or /photo
-  /^\/api\/places(\/(nearby|photo|[^/]+))?$/,
-];
-
-// Routes that require exact match
-export const PUBLIC_API_EXACT_PATHS = [
-  "/api/promotions/config",
-  "/api/promotions/price-preview",
-  "/api/promotions/active",
-  "/api/leads/restaurant",
-  // Favorites cookie endpoints (browser-initiated)
-  "/api/favorites",
-  "/api/favorites/prune",
-  // DISABLED: Restaurant promotions feature is currently disabled
-  // "/api/cloudinary/sign",
-  // Public image upload for events (browser-initiated; backend expects HMAC only on internal hop)
-  "/api/publica/image-upload",
-  // Revalidation endpoint handles its own secret, so bypass HMAC middleware
-  "/api/revalidate",
-  // Health check endpoint for monitoring cache infrastructure
-  "/api/health",
-  // Sponsor checkout (browser-initiated Stripe checkout session creation)
-  "/api/sponsors/checkout",
-  // Sponsor availability check (browser-initiated from PlaceSelector)
-  "/api/sponsors/availability",
-  // Sponsor paid-only image upload (browser-initiated; gated by Stripe session status)
-  "/api/sponsors/image-upload",
-  // Stripe webhook (signature verified by endpoint, not HMAC)
-  "/api/sponsors/webhook",
-  // TikTok share page API routes (browser-initiated, proxies to TikTok API)
-  "/api/tiktok/token",
-  "/api/tiktok/creator-info",
-  "/api/tiktok/publish",
-  "/api/tiktok/upload",
-  "/api/tiktok/status",
-  // Web Push subscription (browser-initiated; VAPID send route protects itself with PUSH_SEND_SECRET)
-  "/api/push/subscribe",
-  "/api/push/send",
-  // API-scoped llms.txt (public, machine-readable)
-  "/api/llms.txt",
-];
-
-// Event routes pattern (GET only): base, [slug], or /categorized
-export const EVENTS_PATTERN = /^\/api\/events(\/(categorized|[^/]+))?$/;
-
-// Routes exempt from Origin check (server-to-server callbacks that won't have
-// a browser Origin header):
-export const ORIGIN_CHECK_EXEMPT = new Set([
-  "/api/sponsors/webhook", // Stripe webhook (server-to-server)
-  "/api/revalidate", // External revalidation trigger (has own secret)
-  "/api/health", // Monitoring probes
-  "/api/push/send", // Push broadcast (server-to-server, protected by PUSH_SEND_SECRET)
-]);
-
-/**
- * For public POST/PUT/DELETE routes, verify the Origin header matches the
- * site's domain. This blocks casual abuse (curl, bots, cross-site requests)
- * but won't stop sophisticated attackers who spoof headers.
- */
-export function isOriginAllowed(request: NextRequest): boolean {
-  const origin = request.headers.get("origin");
-
-  // No Origin header → block (curl, scripts, server-to-server without exemption)
-  if (!origin) return false;
-
-  try {
-    const originHost = new URL(origin).host;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-    // Warn if NEXT_PUBLIC_SITE_URL is missing in production — all non-GET
-    // public routes will silently 403 because localhost:3000 won't match.
-    if (!siteUrl && !isDev) {
-      console.warn(
-        "[proxy] NEXT_PUBLIC_SITE_URL is not set in production — Origin checks will fail",
-      );
-    }
-
-    if (getAllowedOriginHosts().has(originHost)) return true;
-
-    return false;
-  } catch {
-    return false;
-  }
-}
-
+// Static headers, trust-page redirects and the /openapi.json and
+// /.well-known/mcp rewrites live in next.config.js. This file only holds
+// per-request logic.
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const search = request.nextUrl.search;
 
-  if (pathname.startsWith("/api/")) {
-    const isPublicApiRequest =
-      // Pattern-based routes (GET only): these only export GET handlers;
-      // restricting at middleware level prevents accidental exposure if a
-      // POST/PUT/DELETE handler is added later without adding HMAC.
-      (request.method === "GET" &&
-        PUBLIC_API_PATTERNS.some((pattern) => pattern.test(pathname))) ||
-      // Exact match routes
-      PUBLIC_API_EXACT_PATHS.includes(pathname) ||
-      // Event routes (GET only): base, [slug], or /categorized
-      (request.method === "GET" && EVENTS_PATTERN.test(pathname)) ||
-      // Image proxy (GET only): used by Next/Image to safely load external images
-      (pathname === "/api/image-proxy" && request.method === "GET");
+  const loginRedirect = getLoginEntryRedirect(request);
+  if (loginRedirect) return loginRedirect;
 
-    if (isPublicApiRequest) {
-      // For non-GET public routes, verify Origin header matches the site domain.
-      // This blocks casual abuse (scripts, bots, cross-site requests) while
-      // allowing legitimate browser requests from our frontend.
-      // Exempt: webhooks, revalidation, and health checks (server-to-server).
-      if (
-        request.method !== "GET" &&
-        !ORIGIN_CHECK_EXEMPT.has(pathname) &&
-        !isOriginAllowed(request)
-      ) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-
-      // Endpoints that need visitor_id for idempotency/tracking
-      const needsVisitorId =
-        pathname === "/api/sponsors/checkout" && request.method === "POST";
-
-      if (needsVisitorId) {
-        const cookieVisitor = request.cookies?.get?.("visitor_id")?.value;
-        const visitorId =
-          cookieVisitor || crypto.randomUUID().replace(/-/g, "");
-
-        // Forward visitor_id via header so route handlers can access it in the same request cycle
-        // (cookie set on response won't be available to route handler until next request)
-        const apiReqHeaders = new Headers(request.headers);
-        apiReqHeaders.set("x-visitor-id", visitorId);
-
-        const response = NextResponse.next({
-          request: { headers: apiReqHeaders },
-        });
-        if (!cookieVisitor) {
-          response.cookies.set("visitor_id", visitorId, {
-            path: "/",
-            maxAge: 60 * 60 * 24 * 365,
-            sameSite: "lax",
-            secure: !isDev,
-          });
-        }
-        return response;
-      }
-      return NextResponse.next();
-    }
-    const hmac = request.headers.get("x-hmac");
-    const timestamp = request.headers.get("x-timestamp");
-    const contentType = request.headers.get("content-type") || "";
-    let requestBody = "";
-
-    if (!process.env.HMAC_SECRET) {
-      console.error("HMAC_SECRET is not configured on the server.");
-      return new NextResponse("Internal Server Error", { status: 500 });
-    }
-
-    if (contentType.toLowerCase().startsWith("multipart/form-data")) {
-      return NextResponse.json(
-        { error: "Unsupported media type" },
-        { status: 415 },
-      );
-    }
-
-    try {
-      requestBody = await request.clone().text();
-    } catch (error) {
-      console.error("Could not read request body in middleware:", error);
-      return new NextResponse("Bad Request: Unable to read request body", {
-        status: 400,
-      });
-    }
-
-    if (!hmac || !timestamp) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        {
-          status: 401,
-        },
-      );
-    }
-
-    if (!validateTimestamp(timestamp)) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        {
-          status: 401,
-        },
-      );
-    }
-
-    const stringToSign = buildStringToSign(
-      requestBody,
-      timestamp,
-      pathname + request.nextUrl.search,
-      request.method,
-    );
-    const signatureIsValid = await verifyHmacSignature(stringToSign, hmac);
-
-    if (!signatureIsValid) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        {
-          status: 401,
-        },
-      );
-    }
-
-    return NextResponse.next();
-  }
+  // Multipart allowlist, public-route classification, Origin/CSRF check and
+  // backend-key/HMAC verification. See utils/api-gate.ts.
+  if (pathname.startsWith("/api/")) return gateApiRequest(request);
 
   if (pathname === "/sw.js") {
     const response = NextResponse.next();
-    // Avoid no-store here so bfcache isn't blocked by this request
+    // no-cache (not no-store) so the SW request doesn't block the bfcache.
     response.headers.set(
       "Cache-Control",
       "no-cache, max-age=0, must-revalidate",
@@ -481,290 +38,91 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
-  // OpenAPI spec: rewrite /openapi.json to /openapi route handler
-  if (pathname === "/openapi.json") {
-    const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = "/openapi";
-    return NextResponse.rewrite(rewriteUrl);
-  }
-
-  // NLWeb /ask endpoint: bypass locale handling
-  if (pathname === "/ask") {
-    return applySecurityHeaders(NextResponse.next());
-  }
-
-  // /.well-known/mcp: rewrite to /mcp so MCP is discoverable at standard path
-  // Uses rewrite instead of redirect to preserve POST body for MCP transport
-  if (pathname === "/.well-known/mcp") {
-    const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = "/mcp";
-    return NextResponse.rewrite(rewriteUrl);
-  }
-
-  // Trust anchor page aliases: standard English paths → Catalan equivalents
-  // Enables orank and AI agents to find About/Contact/Privacy at conventional URLs
-  const trustAnchorMap: Record<string, string> = {
-    "/about": "/qui-som",
-    "/contact": "/qui-som",
-    "/privacy": "/politica-privacitat",
-    "/terms": "/termes-servei",
-  };
-  const trustTarget = trustAnchorMap[pathname];
-  if (trustTarget) {
-    return NextResponse.redirect(new URL(trustTarget, request.url), 301);
-  }
-
-  // OpenAPI spec: bypass locale handling so route handler is used
-  if (pathname === "/openapi") {
-    return NextResponse.next();
-  }
-
-  // /docs paths: bypass locale handling for documentation routes
-  if (pathname.startsWith("/docs/")) {
-    return NextResponse.next();
-  }
-
-  // /index.md: serve markdown homepage for agents
-  if (pathname === "/index.md") {
-    return NextResponse.next();
-  }
-
-  // ?mode=agent: return structured agent view
-  if (request.nextUrl.searchParams.get("mode") === "agent") {
-    const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = "/agent-view";
-    rewriteUrl.searchParams.delete("mode");
-    return NextResponse.rewrite(rewriteUrl);
-  }
-
-  // Markdown for Agents: content negotiation
-  // When agents request text/markdown, serve the llms.txt content with proper Content-Type
-  const acceptHeader = request.headers.get("accept") || "";
-  if (
-    acceptHeader.includes("text/markdown") &&
-    !pathname.startsWith("/api/") &&
-    !pathname.startsWith("/_next/")
-  ) {
-    const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = "/llms.txt";
-    rewriteUrl.searchParams.set("_accept", "text/markdown");
-    const headers = new Headers(request.headers);
-    headers.set("x-markdown-negotiation", "1");
-    return NextResponse.rewrite(rewriteUrl, {
-      request: { headers },
-    });
-  }
+  const agentRewrite = getAgentRewrite(request);
+  if (agentRewrite) return agentRewrite;
 
   const { locale: localeFromPath, pathnameWithoutLocale } =
     stripLocalePrefix(pathname);
   const localeFromCookie = getLocaleFromCookie(request);
 
-  // Redirect explicit default locale prefix to canonical form (e.g., /ca/foo → /foo)
-  if (localeFromPath === DEFAULT_LOCALE) {
-    const redirectUrl = new URL(
-      `${pathnameWithoutLocale}${search || ""}`,
-      request.url,
-    );
-    const response = NextResponse.redirect(redirectUrl, 308);
-    persistLocaleCookie(response, DEFAULT_LOCALE);
+  const localeRedirect = getLocaleRedirect(
+    request,
+    localeFromPath,
+    pathnameWithoutLocale,
+    localeFromCookie,
+  );
+  if (localeRedirect) return localeRedirect;
+
+  // A prefixed path that differs from the cookie updates the cookie.
+  const pathLocaleToPersist =
+    localeFromPath !== localeFromCookie ? localeFromPath : null;
+
+  const canonicalRedirect = handleCanonicalRedirects(request);
+  if (canonicalRedirect) {
+    if (pathLocaleToPersist) {
+      persistLocaleCookie(canonicalRedirect, pathLocaleToPersist);
+    }
+    return canonicalRedirect;
+  }
+
+  const placeCheck = await checkPlace(
+    request,
+    pathnameWithoutLocale,
+    localeFromPath,
+  );
+  if (placeCheck?.kind === "alias") {
+    const response = NextResponse.redirect(placeCheck.url, 301);
+    if (pathLocaleToPersist) {
+      persistLocaleCookie(response, pathLocaleToPersist);
+    }
     return response;
   }
 
-  // Auto-redirect to preferred non-default locale on root path
-  if (!localeFromPath && pathname === "/") {
-    const preferredLocale =
-      localeFromCookie ||
-      parseAcceptLanguage(request.headers.get("accept-language"));
-    if (preferredLocale && preferredLocale !== DEFAULT_LOCALE) {
-      const redirectUrl = new URL(
-        `/${preferredLocale}${search || ""}`,
-        request.url,
-      );
-      const response = NextResponse.redirect(redirectUrl, 302);
-      persistLocaleCookie(response, preferredLocale);
-      return response;
-    }
-  }
-
-  const resolvedLocale: AppLocale = localeFromPath ?? DEFAULT_LOCALE;
-  const shouldPersistLocaleFromPath =
-    Boolean(localeFromPath) && localeFromPath !== localeFromCookie;
-
-  // Handle canonical redirects for place routes
-  const redirectResponse = handleCanonicalRedirects(request);
-  if (redirectResponse) {
-    if (shouldPersistLocaleFromPath && localeFromPath) {
-      persistLocaleCookie(redirectResponse, localeFromPath);
-    }
-    return redirectResponse;
-  }
-
+  const locale = localeFromPath ?? DEFAULT_LOCALE;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
-  requestHeaders.set("x-next-intl-locale", resolvedLocale);
+  requestHeaders.set("x-next-intl-locale", locale);
+  const init = { request: { headers: requestHeaders } };
 
-  // PPR bot fix: Next.js's hardcoded getBotType() only recognizes ~27 traditional
-  // crawlers for blocking render. AI bots (GPTBot, ClaudeBot, ora-scan, etc.)
-  // get PPR shells (empty HTML) because they're unrecognized. Appending "Slurp"
-  // (already in the hardcoded regex) to the UA triggers blocking render for these
-  // bots, so they receive full server-rendered HTML.
-  // See: node_modules/next/dist/shared/lib/router/utils/is-bot.js
-  const ua = request.headers.get("user-agent") || "";
-  const isAiBot = AI_BOT_UA_RE.test(ua);
-  if (isAiBot) {
-    requestHeaders.set("user-agent", `${ua} Slurp`);
+  // Pages live under app/[locale]/. Prefixed paths (/es/foo) already match;
+  // unprefixed ones (/foo) are rewritten to /ca/foo. Unknown places render
+  // the same page with a 404 status (NextResponse.next() can't set one).
+  const url = request.nextUrl.clone();
+  if (!localeFromPath) {
+    url.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
   }
+  const response =
+    placeCheck?.kind === "missing"
+      ? NextResponse.rewrite(url, { ...init, status: 404 })
+      : localeFromPath
+        ? NextResponse.next(init)
+        : NextResponse.rewrite(url, init);
 
-  // No per-page visitor id injection; handled only for /api/sponsors/checkout.
-
-  const baseResponseInit = {
-    request: {
-      headers: requestHeaders,
-    },
-  };
-
-  // With [locale] route segment, all page routes live under app/[locale]/.
-  // - Paths without locale prefix (default locale, e.g., /barcelona) → rewrite
-  //   to /ca/barcelona so it matches app/[locale=ca]/[place=barcelona]/page.tsx
-  // - Paths with locale prefix (e.g., /es/barcelona) → pass through, already
-  //   matches app/[locale=es]/[place=barcelona]/page.tsx
-  const response = localeFromPath
-    ? NextResponse.next(baseResponseInit)
-    : (() => {
-        const rewriteUrl = request.nextUrl.clone();
-        rewriteUrl.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
-        return NextResponse.rewrite(rewriteUrl, baseResponseInit);
-      })();
-
-  if (shouldPersistLocaleFromPath && localeFromPath) {
-    persistLocaleCookie(response, localeFromPath);
+  if (pathLocaleToPersist) {
+    persistLocaleCookie(response, pathLocaleToPersist);
   } else if (
     !localeFromPath &&
-    localeFromCookie !== null &&
+    localeFromCookie &&
     localeFromCookie !== DEFAULT_LOCALE
   ) {
-    // Clear stale non-default locale cookie when user visits unprefixed path
-    // (which resolves to DEFAULT_LOCALE), so subsequent / visits don't redirect
+    // An unprefixed visit means the default locale: clear a stale cookie so
+    // the next visit to / doesn't redirect.
     persistLocaleCookie(response, DEFAULT_LOCALE);
   }
 
-  // visitor_id cookie is set for /api/sponsors/checkout if missing.
-
-  applySecurityHeaders(response);
-
-  // Cache-Control for public HTML pages (excluding API and Next assets).
-  //
-  // s-maxage=1800 (30 min): Cultural events are published days in advance, so
-  // 30 min staleness is invisible to users. With stale-while-revalidate=3600,
-  // CloudFront serves the stale page instantly for up to 60 min after expiry
-  // while revalidating in the background — eliminating TTFB spikes from
-  // synchronous revalidation. This raises CloudFront cache-hit ratio and
-  // reduces Lambda invocations significantly.
-  //
-  // Browser cache is set to 0 so users revalidate on navigation, but CDNs can
-  // still serve quickly and revalidate in the background.
-  if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
-    const normalizedPath = pathnameWithoutLocale || pathname;
-    const isFavoritesPage = normalizedPath === "/preferits";
-    const isPersonalizedHtml = isFavoritesPage;
-
-    // RSC client-navigation requests must never be CDN-cached. Cloudflare
-    // Free/Pro/Business ignores custom Vary headers (only Accept-Encoding),
-    // so if an RSC request (`RSC: 1`) is the first to fill the cache for a
-    // URL, Cloudflare serves that raw flight payload (text/x-component) to
-    // every subsequent HTML visitor until the TTL expires. RSC responses are
-    // tiny and cheap to regenerate, so skipping CDN cache here is free.
-    // See docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md.
-    const isRscRequest = request.headers.get("RSC") === "1";
-
-    // AI bot requests must not pollute or be served from the shared CDN cache:
-    // - Origin renders a different (fully-SSR) HTML for bots (see Slurp trick
-    //   above). If that response were cached, browsers would get over-rendered
-    //   HTML; if a browser PPR shell is already cached, bots would get empty
-    //   content. Both hurt orank.ai checks (content-no-js, semantic-indexing,
-    //   sim-chatgpt, sim-claude) and general AI-agent discoverability.
-    // - NOTE: This prevents the BOT response from being cached but does NOT
-    //   stop Cloudflare from serving an already-cached browser shell to bots.
-    //   A Cloudflare Cache Rule must also bypass cache when User-Agent matches
-    //   the bot regex. See docs/incidents/2026-04-24-ai-bot-cdn-cache-mix.md.
-    response.headers.set(
-      "Cache-Control",
-      isPersonalizedHtml || isAiBot || isRscRequest
-        ? "private, no-store"
-        : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
-    );
-  }
-
-  // Set Content-Language header for SEO and accessibility
-  response.headers.set("Content-Language", resolvedLocale);
-
-  // Agent discovery: Link headers (RFC 8288)
-  // Help AI agents discover machine-readable resources
-  response.headers.set(
-    "Link",
-    [
-      '</.well-known/api-catalog>; rel="api-catalog"',
-      '</openapi.json>; rel="service-desc"; type="application/openapi+json"',
-      '</llms.txt>; rel="service-doc"; type="text/plain"',
-      '</.well-known/agent-skills/index.json>; rel="describedby"',
-    ].join(", "),
-  );
-
-  // Vary on Accept so CDN caches text/markdown and text/html variants separately
-  // Required for markdown content negotiation to work through Cloudflare
-  response.headers.append("Vary", "Accept");
-
-  // SEO: Add X-Robots-Tag for filtered listing pages (search, distance, price, lat, lon)
-  // This prevents indexing of filtered/personalized URLs without making pages dynamic
-  const NON_CANONICAL_PARAMS = [
-    "search",
-    "distance",
-    "price",
-    "from",
-    "to",
-    "lat",
-    "lon",
-  ];
-  const hasNonCanonicalParams = NON_CANONICAL_PARAMS.some((param) => {
-    const value = request.nextUrl.searchParams.get(param);
-    return value !== null && value.trim().length > 0;
-  });
-
-  // Hidden tool pages that should never be indexed by crawlers
-  const NOINDEX_PATHS = ["/compartir-tiktok", "/callback"];
-  const isNoindexPath = NOINDEX_PATHS.some((p) =>
-    (pathnameWithoutLocale || pathname).startsWith(p),
-  );
-
-  // Block all non-production hosts from indexing (staging, preview deployments).
-  // GSC reported ~7,800 staging URLs leaking into Google's "Crawled - currently
-  // not indexed" bucket because no noindex header was emitted.
-  // Default-deny: anything not on the production allowlist is noindexed.
-  const isNonProductionHost = !isProductionHost(request.headers.get("host"));
-
-  // SEO: 3-segment listing paths /[place]/[date]/[category] with a non-default
-  // date (avui|dema|setmana|cap-de-setmana) generate thin/duplicate content
-  // that GSC flags as "Crawled - currently not indexed". Mark noindex,follow
-  // so crawlers can still discover the canonical /[place]/[category] page.
-  // Note: /[place]/tots/[category] is already 301'd to /[place]/[category] by
-  // handleCanonicalRedirects above, so we only need to match non-tots dates.
-  const THREE_SEGMENT_NOINDEX_RE =
-    /^\/[a-z0-9-]+\/(?:avui|dema|setmana|cap-de-setmana)\/[a-z0-9-]+$/;
-  const pathToCheck = pathnameWithoutLocale || pathname;
-  const isThreeSegmentListing = THREE_SEGMENT_NOINDEX_RE.test(pathToCheck);
-
-  if (isNonProductionHost || isNoindexPath) {
-    response.headers.set("X-Robots-Tag", "noindex, nofollow");
-  } else if (hasNonCanonicalParams || isThreeSegmentListing) {
-    response.headers.set("X-Robots-Tag", "noindex, follow");
-  }
-
+  applyCsp(response);
+  applyPageHeaders(request, response, pathnameWithoutLocale, locale);
   return response;
 }
 
+// Proxy skips Next internals, static files, machine-readable routes (they need
+// no locale or CSP), the next.config rewrites (/openapi.json, /.well-known/mcp)
+// and Sentry's tunnelRoute (/monitoring, a next.config rewrite that runs after
+// Proxy; rewriting it to /ca/monitoring dropped every browser error report).
+// Anchored entries ($ or a trailing /) leave place slugs with the same prefix
+// alone.
 export const config = {
   matcher: [
-    "/.well-known/mcp",
-    "/((?!_next|favicon.ico|robots.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view).*)",
+    "/((?!_next|favicon\\.ico|robots\\.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads\\.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view|monitoring$|ask$|openapi(?:\\.json)?$|index\\.md$|docs/).*)",
   ],
 };

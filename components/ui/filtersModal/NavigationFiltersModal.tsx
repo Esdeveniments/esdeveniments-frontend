@@ -16,8 +16,8 @@ import RadioInput from "@components/ui/common/form/radioInput";
 import RangeInput from "@components/ui/common/form/rangeInput";
 import { BYDATES, DISTANCES, DEFAULT_FILTER_VALUE, DATE_RANGE_SHORTCUTS } from "@utils/constants";
 
-const CalendarDatePicker = dynamic(
-  () => import("./CalendarDatePicker"),
+const DateRangeCalendar = dynamic(
+  () => import("@components/ui/common/form/DateRangeCalendar"),
   { ssr: false, loading: () => <div className="h-[220px] w-full animate-pulse bg-muted/30 rounded-card" /> },
 );
 import { generateRegionsAndTownsOptions } from "@utils/helpers";
@@ -46,6 +46,12 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
   loading: () => <SelectSkeleton />,
   ssr: false,
 });
+
+const dateChipClass = (isActive: boolean) =>
+  `px-3 py-1.5 text-sm rounded-badge border transition-colors ${isActive
+    ? "bg-primary text-primary-foreground border-primary"
+    : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
+  }`;
 
 const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   isOpen,
@@ -115,6 +121,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     const fromDate = hasExplicitDateRange
       ? currentQueryParams.from || ""
       : "";
+    const toDate = hasExplicitDateRange ? currentQueryParams.to || "" : "";
     const distance =
       currentQueryParams.distance ||
       (currentQueryParams.lat && currentQueryParams.lon ? "50" : "");
@@ -127,6 +134,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       category,
       price,
       fromDate,
+      toDate,
       distance,
       userLocation: initialUserLocation,
       selectOption: regionOption || null,
@@ -168,12 +176,9 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   // TODO: Re-enable when backend supports the `type` query param
   // const [localPrice, setLocalPrice] = useState<string>(defaults.price);
   const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
-  const [localToDate, setLocalToDate] = useState<string>(currentQueryParams.to || defaults.fromDate);
-  const [showCalendar, setShowCalendar] = useState<boolean>(Boolean(defaults.fromDate));
-  const isAdvancedDateActive =
-    BYDATES.slice(3).some((opt) => opt.value === defaults.byDate) ||
-    Boolean(defaults.fromDate);
-  const [showMoreDates, setShowMoreDates] = useState<boolean>(isAdvancedDateActive);
+  const [localToDate, setLocalToDate] = useState<string>(defaults.toDate);
+  // Which date control the user touched last, for GA: preset, shortcut or calendar.
+  const [dateSource, setDateSource] = useState("unchanged");
   const [localDistance, setLocalDistance] = useState<string>(defaults.distance);
   const [localUserLocation, setLocalUserLocation] = useState(
     defaults.userLocation
@@ -201,20 +206,15 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   // Reset local state whenever the modal opens or the default inputs change while open
   useEffect(() => {
     if (!isOpen) return;
-    const id = window.setTimeout(() => {
+    startTransition(() => {
       setLocalPlace(defaults.place);
       setLocalByDate(defaults.byDate);
       setLocalCategory(defaults.category);
       // TODO: Re-enable when backend supports the `type` query param
       // setLocalPrice(defaults.price);
       setLocalFromDate(defaults.fromDate);
-      const hasExplicitRange = Boolean(currentQueryParams.from && currentQueryParams.to);
-      setLocalToDate(hasExplicitRange ? (currentQueryParams.to || defaults.fromDate) : defaults.fromDate);
-      setShowCalendar(Boolean(defaults.fromDate));
-      const advancedActive =
-        BYDATES.slice(3).some((opt) => opt.value === defaults.byDate) ||
-        Boolean(defaults.fromDate);
-      setShowMoreDates(advancedActive);
+      setLocalToDate(defaults.toDate);
+      setDateSource("unchanged");
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
       setLocalPlaceType(defaults.placeType);
@@ -223,8 +223,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setUserLocationError("");
       setIsDistanceActive(Boolean(defaults.distance));
       setUseCurrentLocationMode(initialUseCurrentLocation);
-    }, 0);
-    return () => window.clearTimeout(id);
+    });
   }, [
     isOpen,
     defaults.place,
@@ -232,11 +231,11 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.category,
     defaults.price,
     defaults.fromDate,
+    defaults.toDate,
     defaults.distance,
     defaults.userLocation,
     defaults.placeType,
     defaults.placeCoords,
-    currentQueryParams.to,
     initialUseCurrentLocation,
   ]);
 
@@ -523,6 +522,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     sendGoogleEvent("filter_change", {
       filter_place: changes.place,
       filter_date: changes.byDate,
+      filter_date_mode:
+        !changes.from && changes.byDate === DEFAULT_FILTER_VALUE ? "none" : dateSource,
       filter_category: changes.category,
       filter_distance: changes.distance !== undefined ? changes.distance.toString() : undefined,
       context: "filters_modal_apply",
@@ -538,12 +539,13 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     setLocalByDate((prevValue) => (prevValue === value ? "" : value) as string);
     setLocalFromDate(""); // Clear calendar date when shortcut selected
     setLocalToDate("");
-    setShowCalendar(false); // Hide calendar when shortcut selected
+    setDateSource("preset");
   }, []);
 
   const handleCalendarDateChange = useCallback((from: string, to: string) => {
     setLocalFromDate(from);
     setLocalToDate(to || from);
+    setDateSource("calendar");
     if (from) {
       setLocalByDate(""); // Clear shortcut when calendar date selected
     }
@@ -555,6 +557,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalFromDate(from);
       setLocalToDate(to);
       setLocalByDate(""); // Clear byDate shortcut
+      setDateSource("shortcut");
     },
     [],
   );
@@ -674,7 +677,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 {useLocationLabel}
               </button>
               {useCurrentLocationMode && (
-                <div className="text-xs text-border flex items-center gap-2">
+                <div className="animate-fade-in-fast text-xs text-border flex items-center gap-2">
                   {t("useLocation.active")}
                   <button
                     onClick={() => setUseCurrentLocationMode(false)}
@@ -685,7 +688,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 </div>
               )}
               {isRegionSelected && (
-                <div className="text-xs text-border bg-background border border-border rounded-md p-2">
+                <div className="animate-fade-in-fast text-xs text-border bg-background border border-border rounded-md p-2">
                   {t("useLocation.regionNotice")}
                 </div>
               )}
@@ -694,105 +697,43 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
                 {t("modal.dateHeading")}
               </p>
-              <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-                {BYDATES.slice(0, 3).map(({ value, labelKey }) => (
-                  <RadioInput
-                    key={value}
-                    id={value}
-                    name="byDate"
-                    value={value}
-                    checkedValue={localByDate}
-                    onChange={handleByDateChange}
-                    label={tByDates(labelKey)}
-                  />
-                ))}
-                <label htmlFor="pick-date" className="flex-start gap-2 cursor-pointer">
-                  <input
-                    id="pick-date"
-                    name="byDate"
-                    type="checkbox"
-                    className="h-4 w-4 rounded-md text-primary border border-primary focus-ring"
-                    checked={showCalendar}
-                    onChange={() => {
-                      setShowCalendar((prev) => {
-                        if (!prev) {
-                          // Opening calendar: clear byDate shortcut
-                          setLocalByDate("");
-                        } else {
-                          // Closing calendar: clear date range
-                          setLocalFromDate("");
-                          setLocalToDate("");
-                        }
-                        return !prev;
-                      });
-                    }}
-                  />
-                  <span>{t("modal.pickDate")}</span>
-                </label>
-              </div>
-              {showCalendar && (
-                <CalendarDatePicker
-                  fromDate={localFromDate}
-                  toDate={localToDate}
-                  onChange={handleCalendarDateChange}
-                />
-              )}
-              {!showMoreDates ? (
-                <button
-                  type="button"
-                  onClick={() => setShowMoreDates(true)}
-                  className="text-sm text-primary font-medium hover:text-primary/80 transition-colors"
-                >
-                  {t("modal.viewMore")}
-                </button>
-              ) : (
-                <>
-                  <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
-                    {BYDATES.slice(3).map(({ value, labelKey }) => (
-                      <RadioInput
-                        key={value}
-                        id={value}
-                        name="byDate"
-                        value={value}
-                        checkedValue={localByDate}
-                        onChange={handleByDateChange}
-                        label={tByDates(labelKey)}
-                      />
-                    ))}
-                  </div>
-                  <div className="w-full flex flex-wrap gap-2">
-                    {DATE_RANGE_SHORTCUTS.map(({ labelKey, getRange }) => {
-                      const { from: rangeFrom, to: rangeTo } = getRange();
-                      const isActive =
-                        !localByDate &&
-                        localFromDate !== "" &&
-                        localFromDate === rangeFrom &&
-                        localToDate === rangeTo;
-                      return (
-                        <button
-                          key={labelKey}
-                          type="button"
-                          aria-pressed={isActive}
-                          onClick={() => handleDateRangeShortcut(getRange)}
-                          className={`px-3 py-1.5 text-sm rounded-badge border transition-colors ${isActive
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted/30"
-                            }`}
-                        >
-                          {tByDates(labelKey)}
-                        </button>
-                      );
-                    })}
-                  </div>
+              <div className="w-full flex flex-wrap gap-2">
+                {BYDATES.map(({ value, labelKey }) => (
                   <button
+                    key={value}
                     type="button"
-                    onClick={() => setShowMoreDates(false)}
-                    className="text-sm text-primary font-medium hover:text-primary/80 transition-colors"
+                    aria-pressed={localByDate === value}
+                    onClick={() => handleByDateChange(value)}
+                    className={dateChipClass(localByDate === value)}
                   >
-                    {t("modal.viewLess")}
+                    {tByDates(labelKey)}
                   </button>
-                </>
-              )}
+                ))}
+                {DATE_RANGE_SHORTCUTS.map(({ labelKey, getRange }) => {
+                  const { from: rangeFrom, to: rangeTo } = getRange();
+                  const isActive =
+                    !localByDate &&
+                    localFromDate !== "" &&
+                    localFromDate === rangeFrom &&
+                    localToDate === rangeTo;
+                  return (
+                    <button
+                      key={labelKey}
+                      type="button"
+                      aria-pressed={isActive}
+                      onClick={() => handleDateRangeShortcut(getRange)}
+                      className={dateChipClass(isActive)}
+                    >
+                      {tByDates(labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+              <DateRangeCalendar
+                fromDate={localFromDate}
+                toDate={localToDate}
+                onChange={handleCalendarDateChange}
+              />
             </fieldset>
             {categories.length > 0 && (
               <fieldset className="w-full flex flex-col justify-start items-start gap-4">
@@ -855,7 +796,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                     checked={isDistanceActive && !disableDistance}
                     onChange={toggleDistanceActive}
                     disabled={disableDistance}
-                    className="h-4 w-4 accent-primary rounded border-border"
+                    className="h-4 w-4 rounded border-border"
                     data-testid="distance-toggle"
                   />
                   {t("distance.toggle")}
@@ -876,7 +817,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 )}
               </p>
               {shouldShowGeolocationFeedback && (
-                <div className="border-t border-border py-2">
+                <div className="animate-fade-in-fast border-t border-border py-2">
                   <div className="flex flex-col">
                     {userLocationLoading && (
                       <div className="text-sm text-border">

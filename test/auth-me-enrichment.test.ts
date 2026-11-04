@@ -1,0 +1,193 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import * as usersExternal from "@lib/api/users-external";
+import { enrichWithBackendProfile } from "@lib/auth/enrichment";
+import type { AuthUser } from "types/auth";
+
+vi.mock("@lib/api/users-external", () => ({
+  getAuthenticatedUserExternal: vi.fn(),
+}));
+
+const mockGetAuthenticatedUserExternal = vi.mocked(
+  usersExternal.getAuthenticatedUserExternal,
+);
+
+const idTokenUser: AuthUser = {
+  id: "logto-sub",
+  email: "gerard@example.com",
+  name: "Gerard",
+  username: "gerard_rovellat",
+  avatarUrl: "https://logto.example.com/avatar.png",
+  role: "USER",
+  emailVerified: true,
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+describe("enrichWithBackendProfile", () => {
+  it("returns the id_token-derived user unchanged without an access token", async () => {
+    const result = await enrichWithBackendProfile(idTokenUser, null);
+    expect(result).toEqual(idTokenUser);
+    expect(mockGetAuthenticatedUserExternal).not.toHaveBeenCalled();
+  });
+
+  it("returns the id_token-derived user unchanged when the backend call fails", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue(null);
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+    expect(result).toEqual(idTokenUser);
+  });
+
+  it("layers backend-owned fields and prefers backend name/username when better", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "backend_username",
+      pictureUrl: "https://cdn.example.com/avatar.png",
+      pictureSource: "CUSTOM",
+      role: "ADMIN",
+      lastLoginAt: "2026-07-02T10:00:00Z",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result).toEqual({
+      ...idTokenUser,
+      id: "backend-uuid",
+      logtoId: "logto-sub",
+      name: "Backend Name",
+      username: "backend_username",
+      avatarUrl: "https://cdn.example.com/avatar.png",
+      pictureSource: "CUSTOM",
+      role: "ADMIN",
+      lastLoginAt: "2026-07-02T10:00:00Z",
+    });
+  });
+
+  it("prefers the backend's emailVerified over the id_token claim", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      emailVerified: false,
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    // idTokenUser.emailVerified is true — the backend's false should win.
+    expect(result.emailVerified).toBe(false);
+  });
+
+  it("falls back to the id_token's emailVerified when the backend omits it", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.emailVerified).toBe(idTokenUser.emailVerified);
+  });
+
+  it("keeps id_token name/username when the backend values are not better", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: idTokenUser.name,
+      username: idTokenUser.username,
+      pictureUrl: "https://cdn.example.com/avatar.png",
+      pictureSource: "CUSTOM",
+      role: "ADMIN",
+      lastLoginAt: "2026-07-02T10:00:00Z",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.name).toBe(idTokenUser.name);
+    expect(result.username).toBe(idTokenUser.username);
+    expect(result.avatarUrl).toBe("https://cdn.example.com/avatar.png");
+  });
+
+  it("prefers backend name when id_token name is the user's email", async () => {
+    const userWithEmailAsName: AuthUser = {
+      ...idTokenUser,
+      name: idTokenUser.email,
+    };
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "backend_username",
+      pictureUrl: "https://cdn.example.com/avatar.png",
+      pictureSource: "CUSTOM",
+      role: "ADMIN",
+      lastLoginAt: "2026-07-02T10:00:00Z",
+    });
+
+    const result = await enrichWithBackendProfile(userWithEmailAsName, "token");
+
+    expect(result.name).toBe("Backend Name");
+    expect(result.username).toBe("backend_username");
+  });
+
+  it("falls back to the id_token's avatarUrl/role when the backend omits them", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "backend_username",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.avatarUrl).toBe(idTokenUser.avatarUrl);
+    expect(result.role).toBe(idTokenUser.role);
+    expect(result.pictureSource).toBeUndefined();
+    expect(result.lastLoginAt).toBeUndefined();
+  });
+
+  it("uses the backend id as the canonical user id and preserves the Logto sub as logtoId", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "backend_username",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.id).toBe("backend-uuid");
+    expect(result.logtoId).toBe("logto-sub");
+  });
+
+  it("keeps id_token username when backend username is whitespace-only", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "   ",
+      pictureUrl: "https://cdn.example.com/avatar.png",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    // Whitespace-only username should not replace the valid id_token username
+    expect(result.username).toBe(idTokenUser.username);
+    // Backend name is still better (id_token name is not the email here)
+    expect(result.name).toBe("Backend Name");
+  });
+
+  it("keeps id_token username when backend username is an empty string", async () => {
+    mockGetAuthenticatedUserExternal.mockResolvedValue({
+      id: "backend-uuid",
+      email: "backend@example.com",
+      name: "Backend Name",
+      username: "",
+      pictureUrl: "https://cdn.example.com/avatar.png",
+    });
+
+    const result = await enrichWithBackendProfile(idTokenUser, "token");
+
+    expect(result.username).toBe(idTokenUser.username);
+  });
+});

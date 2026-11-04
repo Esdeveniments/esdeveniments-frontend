@@ -113,11 +113,7 @@ export function prepareCardContentData({
 
   const shouldShowFavoriteButton = Boolean(event.slug);
 
-  // Price indicator — disabled until backend provides reliable FREE/PAID data.
-  // When enabled: uncomment the line below and remove the hardcoded undefined.
-  // All card rendering (CardLayout, CardHorizontalServer) already supports priceLabel.
-  // const priceLabel = event.type === "FREE" ? tCard("free") : undefined;
-  const priceLabel = undefined;
+  const promotedLabel = event.isPromoted ? tCard("promoted") : undefined;
 
   // View count aria label
   const viewCountAriaLabel = tCard("viewCountAria", {
@@ -152,7 +148,7 @@ export function prepareCardContentData({
     timeDisplay,
     favoriteLabels,
     shouldShowFavoriteButton,
-    priceLabel,
+    promotedLabel,
     viewCountAriaLabel,
     categoryLabel,
     categorySlug,

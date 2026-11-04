@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
 
@@ -73,7 +73,6 @@ describe("NavigationFiltersModal - Locale no-op apply", () => {
   });
 
   it("does not set loading or navigate when applying unchanged filters on a locale-prefixed URL", async () => {
-    vi.useFakeTimers();
     render(
       <NavigationFiltersModal
         isOpen
@@ -85,17 +84,9 @@ describe("NavigationFiltersModal - Locale no-op apply", () => {
       />
     );
 
-    // The component resets local state with setTimeout(0) on open.
-    // Flush it to avoid act() warnings and mimic settled UI state.
-    await act(async () => {
-      vi.runOnlyPendingTimers();
-    });
-
     fireEvent.click(screen.getByTestId("modal-action"));
 
     expect(mockSetLoading).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
-
-    vi.useRealTimers();
   });
 });

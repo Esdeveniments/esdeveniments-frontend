@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     "  Query params: page (int), size (int, max 50), place (slug), category (slug), byDate (avui|dema|setmana|cap-de-setmana), from (ISO date), to (ISO date), term (keyword), lat (float), lon (float), radius (km)",
     "  Response: { content: Event[], currentPage, pageSize, totalElements, totalPages, last }",
     "",
-    "GET /api/events/{slug} — Get event details by slug or ID",
+    "GET /api/events/{slug} — Get event details by slug",
     "  Response: EventDetail (title, dates, location, city, region, categories, description, imageUrl)",
     "",
     "### News",

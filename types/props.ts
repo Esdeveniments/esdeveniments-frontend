@@ -5,6 +5,17 @@ export interface LatestNewsSectionProps {
   newsHref: string;
 }
 
+export interface PublishDraftPanelProps {
+  /** "decision": restore choice, failures and warnings. "status": save status and discard. */
+  variant: "decision" | "status";
+  state: import("./publish-draft").PublishDraftSessionState;
+  onRestore: () => void;
+  onRestoreGuest: () => Promise<void>;
+  onDiscard: () => Promise<import("./publish-draft").PublishDraftFlushResult | undefined>;
+  onRetry: () => void;
+  warnings: import("./publish-draft").PublishDraftWarning[];
+}
+
 /**
  * Return type for useImageRetry hook
  */
@@ -38,7 +49,7 @@ export interface ClientImageInnerProps {
   date?: string;
 }
 
-import { ChangeEvent, MouseEvent, ReactNode } from "react";
+import { ChangeEvent, InputHTMLAttributes, MouseEvent, ReactNode } from "react";
 
 // Detail page section tracker
 export interface DetailSectionTrackerProps {
@@ -57,7 +68,12 @@ import {
   Href,
   NavigationItem,
 } from "types/common";
-import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import {
+  EventSummaryResponseDTO,
+  ListEvent,
+  ProfileEventStatus,
+  FavoritesPeriod,
+} from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
@@ -79,6 +95,7 @@ export interface SelectComponentProps {
   testId?: string;
   autoFocus?: boolean;
   menuPosition?: "fixed" | "absolute";
+  error?: string;
 }
 
 export interface SelectSkeletonProps {
@@ -95,6 +112,7 @@ export interface MultiSelectProps {
   isDisabled?: boolean;
   placeholder?: string;
   isLoading?: boolean;
+  optionalLabel?: string;
 }
 
 export interface ReportViewProps {
@@ -130,8 +148,8 @@ export interface CardLayoutProps {
   categoryLabel?: string;
   /** Category slug for analytics/URL building */
   categorySlug?: string;
-  /** Localized price label (e.g., "Gratuït" for free events) */
-  priceLabel?: string;
+  /** Localized badge for events with an active paid promotion */
+  promotedLabel?: string;
   /** Urgency label ("Today" / "Tomorrow") */
   urgencyLabel?: string;
   /** Urgency type for styling */
@@ -208,6 +226,23 @@ export interface ModalProps {
   actionButton?: ReactNode;
   onActionButtonClick?: () => boolean | void | Promise<boolean | void>;
   actionButtonDisabled?: boolean;
+  actionButtonAnalyticsAction?: string;
+  testId?: string;
+}
+
+export interface ConfirmDialogProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  title: string;
+  description?: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  /** Return false to keep the dialog open (e.g. the action failed). */
+  onConfirm: () => boolean | void | Promise<boolean | void>;
+  /** Disables both buttons and blocks Escape/backdrop dismissal while the action runs. */
+  busy?: boolean;
+  /** Shown inside the dialog when the action failed. */
+  error?: string;
   testId?: string;
 }
 
@@ -266,7 +301,6 @@ export interface DatePickerComponentProps {
   idPrefix?: string;
   startDate: string; // "YYYY-MM-DD" or ISO string
   endDate: string; // "YYYY-MM-DD" or ISO string
-  minDate?: string; // "YYYY-MM-DD" or ISO string
   onChange: (field: "startDate" | "endDate", value: string) => void;
   required?: boolean;
   className?: string;
@@ -276,55 +310,45 @@ export interface DatePickerComponentProps {
 }
 
 export interface TimeSelectorProps {
+  id: string;
   value: string;
   onChange: (time: string) => void;
   minTime?: string;
   label: string;
 }
 
-export interface DateButtonProps {
-  label: string;
-  value: string;
-  isOpen: boolean;
-  onClick: () => void;
-}
-
-export interface CalendarDatePickerProps {
+export interface DateRangeCalendarProps {
   /** Range start as YYYY-MM-DD or empty string */
   fromDate: string;
   /** Range end as YYYY-MM-DD or empty string */
   toDate: string;
   /** Callback with from/to YYYY-MM-DD strings (empty to clear) */
   onChange: (from: string, to: string) => void;
+  /** First selectable day as YYYY-MM-DD (default: today in Madrid) */
+  minDate?: string;
+  /** Never let the user clear the range */
+  required?: boolean;
 }
-
-export type AcceptedImageTypes =
-  | "image/jpeg"
-  | "image/png"
-  | "image/jpg"
-  | "image/webp";
 
 export interface ImageUploaderProps {
   value: string | null;
   onUpload: (file: File | null) => void;
-  progress: number;
-  isUploading?: boolean;
-  uploadMessage?: string | null;
-  mode?: "upload" | "url";
-  onModeChange?: (mode: "upload" | "url") => void;
-  imageUrlValue?: string;
-  onImageUrlChange?: (url: string) => void;
-  imageUrlError?: string | null;
+  onPreparingChange?: (preparing: boolean) => void;
 }
 
 export interface InputProps {
   id: string;
   title: string;
   subtitle?: string;
+  /** Shown after the label for optional fields, e.g. "(opcional)". */
+  optionalLabel?: string;
   value: string | number;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   onBlur?: () => void;
+  inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
+  maxLength?: number;
 }
 
 export type RadioInputValue = string | number;
@@ -394,31 +418,25 @@ export interface FilterLoadingGateProps {
   children: ReactNode;
 }
 
-// Next.js App Router page props interfaces
-export interface FilteredPageProps {
-  params: Promise<{
-    place: string;
-    byDate: string;
-    category: string;
-  }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-// Route handler context for catch-all sitemap routes
-export interface SitemapPartsRouteContext {
-  params: Promise<{ parts: string[] }>;
-}
-
 export interface NavbarLabels {
   logoAlt: string;
-  openMenu: string;
-  closeMenu: string;
   home: string;
   agenda: string;
   favorites: string;
   publish: string;
   news: string;
   mobilePublishLabel: string;
+  login: string;
+  logout: string;
+  userMenu: string;
+  myProfile: string;
+  /**
+   * Shown inside the user dropdown when `AuthUser.profileEnrichmentFailed` is
+   * set — signals to the user that they're logged in (id_token verified) but
+   * the backend hasn't recognised their access_token, so the profile slug,
+   * nickname, etc. can't be shown.
+   */
+  incompleteProfile: string;
 }
 
 export interface NavbarClientProps {
@@ -458,6 +476,10 @@ export interface FiltersClientProps {
   labels: FilterLabels;
 }
 
+export interface CopyrightNoticeProps {
+  year: number;
+}
+
 export interface ActiveNavLinkProps {
   href: string;
   children: ReactNode;
@@ -491,6 +513,51 @@ export interface NavigationFiltersModalProps {
   categories?: CategorySummaryResponseDTO[];
 }
 
+export interface ProfileHeaderProps {
+  profile: import("types/api/profile").ProfileDetailResponseDTO;
+}
+
+export interface VerifiedBadgeProps {
+  role?: import("types/auth").AuthRole;
+  verified?: boolean;
+}
+
+// Route-based tab strip (e.g. profile/favourites Propers/Passats). Each item
+// is a navigable Link, not a client-side tabpanel switch — see components/ui/common/tabs.
+export interface TabItem {
+  id: string;
+  href: string;
+  label: string;
+  count?: number;
+}
+
+export interface TabsProps {
+  items: TabItem[];
+  active: string;
+  ariaLabel: string;
+}
+
+// buildProfileTabItems (components/partials/profile-tabs.ts) is shared by
+// page.tsx and passats/page.tsx, both of which call getTranslations
+// server-side and pass the resolved translator straight through.
+export type ProfileTranslator = Awaited<
+  ReturnType<typeof import("next-intl/server").getTranslations>
+>;
+
+export interface AvatarInitialsProps {
+  name: string;
+}
+
+export interface ProfileEventsSectionProps {
+  username: string;
+  status: ProfileEventStatus;
+}
+
+export interface FavoritesEventsSectionProps {
+  accessToken: string;
+  status: ProfileEventStatus;
+}
+
 export interface HybridEventsListProps {
   initialEvents: ListEvent[];
   placeTypeLabel?: PlaceTypeAndLabel;
@@ -499,6 +566,7 @@ export interface HybridEventsListProps {
   place: string;
   category?: string;
   date?: string;
+  profileSlug?: string; // Filter events by profile/venue slug
   serverHasMore?: boolean; // Add server pagination info
   /**
    * Page size used for the SSR fetch. Forwarded to the client SWR hook so
@@ -508,6 +576,8 @@ export interface HybridEventsListProps {
    */
   ssrPageSize?: number;
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
+  // Rendered below the page heading, inside the space kept for the fixed filter bar.
+  promotedSlot?: import("react").ReactNode;
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
@@ -528,6 +598,8 @@ export interface PlacePageEventsResult {
   /** Page size used for the initial SSR fetch (threaded to SWR initialSize) */
   ssrPageSize: number;
   structuredScripts?: JsonLdScript[];
+  /** Gates date/category explore links (see lib/seo/place-expandability.ts) */
+  placeIsExpandable: boolean;
 }
 
 export interface PlaceShellData {
@@ -693,7 +765,7 @@ export interface NewsCitiesSectionProps {
 
 export interface NewsListProps {
   newsPromise: Promise<
-    import("./api/news").PagedResponseDTO<NewsSummaryResponseDTO>
+    import("./api/event").PagedResponseDTO<NewsSummaryResponseDTO>
   >;
   placeTypePromise: Promise<PlaceTypeAndLabel>;
   place: string;
@@ -805,6 +877,61 @@ export interface ExploreNearbyProps {
   placeType: PlaceType;
 }
 
+// Profile owner actions client island props
+export interface ProfileOwnerActionsProps {
+  username: string;
+}
+
+// Owner-only visits stat client island: totalEventVisits is public on the
+// DTO but reads worse than nothing to a non-owner ("12 visites" on a stranger's
+// profile), so it's gated behind the same owner check as ProfileOwnerActions.
+export interface ProfileVisitsStatProps {
+  username: string;
+  visits: number;
+}
+
+// Profile claim CTA client island props
+export interface ProfileClaimCtaProps {
+  username: string;
+}
+
+// /perfil/[username] and /perfil/[username]/passats — fires profile_page_view
+export interface ProfilePageTrackerProps {
+  username: string;
+  upcomingCount: number | undefined;
+  pastCount: number | undefined;
+  status: ProfileEventStatus;
+}
+
+// /preferits and /preferits/passats — fires favorites_page_view
+export interface FavoritesPageTrackerProps {
+  favoritesCount: number;
+  activeCount: number;
+  period?: FavoritesPeriod;
+}
+
+// /perfil/edita — shown to anonymous visitors, mirrors PublishAuthGate
+export interface EditProfileAuthGateProps {
+  redirectTo?: string;
+}
+
+// /perfil/edita — the signed-in profile-completion / edit form
+export interface EditProfileFormProps {
+  redirectTo?: string;
+}
+
+// /perfil/edita — avatar upload/remove section, self-contained (reads
+// useAuth() directly for the current avatarUrl/name and to refetch after a
+// successful mutation)
+export interface EditProfileAvatarProps {
+  className?: string;
+}
+
+// /publica — shown to signed-in users whose profileCompleted is false
+export interface CompleteProfileGateProps {
+  redirectTo: string;
+}
+
 // Sticky CTA bar for event detail page (mobile)
 export interface EventStickyCTAProps {
   eventUrl?: string;
@@ -827,6 +954,7 @@ export interface EventClientPayload {
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
+  ownerId?: string;
 }
 
 export interface EventClientProps {
@@ -845,13 +973,85 @@ export interface EventDetailsSectionProps {
   event: import("./api/event").EventDetailResponseDTO;
 }
 
+// Cached body of the event detail page; slots are request-time parts.
+export interface EventPageBodyProps {
+  slug: string;
+  locale: import("./i18n").AppLocale;
+  mobileSponsorSlot: import("react").ReactNode;
+  sidebarSponsorSlot: import("react").ReactNode;
+  latestNewsSlot: import("react").ReactNode;
+}
+
 // Sticky sidebar for event detail page (desktop)
 export interface EventSidebarProps {
   event: import("./api/event").EventDetailResponseDTO;
   cityName: string;
   regionName: string;
-  primaryPlaceSlug: string;
-  sponsorFallbackPlaces?: string[];
+  // Rendered outside the cached event body: the sponsor slot is request-time.
+  sponsorSlot: import("react").ReactNode;
+}
+
+// Owner-only edit action, event detail sidebar client island
+export interface EventEditActionProps {
+  ownerId?: string;
+  slug: string;
+}
+
+// Owner-only promote action, event detail sidebar client island
+export type EventPromoteActionProps = EventEditActionProps;
+
+export interface PromoteUpsellModalProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  slug: string;
+}
+
+// /e/[eventId]/promote client page
+export interface PromoteEventClientProps {
+  eventId: string;
+  slug: string;
+  options: import("types/api/promotion").PromotionResult<
+    import("types/api/promotion").PromotionOptionsDTO
+  >;
+  pendingCheckoutUrl: string | null;
+  /** Event's own town/region/province names, shown on the scope tabs. */
+  placeNames: Partial<
+    Record<import("types/api/promotion").PromotionPlacement, string>
+  >;
+}
+
+// /e/[eventId]/promote/{success,cancel} status panel
+export interface PromotionStatusPanelProps {
+  slug: string;
+  status: import("types/api/promotion").PromotionStatusDTO | null;
+  /** Backend code of a failed status call; localized when it has copy. */
+  errorCode?: string;
+  variant: "success" | "cancel";
+}
+
+// /e/[eventId]/promote: shown only if the session refresh fails
+export interface RefreshSessionProps {
+  children?: import("react").ReactNode;
+}
+
+export interface PromotionReturnPageProps {
+  params: PageProps<"/[locale]/e/[eventId]/promote/success">["params"];
+  variant: PromotionStatusPanelProps["variant"];
+}
+
+export interface PromotedEventsSectionProps {
+  /** Place page slug; omit (or "catalunya") for the Catalonia-wide list. */
+  placeSlug?: string;
+}
+
+export interface PromotedEventsRowProps extends PromotedEventsSectionProps {
+  events: import("./api/event").EventSummaryResponseDTO[];
+}
+
+// /e/[eventId]/edita client form
+export interface EditEventClientProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  regions: import("./api/region").RegionsGroupedByCitiesResponseDTO[] | null;
 }
 
 // Social proof counter
@@ -864,4 +1064,16 @@ export interface SocialProofCounterProps {
 export interface UrlFiltersProviderProps {
   children: ReactNode;
   categories?: CategorySummaryResponseDTO[];
+}
+
+export interface PwaBackButtonProps {
+  fallbackHref?: string;
+}
+
+// Shared skeleton grid: same grid-cols-1 md:2 xl:3 layout as List
+// (components/ui/list), so a loading state never reflows once real
+// content swaps in. `count` defaults to 6 to match the pre-existing
+// EventsListSkeleton/PlacePageSkeleton usage.
+export interface EventsGridSkeletonProps {
+  count?: number;
 }

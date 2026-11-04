@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidEventUrl } from "@utils/event-url";
 import type {
   RegionSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -64,7 +65,6 @@ export const createEventFormSchema = (
     id: z.string().optional(),
     title: z.string().min(1, labels.titleRequired),
     description: z.string().min(1, labels.descriptionRequired),
-    type: z.enum(["FREE", "PAID"]),
     startDate: z.string(), // "YYYY-MM-DD" - consistent with API
     startTime: z.string().nullable(), // ISO time string or null - consistent with API
     endDate: z.string(), // "YYYY-MM-DD" - consistent with API
@@ -72,26 +72,9 @@ export const createEventFormSchema = (
     region: z.union([RegionSummaryResponseDTOSchema, OptionSchema]).nullable(),
     town: z.union([CitySummaryResponseDTOSchema, OptionSchema]).nullable(),
     location: z.string().min(1, labels.locationRequired),
-    imageUrl: z
-      .string()
-      .url(labels.invalidUrl)
-      .refine((val) => {
-        if (!val) return true;
-        try {
-          const url = new URL(val);
-          return url.hostname.includes(".");
-        } catch {
-          return false;
-        }
-      }, labels.invalidUrl)
-      .nullable()
-      .or(z.literal("")),
     url: z
       .string()
-      .refine(
-        (val) => !val || z.string().url().safeParse(val).success,
-        labels.invalidUrl,
-      ),
+      .refine((val) => !val || isValidEventUrl(val), labels.invalidUrl),
     categories: z.array(CategoryFormItemSchema),
     email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
     isAllDay: z.boolean().optional(),
@@ -133,7 +116,6 @@ export interface FormData {
   id?: string;
   title: string;
   description: string;
-  type: "FREE" | "PAID";
   startDate: string; // "YYYY-MM-DD" - consistent with API
   startTime: string | null; // ISO time string or null - consistent with API
   endDate: string; // "YYYY-MM-DD" - consistent with API
@@ -141,7 +123,6 @@ export interface FormData {
   region: RegionSummaryResponseDTO | { value: string; label: string } | null;
   town: CitySummaryResponseDTO | { value: string; label: string } | null;
   location: string;
-  imageUrl: string | null;
   url: string;
   categories: Array<
     { id: number; name: string } | { value: string; label: string } | number
@@ -172,8 +153,8 @@ export interface FetchEventsParams {
   byDate?: string; // Date filter
   from?: string; // Start date
   to?: string; // End date
-  type?: string; // Price filter: "FREE" | "PAID"
   isToday?: boolean;
+  profileSlug?: string; // Filter events by profile/venue slug
   // Note: API expects 'term' for search queries
 }
 
@@ -191,6 +172,10 @@ export interface FetchEventsWithFallbackOptions {
   initialParams: FetchEventsParams;
   regionFallback?: EventFallbackStageOptions;
   finalFallback?: EventFallbackStageOptions;
+  /** Defaults to fetchEvents. */
+  fetcher?: (
+    params: FetchEventsParams,
+  ) => Promise<PagedResponseDTO<EventSummaryResponseDTO>>;
 }
 
 export interface FetchEventsWithFallbackResult {
@@ -305,8 +290,12 @@ export interface EventLocationProps {
   regionName: string;
   citySlug?: string;
   regionSlug?: string;
+  profile?: import("types/api/profile").ProfileSummaryResponseDTO;
   compact?: boolean;
 }
+
+export const EventFormStepSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
+export type EventFormStep = z.infer<typeof EventFormStepSchema>;
 
 export interface EventFormProps {
   form: FormData;
@@ -315,6 +304,8 @@ export interface EventFormProps {
   analyticsContext?: string;
   isEditMode?: boolean;
   isLoading?: boolean;
+  isSubmitDisabled?: boolean;
+  submitAnalyticsAction?: string;
   cityOptions: Option[];
   categoryOptions: Option[];
   isLoadingCities?: boolean;
@@ -325,24 +316,43 @@ export interface EventFormProps {
     value: FormData[K],
   ) => void;
   handleImageChange: (file: File | null) => void;
+  onImagePreparingChange?: (preparing: boolean) => void;
   handleTownChange: (town: Option | null) => void;
   handleCategoriesChange: (categories: Option[]) => void;
   handleUseGeolocation?: () => void;
   handleTestUrl?: (url: string) => void;
-  progress: number;
   imageToUpload: string | null;
   imageFile?: File | null;
-  isUploadingImage?: boolean;
-  uploadMessage?: string | null;
   onPreview?: () => void;
   canPreview?: boolean;
   previewLabel?: string;
   previewTestId?: string;
-  imageMode?: "upload" | "url";
-  onImageModeChange?: (mode: "upload" | "url") => void;
-  handleImageUrlChange?: (url: string) => void;
-  imageUrlValue?: string | null;
+  initialStep?: EventFormStep;
+  onStepChange?: (step: EventFormStep) => void;
 }
+
+export type CoverImageIntent = "keep" | "replace" | "remove";
+
+/** Result returned by the editEvent server action. */
+export interface EditEventResult {
+  success: boolean;
+  newSlug?: string;
+  error?: string;
+  errorCode?: "COVER_UPDATE_FAILED";
+}
+
+/**
+ * Result returned by the createEventAction server action. A discriminated
+ * union (not a thrown error) for the two failures the client can actually
+ * act on: Next.js redacts thrown Server Action error messages/properties in
+ * production, so a caught 401/403 must be returned, not re-thrown, for
+ * PublishForm to reliably tell "stale session" from "profile incomplete"
+ * apart from a generic failure. Mirrors editEvent's existing
+ * return-over-throw convention for actionable failures.
+ */
+export type CreateEventActionResult =
+  | { success: true; event: EventDetailResponseDTO }
+  | { success: false; reason: "profile-incomplete" | "stale-session" };
 
 export interface UseEventsOptions {
   place?: string;
@@ -355,6 +365,7 @@ export interface UseEventsOptions {
   to?: string; // Calendar date filter (YYYY-MM-DD)
   lat?: string; // Client-side latitude filter
   lon?: string; // Client-side longitude filter
+  profileSlug?: string; // Filter events by profile/venue slug
   initialSize?: number;
   fallbackData?: EventSummaryResponseDTO[];
   serverHasMore?: boolean; // Add server pagination info
@@ -368,6 +379,7 @@ export interface UseEventsReturn {
   isLoading: boolean;
   isLoadingMore: boolean;
   loadMore: () => void | Promise<void>;
+  retry: () => void;
   error: Error | undefined;
 }
 

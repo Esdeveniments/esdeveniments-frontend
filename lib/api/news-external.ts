@@ -1,13 +1,12 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import type {
-  PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
 } from "types/api/news";
 import type { FetchNewsParams } from "./news";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { PagedResponseDTO } from "types/api/event";
-import { buildNewsQuery, getApiUrl } from "@utils/api-helpers";
+import { buildNewsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helpers";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
 // This creates a separate cache entry for every unique URL.
@@ -16,7 +15,7 @@ import { buildNewsQuery, getApiUrl } from "@utils/api-helpers";
 
 export async function fetchNewsExternal(
   params: FetchNewsParams
-): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
+): Promise<PagedResponseDTO<NewsSummaryResponseDTO>> {
   const api = getApiUrl();
   try {
     // Use buildNewsQuery with setDefaults=false to match original behavior
@@ -26,26 +25,12 @@ export async function fetchNewsExternal(
     const res = await fetchWithHmac(`${api}/news?${query.toString()}`);
     if (!res.ok) {
       console.error(`fetchNewsExternal: HTTP ${res.status}`);
-      return {
-        content: [],
-        currentPage: 0,
-        pageSize: 0,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      };
+      return emptyPagedResponse();
     }
-    return (await res.json()) as PagedNewsResponseDTO<NewsSummaryResponseDTO>;
+    return (await res.json()) as PagedResponseDTO<NewsSummaryResponseDTO>;
   } catch (error) {
     console.error("fetchNewsExternal: failed", error);
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    return emptyPagedResponse();
   }
 }
 
@@ -86,25 +71,11 @@ export async function fetchNewsCitiesExternal(
     const res = await fetchWithHmac(url);
     if (!res.ok) {
       console.error(`fetchNewsCitiesExternal: HTTP ${res.status}`);
-      return {
-        content: [],
-        currentPage: 0,
-        pageSize: 0,
-        totalElements: 0,
-        totalPages: 0,
-        last: true,
-      };
+      return emptyPagedResponse();
     }
     return (await res.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
   } catch (error) {
     console.error("fetchNewsCitiesExternal: failed", error);
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    return emptyPagedResponse();
   }
 }

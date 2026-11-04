@@ -1,22 +1,29 @@
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { GlobeAltIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { GlobeAltIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
 const GlobeIcon = GlobeAltIcon;
 import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { Link } from "@i18n/routing";
 import { useTranslations } from "next-intl";
+import EventEditAction from "./EventEditAction";
+import EventPromoteAction from "./EventPromoteAction";
 
 /**
- * Renders ancillary event details: duration + external link.
+ * Renders ancillary event details: duration + external link + creator info.
  * Status badge and date/time info are intentionally NOT shown here
  * to avoid duplication (they already appear in EventHeader and EventCalendar).
+ * Also renders the owner-only Edit and Promote actions: EventSidebar has them
+ * too, but the sidebar is hidden below the lg breakpoint.
  */
 const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
 
-  const hasValidUrl = !!event.url && /^https?:\/\//i.test(event.url);
+  const eventUrl = event.url ?? "";
+  const hasValidUrl = /^https?:\/\//i.test(eventUrl);
+  const owner = event.owner;
 
   // Only render if there's something to show
-  if (!event.duration && !hasValidUrl) return null;
+  if (!event.duration && !hasValidUrl && !owner) return null;
 
   return (
     <div className="w-full">
@@ -39,7 +46,7 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
             <div className="body-normal font-semibold text-foreground-strong">
               {t("eventLink")}{" "}
               <PressableAnchor
-                href={event.url}
+                href={eventUrl}
                 className="body-normal inline-block text-primary hover:underline transition-colors duration-200 ease-in-out pb-0"
                 target="_blank"
                 rel="noreferrer"
@@ -53,6 +60,44 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
                 {event.title}
               </PressableAnchor>
             </div>
+          )}
+
+          {owner && (
+            <div
+              className="body-small flex items-center gap-element-gap text-foreground-strong/70"
+              data-testid="event-created-by"
+            >
+              <UserIcon className="w-4 h-4" />
+              <span>
+                {t.rich("createdBy", {
+                  name:
+                    owner.displayName ??
+                    owner.username ??
+                    "",
+                  link: (chunks) =>
+                    owner.username ? (
+                      <Link
+                        href={`/perfil/${encodeURIComponent(
+                          owner.username
+                        )}`}
+                        className="text-primary hover:underline font-medium"
+                        data-testid="event-created-by-link"
+                      >
+                        {chunks}
+                      </Link>
+                    ) : (
+                      <span className="font-medium">{chunks}</span>
+                    ),
+                })}
+              </span>
+            </div>
+          )}
+
+          {owner && (
+            <>
+              <EventEditAction ownerId={owner.id} slug={event.slug ?? ""} />
+              <EventPromoteAction ownerId={owner.id} slug={event.slug ?? ""} />
+            </>
           )}
         </div>
       </div>

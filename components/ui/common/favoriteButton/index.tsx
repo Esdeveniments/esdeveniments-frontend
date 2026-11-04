@@ -1,18 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import useSWR from "swr";
-import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
-import { HeartIcon as HeartIconOutline } from "@heroicons/react/24/outline";
 
 import Button from "@components/ui/common/button";
+import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 import { sendGoogleEvent } from "@utils/analytics";
 import useTrackedCta from "@components/hooks/useTrackedCta";
 import { queueFavoriteRequest } from "@utils/favorites-queue";
+import { useAuth } from "@components/hooks/useAuth";
+import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
+// Not @utils/constants: keep this client import dependency-free — see
+// utils/favorites-limits.ts.
+import { MAX_FAVORITES_AUTHENTICATED } from "@utils/favorites-limits";
 
 const FAVORITES_SWR_KEY = "favorites:list";
 
@@ -38,8 +42,8 @@ export default function FavoriteButton({
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const isMutatingRef = useRef(false);
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const t = useTranslations("Components.FavoriteButton");
   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("favorite_button");
 
@@ -62,21 +66,27 @@ export default function FavoriteButton({
     }
   );
 
-  useEffect(() => {
-    if (isMutatingRef.current) return;
-    if (!favoritesData || favoritesData.ok !== true) return;
-    setIsFavorite(favoritesData.favorites.includes(eventSlug));
-  }, [favoritesData, eventSlug]);
+  // Adopt the shared favorites list when it changes, except while our own
+  // toggle is in flight (react.dev: "Adjusting some state when a prop changes").
+  const [syncedFavorites, setSyncedFavorites] = useState<{
+    data: typeof favoritesData | null;
+    slug: string;
+  }>({ data: null, slug: eventSlug });
+  if (syncedFavorites.data !== favoritesData || syncedFavorites.slug !== eventSlug) {
+    setSyncedFavorites({ data: favoritesData, slug: eventSlug });
+    if (!isPending && favoritesData?.ok === true) {
+      setIsFavorite(favoritesData.favorites.includes(eventSlug));
+    }
+  }
 
   const ariaLabel = isFavorite ? labels.remove : labels.add;
-  const Icon = isFavorite ? HeartIconSolid : HeartIconOutline;
 
   return (
     <div ref={ctaRef} className="relative">
       <Button
         type="button"
         variant="ghost"
-        className={["group p-2", className].filter(Boolean).join(" ")}
+        className={["group", className || "h-button w-button p-0"].join(" ")}
         aria-label={ariaLabel}
         aria-pressed={isFavorite}
         disabled={isPending}
@@ -90,8 +100,25 @@ export default function FavoriteButton({
           const nextIsFavorite = !isFavorite;
           setIsFavorite(nextIsFavorite);
 
+          if (
+            nextIsFavorite &&
+            isAuthenticated &&
+            favoritesData?.ok === true &&
+            favoritesData.favorites.length >= MAX_FAVORITES_AUTHENTICATED
+          ) {
+            setIsFavorite(!nextIsFavorite);
+            sendGoogleEvent("favorites_limit_reached", {
+              action: "add",
+              max_favorites: MAX_FAVORITES_AUTHENTICATED,
+              event_slug: eventSlug,
+              event_id: eventId,
+              event_title: eventTitle,
+            });
+            setLimitMessage(t("maxReached", { max: MAX_FAVORITES_AUTHENTICATED }));
+            return;
+          }
+
           startTransition(async () => {
-            isMutatingRef.current = true;
             try {
               const response = await queueFavoriteRequest(() =>
                 fetch("/api/favorites", {
@@ -99,6 +126,7 @@ export default function FavoriteButton({
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     eventSlug,
+                    eventId,
                     shouldBeFavorite: nextIsFavorite,
                   }),
                 })
@@ -130,12 +158,28 @@ export default function FavoriteButton({
                 "favorites" in payload &&
                 Array.isArray((payload as { favorites?: unknown }).favorites)
               ) {
+                // Guest cookie branch echoes the canonical list — adopt it.
                 const favorites = (payload as { favorites: unknown[] }).favorites
                   .filter((value): value is string => typeof value === "string")
                   .map((value) => value.trim())
                   .filter(Boolean);
 
                 mutateFavorites({ ok: true, favorites }, { revalidate: false });
+              } else {
+                // Authed branch returns `{ ok: true }` only (one less round
+                // trip per toggle). Keep cross-instance SWR consumers in
+                // sync by updating the cache locally with the same change
+                // the backend just persisted.
+                mutateFavorites(
+                  (current) => {
+                    if (!current || current.ok !== true) return current;
+                    const set = new Set(current.favorites);
+                    if (nextIsFavorite) set.add(eventSlug);
+                    else set.delete(eventSlug);
+                    return { ok: true, favorites: Array.from(set) };
+                  },
+                  { revalidate: false }
+                );
               }
 
               const analyticsEventName = nextIsFavorite
@@ -147,6 +191,14 @@ export default function FavoriteButton({
                 event_id: eventId,
                 event_title: eventTitle,
               });
+
+              // Guest just saved a favorite (kept in the cookie until they
+              // log in). Nudge them — once per session — to sign in so it
+              // syncs. The session-level FavoriteLoginNudge owns the UI and
+              // the once-per-session guard; we only emit the signal.
+              if (nextIsFavorite && !isAuthenticated) {
+                window.dispatchEvent(new Event(GUEST_FAVORITE_SAVED_EVENT));
+              }
 
               // Preserve existing /preferits UX: reflect removals immediately.
               // Avoid refreshing other pages to keep the toggle lightweight.
@@ -164,13 +216,16 @@ export default function FavoriteButton({
                 },
               });
               setIsFavorite(!nextIsFavorite);
-            } finally {
-              isMutatingRef.current = false;
             }
           });
         }}
       >
-        <Icon className={`h-6 w-6 text-primary transition-[transform,color] duration-200 group-hover:scale-[1.06] group-active:scale-[0.96] ${isFavorite ? "animate-heartBeat" : ""}`} />
+        <svg
+          className={`h-6 w-6 text-primary transition-[transform,color] duration-200 group-hover:scale-[1.06] group-active:scale-[0.96] ${isFavorite ? "animate-heartBeat" : ""}`}
+          aria-hidden="true"
+        >
+          <use href={`#${isFavorite ? SPRITE_ICON.heartSolid : SPRITE_ICON.heartOutline}`} />
+        </svg>
       </Button>
 
       {limitMessage && (

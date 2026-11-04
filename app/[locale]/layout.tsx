@@ -11,19 +11,48 @@ import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { routing } from "@i18n/routing";
+import { isE2ETestMode } from "@utils/env";
+import { FUNDING_CHOICES_SRC } from "@utils/analytics";
 import GoogleScripts from "../GoogleScripts";
+import AuthEventTracker from "@components/analytics/AuthEventTracker";
 import { AdProvider } from "@lib/context/AdContext";
-import { BaseLayout } from "@components/ui/layout";
+import { AuthProvider } from "@lib/auth/AuthProvider";
+import BaseLayout from "@components/ui/layout/base";
+import IconSprite from "@components/ui/common/IconSprite";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
 import WebMcpTools from "@components/partials/WebMcpTools";
+import AppShellSkeleton from "@components/ui/common/skeletons/AppShellSkeleton";
 import type { AppLocale } from "types/i18n";
 import {
   CLIENT_APP_KEYS,
   CLIENT_COMPONENT_KEYS,
   CLIENT_UTILS_KEYS,
   CLIENT_FULL_TOP_LEVEL,
+  CLIENT_PARTIAL_PATHS,
+  pickPath,
 } from "@lib/i18n/client-namespaces";
+
+async function I18nProvider({
+  locale,
+  children,
+}: {
+  locale: AppLocale;
+  children: ReactNode;
+}) {
+  const messages = await getMessages();
+  const clientMessages = pickClientMessages(messages);
+
+  return (
+    <NextIntlClientProvider
+      key={locale}
+      messages={clientMessages}
+      locale={locale}
+    >
+      {children}
+    </NextIntlClientProvider>
+  );
+}
 
 function pickNamespace<T extends Record<string, unknown>>(
   source: T | undefined,
@@ -51,6 +80,7 @@ function pickClientMessages(
   for (const key of CLIENT_FULL_TOP_LEVEL) {
     if (m[key] !== undefined) picked[key] = m[key];
   }
+  for (const path of CLIENT_PARTIAL_PATHS) pickPath(m, picked, path.split("."));
   return picked as Partial<typeof messages>;
 }
 
@@ -87,6 +117,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
   themeColor: "#D6002F",
 };
 
@@ -108,9 +139,6 @@ export default async function LocaleLayout({
 
   // Distribute the locale to all server components in this request
   setRequestLocale(locale);
-
-  const messages = await getMessages();
-  const clientMessages = pickClientMessages(messages);
 
   return (
     <html lang={locale}>
@@ -146,6 +174,41 @@ export default async function LocaleLayout({
             `,
           }}
         />
+        {/* googlefcPresent iframe: Google requires it before Funding Choices
+            loads. It lives here, not as a beforeInteractive <Script> in
+            GoogleScripts: inside that streamed client tree the inline script
+            landed at random spots in the DOM and caused hydration error #418. */}
+        {!isE2ETestMode && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+              (function() {
+                if (window.frames['googlefcPresent']) return;
+                var createIframe = function() {
+                  if (!document.body) {
+                    setTimeout(createIframe, 0);
+                    return;
+                  }
+                  var i = document.createElement('iframe');
+                  i.style.cssText = 'width:0;height:0;border:none;z-index:-1000;position:absolute;left:-1000px;top:-1000px';
+                  i.style.display = 'none';
+                  i.name = 'googlefcPresent';
+                  document.body.appendChild(i);
+                };
+                createIframe();
+              })();
+            `,
+            }}
+          />
+        )}
+        {/* Funding Choices (consent box) as Google's snippet places it: async
+            in <head>. Loaded from the client tree it waited for hydration and
+            the load event, and on a first visit its box became the LCP at
+            about 5 s on a slow phone. GoogleScripts keeps the
+            fallback for pages where FC shows no box. */}
+        {!isE2ETestMode && FUNDING_CHOICES_SRC && (
+          <script async src={FUNDING_CHOICES_SRC} />
+        )}
       </head>
       <body>
         <Script
@@ -175,23 +238,23 @@ export default async function LocaleLayout({
             `,
           }}
         />
-        <NextIntlClientProvider
-          key={locale}
-          messages={clientMessages}
-          locale={locale}
-        >
-          <Suspense fallback={null}>
+        <IconSprite />
+        <Suspense fallback={<AppShellSkeleton />}>
+          <I18nProvider locale={locale}>
             <AdProvider>
-              <WebsiteSchema locale={locale} />
-              <Suspense fallback={null}>
-                <GoogleScripts />
-              </Suspense>
-              <AnalyticsBootstrap />
-              <WebMcpTools locale={locale} />
-              <BaseLayout>{children}</BaseLayout>
+              <AuthProvider>
+                <WebsiteSchema locale={locale} />
+                <Suspense fallback={null}>
+                  <GoogleScripts />
+                </Suspense>
+                <AuthEventTracker />
+                <AnalyticsBootstrap />
+                <WebMcpTools locale={locale} />
+                <BaseLayout>{children}</BaseLayout>
+              </AuthProvider>
             </AdProvider>
-          </Suspense>
-        </NextIntlClientProvider>
+          </I18nProvider>
+        </Suspense>
       </body>
     </html>
   );

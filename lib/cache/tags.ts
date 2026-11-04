@@ -8,7 +8,7 @@ import type { CacheTag } from "types/cache";
 const MAX_TAG_LENGTH = 256;
 
 /** Stable, non-cryptographic short hash (djb2) used to shorten oversized tags. */
-function shortTagHash(input: string): string {
+export function shortTagHash(input: string): string {
   let hash = 5381;
   for (let i = 0; i < input.length; i += 1) {
     hash = ((hash << 5) + hash + input.charCodeAt(i)) >>> 0;
@@ -71,4 +71,9 @@ export const newsPlaceTag = (slug: string): `news:place:${string}` =>
   boundedTag("news:place", slug);
 export const newsSlugTag = (slug: string): `news:${string}` =>
   boundedTag("news", slug);
+
+// User / profile tags
+export const usersTag = "users" as const satisfies CacheTag;
+export const userTag = (username: string): `user:${string}` =>
+  boundedTag("user", username);
 

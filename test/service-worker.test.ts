@@ -23,6 +23,32 @@ describe("service worker template", () => {
       expect(contents).toContain('type === "SKIP_WAITING"');
       expect(contents).toContain("self.skipWaiting()");
     });
+
+    it("calls self.skipWaiting() on install so SW fixes actually reach users with a stale SW", () => {
+      // 2026-07-26: Without this, the new SW stays in the WAITING state until
+      // every tab of the app closes, so any SW-side fix silently fails to
+      // reach users that already have the broken SW installed. See LESSONS.md.
+      const contents = getContents();
+      expect(contents).toContain('self.addEventListener("install"');
+      // The install listener must live BEFORE the message listener so the
+      // new SW is ready to skipWaiting as soon as it installs (then the
+      // manual SKIP_WAITING message handler still works for ad-hoc reloads).
+      const installIdx = contents.indexOf('self.addEventListener("install"');
+      const messageIdx = contents.indexOf('self.addEventListener("message"');
+      expect(installIdx).toBeGreaterThan(-1);
+      expect(messageIdx).toBeGreaterThan(-1);
+      expect(installIdx).toBeLessThan(messageIdx);
+    });
+
+    it("purges the hardcoded local-api-cache on activate (Workbox suffix bump alone can't reach it)", () => {
+      // 2026-07-26: The catch-all /api/ SWR route uses a literal cache name,
+      // so a Workbox suffix bump doesn't invalidate it. Users whose OLD SW
+      // poisoned it pre-logout need that specific cache explicitly deleted.
+      const contents = getContents();
+      expect(contents).toContain(
+        'caches.delete("esdeveniments-local-api-cache")',
+      );
+    });
   });
 
   describe("resilience", () => {
@@ -96,6 +122,23 @@ describe("service worker template", () => {
       // Multiple CacheableResponsePlugin instances with statuses: [0, 200]
       const matches = contents.match(/statuses:\s*\[0,\s*200\]/g);
       expect(matches?.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("never caches session-dependent endpoints — NetworkOnly, before the catch-all", () => {
+      const contents = getContents();
+      // Auth and per-user endpoints must use NetworkOnly so a cached response
+      // can't keep the UI logged in after logout (/api/auth/me) or serve one
+      // user's data to another (/api/favorites).
+      expect(contents).toMatch(
+        /startsWith\("\/api\/auth\/"\)[\s\S]*?NetworkOnly\(\)/
+      );
+      expect(contents).toContain('url.pathname === "/api/favorites"');
+      // And it must register before the catch-all /api/ route, or Workbox's
+      // first-match-wins ordering would route it to the SWR cache instead.
+      const authIdx = contents.indexOf('startsWith("/api/auth/")');
+      const catchAllIdx = contents.indexOf('!url.pathname.startsWith("/api/image-proxy")');
+      expect(authIdx).toBeGreaterThan(-1);
+      expect(authIdx).toBeLessThan(catchAllIdx);
     });
   });
 

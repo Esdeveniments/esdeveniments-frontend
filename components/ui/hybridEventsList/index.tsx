@@ -10,6 +10,7 @@ import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+import { hasCardImage } from "@utils/event-helpers";
 
 async function HybridEventsList({
   initialEvents = [],
@@ -18,10 +19,13 @@ async function HybridEventsList({
   place,
   category,
   date,
+  profileSlug,
   serverHasMore = false,
   ssrPageSize,
   categories,
+  promotedSlot,
 }: HybridEventsListProps): Promise<ReactElement> {
+  const priorityIndex = initialEvents.findIndex(hasCardImage);
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
 
@@ -62,6 +66,7 @@ async function HybridEventsList({
         data-analytics-date-slug={date || undefined}
       >
         {headingSection}
+        {promotedSlot}
         {sponsorSlot}
         <NoEventsFound
           title={pageData?.notFoundTitle}
@@ -72,7 +77,7 @@ async function HybridEventsList({
             <CardServer
               key={`${event.id}-${index}`}
               event={event}
-              isPriority={index === 0}
+              isPriority={index === priorityIndex}
             />
           )}
         </List>
@@ -91,41 +96,25 @@ async function HybridEventsList({
       data-analytics-date-slug={date || undefined}
     >
       {headingSection}
+      {promotedSlot}
       {sponsorSlot}
 
-      {/* Initial SSR list with ads (no hydration beyond card internals) */}
-      {/* Hidden when client filters are active (handled declaratively by SsrListWrapper) */}
-      {/* Wrapped in Suspense because SsrListWrapper uses useSearchParams() */}
-      {/* Fallback renders SSR content directly to ensure SEO visibility */}
-      <Suspense
-        fallback={
-          <div data-ssr-list-wrapper>
-            <List events={initialEvents}>
-              {(event: ListEvent, index: number) => (
-                <CardServer
-                  key={`${event.id ?? "ad"}-${index}`}
-                  event={event}
-                  isPriority={index === 0}
-                />
-              )}
-            </List>
-            <AdArticle slot="9643657007" />
-          </div>
-        }
-      >
-        <SsrListWrapper categories={categories}>
-          <List events={initialEvents}>
-            {(event: ListEvent, index: number) => (
-              <CardServer
-                key={`${event.id ?? "ad"}-${index}`}
-                event={event}
-                isPriority={index === 0}
-              />
-            )}
-          </List>
-          <AdArticle slot="9643657007" />
-        </SsrListWrapper>
-      </Suspense>
+      {/* Initial SSR list with ads (no hydration beyond card internals).
+          Hidden when client filters are active (SsrListWrapper). No Suspense
+          here: SsrListWrapper reads the shared URL filters context, and a
+          fallback that repeated the list sent every card twice in the HTML. */}
+      <SsrListWrapper categories={categories}>
+        <List events={initialEvents}>
+          {(event: ListEvent, index: number) => (
+            <CardServer
+              key={`${event.id ?? "ad"}-${index}`}
+              event={event}
+              isPriority={index === priorityIndex}
+            />
+          )}
+        </List>
+        <AdArticle slot="9643657007" />
+      </SsrListWrapper>
 
       {/* Client enhancer for pagination */}
       <HybridEventsListClient
@@ -133,6 +122,7 @@ async function HybridEventsList({
         place={place}
         category={category}
         date={date}
+        profileSlug={profileSlug}
         serverHasMore={serverHasMore}
         ssrPageSize={ssrPageSize}
         categories={categories}

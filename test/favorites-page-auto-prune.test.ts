@@ -7,8 +7,18 @@ import type {
   EventSummaryResponseDTO,
   ListEvent,
 } from "types/api/event";
+import type { TabItem } from "types/props";
 
-const autoPruneProps: Array<{ slugsToRemove: string[] }> = [];
+const autoPruneProps: Array<{
+  slugsToRemove: string[];
+  eventIdsToRemove: string[];
+}> = [];
+
+const trackerProps: Array<{
+  favoritesCount: number;
+  activeCount: number;
+}> = [];
+const tabsItems: TabItem[][] = [];
 
 vi.mock("@utils/i18n-seo", () => ({
   getLocaleSafely: vi.fn(async () => "ca"),
@@ -23,6 +33,18 @@ vi.mock("@utils/favorites", () => ({
   getFavoritesFromCookies: vi.fn(async () => [] as string[]),
 }));
 
+vi.mock("@utils/auth-cookies", () => ({
+  getAccessTokenFromCookies: vi.fn(async () => null),
+}));
+
+vi.mock("@lib/api/favorites-external", () => ({
+  listFavoriteEventsByPeriodExternal: vi.fn(async () => null),
+  getFavoritePeriodCounts: vi.fn(async () => ({
+    activeCount: null,
+    pastCount: null,
+  })),
+}));
+
 vi.mock("@utils/event-helpers", () => ({
   filterActiveEvents: vi.fn(
     (events: EventSummaryResponseDTO[] | ListEvent[]) =>
@@ -31,7 +53,8 @@ vi.mock("@utils/event-helpers", () => ({
   isEventActive: vi.fn((_event: EventSummaryResponseDTO) => true),
 }));
 
-vi.mock("@lib/api/events", () => ({
+vi.mock("@lib/api/events", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lib/api/events")>()),
   fetchEventBySlugWithStatus: vi.fn(async (_slug: string) => ({
     event: null,
     notFound: false,
@@ -67,8 +90,46 @@ vi.mock("@components/partials/seo-meta", () => ({
 }));
 
 vi.mock("./../app/[locale]/preferits/FavoritesAutoPrune", () => ({
-  default: function FavoritesAutoPruneMock(props: { slugsToRemove: string[] }) {
-    autoPruneProps.push({ slugsToRemove: props.slugsToRemove });
+  default: function FavoritesAutoPruneMock(props: {
+    slugsToRemove: string[];
+    eventIdsToRemove?: string[];
+  }) {
+    autoPruneProps.push({
+      slugsToRemove: props.slugsToRemove,
+      eventIdsToRemove: props.eventIdsToRemove ?? [],
+    });
+    return null;
+  },
+}));
+
+vi.mock("./../app/[locale]/preferits/FavoritesPageTracker", () => ({
+  default: function FavoritesPageTrackerMock(props: {
+    favoritesCount: number;
+    activeCount: number;
+  }) {
+    trackerProps.push({
+      favoritesCount: props.favoritesCount,
+      activeCount: props.activeCount,
+    });
+    return null;
+  },
+}));
+
+vi.mock("@components/ui/common/tabs", () => ({
+  default: function TabsMock(props: { items: TabItem[] }) {
+    tabsItems.push(props.items);
+    return null;
+  },
+}));
+
+vi.mock("@components/partials/FavoritesEventsSection", () => ({
+  default: async function FavoritesEventsSectionMock() {
+    return null;
+  },
+}));
+
+vi.mock("@components/ui/common/skeletons/EventsGridSkeleton", () => ({
+  default: function EventsGridSkeletonMock() {
     return null;
   },
 }));
@@ -79,7 +140,7 @@ function createEventDetail(slug: string): EventDetailResponseDTO {
     hash: `hash-${slug}`,
     slug,
     title: `Title ${slug}`,
-    type: "FREE" as const,
+    isPromoted: false,
     url: "https://example.com",
     description: "desc",
     imageUrl: "https://example.com/img.jpg",
@@ -109,6 +170,8 @@ function createEventDetail(slug: string): EventDetailResponseDTO {
 describe("Favorites page auto-prune", () => {
   beforeEach(() => {
     autoPruneProps.length = 0;
+    trackerProps.length = 0;
+    tabsItems.length = 0;
     vi.clearAllMocks();
   });
 
@@ -196,5 +259,44 @@ describe("Favorites page auto-prune", () => {
 
     expect(autoPruneProps).toHaveLength(1);
     expect(autoPruneProps[0].slugsToRemove).toEqual([]);
+  });
+
+  it("never prunes for authenticated users, even with expired events in the response", async () => {
+    const { getAccessTokenFromCookies } = await import("@utils/auth-cookies");
+    const { getFavoritePeriodCounts } = await import(
+      "@lib/api/favorites-external"
+    );
+
+    vi.mocked(getAccessTokenFromCookies).mockResolvedValue("token");
+    vi.mocked(getFavoritePeriodCounts).mockResolvedValue({
+      activeCount: 3,
+      pastCount: 2,
+    });
+
+    const { default: PreferitsPage } = await import(
+      "@app/[locale]/preferits/page"
+    );
+    const element = await PreferitsPage();
+    renderToStaticMarkup(element);
+
+    // Authenticated branch never renders FavoritesAutoPrune at all — nothing
+    // to prune once period=active already excludes expired events server-side.
+    expect(autoPruneProps).toHaveLength(0);
+
+    // The shared count helper supplies both periods in one request-scoped
+    // orchestration, while the tracker still reports their total.
+    expect(trackerProps).toHaveLength(1);
+    expect(trackerProps[0]).toEqual({ favoritesCount: 5, activeCount: 3 });
+    expect(tabsItems).toEqual([
+      [
+        { id: "upcoming", href: "/preferits", label: "tabUpcoming", count: 3 },
+        {
+          id: "past",
+          href: "/preferits/passats",
+          label: "tabPast",
+          count: 2,
+        },
+      ],
+    ]);
   });
 });

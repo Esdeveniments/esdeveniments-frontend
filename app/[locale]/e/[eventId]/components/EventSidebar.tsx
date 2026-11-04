@@ -1,40 +1,47 @@
-import { Suspense } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   ClockIcon,
+  UserIcon,
 } from "@heroicons/react/24/outline";
+import { Link } from "@i18n/routing";
 import EventCalendar from "./EventCalendar";
 import EventLocation from "./EventLocation";
 import Weather from "components/ui/weather";
-import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import { getProfileSlug } from "@utils/user-helpers";
+import EventEditAction from "./EventEditAction";
+import EventPromoteAction from "./EventPromoteAction";
 import type { EventSidebarProps } from "types/props";
+import type { AppLocale } from "types/i18n";
 
 /**
- * Sticky sidebar for the event detail page (desktop only).
+ * Sidebar for the event detail page (desktop only).
  * Contains: Date/Time, Location, More Info, Duration, Sponsor.
  *
- * Rendered inside a card with sticky positioning.
+ * Not sticky: it is taller than most screens, so sticking would hide the
+ * sponsor card until the end of the event content.
  * Hidden on mobile (lg:hidden) — mobile uses inline versions of these components.
  */
 export default async function EventSidebar({
   event,
   cityName,
   regionName,
-  primaryPlaceSlug,
-  sponsorFallbackPlaces,
+  sponsorSlot,
 }: EventSidebarProps) {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
+
+  // Build a URL-safe slug for the creator profile link.
+  const creatorSlug = event.owner ? getProfileSlug(event.owner) : null;
 
   return (
     <aside
       className="hidden lg:block w-[340px] xl:w-[380px] flex-shrink-0"
       aria-label={t("sidebarAriaLabel")}
     >
-      <div className="sticky top-20 flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         {/* Main sidebar card */}
         <div className="card-bordered">
           <div className="card-body flex flex-col gap-4">
@@ -50,6 +57,7 @@ export default async function EventSidebar({
               regionName={regionName}
               citySlug={event.city?.slug}
               regionSlug={event.region?.slug}
+              profile={event.profile}
               compact
             />
 
@@ -99,16 +107,40 @@ export default async function EventSidebar({
               </>
             )}
 
+            {/* Creator / publisher profile link */}
+            {event.owner && creatorSlug && (
+              <>
+                <hr className="border-border" />
+                <div className="flex flex-col gap-1" data-testid="event-created-by">
+                  <h3 className="label font-semibold text-foreground-strong">
+                    {t("sidebarCreatedBy")}
+                  </h3>
+                  <span className="inline-flex items-center gap-1.5 body-small font-semibold text-foreground-strong">
+                    <UserIcon className="w-4 h-4 flex-shrink-0" />
+                    {event.owner.displayName ?? event.owner.username ?? ""}
+                  </span>
+                  <Link
+                    href={`/perfil/${encodeURIComponent(creatorSlug)}`}
+                    className="flex flex-col gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
+                    data-testid="event-created-by-link"
+                  >
+                    <span className="font-normal text-primary">
+                      {t("sidebarViewAllEvents")} →
+                    </span>
+                  </Link>
+                </div>
+              </>
+            )}
+
+            {/* Owner-only edit action */}
+            <EventEditAction ownerId={event.owner?.id} slug={event.slug ?? ""} />
+            <EventPromoteAction ownerId={event.owner?.id} slug={event.slug ?? ""} />
+
           </div>
         </div>
 
         {/* Sponsor card (outside main card for visual separation) */}
-        <Suspense fallback={null}>
-          <SponsorBannerSlot
-            place={primaryPlaceSlug}
-            fallbackPlaces={sponsorFallbackPlaces}
-          />
-        </Suspense>
+        {sponsorSlot}
       </div>
     </aside>
   );

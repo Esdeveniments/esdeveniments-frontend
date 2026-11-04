@@ -10,6 +10,16 @@
   canvas {
     overflow: clip;
   }
+  /* @tailwindcss/forms paints checkboxes and radios #2563eb and rings them on
+     every :focus. Use the brand red, and ring only on :focus-visible. */
+  [type="checkbox"],
+  [type="radio"] {
+    @apply text-primary focus-visible:ring-primary;
+  }
+  [type="checkbox"]:focus:not(:focus-visible),
+  [type="radio"]:focus:not(:focus-visible) {
+    box-shadow: none;
+  }
 }
 
 /* Optimize font loading - ensure text stays visible during webfont loading */
@@ -25,6 +35,60 @@ html {
   font-synthesis-weight: none;
 }
 
+:root {
+  /* Button heights: 40px (36px for .btn-sm) with a mouse or trackpad; every
+     button becomes a 44px touch target on touch screens. */
+  --button-height: 2.5rem;
+  --button-sm-height: 2.25rem;
+  --mobile-nav-height: 4rem;
+  --mobile-nav-safe-area: env(safe-area-inset-bottom, 0px);
+  --mobile-nav-clearance: calc(
+    var(--mobile-nav-height) + var(--mobile-nav-safe-area)
+  );
+}
+
+@media (min-width: 950px) {
+  :root {
+    --mobile-nav-clearance: 0px;
+  }
+}
+
+@media (pointer: coarse) {
+  :root {
+    --button-height: 2.75rem;
+    --button-sm-height: 2.75rem;
+  }
+}
+
+.site-navbar-safe-area {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-inline-start: env(safe-area-inset-left, 0px);
+  padding-inline-end: env(safe-area-inset-right, 0px);
+}
+
+.mobile-nav-content-safe-area {
+  padding-bottom: var(--mobile-nav-clearance);
+}
+
+.mobile-bottom-nav {
+  box-sizing: border-box;
+  height: var(--mobile-nav-clearance);
+  padding-bottom: var(--mobile-nav-safe-area);
+  left: env(safe-area-inset-left, 0px);
+  right: env(safe-area-inset-right, 0px);
+}
+
+@media (min-width: 950px) {
+  .mobile-nav-content-safe-area {
+    padding-bottom: 3rem;
+  }
+
+  .mobile-bottom-nav {
+    padding-bottom: 0;
+  }
+}
+
 body {
   @apply font-sans antialiased text-base leading-relaxed;
 }
@@ -32,10 +96,14 @@ body {
 html,
 body {
   font-size: 100%; /* keep 1rem = 16px */
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* prevent stray horizontal gap/scroll on mobile */
+  /* Prevent stray horizontal gap/scroll on mobile. `clip`, unlike `hidden`,
+     doesn't turn <body> into a scroll container, so the window keeps
+     scrolling (Next.js scroll reset, back/forward restore) and the sticky
+     navbar works. No `hidden` fallback: it would break the sticky navbar. */
+  overflow-x: clip;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-font-smoothing: antialiased;
@@ -152,6 +220,10 @@ p {
     @apply text-sm font-normal leading-relaxed tracking-normal;
   }
 
+  .body-small-italic {
+    @apply body-small italic;
+  }
+
   /* LABEL: UI elements - Small badges, uppercase labels */
   .label {
     @apply text-xs uppercase tracking-wider font-medium;
@@ -161,28 +233,38 @@ p {
   /* BUTTONS */
   /* ===================================== */
 
+  /* Shared shape for every btn-* variant; variants add only colours. */
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2 min-h-button text-sm font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-primary text-primary-foreground hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply btn-base border-transparent bg-primary text-primary-foreground hover:bg-primary-dark focus-visible:ring-primary;
   }
 
   .btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-border text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
+    @apply btn-base border-border text-foreground hover:bg-muted focus-visible:ring-foreground;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply btn-base border-primary text-primary hover:bg-primary hover:text-primary-foreground focus-visible:ring-primary;
   }
 
   .btn-muted {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-muted text-foreground opacity-60 cursor-not-allowed;
+    @apply btn-base border-transparent bg-muted text-foreground hover:bg-border/40 focus-visible:ring-foreground;
   }
 
   .btn-category {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-badge px-4 py-2.5 border border-border/80 bg-background text-foreground hover:border-primary hover:text-primary transition-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-badge px-4 py-2.5 border border-border/80 bg-background text-foreground hover:border-primary hover:text-primary transition-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wide rounded-button px-button-x py-button-y bg-transparent text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2;
+    @apply btn-base border-transparent bg-transparent text-foreground hover:bg-muted focus-visible:ring-foreground;
+  }
+
+  /* Compact size for secondary actions in dense rows. Combine with a variant. */
+  .btn-sm {
+    @apply min-h-button-sm gap-1.5 px-3 py-1 text-xs;
   }
 
   /* ===================================== */
@@ -380,7 +462,7 @@ p {
 
   .input {
     /* Enforce 16px to avoid iOS Safari auto-zoom on focus */
-    @apply w-full rounded-input border border-border bg-background text-foreground text-base px-input-x py-input-y h-10 placeholder:text-foreground/60 transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-border/80;
+    @apply w-full rounded-input border border-input bg-background text-foreground text-base px-input-x py-input-y h-10 placeholder:text-muted-foreground transition-[box-shadow,border-color] duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary hover:border-foreground;
   }
 
   .input-lg {
@@ -388,7 +470,7 @@ p {
   }
 
   .input-error {
-    @apply border-error focus-visible:ring-error focus-visible:border-error;
+    @apply border-error hover:border-error focus-visible:ring-error focus-visible:border-error;
   }
 
   .input-disabled {
@@ -404,16 +486,16 @@ p {
   }
 
   .helper-text-error {
-    @apply body-small text-error mt-1;
+    @apply body-small text-error-dark mt-1;
   }
 
   /* Form-specific typography for accessibility */
   .form-label {
-    @apply text-base md:text-lg font-semibold text-foreground-strong;
+    @apply text-base font-semibold text-foreground-strong;
   }
 
   .form-helper {
-    @apply text-sm md:text-base text-muted-foreground;
+    @apply text-sm text-muted-foreground;
   }
 
   /* ===================================== */
@@ -641,6 +723,41 @@ video {
   animation: appear 0.3s ease-in reverse forwards;
 }
 
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-dropdown-in {
+  transform-origin: top;
+  animation: dropdownIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-in-fast {
+  animation: fadeIn 100ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -711,78 +828,79 @@ video {
    primary: #D6002F, primary-foreground: #ffffff,
    foreground: rgb(69 69 69), foreground-strong: rgb(0 0 0)
 ─── */
-.rdp-filter-wrapper {
+/* Variables go on .rdp-root: the library declares its defaults there, so a
+   parent wrapper cannot override them. */
+.rdp-calendar .rdp-root {
   --rdp-accent-color: #d6002f;
   --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
   --rdp-range_middle-color: rgb(69, 69, 69);
   --rdp-range_middle-background-color: rgba(214, 0, 47, 0.08);
   --rdp-selected-border: 0px solid transparent;
+  --rdp-today-color: #d6002f;
+  --rdp-day-width: min(44px, calc((100vw - 3rem) / 7));
+  --rdp-day-height: 44px;
+  --rdp-day_button-width: min(42px, calc((100vw - 3rem) / 7));
+  --rdp-day_button-height: 42px;
   --rdp-day_button-border-radius: 9999px;
-  --rdp-day_button-height: 28px;
-  --rdp-day_button-width: 28px;
+  --rdp-nav_button-width: 44px;
+  --rdp-nav_button-height: 44px;
   --rdp-outside-opacity: 0.4;
+
+  font-size: 0.875rem;
 }
 
-.rdp-filter-wrapper .rdp-root {
-  --rdp-font-family: var(--font-family, inherit);
-
-  font-size: 0.8125rem;
-  width: 100%;
-  max-width: 280px;
-}
-
-/* Remove default blue outline ring on all interactive elements */
-.rdp-filter-wrapper .rdp-day_button {
+.rdp-calendar .rdp-day_button {
   outline: none !important;
   border: none;
+  margin-inline: auto;
 }
 
-.rdp-filter-wrapper .rdp-month_caption {
+/* Fill the container: the library sizes the grid to its content. */
+.rdp-calendar .rdp-months {
+  max-width: none;
+}
+
+.rdp-calendar .rdp-month,
+.rdp-calendar .rdp-month_grid {
+  width: 100%;
+}
+
+.rdp-calendar .rdp-month_grid {
+  table-layout: fixed;
+}
+
+.rdp-calendar .rdp-month_caption {
   font-weight: 600;
   text-transform: capitalize;
-  font-size: 0.8125rem;
   color: rgb(0, 0, 0);
-  padding-bottom: 0.25rem;
 }
 
-.rdp-filter-wrapper .rdp-weekday {
-  color: rgba(69, 69, 69, 0.4);
-  font-size: 0.6875rem;
+.rdp-calendar .rdp-weekday {
+  color: rgba(69, 69, 69, 0.5);
+  font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.125rem 0;
 }
 
-.rdp-filter-wrapper .rdp-day {
+.rdp-calendar .rdp-day {
   color: rgb(69, 69, 69);
 }
 
-.rdp-filter-wrapper .rdp-day.rdp-disabled {
-  color: rgba(69, 69, 69, 0.25);
-}
-
-/* Selected start/end circles – solid brand red, no outline ring */
-.rdp-filter-wrapper .rdp-day.rdp-range_start .rdp-day_button,
-.rdp-filter-wrapper .rdp-day.rdp-range_end .rdp-day_button,
-.rdp-filter-wrapper .rdp-day.rdp-selected .rdp-day_button {
+/* A start still waiting for its end has no range_start class yet: fill it too. */
+.rdp-calendar .rdp-day.rdp-selected:not(.rdp-range_middle) .rdp-day_button {
   background-color: #d6002f;
   color: #ffffff;
   font-weight: 600;
-  outline: none !important;
-  border: none !important;
-  box-shadow: none;
 }
 
-/* Range middle – soft rose tint */
-.rdp-filter-wrapper .rdp-day.rdp-range_middle .rdp-day_button {
-  background-color: rgba(214, 0, 47, 0.08);
-  color: rgb(69, 69, 69);
+.rdp-calendar .rdp-day.rdp-selected.rdp-outside {
+  opacity: 1;
+}
+
+.rdp-calendar .rdp-day.rdp-range_middle .rdp-day_button {
   border-radius: 0;
-  outline: none !important;
-  border: none !important;
 }
 
-/* Today indicator – subtle dotted border */
-.rdp-filter-wrapper
+.rdp-calendar
   .rdp-day.rdp-today:not(
     .rdp-selected,
     .rdp-range_start,
@@ -793,86 +911,20 @@ video {
   border: 1px solid rgba(214, 0, 47, 0.35) !important;
 }
 
-.rdp-filter-wrapper .rdp-button_previous,
-.rdp-filter-wrapper .rdp-button_next {
-  color: #d6002f;
-  width: 24px;
-  height: 24px;
-}
-
-.rdp-filter-wrapper .rdp-button_previous:hover,
-.rdp-filter-wrapper .rdp-button_next:hover {
-  color: #d6002f;
-  background-color: rgba(214, 0, 47, 0.06);
-}
-
-.rdp-filter-wrapper .rdp-chevron {
+.rdp-calendar .rdp-chevron {
   fill: #d6002f;
 }
 
-.rdp-filter-wrapper .rdp-nav {
-  gap: 0.25rem;
-}
-
-/* Keyboard focus: visible ring for accessibility (box-shadow survives outline:none on selected days) */
-.rdp-filter-wrapper .rdp-day_button:focus-visible,
-.rdp-filter-wrapper .rdp-button_previous:focus-visible,
-.rdp-filter-wrapper .rdp-button_next:focus-visible {
-  box-shadow: 0 0 0 2px #d6002f !important;
+.rdp-calendar .rdp-button_previous:hover,
+.rdp-calendar .rdp-button_next:hover {
+  background-color: rgba(214, 0, 47, 0.06);
   border-radius: 9999px;
 }
 
-.rdp-filter-wrapper .rdp-months {
-  gap: 0;
-}
-
-/* EventForm date picker overrides */
-.rdp-form-wrapper {
-  --rdp-accent-color: #d6002f;
-  --rdp-accent-background-color: rgba(214, 0, 47, 0.08);
-  --rdp-selected-border: 0px solid transparent;
-  --rdp-day_button-border-radius: 9999px;
-  --rdp-day_button-height: 36px;
-  --rdp-day_button-width: 36px;
-}
-
-.rdp-form-wrapper .rdp-root {
-  font-size: 0.875rem;
-}
-
-.rdp-form-wrapper .rdp-day_button {
-  outline: none !important;
-  border: none;
-}
-
-.rdp-form-wrapper .rdp-month_caption {
-  font-weight: 600;
-  text-transform: capitalize;
-}
-
-.rdp-form-wrapper .rdp-day.rdp-selected .rdp-day_button {
-  background-color: #d6002f;
-  color: #ffffff;
-  font-weight: 600;
-  outline: none !important;
-  border: none !important;
-  box-shadow: none;
-}
-
-.rdp-form-wrapper .rdp-day.rdp-today:not(.rdp-selected) .rdp-day_button {
-  border: 1px solid rgba(214, 0, 47, 0.35) !important;
-}
-
-.rdp-form-wrapper .rdp-range_middle .rdp-day_button {
-  background-color: rgba(214, 0, 47, 0.06);
-  color: rgb(69, 69, 69);
-  outline: none !important;
-}
-
-/* Keyboard focus: visible ring for form calendar accessibility */
-.rdp-form-wrapper .rdp-day_button:focus-visible,
-.rdp-form-wrapper .rdp-button_previous:focus-visible,
-.rdp-form-wrapper .rdp-button_next:focus-visible {
+/* Keyboard focus: visible ring (box-shadow survives outline:none on selected days) */
+.rdp-calendar .rdp-day_button:focus-visible,
+.rdp-calendar .rdp-button_previous:focus-visible,
+.rdp-calendar .rdp-button_next:focus-visible {
   box-shadow: 0 0 0 2px #d6002f !important;
   border-radius: 9999px;
 }

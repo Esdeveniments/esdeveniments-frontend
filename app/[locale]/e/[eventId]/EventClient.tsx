@@ -1,27 +1,38 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "@i18n/routing";
+import { useAuth } from "@components/hooks/useAuth";
 // import useOnScreen from "components/hooks/useOnScreen";
-import { sendGoogleEvent } from "@utils/analytics";
+import { useEventAnalytics } from "./hooks/useEventAnalytics";
 
 import type { EventClientProps } from "types/props";
 import EventNotifications from "./components/EventNotifications";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
-// import PencilIcon from "@heroicons/react/24/outline";
-// import InformationCircleIcon from "@heroicons/react/24/outline";
-// const InfoIcon = InformationCircleIcon;
 import { MegaphoneIcon as SpeakerphoneIcon } from "@heroicons/react/24/outline";
 import AdArticle from "components/ui/adArticle";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { useTranslations } from "next-intl";
+import { ensureGtag, sendGoogleEvent } from "@utils/analytics";
 
 // computeTemporalStatus now imported from utils/event-status for reuse & testability
+
+// Only relevant right after the owner publishes, so keep it out of the
+// detail page bundle.
+const PromoteUpsellModal = dynamic(
+  () => import("./components/PromoteUpsellModal"),
+  { ssr: false },
+);
 
 export default function EventClient({
   event,
 }: EventClientProps) {
   const t = useTranslations("Components.EventPage");
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user } = useAuth();
   // const editModalRef = useRef<HTMLDivElement>(null);
 
   // const isEditModalVisible = useOnScreen(
@@ -36,6 +47,37 @@ export default function EventClient({
   const edit_suggested = searchParams.get("edit_suggested") === "true";
   const [showThankYouBanner, setShowThankYouBanner] = useState(edit_suggested);
 
+  // /publica redirects here with ?promote=1 after a publish. Anyone can add
+  // the marker to a URL, so show the upsell only once ownership is confirmed.
+  const isOwner = Boolean(event.ownerId) && user?.id === event.ownerId;
+  const [promoteDismissed, setPromoteDismissed] = useState(false);
+  const showPromoteUpsell =
+    searchParams.get("promote") === "1" && isOwner && !promoteDismissed;
+
+  const hasFiredPromoteShownRef = useRef(false);
+  useEffect(() => {
+    if (showPromoteUpsell && !hasFiredPromoteShownRef.current) {
+      hasFiredPromoteShownRef.current = true;
+      ensureGtag();
+      sendGoogleEvent("promote_modal_shown", {
+        event_slug: event.slug ?? "",
+        source: "event_detail",
+      });
+    }
+  }, [showPromoteUpsell, event.slug]);
+
+  const handlePromoteUpsellOpenChange = (open: boolean) => {
+    if (open) return;
+    setPromoteDismissed(true);
+    // Strip only the one-time marker; keep any other query params.
+    const remainingParams = new URLSearchParams(searchParams.toString());
+    remainingParams.delete("promote");
+    const query = remainingParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  };
+
   // const {
   //   openModal,
   //   setOpenModal,
@@ -47,30 +89,7 @@ export default function EventClient({
   //   onRemove,
   // } = useEventModals();
 
-  useEffect(() => {
-    const isPast = event.endDate
-      ? new Date(event.endDate) < new Date()
-      : false;
-
-    sendGoogleEvent("view_event_page", {
-      event_id: event.id,
-      event_slug: event.slug ?? "",
-      category_slug: event.categorySlug ?? "",
-      place_slug: event.placeSlug ?? "",
-      has_image: event.hasImage,
-      is_past: isPast,
-      origin: event.origin,
-    });
-  }, [
-    event.categorySlug,
-    event.endDate,
-    event.hasImage,
-    event.id,
-    event.origin,
-    event.placeSlug,
-    event.slug,
-  ]);
-
+  useEventAnalytics(event);
 
   const slug = event.slug ?? "";
   const title = event.title ?? "";
@@ -84,6 +103,14 @@ export default function EventClient({
         showThankYouBanner={!!showThankYouBanner}
         setShowThankYouBanner={setShowThankYouBanner}
       />
+
+      {showPromoteUpsell && (
+        <PromoteUpsellModal
+          open={showPromoteUpsell}
+          setOpen={handlePromoteUpsellOpenChange}
+          slug={slug}
+        />
+      )}
 
       {/* Ad Section */}
       <div className="w-full h-full min-h-[250px]">

@@ -15,13 +15,17 @@ vi.mock("next/image", () => ({
   ),
 }));
 
+vi.mock("@components/hooks/useAuth", () => ({
+  useAuth: () => ({ isAuthenticated: false }),
+}));
+
 describe("favorites heart visibility", () => {
   const baseEvent: EventSummaryResponseDTO = {
     id: "1",
     hash: "h",
     slug: "test-event",
     title: "Test",
-    type: "FREE",
+    isPromoted: false,
     url: "https://example.com",
     description: "d",
     imageUrl: "",

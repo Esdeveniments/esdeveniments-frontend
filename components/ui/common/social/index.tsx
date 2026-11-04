@@ -5,7 +5,7 @@ import { SocialIcon } from "./icons";
 import { SocialProps } from "types/props";
 
 const SOCIAL_BUTTON_CLASS =
-  "px-3 py-3 bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition-all duration-normal hover:scale-110 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+  "flex-center h-button w-button bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition-all duration-normal hover:scale-110 hover:shadow-md focus-ring";
 
 const ICON_CLASS = "w-5 h-5 fill-primary transition-colors";
 

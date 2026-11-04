@@ -10,7 +10,7 @@ import type {
   EventTimeLabels,
 } from "types/event";
 import type { EventTimeDTO } from "types/api/event";
-import caMessages from "../messages/ca.json";
+import localeLabels from "../i18n/locale-labels.generated.json";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export type { EventTimeLabels };
@@ -174,18 +174,6 @@ export const getFormattedDate = (
   };
 };
 
-export const nextDay = (x: number): Date => {
-  const now = new Date();
-  now.setDate(now.getDate() + ((x + (7 - now.getDay())) % 7));
-  const convertedDate = convertTZ(now, "Europe/Madrid");
-  return convertedDate;
-};
-
-export const isWeekend = (): boolean => {
-  const today = new Date();
-  return today.getDay() === 0 || today.getDay() === 5 || today.getDay() === 6;
-};
-
 /**
  * Converts ISO time string or Date to EventTimeDTO shape for backend requests.
  * Provides a default fallback for invalid or empty input.
@@ -241,13 +229,52 @@ export function parseTimeToEventTimeDTO(
 }
 
 /**
- * Convert Date object to LocalDate format (YYYY-MM-DD) for API compatibility
+ * Convert Date object to LocalDate format (YYYY-MM-DD) for API compatibility.
+ * Despite the name this is the UTC date (toISOString). For the browser-local
+ * date and time the event form shows, use toLocalDateTimeString.
  * @param date - Date object to convert
  * @returns string in YYYY-MM-DD format
  */
 export const toLocalDateString = (date: Date): string => {
   return date.toISOString().slice(0, 10);
 };
+
+/**
+ * Parses a form date value in local time. Edit forms prefill date-only
+ * "YYYY-MM-DD" values, which `new Date()` would read as UTC midnight.
+ */
+export function parseLocalDateTime(value: string): Date {
+  return new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00` : value);
+}
+
+/**
+ * "YYYY-MM-DDTHH:mm" in the browser's local time: the value the event form
+ * shows and publishes. Never use toISOString() here, it shifts to UTC.
+ */
+export function toLocalDateTimeString(date: Date): string {
+  // Fail like toISOString() did, instead of sending "NaN-NaN-NaN".
+  if (Number.isNaN(date.getTime())) throw new RangeError("Invalid time value");
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${d}T${h}:${mi}`;
+}
+
+const LOCAL_DATE_TIME =
+  /^(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?:T((?:[01]\d|2[0-3]):[0-5]\d))?$/;
+
+// Split by string, not through Date: a local time inside a DST gap would shift.
+export function splitLocalDateTime(value: string): { date: string; time: string } {
+  const match = LOCAL_DATE_TIME.exec(value);
+  const [year, month, day] = (match?.[1] ?? "").split("-").map(Number);
+  // UTC round trip: rejects a day the month does not have, such as 02-31.
+  if (!match || new Date(Date.UTC(year, month - 1, day)).getUTCDate() !== day) {
+    throw new RangeError("Invalid time value");
+  }
+  return { date: match[1], time: match[2] ?? "00:00" };
+}
 
 /**
  * Format time string for API compatibility (HH:mm format)
@@ -260,7 +287,7 @@ export const formatTimeForAPI = (timeString: string): string => {
   return `${hour}:${minute}`;
 };
 
-const defaultEventTimeLabels: EventTimeLabels = (caMessages as any).Utils
+const defaultEventTimeLabels: EventTimeLabels = localeLabels.utils
   .EventTime as EventTimeLabels;
 
 const fillTemplate = (
@@ -455,3 +482,19 @@ export const formatCardDate = (
     isMultiDay: true,
   };
 };
+
+/**
+ * Parses a date string from the backend as UTC milliseconds.
+ * Backend omits timezone suffix (e.g. "2026-04-28T18:17:23") — we append "Z"
+ * unless the string already has a timezone offset or "Z" suffix.
+ * Returns null if the string is empty, undefined, or unparseable.
+ */
+export function parseBackendDateAsUtcMs(
+  date: string | undefined | null,
+): number | null {
+  if (!date) return null;
+  const hasTimezone = /Z|[+-]\d{2}:\d{2}$/.test(date);
+  const utcString = hasTimezone ? date : `${date}Z`;
+  const ms = new Date(utcString).getTime();
+  return isNaN(ms) ? null : ms;
+}

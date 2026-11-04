@@ -80,7 +80,18 @@
       "subtitle": "Només es mostren esdeveniments futurs. Quan un esdeveniment finalitza, s'elimina automàticament dels preferits.",
       "countLabel": "{count}/{max} desats",
       "emptyTitle": "Encara no tens esdeveniments futurs desats",
-      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits."
+      "emptyDescription": "Marca esdeveniments amb el cor per veure'ls aquí. Els esdeveniments passats s'eliminen automàticament dels preferits.",
+      "errorTitle": "No hem pogut carregar els teus preferits",
+      "errorDescription": "Torna-ho a provar en un moment. Els teus preferits estan segurs.",
+      "tabUpcoming": "Propers",
+      "tabPast": "Passats",
+      "pastTitle": "Preferits passats - Esdeveniments.cat",
+      "pastDescription": "Els teus esdeveniments passats guardats",
+      "pastEmptyTitle": "Encara no tens esdeveniments passats desats",
+      "pastEmptyDescription": "Els esdeveniments que marquis amb el cor apareixeran aquí un cop hagin finalitzat.",
+      "pastAuthGateTitle": "Inicia sessió per veure els teus preferits passats",
+      "pastAuthGateDescription": "Els preferits passats només estan disponibles per a comptes amb sessió iniciada.",
+      "pastAuthGateLogin": "Iniciar sessió"
     },
     "About": {
       "metaTitle": "Qui som - Agenda cultural de Catalunya | Esdeveniments.cat",
@@ -191,8 +202,13 @@
       "nearbyLabel": "A prop:"
     },
     "EventEdit": {
+      "coverUpdateFailed": "L'esdeveniment s'ha desat, però no s'ha pogut actualitzar la imatge.",
       "title": "Editar esdeveniment",
-      "description": "Panell segur per editar esdeveniments d'Esdeveniments.cat."
+      "description": "Panell segur per editar esdeveniments d'Esdeveniments.cat.",
+      "heading": "Edita el teu esdeveniment",
+      "subheading": "Actualitza els detalls, la ubicació o la imatge del teu esdeveniment.",
+      "backToEvent": "Tornar a l'esdeveniment",
+      "myEvents": "Els meus esdeveniments"
     },
     "PublishPage": {
       "metaTitle": "Publica el teu esdeveniment gratis a Catalunya | Agenda cultural - Esdeveniments.cat",
@@ -200,6 +216,56 @@
       "schemaName": "Publica un acte cultural a Catalunya",
       "schemaDescription": "Formulari oficial per afegir concerts, exposicions, teatre i activitats culturals a l'agenda col·laborativa de Catalunya.",
       "schemaAction": "Publicar esdeveniment cultural"
+    },
+    "EditProfile": {
+      "title": "Edita el teu perfil",
+      "description": "Actualitza el teu nom, nom d'usuari, biografia i foto de perfil.",
+      "heading": "Edita el teu perfil",
+      "subheading": "Aquesta informació és pública i apareixerà al teu perfil.",
+      "onboardingHeading": "Completa el teu perfil",
+      "onboardingSubheading": "Per acabar de crear el teu compte, tria un nom d'usuari i un nom visible.",
+      "usernameHint": "Nom d'usuari temporal generat automàticament — tria'n un de nou.",
+      "usernameLockedHint": "Un cop establert, el nom d'usuari no es pot tornar a canviar.",
+      "submitLabel": "Desar canvis",
+      "savingLabel": "Desant...",
+      "success": "Perfil actualitzat correctament.",
+      "fields": {
+        "username": "Nom d'usuari",
+        "displayName": "Nom visible",
+        "bio": "Biografia"
+      },
+      "usernameErrors": {
+        "usernameTooShort": "Ha de tenir com a mínim 3 caràcters.",
+        "usernameTooLong": "Ha de tenir com a màxim 30 caràcters.",
+        "usernameInvalidChars": "Només minúscules, números i guions, sense guions consecutius ni a l'inici o final.",
+        "usernameReservedPrefix": "No pot començar per \"user-\".",
+        "usernameReserved": "Aquest nom d'usuari està reservat."
+      },
+      "errors": {
+        "displayNameRequired": "El nom visible és obligatori.",
+        "displayNameTooLong": "Massa llarg (màxim 80 caràcters).",
+        "bioTooLong": "Massa llarga (màxim 500 caràcters).",
+        "usernameTaken": "Aquest nom d'usuari ja està en ús.",
+        "sessionExpired": "La sessió ha caducat. Torna a iniciar sessió.",
+        "generic": "No s'ha pogut desar el perfil. Torna-ho a intentar."
+      },
+      "avatar": {
+        "label": "Foto de perfil",
+        "uploadButton": "Pujar foto",
+        "removeButton": "Eliminar foto",
+        "uploading": "Pujant...",
+        "removing": "Eliminant...",
+        "altPreview": "Foto de perfil",
+        "errorUnsupported": "Format no admès. Utilitza JPG o PNG.",
+        "errorTooLarge": "La imatge supera el límit de 2 MB.",
+        "errorUploadFailed": "No s'ha pogut pujar la foto. Torna-ho a intentar.",
+        "errorRemoveFailed": "No s'ha pogut eliminar la foto. Torna-ho a intentar."
+      },
+      "authGate": {
+        "title": "Inicia sessió per editar el perfil",
+        "description": "Cal iniciar sessió per completar o editar el teu perfil.",
+        "login": "Inicia sessió"
+      }
     },
     "PlacesNearby": {
       "invalidNumber": "Coordenades no vàlides: lat,lng han de ser nombres",
@@ -231,37 +297,80 @@
       "description": "Les últimes notícies i recomanacions culturals de Catalunya"
     },
     "Publish": {
-      "heading": "Publica el teu esdeveniment a Catalunya",
-      "subheading": "Afegeix el teu concert, exposició, teatre, taller o activitat cultural a l'agenda més gran de Catalunya. És gratuït!",
-      "sponsorTitle": "Tens un negoci local?",
-      "sponsorLink": "Veure opcions de patrocini",
-      "benefits": {
-        "title": "Per què publicar a Esdeveniments.cat?",
-        "free": "100% gratuït - sense costos ocults",
-        "reach": "Arriba a milers de persones interessades en cultura",
-        "fast": "Publicació ràpida en menys d'un minut",
-        "visibility": "Visibilitat a Google i xarxes socials"
+      "publishCta": {
+        "signIn": "Inicia sessió per publicar",
+        "completeProfile": "Completa el perfil per publicar",
+        "resolving": "Comprovant la sessió…"
       },
-      "requiredNote": "* camps obligatoris",
-      "errorCreate": "Error al crear l'esdeveniment. Si us plau, torna-ho a intentar.",
-      "errorBodyLimit": "La mida total de la sol·licitud (imatge + dades) supera el límit permès de 10 MB. Si us plau, redueix la mida de la imatge o elimina dades no necessàries.",
-      "errorGeneric": "Hi ha hagut un error en publicar l'esdeveniment. Si us plau, torna-ho a intentar.",
+      "accountNotice": "Ja tens compte?",
+      "earlySignIn": "Inicia sessió",
+      "optionsFailed": "No hem pogut carregar els municipis o les categories. Torna-ho a provar.",
+      "draftOwnerChanged": "La sessió ha canviat. Conservem el formulari, però no el desarem en un altre compte. Copia el que vulguis conservar i recarrega la pàgina.",
+      "completeProfileGate": {
+        "title": "Completa el teu perfil",
+        "description": "Abans de publicar un esdeveniment, cal que triïs un nom d'usuari i un nom visible.",
+        "cta": "Completa el perfil"
+      },
+      "heading": "Publica el teu esdeveniment a Catalunya",
+      "subheading": "Afegeix-lo a l'agenda cultural més gran de Catalunya. És gratuït.",
+      "sponsorTitle": "Tens un negoci local?",
+      "sponsorLink": "Mira les opcions de patrocini",
+      "errorCreate": "No hem pogut crear l'esdeveniment. Torna-ho a provar.",
+      "errorBodyLimit": "La imatge i les dades superen el límit de 10 MB. Tria una imatge més petita.",
+      "errorGeneric": "No hem pogut publicar l'esdeveniment. Torna-ho a provar.",
       "errorFormParsing": "S'ha tallat la connexió mentre s'enviava el formulari. Recarrega la pàgina i torna-ho a provar.",
       "errorDuplicate": "Aquest esdeveniment ja existeix. Si creus que és un error, contacta amb nosaltres.",
-      "submitLabel": "Publicar",
-      "imageTooLarge": "La imatge supera el límit permès de {limit} MB. Si us plau, tria una imatge més petita.",
+      "errorStaleSession": "La sessió ha caducat. Torna a iniciar sessió per continuar.",
+      "submitLabel": "Publica",
+      "imageTooLarge": "La imatge supera el límit de {limit} MB. Tria'n una de més petita.",
       "uploadSuccess": "Imatge pujada correctament.",
-      "uploadFailed": "No hem pogut pujar la imatge. Revisa la connexió i torna-ho a intentar.",
+      "uploadFailed": "No hem pogut pujar la imatge. Revisa la connexió i torna-ho a provar.",
       "imageRequired": "La imatge és obligatòria.",
       "fallbackRegion": "Regió {id}",
       "fallbackCity": "Ciutat {id}",
-      "noEventsFound": "No hem trobat esdeveniments recents per a aquesta zona. Torna-ho a intentar més tard.",
-      "restoreDraftTitle": "Tens un esborrany guardat",
+      "noEventsFound": "No hem trobat esdeveniments recents per a aquesta zona. Torna-ho a provar més tard.",
+      "restoreDraftTitle": "Tens un esborrany desat",
+      "draftChooseTitle": "Quin esborrany vols continuar?",
+      "draftChooseDescription": "Hem conservat l'esdeveniment que has omplert abans d'iniciar sessió, però aquest compte ja tenia un esborrany. Si continues amb el nou, substituiràs l'anterior.",
+      "draftUseGuest": "Continua amb el nou",
+      "draftUseAccount": "Recupera l'anterior",
+      "draftAccountTitle": "Esborrany anterior del compte: {title}",
       "restoreDraftDescription": "Pots recuperar el que estaves escrivint o començar de zero.",
-      "restoreDraftApply": "Recupera esborrany",
+      "restoreDraftApply": "Recupera l'esborrany",
       "restoreDraftDiscard": "Descarta",
+      "draftHeading": "Esborrany local",
+      "draftRestoreReplacesEdits": "Si recuperes l'esborrany desat, substituiràs els canvis que tens ara al formulari. Copia abans qualsevol text que vulguis conservar.",
+      "draftLoading": "S'està cercant un esborrany…",
+      "draftSaving": "S'està desant…",
+      "draftSaved": "Desat en aquest dispositiu",
+      "draftDiscarding": "S'està descartant l'esborrany…",
+      "draftSaveFailed": "El navegador no ha pogut completar l'operació amb l'esborrany. No tanquis aquesta pàgina. Revisa els permisos d'emmagatzematge del navegador i torna-ho a provar.",
+      "draftStorageFull": "No hi ha prou espai, l'esborrany supera el límit o ja hi ha cinc esborranys desats. No tanquis la pàgina. Allibera espai, redueix el text o la imatge, o descarta un altre esborrany i torna-ho a provar.",
+      "draftRecordInvalid": "No es pot llegir l'esborrany desat. Pots tornar-ho a provar o descartar-lo per començar de nou. No tanquis la pàgina si hi tens canvis.",
+      "draftConflict": "Una altra pestanya ha canviat els esborranys desats. Els teus canvis no s'han sobreescrit ni desat. No tanquis aquesta pàgina; revisa l'esborrany desat abans de decidir què vols conservar.",
+      "draftReviewConflict": "Revisa l'esborrany desat",
+      "draftResolveBeforePublish": "Revisa l'esborrany desat i tria si el vols recuperar o descartar abans de publicar.",
+      "draftAutoPublishStopped": "No hem publicat l'esdeveniment automàticament. Revisa el formulari i prem Publica per continuar.",
+      "draftHandoffFailed": "No hem pogut continuar. Torna-ho a provar o descarta l'esborrany.",
+      "draftResumeFailed": "No hem pogut recuperar l'esborrany d'aquest retorn. Pot haver caducat, canviat o pertànyer a un altre compte. Pots revisar l'esborrany disponible o començar de nou.",
+      "draftAuthNotice": "Desarem l'esborrany. Quan hagis iniciat sessió, continuarem amb la publicació.",
+      "draftProfileNotice": "Desarem l'esborrany. Quan hagis completat el perfil, continuarem amb la publicació.",
+      "draftRetry": "Torna-ho a provar",
+      "draftDiscardConfirm": "Vols descartar l'esborrany?",
+      "draftDiscardDescription": "S'esborraran el formulari i la imatge. No es pot desfer.",
+      "draftKeep": "Conserva l'esborrany",
+      "draftDateExpired": "Revisa les dates: l'esborrany comença en una data passada. No les hem canviat.",
+      "draftCityUnavailable": "El municipi desat ja no és a la llista. Revisa'l i torna'l a seleccionar. Hem conservat el valor original.",
+      "draftCategoryUnavailable": "Alguna categoria desada ja no és a la llista. Revisa les categories. Hem conservat els valors originals.",
+      "draftCleanupFailed": "L'esdeveniment s'ha publicat, però no s'ha pogut eliminar l'esborrany local. Descarta'l en tornar al formulari. No tornis a publicar l'esdeveniment.",
       "geoNotSupported": "El teu navegador no permet obtenir la ubicació.",
-      "geoDenied": "No hem pogut obtenir la ubicació. Revisa els permisos."
+      "geoDenied": "No hem pogut obtenir la ubicació. Revisa els permisos.",
+      "promoteUpsell": {
+        "title": "Impulsa el teu esdeveniment",
+        "description": "Promociona'l per arribar a més gent i sortir als primers llocs.",
+        "promoteButton": "Promociona'l",
+        "keepFreeButton": "Ara no"
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " a {place}",
@@ -309,6 +418,67 @@
       "notFoundTitle": "Sense esdeveniments disponibles",
       "notFoundDescriptionWithDate": "No hem trobat {activitiesLabel} per {date} a {place}.",
       "notFoundDescriptionFallback": "No hem trobat {activitiesLabel} per als propers dies a {place}."
+    },
+    "EventPromote": {
+      "refreshingSession": "S'està restaurant la sessió...",
+      "title": "Promociona el teu esdeveniment",
+      "description": "Arriba a més gent promocionant el teu esdeveniment a Esdeveniments.cat.",
+      "heading": "Promociona el teu esdeveniment",
+      "subheading": "Destaca't per arribar a més gent i aparèixer als primers llocs.",
+      "benefit1": "Més visibilitat a l'agenda",
+      "benefit2": "Prioritat davant d'altres esdeveniments",
+      "benefit3": "Més persones interessades",
+      "backToEvent": "Tornar a l'esdeveniment",
+      "confirmButton": "Confirma i paga",
+      "confirmButtonLoading": "Redirigint a pagament...",
+      "errorGeneric": "Alguna cosa ha fallat. Torna-ho a intentar.",
+      "chooseOption": "Tria on i quant de temps",
+      "taxIncluded": "Preus amb IVA inclòs. Pagament únic.",
+      "duration": "{days, plural, one {# dia} other {# dies}}",
+      "scope": {
+        "CITY": "La teva població",
+        "REGION": "La teva comarca",
+        "PROVINCE": "La teva província",
+        "CATALONIA": "Tot Catalunya"
+      },
+      "pendingCheckout": "Tens un pagament pendent per a aquest esdeveniment.",
+      "resumeCheckout": "Continua el pagament",
+      "refreshStatus": "Actualitza l'estat",
+      "tryAgain": "Torna-ho a provar",
+      "errors": {
+        "PROMOTION_ALREADY_ACTIVE": "Aquest esdeveniment ja està promocionat.",
+        "CHECKOUT_ALREADY_PENDING": "Ja tens un pagament pendent per a aquest esdeveniment.",
+        "REFUND_PENDING": "Hi ha un reemborsament en curs per a aquest esdeveniment.",
+        "PROMOTIONS_DISABLED": "Les promocions no estan disponibles ara mateix.",
+        "MISSING_EVENT_LOCATION": "L'esdeveniment necessita una població per poder-lo promocionar.",
+        "MISSING_EVENT_DATE": "L'esdeveniment necessita una data per poder-lo promocionar.",
+        "INSUFFICIENT_EVENT_DURATION": "L'esdeveniment acaba abans que s'acabi aquesta promoció.",
+        "NO_AVAILABLE_OPTIONS": "Ara mateix no hi ha cap promoció disponible per a aquest esdeveniment.",
+        "AUTHENTICATION_REQUIRED": "La teva sessió ha caducat. Torna a iniciar sessió.",
+        "NOT_EVENT_OWNER": "Només qui ha creat l'esdeveniment el pot promocionar.",
+        "INVALID_OPTION": "Aquesta opció ja no està disponible. Tria'n una altra.",
+        "CHECKOUT_EXPIRED": "El pagament ha caducat. Torna-ho a provar.",
+        "PAYMENT_PROCESSING": "Estem processant el pagament. Espera uns segons."
+      },
+      "status": {
+        "ACTIVE": "El teu esdeveniment està promocionat fins al {endsAt}.",
+        "PENDING": "Estem confirmant el pagament. Pot trigar uns segons.",
+        "PAID": "Pagament rebut. La promoció s'activarà de seguida.",
+        "EXPIRED": "El pagament ha caducat i no s'ha fet cap càrrec.",
+        "FAILED": "El pagament no s'ha pogut completar.",
+        "REFUND_PENDING": "Estem tramitant el reemborsament.",
+        "REFUNDED": "Hem reemborsat el pagament.",
+        "NONE": "No hi ha cap pagament per a aquest esdeveniment.",
+        "unknown": "Ara no podem consultar l'estat del pagament. Torna-ho a provar d'aquí a una estona.",
+        "promotionEXPIRED": "La promoció d'aquest esdeveniment ja ha acabat.",
+        "promotionREVOKED": "La promoció d'aquest esdeveniment s'ha retirat."
+      },
+      "successPage": {
+        "title": "Gràcies!"
+      },
+      "cancelPage": {
+        "title": "Pagament cancel·lat"
+      }
     }
   },
   "Components": {
@@ -320,6 +490,32 @@
     },
     "Breadcrumbs": {
       "home": "Inici"
+    },
+    "Profile": {
+      "title": "{name} — Perfil",
+      "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+      "events": "Esdeveniments",
+      "verified": "Verificat",
+      "verifiedOrganizer": "Organitzador verificat",
+      "joinedDate": "Des de {date}",
+      "noEvents": "Encara no hi ha esdeveniments",
+      "website": "Lloc web",
+      "totalEvents": "{count, plural, one {# esdeveniment} other {# esdeveniments}}",
+      "notFound": "Perfil no trobat",
+      "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
+      "backHome": "Tornar a l'inici",
+      "editProfile": "Editar perfil",
+      "claimQuestion": "És el teu local?",
+      "claimLogin": "Iniciar sessió",
+      "tabUpcoming": "Propers",
+      "tabPast": "Passats",
+      "noUpcomingEvents": "Encara no hi ha esdeveniments propers",
+      "noPastEvents": "Encara no hi ha esdeveniments passats",
+      "statsPublished": "Publicats",
+      "statsUpcoming": "Propers",
+      "statsVisits": "Visites",
+      "pastTitle": "Esdeveniments passats de {name} — Perfil",
+      "pastMetaDescription": "Consulta els esdeveniments passats de {name}: concerts, exposicions i activitats que ja ha organitzat."
     },
     "Footer": {
       "navigation": {
@@ -333,7 +529,8 @@
         "contact": "Contacte",
         "archive": "Arxiu",
         "terms": "Termes de servei",
-        "privacy": "Privacitat"
+        "privacy": "Privacitat",
+        "login": "Iniciar sessió"
       },
       "sponsorCta": {
         "title": "Fes visible el teu negoci local",
@@ -354,8 +551,6 @@
       },
       "logoAlt": "Logo Esdeveniments.cat",
       "aria": {
-        "openMenu": "Open menu",
-        "closeMenu": "Close menu",
         "home": "Home",
         "agenda": "Agenda",
         "favorites": "Preferits",
@@ -373,7 +568,14 @@
         "es": "Esp",
         "en": "Eng"
       },
-      "mobilePublishLabel": "Publica"
+      "mobilePublishLabel": "Publica",
+      "auth": {
+        "login": "Iniciar sessió",
+        "logout": "Tanca sessió",
+        "userMenu": "Menú d'usuari",
+        "myProfile": "El meu perfil",
+        "incompleteProfile": "⚠️ Sessió parcial — tanca sessió i torna a entrar per carregar el teu perfil."
+      }
     },
     "NoEventsFound": {
       "cta": "Afegeix un esdeveniment",
@@ -387,11 +589,16 @@
     },
     "Notification": {
       "createdSuccess": "Fantàstic!! L'esdeveniment {title} s'ha creat correctament i ja el pot veure tothom!",
-      "close": "Close",
+      "close": "Tanca",
       "viewEvent": "Veure esdeveniment"
     },
     "FavoriteButton": {
       "maxReached": "Has arribat al límit de {max} preferits. Elimina'n un per afegir-ne més."
+    },
+    "FavoritesLoginNudge": {
+      "message": "Desat! Inicia sessió per sincronitzar els teus preferits entre dispositius.",
+      "login": "Inicia sessió",
+      "dismiss": "Tanca"
     },
     "EventNotifications": {
       "thankYou": "Gràcies per contribuir a millorar el contingut de Esdeveniments.cat! En menys de 24 hores estarà disponible el canvi."
@@ -437,58 +644,6 @@
       "active": "actiu"
     },
     "Constants": {
-      "days": [
-        "Diumenge",
-        "Dilluns",
-        "Dimarts",
-        "Dimecres",
-        "Dijous",
-        "Divendres",
-        "Dissabte"
-      ],
-      "daysShort": ["Dg.", "Dl.", "Dt.", "Dc.", "Dj.", "Dv.", "Ds."],
-      "monthsShort": [
-        "gen.",
-        "feb.",
-        "març",
-        "abr.",
-        "maig",
-        "juny",
-        "jul.",
-        "ag.",
-        "set.",
-        "oct.",
-        "nov.",
-        "des."
-      ],
-      "months": [
-        "gener",
-        "febrer",
-        "març",
-        "abril",
-        "maig",
-        "juny",
-        "juliol",
-        "agost",
-        "setembre",
-        "octubre",
-        "novembre",
-        "desembre"
-      ],
-      "monthsUrl": [
-        "gener",
-        "febrer",
-        "marc",
-        "abril",
-        "maig",
-        "juny",
-        "juliol",
-        "agost",
-        "setembre",
-        "octubre",
-        "novembre",
-        "desembre"
-      ],
       "newsHubs": {
         "mataro": "Mataró",
         "barcelona": "Barcelona",
@@ -538,6 +693,7 @@
     },
     "Filters": {
       "triggerLabel": "Filtres",
+      "removeFilter": "Elimina el filtre {filter}",
       "priceFree": "Gratuït",
       "pricePaid": "De pagament"
     },
@@ -652,34 +808,22 @@
         "priceHeading": "Preu",
         "priceFree": "Gratuït",
         "pricePaid": "De pagament",
-        "calendarLabel": "O escull al calendari:",
-        "pickDate": "Escull una data...",
-        "viewMore": "Veure més",
-        "viewLess": "Veure menys"
+        "calendarLabel": "O escull al calendari:"
       }
     },
     "ImageUploader": {
-      "label": "Imatge *",
-      "unsupported": "El fitxer seleccionat no és una imatge suportada. Si us plau, carregueu un fitxer en format JPEG, PNG, JPG, o WEBP.",
-      "originalTooLarge": "La imatge supera el límit màxim de {limit} MB. Redueix la mida de la imatge abans de tornar-ho a intentar.",
-      "tooLarge": "La mida de la imatge supera el límit permès de {limit} MB. Si us plau, trieu una imatge més petita.",
-      "compressFailed": "No hem pogut reduir la imatge. Revisa la connexió i torna-ho a intentar.",
-      "optimizing": "Optimitzant la imatge per complir el límit de {limit} MB...",
-      "progress": "{progress}%",
-      "uploading": "Pujant la imatge ({progress}%)...",
-      "uploadSuccess": "Imatge pujada correctament.",
-      "uploadMode": "Puja un fitxer",
-      "urlMode": "Usa una URL",
-      "imageUrlLabel": "URL de la imatge",
-      "imageUrlPlaceholder": "https://exemple.com/imatge.jpg",
-      "imageUrlHelper": "Si ja tens la imatge en línia, enganxa-hi l'enllaç i l'usarem directament sense pujar res.",
-      "imageUrlInvalid": "Afegeix una URL vàlida",
-      "remove": "Eliminar imatge",
+      "label": "Imatge",
+      "unsupported": "Aquest fitxer no és compatible. Tria una imatge JPG o PNG.",
+      "originalTooLarge": "La imatge supera el límit de {limit} MB. Tria'n una de més petita.",
+      "tooLarge": "No hem pogut reduir la imatge per sota de {limit} MB. Tria'n una de més petita.",
+      "compressFailed": "No hem pogut reduir la imatge. Torna-ho a provar.",
+      "optimizing": "Optimitzant la imatge…",
+      "remove": "Elimina la imatge",
       "altPreview": "Imatge",
-      "uploadDropCta": "Arrossega la teva imatge aquí",
-      "uploadDropHelper": "o fes clic per seleccionar",
-      "selectButton": "Seleccionar fitxer",
-      "formatHelper": "Format: JPEG, PNG, JPG o WEBP"
+      "uploadDropCta": "o arrossega-la aquí",
+      "selectButton": "Tria una imatge",
+      "formatHelper": "JPG o PNG",
+      "change": "Canvia"
     },
     "HeroCTA": {
       "buttonBase": "Veure esdeveniments",
@@ -704,7 +848,10 @@
     "WhereToEatSection": {
       "title": "On pots menjar",
       "promote": "Promociona el teu restaurant",
-      "showPhoto": "Veure foto"
+      "showPhoto": "Veure foto",
+      "loadIntro": "Troba on menjar a prop de l'esdeveniment.",
+      "loadCta": "Mostra restaurants a prop",
+      "empty": "Ara mateix no podem mostrar restaurants a prop."
     },
     "FeaturedPlaceSection": {
       "seeMore": "Veure més",
@@ -716,7 +863,8 @@
     "CategoryEventsSection": {
       "heading": "L'agenda {categoryPhrase} a Catalunya",
       "seeMore": "Veure més",
-      "sponsored": "Contingut patrocinat"
+      "sponsored": "Contingut patrocinat",
+      "headingNoArticle": "Agenda a Catalunya · {categoryName}"
     },
     "Weather": {
       "title": "El temps",
@@ -786,6 +934,10 @@
     },
     "EventPage": {
       "sponsored": "Contingut patrocinat",
+      "editEvent": "Editar esdeveniment",
+      "editTitle": "Edita: {title}",
+      "editError": "Error en actualitzar l'esdeveniment",
+      "editSave": "Desa canvis",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
       "stickyMoreInfo": "Més info",
       "stickyCalendar": "Calendari",
@@ -801,28 +953,29 @@
       "readLess": "Llegir menys",
       "durationLabel": "Durada: {duration}",
       "sidebarAriaLabel": "Detalls de l'esdeveniment",
-      "toolbarAriaLabel": "Accions de l'esdeveniment"
+      "toolbarAriaLabel": "Accions de l'esdeveniment",
+      "sidebarCreatedBy": "Publicat per",
+      "sidebarViewAllEvents": "Veure tots els esdeveniments",
+      "promoteEvent": "Promocionar"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
       "dateSingle": "{nameDay}, {start}",
       "favoriteAddAria": "Afegeix a preferits",
       "favoriteRemoveAria": "Elimina de preferits",
-      "free": "Gratuït",
       "today": "Avui",
       "tomorrow": "Demà",
       "multipleDates": "Diversos dies",
-      "viewCountAria": "{count, plural, one {{count} visualització} other {{count} visualitzacions}}"
+      "viewCountAria": "{count, plural, one {{count} visualització} other {{count} visualitzacions}}",
+      "promoted": "Patrocinat"
     },
     "EventForm": {
-      "title": "Títol *",
+      "title": "Títol",
       "url": "Enllaç de l'esdeveniment",
-      "region": "Comarca *",
-      "town": "Població",
-      "titleHint": "Exemple: Festa major del barri",
-      "locationHint": "Afegeix el punt exacte: plaça, carrer o equipament",
-      "urlHint": "Opcional: enllaç oficial o xarxes de l'esdeveniment",
-      "imageHint": "Formats JPG/PNG/WebP. Imatges clares ajuden a trobar-ho.",
+      "region": "Comarca",
+      "town": "Municipi",
+      "locationHint": "Plaça, carrer o equipament",
+      "urlHint": "Web o xarxes socials de l'esdeveniment",
       "reviewTitle": "Abans de publicar",
       "reviewReady": "Tot a punt! Revisa i publica.",
       "reviewMissing": "{count, plural, one {Falta: {fields}} other {Falten: {fields}}}",
@@ -849,18 +1002,22 @@
       "previous": "Enrere",
       "next": "Següent",
       "useLocation": "Usa la meva ubicació",
-      "locating": "Localitzant...",
+      "locating": "Localitzant…",
       "testLink": "Prova l'enllaç",
-      "regionPlaceholder": "Selecciona una comarca",
-      "townPlaceholder": "Selecciona un poble",
-      "categoriesPlaceholder": "Selecciona categories",
+      "regionPlaceholder": "Tria una comarca",
+      "townPlaceholder": "Tria un municipi",
+      "categoriesPlaceholder": "Tria categories",
       "categories": "Categories",
       "location": "Lloc",
       "email": "Correu electrònic",
       "emailSubtitle": "Vols que t'avisem quan l'esdeveniment s'hagi actualitzat? (no guardem les dades)",
-      "publishing": "Publicant...",
-      "regionSkeleton": "Comarca *",
-      "townSkeleton": "Població *"
+      "publishing": "Publicant…",
+      "regionSkeleton": "Comarca",
+      "townSkeleton": "Municipi",
+      "optional": "(opcional)",
+      "stepDone": "completat",
+      "stepCurrent": "pas actual",
+      "stepTodo": "pendent"
     },
     "Layout": {
       "rss": "RSS",
@@ -869,13 +1026,15 @@
     "EventDetailsSection": {
       "title": "Detalls de l'esdeveniment",
       "eventLink": "Enllaç a l'esdeveniment:",
-      "duration": "Durada aproximada: {duration}"
+      "duration": "Durada aproximada: {duration}",
+      "createdBy": "Publicat per <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicació",
       "showMap": "Mostrar mapa",
       "hideMap": "Tancar mapa",
-      "getDirections": "Com arribar"
+      "getDirections": "Com arribar",
+      "profileLink": "Perfil de {name}"
     },
     "EventCalendar": {
       "title": "Data i hora"
@@ -892,18 +1051,18 @@
       "loadingShort": "Carregant..."
     },
     "TextArea": {
-      "label": "Descripció *",
-      "edit": "✏️ Editar",
-      "preview": "👁️ Previsualitzar",
-      "emptyPreview": "Escriu alguna cosa per veure la previsualització...",
-      "placeholder": "Descriu el teu esdeveniment...",
-      "helperPreview": "Així és com veuran la descripció els visitants",
-      "helperEdit": "Prem Enter per fer salts de línia."
+      "label": "Descripció",
+      "placeholder": "Descriu el teu esdeveniment…"
+    },
+    "DateRangeCalendar": {
+      "pickStart": "Tria el primer dia",
+      "pickEnd": "Ara tria l'últim dia (o toca el mateix si només és un dia)",
+      "clear": "Esborra les dates"
     },
     "DatePicker": {
-      "dateAndTime": "Data i hora *",
-      "start": "Inici *",
-      "end": "Final *",
+      "startTime": "Hora d'inici",
+      "endTime": "Hora de fi",
+      "dateAndTime": "Data i hora",
       "dateFormat": "d MMMM, yyyy HH:mm aa",
       "monthYearFormat": "MMMM yyyy",
       "allDay": "Tot el dia (sense hora de fi)",
@@ -915,7 +1074,9 @@
     },
     "HybridEventsListClient": {
       "errorTitle": "Error al carregar esdeveniments",
-      "error": "Si us plau, torna-ho a intentar més tard."
+      "error": "Si us plau, torna-ho a intentar més tard.",
+      "resultsCount": "{count, plural, =0 {Cap esdeveniment} one {# esdeveniment} other {# esdeveniments}}",
+      "retry": "Torna-ho a provar"
     },
     "Hero": {
       "options": {
@@ -986,6 +1147,16 @@
       "unavailable": "Localització no disponible. Prova a seleccionar una població en lloc d'utilitzar la distància.",
       "timeout": "Temps d'espera esgotat. Prova de nou o selecciona una població.",
       "genericError": "Error obtenint la localització. Prova a seleccionar una població en lloc d'utilitzar la distància."
+    },
+    "PwaBackButton": {
+      "label": "Tornar",
+      "ariaLabel": "Tornar enrere"
+    },
+    "PromotedEvents": {
+      "title": "Esdeveniments destacats"
+    },
+    "Modal": {
+      "close": "Tanca"
     }
   },
   "Partials": {
@@ -1269,12 +1440,13 @@
   "Utils": {
     "Validation": {
       "genericError": "Hi ha errors de validació",
-      "imageRequired": "La imatge és obligatòria",
-      "titleRequired": "El títol és obligatori",
-      "descriptionRequired": "La descripció és obligatòria",
-      "locationRequired": "La localització és obligatòria",
-      "invalidUrl": "URL invàlida",
-      "invalidEmail": "Email invàlid"
+      "imageRequired": "Afegeix una imatge",
+      "titleRequired": "Escriu un títol",
+      "descriptionRequired": "Escriu una descripció",
+      "locationRequired": "Indica el lloc",
+      "invalidUrl": "Escriu un enllaç vàlid, com ara exemple.cat",
+      "invalidEmail": "Escriu un correu electrònic vàlid",
+      "townRequired": "Tria un municipi"
     },
     "SearchQuery": {
       "forSearch": "per a la cerca"
@@ -1351,42 +1523,9 @@
         "deLa": "de la",
         "deLes": "de les",
         "deL": "de l'"
-      },
-      "capitalizePrepositions": [
-        "al",
-        "a",
-        "del",
-        "dels",
-        "de la",
-        "de les",
-        "de l’",
-        "de l'",
-        "pel",
-        "pels"
-      ],
-      "feminineExceptions": ["gent gran", "dansa"],
-      "masculineExceptions": [
-        "penedès",
-        "alt penedès",
-        "baix penedès",
-        "rosselló",
-        "urgell",
-        "alt urgell",
-        "pla d'urgell",
-        "vallès",
-        "vallès oriental",
-        "vallès occidental",
-        "gironès",
-        "barcelonès",
-        "tarragonès",
-        "montsià",
-        "baix ebre",
-        "maresme",
-        "bages"
-      ]
+      }
     },
     "Calendar": {
-      "moreInfoHtml": "Més informació: <a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">Esdeveniments.cat</a>",
       "moreInfoText": "Més informació: {url}",
       "dateRange": "Del {start} al {end}",
       "dateSingle": "Del {start}",
@@ -1397,7 +1536,7 @@
         "outlook": "Outlook",
         "other": "Altres"
       },
-      "ariaAdd": "Add to {name}"
+      "ariaAdd": "Afegeix a {name}"
     },
     "LocationHelpers": {
       "newsAll": "Notícies de Catalunya",
@@ -1597,7 +1736,7 @@
       "doneCta": "Fet",
       "dropzone": {
         "title": "Arrossega la imatge aquí o fes clic",
-        "formats": "Format horitzontal • JPG, PNG o WebP",
+        "formats": "Format horitzontal • JPG o PNG",
         "optimal": "Òptim: 728×150px",
         "minimum": "Mínim: 400×80px"
       },
@@ -1605,7 +1744,7 @@
         "title": "Recomanacions per a la imatge:",
         "recommended": "Mida òptima: {width}×{height}px (proporció 5:1)",
         "horizontal": "Format bàner horitzontal allargat",
-        "formats": "Formats: JPG, PNG o WebP",
+        "formats": "Formats: JPG o PNG",
         "minimum": "Mínim acceptat: 400×80px"
       },
       "validation": {
@@ -1667,5 +1806,87 @@
       "backHome": "Torna a l'inici"
     },
     "backToHome": "Torna a l'inici"
+  },
+  "Auth": {
+    "login": {
+      "title": "Iniciar sessió",
+      "subtitle": "Accedeix al teu compte per gestionar els teus esdeveniments",
+      "submit": "Iniciar sessió",
+      "noAccount": "No tens compte?",
+      "registerLink": "Crea'n un",
+      "magicLinkSent": "Revisa el teu correu per al link d'accés"
+    },
+    "register": {
+      "title": "Crear compte",
+      "subtitle": "Uneix-te a la comunitat i publica els teus esdeveniments",
+      "submit": "Crear compte",
+      "hasAccount": "Ja tens compte?",
+      "loginLink": "Inicia sessió",
+      "passwordHint": "Mínim 8 caràcters"
+    },
+    "fields": {
+      "email": "Correu electrònic",
+      "password": "Contrasenya",
+      "name": "Nom (opcional)",
+      "passwordShow": "Mostra la contrasenya",
+      "passwordHide": "Amaga la contrasenya"
+    },
+    "errors": {
+      "invalid-credentials": "Correu o contrasenya incorrectes.",
+      "invalid-email": "Aquest correu no sembla vàlid.",
+      "email-taken": "Ja existeix un compte amb aquest correu.",
+      "weak-password": "La contrasenya ha de tenir com a mínim 8 caràcters.",
+      "network-error": "Sense connexió. Comprova-la i torna a provar-ho.",
+      "server-error": "El servei no està disponible ara mateix. Torna-ho a provar en uns moments.",
+      "not-configured": "L'autenticació encara no està configurada.",
+      "rate-limited": "Massa intents. Espera uns moments abans de tornar-ho a provar.",
+      "rate-limited-seconds": "Massa intents. Torna-ho a provar d'aquí a {seconds}s.",
+      "email-not-verified": "Has de verificar el correu abans d'iniciar sessió.",
+      "account-locked": "El teu compte està bloquejat. Contacta amb el suport.",
+      "unknown": "No hem pogut completar l'acció. Torna-ho a provar."
+    },
+    "actions": {
+      "forgotPassword": "Has oblidat la contrasenya?",
+      "forgotPasswordSent": "T'hem enviat un correu per restablir-la a {email}.",
+      "resendVerification": "Reenvia el correu de verificació",
+      "verificationSent": "Correu de verificació reenviat a {email}.",
+      "contactSupport": "Contacta amb el suport"
+    },
+    "meta": {
+      "loginTitle": "Iniciar sessió | Esdeveniments.cat",
+      "loginDescription": "Inicia sessió al teu compte d'Esdeveniments.cat",
+      "registerTitle": "Crear compte | Esdeveniments.cat",
+      "registerDescription": "Crea el teu compte a Esdeveniments.cat per publicar esdeveniments",
+      "verifyEmailTitle": "Verificar correu | Esdeveniments.cat",
+      "verifyEmailDescription": "Verifica el teu correu electrònic per activar el teu compte d'Esdeveniments.cat",
+      "resetPasswordTitle": "Restablir contrasenya | Esdeveniments.cat",
+      "resetPasswordDescription": "Restableix la contrasenya del teu compte d'Esdeveniments.cat"
+    },
+    "verification": {
+      "checkEmailTitle": "Revisa el teu correu",
+      "checkEmailDescription": "Hem enviat un correu de verificació a {email}. Fes clic a l'enllaç per activar el teu compte.",
+      "resend": "Tornar a enviar el correu",
+      "resent": "Correu enviat!",
+      "successTitle": "Correu verificat!",
+      "successDescription": "El teu compte ha estat verificat correctament. Ja pots iniciar sessió.",
+      "errorTitle": "Error de verificació",
+      "errorDescription": "No hem pogut verificar el teu correu. L'enllaç pot haver caducat o ja ha estat utilitzat.",
+      "invalidToken": "Enllaç no vàlid",
+      "invalidTokenDescription": "L'enllaç de verificació no és vàlid. Torna a registrar-te o sol·licita un nou correu de verificació."
+    },
+    "resetPassword": {
+      "title": "Restablir contrasenya",
+      "subtitle": "Introdueix la teva nova contrasenya",
+      "newPassword": "Nova contrasenya",
+      "confirmPassword": "Confirma la contrasenya",
+      "submit": "Canviar contrasenya",
+      "passwordMismatch": "Les contrasenyes no coincideixen",
+      "successTitle": "Contrasenya canviada!",
+      "successDescription": "La teva contrasenya s'ha actualitzat correctament. Ja pots iniciar sessió.",
+      "errorTitle": "Error al restablir",
+      "errorDescription": "No hem pogut restablir la contrasenya. L'enllaç pot haver caducat o ja ha estat utilitzat.",
+      "invalidToken": "Enllaç no vàlid",
+      "invalidTokenDescription": "L'enllaç per restablir la contrasenya no és vàlid. Sol·licita'n un de nou."
+    }
   }
 }

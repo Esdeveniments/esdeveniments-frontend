@@ -1,6 +1,5 @@
 import { cache } from "react";
 import type {
-  PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
   FetchNewsParams,
@@ -11,6 +10,7 @@ import {
   getInternalApiUrl,
   buildNewsQuery,
   getVercelProtectionBypassHeaders,
+  emptyPagedResponse,
 } from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
@@ -23,7 +23,7 @@ export type { FetchNewsParams } from "types/api/news";
 
 export async function fetchNews(
   params: FetchNewsParams
-): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
+): Promise<PagedResponseDTO<NewsSummaryResponseDTO>> {
   // Use internal API route for stable caching
 
   try {
@@ -41,7 +41,7 @@ export async function fetchNews(
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data: PagedNewsResponseDTO<NewsSummaryResponseDTO> =
+    const data: PagedResponseDTO<NewsSummaryResponseDTO> =
       await response.json();
     return {
       ...data,
@@ -49,14 +49,7 @@ export async function fetchNews(
     };
   } catch (e) {
     console.error("Error fetching news:", e);
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    return emptyPagedResponse();
   }
 }
 
@@ -114,14 +107,7 @@ export async function fetchNewsCities(params?: {
     return (await response.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
   } catch (e) {
     console.error("Error fetching news cities:", e);
-    return {
-      content: [],
-      currentPage: 0,
-      pageSize: 0,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
-    };
+    return emptyPagedResponse();
   }
 }
 
@@ -132,12 +118,12 @@ export const getNewsBySlug = cache(fetchNewsBySlug);
 // Metadata-only reader: resolves the API origin from configuration instead of
 // request headers(), so generateMetadata stays prerenderable under
 // cacheComponents (reading headers() would make the metadata boundary dynamic
-// and mismatch the static shell). Mirrors getEventBySlugForMetadata.
+// and mismatch the static shell). Mirrors getCachedEventBySlug.
 export async function getNewsBySlugForMetadata(
   slug: string,
 ): Promise<NewsDetailResponseDTO | null> {
   "use cache";
-  // See getEventBySlugForMetadata: "use cache" (not React cache) is what makes
+  // See getCachedEventBySlug: "use cache" (not React cache) is what makes
   // metadata prerenderable under cacheComponents.
   cacheTag(newsTag, newsSlugTag(slug));
   const detail = await fetchNewsBySlug(slug, {

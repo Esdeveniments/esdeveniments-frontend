@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ImageUploader from "@components/ui/common/form/imageUpload";
+import { useImagePreview } from "@components/hooks/useImagePreview";
 import { renderWithProviders } from "../../../../utils/renderWithProviders";
 import { MAX_TOTAL_UPLOAD_BYTES, formatMegabytesLabel } from "@utils/constants";
 
@@ -28,18 +29,22 @@ vi.mock("next/image", () => ({
 
 // Mock FileReader
 class MockFileReader {
+  static instances: MockFileReader[] = [];
+  static automatic = true;
   result: string | null = null;
   onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => void) | null =
     null;
 
   readAsDataURL() {
+    MockFileReader.instances.push(this);
+    if (!MockFileReader.automatic) return;
     // Simulate async behavior
     setTimeout(() => {
       this.result = "data:image/jpeg;base64,test";
       if (this.onload) {
         // Call with proper context - cast to avoid TypeScript error
         const event = {} as ProgressEvent<FileReader>;
-        (this.onload as any).call(this, event);
+        Reflect.apply(this.onload, this, [event]);
       }
     }, 0);
   }
@@ -58,18 +63,49 @@ class MockFileReader {
   }
 
   removeEventListener() {}
-}
+  abort = vi.fn();
 
-global.FileReader = MockFileReader as unknown as typeof FileReader;
+  complete() {
+    this.result = "data:image/jpeg;base64,late";
+    if (this.onload) Reflect.apply(this.onload, this, [new ProgressEvent("load")]);
+  }
+}
 
 const MAX_LIMIT_LABEL = formatMegabytesLabel(MAX_TOTAL_UPLOAD_BYTES);
 
+/** Wires the uploader the way the publish and edit forms do. */
+function WithPreview({
+  initial,
+  onUpload,
+  onPreparingChange,
+}: {
+  initial: string | null;
+  onUpload: (file: File | null) => void;
+  onPreparingChange?: (preparing: boolean) => void;
+}) {
+  const [preview, updatePreview] = useImagePreview(initial);
+  return (
+    <ImageUploader
+      value={preview}
+      onUpload={(file) => {
+        onUpload(file);
+        updatePreview(file);
+      }}
+      onPreparingChange={onPreparingChange}
+    />
+  );
+}
+
 describe("ImageUploader file validation", () => {
   beforeEach(() => {
+    vi.stubGlobal("FileReader", MockFileReader);
+    MockFileReader.instances = [];
+    MockFileReader.automatic = true;
     vi.clearAllMocks();
     mockCompress.mockReset();
     mockCompress.mockResolvedValue(null);
   });
+  afterEach(() => vi.unstubAllGlobals());
 
   const createMockFile = (name: string, type: string, size: number): File => {
     const file = new File([], name, { type });
@@ -80,6 +116,69 @@ describe("ImageUploader file validation", () => {
     return file;
   };
 
+  it("ignores compression finishing after the editor is unmounted", async () => {
+    const pending = Promise.withResolvers<File>();
+    mockCompress.mockReturnValueOnce(pending.promise);
+    const onUpload = vi.fn();
+    const view = renderWithProviders(<ImageUploader value={null} onUpload={onUpload} />);
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [createMockFile("large.jpg", "image/jpeg", 9 * 1024 * 1024)] },
+    });
+    view.unmount();
+    await act(async () => pending.resolve(createMockFile("small.jpg", "image/jpeg", 100)));
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
+  it("invalidates pending compression when the user removes the cover", async () => {
+    const pending = Promise.withResolvers<File>();
+    mockCompress.mockReturnValueOnce(pending.promise);
+    const onUpload = vi.fn();
+    const preparing = vi.fn();
+    renderWithProviders(
+      <WithPreview initial="https://example.com/old.jpg" onUpload={onUpload} onPreparingChange={preparing} />,
+    );
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [createMockFile("large.jpg", "image/jpeg", 9 * 1024 * 1024)] },
+    });
+    expect(preparing).toHaveBeenLastCalledWith(true);
+    fireEvent.click(screen.getByRole("button", { name: "Elimina la imatge" }));
+    await act(async () => pending.resolve(createMockFile("small.jpg", "image/jpeg", 100)));
+    expect(onUpload.mock.calls).toEqual([[null]]);
+    expect(preparing).toHaveBeenLastCalledWith(false);
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("ignores a preview load arriving after removal", async () => {
+    MockFileReader.automatic = false;
+    const onUpload = vi.fn();
+    renderWithProviders(<WithPreview initial="https://example.com/old.jpg" onUpload={onUpload} />);
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [createMockFile("new.jpg", "image/jpeg", 100)] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Elimina la imatge" }));
+    act(() => MockFileReader.instances[0].complete());
+    expect(onUpload).toHaveBeenLastCalledWith(null);
+    expect(MockFileReader.instances[0].abort).toHaveBeenCalled();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("shows the preview its parent passes, not one of its own", async () => {
+    const onUpload = vi.fn();
+    const { rerender } = renderWithProviders(
+      <ImageUploader value={null} onUpload={onUpload} />,
+    );
+    const file = createMockFile("new.jpg", "image/jpeg", 100);
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [file] },
+    });
+    await waitFor(() => expect(onUpload).toHaveBeenCalledWith(file));
+    await act(async () => {});
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+
+    rerender(<ImageUploader value="data:image/jpeg;base64,parent" onUpload={onUpload} />);
+    expect(screen.getByRole("img")).toHaveAttribute("src", "data:image/jpeg;base64,parent");
+  });
+
   it(`accepts valid image files under ${MAX_LIMIT_LABEL}MB`, async () => {
     const onUpload = vi.fn();
     const validFile = createMockFile(
@@ -89,7 +188,7 @@ describe("ImageUploader file validation", () => {
     ); // 1.5MB
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -115,7 +214,7 @@ describe("ImageUploader file validation", () => {
     // Should not show error message
     expect(
       screen.queryByText(
-        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i"),
+        new RegExp(`per sota de ${MAX_LIMIT_LABEL} MB`, "i"),
       ),
     ).not.toBeInTheDocument();
   });
@@ -129,7 +228,7 @@ describe("ImageUploader file validation", () => {
     ); // 3MB
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -148,7 +247,7 @@ describe("ImageUploader file validation", () => {
       expect(
         screen.getByText(
           new RegExp(
-            `La mida de la imatge supera el límit permès de ${MAX_LIMIT_LABEL} MB`,
+            `No hem pogut reduir la imatge per sota de ${MAX_LIMIT_LABEL} MB`,
             "i",
           ),
         ),
@@ -169,7 +268,7 @@ describe("ImageUploader file validation", () => {
     );
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -194,7 +293,7 @@ describe("ImageUploader file validation", () => {
     // Should not show error message
     expect(
       screen.queryByText(
-        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i"),
+        new RegExp(`per sota de ${MAX_LIMIT_LABEL} MB`, "i"),
       ),
     ).not.toBeInTheDocument();
   });
@@ -209,7 +308,7 @@ describe("ImageUploader file validation", () => {
     );
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -233,7 +332,7 @@ describe("ImageUploader file validation", () => {
 
     expect(
       screen.queryByText(
-        new RegExp(`supera el límit permès de ${MAX_LIMIT_LABEL} MB`, "i"),
+        new RegExp(`per sota de ${MAX_LIMIT_LABEL} MB`, "i"),
       ),
     ).not.toBeInTheDocument();
   });
@@ -253,7 +352,7 @@ describe("ImageUploader file validation", () => {
     mockCompress.mockResolvedValueOnce(compressedFile);
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -283,7 +382,7 @@ describe("ImageUploader file validation", () => {
     mockCompress.mockRejectedValueOnce(new Error("failed"));
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -310,7 +409,7 @@ describe("ImageUploader file validation", () => {
     const invalidFile = createMockFile("test.pdf", "application/pdf", 1024);
 
     renderWithProviders(
-      <ImageUploader value={null} onUpload={onUpload} progress={0} />,
+      <ImageUploader value={null} onUpload={onUpload} />,
     );
 
     const input = document.querySelector(
@@ -327,30 +426,10 @@ describe("ImageUploader file validation", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/no és una imatge suportada/i),
+        screen.getByText(/no és compatible/i),
       ).toBeInTheDocument();
     });
 
     expect(onUpload).not.toHaveBeenCalled();
-  });
-
-  it("previews arbitrary external image URLs without Next optimizer", () => {
-    const externalImage = "https://www.cardedeu.cat/media/cartell.jpg";
-
-    renderWithProviders(
-      <ImageUploader
-        value={null}
-        onUpload={vi.fn()}
-        progress={0}
-        mode="url"
-        imageUrlValue={externalImage}
-      />,
-    );
-
-    const preview = document.querySelector(
-      `img[src="${externalImage}"]`,
-    );
-
-    expect(preview).toBeInTheDocument();
   });
 });

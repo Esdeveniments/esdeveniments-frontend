@@ -1,115 +1,101 @@
 "use client";
 
-import { useEffect, Suspense, useMemo, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
-import { usePathname, useSearchParams } from "next/navigation";
 import { useAdContext } from "@lib/context/AdContext";
-import type { WindowWithGtag } from "types/common";
+import { useIsClient } from "@components/hooks/useIsClient";
 import { isE2ETestMode } from "@utils/env";
 import { isProductionHost } from "@utils/production-host";
-import { scheduleIdleCallback } from "@utils/browser";
+import {
+  onFirstInteractionOrTimeout,
+  scheduleIdleCallback,
+} from "@utils/browser";
+import {
+  ensureGtag,
+  CONSENT_MODE_DEFAULTS,
+  FUNDING_CHOICES_SRC,
+} from "@utils/analytics";
+import type { GoogleScriptsHeavyProps, TcfCallback } from "types/ads";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
-const ADS_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADS;
-// FundingChoices URL uses the ads client ID (without 'ca-' prefix if present)
-const FUNDING_CHOICES_PUB_ID = ADS_CLIENT?.replace(/^ca-/, "") ?? "";
-const FUNDING_CHOICES_SRC = FUNDING_CHOICES_PUB_ID
-  ? `https://fundingchoicesmessages.google.com/i/${FUNDING_CHOICES_PUB_ID}?ers=1`
-  : "";
 
-// Google Analytics gtag shim - reused across multiple Script components
-// Conditionally defines gtag only if it doesn't already exist to avoid overwriting
-// the real gtag.js implementation if it has already loaded
-const GTAG_SHIM = 'window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};';
+// Google Analytics gtag shim - reused across multiple Script components.
+// Conditionally defines gtag only if it doesn't already exist (avoids
+// overwriting the real gtag.js implementation if it has already loaded), and
+// pushes the Consent Mode v2 denied default in that same guarded branch -
+// mirroring ensureGtag() in utils/analytics.ts - so whichever of the two
+// runs first (this inline script, or a tracker's ensureGtag() call on a hard
+// nav) is the only one that ever pushes the default. Consent Mode only
+// honors the first 'default' command; a second one would reset an
+// already-granted consent state back to denied.
+// It also pushes 'js' + 'config' in that branch, like ensureGtag(): gtag.js
+// drops any event queued before 'config'. This script only renders on the
+// production host, so it needs no host check of its own.
+const GTAG_SHIM = `window.dataLayer=window.dataLayer||[];if(typeof window.gtag!=='function'){window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('consent','default',${JSON.stringify(CONSENT_MODE_DEFAULTS)});window.gtag('js',new Date());window.gtag('config','${GA_MEASUREMENT_ID}');}`;
 
-const ensureGtag = (): WindowWithGtag | null => {
-  if (typeof window === "undefined") return null;
-  const win = window as WindowWithGtag;
-  win.dataLayer = win.dataLayer || [];
-
-  if (typeof win.gtag !== "function") {
-    win.gtag = function gtag() {
-
-      win.dataLayer.push(arguments);
-    };
-  }
-
-  return win;
-};
-
-// Debounce tracking: store path + timestamp to allow re-visits but prevent duplicates
-// Key = path, Value = timestamp of last track
-const pageViewTimestamps = new Map<string, number>();
-// Minimum ms between tracking same path (prevents duplicates from re-renders/strict mode)
-const DEBOUNCE_MS = 1000;
 // Idle timeout for consent state updates (allows main thread work to complete first)
 const CONSENT_UPDATE_IDLE_TIMEOUT_MS = 1000;
 
-/**
- * Check if we should track this page view.
- * Returns true if:
- * - Path hasn't been tracked before, OR
- * - Path was tracked more than DEBOUNCE_MS ago (legitimate re-visit)
- */
-function shouldTrackPageView(pagePath: string): boolean {
-  const now = Date.now();
-  const lastTracked = pageViewTimestamps.get(pagePath);
+// adsbygoogle.js waits for the first tap, key press or scroll, so it does not
+// compete with the user's first interactions. Without one, it loads this long
+// after the window load event.
+const ADS_SCRIPT_FALLBACK_MS = 4500;
 
-  if (lastTracked === undefined || now - lastTracked > DEBOUNCE_MS) {
-    pageViewTimestamps.set(pagePath, now);
+// On a slow phone FC's own box reports "cmpuishown" up to ~1.2 s after its
+// first TCF event; wait longer than that before showing the box by hand.
+const CONSENT_FALLBACK_DELAY_MS = 3000;
 
-    // Cleanup: remove entries older than 5 minutes to prevent memory growth
-    if (pageViewTimestamps.size > 100) {
-      const fiveMinutesAgo = now - 5 * 60 * 1000;
-      for (const [path, timestamp] of pageViewTimestamps) {
-        if (timestamp < fiveMinutesAgo) {
-          pageViewTimestamps.delete(path);
-        }
-      }
-    }
-
-    return true;
-  }
-
-  return false;
-}
-
-// Separate component for pageview tracking that uses useSearchParams (requires Suspense)
-function GoogleAnalyticsPageview({ adsAllowed }: { adsAllowed: boolean }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  // Normalize search params: sort by key and use consistent encoding to prevent
-  // spurious pageview events from parameter order/encoding variations
-  const searchParamsString = useMemo(() => {
-    if (!searchParams) return "";
-    // Create a mutable copy from the read-only searchParams and sort it
-    const params = new URLSearchParams(searchParams);
-    params.sort();
-    return params.toString();
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
-    if (!adsAllowed) return; // Don't track when consent is not given
-
-    const win = ensureGtag();
-    if (!win) return;
-
-    const query = searchParamsString ? `?${searchParamsString}` : "";
-    const pagePath = `${pathname || "/"}` + query;
-
-    // Time-based debounce: prevents duplicates from React re-renders/Strict Mode
-    // but allows legitimate re-visits (user navigates away and back)
-    if (!shouldTrackPageView(pagePath)) {
+// WORKAROUND: on some pages (seen on "/") Funding Choices loads but never
+// shows its box to a new visitor, so show it by hand. Only when FC's first TCF
+// event says GDPR applies and there is no stored consent string, and FC has
+// not shown its own box since. The wait starts at that first event, not at a
+// fixed time, so a slow FC cannot reopen the box for a visitor who already
+// chose. (The googlefcInactive frame is no signal: it is there for everyone.)
+export function armConsentFallback(): () => void {
+  if (typeof window.__tcfapi !== "function") return () => {};
+  let settled = false;
+  let listenerId: number | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const stopListening = () => {
+    if (listenerId === undefined) return;
+    window.__tcfapi?.("removeEventListener", 2, () => {}, listenerId);
+    listenerId = undefined;
+  };
+  const onTcData: TcfCallback = (tcData, success) => {
+    if (!success || !tcData) return;
+    if (typeof tcData.listenerId === "number") listenerId = tcData.listenerId;
+    if (settled) {
+      stopListening();
       return;
     }
-
-    win.gtag("event", "page_view", {
-      page_path: pagePath,
-    });
-  }, [adsAllowed, pathname, searchParamsString]);
-
-  return null;
+    if (
+      tcData.tcString ||
+      tcData.gdprApplies === false ||
+      tcData.eventStatus === "cmpuishown"
+    ) {
+      settled = true;
+      clearTimeout(timer);
+      stopListening();
+      return;
+    }
+    // undefined means "not known yet": wait for a later event.
+    if (tcData.gdprApplies !== true) return;
+    timer ??= setTimeout(() => {
+      stopListening();
+      if (settled || document.querySelector(".fc-consent-root")) return;
+      try {
+        window.googlefc?.showRevocationMessage?.();
+      } catch {
+        // Consent UI trigger failed silently
+      }
+    }, CONSENT_FALLBACK_DELAY_MS);
+  };
+  window.__tcfapi("addEventListener", 2, onTcData);
+  return () => {
+    settled = true;
+    clearTimeout(timer);
+    stopListening();
+  };
 }
 
 export default function GoogleScripts() {
@@ -118,18 +104,56 @@ export default function GoogleScripts() {
   // Gate GA (pageviews + consent) and Auto Ads to the production host so they
   // never fire on Vercel previews, staging, or the app embedded in the Coolify
   // dashboard, all of which inline the same prod measurement ID. Reuses the
-  // existing prod-host allowlist (covers www + apex). Resolved after mount so
-  // the first client render matches SSR (both render nothing) — no hydration
-  // mismatch. The CMP/consent banner is intentionally NOT gated (it keeps its
-  // beforeInteractive ordering and sends nothing to GA on its own).
-  const [isProdHost, setIsProdHost] = useState(false);
-  useEffect(() => {
-    setIsProdHost(isProductionHost(window.location.hostname));
-  }, []);
+  // existing prod-host allowlist (covers www + apex). False on the server and
+  // during hydration, so the first client render matches SSR (both render
+  // nothing) — no hydration mismatch. The CMP/consent banner is intentionally
+  // NOT gated (its googlefcPresent script runs in the root layout <head>, and
+  // it sends nothing to GA on its own).
+  const isClient = useIsClient();
+  const isProdHost = isClient && isProductionHost(window.location.hostname);
 
   const [HeavyComponent, setHeavyComponent] = useState<
-    React.ComponentType<{ adsAllowed: boolean }> | null
+    React.ComponentType<GoogleScriptsHeavyProps> | null
   >(null);
+  // Armed at mount, not in GoogleScriptsHeavy: that mounts only after consent,
+  // so it would miss the first interaction (often the consent click itself).
+  const [adsScriptReady, setAdsScriptReady] = useState(false);
+  useEffect(() => {
+    if (isE2ETestMode) return;
+    let cancelIdle: (() => void) | undefined;
+    const cancelTrigger = onFirstInteractionOrTimeout(() => {
+      // Off the event task, so the first tap's INP does not pay for it.
+      cancelIdle = scheduleIdleCallback(() => setAdsScriptReady(true), {
+        timeout: 500,
+      });
+    }, ADS_SCRIPT_FALLBACK_MS);
+    return () => {
+      cancelTrigger();
+      cancelIdle?.();
+    };
+  }, []);
+  // The Funding Choices loader is in the root layout <head>. Arm the consent
+  // fallback once it has loaded.
+  useEffect(() => {
+    if (isE2ETestMode || !FUNDING_CHOICES_SRC) return;
+    const script = document.querySelector<HTMLScriptElement>(
+      `script[src="${FUNDING_CHOICES_SRC}"]`
+    );
+    if (!script) return;
+    let disarm: (() => void) | undefined;
+    const arm = () => {
+      disarm = armConsentFallback();
+    };
+    // Usually loaded before hydration: the loader defines __tcfapi, and there
+    // is no load event left to wait for.
+    if (typeof window.__tcfapi === "function") arm();
+    else script.addEventListener("load", arm, { once: true });
+    return () => {
+      script.removeEventListener("load", arm);
+      disarm?.();
+    };
+  }, []);
+
   // Track last consent state to avoid duplicate consent updates
   // Using useRef (not module-level) to handle React Strict Mode correctly
   const lastConsentStateRef = useRef<"granted" | "denied" | null>(null);
@@ -200,116 +224,27 @@ export default function GoogleScripts() {
 
   return (
     <>
-      {/* Google Analytics - Consent Mode v2 (defaults set inline to avoid race conditions) */}
+      {/* Google Analytics - Consent Mode v2 (default pushed by GTAG_SHIM, see
+          its comment above, for why this can't unconditionally re-push it) */}
       {GA_MEASUREMENT_ID && !isE2ETestMode && isProdHost && (
         <>
           <Script id="google-analytics-consent" strategy="lazyOnload">
-            {`
-              ${GTAG_SHIM}
-              gtag('consent', 'default', {
-                ad_user_data: 'denied',
-                ad_personalization: 'denied',
-                ad_storage: 'denied',
-                analytics_storage: 'denied'
-              });
-            `}
+            {GTAG_SHIM}
           </Script>
           <Script
             id="google-analytics-gtag"
             strategy="lazyOnload"
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
           />
-          <Script id="google-analytics-lazy-load" strategy="lazyOnload">
-            {`
-              ${GTAG_SHIM}
-              // Note: GTAG_SHIM is included here defensively, even though it's already in
-              // google-analytics-consent script. This ensures gtag is available if script
-              // loading order varies or the consent script fails to load.
-              gtag('js', new Date());
-              gtag('config', '${GA_MEASUREMENT_ID}', {
-                cookie_domain: 'auto',
-                send_pageview: false
-              });
-            `}
-          </Script>
         </>
-      )}
-
-      {!isE2ETestMode && (
-        <>
-          {/* googlefcPresent iframe - MUST exist BEFORE Funding Choices loads (Google requirement).
-              Uses beforeInteractive to guarantee ordering. This is a tiny inline script with
-              zero performance impact - it just creates a hidden iframe. */}
-          <Script id="google-fc-present" strategy="beforeInteractive">
-            {`
-              (function() {
-                if (window.frames['googlefcPresent']) return;
-                var createIframe = function() {
-                  if (!document.body) {
-                    setTimeout(createIframe, 0);
-                    return;
-                  }
-                  var i = document.createElement('iframe');
-                  i.style.cssText = 'width:0;height:0;border:none;z-index:-1000;position:absolute;left:-1000px;top:-1000px';
-                  i.style.display = 'none';
-                  i.name = 'googlefcPresent';
-                  document.body.appendChild(i);
-                };
-                createIframe();
-              })();
-            `}
-          </Script>
-
-          {/* Funding Choices (CMP) - loads with lazyOnload for PageSpeed.
-              Since googlefcPresent uses beforeInteractive, ordering is guaranteed.
-              AdContext polls for __tcfapi and falls back after 5s. */}
-          {FUNDING_CHOICES_SRC && (
-            <Script
-              src={FUNDING_CHOICES_SRC}
-              strategy="lazyOnload"
-              onLoad={() => {
-                // WORKAROUND: Google FC sometimes marks the page as "inactive" on root paths
-                // due to script loading order issues from performance optimizations.
-                // When this happens, googlefcInactive iframe exists but consent banner doesn't show.
-                // Detect this condition and manually trigger the consent UI.
-                setTimeout(() => {
-                  const win = window as unknown as {
-                    googlefc?: { showRevocationMessage?: () => void };
-                    __tcfapi?: unknown;
-                    frames?: Record<string, unknown>;
-                  };
-
-                  const hasInactiveFrame = Boolean(window.frames && 'googlefcInactive' in window.frames);
-                  // Check if consent UI is already visible (Google FC uses .fc-consent-root)
-                  const consentUIAlreadyVisible = Boolean(document.querySelector('.fc-consent-root'));
-
-                  // Only trigger if: inactive frame exists AND consent UI is not showing
-                  if (hasInactiveFrame && !consentUIAlreadyVisible && win.googlefc?.showRevocationMessage) {
-                    try {
-                      win.googlefc.showRevocationMessage();
-                    } catch {
-                      // Consent UI trigger failed silently
-                    }
-                  }
-                }, 500);
-              }}
-            />
-          )}
-
-
-        </>
-      )}
-
-      {/* Pageview tracking - wrapped in Suspense for useSearchParams */}
-      {GA_MEASUREMENT_ID && !isE2ETestMode && isProdHost && (
-        <Suspense fallback={null}>
-          <GoogleAnalyticsPageview adsAllowed={adsAllowed} />
-        </Suspense>
       )}
 
       {/* Heavy tracking + Auto Ads: only load after consent */}
       {!isE2ETestMode && isProdHost && adsAllowed && HeavyComponent && (
-        <HeavyComponent adsAllowed={adsAllowed} />
+        <HeavyComponent
+          adsAllowed={adsAllowed}
+          adsScriptReady={adsScriptReady}
+        />
       )}
     </>
   );

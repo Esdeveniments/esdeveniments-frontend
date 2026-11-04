@@ -2,10 +2,11 @@ import Image from "@components/ui/common/image";
 import { getTranslations } from "next-intl/server";
 import type { CardHorizontalServerProps } from "types/common";
 import CardLink from "@components/ui/common/cardContent/CardLink";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
 import CategoryBadge from "@components/ui/common/cardContent/CategoryBadge";
-import { MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
+import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 import { prepareCardContentData } from "@components/ui/common/cardContent/prepareCardContentData";
 
 const CardHorizontalServer = async ({
@@ -13,7 +14,7 @@ const CardHorizontalServer = async ({
   isPriority = false,
   initialIsFavorite,
 }: CardHorizontalServerProps) => {
-  const locale = await getLocaleSafely();
+  const locale = (await rootLocale()) as AppLocale;
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const tCategories = await getTranslations({ locale, namespace: "Config.Categories" });
@@ -26,7 +27,7 @@ const CardHorizontalServer = async ({
     favoriteLabels,
     shouldShowFavoriteButton,
     categoryLabel,
-    priceLabel,
+    promotedLabel,
     urgencyLabel,
     urgencyType,
     multiDayLabel,
@@ -59,7 +60,7 @@ const CardHorizontalServer = async ({
           className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
           title={event.title}
           alt={event.title}
-          image={event.imageUrl}
+          image={event.imageUrl ?? undefined}
           priority={isPriority}
           location={event.city?.name}
           region={event.region?.name}
@@ -81,6 +82,9 @@ const CardHorizontalServer = async ({
       </div>
 
       <div className="flex-1 flex flex-col px-3.5 pt-2.5 pb-3.5 pointer-events-none">
+        {promotedLabel && (
+          <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
+        )}
         <CategoryBadge label={categoryLabel} />
 
         <p className="text-xs text-muted-foreground mb-1 truncate">
@@ -92,7 +96,6 @@ const CardHorizontalServer = async ({
             cardDate
           )}
           {timeDisplay && <> · {timeDisplay}</>}
-          {priceLabel && <> · <span className="text-success font-medium">{priceLabel}</span></>}
           {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 
@@ -102,7 +105,9 @@ const CardHorizontalServer = async ({
 
         {primaryLocation && (
           <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0">
-            <LocationMarkerIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <svg className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true">
+              <use href={`#${SPRITE_ICON.mapPin}`} />
+            </svg>
             <span className="truncate">{primaryLocation}</span>
           </div>
         )}

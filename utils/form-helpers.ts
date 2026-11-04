@@ -1,11 +1,10 @@
 import type { Option } from "types/common";
 import type {
-  EventCreateRequestDTO,
-  EventUpdateRequestDTO,
+  EventBaseRequestDTO,
   EventDetailResponseDTO,
 } from "types/api/event";
 import type { FormData } from "types/event";
-import { formatTimeForAPI } from "./date-helpers";
+import { formatTimeForAPI, splitLocalDateTime } from "./date-helpers";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -28,16 +27,9 @@ export function getTownValue(
 
 export function formDataToBackendDTO(
   form: FormData
-): EventCreateRequestDTO | EventUpdateRequestDTO {
-  // Extract date and time from datetime strings
-  const startDateTime = new Date(form.startDate);
-  const endDateTime = new Date(form.endDate);
-
-  const startDate = startDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
-  const endDate = endDateTime.toISOString().split("T")[0]; // YYYY-MM-DD
-
-  const startTime = startDateTime.toTimeString().slice(0, 5); // HH:mm
-  const endTime = endDateTime.toTimeString().slice(0, 5); // HH:mm
+): EventBaseRequestDTO {
+  const { date: startDate, time: startTime } = splitLocalDateTime(form.startDate);
+  const { date: endDate, time: endTime } = splitLocalDateTime(form.endDate);
 
   // Extract region and city IDs - they can be Option objects or DTO objects
   const regionId = form.region
@@ -53,10 +45,8 @@ export function formDataToBackendDTO(
 
   return {
     title: form.title,
-    type: form.type ?? "FREE",
-    url: form.url,
+    url: form.url || null,
     description: form.description,
-    imageUrl: form.imageUrl,
     regionId,
     cityId,
     startDate, // Now in YYYY-MM-DD format
@@ -78,12 +68,15 @@ export function formDataToBackendDTO(
   };
 }
 
+function toLocalDateTimeValue(date: string | null, time: string): string {
+  return date ? `${date}T${time.slice(0, 5)}` : "";
+}
+
 export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
-  return {
+  const form: FormData = {
     id: event.id ? String(event.id) : undefined,
     title: event.title || "",
     description: event.description || "",
-    type: event.type || "FREE",
     startDate: event.startDate || "", // Keep as string, already in YYYY-MM-DD format
     startTime: event.startTime, // Keep as string | null, already in ISO time format
     endDate: event.endDate || "", // Keep as string, already in YYYY-MM-DD format
@@ -95,11 +88,27 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
       ? { value: String(event.city.id), label: event.city.name }
       : null,
     location: event.location || "",
-    imageUrl: event.imageUrl || null,
     url: event.url || "",
     categories: Array.isArray(event.categories)
       ? event.categories.map((cat) => ({ id: cat.id, name: cat.name }))
       : [],
     email: "", // UI only
+  };
+  // The picker cannot leave a time open. A null start is how the site marks an
+  // all-day event (event-status.ts), and end of day keeps the event listed all
+  // day, as a null end does in the backend's lists.
+  const startTime = (event.startTime || "00:00").slice(0, 5);
+  const endTime = (event.endTime || "23:59").slice(0, 5);
+  // The picker edits one local "YYYY-MM-DDTHH:mm" per field; the stored times
+  // kept separately above would outrank what the user changes in it.
+  return {
+    ...form,
+    startDate: toLocalDateTimeValue(event.startDate, startTime),
+    startTime: null,
+    endDate: toLocalDateTimeValue(event.endDate, endTime),
+    endTime: null,
+    // What an all-day save stores, so it reopens as all-day. Any other stored
+    // time stays timed and is saved back unchanged.
+    isAllDay: startTime === "00:00" && endTime === "23:59",
   };
 }

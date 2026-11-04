@@ -26,13 +26,6 @@ const pageFetcher = async (
   return (await res.json()) as PagedResponseDTO<EventSummaryResponseDTO>;
 };
 
-/** Map URL price slug to API EventType value */
-const priceToType = (price?: string): string | undefined => {
-  if (price === "gratis") return "FREE";
-  if (price === "pagament") return "PAID";
-  return undefined;
-};
-
 export const useEvents = ({
   place,
   category,
@@ -44,6 +37,7 @@ export const useEvents = ({
   to: explicitTo,
   lat,
   lon,
+  profileSlug,
   initialSize = 12,
   fallbackData = [],
   serverHasMore = false,
@@ -51,9 +45,7 @@ export const useEvents = ({
   const [activationKey, setActivationKey] = useState<string | null>(null);
   const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
-  const currentKey = `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${initialSize}`;
-
-  const eventType = priceToType(price);
+  const currentKey = `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${profileSlug}|${initialSize}`;
 
   const hasClientFilters = hasActiveClientFilters({
     search,
@@ -100,10 +92,10 @@ export const useEvents = ({
     from: range.from,
     to: range.to,
     term: search,
-    type: eventType,
     radius: hasCoords && hasValidRadius ? radius : undefined,
     lat: hasCoords && hasValidRadius ? latNumber : undefined,
     lon: hasCoords && hasValidRadius ? lonNumber : undefined,
+    profileSlug,
   };
 
   const getKey = (
@@ -119,10 +111,10 @@ export const useEvents = ({
       baseParams.from,
       baseParams.to,
       baseParams.term,
-      baseParams.type,
       baseParams.radius,
       baseParams.lat,
       baseParams.lon,
+      baseParams.profileSlug,
       pageIndex,
       baseParams.size,
     ] as const;
@@ -133,6 +125,7 @@ export const useEvents = ({
     error,
     isLoading: isSWRLoading,
     setSize,
+    mutate,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
     getKey,
     ([
@@ -143,10 +136,10 @@ export const useEvents = ({
       fromParam,
       toParam,
       termParam,
-      typeParam,
       radiusParam,
       latParam,
       lonParam,
+      profileSlugParam,
       pageIndex,
       sizeParam,
     ]) =>
@@ -159,10 +152,10 @@ export const useEvents = ({
         from: fromParam as string | undefined,
         to: toParam as string | undefined,
         term: termParam as string | undefined,
-        type: typeParam as string | undefined,
         radius: radiusParam as number | undefined,
         lat: latParam as number | undefined,
         lon: lonParam as number | undefined,
+        profileSlug: profileSlugParam as string | undefined,
       }),
     {
       fallbackData:
@@ -247,6 +240,7 @@ export const useEvents = ({
     isLoading,
     isLoadingMore,
     loadMore,
+    retry: () => void mutate(),
     error: error as Error | undefined,
   };
 };

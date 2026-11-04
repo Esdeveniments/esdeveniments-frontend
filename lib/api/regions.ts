@@ -1,21 +1,21 @@
 import { RegionSummaryResponseDTO } from "types/api/event";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { createCache } from "lib/api/cache";
-import {
-  getInternalApiUrl,
-  getVercelProtectionBypassHeaders,
-} from "@utils/api-helpers";
+import { connection } from "next/server";
 import {
   fetchRegionsExternal,
   fetchRegionsOptionsExternal,
 } from "./regions-external";
-import { isBuildPhase } from "@utils/build-phase";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 
+// The external fetchers return [] on failure; storeEmpty: false keeps a
+// failure from being cached for a day.
 const { cache: regionsListCache, clear: clearRegionsListCache } =
-  createCache<RegionSummaryResponseDTO[]>(86400000);
+  createCache<RegionSummaryResponseDTO[]>(86400000, { storeEmpty: false });
 const { cache: regionsWithCitiesCache, clear: clearRegionsWithCitiesCache } =
-  createCache<RegionsGroupedByCitiesResponseDTO[]>(86400000);
+  createCache<RegionsGroupedByCitiesResponseDTO[]>(86400000, {
+    storeEmpty: false,
+  });
 
 /**
  * Clear all in-memory region caches.
@@ -26,140 +26,31 @@ export function clearRegionsCaches(): void {
   clearRegionsWithCitiesCache();
 }
 
-async function fetchRegionsFromApi(): Promise<RegionSummaryResponseDTO[]> {
-  const url = await getInternalApiUrl(`/api/regions`);
-  const response = await fetch(url, {
-    headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 86400, tags: ["regions"] },
-  });
-  if (!response.ok) {
-    const errorText = await response
-      .text()
-      .catch(() => "Unable to read error response");
-    console.error(
-      `fetchRegionsFromApi: HTTP error! status: ${response.status}, url: ${url}, error: ${errorText}`,
-    );
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  return response.json();
-}
-
-/**
- * Fetch all regions (comarques).
- * During build phase (SSG), calls external API directly to avoid internal proxy issues.
- * At runtime (ISR/SSR), uses internal API proxy for better caching and security.
- */
+/** Fetch all regions (comarques). */
 export async function fetchRegions(): Promise<RegionSummaryResponseDTO[]> {
-
-  // During build phase, bypass internal proxy and call external API directly
-  // This ensures SSG pages (homepage, sitemap) can fetch data during next build
-  if (isBuildPhase) {
-    try {
-      return await fetchRegionsExternal();
-    } catch (e) {
-      // Sanitize error logging to prevent information disclosure
-      const errorMessage = getSanitizedErrorMessage(e);
-      console.error(
-        "fetchRegions: Build phase external fetch failed:",
-        errorMessage,
-      );
-      return [];
-    }
-  }
-
-  // Runtime: use internal API proxy with caching
-  // If internal API fails (e.g., during build when server isn't running), fallback to external
   try {
-    return await regionsListCache(fetchRegionsFromApi);
-  } catch {
-    // If internal API fails, try external API as fallback (handles edge cases)
-    try {
-      return await fetchRegionsExternal();
-    } catch (fallbackError) {
-      // Sanitize error logging to prevent information disclosure
-      const errorMessage = getSanitizedErrorMessage(fallbackError);
-      console.error(
-        "fetchRegions: Both internal and external API failed:",
-        errorMessage,
-      );
-      return [];
-    }
-  }
-}
-
-async function fetchRegionsWithCitiesFromApi(): Promise<
-  RegionsGroupedByCitiesResponseDTO[]
-> {
-  const url = await getInternalApiUrl(`/api/regions/options`);
-  const response = await fetch(url, {
-    headers: getVercelProtectionBypassHeaders(),
-    next: { revalidate: 86400, tags: ["regions", "regions:options"] },
-  });
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return response.json();
-}
-
-/**
- * Fetch regions with their associated cities.
- * During build phase, calls external API directly. At runtime, uses internal proxy.
- */
-export async function fetchRegionsWithCities(): Promise<
-  RegionsGroupedByCitiesResponseDTO[]
-> {
-  // During build phase, bypass internal proxy
-  if (isBuildPhase) {
-    try {
-      const data = await fetchRegionsOptionsExternal();
-      if (data.length === 0) {
-        console.warn(
-          "fetchRegionsWithCities: Build phase fetch returned empty array",
-        );
-      }
-      return data;
-    } catch (e) {
-      // Sanitize error logging to prevent information disclosure
-      const errorMessage = getSanitizedErrorMessage(e);
-      console.error(
-        "fetchRegionsWithCities: Build phase external fetch failed:",
-        errorMessage,
-      );
-      // Fail the build rather than deploying with incomplete/incorrect data
-      // This ensures API issues are caught during deployment, not in production
-      throw new Error(
-        `fetchRegionsWithCities: Build failed due to API error. Cannot proceed with incomplete data. ${errorMessage}`,
-      );
-    }
-  }
-
-  // Runtime: use internal API proxy with caching
-  try {
-    return await regionsWithCitiesCache(fetchRegionsWithCitiesFromApi);
+    // Keep the request-time signal fetchWithHmac gives on a cache miss, so a
+    // warm cache cannot change what Next prerenders.
+    await connection();
+    return await regionsListCache(fetchRegionsExternal);
   } catch (e) {
-    // Sanitize error logging to prevent information disclosure
-    const errorMessage = getSanitizedErrorMessage(e);
-    console.error(
-      "fetchRegionsWithCities: Runtime internal API fetch failed:",
-      errorMessage,
-    );
-    // Return empty array on failure - UI should handle gracefully
-    // This is safer than returning incomplete mock data
+    console.error("fetchRegions: fetch failed:", getSanitizedErrorMessage(e));
     return [];
   }
 }
 
-export async function fetchRegionById(
-  id: string | number,
-): Promise<RegionSummaryResponseDTO | null> {
+/** Fetch regions with their associated cities. */
+export async function fetchRegionsWithCities(): Promise<
+  RegionsGroupedByCitiesResponseDTO[]
+> {
   try {
-    const url = await getInternalApiUrl(`/api/regions/${id}`);
-    const response = await fetch(url, {
-      headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 86400, tags: ["regions", `region:${id}`] },
-    });
-    if (!response.ok) return null;
-    return response.json();
+    await connection();
+    return await regionsWithCitiesCache(fetchRegionsOptionsExternal);
   } catch (e) {
-    console.error("Error fetching region by id:", e);
-    return null;
+    console.error(
+      "fetchRegionsWithCities: fetch failed:",
+      getSanitizedErrorMessage(e),
+    );
+    return [];
   }
 }

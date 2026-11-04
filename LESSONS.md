@@ -2,6 +2,81 @@
 
 Repo-specific gotchas worth sharing. Read this during research on any task here.
 
+## A page can't set its own 404 or 301: decide it in `proxy.ts`
+
+`app/[locale]/layout.tsx` wraps every page in `<Suspense>`, so the status line
+is sent before the page runs. A page-level `notFound()` then serves 200 with
+`noindex`, and `redirect()` becomes a client-side meta refresh. Google files
+the first as a Soft 404 and the second as a weak redirect. Unknown place slugs
+are therefore resolved in Proxy (`resolvePlaceForProxy`, `lib/api/places-proxy.ts`):
+an alias gets a 301 and a missing place gets
+`NextResponse.rewrite(url, { status: 404 })`. `NextResponse.next()` can't set a
+status, but a rewrite can and still renders the page. The page itself must then render
+`notFound()`, not redirect: a page `redirect()` under the 404 becomes a meta
+refresh that sends visitors (and mixed signals) to another URL. The check fails open
+(`unknown`) on any backend error or after 1.5 s, then skips the backend for
+30 s, so an outage never serves a false 404 or slows every request. Proxy is bundled apart from the app, so `/api/revalidate` doesn't
+clear its 1 h place cache: a new place can 404 for up to an hour plus CDN TTL.
+A new top-level route folder must be added to `NON_PLACE_FIRST_SEGMENTS`
+(`utils/middleware-redirects.ts`, guarded by
+`test/middleware-redirects-non-place.test.ts`) or it would be checked as a place.
+Missing events still serve 200 + `noindex`: a 404 there would need a full event
+fetch in Proxy.
+
+## Event JSON-LD must only state what the backend knows
+
+Google's Event rich results read `performer`, `organizer`, `image` and the
+date offsets literally. We used to put the venue name in `performer` and
+`organizer`, and the site logo in `image` (also in the event sitemap's
+`<image:image>`), which Search Console can flag as misleading. Leave a property
+out when there is no real value. Timed `startDate`/`endDate` carry the
+Europe/Madrid offset (`withMadridOffset`, `@date-fns/tz`, DST-aware); date-only
+values stay plain dates.
+
+## Guest and account publish drafts need an explicit choice after login
+
+A guest can finish all three steps while the same browser still holds an older
+account draft. Rejecting the handoff and offering a generic Restore loaded that
+older draft, which looked like lost location, dates and image. Keep both until
+the user chooses one. Replacing the account draft must check the saved revision
+again. Browser checks need both slots populated, a full login navigation and
+assertions on the restored controls as well as the stored bytes.
+
+## Auth return must preserve the user's publish choice and wizard step
+
+Saving the fields and poster does not save the wizard position. Store the step
+in the same snapshot and restore it when the editor remounts. Early sign-in and
+ordinary Restore must not publish. Only an explicit Publish click records a
+one-use publish intent, tied to the exact draft revision. Claim that revision
+atomically before continuing, since two tabs can copy the same sessionStorage
+intent. Consume the intent before creation and do not retry an uncertain network
+response automatically; backend idempotency is still needed for exactly-once
+creation.
+
+## The edit form holds one local datetime per field
+
+`eventDtoToFormData` used to put the stored `startTime` and `endTime` next to a
+date-only `startDate`, and `formDataToBackendDTO` preferred the stored time. The
+date picker therefore showed 09:00 for a 21:00 event, and a time changed in the
+picker was ignored on save. The form now holds `YYYY-MM-DDTHH:mm` in
+`startDate`/`endDate` and leaves `startTime`/`endTime` empty, the same shape the
+create form uses. The backend has no all-day flag. It stores an event made with
+the all-day toggle as 09:00 to 23:59, so the edit form shows that one as timed. A
+stored null start time is the site's own all-day mark (`utils/event-status.ts`), so
+the edit form loads null or 00:00 start with null or 23:59 end with the toggle on,
+00:00 to 23:59. That is also what an all-day save stores, so it reopens the same
+way. Treating every 00:00 start as all-day would overwrite a stored end such as
+03:00 with 23:59. The picker cannot leave
+an end open, so a null end time loads as 23:59: the backend lists a null end and a
+23:59 end the same way, while an end equal to the start would drop the event from
+lists at its start time. A bare date used to save as 00:00, an end before the start.
+Turning the toggle off moves a 00:00 start to 09:00 and the end to 10:00, because
+the site would still show a 00:00 start as all-day.
+
+## Never `waitUntil: "networkidle"` in an e2e against a deployed build
+
+`load_more_with_filters.spec.ts` did `page.goto(..., { waitUntil: "networkidle" })`. Locally it passed; against the Vercel preview it timed out `page.goto` at 45s **every** retry, hard-failing the required E2E gate and blocking every develop PR — even a docs-only one. The cause isn't the test's data or mocks (that spec fully mocks `/api/events`): analytics, ads and Sentry keep the network busy on a deployed build, so "networkidle" (500ms of silence) never fires. Use `waitUntil: "domcontentloaded"` plus an explicit auto-waiting assertion for the element you need (`expect(getByTestId(...))`), the way `home.flow.spec.ts` does reliably. For a mid-test settle after an action, bound it: `page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {})`, never an unbounded wait. Grep `e2e/` for `networkidle` before trusting the gate.
+
 ## A test that skips on its own failure mode is worse than no test
 
 The image-proxy e2e tests skipped on any 502 (`test.skip("Test image service unavailable")`). When the dispatcher broke and 502'd every image, the suite read it as a flaky upstream and shipped green — for weeks (the May 2026 autoSelectFamily regression). If a test exists to catch failure X, it must **fail** on X, never skip. Retry to absorb genuine flakiness, then fail once retries are exhausted. Before trusting a green e2e run, grep for `if (status >= 500) test.skip` shapes.
@@ -10,17 +85,27 @@ The image-proxy e2e tests skipped on any 502 (`test.skip("Test image service una
 
 Yarn 4 (Berry) dropped automatic `pre*`/`post*` lifecycle scripts — npm runs them, Yarn doesn't. `prebuild` generates `public/sw.js` and `public/robots.txt`, both gitignored. Every deploy path must invoke it explicitly: the Dockerfile/Coolify and CI already do; Vercel needs the `vercel.json` `buildCommand` (`yarn prebuild && yarn build`). The env-specific builds (`build:development|staging|production`) already chain prebuild. A bare `yarn build` ships without the service worker or robots.txt.
 
+`yarn dev` does not generate these files either. A fresh integration runner must run `yarn prebuild` with the same API URL before starting dev. Otherwise `/sw.js` returns 404 and service-worker-enabled recovery never reaches an active controller.
+
 ## Vercel previews are a preview, not production
 
-Production runs on Coolify/Docker/Node 22; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works; gate promotion to `main` on the Coolify/Docker path.
+Production runs on Coolify/Docker/Node 26; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works (PR E2E no longer uses previews); gate promotion to `main` on the Coolify/Docker path.
 
 ## Image-proxy/dispatcher bugs only surface through a real socket
 
 `buildPinnedDnsDispatcher`'s `lookup` callback runs only when undici opens a real connection — autoSelectFamily (Happy Eyeballs, default since Node 20) calls it with `{ all: true }` and expects an array of records. Mocked-fetch unit tests never reach it. `test/pinned-dns-dispatcher.test.ts` fetches through a loopback server to exercise the real path; keep that style for any proxy or dispatcher change.
 
+That real-socket design has a cost: it's a real HTTP server on a real (ephemeral) port, so it can flake under CPU/port contention rather than a code bug. It failed once in `yarn test --run` right after a `git push` (2213/2215) while a dev server and browser automation were still running in the background, then passed 3/3 in isolation and 2215/2215 once those processes were killed. Before "fixing" a failure here, rule out background load (`next dev`, headless browsers, other test runs) rather than touching the dispatcher code.
+
 ## Back-merge main hotfixes into develop the same day
 
 main and develop diverge. A fix that lands directly on main (a hotfix) does not reach develop on its own, so develop can re-ship a bug main already fixed — and merging develop→main can even revert main's fix. This caused the Jun 11 2026 incident: `097e1275 fix(cache): scope Redis entries by build id` sat on main for weeks while develop kept the broken handler. The `branch-drift` CI workflow flags when main is ahead of develop on infra files (`cache-handler.mjs`, `next.config.js`, `Dockerfile`, `proxy.ts`). When you see that warning, back-merge before promoting.
+
+Merge the back-merge PR with a **merge commit, never squash**. A squash copies main's changes but leaves main's commits outside develop's history, so the next develop→main merge conflicts on them again. Back-merge #340 was squashed; that is why five main hotfixes still showed as "main only" in November 2026.
+
+## `proxy.ts` can't see RSC requests
+
+Next strips the router headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, `next-router-segment-prefetch`) and the `_rsc` query param before `proxy.ts` runs (`FLIGHT_HEADERS` loop in `next/dist/server/web/adapter.js`). So `request.headers.get("RSC")` is always `null` there. A unit test that builds the request with that header by hand passes anyway. The RSC check from `0cdf6f8e` never fired for this reason. Cloudflare RSC cache poisoning is prevented by the Cloudflare bypass rule; Next's `_rsc` validation only narrows it (an empty `307` on the plain URL instead of a flight payload) (`docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md`).
 
 ## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
 
@@ -40,10 +125,494 @@ It's tempting to drop a threshold (e.g. `SITEMAP_MIN_EVENTS_FOR_EXPANSION`) or r
 
 1. **Code** — `lib/cache/redis-client.ts` + `lib/places/nearby-cache-key.ts` cache results in Redis keyed by `~1.1km-snapped` coordinates. This is a **separate Redis layer from `cache-handler.mjs`** on purpose: the Next handler scopes keys by `buildId` and wipes them every deploy, which is wrong for data that should outlive deploys. The app cache is deploy-independent (12h TTL) and fails open.
 2. **Cloudflare WAF** (dashboard, zone `esdeveniments.cat`) — managed-challenge for SG/JP/CN bot traffic + a per-IP rate-limit on the endpoint.
-3. **GCP quota** (`places.googleapis.com/SearchNearbyRequest`, project `esdeveniments-3`) — **50/day** consumer override. This is the hard ceiling. The €10 "budget" is only an alert, never a cap.
+3. **GCP quota** (`places.googleapis.com/SearchNearbyRequest`, project **`esdeveniments`** (owned by the project owner's personal account) — not `esdeveniments-3`, which has no Places API) — **50/day** consumer override. This is the hard ceiling. The €10 "budget" is only an alert, never a cap. Verify it exists: `curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" "https://serviceusage.googleapis.com/v1beta1/projects/esdeveniments/services/places.googleapis.com/consumerQuotaMetrics/places.googleapis.com%2FSearchNearbyRequest/limits/%2Fd%2Fproject/consumerOverrides"` (expects `"overrideValue": "50"`). On Oct 27 2026 it was found missing (default 75,000/day) and re-applied.
+
+Until late Oct 2026, staging and prod shared one API key ("API key 1") with **separate Redis caches**, so each ~1km cell was billed once per environment, and staging sat outside the `www`-scoped WAF. As of Nov 2026 staging has no key (`/api/places/nearby` returns `Api.PlacesNearby.notConfigured`); keep it that way. The SKU is Nearby Search *Enterprise* (the field mask asks for rating/price/opening hours): 1,000 free calls/month, then billed per call — so cost appears only once a month's cumulative calls pass ~1,000.
+
+Since Nov 2026 the widget is click-to-load (`restaurant_load_click`): Google is only called when a person clicks, so scroll-triggered bot calls are gone. Don't revert to an `IntersectionObserver` trigger.
 
 So if restaurants suddenly stop showing, or a request 429s, the cause may be the WAF or the quota — not the code. See [docs/incidents/2026-06-26-places-api-cost.md](docs/incidents/2026-06-26-places-api-cost.md).
 
 ## Never block DE / Hetzner / datacenter ASNs at the Cloudflare edge — that's the own origin
 
 ~40% of Cloudflare traffic shows country **DE** hitting `api.esdeveniments.cat` on SSR data paths (`/api/events`, `/api/places/regions/options`, …). That is **not** a bot — it's the Coolify box on **Hetzner** (ASN 24940, Germany) calling its own backend through Cloudflare on every render. A disabled "block non-ES" WAF rule already exists from a past attempt, and a Cloudflare AI assistant will recommend challenging datacenter ASNs (incl. 24940 / AWS). Applying either takes down SSR. Use *managed challenge* on named bot-source countries (SG/JP/CN), never *block* by geography/ASN, and always verify origin egress before any country/ASN edge rule.
+
+## Behind Coolify/Traefik, `request.nextUrl.origin` is the container's internal bind
+
+In a route handler on the self-hosted box, `request.nextUrl.origin` (and `request.url`) is `https://0.0.0.0:3000`, **not** the public host — Next sees the internal bind, not what the browser used. This silently broke the Logto OIDC `redirect_uri` on the first preview deploy: it pointed at `0.0.0.0:3000/api/auth/callback`, which the IdP rejects (and tests on localhost never caught it, because there the bind *is* the public origin). Curiously, the same value is correct inside `proxy.ts` (middleware sees the real host), so the bug only bites route handlers.
+
+Rule: any externally-facing URL built in a route handler (OAuth redirect URIs, post-logout URIs, absolute links in emails/webhooks) must derive the origin from `x-forwarded-host` / `x-forwarded-proto`, not `nextUrl.origin`. Use `getRequestOrigin()` in `lib/auth/logto.ts`. It's safe to trust the forwarded headers because the proxy overwrites client-supplied ones, and Logto's exact-match redirect allowlist is the real gate. This can only be caught against a real proxied deployment — the `prod-arch-smoke` localhost build can't see it; the post-deploy smoke in `deploy-coolify.yml` asserts the deployed sign-in `redirect_uri` matches `DEPLOY_URL`.
+
+## The service worker must never cache `/api/auth/*` — a stale cache outlives logout
+
+Logout looked broken on the first Logto preview: after sign-out the navbar stayed logged-in and `/api/auth/me` kept returning 200 with the user. The cookies were actually cleared (a `curl` and a `?cb=` cache-buster both returned 401) — the lie was in the **service worker**. The catch-all `/api/` `StaleWhileRevalidate` route in `public/sw-template.js` cached `/api/auth/me`; it only gates on status 200 and ignores the route's `Cache-Control: no-store` (the `respectCacheControlPlugin` is wired into the pages cache, not the API cache). So the SW served the logged-in response from before logout. `/api/auth/sign-out` likewise landed in the pages cache as a navigation. Note `cache: 'no-store'` on a `fetch` does NOT bypass the SW — that flag only touches the HTTP cache, so the symptom survives a hard fetch and only `curl` (no SW) tells the truth.
+
+Fix: a `NetworkOnly` route for `/api/auth/*` registered **before** the navigation and catch-all `/api/` routes (Workbox is first-match-wins). Any future auth-state or per-user endpoint needs the same treatment — never let it fall into a caching strategy. `test/service-worker.test.ts` asserts the auth route exists and is ordered before the catch-all. Generated `public/sw.js` is gitignored; edit the template and run `yarn prebuild`.
+
+**Deploying the fix to existing users — the SW lifecycle trap (2026-07-26):** Adding `NetworkOnly` alone is not enough. Workbox-managed caches invalidate on a `suffix` bump or `cleanupOutdatedCaches()`, but the catch-all `/api/` route uses a **literal** `cacheName: "esdeveniments-local-api-cache"` outside Workbox's rename system, so the stale `/api/auth/me` 200 survives a suffix bump. Worse, Workbox's `CacheableResponsePlugin({ statuses: [0, 200] })` means an in-flight SWR update with a 401 will *not* overwrite the cached 200 — the SW keeps serving the pre-logout response until that exact cache key is wiped. Without `self.skipWaiting()` on `install`, the new SW stays in `WAITING` until every tab of the app closes, so any SW-side fix silently fails to reach users that already have the broken SW installed.
+
+Three things go together: (1) `self.addEventListener("install", () => self.skipWaiting())` so the new SW forces a takeover the moment it installs; (2) bump `suffix: "v4"` → `"v5"` so precache/runtime caches are renamed and `cleanupOutdatedCaches` prunes them; (3) `await caches.delete("esdeveniments-local-api-cache")` inside the `activate` handler so the hardcoded poison cache is explicitly purged. Skip any one and the bug returns.
+
+## The CSRF origin allowlist makes `/api/favorites` a localhost-only false green
+
+The favorites POST is CSRF-guarded by an origin allowlist that includes `localhost:3000` in dev. So on localhost the write passes; it only **403s on a non-localhost / non-www host** — i.e. a Coolify PR preview or staging. Same shape as the proxy-origin bug: the environment that's convenient to test on is exactly the one that can't reproduce the failure. Test any origin/CSRF-gated write (favorites, and future authed mutations) on the Coolify preview, and if a POST 403s only off-localhost, suspect the allowlist host set, not the client. Manual runbook: `docs/logto-auth-setup.md`.
+
+## `NEXT_PUBLIC_*` are baked at build (from GitHub) — not read from Coolify at runtime
+
+The prebuilt-image deploy (PR #371) builds the image in GitHub Actions and runs it in Coolify, so env vars split in two: `NEXT_PUBLIC_*` are inlined **at build** from the **GitHub** environment secrets; runtime secrets (`HMAC_SECRET`, `REDIS_URL`, `STRIPE_*`, …) are read **at runtime** from **Coolify**. The `getApiUrl`/`getApiOrigin` "indirect lookup" in `utils/api-helpers.ts` was meant to keep `NEXT_PUBLIC_API_URL` runtime-readable, but it does **not** — Turbopack still inlines it (grep `/app/.next/server` and you'll find literal copies). So for a Docker-Image app the Coolify `NEXT_PUBLIC_*` values are dead; GitHub's are authoritative.
+
+On 2026-06-27 the GitHub `staging` secret `NEXT_PUBLIC_API_URL` was missing the `/api` suffix → every fetch hit `/events` (→ 500) → `fetchEventsExternal` swallowed it into an empty list → blank events with HTTP 200 and **no logs** (`removeConsole` had stripped the error; now fixed to keep `console.error`). The Coolify-built (dockerfile) staging app was fine because its build bakes Coolify's own correct value, which hid the mismatch. Rules: GitHub secrets are the source of truth for `NEXT_PUBLIC_*` in image builds; `NEXT_PUBLIC_API_URL` must include `/api` (backend serves `/api/events`); the prod `:main` build uses **repo-level** secrets (there is no `production` GH environment) so verify `https://api.esdeveniments.cat/api` before cutover; confirm a baked value with `docker exec <c> sh -c "grep -rhoE 'https://api[a-zA-Z0-9._/-]*' /app/.next/server | sort -u"`. The post-deploy smoke test now asserts `/api/events` returns data so this can't ship silently again. See [docs/ci-build-push-migration.md](docs/ci-build-push-migration.md).
+
+## Cloudflare Zaraz runs zone-wide — a Google tag there fires on every host, bypassing app gating
+
+On 2026-08-18 the prod GA4 property (`G-1F86ZBKSJ0`) showed `staging.esdeveniments.cat` and `coolify.esdeveniments.cat` traffic. The app was innocent — `app/GoogleScripts.tsx` gates gtag/Ads behind an `isProductionHost` allowlist. The source was **Cloudflare Zaraz**: the zone-level tag manager injects its loader into every hostname in the `esdeveniments.cat` zone and carried a GA4 integration with the prod measurement ID, so it fired `stats.g.doubleclick.net/g/collect?t=dc&tid=G-1F86ZBKSJ0` on staging and on the Coolify dashboard itself. Anything that runs at the CDN/zone level (Zaraz, Workers, edge injections) executes *outside* the app and cannot be stopped by app-side host gating. When "foreign traffic in GA" appears, check what Cloudflare injects — and probe with a live browser that logs network requests: `curl`/grep of the served HTML misses Zaraz because the loader is UA-gated/inline. Fix = remove the GA4/Ads integration from Zaraz (the app already implements GA4 + Ads + Consent Mode v2 natively); detect with the nightly `no-google-tracking` E2E against the deployed staging host; clean up with a GA4 hostname data filter. See [docs/incidents/2026-08-18-zaraz-zone-wide-google-tags.md](docs/incidents/2026-08-18-zaraz-zone-wide-google-tags.md).
+
+## Cutting a Coolify app to Docker Image: `BUILD_VERSION` survives a naive env copy
+
+When standing up the new Docker Image apps (2026-07-03, both staging and prod),
+copying env vars over from the old Dockerfile app also copied `BUILD_VERSION` —
+no copy method excludes it automatically. Left in place, it shadows the value
+the image bakes at build time and silently breaks the `/api/health` version
+check `deploy-coolify.yml` polls after every deploy (the deploy job then times
+out waiting for a SHA that never appears, even though the container is
+actually healthy). After any env-var copy onto a Docker Image app, check for
+and delete `BUILD_VERSION` before wiring in the CI webhook. See
+[docs/ci-build-push-migration.md](docs/ci-build-push-migration.md).
+
+Also: Coolify's "Deploy Webhook" is a distinct URL from the app's public FQDN
+and from the "Manual Git Webhooks" section on the same page — grab it from the
+top of the app's Webhooks tab, it needs the `Authorization: Bearer` header the
+same way `COOLIFY_WEBHOOK_URL`/`_STAGING` are consumed in the workflow.
+
+## PR review-loop must wait for AI bot re-reviews to settle before declaring convergence
+After a push that should re-trigger bots, the GitHub review-thread stream
+arrives over a few minutes (Copilot + CodeRabbit + Greptile + Cubic + Gemini
+each have their own polling cadence). A single `gh api graphql` filtered
+list at time T is conclusive evidence of *that instant*, not the eventual
+stable state. Round 2 on PR #426 fetched 1 unresolved thread and declared
+convergence; another 12 landed within ten minutes, including two P1
+regressions the same PR's round-1 commit had introduced. Rule: poll twice,
+≥ 4 min apart, and only call convergence when `totalCount` is stable AND
+`unresolved == 0` (or new threads are declines of previously-declined
+items). See `docs/incidents/2026-07-26-pr-review-loop-missed-threads.md`.
+
+## An enrichment wrapper that `return null`s on backend 401 masks every authenticated-session regression
+`lib/auth/enrichment.ts.enrichWithBackendProfile` used to call
+`getAuthenticatedUserExternal(accessToken)` and silently `return user` on any
+failure — so when the backend rejected the Bearer with 401 (audience
+mismatch, JWKS not imported in preprod, etc.), the session *looked* valid
+because the id_token was itself correct. The navbar then rendered with an
+empty `username` (`getProfileSlug(user) => ""`) and the profile menu item
+disappeared. Users reported "I can't see my profile in the menu" with no
+breadcrumb to the actual cause. Rule of thumb: any "best-effort" wrapper
+that can silently down-grade to a less-privileged user view MUST surface the
+failure mode on the result (here: `profileEnrichmentFailed: "auth" | "transient"`)
+so the UI can render an honest warning. Also: log JWT `iss`/`aud`/`exp` claim
+hints at the rejection site so the next log scrape immediately tells you
+whether the audience is wrong, the issuer is wrong, or the JWT expired —
+don't redact everything, just enough PII to stay safe.
+
+## `AuthProvider`'s client session is hydrated once — nothing keeps it in sync
+
+`lib/auth/AuthProvider.tsx` fetches `/api/auth/me` exactly once, in a
+`useEffect` on mount, and caches the result in React state for the tab's
+lifetime. `useAuth().user` never updates on its own again. A plan to fix the
+profile-completion onboarding (`/perfil/edita`, avatar upload) originally
+assumed `router.push()` / `router.refresh()` after a successful `PATCH
+/api/users/me/profile` would be enough to reflect the new
+`profileCompleted`/`username`/`avatarUrl` — it isn't: `router.refresh()`
+only re-runs Server Component data fetching, and `AuthProvider` sits above
+the navigating route segment so it never remounts. Without an explicit
+resync, the `/publica` profile-completion gate would re-check a stale
+`false` even after a successful save. Fix: `AuthProvider` now exposes
+`refetchUser(): Promise<void>` (extracted the mount-time fetch into a
+reusable `load()` so both paths share the retry/abort logic) — any client
+mutation that changes session-derived fields (profile PATCH, avatar
+upload/remove) must call it explicitly. `router.refresh()` alone is not
+enough for anything read from `useAuth()`.
+
+## The profile events endpoint takes `period=active|past`, not `status=upcoming|past`
+
+The profile events split plan (2026-07-30, now in git history) was drafted against a param
+named `status`. Gerard's actual contract (confirmed 2026-07-30, live on PRE)
+is `period`, required, lowercase, on both
+`/api/users/{username}/events?period=active|past` and
+`/api/users/me/favorites/events?period=active|past` (same spec, for the
+future favourites split). `active` includes upcoming *and* in-progress
+events; `past` sorts most-recent-first. `lib/api/users-external.ts`
+`getUserEventsExternal` keeps `status: "upcoming" | "past"` as its own
+parameter name (a domain word, matching `ProfileEventsSectionProps`) and
+translates it to `period` at that one boundary — see `PERIOD_BY_STATUS`.
+If a future endpoint needs the same split, translate at the API-layer
+boundary rather than renaming the domain-level `status` everywhere it's
+threaded through.
+
+**Update, 2026-07-31:** the fix above only touched `users-external.ts`. It
+missed `/api/users/me/favorites/events` — the plan's own finding #2 argued
+favourites didn't need a `period` split yet, so `favorites-external.ts` was
+left sending just `page`/`size`. The backend enforces `period` there too,
+live, independent of whether the frontend favourites split has shipped:
+every `listFavoriteEventsExternal` call was failing with
+`HTTP 500 "Required request parameter 'period' ... is not present"`
+(confirmed via Coolify staging logs), which `/api/favorites` turns into a
+hardcoded 502, breaking `/preferits` and — because homepage cards never
+pass `initialIsFavorite` (`components/ui/hybridEventsList/index.tsx`) and
+rely entirely on the client fetch to `/api/favorites` to learn favorite
+state — leaving homepage hearts stuck unfavorited on every fresh load.
+There is no `period=all`; `listFavoriteEventsExternal` now fetches both
+`active` and `past` and merges them, since `/preferits` needs both (display
++ `FavoritesAutoPrune`'s expired-favourite cleanup, PR #430) in one list.
+
+`upcomingEventCount`/`pastEventCount` on `UserPublicResponseDTO`
+(`lib/validation/user.ts`) are unconfirmed — still `.nullish()`, degrading to
+a label-only tab until the backend starts sending them.
+
+## A field the backend drops can empty every event list, with HTTP 200
+
+Backend v2 (PRE, 2026-10-18) removed event `type`. Two frontend checks still
+required it: the Zod event schema and the `isEventSummaryResponseDTO` type
+guard. Zod rejected every payload and the guard filtered every remaining
+event out, so lists rendered empty with no error page. v2 also answers 401
+to any request without `X-Backend-Key`, which the safe fallbacks turn into
+the same empty lists. When the backend contract changes, grep for the
+removed field in `lib/validation/` and `types/api/is*.ts` first, and check
+PRE's `/v3/api-docs` (it needs no key) before trusting an empty page.
+
+## Module-level state is not shared between a server action and a route handler
+
+`lib/cache/event-detail-cache.ts` kept its cache in a module-level `Map` and
+documented that the edit action and `/api/events/[slug]` shared it. A production
+build bundles them separately, so each got its own copy. The action cleared its
+copy, the route kept serving the old event, and owners saw their edit only after
+the 30-minute TTL. `next dev` uses one module graph, so it never showed. Keep
+state that two entry points must share on `globalThis`, as `redis-client.ts`
+does, and test it by importing the module again after `vi.resetModules()`.
+
+## Pin `NEXT_PUBLIC_SITE_URL` when you run e2e against pre-production
+
+`NEXT_PUBLIC_SITE_URL` is inlined at build time, and the event page fetches its
+own `/api/events/{slug}` through that origin. Unset, it falls back to the
+production site, so an event that exists only on pre-production renders "not
+found" while the backend serves it. Build with `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
+for local runs. The e2e-integration workflow already does. The sponsor checkout
+refuses a non-https site URL in production, so the payment specs need an https
+value instead.
+
+## Specs that type a password must switch traces off
+
+Playwright traces record `fill()` arguments in plain text, and the staging
+workflows retry and upload `playwright-report/`. The `E2E_STAGING_*` specs call
+`test.use({ trace: "off" })`. Do the same in any new spec that logs in with a
+real credential.
+
+## A rejected refresh token must not leave its claim open
+
+`coordinateRefresh` claims a refresh token in the database before it calls Logto.
+When Logto answered 4xx, the claim stayed open with no result. Every later
+request with that token waited 20 seconds, then threw an error without a status,
+which `resolveSession` treats as transient (503), so the dead cookie was never
+cleared. Leaving timeouts and 5xx unresolved had the same effect for 30 days.
+The code now stores every failed exchange for 5 seconds (with its status when
+there is one), so waiting requests fail fast, and then releases the claim. If the
+provider had used the token, the retry gets `invalid_grant` and signs the user
+out. Nobody holds the rotated tokens then, so nothing better is possible. A rotated
+token whose result expired throws 401, not a statusless error, so the cookie is cleared.
+
+## A refresh claim needs a lease, keyed on `result_until`, not `result`
+
+A process that died mid-exchange (a deploy restart, a crash) left its
+`auth_refresh` claim open with no result. Every later request with that token
+waited 20 seconds and got 503 until the user signed in again. The claim now has
+`claimed_at` and a lease; after it, a request may take the claim over. The lease
+must cover everything a live owner does after the claim commits: reading the
+claim reply, the Logto call and the result write, each up to its own timeout.
+The first version covered only the Logto call, so a slow but live owner could be
+stolen from. Test "no result" as `result_until IS NULL`: the
+cleanup step sets `result = NULL` on expired results, so a spent rotated token
+also has a NULL `result`, and a lease keyed on it would replay that token.
+Derive the lease from `TURSO_TIMEOUT_MS` and `LOGTO_TOKEN_TIMEOUT_MS`, never a
+separate number, so a longer timeout cannot make the lease shorter than a live
+owner.
+
+## PR E2E builds and runs the app in the runner
+
+The required "E2E tests (Playwright)" check no longer waits for a Vercel
+preview (the Vercel quota ran out and previews stopped). The job in `ci.yml`
+runs `yarn build` and `yarn start` with `E2E_TEST_MODE=1` and
+`NEXT_PUBLIC_E2E_TEST_MODE=1`, then Playwright against `http://localhost:3000`.
+`NEXT_PUBLIC_API_URL` is inlined by `yarn build`, so the build step sets it.
+The secrets are read at runtime, so the start step needs `HMAC_SECRET`,
+`BACKEND_SERVICE_SECRET` and the `*_TEST` Stripe and Turso secrets. It also
+sets `INTERNAL_SITE_URL=http://localhost:3000`: cached readers resolve the
+app's own `/api` from config, not from the request Host, so without it they
+read production `www` instead of the build under test. If the
+backend rejects the request, safe-fallback routes (categories, places, news)
+return 200 with empty data, while `/api/events` passes the upstream error on;
+either way the data specs fail. The job does not reuse the quality job's build
+or its `.next/cache` key, because `NEXT_PUBLIC_E2E_TEST_MODE` is inlined at
+build time.
+
+## E2E runs on pull requests only
+
+The E2E job has `if: github.event_name == 'pull_request'`. On a code push to
+`main` the Coolify deploy workflow runs its own build and E2E (it ignores
+`**/*.md`, so docs-only pushes run no E2E). A skipped E2E check on a
+push run is expected, not a pass.
+
+## Test-mode specs read `E2E_TEST_MODE` in the Playwright process
+
+`publica_to_event.flow.spec.ts` calls `test.skip` on `process.env.E2E_TEST_MODE`
+inside Playwright, so setting it only on the server step skipped the spec on
+every deploy. Set it on the step that runs `yarn test:e2e` too.
+
+## Playwright hooks keep the 30 s default under a describe-level timeout
+
+`test.setTimeout()` at describe level covers the tests, not `beforeAll` or
+`afterAll`. A real login plus publish in `beforeAll` hit 30 s. Call
+`test.setTimeout()` inside each slow hook.
+
+## Keep the window as the scroller: `overflow-x: clip`, never `hidden`, on `html, body`
+
+`styles/globals.css` used to give `html, body` `height: 100vh` and
+`overflow-x: hidden`. That made `<body>` the scroll container: `window.scrollY`
+stayed 0, `window` scroll listeners never fired, Next.js's scroll reset on
+navigation was a no-op (users landed mid-page with the navbar hidden), and Back
+lost the list position. `overflow-x: clip` clips the same way without creating
+a scroll container, and `min-height` lets `<html>` grow with the page. Because
+`<html>` sets an overflow, `body { overflow: hidden }` no longer reaches the
+viewport: lock page scroll on `document.documentElement`, as Headless UI does.
+If a Headless UI dialog already holds that lock, leave it alone: saving its
+`hidden` and writing it back after Headless releases leaves the page
+unscrollable until reload. Safari before 16 ignores `clip`, so it gets no
+horizontal clipping on `html, body`. Don't add a `hidden` fallback: it breaks
+the sticky navbar.
+Playwright's `scrollIntoViewIfNeeded()`, `hover()` and `click()` scroll the
+nearest scrollable ancestor. While `<main>` had `overflow-hidden` (until #507) they
+scrolled `<main>` itself, and a popover clipped for users looked fine in tests.
+To test what a user sees, scroll with `page.mouse.wheel()` and move the mouse
+by coordinates.
+
+## React hoists a preload `<link>` into `<head>` only when it has `href`
+
+`<link rel="preload" as="image" imageSrcSet={…} media={…}>` without `href`
+renders in `<body>`, where the browser finds it late. Pass `href` (a fallback
+URL) as well as `imageSrcSet`, as the home hero preload does (#508).
+
+## Local builds: leave `SENTRY_AUTH_TOKEN` empty
+
+`next.config.js` uploads source maps and creates a Sentry release whenever
+`SENTRY_AUTH_TOKEN` is set, and `.env.local` may set it. Every local
+`yarn build` then adds a junk release to the production project. Build with
+`SENTRY_AUTH_TOKEN= yarn build`.
+
+## Local Lighthouse: run it on Playwright's Chromium
+
+Lighthouse against Chrome 156 fails with "connection closed". Point
+`CHROME_PATH` at the Chromium that Playwright installs (on macOS,
+`~/Library/Caches/ms-playwright/chromium-*/chrome-mac-arm64/Google Chrome for
+Testing.app/Contents/MacOS/Google Chrome for Testing`).
+
+## Run the bundle gate in the main checkout; refresh its baseline from CI
+
+In a git worktree with a symlinked `node_modules`, the `.nft.json` trace files
+list longer paths. Every route's `serverBytes` grows a few KB, and
+`compare-bundle-sizes.mjs` reports dozens of false errors. Refresh
+`bundle-size-baseline.json` from the `bundle-sizes` artifact of a green develop
+CI run (`gh run download <id> -n bundle-sizes`), never from a local build.
+The artifact lists `routes` as an array; the baseline keys them by route and
+keeps its own `version` and `thresholds`. Copy the artifact's
+`client.totalBytes` into the top-level `clientTotalBytes` too: the gate reads
+that field, and without it the client check is skipped.
+`yarn build` itself fails in such a worktree. Turbopack rejects the symlink
+("the symlink target leaves the configured filesystem roots"), so build in the
+main checkout or run a real `yarn install` in the worktree.
+
+## `vi.resetModules()` keeps `vi.mock` factories
+
+A `mockImplementation` set on a mocked module survives `vi.resetModules()` and
+leaks into later tests. Restore the original implementation in a `finally`.
+
+## Shared code must not import `messages/*.json`
+
+The bundler ships an imported JSON file whole. `utils/constants.ts` and five
+shared utils imported the locale files for a few labels, so every client
+component that reached them loaded a 72 KB gzip chunk holding `ca`, `es` and
+`en`. They now read `i18n/locale-labels.generated.json`; run
+`yarn i18n:labels` after editing `Components.Constants` or the `Utils` sections
+it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
+Outside tests, only `i18n/request.ts` loads the full message files.
+
+## Messages are precompiled: strings only, no `t.raw()`
+
+`next.config.js` turns on next-intl `experimental.messages.precompile`, so the
+build compiles every message in `messages/*.json` to ICU code. Nested objects
+(namespaces) are fine, but the build fails when a leaf is an array or another
+non-string value, or holds an HTML tag with attributes (`<a href=...>`), and
+`t.raw()` returns compiled data instead of the string. Put lists (month names,
+word lists) in `i18n/locale-lists.json` and read them through
+`utils/constants.ts`; read nested strings with `t.has()` plus `t()`. Unit tests
+use the raw JSON and do not catch this, so run `yarn build`.
+
+## The backend looks events up by slug only
+
+`GET /api/events/{slug}` returns 404 for an event UUID on the v2 backend. Docs and
+agent surfaces (llms.txt, MCP, agent-view, OpenAPI) say slug only.
+
+## "N × locator resolved to visible" after a locator handler is not a stuck overlay
+
+After `addLocatorHandler` runs, Playwright waits for the overlay to hide and logs
+each poll: `5 × locator resolved to visible <div … animate-disappear>`. Its next
+line, `interception handler has finished, continuing`, is written only once the
+overlay is hidden. Five polls at Playwright's backoff is about 270 ms, which is the
+Follow-us popup's normal 300 ms close. The 2026-10-21 nightly timeout blamed on the
+popup was the date picker: its placeholder swaps itself for the real picker on
+pointer enter, so a click lost its target (`element was detached from the DOM`).
+Read the lines after the handler before blaming the overlay.
+
+## The publish button ignores clicks for 250 ms after the last step opens
+
+`EventForm` arms Publish 250 ms after the last step renders, so a double tap on
+Next cannot publish. A spec that clicks Publish sooner is silently ignored and then
+times out waiting for navigation. Wait for `data-publish-armed="true"` on
+`event-form`, never a fixed sleep.
+
+## Cloudflare caches `/api/*` only through a Cache Rule, and honors `Vary` only through one
+
+On the Free plan Cloudflare does not cache `/api/*` by default
+(`cf-cache-status: DYNAMIC`), whatever `Cache-Control` says. A Cache Rule can
+opt a route in, and `/api/image-proxy` is the one that earns it: a miss fetches
+the upstream image and usually re-encodes it with Sharp (0.2-0.8 s, measured
+2026-10-24). Cloudflare ignores `Vary: Accept` unless a Cache Rule configures
+Vary, so the image proxy returns bytes that depend on the URL only: it picks the
+output format from the `format` query param, never from the `Accept` header.
+That keeps one cached copy per URL with no Vary setup. Do not reintroduce
+`Accept` negotiation there without a Vary rule, or Cloudflare would serve one
+browser's format to every browser. Deploy URL-only code before you enable the
+rule for a host.
+
+## Browser Sentry must be initialised in `instrumentation-client.ts`
+
+Turbopack ignores `sentry.client.config.ts`. Until 2026-10-24 the browser
+`Sentry.init()` lived there, so production sent no client errors for months,
+with no build error or warning. Keep the init in `instrumentation-client.ts`.
+To check a deploy, load a page and look for `window.__SENTRY__`, then throw an
+error in the console: a `POST /monitoring?o=…&p=…` request should follow.
+The `webpack.treeshake` options in `next.config.js` also do nothing under
+Turbopack; `compiler.define` (`__SENTRY_TRACING__`, `__SENTRY_DEBUG__`) is what
+strips Sentry's tracing and debug code. Even then, `init()` from
+`@sentry/nextjs` adds 148 KB raw to the boot chunk, so the file builds a
+`BrowserClient` by hand (48 KB). That client must set what `init()` did for
+free: `release` (`process.env._sentryRelease`), `tunnel` (`sentryTunnelFor`)
+and `eventFiltersIntegration` (without it `ignoreErrors` and `denyUrls` do
+nothing).
+
+## react-day-picker ignores CSS variables set on a parent
+
+The library declares its defaults (`--rdp-accent-color`, `--rdp-day_button-height`,
+...) on `.rdp-root` itself, so variables set on a wrapper never reach it. The old
+`.rdp-filter-wrapper` asked for 28px days and got 42px, and the publish calendar's
+arrows stayed the library's blue. Set the variables on `.rdp-calendar .rdp-root`.
+In range mode, a controlled `selected` with `to === from` counts as a full range,
+so with `resetOnSelect` the next tap starts over instead of picking the end.
+`DateRangeCalendar` keeps `to` undefined while it waits for the second tap.
+
+## `@tailwindcss/forms` ignores `accent-*` on radios and checkboxes
+
+The plugin resets their `appearance`, sets `color: #2563eb` on the input
+itself and paints the checked state with `currentColor`. So `accent-primary`
+does nothing, and a `text-primary` on the parent label does not reach the
+input. It also rings them on every `:focus`, mouse clicks included. The base
+layer in `styles/globals.css` now makes every checkbox and radio brand red and
+rings them only on `:focus-visible`. Do not add `accent-*`, and never
+`focus:ring-0`: that left the filters modal options with no keyboard focus.
+
+## After `router.refresh()`, a client component keeps its state
+
+The server re-renders with new props, but React keeps the same client
+instance, so `useState` initializers do not run again. A server action that
+writes a cookie (a token refresh in `promotionRequest`) re-renders the page the
+same way. The promote page started with no options while `RefreshSession`
+renewed the token, and kept no tab or card picked after the refresh. A
+changing `key` fixes the state but remounts the component, which resets its
+refs and sent `promote_page_view` twice.
+`PromoteEventClient` instead compares the `options` prop during render and
+re-picks only when the picked option is gone or no longer available.
+
+## A Vitest hook must not return a mock
+
+`beforeEach(() => mock.mockReset())` returns the mock, and Vitest runs a
+function returned from `beforeEach` as that test's cleanup. So the mock is
+called once more after every test, and a test that makes it return a promise
+that never settles times out in the hook. Use a block body:
+`beforeEach(() => { mock.mockReset(); })`.
+
+## Performance numbers: three traps
+
+Baselines, Google's limits and the method live in `docs/performance/baselines.md`; scripts are `scripts/perf-lab.mjs` (lab) and `scripts/crux-check.py` (field).
+
+- A local build of `main` is not a valid baseline while `main` uses backend contract v1: against the v2 API its event pages render as 404 and listings are empty, so it looks fast. Compare develop commits locally and use the live site as the production reference.
+- Lab runs in E2E mode have no Google consent box, ads or analytics. On real first visits the consent box text is often the LCP (6-7 s on a slow phone), so field LCP is much worse than lab LCP.
+- Start local builds with `INTERNAL_SITE_URL=http://localhost:<port>`. Cached readers resolve the app's own `/api` from config, not the request Host, so without it they read another environment.
+
+## Funding Choices: `googlefcInactive` is no signal; test the box under the real host
+
+FC adds the `googlefcInactive` frame for every visitor, also for those who
+already chose, so a fallback keyed on it reopens the consent box on every page
+(on production until #609). Use the TCF `addEventListener` events instead: the
+first event has `gdprApplies`, and a returning visitor's first event is
+`tcloaded` with a `tcString`. With FC on our site `getTCData` always fails (it is deprecated in TCF 2.2; use `addEventListener`),
+and the `FCCDCF` cookie is set on a first visit too. FC shows no box on
+`localhost`: map the production host to the local build with Chromium's
+`--host-resolver-rules`, and serve it over HTTPS for returning-visitor tests
+(over http FC's consent cookies do not stick). Method in
+`docs/performance/baselines.md` (2026-11-02 (2)).
+
+## `"use cache"` needs its own handler here
+
+`cacheMaxMemorySize: 0` (set so the Redis page cache keeps no per-process copy)
+also turns Next's built-in `"use cache"` store into a no-op in production.
+Until `use-cache-handler.mjs` was registered as `cacheHandlers.default`, no
+`"use cache"` function was cached at runtime: every call ran again. Pages that
+Next stores whole (the event page) were fast anyway, because the route cache is
+a separate layer. To check: log server `fetch` calls (`NODE_OPTIONS=--require`
+with a small fetch wrapper) and load a page twice; a cached reader must not
+fetch the second time.
+
+## Server readers have one path: the external wrapper
+
+`utils/constants.ts` used to set `isBuildPhase` when `NODE_ENV` was production
+and `VERCEL_URL` was not set, which is always the case on Coolify. So the
+"internal route + in-memory cache" path never ran in production, and a town
+page made 6 to 8 uncached backend calls for places, categories and regions.
+The reference-data readers (places, categories, regions, cities) now always
+call the `*-external.ts` wrapper through the in-memory cache, and each calls
+`connection()` before the cache so a warm cache cannot change what Next
+prerenders. The list readers fall back to `[]` on failure (the categories,
+regions and cities wrappers return it; `fetchPlacesAggregatedExternal` throws
+and `fetchPlaces` catches), so their caches use `storeEmpty: false`. A place
+404 (`null`) is a real answer and stays cached.
+Town event lists use `"use cache"` instead (`fetchEventsCached`); the
+promoted-events cache keeps `[]` on purpose.
+
+## Next's `updateTag` doesn't clear Cloudflare; purge by tag
+
+Publish and edit called `updateTag`, and the event page was fresh, but listings
+stayed old for up to 30 min: `updateTag`/`revalidateTag` clear Next's caches
+(Redis page cache, `"use cache"` store), not Cloudflare, which caches public
+HTML for `s-maxage=1800`. `proxy.ts` (`utils/proxy-page-headers.ts`) now sends a `Cache-Tag` header
+(`lib/cdn/cache-tags.ts`) and publish/edit/delete purge the event's tags in
+`after()` (`lib/cdn/cloudflare-purge.ts`). Things checked on the way:
+
+- Cloudflare ignores `stale-while-revalidate` when `s-maxage` is set, so an
+  expired page is refetched while the visitor waits (`cf-cache-status:
+  EXPIRED`), and "invalidate" (mark stale) behaves like a purge for us.
+- Tags start with the configured site host (`getCdnHost`), not the request's
+  Host header: purges are zone-wide and staging shares the zone, and a proxy
+  that rewrites Host must not make the labels and the purge disagree.
+- `/api/*` is never edge-cached (DYNAMIC), so a prefix purge of an API URL does
+  nothing; only HTML needs purging.
+- Free plan: 5 purge requests/min per account, 100 tags each. Batch.
+- The purge runs in `after()`: in a server action Next has already written the
+  revalidations; in a route handler they start before `after()` callbacks run.
+- Pages cached before a tag existed have no tags; the post-deploy purge in
+  `deploy-coolify.yml` clears them.

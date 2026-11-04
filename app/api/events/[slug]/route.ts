@@ -1,34 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
+import { deleteEventById } from "@lib/api/events";
+import { getCurrentUser } from "@lib/auth/session";
 import { handleApiError } from "@utils/api-error-handler";
-import { createKeyedCache } from "@lib/api/cache";
-import type { EventDetailResponseDTO } from "types/api/event";
-
-// Cache event detail by slug to avoid hitting backend on every refresh (which increments visits).
-// TTL aligns with Cache-Control s-maxage for consistency.
-const EVENT_DETAIL_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const { cache: eventDetailCache } =
-  createKeyedCache<EventDetailResponseDTO | null>(EVENT_DETAIL_TTL_MS);
+import { eventDetailCache, deleteEventDetailCache } from "@lib/cache/event-detail-cache";
+import { eventTag, eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 
 // GET /api/events/[slug] - server-only proxy with server-side HMAC and stable caching
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ slug: string }> }
+  context: RouteContext<"/api/events/[slug]">
 ) {
   try {
     const { slug } = await context.params;
     const data = await eventDetailCache(slug, async (key) => {
       return await fetchExternalEvent(String(key));
     });
-    // Note: Removed per-request revalidateTag call for past events.
-    // The previous logic called revalidateTag on EVERY request for past events,
-    // which caused excessive cache write operations and transient errors.
-    // Event lists already have time-based revalidation (revalidate: 300 seconds)
-    // via the fetch cache in lib/api/events.ts, so this was redundant.
     return NextResponse.json(data ?? null, {
       status: data ? 200 : 404,
       headers: {
-        // Shared cache at the edge; app fetch can also set revalidate tags
         "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=1800",
       },
     });
@@ -36,5 +29,63 @@ export async function GET(
     return handleApiError(e, "/api/events/[slug]", {
       fallbackData: null,
     });
+  }
+}
+
+// DELETE /api/events/[slug] - delete event by slug (requires auth cookie).
+// The backend enforces the creator check; we fail fast if no session exists.
+export async function DELETE(
+  _request: Request,
+  context: RouteContext<"/api/events/[slug]">
+) {
+  try {
+    const [currentUser, { slug }] = await Promise.all([
+      getCurrentUser(),
+      context.params,
+    ]);
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const event = await fetchExternalEvent(slug);
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    // Fail fast if the session does not belong to the event creator. The
+    // backend also enforces this, but checking here avoids issuing a mutation
+    // for events the caller does not own.
+    const isCreator =
+      Boolean(currentUser.id) &&
+      currentUser.id === event.owner?.id;
+    if (!isCreator) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await deleteEventById(event.id);
+    // Clear in-memory cache so next GET doesn't serve stale data
+    deleteEventDetailCache(slug);
+    // Purge Next.js fetch Data Cache for the specific event and all event
+    // lists so deleted events don't remain in cached listing pages.
+    revalidateTag(eventTag(slug), { expire: 0 });
+    revalidateTag(eventsTag, { expire: 0 });
+    revalidateTag(eventsCategorizedTag, { expire: 0 });
+    // Purge Next.js Data Cache for all locales of the event detail page.
+    // Default locale (ca) has no prefix; non-default locales get a prefix path.
+    try {
+      for (const locale of SUPPORTED_LOCALES) {
+        const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+        revalidatePath(`${prefix}/e/${slug}`);
+      }
+    } catch {
+      // revalidatePath is a no-op outside of a render context in some environments
+    }
+    // Next's tags don't reach Cloudflare: purge the pages that showed the
+    // event. Next starts the revalidations above before the response is sent,
+    // and after() runs once it has been sent.
+    after(() => purgeEventPagesFromCdn([event]));
+    return new NextResponse(null, { status: 204 });
+  } catch (e) {
+    return handleApiError(e, "/api/events/[slug] DELETE");
   }
 }

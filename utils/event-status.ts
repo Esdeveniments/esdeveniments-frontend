@@ -3,9 +3,9 @@ import type {
   EventStatusLabels,
 } from "types/event-status";
 import { normalizeEndTime } from "@utils/date-helpers";
-import caMessages from "../messages/ca.json";
+import localeLabels from "../i18n/locale-labels.generated.json";
 
-const defaultLabels: EventStatusLabels = (caMessages as any).Utils
+const defaultLabels: EventStatusLabels = localeLabels.utils
   .EventStatus as EventStatusLabels;
 
 const COUNT_PLACEHOLDER = "{count}";

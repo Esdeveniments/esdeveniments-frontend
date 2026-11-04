@@ -1,20 +1,27 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import CardServer from "@components/ui/card/CardServer";
 import List from "@components/ui/list";
 import NoEventsFound from "@components/ui/common/noEventsFound";
-import HeadingLayout from "@components/ui/hybridEventsList/HeadingLayout";
+import Tabs from "@components/ui/common/tabs";
+import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkeleton";
+import { buildFavoritesTabItems } from "@components/partials/favorites-tabs";
+import FavoritesEventsSection from "@components/partials/FavoritesEventsSection";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import { fetchEventBySlugWithStatus } from "@lib/api/events";
+import { getFavoritePeriodCounts } from "@lib/api/favorites-external";
 import { captureException } from "@sentry/nextjs";
 import { filterActiveEvents, isEventActive } from "@utils/event-helpers";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
 import { MAX_FAVORITES } from "@utils/constants";
 import { getFavoritesFromCookies } from "@utils/favorites";
+import { getAccessTokenFromCookies } from "@utils/auth-cookies";
 import { getTranslations } from "next-intl/server";
 import type { EventSummaryResponseDTO } from "types/api/event";
+import type { ProfileTranslator } from "types/props";
 import FavoritesAutoPrune from "./FavoritesAutoPrune";
 import FavoritesPageTracker from "./FavoritesPageTracker";
 
@@ -100,27 +107,70 @@ async function fetchFavoritesEvents(
   return { events: results, notFoundSlugs };
 }
 
+function collectExpiredEventKeys<K>(
+  events: EventSummaryResponseDTO[],
+  keyOf: (event: EventSummaryResponseDTO) => K | null | undefined
+): K[] {
+  return events.flatMap((event) => {
+    const key = keyOf(event);
+    if (!key) return [];
+    if (isEventActive(event)) return [];
+    return [key];
+  });
+}
+
 export default async function PreferitsPage() {
   const locale = (await rootLocale()) as AppLocale;
-  const t = await getTranslations({ locale, namespace: "App.Favorites" });
+  const [t, authToken] = await Promise.all([
+    getTranslations({ locale, namespace: "App.Favorites" }),
+    getAccessTokenFromCookies(),
+  ]);
 
-  const favoriteSlugs = [...(await getFavoritesFromCookies())].reverse();
-  const uniqueFavoritesCount = new Set(favoriteSlugs).size;
-  const { events, notFoundSlugs } = await fetchFavoritesEvents(favoriteSlugs);
-  const activeEvents = filterActiveEvents(events);
+  // Authenticated: backend is the source of truth, scoped by period. No more
+  // client-side expiry filtering/pruning needed — period=active already
+  // excludes expired events server-side, so there's nothing to prune.
+  if (authToken) {
+    const { activeCount, pastCount } = await getFavoritePeriodCounts(authToken);
+    const tabItems = buildFavoritesTabItems(
+      {
+        activeCount: activeCount ?? undefined,
+        pastCount: pastCount ?? undefined,
+      },
+      t
+    );
 
-  const expiredSlugs = events.flatMap((event) => {
-    if (!event.slug) return [];
-    if (isEventActive(event)) return [];
-    return [event.slug];
-  });
-
-  const slugsToRemove = Array.from(new Set([...expiredSlugs, ...notFoundSlugs]));
-
-  if (favoriteSlugs.length === 0 || activeEvents.length === 0) {
     return (
-      <div className="container py-section-y flex-col justify-center items-center" data-testid="favorites-page-empty">
-        <FavoritesAutoPrune slugsToRemove={slugsToRemove} />
+      <>
+        <Tabs items={tabItems} active="upcoming" ariaLabel={t("heading")} />
+        {activeCount !== null && pastCount !== null && (
+          <FavoritesPageTracker
+            favoritesCount={activeCount + (pastCount ?? 0)}
+            activeCount={activeCount}
+          />
+        )}
+        <div className="w-full mt-section-y">
+          <Suspense fallback={<EventsGridSkeleton count={3} />}>
+            <FavoritesSectionOrError accessToken={authToken} t={t} />
+          </Suspense>
+        </div>
+      </>
+    );
+  }
+
+  // Guest: cookie store, keyed by slug — unchanged from before this feature.
+  const cookieSlugs = [...(await getFavoritesFromCookies())].reverse();
+  const fetched = await fetchFavoritesEvents(cookieSlugs);
+  const expiredSlugs = collectExpiredEventKeys(fetched.events, (e) => e.slug);
+  const slugsToRemove = Array.from(
+    new Set([...expiredSlugs, ...fetched.notFoundSlugs])
+  );
+  const activeEvents = filterActiveEvents(fetched.events);
+  const uniqueFavoritesCount = new Set(cookieSlugs).size;
+
+  if (cookieSlugs.length === 0 || activeEvents.length === 0) {
+    return (
+      <div data-testid="favorites-page-empty">
+        <FavoritesAutoPrune slugsToRemove={slugsToRemove} eventIdsToRemove={[]} />
         <FavoritesPageTracker favoritesCount={uniqueFavoritesCount} activeCount={0} />
         <NoEventsFound title={t("emptyTitle")} description={t("emptyDescription")} />
       </div>
@@ -128,24 +178,18 @@ export default async function PreferitsPage() {
   }
 
   return (
-    <div className="container py-section-y flex-col justify-center items-center" data-testid="favorites-page">
-      <FavoritesAutoPrune slugsToRemove={slugsToRemove} />
-      <FavoritesPageTracker favoritesCount={uniqueFavoritesCount} activeCount={activeEvents.length} />
-      <div className="w-full">
-        <HeadingLayout
-          title={t("heading")}
-          subtitle={t("subtitle")}
-          titleClass="heading-1"
-          subtitleClass="body-large"
-          cta={null}
-        />
-        <p className="body-small text-foreground/80 mb-element-gap">
-          {t("countLabel", {
-            count: uniqueFavoritesCount,
-            max: MAX_FAVORITES,
-          })}
-        </p>
-      </div>
+    <div data-testid="favorites-page">
+      <FavoritesAutoPrune slugsToRemove={slugsToRemove} eventIdsToRemove={[]} />
+      <FavoritesPageTracker
+        favoritesCount={uniqueFavoritesCount}
+        activeCount={activeEvents.length}
+      />
+      <p className="body-small text-foreground/80 mb-element-gap">
+        {t("subtitle")}
+      </p>
+      <p className="body-small text-foreground/80 mb-element-gap">
+        {t("countLabel", { count: uniqueFavoritesCount, max: MAX_FAVORITES })}
+      </p>
       <List events={activeEvents}>
         {(event, index) => (
           <CardServer
@@ -158,4 +202,33 @@ export default async function PreferitsPage() {
       </List>
     </div>
   );
+}
+
+// Wraps FavoritesEventsSection so a backend failure renders the same
+// backendUnavailable error state /preferits has always had, now sourced
+// from the single-period fetch instead of the merged one.
+async function FavoritesSectionOrError({
+  accessToken,
+  t,
+}: {
+  accessToken: string;
+  t: ProfileTranslator;
+}) {
+  const section = await FavoritesEventsSection({
+    accessToken,
+    status: "upcoming",
+  });
+
+  if (section === null) {
+    return (
+      <div data-testid="favorites-page-error">
+        <NoEventsFound
+          title={t("errorTitle")}
+          description={t("errorDescription")}
+        />
+      </div>
+    );
+  }
+
+  return section;
 }

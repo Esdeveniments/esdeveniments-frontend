@@ -3,12 +3,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // Mock the server helper to avoid real network (external proxy layer)
 vi.mock("@lib/api/events-external", () => {
   return {
-    fetchEventsExternal: vi.fn(),
+    fetchEventsExternalResult: vi.fn(),
   };
 });
 
 import { GET } from "app/api/events/route";
-import { fetchEventsExternal } from "@lib/api/events-external";
+import { fetchEventsExternalResult } from "@lib/api/events-external";
 
 describe("/api/events proxy", () => {
   const originalEnv = { ...process.env };
@@ -16,7 +16,7 @@ describe("/api/events proxy", () => {
   beforeEach(() => {
     vi.resetModules();
     process.env = { ...originalEnv };
-    (fetchEventsExternal as unknown as ReturnType<typeof vi.fn>).mockReset();
+    vi.mocked(fetchEventsExternalResult).mockReset();
   });
 
   afterEach(() => {
@@ -24,15 +24,17 @@ describe("/api/events proxy", () => {
   });
 
   it("forwards filters and clamps page/size; sets cache headers", async () => {
-    (
-      fetchEventsExternal as unknown as ReturnType<typeof vi.fn>
-    ).mockResolvedValue({
-      content: [],
-      currentPage: 0,
-      pageSize: 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
+    vi.mocked(fetchEventsExternalResult).mockResolvedValue({
+      error: null,
+      status: 200,
+      data: {
+        content: [],
+        currentPage: 0,
+        pageSize: 10,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      },
     });
 
     const req = new Request(
@@ -46,8 +48,8 @@ describe("/api/events proxy", () => {
     );
 
     // Verify mapping and clamping
-    expect(fetchEventsExternal).toHaveBeenCalledTimes(1);
-    const params = (fetchEventsExternal as any).mock.calls[0][0];
+    expect(fetchEventsExternalResult).toHaveBeenCalledTimes(1);
+    const params = vi.mocked(fetchEventsExternalResult).mock.calls[0][0];
     expect(params.place).toBe("barcelona");
     expect(params.category).toBe("music");
     expect(params.byDate).toBe("avui");
@@ -62,15 +64,17 @@ describe("/api/events proxy", () => {
   });
 
   it("ignores invalid numeric params", async () => {
-    (
-      fetchEventsExternal as unknown as ReturnType<typeof vi.fn>
-    ).mockResolvedValue({
-      content: [],
-      currentPage: 0,
-      pageSize: 10,
-      totalElements: 0,
-      totalPages: 0,
-      last: true,
+    vi.mocked(fetchEventsExternalResult).mockResolvedValue({
+      error: null,
+      status: 200,
+      data: {
+        content: [],
+        currentPage: 0,
+        pageSize: 10,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      },
     });
 
     const req = new Request(
@@ -78,7 +82,7 @@ describe("/api/events proxy", () => {
     );
     await GET(req);
 
-    const params = (fetchEventsExternal as any).mock.calls[0][0];
+    const params = vi.mocked(fetchEventsExternalResult).mock.calls[0][0];
     expect(params.page).toBeUndefined();
     expect(params.size).toBeUndefined();
     expect(params.lat).toBeUndefined();

@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const host = process.env.HOST || "127.0.0.1";
+const host = process.env.HOST || "localhost";
 const port = process.env.PORT || "3000";
 const baseUrl =
   process.env.PLAYWRIGHT_TEST_BASE_URL || `http://${host}:${port}`;
@@ -27,6 +27,9 @@ if (process.env.NEXT_PUBLIC_API_URL) {
 }
 if (process.env.HMAC_SECRET) {
   webServerEnv.HMAC_SECRET = process.env.HMAC_SECRET;
+}
+if (process.env.BACKEND_SERVICE_SECRET) {
+  webServerEnv.BACKEND_SERVICE_SECRET = process.env.BACKEND_SERVICE_SECRET;
 }
 
 export default defineConfig({

@@ -2,9 +2,8 @@ import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
-import { getCategories, fetchCategoriesForMetadata } from "@lib/api/categories";
+import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, toLocalDateString } from "@utils/helpers";
-import { getPlaceTypeAndLabelForMetadata } from "@lib/seo/place-metadata";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -32,7 +31,6 @@ import {
   parseFiltersFromUrl,
   getRedirectUrl,
 } from "@utils/url-filters";
-import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
@@ -46,10 +44,7 @@ import type { PlacePageEventsResult } from "types/props";
 import { siteUrl } from "@config/index";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { getPlaceAliasOrInvalidPlaceRedirectUrl } from "@utils/place-alias-or-invalid-redirect";
-import {
-  getPlaceExpandability,
-  getPlaceExpandabilityForMetadata,
-} from "@lib/seo/place-expandability";
+import { getPlaceExpandability } from "@lib/seo/place-expandability";
 import {
   SSR_EVENTS_SIZE_EXPANDABLE,
   SSR_EVENTS_SIZE_THIN,
@@ -59,9 +54,7 @@ import {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ place: string; byDate: string }>;
-}) {
+}: PageProps<"/[locale]/[place]/[byDate]">) {
   const { place, byDate } = await params;
 
   const validation = validatePlaceForMetadata(place);
@@ -71,7 +64,7 @@ export async function generateMetadata({
 
   let categories: CategorySummaryResponseDTO[] = [];
   try {
-    categories = await fetchCategoriesForMetadata();
+    categories = await getCategories();
   } catch (error) {
     console.error("generateMetadata: Error fetching categories:", error);
   }
@@ -96,7 +89,7 @@ export async function generateMetadata({
   const actualDate = parsed.segments.date;
   const actualCategory = parsed.segments.category;
 
-  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelForMetadata(
+  const placeTypeLabel: PlaceTypeAndLabel = await getPlaceTypeAndLabelCached(
     place
   );
 
@@ -123,10 +116,7 @@ export async function generateMetadata({
   // URLs in "Crawled — currently not indexed" (Dec 2025–May 2026 GSC drop).
   // Reversible: when inventory grows past the threshold, the meta tag stops being emitted
   // and the URL re-enters the sitemap on the same signal — Google re-indexes on next crawl.
-  const expandable = await getPlaceExpandabilityForMetadata(
-    place,
-    placeTypeLabel.type
-  );
+  const expandable = await getPlaceExpandability(place, placeTypeLabel.type);
 
   return buildPageMeta({
     title: pageData.metaTitle,
@@ -141,9 +131,7 @@ export async function generateMetadata({
 
 export default async function ByDatePage({
   params,
-}: {
-  params: Promise<{ place: string; byDate: string }>;
-}) {
+}: PageProps<"/[locale]/[place]/[byDate]">) {
   // Parallelize independent operations: params, locale, and categories fetch.
   const [resolvedParams, locale, categoriesResult] = await Promise.all([
     params,
@@ -287,6 +275,7 @@ export default async function ByDatePage({
     paramsForFetch,
     pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
     locale,
+    placeIsExpandable: isExpandableForFetch,
   });
 
 
@@ -298,11 +287,6 @@ export default async function ByDatePage({
     locale,
     rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}/${actualDate}`,
-    buildFallbackUrlForInvalidPlace: () =>
-      buildFallbackUrlForInvalidPlace({
-        byDate,
-        rawSearchParams: {},
-      }),
     fetchPlaceBySlug,
   });
   if (placeRedirectUrl) {
@@ -414,6 +398,7 @@ async function buildPlaceByDateEventsPromise({
   paramsForFetch,
   pageDataPromise,
   locale,
+  placeIsExpandable,
 }: {
   place: string;
   finalCategory?: string;
@@ -421,6 +406,7 @@ async function buildPlaceByDateEventsPromise({
   paramsForFetch: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
   locale: AppLocale;
+  placeIsExpandable: boolean;
 }): Promise<PlacePageEventsResult> {
   const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
@@ -487,5 +473,6 @@ async function buildPlaceByDateEventsPromise({
     structuredScripts: structuredScripts.length
       ? structuredScripts
       : undefined,
+    placeIsExpandable,
   };
 }

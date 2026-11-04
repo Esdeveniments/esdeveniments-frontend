@@ -305,16 +305,16 @@ export function buildOptimizedImageUrl(
 }
 
 /**
- * Generate URLs for <picture> element sources with modern format fallbacks.
- * Returns WebP, AVIF, and JPEG URLs for progressive enhancement.
- * WebP is prioritized over AVIF for faster encoding and more reliable output.
+ * Generate URLs for <picture> element sources: WebP plus a fallback URL
+ * without a format param (the proxy picks the format from the Accept header).
+ * No AVIF source: listed after WebP it is never picked, since every browser
+ * that supports AVIF also supports WebP.
  *
  * Usage:
  * ```tsx
  * const sources = buildPictureSourceUrls(imageUrl, cacheKey, { width, quality });
  * <picture>
  *   <source srcSet={sources.webp} type="image/webp" />
- *   <source srcSet={sources.avif} type="image/avif" />
  *   <img src={sources.fallback} alt="..." />
  * </picture>
  * ```
@@ -327,10 +327,6 @@ export function buildPictureSourceUrls(
   const baseOptions = options ?? {};
 
   return {
-    avif: buildOptimizedImageUrl(imageUrl, cacheKey, {
-      ...baseOptions,
-      format: "avif",
-    }),
     webp: buildOptimizedImageUrl(imageUrl, cacheKey, {
       ...baseOptions,
       format: "webp",
@@ -349,7 +345,6 @@ export function buildPictureSourceUrls(
  * const sources = buildResponsivePictureSourceUrls(imageUrl, cacheKey, { quality }, [500, 800, 1200]);
  * <picture>
  *   <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
- *   <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
  *   <img src={sources.fallback} alt="..." sizes={sizes} />
  * </picture>
  * ```
@@ -370,21 +365,16 @@ export function buildResponsivePictureSourceUrls(
   });
 
   // Build "url1 500w, url2 800w, url3 1200w" srcSet strings
-  const buildSrcSet = (format: "avif" | "webp"): string =>
-    widths
-      .map((w) => {
-        const url = buildOptimizedImageUrl(imageUrl, cacheKey, {
-          ...baseOptions,
-          width: w,
-          format,
-        });
-        return `${url} ${w}w`;
-      })
-      .join(", ");
+  const webpSrcSet = widths
+    .map((w) => {
+      const url = buildOptimizedImageUrl(imageUrl, cacheKey, {
+        ...baseOptions,
+        width: w,
+        format: "webp",
+      });
+      return `${url} ${w}w`;
+    })
+    .join(", ");
 
-  return {
-    ...base,
-    webpSrcSet: buildSrcSet("webp"),
-    avifSrcSet: buildSrcSet("avif"),
-  };
+  return { ...base, webpSrcSet };
 }

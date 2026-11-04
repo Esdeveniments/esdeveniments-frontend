@@ -12,9 +12,9 @@ test.describe("Add to calendar menu", () => {
     await button.click();
 
     await expect(
-      page.getByRole("button", { name: "Google Calendar" })
+      page.getByRole("link", { name: /Google Calendar/ })
     ).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole("button", { name: "Outlook" })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole("button", { name: "Altres" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("link", { name: /Outlook/ })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("link", { name: /Altres/ })).toBeVisible({ timeout: 10000 });
   });
 });

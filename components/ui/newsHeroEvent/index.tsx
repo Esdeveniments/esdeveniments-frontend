@@ -16,7 +16,7 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
   const t = await getTranslations({ locale, namespace: "Components.News" });
   const rawImage = event.imageUrl;
 
-  // Generate AVIF, WebP, and JPEG URLs for <picture> element
+  // Generate WebP and JPEG URLs for <picture> element
   const imageQuality = getOptimalImageQuality({
     isPriority: true,
     isExternal: true,
@@ -41,12 +41,11 @@ export default async function NewsHeroEvent({ event }: NewsHeroEventProps) {
         <div className="relative aspect-[16/9] w-full md:h-80">
           <picture>
             <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
-            <source srcSet={sources.avifSrcSet} type="image/avif" sizes={sizes} />
             <img
               src={sources.fallback}
               alt={event.title}
               loading="eager"
-              decoding="sync"
+              decoding="async"
               fetchPriority="high"
               sizes={sizes}
               className="object-cover w-full h-full absolute inset-0"

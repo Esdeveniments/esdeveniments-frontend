@@ -50,6 +50,7 @@ module.exports = {
         xs: "360px",
         sm: "576px",
         md: "768px",
+        nav: "950px",
         lg: "1024px",
         xl: "1280px",
       },
@@ -67,9 +68,13 @@ module.exports = {
         background: "#ffffff",
         foreground: `rgb(${foregroundRgb} / <alpha-value>)`,
         "foreground-strong": "rgb(0 0 0 / <alpha-value>)",
-        "muted-foreground": "#6B7280", // gray-500: WCAG AA compliant (~4.6:1 on white)
+        // The only secondary text gray. Neutral to match foreground; 5.74:1 on
+        // white, 5.36:1 on muted (WCAG AA with margin). Don't use
+        // text-foreground/75 or lighter for text: ESLint blocks it.
+        "muted-foreground": "#666666",
         muted: "#F7F7F7",
-        border: "#CCCCCC",
+        border: "#CCCCCC", // Decorative: cards, dividers, popovers
+        input: "#8C8C8C", // Form control outlines: 3.36:1 on white (WCAG 1.4.11)
         "primary-foreground": "#ffffff",
         "error-foreground": "#ffffff",
 
@@ -79,14 +84,14 @@ module.exports = {
 
         // Semantic colors (NEW)
         success: "#10B981",
-        "success-dark": "#059669",
+        "success-dark": "#047857", // Text on white: 5.48:1
         "success-light": "#ECFDF5",
         "success-muted": "#D1FAE5",
         "success-border": "#A7F3D0",
         error: "#EF4444",
-        "error-dark": "#DC2626",
+        "error-dark": "#B91C1C", // Text: 6.47:1 on white, 5.66:1 on error/10
         warning: "#F59E0B",
-        "warning-dark": "#D97706",
+        "warning-dark": "#B45309", // Text on white: 5.02:1
         "warning-light": "#FFFBEB",
         "warning-muted": "#FEF3C7",
         "warning-border": "#FDE68A",
@@ -129,13 +134,26 @@ module.exports = {
         "badge-y": "0.25rem", // 4px - Badge vertical padding
       },
 
+      // === MIN HEIGHT === //
+      // --button-height: 40px (mouse) / 44px (touch), set in globals.css
+      height: {
+        button: "var(--button-height)",
+      },
+      width: {
+        button: "var(--button-height)",
+      },
+      minHeight: {
+        button: "var(--button-height)", // 40px mouse, 44px touch (WCAG 2.5.5)
+        "button-sm": "var(--button-sm-height)", // 36px mouse, 44px touch (.btn-sm)
+      },
+
       // === BORDER RADIUS === //
       borderRadius: {
         button: "9999px", // Full - Buttons, small elements
         card: "0.75rem", // 12px - Cards, containers
         input: "0.5rem", // 8px - Form inputs
         badge: "9999px", // Full - Pills, badges
-        modal: "1rem", // 16px - Modals, dialogs
+        modal: "0.75rem", // 12px - Modals, dialogs (same as card)
       },
 
       // === SHADOWS (PROFESSIONAL SYSTEM) === //

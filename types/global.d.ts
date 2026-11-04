@@ -10,6 +10,7 @@ declare global {
     __adsConsentGranted?: boolean;
     __autoAdsInitialized?: boolean;
     __autoAdsInitPending?: symbol;
+    __adsScriptSettled?: boolean;
     dataLayer?: unknown[];
     __tcfapi?: (
       command: "addEventListener" | "removeEventListener" | "getTCData",
@@ -17,6 +18,7 @@ declare global {
       callback: import("./ads").TcfCallback,
       listenerId?: number
     ) => void;
+    googlefc?: { showRevocationMessage?: () => void };
     requestIdleCallback?: (
       callback: () => void,
       options?: { timeout: number }

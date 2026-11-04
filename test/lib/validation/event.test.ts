@@ -9,7 +9,7 @@ const baseSummary = {
   hash: "hash-1",
   slug: "event-1",
   title: "Sample Event",
-  type: "FREE" as const,
+  isPromoted: false,
   url: "https://example.com/event-1",
   description: "Great event",
   imageUrl: "https://cdn.example.com/event-1.jpg",

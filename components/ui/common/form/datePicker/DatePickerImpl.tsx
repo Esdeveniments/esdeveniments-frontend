@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { DayPicker } from "react-day-picker";
-import { CalendarIcon } from "@heroicons/react/24/outline";
-import { setHours, setMinutes, setSeconds, addMinutes } from "date-fns";
-import { ca, es, enUS } from "date-fns/locale";
-import type { Locale } from "date-fns";
-import { useLocale, useTranslations } from "next-intl";
-import type { DatePickerComponentProps, TimeSelectorProps, DateButtonProps } from "types/props";
-import "react-day-picker/style.css";
-
-const LOCALE_MAP: Record<string, Locale> = { ca, es, en: enUS };
+import {
+  setHours,
+  setMinutes,
+  setSeconds,
+  addMinutes,
+  addDays,
+} from "date-fns";
+import { useTranslations } from "next-intl";
+import type { DatePickerComponentProps, TimeSelectorProps } from "types/props";
+import { toLocalDateTimeString } from "@utils/date-helpers";
+import { nowInMadrid } from "@utils/constants";
+import DateRangeCalendar from "../DateRangeCalendar";
 
 function toDate(dateStr: string): Date {
   if (!dateStr) return setHours(setMinutes(new Date(), 0), 9);
@@ -20,86 +22,66 @@ function toDate(dateStr: string): Date {
   return new Date(dateStr);
 }
 
-function toISOStringLocalMinutes(date: Date): string {
-  const y = date.getFullYear();
-  const mo = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  const h = String(date.getHours()).padStart(2, "0");
-  const mi = String(date.getMinutes()).padStart(2, "0");
-  return `${y}-${mo}-${d}T${h}:${mi}`;
-}
-
 function computeEndDate(
   startingDate: Date,
   initialEndDate: string | undefined,
   isAllDay: boolean,
 ): Date {
-  const initialEndCandidate = initialEndDate
-    ? toDate(initialEndDate)
-    : setMinutes(startingDate, startingDate.getMinutes() + 60);
-
-  const endingDate =
-    initialEndCandidate > startingDate
-      ? initialEndCandidate
-      : new Date(startingDate.getTime() + 60 * 60 * 1000);
-
   if (isAllDay) {
-    return setSeconds(setMinutes(setHours(startingDate, 23), 59), 59);
+    const candidate = initialEndDate ? toDate(initialEndDate) : startingDate;
+    const baseDate = candidate >= startingDate ? candidate : startingDate;
+    return setSeconds(setMinutes(setHours(baseDate, 23), 59), 59);
   }
 
-  return endingDate;
+  const defaultEndDate = new Date(startingDate.getTime() + 60 * 60 * 1000);
+  if (!initialEndDate) {
+    return defaultEndDate;
+  }
+
+  const candidate = toDate(initialEndDate);
+  return candidate > startingDate ? candidate : defaultEndDate;
 }
 
 function formatTime(d: Date): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-function formatDateDisplay(d: Date, locale: string): string {
-  const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
-  return d.toLocaleDateString(dateFnsLocale.code ?? locale, {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+function toYMD(d: Date): string {
+  return toLocalDateTimeString(d).slice(0, 10);
+}
+
+/** Copies the calendar day of `ymd` onto `time`, keeping its hours and minutes. */
+function withDay(ymd: string, time: Date): Date {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const result = new Date(time);
+  result.setFullYear(y, m - 1, d);
+  return result;
 }
 
 function TimeSelector({
+  id,
   value,
   onChange,
   minTime,
   label,
 }: TimeSelectorProps) {
   return (
-    <input
-      type="time"
-      value={value}
-      min={minTime}
-      onChange={(e) => onChange(e.target.value)}
-      aria-label={label}
-      className="w-full px-3 py-2 border border-border rounded-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-    />
-  );
-}
-
-function DateButton({
-  label,
-  value,
-  isOpen,
-  onClick,
-}: DateButtonProps) {
-  const accessibleLabel = value ? `${label}: ${value}` : label;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={accessibleLabel}
-      aria-expanded={isOpen}
-      className={`w-full min-h-[44px] px-4 py-3 border rounded-xl text-foreground-strong text-base bg-background hover:border-primary/50 hover:bg-muted/30 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all flex items-center justify-between gap-2 ${isOpen ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
-    >
-      <span>{value || label}</span>
-      <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-    </button>
+    <div className="w-full sm:flex-1 sm:min-w-0">
+      <label
+        htmlFor={id}
+        className="text-sm text-muted-foreground mb-1.5 block font-medium"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        type="time"
+        value={value}
+        min={minTime}
+        onChange={(e) => onChange(e.target.value)}
+        className="input input-lg"
+      />
+    </div>
   );
 }
 
@@ -107,7 +89,6 @@ export default function DatePickerImpl({
   idPrefix = "date",
   startDate: initialStartDate,
   endDate: initialEndDate,
-  minDate,
   onChange,
   required,
   className,
@@ -116,60 +97,44 @@ export default function DatePickerImpl({
   onToggleAllDay,
 }: DatePickerComponentProps) {
   const t = useTranslations("Components.DatePicker");
-  const locale = useLocale();
-  const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
 
   const startDate = toDate(initialStartDate);
   const endDate = computeEndDate(startDate, initialEndDate, isAllDay);
-  const minDateObj = minDate ? toDate(minDate) : undefined;
+  // New events start today or later. An edited event may already have started,
+  // so its original start day stays selectable.
+  const [firstDay] = useState(() => {
+    const today = toYMD(nowInMadrid());
+    const start = toYMD(startDate);
+    return start < today ? start : today;
+  });
+  const allDaySwitchId = `${idPrefix}-all-day-switch`;
 
-  const [activeField, setActiveField] = useState<"start" | "end" | null>(null);
-
-  const handleDaySelectStart = (day: Date | undefined) => {
-    if (!day) return;
-    const newStart = new Date(day);
-    newStart.setHours(startDate.getHours(), startDate.getMinutes(), 0, 0);
-
-    onChange("startDate", toISOStringLocalMinutes(newStart));
+  const handleRangeChange = (from: string, to: string) => {
+    if (!from) return;
+    const newStart = withDay(from, startDate);
+    let newEnd = withDay(to || from, endDate);
 
     if (isAllDay) {
-      const endOfDay = setSeconds(
-        setMinutes(setHours(newStart, 23), 59),
-        59,
-      );
-      onChange("endDate", toISOStringLocalMinutes(endOfDay));
-      setActiveField(null);
-      return;
+      newEnd = setSeconds(setMinutes(setHours(newEnd, 23), 59), 59);
+    } else if (newEnd <= newStart) {
+      // Same end day as the start but an earlier time: an overnight event
+      // (22:00 to 02:00) ends the next day, so keep that time-of-day length.
+      newEnd = addDays(withDay(from, endDate), 1);
     }
 
-    const diff = endDate.getTime() - startDate.getTime();
-    const newEnd =
-      diff > 0
-        ? new Date(newStart.getTime() + diff)
-        : addMinutes(newStart, 60);
-    onChange("endDate", toISOStringLocalMinutes(newEnd));
-    // Keep calendar open so user can adjust the time without re-clicking
-  };
-
-  const handleDaySelectEnd = (day: Date | undefined) => {
-    if (!day) return;
-    const newEnd = new Date(day);
-    newEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
-
-    const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
-    onChange("endDate", toISOStringLocalMinutes(corrected));
-    // Keep calendar open so user can adjust the time without re-clicking
+    onChange("startDate", toLocalDateTimeString(newStart));
+    onChange("endDate", toLocalDateTimeString(newEnd));
   };
 
   const handleStartTimeChange = (time: string) => {
     const [h, m] = time.split(":").map(Number);
     const newStart = new Date(startDate);
     newStart.setHours(h, m, 0, 0);
-    onChange("startDate", toISOStringLocalMinutes(newStart));
+    onChange("startDate", toLocalDateTimeString(newStart));
 
     if (newStart >= endDate) {
       const newEnd = addMinutes(newStart, 60);
-      onChange("endDate", toISOStringLocalMinutes(newEnd));
+      onChange("endDate", toLocalDateTimeString(newEnd));
     }
   };
 
@@ -179,31 +144,36 @@ export default function DatePickerImpl({
     newEnd.setHours(h, m, 0, 0);
 
     const corrected = newEnd <= startDate ? addMinutes(startDate, 15) : newEnd;
-    onChange("endDate", toISOStringLocalMinutes(corrected));
+    onChange("endDate", toLocalDateTimeString(corrected));
   };
 
-  const startDisplay = formatDateDisplay(startDate, locale);
-  const endDisplay = formatDateDisplay(endDate, locale);
+  const isSameDay = startDate.toDateString() === endDate.toDateString();
 
   return (
     <div className={`w-full flex flex-col gap-4 ${className ?? ""}`}>
       <div className="flex justify-between items-center">
-        <label className="form-label">{t("dateAndTime")}</label>
+        <span className="form-label">{t("dateAndTime")}</span>
 
         {enableAllDayToggle && (
-          <label className="flex items-center gap-2 cursor-pointer select-none">
+          <label
+            htmlFor={allDaySwitchId}
+            className="flex items-center gap-2 cursor-pointer select-none"
+          >
             <div className="relative">
               <input
+                id={allDaySwitchId}
                 type="checkbox"
-                className="sr-only"
+                role="switch"
+                aria-checked={isAllDay}
+                className="peer sr-only"
                 checked={isAllDay}
                 onChange={(e) => onToggleAllDay?.(e.target.checked)}
               />
               <div
-                className={`w-10 h-6 rounded-full transition-colors ${isAllDay ? "bg-primary" : "bg-muted"}`}
+                className={`w-11 h-6 rounded-full border-2 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 ${isAllDay ? "bg-primary border-primary" : "bg-background border-muted-foreground"}`}
               />
               <div
-                className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isAllDay ? "transform translate-x-4" : ""}`}
+                className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform ${isAllDay ? "bg-white translate-x-5" : "bg-muted-foreground"}`}
               />
             </div>
             <span className="text-sm text-foreground-strong">
@@ -213,94 +183,29 @@ export default function DatePickerImpl({
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full">
-        <div className="w-full sm:flex-1 sm:min-w-0">
-          <span className="text-sm text-muted-foreground mb-1.5 block font-medium">
-            {t("start")}
-          </span>
-          <DateButton
-            label={t("start")}
-            value={
-              isAllDay
-                ? startDisplay
-                : `${startDisplay} ${formatTime(startDate)}`
-            }
-            isOpen={activeField === "start"}
-            onClick={() =>
-              setActiveField((prev) => (prev === "start" ? null : "start"))
-            }
-          />
-        </div>
+      <DateRangeCalendar
+        fromDate={toYMD(startDate)}
+        toDate={toYMD(endDate)}
+        minDate={firstDay}
+        required={required}
+        onChange={handleRangeChange}
+      />
 
-        <div className="w-full sm:flex-1 sm:min-w-0">
-          <span className="text-sm text-muted-foreground mb-1.5 block font-medium">
-            {t("end")}
-          </span>
-          <DateButton
-            label={t("end")}
-            value={
-              isAllDay
-                ? endDisplay
-                : `${endDisplay} ${formatTime(endDate)}`
-            }
-            isOpen={activeField === "end"}
-            onClick={() =>
-              setActiveField((prev) => (prev === "end" ? null : "end"))
-            }
+      {!isAllDay && (
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+          <TimeSelector
+            id={`${idPrefix}-start-time`}
+            label={t("startTime")}
+            value={formatTime(startDate)}
+            onChange={handleStartTimeChange}
           />
-        </div>
-      </div>
-
-      {activeField && (
-        <div className="rdp-form-wrapper border border-border rounded-card p-3 bg-background">
-          <DayPicker
-            id={`${idPrefix}-${activeField}`}
-            mode="single"
-            locale={dateFnsLocale}
-            selected={activeField === "start" ? startDate : endDate}
-            onSelect={
-              activeField === "start"
-                ? handleDaySelectStart
-                : handleDaySelectEnd
-            }
-            disabled={
-              activeField === "end"
-                ? {
-                    before:
-                      minDateObj && minDateObj > startDate
-                        ? minDateObj
-                        : startDate,
-                  }
-                : minDateObj
-                  ? { before: minDateObj }
-                  : undefined
-            }
-            defaultMonth={activeField === "start" ? startDate : endDate}
-            showOutsideDays
-            fixedWeeks
-            required={required}
+          <TimeSelector
+            id={`${idPrefix}-end-time`}
+            label={t("endTime")}
+            value={formatTime(endDate)}
+            minTime={isSameDay ? formatTime(startDate) : undefined}
+            onChange={handleEndTimeChange}
           />
-          {!isAllDay && (
-            <div className="mt-3 pt-3 border-t border-border">
-              <TimeSelector
-                value={formatTime(
-                  activeField === "start" ? startDate : endDate,
-                )}
-                onChange={
-                  activeField === "start"
-                    ? handleStartTimeChange
-                    : handleEndTimeChange
-                }
-                minTime={
-                  activeField === "end" &&
-                    startDate.toDateString() === endDate.toDateString()
-                    ? formatTime(startDate)
-                    : undefined
-                }
-                label={activeField === "start" ? t("start") : t("end")}
-              />
-            </div>
-          )}
         </div>
       )}
     </div>

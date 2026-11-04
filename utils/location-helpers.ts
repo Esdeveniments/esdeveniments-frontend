@@ -6,8 +6,6 @@ import {
   formatPlaceName,
 } from "./string-helpers";
 import type { Location, PlaceTypeAndLabel } from "types/common";
-import type { PlaceResponseDTO } from "types/api/place";
-import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import type {
   BuildDisplayLocationOptions,
   EventLocationLabelOptions,
@@ -208,21 +206,9 @@ export const buildEventListLocationLabels = ({
   };
 };
 
-/**
- * Shared resolution logic, parametrized by which place/region fetchers to
- * use. `getPlaceTypeAndLabel` (content) and `getPlaceTypeAndLabelForMetadata`
- * (lib/seo/place-metadata.ts, for generateMetadata) differ only in which
- * fetchers they pass in — the content ones are React cache()-memoized only,
- * the metadata ones are `"use cache"` and static-shell-safe. Exported so the
- * metadata variant (which must live outside this client-reachable file — see
- * lib/seo/place-metadata.ts) can reuse this logic. See
- * docs/incidents/2026-06-13-cachecomponents-metadata-resume-mismatch.md.
- */
-export async function resolvePlaceTypeAndLabel(
+export const getPlaceTypeAndLabel = async (
   place: string,
-  fetchPlace: (slug: string) => Promise<PlaceResponseDTO | null>,
-  fetchRegions: () => Promise<RegionsGroupedByCitiesResponseDTO[]>,
-): Promise<PlaceTypeAndLabel> {
+): Promise<PlaceTypeAndLabel> => {
   // Empty place means home page or Catalunya-wide view
   // Return default without making API calls
   if (!place || place === "") {
@@ -236,7 +222,7 @@ export async function resolvePlaceTypeAndLabel(
   }
 
   try {
-    const placeInfo = await fetchPlace(place);
+    const placeInfo = await fetchPlaceBySlug(place);
     if (placeInfo) {
       const formattedLabel = formatPlaceName(placeInfo.name);
       const type =
@@ -251,7 +237,7 @@ export async function resolvePlaceTypeAndLabel(
       // For cities, look up parent region from cached data for SEO breadcrumbs
       if (type === "town") {
         try {
-          const regionsWithCities = await fetchRegions();
+          const regionsWithCities = await fetchRegionsWithCities();
           for (const region of regionsWithCities) {
             const city = region.cities.find((c) => c.value === place);
             if (city) {
@@ -275,7 +261,7 @@ export async function resolvePlaceTypeAndLabel(
   }
 
   try {
-    const regionsWithCities = await fetchRegions();
+    const regionsWithCities = await fetchRegionsWithCities();
 
     const region = regionsWithCities.find(
       (r) =>
@@ -303,19 +289,10 @@ export async function resolvePlaceTypeAndLabel(
   }
 
   return { type: "town", label: formatPlaceName(place.replace(/-/g, " ")) };
-}
+};
 
-export const getPlaceTypeAndLabel = (place: string): Promise<PlaceTypeAndLabel> =>
-  resolvePlaceTypeAndLabel(place, fetchPlaceBySlug, fetchRegionsWithCities);
-
-// Per-request memoized wrapper for server routes (content, not metadata)
+// Per-request memoized wrapper for server routes
 export const getPlaceTypeAndLabelCached = cache(getPlaceTypeAndLabel);
-
-// getPlaceTypeAndLabelForMetadata lives in @lib/seo/place-metadata, not here —
-// this file is transitively reachable from Client Components (via
-// utils/helpers.ts -> utils/url-filters.ts -> UrlFiltersContext.tsx), and
-// Next.js forbids defining a `"use cache"` function inline in a file that can
-// be pulled into a client bundle.
 
 export const getDistance = (
   location1: Location,

@@ -67,8 +67,9 @@ vi.mock("@components/partials/generatePagesData", () => {
   };
 });
 
-vi.mock("@lib/api/events", () => {
+vi.mock("@lib/api/events", async (importOriginal) => {
   return {
+    ...(await importOriginal<typeof import("@lib/api/events")>()),
     insertAds: <T,>(events: T[]) => events,
   };
 });

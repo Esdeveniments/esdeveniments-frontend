@@ -1,10 +1,22 @@
-import type { CacheEntry, CacheFn, KeyedCacheFn } from "types/cache";
+import type {
+  CacheEntry,
+  CacheFn,
+  CacheOptions,
+  KeyedCacheFn,
+  KeyedCacheOptions,
+} from "types/cache";
+
+const isEmpty = (data: unknown) =>
+  data == null || (Array.isArray(data) && data.length === 0);
 
 /**
  * Simple time-based cache for single values.
  * Returns an object with both the cache function and a clear function.
  */
-export function createCache<T>(ttlMs: number): {
+export function createCache<T>(
+  ttlMs: number,
+  { storeEmpty = true }: CacheOptions = {},
+): {
   cache: CacheFn<T>;
   clear: () => void;
 } {
@@ -15,7 +27,9 @@ export function createCache<T>(ttlMs: number): {
       return cacheEntry.data;
     }
     const data = await fetcher();
-    cacheEntry = { data, timestamp: performance.now() };
+    if (storeEmpty || !isEmpty(data)) {
+      cacheEntry = { data, timestamp: performance.now() };
+    }
     return data;
   };
 
@@ -30,9 +44,13 @@ export function createCache<T>(ttlMs: number): {
  * Keyed cache for values by key (e.g. by ID).
  * Returns an object with both the cache function and a clear function.
  */
-export function createKeyedCache<T>(ttlMs: number): {
+export function createKeyedCache<T>(
+  ttlMs: number,
+  { storeEmpty = true, maxEntries }: KeyedCacheOptions = {},
+): {
   cache: KeyedCacheFn<T>;
   clear: () => void;
+  delete: (key: string | number) => void;
 } {
   const cacheMap = new Map<string | number, { data: T; timestamp: number }>();
 
@@ -42,7 +60,14 @@ export function createKeyedCache<T>(ttlMs: number): {
       return entry.data;
     }
     const data = await fetcher(key);
-    cacheMap.set(key, { data, timestamp: performance.now() });
+    if (storeEmpty || !isEmpty(data)) {
+      cacheMap.delete(key);
+      cacheMap.set(key, { data, timestamp: performance.now() });
+      if (maxEntries !== undefined && cacheMap.size > maxEntries) {
+        // Map keeps insertion order, so the first key is the oldest.
+        cacheMap.delete(cacheMap.keys().next().value!);
+      }
+    }
     return data;
   };
 
@@ -50,5 +75,9 @@ export function createKeyedCache<T>(ttlMs: number): {
     cacheMap.clear();
   };
 
-  return { cache, clear };
+  const deleteKey = (key: string | number) => {
+    cacheMap.delete(key);
+  };
+
+  return { cache, clear, delete: deleteKey };
 }

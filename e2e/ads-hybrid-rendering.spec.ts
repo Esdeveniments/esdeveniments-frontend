@@ -18,7 +18,13 @@ test.describe("Hybrid rendering: ads are SSR-only", () => {
     const loadMore = page.getByRole("button", { name: /carrega més|més/i });
     if (await loadMore.isVisible()) {
       await loadMore.click();
-      await page.waitForLoadState("networkidle");
+      // Bounded settle wait: on an ads page the network never truly idles
+      // (ad slots keep polling), so a bare networkidle wait would hang until
+      // timeout. Give the load-more fetch + client ad hydration a moment; the
+      // lenient count assertion below is the real check.
+      await page
+        .waitForLoadState("networkidle", { timeout: 5000 })
+        .catch(() => {});
     }
 
     const afterCount = await sponsoredHeadings.count();

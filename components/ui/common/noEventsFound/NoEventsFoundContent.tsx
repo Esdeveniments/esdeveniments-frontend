@@ -223,11 +223,12 @@ export default function NoEventsFoundContent({
         <PressableAnchorClient
           href="/publica"
           prefetch={false}
-          className="group relative inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-dark text-primary-foreground font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          className="btn-primary"
           variant="inline"
         >
           <svg
-            className="w-5 h-5 transition-transform group-hover:rotate-90 duration-300"
+            className="w-4 h-4"
+            aria-hidden="true"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -239,9 +240,9 @@ export default function NoEventsFoundContent({
               d="M12 4v16m8-8H4"
             />
           </svg>
-          <span className="uppercase tracking-wide text-sm">{ctaLabel}</span>
+          {ctaLabel}
         </PressableAnchorClient>
-        <p className="text-sm text-foreground opacity-70">{helperText}</p>
+        <p className="body-small text-muted-foreground">{helperText}</p>
       </div>
     </div>
   );

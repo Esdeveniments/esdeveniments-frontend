@@ -1,0 +1,59 @@
+name: No Google tracking on staging (nightly)
+
+# Runs the no-google-tracking E2E guard against the real staging host — the
+# one place zone-wide Cloudflare Zaraz injection happens. Localhost, the PR CI
+# build, and Vercel previews never exercise the Cloudflare edge, so running the
+# same spec there cannot catch an edge-injected tracker (see
+# docs/incidents/2026-08-18-zaraz-zone-wide-google-tags.md).
+# Intentionally RED until the Zaraz GA4 integration is removed/restricted on
+# the zone — that is the alarm this workflow exists to sound.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *" # nightly at 04:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  staging-guard:
+    name: Staging — zero Google tracking requests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_VERSION: "26"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack (Yarn 4)
+        # Node 25+ no longer bundles Corepack.
+        run: npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run no-Google-tracking guard against staging
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: https://staging.esdeveniments.cat
+        run: yarn test:e2e -c playwright.remote.config.ts e2e/no-google-tracking-on-non-prod.spec.ts
+
+      - name: Upload Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-no-google-tracking-report
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore

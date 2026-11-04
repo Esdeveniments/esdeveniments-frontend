@@ -1,4 +1,4 @@
-import { MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
+import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 import Image from "@components/ui/common/image";
 import FavoriteButtonOverlay from "@components/ui/common/favoriteButton/FavoriteButtonOverlay";
 import CategoryBadge from "./CategoryBadge";
@@ -19,7 +19,7 @@ export default function CardLayout({
   timeDisplay,
   primaryLocation,
   categoryLabel,
-  priceLabel,
+  promotedLabel,
   urgencyLabel,
   urgencyType,
   multiDayLabel,
@@ -73,6 +73,9 @@ export default function CardLayout({
       </div>
 
       <div className="flex-1 flex flex-col px-4 pt-3 pb-4 pointer-events-none">
+        {promotedLabel && (
+          <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
+        )}
         <CategoryBadge label={categoryLabel} />
 
         <p className="text-sm text-muted-foreground mb-1">
@@ -84,7 +87,6 @@ export default function CardLayout({
             cardDate
           )}
           {timeDisplay && <> · {timeDisplay}</>}
-          {priceLabel && <> · <span className="text-success font-medium">{priceLabel}</span></>}
           {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 
@@ -94,7 +96,9 @@ export default function CardLayout({
 
         {primaryLocation && (
           <div className="mt-auto flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-            <LocationMarkerIcon className="w-4 h-4 flex-shrink-0" />
+            <svg className="w-4 h-4 flex-shrink-0" aria-hidden="true">
+              <use href={`#${SPRITE_ICON.mapPin}`} />
+            </svg>
             <span className="truncate">{primaryLocation}</span>
           </div>
         )}

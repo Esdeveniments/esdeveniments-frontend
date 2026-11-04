@@ -19,14 +19,17 @@ export default async function Navbar() {
     navigation,
     labels: {
       logoAlt: t("logoAlt"),
-      openMenu: t("aria.openMenu"),
-      closeMenu: t("aria.closeMenu"),
       home: t("aria.home"),
       agenda: t("aria.agenda"),
       favorites: t("aria.favorites"),
       publish: t("aria.publish"),
       news: t("aria.news"),
       mobilePublishLabel: t("mobilePublishLabel"),
+      login: t("auth.login"),
+      logout: t("auth.logout"),
+      userMenu: t("auth.userMenu"),
+      myProfile: t("auth.myProfile"),
+      incompleteProfile: t("auth.incompleteProfile"),
     },
   };
 

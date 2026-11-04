@@ -2,6 +2,10 @@ import { Suspense } from "react";
 import type { JSX } from "react";
 import dynamic from "next/dynamic";
 import HybridEventsList from "@components/ui/hybridEventsList";
+import {
+  getPromotedEvents,
+  PromotedEventsRow,
+} from "@components/ui/promotedEvents/PromotedEventsSection";
 import JsonLdServer from "./JsonLdServer";
 import { EventsListSkeleton } from "@components/ui/common/skeletons";
 import { FilterLoadingProvider } from "@components/context/FilterLoadingContext";
@@ -27,9 +31,8 @@ import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
-import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { hasCardImage } from "@utils/event-helpers";
 import { connection } from "next/server";
-import { getPlaceExpandability } from "@lib/seo/place-expandability";
 
 // Lazy load below-the-fold client component via client component wrapper
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -258,30 +261,30 @@ async function PlacePageContent({
   await connection();
 
   // Await shell data and events in parallel
-  const [{ placeTypeLabel, pageData }, { events, noEventsFound, serverHasMore, ssrPageSize, structuredScripts }] =
-    await Promise.all([shellDataPromise, eventsPromise]);
-
-  // Gate filter quicklinks on event depth. Mirrors sitemap policy: cities with
-  // fewer than SITEMAP_MIN_EVENTS_FOR_EXPANSION (40) events shouldn't emit
-  // /[place]/[date] or /[place]/[category] internal links — those URLs are
-  // near-duplicates of the parent page and end up in GSC's "Crawled — currently
-  // not indexed" bucket. Regions always expand.
-  const placeIsExpandable = await getPlaceExpandability(
-    place,
-    placeTypeLabel.type,
-  );
+  // placeIsExpandable gates filter quicklinks on event depth. Mirrors sitemap
+  // policy: cities with fewer than SITEMAP_MIN_EVENTS_FOR_EXPANSION (40) events
+  // shouldn't emit /[place]/[date] or /[place]/[category] internal links — those
+  // URLs are near-duplicates of the parent page and end up in GSC's "Crawled —
+  // currently not indexed" bucket. Regions always expand.
+  // Promoted events load with the list (not in their own Suspense), so the
+  // row never pops in later and pushes the list down.
+  const [
+    { placeTypeLabel, pageData },
+    { events, noEventsFound, serverHasMore, ssrPageSize, structuredScripts, placeIsExpandable },
+    promotedEvents,
+  ] = await Promise.all([shellDataPromise, eventsPromise, getPromotedEvents(place)]);
 
   const tBreadcrumbs = await getTranslations("Components.Breadcrumbs");
   const tByDates = await getTranslations("Config.ByDates");
   const locale = await getLocaleSafely();
 
-  // Preload LCP image — first real event card image.
+  // Preload LCP image: the same card HybridEventsList marks as priority.
   // Uses responsive srcSet so the browser picks the right width for the viewport.
-  const firstRealEvent = events.find(isEventSummaryResponseDTO);
-  const lcpSources = firstRealEvent?.imageUrl
+  const firstImageEvent = events.find(hasCardImage);
+  const lcpSources = firstImageEvent
     ? buildResponsivePictureSourceUrls(
-      firstRealEvent.imageUrl,
-      firstRealEvent.hash || firstRealEvent.updatedAt,
+      firstImageEvent.imageUrl,
+      firstImageEvent.hash || firstImageEvent.updatedAt,
       {
         quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
       },
@@ -362,6 +365,7 @@ async function PlacePageContent({
           serverHasMore={serverHasMore}
           ssrPageSize={ssrPageSize}
           categories={categories}
+          promotedSlot={<PromotedEventsRow events={promotedEvents} placeSlug={place} />}
         />
       </FilterLoadingGate>
 

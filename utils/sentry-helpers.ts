@@ -1,4 +1,32 @@
-import type { Event, EventHint, ErrorEvent } from "@sentry/nextjs";
+import type {
+  Event,
+  EventHint,
+  ErrorEvent,
+  NodeOptions,
+} from "@sentry/nextjs";
+
+const V10_SENSITIVE_HEADERS = ["forwarded", "-ip", "remote-", "via", "-user"];
+
+/**
+ * Sentry v11 replaced sendDefaultPii with dataCollection, whose unset default
+ * collects cookies, user info, HTTP bodies and DB query data. This is the
+ * documented v10 sendDefaultPii:false baseline; pass it in every init.
+ */
+export const SENTRY_DATA_COLLECTION: NonNullable<NodeOptions["dataCollection"]> =
+  {
+    userInfo: false,
+    cookies: false,
+    httpHeaders: {
+      request: { deny: V10_SENSITIVE_HEADERS },
+      response: { deny: V10_SENSITIVE_HEADERS },
+    },
+    httpBodies: [],
+    urlQueryParams: { deny: V10_SENSITIVE_HEADERS },
+    genAI: { inputs: false, outputs: false },
+    databaseQueryData: false,
+    queues: false,
+    graphQL: { document: false, variables: false },
+  };
 
 /**
  * Well-known error patterns to ignore at SDK level (before serialization).
@@ -184,6 +212,24 @@ export function beforeSend(
   }
 
   return event;
+}
+
+/**
+ * The tunnel URL @sentry/nextjs's init() derives from withSentryConfig's
+ * tunnelRoute, for a hand-built BrowserClient. Events then go to our own origin,
+ * so ad blockers that block *.sentry.io do not drop them. Non-SaaS DSNs are not
+ * tunnelled, as in the SDK.
+ */
+export function sentryTunnelFor(
+  dsn: string | undefined,
+  tunnelPath: string | undefined,
+): string | undefined {
+  const saas = dsn?.match(
+    /^https:\/\/[^@]+@o(\d+)\.ingest(?:\.([a-z]{2}))?\.sentry\.io\/(\d+)$/,
+  );
+  if (!tunnelPath || !saas) return undefined;
+  const [, orgId, region, projectId] = saas;
+  return `${tunnelPath}?o=${orgId}&p=${projectId}${region ? `&r=${region}` : ""}`;
 }
 
 /**

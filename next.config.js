@@ -1,4 +1,4 @@
-const { withSentryConfig } = require("@sentry/nextjs");
+const { withSentryConfig } = require("@sentry/nextjs/config");
 const createNextIntlPlugin = require("next-intl/plugin");
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled:
@@ -7,7 +7,22 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
     process.env.BUNDLE_ANALYZE === "server",
 });
 
-const withNextIntl = createNextIntlPlugin();
+// Precompiled messages skip ICU parsing at runtime (about 23 ms per page on a
+// slow phone). Messages must be plain strings: no t.raw(), no arrays (lists
+// live in i18n/locale-lists.json).
+const withNextIntl = createNextIntlPlugin({
+  experimental: {
+    messages: { path: "./messages", format: "json", precompile: true },
+  },
+});
+// Next's default HTML-limited bot list (the file its htmlLimitedBots docs link
+// to). If a Next upgrade moves it, the build fails here instead of silently
+// dropping the defaults.
+const {
+  HTML_LIMITED_BOT_UA_RE: NEXT_DEFAULT_HTML_LIMITED_BOTS,
+} = require("next/dist/shared/lib/router/utils/html-bots");
+const botUserAgents = require("./config/bot-user-agents.json");
+
 const isDev = process.env.NODE_ENV === "development";
 const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
 const vercelPreviewImagePatterns = process.env.VERCEL_URL
@@ -43,7 +58,7 @@ const nextConfig = {
   // Required for Docker/Coolify deployment (standalone server.js output)
   output: "standalone",
   outputFileTracingIncludes: {
-    "/*": ["./cache-handler.mjs"],
+    "/*": ["./cache-handler.mjs", "./use-cache-handler.mjs"],
   },
   // Mark sharp and its native dependencies as external
   // Sharp has native binaries that must be bundled separately for the target platform
@@ -68,12 +83,18 @@ const nextConfig = {
         // at build time, but Redis env vars are only available at container runtime.
         cacheHandler: require.resolve("./cache-handler.mjs"),
         cacheMaxMemorySize: 0,
+        // cacheMaxMemorySize: 0 also disables the built-in "use cache" store.
+        cacheHandlers: { default: require.resolve("./use-cache-handler.mjs") },
       }),
 
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
 
   cacheComponents: true,
+  // Links prefetch the shared App Shell of a route, not each URL. Safe here:
+  // no <Link> uses prefetch={true} (the Pressable/Card primitives default to
+  // false). Requires cacheComponents.
+  partialPrefetching: true,
 
   // --- HTML-limited bots (blocking render, no streaming) ---
   // With cacheComponents (PPR) + self-hosted cache handler, streamed HTML arrives
@@ -82,18 +103,21 @@ const nextConfig = {
   // don't execute JS, so they see an empty <main>. Forcing a blocking render for
   // these user agents makes the full HTML available to them, restoring SEO/AI
   // discoverability without disabling PPR for real users.
-  // NOTE: Setting this OVERRIDES the Next.js default list, so we must include
-  // the upstream defaults (kept verbatim from
-  // https://github.com/vercel/next.js/blob/canary/packages/next/src/shared/lib/router/utils/html-bots.ts)
-  // and extend them with AI / scanner UAs.
-  htmlLimitedBots:
-    /[\w-]+-Google|Google-[\w-]+|GoogleOther|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight|Googlebot|GPTBot|ChatGPT-User|OAI-SearchBot|Claude-Web|ClaudeBot|anthropic-ai|PerplexityBot|Perplexity-User|ora-scan|ora-agent|DeepSeekBot|Qwen-Agent|Bytespider|CCBot|Meta-ExternalAgent|Meta-ExternalFetcher|Applebot-Extended|cohere-ai|Omgilibot|YouBot|Diffbot|Amazonbot|Timpibot|ImagesiftBot/i,
+  // NOTE: Setting this OVERRIDES the Next.js default list, so we extend Next's
+  // own default regex (read from the installed version, so it never goes
+  // stale) with the crawlers in config/bot-user-agents.json.
+  htmlLimitedBots: new RegExp(
+    [
+      NEXT_DEFAULT_HTML_LIMITED_BOTS.source,
+      ...botUserAgents.searchCrawlers,
+      ...botUserAgents.aiCrawlers,
+    ].join("|"),
+    "i",
+  ),
 
   // --- Experimental Features ---
   experimental: {
-    rootParams: true,
     scrollRestoration: true,
-    inlineCss: true,
     // Tree-shake heavy libraries to reduce bundle size
     optimizePackageImports: [
       "@headlessui/react",
@@ -112,7 +136,22 @@ const nextConfig = {
 
   // --- Optimizations ---
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+    // Strip console.* in production to cut noise, but KEEP console.error and
+    // console.warn: stripping them masked a silent events-blank outage (2026-06-27)
+    // whose only stdout signals would have been fetchEventsExternal's logged error
+    // and getApiOrigin's "invalid API URL" warning. Both stay in docker logs for
+    // debugging (Sentry captures errors too); warn also surfaces hydration/PPR issues.
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+    // Sentry runs errors-only (tracesSampleRate: 0 everywhere). These flags
+    // strip its tracing and debug code from the bundles. The
+    // webpack.treeshake options below do the same, but Turbopack ignores them.
+    define: {
+      __SENTRY_TRACING__: false,
+      __SENTRY_DEBUG__: false,
+    },
   },
 
   // --- Image Optimization ---
@@ -151,13 +190,58 @@ const nextConfig = {
     ],
   },
 
-  // The `headers` block has been removed.
-  // Security and caching headers are now managed dynamically in `proxy.ts` (Next.js 16: renamed from middleware.ts).
-  // CSP uses a relaxed policy with host allowlisting to enable ISR/PPR caching.
+  // --- Headers ---
+  // Static security headers for every response (pages, API, assets). The CSP
+  // is HTML-only and lives in proxy.ts (utils/proxy-csp.ts); per-page caching
+  // headers are set there too.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // Keep in sync with frame-ancestors in utils/proxy-csp.ts
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self)",
+          },
+        ],
+      },
+    ];
+  },
 
   // --- Redirects ---
+  // Run before proxy.ts. Conventional English trust-page URLs (used by AI
+  // agents and site scanners) → the Catalan pages.
   async redirects() {
-    return [];
+    return [
+      { source: "/about", destination: "/qui-som", statusCode: 301 },
+      { source: "/contact", destination: "/qui-som", statusCode: 301 },
+      {
+        source: "/privacy",
+        destination: "/politica-privacitat",
+        statusCode: 301,
+      },
+      { source: "/terms", destination: "/termes-servei", statusCode: 301 },
+    ];
+  },
+
+  // --- Rewrites ---
+  // beforeFiles so they win over app routes. proxy.ts's matcher skips both
+  // sources. A rewrite keeps the POST body, which the MCP transport needs.
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: "/openapi.json", destination: "/openapi" },
+        { source: "/.well-known/mcp", destination: "/mcp" },
+      ],
+    };
   },
 };
 
@@ -175,6 +259,9 @@ module.exports = withSentryConfig(
 
     // Only print logs for uploading source maps in CI
     silent: !process.env.CI,
+
+    // Tracing is off in the browser, so there is no navigation hook to export.
+    suppressOnRouterTransitionStartWarning: true,
 
     // Skip all Sentry network operations when no auth token is configured (e.g., CI builds)
     dryRun: !sentryUploadsEnabled,
@@ -230,7 +317,6 @@ module.exports = withSentryConfig(
         // Remove all Session Replay code (replay is fully disabled)
         excludeReplayIframe: true,
         excludeReplayShadowDOM: true,
-        excludeReplayCanvas: true,
       },
       automaticVercelMonitors: true,
     },

@@ -1,12 +1,17 @@
 "use server";
 import { updateTag, refresh } from "next/cache";
 import { after } from "next/server";
+import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
+import { getErrorStatus } from "@utils/error-status";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
+import type { CreateEventActionResult } from "types/event";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
+import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
 import { env } from "@utils/misc-helpers";
+import { getValidatedImageFile } from "@utils/image-validation";
 
 /**
  * Sends email notification via Pipedream when a new event is published.
@@ -35,12 +40,74 @@ async function sendNewEventEmail(title: string, slug: string): Promise<void> {
   });
 }
 
+/**
+ * `formData` carries `event` (EventCreateRequestDTO as a JSON string) and an
+ * optional `imageFile`. FormData is the server-action-safe way to send a File.
+ */
 export async function createEventAction(
-  data: EventCreateRequestDTO,
+  formData: FormData,
   e2eExtras?: E2EEventExtras
-) {
-  // 1. Create the event in your backend
-  const created = await createEvent(data, e2eExtras);
+): Promise<CreateEventActionResult> {
+  const rawEvent = formData.get("event");
+  if (typeof rawEvent !== "string") {
+    throw new Error("createEventAction: missing event payload");
+  }
+  // The backend validates the fields; this only rejects a malformed payload.
+  const data = JSON.parse(rawEvent) as EventCreateRequestDTO;
+  const imageFile = await getValidatedImageFile(formData.get("imageFile"));
+
+  // 2026-07-26 round-5: catch the mutation error path so we can distinguish
+  // 401 (likely stale Bearer — user should log out and back in) from 403
+  // (profileCompleted: false per backend spec — user should complete
+  // onboarding). Anything else is a real 5xx and rethrows. We log + tag
+  // Sentry with the next action so the form can render the right message.
+  //
+  // 401/403 are *returned* as a CreateEventActionResult, not re-thrown:
+  // Next.js redacts thrown Server Action error messages/properties in
+  // production (only a generic message + digest reach the client), so
+  // PublishForm would have no reliable way to tell these apart from a
+  // plain 5xx if we threw here. editEvent
+  // (app/[locale]/e/[eventId]/edita/actions.ts) already returns rather
+  // than throws for its own actionable failures — same convention.
+  // Anything else stays a throw: there's no more specific client action
+  // to take for a real 5xx anyway.
+  let created;
+  try {
+    // 1. Create the event in your backend
+    created = await createEvent(data, imageFile, e2eExtras);
+  } catch (err) {
+    const status = getErrorStatus(err);
+    if (status === 401 || status === 403) {
+      const nextAction =
+        status === 401 ? "logout-and-relogin" : "complete-profile";
+      console.error(
+        `createEventAction: backend rejected with ${status} \u2014 ${status === 401 ? "Likely stale Bearer \u2014 user should log out and back in." : "Likely profileCompleted: false \u2014 user should complete profile onboarding."}`,
+      );
+      // Don't forward the caught `err` as-is: createEvent() embeds the raw
+      // backend response body in its .message, which would otherwise reach
+      // Sentry unredacted despite the extra.* fields below being carefully
+      // scrubbed. A short, fixed-shape message keeps the actual diagnosis
+      // (status/nextAction/field names) without the body's content. titleHint
+      // is dropped too \u2014 an event title has no diagnostic value for an
+      // auth/profile-completion failure, so there's no reason to send
+      // user-controlled content to a third-party service for it.
+      captureException(new Error(`createEvent rejected: ${status}`), {
+        tags: {
+          section: "publica-create",
+          authStatus: String(status),
+          nextAction,
+        },
+        extra: {
+          dataFields: Object.keys(data ?? {}),
+        },
+      });
+      return {
+        success: false,
+        reason: status === 401 ? "stale-session" : "profile-incomplete",
+      };
+    }
+    throw err;
+  }
 
   // 2. Send email notification (fire-and-forget, non-blocking)
   // Uses `after` to ensure execution completes in serverless environments
@@ -53,6 +120,9 @@ export async function createEventAction(
   // This ensures read-your-own-writes: the new event appears immediately
   updateTag(eventsTag);
   updateTag(eventsCategorizedTag);
+  // Next's tags don't reach Cloudflare: purge the listings that show the
+  // event. after() runs once the action's revalidations are applied.
+  after(() => purgeEventPagesFromCdn([created]));
   // Refresh the current request to reflect changes
   refresh();
 

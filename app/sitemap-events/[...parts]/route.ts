@@ -6,7 +6,6 @@ import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
 import { EXPIRED_EVENT_NOINDEX_DAYS } from "@lib/meta";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
-import type { SitemapPartsRouteContext } from "types/props";
 
 // Chunk size chosen to keep response sizes manageable
 // With image URLs and hreflang alternates, ~500 events per chunk is safe
@@ -14,7 +13,7 @@ const EVENTS_PER_CHUNK = 500;
 
 export async function GET(
   _request: Request,
-  context: SitemapPartsRouteContext
+  context: RouteContext<"/sitemap-events/[...parts]">
 ) {
   const { parts } = await context.params;
 
@@ -64,8 +63,6 @@ export async function GET(
     JSON.stringify(events)
   ) as EventSummaryResponseDTO[];
 
-  const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
-
   // Keep sitemap aligned with on-page robots policy: events older than
   // EXPIRED_EVENT_NOINDEX_DAYS are noindex'd in lib/meta.ts, so excluding
   // them from the sitemap prevents signal conflicts and preserves sitemap
@@ -83,17 +80,19 @@ export async function GET(
       return endTime > expiredCutoffMs;
     })
     .map((data) => {
-      const image = data.imageUrl || defaultImage;
-      let lastModDate = data.updatedAt
-        ? new Date(data.updatedAt)
-        : new Date(data.endDate || data.startDate);
-      if (isNaN(lastModDate.getTime())) {
-        lastModDate = new Date();
-      }
+      // Only the event's own image; the site logo doesn't represent the event.
+      const image = data.imageUrl;
+      // Only a real edit date is a valid lastmod. The event date is in the
+      // future for upcoming events, which Search Console flags as invalid.
+      const updatedMs = data.updatedAt ? new Date(data.updatedAt).getTime() : NaN;
+      const lastmod =
+        Number.isNaN(updatedMs) || updatedMs > Date.now()
+          ? undefined
+          : new Date(updatedMs).toISOString();
       const loc = `${siteUrl}/e/${data.slug}`;
       return {
         loc,
-        lastmod: lastModDate.toISOString(),
+        lastmod,
         changefreq: "daily",
         priority: 0.7,
         image: image ? { loc: image, title: data.title } : undefined,

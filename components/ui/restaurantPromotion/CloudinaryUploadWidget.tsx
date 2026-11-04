@@ -130,7 +130,7 @@ export function CloudinaryUploadWidget({
           ) : (
             <div>
               <svg
-                className="mx-auto h-8 w-8 text-foreground/60"
+                className="mx-auto h-8 w-8 text-muted-foreground"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

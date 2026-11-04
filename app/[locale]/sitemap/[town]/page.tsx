@@ -1,13 +1,14 @@
 import { Suspense } from "react";
 import { siteUrl } from "@config/index";
 import { getAllYears, normalizeMonthParam } from "@lib/dates";
-import { MONTHS_URL as DEFAULT_MONTHS_URL } from "@utils/constants";
+import {
+  MONTHS_URL as DEFAULT_MONTHS_URL,
+  getMonthNames,
+} from "@utils/constants";
 // No headers/nonce needed with relaxed CSP
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getPlaceBySlug } from "@lib/api/places";
-import { fetchPlaceBySlugForMetadata } from "@lib/seo/place-metadata";
 import { getTranslations } from "next-intl/server";
-import type { TownStaticPathParams } from "types/common";
 import type { AppLocale } from "types/i18n";
 import { formatPlacePreposition } from "@utils/helpers";
 import {
@@ -27,16 +28,14 @@ import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<TownStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/sitemap/[town]">) {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const { town } = await params;
   // Tolerate backend 5xx: getPlaceBySlug throws on non-200/404. Falling back
   // to null lets the page render with the slug as the label instead of 500ing
   // — fixes ~698 5xx errors flagged by GSC on /sitemap/<town>/...
-  const place = await fetchPlaceBySlugForMetadata(town).catch(() => null);
+  const place = await getPlaceBySlug(town).catch(() => null);
   const label = place?.name || town;
   const placeType: "region" | "town" =
     place?.type === "CITY" ? "town" : "region";
@@ -52,9 +51,7 @@ export async function generateMetadata({
 
 export default function Page({
   params,
-}: {
-  params: Promise<TownStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/sitemap/[town]">) {
   return (
     <Suspense
       fallback={
@@ -68,17 +65,13 @@ export default function Page({
   );
 }
 
-async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) {
+async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">, "params">) {
   const { town } = await params;
   const locale: AppLocale = (await rootLocale()) as AppLocale;
   const years: number[] = getAllYears();
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
-  const tConstants = await getTranslations({
-    locale,
-    namespace: "Components.Constants",
-  });
   const withLocale = (path: string) => withLocalePath(path, locale);
-  const monthLabels = (tConstants.raw("months") as string[]) || [];
+  const monthLabels = getMonthNames(locale);
   const months = DEFAULT_MONTHS_URL.map((slug, index) => {
     const fallback = normalizeMonthParam(slug);
     return {

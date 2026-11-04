@@ -42,6 +42,7 @@ function HybridEventsListClientContent({
   place,
   category,
   date,
+  profileSlug,
   serverHasMore = false,
   ssrPageSize,
   pageData,
@@ -51,6 +52,9 @@ function HybridEventsListClientContent({
   const locale = useLocale() as AppLocale;
   const searchResultsTrackedRef = useRef(false);
   const zeroResultsTrackedRef = useRef(false);
+  const statusRef = useRef<HTMLParagraphElement>(null);
+  const [retried, setRetried] = useState(false);
+  const focusAfterRetryRef = useRef(false);
   const [listingContainer, setListingContainer] = useState<HTMLDivElement | null>(null);
 
   const search = parsed.queryParams.search;
@@ -68,7 +72,7 @@ function HybridEventsListClientContent({
   // Check if client-side filters are active
   const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
 
-  const { events, hasMore, loadMore, isLoading, isLoadingMore, error } =
+  const { events, totalEvents, hasMore, loadMore, retry, isLoading, isLoadingMore, error } =
     useEvents({
       place,
       category,
@@ -80,6 +84,7 @@ function HybridEventsListClientContent({
       to,
       lat,
       lon,
+      profileSlug,
       // Match client page size to the SSR page size so the next page request
       // starts AFTER the SSR-rendered events. If the client used a smaller
       // page (e.g. 10) while the server pre-rendered 30, the first "Load
@@ -122,6 +127,7 @@ function HybridEventsListClientContent({
     if (
       search &&
       !isLoading &&
+      !error &&
       !searchResultsTrackedRef.current &&
       hasClientFilters
     ) {
@@ -134,7 +140,7 @@ function HybridEventsListClientContent({
         date: date || undefined,
       });
     }
-  }, [search, isLoading, hasClientFilters, displayedEvents.length, place, category, date]);
+  }, [search, isLoading, error, hasClientFilters, displayedEvents.length, place, category, date]);
 
   // Track zero results when filters are active and loading is complete
   useEffect(() => {
@@ -168,13 +174,24 @@ function HybridEventsListClientContent({
     date: date || undefined,
   });
 
+  // A successful retry unmounts the focused button; move focus to the list
+  // so keyboard users stay in place, and let the status read the count.
+  // Only when focus was lost: a later automatic recovery must not pull focus
+  // away from where the user moved it.
+  useEffect(() => {
+    if (focusAfterRetryRef.current && !error) {
+      focusAfterRetryRef.current = false;
+      const active = document.activeElement;
+      if (!active || active === document.body) {
+        (listingContainer ?? statusRef.current)?.focus();
+      }
+    }
+  }, [error, listingContainer]);
+
   // Log errors for debugging
   if (error) {
     console.error("Events loading error:", error);
   }
-
-  // Show error state when there's an error and filters are active
-  const showErrorState = error && hasClientFilters;
 
   // Show no events found when filters are active, fetch completed, and no results
   const showNoEventsFound =
@@ -195,21 +212,14 @@ function HybridEventsListClientContent({
 
   return (
     <>
+      <p role="status" className="sr-only" ref={statusRef} tabIndex={-1}>
+        {(hasClientFilters || retried) && !isLoading && !error
+          ? t("resultsCount", { count: totalEvents })
+          : ""}
+      </p>
       {isLoading ? (
         // Show skeleton immediately while fetching filtered events
         <EventsGridSkeleton />
-      ) : showErrorState ? (
-        // Show error message when events fail to load
-        <div className="w-full flex flex-col items-center gap-element-gap py-section-y px-section-x">
-          <div className="w-full text-center">
-            <p className="body-normal text-foreground-strong mb-element-gap">
-              {t("errorTitle")}
-            </p>
-            <p className="body-small text-foreground/80">
-              {t("error")}
-            </p>
-          </div>
-        </div>
       ) : showNoEventsFound ? (
         // Show no events found message when filters return no results
         <>
@@ -226,7 +236,7 @@ function HybridEventsListClientContent({
       ) : (
         <>
           {displayedEvents.length > 0 ? (
-            <div ref={setListingContainer}>
+            <div ref={setListingContainer} tabIndex={-1}>
               <ClientCardsList events={displayedEvents} />
             </div>
           ) : null}
@@ -249,6 +259,30 @@ function HybridEventsListClientContent({
           />
         </>
       )}
+      {/* Below the list: a late error must not push loaded cards down (CLS). */}
+      {error ? (
+        <div role="alert" className="w-full stack items-center py-section-y px-section-x">
+          <div className="w-full text-center">
+            <p className="body-normal text-foreground-strong mb-element-gap">
+              {t("errorTitle")}
+            </p>
+            <p className="body-small text-foreground/80">
+              {t("error")}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setRetried(true);
+                focusAfterRetryRef.current = true;
+                retry();
+              }}
+              className="btn-outline mt-element-gap"
+            >
+              {t("retry")}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

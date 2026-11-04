@@ -5,15 +5,13 @@ import type { Metadata } from "next";
 import { siteUrl } from "@config/index";
 import { withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
-import { fetchEventBySlug } from "lib/api/events";
 import { fetchRegionsWithCities } from "lib/api/regions";
+import { getOwnedEventBySlug } from "@lib/auth/owned-event";
 import EditEventClient from "./EditEventClient";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ eventId: string }>;
-}): Promise<Metadata> {
+}: PageProps<"/[locale]/e/[eventId]/edita">): Promise<Metadata> {
   const { eventId } = await params;
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.EventEdit" });
@@ -28,14 +26,14 @@ export async function generateMetadata({
 
 export default async function EditaPage({
   params,
-}: {
-  params: Promise<{ eventId: string }>;
-}) {
+}: PageProps<"/[locale]/e/[eventId]/edita">) {
   const slug = (await params).eventId;
-  const event = await fetchEventBySlug(slug);
-  const regionsWithCities = await fetchRegionsWithCities();
+  const event = await getOwnedEventBySlug(slug);
+  if (!event) return notFound();
 
-  if (!event || !regionsWithCities) return notFound();
+  // Fetch region data only after confirming the user is the creator.
+  const regionsWithCities = await fetchRegionsWithCities();
+  if (!regionsWithCities) return notFound();
 
   return <EditEventClient event={event} regions={regionsWithCities} />;
 }

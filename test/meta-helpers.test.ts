@@ -67,7 +67,7 @@ describe("meta helpers (black-box)", () => {
         relatedEvents: [],
         weather: undefined,
         hash: "h",
-        type: "FREE",
+        isPromoted: false,
         url: "https://example.com",
         startTime: null,
         endTime: null,

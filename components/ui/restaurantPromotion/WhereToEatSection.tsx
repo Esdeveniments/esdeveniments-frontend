@@ -105,7 +105,7 @@ export default function WhereToEatSection({
                   const photoUrl = getPhotoUrl(place);
                   if (!photoUrl) {
                     return (
-                      <div className="w-20 h-20 rounded-md flex items-center justify-center bg-muted text-foreground/60 flex-shrink-0 ml-4">
+                      <div className="w-20 h-20 rounded-md flex items-center justify-center bg-muted text-muted-foreground flex-shrink-0 ml-4">
                         <svg
                           className="w-8 h-8"
                           fill="none"
@@ -136,7 +136,7 @@ export default function WhereToEatSection({
                           handleLoadPhoto(photoIdKey, place.name);
                         }}
                         aria-label={t("showPhoto")}
-                        className="w-20 h-20 rounded-md flex flex-col items-center justify-center bg-muted hover:bg-muted/80 text-foreground/70 hover:text-foreground-strong flex-shrink-0 ml-4 transition-colors gap-1 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        className="w-20 h-20 rounded-md flex flex-col items-center justify-center bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground-strong flex-shrink-0 ml-4 transition-colors gap-1 focus:outline-none focus:ring-2 focus:ring-primary/40"
                       >
                         <PhotoIcon className="w-6 h-6" aria-hidden="true" />
                         <span className="text-[10px] font-medium leading-none">
@@ -189,7 +189,7 @@ export default function WhereToEatSection({
                   <p className="mt-2 text-xs flex flex-wrap items-center gap-2 text-foreground">
                     {openInfo?.hoursText && <span>{openInfo.hoursText}</span>}
                     {openInfo?.hoursText && openInfo?.openLabel && (
-                      <span className="text-foreground/40">·</span>
+                      <span className="text-muted-foreground">·</span>
                     )}
                     {openInfo?.openLabel && (
                       <span className={openInfo.toneClass}>
@@ -198,7 +198,7 @@ export default function WhereToEatSection({
                     )}
                     {(openInfo?.hoursText || openInfo?.openLabel) &&
                       (place.rating || price) && (
-                        <span className="text-foreground/40">·</span>
+                        <span className="text-muted-foreground">·</span>
                       )}
                     {place.rating && (
                       <span className="text-foreground flex items-center gap-1">
@@ -207,7 +207,7 @@ export default function WhereToEatSection({
                       </span>
                     )}
                     {place.rating && price && (
-                      <span className="text-foreground/40">·</span>
+                      <span className="text-muted-foreground">·</span>
                     )}
                     {price && <span className="text-foreground">{price}</span>}
                   </p>

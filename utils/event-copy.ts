@@ -3,12 +3,12 @@ import { getFormattedDate, normalizeEndTime } from "@utils/date-helpers";
 import { capitalizeFirstLetter, formatPlaceName } from "./string-helpers";
 import { formatPlacePreposition } from "@utils/helpers";
 import type { EventCopyLabels, StringHelperLabels } from "types/common";
-import caMessages from "../messages/ca.json";
+import localeLabels from "../i18n/locale-labels.generated.json";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
-const defaultEventCopyLabels: EventCopyLabels = (caMessages as any).Utils
+const defaultEventCopyLabels: EventCopyLabels = localeLabels.utils
   .EventCopy as EventCopyLabels;
-const eventCopyStringLabels: StringHelperLabels = (caMessages as any).Utils
+const eventCopyStringLabels: StringHelperLabels = localeLabels.utils
   .StringHelpers as StringHelperLabels;
 const canonicalArticleMap = Object.values(
   eventCopyStringLabels.articles

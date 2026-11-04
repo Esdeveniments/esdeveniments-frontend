@@ -18,7 +18,7 @@ export default function SponsorUploadPageClient() {
     return (
       <div className="card-bordered card-body max-w-2xl mx-auto text-center">
         <h2 className="heading-3 mb-2">{t("uploadPage.missingSessionTitle")}</h2>
-        <p className="body-normal text-foreground/70 mb-6">
+        <p className="body-normal text-muted-foreground mb-6">
           {t("uploadPage.missingSessionSubtitle")}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -41,7 +41,7 @@ export default function SponsorUploadPageClient() {
     <div className="space-y-6">
       <div className="max-w-3xl mx-auto text-center">
         <h1 className="heading-1 mb-2">{t("checkout.successTitle")}</h1>
-        <p className="body-normal text-foreground/70">
+        <p className="body-normal text-muted-foreground">
           {t("checkout.successSubtitle")}
         </p>
       </div>

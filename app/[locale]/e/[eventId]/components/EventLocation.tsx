@@ -16,6 +16,7 @@ export default function EventLocation({
   regionName,
   citySlug,
   regionSlug,
+  profile,
   compact = false,
 }: EventLocationProps) {
   const t = useTranslations("Components.EventLocation");
@@ -39,6 +40,18 @@ export default function EventLocation({
     regionName: regionLabel,
     hidePlaceSegments: showPlaceLinks, // Hide city/region from the string if we show them as links below
   });
+
+  // 2026-07-25 backend migration: profile.displayName is canonical; profile.name
+  // is the legacy field; profile.username is the safety net. The profileLink
+  // translation expects a string, so we coalesce to "" rather than flow
+  // undefined through the i18n interpolation (different locales break
+  // differently on undefined).
+  const profileDisplayName = profile
+    ? profile.displayName?.trim() ||
+      profile.name?.trim() ||
+      profile.username?.trim() ||
+      ""
+    : "";
 
   if (compact) {
     return (
@@ -69,7 +82,7 @@ export default function EventLocation({
               </PressableAnchor>
             )}
             {cityHref && regionHref && cityLabel && regionLabel && (
-              <span className="text-foreground/40">|</span>
+              <span className="text-muted-foreground">|</span>
             )}
             {regionHref && regionLabel && (
               <PressableAnchor
@@ -81,6 +94,16 @@ export default function EventLocation({
               </PressableAnchor>
             )}
           </div>
+        )}
+        {/* Profile/venue link */}
+        {profile && (
+          <PressableAnchor
+            href={`/perfil/${encodeURIComponent(profile.username)}`}
+            className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
+            variant="inline"
+          >
+            {t("profileLink", { name: profileDisplayName })}
+          </PressableAnchor>
         )}
       </div>
     );
@@ -119,7 +142,7 @@ export default function EventLocation({
                   </PressableAnchor>
                 )}
                 {cityHref && regionHref && cityLabel && regionLabel && (
-                  <span className="text-foreground/40">|</span>
+                  <span className="text-muted-foreground">|</span>
                 )}
                 {regionHref && regionLabel && (
                   <PressableAnchor
@@ -131,6 +154,14 @@ export default function EventLocation({
                   </PressableAnchor>
                 )}
               </div>
+            )}
+            {/* Profile/venue link */}
+            {profile && (
+              <PressableAnchor
+                href={`/perfil/${encodeURIComponent(profile.username)}`}
+              >
+                {t("profileLink", { name: profileDisplayName })}
+              </PressableAnchor>
             )}
           </div>
           {/* Map — full width, no padding */}

@@ -1,5 +1,7 @@
 import { getRegionValue, getTownValue } from "@utils/form-helpers";
-import { normalizeUrl, slugifySegment } from "@utils/string-helpers";
+import { splitLocalDateTime, toLocalDateTimeString } from "@utils/date-helpers";
+import { normalizeUrl } from "@utils/event-url";
+import { slugifySegment } from "@utils/string-helpers";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { EventDetailResponseDTO, RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
@@ -129,21 +131,20 @@ const buildCategoriesMeta = (
     );
 };
 
-const parseDate = (value: string): Date | null => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
+// The split publishing uses, so the preview shows what will be stored.
+const splitOrNull = (value: string) => {
+  try {
+    return splitLocalDateTime(value);
+  } catch {
+    return null;
+  }
 };
 
-const extractDate = (value: string, fallback: Date): string => {
-  const parsed = parseDate(value) || fallback;
-  return parsed.toISOString().slice(0, 10);
-};
+const extractDate = (value: string, fallback: Date): string =>
+  splitOrNull(value)?.date ?? toLocalDateTimeString(fallback).slice(0, 10);
 
-const extractTime = (value: string): string | null => {
-  const parsed = parseDate(value);
-  if (!parsed) return null;
-  return parsed.toISOString().slice(11, 16);
-};
+const extractTime = (value: string): string | null =>
+  splitOrNull(value)?.time ?? null;
 
 export const mapDraftToPreviewEvent = ({
   form,
@@ -180,10 +181,10 @@ export const mapDraftToPreviewEvent = ({
     hash: "preview",
     slug,
     title: safeTitle,
-    type: form.type || "FREE",
+    isPromoted: false,
     url: normalizedUrl,
     description: form.description || "",
-    imageUrl: imageUrl || form.imageUrl || "",
+    imageUrl,
     startDate,
     startTime,
     endDate,

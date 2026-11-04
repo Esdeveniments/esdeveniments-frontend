@@ -25,14 +25,14 @@ export default async function PatrocinaSuccessPage() {
     <main className="min-h-screen bg-background py-section-y px-section-x">
       <div className="max-w-3xl mx-auto text-center space-y-6">
         <div className="flex justify-center">
-          <CheckCircleIcon className="h-16 w-16 text-success" />
+          <CheckCircleIcon className="h-16 w-16 text-success-dark" />
         </div>
         <h1 className="heading-1">{t("successPage.title")}</h1>
         <p className="body-large text-foreground/80">{t("successPage.subtitle")}</p>
 
         <div className="card-bordered card-body text-left space-y-3">
           <h2 className="heading-3">{t("successPage.nextTitle")}</h2>
-          <ul className="body-normal text-foreground/70 list-disc pl-6 space-y-1">
+          <ul className="body-normal text-muted-foreground list-disc pl-6 space-y-1">
             <li>{t("successPage.next1")}</li>
             <li>{t("successPage.next2")}</li>
           </ul>

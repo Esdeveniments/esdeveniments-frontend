@@ -1,11 +1,20 @@
+import { cacheLife } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { JSX } from "react";
-import ActiveLink from "@components/ui/common/link";
+import { Link } from "@i18n/routing";
 import Social from "@components/ui/common/social";
-import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClient";
 import CopyrightNotice from "./CopyrightYear";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 import { contactEmail, socialLinks } from "@config/index";
+
+// Reading the clock while rendering made the footer boundary dynamic under
+// cacheComponents. The shell then dropped the <footer>, but still streamed its
+// link holes, so React's $RS found no placeholders (11 errors per page).
+async function getCopyrightYear(): Promise<number> {
+  "use cache";
+  cacheLife("days");
+  return new Date().getFullYear();
+}
 
 export default async function Footer(): Promise<JSX.Element> {
   const t = await getTranslations("Components.Footer");
@@ -45,6 +54,7 @@ export default async function Footer(): Promise<JSX.Element> {
     { name: t("navigation.archive"), href: "/sitemap", kind: "internal", current: false },
     { name: t("navigation.terms"), href: "/termes-servei", kind: "internal", current: false },
     { name: t("navigation.privacy"), href: "/politica-privacitat", kind: "internal", current: false },
+    { name: t("navigation.login"), href: "/iniciar-sessio", kind: "internal", current: false },
   ] satisfies Array<
     | {
       name: string;
@@ -63,9 +73,12 @@ export default async function Footer(): Promise<JSX.Element> {
 
   return (
     <footer className="w-full border-t border-border bg-gradient-to-b from-background to-muted/30">
-      <div className="container flex flex-col items-center gap-section-y-sm pt-section-y pb-20 md:pb-section-y px-section-x">
+      <div
+        className="container mobile-nav-content-safe-area flex flex-col items-center gap-section-y-sm pt-section-y px-section-x"
+        data-testid="mobile-nav-content-safe-area"
+      >
         {/* Social Media Section */}
-        <div className="flex flex-col items-center gap-element-gap">
+        <div className="flex flex-col items-center gap-element-gap px-4 sm:px-0">
           <Social links={links} />
         </div>
 
@@ -87,13 +100,18 @@ export default async function Footer(): Promise<JSX.Element> {
                 {item.name}
               </a>
             ) : (
-              <ActiveLink
+              <Link
                 href={item.href}
                 key={item.name}
-                className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive"
+                prefetch={false}
+                data-pressable-link="inline"
+                className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive pressable-inline"
+                {...(item.href === "/iniciar-sessio"
+                  ? { "data-analytics-action": "footer_login" }
+                  : {})}
               >
                 {item.name}
-              </ActiveLink>
+              </Link>
             )
           )}
         </nav>
@@ -111,12 +129,17 @@ export default async function Footer(): Promise<JSX.Element> {
               <h2 id="footer-sponsor-cta" className="heading-4 text-foreground-strong">
                 {t("sponsorCta.title")}
               </h2>
-              <p className="body-small text-foreground/70 max-w-2xl">
+              <p className="body-small text-muted-foreground max-w-2xl">
                 {t("sponsorCta.description")}
               </p>
-              <PressableAnchorClient href="/patrocina" className="btn-primary">
+              <Link
+                href="/patrocina"
+                prefetch={false}
+                data-pressable-link="inline"
+                className="btn-primary pressable-inline"
+              >
                 {tSponsor("cta")}
-              </PressableAnchorClient>
+              </Link>
             </div>
           </div>
         </section>
@@ -135,14 +158,15 @@ export default async function Footer(): Promise<JSX.Element> {
           <div className="w-full max-w-5xl bg-background/50 rounded-card p-6 shadow-sm border border-border/40">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3">
               {TOP_AGENDA_LINKS.map((item) => (
-                <PressableAnchorClient
+                <Link
                   key={item.href}
                   href={item.href}
                   prefetch={false}
-                  className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1"
+                  data-pressable-link="inline"
+                  className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1 pressable-inline"
                 >
                   {`${agendaLabel} ${item.name}`}
-                </PressableAnchorClient>
+                </Link>
               ))}
             </div>
           </div>
@@ -152,8 +176,11 @@ export default async function Footer(): Promise<JSX.Element> {
         <hr className="w-full max-w-4xl border-t border-border/50" />
 
         {/* Copyright Section */}
-        <div className="w-full flex flex-col items-center gap-element-gap-sm px-section-x">
-          <CopyrightNotice />
+        <div
+          className="w-full flex flex-col items-center gap-element-gap-sm px-section-x"
+          data-testid="footer-last-content"
+        >
+          <CopyrightNotice year={await getCopyrightYear()} />
           <span className="text-xs text-muted-foreground text-center">
             {t("tagline")}
           </span>

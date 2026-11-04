@@ -1,6 +1,9 @@
 import { siteUrl } from "@config/index";
 import { normalizeEndTime } from "@utils/date-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
+import { TIMEZONE_MADRID } from "@utils/constants";
+import { TZDate } from "@date-fns/tz";
+import { format } from "date-fns";
 import type {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
@@ -57,6 +60,21 @@ export const ensureTime = (value?: string | null): string | undefined => {
   const trimmed = sanitizeText(value);
   if (!trimmed) return undefined;
   return /^\d{2}:\d{2}(:\d{2})?$/.test(trimmed) ? trimmed : undefined;
+};
+
+/**
+ * Appends the Europe/Madrid UTC offset (DST-aware) to a local
+ * "YYYY-MM-DDTHH:mm[:ss]" value, as Google's Event docs recommend.
+ * Date-only and already-offset values are returned unchanged.
+ */
+export const withMadridOffset = (value: string): string => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(
+    value
+  );
+  if (!match) return value;
+  const [y, mo, d, h, mi, s] = match.slice(1).map((part) => Number(part ?? 0));
+  const local = new TZDate(y, mo - 1, d, h, mi, s, TIMEZONE_MADRID);
+  return `${value}${format(local, "xxx")}`;
 };
 
 export const buildDateTime = (
@@ -126,15 +144,10 @@ export const generateJsonData = (
     }
   };
 
-  // Enhanced image handling with validation, de-duplication and fallback
-  const imageCandidates = [imageUrl, defaultImage];
-  const images = Array.from(
-    new Set(imageCandidates.filter((src): src is string => isValidHttpUrl(src)))
-  );
-  if (images.length === 0 && isValidHttpUrl(defaultImage)) {
-    images.push(defaultImage);
-  }
-  if (!imageUrl || !isValidHttpUrl(imageUrl)) {
+  // Google: event images "must represent the marked up content", so the site
+  // logo is never used as an event image; `image` is omitted instead.
+  const images = imageUrl && isValidHttpUrl(imageUrl) ? [imageUrl] : [];
+  if (images.length === 0) {
     logSchemaWarning(slug, "image");
   }
 
@@ -175,7 +188,7 @@ export const generateJsonData = (
           contentUrl: videoUrl,
           description: descriptionValue,
           thumbnailUrl: images[0] || defaultImage,
-          uploadDate: resolvedStartDate,
+          uploadDate: withMadridOffset(resolvedStartDate),
         }
       : null;
 
@@ -202,8 +215,6 @@ export const generateJsonData = (
     return unique.length > 0 ? unique : undefined;
   })();
 
-  const organizerName =
-    sanitizedLocation || cityName || regionName || "Esdeveniments Catalunya";
   if (!trimmedTitle) {
     logSchemaWarning(slug, "name");
   }
@@ -212,32 +223,6 @@ export const generateJsonData = (
   const inLanguage = localeToHrefLang[localeToUse] ?? localeToUse;
   const slugPart = typeof slug === "string" ? slug : "";
   const eventUrl = toLocalizedUrl(`/e/${slugPart}`, localeToUse);
-
-  const buildOffer = () => {
-    const baseOffer = {
-      "@type": "Offer" as const,
-      priceCurrency: "EUR",
-      availability: "https://schema.org/InStock",
-      url: eventUrl,
-      validFrom: resolvedStartDate,
-    };
-
-    if (event.type === "FREE") {
-      return {
-        ...baseOffer,
-        price: 0,
-      };
-    }
-
-    // Paid events without known price: omit offers entirely.
-    // Emitting price:0 + "Consult price" placeholder violates Google's
-    // sd-policies ("don't use structured data to deceive") and suppresses
-    // rich results. schema.org/Event treats offers as recommended, not required.
-    logSchemaWarning(slug, "offers", "missing price for paid event");
-    return null;
-  };
-
-  const offers = buildOffer();
 
   // Always emit EventScheduled. schema.org/EventStatusType only defines:
   // EventScheduled, EventCancelled, EventMovedOnline, EventPostponed,
@@ -254,8 +239,8 @@ export const generateJsonData = (
     "@id": eventUrl,
     name: schemaName,
     url: eventUrl,
-    startDate: resolvedStartDate,
-    endDate: resolvedEndDate,
+    startDate: withMadridOffset(resolvedStartDate),
+    endDate: withMadridOffset(resolvedEndDate),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
     location: {
@@ -278,20 +263,12 @@ export const generateJsonData = (
         addressRegion,
       },
     },
-    image: images,
+    ...(images.length > 0 && { image: images }),
     description: descriptionValue,
     inLanguage,
     ...(genre && { genre }),
-    performer: {
-      "@type": "PerformingGroup" as const,
-      name: organizerName,
-    },
-    organizer: {
-      "@type": "Organization" as const,
-      name: organizerName,
-      url: siteUrl,
-    },
-    ...(offers && { offers }),
+    // performer/organizer are omitted: the backend has no performer or
+    // organizer data, and the venue name is neither (Google sd-policies).
     // isAccessibleForFree removed: event.type defaults to "FREE" so this is unreliable.
     // We only want to claim "Free" when we are 100% sure.
     ...(isValidHttpUrl(event.url) && {

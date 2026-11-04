@@ -57,6 +57,39 @@ function getAllFiles(dir, fileList = []) {
   return fileList;
 }
 
+// Recursively get all files belonging to ONE route's own server bundle,
+// stopping at nested route boundaries. In .next/server/app, a child route's
+// compiled output lives inside its parent route's directory (e.g.
+// preferits/passats/ sits under preferits/), so a plain recursive walk
+// double-counts every descendant route's page_client-reference-manifest.js
+// (typically 300-500KB each in this app) into every ancestor route's total.
+// A subdirectory with its own page.js is a distinct, separately-measured
+// route: don't descend into it.
+function getRouteOwnFiles(dir, fileList = []) {
+  try {
+    const files = readdirSync(dir, { withFileTypes: true });
+    for (const file of files) {
+      const filePath = join(dir, file.name);
+      if (file.isDirectory()) {
+        const nestedPageFile = join(filePath, 'page.js');
+        const nestedRouteFile = join(filePath, 'route.js');
+        if (
+          statSync(nestedPageFile, { throwIfNoEntry: false }) ||
+          statSync(nestedRouteFile, { throwIfNoEntry: false })
+        ) {
+          continue;
+        }
+        getRouteOwnFiles(filePath, fileList);
+      } else if (file.isFile()) {
+        fileList.push(filePath);
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+  return fileList;
+}
+
 // Analyze client bundles
 function analyzeClientBundles() {
   const staticDir = join(projectRoot, '.next', 'static');
@@ -109,7 +142,7 @@ function analyzeRouteServerBundle(route) {
     return null;
   }
 
-  const files = [...rootFiles, ...getAllFiles(serverDir)];
+  const files = [...rootFiles, ...getRouteOwnFiles(serverDir)];
   const bundles = files
     .filter(f => f.endsWith('.js') || f.endsWith('.json'))
     .map(file => {

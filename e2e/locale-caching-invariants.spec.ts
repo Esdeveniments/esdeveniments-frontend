@@ -30,10 +30,7 @@ test.describe("Locale caching invariants", () => {
         headers["content-security-policy-report-only"]
     );
 
-    test.skip(
-      !hasProxyHeaders,
-      "proxy.ts not active in this environment (e.g. plain next dev)"
-    );
+    expect(hasProxyHeaders, "proxy.ts sets a CSP header").toBe(true);
 
     const currentUrl = pageEs.url();
     if (/\/es(\/|$)/.test(currentUrl)) {
@@ -77,10 +74,7 @@ test.describe("Locale caching invariants", () => {
       headersDefault["content-security-policy"] ||
         headersDefault["content-security-policy-report-only"]
     );
-    test.skip(
-      !hasProxyHeaders,
-      "proxy.ts not active in this environment (e.g. plain next dev)"
-    );
+    expect(hasProxyHeaders, "proxy.ts sets a CSP header").toBe(true);
 
     expect(contentLangDefault).toBe("ca");
 

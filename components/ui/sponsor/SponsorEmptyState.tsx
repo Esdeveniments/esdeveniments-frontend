@@ -29,7 +29,7 @@ export default function SponsorEmptyState() {
           {t("cta")}
         </span>
         <ChevronRightIcon
-          className="h-4 w-4 text-foreground/60 group-hover:text-primary"
+          className="h-4 w-4 text-muted-foreground group-hover:text-primary"
           aria-hidden="true"
         />
       </div>

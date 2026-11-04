@@ -1,6 +1,6 @@
 /**
  * Sponsor banner types for the self-service advertising system.
- * @see /strategy-pricing.md for full system documentation
+ * @see docs/strategy-pricing.md for full system documentation
  */
 
 /**

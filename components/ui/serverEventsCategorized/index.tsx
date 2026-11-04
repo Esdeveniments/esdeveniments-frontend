@@ -34,11 +34,13 @@ import { FeaturedPlaceSection } from "./FeaturedPlaceSection";
 import { CategoryEventsSection } from "./CategoryEventsSection";
 import { createDateFilterBadgeLabels } from "./DateFilterBadges";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
+import PromotedEventsSection from "@components/ui/promotedEvents/PromotedEventsSection";
 import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
 import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import { HERO_IMAGE } from "@config/hero-image";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
@@ -201,15 +203,30 @@ async function ServerEventsCategorized({
       <div className="relative overflow-hidden border-b border-border/40 pb-8 pt-4">
         {/* Hero background image — uses <img> instead of CSS background-image
             so the browser can discover it early and apply fetchpriority="high" */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/static/images/hero-castellers.webp"
-          alt=""
-          aria-hidden="true"
-          fetchPriority="high"
-          decoding="sync"
-          className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
-        />
+        <picture>
+          <source
+            media={HERO_IMAGE.mobile.media}
+            srcSet={HERO_IMAGE.mobile.srcSet}
+            sizes={HERO_IMAGE.mobile.sizes}
+            type={HERO_IMAGE.mobile.type}
+          />
+          <source
+            media={HERO_IMAGE.mobile.media}
+            srcSet={HERO_IMAGE.mobile.fallbackSrcSet}
+            sizes={HERO_IMAGE.mobile.sizes}
+            type="image/webp"
+          />
+          <img
+            src={HERO_IMAGE.src}
+            srcSet={HERO_IMAGE.desktop.srcSet}
+            sizes={HERO_IMAGE.desktop.sizes}
+            alt=""
+            aria-hidden="true"
+            fetchPriority="high"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
+          />
+        </picture>
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
         <div className="container relative z-10">
@@ -469,7 +486,14 @@ export async function ServerEventsCategorizedContent({
     categorySectionsToRender.length > 0 || featuredSections.length > 0;
 
   if (!hasEvents) {
-    return <NoEventsFound />;
+    return (
+      <>
+        <Suspense fallback={null}>
+          <PromotedEventsSection />
+        </Suspense>
+        <NoEventsFound />
+      </>
+    );
   }
 
   const tCategory = await getTranslations({
@@ -508,6 +532,10 @@ export async function ServerEventsCategorizedContent({
 
   return (
     <>
+      <Suspense fallback={null}>
+        <PromotedEventsSection />
+      </Suspense>
+
       {/* Popular Now Section — derived from existing data, zero extra API calls */}
       {popularEvents.length > 0 && (
         <div className="container content-auto-section">
