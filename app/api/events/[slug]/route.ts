@@ -1,13 +1,14 @@
 import { NextResponse, after } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
 import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
 import { handleApiError } from "@utils/api-error-handler";
+import { isEventOwner } from "@utils/event-helpers";
 import { eventDetailCache, deleteEventDetailCache } from "@lib/cache/event-detail-cache";
+import { revalidateEventPages } from "@lib/cache/revalidate-event-pages";
 import { eventTag, eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
-import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "types/i18n";
 
 // GET /api/events/[slug] - server-only proxy with server-side HMAC and stable caching
 export async function GET(
@@ -55,10 +56,7 @@ export async function DELETE(
     // Fail fast if the session does not belong to the event creator. The
     // backend also enforces this, but checking here avoids issuing a mutation
     // for events the caller does not own.
-    const isCreator =
-      Boolean(currentUser.id) &&
-      currentUser.id === event.owner?.id;
-    if (!isCreator) {
+    if (!isEventOwner(currentUser.id, event.owner?.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -70,16 +68,7 @@ export async function DELETE(
     revalidateTag(eventTag(slug), { expire: 0 });
     revalidateTag(eventsTag, { expire: 0 });
     revalidateTag(eventsCategorizedTag, { expire: 0 });
-    // Purge Next.js Data Cache for all locales of the event detail page.
-    // Default locale (ca) has no prefix; non-default locales get a prefix path.
-    try {
-      for (const locale of SUPPORTED_LOCALES) {
-        const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-        revalidatePath(`${prefix}/e/${slug}`);
-      }
-    } catch {
-      // revalidatePath is a no-op outside of a render context in some environments
-    }
+    revalidateEventPages([slug]);
     // Next's tags don't reach Cloudflare: purge the pages that showed the
     // event. Next starts the revalidations above before the response is sent,
     // and after() runs once it has been sent.

@@ -128,6 +128,24 @@ describe("/api/events/[slug] DELETE cache invalidation", () => {
     expect(mockRevalidateTag).toHaveBeenCalledWith("events:categorized", { expire: 0 });
   });
 
+  it("revalidates the event page under every locale prefix, including the default /ca", async () => {
+    const { DELETE } = await import("app/api/events/[slug]/route");
+    const req = new Request("http://localhost/api/events/my-event", {
+      method: "DELETE",
+    });
+    const ctx = { params: Promise.resolve({ slug: "my-event" }) };
+
+    await DELETE(req, ctx as any);
+
+    // proxy.ts rewrites /e/my-event to /ca/e/my-event; revalidatePath matches
+    // the rewritten route path, so an unprefixed path would miss Catalan.
+    expect(mockRevalidatePath.mock.calls.map(([path]) => path).sort()).toEqual([
+      "/ca/e/my-event",
+      "/en/e/my-event",
+      "/es/e/my-event",
+    ]);
+  });
+
   it("purges the deleted event's pages from Cloudflare after the response", async () => {
     const { DELETE } = await import("app/api/events/[slug]/route");
     const req = new Request("http://localhost/api/events/my-event", {

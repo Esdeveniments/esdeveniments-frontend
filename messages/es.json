@@ -948,7 +948,13 @@
       "toolbarAriaLabel": "Acciones del evento",
       "sidebarCreatedBy": "Publicado por",
       "sidebarViewAllEvents": "Ver todos los eventos",
-      "promoteEvent": "Promocionar"
+      "promoteEvent": "Promocionar",
+      "deleteEvent": "Eliminar evento",
+      "deleteConfirmTitle": "¿Quieres eliminar este evento?",
+      "deleteConfirmDescription": "Dejará de aparecer en la agenda y no se podrá recuperar.",
+      "deleteConfirm": "Eliminar",
+      "deleteCancel": "Cancelar",
+      "deleteError": "No se ha podido eliminar el evento. Vuelve a intentarlo."
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
