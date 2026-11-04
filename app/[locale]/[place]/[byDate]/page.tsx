@@ -132,9 +132,24 @@ export async function generateMetadata({
 export default async function ByDatePage({
   params,
 }: PageProps<"/[locale]/[place]/[byDate]">) {
-  // Parallelize independent operations: params, locale, and categories fetch.
-  const [resolvedParams, locale, categoriesResult] = await Promise.all([
-    params,
+  const { place, byDate } = await params;
+
+  try {
+    validatePlaceOrThrow(place);
+  } catch {
+    notFound();
+  }
+
+  // The place lookup and its event count (which sets the SSR page size) don't
+  // need categories: start them now instead of after categories arrive. Both
+  // catch their own errors, so neither promise rejects. React cache() dedupes
+  // the calls from generateMetadata and PlacePageShell in the same request.
+  const placeTypeLabelPromise = getPlaceTypeAndLabelCached(place);
+  const isExpandablePromise = placeTypeLabelPromise.then((typeLabel) =>
+    getPlaceExpandability(place, typeLabel.type)
+  );
+
+  const [locale, categoriesResult] = await Promise.all([
     rootLocale() as Promise<AppLocale>,
     getCategories().catch((error) => {
       console.error(
@@ -144,18 +159,11 @@ export default async function ByDatePage({
       return [] as CategorySummaryResponseDTO[];
     }),
   ]);
-  const { place, byDate } = resolvedParams;
 
   const tFallback = await getTranslations({
     locale,
     namespace: "App.PlaceByDate",
   });
-
-  try {
-    validatePlaceOrThrow(place);
-  } catch {
-    notFound();
-  }
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
@@ -201,13 +209,8 @@ export default async function ByDatePage({
   const finalCategory = actualCategory;
 
   // Match SSR depth to indexability: expandable places get a richer first page;
-  // thin places stay small. Both helpers are React cache()-wrapped, so duplicate
-  // calls from generateMetadata/PlacePageShell in the same request are deduped.
-  const pageTypeLabelForFetch = await getPlaceTypeAndLabelCached(place);
-  const isExpandableForFetch = await getPlaceExpandability(
-    place,
-    pageTypeLabelForFetch.type
-  );
+  // thin places stay small.
+  const isExpandableForFetch = await isExpandablePromise;
 
   const paramsForFetch: FetchEventsParams = {
     page: 0,

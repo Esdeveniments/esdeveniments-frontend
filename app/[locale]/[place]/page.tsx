@@ -141,19 +141,20 @@ export async function PlacePageGate({ place }: { place: string }): Promise<JSX.E
 
   const eventsPromise = buildPlaceEventsPromise({ place, locale });
 
-  // Await categories for late existence check only
-  const categories = await categoriesPromise;
-
   // Late existence check to preserve UX without creating an enumeration oracle
   // Note: We pass empty searchParams to keep pages static (ISR-compatible).
   // Query params are not preserved on alias redirects (rare edge case).
-  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
-    place,
-    locale,
-    rawSearchParams: {},
-    buildTargetPath: (alias) => `/${alias}`,
-    fetchPlaceBySlug,
-  });
+  // Runs alongside categories: neither needs the other.
+  const [categories, placeRedirectUrl] = await Promise.all([
+    categoriesPromise,
+    getPlaceAliasOrInvalidPlaceRedirectUrl({
+      place,
+      locale,
+      rawSearchParams: {},
+      buildTargetPath: (alias) => `/${alias}`,
+      fetchPlaceBySlug,
+    }),
+  ]);
   if (placeRedirectUrl) {
     redirect(placeRedirectUrl);
   }
@@ -225,7 +226,8 @@ export async function buildPlaceEventsPromise({
   place: string;
   locale?: AppLocale;
 }): Promise<PlacePageEventsResult> {
-  const placeTypeLabel = await getPlaceTypeAndLabelCached(place);
+  // Only needed after the events arrive, so don't hold the events fetch on it.
+  const placeTypeLabelPromise = getPlaceTypeAndLabelCached(place);
 
   // Always fetch the rich page size: the unfiltered response's totalElements
   // decides expandability, which saves a separate count call. Thin places are
@@ -257,6 +259,7 @@ export async function buildPlaceEventsPromise({
         place: undefined,
       },
     });
+  const placeTypeLabel = await placeTypeLabelPromise;
   // An empty first page is either a real zero or an API failure (fetchEvents
   // returns an empty page for both), and eventsResponse then holds a fallback
   // total. Ask the count endpoint so failures fail open, as in the sitemap.

@@ -129,26 +129,36 @@ export async function generateMetadata({
 export default async function FilteredPage({
   params,
 }: PageProps<"/[locale]/[place]/[byDate]/[category]">) {
-  // Parallelize independent operations: params, locale, and categories fetch.
-  const [resolvedParams, locale, categoriesResult] = await Promise.all([
-    params,
-    rootLocale() as Promise<AppLocale>,
-    getCategories().catch((error) => {
-      console.error("Error fetching categories:", error);
-      return [] as CategorySummaryResponseDTO[];
-    }),
-  ]);
-  const { place, byDate, category } = resolvedParams;
-  const tFallback = await getTranslations({
-    locale,
-    namespace: "App.PlaceByDateCategory",
-  });
+  const { place, byDate, category } = await params;
 
   try {
     validatePlaceOrThrow(place);
   } catch {
     notFound();
   }
+
+  // The place lookup and its event count (which sets the SSR page size) don't
+  // need categories: start them now instead of after categories arrive. Both
+  // catch their own errors, so neither promise rejects. React cache() dedupes
+  // the calls from generateMetadata and PlacePageShell in the same request.
+  // parseFiltersFromUrl keeps the place segment as is, so filters.place below
+  // is this same slug.
+  const placeTypeLabelPromise = getPlaceTypeAndLabelCached(place);
+  const isExpandablePromise = placeTypeLabelPromise.then((typeLabel) =>
+    getPlaceExpandability(place, typeLabel.type)
+  );
+
+  const [locale, categoriesResult] = await Promise.all([
+    rootLocale() as Promise<AppLocale>,
+    getCategories().catch((error) => {
+      console.error("Error fetching categories:", error);
+      return [] as CategorySummaryResponseDTO[];
+    }),
+  ]);
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDateCategory",
+  });
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
@@ -190,13 +200,8 @@ export default async function FilteredPage({
   const filters = urlToFilterState(parsed);
 
   // Match SSR depth to indexability: expandable places get a richer first page;
-  // thin places stay small. Both helpers are React cache()-wrapped, so duplicate
-  // calls in the same request are deduped.
-  const placeTypeLabelForFetch = await getPlaceTypeAndLabelCached(filters.place);
-  const isExpandableForFetch = await getPlaceExpandability(
-    filters.place,
-    placeTypeLabelForFetch.type
-  );
+  // thin places stay small.
+  const isExpandableForFetch = await isExpandablePromise;
 
   // Prepare fetch params (align with byDate page behavior)
   const fetchParams: FetchEventsParams = {
