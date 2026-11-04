@@ -6,10 +6,12 @@ const fetchPlacesAggregatedExternal = vi.fn();
 vi.mock("@lib/api/places-external", () => ({
   fetchPlaceBySlugExternal,
   fetchPlacesAggregatedExternal,
+  PLACES_LIST_CACHE_KEY: "places:aggregated",
 }));
 vi.mock("../lib/api/places-external", () => ({
   fetchPlaceBySlugExternal,
   fetchPlacesAggregatedExternal,
+  PLACES_LIST_CACHE_KEY: "places:aggregated",
 }));
 
 const places: PlaceResponseDTO[] = [
@@ -19,9 +21,18 @@ const places: PlaceResponseDTO[] = [
 
 const load = async () => (await import("@lib/api/places-proxy")).resolvePlaceForProxy;
 
+// A new process: fresh modules and an empty shared cache store (the place
+// list lives on globalThis, so resetModules alone keeps it).
+function freshProcess() {
+  vi.resetModules();
+  delete (globalThis as Record<symbol, unknown>)[
+    Symbol.for("esdeveniments.cache.slots")
+  ];
+}
+
 describe("resolvePlaceForProxy", () => {
   beforeEach(() => {
-    vi.resetModules();
+    freshProcess();
     fetchPlaceBySlugExternal.mockReset();
     fetchPlacesAggregatedExternal.mockReset();
     fetchPlacesAggregatedExternal.mockResolvedValue(places);
@@ -56,13 +67,13 @@ describe("resolvePlaceForProxy", () => {
     fetchPlaceBySlugExternal.mockRejectedValueOnce(new Error("HTTP 500"));
     expect(await (await load())("a-place")).toEqual({ kind: "unknown" });
 
-    vi.resetModules();
+    freshProcess();
     fetchPlaceBySlugExternal.mockClear();
     fetchPlacesAggregatedExternal.mockRejectedValue(new Error("HTTP 500"));
     expect(await (await load())("c-place")).toEqual({ kind: "unknown" });
     expect(fetchPlaceBySlugExternal).not.toHaveBeenCalled();
 
-    vi.resetModules();
+    freshProcess();
     fetchPlacesAggregatedExternal.mockResolvedValue([]);
     expect(await (await load())("b-place")).toEqual({ kind: "unknown" });
   });

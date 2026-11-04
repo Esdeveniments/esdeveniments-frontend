@@ -14,17 +14,18 @@ const regions = [
   },
 ];
 
-function respond(url: string): Response {
-  return Response.json(url.endsWith("/categories") ? categories : regions);
-}
+const places = [{ id: 3, name: "Girona", slug: "girona" }];
 
-const SHARED_SLOTS = Symbol.for("esdeveniments.cache.slots");
+function respond(url: string): Response {
+  if (url.endsWith("/categories")) return Response.json(categories);
+  if (url.endsWith("/places/regions/options")) return Response.json(regions);
+  if (url.endsWith("/places/cities")) return Response.json(places);
+  return Response.json([]); // /places/regions
+}
 
 beforeEach(() => {
   vi.mocked(fetchWithHmac).mockReset();
   vi.mocked(fetchWithHmac).mockImplementation(async (url) => respond(url));
-  // Fresh shared store per test; simulates a new server process.
-  delete (globalThis as Record<symbol, unknown>)[SHARED_SLOTS];
   vi.resetModules();
 });
 
@@ -65,18 +66,24 @@ describe("warmReferenceCaches", () => {
     );
     await warmReferenceCaches();
 
-    expect(fetchWithHmac).toHaveBeenCalledTimes(2);
+    // categories, regions/options, and the place list (regions + cities)
+    expect(fetchWithHmac).toHaveBeenCalledTimes(4);
     for (const [, options] of vi.mocked(fetchWithHmac).mock.calls) {
-      expect(options).toEqual({ skipConnection: true });
+      expect(options).toMatchObject({ skipConnection: true });
     }
 
-    // The pages load their own module copy; they must hit the warm entry.
+    // The pages and proxy.ts load their own module copies; they must all hit
+    // the warm entries.
     vi.resetModules();
     const { fetchCategories } = await import("@lib/api/categories");
     const { fetchRegionsWithCities } = await import("@lib/api/regions");
+    const { fetchPlaces } = await import("@lib/api/places");
+    const { resolvePlaceForProxy } = await import("@lib/api/places-proxy");
     expect(await fetchCategories()).toEqual(categories);
     expect(await fetchRegionsWithCities()).toHaveLength(1);
-    expect(fetchWithHmac).toHaveBeenCalledTimes(2);
+    expect(await fetchPlaces()).toHaveLength(1);
+    expect(await resolvePlaceForProxy("girona")).toEqual({ kind: "exists" });
+    expect(fetchWithHmac).toHaveBeenCalledTimes(4);
   });
 
   it("never holds startup longer than the timeout", async () => {

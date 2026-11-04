@@ -71,6 +71,14 @@ export type CacheEntry<T> = {
   timestamp: number;
 };
 
-/** Holder for a single-value cache entry (shared on globalThis with globalKey). */
-export type CacheSlot<T> = { entry: CacheEntry<T> | null };
+/**
+ * Holder for a single-value cache entry (shared on globalThis with globalKey).
+ * pending: the fetch in flight, shared by concurrent misses. generation:
+ * bumped by clear(), so a fetch started before it doesn't store its result.
+ */
+export type CacheSlot<T> = {
+  entry: CacheEntry<T> | null;
+  pending: Promise<T> | null;
+  generation: number;
+};
 

@@ -4,10 +4,13 @@ import { resolvePlaceSlugAliasFromPlaces } from "@utils/place-alias";
 import {
   fetchPlaceBySlugExternal,
   fetchPlacesAggregatedExternal,
+  PLACES_LIST_CACHE_KEY,
 } from "./places-external";
 
-// Proxy is bundled apart from the app, so /api/revalidate can't clear these
-// caches. The short TTL bounds how long a newly added place can 404.
+// Proxy is bundled apart from the app, so /api/revalidate can't clear
+// placeExistsCache. The short TTL bounds how long a newly added place can 404.
+// The place list shares the app's entry (PLACES_LIST_CACHE_KEY): it's filled
+// at server start, and /api/revalidate clears it for both.
 const PROXY_PLACE_TTL_MS = 60 * 60 * 1000;
 // Proxy runs before every page request; a slow backend must not delay pages.
 // On timeout the page is served as before.
@@ -18,7 +21,7 @@ const { cache: placeExistsCache } = createKeyedCache<boolean>(
 );
 const { cache: placesCache } = createCache<PlaceResponseDTO[]>(
   PROXY_PLACE_TTL_MS,
-  { storeEmpty: false },
+  { storeEmpty: false, globalKey: PLACES_LIST_CACHE_KEY },
 );
 // After a failure, skip the backend for a while so an outage doesn't add the
 // timeout to every request or pile more calls onto a struggling backend.
