@@ -553,6 +553,13 @@ describe("proxy", () => {
       expect(url.search).toBe(search);
     });
 
+    it("caps how long browsers keep the category 301", async () => {
+      const response = await proxy(listingRequest("/barcelona/concerts"));
+      expect(response?.headers.get("Cache-Control")).toBe(
+        "public, max-age=3600",
+      );
+    });
+
     it.each(["/barcelona/teatre", "/barcelona/avui/musica"])(
       "serves %s as before",
       async (pathname) => {

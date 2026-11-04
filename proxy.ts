@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { PROXY_LIST_TTL_MS } from "@lib/api/proxy-list";
 import { gateApiRequest } from "@utils/api-gate";
 import { stripLocalePrefix } from "@utils/i18n-routing";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
@@ -78,6 +79,14 @@ export default async function proxy(request: NextRequest) {
         : categoryRedirectUrl;
   if (redirectUrl) {
     const response = NextResponse.redirect(redirectUrl, 301);
+    if (redirectUrl === categoryRedirectUrl) {
+      // A new category can be missing from Proxy's list for up to its TTL;
+      // without a max-age, browsers may keep this 301 forever.
+      response.headers.set(
+        "Cache-Control",
+        `public, max-age=${PROXY_LIST_TTL_MS / 1000}`,
+      );
+    }
     if (pathLocaleToPersist) {
       persistLocaleCookie(response, pathLocaleToPersist);
     }

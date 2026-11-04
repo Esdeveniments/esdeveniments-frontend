@@ -22,7 +22,8 @@ A new top-level route folder must be added to `NON_PLACE_FIRST_SEGMENTS`
 `test/middleware-redirects-non-place.test.ts`) or it would be checked as a place.
 Unknown category slugs (`/barcelona/concerts`) get the same treatment: `checkCategory`
 (`utils/proxy-place.ts`) 301s them to the URL the page's `getRedirectUrl` would pick,
-with the same cache, timeout and back-off (`lib/api/proxy-list.ts`).
+with the same cache, timeout and back-off (`lib/api/proxy-list.ts`). That 301 carries `max-age` equal to the list TTL, so a browser
+doesn't keep it after a new category shows up.
 Missing events still serve 200 + `noindex`: a 404 there would need a full event
 fetch in Proxy.
 
