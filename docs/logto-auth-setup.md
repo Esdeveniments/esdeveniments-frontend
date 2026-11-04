@@ -59,11 +59,14 @@ Do **not** create per-environment apps inside a single instance — they share
 the user pool and signing keys, so it's fake isolation (a test signup lands
 next to real users; a leaked staging key validates prod tokens).
 
-Current state (Jun 2026): only the **preproduction** instance
-(`auth-preproduction.esdeveniments.cat`) is deployed. It backs **dev +
-staging**. Production auth is **pending a production Logto instance**
-(`auth.esdeveniments.cat`); until it exists, do not mint prod secrets in the
-preproduction instance.
+Current state (Nov 2026): two instances.
+
+- **Preproduction** (`auth-preproduction.esdeveniments.cat`) backs **dev +
+  staging**.
+- **Production** (`auth.esdeveniments.cat`) backs `www`, live since release
+  #630 (2026-11-04).
+
+Never put prod secrets in the preproduction instance, or the reverse.
 
 ### Per-app setup (each environment)
 
@@ -98,6 +101,30 @@ and post sign-out `https://esdeveniments.cat/` too.
 
 Forget a host's callback and that environment fails closed with Logto's
 `redirect_uri mismatch` — the single most common setup miss.
+
+### Google sign-in (social connector)
+
+The frontend only knows `LOGTO_*`; Google is configured inside each Logto
+instance. Each instance has its own Google connector, and Google redirects to
+Logto, not to our app:
+
+| Instance | Google connector ID | Redirect URI to register in GCP |
+| --- | --- | --- |
+| Preproduction | `x46ggdf3u44k8xmuducv5` | `https://auth-preproduction.esdeveniments.cat/callback/x46ggdf3u44k8xmuducv5` |
+| Production | `lx2fe0v4goniu99yr8l6r` | `https://auth.esdeveniments.cat/callback/lx2fe0v4goniu99yr8l6r` |
+
+Both connectors use the same OAuth web client in GCP project `esdeveniments`
+(client ID `381787440315-vskse0t4…`, Google Auth Platform → Clients). Sharing
+it is allowed: both instances use the same client secret, consent screen and
+quota. To split them later, create a second web client and change only the
+production connector.
+
+- A missing or wrong URI shows Google's `Error 400: redirect_uri_mismatch`
+  (the first production sign-in hit this). Add the URI exactly as Logto shows
+  it in the connector page.
+- `gcloud` can't edit standard OAuth web clients; use the Cloud Console.
+- The consent screen must be **In production**, not "Testing", or only listed
+  test users can sign in.
 
 ## The 5 secret locations (keep in sync)
 

@@ -233,3 +233,38 @@ Still to record after the production deploy:
 - Time from publishing a test event to seeing it on its place listing through Cloudflare (expected: seconds).
 - Cloudflare cache hit ratio and TTFB over 48 h, compared with the 48 h before.
 
+
+## 2026-11-04: production after release #630
+
+First measurement of production after develop reached main (#630, `ac5aa010`, backend v2). Same script and profile as the 2026-11-02 "Live" column: `scripts/perf-lab.mjs`, Pixel 7, 4x CPU, 1.6 Mbps / 150 ms, median of 3. Live runs include the Google scripts (consent box, ads, analytics). Event: `bibliobus-puigdon-4-de-novembre-del-2026-df7q7ms7pep3vgsgqe1l7l342c` (with image).
+
+| Page | Metric | Live 2026-11-02 (old main) | Live 2026-11-04 |
+|---|---|---|---|
+| `/` | LCP | 3.37 s (hero image) | **1.62 s** (image) |
+| | FCP / TBT | 3.37 s / 95 ms | 0.90 s / 128 ms |
+| | domInteractive | 2.60 s | **0.94 s** |
+| | HTML / total | 1317 / 812 KB | 1022 / 719 KB |
+| `/catalunya` | LCP | 3.23 s (image) | 3.80 s (consent box); own content **1.17 s** |
+| | TBT | 136 ms | 158 ms |
+| | domInteractive | 2.01 s | **0.74 s** |
+| | HTML / total | 959 / 905 KB | 603 / 665 KB |
+| `/barcelona` | LCP | 6.04 s (consent box) | 3.92 s (consent box); own content **1.14 s** |
+| | TBT | not recorded | 206 ms |
+| | domInteractive | 2.03 s | **0.80 s** |
+| | HTML | 980 KB | 650 KB |
+| Event with image | LCP | 2.53 s (image) | 2.96 s (image) |
+| | TBT | not recorded | 163 ms |
+| | domInteractive | 1.21 s | **0.72 s** |
+| | HTML / total | 448 / 985 KB | 376 / 793 KB |
+
+Server time for the full HTML through Cloudflare (`perf-lab.mjs` fetch, cold / warm): `/` 152 / 106 ms, `/catalunya` 906 / 35 ms, `/barcelona` 109 / 67 ms, event 813 / 31 ms. Browser TTFB 77-118 ms.
+
+**Findings:**
+- Our own content paints in 1.1-1.6 s on every page measured, and domInteractive fell from 2.0-2.6 s to 0.7-0.9 s.
+- On listings the reported LCP is the Funding Choices consent box text at 3.8-3.9 s. A Playwright LCP-entry trace confirmed it: our intro paragraph is an earlier LCP entry at 1.1-1.2 s. It is still the main open LCP problem, but `/barcelona` went from 6.04 s to 3.92 s.
+- A Cloudflare HIT answers in under 0.12 s. A miss took 0.8-0.9 s (`/catalunya`, the event page) against 31-35 ms warm, probably backend v2. Watch it.
+- TBT is 128-206 ms, against 95-136 ms live on 2026-11-02. Live runs include Google's scripts, so it is noisy; `/barcelona` is above Google's 200 ms. Recheck with a lab build.
+- The event page with an image is still limited by the image download (about 3 s).
+- No React hydration errors on `/`, `/catalunya` and `/barcelona` in a real browser after the deploy.
+
+**Next check:** CrUX (`python3 scripts/crux-check.py`) about 4 weeks after 2026-11-04; a lab TBT comparison of main against the 2026-11-02 "Now" build.

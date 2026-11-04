@@ -34,13 +34,61 @@ the container. No rebuild is needed when the Coolify limit changes.
 - Override per environment by setting `NODE_OPTIONS=--max-old-space-size=<MiB>` as a
   Coolify env var; the entrypoint leaves an explicit value untouched.
 
+## Current limits (Coolify, 2026-11-04)
+
+Server: one 8 GB, 4 vCPU box. Read with the Coolify API (`get_application` /
+`get_database`, `limits_*` fields).
+
+| Container | Memory limit | Reservation | Swappiness | CPU limit |
+| --- | --- | --- | --- | --- |
+| Frontend prod | 3g | 1g | 20 | 2 |
+| Frontend staging | 1g | 512m | 60 | 1 |
+| Backend prod | **none** | none | 60 | **none** |
+| Backend pre | 1g | 512m | 20 | 1 |
+| Postgres pro | 2g | 1g | 0 | **1** |
+| Postgres pre | 1g | 256m | 60 | 0.5 |
+| 4× Redis | 512m + 512m + 256m + 256m | 100–150m | 0–60 | 0.2–0.5 |
+| Logto pro / pre | **none** | none | — | **none** |
+
+The capped containers alone add up to ~9.5 GB, so the box is oversubscribed,
+and backend prod (2 GB in July, lost when the v2 app was created) and Logto
+have no cap at all.
+
+### Rules for a single shared box
+
+- **Every container gets a memory limit.** Without one, when the host runs out
+  of RAM the kernel OOM killer picks the biggest process, which can be Postgres
+  or Coolify instead of the container that grew.
+- **Size the limit from the measured peak + 30–50%** (Coolify → Metrics, or
+  `docker stats` below). The sum of **reservations** must fit in real RAM minus
+  ~1 GB for the OS, Coolify and Traefik; limits may overcommit a little.
+- **Prefer CPU weight over hard CPU limits.** A hard limit throttles a container
+  even when the box is idle; weight (`cpu_shares`) only decides who wins when
+  the box is busy. Give prod 1024 and staging/pre 512.
+- **Match the runtime to the limit:** the frontend entrypoint sizes the V8 heap
+  (above); Java needs `-XX:MaxRAMPercentage=75` in `JAVA_TOOL_OPTIONS`.
+- **Any limit change needs a redeploy**, and any memory squeeze needs a health
+  check timeout review (incident
+  [2026-07-07](./incidents/2026-07-07-coolify-container-healthcheck-crash.md)).
+
+### Pending changes (in order)
+
+1. Backend prod: memory 2g, reservation 1g, swappiness 20,
+   `MaxRAMPercentage=75` (tracked in Esdeveniments/esdeveniments-backend#52).
+2. Postgres pro: 2 CPUs (1 CPU may add to the slow `/events/categorized`).
+3. Frontend prod: back to 2g unless Metrics shows it above ~1.5 GB.
+4. Staging and pre: CPU weight 512.
+5. Logto pro / pre: 512m each.
+6. Real fix: move staging and pre to a second small server.
+
 ## What to set in Coolify (infra side)
 
 Frontend application → **Resource Limits**:
 
-- **Maximum Memory Limit (hard):** currently **2 GB** for prod (heap ≈ 1536 MB
-  at 75%, the rest for `sharp`/buffers/RSS). Staging is at 1 GB. The hard limit
-  is what OOM-kills; pair it with a soft limit slightly below.
+- **Maximum Memory Limit (hard):** **2 GB** is the target for prod (heap ≈
+  1536 MB at 75%, the rest for `sharp`/buffers/RSS); it is 3 GB today (see
+  above). Staging is at 1 GB. The hard limit is what OOM-kills; pair it with a
+  soft limit (reservation) below it.
 - **CPU:** 1–2 vCPU is plenty for the current traffic.
 - **Swappiness:** **avoid 10** — use **20–30** for prod (monitored hypothesis,
   not a confirmed fix). Both prod containers crashed at `swappiness=10`
