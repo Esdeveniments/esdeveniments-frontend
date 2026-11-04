@@ -1,13 +1,31 @@
 import type {
-  CacheEntry,
   CacheFn,
-  CacheOptions,
+  CacheSlot,
   KeyedCacheFn,
   KeyedCacheOptions,
+  SingleCacheOptions,
 } from "types/cache";
 
 const isEmpty = (data: unknown) =>
   data == null || (Array.isArray(data) && data.length === 0);
+
+// Next bundles pages, API routes and instrumentation.ts separately, so each
+// gets its own copy of a module-level variable. globalThis is per process.
+const SHARED_SLOTS = Symbol.for("esdeveniments.cache.slots");
+
+function getSlot<T>(globalKey: string | undefined): CacheSlot<T> {
+  if (!globalKey) return { entry: null };
+  const store = globalThis as typeof globalThis & {
+    [SHARED_SLOTS]?: Map<string, CacheSlot<unknown>>;
+  };
+  const slots = (store[SHARED_SLOTS] ??= new Map());
+  let slot = slots.get(globalKey);
+  if (!slot) {
+    slot = { entry: null };
+    slots.set(globalKey, slot);
+  }
+  return slot as CacheSlot<T>;
+}
 
 /**
  * Simple time-based cache for single values.
@@ -15,26 +33,27 @@ const isEmpty = (data: unknown) =>
  */
 export function createCache<T>(
   ttlMs: number,
-  { storeEmpty = true }: CacheOptions = {},
+  { storeEmpty = true, globalKey }: SingleCacheOptions = {},
 ): {
   cache: CacheFn<T>;
   clear: () => void;
 } {
-  let cacheEntry: CacheEntry<T> | null = null;
+  const slot = getSlot<T>(globalKey);
 
   const cache: CacheFn<T> = async (fetcher) => {
-    if (cacheEntry && performance.now() - cacheEntry.timestamp < ttlMs) {
-      return cacheEntry.data;
+    const cached = slot.entry;
+    if (cached && performance.now() - cached.timestamp < ttlMs) {
+      return cached.data;
     }
     const data = await fetcher();
     if (storeEmpty || !isEmpty(data)) {
-      cacheEntry = { data, timestamp: performance.now() };
+      slot.entry = { data, timestamp: performance.now() };
     }
     return data;
   };
 
   const clear = () => {
-    cacheEntry = null;
+    slot.entry = null;
   };
 
   return { cache, clear };

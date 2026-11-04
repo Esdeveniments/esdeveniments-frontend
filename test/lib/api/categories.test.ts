@@ -22,6 +22,11 @@ describe("lib/api/categories", () => {
   const ENV_BACKUP = { ...process.env };
 
   beforeEach(() => {
+    // The category cache lives on globalThis (shared across bundles), so it
+    // survives resetModules: clear it to start each test like a new process.
+    delete (globalThis as Record<symbol, unknown>)[
+      Symbol.for("esdeveniments.cache.slots")
+    ];
     vi.resetModules();
     process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
     vi.stubGlobal(

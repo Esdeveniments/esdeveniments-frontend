@@ -9,6 +9,13 @@ export type CacheFn<T> = (fetcher: () => Promise<T>) => Promise<T>;
  */
 export type CacheOptions = { storeEmpty?: boolean };
 
+/**
+ * globalKey: keep the entry on globalThis under this key, so every bundle in
+ * the server process (pages, API routes, instrumentation.ts) shares one entry
+ * instead of each holding its own module copy.
+ */
+export type SingleCacheOptions = CacheOptions & { globalKey?: string };
+
 /** maxEntries: drop the oldest entry beyond this size. */
 export type KeyedCacheOptions = CacheOptions & { maxEntries?: number };
 
@@ -63,4 +70,7 @@ export type CacheEntry<T> = {
   data: T;
   timestamp: number;
 };
+
+/** Holder for a single-value cache entry (shared on globalThis with globalKey). */
+export type CacheSlot<T> = { entry: CacheEntry<T> | null };
 

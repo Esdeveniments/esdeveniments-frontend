@@ -27,13 +27,19 @@ export async function fetchRegionsExternal(): Promise<
   }
 }
 
-export async function fetchRegionsOptionsExternal(): Promise<
+// skipConnection: for the startup warm-up (instrumentation.ts), which runs
+// outside a request, where connection() throws.
+export async function fetchRegionsOptionsExternal({
+  skipConnection,
+}: { skipConnection?: boolean } = {}): Promise<
   RegionsGroupedByCitiesResponseDTO[]
 > {
   const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const res = await fetchWithHmac(`${api}/places/regions/options`);
+    const res = await fetchWithHmac(`${api}/places/regions/options`, {
+      skipConnection,
+    });
     if (!res.ok) {
       console.error(`fetchRegionsOptionsExternal: HTTP ${res.status}`);
       return [];
