@@ -78,7 +78,9 @@ The proxy split (#625) dropped the check from develop, and the develop → main 
 
 1. **Cloudflare bypass rule for RSC requests**, ordered below the HTML rule (see Bug B).
 2. **Next 16.3+ `_rsc` validation** stays on (the default). It is a mitigation, not a replacement for item 1.
-3. **Check after any Cloudflare cache rule change or cache purge:** send `RSC: 1` to a fresh, rarely visited URL on `www`, then a plain request to the same URL. The plain one must be `200 text/html`, never `text/x-component` or a `307`.
+3. **Check after any Cloudflare cache rule change or cache purge**, on a fresh, rarely visited URL on `www`:
+   - `curl -sIL -H 'RSC: 1' <url>`. `-L` follows Next's `307` to the `?_rsc=` URL, so the last hop is a real flight response. Every hop must show `cf-cache-status: DYNAMIC` or `BYPASS`, and the last hop must be `text/x-component`.
+   - Then a plain `curl -sI <url>`. It must be `200 text/html`, never `text/x-component` or a `307`.
 
 ### Cloudflare Cache Rule Reminder
 
