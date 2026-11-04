@@ -7,6 +7,11 @@ import { renderToString } from "react-dom/server";
 vi.mock("@lib/api/categories", () => ({
   fetchCategories: vi.fn(() => new Promise(() => {})),
 }));
+// The gate also starts the place and events reads before it awaits
+// categories; keep them off the network too.
+vi.mock("@lib/api/fetch-wrapper", () => ({
+  fetchWithHmac: vi.fn(() => new Promise(() => {})),
+}));
 
 import Page from "app/[locale]/[place]/page";
 

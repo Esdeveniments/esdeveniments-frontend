@@ -1,5 +1,8 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { buildPlaceByDateEventsPromise } from "app/[locale]/[place]/[byDate]/page";
+
+vi.mock("@lib/api/fetch-wrapper", () => ({ fetchWithHmac: vi.fn() }));
 import type { EventSummaryResponseDTO } from "types/api/event";
 import type { PageData } from "types/common";
 
@@ -23,8 +26,9 @@ const event = (i: number): EventSummaryResponseDTO => ({
 });
 
 function mockEventsBackend(totalElements: number) {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-    const size = Number(new URL(String(input)).searchParams.get("size"));
+  const fetchMock = vi.mocked(fetchWithHmac);
+  fetchMock.mockImplementation(async (input: string) => {
+    const size = Number(new URL(input).searchParams.get("size"));
     const count = Math.min(size, totalElements);
     return Response.json({
       content: Array.from({ length: count }, (_, i) => event(i)),
@@ -35,9 +39,7 @@ function mockEventsBackend(totalElements: number) {
       last: count >= totalElements,
     });
   });
-  vi.stubGlobal("fetch", fetchMock);
-  return () =>
-    fetchMock.mock.calls.map(([input]) => new URL(String(input)).searchParams);
+  return () => fetchMock.mock.calls.map(([input]) => new URL(input).searchParams);
 }
 
 const realEvents = (events: unknown[]) =>
@@ -66,8 +68,8 @@ function build(placeIsExpandablePromise: Promise<boolean>) {
   });
 }
 
-afterEach(() => {
-  vi.unstubAllGlobals();
+beforeEach(() => {
+  vi.mocked(fetchWithHmac).mockReset();
 });
 
 describe("buildPlaceByDateEventsPromise", () => {
