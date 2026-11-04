@@ -37,6 +37,7 @@ The issue self-resolved after ~30 minutes when the `s-maxage=1800` TTL expired, 
 | 2026-07-31 14:34 UTC | **Recurred on `/en`** — the `isRscRequest` fix below was never actually committed (`git log -S"isRscRequest"` had zero hits). Implemented for real in `proxy.ts` (commit `0cdf6f8e`) + regression test in `test/proxy.test.ts`. Deployed correctly via CI. |
 | 2026-07-31 19:01 UTC | An untracked Coolify deployment (no GitHub Actions run, no webhook, no API call) silently reverted the 14:34 fix — see "Recurrence #2" below. |
 | 2026-08-01      | **Recurrence #2 discovered**: origin still served `public, s-maxage=1800` for RSC requests; the Cloudflare bypass rule added in response also turned out not to be firing. Both root-caused and fixed — see below. |
+| 2026-11-04      | **Correction.** The `proxy.ts` RSC check never fired: Next strips the `RSC` header (and `_rsc`) before the proxy runs. What protects us is the Cloudflare bypass rule, plus Next 16.4's `_rsc` check after the develop → main release. The proxy check is removed. See "Correction (2026-11-04)" below. |
 
 ## Root Cause
 
@@ -60,36 +61,31 @@ The initial fix attempt was to add `Vary: RSC` so Cloudflare would maintain sepa
 
 ## Resolution
 
-Set `Cache-Control: private, no-store` for RSC requests in `proxy.ts`:
+Two layers protect HTML URLs. The proxy is not one of them (see "Correction (2026-11-04)").
 
-```typescript
-const isRscRequest = request.headers.get("RSC") === "1";
+1. **Cloudflare Cache Rule "RSC flight payloads — never cache"** (Bypass). It must sit *below* the broad "Cache HTML pages" rule (last match wins). Live check on 2026-11-04 against `www`: an `RSC: 1` request got `cf-cache-status: DYNAMIC`, and the next plain request to the same fresh URL got `text/html` (`MISS`, then `HIT`).
+2. **Next.js `_rsc` cache-busting** (Next 16.3+, `experimental.validateRSCRequestHeaders` on by default). RSC requests carry `?_rsc=<hash of the router headers>`, so they never share a cache key with the HTML URL. An RSC request with a missing or wrong `_rsc` gets an empty `307` to the correct URL instead of a flight payload. Main ran Next 16.2.6 without this; develop runs 16.4.4. Docs: https://nextjs.org/docs/app/guides/cdn-caching. Don't set `validateRSCRequestHeaders: false`, and keep query strings in the Cloudflare cache key.
 
-response.headers.set(
-  "Cache-Control",
-  isPersonalizedHtml || isRscRequest
-    ? "private, no-store"
-    : "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600",
-);
-```
+## Correction (2026-11-04)
 
-This ensures:
-- **HTML responses**: Cached by CDN (`s-maxage=1800`) — good for performance
-- **RSC responses**: Never cached by CDN (`private, no-store`) — prevents poisoning
+The fix from 2026-07-31 (`0cdf6f8e`) checked `request.headers.get("RSC")` in `proxy.ts`. That value is always `null`. Next's middleware adapter (`next/dist/server/web/adapter.js`, the `FLIGHT_HEADERS` loop: "Headers should only be stripped for middleware") removes `rsc`, `next-router-state-tree`, `next-router-prefetch` and `next-router-segment-prefetch` before the proxy runs, and strips `_rsc` from `request.nextUrl`. So the proxy cannot tell an RSC request from an HTML request. The unit test passed only because it builds the request with the header by hand.
 
-RSC responses are small (~300 bytes) and fast to generate, so CDN caching provides negligible benefit. The HTML responses are the ones that matter for cold loads, SEO, and TTFB.
+This also explains Bug A below: prod still sent `public, s-maxage=1800` for RSC requests because the check could never match, not only because of the floating image tag. The image-tag fix is still correct for its own reasons.
+
+The proxy split (#625) dropped the check from develop, and the develop → main release removes it from main. Don't add it back.
 
 ## Prevention
 
-1. **`proxy.ts` now detects RSC requests** via the `RSC: 1` header and excludes them from CDN caching
-2. **All proxy tests pass** (25/25) with the new logic
+1. **Cloudflare bypass rule for RSC requests**, ordered below the HTML rule (see Bug B).
+2. **Next 16.3+ `_rsc` validation** stays on (the default).
+3. **Check after any Cloudflare cache rule change or cache purge:** send `RSC: 1` to a fresh, rarely visited URL on `www`, then a plain request to the same URL. The plain one must be `text/html`.
 
 ### Cloudflare Cache Rule Reminder
 
 If modifying the Cloudflare cache rule for `www.esdeveniments.cat`, be aware that:
 - Cloudflare doesn't vary cache by custom request headers (only `Accept-Encoding`)
 - Any cached page URL can receive both HTML and RSC requests
-- The cache rule should ideally exclude RSC responses, but since Cloudflare can't match on `RSC` header in Free/Pro plans, the server-side `private, no-store` approach is the correct solution
+- The zone's "RSC flight payloads — never cache" rule is what keeps RSC responses out of the cache. The proxy can't do it (see "Correction (2026-11-04)")
 - **Cache Rules apply cumulatively, and where two rules set the same field (e.g. Cache Eligibility) for a matching request, the LAST matching rule in the ordered list wins** — not the first. A narrow bypass rule placed *above* a broad "cache everything" rule gets silently overridden. Any bypass rule (RSC, AI bots, `/_next/image`) must sit *below* the broad HTML-caching rule in the Cache Rules list.
 
 ## Recurrence #2 (2026-08-01): two independent bugs stacked
@@ -98,7 +94,7 @@ Reported again on `/en` ("weird text instead of the website"). Live reproduction
 
 ### Bug A: the 2026-07-31 fix never stayed deployed
 
-`proxy.ts` commit `0cdf6f8e` built and deployed correctly via GitHub Actions at 14:25-14:35 UTC on 2026-07-31 (confirmed via `gh run list` + Coolify deployment log timestamps). But an untracked Coolify deployment at 19:01 UTC the same day — no GitHub Actions run, no webhook, no API call, `force_rebuild: false` — silently reverted production to pre-fix behavior. Confirmed live on 2026-08-01: sending the literal header `proxy.ts` checks for (`RSC: 1`) still got `Cache-Control: public, max-age=0, s-maxage=1800` back from origin, even though Next.js itself correctly returned `content-type: text/x-component` for the same request — proving the header reached the process but the `isRscRequest` code path was simply not present in the running binary.
+`proxy.ts` commit `0cdf6f8e` built and deployed correctly via GitHub Actions at 14:25-14:35 UTC on 2026-07-31 (confirmed via `gh run list` + Coolify deployment log timestamps). But an untracked Coolify deployment at 19:01 UTC the same day — no GitHub Actions run, no webhook, no API call, `force_rebuild: false` — silently reverted production to pre-fix behavior. Confirmed live on 2026-08-01: sending the literal header `proxy.ts` checks for (`RSC: 1`) still got `Cache-Control: public, max-age=0, s-maxage=1800` back from origin, even though Next.js itself correctly returned `content-type: text/x-component` for the same request — proving the header reached the process but the `isRscRequest` code path was simply not present in the running binary. (Corrected 2026-11-04: the header reaches Next but is stripped before the proxy, so the check could not match even when deployed. See "Correction (2026-11-04)".)
 
 Root cause: Coolify's `esdeveniments-production` app was configured with `docker_registry_image_tag: "main"` — a **floating** registry tag — with `health_check_enabled: true` (path `/`, 30s interval, 3 retries). CI already pushes an immutable `sha-<commit>` tag alongside `:main` (`.github/workflows/deploy-coolify.yml`, `build-and-push` job), but nothing used it. A health-check-triggered container restart recreates the container from whatever's locally cached under the `:main` tag, bypassing the deploy pipeline entirely — this box has prior history of the same class of bug (`3e1d8bc8` "clear zero-byte image cache files on boot", the Jul 7 crash incident in `cbd429df`).
 
@@ -131,3 +127,4 @@ Rule 3 has no RSC or bot-UA exclusion and matches `/en` (and effectively any non
 6. **A "Resolution" section in an incident doc is not proof the fix shipped.** This doc was backfilled 16 days after the incident in a batch commit unrelated to `proxy.ts`, and the described fix was never committed — the same bug recurred on `/en` three months later. Verify fixes described in incident docs against `git log -S` or the current file, don't trust the prose.
 7. **A correct deploy is not proof the fix stays deployed.** A floating registry tag (`:main`) plus a health-check-triggered container restart can silently revert a correctly-shipped fix hours later, with no CI run, webhook, or API call in the audit trail. Pin deploys to immutable per-commit tags.
 8. **A "Bypass cache" rule is not proof requests are bypassed.** Cloudflare Cache Rules are last-match-wins per field across the whole ordered list — a bypass rule sitting above a broad "eligible for cache" rule is silently overridden. Reproduce the actual `cf-cache-status` on a fresh URL before trusting a rule is doing anything.
+9. **A unit test that builds the request by hand can't prove the proxy sees a header.** Next strips the router headers (`rsc`, `next-router-*`) and `_rsc` before `proxy.ts` runs. Check what the running proxy receives, or test the live response, before trusting a header-based check.

@@ -101,6 +101,12 @@ That real-socket design has a cost: it's a real HTTP server on a real (ephemeral
 
 main and develop diverge. A fix that lands directly on main (a hotfix) does not reach develop on its own, so develop can re-ship a bug main already fixed — and merging develop→main can even revert main's fix. This caused the Jun 11 2026 incident: `097e1275 fix(cache): scope Redis entries by build id` sat on main for weeks while develop kept the broken handler. The `branch-drift` CI workflow flags when main is ahead of develop on infra files (`cache-handler.mjs`, `next.config.js`, `Dockerfile`, `proxy.ts`). When you see that warning, back-merge before promoting.
 
+Merge the back-merge PR with a **merge commit, never squash**. A squash copies main's changes but leaves main's commits outside develop's history, so the next develop→main merge conflicts on them again. Back-merge #340 was squashed; that is why five main hotfixes still showed as "main only" in November 2026.
+
+## `proxy.ts` can't see RSC requests
+
+Next strips the router headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, `next-router-segment-prefetch`) and the `_rsc` query param before `proxy.ts` runs (`FLIGHT_HEADERS` loop in `next/dist/server/web/adapter.js`). So `request.headers.get("RSC")` is always `null` there. A unit test that builds the request with that header by hand passes anyway. The RSC check from `0cdf6f8e` never fired for this reason. Cloudflare RSC cache poisoning is handled by the Cloudflare bypass rule and Next's `_rsc` validation (`docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md`).
+
 ## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
 
 `next.config.js` enables the Redis `cacheHandler` only off-Vercel (`isVercel ? {} : { cacheHandler }`). So localhost and Vercel can never reproduce cache-handler bugs; only Coolify (persistent Redis across deploys) can. Keys are scoped by `buildId` so a new build never reads a previous build's prerendered shell — a stale shell makes React's resume mismatch (`Expected the resume to render ...`), fall back to client rendering, and emit HTML with no SSR `<title>`/description/canonical. The page still returns 200, so assert metadata in the **raw** HTML, not the status code. See [docs/incidents/2026-06-11-coolify-redis-stale-prerender.md](docs/incidents/2026-06-11-coolify-redis-stale-prerender.md).
