@@ -646,3 +646,23 @@ production without events longer than planned. Two gaps, both in
 When the backend contract changes, production is blank from the backend
 switch until the new frontend is live. Run the release PR's E2E before the
 switch, and have Cloudflare access ready for a manual purge.
+
+## A render flag must be the same on the server and in the browser
+
+The deploy E2E failed `hydration-errors.spec.ts` (React #418 on `/`,
+`/catalunya`, `/barcelona`) for releases #630 and #637, so both shipped with
+`skip_e2e`. The job set `E2E_TEST_MODE` and `NEXT_PUBLIC_E2E_TEST_MODE` only
+when starting the server, not at build. `isE2ETestMode` read both, so the
+server saw `true` at runtime while the browser had `false` inlined, and
+`LazySocialFollowPopup` rendered `null` on the server but a lazy popup in the
+browser. `NEXT_PUBLIC_*` values are frozen at `next build`, and other
+variables never reach the browser
+([Next docs](https://nextjs.org/docs/app/guides/environment-variables)).
+
+- Anything that decides what renders uses `isE2ETestBuild`
+  (`NEXT_PUBLIC_E2E_TEST_MODE` only). `isE2ETestMode` is for server-only
+  behavior (API gate, test fixtures).
+- A job that builds for E2E sets the test-mode vars on the build step as well
+  as the start step. A `NEXT_PUBLIC_*` variable that is unset at build is not
+  inlined: the server bundle still reads it at runtime, while the browser gets
+  `undefined`.
