@@ -85,10 +85,12 @@ export default function Page({
 }: PageProps<"/[locale]/[place]">) {
   const { place } = use(params);
 
-  // SEO-safe fallback: if the streamed gate fails (broken env, Suspense
-  // error, etc.) crawlers still see an h1 derived from the slug. Users see
-  // the page skeleton: this boundary catches everything below, so
-  // [place]/loading.tsx never shows for this route.
+  // Fallback while PlacePageGate suspends: the page skeleton for users and
+  // an h1 derived from the slug for crawlers. This boundary catches every
+  // suspension below it, so [place]/loading.tsx only shows while params
+  // resolve. It doesn't catch errors, but if the gate throws on the server
+  // React leaves this fallback in the HTML and retries on the client, so
+  // crawlers still get the h1.
   const placeLabel = formatPlaceName(place);
 
   return (
