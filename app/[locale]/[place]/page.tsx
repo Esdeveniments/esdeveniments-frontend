@@ -17,6 +17,7 @@ import type {
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
+import PlacePageSkeleton from "@components/ui/common/skeletons/PlacePageSkeleton";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -84,14 +85,20 @@ export default function Page({
 }: PageProps<"/[locale]/[place]">) {
   const { place } = use(params);
 
-  // Minimal SEO-safe fallback: if the streamed gate fails (broken env,
-  // Suspense error, etc.) crawlers still see an h1 derived from the slug.
-  // This mirrors the homepage's HomeStaticFallback pattern.
+  // SEO-safe fallback: if the streamed gate fails (broken env, Suspense
+  // error, etc.) crawlers still see an h1 derived from the slug. Users see
+  // the page skeleton: this boundary catches everything below, so
+  // [place]/loading.tsx never shows for this route.
   const placeLabel = formatPlaceName(place);
 
   return (
     <Suspense
-      fallback={<h1 className="sr-only">{placeLabel}</h1>}
+      fallback={
+        <>
+          <h1 className="sr-only">{placeLabel}</h1>
+          <PlacePageSkeleton />
+        </>
+      }
     >
       <PlacePageGate place={place} />
     </Suspense>
