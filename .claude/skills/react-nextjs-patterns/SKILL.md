@@ -67,7 +67,9 @@ So a page-level fallback must be the visible skeleton, with any SEO-only markup 
 </Suspense>
 ```
 
-Reuse the folder's `loading.tsx` skeleton so both paths look the same. `fallback={null}` is fine for small parts of a page (sponsor slot, scripts), never for the whole body. Next's instant-navigation validation only checks that a boundary exists, not that its fallback shows anything: test the fallback with `renderToString` and a reader that never resolves (`test/place-page-loading-fallback.test.tsx`).
+Reuse the folder's `loading.tsx` skeleton so both paths look the same.
+
+The fallback only covers the wait; keep the wait short. Before a page renders, start every read that doesn't depend on another one, and `await` them together (`Promise.all`) or pass the promise down to the component that needs it. Don't `await` one backend call and then start the next unless the second needs the first's result. The listing pages used to chain categories → place lookup → event count → events. Now they start the place lookup and count right after validating the slug, and fetch the rich page size without waiting for the count, trimming it afterwards (`buildPlaceEventsPromise`, `buildPlaceByDateEventsPromise`). `fallback={null}` is fine for small parts of a page (sponsor slot, scripts), never for the whole body. Next's instant-navigation validation only checks that a boundary exists, not that its fallback shows anything: test the fallback with `renderToString` and a reader that never resolves (`test/place-page-loading-fallback.test.tsx`).
 
 ## Prefetch
 
