@@ -422,7 +422,11 @@ CI run (`gh run download <id> -n bundle-sizes`), never from a local build.
 The artifact lists `routes` as an array; the baseline keys them by route and
 keeps its own `version` and `thresholds`. Copy the artifact's
 `client.totalBytes` into the top-level `clientTotalBytes` too: the gate reads
-that field, and without it the client check is skipped.
+that field, and without it the client check is skipped. Key the artifact's
+`pages` array by `page` the same way (`{ "/ca": { "jsGzipBytes": … } }`).
+Without `pages`, the per-page JS check is skipped, and that check is the one
+that sees a shared chunk grow on the home and listing pages: zod 4 added
+16 KB gzip there while `client.totalBytes` fell.
 `yarn build` itself fails in such a worktree. Turbopack rejects the symlink
 ("the symlink target leaves the configured filesystem roots"), so build in the
 main checkout or run a real `yarn install` in the worktree.

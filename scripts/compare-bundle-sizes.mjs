@@ -86,81 +86,44 @@ async function main() {
     error: { ratio: 0.1, bytes: 100 * 1024 },
   };
 
-  const currentRoutes = buildRouteMap(currentJson);
+  const pageThresholds = baselineJson.pageThresholds ?? {
+    warning: { ratio: 0.01, bytes: 3 * 1024 },
+    error: { ratio: 0.03, bytes: 10 * 1024 },
+  };
 
   const issues = [];
 
-  const baselineClient = baselineJson.clientTotalBytes;
-  const currentClient = currentJson?.client?.totalBytes ?? 0;
-  if (Number.isFinite(baselineClient) && baselineClient > 0) {
-    const deltaBytes = currentClient - baselineClient;
-    const deltaRatio = deltaBytes / baselineClient;
-
-    if (deltaBytes > 0) {
-      if (isExceeded(deltaBytes, deltaRatio, globalThresholds.error)) {
-        issues.push({
-          level: 'error',
-          kind: 'client',
-          key: 'client.totalBytes',
-          baseline: baselineClient,
-          current: currentClient,
-          deltaBytes,
-          deltaRatio,
-          threshold: globalThresholds.error,
-        });
-      } else if (isExceeded(deltaBytes, deltaRatio, globalThresholds.warning)) {
-        issues.push({
-          level: 'warn',
-          kind: 'client',
-          key: 'client.totalBytes',
-          baseline: baselineClient,
-          current: currentClient,
-          deltaBytes,
-          deltaRatio,
-          threshold: globalThresholds.warning,
-        });
-      }
-    }
+  function check(key, baselineBytes, currentBytes, { warning, error }) {
+    if (!Number.isFinite(baselineBytes) || baselineBytes <= 0) return;
+    const deltaBytes = currentBytes - baselineBytes;
+    if (deltaBytes <= 0) return;
+    const deltaRatio = deltaBytes / baselineBytes;
+    const level = isExceeded(deltaBytes, deltaRatio, error)
+      ? 'error'
+      : isExceeded(deltaBytes, deltaRatio, warning) ? 'warn' : null;
+    if (!level) return;
+    issues.push({
+      level,
+      key,
+      baseline: baselineBytes,
+      current: currentBytes,
+      deltaBytes,
+      deltaRatio,
+      threshold: level === 'error' ? error : warning,
+    });
   }
 
-  const baselineRoutes = baselineJson.routes ?? {};
-  for (const [route, routeConfig] of Object.entries(baselineRoutes)) {
-    const baselineServerBytes = routeConfig?.serverBytes;
-    if (!Number.isFinite(baselineServerBytes) || baselineServerBytes <= 0) continue;
+  check('client.totalBytes', baselineJson.clientTotalBytes, currentJson?.client?.totalBytes ?? 0, globalThresholds);
 
-    const currentEntry = currentRoutes.get(route);
-    const currentServerBytes = currentEntry?.serverBytes ?? 0;
+  const currentPages = new Map((currentJson?.pages ?? []).map((entry) => [entry.page, entry]));
+  for (const [page, pageConfig] of Object.entries(baselineJson.pages ?? {})) {
+    if (!currentPages.has(page)) console.warn(`⚠️  ${page}: no prerendered HTML in this build, page JS not checked.`);
+    check(`page ${page} (JS gzip)`, pageConfig?.jsGzipBytes, currentPages.get(page)?.jsGzipBytes ?? 0, pageThresholds);
+  }
 
-    const deltaBytes = currentServerBytes - baselineServerBytes;
-    const deltaRatio = deltaBytes / baselineServerBytes;
-
-    if (deltaBytes <= 0) continue;
-
-    const { warning, error } = getThresholds(routeConfig, globalThresholds);
-
-    if (isExceeded(deltaBytes, deltaRatio, error)) {
-      issues.push({
-        level: 'error',
-        kind: 'route',
-        key: route,
-        baseline: baselineServerBytes,
-        current: currentServerBytes,
-        deltaBytes,
-        deltaRatio,
-        threshold: error,
-      });
-    } else if (isExceeded(deltaBytes, deltaRatio, warning)) {
-      issues.push({
-        level: 'warn',
-        kind: 'route',
-        key: route,
-        baseline: baselineServerBytes,
-        current: currentServerBytes,
-        deltaBytes,
-        deltaRatio,
-        threshold: warning,
-      });
-    }
+  const currentRoutes = buildRouteMap(currentJson);
+  for (const [route, routeConfig] of Object.entries(baselineJson.routes ?? {})) {
+    check(route, routeConfig?.serverBytes, currentRoutes.get(route)?.serverBytes ?? 0, getThresholds(routeConfig, globalThresholds));
   }
 
   const errors = issues.filter(i => i.level === 'error');
