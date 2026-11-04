@@ -15,6 +15,6 @@ test.describe("Add to calendar menu", () => {
       page.getByRole("link", { name: /Google Calendar/ })
     ).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole("link", { name: /Outlook/ })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole("link", { name: /Altres/ })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("link", { name: "Afegeix a Altres", exact: true })).toBeVisible({ timeout: 10000 });
   });
 });

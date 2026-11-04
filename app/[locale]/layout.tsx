@@ -11,7 +11,7 @@ import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { routing } from "@i18n/routing";
-import { isE2ETestMode } from "@utils/env";
+import { isE2ETestBuild } from "@utils/env";
 import { FUNDING_CHOICES_SRC } from "@utils/analytics";
 import GoogleScripts from "../GoogleScripts";
 import AuthEventTracker from "@components/analytics/AuthEventTracker";
@@ -178,7 +178,7 @@ export default async function LocaleLayout({
             loads. It lives here, not as a beforeInteractive <Script> in
             GoogleScripts: inside that streamed client tree the inline script
             landed at random spots in the DOM and caused hydration error #418. */}
-        {!isE2ETestMode && (
+        {!isE2ETestBuild && (
           <script
             dangerouslySetInnerHTML={{
               __html: `
@@ -206,7 +206,7 @@ export default async function LocaleLayout({
             the load event, and on a first visit its box became the LCP at
             about 5 s on a slow phone. GoogleScripts keeps the
             fallback for pages where FC shows no box. */}
-        {!isE2ETestMode && FUNDING_CHOICES_SRC && (
+        {!isE2ETestBuild && FUNDING_CHOICES_SRC && (
           <script async src={FUNDING_CHOICES_SRC} />
         )}
       </head>
