@@ -100,9 +100,7 @@ function HomeStaticFallback({ locale }: { locale: AppLocale }) {
 
 export default function Page({
   params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+}: PageProps<"/[locale]">) {
   const { locale } = use(params);
   const appLocale = locale as AppLocale;
 

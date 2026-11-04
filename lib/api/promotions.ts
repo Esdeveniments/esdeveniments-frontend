@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { captureException } from "@sentry/nextjs";
+import { getErrorStatus } from "@utils/error-status";
 import type { z } from "zod";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { requireAuth } from "./events";
@@ -59,7 +60,7 @@ async function getAuth(
     try {
       return await requireAuth({ forceRefresh });
     } catch (error) {
-      if ((error as { status?: number }).status !== 401) throw error;
+      if (getErrorStatus(error) !== 401) throw error;
       return null;
     }
   }

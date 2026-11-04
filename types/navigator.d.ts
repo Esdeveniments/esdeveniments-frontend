@@ -7,6 +7,8 @@ declare global {
     connection?: NetworkInformation;
     mozConnection?: NetworkInformation;
     webkitConnection?: NetworkInformation;
+    // iOS Safari: true when launched from the home screen (non-standard).
+    standalone?: boolean;
     // WebMCP / Model Context Protocol — the browser will expose this once the
     // API ships. Typed here so callers don't need inline casts.
     modelContext?: ModelContext;

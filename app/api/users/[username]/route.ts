@@ -6,7 +6,7 @@ import type { UserPublicResponseDTO } from "types/api/user";
 // GET /api/users/[username] - server-only proxy with server-side HMAC and caching
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ username: string }> }
+  context: RouteContext<"/api/users/[username]">
 ) {
   try {
     const { username } = await context.params;

@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
+import { useIsClient } from "@components/hooks/useIsClient";
 import { useEvents } from "@components/hooks/useEvents";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import type { ClientTestProps } from "types/common";
-
-const subscribeNoop = () => () => {};
 
 export default function ClientTest({
   initialEvents,
@@ -15,11 +14,7 @@ export default function ClientTest({
 }: ClientTestProps) {
   const realInitial = useMemo(() => initialEvents, [initialEvents]);
   // The SSR button is visible before React attaches its click handler.
-  const hydrated = useSyncExternalStore(
-    subscribeNoop,
-    () => true,
-    () => false,
-  );
+  const hydrated = useIsClient();
 
   const { events, hasMore, loadMore, isLoadingMore } = useEvents({
     place,

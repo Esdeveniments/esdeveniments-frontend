@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import type { ButtonProps } from "types/common";
 
 const VARIANTS: Record<string, string> = {
   neutral: "btn-neutral",
@@ -10,20 +10,14 @@ const VARIANTS: Record<string, string> = {
   ghost: "btn-ghost",
 };
 
-const Button = forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    variant?:
-    | "neutral"
-    | "primary"
-    | "muted"
-    | "outline"
-    | "solid"
-    | "category"
-    | "ghost";
-    hasIcon?: boolean;
-  }
->(({ children, className = "", variant = "neutral", hasIcon = false, ...rest }, ref) => {
+const Button = ({
+  children,
+  className = "",
+  variant = "neutral",
+  hasIcon = false,
+  ref,
+  ...rest
+}: ButtonProps) => {
   const variantClass = VARIANTS[variant] ?? VARIANTS.neutral;
   const iconPadding = hasIcon ? "pl-3" : "";
 
@@ -36,8 +30,6 @@ const Button = forwardRef<
       {children}
     </button>
   );
-});
-
-Button.displayName = "Button";
+};
 
 export default Button;

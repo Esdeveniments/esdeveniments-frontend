@@ -56,7 +56,10 @@ const catalog: PromotionOptionsDTO = {
 };
 
 const renderPage = async () =>
-  PromotePage({ params: Promise.resolve({ eventId: "concert" }) });
+  PromotePage({
+    params: Promise.resolve({ locale: "ca", eventId: "concert" }),
+    searchParams: Promise.resolve({}),
+  });
 
 describe("PromotePage", () => {
   it("picks an option once a session refresh brings the options in", async () => {

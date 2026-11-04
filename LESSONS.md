@@ -2,6 +2,37 @@
 
 Repo-specific gotchas worth sharing. Read this during research on any task here.
 
+## A page can't set its own 404 or 301: decide it in `proxy.ts`
+
+`app/[locale]/layout.tsx` wraps every page in `<Suspense>`, so the status line
+is sent before the page runs. A page-level `notFound()` then serves 200 with
+`noindex`, and `redirect()` becomes a client-side meta refresh. Google files
+the first as a Soft 404 and the second as a weak redirect. Unknown place slugs
+are therefore resolved in Proxy (`resolvePlaceForProxy`, `lib/api/places-proxy.ts`):
+an alias gets a 301 and a missing place gets
+`NextResponse.rewrite(url, { status: 404 })`. `NextResponse.next()` can't set a
+status, but a rewrite can and still renders the page. The page itself must then render
+`notFound()`, not redirect: a page `redirect()` under the 404 becomes a meta
+refresh that sends visitors (and mixed signals) to another URL. The check fails open
+(`unknown`) on any backend error or after 1.5 s, then skips the backend for
+30 s, so an outage never serves a false 404 or slows every request. Proxy is bundled apart from the app, so `/api/revalidate` doesn't
+clear its 1 h place cache: a new place can 404 for up to an hour plus CDN TTL.
+A new top-level route folder must be added to `NON_PLACE_FIRST_SEGMENTS`
+(`utils/middleware-redirects.ts`, guarded by
+`test/middleware-redirects-non-place.test.ts`) or it would be checked as a place.
+Missing events still serve 200 + `noindex`: a 404 there would need a full event
+fetch in Proxy.
+
+## Event JSON-LD must only state what the backend knows
+
+Google's Event rich results read `performer`, `organizer`, `image` and the
+date offsets literally. We used to put the venue name in `performer` and
+`organizer`, and the site logo in `image` (also in the event sitemap's
+`<image:image>`), which Search Console can flag as misleading. Leave a property
+out when there is no real value. Timed `startDate`/`endDate` carry the
+Europe/Madrid offset (`withMadridOffset`, `@date-fns/tz`, DST-aware); date-only
+values stay plain dates.
+
 ## Guest and account publish drafts need an explicit choice after login
 
 A guest can finish all three steps while the same browser still holds an older
@@ -58,7 +89,7 @@ Yarn 4 (Berry) dropped automatic `pre*`/`post*` lifecycle scripts — npm runs t
 
 ## Vercel previews are a preview, not production
 
-Production runs on Coolify/Docker/Node 22; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works (PR E2E no longer uses previews); gate promotion to `main` on the Coolify/Docker path.
+Production runs on Coolify/Docker/Node 26; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works (PR E2E no longer uses previews); gate promotion to `main` on the Coolify/Docker path.
 
 ## Image-proxy/dispatcher bugs only surface through a real socket
 
@@ -69,6 +100,12 @@ That real-socket design has a cost: it's a real HTTP server on a real (ephemeral
 ## Back-merge main hotfixes into develop the same day
 
 main and develop diverge. A fix that lands directly on main (a hotfix) does not reach develop on its own, so develop can re-ship a bug main already fixed — and merging develop→main can even revert main's fix. This caused the Jun 11 2026 incident: `097e1275 fix(cache): scope Redis entries by build id` sat on main for weeks while develop kept the broken handler. The `branch-drift` CI workflow flags when main is ahead of develop on infra files (`cache-handler.mjs`, `next.config.js`, `Dockerfile`, `proxy.ts`). When you see that warning, back-merge before promoting.
+
+Merge the back-merge PR with a **merge commit, never squash**. A squash copies main's changes but leaves main's commits outside develop's history, so the next develop→main merge conflicts on them again. Back-merge #340 was squashed; that is why five main hotfixes still showed as "main only" in November 2026.
+
+## `proxy.ts` can't see RSC requests
+
+Next strips the router headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, `next-router-segment-prefetch`) and the `_rsc` query param before `proxy.ts` runs (`FLIGHT_HEADERS` loop in `next/dist/server/web/adapter.js`). So `request.headers.get("RSC")` is always `null` there. A unit test that builds the request with that header by hand passes anyway. The RSC check from `0cdf6f8e` never fired for this reason. Cloudflare RSC cache poisoning is prevented by the Cloudflare bypass rule; Next's `_rsc` validation only narrows it (an empty `307` on the plain URL instead of a flight payload) (`docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md`).
 
 ## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
 
@@ -560,3 +597,26 @@ and `fetchPlaces` catches), so their caches use `storeEmpty: false`. A place
 404 (`null`) is a real answer and stays cached.
 Town event lists use `"use cache"` instead (`fetchEventsCached`); the
 promoted-events cache keeps `[]` on purpose.
+
+## Next's `updateTag` doesn't clear Cloudflare; purge by tag
+
+Publish and edit called `updateTag`, and the event page was fresh, but listings
+stayed old for up to 30 min: `updateTag`/`revalidateTag` clear Next's caches
+(Redis page cache, `"use cache"` store), not Cloudflare, which caches public
+HTML for `s-maxage=1800`. `proxy.ts` (`utils/proxy-page-headers.ts`) now sends a `Cache-Tag` header
+(`lib/cdn/cache-tags.ts`) and publish/edit/delete purge the event's tags in
+`after()` (`lib/cdn/cloudflare-purge.ts`). Things checked on the way:
+
+- Cloudflare ignores `stale-while-revalidate` when `s-maxage` is set, so an
+  expired page is refetched while the visitor waits (`cf-cache-status:
+  EXPIRED`), and "invalidate" (mark stale) behaves like a purge for us.
+- Tags start with the configured site host (`getCdnHost`), not the request's
+  Host header: purges are zone-wide and staging shares the zone, and a proxy
+  that rewrites Host must not make the labels and the purge disagree.
+- `/api/*` is never edge-cached (DYNAMIC), so a prefix purge of an API URL does
+  nothing; only HTML needs purging.
+- Free plan: 5 purge requests/min per account, 100 tags each. Batch.
+- The purge runs in `after()`: in a server action Next has already written the
+  revalidations; in a route handler they start before `after()` callbacks run.
+- Pages cached before a tag existed have no tags; the post-deploy purge in
+  `deploy-coolify.yml` clears them.

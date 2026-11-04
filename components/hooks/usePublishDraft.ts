@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { initialPublishDraftState, PublishDraftSession } from "@utils/publish-draft-session";
 import { savePublishResumeIntent, takePublishResumeIntent } from "@utils/publish-draft-resume";
 import type {
@@ -10,6 +10,12 @@ import type {
 // Auth may still be unresolved when this route unmounts. Do not guess an owner.
 let pendingHydrationDraft: PublishDraftInput | null = null;
 let hydrationGeneration = 0;
+const bufferListeners = new Set<() => void>();
+const subscribeBuffer = (listener: () => void) => {
+  bufferListeners.add(listener);
+  return () => { bufferListeners.delete(listener); };
+};
+const hasBufferedDraft = () => pendingHydrationDraft !== null;
 const warnPendingHydration = (event: BeforeUnloadEvent) => {
   if (!pendingHydrationDraft) return;
   event.preventDefault();
@@ -23,11 +29,17 @@ export function usePublishDraft({
   const session = useRef<PublishDraftSession | null>(null);
   const edited = useRef(false);
   const latestInput = useRef({ form, imageFile, step });
-  const [restoringBuffer, setRestoringBuffer] = useState(() => pendingHydrationDraft !== null);
+  const restoringBuffer = useSyncExternalStore(subscribeBuffer, hasBufferedDraft, hasBufferedDraft);
   const completed = useRef(false);
+  // Owner of the open session: the ref is for the effect (it needs the previous
+  // owner), the state is the same value for render.
   const ownerKey = useRef<string | null>(null);
+  const [sessionOwnerKey, setSessionOwnerKey] = useState<string | null>(null);
   const resolvedOwnerKey = accountId ? `account:${accountId}` : "guest";
-  const ownerChanged = !isAuthLoading && ownerKey.current === "guest" && resolvedOwnerKey !== "guest";
+  const ownerChanged = !isAuthLoading && sessionOwnerKey === "guest" && resolvedOwnerKey !== "guest";
+  if (!isAuthLoading && !restoringBuffer && !ownerChanged && sessionOwnerKey !== resolvedOwnerKey) {
+    setSessionOwnerKey(resolvedOwnerKey);
+  }
   const [resumeFailed, setResumeFailed] = useState(false);
   const resumeRequest = useRef<ReturnType<typeof takePublishResumeIntent> | null>(null);
   const restoreCallback = useRef(onRestore);
@@ -45,7 +57,7 @@ export function usePublishDraft({
         buffered.step !== latestInput.current.step) {
       restoreCallback.current({ ...buffered, updatedAt: Date.now() });
     }
-    setRestoringBuffer(false);
+    bufferListeners.forEach((listener) => listener());
   }, [isAuthLoading]);
   useEffect(() => {
     const generation = ++hydrationGeneration;
@@ -111,13 +123,13 @@ export function usePublishDraft({
     session.current?.edit({ form, imageFile, step });
   }, [form, imageFile, step, accountId, isAuthLoading, restoringBuffer]);
 
-  const hasUnsavedEdits = state.dirty || edited.current;
+  // No deps: `edited` is a ref, so re-check after every render.
   useEffect(() => {
-    if (!hasUnsavedEdits) return;
+    if (!state.dirty && !edited.current) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [hasUnsavedEdits]);
+  });
 
   const markEdited = useCallback(() => { edited.current = true; completed.current = false; }, []);
   const clearGuestReturn = () => {

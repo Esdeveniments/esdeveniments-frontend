@@ -27,7 +27,7 @@ export function buildSitemap(
         let xml =
           `  <url>\n` +
           `    <loc>${escapeXml(field.loc)}</loc>\n` +
-          `    <lastmod>${field.lastmod}</lastmod>\n` +
+          (field.lastmod ? `    <lastmod>${field.lastmod}</lastmod>\n` : "") +
           `    <changefreq>${field.changefreq}</changefreq>\n` +
           `    <priority>${field.priority}</priority>\n`;
 

@@ -18,9 +18,11 @@ Coolify does **not** build. `deploy-coolify.yml` builds a Docker image in GitHub
 | `NEXT_PUBLIC_*` | Build time (inlined in the client bundle) | GitHub secret → workflow `build-args:` → Dockerfile `ARG` + `ENV` in the builder stage |
 | Build-time private secret (`HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `SENTRY_AUTH_TOKEN`) | Build time (prerender, source maps) | GitHub secret → workflow `secrets:` → Dockerfile `RUN --mount=type=secret,...` |
 | Server-only runtime value (`LOGTO_*`, `STRIPE_*`, `REDIS_URL`, `TURSO_*`, `API_URL`, `SENTRY_DSN`, `REVALIDATE_SECRET`, …) | Runtime, by the Node server | Coolify → Application → Environment |
-| Workflow-only (`COOLIFY_TOKEN`, `COOLIFY_WEBHOOK_URL`, `CLOUDFLARE_*`) | During the workflow | GitHub secret → step `env:` |
+| Workflow-only (`COOLIFY_TOKEN`, `COOLIFY_WEBHOOK_URL`) | During the workflow | GitHub secret → step `env:` |
 
 `REVALIDATE_SECRET` is both: `app/api/revalidate/route.ts` and `app/api/health/route.ts` read it at runtime (Coolify), and `deploy-coolify.yml` sends the same value from a GitHub secret on post-deploy calls.
+
+`CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` are both too: the post-deploy purge in `deploy-coolify.yml` uses the GitHub secrets, and the app reads them at runtime (Coolify) to purge Cache-Tags on publish, edit and delete (`lib/cdn/cloudflare-purge.ts`). The token needs the zone's Cache Purge permission. Without them the purge is skipped and pages stay stale until `s-maxage` expires; `/api/health` (authenticated) reports `cloudflarePurgeConfigured`.
 
 `HMAC_SECRET` and `BACKEND_SERVICE_SECRET` are also needed at runtime, so set them in Coolify too. `SENTRY_AUTH_TOKEN` is build-only (read in `next.config.js`); keep it out of Coolify. The `e2e-tests` job's "Build Next.js application" step in `deploy-coolify.yml` gets `HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `NEXT_PUBLIC_API_URL` and `SENTRY_AUTH_TOKEN` as step `env:`; add a new build-time value there as well if the CI build needs it.
 

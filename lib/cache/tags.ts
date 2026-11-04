@@ -8,7 +8,7 @@ import type { CacheTag } from "types/cache";
 const MAX_TAG_LENGTH = 256;
 
 /** Stable, non-cryptographic short hash (djb2) used to shorten oversized tags. */
-function shortTagHash(input: string): string {
+export function shortTagHash(input: string): string {
   let hash = 5381;
   for (let i = 0; i < input.length; i += 1) {
     hash = ((hash << 5) + hash + input.charCodeAt(i)) >>> 0;

@@ -60,10 +60,10 @@ test.describe("Sitemaps and feed", () => {
     // Event URLs should contain /e/ path
     expect(urlLocs.some((loc: string) => loc.includes("/e/"))).toBe(true);
 
-    // Check lastmod dates are not 2023
+    // lastmod is optional (only a real edit date), but never in the future
     urls.forEach((url: { lastmod?: string }) => {
-      expect(url.lastmod).toBeDefined();
-      expect(url.lastmod).not.toContain("2023");
+      if (url.lastmod === undefined) return;
+      expect(new Date(url.lastmod).getTime()).toBeLessThanOrEqual(Date.now());
     });
   });
 

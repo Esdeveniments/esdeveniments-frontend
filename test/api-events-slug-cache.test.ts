@@ -8,6 +8,19 @@ vi.mock("next/cache", () => ({
   revalidatePath: mockRevalidatePath,
 }));
 
+// after() needs a request scope; capture its callbacks instead.
+const mockAfter = vi.fn();
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (callback: () => unknown) => mockAfter(callback),
+}));
+
+const mockPurgeEventPagesFromCdn = vi.fn();
+vi.mock("@lib/cdn/cloudflare-purge", () => ({
+  purgeEventPagesFromCdn: (...args: unknown[]) =>
+    mockPurgeEventPagesFromCdn(...args),
+}));
+
 // Mock external fetch to avoid network and to assert call counts
 vi.mock("@lib/api/events-external", () => ({
   fetchEventBySlug: vi.fn(),
@@ -115,6 +128,21 @@ describe("/api/events/[slug] DELETE cache invalidation", () => {
     expect(mockRevalidateTag).toHaveBeenCalledWith("events:categorized", { expire: 0 });
   });
 
+  it("purges the deleted event's pages from Cloudflare after the response", async () => {
+    const { DELETE } = await import("app/api/events/[slug]/route");
+    const req = new Request("http://localhost/api/events/my-event", {
+      method: "DELETE",
+    });
+    const ctx = { params: Promise.resolve({ slug: "my-event" }) };
+
+    await DELETE(req, ctx as any);
+
+    expect(mockPurgeEventPagesFromCdn).not.toHaveBeenCalled();
+    expect(mockAfter).toHaveBeenCalledTimes(1);
+    await mockAfter.mock.calls[0][0]();
+    expect(mockPurgeEventPagesFromCdn).toHaveBeenCalledWith([fakeEvent]);
+  });
+
   it("returns 401 when no session exists", async () => {
     mockGetCurrentUser.mockResolvedValue(null);
     const { DELETE } = await import("app/api/events/[slug]/route");
@@ -128,6 +156,7 @@ describe("/api/events/[slug] DELETE cache invalidation", () => {
     expect(res.status).toBe(401);
     expect(mockDeleteEventById).not.toHaveBeenCalled();
     expect(mockRevalidateTag).not.toHaveBeenCalled();
+    expect(mockAfter).not.toHaveBeenCalled();
   });
 
   it("returns 403 when the user is not the creator", async () => {

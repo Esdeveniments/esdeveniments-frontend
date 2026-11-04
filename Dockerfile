@@ -1,15 +1,17 @@
 # syntax=docker/dockerfile:1
-FROM node:22-slim AS base
+FROM node:26-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   curl \
   && rm -rf /var/lib/apt/lists/*
+# Node 25+ no longer bundles Corepack, so install it to get Yarn 4 (packageManager).
+RUN npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 WORKDIR /app
 
 FROM base AS deps
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
-RUN corepack enable && yarn install --immutable
+RUN yarn install --immutable
 
 FROM base AS builder
 # Build-time arguments for Next.js static optimization.
@@ -21,8 +23,6 @@ ARG NEXT_PUBLIC_GOOGLE_ANALYTICS
 ARG NEXT_PUBLIC_GOOGLE_ADS
 ARG NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
 ARG NEXT_PUBLIC_GOOGLE_MAPS
-ARG NEXT_PUBLIC_TIKTOK_CLIENT_KEY
-ARG NEXT_PUBLIC_TIKTOK_REDIRECT_URI
 ARG NEXT_PUBLIC_CONTACT_EMAIL
 # Web Push: public VAPID key is inlined into the client bundle at build time.
 # Without it, usePushNotifications reports "unsupported" and the push CTA
@@ -40,8 +40,6 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_GOOGLE_ADS=$NEXT_PUBLIC_GOOGLE_ADS \
     NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION \
     NEXT_PUBLIC_GOOGLE_MAPS=$NEXT_PUBLIC_GOOGLE_MAPS \
-    NEXT_PUBLIC_TIKTOK_CLIENT_KEY=$NEXT_PUBLIC_TIKTOK_CLIENT_KEY \
-    NEXT_PUBLIC_TIKTOK_REDIRECT_URI=$NEXT_PUBLIC_TIKTOK_REDIRECT_URI \
     NEXT_PUBLIC_CONTACT_EMAIL=$NEXT_PUBLIC_CONTACT_EMAIL \
     NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY \
     SENTRY_ORG=$SENTRY_ORG \
@@ -53,7 +51,7 @@ COPY . .
 RUN --mount=type=secret,id=HMAC_SECRET,env=HMAC_SECRET,required=true \
     --mount=type=secret,id=BACKEND_SERVICE_SECRET,env=BACKEND_SERVICE_SECRET,required=true \
     --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN \
-    node scripts/verify-backend-build.mjs && corepack enable && yarn prebuild && yarn build
+    node scripts/verify-backend-build.mjs && yarn prebuild && yarn build
 
 FROM base AS runner
 ENV NODE_ENV=production

@@ -1,6 +1,6 @@
 ---
 name: security-headers-csp
-description: How the Content Security Policy and security headers are built in proxy.ts, and how to add a third-party script, domain or iframe without breaking the CSP or Core Web Vitals. Use when touching CSP, security headers, script-src/connect-src/frame-src, adding an external script or domain, Google Analytics/AdSense/Funding Choices loading, or JSON-LD output.
+description: How the Content Security Policy (utils/proxy-csp.ts, applied in proxy.ts) and the static security headers (next.config.js headers()) are built, and how to add a third-party script, domain or iframe without breaking the CSP or Core Web Vitals. Use when touching CSP, security headers, script-src/connect-src/frame-src, adding an external script or domain, Google Analytics/AdSense/Funding Choices loading, or JSON-LD output.
 ---
 
 # Security headers & CSP
@@ -9,16 +9,14 @@ Rule (AGENTS.md › Security): the CSP is a relaxed host allowlist with `'unsafe
 
 ## Where it lives
 
-All of it is in `proxy.ts`:
+- **CSP**: `buildCsp()` in `utils/proxy-csp.ts` builds the policy once per process (`CSP_VALUE`). `proxy.ts` calls `applyCsp(response)` on HTML page responses only. Routes Proxy skips (API, `/sw.js`, machine-readable routes in the matcher exclusions) send no CSP; they return JSON/text, and a CSP on `/sw.js` would apply to the service worker itself and block Workbox's CDN `importScripts`.
+- **Static headers**: `headers()` in `next.config.js` sends the rest of the table below on every response (pages, API, assets, redirects), so no branch can skip them.
 
-- `getCsp()` builds a `cspDirectives` object and joins it into a string. `CACHED_CSP = getCsp()` is computed once at module load.
-- `applySecurityHeaders(response)` sets the headers below on page responses that reach it (the main locale path and `/ask`). Branches that return earlier don't get them: `/api/*` (`gateApiRequest`), `/sw.js`, the bypassed `/openapi`, `/docs/*`, `/index.md` routes, and the redirects/rewrites before it.
-
-Read `getCsp()` for the current allowlist; don't copy it into docs or other files.
+Read `buildCsp()` for the current allowlist; don't copy it into docs or other files.
 
 ## CSP facts that matter
 
-- `script-src` and `script-src-elem` carry the same host list. A new script host goes in **both**, or the browser blocks it.
+- `script-src` and `script-src-elem` share one `scriptSources` list, so a new script host goes in once.
 - `'unsafe-eval'` is added only when `NEXT_PUBLIC_GOOGLE_ADS` is set (AdSense needs it) and in dev.
 - `vercel.live` is added on preview only.
 - `connect-src` is `'self'`, the API origin (`getApiOrigin()`), and `https:`. Any HTTPS XHR/fetch target already works.
@@ -26,11 +24,11 @@ Read `getCsp()` for the current allowlist; don't copy it into docs or other file
 - `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'self'`.
 - The policy is sent as `Content-Security-Policy-Report-Only` when `NEXT_PUBLIC_CSP_REPORT_ONLY=1` or on a Vercel preview. Use that flag to trial a stricter policy without breaking pages.
 
-## Headers set by `applySecurityHeaders`
+## Security headers
 
 | Header | Value |
 | --- | --- |
-| `Content-Security-Policy` (or `-Report-Only`) | `CACHED_CSP` |
+| `Content-Security-Policy` (or `-Report-Only`), pages only | `CSP_VALUE` (`utils/proxy-csp.ts`) |
 | `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` |
 | `X-Content-Type-Options` | `nosniff` |
 | `X-Frame-Options` | `SAMEORIGIN` (matches `frame-ancestors 'self'`) |
@@ -42,7 +40,7 @@ Read `getCsp()` for the current allowlist; don't copy it into docs or other file
 ## Adding a third-party script or domain
 
 1. Ask whether it is needed at all. Every script costs main-thread time; this site is judged on Core Web Vitals.
-2. Add the host to `script-src` **and** `script-src-elem` in `getCsp()`. Add it to `connect-src` only if it is not HTTPS.
+2. Add the host to `scriptSources` in `buildCsp()` (`utils/proxy-csp.ts`). Add it to `connect-src` only if it is not HTTPS.
 3. Load it with `next/script` and the latest strategy that works (`lazyOnload` for analytics). Gate ad/tracking scripts on consent (`useAdContext().adsAllowed`) and on `isProductionHost()`, like `app/GoogleScripts.tsx`.
 4. Check the browser console on a real page for CSP violations. Try `NEXT_PUBLIC_CSP_REPORT_ONLY=1` first if unsure.
 
@@ -64,8 +62,8 @@ Render structured data only with `components/partials/JsonLdServer.tsx` (server 
 
 ## Checklist
 
-- [ ] New script host in both `script-src` and `script-src-elem`
+- [ ] New script host added to `scriptSources`
 - [ ] Script gated on consent / production host if it tracks or serves ads
 - [ ] No new `'unsafe-*'` keyword without a reason in a code comment
 - [ ] No CSP violations in the console on a real page
-- [ ] Header changes made in `applySecurityHeaders`, not per route
+- [ ] Static header changes made in `next.config.js` `headers()`, CSP changes in `utils/proxy-csp.ts`, not per route

@@ -17,7 +17,6 @@ import {
 import dynamic from "next/dynamic";
 import { isValidPlace } from "@utils/route-validation";
 import { notFound, permanentRedirect } from "next/navigation";
-import type { MonthStaticPathParams } from "types/common";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import {
   buildPageMeta,
@@ -57,9 +56,7 @@ const fetchMonthEvents = cache(
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<MonthStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/sitemap/[town]/[year]/[month]">) {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapMonth" });
   const tNotFound = await getTranslations({ locale, namespace: "App.NotFound" });
@@ -140,9 +137,7 @@ export async function generateMetadata({
 
 export default async function Page({
   params,
-}: {
-  params: Promise<MonthStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/sitemap/[town]/[year]/[month]">) {
   // Opt out of cacheComponents caching — conditional JsonLdServer rendering
   // below depends on event count (jsonData.length, eventsItemList). Without this,
   // cached tree shape can differ from replay → "Expected Fragment but got script".

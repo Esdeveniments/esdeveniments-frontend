@@ -184,3 +184,52 @@ Lab, same session, same slugs. Before = develop `700d65ff` (before #608), after 
 - The event-without-image LCP of 880 ms "before" is above the 596-632 ms seen in earlier sessions, so treat that row's gain as noise.
 
 Cloudflare: the production `/api/image-proxy` cache rule for `www.esdeveniments.cat` exists but stays **disabled** until develop reaches main. Main picks the image format from the `Accept` header and sends `Vary: Accept`; develop picks it from the URL `format` param, which is safe to edge-cache. Enable it at release, then check `cf-cache-status: HIT` on a repeated image URL.
+
+## 2026-11-03: SEO fixes (place 404/301 in Proxy)
+
+Server-only change: no client JS, no new LCP work. Proxy now checks the first path segment of listing URLs against the places list (see LESSONS.md, "A page can't set its own 404 or 301").
+
+Local production build (`yarn build:development`, `yarn start:development`, dev backend), curl `time_total`, one run:
+
+| Request | First hit (cold process) | Warm |
+|---|---|---|
+| `/barcelona` | 794 ms (includes the one places list call) | 83 ms |
+| `/girona/concerts` | 140 ms | 69 ms |
+| `/no-such-place-xyz` (404) | 1036 ms | 79 ms |
+| `/lagarriga` (301) | 65 ms | |
+
+- Warm cost is an in-memory scan of ~1,000 slugs. A cold process pays one `/places` + `/regions` list call per hour; a slug not in the list (a province) pays one `/places/{slug}` call, cached for 1 h. Both are bounded by a 1.5 s abort signal, after which the page renders as before.
+- 513 of the 515 Catalan place URLs in the production place sitemap return 200 on this build; the other 2 (`campdevanol`, `torrebeses`) are missing from the dev backend only and return 200 in production.
+
+What to watch after release (field data needs days to weeks):
+
+- Search Console → Pages: "Not found (404)" should rise (junk place URLs that used to return 200), "Soft 404" and "Crawled – currently not indexed" should fall. "Page with redirect" rises by the alias URLs.
+- Search Console → Enhancements → Events: valid items stay stable; no new "misleading" or invalid `image`/`performer`/`organizer` warnings.
+- GA4 `web_vitals` TTFB and LCP on place pages, and `python3 scripts/crux-check.py` after 4 weeks: no regression.
+- Backend: request volume on `/places/{slug}` should not grow (the list answers most lookups).
+
+## 2026-11-03: Cloudflare Cache-Tag purge
+
+Publish, edit and delete now purge the affected pages from Cloudflare by `Cache-Tag` instead of waiting for `s-maxage=1800` (see LESSONS.md, "Next's `updateTag` doesn't clear Cloudflare"). `s-maxage` is unchanged.
+
+Baseline before the change, production, curl from a home connection, 2026-11-03 17:40 UTC, two runs each:
+
+| Request | First run | Second run |
+|---|---|---|
+| `/` | HIT, 250 ms | HIT, 119 ms |
+| `/es` | EXPIRED, 254 ms | HIT, 119 ms |
+| `/barcelona` | EXPIRED, 268 ms | HIT, 113 ms |
+| `/es/barcelona` | EXPIRED, 263 ms | HIT, 106 ms |
+| `/catalunya` | EXPIRED, 251 ms | HIT, 97 ms |
+| `/girona/avui` | MISS, 255 ms | HIT, 87 ms |
+| `/api/events?page=0&size=10` | DYNAMIC, 768 ms | DYNAMIC, 861 ms |
+
+- A HIT costs about 100 ms TTFB; a MISS or EXPIRED about 250 ms. A purge turns the next request for each purged page into a MISS, so watch the hit ratio.
+- Cloudflare caches HTML only on www. `/api/*`, RSC requests, staging HTML and AI bots are DYNAMIC.
+- Before: a new or edited event reached its place listing after up to 30 min (the page's remaining `s-maxage`). Each publish or delete now purges up to 7 tags (home, `catalunya`, city, region, province, event, owner) in one request; an edit that moves the event sends both sets, still one request.
+
+Still to record after the production deploy:
+
+- Time from publishing a test event to seeing it on its place listing through Cloudflare (expected: seconds).
+- Cloudflare cache hit ratio and TTFB over 48 h, compared with the 48 h before.
+

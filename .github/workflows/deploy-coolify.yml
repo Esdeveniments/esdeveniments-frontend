@@ -40,7 +40,7 @@ permissions:
   actions: read
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "26"
   IS_PRODUCTION: ${{ github.ref_name == 'main' }}
   DEPLOY_URL: ${{ github.ref_name == 'main' && 'https://www.esdeveniments.cat' || 'https://staging.esdeveniments.cat' }}
 
@@ -64,7 +64,8 @@ jobs:
           cache: yarn
 
       - name: Enable Corepack (Yarn 4)
-        run: corepack enable
+        # Node 25+ no longer bundles Corepack.
+        run: npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -96,7 +97,8 @@ jobs:
           cache: yarn
 
       - name: Enable Corepack (Yarn 4)
-        run: corepack enable
+        # Node 25+ no longer bundles Corepack.
+        run: npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -128,7 +130,8 @@ jobs:
           cache: yarn
 
       - name: Enable Corepack (Yarn 4)
-        run: corepack enable
+        # Node 25+ no longer bundles Corepack.
+        run: npm install -g corepack@0.36.0 --no-audit --no-fund && corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -167,6 +170,9 @@ jobs:
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          # Server-side reads of the app's own /api go to this build, not to
+          # production www (cached readers skip the request Host header).
+          INTERNAL_SITE_URL: http://localhost:3000
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
 
       - name: Wait for server to be ready
@@ -319,8 +325,6 @@ jobs:
             NEXT_PUBLIC_GOOGLE_ADS=${{ env.NEXT_PUBLIC_GOOGLE_ADS }}
             NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
             NEXT_PUBLIC_GOOGLE_MAPS=${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS }}
-            NEXT_PUBLIC_TIKTOK_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_TIKTOK_CLIENT_KEY }}
-            NEXT_PUBLIC_TIKTOK_REDIRECT_URI=${{ secrets.NEXT_PUBLIC_TIKTOK_REDIRECT_URI }}
             NEXT_PUBLIC_VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
             SENTRY_ORG=${{ secrets.SENTRY_ORG }}
             SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
@@ -548,6 +552,13 @@ jobs:
               echo "::error::Container swapped but serving the wrong commit within ${MAX_WAIT}s. live=${LIVE_VERSION:0:7} expected=${EXPECTED_VERSION:0:7}. Possible causes: (1) a rapid subsequent push caused Coolify to process webhooks out of order; (2) a prior failed build retried mid-poll. Re-run the workflow or push again."
             fi
             exit 1
+          fi
+
+          # Publish/edit/delete purge Cloudflare by Cache-Tag at runtime
+          # (lib/cdn/cloudflare-purge.ts). Without the Coolify env vars that
+          # purge is skipped and listings stay stale until s-maxage expires.
+          if ! echo "$RESPONSE" | grep -q '"cloudflarePurgeConfigured":true'; then
+            echo "::warning::CLOUDFLARE_ZONE_ID/CLOUDFLARE_API_TOKEN are not set in Coolify: event changes won't purge Cloudflare (listings stay stale up to 30 min)."
           fi
 
       - name: Smoke — OIDC sign-in redirects to Logto (guards public host + LOGTO_* env)

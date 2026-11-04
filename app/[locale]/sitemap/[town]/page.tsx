@@ -9,7 +9,6 @@ import {
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getPlaceBySlug } from "@lib/api/places";
 import { getTranslations } from "next-intl/server";
-import type { TownStaticPathParams } from "types/common";
 import type { AppLocale } from "types/i18n";
 import { formatPlacePreposition } from "@utils/helpers";
 import {
@@ -29,9 +28,7 @@ import SitemapSkeleton from "@components/sitemap/SitemapSkeleton";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<TownStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/sitemap/[town]">) {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const { town } = await params;
@@ -54,9 +51,7 @@ export async function generateMetadata({
 
 export default function Page({
   params,
-}: {
-  params: Promise<TownStaticPathParams>;
-}) {
+}: PageProps<"/[locale]/sitemap/[town]">) {
   return (
     <Suspense
       fallback={
@@ -70,7 +65,7 @@ export default function Page({
   );
 }
 
-async function AsyncPage({ params }: { params: Promise<TownStaticPathParams> }) {
+async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">, "params">) {
   const { town } = await params;
   const locale: AppLocale = (await rootLocale()) as AppLocale;
   const years: number[] = getAllYears();

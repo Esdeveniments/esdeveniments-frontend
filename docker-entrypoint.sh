@@ -3,7 +3,7 @@
 # garbage collector runs *before* the kernel OOM-kills the container.
 #
 # Why this exists:
-#   - Node 22 is cgroup-aware and defaults the heap to ~50% of the container
+#   - Node (22+) is cgroup-aware and defaults the heap to ~50% of the container
 #     limit, which underuses the cap. We bump that to 75%.
 #   - We must use an ABSOLUTE MiB value, not Node's `=NN%` syntax: the percentage
 #     form reads the *host's* memory, not the cgroup limit, so on a shared box it

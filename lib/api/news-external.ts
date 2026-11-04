@@ -1,6 +1,5 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import type {
-  PagedResponseDTO as PagedNewsResponseDTO,
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
 } from "types/api/news";
@@ -16,7 +15,7 @@ import { buildNewsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helper
 
 export async function fetchNewsExternal(
   params: FetchNewsParams
-): Promise<PagedNewsResponseDTO<NewsSummaryResponseDTO>> {
+): Promise<PagedResponseDTO<NewsSummaryResponseDTO>> {
   const api = getApiUrl();
   try {
     // Use buildNewsQuery with setDefaults=false to match original behavior
@@ -28,7 +27,7 @@ export async function fetchNewsExternal(
       console.error(`fetchNewsExternal: HTTP ${res.status}`);
       return emptyPagedResponse();
     }
-    return (await res.json()) as PagedNewsResponseDTO<NewsSummaryResponseDTO>;
+    return (await res.json()) as PagedResponseDTO<NewsSummaryResponseDTO>;
   } catch (error) {
     console.error("fetchNewsExternal: failed", error);
     return emptyPagedResponse();

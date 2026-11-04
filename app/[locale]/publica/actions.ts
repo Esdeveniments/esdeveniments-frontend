@@ -3,10 +3,12 @@ import { updateTag, refresh } from "next/cache";
 import { after } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
+import { getErrorStatus } from "@utils/error-status";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import type { CreateEventActionResult } from "types/event";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
+import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
 import { env } from "@utils/misc-helpers";
 import { getValidatedImageFile } from "@utils/image-validation";
@@ -74,7 +76,7 @@ export async function createEventAction(
     // 1. Create the event in your backend
     created = await createEvent(data, imageFile, e2eExtras);
   } catch (err) {
-    const status = (err as { status?: number })?.status;
+    const status = getErrorStatus(err);
     if (status === 401 || status === 403) {
       const nextAction =
         status === 401 ? "logout-and-relogin" : "complete-profile";
@@ -118,6 +120,9 @@ export async function createEventAction(
   // This ensures read-your-own-writes: the new event appears immediately
   updateTag(eventsTag);
   updateTag(eventsCategorizedTag);
+  // Next's tags don't reach Cloudflare: purge the listings that show the
+  // event. after() runs once the action's revalidations are applied.
+  after(() => purgeEventPagesFromCdn([created]));
   // Refresh the current request to reflect changes
   refresh();
 

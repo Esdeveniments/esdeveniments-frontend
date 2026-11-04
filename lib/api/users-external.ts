@@ -4,6 +4,7 @@ import { fetchWithHmac } from "./fetch-wrapper";
 import { parseAuthenticatedUser, parseUserPublic } from "@lib/validation/user";
 import { parsePagedEvents } from "@lib/validation/event";
 import { getApiUrl, isApiUrlConfigured, emptyPagedResponse } from "@utils/api-helpers";
+import { getErrorStatus } from "@utils/error-status";
 import type {
   AuthenticatedUserDTO,
   ProfileUpdateRequestDTO,
@@ -85,7 +86,7 @@ export async function getAuthenticatedUserExternal(
     }
     return parseAuthenticatedUser(await response.json());
   } catch (error) {
-    if ((error as { status?: number })?.status) throw error;
+    if (getErrorStatus(error)) throw error;
     console.error(
       `getAuthenticatedUserExternal: failed (network/parse) \u2014 access_token=${safeClaims}`,
       error,
@@ -246,7 +247,7 @@ export async function patchMeProfileExternal(
     }
     return parseUserPublic(await response.json());
   } catch (error) {
-    if ((error as { status?: number })?.status) throw error;
+    if (getErrorStatus(error)) throw error;
     console.error("patchMeProfileExternal: failed", error);
     return null;
   }
@@ -297,7 +298,7 @@ export async function uploadUserAvatarExternal(
         : null;
     return avatarUrl ? { avatarUrl } : null;
   } catch (error) {
-    if ((error as { status?: number })?.status) throw error;
+    if (getErrorStatus(error)) throw error;
     console.error("uploadUserAvatarExternal: failed", error);
     return null;
   }
@@ -332,7 +333,7 @@ export async function deleteUserAvatarExternal(
     }
     return true;
   } catch (error) {
-    if ((error as { status?: number })?.status) throw error;
+    if (getErrorStatus(error)) throw error;
     console.error("deleteUserAvatarExternal: failed", error);
     return false;
   }

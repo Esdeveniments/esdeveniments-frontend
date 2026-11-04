@@ -11,6 +11,10 @@ import { clearPlacesCaches } from "@lib/api/places";
 import { clearRegionsCaches } from "@lib/api/regions";
 import { clearCategoriesCaches } from "@lib/api/categories";
 import { clearCitiesCaches } from "@lib/api/cities";
+import {
+  getAllHtmlCdnTag,
+  purgeCloudflareCache,
+} from "@lib/cdn/cloudflare-purge";
 
 /**
  * Whitelist of cache tags that can be revalidated via this endpoint.
@@ -26,14 +30,14 @@ const ALLOWED_TAGS = [
 ] as const satisfies readonly RevalidatableTag[];
 
 /**
- * Tags that require a full Cloudflare cache purge.
+ * Tags that purge all HTML from Cloudflare.
  * These are structural data (places, regions, cities, categories) that affect
- * navigation, filters, and sitemaps across ALL locales and pages.
- * Prefix-based purge can't target the default locale cleanly (it uses unprefixed
- * paths via next-intl's "as-needed" strategy), so we purge everything.
+ * navigation, filters and place pages across ALL locales. A prefix purge can't
+ * target the default locale (no prefix with next-intl's "as-needed"), so we
+ * purge the `<host>:html` Cache-Tag that the proxy (utils/proxy-page-headers.ts) puts on every public page.
  * These revalidations are rare (only when new towns/places are added).
  */
-const FULL_PURGE_TAGS: ReadonlySet<RevalidatableTag> = new Set([
+const HTML_PURGE_TAGS: ReadonlySet<RevalidatableTag> = new Set([
   "places",
   "regions",
   "cities",
@@ -42,6 +46,8 @@ const FULL_PURGE_TAGS: ReadonlySet<RevalidatableTag> = new Set([
 
 /**
  * Tags with targeted Cloudflare prefix purges (API-only, no HTML pages).
+ * Cloudflare doesn't cache `/api/*` today (cf-cache-status: DYNAMIC, no Cache
+ * Rule), so this only matters if a rule starts caching API responses.
  */
 const TAG_TO_CLOUDFLARE_PREFIXES: Partial<Record<RevalidatableTag, string[]>> = {
   "regions:options": ["www.esdeveniments.cat/api/regions/options"],
@@ -96,61 +102,26 @@ function validateTags(tags: unknown): tags is RevalidatableTag[] {
 }
 
 /**
- * Purge Cloudflare cache. Supports full purge or prefix-based purge.
- * Returns success status and any error message.
+ * Purge every public HTML page of this deployment by its `<host>:html`
+ * Cache-Tag (set by utils/proxy-page-headers.ts). Purging everything also drops cached images and
+ * other hosts in the zone, so it's only the fallback when the tag purge fails.
  */
-async function purgeCloudflareCache(
-  options: { purgeEverything: true } | { prefixes: string[] }
-): Promise<{ success: boolean; error?: string; skipped?: boolean }> {
-  const zoneId = process.env.CLOUDFLARE_ZONE_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-
-  // Skip if Cloudflare is not configured
-  if (!zoneId || !apiToken) {
-    return { success: true, skipped: true }; // Not an error, just not configured
-  }
-
-  const body =
-    "purgeEverything" in options
-      ? { purge_everything: true }
-      : { prefixes: options.prefixes };
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10_000);
-
-    let response: Response;
-    try {
-      response = await fetch(
-        `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        }
-      );
-    } finally {
-      clearTimeout(timeoutId);
+async function purgeAllHtml(): Promise<CloudflarePurgeResult> {
+  const htmlTag = getAllHtmlCdnTag();
+  if (htmlTag) {
+    const result = await purgeCloudflareCache({ tags: [htmlTag] });
+    if (result.success) {
+      return { purged: !result.skipped, tags: [htmlTag], skipped: result.skipped };
     }
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMsg = `Cloudflare purge failed: ${response.status}`;
-      console.error(errorMsg, errorData);
-      return { success: false, error: errorMsg };
-    }
-
-    return { success: true };
-  } catch (error) {
-    const errorMsg =
-      error instanceof Error ? error.message : "Unknown Cloudflare error";
-    console.error("Cloudflare purge error:", error);
-    return { success: false, error: errorMsg };
+    console.warn(`[revalidate] Tag purge failed (${result.error}), purging everything`);
   }
+  const fallback = await purgeCloudflareCache({ purgeEverything: true });
+  return {
+    purged: fallback.success && !fallback.skipped,
+    prefixes: ["*"],
+    skipped: fallback.skipped,
+    error: fallback.error,
+  };
 }
 
 /**
@@ -251,22 +222,16 @@ export async function POST(request: Request) {
     }
 
     // 5. Purge Cloudflare cache
-    // Structural tags (places, regions, etc.) trigger a full purge since they
-    // affect all locales and pages. Other tags use targeted prefix purge.
-    const needsFullPurge = revalidatedTags.some((tag) => FULL_PURGE_TAGS.has(tag));
+    // Structural tags (places, regions, etc.) purge all HTML since they affect
+    // every locale and page. Other tags use a targeted prefix purge.
+    const needsHtmlPurge = revalidatedTags.some((tag) => HTML_PURGE_TAGS.has(tag));
     const cfPrefixes = new Set(
       revalidatedTags.flatMap((tag) => TAG_TO_CLOUDFLARE_PREFIXES[tag] ?? [])
     );
 
     let cloudflareResult: CloudflarePurgeResult;
-    if (needsFullPurge) {
-      const cfResult = await purgeCloudflareCache({ purgeEverything: true });
-      cloudflareResult = {
-        purged: cfResult.success && !cfResult.skipped,
-        prefixes: ["*"],
-        skipped: cfResult.skipped,
-        error: cfResult.error,
-      };
+    if (needsHtmlPurge) {
+      cloudflareResult = await purgeAllHtml();
     } else if (cfPrefixes.size > 0) {
       const prefixArray = Array.from(cfPrefixes);
       const cfResult = await purgeCloudflareCache({ prefixes: prefixArray });

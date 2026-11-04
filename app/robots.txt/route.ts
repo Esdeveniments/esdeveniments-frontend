@@ -19,7 +19,8 @@ import { siteUrl } from "@config/index";
  *   sim-chatgpt / sim-claude) can reach our content. Our data is
  *   public cultural-events information; training protection has
  *   lower value than broad agent reach.
- * - Block /_next/ static files (JS chunks, CSS, build artifacts)
+ * - Allow /_next/static/ (JS/CSS Google needs to render pages); block the
+ *   rest of /_next/ (build internals)
  * - Block /api/ routes (internal endpoints, not for indexing)
  * - Declare multiple sitemaps for comprehensive discovery
  *
@@ -62,10 +63,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // Default rules for all crawlers (including search engines)
       {
         userAgent: "*",
-        allow: "/",
+        // Google must fetch JS/CSS to render pages; blocking them hurts
+        // rendering and indexing. The longer Allow path wins over Disallow.
+        allow: ["/", "/_next/static/"],
         disallow: [
-          // Block Next.js internal static files (JS chunks, CSS, build artifacts)
-          // These were being indexed by Google Search Console
+          // Other Next.js internals (not page resources)
           "/_next/",
           // Block API routes - internal endpoints not meant for indexing
           "/api/",

@@ -4,7 +4,6 @@ import { Feed } from "feed";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceTypeAndLabel, getFormattedDate } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
-import { escapeXml } from "@utils/xml-escape";
 import type { RssEvent } from "types/common";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { getTranslations } from "next-intl/server";
@@ -95,9 +94,7 @@ const buildFeed = async (
     place: placeLabel,
   });
 
-  // Escape labels for XML safety
-  // The feed library handles escaping for channel title/description and uses CDATA for item fields.
-  // We only need to escape attributes that are not handled by the library (like enclosure url).
+  // feed escapes the channel fields and enclosure URLs and wraps item fields in CDATA, so pass raw strings.
 
   const language = localeToHrefLang[locale] ?? locale;
   const feed = new Feed({
@@ -120,9 +117,6 @@ const buildFeed = async (
   );
 
   removedDuplicatedItems.forEach((item) => {
-    // The feed library wraps title, description, content in CDATA, so we should NOT escape them.
-    // However, it does NOT escape the enclosure URL (image), so we MUST escape it.
-
     const description = t("itemDescription", {
       title: item.title,
       nameDay: item.nameDay,
@@ -139,7 +133,7 @@ const buildFeed = async (
       description,
       content: item.location,
       date: new Date(item.startDate),
-      image: escapeXml(item.imageUrl || defaultImage),
+      image: item.imageUrl || defaultImage,
     });
   });
 

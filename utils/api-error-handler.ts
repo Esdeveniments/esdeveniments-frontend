@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import type { ApiErrorOptions } from "types/api-error";
+import { getErrorStatus } from "./error-status";
 
 /**
  * Sanitizes error messages before logging to prevent information disclosure.
@@ -35,10 +36,8 @@ export function handleApiError(
   routePath: string,
   options: ApiErrorOptions = {}
 ): NextResponse {
-  const rawStatus = error instanceof Error && "status" in error
-    ? (error as Error & { status: unknown }).status
-    : undefined;
-  const errorStatus = typeof rawStatus === "number" && rawStatus >= 400 && rawStatus < 600
+  const rawStatus = error instanceof Error ? getErrorStatus(error) : undefined;
+  const errorStatus = rawStatus !== undefined && rawStatus >= 400 && rawStatus < 600
     ? rawStatus
     : undefined;
   const { status = errorStatus ?? 500, errorMessage, fallbackData, sentryContext } = options;
@@ -48,8 +47,6 @@ export function handleApiError(
   const errorObj =
     error instanceof Error ? error : new Error(getSanitizedErrorMessage(error));
 
-  // Log to console - consoleLoggingIntegration will automatically send to Sentry in production
-  // when enableLogs: true is set in config. This is the recommended approach for v10.27.0+
   console.error(`${routePath} error:`, errorObj);
 
   // Capture exception to Sentry in production

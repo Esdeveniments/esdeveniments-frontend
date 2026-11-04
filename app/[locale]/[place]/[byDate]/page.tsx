@@ -31,7 +31,6 @@ import {
   parseFiltersFromUrl,
   getRedirectUrl,
 } from "@utils/url-filters";
-import { buildFallbackUrlForInvalidPlace } from "@utils/url-filters";
 import { redirect, notFound } from "next/navigation";
 import {
   validatePlaceOrThrow,
@@ -55,9 +54,7 @@ import {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ place: string; byDate: string }>;
-}) {
+}: PageProps<"/[locale]/[place]/[byDate]">) {
   const { place, byDate } = await params;
 
   const validation = validatePlaceForMetadata(place);
@@ -134,9 +131,7 @@ export async function generateMetadata({
 
 export default async function ByDatePage({
   params,
-}: {
-  params: Promise<{ place: string; byDate: string }>;
-}) {
+}: PageProps<"/[locale]/[place]/[byDate]">) {
   // Parallelize independent operations: params, locale, and categories fetch.
   const [resolvedParams, locale, categoriesResult] = await Promise.all([
     params,
@@ -292,11 +287,6 @@ export default async function ByDatePage({
     locale,
     rawSearchParams: {},
     buildTargetPath: (alias) => `/${alias}/${actualDate}`,
-    buildFallbackUrlForInvalidPlace: () =>
-      buildFallbackUrlForInvalidPlace({
-        byDate,
-        rawSearchParams: {},
-      }),
     fetchPlaceBySlug,
   });
   if (placeRedirectUrl) {

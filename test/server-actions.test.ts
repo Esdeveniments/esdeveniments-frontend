@@ -65,6 +65,13 @@ vi.mock("@lib/cache/event-detail-cache", () => ({
   deleteEventDetailCache: (slug: string) => mockDeleteEventDetailCache(slug),
 }));
 
+const mockPurgeEventPagesFromCdn = vi.fn();
+
+vi.mock("@lib/cdn/cloudflare-purge", () => ({
+  purgeEventPagesFromCdn: (...args: unknown[]) =>
+    mockPurgeEventPagesFromCdn(...args),
+}));
+
 const pngFile = () =>
   new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], "c.png", { type: "image/png" });
 const fakePngFile = () => new File(["<html>"], "c.png", { type: "image/png" });
@@ -189,6 +196,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockUpdateTag).toHaveBeenCalledWith("events");
       expect(mockUpdateTag).toHaveBeenCalledWith("events:categorized");
       expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockPurgeEventPagesFromCdn).toHaveBeenCalledWith([mockEvent]);
       expect(result).toEqual({ success: true, event: mockEvent });
     });
 
@@ -371,6 +379,11 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("old-event");
       expect(mockDeleteEventDetailCache).toHaveBeenCalledWith("updated-event");
       expect(mockRefresh).toHaveBeenCalledTimes(1);
+      // Cloudflare: the pages of both the old and the edited event.
+      expect(mockPurgeEventPagesFromCdn).toHaveBeenCalledWith([
+        buildEvent(),
+        mockUpdatedEvent,
+      ]);
       expect(result).toEqual({ success: true, newSlug: "updated-event" });
     });
 

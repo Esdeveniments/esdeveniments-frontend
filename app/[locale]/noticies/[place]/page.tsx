@@ -22,9 +22,7 @@ import NewsListSkeleton from "@components/noticies/NewsListSkeleton";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ place: string }>;
-}): Promise<Metadata> {
+}: PageProps<"/[locale]/noticies/[place]">): Promise<Metadata> {
   const { place } = await params;
   const placeType = await getPlaceTypeAndLabelCached(place);
   const locale = (await rootLocale()) as AppLocale;
@@ -55,10 +53,7 @@ export async function generateMetadata({
 export default async function Page({
   params,
   searchParams,
-}: {
-  params: Promise<{ place: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+}: PageProps<"/[locale]/noticies/[place]">) {
   // Parallelize independent awaits (params + locale + searchParams) to reduce TTFB.
   const [{ place }, locale, query] = await Promise.all([
     params,

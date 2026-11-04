@@ -41,9 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Page({
   searchParams,
-}: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+}: PageProps<"/[locale]/noticies">) {
   // Parallelize independent awaits (locale + searchParams) to reduce TTFB.
   const [locale, query] = await Promise.all([
     rootLocale() as Promise<AppLocale>,
