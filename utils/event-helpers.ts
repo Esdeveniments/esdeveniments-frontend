@@ -12,6 +12,17 @@ export const hasCardImage = (
   isEventSummaryResponseDTO(event) && Boolean(event.imageUrl?.trim());
 
 /**
+ * True when the signed-in user created the event. Both IDs must be set, so a
+ * logged-out user never "owns" a legacy event with no owner.
+ * Pure on purpose: the UI uses it to show owner actions, the server to
+ * authorize them.
+ */
+export const isEventOwner = (
+  userId: string | null | undefined,
+  ownerId: string | null | undefined
+): boolean => Boolean(userId) && userId === ownerId;
+
+/**
  * Returns true when the provided event is still live or upcoming.
  * Uses computeTemporalStatus so logic stays consistent across the app.
  */

@@ -991,14 +991,13 @@ export interface EventSidebarProps {
   sponsorSlot: import("react").ReactNode;
 }
 
-// Owner-only edit action, event detail sidebar client island
-export interface EventEditActionProps {
+// Owner-only edit/promote/delete actions, event detail client island
+export interface EventOwnerActionsProps {
   ownerId?: string;
   slug: string;
 }
 
-// Owner-only promote action, event detail sidebar client island
-export type EventPromoteActionProps = EventEditActionProps;
+export type EventDeleteActionProps = Pick<EventOwnerActionsProps, "slug">;
 
 export interface PromoteUpsellModalProps {
   open: boolean;

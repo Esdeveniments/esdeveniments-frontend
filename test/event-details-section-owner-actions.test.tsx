@@ -20,6 +20,7 @@ vi.mock("@i18n/routing", () => ({
   Link: ({ children, ...props }: { children: ReactNode }) => (
     <a {...props}>{children}</a>
   ),
+  useRouter: () => ({ replace: vi.fn() }),
 }));
 
 vi.mock("@heroicons/react/24/outline", () => ({
@@ -28,6 +29,7 @@ vi.mock("@heroicons/react/24/outline", () => ({
   UserIcon: () => <svg data-testid="user-icon" />,
   MegaphoneIcon: () => <svg data-testid="megaphone-icon" />,
   PencilIcon: () => <svg data-testid="pencil-icon" />,
+  TrashIcon: () => <svg data-testid="trash-icon" />,
 }));
 
 vi.mock("@components/ui/common/SectionHeading", () => ({
@@ -95,7 +97,7 @@ describe("EventDetailsSection owner actions (mobile)", () => {
     mockAuthUser = null;
   });
 
-  it("shows the edit and promote links on the mobile details section when the signed-in user owns the event", () => {
+  it("shows the edit, promote and delete actions on the mobile details section when the signed-in user owns the event", () => {
     mockAuthUser = {
       id: OWNER_ID,
       email: "a@b.com",
@@ -110,6 +112,7 @@ describe("EventDetailsSection owner actions (mobile)", () => {
     expect(
       screen.getByTestId("event-promote-link").getAttribute("href"),
     ).toBe("/e/my-event/promote");
+    expect(screen.getByTestId("event-delete-button")).toBeTruthy();
   });
 
   it("does not show the owner links when the signed-in user is not the owner", () => {
