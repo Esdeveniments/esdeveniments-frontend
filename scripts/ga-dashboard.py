@@ -304,6 +304,8 @@ def collect_data(days, sections, country=None):
         }))
 
     # ── All custom events (used for behavior funnel + events view) ──
+    # The limit must cover every event name (AUTO_EVENTS count against it too),
+    # or low-count events like publish_success drop out of events_map.
     if "events" in sections or "behavior" in sections:
         d["events"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
@@ -311,7 +313,7 @@ def collect_data(days, sections, country=None):
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
             "dimensionFilter": with_country_filter(None, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
-            "limit": 50,
+            "limit": 250,
         }))
 
     # ── Publish funnel ──
@@ -357,12 +359,18 @@ def collect_data(days, sections, country=None):
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 15,
         }))
+        # `search` never sends results_count; only search_results_loaded does
+        # (components/ui/hybridEventsList/HybridEventsListClient.tsx).
+        search_results_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "search_results_loaded"},
+        }}
         d["search_results"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "customEvent:search_term"},
                            {"name": "customEvent:results_count"}],
             "metrics": [{"name": "eventCount"}],
-            "dimensionFilter": with_country_filter(search_filter, country),
+            "dimensionFilter": with_country_filter(search_results_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 30,
         }))
@@ -393,7 +401,8 @@ def collect_data(days, sections, country=None):
         }))
 
     # ── Engagement detail ──
-    if "engagement" in sections:
+    # Outbound by link_type also feeds the restaurant trigger in compute_behavior.
+    if "engagement" in sections or "behavior" in sections:
         outbound_filter = {"filter": {
             "fieldName": "eventName",
             "stringFilter": {"value": "outbound_click"},
@@ -404,8 +413,11 @@ def collect_data(days, sections, country=None):
                            {"name": "customEvent:link_type"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
             "dimensionFilter": with_country_filter(outbound_filter, country),
-            "limit": 10,
+            "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
+            "limit": 50,
         }))
+
+    if "engagement" in sections:
         restaurant_filter = {"filter": {
             "fieldName": "eventName",
             "stringFilter": {"matchType": "CONTAINS", "value": "restaurant"},
@@ -454,19 +466,23 @@ def collect_data(days, sections, country=None):
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 20,
         }))
-        # Page views per page (to compute conversion rate)
-        event_page_filter = {"filter": {
-            "fieldName": "pagePath",
-            "stringFilter": {"matchType": "BEGINS_WITH", "value": "/e/"},
-        }}
-        d["views_by_page"] = extract_rows(api_call("runReport", {
-            "dateRanges": rng,
-            "dimensions": [{"name": "pagePath"}],
-            "metrics": [{"name": "screenPageViews"}],
-            "dimensionFilter": with_country_filter(event_page_filter, country),
-            "orderBys": [{"metric": {"metricName": "screenPageViews"}, "desc": True}],
-            "limit": 50,
-        }))
+        # Page views for exactly the pages above (to compute conversion rate).
+        # Listing the paths covers every locale prefix (/es/e/, /en/e/) and
+        # low-traffic pages a top-N views query would miss.
+        outbound_pages = [dims[0] for dims, _ in d["outbound_by_page"]]
+        d["views_by_page"] = []
+        if outbound_pages:
+            outbound_pages_filter = {"filter": {
+                "fieldName": "pagePath",
+                "inListFilter": {"values": outbound_pages},
+            }}
+            d["views_by_page"] = extract_rows(api_call("runReport", {
+                "dateRanges": rng,
+                "dimensions": [{"name": "pagePath"}],
+                "metrics": [{"name": "screenPageViews"}],
+                "dimensionFilter": with_country_filter(outbound_pages_filter, country),
+                "limit": len(outbound_pages),
+            }))
 
         # Section visibility breakdown (which detail page sections do users see?)
         section_view_filter = {"filter": {
@@ -599,10 +615,19 @@ def compute_behavior(d, days):
     def adoption(event_name):
         return events_map.get(event_name, {}).get("users", 0) / total_users
 
-    # Publish funnel
-    pub_starts = events_map.get("publish_form_start", {}).get("count", 0)
-    pub_success = events_map.get("publish_success", {}).get("count", 0)
-    pub_errors = events_map.get("publish_error", {}).get("count", 0)
+    # Publish funnel: prefer the dedicated publish query, which has no row
+    # limit, so the summary always matches the Publish Funnel table.
+    publish_counts = {dims[0]: safe_int(mets[0])
+                      for dims, mets in d.get("publish", [])}
+
+    def publish_count(event_name):
+        if event_name in publish_counts:
+            return publish_counts[event_name]
+        return events_map.get(event_name, {}).get("count", 0)
+
+    pub_starts = publish_count("publish_form_start")
+    pub_success = publish_count("publish_success")
+    pub_errors = publish_count("publish_error")
 
     # Zero-result searches
     zero_results = []
@@ -812,15 +837,17 @@ def compute_behavior(d, days):
             "acted": cal_clicks,
             "rate": cal_clicks / cal_views,
         }
-    # Restaurant section as trigger for maps/website clicks
+    # Restaurant section as trigger for restaurant map clicks. Only the
+    # maps_restaurant link_type comes from this section; other outbound
+    # clicks (website, sticky CTA, directions) must not count here.
     rest_views = events_map.get("restaurant_section_view", {}).get("users", 0)
-    maps_clicks = events_map.get("outbound_click", {}).get("users", 0)
-    # Approximate: restaurant is one source of outbound
+    maps_clicks = sum(safe_int(mets[1]) for dims, mets in d.get("outbound", [])
+                      if len(dims) > 1 and dims[1] == "maps_restaurant")
     if rest_views > 0:
         triggers["Restaurant section"] = {
             "exposed": rest_views,
             "acted": maps_clicks,
-            "rate": maps_clicks / rest_views if rest_views > 0 else 0,
+            "rate": maps_clicks / rest_views,
         }
     b["triggers"] = triggers
 
