@@ -208,15 +208,11 @@ export default async function ByDatePage({
   // Since we don't read searchParams (to keep pages static), category comes from URL path only
   const finalCategory = actualCategory;
 
-  // Match SSR depth to indexability: expandable places get a richer first page;
-  // thin places stay small.
-  const isExpandableForFetch = await isExpandablePromise;
-
   const paramsForFetch: FetchEventsParams = {
     page: 0,
-    size: isExpandableForFetch
-      ? SSR_EVENTS_SIZE_EXPANDABLE
-      : SSR_EVENTS_SIZE_THIN,
+    // Always the rich size, so the events fetch doesn't wait for the event
+    // count; thin places are trimmed once it arrives (as on the [place] page).
+    size: SSR_EVENTS_SIZE_EXPANDABLE,
   };
 
   // Only add date filters if actualDate is not "tots"
@@ -278,7 +274,7 @@ export default async function ByDatePage({
     paramsForFetch,
     pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
     locale,
-    placeIsExpandable: isExpandableForFetch,
+    placeIsExpandablePromise: isExpandablePromise,
   });
 
 
@@ -394,14 +390,14 @@ function buildFallbackPlaceByDateShellData({
   };
 }
 
-async function buildPlaceByDateEventsPromise({
+export async function buildPlaceByDateEventsPromise({
   place,
   finalCategory,
   actualDate,
   paramsForFetch,
   pageDataPromise,
   locale,
-  placeIsExpandable,
+  placeIsExpandablePromise,
 }: {
   place: string;
   finalCategory?: string;
@@ -409,7 +405,9 @@ async function buildPlaceByDateEventsPromise({
   paramsForFetch: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
   locale: AppLocale;
-  placeIsExpandable: boolean;
+  // Match SSR depth to indexability: expandable places get a richer first
+  // page; thin places stay small.
+  placeIsExpandablePromise: Promise<boolean>;
 }): Promise<PlacePageEventsResult> {
   const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
@@ -428,9 +426,17 @@ async function buildPlaceByDateEventsPromise({
         place: undefined,
       },
     });
-  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
+  const placeIsExpandable = await placeIsExpandablePromise;
+  const ssrPageSize = placeIsExpandable
+    ? SSR_EVENTS_SIZE_EXPANDABLE
+    : SSR_EVENTS_SIZE_THIN;
+  // Fallback results come from their own smaller queries: keep them whole.
+  const pageEvents = noEventsFound ? events : events.slice(0, ssrPageSize);
+  const serverHasMore = eventsResponse
+    ? !eventsResponse.last || events.length > pageEvents.length
+    : false;
 
-  const localizedEvents = addLocalizedDateFields(events, locale);
+  const localizedEvents = addLocalizedDateFields(pageEvents, locale);
   const eventsWithAds = insertAds(localizedEvents);
   const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
   const pageData = await pageDataPromise;
@@ -472,7 +478,7 @@ async function buildPlaceByDateEventsPromise({
     events: eventsWithAds,
     noEventsFound,
     serverHasMore,
-    ssrPageSize: paramsForFetch.size as number,
+    ssrPageSize,
     structuredScripts: structuredScripts.length
       ? structuredScripts
       : undefined,
