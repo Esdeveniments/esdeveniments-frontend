@@ -27,8 +27,9 @@ export default function EventDeleteAction({ slug }: EventDeleteActionProps) {
         method: "DELETE",
         credentials: "include",
       });
-      // 404: already gone, which is what the user asked for.
-      if (!response.ok && response.status !== 404) {
+      // Not even a 404 counts as success: the route also returns it when the
+      // backend lookup fails, so the event may still be live.
+      if (!response.ok) {
         setFailed(true);
         sendGoogleEvent("event_delete_error", { status: response.status });
         return false;

@@ -47,8 +47,9 @@ describe("EventDeleteAction", () => {
     });
   });
 
-  it("keeps the dialog open with an error when the delete fails", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 500 }));
+  // 404 too: the route returns it when the backend lookup fails.
+  it.each([500, 404])("keeps the dialog open with an error on a %i", async (status) => {
+    fetchMock.mockResolvedValue(new Response(null, { status }));
     render(<EventDeleteAction slug="my-event" />);
 
     await confirmDelete();
