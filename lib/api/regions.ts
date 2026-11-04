@@ -12,7 +12,7 @@ import { getSanitizedErrorMessage } from "@utils/api-error-handler";
 // failure from being cached for a day.
 const { cache: regionsListCache, clear: clearRegionsListCache } =
   createCache<RegionSummaryResponseDTO[]>(86400000, { storeEmpty: false });
-// globalKey: shared with the startup warm-up and the API routes, which are
+// globalKey: shared with the startup warm-up and /api/revalidate, which are
 // bundled apart from the pages.
 const { cache: regionsWithCitiesCache, clear: clearRegionsWithCitiesCache } =
   createCache<RegionsGroupedByCitiesResponseDTO[]>(86400000, {

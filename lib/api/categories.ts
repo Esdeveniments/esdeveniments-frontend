@@ -6,7 +6,7 @@ import { fetchCategoriesExternal } from "./categories-external";
 
 // fetchCategoriesExternal returns [] on failure; storeEmpty: false keeps a
 // failure from being cached for a day. globalKey: shared with the startup
-// warm-up and the API routes, which are bundled apart from the pages.
+// warm-up and /api/revalidate, which are bundled apart from the pages.
 const { cache: categoriesListCache, clear: clearCategoriesListCache } =
   createCache<CategorySummaryResponseDTO[]>(86400000, {
     storeEmpty: false,

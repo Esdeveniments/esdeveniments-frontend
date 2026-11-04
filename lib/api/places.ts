@@ -16,7 +16,7 @@ import {
 const { cache: placeBySlugCache, clear: clearPlaceBySlugCache } =
   createKeyedCache<PlaceResponseDTO | null>(86400000, { maxEntries: 5000 });
 // PLACES_LIST_CACHE_KEY: one entry per process, shared with proxy.ts (which
-// keeps it for 1 h), the API routes and the startup warm-up.
+// keeps it for 1 h), /api/revalidate and the startup warm-up.
 const { cache: placesCache, clear: clearPlacesListCache } =
   createCache<PlaceResponseDTO[]>(86400000, {
     storeEmpty: false,
