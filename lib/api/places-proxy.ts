@@ -27,16 +27,23 @@ const { cache: placesCache } = createCache<PlaceResponseDTO[]>(
 // timeout to every request or pile more calls onto a struggling backend.
 const PROXY_PLACE_BACKOFF_MS = 30 * 1000;
 let backoffUntil = 0;
-let placesRequest: Promise<PlaceResponseDTO[]> | null = null;
 
-// Concurrent requests on a cold process share one list call.
+// The list fetch is shared (one per process, also started by the startup
+// warm-up and by fetchPlaces), so it runs without this request's signal: the
+// proxy stops waiting at its own deadline while the fetch keeps going and
+// fills the cache for everyone. Aborting a shared fetch would hand [] to the
+// other callers waiting on it.
 function loadPlaces(signal: AbortSignal): Promise<PlaceResponseDTO[]> {
-  placesRequest ??= placesCache(() =>
-    fetchPlacesAggregatedExternal({ signal }),
-  ).finally(() => {
-    placesRequest = null;
+  const deadline = new Promise<never>((_, reject) => {
+    if (signal.aborted) reject(signal.reason);
+    signal.addEventListener("abort", () => reject(signal.reason), { once: true });
   });
-  return placesRequest;
+  // The deadline may fire after the list arrived; nothing awaits it then.
+  deadline.catch(() => {});
+  return Promise.race([
+    placesCache(() => fetchPlacesAggregatedExternal()),
+    deadline,
+  ]);
 }
 
 function failOpen(): ProxyPlaceResolution {
@@ -53,7 +60,8 @@ export async function resolvePlaceForProxy(
   slug: string,
 ): Promise<ProxyPlaceResolution> {
   if (Date.now() < backoffUntil) return { kind: "unknown" };
-  // One deadline for the whole check; fetchWithHmac aborts the fetch on it.
+  // One deadline for the whole check. It aborts the per-slug lookup (which
+  // only the proxy uses) and stops the wait for the shared place list.
   const signal = AbortSignal.timeout(PROXY_PLACE_TIMEOUT_MS);
 
   try {

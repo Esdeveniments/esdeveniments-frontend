@@ -102,11 +102,46 @@ describe("resolvePlaceForProxy", () => {
     expect(fetchPlacesAggregatedExternal).toHaveBeenCalledTimes(1);
   });
 
-  it("bounds both backend calls with one abort signal", async () => {
+  it("aborts its own per-slug lookup but not the shared list fetch", async () => {
     fetchPlaceBySlugExternal.mockResolvedValue(null);
     await (await load())("no-such-place");
-    const listSignal = fetchPlacesAggregatedExternal.mock.calls[0][0].signal;
-    expect(listSignal).toBeInstanceOf(AbortSignal);
-    expect(fetchPlaceBySlugExternal.mock.calls[0][1].signal).toBe(listSignal);
+    expect(fetchPlacesAggregatedExternal.mock.calls[0][0]?.signal).toBeUndefined();
+    expect(fetchPlaceBySlugExternal.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  // The place list is shared with the startup warm-up and fetchPlaces, which
+  // run under fetchWithHmac's 10 s timeout. The proxy must still give up at
+  // its own deadline, and its deadline must not cut the shared fetch short.
+  it("fails open at its deadline when it joins someone else's slow fetch", async () => {
+    let finish!: (places: PlaceResponseDTO[]) => void;
+    fetchPlacesAggregatedExternal.mockImplementationOnce(
+      () => new Promise((resolve) => (finish = resolve)),
+    );
+    const { warmPlacesCache } = await import("@lib/api/places");
+    const warm = warmPlacesCache();
+
+    const start = Date.now();
+    expect(await (await load())("barcelona")).toEqual({ kind: "unknown" });
+    expect(Date.now() - start).toBeLessThan(2500);
+
+    finish(places);
+    await warm;
+    const { fetchPlaces } = await import("@lib/api/places");
+    expect(await fetchPlaces()).toEqual(places);
+    expect(fetchPlacesAggregatedExternal).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't hand [] to a caller that joins the proxy's fetch", async () => {
+    let finish!: (places: PlaceResponseDTO[]) => void;
+    fetchPlacesAggregatedExternal.mockImplementationOnce(
+      () => new Promise((resolve) => (finish = resolve)),
+    );
+    const proxyResult = (await load())("barcelona");
+    const { fetchPlaces } = await import("@lib/api/places");
+    const joined = fetchPlaces();
+
+    expect(await proxyResult).toEqual({ kind: "unknown" });
+    finish(places);
+    expect(await joined).toEqual(places);
   });
 });
