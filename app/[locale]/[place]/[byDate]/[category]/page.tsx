@@ -187,8 +187,8 @@ export default async function FilteredPage({
 
   // Canonicalization note:
   // - Middleware handles structural normalization (folding query date/category, omitting "tots")
-  // - This page-level redirect remains to validate category slugs against dynamic categories
-  //   and normalize unknown slugs (middleware cannot fetch categories at edge time)
+  // - Proxy 301s unknown category slugs (checkCategory in utils/proxy-place.ts); this
+  //   redirect is the fallback when it fails open. Here it streams as 200 + meta refresh.
   // - When middleware already normalized, this is a no-op
   // - Query params (search, distance, lat, lon) are preserved through redirects
   const redirectUrl = getRedirectUrl(parsed);

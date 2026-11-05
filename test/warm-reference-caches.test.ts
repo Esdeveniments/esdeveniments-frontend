@@ -79,10 +79,12 @@ describe("warmReferenceCaches", () => {
     const { fetchRegionsWithCities } = await import("@lib/api/regions");
     const { fetchPlaces } = await import("@lib/api/places");
     const { resolvePlaceForProxy } = await import("@lib/api/places-proxy");
+    const { getCategoriesForProxy } = await import("@lib/api/categories-proxy");
     expect(await fetchCategories()).toEqual(categories);
     expect(await fetchRegionsWithCities()).toHaveLength(1);
     expect(await fetchPlaces()).toHaveLength(1);
     expect(await resolvePlaceForProxy("girona")).toEqual({ kind: "exists" });
+    expect(await getCategoriesForProxy()).toEqual(categories);
     expect(fetchWithHmac).toHaveBeenCalledTimes(4);
   });
 

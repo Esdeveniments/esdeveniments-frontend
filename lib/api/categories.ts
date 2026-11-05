@@ -2,15 +2,18 @@ import { CategorySummaryResponseDTO } from "types/api/category";
 import { createCache } from "lib/api/cache";
 import { cache as reactCache } from "react";
 import { connection } from "next/server";
-import { fetchCategoriesExternal } from "./categories-external";
+import {
+  CATEGORIES_LIST_CACHE_KEY,
+  fetchCategoriesExternal,
+} from "./categories-external";
 
 // fetchCategoriesExternal returns [] on failure; storeEmpty: false keeps a
-// failure from being cached for a day. globalKey: shared with the startup
-// warm-up and /api/revalidate, which are bundled apart from the pages.
+// failure from being cached for a day. globalKey: shared with proxy.ts, the
+// startup warm-up and /api/revalidate, which are bundled apart from the pages.
 const { cache: categoriesListCache, clear: clearCategoriesListCache } =
   createCache<CategorySummaryResponseDTO[]>(86400000, {
     storeEmpty: false,
-    globalKey: "categories",
+    globalKey: CATEGORIES_LIST_CACHE_KEY,
   });
 
 /**

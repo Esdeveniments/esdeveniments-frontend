@@ -15,11 +15,18 @@ status, but a rewrite can and still renders the page. The page itself must then 
 `notFound()`, not redirect: a page `redirect()` under the 404 becomes a meta
 refresh that sends visitors (and mixed signals) to another URL. The check fails open
 (`unknown`) on any backend error or after 1.5 s, then skips the backend for
-30 s, so an outage never serves a false 404 or slows every request. Proxy is bundled apart from the app, so `/api/revalidate` doesn't
-clear its 1 h place cache: a new place can 404 for up to an hour plus CDN TTL.
+30 s, so an outage never serves a false 404 or slows every request. Proxy shares the
+app's places list (`globalKey`), so `/api/revalidate` clears it; Proxy's own 1 h
+per-slug cache isn't cleared, so a slug cached as missing can 404 for up to an hour
+plus CDN TTL.
 A new top-level route folder must be added to `NON_PLACE_FIRST_SEGMENTS`
 (`utils/middleware-redirects.ts`, guarded by
 `test/middleware-redirects-non-place.test.ts`) or it would be checked as a place.
+Unknown category slugs (`/barcelona/concerts`) get the same treatment: `checkCategory`
+(`utils/proxy-place.ts`) 301s them to the URL the page's `getRedirectUrl` would pick,
+with the same cache, timeout and back-off (`lib/api/proxy-list.ts`). That 301 carries
+`private, max-age` equal to the list TTL, so a browser doesn't keep it after a new
+category shows up (`private` because it may set the `NEXT_LOCALE` cookie).
 Missing events still serve 200 + `noindex`: a 404 there would need a full event
 fetch in Proxy.
 

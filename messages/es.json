@@ -1225,7 +1225,7 @@
         "gent-gran": {
           "titleSuffix": "Actividades para personas mayores",
           "description": "actividades para gente mayor, seniors, tercera edad, casal de gent gran",
-          "context": "Descubre actividades especialmente pensadas para la gente mayor: talleres, charlas, deporte suave y encuentros sociales",
+          "context": "Descubre actividades pensadas para la gente mayor: talleres, charlas, deporte suave y encuentros sociales",
           "noEvents": "actividades destinadas a la gente mayor"
         },
         "familia-i-infants": {
@@ -1277,28 +1277,28 @@
           "title": "{titleSuffix} hoy {label}",
           "subTitle": "Descubre {titleSuffix} hoy {label} con propuestas actualizadas y planes de última hora. Conciertos, teatro, exposiciones y actividades para todos los gustos.",
           "metaTitle": "{categoryTitle} hoy {label} - Agenda cultural y planes",
-          "metaDescription": "{context} hoy {label}. Consulta la agenda para descubrir planes para hoy: horarios, espacios, actividades para familias y opciones gratuitas.",
+          "metaDescription": "{context} hoy {label}.",
           "notFound": "Lo sentimos, pero no hay {noEventsText} hoy {label}. Mira las propuestas para mañana, este fin de semana u otras localidades cercanas para encontrar planes que te puedan interesar."
         },
         "dema": {
           "title": "{titleSuffix} mañana {label}",
           "subTitle": "Descubre {titleSuffix} mañana {label} y prepara tu plan con antelación. Música, teatro, exposiciones y actividades para disfrutar de la cultura.",
           "metaTitle": "{categoryTitle} mañana {label} - Ideas y planes culturales",
-          "metaDescription": "{context} mañana {label}. Anticípate y encuentra los mejores planes para mañana: actividades familiares, propuestas nocturnas y eventos culturales cerca de ti.",
+          "metaDescription": "{context} mañana {label}.",
           "notFound": "Lo sentimos, pero no hay {noEventsText} mañana {label}. Consulta la agenda para hoy, esta semana u otros destinos cercanos para encontrar nuevas propuestas."
         },
         "setmana": {
           "title": "{titleSuffix} esta semana {label}",
           "subTitle": "Descubre {titleSuffix} esta semana {label} y llena tu agenda de planes. Conciertos, talleres, exposiciones y actividades familiares.",
           "metaTitle": "{categoryTitle} esta semana {label} - Agenda completa",
-          "metaDescription": "{context} esta semana {label}. Descubre una selección de actividades destacadas, planes para el fin de semana y propuestas gratuitas para todas las edades.",
+          "metaDescription": "{context} esta semana {label}.",
           "notFound": "Lo sentimos, pero no hay {noEventsText} esta semana {label}. Prueba a cambiar la fecha o explora otros municipios y comarcas cercanas para encontrar nuevos planes."
         },
         "capDeSetmana": {
           "title": "{titleSuffix} este fin de semana {label}",
           "subTitle": "Descubre {titleSuffix} este fin de semana {label} con propuestas para salir y disfrutar en familia. Conciertos, actividades con niños y cultura local.",
           "metaTitle": "{categoryTitle} este fin de semana {label} - Planes y agenda",
-          "metaDescription": "{context} este fin de semana {label}. Encuentra conciertos, fiestas, actividades con niños y otros planes para aprovechar al máximo el fin de semana.",
+          "metaDescription": "{context} este fin de semana {label}.",
           "notFound": "Lo sentimos, pero no hay {noEventsText} este fin de semana {label}. Consulta otras fechas, explora actividades en el resto de Cataluña o ajusta los filtros de la búsqueda para descubrir más opciones."
         }
       },
@@ -1306,14 +1306,14 @@
         "title": "{titleSuffix} {label} {year}",
         "subTitle": "Descubre {titleSuffix} {label} con una selección de eventos y actividades culturales. Conciertos, talleres, exposiciones, planes familiares y propuestas gratuitas.",
         "metaTitle": "{categoryTitle} {label} {year} | Qué hacer - Agenda y planes",
-        "metaDescription": "{context} {label}. Consulta la agenda cultural actualizada y encuentra conciertos, talleres, exposiciones, actividades familiares y otros planes para tu tiempo libre.",
+        "metaDescription": "{context} {label}. Consulta la agenda.",
         "notFound": "Lo sentimos, pero no hay {noEventsText} {label} en este momento. Prueba con otras fechas, categorías o localidades cercanas para descubrir nuevas propuestas culturales."
       },
       "regionNoDate": {
         "title": "Qué hacer {label}. Agenda {year}",
         "subTitle": "Descubre los mejores planes de ocio y cultura {label} este {month}. Encuentra conciertos, teatro, exposiciones, rutas y actividades familiares para aprovechar el fin de semana.",
         "metaTitle": "Qué hacer {label} - Agenda y planes {year}",
-        "metaDescription": "Explora la mejor agenda cultural {label} este {month}. Encuentra conciertos, festivales, teatro, actividades para niños y planes gratuitos para disfrutar de la región.",
+        "metaDescription": "Explora la mejor agenda cultural {label} este {month}: conciertos, festivales, teatro, actividades para niños y planes gratuitos.",
         "canonical": "{siteUrl}/{place}",
         "notFound": "Lo sentimos, pero no hay eventos {label} en esta fecha. Mira otros días, ajusta los filtros o consulta localidades cercanas para encontrar nuevos planes y actividades."
       },
@@ -1321,12 +1321,12 @@
         "barcelona": {
           "title": "Qué hacer en Barcelona. Agenda {year}",
           "metaTitle": "Qué hacer en Barcelona - Agenda y planes {year}",
-          "metaDescription": "Eventos en Barcelona y planes para hacer este {month}. Consulta la agenda con conciertos, fiestas, actividades familiares, talleres, exposiciones y otras propuestas para disfrutar de la ciudad."
+          "metaDescription": "Eventos en Barcelona y planes para hacer este {month}: conciertos, fiestas, actividades familiares, talleres, exposiciones y más propuestas."
         },
         "default": {
           "title": "Qué hacer {label}. Agenda {year}",
           "metaTitle": "Qué hacer {label} - Agenda y planes {year}",
-          "metaDescription": "Descubre la agenda hoy {label} este {month}. Consulta conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes para disfrutar del municipio."
+          "metaDescription": "Descubre la agenda hoy {label} este {month}: conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes."
         },
         "subTitle": "Descubre los mejores planes de ocio y cultura {label} este {month}. Consulta la agenda actualizada con fiestas, conciertos, teatro, cine, exposiciones y actividades familiares.",
         "notFound": "Lo sentimos, pero no hay eventos {label} para esta fecha. Prueba a cambiar la fecha, explorar otras categorías o mirar municipios cercanos para encontrar actividades que te interesen.",
@@ -1337,28 +1337,28 @@
           "title": "Qué hacer hoy {label}",
           "subTitle": "Descubre qué hacer hoy {label}: conciertos, teatro, exposiciones, actividades familiares y planes de última hora. Consulta la agenda actualizada y no te pierdas nada.",
           "metaTitle": "Qué hacer hoy {label} - Planes y agenda",
-          "metaDescription": "Descubre qué hacer hoy {label}. Consulta la agenda cultural actualizada con conciertos, fiestas, actividades con niños, propuestas gratuitas y otros planes cerca de ti.",
+          "metaDescription": "Descubre qué hacer hoy {label}: conciertos, fiestas, actividades con niños, propuestas gratuitas y otros planes cerca de ti.",
           "notFound": "Lo sentimos, pero no hay eventos hoy {label}. Mira las propuestas para mañana, esta semana u otras localidades cercanas para encontrar planes que encajen contigo."
         },
         "dema": {
           "title": "Qué hacer mañana {label}",
           "subTitle": "Organiza tu día y descubre qué hacer mañana {label}: conciertos, teatro, exposiciones y actividades familiares. Consulta la agenda y elige tu plan.",
           "metaTitle": "Qué hacer mañana {label} - Ideas y planes",
-          "metaDescription": "Descubre qué hacer mañana {label}. Encuentra conciertos, actividades para niños, exposiciones, rutas y otros planes para organizar tu día con antelación.",
+          "metaDescription": "Descubre qué hacer mañana {label}: conciertos, actividades para niños, exposiciones, rutas y otros planes para organizar tu día.",
           "notFound": "Lo sentimos, pero no hay eventos mañana {label}. Consulta la agenda para hoy, esta semana u otros destinos cercanos para descubrir nuevas opciones."
         },
         "setmana": {
           "title": "Agenda semanal {label}",
           "subTitle": "Descubre qué hacer esta semana {label} con conciertos, talleres, exposiciones y actividades en familia. Planes y cultura para llenar la semana.",
           "metaTitle": "Qué hacer esta semana {label} - Agenda completa",
-          "metaDescription": "Explora la agenda cultural esta semana {label}. Encuentra conciertos, exposiciones, teatro, actividades en familia, rutas y otros planes para llenar tu semana.",
+          "metaDescription": "La agenda cultural de esta semana {label}: conciertos, exposiciones, teatro, actividades en familia, rutas y otros planes.",
           "notFound": "Lo sentimos, pero no hay eventos esta semana {label}. Prueba otras semanas, cambia de categoría o explora localidades cercanas para encontrar más actividades."
         },
         "capDeSetmana": {
           "title": "Qué hacer este fin de semana {label}",
           "subTitle": "Descubre qué hacer este fin de semana {label}: conciertos, fiestas, actividades familiares y propuestas al aire libre. Encuentra tu plan y aprovecha el fin de semana.",
           "metaTitle": "Qué hacer este fin de semana {label} - Planes y agenda",
-          "metaDescription": "Descubre los mejores planes para este fin de semana {label}. Consulta conciertos, fiestas populares, actividades con niños, rutas y otras propuestas culturales para aprovechar al máximo el fin de semana.",
+          "metaDescription": "Los mejores planes para este fin de semana {label}: conciertos, fiestas populares, actividades con niños, rutas y otras propuestas.",
           "notFound": "Lo sentimos, pero no hay eventos este fin de semana {label}. Consulta otras fechas, explora categorías diferentes o mira qué se hace en el resto de Cataluña para encontrar nuevos planes."
         }
       },
@@ -1367,7 +1367,7 @@
           "title": "Qué hacer hoy en Cataluña",
           "subTitle": "Descubre qué hacer hoy en Cataluña con una agenda cultural actualizada. Conciertos, teatro, exposiciones, planes en familia y actividades gratis por todo el territorio.",
           "metaTitle": "Qué hacer hoy en Cataluña - Planes y agenda",
-          "metaDescription": "Descubre qué hacer hoy en Cataluña. Consulta la agenda cultural actualizada con conciertos, festivales, actividades con niños, propuestas gratuitas y planes de última hora en todo el territorio.",
+          "metaDescription": "Descubre qué hacer hoy en Cataluña: conciertos, festivales, actividades con niños, propuestas gratuitas y planes de última hora.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Lo sentimos, pero no hay eventos hoy en Cataluña. Mira las propuestas para mañana, esta semana o filtra por localidad y categoría para encontrar otros planes interesantes."
         },
@@ -1375,7 +1375,7 @@
           "title": "Qué hacer mañana en Cataluña",
           "subTitle": "Descubre qué hacer mañana en Cataluña y planifica tu tiempo libre. Conciertos, teatro, exposiciones, actividades en familia y planes para todos los gustos.",
           "metaTitle": "Qué hacer mañana en Cataluña - Ideas y planes",
-          "metaDescription": "Descubre qué hacer mañana en Cataluña. Encuentra conciertos, actividades familiares, rutas, fiestas y otros planes para organizar tu tiempo libre con antelación.",
+          "metaDescription": "Descubre qué hacer mañana en Cataluña: conciertos, actividades familiares, rutas, fiestas y otros planes para tu tiempo libre.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Lo sentimos, pero no hay eventos mañana en Cataluña. Consulta la agenda para hoy, esta semana o explora diferentes categorías y localidades para descubrir nuevas opciones."
         },
@@ -1383,7 +1383,7 @@
           "title": "Agenda semanal en Cataluña",
           "subTitle": "Descubre qué hacer esta semana en Cataluña con planes culturales para cada día. Conciertos, exposiciones, teatro, fiestas y actividades familiares.",
           "metaTitle": "Qué hacer esta semana en Cataluña - Agenda completa",
-          "metaDescription": "Explora la agenda cultural esta semana en Cataluña. Encuentra conciertos, festivales, rutas, talleres, actividades para niños y otros planes para llenar tu semana de cultura y ocio.",
+          "metaDescription": "La agenda cultural de esta semana en Cataluña: conciertos, festivales, rutas, talleres, actividades para niños y otros planes de ocio.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Lo sentimos, pero no hay eventos esta semana en Cataluña. Prueba a cambiar la semana, ajustar los filtros o explorar diferentes zonas del territorio para encontrar más actividades."
         },
@@ -1391,7 +1391,7 @@
           "title": "Qué hacer este fin de semana en Cataluña",
           "subTitle": "Descubre qué hacer este fin de semana en Cataluña y aprovéchalo al máximo. Conciertos, fiestas populares, actividades con niños, rutas y escapadas.",
           "metaTitle": "Qué hacer este fin de semana en Cataluña - Planes y agenda",
-          "metaDescription": "Descubre los mejores planes para este fin de semana en Cataluña. Consulta conciertos, fiestas populares, actividades para niños, rutas y otras propuestas culturales y de ocio por todo el país.",
+          "metaDescription": "Los mejores planes para este fin de semana en Cataluña: conciertos, fiestas populares, actividades para niños, rutas y planes de ocio.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Lo sentimos, pero no hay eventos este fin de semana en Cataluña. Mira otros fines de semana, explora diferentes categorías o céntrate en una zona concreta para encontrar nuevas ideas."
         }
@@ -1400,7 +1400,7 @@
         "title": "Qué hacer en Cataluña. Agenda {year}",
         "subTitle": "Agenda cultural de Cataluña este {month}, con conciertos, exposiciones, teatro, actividades familiares, fiestas populares y muchos otros planes para tu tiempo libre.",
         "metaTitle": "Descubre eventos en Cataluña este {year}",
-        "metaDescription": "Explora la mejor agenda cultural de Cataluña. Encuentra conciertos, rutas, festivales, actividades con niños, propuestas gratuitas y otros planes para disfrutar de {year}.",
+        "metaDescription": "Explora la mejor agenda cultural de Cataluña: conciertos, rutas, festivales, actividades con niños y planes gratuitos para disfrutar de {year}.",
         "notFound": "Lo sentimos, pero no hay eventos disponibles en Cataluña en este momento. Prueba otras fechas, categorías o localidades para descubrir nuevas propuestas culturales y de ocio."
       }
     }

@@ -11,6 +11,11 @@ import { parseCategories, parseCategoryDetail } from "lib/validation/category";
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
 
+// globalKey of the category-list cache that lib/api/categories.ts and proxy.ts
+// share. Here, not in utils/constants.ts, so the proxy bundle doesn't pull in
+// next-intl and the locale labels with it.
+export const CATEGORIES_LIST_CACHE_KEY = "categories";
+
 // skipConnection: for the startup warm-up (instrumentation.ts), which runs
 // outside a request, where connection() throws.
 export async function fetchCategoriesExternal({
