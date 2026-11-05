@@ -62,12 +62,24 @@ jobs:
           python3 scripts/ga-dashboard.py --md --days "$DAYS" --country Spain > /tmp/dashboard-output.md
 
       - name: Create GitHub Issue
+        id: create-issue
         uses: peter-evans/create-issue-from-file@v6
         with:
           title: "📊 Weekly GA4 Dashboard — ${{ github.event.inputs.days || '7' }}d"
           content-filepath: /tmp/dashboard-output.md
           labels: analytics,automated-dashboard
           assignees: albertolive
+
+      - name: Close previous dashboards
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW_ISSUE: ${{ steps.create-issue.outputs.issue-number }}
+        run: |
+          gh issue list --repo "$GITHUB_REPOSITORY" --label automated-dashboard --state open --limit 100 --json number -q '.[].number' |
+            while read -r n; do
+              [[ "$n" == "$NEW_ISSUE" ]] && continue
+              gh issue close "$n" --repo "$GITHUB_REPOSITORY" --reason "not planned" --comment "Superseded by #$NEW_ISSUE."
+            done
 
       - name: Cleanup credentials
         if: always()

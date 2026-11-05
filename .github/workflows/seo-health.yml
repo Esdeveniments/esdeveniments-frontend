@@ -371,11 +371,21 @@ jobs:
             done < /tmp/failing-jobs.txt
           } > /tmp/issue-body.md
 
+      - name: Find open regression issue
+        if: steps.eval.outputs.has_failures == 'true'
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh issue list --repo "$GITHUB_REPOSITORY" --label automated-audit --label regression --state open --limit 1 --json number -q '.[0].number // empty')
+          echo "number=$n" >> "$GITHUB_OUTPUT"
+
       - name: Create or update issue
         if: steps.eval.outputs.has_failures == 'true'
         uses: peter-evans/create-issue-from-file@v6
         with:
-          title: "🚨 SEO Health Regression — ${{ github.run_id }}"
+          issue-number: ${{ steps.existing.outputs.number }}
+          title: "🚨 SEO Health Regression"
           content-filepath: /tmp/issue-body.md
           labels: seo,automated-audit,regression
           assignees: albertolive
