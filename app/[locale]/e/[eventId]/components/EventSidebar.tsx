@@ -11,8 +11,7 @@ import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { getProfileSlug } from "@utils/user-helpers";
-import EventEditAction from "./EventEditAction";
-import EventPromoteAction from "./EventPromoteAction";
+import EventOwnerActions from "./EventOwnerActions";
 import type { EventSidebarProps } from "types/props";
 import type { AppLocale } from "types/i18n";
 
@@ -132,9 +131,8 @@ export default async function EventSidebar({
               </>
             )}
 
-            {/* Owner-only edit action */}
-            <EventEditAction ownerId={event.owner?.id} slug={event.slug ?? ""} />
-            <EventPromoteAction ownerId={event.owner?.id} slug={event.slug ?? ""} />
+            {/* Owner-only actions */}
+            <EventOwnerActions ownerId={event.owner?.id} slug={event.slug ?? ""} />
 
           </div>
         </div>

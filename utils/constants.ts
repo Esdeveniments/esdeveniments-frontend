@@ -314,30 +314,6 @@ export function shouldUseDynamicCategories(): boolean {
   return true;
 }
 
-/**
- * Get category display name from dynamic categories (API is source of truth)
- * @param categorySlug - Category slug
- * @param categories - Dynamic categories from API
- * @returns Display name for the category, or slug if not found
- */
-export function getCategoryDisplayName(
-  categorySlug: string,
-  categories?: CategorySummaryResponseDTO[],
-): string {
-  if (categories && categories.length > 0) {
-    const dynamicCategory = categories.find((cat) => cat.slug === categorySlug);
-    if (dynamicCategory) {
-      return dynamicCategory.name;
-    }
-  }
-
-  // Return slug as fallback (capitalize first letter for readability)
-  return (
-    categorySlug.charAt(0).toUpperCase() +
-    categorySlug.slice(1).replace(/-/g, " ")
-  );
-}
-
 // --- News UI constants ---
 export async function getNewsHubs(): Promise<{ slug: string; name: string }[]> {
   const t = await getTranslations("Components.Constants.newsHubs");

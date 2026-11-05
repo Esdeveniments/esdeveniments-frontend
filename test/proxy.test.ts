@@ -556,7 +556,7 @@ describe("proxy", () => {
     it("caps how long browsers keep the category 301", async () => {
       const response = await proxy(listingRequest("/barcelona/concerts"));
       expect(response?.headers.get("Cache-Control")).toBe(
-        "public, max-age=3600",
+        "private, max-age=3600",
       );
     });
 

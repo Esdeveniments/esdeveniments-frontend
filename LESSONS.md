@@ -15,15 +15,18 @@ status, but a rewrite can and still renders the page. The page itself must then 
 `notFound()`, not redirect: a page `redirect()` under the 404 becomes a meta
 refresh that sends visitors (and mixed signals) to another URL. The check fails open
 (`unknown`) on any backend error or after 1.5 s, then skips the backend for
-30 s, so an outage never serves a false 404 or slows every request. Proxy is bundled apart from the app, so `/api/revalidate` doesn't
-clear its 1 h place cache: a new place can 404 for up to an hour plus CDN TTL.
+30 s, so an outage never serves a false 404 or slows every request. Proxy shares the
+app's places list (`globalKey`), so `/api/revalidate` clears it; Proxy's own 1 h
+per-slug cache isn't cleared, so a slug cached as missing can 404 for up to an hour
+plus CDN TTL.
 A new top-level route folder must be added to `NON_PLACE_FIRST_SEGMENTS`
 (`utils/middleware-redirects.ts`, guarded by
 `test/middleware-redirects-non-place.test.ts`) or it would be checked as a place.
 Unknown category slugs (`/barcelona/concerts`) get the same treatment: `checkCategory`
 (`utils/proxy-place.ts`) 301s them to the URL the page's `getRedirectUrl` would pick,
-with the same cache, timeout and back-off (`lib/api/proxy-list.ts`). That 301 carries `max-age` equal to the list TTL, so a browser
-doesn't keep it after a new category shows up.
+with the same cache, timeout and back-off (`lib/api/proxy-list.ts`). That 301 carries
+`private, max-age` equal to the list TTL, so a browser doesn't keep it after a new
+category shows up (`private` because it may set the `NEXT_LOCALE` cookie).
 Missing events still serve 200 + `noindex`: a 404 there would need a full event
 fetch in Proxy.
 
@@ -291,6 +294,7 @@ copy, the route kept serving the old event, and owners saw their edit only after
 the 30-minute TTL. `next dev` uses one module graph, so it never showed. Keep
 state that two entry points must share on `globalThis`, as `redis-client.ts`
 does, and test it by importing the module again after `vi.resetModules()`.
+The same split applies to `instrumentation.ts`: a startup warm-up there fills its own copy, and `connection()` throws outside a request. `createCache({ globalKey })` and the `warm*` readers (`skipConnection: true`) handle both (`warmReferenceCaches`). In a build of 2026-11-04 the listing pages shared one copy of the categories reader (`chunks/ssr/lib_api_categories_ts…`), while `instrumentation.ts` was compiled into a separate chunk with its own, so a warm-up there left the pages cold.
 
 ## Pin `NEXT_PUBLIC_SITE_URL` when you run e2e against pre-production
 
@@ -650,3 +654,23 @@ production without events longer than planned. Two gaps, both in
 When the backend contract changes, production is blank from the backend
 switch until the new frontend is live. Run the release PR's E2E before the
 switch, and have Cloudflare access ready for a manual purge.
+
+## A render flag must be the same on the server and in the browser
+
+The deploy E2E failed `hydration-errors.spec.ts` (React #418 on `/`,
+`/catalunya`, `/barcelona`) for releases #630 and #637, so both shipped with
+`skip_e2e`. The job set `E2E_TEST_MODE` and `NEXT_PUBLIC_E2E_TEST_MODE` only
+when starting the server, not at build. `isE2ETestMode` read both, so the
+server saw `true` at runtime while the browser had `false` inlined, and
+`LazySocialFollowPopup` rendered `null` on the server but a lazy popup in the
+browser. `NEXT_PUBLIC_*` values are frozen at `next build`, and other
+variables never reach the browser
+([Next docs](https://nextjs.org/docs/app/guides/environment-variables)).
+
+- Anything that decides what renders uses `isE2ETestBuild`
+  (`NEXT_PUBLIC_E2E_TEST_MODE` only). `isE2ETestMode` is for server-only
+  behavior (API gate, test fixtures).
+- A job that builds for E2E sets the test-mode vars on the build step as well
+  as the start step. A `NEXT_PUBLIC_*` variable that is unset at build is not
+  inlined: the server bundle still reads it at runtime, while the browser gets
+  `undefined`.

@@ -5,8 +5,7 @@ import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { Link } from "@i18n/routing";
 import { useTranslations } from "next-intl";
-import EventEditAction from "./EventEditAction";
-import EventPromoteAction from "./EventPromoteAction";
+import EventOwnerActions from "./EventOwnerActions";
 
 /**
  * Renders ancillary event details: duration + external link + creator info.
@@ -93,12 +92,7 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
             </div>
           )}
 
-          {owner && (
-            <>
-              <EventEditAction ownerId={owner.id} slug={event.slug ?? ""} />
-              <EventPromoteAction ownerId={owner.id} slug={event.slug ?? ""} />
-            </>
-          )}
+          {owner && <EventOwnerActions ownerId={owner.id} slug={event.slug ?? ""} />}
         </div>
       </div>
     </div>

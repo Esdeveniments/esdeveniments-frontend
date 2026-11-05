@@ -1,6 +1,7 @@
 import { fetchEventBySlug } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
 import { getAccessTokenFromCookies, getRefreshTokenFromCookies } from "@utils/auth-cookies";
+import { isEventOwner } from "@utils/event-helpers";
 import type { EventDetailResponseDTO } from "types/api/event";
 
 /**
@@ -14,8 +15,7 @@ export async function getOwnedEventBySlug(
     fetchEventBySlug(slug),
     getCurrentUser(),
   ]);
-  const isOwner = Boolean(currentUser?.id) && currentUser?.id === event?.owner?.id;
-  return event && isOwner ? event : null;
+  return event && isEventOwner(currentUser?.id, event.owner?.id) ? event : null;
 }
 
 /**

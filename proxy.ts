@@ -81,10 +81,11 @@ export default async function proxy(request: NextRequest) {
     const response = NextResponse.redirect(redirectUrl, 301);
     if (redirectUrl === categoryRedirectUrl) {
       // A new category can be missing from Proxy's list for up to its TTL;
-      // without a max-age, browsers may keep this 301 forever.
+      // without a max-age, browsers may keep this 301 forever. `private`
+      // because it may set the NEXT_LOCALE cookie.
       response.headers.set(
         "Cache-Control",
-        `public, max-age=${PROXY_LIST_TTL_MS / 1000}`,
+        `private, max-age=${PROXY_LIST_TTL_MS / 1000}`,
       );
     }
     if (pathLocaleToPersist) {

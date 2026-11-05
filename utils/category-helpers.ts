@@ -70,24 +70,14 @@ export function getCategoryId(
 }
 
 /**
- * Creates a display-friendly name from category data
- * Falls back to slug or ID if name is not available
+ * The one UI label for a category, used by every component (chips, modal,
+ * cards, event page, quick links). `tCategories` must be bound to the
+ * `Config.Categories` namespace. Order: CATEGORY_CONFIG label → backend name
+ * → slug. SEO `titleSuffix` phrases are for titles/meta only, never here.
  */
-export function getCategoryDisplayName(
-  category: CategorySummaryResponseDTO | null
-): string {
-  if (!category) return "";
-
-  return category.name || category.slug || `Category ${category.id}`;
-}
-
-/**
- * Localizes a category label when the slug is known in CATEGORY_CONFIG.
- * Falls back to the backend-provided name (or slug) when unknown.
- */
-export function getLocalizedCategoryLabelFromConfig(
+export function getCategoryLabel(
   slug: unknown,
-  fallbackName: string,
+  fallbackName: string | undefined,
   tCategories: (key: string) => string
 ): string {
   const normalizedSlug = typeof slug === "string" ? slug.toLowerCase() : "";
@@ -95,5 +85,5 @@ export function getLocalizedCategoryLabelFromConfig(
   if (config?.labelKey) {
     return tCategories(config.labelKey);
   }
-  return fallbackName;
+  return fallbackName || normalizedSlug;
 }

@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const fetchCategoriesExternal = vi.fn();
-vi.mock("../lib/api/categories-external", () => ({ fetchCategoriesExternal }));
+vi.mock("../lib/api/categories-external", () => ({
+  CATEGORIES_LIST_CACHE_KEY: "categories",
+  fetchCategoriesExternal,
+}));
 
 const teatre = { id: 1, name: "Teatre", slug: "teatre" };
 

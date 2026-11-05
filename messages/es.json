@@ -948,7 +948,13 @@
       "toolbarAriaLabel": "Acciones del evento",
       "sidebarCreatedBy": "Publicado por",
       "sidebarViewAllEvents": "Ver todos los eventos",
-      "promoteEvent": "Promocionar"
+      "promoteEvent": "Promocionar",
+      "deleteEvent": "Eliminar evento",
+      "deleteConfirmTitle": "¿Quieres eliminar este evento?",
+      "deleteConfirmDescription": "Dejará de aparecer en la agenda y no se podrá recuperar.",
+      "deleteConfirm": "Eliminar",
+      "deleteCancel": "Cancelar",
+      "deleteError": "No se ha podido eliminar el evento. Vuelve a intentarlo."
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
@@ -1566,7 +1572,17 @@
       "familiaIInfants": "Actividades en familia",
       "musica": "Conciertos",
       "teatre": "Teatro",
-      "exposicions": "Exposiciones"
+      "exposicions": "Exposiciones",
+      "literatura": "Literatura y libros",
+      "tallersIFormacio": "Talleres y formación",
+      "dansa": "Danza y baile",
+      "salutIBenestar": "Salud y bienestar",
+      "esport": "Deporte y actividad física",
+      "patrimoniCultural": "Patrimonio cultural",
+      "serveisMunicipals": "Servicios municipales",
+      "gentGran": "Actividades para personas mayores",
+      "cinema": "Cartelera de cine",
+      "altres": "Otras actividades"
     },
     "ByDates": {
       "today": "Hoy",

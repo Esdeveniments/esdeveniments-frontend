@@ -151,6 +151,10 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          # NEXT_PUBLIC_* is inlined here, so set it where the server starts too.
+          # This build only serves the E2E below; the image is built separately.
+          E2E_TEST_MODE: "1"
+          NEXT_PUBLIC_E2E_TEST_MODE: "1"
         run: yarn build
 
       - name: Install Playwright browsers

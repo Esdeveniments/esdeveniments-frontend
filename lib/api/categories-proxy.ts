@@ -1,8 +1,14 @@
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { createProxyListLoader, PROXY_TIMEOUT_MS } from "@lib/api/proxy-list";
-import { fetchCategoriesExternal } from "./categories-external";
+import {
+  CATEGORIES_LIST_CACHE_KEY,
+  fetchCategoriesExternal,
+} from "./categories-external";
 
-const categoriesLoader = createProxyListLoader(fetchCategoriesExternal);
+const categoriesLoader = createProxyListLoader(
+  () => fetchCategoriesExternal(),
+  { globalKey: CATEGORIES_LIST_CACHE_KEY },
+);
 
 /**
  * The backend categories for Proxy checks, or null when the backend can't
@@ -18,7 +24,7 @@ export async function getCategoriesForProxy(): Promise<
     );
     if (categories.length > 0) return categories;
   } catch {
-    // fetchCategoriesExternal returns [] on errors; this is a safety net.
+    // Timeout. fetchCategoriesExternal itself returns [] on errors.
   }
   categoriesLoader.backOff();
   return null;

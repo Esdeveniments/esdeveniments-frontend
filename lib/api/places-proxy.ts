@@ -9,13 +9,21 @@ import { resolvePlaceSlugAliasFromPlaces } from "@utils/place-alias";
 import {
   fetchPlaceBySlugExternal,
   fetchPlacesAggregatedExternal,
+  PLACES_LIST_CACHE_KEY,
 } from "./places-external";
 
 const { cache: placeExistsCache } = createKeyedCache<boolean>(
   PROXY_LIST_TTL_MS,
   { maxEntries: 5000 },
 );
-const placesLoader = createProxyListLoader(fetchPlacesAggregatedExternal);
+// The place list shares the app's entry (PLACES_LIST_CACHE_KEY): it's filled
+// at server start, and /api/revalidate clears it for both. placeExistsCache is
+// Proxy's own: its TTL bounds how long a slug cached as missing keeps 404ing
+// after that place is added.
+const placesLoader = createProxyListLoader(
+  () => fetchPlacesAggregatedExternal(),
+  { globalKey: PLACES_LIST_CACHE_KEY },
+);
 
 function failOpen(): ProxyPlaceResolution {
   placesLoader.backOff();
@@ -31,7 +39,8 @@ export async function resolvePlaceForProxy(
   slug: string,
 ): Promise<ProxyPlaceResolution> {
   if (placesLoader.isBackingOff()) return { kind: "unknown" };
-  // One deadline for the whole check; fetchWithHmac aborts the fetch on it.
+  // One deadline for the whole check. It aborts the per-slug lookup (which
+  // only Proxy uses) and stops the wait for the shared place list.
   const signal = AbortSignal.timeout(PROXY_TIMEOUT_MS);
 
   try {
