@@ -73,9 +73,19 @@ export async function fetchPlaceBySlugExternal(
   }
 }
 
+// globalKey of the place-list cache that lib/api/places.ts and proxy.ts share.
+// Here, not in utils/constants.ts, so the proxy bundle doesn't pull in
+// next-intl and the locale labels with it.
+export const PLACES_LIST_CACHE_KEY = "places:aggregated";
+
+// skipConnection: for the startup warm-up (instrumentation.ts), which runs
+// outside a request, where connection() throws.
 export async function fetchPlacesAggregatedExternal({
   signal,
-}: Pick<RequestInit, "signal"> = {}): Promise<PlaceResponseDTO[]> {
+  skipConnection,
+}: Pick<RequestInit, "signal"> & { skipConnection?: boolean } = {}): Promise<
+  PlaceResponseDTO[]
+> {
   const api = getApiUrl();
   const endpoints: Array<{ path: string; type: "REGION" | "CITY" }> = [
     { path: "/places/regions", type: "REGION" },
@@ -87,7 +97,7 @@ export async function fetchPlacesAggregatedExternal({
     endpoints.map(async ({ path, type }) => {
       const endpoint = `${api}${path}`;
       // No `next: { revalidate }` - uses no-store to avoid cache explosion
-      const response = await fetchWithHmac(endpoint, { signal });
+      const response = await fetchWithHmac(endpoint, { signal, skipConnection });
       if (!response.ok) {
         throw new Error(
           `fetchPlacesAggregatedExternal: ${endpoint} HTTP ${response.status}`

@@ -201,3 +201,75 @@ describe("maxEntries option", () => {
     expect(fetcher.mock.calls.map(([k]) => k)).toEqual(["a", "b", "c", "a"]);
   });
 });
+
+// Requests on a cold process used to each call the backend for the same data.
+describe("concurrent misses", () => {
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => {
+      resolve = r;
+    });
+    return { promise, resolve };
+  }
+
+  it("createCache shares one fetch between concurrent misses", async () => {
+    const { cache } = createCache<string>(5000);
+    const gate = deferred<string>();
+    const fetcher = vi.fn(() => gate.promise);
+
+    const both = Promise.all([cache(fetcher), cache(fetcher)]);
+    gate.resolve("data");
+
+    expect(await both).toEqual(["data", "data"]);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it("createCache retries after a shared fetch fails", async () => {
+    const { cache } = createCache<string>(5000);
+    const fetcher = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("down"))
+      .mockResolvedValueOnce("data");
+
+    const results = await Promise.allSettled([cache(fetcher), cache(fetcher)]);
+    expect(results.map((r) => r.status)).toEqual(["rejected", "rejected"]);
+    expect(await cache(fetcher)).toBe("data");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("createCache doesn't store a fetch that started before clear()", async () => {
+    const { cache, clear } = createCache<string>(5000);
+    const gate = deferred<string>();
+    const stale = cache(() => gate.promise);
+    clear();
+    gate.resolve("stale");
+    expect(await stale).toBe("stale");
+
+    expect(await cache(async () => "fresh")).toBe("fresh");
+  });
+
+  it("createKeyedCache shares one fetch per key", async () => {
+    const { cache } = createKeyedCache<string>(5000);
+    const gate = deferred<string>();
+    const fetcher = vi.fn((key: string | number) =>
+      key === "a" ? gate.promise : Promise.resolve(`value-${key}`),
+    );
+
+    const all = Promise.all([cache("a", fetcher), cache("a", fetcher), cache("b", fetcher)]);
+    gate.resolve("value-a");
+
+    expect(await all).toEqual(["value-a", "value-a", "value-b"]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("createKeyedCache doesn't store a fetch that started before delete()", async () => {
+    const { cache, delete: deleteKey } = createKeyedCache<string>(5000);
+    const gate = deferred<string>();
+    const stale = cache("event", () => gate.promise);
+    deleteKey("event");
+    gate.resolve("before-edit");
+    await stale;
+
+    expect(await cache("event", async () => "after-edit")).toBe("after-edit");
+  });
+});
