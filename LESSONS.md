@@ -648,6 +648,23 @@ When the backend contract changes, production is blank from the backend
 switch until the new frontend is live. Run the release PR's E2E before the
 switch, and have Cloudflare access ready for a manual purge.
 
+## A page's own `<Suspense>` hides `loading.tsx`: its fallback must be visible
+
+The `[place]` page is sync and returns `<Suspense>` around `PlacePageGate`
+straight away (#269, to flush the shell early). That inner boundary catches
+everything, so `[place]/loading.tsx` only shows while `params` resolve, and
+the root layout's boundary never shows on a client navigation. From April to
+November the fallback was only `<h1 className="sr-only">`: while the gate
+awaited categories and the place lookup (cold in-memory caches after every
+deploy, and on every RSC navigation, which Cloudflare doesn't cache) users saw
+a blank `<main>` and the footer. A build from before the November changes
+behaved the same with a slow backend, so this was never a regression in
+the code: it showed whenever the cache was cold. Next's instant-navigation validation passes
+it because a boundary exists; it doesn't check that the fallback shows
+anything. Fix (#638): `PlacePageSkeleton` in the fallback, `sr-only` h1 kept
+for crawlers, guarded by `test/place-page-loading-fallback.test.tsx`
+(`renderToString` with a reader that never resolves).
+
 ## A render flag must be the same on the server and in the browser
 
 The deploy E2E failed `hydration-errors.spec.ts` (React #418 on `/`,
