@@ -19,7 +19,11 @@ import type { EventCopyLabels } from "types/common";
 import PastEventBanner from "./components/PastEventBanner";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import PwaBackButton from "@components/ui/common/PwaBackButton";
-import type { BreadcrumbNavItem, EventPageBodyProps } from "types/props";
+import type {
+  BreadcrumbNavItem,
+  EventPageBodyProps,
+  EventPageGateProps,
+} from "types/props";
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
@@ -75,18 +79,27 @@ export async function generateMetadata(props: PageProps<"/[locale]/e/[eventId]">
   return generateEventMetadata(event, canonical, undefined, locale);
 }
 
-// Main page component — sync, unwraps params with use() and returns a Suspense
-// boundary immediately so the static shell (layout) can flush before any async
-// work. All async logic (locale, event fetch, translations, redirects) lives
-// inside EventPageContent and streams in under the EventDetailSkeleton fallback.
+// Main page component: returns a Suspense boundary straight away so the shell
+// flushes before any async work. Its fallback doesn't read params, so it also
+// lands in the generic prerendered shell (event slugs are unknown at build
+// time): a first load shows the skeleton, not a blank <main>. A loading.tsx
+// would do the same but also wrap edita/ and promote/.
 export default function EventPage({
   params,
 }: PageProps<"/[locale]/e/[eventId]">) {
+  return (
+    <Suspense fallback={<EventDetailSkeleton />}>
+      <EventPageGate params={params} />
+    </Suspense>
+  );
+}
+
+// Unwraps params and streams the page in under the same skeleton, plus a
+// minimal sr-only h1 derived from the slug so crawlers see a heading even if
+// the stream fails (broken env, error boundary, etc.).
+function EventPageGate({ params }: EventPageGateProps) {
   const { eventId: slug } = use(params);
 
-  // Fallback combines the visual skeleton (aria-hidden) with a minimal
-  // sr-only h1 derived from the slug — ensures crawlers see a heading even
-  // if the Suspense stream fails (broken env, error boundary, etc.).
   return (
     <Suspense
       fallback={

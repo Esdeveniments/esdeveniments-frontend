@@ -975,6 +975,10 @@ export interface EventDetailsSectionProps {
   event: import("./api/event").EventDetailResponseDTO;
 }
 
+export interface EventPageGateProps {
+  params: Promise<{ eventId: string }>;
+}
+
 // Cached body of the event detail page; slots are request-time parts.
 export interface EventPageBodyProps {
   slug: string;

@@ -702,6 +702,16 @@ The home page had the same gap: `HomeContent` waits on `connection()` (in
 so the preloaded hero image paints in the shell instead of after the backend
 answers.
 
+The event page's fallback (skeleton + `sr-only` slug h1) was visible but read
+`params` (`use(params)` in the page). Event slugs are unknown at build time,
+so the fallback couldn't go into the generic prerendered shell
+(`ca/e/[eventId].html`): the first flush had a blank `<main>`, and the
+skeleton came with the resume, 2–73 ms later in production on a Cloudflare
+MISS. Fix: the page returns a static `<Suspense fallback={<EventDetailSkeleton />}>`
+around `EventPageGate`, which reads `params` and keeps the inner fallback.
+A `loading.tsx` would do the same but also wrap `edita/` and `promote/`.
+Guarded by `test/event-page-loading-fallback.test.tsx`.
+
 ## A render flag must be the same on the server and in the browser
 
 The deploy E2E failed `hydration-errors.spec.ts` (React #418 on `/`,
