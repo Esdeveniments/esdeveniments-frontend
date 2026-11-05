@@ -15,6 +15,10 @@ import {
 import { isDevelopmentHost } from "@utils/host-validation";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
 import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
+import {
+  isIncompleteChainError,
+  resolveMissingIssuers,
+} from "@utils/tls-aia";
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
@@ -44,14 +48,11 @@ function getCacheControl(hasCacheKey: boolean): string {
     : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
 }
 
-// Some municipal sites ship an incomplete TLS certificate chain (missing intermediate certs).
-// Node's TLS verification rejects these, so we selectively bypass verification only for
-// known-bad hosts.
-const BROKEN_TLS_HOST_SUFFIXES = [
-  ".altanet.org",
-  ".biguesiriells.cat",
-  ".l-h.cat",
-];
+// Hosts whose certificate doesn't match their hostname (www.bot.altanet.org
+// serves a certificate for other names). Verification is skipped only for them.
+// Incomplete chains (missing intermediates) don't belong here: fetchWithTimeout
+// recovers those through AIA (utils/tls-aia.ts) without skipping verification.
+const BROKEN_TLS_HOST_SUFFIXES = [".altanet.org"];
 
 const insecureTlsDispatcher = new Agent({
   connect: {
@@ -127,7 +128,25 @@ async function fetchWithTimeout(
     // undici) mismatches internal symbols and throws
     // "controller[kState].transformAlgorithm is not a function" when decoding
     // compressed upstream responses.
-    const response = await undiciFetch(url, init);
+    let response: Awaited<ReturnType<typeof undiciFetch>>;
+    try {
+      response = await undiciFetch(url, init);
+    } catch (error) {
+      const dnsRecords = targetSafety.dnsRecords;
+      if (bypassTls || !dnsRecords || !isIncompleteChainError(error)) {
+        throw error;
+      }
+      const issuers = await resolveMissingIssuers(
+        url,
+        dnsRecords,
+        controller.signal,
+      );
+      if (issuers.length === 0) throw error;
+      response = await undiciFetch(url, {
+        ...init,
+        dispatcher: buildPinnedDnsDispatcher(dnsRecords, true, issuers) ?? undefined,
+      });
+    }
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       await response.body?.cancel();
