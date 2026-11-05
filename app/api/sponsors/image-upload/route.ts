@@ -6,6 +6,13 @@ import {
   updateCheckoutSessionMetadata,
   updatePaymentIntentMetadata,
 } from "@lib/stripe";
+import {
+  getPaymentIntentId,
+  getString,
+  isPaidSession,
+  isRecord,
+  isSponsorCheckoutSession,
+} from "@lib/stripe/session";
 import { activateSponsorImage } from "@lib/db/sponsors";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
@@ -16,35 +23,6 @@ import { detectImageType, isBackendImageType } from "@utils/image-validation";
 
 // 10 uploads per minute per IP — prevents abuse of the public image upload
 const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function getString(value: unknown): string | null {
-  return typeof value === "string" ? value : null;
-}
-
-function isPaidSession(session: unknown): boolean {
-  if (!isRecord(session)) return false;
-  const paymentStatus = getString(session.payment_status);
-  const status = getString(session.status);
-  // Stripe Checkout Session typically uses payment_status=paid when completed.
-  // Some API versions also expose status=complete.
-  return paymentStatus === "paid" || status === "complete";
-}
-
-function isSponsorCheckoutSession(session: unknown): boolean {
-  if (!isRecord(session)) return false;
-  const metadata = session.metadata;
-  if (!isRecord(metadata)) return false;
-  return getString(metadata.product) === "sponsor_banner";
-}
-
-function getPaymentIntentId(session: unknown): string | null {
-  if (!isRecord(session)) return null;
-  return getString(session.payment_intent);
-}
 
 export async function POST(request: Request) {
   const blocked = limiter.check(request);

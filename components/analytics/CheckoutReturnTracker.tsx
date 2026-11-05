@@ -15,6 +15,7 @@ export default function CheckoutReturnTracker({
   transactionId,
   paid,
   requirePending = false,
+  amount = null,
   params,
 }: CheckoutReturnTrackerProps) {
   const returnTrackedRef = useRef(false);
@@ -33,8 +34,8 @@ export default function CheckoutReturnTracker({
   useEffect(() => {
     if (!paid || !transactionId) return;
     ensureGtag();
-    trackPurchase(flow, transactionId, { requirePending });
-  }, [flow, paid, transactionId, requirePending]);
+    trackPurchase(flow, transactionId, { requirePending, amount });
+  }, [flow, paid, transactionId, requirePending, amount]);
 
   return null;
 }

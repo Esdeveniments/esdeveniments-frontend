@@ -1099,6 +1099,13 @@ export interface CheckoutReturnTrackerProps {
   paid: boolean;
   /** Report `purchase` only if this tab saved a matching checkout first. */
   requirePending?: boolean;
+  /** Server-verified charge; overrides the saved list price and `requirePending`. */
+  amount?: import("types/analytics").CheckoutAmount | null;
   /** Extra low-cardinality params for the `<flow>_checkout_return` event. */
   params?: Record<string, string>;
+}
+
+export interface SponsorUploadPageClientProps {
+  /** What Stripe charged for this session, or null when it couldn't be verified. */
+  amountPaid: import("types/analytics").CheckoutAmount | null;
 }

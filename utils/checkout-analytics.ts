@@ -1,5 +1,6 @@
 import { sendGoogleEvent } from "./analytics";
 import type {
+  CheckoutAmount,
   CheckoutAnalyticsItem,
   CheckoutFlow,
   PendingCheckout,
@@ -66,12 +67,16 @@ function readPendingCheckout(
  * GA4 `purchase`, at most once per transaction in this browser. Returns true
  * when the event was sent. With `requirePending`, it is sent only when this
  * tab saved a matching checkout, so a pasted or reloaded return URL can't
- * report revenue.
+ * report revenue. A server-verified `amount` replaces the saved list price
+ * (promotion codes) and makes `requirePending` unnecessary.
  */
 export function trackPurchase(
   flow: CheckoutFlow,
   transactionId: string,
-  { requirePending = false }: { requirePending?: boolean } = {},
+  {
+    requirePending = false,
+    amount = null,
+  }: { requirePending?: boolean; amount?: CheckoutAmount | null } = {},
 ): boolean {
   if (!transactionId) return false;
   const sentKey = PURCHASE_SENT_KEY_PREFIX + transactionId;
@@ -82,16 +87,29 @@ export function trackPurchase(
   }
 
   const pending = readPendingCheckout(flow, transactionId);
-  if (requirePending && !pending) return false;
+  if (requirePending && !pending && !amount) return false;
 
+  const items = pending?.items;
   sendGoogleEvent("purchase", {
     checkout_flow: flow,
     transaction_id: transactionId,
-    ...(pending && {
-      currency: pending.currency,
-      value: pending.value,
-      items: pending.items,
-    }),
+    ...(amount
+      ? {
+          currency: amount.currency,
+          value: amount.value,
+          // A single item carries the whole (possibly discounted) charge.
+          ...(items && {
+            items:
+              items.length === 1
+                ? [{ ...items[0], price: amount.value / items[0].quantity }]
+                : items,
+          }),
+        }
+      : pending && {
+          currency: pending.currency,
+          value: pending.value,
+          items: pending.items,
+        }),
   });
 
   try {

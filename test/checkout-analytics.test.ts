@@ -90,4 +90,38 @@ describe("trackPurchase", () => {
     );
     expect(events("purchase")).toEqual([]);
   });
+
+  it("uses the verified amount over the saved list price, even without a pending checkout", () => {
+    savePendingCheckout({
+      flow: "sponsor",
+      transactionId: "cs_test_2",
+      currency: "EUR",
+      value: 15,
+      items: [{ ...item, price: 15 }],
+    });
+    const amount = { value: 7.5, currency: "EUR" };
+
+    expect(
+      trackPurchase("sponsor", "cs_test_2", { requirePending: true, amount }),
+    ).toBe(true);
+    expect(
+      trackPurchase("sponsor", "cs_test_3", { requirePending: true, amount }),
+    ).toBe(true);
+
+    expect(events("purchase")).toEqual([
+      {
+        checkout_flow: "sponsor",
+        transaction_id: "cs_test_2",
+        currency: "EUR",
+        value: 7.5,
+        items: [{ ...item, price: 7.5 }],
+      },
+      {
+        checkout_flow: "sponsor",
+        transaction_id: "cs_test_3",
+        currency: "EUR",
+        value: 7.5,
+      },
+    ]);
+  });
 });

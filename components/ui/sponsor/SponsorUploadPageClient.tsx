@@ -5,8 +5,11 @@ import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@i18n/routing";
 import CheckoutReturnTracker from "@components/analytics/CheckoutReturnTracker";
 import SponsorImageUpload from "./SponsorImageUpload";
+import type { SponsorUploadPageClientProps } from "types/props";
 
-export default function SponsorUploadPageClient() {
+export default function SponsorUploadPageClient({
+  amountPaid,
+}: SponsorUploadPageClientProps) {
   const t = useTranslations("Sponsorship");
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,6 +50,7 @@ export default function SponsorUploadPageClient() {
         transactionId={sessionId}
         paid
         requirePending
+        amount={amountPaid}
       />
       <div className="max-w-3xl mx-auto text-center">
         <h1 className="heading-1 mb-2">{t("checkout.successTitle")}</h1>

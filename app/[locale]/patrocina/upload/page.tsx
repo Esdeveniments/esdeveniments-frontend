@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
 import SponsorUploadPageClient from "@components/ui/sponsor/SponsorUploadPageClient";
+import { getSponsorAmountPaid } from "@lib/stripe/session";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await rootLocale()) as AppLocale;
@@ -29,7 +30,19 @@ function UploadPageSkeleton() {
   );
 }
 
-export default async function PatrocinaUploadPage() {
+// Reads what Stripe charged (after promotion codes) for GA4 purchase revenue.
+async function SponsorUploadContent({
+  searchParams,
+}: Pick<PageProps<"/[locale]/patrocina/upload">, "searchParams">) {
+  const { session_id: sessionId } = await searchParams;
+  const amountPaid =
+    typeof sessionId === "string" ? await getSponsorAmountPaid(sessionId) : null;
+  return <SponsorUploadPageClient amountPaid={amountPaid} />;
+}
+
+export default async function PatrocinaUploadPage({
+  searchParams,
+}: PageProps<"/[locale]/patrocina/upload">) {
   const locale = (await rootLocale()) as AppLocale;
   setRequestLocale(locale);
 
@@ -37,7 +50,7 @@ export default async function PatrocinaUploadPage() {
     <main className="min-h-screen bg-background py-section-y px-section-x">
       <div className="max-w-5xl mx-auto">
         <Suspense fallback={<UploadPageSkeleton />}>
-          <SponsorUploadPageClient />
+          <SponsorUploadContent searchParams={searchParams} />
         </Suspense>
       </div>
     </main>

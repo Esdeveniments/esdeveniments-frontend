@@ -59,6 +59,12 @@ export interface CheckoutAnalyticsItem {
   quantity: number;
 }
 
+/** Amount Stripe actually charged, in currency units (after promotion codes). */
+export interface CheckoutAmount {
+  value: number;
+  currency: string;
+}
+
 /**
  * Checkout saved in sessionStorage before the Stripe redirect. The tab keeps
  * it across the round trip, so the return page can report `purchase` with
