@@ -2,41 +2,26 @@
 
 import Image from "next/image";
 
-import {
-  PlusIcon,
-  HomeIcon,
-  CalendarIcon,
-  HeartIcon,
-  NewspaperIcon,
-  UserCircleIcon,
-} from "@heroicons/react/24/outline";
-const PlusSmIcon = PlusIcon;
-import { useLocale } from "next-intl";
+import { UserCircleIcon } from "@heroicons/react/24/outline";
 import ActiveLink from "@components/ui/common/link";
+import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 import PressableLink from "@components/ui/primitives/PressableLink";
-import { usePathname } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
 import { getProfileSlug } from "@utils/user-helpers";
 import type { NavbarClientProps } from "types/props";
 import type { Href } from "types/common";
-import { DEFAULT_LOCALE } from "types/i18n";
 
 import LanguageSwitcher from "./LanguageSwitcher";
+import NavbarLoginLink from "./NavbarLoginLink";
+
+// No usePathname() here: it suspends while Next prerenders the generic shell
+// of routes with params, which would push the whole navbar out of the static
+// HTML. Only ActiveLink (tiny boundary per link) and the client-only login
+// link and language menu read it.
 
 export default function NavbarClient({ navigation, labels }: NavbarClientProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const pathname = usePathname();
-  const locale = useLocale();
   const logoAlt = labels.logoAlt?.trim() || "Esdeveniments";
-
-  // Return users to the page they logged in from. usePathname() drops the
-  // locale prefix, so add it back or es/en users land on the Catalan page.
-  const returnPath =
-    locale === DEFAULT_LOCALE ? pathname : `/${locale}${pathname}`;
-  const loginHref: Href =
-    pathname && pathname !== "/" && pathname !== "/iniciar-sessio"
-      ? `/iniciar-sessio?redirect=${encodeURIComponent(returnPath)}`
-      : "/iniciar-sessio";
 
   // Build a URL-safe slug for the /perfil/{slug} URL. Prefer the
   // server-slugified username, fall back to a slugified display name, and
@@ -130,8 +115,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     )}
                   </PressableLink>
                 ) : (
-                  <ActiveLink
-                    href={loginHref}
+                  <NavbarLoginLink
                     className="btn-outline btn-sm whitespace-nowrap shrink-0"
                     aria-label={
                       user?.profileEnrichmentFailed
@@ -143,7 +127,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   >
                     <UserCircleIcon className="h-5 w-5" aria-hidden="true" />
                     {labels.loginShort}
-                  </ActiveLink>
+                  </NavbarLoginLink>
                 )
               )}
             </div>
@@ -186,14 +170,13 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                     )}
                   </PressableLink>
                 ) : (
-                  <ActiveLink
-                    href={loginHref}
+                  <NavbarLoginLink
                     className="btn-outline text-xs whitespace-nowrap"
                     data-testid="desktop-login-link"
                     data-analytics-action="navbar_login_desktop"
                   >
                     {labels.login}
-                  </ActiveLink>
+                  </NavbarLoginLink>
                 )
               )}
 
@@ -214,10 +197,12 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  className="bottom-nav-link"
                   aria-label={labels.home}
                 >
-                  <HomeIcon className="h-6 w-6" />
+                  <svg className="h-6 w-6" aria-hidden="true">
+                    <use href={`#${SPRITE_ICON.home}`} />
+                  </svg>
                 </ActiveLink>
               </div>
 
@@ -225,10 +210,12 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/catalunya"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  className="bottom-nav-link"
                   aria-label={labels.agenda}
                 >
-                  <CalendarIcon className="h-6 w-6" />
+                  <svg className="h-6 w-6" aria-hidden="true">
+                    <use href={`#${SPRITE_ICON.calendar}`} />
+                  </svg>
                 </ActiveLink>
               </div>
 
@@ -236,10 +223,12 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/preferits"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  className="bottom-nav-link"
                   aria-label={labels.favorites}
                 >
-                  <HeartIcon className="h-6 w-6" />
+                  <svg className="h-6 w-6" aria-hidden="true">
+                    <use href={`#${SPRITE_ICON.heartOutline}`} />
+                  </svg>
                 </ActiveLink>
               </div>
 
@@ -247,10 +236,12 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/publica"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center gap-2 px-4 py-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
+                  className="bottom-nav-link gap-2 px-4"
                   aria-label={labels.publish}
                 >
-                  <PlusSmIcon className="h-6 w-6" />
+                  <svg className="h-6 w-6" aria-hidden="true">
+                    <use href={`#${SPRITE_ICON.plus}`} />
+                  </svg>
                   <span className="hidden sm:block label font-semibold">
                     {labels.mobilePublishLabel}
                   </span>
@@ -261,10 +252,12 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 <ActiveLink
                   href="/noticies"
                   activeLinkClass="text-primary bg-primary/10"
-                  className="flex-center p-3 rounded-full hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-w-[44px] min-h-[44px]"
+                  className="bottom-nav-link"
                   aria-label={labels.news}
                 >
-                  <NewspaperIcon className="h-6 w-6" />
+                  <svg className="h-6 w-6" aria-hidden="true">
+                    <use href={`#${SPRITE_ICON.newspaper}`} />
+                  </svg>
                 </ActiveLink>
               </div>
             </div>

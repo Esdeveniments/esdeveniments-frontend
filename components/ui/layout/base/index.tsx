@@ -22,8 +22,12 @@ export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
       <Suspense fallback={null}>
         <Footer />
       </Suspense>
-      <LazySocialFollowPopup />
-      <LazyFavoriteLoginNudge />
+      {/* Both read usePathname() but render nothing on the server; the
+          boundary stops them suspending the layout in generic shells. */}
+      <Suspense fallback={null}>
+        <LazySocialFollowPopup />
+        <LazyFavoriteLoginNudge />
+      </Suspense>
     </>
   );
 }

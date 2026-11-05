@@ -307,6 +307,12 @@ p {
     @apply flex justify-center items-center;
   }
 
+  /* Mobile bottom-nav link: 44px touch target with a round hover/focus ring.
+     One short class keeps each link's HTML small (see ActiveLink). */
+  .bottom-nav-link {
+    @apply flex justify-center items-center p-3 rounded-full min-w-[44px] min-h-[44px] hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
   .flex-between {
     @apply flex justify-between items-center;
   }

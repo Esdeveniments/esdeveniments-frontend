@@ -48,7 +48,7 @@ The append/dedupe/ads contract is in AGENTS.md › Rendering. `getInternalApiUrl
 
 What users see while a page loads is the fallback of the nearest `<Suspense>` *below the shared layout*:
 
-- Direct visit: the static shell. Client navigation: only the part below the layout the two routes share re-renders, so the root layout's `<Suspense fallback={<AppShellSkeleton />}>` never shows on a navigation.
+- Direct visit: the static shell. Client navigation: only the part below the layout the two routes share re-renders, so a root-level fallback would never show on a navigation.
 - `loading.tsx` is a `<Suspense>` around the page. If the page returns its own `<Suspense>` straight away (the sync `[place]` page does, to flush the shell early), that inner boundary catches everything and `loading.tsx` only shows while `params` resolve.
 
 So a page-level fallback must be the visible skeleton, with any SEO-only markup next to it:
@@ -85,6 +85,14 @@ export default function EventPage({ params }) {
 Prefer this over a `loading.tsx` when the folder has child routes the skeleton doesn't fit (`edita/`, `promote/`).
 
 The fallback only covers the wait; keep the wait short. Before a page renders, start every read that doesn't depend on another one, and `await` them together (`Promise.all`) or pass the promise down to the component that needs it. Don't `await` one backend call and then start the next unless the second needs the first's result. The listing pages used to chain categories → place lookup → event count → events. Now they start the place lookup and count right after validating the slug, and fetch the rich page size without waiting for the count, trimming it afterwards (`buildPlaceEventsPromise`, `buildPlaceByDateEventsPromise`). `fallback={null}` is fine for small parts of a page (sponsor slot, scripts), never for the whole body. Next's instant-navigation validation only checks that a boundary exists, not that its fallback shows anything: test the fallback with `renderToString` and a reader that never resolves (`test/place-page-loading-fallback.test.tsx`, `test/home-page-loading-fallback.test.tsx`, `test/event-page-loading-fallback.test.tsx`).
+
+### Keep the root shell inline
+
+The root layout has no `<Suspense>`, so the navbar and each page's static part (the home hero) are in the first flush. React outlines a finished boundary over ~500 B (`isEligibleForOutlining` in `react-dom-server`): its content goes into a hidden `<div id="S:…">`, the fallback paints first and `$RC` swaps them up to 300 ms after the first paint. The cost: everything above a page's own boundary must prerender in every shell, including the generic shells of `[param]` routes (`ca/[place].html`, `ca/e/[eventId].html`). `next build` fails otherwise; `yarn next build --debug-prerender --debug-build-paths 'app/[locale]/<route>/**'` gives a stack in ~20 s (set `typescript.ignoreBuildErrors` locally for a partial build, then revert).
+
+- `usePathname()`, `useParams()` and `useSelectedLayoutSegment()` suspend in a generic shell. In the chrome, read them in a tiny boundary (`ActiveLink`: one `<Suspense>` per link with the non-active link as fallback, under 500 B so it stays inline) or in a leaf that doesn't render on the server (`NavbarLoginLink` after auth loads, `LanguageMenu` when open).
+- Request data in a page or layout (`cookies()`, `params`, uncached fetches, `new Date()` in a client render) needs a `loading.tsx` or a boundary below that layout, with a visible skeleton. A segment's `loading.tsx` doesn't wrap its own `layout.tsx` (`perfil/[username]/layout.tsx` has its own `<Suspense>`).
+- Pass the locale to `getTranslations({ locale, namespace })` (`rootLocale()`). A no-locale call shares next-intl's cached config with the root `NextIntlClientProvider` and can resolve it from `headers()`, which blocks the whole shell even from inside a boundary.
 
 ## Prefetch
 

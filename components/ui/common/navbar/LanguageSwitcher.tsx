@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "../../../../i18n/routing";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { ensureGtag, sendGoogleEvent } from "@utils/analytics";
-import type { LanguageSwitcherProps } from "types/props";
+import type { LanguageMenuProps, LanguageSwitcherProps } from "types/props";
 import {
   SUPPORTED_LOCALES,
   LOCALE_COOKIE,
@@ -25,12 +25,39 @@ function setCookie(nextLocale: AppLocale) {
   document.cookie = buildCookieString(nextLocale);
 }
 
+// Rendered only while the menu is open, so usePathname() never runs during
+// SSR: it would suspend the whole navbar in the generic shell of /[place],
+// /e/[eventId] and other routes with params.
+function LanguageMenu({ options, locale, onSelect }: LanguageMenuProps) {
+  const pathname = usePathname();
+
+  return (
+    <div className="absolute right-0 z-dropdown mt-2 w-32 origin-top-right rounded-card bg-background border border-border shadow-dropdown focus:outline-none">
+      <div className="py-1">
+        {options.map((option) => (
+          <Link
+            key={option.value}
+            href={pathname}
+            locale={option.value}
+            onClick={() => onSelect(option.value)}
+            className={`
+              ${locale === option.value ? "font-bold bg-muted" : ""}
+              block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors
+            `}
+          >
+            {option.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function LanguageSwitcher({
   compact = false,
 }: LanguageSwitcherProps) {
   const locale = useLocale();
   const t = useTranslations("Components.Navbar");
-  const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -129,24 +156,11 @@ export default function LanguageSwitcher({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-dropdown mt-2 w-32 origin-top-right rounded-card bg-background border border-border shadow-dropdown focus:outline-none">
-          <div className="py-1">
-            {options.map((option) => (
-              <Link
-                key={option.value}
-                href={pathname}
-                locale={option.value}
-                onClick={() => handleLanguageChange(option.value as AppLocale)}
-                className={`
-                  ${locale === option.value ? "font-bold bg-muted" : ""}
-                  block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors
-                `}
-              >
-                {option.label}
-              </Link>
-            ))}
-          </div>
-        </div>
+        <LanguageMenu
+          options={options}
+          locale={locale}
+          onSelect={handleLanguageChange}
+        />
       )}
     </div>
   );

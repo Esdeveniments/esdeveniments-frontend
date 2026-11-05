@@ -30,7 +30,7 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
-import type { ImageSizeContext } from "types/common";
+import type { ActiveLinkProps, ImageSizeContext } from "types/common";
 
 /**
  * Props for ClientImageInner component
@@ -449,6 +449,14 @@ export interface NavbarClientProps {
 export interface LanguageSwitcherProps {
   /** Borderless trigger for the compact (mobile) header. */
   compact?: boolean;
+}
+
+export type NavbarLoginLinkProps = Omit<ActiveLinkProps, "href">;
+
+export interface LanguageMenuProps {
+  options: { value: AppLocale; label: string }[];
+  locale: string;
+  onSelect: (locale: AppLocale) => void;
 }
 
 // Component props interfaces

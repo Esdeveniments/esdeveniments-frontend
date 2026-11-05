@@ -1,3 +1,5 @@
+import type { ExternalStore } from "./common";
+
 export interface TcfData {
   eventStatus?: "tcloaded" | "useractioncomplete" | "cmpuishown" | string;
   listenerId?: number;
@@ -21,6 +23,11 @@ export interface AdContextType {
     callback: (mutations: MutationRecord[]) => void
   ) => void;
   unobserveMutations: (element: Element) => void;
+}
+
+/** What AdProvider puts in context: stable for the page's lifetime. */
+export interface AdContextInternal extends Omit<AdContextType, "adsAllowed"> {
+  adsAllowed: ExternalStore<boolean>;
 }
 
 export interface GoogleScriptsHeavyProps {
