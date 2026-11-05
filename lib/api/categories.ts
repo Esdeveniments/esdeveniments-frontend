@@ -5,9 +5,13 @@ import { connection } from "next/server";
 import { fetchCategoriesExternal } from "./categories-external";
 
 // fetchCategoriesExternal returns [] on failure; storeEmpty: false keeps a
-// failure from being cached for a day.
+// failure from being cached for a day. globalKey: shared with the startup
+// warm-up and /api/revalidate, which are bundled apart from the pages.
 const { cache: categoriesListCache, clear: clearCategoriesListCache } =
-  createCache<CategorySummaryResponseDTO[]>(86400000, { storeEmpty: false });
+  createCache<CategorySummaryResponseDTO[]>(86400000, {
+    storeEmpty: false,
+    globalKey: "categories",
+  });
 
 /**
  * Clear the in-memory category cache.
@@ -27,6 +31,13 @@ export async function fetchCategories(): Promise<CategorySummaryResponseDTO[]> {
     console.error("Error fetching categories:", e);
     return [];
   }
+}
+
+/** Fill the cache at server start (instrumentation.ts), outside a request. */
+export async function warmCategoriesCache(): Promise<void> {
+  await categoriesListCache(() =>
+    fetchCategoriesExternal({ skipConnection: true }),
+  );
 }
 
 // React per-request memoization for metadata+page deduplication

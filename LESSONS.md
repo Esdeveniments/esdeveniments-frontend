@@ -287,6 +287,7 @@ copy, the route kept serving the old event, and owners saw their edit only after
 the 30-minute TTL. `next dev` uses one module graph, so it never showed. Keep
 state that two entry points must share on `globalThis`, as `redis-client.ts`
 does, and test it by importing the module again after `vi.resetModules()`.
+The same split applies to `instrumentation.ts`: a startup warm-up there fills its own copy, and `connection()` throws outside a request. `createCache({ globalKey })` and the `warm*` readers (`skipConnection: true`) handle both (`warmReferenceCaches`). In a build of 2026-11-04 the listing pages shared one copy of the categories reader (`chunks/ssr/lib_api_categories_ts…`), while `instrumentation.ts` was compiled into a separate chunk with its own, so a warm-up there left the pages cold.
 
 ## Pin `NEXT_PUBLIC_SITE_URL` when you run e2e against pre-production
 
