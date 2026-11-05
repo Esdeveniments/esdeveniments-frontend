@@ -694,6 +694,14 @@ anything. Fix (#638): `PlacePageSkeleton` in the fallback, `sr-only` h1 kept
 for crawlers, guarded by `test/place-page-loading-fallback.test.tsx`
 (`renderToString` with a reader that never resolves).
 
+The home page had the same gap: `HomeContent` waits on `connection()` (in
+`generatePagesData`), and its fallback was only an `sr-only` nav and a
+`<noscript>`, so the PPR shell and every navigation to `/` showed a blank
+`<main>`. Fix: `HomePageSkeleton` next to `HomeStaticFallback`, guarded by
+`test/home-page-loading-fallback.test.tsx`. The skeleton reuses `HomeHero`,
+so the preloaded hero image paints in the shell instead of after the backend
+answers.
+
 ## A render flag must be the same on the server and in the browser
 
 The deploy E2E failed `hydration-errors.spec.ts` (React #418 on `/`,

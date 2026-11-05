@@ -638,6 +638,10 @@ export interface SeoLinkSection {
   links: SeoLinkItem[];
 }
 
+export interface HomeHeroProps {
+  children: ReactNode;
+}
+
 export interface ServerEventsCategorizedProps {
   categorizedEventsPromise: Promise<Record<string, ListEvent[]>>;
   pageData?: PageData;

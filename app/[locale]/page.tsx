@@ -22,6 +22,7 @@ import { filterActiveEvents } from "@utils/event-helpers";
 import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
 import { connection } from "next/server";
 import { HERO_IMAGE } from "@config/hero-image";
+import HomePageSkeleton from "@components/ui/common/skeletons/HomePageSkeleton";
 
 export async function generateMetadata() {
   const locale = (await rootLocale()) as AppLocale;
@@ -122,7 +123,16 @@ export default function Page({
         />
       ))}
 
-      <Suspense fallback={<HomeStaticFallback locale={appLocale} />}>
+      {/* HomeContent waits on connection(), so this fallback is what users
+          see on a first load and on client navigations: keep it visible. */}
+      <Suspense
+        fallback={
+          <>
+            <HomeStaticFallback locale={appLocale} />
+            <HomePageSkeleton />
+          </>
+        }
+      >
         <HomeContent locale={appLocale} />
       </Suspense>
     </>
