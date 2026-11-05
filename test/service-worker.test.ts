@@ -117,11 +117,18 @@ describe("service worker template", () => {
       expect(contents).toContain('cacheControl.includes("no-store")');
     });
 
-    it("only caches successful responses (status 0 or 200)", () => {
+    it("only caches 200 responses, never opaque (status 0) ones", () => {
       const contents = getContents();
-      // Multiple CacheableResponsePlugin instances with statuses: [0, 200]
-      const matches = contents.match(/statuses:\s*\[0,\s*200\]/g);
+      const matches = contents.match(/statuses:\s*\[200\]/g);
       expect(matches?.length).toBeGreaterThanOrEqual(3);
+      expect(contents).not.toMatch(/statuses:\s*\[0\b/);
+    });
+
+    it("loads the self-hosted Workbox, not the Google CDN", () => {
+      const contents = getContents();
+      expect(contents).toContain('importScripts("{{WORKBOX_PATH}}/workbox-sw.js")');
+      expect(contents).toContain("modulePathPrefix");
+      expect(contents).not.toContain("storage.googleapis.com");
     });
 
     it("never caches session-dependent endpoints — NetworkOnly, before the catch-all", () => {

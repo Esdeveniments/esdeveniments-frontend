@@ -1,20 +1,21 @@
 // Service Worker for improved caching and performance using Workbox (2025 Best Practices)
 // Build marker (replaced at prebuild time): {{BUILD_VERSION}}
 
-// Import the Workbox library from Google's CDN.
-// Workbox simplifies common service worker tasks like caching, routing, and lifecycle management.
-importScripts(
-  "https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js"
-);
+// Workbox is self-hosted: scripts/generate-sw.mjs copies it from node_modules
+// into {{WORKBOX_PATH}} (a versioned folder) at prebuild time.
+importScripts("{{WORKBOX_PATH}}/workbox-sw.js");
 
-// Defensive check: if Workbox failed to load (e.g., CDN blocked), exit gracefully.
-// This prevents the entire SW from failing if the external dependency is unavailable.
+// Defensive check: if workbox-sw loaded but didn't define self.workbox, register
+// a no-op SW instead of throwing. (If importScripts itself fails, install fails
+// and the previous SW stays.)
 if (!self.workbox) {
   console.warn("Workbox failed to load. Service worker features disabled.");
   // Still handle basic offline fallback without Workbox
   self.addEventListener("fetch", () => {});
   // Exit early - don't try to use workbox APIs
 } else {
+  workbox.setConfig({ modulePathPrefix: "{{WORKBOX_PATH}}" });
+
   // Set a more descriptive name for your caches for easier debugging.
   workbox.core.setCacheNameDetails({
     prefix: "esdeveniments-app",
@@ -65,8 +66,9 @@ if (!self.workbox) {
 
   // --- 3. Caching Strategies for Runtime Requests ---
 
-  // Custom plugin to respect server Cache-Control headers.
-  // This prevents caching HTML marked as "private" or "no-store" (e.g., personalized pages like favorites).
+  // Custom plugin to respect server Cache-Control headers. Used on the page,
+  // API and default caches: a route that says "private" or "no-store" (auth,
+  // personalized pages like favorites) must never be stored by the SW.
   const respectCacheControlPlugin = {
     cacheWillUpdate: async ({ response }) => {
       const cacheControl = response.headers.get("Cache-Control") || "";
@@ -117,10 +119,9 @@ if (!self.workbox) {
     ({ request }) => request.mode === "navigate",
     async (args) => {
       try {
-        // Use the Navigation Preload response if it's available.
-        const preloadResponse = await args.preloadResponse;
-        if (preloadResponse) return preloadResponse;
-        // Otherwise, fall back to the network-first strategy.
+        // NetworkFirst uses the navigation preload response itself and caches
+        // it. Returning args.preloadResponse directly skipped the cache, so
+        // the offline fallback to visited pages almost never had an entry.
         return await pageStrategy.handle(args);
       } catch (error) {
         // If the network fails AND the page isn't in the cache,
@@ -158,7 +159,7 @@ if (!self.workbox) {
       },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [200],
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 100,
@@ -181,7 +182,7 @@ if (!self.workbox) {
       },
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [200],
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 200,
@@ -203,8 +204,9 @@ if (!self.workbox) {
         ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
       },
       plugins: [
+        respectCacheControlPlugin,
         new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [200],
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 50,
@@ -225,8 +227,9 @@ if (!self.workbox) {
         ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
       },
       plugins: [
+        respectCacheControlPlugin,
         new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [200],
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 30,
@@ -249,8 +252,9 @@ if (!self.workbox) {
         ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
       },
       plugins: [
+        respectCacheControlPlugin,
         new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [200],
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 100,
@@ -274,8 +278,9 @@ if (!self.workbox) {
         ignoreVary: true, // Ignore Next.js Vary headers (rsc, next-router-state-tree, etc.)
       },
       plugins: [
+        respectCacheControlPlugin,
         new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [200],
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 50,
@@ -295,8 +300,9 @@ if (!self.workbox) {
         ignoreVary: true, // Ignore Vary headers for consistent cache matching
       },
       plugins: [
+        respectCacheControlPlugin,
         new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [200],
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 100,
@@ -316,8 +322,9 @@ if (!self.workbox) {
         ignoreVary: true, // Ignore Vary headers for consistent cache matching
       },
       plugins: [
+        respectCacheControlPlugin,
         new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [200],
         }),
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 50,

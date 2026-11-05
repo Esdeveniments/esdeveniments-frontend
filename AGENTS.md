@@ -64,7 +64,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - `components/ui/<feature>/`, `components/partials/`, `components/hooks/`, `components/context/`.
 - `lib/api/`: client libraries + `*-external.ts` backend wrappers. `lib/validation/`: Zod. `utils/`, `config/`, `types/` (all types).
 - `proxy.ts`: Next 16 Proxy (locale, canonical redirects, place 404/301, CSP, page cache/robots headers, API gate); its helpers are `utils/proxy-*.ts` and `utils/api-gate.ts`. Static security headers, fixed redirects and fixed rewrites live in `next.config.js` (`headers`, `redirects`, `rewrites`).
-- `public/sw-template.js` → `public/sw.js` (Workbox from CDN). `scripts/`: build and perf scripts.
+- `public/sw-template.js` → `public/sw.js` (Workbox self-hosted from the `workbox-*` devDependencies by `scripts/generate-sw.mjs`). `scripts/`: build and perf scripts.
 - Path aliases in `tsconfig.json` (`@components/*`, `@utils/*`, `@lib/*`, `@i18n/*`, …).
 
 ## Hard rules (each one caused an incident)

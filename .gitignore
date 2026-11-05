@@ -17,6 +17,7 @@ blob-report/
 
 # generated service worker
 /public/sw.js
+/public/static/workbox-v*/
 
 # generated robots.txt (built from scripts/generate-robots.mjs)
 /public/robots.txt
