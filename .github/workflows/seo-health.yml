@@ -9,7 +9,7 @@ name: SEO Health Check
 # a production invariant that previously regressed silently:
 #
 #   rich-results    -> Event JSON-LD valid per Google schema (fix e4190962)
-#   sitemap-validate -> sitemap-events filters expired events (fix e4190962)
+#   sitemap-validate -> sitemap-events is reachable, full and has valid lastmods
 #   bot-parity      -> AI crawlers receive full SSR (Apr 23 incident)
 #   ai-referrer     -> GA4 custom event fires for AI traffic (fix 40fe1ed6)
 
@@ -153,10 +153,10 @@ jobs:
           # Expected lower bound of event URLs in chunk 1. Tune if backend size changes.
           MIN_EVENTS = 100
           # Most recent lastmod must be within this window (data feed liveness).
+          # lastmod is the event's real edit date (updatedAt) and is omitted when
+          # the backend doesn't send one, so it can't tell expired events apart;
+          # expired-event filtering is covered by test/app/sitemap-events-route.test.ts.
           MAX_STALENESS_DAYS = 7
-          # No event's lastmod should be older than the EXPIRED_EVENT_NOINDEX_DAYS
-          # constant + a grace window (sitemaps cache for 24h; grace = 2d).
-          MAX_EXPIRED_DAYS = 62
 
           try:
               xml = urllib.request.urlopen(f"{SITE}/sitemap-events/1.xml", timeout=30).read()
@@ -173,7 +173,6 @@ jobs:
 
           now = datetime.now(timezone.utc)
           latest = None
-          stale_violations = []
           for u in urls:
               lm = u.find("sm:lastmod", ns)
               if lm is None or not lm.text:
@@ -181,28 +180,19 @@ jobs:
               try:
                   dt = datetime.fromisoformat(lm.text.replace("Z", "+00:00"))
               except ValueError:
-                  continue
+                  print(f"❌ Invalid lastmod {lm.text!r}")
+                  sys.exit(1)
+              if dt > now + timedelta(days=1):
+                  print(f"❌ lastmod {lm.text} is in the future (Search Console flags it)")
+                  sys.exit(1)
               if latest is None or dt > latest:
                   latest = dt
-              age_days = (now - dt).days
-              if age_days > MAX_EXPIRED_DAYS:
-                  loc = u.find("sm:loc", ns)
-                  stale_violations.append(f"- `{loc.text if loc is not None else '?'}` lastmod {lm.text} ({age_days}d old)")
 
-          failed = False
-          if latest is None or (now - latest).days > MAX_STALENESS_DAYS:
-              print(f"❌ Newest lastmod is {latest} — data feed may be stale")
-              failed = True
-          if stale_violations:
-              print(f"❌ {len(stale_violations)} events older than {MAX_EXPIRED_DAYS}d still in sitemap:")
-              print("\n".join(stale_violations[:10]))
-              if len(stale_violations) > 10:
-                  print(f"... and {len(stale_violations) - 10} more")
-              failed = True
-
-          if failed:
+          if latest is not None and (now - latest).days > MAX_STALENESS_DAYS:
+              print(f"❌ Newest lastmod is {latest.isoformat()} — data feed may be stale")
               sys.exit(1)
-          print(f"✅ {len(urls)} URLs, newest lastmod {latest.isoformat() if latest else '?'}, no expired events")
+          newest = latest.isoformat() if latest else "none (backend sends no updatedAt)"
+          print(f"✅ {len(urls)} URLs, newest lastmod {newest}")
           PY
 
       - name: Upload report

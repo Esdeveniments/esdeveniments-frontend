@@ -46,14 +46,19 @@ jobs:
             google-analytics-data
 
       - name: Authenticate with GCP
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> $GITHUB_ENV
+          umask 077
+          printf '%s' "$GCP_SA_KEY" > /tmp/gcp-sa-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> "$GITHUB_ENV"
 
       - name: Run GA4 Dashboard
         id: dashboard
+        env:
+          DAYS: ${{ github.event.inputs.days || '7' }}
         run: |
-          DAYS="${{ github.event.inputs.days || '7' }}"
+          [[ "$DAYS" =~ ^[0-9]+$ ]] || { echo "::error::days must be a number"; exit 1; }
           python3 scripts/ga-dashboard.py --md --days "$DAYS" --country Spain > /tmp/dashboard-output.md
 
       - name: Create GitHub Issue
