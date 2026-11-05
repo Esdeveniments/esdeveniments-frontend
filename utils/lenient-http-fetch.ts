@@ -12,6 +12,8 @@ import { buildPinnedLookup } from "@utils/pinned-dns-dispatcher";
 // already read, as a content-length mismatch.
 const KEPT_HEADERS = ["content-type", "content-length", "location"];
 const NULL_BODY_STATUSES = new Set([204, 205, 304]);
+// The caller's signal stops covering the body once it has the response.
+const SOCKET_IDLE_TIMEOUT_MS = 15_000;
 
 export function isHttpParserError(error: unknown): boolean {
   return getErrorChain(error).some(
@@ -65,6 +67,9 @@ export function fetchWithLenientParser(
           reject(error);
         }
       },
+    );
+    request.setTimeout(SOCKET_IDLE_TIMEOUT_MS, () =>
+      request.destroy(new Error("Upstream socket idle timeout")),
     );
     request.once("error", reject);
   });
