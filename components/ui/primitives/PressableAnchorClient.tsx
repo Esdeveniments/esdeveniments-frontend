@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 
 import type { PressableAnchorProps, PressableLinkVariant } from "types/ui";
 import { DEFAULT_LOCALE } from "types/i18n";
+import { NO_VIGNETTE_LINK_ATTRS } from "@utils/constants";
 
 const VARIANT_CLASSES: Record<PressableLinkVariant, string> = {
   inline: "pressable-inline",
@@ -53,12 +54,15 @@ export default function PressableAnchorClient({
   };
 
   const localizedHref = normalizeHref(props.href);
+  const isInternalHref =
+    typeof localizedHref !== "string" || !localizedHref.startsWith("http");
   const classes = clsx("cursor-pointer", className, VARIANT_CLASSES[variant]);
   const resolvedPrefetch =
     process.env.NODE_ENV === "test" ? undefined : prefetch;
 
   return (
     <Link
+      {...(isInternalHref ? NO_VIGNETTE_LINK_ATTRS : {})}
       {...props}
       href={localizedHref as any}
       prefetch={resolvedPrefetch}
