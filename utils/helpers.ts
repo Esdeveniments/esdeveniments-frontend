@@ -38,7 +38,6 @@ export {
   findCategoryBySlugDynamic,
   getCategoryFromDynamicData,
   getCategoryId,
-  getCategoryDisplayName,
 } from "./category-helpers";
 
 // Location helpers

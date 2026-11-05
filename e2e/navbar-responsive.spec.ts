@@ -38,6 +38,9 @@ test.describe("Responsive navbar", () => {
         throw new Error("Compact navbar actions or auth action is missing");
       }
 
+      const logo = element.querySelector<HTMLElement>("img");
+      if (!logo) throw new Error("Navbar logo is missing");
+
       const actionsRect = actions.getBoundingClientRect();
       const languageRect = language.getBoundingClientRect();
       const authRect = auth.getBoundingClientRect();
@@ -54,6 +57,8 @@ test.describe("Responsive navbar", () => {
         actionsWidth: actionsRect.width,
         authWidth: authRect.width,
         topRowWidth: topRowRect.width,
+        logoRight: logo.getBoundingClientRect().right,
+        actionsLeft: actionsRect.left,
       };
     });
 
@@ -64,7 +69,8 @@ test.describe("Responsive navbar", () => {
     expect(geometry.languageWithinActions).toBe(true);
     expect(geometry.authRightGap).toBeCloseTo(16, 1);
     expect(geometry.actionsWidth).toBeGreaterThan(44);
-    expect(geometry.authWidth).toBe(44);
+    expect(geometry.authWidth).toBeGreaterThanOrEqual(44);
+    expect(geometry.logoRight).toBeLessThanOrEqual(geometry.actionsLeft);
     expect(geometry.topRowWidth).toBe(390);
   });
 

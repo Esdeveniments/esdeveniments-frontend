@@ -427,6 +427,8 @@ export interface NavbarLabels {
   news: string;
   mobilePublishLabel: string;
   login: string;
+  /** Visible text of the compact (mobile) login button; must fit at 360px. */
+  loginShort: string;
   logout: string;
   userMenu: string;
   myProfile: string;
@@ -442,6 +444,11 @@ export interface NavbarLabels {
 export interface NavbarClientProps {
   navigation: NavigationItem[];
   labels: NavbarLabels;
+}
+
+export interface LanguageSwitcherProps {
+  /** Borderless trigger for the compact (mobile) header. */
+  compact?: boolean;
 }
 
 // Component props interfaces
@@ -464,7 +471,6 @@ export type FilterLabels = {
   displayNameMap: Record<string, string>;
   byDates: Record<string, string>;
   prices?: Record<string, string>;
-  categoryLabelsBySlug?: Record<string, string>;
 };
 
 export interface FiltersClientProps {
@@ -494,14 +500,6 @@ export interface FilterButtonProps {
   removeUrl: string;
   onOpenModal: () => void;
   testId?: string;
-}
-
-export interface ServerFiltersProps {
-  segments: RouteSegments;
-  queryParams: URLQueryParams;
-  categories?: CategorySummaryResponseDTO[];
-  placeTypeLabel: PlaceTypeAndLabel;
-  onOpenModal: () => void;
 }
 
 export interface NavigationFiltersModalProps {

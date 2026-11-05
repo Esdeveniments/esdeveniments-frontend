@@ -26,6 +26,7 @@ export default async function Navbar() {
       news: t("aria.news"),
       mobilePublishLabel: t("mobilePublishLabel"),
       login: t("auth.login"),
+      loginShort: t("auth.loginShort"),
       logout: t("auth.logout"),
       userMenu: t("auth.userMenu"),
       myProfile: t("auth.myProfile"),

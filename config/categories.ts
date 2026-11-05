@@ -12,7 +12,9 @@ export type CategoryConfig = {
 };
 
 /**
- * Category configuration mapping slug to display label and priority status.
+ * Category configuration mapping every backend slug to its UI label key
+ * (`Config.Categories.<labelKey>` in messages/*.json) and priority status.
+ * Read labels through `getCategoryLabel` (utils/category-helpers.ts).
  * Order matters: priority categories should be listed first to maintain display order.
  */
 export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
@@ -38,6 +40,46 @@ export const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   },
   exposicions: {
     labelKey: "exposicions",
+    isPriority: false,
+  },
+  literatura: {
+    labelKey: "literatura",
+    isPriority: false,
+  },
+  "tallers-i-formacio": {
+    labelKey: "tallersIFormacio",
+    isPriority: false,
+  },
+  dansa: {
+    labelKey: "dansa",
+    isPriority: false,
+  },
+  "salut-i-benestar": {
+    labelKey: "salutIBenestar",
+    isPriority: false,
+  },
+  esport: {
+    labelKey: "esport",
+    isPriority: false,
+  },
+  "patrimoni-cultural": {
+    labelKey: "patrimoniCultural",
+    isPriority: false,
+  },
+  "serveis-municipals": {
+    labelKey: "serveisMunicipals",
+    isPriority: false,
+  },
+  "gent-gran": {
+    labelKey: "gentGran",
+    isPriority: false,
+  },
+  cinema: {
+    labelKey: "cinema",
+    isPriority: false,
+  },
+  altres: {
+    labelKey: "altres",
     isPriority: false,
   },
 } as const;

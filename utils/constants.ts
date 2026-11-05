@@ -314,30 +314,6 @@ export function shouldUseDynamicCategories(): boolean {
   return true;
 }
 
-/**
- * Get category display name from dynamic categories (API is source of truth)
- * @param categorySlug - Category slug
- * @param categories - Dynamic categories from API
- * @returns Display name for the category, or slug if not found
- */
-export function getCategoryDisplayName(
-  categorySlug: string,
-  categories?: CategorySummaryResponseDTO[],
-): string {
-  if (categories && categories.length > 0) {
-    const dynamicCategory = categories.find((cat) => cat.slug === categorySlug);
-    if (dynamicCategory) {
-      return dynamicCategory.name;
-    }
-  }
-
-  // Return slug as fallback (capitalize first letter for readability)
-  return (
-    categorySlug.charAt(0).toUpperCase() +
-    categorySlug.slice(1).replace(/-/g, " ")
-  );
-}
-
 // --- News UI constants ---
 export async function getNewsHubs(): Promise<{ slug: string; name: string }[]> {
   const t = await getTranslations("Components.Constants.newsHubs");
@@ -439,3 +415,12 @@ export const SPONSOR_BANNER_IMAGE = {
  * Dice, Time Out) all use monochrome/neutral category indicators.
  */
 export const CATEGORY_BADGE_COLOR = "bg-muted text-foreground-strong";
+
+// Keeps AdSense vignettes off in-app links. On a client-side navigation the
+// vignette closes after Next has scrolled the new page to the top, then
+// restores the previous page's scroll position onto it. AdSense reads this
+// attribute on the clicked <a> only, never on its ancestors.
+// https://support.google.com/adsense/answer/17016693
+export const NO_VIGNETTE_LINK_ATTRS = {
+  "data-google-vignette": "false",
+} as const;

@@ -1,8 +1,7 @@
 import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
 import CompactCard from "@components/ui/common/cardContent/CompactCard";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
-import { generateJsonData } from "@utils/schema-helpers";
-import type { SchemaOrgEvent } from "types/schema";
+import { buildEventListItems } from "@utils/schema-helpers";
 import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
@@ -51,35 +50,15 @@ async function EventsAroundServer({
   const generateJsonLdData = () => {
     if (!showJsonLd || uniqueEvents.length === 0) return null;
 
-    const eventSchemas: SchemaOrgEvent[] = uniqueEvents
-      .slice(0, 10)
-      .map((event) => {
-        try {
-          return generateJsonData(event);
-        } catch (err) {
-          console.error(
-            "Error generating JSON-LD data for event:",
-            event.id,
-            err
-          );
-          return null;
-        }
-      })
-      .filter(Boolean) as SchemaOrgEvent[];
-
-    if (eventSchemas.length === 0) return null;
+    const items = buildEventListItems(uniqueEvents.slice(0, 10), locale);
 
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
       "@id": `${siteUrl}#itemlist-${title?.toLowerCase().replace(/\s+/g, "-")}`,
       name: title || "Related Events",
-      numberOfItems: eventSchemas.length,
-      itemListElement: eventSchemas.map((eventSchema, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        item: eventSchema,
-      })),
+      numberOfItems: items.length,
+      itemListElement: items,
     };
   };
 

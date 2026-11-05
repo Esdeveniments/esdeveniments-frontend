@@ -34,7 +34,7 @@ const TOOLS = [
       type: "object" as const,
       properties: {
         place: { type: "string", description: "Place slug (e.g. 'barcelona', 'girona', 'maresme')" },
-        category: { type: "string", description: "Category slug (e.g. 'concerts', 'teatre', 'exposicions')" },
+        category: { type: "string", description: "Category slug (e.g. 'musica', 'teatre', 'exposicions')" },
         byDate: {
           type: "string",
           description: "Date shortcut: 'avui' (today), 'dema' (tomorrow), 'setmana' (this week), 'cap-de-setmana' (this weekend)",

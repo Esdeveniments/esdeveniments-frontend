@@ -22,6 +22,8 @@ export default [
     ignores: [
       ".next/**",
       ".next/**/*",
+      // Workbox runtime copied from node_modules by scripts/generate-sw.mjs
+      "public/static/workbox-v*/**",
     ],
   },
   // Patch legacy rule context for ESLint 10 compatibility

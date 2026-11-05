@@ -72,7 +72,7 @@ export async function GET(
             "Search and browse cultural events in Catalonia by place, date, and category",
           parameters: {
             place: { type: "string", description: "Place slug (e.g. 'barcelona')" },
-            category: { type: "string", description: "Category slug (e.g. 'concerts')" },
+            category: { type: "string", description: "Category slug (e.g. 'musica')" },
             byDate: { type: "string", description: "Date shortcut: avui, dema, setmana, cap-de-setmana" },
             term: { type: "string", description: "Free-text search term" },
           },

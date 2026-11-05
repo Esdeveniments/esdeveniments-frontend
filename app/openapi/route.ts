@@ -84,7 +84,7 @@ export async function GET() {
               in: "query",
               schema: { type: "string" },
               description:
-                "Category slug (e.g. 'concerts', 'teatre', 'exposicions')",
+                "Category slug (e.g. 'musica', 'teatre', 'exposicions')",
             },
             {
               name: "byDate",
@@ -148,7 +148,7 @@ export async function GET() {
                         startDate: "2026-07-01T20:00:00Z",
                         endDate: "2026-07-15T23:00:00Z",
                         location: "Barcelona",
-                        category: "concerts",
+                        category: "musica",
                       },
                     ],
                     currentPage: 0,

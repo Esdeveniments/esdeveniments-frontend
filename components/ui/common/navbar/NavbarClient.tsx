@@ -11,18 +11,32 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 const PlusSmIcon = PlusIcon;
+import { useLocale } from "next-intl";
 import ActiveLink from "@components/ui/common/link";
 import PressableLink from "@components/ui/primitives/PressableLink";
+import { usePathname } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
 import { getProfileSlug } from "@utils/user-helpers";
 import type { NavbarClientProps } from "types/props";
 import type { Href } from "types/common";
+import { DEFAULT_LOCALE } from "types/i18n";
 
 import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function NavbarClient({ navigation, labels }: NavbarClientProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const pathname = usePathname();
+  const locale = useLocale();
   const logoAlt = labels.logoAlt?.trim() || "Esdeveniments";
+
+  // Return users to the page they logged in from. usePathname() drops the
+  // locale prefix, so add it back or es/en users land on the Catalan page.
+  const returnPath =
+    locale === DEFAULT_LOCALE ? pathname : `/${locale}${pathname}`;
+  const loginHref: Href =
+    pathname && pathname !== "/" && pathname !== "/iniciar-sessio"
+      ? `/iniciar-sessio?redirect=${encodeURIComponent(returnPath)}`
+      : "/iniciar-sessio";
 
   // Build a URL-safe slug for the /perfil/{slug} URL. Prefer the
   // server-slugified username, fall back to a slugified display name, and
@@ -81,13 +95,18 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               className="flex nav:hidden shrink-0 justify-end items-center gap-2"
               data-testid="compact-navbar-actions"
             >
-              <LanguageSwitcher />
+              <LanguageSwitcher compact />
               {isLoading ? (
-                <div
-                  className="w-11 h-11 shrink-0"
+                // Same box as the logged-out button (most visitors) so the
+                // header doesn't shift when auth resolves.
+                <span
+                  className="btn-outline btn-sm whitespace-nowrap shrink-0 invisible"
                   aria-hidden="true"
                   data-testid="mobile-auth-slot"
-                />
+                >
+                  <UserCircleIcon className="h-5 w-5" />
+                  {labels.loginShort}
+                </span>
               ) : (
                 isAuthenticated && user && !user.profileEnrichmentFailed ? (
                   <PressableLink
@@ -112,17 +131,18 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   </PressableLink>
                 ) : (
                   <ActiveLink
-                    href="/iniciar-sessio"
-                    className="flex-center w-11 h-11 rounded-full text-foreground hover:bg-muted transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    href={loginHref}
+                    className="btn-outline btn-sm whitespace-nowrap shrink-0"
                     aria-label={
                       user?.profileEnrichmentFailed
-                        ? labels.incompleteProfile
-                        : labels.login
+                        ? `${labels.loginShort}. ${labels.incompleteProfile}`
+                        : undefined
                     }
                     data-testid="mobile-login-link"
                     data-analytics-action="navbar_login_mobile_header"
                   >
-                    <UserCircleIcon className="h-6 w-6" aria-hidden="true" />
+                    <UserCircleIcon className="h-5 w-5" aria-hidden="true" />
+                    {labels.loginShort}
                   </ActiveLink>
                 )
               )}
@@ -167,7 +187,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   </PressableLink>
                 ) : (
                   <ActiveLink
-                    href="/iniciar-sessio"
+                    href={loginHref}
                     className="btn-outline text-xs whitespace-nowrap"
                     data-testid="desktop-login-link"
                     data-analytics-action="navbar_login_desktop"

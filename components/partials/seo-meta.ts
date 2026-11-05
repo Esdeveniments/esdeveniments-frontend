@@ -2,7 +2,6 @@ import { siteUrl } from "@config/index";
 import { DEFAULT_ROBOTS_POLICY } from "lib/meta";
 import { isProductionSiteUrl } from "@utils/production-host";
 import { EventSummaryResponseDTO } from "types/api/event";
-import { SchemaPlaceLocation } from "types/schema";
 import {
   BreadcrumbItem,
   WebPageOptions,
@@ -21,6 +20,7 @@ import {
   stripLocaleFromPathname,
   toLocalizedUrl,
 } from "@utils/i18n-seo";
+import { buildEventListItems } from "@utils/schema-helpers";
 
 export const defaultMeta = {
   openGraph: {
@@ -72,50 +72,10 @@ export function generateItemListStructuredData(
   const siteHomeUrl = toLocalizedUrl("/", localeToUse);
   const itemListIdBase = pageUrl ?? siteHomeUrl;
 
-  const itemListElements = events.slice(0, 20).map((event, index) => {
-    // Build location object with proper null checks
-    const locationData: SchemaPlaceLocation = {
-      "@type": "Place",
-      name: event.location,
-    };
-
-    // Only add address if we have city or region data
-    if (event.city?.name || event.region?.name) {
-      locationData.address = {
-        "@type": "PostalAddress",
-        addressCountry: "ES",
-        ...(event.city?.name && { addressLocality: event.city.name }),
-        ...(event.region?.name && { addressRegion: event.region.name }),
-      };
-    }
-
-    return {
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "Event",
-        "@id": toLocalizedUrl(`/e/${event.slug}`, localeToUse),
-        name: event.title,
-        url: toLocalizedUrl(`/e/${event.slug}`, localeToUse),
-        startDate: event.startDate,
-        endDate: event.endDate || event.startDate,
-        eventStatus: "https://schema.org/EventScheduled",
-        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-        location: locationData,
-        organizer: {
-          "@type": "Organization",
-          name: "Esdeveniments.cat",
-          url: siteHomeUrl,
-        },
-        ...(event.imageUrl && {
-          image: event.imageUrl,
-        }),
-        ...(event.description && {
-          description: event.description,
-        }),
-      },
-    };
-  });
+  const itemListElements = buildEventListItems(
+    events.slice(0, 20),
+    localeToUse,
+  );
 
   return {
     "@context": "https://schema.org",

@@ -7364,6 +7364,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"idb@npm:^7.0.1":
+  version: 7.1.1
+  resolution: "idb@npm:7.1.1"
+  checksum: 10c0/72418e4397638797ee2089f97b45fc29f937b830bc0eb4126f4a9889ecf10320ceacf3a177fe5d7ffaf6b4fe38b20bbd210151549bfdc881db8081eed41c870d
+  languageName: node
+  linkType: hard
+
 "ignore@npm:^5.2.0":
   version: 5.3.2
   resolution: "ignore@npm:5.3.2"
@@ -10674,6 +10681,15 @@ __metadata:
     vitest: "npm:5.0.5"
     web-push: "npm:^3.6.7"
     web-vitals: "npm:^6.2.3"
+    workbox-broadcast-update: "npm:7.4.1"
+    workbox-cacheable-response: "npm:7.4.1"
+    workbox-core: "npm:7.4.1"
+    workbox-expiration: "npm:7.4.1"
+    workbox-navigation-preload: "npm:7.4.1"
+    workbox-precaching: "npm:7.4.1"
+    workbox-routing: "npm:7.4.1"
+    workbox-strategies: "npm:7.4.1"
+    workbox-sw: "npm:7.4.1"
     zod: "npm:3.25.76"
   languageName: unknown
   linkType: soft
@@ -12650,6 +12666,86 @@ __metadata:
   version: 1.2.5
   resolution: "word-wrap@npm:1.2.5"
   checksum: 10c0/e0e4a1ca27599c92a6ca4c32260e8a92e8a44f4ef6ef93f803f8ed823f486e0889fc0b93be4db59c8d51b3064951d25e43d434e95dc8c960cc3a63d65d00ba20
+  languageName: node
+  linkType: hard
+
+"workbox-broadcast-update@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-broadcast-update@npm:7.4.1"
+  dependencies:
+    workbox-core: "npm:7.4.1"
+  checksum: 10c0/fb640c12dc9034f4f0fe9636f532a41c8eccba360676b4cd28d479b59684eab727435310d0e115b935d92e7abfe5ee91a77d567f9cb824fe33064e18880d7c4f
+  languageName: node
+  linkType: hard
+
+"workbox-cacheable-response@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-cacheable-response@npm:7.4.1"
+  dependencies:
+    workbox-core: "npm:7.4.1"
+  checksum: 10c0/fc7bb1e435262c6390c6cdab02f27c7304bdd5de663514278718620c15df894e1d57a1cf38b10ec5dbe673ce3d650010c650dcd3d6587eb4dfad170caeaa53d4
+  languageName: node
+  linkType: hard
+
+"workbox-core@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-core@npm:7.4.1"
+  checksum: 10c0/953c3bcec2c04cef44ac779ac6b525f639fade17c594cfa601d7892090da6e18abd3eda22d2d592d8b4df6aa6856c947770f8b960f70c1ac1c989f722d0e7f67
+  languageName: node
+  linkType: hard
+
+"workbox-expiration@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-expiration@npm:7.4.1"
+  dependencies:
+    idb: "npm:^7.0.1"
+    workbox-core: "npm:7.4.1"
+  checksum: 10c0/d940f2f263b5c1b5a27c4e0b7df9c44c9a8d9aa4ac4c8217610cee6e235aa4d97608d8713bb95a0da3228f145209e8cbc3d4ebc51455bd72a60d33f706640e15
+  languageName: node
+  linkType: hard
+
+"workbox-navigation-preload@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-navigation-preload@npm:7.4.1"
+  dependencies:
+    workbox-core: "npm:7.4.1"
+  checksum: 10c0/efe8fda736cc6afa1bf90eec65fccf206c179bda194264c5fa14063cd7d3b9bf399b960c22400212f83e48e3509cb6f586d1360710319049542cbe93254af5b9
+  languageName: node
+  linkType: hard
+
+"workbox-precaching@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-precaching@npm:7.4.1"
+  dependencies:
+    workbox-core: "npm:7.4.1"
+    workbox-routing: "npm:7.4.1"
+    workbox-strategies: "npm:7.4.1"
+  checksum: 10c0/e1f22df8945fe8cf3b77d8c8c9fb460d8e6469dbf0dba3d372a59e9649a6272024d6e63783ceb95bfed30f634ced524f1d0d3f21979fb6e48cdaa009e9be12c5
+  languageName: node
+  linkType: hard
+
+"workbox-routing@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-routing@npm:7.4.1"
+  dependencies:
+    workbox-core: "npm:7.4.1"
+  checksum: 10c0/11447d16c652de1667aa2be89634e426b615ff00f96d08d395a096afef07813a131d64c1f840344dd4210746800937437682a6bde7ef8a5233f371203c99d36a
+  languageName: node
+  linkType: hard
+
+"workbox-strategies@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-strategies@npm:7.4.1"
+  dependencies:
+    workbox-core: "npm:7.4.1"
+  checksum: 10c0/db96df6ef1260e281c580a963e68390e64df198b0684f37a693449af928edb3679ac97390dabe2ec11dc617a632cf4410a65854dd399bfdeaafbb74aea6532d8
+  languageName: node
+  linkType: hard
+
+"workbox-sw@npm:7.4.1":
+  version: 7.4.1
+  resolution: "workbox-sw@npm:7.4.1"
+  checksum: 10c0/cef8ebffcef9e8f055d7f51273c8fcb9981b6c9de272c4d37b17a11cef5df55d05f814bda3d8daab6b7e207a484865cb08a579e0ba7341ed66ecce34acb3cfc3
   languageName: node
   linkType: hard
 

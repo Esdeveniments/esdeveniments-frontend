@@ -103,7 +103,7 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 
 **Decision**: Text badge overlay at top-left of image with `bg-background/90 backdrop-blur-sm`.
 **Why**: For mixed-category listings, category is the #1 scanning signal. Users need to quickly identify "is this a concert or a workshop?" Color-coded vertical bars (production) required memorizing a color→category mapping and were problematic for colorblind users (~8% of males). Text badges are universally understood. DICE uses a similar approach.
-**Localization**: Badges use `getLocalizedCategoryLabelFromConfig` instead of raw API names.
+**Localization**: Badges use `getCategoryLabel` instead of raw API names.
 
 #### View counter behavior
 
@@ -184,7 +184,7 @@ A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja,
 | **Weak social proof**               | Fever: star ratings; Meetup: "X going" + avatars                      | Visit counter only ("27 visites") — ambiguous          |
 | **No price/free display**           | Eventbrite/Fever show prominently                                     | `event.type` exists but not rendered prominently       |
 | **Map hidden behind toggle**        | Eventbrite/Meetup show maps inline by default                         | "Show map" toggle adds friction                        |
-| **No organizer/source attribution** | Every competitor shows who organized the event                        | None — JSON-LD organizer is always "Esdeveniments.cat" |
+| **No organizer/source attribution** | Every competitor shows who organized the event                        | Sidebar "Creat per" links the owner's profile; JSON-LD `organizer` only for verified organization owners (e.g. town councils) |
 | **Single-column on desktop**        | Eventbrite uses 2-col (content left, sticky sidebar right)            | Entirely single-column                                 |
 | **Ad error boxes**                  | Competitors show nothing or clean fallback                            | Yellow "L'anunci no s'ha pogut carregar" boxes         |
 

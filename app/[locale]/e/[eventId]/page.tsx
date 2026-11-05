@@ -28,7 +28,10 @@ import {
   buildEventIntroText,
   formatPlaceName,
 } from "@utils/helpers";
-import { generateHowToSchema } from "@utils/schema-helpers";
+import {
+  buildEventListItems,
+  generateHowToSchema,
+} from "@utils/schema-helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
@@ -39,7 +42,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
-import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import { getCategoryLabel } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
@@ -253,7 +256,7 @@ async function EventPageBody({
     getTranslations({ locale, namespace: "Components.Breadcrumbs" }),
   ]);
   const primaryCategoryLabel = primaryCategorySlug
-    ? getLocalizedCategoryLabelFromConfig(
+    ? getCategoryLabel(
       primaryCategorySlug,
       event.categories?.[0]?.name || primaryCategorySlug,
       tCategories
@@ -316,26 +319,11 @@ async function EventPageBody({
         "@type": "ItemList",
         name: "Related Events",
         url: `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`,
-        numberOfItems: event.relatedEvents.length,
-        itemListElement: event.relatedEvents
-          .slice(0, 10) // Limit for performance
-          .map((relatedEvent, index) => {
-            try {
-              return {
-                "@type": "ListItem",
-                position: index + 1,
-                item: generateJsonData(relatedEvent, locale),
-              };
-            } catch (err) {
-              console.error(
-                "Error generating JSON-LD for related event:",
-                relatedEvent.id,
-                err
-              );
-              return null;
-            }
-          })
-          .filter(Boolean),
+        numberOfItems: Math.min(event.relatedEvents.length, 10),
+        itemListElement: buildEventListItems(
+          event.relatedEvents.slice(0, 10),
+          locale
+        ),
       }
       : null;
 

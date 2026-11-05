@@ -12,24 +12,28 @@ public/sw-template.js → scripts/generate-sw.mjs (yarn prebuild) → public/sw.
 ```
 
 - `public/sw.js` is build output: never edit or commit it.
-- `generate-sw.mjs` replaces two placeholders:
+- `generate-sw.mjs` copies the Workbox runtime (the `workbox-*` devDependencies, pinned to one version) into `public/static/workbox-v<version>/` (gitignored, under `/static` so `proxy.ts` skips it) and replaces three placeholders:
   - `{{API_ORIGIN}}`: origin of `NEXT_PUBLIC_API_URL`, or of `apiUrl` in `config/api-defaults.json` when the env var is unset.
   - `{{BUILD_VERSION}}`: `BUILD_VERSION` → `VERCEL_GIT_COMMIT_SHA` → `VERCEL_DEPLOYMENT_ID` → `Date.now()`. It makes `sw.js` change on every deploy, so browsers install the new SW.
-- It uses `String.replace`, which replaces only the **first** match. Use each placeholder once (today `{{API_ORIGIN}}` appears only in the external API route).
+  - `{{WORKBOX_PATH}}`: `/static/workbox-v<version>`, used by `importScripts` and `workbox.setConfig({ modulePathPrefix })`.
+- `{{API_ORIGIN}}` and `{{BUILD_VERSION}}` use `String.replace`, which replaces only the **first** match, so use each once. `{{WORKBOX_PATH}}` uses `replaceAll`.
+- To upgrade Workbox, bump every `workbox-*` devDependency to the same version; a new module needs adding to `WORKBOX_MODULES` in the script.
 - `yarn dev` and `yarn build` don't run prebuild; `build:development|staging|production` do. After editing the template: `yarn prebuild`, then restart dev.
 
 ## Template layout
 
-- Loads Workbox 7.1.0 from Google's CDN with `importScripts`. If the CDN fetch fails, `importScripts` throws and the new SW fails to install (the old one, if any, stays). `if (!self.workbox)` only covers a script that loads but doesn't define `self.workbox`; it then registers a no-op SW. Keep new code inside the `else` branch.
+- Loads the self-hosted Workbox with `importScripts("{{WORKBOX_PATH}}/workbox-sw.js")`; `workbox-sw` loads `.dev.js` modules on localhost and `.prod.js` elsewhere. If `importScripts` throws, the new SW fails to install (the old one, if any, stays). `if (!self.workbox)` only covers a script that loads but doesn't define `self.workbox`; it then registers a no-op SW. Keep new code inside the `else` branch.
 - Precaches `/offline` and `/static/css/offline.css`; `cleanupOutdatedCaches()` removes old precaches.
 - Routes use `workbox.routing.registerRoute(...)` and `new workbox.strategies.X(...)` directly. The first matching route wins, so order matters.
 
 ## Routes (in order)
 
+Before any Workbox route, a plain `fetch` listener calls `stopImmediatePropagation()` for Next RSC requests (`RSC: 1` header or `_rsc` param), so they bypass the SW entirely. Proxying the Flight stream through the SW broke client navigations on iOS Safari ("FetchEvent.respondWith received an error: TypeError: Load failed"). Keep it above the first `registerRoute`/`precacheAndRoute`: Workbox adds its own listener there.
+
 | Match | Strategy | Cache name | Expiry |
 | --- | --- | --- | --- |
 | `/api/auth/*`, `/api/favorites` | NetworkOnly | – | – |
-| Navigations (`request.mode === "navigate"`) | navigation preload, then NetworkFirst + `BroadcastUpdatePlugin` + skip `private`/`no-store` | `esdeveniments-pages-cache` | 50 / 7 d |
+| Navigations (`request.mode === "navigate"`) | NetworkFirst (uses and caches the navigation preload response) + `BroadcastUpdatePlugin` + skip `private`/`no-store`; offline page on failure | `esdeveniments-pages-cache` | 50 / 7 d |
 | Google ads/analytics, Sentry | NetworkOnly | – | – |
 | style, script, worker, font | CacheFirst | `esdeveniments-static-assets-cache` | 100 / 30 d |
 | images | StaleWhileRevalidate | `esdeveniments-images-cache` | 200 / 7 d |
@@ -42,7 +46,9 @@ public/sw-template.js → scripts/generate-sw.mjs (yarn prebuild) → public/sw.
 
 Service-worker TTLs are set on purpose and don't always match the route's `s-maxage` (events: 10 min in the SW vs 30 min on `/api/events`; news: 3 min vs 10 min on `/api/news`), even where template comments say "matches server cache TTL". Check both when you change either.
 
-**Any new per-user or auth endpoint must be added to the NetworkOnly route at the top.** The `/api/*` catch-all caches by URL and ignores cookies, so it once kept users "logged in" after logout (see LESSONS.md).
+Caches store only `200`s (`CacheableResponsePlugin({ statuses: [200] })`): opaque cross-origin responses (status `0`) each count several MB against the storage quota. The page, API and default caches also run `respectCacheControlPlugin`, so a response marked `private` or `no-store` is never stored.
+
+**Any new per-user or auth endpoint must be added to the NetworkOnly route at the top.** The `/api/*` catch-all caches by URL and ignores cookies, so it once kept users "logged in" after logout (see LESSONS.md). Sending `no-store` now also keeps it out of the SW cache, but NetworkOnly is still required: it stops the SW from serving an entry stored before the header was added.
 
 ## Offline
 
@@ -57,7 +63,7 @@ The navigation route catches network errors and returns `cache.match("/offline")
 ## Adding a cache rule
 
 1. Add a `registerRoute` in the template, above any broader route that would match first.
-2. Use a cache name starting with `esdeveniments-`, an `ExpirationPlugin` (`maxEntries` + `maxAgeSeconds`) and `CacheableResponsePlugin({ statuses: [0, 200] })` like the neighbours.
+2. Use a cache name starting with `esdeveniments-`, an `ExpirationPlugin` (`maxEntries` + `maxAgeSeconds`) and `CacheableResponsePlugin({ statuses: [200] })` like the neighbours (plus `respectCacheControlPlugin` for same-origin API data).
 3. Set `matchOptions: { ignoreVary: true }`. Next responses vary on `rsc`, `next-router-state-tree`, `next-router-prefetch` and similar headers; without it the same URL misses the cache or is stored many times.
 4. If old entries must go on deploy, delete the cache in `activate`.
 5. `yarn prebuild`, restart, and check DevTools › Application › Service Workers and Cache Storage.
