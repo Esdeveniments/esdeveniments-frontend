@@ -639,3 +639,12 @@ export interface JsonLdScript {
   id: string;
   data: unknown;
 }
+
+// lib/context/external-store.ts: state a root provider shares without changing
+// its context value (see that file for why).
+export interface ExternalStore<T> {
+  get(): T;
+  getInitial(): T;
+  set(next: T): void;
+  subscribe(listener: () => void): () => void;
+}

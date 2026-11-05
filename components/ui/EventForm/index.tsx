@@ -270,280 +270,284 @@ export const EventForm: React.FC<EventFormProps> = ({
       data-hydrated={isHydrated ? "true" : "false"}
       data-publish-armed={isPublishArmed ? "true" : "false"}
     >
-      <div className="w-full">
-        <div className="flex justify-between body-small text-muted-foreground">
-          <span>{tForm("step", { current: step + 1, total: steps.length })}</span>
-          <span className="font-medium text-foreground">{tForm(steps[step])}</span>
-        </div>
-        <ol className="w-full flex gap-1">
-          {steps.map((name, index) => (
-            <li key={name} className="flex-1">
-              <button
-                type="button"
-                onClick={() => handleStepClick(index)}
-                disabled={index > step}
-                aria-current={index === step ? "step" : undefined}
-                aria-label={`${tForm(name)}, ${tForm(index < step ? "stepDone" : index === step ? "stepCurrent" : "stepTodo")}`}
-                className="group block w-full py-2 rounded-badge focus-ring disabled:cursor-default"
-              >
-                <span className={`block h-1.5 rounded-badge transition-colors ${index <= step ? "bg-primary" : "bg-border"} ${index < step ? "group-hover:bg-primary-dark" : ""}`} />
-              </button>
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      {step === 0 && (
-        <>
-          <Input
-            id="title"
-            title={tForm("title")}
-            value={form.title}
-            onChange={(e) => handleFormChange("title", e.target.value)}
-            error={errorFor("title")}
-          />
-
-          <TextArea
-            id="description"
-            value={form.description}
-            onChange={(e) => handleFormChange("description", e.target.value)}
-            error={errorFor("description")}
-          />
-
-          <div className="w-full">
-            <Input
-              id="url"
-              title={tForm("url")}
-              optionalLabel={optionalLabel}
-              subtitle={helperUrl}
-              value={form.url}
-              inputMode="url"
-              autoComplete="url"
-              onChange={(e) => handleFormChange("url", e.target.value)}
-              error={errorFor("url")}
-            />
-            {handleTestUrl && form.url.trim() && isValidEventUrl(form.url) ? (
-              <button
-                type="button"
-                className="mt-1 body-small font-medium text-primary underline underline-offset-4 hover:text-primary-dark rounded-sm focus-ring"
-                data-testid="test-link-button"
-                onClick={() => handleTestUrl(form.url)}
-              >
-                {tForm("testLink")}
-              </button>
-            ) : null}
+      {/* The form is in the prerendered shell, so it shows before React
+          hydrates. Typing or clicking then wouldn't reach React state. */}
+      <fieldset disabled={!isHydrated} className="contents">
+        <div className="w-full">
+          <div className="flex justify-between body-small text-muted-foreground">
+            <span>{tForm("step", { current: step + 1, total: steps.length })}</span>
+            <span className="font-medium text-foreground">{tForm(steps[step])}</span>
           </div>
-        </>
-      )}
+          <ol className="w-full flex gap-1">
+            {steps.map((name, index) => (
+              <li key={name} className="flex-1">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(index)}
+                  disabled={index > step}
+                  aria-current={index === step ? "step" : undefined}
+                  aria-label={`${tForm(name)}, ${tForm(index < step ? "stepDone" : index === step ? "stepCurrent" : "stepTodo")}`}
+                  className="group block w-full py-2 rounded-badge focus-ring disabled:cursor-default"
+                >
+                  <span className={`block h-1.5 rounded-badge transition-colors ${index <= step ? "bg-primary" : "bg-border"} ${index < step ? "group-hover:bg-primary-dark" : ""}`} />
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
 
-      {step === 1 && (
-        <>
-          {isLoadingCities ? (
-            <SelectSkeleton label={tForm("townSkeleton")} />
-          ) : (
-            <div className="w-full space-y-2">
-              <Select
-                id="town"
-                title={tForm("town")}
-                options={cityOptions}
-                value={isOption(form.town) ? form.town : null}
-                onChange={handleTownChange}
-                isClearable
-                placeholder={tForm("townPlaceholder")}
-                testId="town-select"
-                error={errorFor("town")}
+        {step === 0 && (
+          <>
+            <Input
+              id="title"
+              title={tForm("title")}
+              value={form.title}
+              onChange={(e) => handleFormChange("title", e.target.value)}
+              error={errorFor("title")}
+            />
+
+            <TextArea
+              id="description"
+              value={form.description}
+              onChange={(e) => handleFormChange("description", e.target.value)}
+              error={errorFor("description")}
+            />
+
+            <div className="w-full">
+              <Input
+                id="url"
+                title={tForm("url")}
+                optionalLabel={optionalLabel}
+                subtitle={helperUrl}
+                value={form.url}
+                inputMode="url"
+                autoComplete="url"
+                onChange={(e) => handleFormChange("url", e.target.value)}
+                error={errorFor("url")}
               />
-              {handleUseGeolocation ? (
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isLocating}
-                    data-testid="geolocate-button"
-                    onClick={handleUseGeolocation}
-                  >
-                    {isLocating
-                      ? tForm.has("locating")
-                        ? tForm("locating")
-                        : "Localitzant…"
-                      : tForm.has("useLocation")
-                        ? tForm("useLocation")
-                        : "Usa la meva ubicació"}
-                  </Button>
-                </div>
+              {handleTestUrl && form.url.trim() && isValidEventUrl(form.url) ? (
+                <button
+                  type="button"
+                  className="mt-1 body-small font-medium text-primary underline underline-offset-4 hover:text-primary-dark rounded-sm focus-ring"
+                  data-testid="test-link-button"
+                  onClick={() => handleTestUrl(form.url)}
+                >
+                  {tForm("testLink")}
+                </button>
               ) : null}
             </div>
-          )}
-
-          <Input
-            id="location"
-            title={tForm("location")}
-            subtitle={helperLocation}
-            value={form.location}
-            onChange={(e) => handleFormChange("location", e.target.value)}
-            error={errorFor("location")}
-          />
-
-          <MultiSelect
-            id="categories"
-            title={tForm("categories")}
-            optionalLabel={optionalLabel}
-            value={
-              Array.isArray(form.categories)
-                ? form.categories
-                  .map((cat) => {
-                    if (isOption(cat)) {
-                      return cat;
-                    }
-                    if (typeof cat === "object" && "id" in cat && "name" in cat) {
-                      return { value: cat.id.toString(), label: cat.name };
-                    }
-                    return null;
-                  })
-                  .filter((cat): cat is Option => cat !== null)
-                : []
-            }
-            onChange={handleCategoriesChange}
-            options={categoryOptions}
-            isDisabled={isLoadingCategories}
-            isLoading={isLoadingCategories}
-            placeholder={tForm("categoriesPlaceholder")}
-          />
-        </>
-      )}
-
-      {step === 2 && (
-        <>
-          <ImageUpload
-            value={imageToUpload}
-            onUpload={handleImageChange}
-            onPreparingChange={(preparing) => {
-              setIsImagePreparing(preparing);
-              onImagePreparingChange?.(preparing);
-            }}
-          />
-
-          <DatePicker
-            idPrefix="event-date"
-            startDate={form.startDate}
-            endDate={form.endDate}
-            onChange={(field, value) => handleFormChange(field, value)}
-            required
-            enableAllDayToggle
-            isAllDay={Boolean(form.isAllDay)}
-            onToggleAllDay={handleAllDayToggle}
-            className="w-full"
-          />
-
-
-
-          {isEditMode && (
-            <Input
-              id="email"
-              title={tForm("email")}
-              subtitle={tForm("emailSubtitle")}
-              value={form.email || ""}
-              onChange={(e) => handleFormChange("email", e.target.value)}
-            />
-          )}
-        </>
-      )}
-
-      {feedbackMessage && (
-        <p className="helper-text-error w-full" role="alert">
-          {feedbackMessage}
-        </p>
-      )}
-
-      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-4 w-full pt-6">
-        {step > 0 ? (
-          <Button
-            type="button"
-            variant="ghost"
-            data-testid="prev-button"
-            disabled={isImagePreparing}
-            onClick={goPrev}
-            className="w-full sm:w-auto"
-          >
-            {tForm.has("previous") ? tForm("previous") : "Enrere"}
-          </Button>
-        ) : (
-          <div className="hidden sm:block" />
+          </>
         )}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-          {step === steps.length - 1 && onPreview ? (
+
+        {step === 1 && (
+          <>
+            {isLoadingCities ? (
+              <SelectSkeleton label={tForm("townSkeleton")} />
+            ) : (
+              <div className="w-full space-y-2">
+                <Select
+                  id="town"
+                  title={tForm("town")}
+                  options={cityOptions}
+                  value={isOption(form.town) ? form.town : null}
+                  onChange={handleTownChange}
+                  isClearable
+                  placeholder={tForm("townPlaceholder")}
+                  testId="town-select"
+                  error={errorFor("town")}
+                />
+                {handleUseGeolocation ? (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isLocating}
+                      data-testid="geolocate-button"
+                      onClick={handleUseGeolocation}
+                    >
+                      {isLocating
+                        ? tForm.has("locating")
+                          ? tForm("locating")
+                          : "Localitzant…"
+                        : tForm.has("useLocation")
+                          ? tForm("useLocation")
+                          : "Usa la meva ubicació"}
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            <Input
+              id="location"
+              title={tForm("location")}
+              subtitle={helperLocation}
+              value={form.location}
+              onChange={(e) => handleFormChange("location", e.target.value)}
+              error={errorFor("location")}
+            />
+
+            <MultiSelect
+              id="categories"
+              title={tForm("categories")}
+              optionalLabel={optionalLabel}
+              value={
+                Array.isArray(form.categories)
+                  ? form.categories
+                    .map((cat) => {
+                      if (isOption(cat)) {
+                        return cat;
+                      }
+                      if (typeof cat === "object" && "id" in cat && "name" in cat) {
+                        return { value: cat.id.toString(), label: cat.name };
+                      }
+                      return null;
+                    })
+                    .filter((cat): cat is Option => cat !== null)
+                  : []
+              }
+              onChange={handleCategoriesChange}
+              options={categoryOptions}
+              isDisabled={isLoadingCategories}
+              isLoading={isLoadingCategories}
+              placeholder={tForm("categoriesPlaceholder")}
+            />
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <ImageUpload
+              value={imageToUpload}
+              onUpload={handleImageChange}
+              onPreparingChange={(preparing) => {
+                setIsImagePreparing(preparing);
+                onImagePreparingChange?.(preparing);
+              }}
+            />
+
+            <DatePicker
+              idPrefix="event-date"
+              startDate={form.startDate}
+              endDate={form.endDate}
+              onChange={(field, value) => handleFormChange(field, value)}
+              required
+              enableAllDayToggle
+              isAllDay={Boolean(form.isAllDay)}
+              onToggleAllDay={handleAllDayToggle}
+              className="w-full"
+            />
+
+
+
+            {isEditMode && (
+              <Input
+                id="email"
+                title={tForm("email")}
+                subtitle={tForm("emailSubtitle")}
+                value={form.email || ""}
+                onChange={(e) => handleFormChange("email", e.target.value)}
+              />
+            )}
+          </>
+        )}
+
+        {feedbackMessage && (
+          <p className="helper-text-error w-full" role="alert">
+            {feedbackMessage}
+          </p>
+        )}
+
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-4 w-full pt-6">
+          {step > 0 ? (
             <Button
               type="button"
-              variant="neutral"
-              className="w-full sm:w-auto"
-              disabled={!isPreviewReady || isLoading || isImagePreparing}
-              data-testid={previewTestId || "preview-button"}
-              data-analytics-event-name={
-                analyticsContext === "publica" ? "publish_preview_click" : undefined
-              }
-              data-analytics-context={analyticsContext}
-              data-analytics-target={
-                analyticsContext === "publica" ? "preview_button" : undefined
-              }
-              onClick={onPreview}
-            >
-              {previewButtonLabel}
-            </Button>
-          ) : null}
-          {step < steps.length - 1 ? (
-            <Button
-              type="button"
-              variant="primary"
-              data-testid="next-button"
-              onClick={goNext}
+              variant="ghost"
+              data-testid="prev-button"
+              disabled={isImagePreparing}
+              onClick={goPrev}
               className="w-full sm:w-auto"
             >
-              {tForm.has("next") ? tForm("next") : "Següent"}
+              {tForm.has("previous") ? tForm("previous") : "Enrere"}
             </Button>
           ) : (
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isLoading || isImagePreparing || isSubmitDisabled}
-              className="w-full sm:w-auto"
-              data-testid="publish-button"
-              data-analytics-event-name={
-                analyticsContext === "publica" && !submitAnalyticsAction ? "publish_submit_click" : undefined
-              }
-              data-analytics-action={submitAnalyticsAction}
-              data-analytics-context={analyticsContext}
-              data-analytics-target={
-                analyticsContext === "publica" ? "publish_button" : undefined
-              }
-            >
-              {isLoading ? (
-                <>
-                  <svg
-                    aria-hidden="true"
-                    className="inline w-4 h-4 mr-2 animate-spin"
-                    viewBox="0 0 100 101"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                      fill="currentColor"
-                      opacity={0.25}
-                    />
-                    <path
-                      d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  {tForm("publishing")}
-                </>
-              ) : (
-                submitLabel
-              )}
-            </Button>
+            <div className="hidden sm:block" />
           )}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            {step === steps.length - 1 && onPreview ? (
+              <Button
+                type="button"
+                variant="neutral"
+                className="w-full sm:w-auto"
+                disabled={!isPreviewReady || isLoading || isImagePreparing}
+                data-testid={previewTestId || "preview-button"}
+                data-analytics-event-name={
+                  analyticsContext === "publica" ? "publish_preview_click" : undefined
+                }
+                data-analytics-context={analyticsContext}
+                data-analytics-target={
+                  analyticsContext === "publica" ? "preview_button" : undefined
+                }
+                onClick={onPreview}
+              >
+                {previewButtonLabel}
+              </Button>
+            ) : null}
+            {step < steps.length - 1 ? (
+              <Button
+                type="button"
+                variant="primary"
+                data-testid="next-button"
+                onClick={goNext}
+                className="w-full sm:w-auto"
+              >
+                {tForm.has("next") ? tForm("next") : "Següent"}
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isLoading || isImagePreparing || isSubmitDisabled}
+                className="w-full sm:w-auto"
+                data-testid="publish-button"
+                data-analytics-event-name={
+                  analyticsContext === "publica" && !submitAnalyticsAction ? "publish_submit_click" : undefined
+                }
+                data-analytics-action={submitAnalyticsAction}
+                data-analytics-context={analyticsContext}
+                data-analytics-target={
+                  analyticsContext === "publica" ? "publish_button" : undefined
+                }
+              >
+                {isLoading ? (
+                  <>
+                    <svg
+                      aria-hidden="true"
+                      className="inline w-4 h-4 mr-2 animate-spin"
+                      viewBox="0 0 100 101"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                        fill="currentColor"
+                        opacity={0.25}
+                      />
+                      <path
+                        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {tForm("publishing")}
+                  </>
+                ) : (
+                  submitLabel
+                )}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      </fieldset>
     </form>
   );
 };

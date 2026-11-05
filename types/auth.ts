@@ -1,3 +1,4 @@
+import type { ExternalStore } from "./common";
 import type { PictureSource } from "./api/user";
 import type { LogtoTokenResponse } from "./api/auth";
 
@@ -125,4 +126,15 @@ export interface AuthContextValue {
    * until a full page reload.
    */
   refetchUser(): Promise<void>;
+}
+
+export interface AuthSessionState {
+  user: AuthUser | null;
+  hydrated: boolean;
+}
+
+/** What AuthProvider puts in context: stable for the page's lifetime. */
+export interface AuthContextInternal
+  extends Pick<AuthContextValue, "signIn" | "logout" | "refetchUser"> {
+  session: ExternalStore<AuthSessionState>;
 }

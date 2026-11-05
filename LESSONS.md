@@ -740,6 +740,23 @@ inline fix; `next build --debug-prerender` names them. Rules that came out of it
   without one can resolve it through `headers()` and make the root
   `NextIntlClientProvider` dynamic, which blocks the shell
   (`preferits/passats`).
+- Root providers now hydrate before the page's boundaries are revealed. A
+  boundary that `$RC` has queued (`<!--$~-->`) still counts as not hydrated,
+  and React can't see which components inside it read a context, so any
+  context value change (AuthProvider's `/api/auth/me` result, AdProvider's
+  consent) made React throw away its server HTML and client-render it. With a
+  warm JS cache, `/preferits` showed its empty state twice, every load, until
+  `$RV` ran. `startTransition` didn't change it. Fix: the provider's context
+  value stays the same object and the changing part lives in a
+  `createExternalStore` (`lib/context/external-store.ts`) read with
+  `useSyncExternalStore`. Client-rendered boundaries per load with a warm
+  cache went from 3–4 (develop) to 0 on `/`, 3 to 2 on `/barcelona` (ad slot
+  bailouts), 1 to 0 on `/preferits`. To count them, wrap
+  `Node.prototype.removeChild` and count `<!--/$-->` removals whose stack is in
+  `/_next/static/` (the inline `$RV` also removes markers).
+- The form on `/publica` now paints before React hydrates, so the inputs are
+  disabled until then (`<fieldset disabled={!isHydrated}>`); typing into them
+  earlier was lost, and the publish E2E specs clicked "Next" too early.
 
 Measured against develop (median of 9, same throttling): the navbar paints
 with the first paint on `/`, `/barcelona` and an event (develop: up to 390 ms
