@@ -6,7 +6,7 @@ import { buildCanonicalUrl } from "@utils/url-filters";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
-import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import { getCategoryLabel } from "@utils/category-helpers";
 
 export default async function EventCategories({
   categories,
@@ -39,7 +39,7 @@ export default async function EventCategories({
               key={category.id}
               href={buildCanonicalUrl({ place, category: category.slug })}
             >
-              {getLocalizedCategoryLabelFromConfig(
+              {getCategoryLabel(
                 category.slug,
                 category.name,
                 tCategories

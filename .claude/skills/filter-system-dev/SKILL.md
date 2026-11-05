@@ -86,9 +86,13 @@ Don't add filter-specific branches here.
 
 1. **Config**: add or edit the object in `config/filters.ts`.
 2. **URL state**: add the key to `URLFilterState` (and `URLQueryParams` for a query param) in `types/url-filters.ts`; parse it in `parseFiltersFromUrl`/`urlToFilterState` and build it in `buildCanonicalUrlDynamic`/`buildFilterUrl` (`utils/url-filters.ts`), omitting the default. New query filters also go in `hasActiveClientFilters` and in `ALLOWED_QUERY_PARAMS` (`utils/middleware-redirects.ts`, also used for the noindex header).
-3. **UI**: input in `NavigationFiltersModal.tsx`; add the value to the `filters` object built in `FiltersClient.tsx`. Chip labels come from `getDisplayText` (translated in `FiltersClient.tsx` via labels from `ServerFilters.tsx`).
+3. **UI**: input in `NavigationFiltersModal.tsx`; add the value to the `filters` object built in `FiltersClient.tsx`. Chip labels come from `getDisplayText`, translated in `FiltersClient.tsx` (date labels via `filterLabels` from `PlacePageShell.tsx`, category labels via `getCategoryLabel`).
 4. **API**: map the value in `useEvents` and pass it along the whole SWR chain: `baseParams`, the `getKey` tuple, the destructured fetcher args, the `pageFetcher({...})` call, then `FetchEventsParams` / `buildEventsQuery`. A value missing from any step never reaches `/api/events`. Follow the `api-layer-patterns` skill.
 5. **Test**: `yarn test test/filter-system.test.ts test/filter-validation.test.ts`, then `yarn test:e2e e2e/filters.flow.spec.ts` (needs a running app) and `verify-que-fer` for the UI.
+
+## Category labels
+
+Every UI surface (chip, modal, cards, event page, quick links, home sections) gets a category's text from `getCategoryLabel(slug, backendName, tCategories)` in `utils/category-helpers.ts`: `CATEGORY_CONFIG[slug].labelKey` → `Config.Categories.<labelKey>`, else the backend `name`, else the slug. The chip (`FiltersClient`) and the modal call it on the client with `useTranslations("Config.Categories")` (`Config` already ships to the client in full). A new backend category needs a `CATEGORY_CONFIG` entry (camelCase `labelKey`) and the key in `messages/{ca,es,en}.json`; `test/category-labels.test.tsx` checks both. The SEO phrase `Partials.GeneratePagesData.categories.<slug>.titleSuffix` is for titles and meta descriptions only; no UI component reads it.
 
 ## Re-enabling price
 

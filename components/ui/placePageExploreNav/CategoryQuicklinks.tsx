@@ -2,9 +2,9 @@ import Badge from "@components/ui/common/badge";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
-import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { CategoryQuicklinksProps } from "types/props";
-import { CATEGORY_CONFIG, PRIORITY_CATEGORY_SLUGS } from "@config/categories";
+import { PRIORITY_CATEGORY_SLUGS } from "@config/categories";
+import { getCategoryLabel } from "@utils/category-helpers";
 
 /**
  * Server component that renders category quicklinks for SEO internal linking.
@@ -55,17 +55,6 @@ export default async function CategoryQuicklinks({
   });
 
   /**
-   * Get localized category label from config, falling back to API name.
-   */
-  const getCategoryLabel = (category: CategorySummaryResponseDTO): string => {
-    const config = CATEGORY_CONFIG[category.slug];
-    if (config?.labelKey) {
-      return tCategories(config.labelKey);
-    }
-    return category.name;
-  };
-
-  /**
    * Build URL for category link, preserving date if already selected.
    */
   const buildCategoryUrl = (categorySlug: string): string => {
@@ -93,7 +82,7 @@ export default async function CategoryQuicklinks({
               <Badge
                 href={buildCategoryUrl(category.slug)}
                 ariaLabel={t("categoryLinkAria", {
-                  category: getCategoryLabel(category),
+                  category: getCategoryLabel(category.slug, category.name, tCategories),
                   place: placeLabel,
                 })}
                 data-analytics-event-name="category_quicklink_click"
@@ -101,7 +90,7 @@ export default async function CategoryQuicklinks({
                 data-analytics-context="place_page"
                 data-analytics-place-slug={place}
               >
-                {getCategoryLabel(category)}
+                {getCategoryLabel(category.slug, category.name, tCategories)}
               </Badge>
             </li>
           ))}

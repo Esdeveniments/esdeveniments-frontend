@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { usePathname } from "@i18n/routing";
-import { isE2ETestMode } from "@utils/env";
+import { isE2ETestBuild } from "@utils/env";
 
 /**
  * Lazy-loaded wrapper for SocialFollowPopup.
@@ -16,7 +16,7 @@ import { isE2ETestMode } from "@utils/env";
  * Suppressed entirely during E2E tests to prevent the full-screen
  * modal from blocking element interactions in multi-page test flows.
  */
-const SocialFollowPopup = isE2ETestMode
+const SocialFollowPopup = isE2ETestBuild
   ? null
   : dynamic(
       () => import("@components/ui/common/social/SocialFollowPopup"),

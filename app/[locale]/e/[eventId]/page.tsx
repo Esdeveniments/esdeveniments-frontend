@@ -39,7 +39,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
-import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import { getCategoryLabel } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
@@ -253,7 +253,7 @@ async function EventPageBody({
     getTranslations({ locale, namespace: "Components.Breadcrumbs" }),
   ]);
   const primaryCategoryLabel = primaryCategorySlug
-    ? getLocalizedCategoryLabelFromConfig(
+    ? getCategoryLabel(
       primaryCategorySlug,
       event.categories?.[0]?.name || primaryCategorySlug,
       tCategories
