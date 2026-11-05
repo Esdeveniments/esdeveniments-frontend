@@ -14,6 +14,7 @@ import ProfileEventsSection from "components/partials/ProfileEventsSection";
 import { fetchUserEvents } from "@lib/api/profiles";
 import List from "@components/ui/list";
 import NoEventsFound from "@components/ui/common/noEventsFound";
+import { Link } from "@i18n/routing";
 
 const mockFetchUserEvents = vi.mocked(fetchUserEvents);
 
@@ -39,13 +40,14 @@ function makeEvent(id: string, startDate: string): EventSummaryResponseDTO {
 }
 
 function paged(
-  content: EventSummaryResponseDTO[]
+  content: EventSummaryResponseDTO[],
+  totalElements = content.length
 ): PagedResponseDTO<EventSummaryResponseDTO> {
   return {
     content,
     currentPage: 0,
     pageSize: 20,
-    totalElements: content.length,
+    totalElements,
     totalPages: 1,
     last: true,
   };
@@ -143,5 +145,58 @@ describe("ProfileEventsSection", () => {
 
     expect(findAllByType(element, NoEventsFound)).toHaveLength(1);
     expect(findAllByType(element, List)).toHaveLength(0);
+  });
+
+  it("shows the latest past events and a link to Passats when nothing is upcoming", async () => {
+    mockFetchUserEvents.mockImplementation(async (_u, _p, _s, status) =>
+      status === "past"
+        ? paged([makeEvent("p1", past), makeEvent("p2", past)], 29)
+        : paged([])
+    );
+
+    const element = await ProfileEventsSection({
+      username: "sala-apolo",
+      status: "upcoming",
+    });
+
+    expect(mockFetchUserEvents).toHaveBeenCalledWith("sala-apolo", 0, 6, "past");
+    const lists = findAllByType(element, List);
+    expect(lists).toHaveLength(1);
+    expect(
+      (lists[0].props as { events: { id: string }[] }).events.map((e) => e.id)
+    ).toEqual(["p1", "p2"]);
+    expect(findAllByType(element, NoEventsFound)).toHaveLength(0);
+    const links = findAllByType(element, Link);
+    expect(links).toHaveLength(1);
+    expect((links[0].props as { href: string }).href).toBe(
+      "/perfil/sala-apolo/passats"
+    );
+  });
+
+  it("hides the Passats link when every past event is already shown", async () => {
+    mockFetchUserEvents.mockImplementation(async (_u, _p, _s, status) =>
+      status === "past" ? paged([makeEvent("p1", past)]) : paged([])
+    );
+
+    const element = await ProfileEventsSection({
+      username: "sala-apolo",
+      status: "upcoming",
+    });
+
+    expect(findAllByType(element, List)).toHaveLength(1);
+    expect(findAllByType(element, Link)).toHaveLength(0);
+  });
+
+  it("skips the upcoming request when the profile says there are none", async () => {
+    mockFetchUserEvents.mockResolvedValue(paged([]));
+
+    await ProfileEventsSection({
+      username: "sala-apolo",
+      status: "upcoming",
+      upcomingCount: 0,
+    });
+
+    expect(mockFetchUserEvents).toHaveBeenCalledTimes(1);
+    expect(mockFetchUserEvents).toHaveBeenCalledWith("sala-apolo", 0, 6, "past");
   });
 });

@@ -116,7 +116,11 @@ export default async function ProfilePage({
         <Suspense
           fallback={<EventsGridSkeleton count={3} />}
         >
-          <ProfileEventsSection username={profile.username} status="upcoming" />
+          <ProfileEventsSection
+            username={profile.username}
+            status="upcoming"
+            upcomingCount={profile.upcomingEventCount}
+          />
         </Suspense>
       </div>
     </>

@@ -512,7 +512,8 @@
       "noUpcomingEvents": "Encara no hi ha esdeveniments propers",
       "noPastEvents": "Encara no hi ha esdeveniments passats",
       "statsPublished": "Publicats",
-      "statsUpcoming": "Propers",
+      "latestPastEvents": "Últims esdeveniments",
+      "viewAllPastEvents": "Veure tots els passats ({count})",
       "statsVisits": "Visites",
       "pastTitle": "Esdeveniments passats de {name} — Perfil",
       "pastMetaDescription": "Consulta els esdeveniments passats de {name}: concerts, exposicions i activitats que ja ha organitzat."
