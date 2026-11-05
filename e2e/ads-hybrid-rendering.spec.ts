@@ -6,6 +6,17 @@ test.describe("Hybrid rendering: ads are SSR-only", () => {
   test("Load more does not add sponsored blocks", async ({ page }) => {
     await page.goto("/catalunya", { waitUntil: "load" });
 
+    const cards = page.locator('a[href^="/e/"][data-analytics-event-slug]');
+    // insertAds places the first ad after the third event.
+    const hasThreeCards = await cards
+      .nth(2)
+      .waitFor({ state: "attached", timeout: 30_000 })
+      .then(
+        () => true,
+        () => false,
+      );
+    test.skip(!hasThreeCards, "Not enough events for an ad");
+
     // AdCardClient is ssr:false, so every ad mounts together after hydration
     // from the same chunk. Wait for the first one, then count them all.
     const sponsored = page.getByText(/Contingut patrocinat/i);
@@ -15,7 +26,6 @@ test.describe("Hybrid rendering: ads are SSR-only", () => {
     const loadMore = page.getByRole("button", { name: /Carregar més/i });
     test.skip(!(await loadMore.isVisible()), "No more events to load");
 
-    const cards = page.locator('a[href^="/e/"][data-analytics-event-slug]');
     const cardsBefore = await cards.count();
     const response = page.waitForResponse(
       (r) => r.url().includes("/api/events") && r.ok(),

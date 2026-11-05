@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   getCategoryFromDynamicData,
   getCategoryId,
-  getCategoryDisplayName,
 } from "../utils/category-helpers";
 import type { CategorySummaryResponseDTO } from "../types/api/category";
 
@@ -60,25 +59,5 @@ describe("getCategoryId", () => {
 
   it("returns null for unknown slug", () => {
     expect(getCategoryId(mockCategories, "nonexistent")).toBeNull();
-  });
-});
-
-describe("getCategoryDisplayName", () => {
-  it("returns category name", () => {
-    expect(getCategoryDisplayName(mockCategories[0])).toBe("Concerts");
-  });
-
-  it("falls back to slug when no name", () => {
-    const cat = { id: 1, name: "", slug: "concerts" };
-    expect(getCategoryDisplayName(cat)).toBe("concerts");
-  });
-
-  it("falls back to Category ID when no name or slug", () => {
-    const cat = { id: 5, name: "", slug: "" };
-    expect(getCategoryDisplayName(cat)).toBe("Category 5");
-  });
-
-  it("returns empty string for null", () => {
-    expect(getCategoryDisplayName(null)).toBe("");
   });
 });

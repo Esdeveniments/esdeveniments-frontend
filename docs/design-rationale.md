@@ -103,7 +103,7 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 
 **Decision**: Text badge overlay at top-left of image with `bg-background/90 backdrop-blur-sm`.
 **Why**: For mixed-category listings, category is the #1 scanning signal. Users need to quickly identify "is this a concert or a workshop?" Color-coded vertical bars (production) required memorizing a color→category mapping and were problematic for colorblind users (~8% of males). Text badges are universally understood. DICE uses a similar approach.
-**Localization**: Badges use `getLocalizedCategoryLabelFromConfig` instead of raw API names.
+**Localization**: Badges use `getCategoryLabel` instead of raw API names.
 
 #### View counter behavior
 
