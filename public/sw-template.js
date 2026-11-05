@@ -107,6 +107,11 @@ if (!self.workbox) {
     },
     plugins: [
       respectCacheControlPlugin, // Don't cache private/no-store responses
+      // Any cacheWillUpdate plugin turns off Workbox's default "200 only"
+      // check, so keep 404/5xx pages from replacing a good offline copy.
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [200],
+      }),
       new workbox.broadcastUpdate.BroadcastUpdatePlugin(),
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 50, // Don't cache more than 50 pages.

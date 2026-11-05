@@ -122,6 +122,12 @@ describe("service worker template", () => {
       const matches = contents.match(/statuses:\s*\[200\]/g);
       expect(matches?.length).toBeGreaterThanOrEqual(3);
       expect(contents).not.toMatch(/statuses:\s*\[0\b/);
+      // respectCacheControlPlugin disables Workbox's default 200-only check,
+      // so the pages cache needs its own CacheableResponsePlugin.
+      const pageStrategy = contents.match(
+        /const pageStrategy = new workbox\.strategies\.NetworkFirst\(\{[\s\S]*?\n  \}\);/,
+      )?.[0];
+      expect(pageStrategy).toMatch(/CacheableResponsePlugin\(\{\s*statuses:\s*\[200\]/);
     });
 
     it("loads the self-hosted Workbox, not the Google CDN", () => {
