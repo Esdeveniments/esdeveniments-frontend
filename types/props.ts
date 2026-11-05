@@ -427,6 +427,8 @@ export interface NavbarLabels {
   news: string;
   mobilePublishLabel: string;
   login: string;
+  /** Visible text of the compact (mobile) login button; must fit at 360px. */
+  loginShort: string;
   logout: string;
   userMenu: string;
   myProfile: string;
@@ -442,6 +444,11 @@ export interface NavbarLabels {
 export interface NavbarClientProps {
   navigation: NavigationItem[];
   labels: NavbarLabels;
+}
+
+export interface LanguageSwitcherProps {
+  /** Borderless trigger for the compact (mobile) header. */
+  compact?: boolean;
 }
 
 // Component props interfaces
