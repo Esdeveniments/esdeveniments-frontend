@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { AuthProvider } from "@lib/auth/AuthProvider";
+import { useContext } from "react";
+import { AuthContext, AuthProvider } from "@lib/auth/AuthProvider";
 import { useAuth } from "@components/hooks/useAuth";
 
 /**
@@ -108,5 +109,35 @@ describe("AuthProvider.refetchUser", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  // A changed root context value makes React client-render every streamed
+  // boundary that hasn't hydrated yet (lib/context/external-store.ts).
+  it("keeps the context value stable while the session loads", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          user: { id: "u1", email: "a@b.com", name: "A", username: "first" },
+        }),
+    } as Response);
+    const seen = new Set<unknown>();
+    function ContextProbe() {
+      seen.add(useContext(AuthContext));
+      return null;
+    }
+
+    render(
+      <AuthProvider>
+        <ContextProbe />
+        <Consumer />
+      </AuthProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("username")).toHaveTextContent("first"),
+    );
+    expect(seen.size).toBe(1);
   });
 });

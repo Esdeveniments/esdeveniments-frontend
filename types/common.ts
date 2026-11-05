@@ -502,6 +502,11 @@ export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   href?: Href;
 }
 
+export interface ActiveLinkAnchorProps extends Omit<ActiveLinkProps, "href"> {
+  href: string;
+  isActive: boolean;
+}
+
 // Generic Badge component props used across UI
 export interface BadgeProps {
   href?: string;
@@ -633,4 +638,13 @@ export interface SitemapBreadcrumbProps {
 export interface JsonLdScript {
   id: string;
   data: unknown;
+}
+
+// lib/context/external-store.ts: state a root provider shares without changing
+// its context value (see that file for why).
+export interface ExternalStore<T> {
+  get(): T;
+  getInitial(): T;
+  set(next: T): void;
+  subscribe(listener: () => void): () => void;
 }

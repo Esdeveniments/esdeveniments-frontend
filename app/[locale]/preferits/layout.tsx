@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
+import { locale as rootLocale } from "next/root-params";
+import type { AppLocale } from "types/i18n";
 
 // Shared shell for /preferits and /preferits/passats, mirroring
 // perfil/[username]/layout.tsx's role for the profile Propers/Passats
@@ -10,7 +12,10 @@ export default async function PreferitsLayout({
 }: {
   children: ReactNode;
 }) {
-  const t = await getTranslations("App.Favorites");
+  // Explicit locale: without it next-intl reads headers(), and this layout
+  // sits outside preferits/loading.tsx, so it would block the shell.
+  const locale = (await rootLocale()) as AppLocale;
+  const t = await getTranslations({ locale, namespace: "App.Favorites" });
 
   return (
     <div className="container py-section-y flex flex-col justify-center items-center">

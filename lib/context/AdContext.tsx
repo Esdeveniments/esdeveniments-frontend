@@ -8,24 +8,31 @@ import {
   useRef,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
-import type { TcfCallback, AdContextType } from "types/ads";
+import type { TcfCallback, AdContextType, AdContextInternal } from "types/ads";
+import {
+  createExternalStore,
+  useExternalStore,
+} from "@lib/context/external-store";
 
 /** Fired on window once adsbygoogle.js loads or fails to load. */
 export const ADS_SCRIPT_SETTLED_EVENT = "ads-script-settled";
 
-const AdContext = createContext<AdContextType | undefined>(undefined);
+const AdContext = createContext<AdContextInternal | undefined>(undefined);
 
-export const useAdContext = () => {
+export const useAdContext = (): AdContextType => {
   const context = useContext(AdContext);
   if (!context) {
     throw new Error("useAdContext must be used within an AdProvider");
   }
-  return context;
+  const adsAllowed = useExternalStore(context.adsAllowed);
+  return useMemo(() => ({ ...context, adsAllowed }), [context, adsAllowed]);
 };
 
 export const AdProvider = ({ children }: { children: ReactNode }) => {
-  const [adsAllowed, setAdsAllowed] = useState(false);
+  // A store, not state: see lib/context/external-store.ts.
+  const [adsAllowed] = useState(() => createExternalStore(false));
 
   // Shared Observers
   const visibilityObserver = useRef<IntersectionObserver | null>(null);
@@ -55,7 +62,7 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       window.dispatchEvent(
         new CustomEvent("ads-consent-changed", { detail: { allowed } })
       );
-      setAdsAllowed(allowed);
+      adsAllowed.set(allowed);
     };
 
     const hasAdConsent = (tcData: {
@@ -151,7 +158,7 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
         window.__tcfapi("removeEventListener", 2, () => { }, listenerId);
       }
     };
-  }, []);
+  }, [adsAllowed]);
 
   // Initialize Visibility Observer
   useEffect(() => {
@@ -268,16 +275,25 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     // The overhead of observing is low if we ignore the callbacks.
   }, []);
 
+  const value = useMemo<AdContextInternal>(
+    () => ({
+      adsAllowed,
+      observeVisibility,
+      unobserveVisibility,
+      observeMutations,
+      unobserveMutations,
+    }),
+    [
+      adsAllowed,
+      observeVisibility,
+      unobserveVisibility,
+      observeMutations,
+      unobserveMutations,
+    ],
+  );
+
   return (
-    <AdContext.Provider
-      value={{
-        adsAllowed,
-        observeVisibility,
-        unobserveVisibility,
-        observeMutations,
-        unobserveMutations,
-      }}
-    >
+    <AdContext.Provider value={value}>
       {children}
     </AdContext.Provider>
   );

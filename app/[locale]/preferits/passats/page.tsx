@@ -35,8 +35,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PreferitsPassatsPage() {
+  // Explicit locale: a no-locale getTranslations() can resolve next-intl's
+  // shared config from headers(), which blocks the root layout's provider.
+  const locale = (await rootLocale()) as AppLocale;
   const [t, authToken] = await Promise.all([
-    getTranslations("App.Favorites"),
+    getTranslations({ locale, namespace: "App.Favorites" }),
     getAccessTokenFromCookies(),
   ]);
 

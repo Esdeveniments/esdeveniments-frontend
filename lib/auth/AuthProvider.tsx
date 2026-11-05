@@ -8,19 +8,32 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { AuthContextValue, AuthUser } from "types/auth";
+import type {
+  AuthContextInternal,
+  AuthSessionState,
+  AuthUser,
+} from "types/auth";
 import { useLocale } from "next-intl";
+import { createExternalStore } from "@lib/context/external-store";
 
-export const AuthContext = createContext<AuthContextValue | undefined>(
+export const AuthContext = createContext<AuthContextInternal | undefined>(
   undefined,
 );
 
 // Hydrates the session from the HttpOnly cookie via /api/auth/me, then exposes
 // redirect-based sign-in / logout. Tokens live in cookies, never in JS.
+// The session lives in a store, not in the context value: see
+// lib/context/external-store.ts. useAuth() reads it.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  const [session] = useState(() =>
+    createExternalStore<AuthSessionState>({ user: null, hydrated: false }),
+  );
+  const setUser = useCallback(
+    (user: AuthUser | null) =>
+      session.set({ hydrated: session.get().hydrated, user }),
+    [session],
+  );
 
   // Fetches /api/auth/me once and resolves `next(user | null)`. Shared by the
   // mount-time hydration effect and `refetchUser()` (called after a profile/
@@ -92,8 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
-      setUser(next);
-      setHydrated(true);
+      session.set({ user: next, hydrated: true });
     };
     const timeout = setTimeout(() => controller.abort(), 10_000);
     void load(finish, controller.signal);
@@ -102,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [load]);
+  }, [load, session]);
 
   // Re-fetches /api/auth/me and replaces `user` with the result, after a
   // successful profile/avatar mutation. Shares `load()` with the hydration
@@ -116,11 +128,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
     try {
-      await load((next) => setUser(next), controller.signal);
+      await load(setUser, controller.signal);
     } finally {
       clearTimeout(timeout);
     }
-  }, [load]);
+  }, [load, setUser]);
 
   const signIn = useCallback((redirectTo?: string) => {
     const query = new URLSearchParams({ locale });
@@ -132,23 +144,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.assign("/api/auth/sign-out");
   }, []);
 
-  const status = !hydrated
-    ? ("loading" as const)
-    : user
-      ? ("authenticated" as const)
-      : ("unauthenticated" as const);
-
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      status,
-      user,
-      isAuthenticated: status === "authenticated",
-      isLoading: status === "loading",
-      signIn,
-      logout,
-      refetchUser,
-    }),
-    [status, user, signIn, logout, refetchUser],
+  const value = useMemo<AuthContextInternal>(
+    () => ({ session, signIn, logout, refetchUser }),
+    [session, signIn, logout, refetchUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -30,7 +30,7 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
-import type { ImageSizeContext } from "types/common";
+import type { ActiveLinkProps, ImageSizeContext } from "types/common";
 
 /**
  * Props for ClientImageInner component
@@ -451,6 +451,14 @@ export interface LanguageSwitcherProps {
   compact?: boolean;
 }
 
+export type NavbarLoginLinkProps = Omit<ActiveLinkProps, "href">;
+
+export interface LanguageMenuProps {
+  options: { value: AppLocale; label: string }[];
+  locale: string;
+  onSelect: (locale: AppLocale) => void;
+}
+
 // Component props interfaces
 export interface ClientInteractiveLayerProps {
   categories?: CategorySummaryResponseDTO[];
@@ -636,6 +644,10 @@ export interface SeoLinkSection {
   id: string;
   title: string;
   links: SeoLinkItem[];
+}
+
+export interface HomeHeroProps {
+  children: ReactNode;
 }
 
 export interface ServerEventsCategorizedProps {
@@ -969,6 +981,10 @@ export interface CollapsibleDescriptionProps {
 // Event details section (duration + external link)
 export interface EventDetailsSectionProps {
   event: import("./api/event").EventDetailResponseDTO;
+}
+
+export interface EventPageGateProps {
+  params: Promise<{ eventId: string }>;
 }
 
 // Cached body of the event detail page; slots are request-time parts.

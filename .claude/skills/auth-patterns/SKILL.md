@@ -68,6 +68,12 @@ re-runs Server Component data fetching, and `AuthProvider` sits above the
 router boundary. See `EditProfileForm.tsx` / `EditProfileAvatar.tsx` for the
 pattern.
 
+The session lives in a `createExternalStore` (`lib/context/external-store.ts`),
+not in the context value: the context value never changes, and `useAuth()`
+reads the session with `useSyncExternalStore`. A changing root context value
+makes React client-render every streamed boundary that isn't hydrated yet
+(AGENTS.md › Rendering). Don't put `user`/`status` back into the context value.
+
 ## Gating a page or component behind auth
 
 Server pages: check the session cookie server-side (`getAccessTokenFromCookies`

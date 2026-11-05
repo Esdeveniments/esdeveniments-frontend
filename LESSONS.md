@@ -4,8 +4,8 @@ Repo-specific gotchas worth sharing. Read this during research on any task here.
 
 ## A page can't set its own 404 or 301: decide it in `proxy.ts`
 
-`app/[locale]/layout.tsx` wraps every page in `<Suspense>`, so the status line
-is sent before the page runs. A page-level `notFound()` then serves 200 with
+With PPR the static shell is flushed, with its status line, before the page's
+dynamic part runs. A page-level `notFound()` then serves 200 with
 `noindex`, and `redirect()` becomes a client-side meta refresh. Google files
 the first as a Soft 404 and the second as a weak redirect. Unknown place slugs
 are therefore resolved in Proxy (`resolvePlaceForProxy`, `lib/api/places-proxy.ts`):
@@ -693,6 +693,75 @@ it because a boundary exists; it doesn't check that the fallback shows
 anything. Fix (#638): `PlacePageSkeleton` in the fallback, `sr-only` h1 kept
 for crawlers, guarded by `test/place-page-loading-fallback.test.tsx`
 (`renderToString` with a reader that never resolves).
+
+The home page had the same gap: `HomeContent` waits on `connection()` (in
+`generatePagesData`), and its fallback was only an `sr-only` nav and a
+`<noscript>`, so the PPR shell and every navigation to `/` showed a blank
+`<main>`. Fix: `HomePageSkeleton` next to `HomeStaticFallback`, guarded by
+`test/home-page-loading-fallback.test.tsx`. The skeleton reuses `HomeHero`,
+so the preloaded hero image paints in the shell instead of after the backend
+answers.
+
+The event page's fallback (skeleton + `sr-only` slug h1) was visible but read
+`params` (`use(params)` in the page). Event slugs are unknown at build time,
+so the fallback couldn't go into the generic prerendered shell
+(`ca/e/[eventId].html`): the first flush had a blank `<main>`, and the
+skeleton came with the resume, 2–73 ms later in production on a Cloudflare
+MISS. Fix: the page returns a static `<Suspense fallback={<EventDetailSkeleton />}>`
+around `EventPageGate`, which reads `params` and keeps the inner fallback.
+A `loading.tsx` would do the same but also wrap `edita/` and `promote/`.
+Guarded by `test/event-page-loading-fallback.test.tsx`.
+
+## A root `<Suspense>` hides the navbar on slow networks
+
+The root layout used to wrap the whole app (navbar, `<main>`, footer) in
+`<Suspense fallback={<AppShellSkeleton />}>`. React streams a finished boundary
+inline only while the shell is under 12.8 KB (`progressiveChunkSize`); any
+boundary over 500 B past that is "outlined": its HTML goes into a hidden
+`<div id="S:x">` and a `$RC` script moves it in. `$RC` waits until 300 ms after
+the first paint. The chrome is far over 12.8 KB, so it was always outlined.
+When the HTML arrived in several network chunks (staging, slow phones), the
+first paint showed the skeleton header and a blank `<main>`, and the real
+navbar came up to ~390 ms later (measured with 4× CPU, 150 ms RTT, 1.6 Mbps).
+
+Fix: no root boundary. Everything above a page's own boundary must be
+prerenderable, so a route that blocked the shell got a `loading.tsx` or an
+inline fix; `next build --debug-prerender` names them. Rules that came out of it:
+
+- Generic shells (`[eventId]`, `[place]`) can't read the pathname:
+  `usePathname`/`useParams` suspend there. Chrome that needs it reads it in a
+  tiny leaf (`ActiveLink` wraps each link in its own `<Suspense>` with a
+  non-active fallback; under 500 B, so it stays inline) or only after a click
+  (`LanguageMenu`).
+- A segment's `loading.tsx` wraps its children, not its own `layout.tsx`: a
+  layout that awaits (profile) returns its own `<Suspense>`.
+- Pass the locale to `getTranslations({ locale, namespace })` in pages and
+  layouts. next-intl caches its config by the locale argument; a call
+  without one can resolve it through `headers()` and make the root
+  `NextIntlClientProvider` dynamic, which blocks the shell
+  (`preferits/passats`).
+- Root providers now hydrate before the page's boundaries are revealed. A
+  boundary that `$RC` has queued (`<!--$~-->`) still counts as not hydrated,
+  and React can't see which components inside it read a context, so any
+  context value change (AuthProvider's `/api/auth/me` result, AdProvider's
+  consent) made React throw away its server HTML and client-render it. With a
+  warm JS cache, `/preferits` showed its empty state twice, every load, until
+  `$RV` ran. `startTransition` didn't change it. Fix: the provider's context
+  value stays the same object and the changing part lives in a
+  `createExternalStore` (`lib/context/external-store.ts`) read with
+  `useSyncExternalStore`. Client-rendered boundaries per load with a warm
+  cache went from 3–4 (develop) to 0 on `/`, 3 to 2 on `/barcelona` (ad slot
+  bailouts), 1 to 0 on `/preferits`. To count them, wrap
+  `Node.prototype.removeChild` and count `<!--/$-->` removals whose stack is in
+  `/_next/static/` (the inline `$RV` also removes markers).
+- The form on `/publica` now paints before React hydrates, so the inputs are
+  disabled until then (`<fieldset disabled={!isHydrated}>`); typing into them
+  earlier was lost, and the publish E2E specs clicked "Next" too early.
+
+Measured against develop (median of 9, same throttling): the navbar paints
+with the first paint on `/`, `/barcelona` and an event (develop: up to 390 ms
+later), the home hero `<img>` is in the first flush, `/publica` FCP/LCP went
+from 2724 to 536 ms, CLS is unchanged. Guarded by `test/navbar-prerender.test.tsx`.
 
 ## A render flag must be the same on the server and in the browser
 

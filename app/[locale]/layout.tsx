@@ -22,7 +22,6 @@ import IconSprite from "@components/ui/common/IconSprite";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
 import WebMcpTools from "@components/partials/WebMcpTools";
-import AppShellSkeleton from "@components/ui/common/skeletons/AppShellSkeleton";
 import type { AppLocale } from "types/i18n";
 import {
   CLIENT_APP_KEYS,
@@ -239,22 +238,20 @@ export default async function LocaleLayout({
           }}
         />
         <IconSprite />
-        <Suspense fallback={<AppShellSkeleton />}>
-          <I18nProvider locale={locale}>
-            <AdProvider>
-              <AuthProvider>
-                <WebsiteSchema locale={locale} />
-                <Suspense fallback={null}>
-                  <GoogleScripts />
-                </Suspense>
-                <AuthEventTracker />
-                <AnalyticsBootstrap />
-                <WebMcpTools locale={locale} />
-                <BaseLayout>{children}</BaseLayout>
-              </AuthProvider>
-            </AdProvider>
-          </I18nProvider>
-        </Suspense>
+        <I18nProvider locale={locale}>
+          <AdProvider>
+            <AuthProvider>
+              <WebsiteSchema locale={locale} />
+              <Suspense fallback={null}>
+                <GoogleScripts />
+              </Suspense>
+              <AuthEventTracker />
+              <AnalyticsBootstrap />
+              <WebMcpTools locale={locale} />
+              <BaseLayout>{children}</BaseLayout>
+            </AuthProvider>
+          </AdProvider>
+        </I18nProvider>
       </body>
     </html>
   );

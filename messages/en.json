@@ -512,7 +512,9 @@
       "noUpcomingEvents": "No upcoming events yet",
       "noPastEvents": "No past events yet",
       "statsPublished": "Published",
-      "statsUpcoming": "Upcoming",
+      "viewAllPastEvents": "See past events ({count})",
+      "upcomingInTown": "Upcoming events in {town}",
+      "moreInTown": "More events in {town}",
       "statsVisits": "Visits",
       "pastTitle": "{name}'s past events — Profile",
       "pastMetaDescription": "Check out {name}'s past events: concerts, exhibitions and activities they've already organized."
