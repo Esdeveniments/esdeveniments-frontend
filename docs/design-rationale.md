@@ -184,7 +184,7 @@ A castellers (human towers) image was sourced from Unsplash (Andrea Huls Pareja,
 | **Weak social proof**               | Fever: star ratings; Meetup: "X going" + avatars                      | Visit counter only ("27 visites") — ambiguous          |
 | **No price/free display**           | Eventbrite/Fever show prominently                                     | `event.type` exists but not rendered prominently       |
 | **Map hidden behind toggle**        | Eventbrite/Meetup show maps inline by default                         | "Show map" toggle adds friction                        |
-| **No organizer/source attribution** | Every competitor shows who organized the event                        | None — JSON-LD organizer is always "Esdeveniments.cat" |
+| **No organizer/source attribution** | Every competitor shows who organized the event                        | Sidebar "Creat per" links the owner's profile; JSON-LD `organizer` only for verified organization owners (e.g. town councils) |
 | **Single-column on desktop**        | Eventbrite uses 2-col (content left, sticky sidebar right)            | Entirely single-column                                 |
 | **Ad error boxes**                  | Competitors show nothing or clean fallback                            | Yellow "L'anunci no s'ha pogut carregar" boxes         |
 

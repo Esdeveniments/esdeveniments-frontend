@@ -9,16 +9,22 @@ export interface VideoObject {
   uploadDate: string;
 }
 
-// Type for schema.org Place object used in structured data (more flexible than SchemaOrgEvent location)
-export interface SchemaPlaceLocation {
-  "@type": "Place";
-  name: string | undefined;
-  address?: {
-    "@type": "PostalAddress";
-    addressCountry: string;
-    addressLocality?: string;
-    addressRegion?: string;
-  };
+/** Event host. Only from a verified ORGANIZATION owner (backend data). */
+export interface SchemaOrganizer {
+  "@type": "Organization";
+  name: string;
+  url: string;
+}
+
+/**
+ * Entry of an event list. Lists link to each event page instead of repeating
+ * the full Event: Google reads Event markup only on the event's own page.
+ */
+export interface SchemaEventListItem {
+  "@type": "ListItem";
+  position: number;
+  url: string;
+  name: string;
 }
 
 /**
@@ -83,6 +89,7 @@ export interface SchemaOrgEvent {
     };
   };
   isAccessibleForFree?: boolean;
+  organizer?: SchemaOrganizer;
   duration?: string;
   video?: VideoObject;
 }

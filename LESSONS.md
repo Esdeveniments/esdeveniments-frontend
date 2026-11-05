@@ -36,7 +36,13 @@ Google's Event rich results read `performer`, `organizer`, `image` and the
 date offsets literally. We used to put the venue name in `performer` and
 `organizer`, and the site logo in `image` (also in the event sitemap's
 `<image:image>`), which Search Console can flag as misleading. Leave a property
-out when there is no real value. Timed `startDate`/`endDate` carry the
+out when there is no real value. `organizer` comes only from a verified
+`ORGANIZATION` owner (e.g. a town council), linked to its profile; admins and
+regular users only publish, so they never count. Full `Event` markup goes
+only on the event's own page: Google reads it only there, and repeating it in
+lists (related events, listings, archives) made Search Console count each
+event many times as "missing organizer". Lists use `buildEventListItems`
+(`url` + `name`). Timed `startDate`/`endDate` carry the
 Europe/Madrid offset (`withMadridOffset`, `@date-fns/tz`, DST-aware); date-only
 values stay plain dates.
 

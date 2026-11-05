@@ -4,7 +4,9 @@ import {
   deriveNameFromUrl,
   generateWebPageSchema,
   generateCollectionPageSchema,
+  generateItemListStructuredData,
 } from "@components/partials/seo-meta";
+import type { EventSummaryResponseDTO } from "types/api/event";
 import type { BreadcrumbItem } from "types/common";
 import { siteUrl } from "@config/index";
 
@@ -301,3 +303,19 @@ describe("generateCollectionPageSchema with breadcrumbs", () => {
   });
 });
 
+
+describe("generateItemListStructuredData", () => {
+  it("links to each event page instead of repeating Event markup", () => {
+    const events = [
+      { slug: "concert-a", title: "Concert A", location: "Palau" },
+      { slug: "fira-b", title: "Fira B", location: "Plaça" },
+    ] as EventSummaryResponseDTO[];
+
+    const list = generateItemListStructuredData(events, "Agenda", undefined, "en");
+
+    expect(list?.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, url: `${siteUrl}/en/e/concert-a`, name: "Concert A" },
+      { "@type": "ListItem", position: 2, url: `${siteUrl}/en/e/fira-b`, name: "Fira B" },
+    ]);
+  });
+});

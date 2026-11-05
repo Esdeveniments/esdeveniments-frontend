@@ -1,7 +1,6 @@
 // No headers/nonce needed with relaxed CSP
 import JsonLdServer from "@components/partials/JsonLdServer";
 import {
-  generateJsonData,
   getFormattedDate,
   formatPlacePreposition,
 } from "@utils/helpers";
@@ -207,13 +206,6 @@ export default async function Page({
   // This still provides good SEO value while keeping response sizes manageable
   const eventsForJsonLd = filteredEvents.slice(0, MAX_EVENTS_FOR_JSON_LD);
 
-  // Generate event JSON-LD data (limited to avoid payload overflow)
-  const jsonData = eventsForJsonLd
-    ? eventsForJsonLd
-      .map((event) => generateJsonData(event, locale))
-      .filter((data) => data !== null)
-    : [];
-
   // Generate structured data for the month archive
   const breadcrumbs = [
     { name: t("breadcrumbs.home"), url: toLocalizedUrl("/", locale) },
@@ -262,11 +254,6 @@ export default async function Page({
 
   return (
     <>
-      {/* Individual Events JSON-LD - kept for backward compatibility */}
-      {jsonData.length > 0 && (
-        <JsonLdServer id={`${town}-${month}-${year}-events`} data={jsonData} />
-      )}
-
       {/* Enhanced Collection Page Schema */}
       <JsonLdServer
         id={`${town}-${month}-${year}-collection`}
