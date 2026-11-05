@@ -549,8 +549,6 @@ export interface AvatarInitialsProps {
 export interface ProfileEventsSectionProps {
   username: string;
   status: ProfileEventStatus;
-  /** Profile's `upcomingEventCount`; 0 skips the upcoming request. */
-  upcomingCount?: number;
 }
 
 export interface FavoritesEventsSectionProps {
