@@ -400,6 +400,22 @@ scrolled `<main>` itself, and a popover clipped for users looked fine in tests.
 To test what a user sees, scroll with `page.mouse.wheel()` and move the mouse
 by coordinates.
 
+## AdSense vignettes put the old scroll position back after a client-side navigation
+
+An AdSense vignette can open when the user clicks an in-app `<a>`. It saves the
+scroll position and shows the ad. When the user closes it, it clicks the link
+again (Next navigates and scrolls to the top). About a second later it calls
+`window.scrollTo` with the old page's position, so the event page opens
+mid-page. This happens in every browser, but only when a vignette is shown
+(frequency capping makes it look random). Blocking ads makes it go away, so
+reproduce it with ads loaded and consent given. The fix is Google's opt-out,
+`data-google-vignette="false"`, on every in-app link: the `Link` in
+`i18n/routing.ts` and the `Pressable*` primitives add `NO_VIGNETTE_LINK_ATTRS`
+(`utils/constants.ts`). AdSense only reads the attribute on the clicked anchor,
+not on its parents. `router.push` doesn't trigger vignettes. Vignettes on Back,
+on inactivity and on tab revisit can't be turned off per link: use AdSense ›
+Auto ads › "Allow additional triggers for vignette ads".
+
 ## React hoists a preload `<link>` into `<head>` only when it has `href`
 
 `<link rel="preload" as="image" imageSrcSet={…} media={…}>` without `href`

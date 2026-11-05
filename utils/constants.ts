@@ -415,3 +415,12 @@ export const SPONSOR_BANNER_IMAGE = {
  * Dice, Time Out) all use monochrome/neutral category indicators.
  */
 export const CATEGORY_BADGE_COLOR = "bg-muted text-foreground-strong";
+
+// Keeps AdSense vignettes off in-app links. On a client-side navigation the
+// vignette closes after Next has scrolled the new page to the top, then
+// restores the previous page's scroll position onto it. AdSense reads this
+// attribute on the clicked <a> only, never on its ancestors.
+// https://support.google.com/adsense/answer/17016693
+export const NO_VIGNETTE_LINK_ATTRS = {
+  "data-google-vignette": "false",
+} as const;
