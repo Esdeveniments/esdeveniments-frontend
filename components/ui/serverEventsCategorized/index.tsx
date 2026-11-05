@@ -25,7 +25,6 @@ import { formatCatalanDe } from "@utils/helpers";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import {
-  CATEGORY_CONFIG,
   PRIORITY_CATEGORY_SLUGS,
   MAX_CATEGORY_SECTIONS,
 } from "@config/categories";
@@ -39,7 +38,7 @@ import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
-import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import { getCategoryLabel } from "@utils/category-helpers";
 import { HERO_IMAGE } from "@config/hero-image";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
@@ -176,12 +175,13 @@ async function ServerEventsCategorized({
     return label;
   };
 
-  const quickCategoryLinks = Object.entries(CATEGORY_CONFIG).map(
-    ([slug, config]) => ({
-      label: tCategories(config.labelKey),
+  // Only the categories with an icon get a home quick link.
+  const quickCategoryLinks = Object.entries(CATEGORY_ICONS).map(
+    ([slug, Icon]) => ({
+      label: getCategoryLabel(slug, slug, tCategories),
       url: withLocale(`/catalunya/${slug}`),
       categorySlug: slug,
-      Icon: CATEGORY_ICONS[slug] || SparklesIcon,
+      Icon,
     })
   );
 
@@ -570,7 +570,7 @@ export async function ServerEventsCategorizedContent({
       {/* Categories Render */}
       <div className="container">
         {categorySectionsToRender.map((section, index) => {
-          const localizedCategoryName = getLocalizedCategoryLabelFromConfig(
+          const localizedCategoryName = getCategoryLabel(
             section.categorySlug,
             section.categoryName,
             tCategories

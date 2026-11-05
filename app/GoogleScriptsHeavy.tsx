@@ -5,7 +5,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { isE2ETestMode } from "@utils/env";
+import { isE2ETestBuild } from "@utils/env";
 import { ensureGtag } from "@utils/analytics";
 import { ADS_SCRIPT_SETTLED_EVENT } from "@lib/context/AdContext";
 import type { GoogleScriptsHeavyProps } from "types/ads";
@@ -68,7 +68,7 @@ export default function GoogleScriptsHeavy({
 
   // Track outbound link clicks (external http/https) with optional enrichment via data attributes.
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID || isE2ETestMode) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestBuild) return;
     if (!adsAllowed) return;
     const win = ensureGtag();
     if (!win) return;
@@ -177,7 +177,7 @@ export default function GoogleScriptsHeavy({
 
   // Trigger Google Auto Ads once consented and loader is (or becomes) available.
   useEffect(() => {
-    if (isE2ETestMode) return;
+    if (isE2ETestBuild) return;
     if (!adsAllowed || !ADS_CLIENT) return;
 
     // Track all timeouts for cleanup
@@ -277,7 +277,7 @@ export default function GoogleScriptsHeavy({
   // Load adsbygoogle.js after consent and the first interaction (or the load
   // fallback). The pushes above queue in window.adsbygoogle until it runs.
   useEffect(() => {
-    if (isE2ETestMode) return;
+    if (isE2ETestBuild) return;
     if (!adsAllowed || !adsScriptReady || !ADS_SRC) return;
     if (document.querySelector(`script[src="${ADS_SRC}"]`)) return;
 
@@ -295,7 +295,7 @@ export default function GoogleScriptsHeavy({
   }, [adsAllowed, adsScriptReady]);
 
   useEffect(() => {
-    if (isE2ETestMode) return;
+    if (isE2ETestBuild) return;
     const handleTagErrors = (event: ErrorEvent) => {
       if (
         typeof event.message === "string" &&
@@ -313,7 +313,7 @@ export default function GoogleScriptsHeavy({
 
   // PWA install tracking
   useEffect(() => {
-    if (isE2ETestMode) return;
+    if (isE2ETestBuild) return;
     const win = ensureGtag();
     if (!win) return;
 
@@ -337,7 +337,7 @@ export default function GoogleScriptsHeavy({
   // install-success signal that works on iOS, where Add to Home Screen emits
   // no JS event, so `pwa_installed` never fires there.
   useEffect(() => {
-    if (isE2ETestMode) return;
+    if (isE2ETestBuild) return;
     const win = ensureGtag();
     if (!win) return;
 

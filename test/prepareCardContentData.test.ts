@@ -54,7 +54,7 @@ vi.mock("@utils/date-helpers", () => ({
 }));
 
 vi.mock("@utils/category-helpers", () => ({
-  getLocalizedCategoryLabelFromConfig: (
+  getCategoryLabel: (
     slug: string,
     fallback: string,
     _t: unknown,

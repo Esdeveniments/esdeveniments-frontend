@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
 import { useAdContext } from "@lib/context/AdContext";
 import { useIsClient } from "@components/hooks/useIsClient";
-import { isE2ETestMode } from "@utils/env";
+import { isE2ETestBuild } from "@utils/env";
 import { isProductionHost } from "@utils/production-host";
 import {
   onFirstInteractionOrTimeout,
@@ -119,7 +119,7 @@ export default function GoogleScripts() {
   // so it would miss the first interaction (often the consent click itself).
   const [adsScriptReady, setAdsScriptReady] = useState(false);
   useEffect(() => {
-    if (isE2ETestMode) return;
+    if (isE2ETestBuild) return;
     let cancelIdle: (() => void) | undefined;
     const cancelTrigger = onFirstInteractionOrTimeout(() => {
       // Off the event task, so the first tap's INP does not pay for it.
@@ -135,7 +135,7 @@ export default function GoogleScripts() {
   // The Funding Choices loader is in the root layout <head>. Arm the consent
   // fallback once it has loaded.
   useEffect(() => {
-    if (isE2ETestMode || !FUNDING_CHOICES_SRC) return;
+    if (isE2ETestBuild || !FUNDING_CHOICES_SRC) return;
     const script = document.querySelector<HTMLScriptElement>(
       `script[src="${FUNDING_CHOICES_SRC}"]`
     );
@@ -163,7 +163,7 @@ export default function GoogleScripts() {
   // because our TCF implementation (AdContext) provides a unified consent model.
   // This is intentional and aligns with our CMP's consent structure.
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID || isE2ETestMode || !isProdHost) return;
+    if (!GA_MEASUREMENT_ID || isE2ETestBuild || !isProdHost) return;
     const win = ensureGtag();
     if (!win) return;
 
@@ -204,7 +204,7 @@ export default function GoogleScripts() {
   // This prevents server/client HTML mismatches caused by client-only boundaries.
   useEffect(() => {
     if (!adsAllowed) return;
-    if (isE2ETestMode) return;
+    if (isE2ETestBuild) return;
     if (!isProdHost) return;
     let cancelled = false;
 
@@ -226,7 +226,7 @@ export default function GoogleScripts() {
     <>
       {/* Google Analytics - Consent Mode v2 (default pushed by GTAG_SHIM, see
           its comment above, for why this can't unconditionally re-push it) */}
-      {GA_MEASUREMENT_ID && !isE2ETestMode && isProdHost && (
+      {GA_MEASUREMENT_ID && !isE2ETestBuild && isProdHost && (
         <>
           <Script id="google-analytics-consent" strategy="lazyOnload">
             {GTAG_SHIM}
@@ -240,7 +240,7 @@ export default function GoogleScripts() {
       )}
 
       {/* Heavy tracking + Auto Ads: only load after consent */}
-      {!isE2ETestMode && isProdHost && adsAllowed && HeavyComponent && (
+      {!isE2ETestBuild && isProdHost && adsAllowed && HeavyComponent && (
         <HeavyComponent
           adsAllowed={adsAllowed}
           adsScriptReady={adsScriptReady}

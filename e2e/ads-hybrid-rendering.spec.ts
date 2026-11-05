@@ -1,37 +1,39 @@
 import { test, expect } from "@playwright/test";
 
-// SSR should insert ad markers into the initial events list, but client should not insert extra ads when loading more
-// We cannot easily introspect isAd from DOM; instead, check that ad containers appear once per page view when scrolling
-
+// SSR inserts the ad slots once (insertAds); loading more events on the
+// client must append events only, never more ads.
 test.describe("Hybrid rendering: ads are SSR-only", () => {
-  test("Home shows sponsored content blocks and does not duplicate after load more", async ({
-    page,
-  }) => {
-    await page.goto("/barcelona", { waitUntil: "domcontentloaded" });
+  test("Load more does not add sponsored blocks", async ({ page }) => {
+    await page.goto("/catalunya", { waitUntil: "load" });
 
-    // Look for sponsored content headings from AdCard/AdArticle usage
-    const sponsoredHeadings = page.getByText(/Contingut patrocinat/i);
-    const initialCount = await sponsoredHeadings.count();
+    const cards = page.locator('a[href^="/e/"][data-analytics-event-slug]');
+    // insertAds places the first ad after the third event.
+    const hasThreeCards = await cards
+      .nth(2)
+      .waitFor({ state: "attached", timeout: 30_000 })
+      .then(
+        () => true,
+        () => false,
+      );
+    test.skip(!hasThreeCards, "Not enough events for an ad");
 
-    // If no ads visible (ad blocker/Google not loaded), still pass by ensuring no explosive duplication later
-    // Trigger load more if present
-    const loadMore = page.getByRole("button", { name: /carrega més|més/i });
-    if (await loadMore.isVisible()) {
-      await loadMore.click();
-      // Bounded settle wait: on an ads page the network never truly idles
-      // (ad slots keep polling), so a bare networkidle wait would hang until
-      // timeout. Give the load-more fetch + client ad hydration a moment; the
-      // lenient count assertion below is the real check.
-      await page
-        .waitForLoadState("networkidle", { timeout: 5000 })
-        .catch(() => {});
-    }
+    // AdCardClient is ssr:false, so every ad mounts together after hydration
+    // from the same chunk. Wait for the first one, then count them all.
+    const sponsored = page.getByText(/Contingut patrocinat/i);
+    await expect(sponsored.first()).toBeVisible({ timeout: 30_000 });
+    const before = await sponsored.count();
 
-    const afterCount = await sponsoredHeadings.count();
-    expect(afterCount).toBeGreaterThanOrEqual(0);
-    // AdCardClient uses ssr:false, so initialCount is always 0 (ads render only after hydration).
-    // With adFrequencyRatio=4, a page of ~10 events yields ~3 ads; after load-more at most ~5.
-    // Tolerate up to initialCount + 5 to avoid flakiness from varying event counts.
-    expect(afterCount).toBeLessThanOrEqual(initialCount + 5);
+    const loadMore = page.getByRole("button", { name: /Carregar més/i });
+    test.skip(!(await loadMore.isVisible()), "No more events to load");
+
+    const cardsBefore = await cards.count();
+    const response = page.waitForResponse(
+      (r) => r.url().includes("/api/events") && r.ok(),
+    );
+    await loadMore.click();
+    await response;
+    await expect.poll(() => cards.count()).toBeGreaterThan(cardsBefore);
+
+    await expect(sponsored).toHaveCount(before);
   });
 });

@@ -464,7 +464,6 @@ export type FilterLabels = {
   displayNameMap: Record<string, string>;
   byDates: Record<string, string>;
   prices?: Record<string, string>;
-  categoryLabelsBySlug?: Record<string, string>;
 };
 
 export interface FiltersClientProps {
@@ -494,14 +493,6 @@ export interface FilterButtonProps {
   removeUrl: string;
   onOpenModal: () => void;
   testId?: string;
-}
-
-export interface ServerFiltersProps {
-  segments: RouteSegments;
-  queryParams: URLQueryParams;
-  categories?: CategorySummaryResponseDTO[];
-  placeTypeLabel: PlaceTypeAndLabel;
-  onOpenModal: () => void;
 }
 
 export interface NavigationFiltersModalProps {
