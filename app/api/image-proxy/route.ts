@@ -6,8 +6,10 @@
  * - Supports image optimization: resizing, format conversion (WebP/AVIF), quality control
  */
 import { NextResponse } from "next/server";
+import type { LookupAddress } from "node:dns";
 import * as Sentry from "@sentry/nextjs";
-import { Agent, fetch as undiciFetch } from "undici";
+import { Agent, fetch as undiciFetch, type Response as UpstreamResponse } from "undici";
+import { readBodyWithLimit } from "@utils/read-body-with-limit";
 import {
   normalizeExternalImageUrl,
   isLegacyFileHandler,
@@ -15,6 +17,15 @@ import {
 import { isDevelopmentHost } from "@utils/host-validation";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
 import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
+import {
+  fetchWithLenientParser,
+  isHttpParserError,
+} from "@utils/lenient-http-fetch";
+import {
+  forgetMissingIssuers,
+  isIncompleteChainError,
+  resolveMissingIssuers,
+} from "@utils/tls-aia";
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
@@ -44,14 +55,11 @@ function getCacheControl(hasCacheKey: boolean): string {
     : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
 }
 
-// Some municipal sites ship an incomplete TLS certificate chain (missing intermediate certs).
-// Node's TLS verification rejects these, so we selectively bypass verification only for
-// known-bad hosts.
-const BROKEN_TLS_HOST_SUFFIXES = [
-  ".altanet.org",
-  ".biguesiriells.cat",
-  ".l-h.cat",
-];
+// Hosts whose certificate doesn't match their hostname (www.bot.altanet.org
+// serves a certificate for other names). Verification is skipped only for them.
+// Incomplete chains (missing intermediates) don't belong here: fetchWithTimeout
+// recovers those through AIA (utils/tls-aia.ts) without skipping verification.
+const BROKEN_TLS_HOST_SUFFIXES = [".altanet.org"];
 
 const insecureTlsDispatcher = new Agent({
   connect: {
@@ -89,11 +97,42 @@ function isAbsoluteHttpUrl(candidate: string): boolean {
   return /^https?:\/\//i.test(candidate);
 }
 
+/**
+ * Retries upstream failures that browsers don't have: a server that omits its
+ * intermediate certificates (fetched via AIA, still fully verified) or sends a
+ * malformed header (re-read with Node's lenient parser). Anything else throws.
+ */
+async function retryBrowserTolerableFailure(
+  error: unknown,
+  url: string,
+  signal: AbortSignal,
+  dnsRecords: LookupAddress[] | undefined,
+  bypassTls: boolean,
+): Promise<UpstreamResponse> {
+  if (isHttpParserError(error)) {
+    return fetchWithLenientParser(url, signal, dnsRecords, !bypassTls);
+  }
+  if (bypassTls || !dnsRecords || !isIncompleteChainError(error)) throw error;
+
+  const issuers = await resolveMissingIssuers(url, dnsRecords, signal);
+  if (issuers.length === 0) throw error;
+  try {
+    return await undiciFetch(url, {
+      signal,
+      redirect: "manual",
+      dispatcher: buildPinnedDnsDispatcher(dnsRecords, true, issuers) ?? undefined,
+    });
+  } catch (retryError) {
+    if (isIncompleteChainError(retryError)) forgetMissingIssuers(url);
+    throw retryError;
+  }
+}
+
 async function fetchWithTimeout(
   url: string,
   redirectsRemaining = MAX_REDIRECTS,
   deadline = Date.now() + TIMEOUT_MS,
-): Promise<Awaited<ReturnType<typeof undiciFetch>>> {
+): Promise<UpstreamResponse> {
   const targetSafety = await getPublicFetchSafety(url);
   if (!targetSafety.isSafe) {
     throw new Error("Blocked unsafe image upstream");
@@ -127,7 +166,18 @@ async function fetchWithTimeout(
     // undici) mismatches internal symbols and throws
     // "controller[kState].transformAlgorithm is not a function" when decoding
     // compressed upstream responses.
-    const response = await undiciFetch(url, init);
+    let response: UpstreamResponse;
+    try {
+      response = await undiciFetch(url, init);
+    } catch (error) {
+      response = await retryBrowserTolerableFailure(
+        error,
+        url,
+        controller.signal,
+        targetSafety.dnsRecords,
+        bypassTls,
+      );
+    }
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       await response.body?.cancel();
@@ -361,29 +411,8 @@ export async function GET(request: Request) {
       const body = response.body;
       if (!body) continue;
 
-      const chunks: Uint8Array[] = [];
-      const reader = body.getReader();
-      let totalBytes = 0;
-      let imageTooLarge = false;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        totalBytes += value.byteLength;
-        if (totalBytes > MAX_BYTES) {
-          await reader.cancel();
-          imageTooLarge = true;
-          break; // Exit the while loop
-        }
-        chunks.push(value);
-      }
-
-      if (imageTooLarge) {
-        continue; // Continue to the next fetch candidate
-      }
-
-      const imageBuffer = Buffer.concat(chunks);
-      if (imageBuffer.length === 0) continue;
+      const imageBuffer = await readBodyWithLimit(body, MAX_BYTES);
+      if (!imageBuffer?.length) continue;
 
       // Sniff content type
       const sniffBuffer = imageBuffer.subarray(

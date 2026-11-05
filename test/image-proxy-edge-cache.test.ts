@@ -97,3 +97,32 @@ describe("image proxy responses are cacheable by URL alone", () => {
     expect(res.headers.get("cache-control")).toMatch(/\bno-store\b/);
   });
 });
+
+describe("image proxy size guard", () => {
+  it("drops an upstream body that streams past 5 MB without a Content-Length", async () => {
+    let pulled = 0;
+    let cancelled = false;
+    const chunk = new Uint8Array(1_000_000);
+    vi.mocked(undiciFetch).mockImplementation(
+      async () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            pull(controller) {
+              pulled++;
+              controller.enqueue(chunk);
+            },
+            cancel() {
+              cancelled = true;
+            },
+          }),
+          { status: 200, headers: { "content-type": "image/jpeg" } },
+        ) as never,
+    );
+
+    const res = await proxy("", "image/webp");
+
+    expect(res.status).toBe(502);
+    expect(cancelled).toBe(true);
+    expect(pulled).toBeLessThan(10);
+  });
+});
