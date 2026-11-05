@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { configure } from "@testing-library/react";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
 vi.mock("next-intl", () => import("./mocks/next-intl"));
 vi.mock("next-intl/server", () => import("./mocks/next-intl-server"));
@@ -37,3 +37,11 @@ if (typeof Blob !== "undefined" && !Blob.prototype.arrayBuffer) {
     });
   };
 }
+
+// createCache({ globalKey }) keeps entries on globalThis, so they survive
+// vi.resetModules(). Start every test with an empty store, like a new process.
+beforeEach(() => {
+  delete (globalThis as Record<symbol, unknown>)[
+    Symbol.for("esdeveniments.cache.slots")
+  ];
+});

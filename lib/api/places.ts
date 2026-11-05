@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import {
   fetchPlaceBySlugExternal,
   fetchPlacesAggregatedExternal,
+  PLACES_LIST_CACHE_KEY,
   isSuspiciousPlaceSlug,
 } from "./places-external";
 
@@ -14,8 +15,13 @@ import {
 // maxEntries bounds the cached 404s for made-up slugs (~1,000 real places).
 const { cache: placeBySlugCache, clear: clearPlaceBySlugCache } =
   createKeyedCache<PlaceResponseDTO | null>(86400000, { maxEntries: 5000 });
+// PLACES_LIST_CACHE_KEY: one entry per process, shared with proxy.ts (which
+// keeps it for 1 h), /api/revalidate and the startup warm-up.
 const { cache: placesCache, clear: clearPlacesListCache } =
-  createCache<PlaceResponseDTO[]>(86400000, { storeEmpty: false });
+  createCache<PlaceResponseDTO[]>(86400000, {
+    storeEmpty: false,
+    globalKey: PLACES_LIST_CACHE_KEY,
+  });
 
 /**
  * Clear all in-memory place caches.
@@ -57,4 +63,11 @@ export async function fetchPlaces(): Promise<PlaceResponseDTO[]> {
     console.error("Error fetching places:", e);
     return [];
   }
+}
+
+/** Fill the cache at server start (instrumentation.ts), outside a request. */
+export async function warmPlacesCache(): Promise<void> {
+  await placesCache(() =>
+    fetchPlacesAggregatedExternal({ skipConnection: true }),
+  );
 }
