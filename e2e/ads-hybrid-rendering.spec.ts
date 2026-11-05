@@ -8,7 +8,14 @@ test.describe("Hybrid rendering: ads are SSR-only", () => {
 
     const cards = page.locator('a[href^="/e/"][data-analytics-event-slug]');
     // insertAds places the first ad after the third event.
-    test.skip((await cards.count()) < 3, "Not enough events for an ad");
+    const hasThreeCards = await cards
+      .nth(2)
+      .waitFor({ state: "attached", timeout: 30_000 })
+      .then(
+        () => true,
+        () => false,
+      );
+    test.skip(!hasThreeCards, "Not enough events for an ad");
 
     // AdCardClient is ssr:false, so every ad mounts together after hydration
     // from the same chunk. Wait for the first one, then count them all.
