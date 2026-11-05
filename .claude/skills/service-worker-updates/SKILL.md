@@ -26,6 +26,8 @@ public/sw-template.js → scripts/generate-sw.mjs (yarn prebuild) → public/sw.
 
 ## Routes (in order)
 
+Before any Workbox route, a plain `fetch` listener calls `stopImmediatePropagation()` for Next RSC requests (`RSC: 1` header or `_rsc` param), so they bypass the SW entirely. Proxying the Flight stream through the SW broke client navigations on iOS Safari ("FetchEvent.respondWith received an error: TypeError: Load failed"). Keep it above the first `registerRoute`/`precacheAndRoute`: Workbox adds its own listener there.
+
 | Match | Strategy | Cache name | Expiry |
 | --- | --- | --- | --- |
 | `/api/auth/*`, `/api/favorites` | NetworkOnly | – | – |

@@ -13,10 +13,10 @@ const STRINGS = {
 
 export default function GlobalError({
   error,
-  reset,
+  retry,
 }: {
   error: Error;
-  reset: () => void;
+  retry: () => void;
 }) {
   useEffect(() => {
     const message = error?.message ?? "";
@@ -54,7 +54,7 @@ export default function GlobalError({
               : fallbackMessage}
           </p>
           <button
-            onClick={reset}
+            onClick={retry}
             style={{
               marginTop: 16,
               padding: "8px 24px",

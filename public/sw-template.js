@@ -23,6 +23,24 @@ if (!self.workbox) {
     runtime: "runtime-cache",
   });
 
+  // Let Next.js RSC (Flight) requests go straight to the network. Registered
+  // before any Workbox route, so stopping propagation here means Workbox never
+  // calls respondWith for them. Proxying the streamed payload through the SW
+  // made iOS Safari surface "FetchEvent.respondWith received an error:
+  // TypeError: Load failed" as a render error on client navigations (e.g.
+  // listing → event), and the catch-all NetworkFirst cached build-specific
+  // payloads. Without the SW, a failed RSC fetch makes Next fall back to a full
+  // navigation, which the navigation route below handles (offline page).
+  self.addEventListener("fetch", (event) => {
+    const { request } = event;
+    if (
+      request.headers.get("RSC") === "1" ||
+      new URL(request.url).searchParams.has("_rsc")
+    ) {
+      event.stopImmediatePropagation();
+    }
+  });
+
   // --- 1. Navigation Preload (Performance Enhancement) ---
   // This feature allows the browser to start fetching a page from the network
   // at the same time the service worker starts up, eliminating any delay.
