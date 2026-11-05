@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@i18n/routing";
+import CheckoutReturnTracker from "@components/analytics/CheckoutReturnTracker";
 import SponsorImageUpload from "./SponsorImageUpload";
 
 export default function SponsorUploadPageClient() {
@@ -39,6 +40,14 @@ export default function SponsorUploadPageClient() {
 
   return (
     <div className="space-y-6">
+      {/* Stripe only sends visitors here after a completed checkout. */}
+      <CheckoutReturnTracker
+        flow="sponsor"
+        outcome="success"
+        transactionId={sessionId}
+        paid
+        requirePending
+      />
       <div className="max-w-3xl mx-auto text-center">
         <h1 className="heading-1 mb-2">{t("checkout.successTitle")}</h1>
         <p className="body-normal text-muted-foreground">

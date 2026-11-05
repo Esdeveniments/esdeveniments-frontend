@@ -8,6 +8,7 @@ import { getPromotionStatus, isStripeCheckoutUrl } from "@lib/api/promotions";
 import type { AppLocale } from "types/i18n";
 import RefreshSession from "./RefreshSession";
 import SessionRefreshNotice from "./SessionRefreshNotice";
+import CheckoutReturnTracker from "@components/analytics/CheckoutReturnTracker";
 import type { PromotionCopyCode } from "types/api/promotion";
 import type { PromotionReturnPageProps, PromotionStatusPanelProps } from "types/props";
 
@@ -36,14 +37,26 @@ export async function PromotionReturnPage({ params, variant }: PromotionReturnPa
   }
 
   const status = await getPromotionStatus(event.id);
+  const statusData = status.ok ? status.data : null;
   return (
     <>
+      <CheckoutReturnTracker
+        flow="promote"
+        outcome={variant}
+        transactionId={statusData?.orderId}
+        paid={statusData?.paymentStatus === "PAID"}
+        params={{
+          event_slug: event.slug,
+          payment_status: statusData?.paymentStatus ?? "UNKNOWN",
+          promotion_status: statusData?.promotionStatus ?? "UNKNOWN",
+        }}
+      />
       {!status.ok && status.code === "AUTHENTICATION_REQUIRED" && (
         <RefreshSession />
       )}
       <PromotionStatusPanel
         slug={event.slug}
-        status={status.ok ? status.data : null}
+        status={statusData}
         errorCode={status.ok ? undefined : status.code}
         variant={variant}
       />

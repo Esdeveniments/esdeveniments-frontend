@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
 import { Link } from "@i18n/routing";
+import CheckoutReturnTracker from "@components/analytics/CheckoutReturnTracker";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await rootLocale()) as AppLocale;
@@ -22,6 +23,7 @@ export default async function PatrocinaCancelledPage() {
 
   return (
     <main className="min-h-screen bg-background py-section-y px-section-x">
+      <CheckoutReturnTracker flow="sponsor" outcome="cancel" paid={false} />
       <div className="max-w-3xl mx-auto text-center space-y-6">
         <h1 className="heading-1">{t("cancelPage.title")}</h1>
         <p className="body-large text-foreground/80">{t("cancelPage.subtitle")}</p>

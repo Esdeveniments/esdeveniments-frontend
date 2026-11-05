@@ -532,7 +532,7 @@ const PublishForm = () => {
           sendGoogleEvent("publish_error", {
             ...buildPublishContext({ form, imageFile }),
             source: "publica",
-            category:
+            reason:
               result.reason === "profile-incomplete"
                 ? "profile-incomplete"
                 : "stale-session",
@@ -552,7 +552,7 @@ const PublishForm = () => {
           sendGoogleEvent("publish_error", {
             ...buildPublishContext({ form, imageFile }),
             source: "publica",
-            category: "generic",
+            reason: "generic",
           });
           setError(t("errorCreate"));
           captureException(new Error("publica: createEventAction returned no event"), {
@@ -616,7 +616,7 @@ const PublishForm = () => {
         sendGoogleEvent("publish_error", {
           ...buildPublishContext({ form, imageFile }),
           source: "publica",
-          category: classifyPublishError({
+          reason: classifyPublishError({
             isImageUploadLimit,
             isBodyLimit,
             isRequestTooLarge,

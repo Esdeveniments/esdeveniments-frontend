@@ -12,7 +12,10 @@ vi.mock("@components/hooks/useEvents", () => ({ useEvents: vi.fn() }));
 vi.mock("@components/context/UrlFiltersContext", () => ({
   useSharedUrlFilters: vi.fn(),
 }));
-vi.mock("@utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
+vi.mock("@utils/analytics", () => ({
+  sendGoogleEvent: vi.fn(),
+  toSearchTermParam: (term: string) => term,
+}));
 vi.mock("@components/hooks/useListingAnalytics", () => ({ default: vi.fn() }));
 vi.mock("next/dynamic", () => ({
   default: () => (props: Record<string, unknown>) => (

@@ -43,15 +43,15 @@ export function useEventModals() {
 
     if (success) setShowThankYouBanner(true);
 
-    sendGoogleEvent("send-delete", {
-      value: reasonToDelete,
+    sendGoogleEvent("event_delete_request", {
+      reason: reasonToDelete ?? "none",
     });
   };
 
   const onRemove = () => {
     setOpenModal(false);
     setTimeout(() => setOpenModalDeleteReasonModal(true), 300);
-    sendGoogleEvent("open-delete-modal", {});
+    sendGoogleEvent("delete_modal_open", {});
   };
 
   return {

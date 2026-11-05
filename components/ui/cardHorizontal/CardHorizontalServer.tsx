@@ -73,7 +73,6 @@ const CardHorizontalServer = async ({
           <FavoriteButtonOverlay
             eventSlug={event.slug}
             eventId={event.id ? String(event.id) : undefined}
-            eventTitle={event.title}
             initialIsFavorite={isFavorite}
             labels={favoriteLabels}
             wrapperClassName="pointer-events-auto z-[2]"

@@ -472,7 +472,6 @@ async function EventPageBody({
                         <FavoriteButton
                           eventSlug={event.slug}
                           eventId={event.id ? String(event.id) : undefined}
-                          eventTitle={event.title}
                           initialIsFavorite={false}
                           labels={favoriteLabels}
                         />

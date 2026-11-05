@@ -2,7 +2,12 @@
 
 import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
+import { useAuth } from "@components/hooks/useAuth";
+import {
+  sendGoogleEvent,
+  ensureGtag,
+  setAnalyticsUserId,
+} from "@utils/analytics";
 
 // Fires once per page load when the OIDC callback redirects back with a
 // one-shot `auth_success`/`auth_error` marker (set by /api/auth/callback).
@@ -61,9 +66,23 @@ function AuthGateClickTracker() {
   return null;
 }
 
+// Keeps GA4's User-ID in sync with the session (opaque Logto id only).
+function AuthUserIdTracker() {
+  const { status, user } = useAuth();
+  const userId = user?.id ?? null;
+
+  useEffect(() => {
+    if (status === "loading") return;
+    setAnalyticsUserId(status === "authenticated" ? userId : null);
+  }, [status, userId]);
+
+  return null;
+}
+
 export default function AuthEventTracker() {
   return (
     <>
+      <AuthUserIdTracker />
       <AuthGateClickTracker />
       <Suspense fallback={null}>
         <AuthResultTracker />
