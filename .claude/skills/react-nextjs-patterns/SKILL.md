@@ -69,7 +69,22 @@ So a page-level fallback must be the visible skeleton, with any SEO-only markup 
 
 Reuse the folder's `loading.tsx` skeleton so both paths look the same. The home page does the same: `HomeContent` waits on `connection()`, so its fallback is `HomePageSkeleton` (built from `HomeHero`, the same hero frame and LCP image as the real page) next to the crawler-only `HomeStaticFallback`.
 
-The fallback only covers the wait; keep the wait short. Before a page renders, start every read that doesn't depend on another one, and `await` them together (`Promise.all`) or pass the promise down to the component that needs it. Don't `await` one backend call and then start the next unless the second needs the first's result. The listing pages used to chain categories → place lookup → event count → events. Now they start the place lookup and count right after validating the slug, and fetch the rich page size without waiting for the count, trimming it afterwards (`buildPlaceEventsPromise`, `buildPlaceByDateEventsPromise`). `fallback={null}` is fine for small parts of a page (sponsor slot, scripts), never for the whole body. Next's instant-navigation validation only checks that a boundary exists, not that its fallback shows anything: test the fallback with `renderToString` and a reader that never resolves (`test/place-page-loading-fallback.test.tsx`, `test/home-page-loading-fallback.test.tsx`).
+A fallback that reads `params` can't go into the generic prerendered shell of a dynamic segment (event slugs are unknown at build time), so the first flush shows a blank `<main>`. Wrap the part that reads `params` in a static boundary:
+
+```tsx
+// app/[locale]/e/[eventId]/page.tsx
+export default function EventPage({ params }) {
+  return (
+    <Suspense fallback={<EventDetailSkeleton />}>
+      <EventPageGate params={params} /> {/* use(params), inner fallback with the sr-only h1 */}
+    </Suspense>
+  );
+}
+```
+
+Prefer this over a `loading.tsx` when the folder has child routes the skeleton doesn't fit (`edita/`, `promote/`).
+
+The fallback only covers the wait; keep the wait short. Before a page renders, start every read that doesn't depend on another one, and `await` them together (`Promise.all`) or pass the promise down to the component that needs it. Don't `await` one backend call and then start the next unless the second needs the first's result. The listing pages used to chain categories → place lookup → event count → events. Now they start the place lookup and count right after validating the slug, and fetch the rich page size without waiting for the count, trimming it afterwards (`buildPlaceEventsPromise`, `buildPlaceByDateEventsPromise`). `fallback={null}` is fine for small parts of a page (sponsor slot, scripts), never for the whole body. Next's instant-navigation validation only checks that a boundary exists, not that its fallback shows anything: test the fallback with `renderToString` and a reader that never resolves (`test/place-page-loading-fallback.test.tsx`, `test/home-page-loading-fallback.test.tsx`, `test/event-page-loading-fallback.test.tsx`).
 
 ## Prefetch
 
