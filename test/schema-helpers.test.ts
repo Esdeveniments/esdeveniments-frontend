@@ -7,7 +7,12 @@ import {
   buildDateTime,
   parseDateFromIso,
 } from "@utils/schema-helpers";
-import type { EventSummaryResponseDTO } from "types/api/event";
+import type {
+  EventDetailResponseDTO,
+  EventSummaryResponseDTO,
+} from "types/api/event";
+import type { OwnerSummaryDTO } from "types/api/user";
+import { siteUrl } from "@config/index";
 
 const baseEvent: EventSummaryResponseDTO = {
   id: "event-1",
@@ -79,6 +84,36 @@ describe("generateJsonData", () => {
 
     expect(schema).not.toHaveProperty("performer");
     expect(schema).not.toHaveProperty("organizer");
+  });
+
+  const withOwner = (owner: Partial<OwnerSummaryDTO>) =>
+    ({
+      ...createEvent(),
+      owner: {
+        id: "u1",
+        displayName: "Ajuntament de Premià de Dalt",
+        username: "ajuntament-premia-de-dalt",
+        avatarUrl: null,
+        verified: true,
+        role: "ORGANIZATION",
+        ...owner,
+      },
+    }) as EventDetailResponseDTO;
+
+  it("uses a verified organization owner as organizer, linked to its profile", () => {
+    expect(generateJsonData(withOwner({}), "es").organizer).toEqual({
+      "@type": "Organization",
+      name: "Ajuntament de Premià de Dalt",
+      url: `${siteUrl}/es/perfil/ajuntament-premia-de-dalt`,
+    });
+  });
+
+  it.each([
+    ["unverified organization", { verified: false }],
+    ["verified admin", { role: "ADMIN" as const }],
+    ["verified user", { role: "USER" as const }],
+  ])("omits organizer for a %s owner", (_label, owner) => {
+    expect(generateJsonData(withOwner(owner))).not.toHaveProperty("organizer");
   });
 
   it("adds the Madrid UTC offset to timed dates, DST-aware", () => {

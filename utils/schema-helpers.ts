@@ -1,6 +1,7 @@
 import { siteUrl } from "@config/index";
 import { normalizeEndTime } from "@utils/date-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
+import { getProfileSlug } from "@utils/user-helpers";
 import { TIMEZONE_MADRID } from "@utils/constants";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
@@ -13,7 +14,12 @@ import {
   localeToHrefLang,
   type AppLocale,
 } from "types/i18n";
-import type { VideoObject, SchemaOrgEvent } from "types/schema";
+import type {
+  VideoObject,
+  SchemaOrgEvent,
+  SchemaOrganizer,
+  SchemaEventListItem,
+} from "types/schema";
 
 const SCHEMA_WARNING_LIMIT = 5;
 const schemaWarningCounts: Record<string, number> = {};
@@ -95,6 +101,39 @@ export const parseDateFromIso = (iso?: string, isEnd?: boolean): Date | undefine
   const parsed = new Date(candidate);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 };
+
+/**
+ * The event's verified organization owner (e.g. a town council), linked to
+ * its profile page. Admins and regular users only publish or import events,
+ * so they are never presented as the organizer.
+ */
+const buildOrganizer = (
+  event: EventDetailResponseDTO | EventSummaryResponseDTO,
+  locale: AppLocale
+): SchemaOrganizer | undefined => {
+  const owner = "owner" in event ? event.owner : null;
+  if (!owner?.verified || owner.role !== "ORGANIZATION") return undefined;
+  const slug = getProfileSlug(owner);
+  const name = owner.displayName?.trim() || owner.username?.trim();
+  if (!slug || !name) return undefined;
+  return {
+    "@type": "Organization",
+    name,
+    url: toLocalizedUrl(`/perfil/${encodeURIComponent(slug)}`, locale),
+  };
+};
+
+/** List entries that link to each event page (see SchemaEventListItem). */
+export const buildEventListItems = (
+  events: Pick<EventSummaryResponseDTO, "slug" | "title">[],
+  locale: AppLocale = DEFAULT_LOCALE
+): SchemaEventListItem[] =>
+  events.map((event, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    url: toLocalizedUrl(`/e/${event.slug}`, locale),
+    name: event.title,
+  }));
 
 export const generateJsonData = (
   event: EventDetailResponseDTO | EventSummaryResponseDTO,
@@ -231,6 +270,7 @@ export const generateJsonData = (
   // are filtered by Google's freshness policy regardless of this field.
 
   const schemaName = trimmedTitle || `Esdeveniment a ${fallbackPlace}`.trim();
+  const organizer = buildOrganizer(event, localeToUse);
   const placeName = sanitizedLocation || addressLocality || fallbackPlace;
 
   return {
@@ -267,8 +307,9 @@ export const generateJsonData = (
     description: descriptionValue,
     inLanguage,
     ...(genre && { genre }),
-    // performer/organizer are omitted: the backend has no performer or
-    // organizer data, and the venue name is neither (Google sd-policies).
+    // No performer: the backend has none, and the venue is not one (Google
+    // sd-policies). The venue goes in `location`, not `organizer`.
+    ...(organizer && { organizer }),
     // isAccessibleForFree removed: event.type defaults to "FREE" so this is unreliable.
     // We only want to claim "Free" when we are 100% sure.
     ...(isValidHttpUrl(event.url) && {

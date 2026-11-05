@@ -28,7 +28,10 @@ import {
   buildEventIntroText,
   formatPlaceName,
 } from "@utils/helpers";
-import { generateHowToSchema } from "@utils/schema-helpers";
+import {
+  buildEventListItems,
+  generateHowToSchema,
+} from "@utils/schema-helpers";
 import LatestNewsSection from "./components/LatestNewsSection";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { generateBreadcrumbList } from "@components/partials/seo-meta";
@@ -316,26 +319,11 @@ async function EventPageBody({
         "@type": "ItemList",
         name: "Related Events",
         url: `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`,
-        numberOfItems: event.relatedEvents.length,
-        itemListElement: event.relatedEvents
-          .slice(0, 10) // Limit for performance
-          .map((relatedEvent, index) => {
-            try {
-              return {
-                "@type": "ListItem",
-                position: index + 1,
-                item: generateJsonData(relatedEvent, locale),
-              };
-            } catch (err) {
-              console.error(
-                "Error generating JSON-LD for related event:",
-                relatedEvent.id,
-                err
-              );
-              return null;
-            }
-          })
-          .filter(Boolean),
+        numberOfItems: Math.min(event.relatedEvents.length, 10),
+        itemListElement: buildEventListItems(
+          event.relatedEvents.slice(0, 10),
+          locale
+        ),
       }
       : null;
 
