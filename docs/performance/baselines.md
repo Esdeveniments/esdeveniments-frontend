@@ -268,3 +268,55 @@ Server time for the full HTML through Cloudflare (`perf-lab.mjs` fetch, cold / w
 - No React hydration errors on `/`, `/catalunya` and `/barcelona` in a real browser after the deploy.
 
 **Next check:** CrUX (`python3 scripts/crux-check.py`) about 4 weeks after 2026-11-04; a lab TBT comparison of main against the 2026-11-02 "Now" build.
+
+## 2026-11-05: inline root shell (#656, release #657)
+
+Release #657 (`e768a37d`) removed the root layout `<Suspense>`, so the navbar is in the first HTML (#656), and added the home and event loading skeletons (#653, #654). "Before" = main `9e5ae714`, "after" = main `e768a37d`, both built locally and measured in the same session against the same API. Pixel 7, 4x CPU, 1.6 Mbps / 150 ms. Event: `oficina-itinerant-dhabitatge-i-rehabilitacio-11-de-novembre-del-2026-221a4fc1-aff6-4795-8da8-ef0ea943bffc` (no image).
+
+**First visit, no Google scripts** (E2E build, `scripts/perf-lab.mjs`, two passes run before-after-after-before, median of 3 each, shown as pass 1 / pass 2):
+
+| Page | FCP before → after | LCP before → after | TBT before → after | HTML raw |
+|---|---|---|---|---|
+| `/` | 724 / 692 → 720 / 716 ms | 1288 / 1320 → 1312 / 1304 ms | 156 / 146 → 162 / 149 ms | 569 → 591 KB |
+| `/catalunya` | 1004 / 952 → **628 / 632** | 1004 / 952 → 924 / 904 | 159 / 101 → 159 / 133 | 545 → 552 KB |
+| `/barcelona` | 1512 / 948 → **616 / 616** | 1632 / 948 → 940 / 912 | 188 / 123 → 135 / 116 | 325 → 332 KB |
+| Event | 1008 / 984 → **624 / 632** | 1008 / 984 → 892 / 924 | 140 / 104 → 154 / 145 | 303 → 316 KB |
+| `/preferits` | 992 / 620 → 616 / 628 | 992 / 620 → 896 / 872 | 212 / 148 → 157 / 130 | 229 → 239 KB |
+
+CLS is the same on every page (0 to 0.006).
+
+**Repeat visit** (same profile, `/` loaded first so the JavaScript is cached, then the page; median of 5):
+
+| Page | FCP before → after | LCP before → after | Client-rendered boundaries |
+|---|---|---|---|
+| `/` | 352 → **248 ms** | 564 → **384 ms** | 2 → 0 |
+| `/catalunya` | 564 → **272** | 964 → 1028 | 7 → 7 |
+| `/barcelona` | 536 → **340** | 940 → **664** | 2 → 2 |
+| Event | 628 → **372** | 628 → 724 | 2 → 2 |
+| `/preferits` | 552 → **324** | 552 → 592 | 0 → 0 |
+
+"Client-rendered boundaries" counts streamed sections React threw away and rendered again on the client (`removeChild` of a `/$` marker called from `/_next/static/`).
+
+**First visit with Google scripts** (production builds served as `https://www.esdeveniments.cat` through a local TLS proxy and `--host-resolver-rules`, so Funding Choices and gtag.js run for real; ads and GA hits blocked: `/googlesyndication|doubleclick|adtrafficquality|googleadservices|google-analytics\.com|\/g\/collect|\/pagead\//`; median of 5, runs alternated):
+
+| Page | FCP before → after | LCP before → after | TBT before → after (all 5 runs after) |
+|---|---|---|---|
+| `/` | 720 → 728 ms | 1408 → 1420 ms | 605 → 622 ms (622/680/481/621/655) |
+| `/catalunya` | 996 → **664** | 1016 → 1016 | 664 → 582 (764/727/562/582/555) |
+| `/barcelona` | 1020 → **656** | 1020 → 1036 | 659 → 781 (666/743/781/800/782) |
+| Event | 1016 → **640** | 9464 → 9464 (a late paint in both builds, not investigated) | 518 → 568 (657/833/568/488/443) |
+
+**TBT on production by script** (`/` and `/barcelona`, 3 runs each, blocking one origin at a time): everything 404-740 ms, without gtag.js 254-421 ms, without Funding Choices 269-352 ms, without both (and ads) 152-270 ms. gtag.js and Funding Choices each add about 150-250 ms; our own JavaScript is about 150-170 ms.
+
+**Production, after the deploy** (`scripts/perf-lab.mjs`, live, same profile as 2026-11-04): `/` FCP 0.88 s, LCP 1.89 s (image), TBT 672 ms; `/catalunya` 0.86 / 1.18 s (text), TBT 835 ms; `/barcelona` 0.83 / 1.15 s (image), TBT 801 ms; event 0.78 / 3.98 s (image), TBT 884 ms. In a throttled check (4x CPU, 150 ms, 1.6 Mbps) the navbar was visible before FCP on `/`, `/barcelona` and `/preferits` in every run.
+
+**Field (CrUX, phone, p75, period to 2026-10-31, before this release):** LCP 2.58 s (73% good), INP 186 ms (81%), CLS 0.22 (72%), FCP 1.22 s, TTFB 0.52 s. CLS p75 history: 0.02 (May) → 0.05 (Aug) → 0.28 (Oct).
+
+**Findings:**
+- FCP and the navbar are 0.1-0.4 s earlier on listings, the event page and `/preferits`, first visit or repeat. `/` is unchanged on a first visit and 0.1 s faster on a repeat visit.
+- LCP is unchanged or better on a first visit. On a repeat visit it is 0.2-0.3 s better on `/` and `/barcelona` but 40-100 ms worse on `/catalunya`, the event page and `/preferits`. Cause: React 19.2 reveals a streamed boundary no earlier than 300 ms after the shell's first frame (`$RC` waits until `$RT + 300`; `$RT` is set in the first `requestAnimationFrame` after the shell). The new shell (navbar plus skeleton) paints first, so content that is ready sooner waits for that window. Before, nothing painted until the single root reveal. It only costs on fast loads (LCP well under 1 s); slower loads wait for the data anyway.
+- TBT is the same within noise, with and without Google scripts. The production TBT of 600-900 ms (against 128-206 ms on 2026-11-04) comes from gtag.js and Funding Choices, whose loading code this release did not change. It is the largest open item for TBT and INP.
+- The extra 7-22 KB of raw HTML is the RSC payload of the new loading skeletons (on `/preferits`, six skeleton cards). Markup is unchanged; transferred bytes grew 2-6 KB.
+- Field CLS (0.22) predates this release. Lab CLS is 0-0.008 on every page, so the field shifts come from what the lab doesn't show (ads, the consent box; see 2026-11-02).
+
+**Next check:** CrUX about 4 weeks after 2026-11-05 (FCP should drop; watch CLS); TBT from gtag.js and Funding Choices (for example, start gtag.js after the first interaction, like AdSense); GA `web_vitals` CLS attribution (#591) to find the field shifts.
