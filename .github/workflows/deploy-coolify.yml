@@ -659,7 +659,14 @@ jobs:
           # Health check with details
           echo ""
           echo "Checking deployment health..."
-          HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 5 "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
+          # Retry like the events check: right after the swap the proxy can
+          # still route one request to the old container (a lone 502 on
+          # 2026-11-05 failed a healthy deploy).
+          for attempt in 1 2 3; do
+            HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 5 "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
+            [ "$HTTP_CODE" = "200" ] && break
+            [ "$attempt" -lt 3 ] && { echo "  attempt $attempt: HTTP $HTTP_CODE — retrying in 5s"; sleep 5; }
+          done
           if [ "$HTTP_CODE" = "200" ] && [ -f /tmp/health.json ]; then
             echo "Health endpoint: OK"
             CACHE=$(jq -r '.cache.strategy // "unknown"' /tmp/health.json)
@@ -668,7 +675,7 @@ jobs:
               echo "::warning::Redis cache not connected (strategy: $CACHE)"
             fi
           else
-            echo "::error::Health endpoint returned HTTP $HTTP_CODE"
+            echo "::error::Health endpoint returned HTTP $HTTP_CODE after 3 attempts"
             FAILED=1
           fi
 
