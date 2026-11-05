@@ -39,7 +39,8 @@ import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
 import { getCategoryLabel } from "@utils/category-helpers";
-import { HERO_IMAGE } from "@config/hero-image";
+import HomeHero from "@components/ui/hero/HomeHero";
+import HomeEventsSkeleton from "@components/ui/common/skeletons/HomeEventsSkeleton";
 
 // Enable streaming with Suspense; dynamic typing doesn’t yet expose `suspense`.
 const HeroSection = (dynamic as any)(
@@ -200,41 +201,11 @@ async function ServerEventsCategorized({
   return (
     <div className="w-full bg-background">
       {/* 1. HERO SECTION: Search + Location + Dates */}
-      <div className="relative overflow-hidden border-b border-border/40 pb-8 pt-4">
-        {/* Hero background image — uses <img> instead of CSS background-image
-            so the browser can discover it early and apply fetchpriority="high" */}
-        <picture>
-          <source
-            media={HERO_IMAGE.mobile.media}
-            srcSet={HERO_IMAGE.mobile.srcSet}
-            sizes={HERO_IMAGE.mobile.sizes}
-            type={HERO_IMAGE.mobile.type}
-          />
-          <source
-            media={HERO_IMAGE.mobile.media}
-            srcSet={HERO_IMAGE.mobile.fallbackSrcSet}
-            sizes={HERO_IMAGE.mobile.sizes}
-            type="image/webp"
-          />
-          <img
-            src={HERO_IMAGE.src}
-            srcSet={HERO_IMAGE.desktop.srcSet}
-            sizes={HERO_IMAGE.desktop.sizes}
-            alt=""
-            aria-hidden="true"
-            fetchPriority="high"
-            decoding="async"
-            className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
-          />
-        </picture>
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
-        <div className="container relative z-10">
-          <Suspense fallback={<HeroSectionSkeleton />}>
-            <HeroSection subTitle={pageData?.subTitle} />
-          </Suspense>
-        </div>
-      </div>
+      <HomeHero>
+        <Suspense fallback={<HeroSectionSkeleton />}>
+          <HeroSection subTitle={pageData?.subTitle} />
+        </Suspense>
+      </HomeHero>
 
       {/* 2. SEO LINK SECTIONS (weekend, today, tomorrow, agendas) */}
       {seoLinkSectionsWithAnalytics.length > 0 && (
@@ -305,7 +276,7 @@ async function ServerEventsCategorized({
       </section>
 
       {/* 4. STREAMED CONTENT: HEAVY FETCHING */}
-      <Suspense fallback={<ServerEventsCategorizedFallback />}>
+      <Suspense fallback={<HomeEventsSkeleton />}>
         <ServerEventsCategorizedContent
           localePrefix={prefix}
           localAgendasSection={localAgendasSection}
@@ -652,24 +623,3 @@ export async function ServerEventsCategorizedContent({
 }
 
 export default ServerEventsCategorized;
-
-function ServerEventsCategorizedFallback() {
-  return (
-    <div className="container py-section-y animate-pulse">
-      <div className="space-y-6">
-        <div className="h-7 w-56 rounded bg-foreground/10" />
-        <div className="h-5 w-2/3 rounded bg-foreground/10" />
-        <div className="grid gap-element-gap md:grid-cols-2">
-          {[0, 1, 2, 3].map((index) => (
-            <div key={index} className="space-y-4 rounded-lg border p-6">
-              <div className="h-6 w-40 rounded bg-foreground/10" />
-              <div className="h-4 w-full rounded bg-foreground/10" />
-              <div className="h-4 w-3/4 rounded bg-foreground/10" />
-              <div className="h-32 rounded bg-foreground/10" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -1,73 +1,51 @@
-import EventCardSkeleton from "./EventCardSkeleton";
+import HomeHero from "@components/ui/hero/HomeHero";
+import HeroSectionSkeleton from "@components/ui/hero/HeroSectionSkeleton";
+import HomeEventsSkeleton from "./HomeEventsSkeleton";
 
+// Mirrors ServerEventsCategorized: hero, link chip sections, quick
+// categories, then the streamed event sections.
 export default function HomePageSkeleton() {
   return (
-    <div
-      className="w-full bg-background overflow-hidden"
-      aria-hidden="true"
-    >
-      <div className="container mt-element-gap">
-        {/* SEO Content skeleton */}
-        <h1 className="heading-1 mb-2">
-          <div className="space-y-2">
-            <div className="h-6 bg-border/40 rounded w-2/3 animate-pulse" />
-            <div className="h-6 bg-border/40 rounded w-1/2 animate-pulse" />
-          </div>
-        </h1>
-        <h2 className="heading-2 text-foreground text-left">
-          <div className="space-y-2">
-            <div className="h-5 bg-border/40 rounded w-3/4 animate-pulse" />
-            <div className="h-5 bg-border/40 rounded w-2/3 animate-pulse" />
-          </div>
-        </h2>
+    <div className="w-full bg-background" data-testid="home-page-skeleton">
+      <HomeHero>
+        <HeroSectionSkeleton />
+      </HomeHero>
 
-        {/* Location Discovery Widget skeleton */}
-        <div className="w-full h-16 bg-border/40 rounded animate-pulse my-element-gap" />
-      </div>
-
-      <div className="container">
-        {/* Category sections skeleton - reduced to 2 for faster FCP */}
-        {Array.from({ length: 2 }).map((_, categoryIndex) => (
-          <div key={categoryIndex}>
-            {/* Category header */}
-            <div className="flex justify-between items-center">
-              <h3 className="heading-3">
-                <div className="space-y-2">
-                  <div className="h-5 bg-border/40 rounded w-64 animate-pulse" />
-                  <div className="h-5 bg-border/40 rounded w-40 animate-pulse" />
-                </div>
-              </h3>
-              <div className="flex items-center gap-1">
-                <div className="h-5 bg-border/40 rounded w-16 animate-pulse" />
-                <div className="w-5 h-5 bg-border/40 rounded-full animate-pulse" />
-              </div>
-            </div>
-
-            {/* Badge navigation skeleton */}
-            <nav
-              aria-hidden="true"
-              className="mt-element-gap-sm mb-element-gap-sm"
-            >
-              <div className="flex gap-element-gap">
-                <div className="h-8 bg-border/40 rounded-badge w-20 animate-pulse" />
-                <div className="h-8 bg-border/40 rounded-badge w-32 animate-pulse" />
-              </div>
-            </nav>
-
-            {/* Events horizontal scroll skeleton - reduced to 2 for faster FCP */}
-            <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
-              {Array.from({ length: 2 }).map((_, eventIndex) => (
+      <div
+        className="container py-section-y border-b border-border/40 space-y-8 animate-pulse"
+        aria-hidden="true"
+      >
+        {[4, 4, 3].map((chipCount, sectionIndex) => (
+          <div key={sectionIndex} className="flex flex-col gap-4">
+            <div className="h-7 w-64 rounded bg-border/40" />
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: chipCount }).map((_, chipIndex) => (
                 <div
-                  key={eventIndex}
-                  className="snap-start flex-none w-[85vw] min-w-[85vw] sm:w-96 sm:min-w-[24rem] flex flex-col bg-background overflow-hidden"
-                >
-                  <EventCardSkeleton />
-                </div>
+                  key={chipIndex}
+                  className="h-8 w-32 rounded-full bg-border/40"
+                />
               ))}
             </div>
           </div>
         ))}
       </div>
+
+      <div
+        className="py-section-y container border-b animate-pulse"
+        aria-hidden="true"
+      >
+        <div className="h-7 w-56 rounded bg-border/40 mb-element-gap" />
+        <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:gap-4">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-10 w-full sm:w-36 rounded-button bg-border/40"
+            />
+          ))}
+        </div>
+      </div>
+
+      <HomeEventsSkeleton />
     </div>
   );
 }
