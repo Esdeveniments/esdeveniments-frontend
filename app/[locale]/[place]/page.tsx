@@ -17,6 +17,7 @@ import type {
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import type { FetchEventsParams } from "types/event";
 import PlacePageShell from "@components/partials/PlacePageShell";
+import PlacePageSkeleton from "@components/ui/common/skeletons/PlacePageSkeleton";
 import {
   validatePlaceOrThrow,
   validatePlaceForMetadata,
@@ -84,14 +85,22 @@ export default function Page({
 }: PageProps<"/[locale]/[place]">) {
   const { place } = use(params);
 
-  // Minimal SEO-safe fallback: if the streamed gate fails (broken env,
-  // Suspense error, etc.) crawlers still see an h1 derived from the slug.
-  // This mirrors the homepage's HomeStaticFallback pattern.
+  // Fallback while PlacePageGate suspends: the page skeleton for users and
+  // an h1 derived from the slug for crawlers. This boundary catches every
+  // suspension below it, so [place]/loading.tsx only shows while params
+  // resolve. It doesn't catch errors, but if the gate throws on the server
+  // React leaves this fallback in the HTML and retries on the client, so
+  // crawlers still get the h1.
   const placeLabel = formatPlaceName(place);
 
   return (
     <Suspense
-      fallback={<h1 className="sr-only">{placeLabel}</h1>}
+      fallback={
+        <>
+          <h1 className="sr-only">{placeLabel}</h1>
+          <PlacePageSkeleton />
+        </>
+      }
     >
       <PlacePageGate place={place} />
     </Suspense>
@@ -132,19 +141,20 @@ export async function PlacePageGate({ place }: { place: string }): Promise<JSX.E
 
   const eventsPromise = buildPlaceEventsPromise({ place, locale });
 
-  // Await categories for late existence check only
-  const categories = await categoriesPromise;
-
   // Late existence check to preserve UX without creating an enumeration oracle
   // Note: We pass empty searchParams to keep pages static (ISR-compatible).
   // Query params are not preserved on alias redirects (rare edge case).
-  const placeRedirectUrl = await getPlaceAliasOrInvalidPlaceRedirectUrl({
-    place,
-    locale,
-    rawSearchParams: {},
-    buildTargetPath: (alias) => `/${alias}`,
-    fetchPlaceBySlug,
-  });
+  // Runs alongside categories: neither needs the other.
+  const [categories, placeRedirectUrl] = await Promise.all([
+    categoriesPromise,
+    getPlaceAliasOrInvalidPlaceRedirectUrl({
+      place,
+      locale,
+      rawSearchParams: {},
+      buildTargetPath: (alias) => `/${alias}`,
+      fetchPlaceBySlug,
+    }),
+  ]);
   if (placeRedirectUrl) {
     redirect(placeRedirectUrl);
   }
@@ -216,7 +226,8 @@ export async function buildPlaceEventsPromise({
   place: string;
   locale?: AppLocale;
 }): Promise<PlacePageEventsResult> {
-  const placeTypeLabel = await getPlaceTypeAndLabelCached(place);
+  // Only needed after the events arrive, so don't hold the events fetch on it.
+  const placeTypeLabelPromise = getPlaceTypeAndLabelCached(place);
 
   // Always fetch the rich page size: the unfiltered response's totalElements
   // decides expandability, which saves a separate count call. Thin places are
@@ -248,6 +259,7 @@ export async function buildPlaceEventsPromise({
         place: undefined,
       },
     });
+  const placeTypeLabel = await placeTypeLabelPromise;
   // An empty first page is either a real zero or an API failure (fetchEvents
   // returns an empty page for both), and eventsResponse then holds a fallback
   // total. Ask the count endpoint so failures fail open, as in the sitemap.

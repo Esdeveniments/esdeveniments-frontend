@@ -44,6 +44,33 @@ Don't build a new list or `useSWR` call for events. Reuse:
 
 The append/dedupe/ads contract is in AGENTS.md › Rendering. `getInternalApiUrl` (`utils/api-helpers.ts`) is async and server-only, and so are the `lib/api/*` helpers; client code fetches relative `/api/*` URLs (e.g. `components/hooks/useEvents.ts`).
 
+## Loading UI
+
+What users see while a page loads is the fallback of the nearest `<Suspense>` *below the shared layout*:
+
+- Direct visit: the static shell. Client navigation: only the part below the layout the two routes share re-renders, so the root layout's `<Suspense fallback={<AppShellSkeleton />}>` never shows on a navigation.
+- `loading.tsx` is a `<Suspense>` around the page. If the page returns its own `<Suspense>` straight away (the sync `[place]` page does, to flush the shell early), that inner boundary catches everything and `loading.tsx` only shows while `params` resolve.
+
+So a page-level fallback must be the visible skeleton, with any SEO-only markup next to it:
+
+```tsx
+// app/[locale]/[place]/page.tsx
+<Suspense
+  fallback={
+    <>
+      <h1 className="sr-only">{placeLabel}</h1>
+      <PlacePageSkeleton />
+    </>
+  }
+>
+  <PlacePageGate place={place} />
+</Suspense>
+```
+
+Reuse the folder's `loading.tsx` skeleton so both paths look the same.
+
+The fallback only covers the wait; keep the wait short. Before a page renders, start every read that doesn't depend on another one, and `await` them together (`Promise.all`) or pass the promise down to the component that needs it. Don't `await` one backend call and then start the next unless the second needs the first's result. The listing pages used to chain categories → place lookup → event count → events. Now they start the place lookup and count right after validating the slug, and fetch the rich page size without waiting for the count, trimming it afterwards (`buildPlaceEventsPromise`, `buildPlaceByDateEventsPromise`). `fallback={null}` is fine for small parts of a page (sponsor slot, scripts), never for the whole body. Next's instant-navigation validation only checks that a boundary exists, not that its fallback shows anything: test the fallback with `renderToString` and a reader that never resolves (`test/place-page-loading-fallback.test.tsx`).
+
 ## Prefetch
 
 `partialPrefetching` makes links prefetch the route's shared shell. Never set `prefetch={true}` on a `<Link>`. `PressableAnchor` (`components/ui/primitives/PressableAnchor.tsx`) defaults to `prefetch={false}`; keep it.
