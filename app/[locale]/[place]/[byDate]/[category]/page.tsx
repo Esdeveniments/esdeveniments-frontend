@@ -129,26 +129,36 @@ export async function generateMetadata({
 export default async function FilteredPage({
   params,
 }: PageProps<"/[locale]/[place]/[byDate]/[category]">) {
-  // Parallelize independent operations: params, locale, and categories fetch.
-  const [resolvedParams, locale, categoriesResult] = await Promise.all([
-    params,
-    rootLocale() as Promise<AppLocale>,
-    getCategories().catch((error) => {
-      console.error("Error fetching categories:", error);
-      return [] as CategorySummaryResponseDTO[];
-    }),
-  ]);
-  const { place, byDate, category } = resolvedParams;
-  const tFallback = await getTranslations({
-    locale,
-    namespace: "App.PlaceByDateCategory",
-  });
+  const { place, byDate, category } = await params;
 
   try {
     validatePlaceOrThrow(place);
   } catch {
     notFound();
   }
+
+  // The place lookup and its event count (which sets the SSR page size) don't
+  // need categories: start them now instead of after categories arrive. Both
+  // catch their own errors, so neither promise rejects. React cache() dedupes
+  // the calls from generateMetadata and PlacePageShell in the same request.
+  // parseFiltersFromUrl keeps the place segment as is, so filters.place below
+  // is this same slug.
+  const placeTypeLabelPromise = getPlaceTypeAndLabelCached(place);
+  const isExpandablePromise = placeTypeLabelPromise.then((typeLabel) =>
+    getPlaceExpandability(place, typeLabel.type)
+  );
+
+  const [locale, categoriesResult] = await Promise.all([
+    rootLocale() as Promise<AppLocale>,
+    getCategories().catch((error) => {
+      console.error("Error fetching categories:", error);
+      return [] as CategorySummaryResponseDTO[];
+    }),
+  ]);
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceByDateCategory",
+  });
 
   // Note: We don't do early place existence checks to avoid creating an enumeration oracle.
   // Invalid places will naturally result in empty event lists, which the page handles gracefully.
@@ -189,21 +199,12 @@ export default async function FilteredPage({
   // Convert to FilterState for compatibility
   const filters = urlToFilterState(parsed);
 
-  // Match SSR depth to indexability: expandable places get a richer first page;
-  // thin places stay small. Both helpers are React cache()-wrapped, so duplicate
-  // calls in the same request are deduped.
-  const placeTypeLabelForFetch = await getPlaceTypeAndLabelCached(filters.place);
-  const isExpandableForFetch = await getPlaceExpandability(
-    filters.place,
-    placeTypeLabelForFetch.type
-  );
-
   // Prepare fetch params (align with byDate page behavior)
   const fetchParams: FetchEventsParams = {
     page: 0,
-    size: isExpandableForFetch
-      ? SSR_EVENTS_SIZE_EXPANDABLE
-      : SSR_EVENTS_SIZE_THIN,
+    // Always the rich size, so the events fetch doesn't wait for the event
+    // count; thin places are trimmed once it arrives (as on the [place] page).
+    size: SSR_EVENTS_SIZE_EXPANDABLE,
     category:
       filters.category !== DEFAULT_FILTER_VALUE ? filters.category : undefined,
     // term is client-driven via SWR; omit on server to keep ISR static
@@ -265,7 +266,7 @@ export default async function FilteredPage({
     pageDataPromise: placeShellDataPromise.then((data) => data.pageData),
     categoryName: categoryData?.name,
     locale,
-    placeIsExpandable: isExpandableForFetch,
+    placeIsExpandablePromise: isExpandablePromise,
   });
 
   // Late existence check to preserve UX without creating an early oracle
@@ -389,14 +390,16 @@ async function buildCategoryEventsPromise({
   pageDataPromise,
   categoryName,
   locale,
-  placeIsExpandable,
+  placeIsExpandablePromise,
 }: {
   filters: { place: string; byDate: string; category: string };
   fetchParams: FetchEventsParams;
   pageDataPromise: Promise<PageData>;
   categoryName?: string;
   locale: AppLocale;
-  placeIsExpandable: boolean;
+  // Match SSR depth to indexability: expandable places get a richer first
+  // page; thin places stay small.
+  placeIsExpandablePromise: Promise<boolean>;
 }): Promise<PlacePageEventsResult> {
   const { eventsResponse, events, noEventsFound } =
     await fetchEventsWithFallback({
@@ -415,9 +418,17 @@ async function buildCategoryEventsPromise({
         place: undefined,
       },
     });
-  const serverHasMore = eventsResponse ? !eventsResponse.last : false;
+  const placeIsExpandable = await placeIsExpandablePromise;
+  const ssrPageSize = placeIsExpandable
+    ? SSR_EVENTS_SIZE_EXPANDABLE
+    : SSR_EVENTS_SIZE_THIN;
+  // Fallback results come from their own smaller queries: keep them whole.
+  const pageEvents = noEventsFound ? events : events.slice(0, ssrPageSize);
+  const serverHasMore = eventsResponse
+    ? !eventsResponse.last || events.length > pageEvents.length
+    : false;
 
-  const localizedEvents = addLocalizedDateFields(events, locale);
+  const localizedEvents = addLocalizedDateFields(pageEvents, locale);
   const eventsWithAds = insertAds(localizedEvents);
   const validEvents = localizedEvents.filter(isEventSummaryResponseDTO);
   const pageData = await pageDataPromise;
@@ -459,7 +470,7 @@ async function buildCategoryEventsPromise({
     events: eventsWithAds,
     noEventsFound,
     serverHasMore,
-    ssrPageSize: fetchParams.size as number,
+    ssrPageSize,
     structuredScripts: structuredScripts.length ? structuredScripts : undefined,
     placeIsExpandable,
   };
