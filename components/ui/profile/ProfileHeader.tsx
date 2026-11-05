@@ -88,8 +88,9 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
           </p>
         )}
 
+        {/* The upcoming count lives on the Propers tab, not here, so each
+            number shows once. */}
         {(profile.eventCount !== undefined ||
-          profile.upcomingEventCount !== undefined ||
           profile.totalEventVisits !== undefined) && (
             <div
               className="flex items-center gap-element-gap mb-element-gap"
@@ -102,16 +103,6 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
                   </span>
                   <span className="body-small text-muted-foreground">
                     {t("statsPublished")}
-                  </span>
-                </div>
-              )}
-              {profile.upcomingEventCount !== undefined && (
-                <div className="flex flex-col items-center">
-                  <span className="heading-3 text-foreground-strong">
-                    {profile.upcomingEventCount}
-                  </span>
-                  <span className="body-small text-muted-foreground">
-                    {t("statsUpcoming")}
                   </span>
                 </div>
               )}
