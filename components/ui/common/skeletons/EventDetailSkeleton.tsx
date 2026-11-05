@@ -3,6 +3,7 @@ export default function EventDetailSkeleton() {
     <div
       className="w-full bg-background pb-10"
       aria-hidden="true"
+      data-testid="event-detail-skeleton"
     >
       <div className="container flex flex-col gap-section-y min-w-0">
         <article className="w-full flex flex-col gap-section-y">

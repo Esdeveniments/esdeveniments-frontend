@@ -976,6 +976,10 @@ export interface EventDetailsSectionProps {
 }
 
 // Cached body of the event detail page; slots are request-time parts.
+export interface EventPageGateProps {
+  params: Promise<{ eventId: string }>;
+}
+
 export interface EventPageBodyProps {
   slug: string;
   locale: import("./i18n").AppLocale;
