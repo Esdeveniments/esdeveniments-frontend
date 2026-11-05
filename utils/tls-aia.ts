@@ -4,8 +4,10 @@ import { isIP } from "node:net";
 import tls from "node:tls";
 import { fetch as undiciFetch } from "undici";
 import { createKeyedCache } from "@lib/api/cache";
+import { getErrorChain } from "@utils/error-chain";
 import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
+import { readBodyWithLimit } from "@utils/read-body-with-limit";
 
 // Some servers send only their leaf certificate, without the intermediates.
 // Browsers still load them because they fetch the missing issuer from the
@@ -19,7 +21,6 @@ const INCOMPLETE_CHAIN_CODES = new Set([
 ]);
 const MAX_AIA_HOPS = 3;
 const MAX_CERT_BYTES = 16_384;
-const MAX_CAUSE_DEPTH = 5;
 const ONE_DAY_MS = 86_400_000;
 
 const issuerCache = createKeyedCache<string[]>(ONE_DAY_MS, {
@@ -29,13 +30,9 @@ const issuerCache = createKeyedCache<string[]>(ONE_DAY_MS, {
 let bundledRoots: X509Certificate[] | undefined;
 
 export function isIncompleteChainError(error: unknown): boolean {
-  let current = error;
-  for (let depth = 0; depth < MAX_CAUSE_DEPTH && current instanceof Error; depth++) {
-    const { code } = current as NodeJS.ErrnoException;
-    if (code && INCOMPLETE_CHAIN_CODES.has(code)) return true;
-    current = current.cause;
-  }
-  return false;
+  return getErrorChain(error).some(
+    ({ code }) => code !== undefined && INCOMPLETE_CHAIN_CODES.has(code),
+  );
 }
 
 function isIssuedBy(cert: X509Certificate, issuer: X509Certificate): boolean {
@@ -103,16 +100,11 @@ async function fetchCertificate(
     return null;
   }
 
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for await (const chunk of response.body) {
-    total += chunk.byteLength;
-    if (total > MAX_CERT_BYTES) return null;
-    chunks.push(chunk);
-  }
+  const der = await readBodyWithLimit(response.body, MAX_CERT_BYTES);
+  if (!der) return null;
   try {
     // DER or PEM. PKCS#7 bundles (.p7c) aren't supported and stop the chase.
-    return new X509Certificate(Buffer.concat(chunks));
+    return new X509Certificate(der);
   } catch {
     return null;
   }
@@ -136,6 +128,18 @@ async function chaseIssuers(
   return isIssuedByBundledRoot(current) ? issuers : [];
 }
 
+function hostKey({ hostname, port }: URL): string {
+  return `${hostname}:${port}`;
+}
+
+/**
+ * Drops a host's cached issuers, e.g. after the server renewed its certificate
+ * under a different intermediate and the cached ones no longer complete it.
+ */
+export function forgetMissingIssuers(targetUrl: string): void {
+  issuerCache.delete(hostKey(new URL(targetUrl)));
+}
+
 /**
  * Returns the PEM intermediates a host failed to send, fetched via AIA and
  * verified up to a bundled root, or [] when they can't be resolved. Results
@@ -146,16 +150,16 @@ export async function resolveMissingIssuers(
   dnsRecords: LookupAddress[],
   signal: AbortSignal,
 ): Promise<string[]> {
-  const { hostname, port } = new URL(targetUrl);
+  const target = new URL(targetUrl);
   const address = dnsRecords[0]?.address;
   if (!address) return [];
 
-  return issuerCache.cache(`${hostname}:${port}`, async () => {
+  return issuerCache.cache(hostKey(target), async () => {
     try {
       const leaf = await readPeerCertificate(
-        hostname,
+        target.hostname,
         address,
-        Number(port) || 443,
+        Number(target.port) || 443,
         signal,
       );
       return await chaseIssuers(leaf, signal);

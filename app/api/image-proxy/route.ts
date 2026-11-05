@@ -6,8 +6,10 @@
  * - Supports image optimization: resizing, format conversion (WebP/AVIF), quality control
  */
 import { NextResponse } from "next/server";
+import type { LookupAddress } from "node:dns";
 import * as Sentry from "@sentry/nextjs";
-import { Agent, fetch as undiciFetch } from "undici";
+import { Agent, fetch as undiciFetch, type Response as UpstreamResponse } from "undici";
+import { readBodyWithLimit } from "@utils/read-body-with-limit";
 import {
   normalizeExternalImageUrl,
   isLegacyFileHandler,
@@ -16,6 +18,11 @@ import { isDevelopmentHost } from "@utils/host-validation";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
 import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
 import {
+  fetchWithLenientParser,
+  isHttpParserError,
+} from "@utils/lenient-http-fetch";
+import {
+  forgetMissingIssuers,
   isIncompleteChainError,
   resolveMissingIssuers,
 } from "@utils/tls-aia";
@@ -90,11 +97,42 @@ function isAbsoluteHttpUrl(candidate: string): boolean {
   return /^https?:\/\//i.test(candidate);
 }
 
+/**
+ * Retries upstream failures that browsers don't have: a server that omits its
+ * intermediate certificates (fetched via AIA, still fully verified) or sends a
+ * malformed header (re-read with Node's lenient parser). Anything else throws.
+ */
+async function retryBrowserTolerableFailure(
+  error: unknown,
+  url: string,
+  signal: AbortSignal,
+  dnsRecords: LookupAddress[] | undefined,
+  bypassTls: boolean,
+): Promise<UpstreamResponse> {
+  if (isHttpParserError(error)) {
+    return fetchWithLenientParser(url, signal, dnsRecords, !bypassTls);
+  }
+  if (bypassTls || !dnsRecords || !isIncompleteChainError(error)) throw error;
+
+  const issuers = await resolveMissingIssuers(url, dnsRecords, signal);
+  if (issuers.length === 0) throw error;
+  try {
+    return await undiciFetch(url, {
+      signal,
+      redirect: "manual",
+      dispatcher: buildPinnedDnsDispatcher(dnsRecords, true, issuers) ?? undefined,
+    });
+  } catch (retryError) {
+    if (isIncompleteChainError(retryError)) forgetMissingIssuers(url);
+    throw retryError;
+  }
+}
+
 async function fetchWithTimeout(
   url: string,
   redirectsRemaining = MAX_REDIRECTS,
   deadline = Date.now() + TIMEOUT_MS,
-): Promise<Awaited<ReturnType<typeof undiciFetch>>> {
+): Promise<UpstreamResponse> {
   const targetSafety = await getPublicFetchSafety(url);
   if (!targetSafety.isSafe) {
     throw new Error("Blocked unsafe image upstream");
@@ -128,24 +166,17 @@ async function fetchWithTimeout(
     // undici) mismatches internal symbols and throws
     // "controller[kState].transformAlgorithm is not a function" when decoding
     // compressed upstream responses.
-    let response: Awaited<ReturnType<typeof undiciFetch>>;
+    let response: UpstreamResponse;
     try {
       response = await undiciFetch(url, init);
     } catch (error) {
-      const dnsRecords = targetSafety.dnsRecords;
-      if (bypassTls || !dnsRecords || !isIncompleteChainError(error)) {
-        throw error;
-      }
-      const issuers = await resolveMissingIssuers(
+      response = await retryBrowserTolerableFailure(
+        error,
         url,
-        dnsRecords,
         controller.signal,
+        targetSafety.dnsRecords,
+        bypassTls,
       );
-      if (issuers.length === 0) throw error;
-      response = await undiciFetch(url, {
-        ...init,
-        dispatcher: buildPinnedDnsDispatcher(dnsRecords, true, issuers) ?? undefined,
-      });
     }
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
@@ -380,29 +411,8 @@ export async function GET(request: Request) {
       const body = response.body;
       if (!body) continue;
 
-      const chunks: Uint8Array[] = [];
-      const reader = body.getReader();
-      let totalBytes = 0;
-      let imageTooLarge = false;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        totalBytes += value.byteLength;
-        if (totalBytes > MAX_BYTES) {
-          await reader.cancel();
-          imageTooLarge = true;
-          break; // Exit the while loop
-        }
-        chunks.push(value);
-      }
-
-      if (imageTooLarge) {
-        continue; // Continue to the next fetch candidate
-      }
-
-      const imageBuffer = Buffer.concat(chunks);
-      if (imageBuffer.length === 0) continue;
+      const imageBuffer = await readBodyWithLimit(body, MAX_BYTES);
+      if (!imageBuffer?.length) continue;
 
       // Sniff content type
       const sniffBuffer = imageBuffer.subarray(
