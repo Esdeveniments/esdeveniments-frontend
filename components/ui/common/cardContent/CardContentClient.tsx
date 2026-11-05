@@ -13,6 +13,7 @@ export default function CardContentClient({
 }: CardContentProps) {
   const tCard = useTranslations("Components.CardContent");
   const tTime = useTranslations("Utils.EventTime");
+  const tCategories = useTranslations("Config.Categories");
   const locale = (useLocale() || DEFAULT_LOCALE) as AppLocale;
   const {
     title,
@@ -34,6 +35,7 @@ export default function CardContentClient({
     locale,
     tCard,
     tTime,
+    tCategories,
   });
 
   return (

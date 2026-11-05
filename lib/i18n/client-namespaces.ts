@@ -66,7 +66,6 @@ export const CLIENT_FULL_TOP_LEVEL = ["Config", "Sponsor"] as const;
 // where a "*" segment matches every key at that level. The guard test checks that every key a client file reads from these
 // namespaces resolves under one of the paths.
 export const CLIENT_PARTIAL_PATHS = [
-  "Partials.GeneratePagesData.categories.*.titleSuffix",
   "Sponsorship.checkout",
   "Sponsorship.placeSelector",
   "Sponsorship.pricing",

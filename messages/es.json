@@ -1572,7 +1572,17 @@
       "familiaIInfants": "Actividades en familia",
       "musica": "Conciertos",
       "teatre": "Teatro",
-      "exposicions": "Exposiciones"
+      "exposicions": "Exposiciones",
+      "literatura": "Literatura y libros",
+      "tallersIFormacio": "Talleres y formación",
+      "dansa": "Danza y baile",
+      "salutIBenestar": "Salud y bienestar",
+      "esport": "Deporte y actividad física",
+      "patrimoniCultural": "Patrimonio cultural",
+      "serveisMunicipals": "Servicios municipales",
+      "gentGran": "Actividades para personas mayores",
+      "cinema": "Cartelera de cine",
+      "altres": "Otras actividades"
     },
     "ByDates": {
       "today": "Hoy",

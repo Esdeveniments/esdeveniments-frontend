@@ -6,7 +6,7 @@ import {
   formatTimeForAPI,
   convertTZ,
 } from "@utils/date-helpers";
-import { getLocalizedCategoryLabelFromConfig } from "@utils/category-helpers";
+import { getCategoryLabel } from "@utils/category-helpers";
 import type { CardContentProps, FavoriteButtonLabels } from "types/props";
 import type { AppLocale } from "types/i18n";
 import type { CardVariant } from "types/ui";
@@ -126,7 +126,7 @@ export function prepareCardContentData({
   if (firstCategory && variant !== "compact") {
     categorySlug = firstCategory.slug;
     categoryLabel = tCategories
-      ? getLocalizedCategoryLabelFromConfig(
+      ? getCategoryLabel(
           firstCategory.slug,
           firstCategory.name,
           tCategories,
