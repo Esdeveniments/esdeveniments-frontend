@@ -502,6 +502,11 @@ export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   href?: Href;
 }
 
+export interface ActiveLinkAnchorProps extends Omit<ActiveLinkProps, "href"> {
+  href: string;
+  isActive: boolean;
+}
+
 // Generic Badge component props used across UI
 export interface BadgeProps {
   href?: string;

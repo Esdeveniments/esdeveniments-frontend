@@ -4,8 +4,8 @@ Repo-specific gotchas worth sharing. Read this during research on any task here.
 
 ## A page can't set its own 404 or 301: decide it in `proxy.ts`
 
-`app/[locale]/layout.tsx` wraps every page in `<Suspense>`, so the status line
-is sent before the page runs. A page-level `notFound()` then serves 200 with
+With PPR the static shell is flushed, with its status line, before the page's
+dynamic part runs. A page-level `notFound()` then serves 200 with
 `noindex`, and `redirect()` becomes a client-side meta refresh. Google files
 the first as a Soft 404 and the second as a weak redirect. Unknown place slugs
 are therefore resolved in Proxy (`resolvePlaceForProxy`, `lib/api/places-proxy.ts`):
@@ -711,6 +711,40 @@ MISS. Fix: the page returns a static `<Suspense fallback={<EventDetailSkeleton /
 around `EventPageGate`, which reads `params` and keeps the inner fallback.
 A `loading.tsx` would do the same but also wrap `edita/` and `promote/`.
 Guarded by `test/event-page-loading-fallback.test.tsx`.
+
+## A root `<Suspense>` hides the navbar on slow networks
+
+The root layout used to wrap the whole app (navbar, `<main>`, footer) in
+`<Suspense fallback={<AppShellSkeleton />}>`. React streams a finished boundary
+inline only while the shell is under 12.8 KB (`progressiveChunkSize`); any
+boundary over 500 B past that is "outlined": its HTML goes into a hidden
+`<div id="S:x">` and a `$RC` script moves it in. `$RC` waits until 300 ms after
+the first paint. The chrome is far over 12.8 KB, so it was always outlined.
+When the HTML arrived in several network chunks (staging, slow phones), the
+first paint showed the skeleton header and a blank `<main>`, and the real
+navbar came up to ~390 ms later (measured with 4× CPU, 150 ms RTT, 1.6 Mbps).
+
+Fix: no root boundary. Everything above a page's own boundary must be
+prerenderable, so a route that blocked the shell got a `loading.tsx` or an
+inline fix; `next build --debug-prerender` names them. Rules that came out of it:
+
+- Generic shells (`[eventId]`, `[place]`) can't read the pathname:
+  `usePathname`/`useParams` suspend there. Chrome that needs it reads it in a
+  tiny leaf (`ActiveLink` wraps each link in its own `<Suspense>` with a
+  non-active fallback; under 500 B, so it stays inline) or only after a click
+  (`LanguageMenu`).
+- A segment's `loading.tsx` wraps its children, not its own `layout.tsx`: a
+  layout that awaits (profile) returns its own `<Suspense>`.
+- Pass the locale to `getTranslations({ locale, namespace })` in pages and
+  layouts. next-intl caches its config by the locale argument; a call
+  without one can resolve it through `headers()` and make the root
+  `NextIntlClientProvider` dynamic, which blocks the shell
+  (`preferits/passats`).
+
+Measured against develop (median of 9, same throttling): the navbar paints
+with the first paint on `/`, `/barcelona` and an event (develop: up to 390 ms
+later), the home hero `<img>` is in the first flush, `/publica` FCP/LCP went
+from 2724 to 536 ms, CLS is unchanged. Guarded by `test/navbar-prerender.test.tsx`.
 
 ## A render flag must be the same on the server and in the browser
 

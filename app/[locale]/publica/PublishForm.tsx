@@ -310,9 +310,15 @@ const PublishForm = () => {
     });
   };
 
-  const previewEvent = useMemo(() => mapDraftToPreviewEvent({
-    form, imageUrl: imagePreview,
-  }), [form, imagePreview]);
+  // Only built while the preview is open: the mapper reads `new Date()`,
+  // which would otherwise make the prerendered form request-time.
+  const previewEvent = useMemo(
+    () =>
+      showPreview
+        ? mapDraftToPreviewEvent({ form, imageUrl: imagePreview })
+        : null,
+    [showPreview, form, imagePreview],
+  );
 
   const handlePreview = () => {
     sendGoogleEvent("publish_preview_open", {
