@@ -4,6 +4,8 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "../../../../i18n/routing";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
+import { ensureGtag, sendGoogleEvent } from "@utils/analytics";
+import type { LanguageSwitcherProps } from "types/props";
 import {
   SUPPORTED_LOCALES,
   LOCALE_COOKIE,
@@ -23,7 +25,9 @@ function setCookie(nextLocale: AppLocale) {
   document.cookie = buildCookieString(nextLocale);
 }
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({
+  compact = false,
+}: LanguageSwitcherProps) {
   const locale = useLocale();
   const t = useTranslations("Components.Navbar");
   const pathname = usePathname();
@@ -81,6 +85,8 @@ export default function LanguageSwitcher() {
     setIsOpen(false);
     if (nextLocale === locale) return;
 
+    ensureGtag();
+    sendGoogleEvent("language_switch", { from: locale, to: nextLocale });
     startNavigationFeedback();
 
     // Set cookie immediately so server sees it on next request
@@ -98,7 +104,11 @@ export default function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full rounded-input border border-border bg-background pl-button-x pr-3 py-button-y text-foreground min-h-[44px] md:min-h-0 gap-2 focus:outline-none focus:ring-2 focus:ring-primary/50 hover:border-border/80 transition-interactive"
+        className={`flex items-center justify-between w-full rounded-input border text-foreground min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary/50 transition-interactive ${
+          compact
+            ? "border-transparent bg-transparent px-2 gap-1 hover:bg-muted"
+            : "border-border bg-background pl-button-x pr-3 py-button-y md:min-h-0 gap-2 hover:border-border/80"
+        }`}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
@@ -108,7 +118,7 @@ export default function LanguageSwitcher() {
           viewBox="0 0 20 20"
           fill="currentColor"
           aria-hidden="true"
-          className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`${compact ? "w-4 h-4" : "w-5 h-5"} text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         >
           <path
             fillRule="evenodd"

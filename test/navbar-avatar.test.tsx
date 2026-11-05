@@ -65,6 +65,7 @@ const labels: NavbarLabels = {
   news: "Notícies",
   mobilePublishLabel: "Publica",
   login: "Inicia sessió",
+  loginShort: "Entra",
   logout: "Tanca sessió",
   userMenu: "Menú d'usuari",
   myProfile: "El meu perfil",
@@ -101,7 +102,9 @@ describe("NavbarClient avatar", () => {
 
     const compactActions = screen.getByTestId("compact-navbar-actions");
     expect(compactActions.querySelector('[data-testid="language-switcher"]')).toBeInTheDocument();
-    expect(screen.getByTestId("mobile-auth-slot")).toHaveClass("w-11", "h-11", "shrink-0");
+    const slot = screen.getByTestId("mobile-auth-slot");
+    expect(slot).toHaveClass("btn-outline", "btn-sm", "invisible");
+    expect(slot).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
     expect(screen.queryByTestId("mobile-login-link")).toBeNull();
   });

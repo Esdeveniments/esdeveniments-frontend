@@ -571,6 +571,7 @@
       "mobilePublishLabel": "Publica",
       "auth": {
         "login": "Iniciar sessió",
+        "loginShort": "Entra",
         "logout": "Tanca sessió",
         "userMenu": "Menú d'usuari",
         "myProfile": "El meu perfil",

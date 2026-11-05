@@ -7,13 +7,20 @@ import type { NavbarLabels } from "types/props";
 const OWNER_ID = "ff3da805-08f2-4fd0-acd5-6372344aa339";
 
 let authUser: AuthUser | null = null;
+let pathname = "/";
+let locale = "ca";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/",
+  usePathname: () => pathname,
+}));
+
+vi.mock("next-intl", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next-intl")>()),
+  useLocale: () => locale,
 }));
 
 vi.mock("@i18n/routing", () => ({
-  usePathname: () => "/",
+  usePathname: () => pathname,
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
@@ -57,6 +64,7 @@ const labels: NavbarLabels = {
   news: "Notícies",
   mobilePublishLabel: "Publica",
   login: "Inicia sessió",
+  loginShort: "Entra",
   logout: "Tanca sessió",
   userMenu: "Menú d'usuari",
   myProfile: "El meu perfil",
@@ -66,6 +74,8 @@ const labels: NavbarLabels = {
 describe("NavbarClient profile link", () => {
   beforeEach(() => {
     authUser = null;
+    pathname = "/";
+    locale = "ca";
   });
 
   it("links to /perfil/edita when the profile isn't completed yet", () => {
@@ -186,6 +196,31 @@ describe("NavbarClient profile link", () => {
     ).toBe("/iniciar-sessio");
     expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
     expect(screen.queryByTestId("desktop-avatar-link")).toBeNull();
+  });
+
+  it("shows a visible login label so the button isn't icon-only", () => {
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    expect(screen.getByTestId("mobile-login-link")).toHaveTextContent(labels.loginShort);
+  });
+
+  it("sends users back to the current page, keeping the locale prefix", () => {
+    pathname = "/barcelona/avui";
+    locale = "es";
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    const expected = `/iniciar-sessio?redirect=${encodeURIComponent("/es/barcelona/avui")}`;
+    expect(screen.getByTestId("mobile-login-link").getAttribute("href")).toBe(expected);
+    expect(screen.getByTestId("desktop-login-link").getAttribute("href")).toBe(expected);
+  });
+
+  it("omits the locale prefix for the default locale", () => {
+    pathname = "/e/concert-123";
+    render(<NavbarClient navigation={[]} labels={labels} />);
+
+    expect(screen.getByTestId("mobile-login-link").getAttribute("href")).toBe(
+      `/iniciar-sessio?redirect=${encodeURIComponent("/e/concert-123")}`
+    );
   });
 });
 

@@ -571,6 +571,7 @@
       "mobilePublishLabel": "Publish",
       "auth": {
         "login": "Log in",
+        "loginShort": "Log in",
         "logout": "Log out",
         "userMenu": "User menu",
         "myProfile": "My profile",
