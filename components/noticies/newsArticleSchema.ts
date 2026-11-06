@@ -1,6 +1,8 @@
 import { siteUrl } from "@config/index";
 import type { NewsDetailResponseDTO } from "types/api/news";
+import type { EventSummaryResponseDTO } from "types/api/event";
 import { localeToHrefLang, type AppLocale } from "types/i18n";
+import { buildEventListItems } from "@utils/schema-helpers";
 
 const ORGANIZATION = {
   "@type": "Organization",
@@ -48,5 +50,32 @@ export function buildNewsArticleSchema({
     author: ORGANIZATION,
     url,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
+  };
+}
+
+/**
+ * ItemList of the article's events, in the order shown (links to `/e/<slug>`).
+ * No `Event` markup: each event page carries its own.
+ */
+export function buildNewsEventsItemListSchema({
+  events,
+  name,
+  url,
+  locale,
+}: {
+  events: Pick<EventSummaryResponseDTO, "slug" | "title">[];
+  name: string;
+  url: string;
+  locale: AppLocale;
+}) {
+  const listed = events.filter((event) => event.slug);
+  if (listed.length === 0) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${url}#events`,
+    name,
+    numberOfItems: listed.length,
+    itemListElement: buildEventListItems(listed, locale),
   };
 }

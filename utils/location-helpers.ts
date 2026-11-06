@@ -4,7 +4,9 @@ import { fetchPlaceBySlug } from "@lib/api/places";
 import {
   sanitizeLegacyApostrophe,
   formatPlaceName,
+  truncateAtWord,
 } from "./string-helpers";
+import { EVENT_VENUE_LABEL_MAX_LENGTH } from "./constants";
 import type { Location, PlaceTypeAndLabel } from "types/common";
 import type {
   BuildDisplayLocationOptions,
@@ -204,6 +206,28 @@ export const buildEventListLocationLabels = ({
     primaryLabel,
     secondaryLabel,
   };
+};
+
+/**
+ * "Venue, City" for row cards. The venue is kept as written (formatPlaceName
+ * would split "Puig-reig") and cut at a word boundary.
+ */
+export const buildEventVenueLabel = ({
+  location,
+  cityName,
+}: Pick<EventPlaceLabelOptions, "location" | "cityName">): string => {
+  const city = formatOptionalPlace(cityName);
+  // Drop venue segments that are the city ("Plaça Major, Vic"), then cut the
+  // venue, so the city always ends the label exactly once.
+  const venue = (location ?? "")
+    .replace(/\s+/g, " ")
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => isDistinctLabel(part, city))
+    .join(", ");
+  if (!venue) return city;
+  const shortVenue = truncateAtWord(venue, EVENT_VENUE_LABEL_MAX_LENGTH);
+  return city ? `${shortVenue}, ${city}` : shortVenue;
 };
 
 export const getPlaceTypeAndLabel = async (

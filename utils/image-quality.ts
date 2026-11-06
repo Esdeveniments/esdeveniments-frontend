@@ -99,6 +99,8 @@ export const getOptimalImageWidth = (
     detail: 1200,
     // Featured card (news lead): half the container from md up
     featured: 800,
+    // Row card (news article events): full width below md, 40% of the article column
+    row: 800,
   };
 
   return widthMap[context];
@@ -126,6 +128,8 @@ export const getResponsiveWidths = (
     detail: [500, 800, 1200],
     // Featured card: full width on mobile, at most ~640px wide from md up
     featured: [500, 800],
+    // Row card: ~360px wide on mobile and desktop, so 500 (1x) and 800 (2x)
+    row: [500, 800],
   };
 
   return widthsMap[context];
@@ -160,6 +164,9 @@ export const getOptimalImageSizes = (
     // Featured card (CardLayout `featured`): full width below md, then the
     // image takes half of the 1280px container
     featured: "(max-width: 767px) 100vw, (max-width: 1280px) 50vw, 640px",
+    // Row card (CardLayout `row`): full width below md, then 40% of the
+    // 896px article column
+    row: "(max-width: 767px) 100vw, 360px",
   };
 
   return sizesMap[context];

@@ -55,6 +55,15 @@ export const extractUuidFromSlug = (s: string): string => {
 export const truncateString = (str: string, num: number): string =>
   str.length <= num ? str : str.slice(0, num) + "...";
 
+/** Cut at the last word boundary within `max` chars and end with "…". */
+export function truncateAtWord(str: string, max: number): string {
+  if (str.length <= max) return str;
+  const cut = str.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  const base = lastSpace > max / 2 ? cut.slice(0, lastSpace) : cut;
+  return `${base.replace(/[\s,;:.–—-]+$/u, "")}…`;
+}
+
 /**
  * Normalizes a string for search/filtering by removing accents and converting to lowercase.
  * Useful for case-insensitive and accent-insensitive text matching.
