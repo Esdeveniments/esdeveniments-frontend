@@ -201,7 +201,6 @@ export interface FavoriteButtonLabels {
 export interface FavoriteButtonProps {
   eventSlug: string;
   eventId?: string;
-  eventTitle?: string;
   initialIsFavorite: boolean;
   labels: FavoriteButtonLabels;
   className?: string;
@@ -1090,3 +1089,19 @@ export interface PwaBackButtonProps {
 export interface EventsGridSkeletonProps {
   count?: number;
 }
+
+export interface CheckoutReturnTrackerProps {
+  flow: import("types/analytics").CheckoutFlow;
+  outcome: "success" | "cancel";
+  /** Promotion order id or Stripe session id. */
+  transactionId?: string | null;
+  /** True only when payment is confirmed (or Stripe sent the success redirect). */
+  paid: boolean;
+  /** Report `purchase` only if this tab saved a matching checkout first. */
+  requirePending?: boolean;
+  /** Server-verified charge; overrides the saved list price and `requirePending`. */
+  amount?: import("types/analytics").CheckoutAmount | null;
+  /** Extra low-cardinality params for the `<flow>_checkout_return` event. */
+  params?: Record<string, string>;
+}
+

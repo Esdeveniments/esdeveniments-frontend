@@ -68,9 +68,8 @@ export default function LocationDiscoveryWidget({
 
       // Send analytics event
       sendGoogleEvent("location_selected", {
-        category: "location_discovery",
-        label: locationName,
-        value: locationOption?.value || locationName.toLowerCase(),
+        context: "location_discovery",
+        place_slug: locationOption?.value || "catalunya",
       });
 
       // Navigate to location using the correct URL value

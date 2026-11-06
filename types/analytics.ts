@@ -45,3 +45,35 @@ export interface CtaStats {
   clicks: number;
   firstInteractionMs?: number;
 }
+
+/** Paid flows that report GA4 ecommerce events (`begin_checkout`, `purchase`). */
+export type CheckoutFlow = "promote" | "sponsor";
+
+/** GA4 ecommerce item. `price` is in currency units (e.g. 5.5), not cents. */
+export interface CheckoutAnalyticsItem {
+  item_id: string;
+  item_name: string;
+  item_category: string;
+  item_variant?: string;
+  price: number;
+  quantity: number;
+}
+
+/** Amount Stripe actually charged, in currency units (after promotion codes). */
+export interface CheckoutAmount {
+  value: number;
+  currency: string;
+}
+
+/**
+ * Checkout saved in sessionStorage before the Stripe redirect. The tab keeps
+ * it across the round trip, so the return page can report `purchase` with
+ * the same value and items as `begin_checkout`.
+ */
+export interface PendingCheckout {
+  flow: CheckoutFlow;
+  transactionId: string;
+  currency: string;
+  value: number;
+  items: CheckoutAnalyticsItem[];
+}

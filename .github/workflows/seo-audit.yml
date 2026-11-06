@@ -51,9 +51,12 @@ jobs:
             requests
 
       - name: Authenticate with GCP
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> $GITHUB_ENV
+          umask 077
+          printf '%s' "$GCP_SA_KEY" > /tmp/gcp-sa-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json" >> "$GITHUB_ENV"
 
       - name: Find previous audit data
         id: previous
@@ -84,13 +87,15 @@ jobs:
         id: audit
         env:
           PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
+          PREV_FOUND: ${{ steps.previous.outputs.found }}
+          PREV_PATH: ${{ steps.previous.outputs.path }}
         run: |
           RUN_DATE=$(date -u +%Y-%m-%d)
           mkdir -p data/seo-audits
 
           PREV_ARGS=()
-          if [ "${{ steps.previous.outputs.found }}" = "true" ]; then
-            PREV_ARGS=(--previous "${{ steps.previous.outputs.path }}")
+          if [ "$PREV_FOUND" = "true" ]; then
+            PREV_ARGS=(--previous "$PREV_PATH")
           fi
 
           SEO_AUDIT_OUTPUT_DIR=data/seo-audits \
@@ -100,7 +105,7 @@ jobs:
           mv data/seo-audits/seo-audit-data.json "data/seo-audits/${RUN_DATE}.json"
           mv data/seo-audits/seo-audit-report.md "data/seo-audits/${RUN_DATE}.md"
 
-          echo "run_date=$RUN_DATE" >> $GITHUB_OUTPUT
+          echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
 
       - name: Upload audit data
         uses: actions/upload-artifact@v7

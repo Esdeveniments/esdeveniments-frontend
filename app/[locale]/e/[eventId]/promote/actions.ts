@@ -4,7 +4,10 @@ import {
   isStripeCheckoutUrl,
 } from "@lib/api/promotions";
 import { getValidAccessToken } from "@utils/auth-cookies";
-import type { PromotionResult } from "types/api/promotion";
+import type {
+  PromotionCheckoutResponseDTO,
+  PromotionResult,
+} from "types/api/promotion";
 
 /**
  * Starts (or resumes, for a repeated idempotency key) a Stripe checkout for
@@ -14,13 +17,13 @@ export async function createPromotionCheckoutAction(
   eventId: string,
   optionId: string,
   idempotencyKey: string,
-): Promise<PromotionResult<{ url: string }>> {
+): Promise<PromotionResult<PromotionCheckoutResponseDTO>> {
   const result = await createPromotionCheckout(eventId, optionId, idempotencyKey);
   if (!result.ok) return result;
   if (!isStripeCheckoutUrl(result.data.url)) {
     return { ok: false, code: "CHECKOUT_UNAVAILABLE" };
   }
-  return { ok: true, data: { url: result.data.url } };
+  return { ok: true, data: { orderId: result.data.orderId, url: result.data.url } };
 }
 
 /**

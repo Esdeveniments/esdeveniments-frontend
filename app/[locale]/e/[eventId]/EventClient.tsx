@@ -138,7 +138,7 @@ export default function EventClient({
               <div
                 onClick={() => {
                   setOpenModal(true);
-                  sendGoogleEvent("open-change-modal", {});
+                  sendGoogleEvent("change_modal_open", {});
                 }}
                 className="gap-2 ease-in-out duration-300 border-background hover:border-foreground-strong"
               >

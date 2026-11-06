@@ -763,6 +763,34 @@ with the first paint on `/`, `/barcelona` and an event (develop: up to 390 ms
 later), the home hero `<img>` is in the first flush, `/publica` FCP/LCP went
 from 2724 to 536 ms, CLS is unchanged. Guarded by `test/navbar-prerender.test.tsx`.
 
+## React holds streamed content until 300 ms after the first paint
+
+React 19.2's streaming runtime throttles reveals. After the shell it writes
+`requestAnimationFrame(function(){$RT=performance.now()})`; when a boundary's
+HTML arrives, `$RC` reveals it on the next frame only while `$RT` is not a
+number, and otherwise with `setTimeout(…, $RT + 300 - now)`. It's meant to
+batch reveals. With no root `<Suspense>`, our shell (navbar plus skeleton)
+paints first, so a page whose data was ready 50 ms later showed it 300 ms
+later: `/preferits` LCP went from 624 to 916 ms against the old root
+boundary, which painted everything in one frame.
+
+Fix: `REVEAL_THROTTLE_OFF_SCRIPT` (`utils/constants.ts`), an inline script at
+the top of the root `<head>`, defines `window.$RT` as an accessor that returns
+`undefined` while the tab is visible, so `$RC` takes the
+`requestAnimationFrame` path; boundaries that arrive in the same frame are
+still batched. In a hidden tab it returns React's value: hidden tabs run no
+animation frames, so a tab hidden after the shell painted would otherwise
+keep its skeleton (and skip hydration) until shown again; React's
+`setTimeout` path still runs there. Nothing on the client reads `$RT`
+(checked in the react-dom client bundles). If React renames it the script
+does nothing, so `test/react-reveal-throttle.test.ts` runs the real `$RC`
+from both the stable and experimental server runtimes and checks which path
+it takes, visible and hidden. Measured on production builds
+(median of 7, 4× CPU, 150 ms RTT, 1.6 Mbps, no Google scripts): LCP 932 → 684
+ms on `/preferits`, 992 → 820 on `/catalunya`, 980 → 752 on `/barcelona`,
+1000 → 756 on an event, `/` unchanged (its LCP is the hero image); FCP, TBT
+and CLS unchanged.
+
 ## A render flag must be the same on the server and in the browser
 
 The deploy E2E failed `hydration-errors.spec.ts` (React #418 on `/`,

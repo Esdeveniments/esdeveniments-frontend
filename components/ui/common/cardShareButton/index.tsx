@@ -32,7 +32,7 @@ export default function CardShareButton({
 
   const handleShareClick = (method: string) => {
     trackClick();
-    sendGoogleEvent("share", { method, content: slug });
+    sendGoogleEvent("share", { method, content_type: "event", item_id: slug });
   };
 
   return (

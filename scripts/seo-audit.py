@@ -66,9 +66,7 @@ TRACKED_CUSTOM_EVENTS = [
     "favorite_add", "favorite_remove", "favorites_limit_reached",
     "publish_form_start", "publish_field_interact", "publish_form_abandon",
     "publish_submit_attempt", "publish_submit_blocked", "publish_error",
-    "publish_success", "publish_image_upload_start", "publish_image_upload_success",
-    "publish_image_upload_error", "publish_image_upload_abort",
-    "publish_preview_open", "publish_test_url_click",
+    "publish_success", "publish_preview_open", "publish_test_url_click",
     "sticky_cta_click", "related_event_click", "explore_more_click",
     "category_quicklink_click",
     "section_view", "card_impression_batch", "listing_scroll_depth",
@@ -770,8 +768,6 @@ def collect_ga4_data():
     publish_events = [
         "publish_form_start", "publish_field_interact", "publish_submit_attempt",
         "publish_submit_blocked", "publish_error", "publish_success",
-        "publish_image_upload_start", "publish_image_upload_success",
-        "publish_image_upload_error", "publish_image_upload_abort",
     ]
     publish_rows = ga_report(
         ["eventName"], ["eventCount", "totalUsers"],
@@ -796,7 +792,7 @@ def collect_ga4_data():
         ["eventName", "customEvent:reason"], ["eventCount"],
         dim_filter=FilterExpression(or_group=FilterExpressionList(expressions=[
             FilterExpression(filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value=ev)))
-            for ev in ["publish_error", "publish_submit_blocked", "publish_image_upload_error"]
+            for ev in ["publish_error", "publish_submit_blocked"]
         ])),
         limit=20,
     )
@@ -829,6 +825,20 @@ def collect_ga4_data():
     data["event_drilldowns"]["filter_usage"] = [
         {"place": r["dims"][0], "date": r["dims"][1], "category": r["dims"][2], "count": safe_int(r["metrics"][0])}
         for r in filter_rows
+    ]
+
+    # Date filter mode: preset (byDate) vs custom range (#521). Needs the
+    # Event-scoped custom dimension filter_date_mode registered in GA.
+    date_mode_rows = ga_report(
+        ["customEvent:filter_date_mode"], ["eventCount"],
+        dim_filter=FilterExpression(
+            filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value="filter_change"))
+        ),
+        limit=10,
+    )
+    data["event_drilldowns"]["filter_date_modes"] = [
+        {"mode": r["dims"][0], "count": safe_int(r["metrics"][0])}
+        for r in date_mode_rows
     ]
 
     # Outbound clicks by link type
@@ -930,15 +940,17 @@ def collect_ga4_data():
             "searcher_users": searchers,
         },
         # ── Publish Effectiveness ──
+        # Starts/successes/conversion are by users (#531): a retry or a
+        # reopened form must not count as another start.
         "publish": {
-            "form_starts": ce.get("publish_form_start", {}).get("count", 0),
+            "form_starts": ce.get("publish_form_start", {}).get("users", 0),
             "submit_attempts": ce.get("publish_submit_attempt", {}).get("count", 0),
-            "successes": ce.get("publish_success", {}).get("count", 0),
+            "successes": ce.get("publish_success", {}).get("users", 0),
             "errors": ce.get("publish_error", {}).get("count", 0),
             "blocked": ce.get("publish_submit_blocked", {}).get("count", 0),
             "conversion_rate": round(
-                ce.get("publish_success", {}).get("count", 0) /
-                max(ce.get("publish_form_start", {}).get("count", 0), 1), 2
+                ce.get("publish_success", {}).get("users", 0) /
+                max(ce.get("publish_form_start", {}).get("users", 0), 1), 2
             ),
         },
         # ── Content Engagement ──
@@ -1173,9 +1185,7 @@ def generate_markdown(data, previous=None):
         lines.append("|------|-------|-------|")
         funnel_order = [
             "publish_form_start", "publish_field_interact", "publish_submit_attempt",
-            "publish_submit_blocked", "publish_image_upload_start", "publish_image_upload_success",
-            "publish_image_upload_error", "publish_image_upload_abort",
-            "publish_error", "publish_success",
+            "publish_submit_blocked", "publish_error", "publish_success",
         ]
         for step in funnel_order:
             vals = funnel.get(step)
@@ -1222,6 +1232,13 @@ def generate_markdown(data, previous=None):
             d = r["date"] if r["date"] != "(not set)" else "—"
             c = r["category"] if r["category"] != "(not set)" else "—"
             lines.append(f"| {p} | {d} | {c} | {r['count']:,} |")
+        lines.append("")
+
+    date_modes = [r for r in drilldowns.get("filter_date_modes", [])
+                  if r["mode"] != "(not set)"]
+    if date_modes:
+        lines.append("**Date filter mode:** " + ", ".join(
+            f"{r['mode']} {r['count']:,}" for r in date_modes))
         lines.append("")
 
     # Outbound clicks by type
@@ -1510,7 +1527,7 @@ def generate_markdown(data, previous=None):
         if pub.get("form_starts", 0) > 0:
             lines.append("### 📝 Publish Funnel Health")
             lines.append("")
-            lines.append(f"- Form starts: **{pub['form_starts']}** → Successes: **{pub['successes']}** "
+            lines.append(f"- Users who started: **{pub['form_starts']}** → published: **{pub['successes']}** "
                          f"(conversion: **{pub['conversion_rate']:.0%}**)")
             if pub["errors"] > 0:
                 lines.append(f"- ⚠️ {pub['errors']} errors, {pub['blocked']} blocked submissions")

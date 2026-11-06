@@ -17,7 +17,7 @@ import {
   MagnifyingGlassIcon as SearchIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
 import { matchSearchToPlace } from "@utils/string-helpers";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
@@ -27,10 +27,8 @@ import { transformRegionsToOptions } from "@components/ui/locationDiscoveryWidge
 const sendSearchTermGA = (searchTerm: string): void => {
   if (searchTerm && searchTerm.length > 0) {
     sendGoogleEvent("search", {
-      category: "search",
-      label: searchTerm,
-      search_term: searchTerm,
-      value: searchTerm,
+      context: "search",
+      search_term: toSearchTermParam(searchTerm),
     });
   }
 };
@@ -103,8 +101,8 @@ export default function Search(): JSX.Element {
       const matchedPlace = matchSearchToPlace(value, places);
       if (matchedPlace) {
         sendGoogleEvent("search_place_redirect", {
-          category: "search",
-          label: value,
+          context: "search",
+          search_term: toSearchTermParam(value),
           matched_place: matchedPlace.value,
         });
         startNavigationFeedback();

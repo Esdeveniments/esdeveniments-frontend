@@ -424,3 +424,16 @@ export const CATEGORY_BADGE_COLOR = "bg-muted text-foreground-strong";
 export const NO_VIGNETTE_LINK_ATTRS = {
   "data-google-vignette": "false",
 } as const;
+
+// Inline <head> script that turns off React's SSR reveal throttle. React 19.2
+// sets `$RT` on the first frame after the shell, then holds every streamed
+// boundary until `$RT + 300 ms` (`$RC` in react-dom-server). Our shell paints
+// the navbar and a skeleton, so content that is ready sooner waited up to
+// 300 ms: LCP -170 to -250 ms without it, same CLS and TBT
+// (docs/performance/baselines.md, 2026-11-05). While `$RT` reads as
+// undefined, `$RC` reveals on the next animation frame, still batching
+// boundaries that arrive in the same frame. A hidden tab runs no animation
+// frames, so there `$RT` keeps React's value and its setTimeout path.
+// test/react-reveal-throttle.test.ts fails if React changes this contract.
+export const REVEAL_THROTTLE_OFF_SCRIPT =
+  '(function(){var t;Object.defineProperty(window,"$RT",{get:function(){return document.hidden?t:void 0},set:function(v){t=v}})})();';

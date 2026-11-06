@@ -64,7 +64,6 @@ export default function CardLayout({
           <FavoriteButtonOverlay
             eventSlug={slug}
             eventId={eventId ? String(eventId) : undefined}
-            eventTitle={originalTitle}
             initialIsFavorite={isFavorite}
             labels={favoriteLabels}
             wrapperClassName="pointer-events-auto z-[2]"

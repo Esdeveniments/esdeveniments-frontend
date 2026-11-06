@@ -13,7 +13,7 @@ import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
 import { hasActiveClientFilters } from "@utils/url-filters";
 import { useTranslations, useLocale } from "next-intl";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
 import useListingAnalytics from "@components/hooks/useListingAnalytics";
 import type { AppLocale } from "types/i18n";
 
@@ -133,7 +133,7 @@ function HybridEventsListClientContent({
     ) {
       searchResultsTrackedRef.current = true;
       sendGoogleEvent("search_results_loaded", {
-        search_term: search,
+        search_term: toSearchTermParam(search),
         results_count: displayedEvents.length,
         place: place || undefined,
         category: category || undefined,
@@ -157,7 +157,7 @@ function HybridEventsListClientContent({
     ) {
       zeroResultsTrackedRef.current = true;
       sendGoogleEvent("zero_results", {
-        search_term: search || undefined,
+        search_term: search ? toSearchTermParam(search) : undefined,
         place: place || undefined,
         category: category || undefined,
         date: date || undefined,

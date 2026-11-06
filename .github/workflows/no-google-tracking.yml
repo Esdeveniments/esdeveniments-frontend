@@ -5,8 +5,8 @@ name: No Google tracking on staging (nightly)
 # build, and Vercel previews never exercise the Cloudflare edge, so running the
 # same spec there cannot catch an edge-injected tracker (see
 # docs/incidents/2026-08-18-zaraz-zone-wide-google-tags.md).
-# Intentionally RED until the Zaraz GA4 integration is removed/restricted on
-# the zone — that is the alarm this workflow exists to sound.
+# Zaraz GA4 is off on the zone; a red run means an edge tracker is back
+# (double-counted GA4 hits). That is the alarm this workflow exists to sound.
 on:
   workflow_dispatch:
   schedule:

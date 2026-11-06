@@ -2,6 +2,13 @@
 
 import { useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { DISPLAY_PRICES_EUR } from "@config/pricing";
+import { sendGoogleEvent } from "@utils/analytics";
+import {
+  savePendingCheckout,
+  trackBeginCheckout,
+} from "@utils/checkout-analytics";
+import type { CheckoutAnalyticsItem } from "types/analytics";
 import type { CheckoutButtonProps } from "types/sponsor";
 
 /**
@@ -29,6 +36,17 @@ export default function CheckoutButton({
     setIsLoading(true);
     setError(null);
 
+    const analyticsItem: CheckoutAnalyticsItem = {
+      item_id: `sponsor_${place.geoScope}_${duration}`,
+      item_name: `sponsor_${place.geoScope}_${duration}`,
+      item_category: "sponsor",
+      item_variant: place.geoScope,
+      price: DISPLAY_PRICES_EUR[place.geoScope][duration],
+      quantity: 1,
+    };
+    trackBeginCheckout("sponsor", "EUR", analyticsItem);
+    let failureReason = "network";
+
     try {
       // Generate UUID per click — Stripe recommends V4 UUIDs for idempotency keys.
       // Protects against network retries (double-click) while allowing intentional
@@ -54,19 +72,36 @@ export default function CheckoutButton({
       if (!response.ok) {
         const errorBody = await response.text().catch(() => "");
         console.error("Checkout API error:", response.status, errorBody);
+        failureReason = `http_${response.status}`;
         throw new Error(`Failed to create checkout session: ${response.status}`);
       }
 
-      const { url } = await response.json();
+      const { url, sessionId } = await response.json();
 
       if (!url || typeof url !== "string") {
+        failureReason = "invalid_url";
         throw new Error("Invalid checkout URL received from API");
+      }
+
+      if (typeof sessionId === "string" && sessionId) {
+        savePendingCheckout({
+          flow: "sponsor",
+          transactionId: sessionId,
+          currency: "EUR",
+          value: analyticsItem.price,
+          items: [analyticsItem],
+        });
       }
 
       // Redirect to Stripe Checkout
       window.location.href = url;
     } catch (err) {
       console.error("Checkout error:", err);
+      sendGoogleEvent("sponsor_checkout_error", {
+        geo_scope: place.geoScope,
+        duration,
+        reason: failureReason,
+      });
       setError(t("checkout.error"));
       setIsLoading(false);
       isSubmittingRef.current = false;

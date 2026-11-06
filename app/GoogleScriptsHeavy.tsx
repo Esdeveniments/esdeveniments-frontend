@@ -59,6 +59,17 @@ function classifyOutboundLinkType(hostname: string, pathname: string): string {
   return "external_website";
 }
 
+const GA4_EVENT_NAME_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
+
+function getUrlHostname(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    return new URL(value).hostname || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export default function GoogleScriptsHeavy({
   adsAllowed,
   adsScriptReady,
@@ -97,7 +108,9 @@ export default function GoogleScriptsHeavy({
       const anchor = getClosestAnchor(event.target);
       if (!analyticsEl && !anchor) return;
 
-      if (analyticsEl?.dataset.analyticsEventName) {
+      const analyticsEventName = analyticsEl?.dataset.analyticsEventName;
+      // GA4 names: letters, digits and underscores, max 40 characters.
+      if (analyticsEventName && GA4_EVENT_NAME_PATTERN.test(analyticsEventName)) {
         const container = analyticsEl.closest(
           '[data-analytics-container="true"]'
         ) as HTMLElement | null;
@@ -106,7 +119,7 @@ export default function GoogleScriptsHeavy({
           ...(analyticsEl.dataset || {}),
         };
 
-        win.gtag("event", dataset.analyticsEventName, {
+        win.gtag("event", analyticsEventName, {
           context: dataset.analyticsContext || undefined,
           target: dataset.analyticsTarget || undefined,
           category_slug: dataset.analyticsCategorySlug || undefined,
@@ -123,7 +136,8 @@ export default function GoogleScriptsHeavy({
           sponsor_name: dataset.analyticsSponsorName || undefined,
           sponsor_place: dataset.analyticsSponsorPlace || undefined,
           sponsor_geo_scope: dataset.analyticsSponsorGeoScope || undefined,
-          sponsor_url: dataset.analyticsSponsorUrl || undefined,
+          // Hostname only: full URLs pass GA's 100-character limit.
+          sponsor_domain: getUrlHostname(dataset.analyticsSponsorUrl),
         });
       }
 
