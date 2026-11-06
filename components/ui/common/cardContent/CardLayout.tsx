@@ -10,6 +10,10 @@ import type { CardLayoutProps } from "types/props";
  */
 export default function CardLayout({
   slug,
+  href = `/e/${slug}`,
+  analyticsEventName = "select_event",
+  variant = "default",
+  description,
   eventId,
   title,
   originalTitle,
@@ -31,20 +35,22 @@ export default function CardLayout({
   imageViewTransitionName,
   renderLink,
 }: CardLayoutProps) {
+  const isFeatured = variant === "featured";
+
   return (
-    <article className="relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col">
+    <article className={`relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col${isFeatured ? " md:flex-row" : ""}`}>
       {renderLink({
-        href: `/e/${slug}`,
+        href,
         className: "absolute inset-0 z-[1]",
         "aria-label": originalTitle || title,
-        "data-analytics-event-name": "select_event",
+        "data-analytics-event-name": analyticsEventName,
         "data-analytics-event-id": eventId ? String(eventId) : "",
         "data-analytics-event-slug": slug || "",
         children: <span className="sr-only">{originalTitle || title}</span>,
       })}
 
       <div
-        className="relative aspect-[3/2] overflow-hidden bg-muted"
+        className={`relative aspect-[3/2] overflow-hidden bg-muted${isFeatured ? " md:w-1/2 md:shrink-0" : ""}`}
         style={imageViewTransitionName ? { viewTransitionName: imageViewTransitionName } : undefined}
       >
         <Image
@@ -56,22 +62,22 @@ export default function CardLayout({
           location={imageContext?.location}
           region={imageContext?.region}
           date={imageContext?.date ?? cardDate}
-          context="list"
+          context={isFeatured ? "featured" : "list"}
           cacheKey={imageCacheKey}
         />
 
-        {shouldShowFavoriteButton && (
+        {shouldShowFavoriteButton && favoriteLabels && (
           <FavoriteButtonOverlay
             eventSlug={slug}
             eventId={eventId ? String(eventId) : undefined}
-            initialIsFavorite={isFavorite}
+            initialIsFavorite={Boolean(isFavorite)}
             labels={favoriteLabels}
             wrapperClassName="pointer-events-auto z-[2]"
           />
         )}
       </div>
 
-      <div className="flex-1 flex flex-col px-4 pt-3 pb-4 pointer-events-none">
+      <div className={`flex-1 flex flex-col pointer-events-none ${isFeatured ? "px-4 pt-3 pb-4 md:p-card-padding md:justify-center" : "px-4 pt-3 pb-4"}`}>
         {promotedLabel && (
           <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
         )}
@@ -89,12 +95,18 @@ export default function CardLayout({
           {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 
-        <h3 className="text-base font-semibold leading-normal line-clamp-2 text-foreground-strong mb-1.5 min-h-[2.75rem] group-hover:text-primary/85 transition-colors">
+        <h3 className={`${isFeatured ? "heading-3 line-clamp-3 mb-2" : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 min-h-[2.75rem]"} text-foreground-strong group-hover:text-primary/85 transition-colors`}>
           {title}
         </h3>
 
+        {isFeatured && description && (
+          <p className="body-normal text-muted-foreground line-clamp-3 mb-3">
+            {description}
+          </p>
+        )}
+
         {primaryLocation && (
-          <div className="mt-auto flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+          <div className={`mt-auto flex items-center gap-1 text-sm text-muted-foreground min-w-0${isFeatured ? " md:mt-0" : ""}`}>
             <svg className="w-4 h-4 flex-shrink-0" aria-hidden="true">
               <use href={`#${SPRITE_ICON.mapPin}`} />
             </svg>

@@ -1,5 +1,4 @@
 import type { ByDateOption, DateRangeShortcut } from "types/common";
-import { getTranslations } from "next-intl/server";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 // Not messages/*.json: client components import this file, and that would
@@ -17,6 +16,11 @@ export const LOGTO_TOKEN_TIMEOUT_MS = 10_000;
 
 /** Number of days within which news articles are considered "fresh". */
 export const NEWS_FRESHNESS_DAYS = 7;
+// News lists: one featured card + a full 3x3 grid per page. Fixed, so every
+// page has a single URL (`?page=N`) and one cache entry.
+export const NEWS_PAGE_SIZE = 10;
+// Cities with news, shown as chips; all of them fit one request.
+export const NEWS_CITIES_LIMIT = 100;
 
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;
@@ -105,21 +109,6 @@ export const NEWS_HUBS = [
   },
   { slug: "lleida", name: defaultConstantsLabels.newsHubs.lleida as string },
 ];
-export const NEARBY_PLACES_BY_HUB: Record<
-  string,
-  { slug: string; name: string }[]
-> = Object.entries(
-  defaultConstantsLabels.nearbyHubs as Record<string, Record<string, string>>,
-).reduce(
-  (acc, [hub, places]) => {
-    acc[hub] = Object.entries(places).map(([slug, name]) => ({
-      slug,
-      name,
-    }));
-    return acc;
-  },
-  {} as Record<string, { slug: string; name: string }[]>,
-);
 
 export function getDayNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
   return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
@@ -314,35 +303,6 @@ export function shouldUseDynamicCategories(): boolean {
   return true;
 }
 
-// --- News UI constants ---
-export async function getNewsHubs(): Promise<{ slug: string; name: string }[]> {
-  const t = await getTranslations("Components.Constants.newsHubs");
-  return NEWS_HUBS.map((hub) => ({
-    slug: hub.slug,
-    name: t(hub.slug),
-  }));
-}
-
-export async function getNearbyPlacesByHub(): Promise<
-  Record<string, { slug: string; name: string }[]>
-> {
-  const t = await getTranslations("Components.Constants.nearbyHubs");
-  return Object.fromEntries(
-    Object.entries(
-      defaultConstantsLabels.nearbyHubs as Record<
-        string,
-        Record<string, string>
-      >,
-    ).map(([hub, places]) => [
-      hub,
-      Object.entries(places).map(([slug]) => ({
-        slug,
-        name: t(`${hub}.${slug}`),
-      })),
-    ]),
-  );
-}
-
 // Time tolerance constants for HMAC timestamp validation
 // Configurable timestamp tolerances via environment variablesexport
 export const FIVE_MINUTES_IN_MS = parseInt(
@@ -415,6 +375,9 @@ export const SPONSOR_BANNER_IMAGE = {
  * Dice, Time Out) all use monochrome/neutral category indicators.
  */
 export const CATEGORY_BADGE_COLOR = "bg-muted text-foreground-strong";
+// "See all" link next to a section heading (home categories, latest news).
+export const SEE_ALL_LINK_CLASS =
+  "flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap";
 
 // Keeps AdSense vignettes off in-app links. On a client-side navigation the
 // vignette closes after Next has scrolled the new page to the top, then
