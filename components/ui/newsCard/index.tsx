@@ -1,4 +1,3 @@
-import { getTranslations } from "next-intl/server";
 import type { NewsCardProps } from "types/props";
 import { formatCardDate } from "@utils/date-helpers";
 import { stripHtmlTags } from "@utils/sanitize";
@@ -15,7 +14,6 @@ export default async function NewsCard({
   priority = false,
 }: NewsCardProps) {
   const locale = await getLocaleSafely();
-  const t = await getTranslations({ locale, namespace: "Components.News" });
   const { cardDate } = formatCardDate(event.startDate, event.endDate, locale);
 
   return (
@@ -35,7 +33,7 @@ export default async function NewsCard({
       image={event.imageUrl}
       isPriority={priority}
       cardDate={cardDate}
-      timeDisplay={t("readingTime", { minutes: event.readingTime })}
+      timeDisplay=""
       primaryLocation={placeLabel ?? ""}
       imageContext={{ location: placeLabel, date: cardDate }}
       imageCacheKey={event.updatedAt}

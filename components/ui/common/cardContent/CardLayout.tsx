@@ -14,6 +14,7 @@ export default function CardLayout({
   analyticsEventName = "select_event",
   variant = "default",
   description,
+  position,
   eventId,
   title,
   originalTitle,
@@ -35,10 +36,12 @@ export default function CardLayout({
   imageViewTransitionName,
   renderLink,
 }: CardLayoutProps) {
-  const isFeatured = variant === "featured";
+  // `featured` and `row` share the side-by-side layout; only the image width differs.
+  const isHorizontal = variant !== "default";
+  const imageWidthClass = variant === "row" ? " md:w-2/5 md:shrink-0" : " md:w-1/2 md:shrink-0";
 
   return (
-    <article className={`relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col${isFeatured ? " md:flex-row" : ""}`}>
+    <article className={`relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col${isHorizontal ? " md:flex-row" : ""}`}>
       {renderLink({
         href,
         className: "absolute inset-0 z-[1]",
@@ -50,7 +53,7 @@ export default function CardLayout({
       })}
 
       <div
-        className={`relative aspect-[3/2] overflow-hidden bg-muted${isFeatured ? " md:w-1/2 md:shrink-0" : ""}`}
+        className={`relative aspect-[3/2] overflow-hidden bg-muted${isHorizontal ? imageWidthClass : ""}`}
         style={imageViewTransitionName ? { viewTransitionName: imageViewTransitionName } : undefined}
       >
         <Image
@@ -62,7 +65,7 @@ export default function CardLayout({
           location={imageContext?.location}
           region={imageContext?.region}
           date={imageContext?.date ?? cardDate}
-          context={isFeatured ? "featured" : "list"}
+          context={isHorizontal ? variant : "list"}
           cacheKey={imageCacheKey}
         />
 
@@ -77,7 +80,7 @@ export default function CardLayout({
         )}
       </div>
 
-      <div className={`flex-1 flex flex-col pointer-events-none ${isFeatured ? "px-4 pt-3 pb-4 md:p-card-padding md:justify-center" : "px-4 pt-3 pb-4"}`}>
+      <div className={`flex-1 flex flex-col pointer-events-none ${isHorizontal ? "px-4 pt-3 pb-4 md:p-card-padding md:justify-center" : "px-4 pt-3 pb-4"}`}>
         {promotedLabel && (
           <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
         )}
@@ -95,18 +98,19 @@ export default function CardLayout({
           {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 
-        <h3 className={`${isFeatured ? "heading-3 line-clamp-3 mb-2" : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 min-h-[2.75rem]"} text-foreground-strong group-hover:text-primary/85 transition-colors`}>
+        <h3 className={`${isHorizontal ? "heading-3 line-clamp-3 mb-2" : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 min-h-[2.75rem]"} text-foreground-strong group-hover:text-primary/85 transition-colors`}>
+          {position !== undefined && `${position}. `}
           {title}
         </h3>
 
-        {isFeatured && description && (
+        {isHorizontal && description && (
           <p className="body-normal text-muted-foreground line-clamp-3 mb-3">
             {description}
           </p>
         )}
 
         {primaryLocation && (
-          <div className={`mt-auto flex items-center gap-1 text-sm text-muted-foreground min-w-0${isFeatured ? " md:mt-0" : ""}`}>
+          <div className={`mt-auto flex items-center gap-1 text-sm text-muted-foreground min-w-0${isHorizontal ? " md:mt-0" : ""}`}>
             <svg className="w-4 h-4 flex-shrink-0" aria-hidden="true">
               <use href={`#${SPRITE_ICON.mapPin}`} />
             </svg>

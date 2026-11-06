@@ -4,6 +4,7 @@ import {
   buildEventLocationLabels,
   buildEventPlaceLabels,
   buildEventListLocationLabels,
+  buildEventVenueLabel,
   getDistance,
   deg2rad,
 } from "../utils/location-helpers";
@@ -123,6 +124,31 @@ describe("buildEventLocationLabels", () => {
       secondaryPreference: "region",
     });
     expect(result.secondaryLabel).toBe("Barcelonès");
+  });
+});
+
+describe("buildEventVenueLabel", () => {
+  it("shows the venue as written, then the city", () => {
+    expect(
+      buildEventVenueLabel({ location: "Razzmatazz (Sant Martí)", cityName: "Barcelona" }),
+    ).toBe("Razzmatazz (Sant Martí), Barcelona");
+    expect(
+      buildEventVenueLabel({ location: "Pavelló Municipal de Puig-reig", cityName: "Berga" }),
+    ).toBe("Pavelló Municipal de Puig-reig, Berga");
+  });
+
+  it("cuts long multi-venue strings at a word boundary", () => {
+    const label = buildEventVenueLabel({
+      location:
+        "Filmoteca de Catalunya - Institut Francès - CCCB - Auditori de Sant Martí - Mooby Bosque - Cines Verdi Park - Cinemes Girona",
+      cityName: "Barcelona",
+    });
+    expect(label).toBe("Filmoteca de Catalunya - Institut Francès - CCCB - Auditori…, Barcelona");
+  });
+
+  it("falls back to the city and skips a city equal to the venue", () => {
+    expect(buildEventVenueLabel({ location: "", cityName: "Girona" })).toBe("Girona");
+    expect(buildEventVenueLabel({ location: "Girona", cityName: "Girona" })).toBe("Girona");
   });
 });
 

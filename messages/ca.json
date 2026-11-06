@@ -187,7 +187,7 @@
       "breadcrumbNews": "Notícies",
       "sectionWeekend": "Cap de setmana",
       "sectionWeek": "Setmana",
-      "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
+      "eventsCount": "{count, plural, one {{count} proposta} other {{count} propostes}}",
       "mustSee": "Els imprescindibles",
       "moreProposals": "Més propostes",
       "relatedArticles": "Articles relacionats",
@@ -915,9 +915,6 @@
       "placeholder": "Què estàs buscant?",
       "clear": "Neteja la cerca",
       "search": "Cerca"
-    },
-    "News": {
-      "readingTime": "{minutes} min de lectura"
     },
     "LocationDiscovery": {
       "heading": "Mirant esdeveniments a",
