@@ -1,17 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 
-const { sendGoogleEventMock } = vi.hoisted(() => ({
-  sendGoogleEventMock: vi.fn<
-    (event: string, obj: Record<string, unknown>) => void
-  >(),
-}));
+const { sendGoogleEventMock, setAnalyticsUserIdMock, authMock } = vi.hoisted(
+  () => ({
+    sendGoogleEventMock: vi.fn<
+      (event: string, obj: Record<string, unknown>) => void
+    >(),
+    setAnalyticsUserIdMock: vi.fn<(userId: string | null) => void>(),
+    authMock: {
+      current: { status: "unauthenticated", user: null } as {
+        status: string;
+        user: { id: string } | null;
+      },
+    },
+  }),
+);
 
 let searchParamsMock = new URLSearchParams();
 
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: sendGoogleEventMock,
   ensureGtag: vi.fn(),
+  setAnalyticsUserId: setAnalyticsUserIdMock,
+}));
+
+vi.mock("@components/hooks/useAuth", () => ({
+  useAuth: () => authMock.current,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -23,7 +37,23 @@ import AuthEventTracker from "@components/analytics/AuthEventTracker";
 describe("AuthEventTracker", () => {
   beforeEach(() => {
     sendGoogleEventMock.mockReset();
+    setAnalyticsUserIdMock.mockReset();
     searchParamsMock = new URLSearchParams();
+    authMock.current = { status: "unauthenticated", user: null };
+  });
+
+  it("syncs the GA4 user_id with the session, skipping the loading state", () => {
+    authMock.current = { status: "loading", user: null };
+    const { rerender } = render(<AuthEventTracker />);
+    expect(setAnalyticsUserIdMock).not.toHaveBeenCalled();
+
+    authMock.current = { status: "authenticated", user: { id: "user-1" } };
+    rerender(<AuthEventTracker />);
+    expect(setAnalyticsUserIdMock).toHaveBeenLastCalledWith("user-1");
+
+    authMock.current = { status: "unauthenticated", user: null };
+    rerender(<AuthEventTracker />);
+    expect(setAnalyticsUserIdMock).toHaveBeenLastCalledWith(null);
   });
 
   it("fires auth_gate_click with the action from a clicked data-analytics-action element", () => {

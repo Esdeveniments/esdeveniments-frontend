@@ -79,6 +79,40 @@ describe("PromoteEventClient", () => {
     mockCheckout.mockReset();
   });
 
+  it("tracks begin_checkout and saves the order for the purchase event", async () => {
+    sessionStorage.clear();
+    const { sendGoogleEvent } = await import("@utils/analytics");
+    mockCheckout.mockResolvedValue({
+      ok: true,
+      data: { orderId: "order-9", url: "https://checkout.stripe.com/c/pay/x" },
+    });
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{ ok: true, data: catalog }}
+        pendingCheckoutUrl={null}
+        placeNames={placeNames}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("promote-confirm-button"));
+    await waitFor(() =>
+      expect(sessionStorage.getItem("ga_pending_checkout:promote")).not.toBeNull(),
+    );
+
+    const item = expect.objectContaining({ item_id: "city-7d", price: 6.99 });
+    expect(sendGoogleEvent).toHaveBeenCalledWith("begin_checkout", {
+      checkout_flow: "promote",
+      currency: "EUR",
+      value: 6.99,
+      items: [item],
+    });
+    expect(
+      JSON.parse(sessionStorage.getItem("ga_pending_checkout:promote") ?? "{}"),
+    ).toMatchObject({ transactionId: "order-9", value: 6.99, currency: "EUR" });
+  });
+
   it("reuses the same Idempotency-Key when retrying the same option", async () => {
     mockCheckout.mockResolvedValue({ ok: false, code: "PAYMENT_PROCESSING" });
     render(

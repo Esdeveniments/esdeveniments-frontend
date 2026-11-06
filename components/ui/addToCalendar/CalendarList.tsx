@@ -18,15 +18,11 @@ const CalendarList: FC<CalendarListProps> = ({
   const handleCalendarClick = useCallback(
     (calendarType: string): void => {
       trackClick();
-      sendGoogleEvent("add_to_calendar", {
-        method: calendarType,
-        event_category: "Calendar",
-        event_label: calendarType,
-        event_title: title,
-      });
+      // The event itself is in page_location; titles are free text.
+      sendGoogleEvent("add_to_calendar", { method: calendarType });
       setTimeout(onClick, 500);
     },
-    [onClick, title, trackClick]
+    [onClick, trackClick]
   );
 
   const calendarOptions: CalendarOption[] = [
@@ -52,8 +48,8 @@ const CalendarList: FC<CalendarListProps> = ({
     "flex items-center gap-2 min-h-button px-3 rounded-button body-small text-foreground-strong hover:bg-muted transition-colors focus-ring";
 
   useEffect(() => {
-    sendGoogleEvent("add_to_calendar_view", { event_title: title });
-  }, [title]);
+    sendGoogleEvent("add_to_calendar_view", {});
+  }, []);
 
   return (
     <div ref={ctaRef} className="absolute top-full left-0 mt-2 z-10">

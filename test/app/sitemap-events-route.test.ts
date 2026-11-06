@@ -4,6 +4,10 @@ import { XMLParser } from "fast-xml-parser";
 const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
   .toISOString()
   .slice(0, 10);
+// Older than EXPIRED_EVENT_NOINDEX_DAYS (60), so it must leave the sitemap.
+const longAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+  .toISOString()
+  .slice(0, 10);
 
 vi.mock("@lib/api/events", () => ({
   fetchEvents: vi.fn().mockResolvedValue({
@@ -28,6 +32,12 @@ vi.mock("@lib/api/events", () => ({
         endDate: tomorrow,
         updatedAt: "2026-01-02T10:00:00Z",
       },
+      {
+        slug: "expired-long-ago",
+        title: "Expired",
+        startDate: longAgo,
+        endDate: longAgo,
+      },
     ],
   }),
 }));
@@ -51,5 +61,7 @@ describe("app/sitemap-events/[...parts]/route", () => {
     expect(bySlug["upcoming-without-updated-at"]).toBeUndefined();
     expect(bySlug["upcoming-future-updated-at"]).toBeUndefined();
     expect(bySlug["upcoming-edited"]).toBe("2026-01-02T10:00:00.000Z");
+    expect(Object.keys(bySlug)).not.toContain("expired-long-ago");
+    expect(Object.keys(bySlug)).toHaveLength(3);
   });
 });

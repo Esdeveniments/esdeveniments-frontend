@@ -4,6 +4,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
 import SponsorUploadPageClient from "@components/ui/sponsor/SponsorUploadPageClient";
+import CheckoutReturnTracker from "@components/analytics/CheckoutReturnTracker";
+import { getSponsorAmountPaid } from "@lib/stripe/session";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await rootLocale()) as AppLocale;
@@ -29,7 +31,30 @@ function UploadPageSkeleton() {
   );
 }
 
-export default async function PatrocinaUploadPage() {
+// Stripe only sends visitors here after a completed checkout. The amount it
+// charged (after promotion codes) is for GA4 only, so this sits in its own
+// Suspense boundary and never holds back the upload form.
+async function SponsorPurchaseTracker({
+  searchParams,
+}: Pick<PageProps<"/[locale]/patrocina/upload">, "searchParams">) {
+  const { session_id: sessionId } = await searchParams;
+  if (typeof sessionId !== "string" || !sessionId) return null;
+  const amount = await getSponsorAmountPaid(sessionId);
+  return (
+    <CheckoutReturnTracker
+      flow="sponsor"
+      outcome="success"
+      transactionId={sessionId}
+      paid
+      requirePending
+      amount={amount}
+    />
+  );
+}
+
+export default async function PatrocinaUploadPage({
+  searchParams,
+}: PageProps<"/[locale]/patrocina/upload">) {
   const locale = (await rootLocale()) as AppLocale;
   setRequestLocale(locale);
 
@@ -38,6 +63,9 @@ export default async function PatrocinaUploadPage() {
       <div className="max-w-5xl mx-auto">
         <Suspense fallback={<UploadPageSkeleton />}>
           <SponsorUploadPageClient />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SponsorPurchaseTracker searchParams={searchParams} />
         </Suspense>
       </div>
     </main>

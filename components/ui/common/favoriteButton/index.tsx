@@ -34,7 +34,6 @@ function isMaxReachedPayload(payload: unknown): boolean {
 export default function FavoriteButton({
   eventSlug,
   eventId,
-  eventTitle,
   initialIsFavorite,
   labels,
   className = "",
@@ -112,7 +111,6 @@ export default function FavoriteButton({
               max_favorites: MAX_FAVORITES_AUTHENTICATED,
               event_slug: eventSlug,
               event_id: eventId,
-              event_title: eventTitle,
             });
             setLimitMessage(t("maxReached", { max: MAX_FAVORITES_AUTHENTICATED }));
             return;
@@ -141,7 +139,6 @@ export default function FavoriteButton({
                     max_favorites: max,
                     event_slug: eventSlug,
                     event_id: eventId,
-                    event_title: eventTitle,
                   });
                   setLimitMessage(t("maxReached", { max: max ?? "" }));
                   setIsFavorite(!nextIsFavorite);
@@ -189,7 +186,6 @@ export default function FavoriteButton({
               sendGoogleEvent(analyticsEventName, {
                 event_slug: eventSlug,
                 event_id: eventId,
-                event_title: eventTitle,
               });
 
               // Guest just saved a favorite (kept in the cookie until they
@@ -211,7 +207,6 @@ export default function FavoriteButton({
                 extra: {
                   event_slug: eventSlug,
                   event_id: eventId,
-                  event_title: eventTitle,
                   next_is_favorite: nextIsFavorite,
                 },
               });

@@ -8,6 +8,7 @@
  * Storage key `ed_first_seen` follows the same localStorage pattern used by
  * `SocialFollowPopup.tsx` — try/catch, JSON-free scalar for resilience.
  */
+import { isE2ETestMode } from "./env";
 import type { WindowWithGtag } from "types/common";
 import type { AnalyticsUserProperties } from "types/analytics";
 
@@ -118,6 +119,9 @@ let appliedForLocale: string | null = null;
 let currentAttemptId = 0;
 
 export function setUserProperties(locale: string, attempt = 0): void {
+  // Same guard as sendGoogleEvent: E2E runs must not send user properties
+  // or the ai_referrer event below.
+  if (isE2ETestMode) return;
   if (appliedForLocale === locale) return;
   if (typeof window === "undefined") return;
   if (attempt > MAX_ATTEMPTS) return;

@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-import { sendGoogleEvent } from "@utils/analytics";
+import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
 import {
   MagnifyingGlassIcon as SearchIcon,
   ChevronDownIcon,
@@ -116,9 +116,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
         setPlace(selectedOption.value, selectedOption.label, selectedOption.placeType);
 
         sendGoogleEvent("location_selected", {
-          category: "hero_search",
-          label: selectedOption.label,
-          value: selectedOption.value,
+          context: "hero_search",
+          place_slug: selectedOption.value,
         });
       }
     } else {
@@ -174,10 +173,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     // Send analytics only for non-empty searches
     if (value) {
       sendGoogleEvent("search", {
-        category: "hero_search",
-        label: value,
-        search_term: value,
-        value: value,
+        context: "hero_search",
+        search_term: toSearchTermParam(value),
       });
     }
 

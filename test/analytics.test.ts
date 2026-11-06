@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { ensureGtag, sendGoogleEvent, CONSENT_MODE_DEFAULTS } from "@utils/analytics";
+import {
+  ensureGtag,
+  sendGoogleEvent,
+  setAnalyticsUserId,
+  CONSENT_MODE_DEFAULTS,
+} from "@utils/analytics";
 import type { WindowWithGtag } from "types/common";
 
 function win(): WindowWithGtag {
@@ -87,6 +92,34 @@ describe("sendGoogleEvent", () => {
       "event",
       "test_event",
       { foo: "bar" },
+    ]);
+  });
+});
+
+describe("setAnalyticsUserId", () => {
+  const userIdCommands = () =>
+    win()
+      .dataLayer.map((c) => Array.from(c as ArrayLike<unknown>))
+      .filter((args) => args[0] === "set");
+
+  beforeEach(() => {
+    delete (window as unknown as { gtag?: unknown }).gtag;
+    delete (window as unknown as { dataLayer?: unknown }).dataLayer;
+    localStorage.clear();
+  });
+
+  it("sends nothing for a visitor who never signed in", () => {
+    setAnalyticsUserId(null);
+    expect(userIdCommands()).toEqual([]);
+  });
+
+  it("sets the user_id, then clears it once on sign-out", () => {
+    setAnalyticsUserId("user-123");
+    setAnalyticsUserId(null);
+    setAnalyticsUserId(null);
+    expect(userIdCommands()).toEqual([
+      ["set", { user_id: "user-123" }],
+      ["set", { user_id: null }],
     ]);
   });
 });

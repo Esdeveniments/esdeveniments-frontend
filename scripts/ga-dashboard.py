@@ -33,6 +33,13 @@ BASE_URL = f"https://analyticsdata.googleapis.com/v1beta/properties/{PROPERTY_ID
 
 # Events that indicate a user "took action" (North Star components)
 ACTION_EVENTS = {"outbound_click", "add_to_calendar", "share", "favorite_add"}
+# Paid-flow funnel, in order. begin_checkout/purchase carry checkout_flow
+# (promote | sponsor); the *_checkout_return events carry outcome.
+MONETIZATION_EVENTS = (
+    "promote_modal_shown", "promote_page_view", "begin_checkout",
+    "promote_checkout_error", "sponsor_checkout_error",
+    "promote_checkout_return", "sponsor_checkout_return", "purchase",
+)
 
 # GA4 auto-collected events (filter from custom events view)
 AUTO_EVENTS = {"session_start", "first_visit", "user_engagement", "page_view",
@@ -334,9 +341,14 @@ def collect_data(days, sections, country=None):
                         "stringFilter": {"value": "publish_error"}}},
             {"filter": {"fieldName": "eventName",
                         "stringFilter": {"value": "publish_submit_blocked"}}},
-            {"filter": {"fieldName": "eventName",
-                        "stringFilter": {"value": "publish_image_upload_error"}}},
         ]}}
+        # Paid flows (event promotion + place sponsorship). purchase is sent
+        # only once the payment is confirmed (see utils/checkout-analytics.ts).
+        d["revenue"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "metrics": [{"name": "transactions"}, {"name": "purchaseRevenue"}],
+            "dimensionFilter": with_country_filter(None, country),
+        }))
         d["publish_errors"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
             "dimensions": [{"name": "eventName"}, {"name": "customEvent:reason"}],
@@ -617,17 +629,19 @@ def compute_behavior(d, days):
 
     # Publish funnel: prefer the dedicated publish query, which has no row
     # limit, so the summary always matches the Publish Funnel table.
-    publish_counts = {dims[0]: safe_int(mets[0])
-                      for dims, mets in d.get("publish", [])}
+    # Conversion is by users (#531): one person retrying a failed submit, or
+    # reopening the form, must not count as several starts.
+    publish_rows = {dims[0]: (safe_int(mets[0]), safe_int(mets[1]))
+                    for dims, mets in d.get("publish", [])}
 
-    def publish_count(event_name):
-        if event_name in publish_counts:
-            return publish_counts[event_name]
-        return events_map.get(event_name, {}).get("count", 0)
+    def publish_metric(event_name, index, key):
+        if event_name in publish_rows:
+            return publish_rows[event_name][index]
+        return events_map.get(event_name, {}).get(key, 0)
 
-    pub_starts = publish_count("publish_form_start")
-    pub_success = publish_count("publish_success")
-    pub_errors = publish_count("publish_error")
+    pub_starts = publish_metric("publish_form_start", 1, "users")
+    pub_success = publish_metric("publish_success", 1, "users")
+    pub_errors = publish_metric("publish_error", 0, "count")
 
     # Zero-result searches
     zero_results = []
@@ -665,6 +679,11 @@ def compute_behavior(d, days):
             "successes": pub_success,
             "errors": pub_errors,
             "conversion": (pub_success / pub_starts) if pub_starts else 0,
+        },
+        "monetization": {
+            ev: (events_map.get(ev, {}).get("count", 0),
+                 events_map.get(ev, {}).get("users", 0))
+            for ev in MONETIZATION_EVENTS
         },
         "zero_result_searches": sorted(zero_results,
                                        key=lambda x: x["count"], reverse=True)[:10],
@@ -922,7 +941,7 @@ def generate_actions(d):
                         "Make it more prominent."))
 
     pub = b.get("publish", {})
-    if pub.get("starts", 0) > 3 and pub.get("conversion", 1) < 0.3:
+    if pub.get("starts", 0) >= 5 and pub.get("conversion", 1) < 0.3:
         actions.append(("P1", "Publish funnel broken",
                         f"Only {pub['conversion']:.0%} conversion. "
                         f"{pub['errors']} errors."))
@@ -1496,14 +1515,29 @@ def render_markdown(d, days):
                 L.append(f"| {dims[0]} | {mets[0]} | {mets[1]} |")
             L.append("")
 
+    # ── Monetization ──
+    if "revenue" in d:
+        L.append("## 💶 Monetization")
+        L.append("")
+        mon = b.get("monetization", {}) if b else {}
+        revenue_row = d["revenue"][0][1] if d["revenue"] else ["0", "0"]
+        L.append(f"Purchases: **{safe_int(revenue_row[0])}** · "
+                 f"Revenue: **€{safe_float(revenue_row[1]):.2f}**")
+        L.append("")
+        L.append("| Step | Users | Events |")
+        L.append("|------|------:|-------:|")
+        for name, (count, users) in mon.items():
+            L.append(f"| {name} | {users} | {count} |")
+        L.append("")
+
     # ── Publish Funnel ──
     if "publish" in d:
         L.append("## 📝 Publish Funnel")
         L.append("")
         pub = b.get("publish", {}) if b else {}
         if pub.get("starts", 0) > 0:
-            L.append(f"Form starts: **{pub['starts']}** → "
-                     f"Successes: **{pub['successes']}** "
+            L.append(f"Users who started: **{pub['starts']}** → "
+                     f"published: **{pub['successes']}** "
                      f"(conversion: **{pub['conversion']:.0%}**)")
             if pub["errors"] > 0:
                 L.append(f"⚠️ {pub['errors']} errors")

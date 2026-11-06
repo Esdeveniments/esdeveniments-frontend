@@ -6,6 +6,12 @@ import { Link } from "@i18n/routing";
 import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
 import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
+import {
+  minorToMajor,
+  savePendingCheckout,
+  trackBeginCheckout,
+} from "@utils/checkout-analytics";
+import type { CheckoutAnalyticsItem } from "types/analytics";
 import type { PromoteEventClientProps } from "types/props";
 import type {
   PromotionCopyCode,
@@ -114,8 +120,18 @@ export default function PromoteEventClient({
       currency: option.currency,
     }).format(option.amountMinor / 100);
 
+  const toAnalyticsItem = (option: PromotionOptionDTO): CheckoutAnalyticsItem => ({
+    item_id: option.id,
+    item_name: `promote_${option.scope.toLowerCase()}_${option.durationDays}d`,
+    item_category: "event_promotion",
+    item_variant: option.scope.toLowerCase(),
+    price: minorToMajor(option.amountMinor),
+    quantity: 1,
+  });
+
   const handleConfirm = async () => {
     if (!selectedId) return;
+    const selectedOption = catalog.find((option) => option.id === selectedId);
     let idempotencyKey = idempotencyKeysRef.current.get(selectedId);
     if (!idempotencyKey) {
       idempotencyKey = crypto.randomUUID();
@@ -128,6 +144,10 @@ export default function PromoteEventClient({
       event_slug: slug,
       option_id: selectedId,
     });
+    const analyticsItem = selectedOption ? toAnalyticsItem(selectedOption) : null;
+    if (selectedOption && analyticsItem) {
+      trackBeginCheckout("promote", selectedOption.currency, analyticsItem);
+    }
 
     try {
       const result = await createPromotionCheckoutAction(
@@ -150,6 +170,15 @@ export default function PromoteEventClient({
         return;
       }
       sendGoogleEvent("promote_checkout_redirect", { event_slug: slug });
+      if (selectedOption && analyticsItem) {
+        savePendingCheckout({
+          flow: "promote",
+          transactionId: result.data.orderId,
+          currency: selectedOption.currency,
+          value: analyticsItem.price,
+          items: [analyticsItem],
+        });
+      }
       window.location.assign(result.data.url);
     } catch (error) {
       console.error("PromoteEventClient: checkout action rejected", error);

@@ -63,3 +63,48 @@ export const ensureGtag = (): WindowWithGtag | null => {
 
   return win;
 };
+
+// Remembers that this browser sent a user_id, so a later anonymous page load
+// (after logout, which is a full redirect) clears it with null.
+const USER_ID_SET_KEY = "ga_user_id_set";
+
+/**
+ * GA4 User-ID: set the opaque auth id when signed in, send null after a
+ * sign-out, send nothing for visitors who never signed in (per Google's
+ * user-id guide). Never pass an email or username here.
+ */
+export const setAnalyticsUserId = (userId: string | null): void => {
+  if (isE2ETestMode) return;
+  const win = ensureGtag();
+  if (!win) return;
+  try {
+    if (userId) {
+      win.gtag("set", { user_id: userId });
+      localStorage.setItem(USER_ID_SET_KEY, "1");
+    } else if (localStorage.getItem(USER_ID_SET_KEY)) {
+      win.gtag("set", { user_id: null });
+      localStorage.removeItem(USER_ID_SET_KEY);
+    }
+  } catch {
+    // Storage disabled: the user_id (if any) was still set above.
+  }
+};
+
+// GA4 drops event param values longer than 100 characters.
+const MAX_SEARCH_TERM_LENGTH = 100;
+
+/** Normalizes a typed search for the `search_term` param. */
+export const toSearchTermParam = (term: string): string =>
+  term.trim().replace(/\s+/g, " ").toLowerCase().slice(0, MAX_SEARCH_TERM_LENGTH);
+
+/** Last path segment of a shared URL (the event slug), never the title. */
+export const getShareItemId = (url: string): string => {
+  try {
+    const segments = new URL(url, "https://www.esdeveniments.cat").pathname
+      .split("/")
+      .filter(Boolean);
+    return segments.at(-1) ?? "";
+  } catch {
+    return "";
+  }
+};
