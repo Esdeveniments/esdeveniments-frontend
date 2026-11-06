@@ -103,7 +103,8 @@ Frontend application → **Resource Limits**:
 
 Redis (`redis-pro`, `redis-pre`) → set a bound so a cache can't grow without limit:
 
-- `maxmemory 256mb` (pro) / `64mb` (pre)
+- `maxmemory 450mb` (pro) / `200mb` (pre), read on 2026-11-06 from the authenticated
+  `/api/health` (`cache.redis.maxmemoryBytes`); this doc said 256mb / 64mb before
 - `maxmemory-policy allkeys-lru` — safe for a cache: an evicted entry is just
   regenerated on the next request.
 
@@ -114,6 +115,12 @@ carry no TTL, so each deploy used to orphan the previous build's keys and Redis 
 forever. `cache-handler.mjs` now purges non-current-build keys on a fresh healthy
 connection (SCAN + UNLINK, fire-and-forget). `maxmemory-policy allkeys-lru` above is
 the backstop if a purge is ever skipped.
+
+Until #669 (2026-11-06) the purge failed on every start (node-redis 6 rejects a
+numeric `SCAN` cursor), so staging sat at 172 MB of 200 MB with 499 keys; the first
+start with the fix left 4. Entries are also brotli-compressed since #669 (a route
+shell is ~43 KB instead of ~390 KB). `/api/health?secret=…` reports `used_memory`,
+`maxmemory`, evictions and hits under `cache.redis`.
 
 ## Quick check on the server
 

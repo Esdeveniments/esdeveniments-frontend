@@ -25,6 +25,8 @@ Lab numbers (this machine, `scripts/perf-lab.mjs`) are proxies. They explain why
 ## How to measure
 
 - **Field (production):** `python3 scripts/crux-check.py`. It needs a free CrUX API key. Data covers the last 28 days, so a change needs about 4 weeks to show fully. Single pages have too few visits; only the whole site has data.
+- **Google scripts on production:** `node scripts/perf-google-tbt.mjs https://www.esdeveniments.cat 5 <out.json> <path>...` splits blocking time by script (gtag.js, Funding Choices, ours), with variants that block each one. `node scripts/perf-stream.mjs '<url>?nc=NC' 7` times when the LCP image and h1 bytes arrive (`NC` skips Cloudflare).
+- **Redis:** `curl -s "https://www.esdeveniments.cat/api/health?secret=$REVALIDATE_SECRET" | jq .cache.redis`.
 - **Lab:** build each version with `E2E_TEST_MODE=1 NEXT_PUBLIC_E2E_TEST_MODE=1 yarn build`, start it with `INTERNAL_SITE_URL=http://localhost:<port> E2E_TEST_MODE=1 yarn start -p <port>`, then `node scripts/perf-lab.mjs http://localhost:<port> <label> <out.json> / /catalunya /barcelona /e/<slug>`.
   - Measure all versions in the same session, with the same API and the same event slugs.
   - E2E mode turns off Google scripts (consent box, ads, analytics), so lab LCP never includes the consent box.
@@ -361,3 +363,86 @@ Estimate, not measured: if a stored `/[place]` page behaved like the stored even
 - Storage: a stored listing is about 0.6 MB (HTML plus RSC), uncompressed in Redis (`cache-handler.mjs`). Production Redis is `maxmemory 256mb` `allkeys-lru` per `docs/self-hosted-resource-limits.md` (the 2026-11-02 section above says 450 MB; not checked). About 400-750 listing URLs (places × 3 languages, which crawlers request) would fill it and evict the stored event pages, which are smaller and already fast. The `"use cache"` store adds 64 MB per process.
 
 **Do first, if this comes back:** compress Redis entries in `cache-handler.mjs` (HTML and RSC compress about 8x: 342 → 44 KB here), then measure Redis memory and the CDN hit rate on production. With compressed entries, storing `/[place]` pages becomes cheap; the refactor above is still needed.
+
+## 2026-11-06 (2): event 404s, field data, Google TBT, stored listings
+
+Four open items from the sections above, measured on production (www, from Barcelona, Cloudflare PoP MAD) on 2026-11-06. Lab runs: Playwright Chromium, Pixel 7, 4x CPU, 1.6 Mbps / 150 ms, first visit, ads and analytics hits blocked (`/googlesyndication|doubleclick|adtrafficquality|googleadservices|google-analytics\.com|\/g\/collect|\/pagead\//`), median of 5 unless noted.
+
+### Unknown event pages: 200 + noindex (not changed)
+
+- A deleted slug serves `200`, `noindex`, the title "No event found" and `NEXT_HTTP_ERROR_FALLBACK;404`; Cloudflare caches it like any page. A missing place gets a real `404`, which Cloudflare also caches (MISS 0.79 s, then HIT 0.14 s).
+- **Search Console → Pages** (data to about 2026-10-25): "Excluded by noindex" 40,037, "Crawled – currently not indexed" 47,012, **"Soft 404" 436**, "Not found (404)" 11. The soft 404 examples are listing and `/sitemap/<place>/<year>/<month>` URLs crawled April to August, plus staging URLs; no event pages.
+- The 1,000-row example list of "Excluded by noindex" has 890 event URLs: 467 ended more than 60 days ago (intended, `EXPIRED_EVENT_NOINDEX_DAYS`), **316 were live events noindexed by a bug** (below), and 107 (12%) were deleted events.
+- Cost of a check in Proxy: one backend lookup per slug, about 100 ms at the origin (`/api/events/<slug>` cold 0.18-0.22 s vs warm 0.11 s). Most event views reach the origin (Cloudflare served 15% of Spanish event views, 2026-11-02 section), and the shared `eventDetailCache` keeps a slug for 30 min, the same as Cloudflare's `s-maxage`, so most of those views would wait for it.
+- **Decision: not built.** Deleted events already stay out of the index through `noindex`, and Google doesn't file them as soft 404s. A real 404 would add up to ~100 ms of TTFB to most event views for no indexing change. Revisit if Search Console starts listing event URLs under "Soft 404".
+- **Bug found and fixed (#668, released in #675):** `isMalformedEventSlug` flagged every slug over 120 chars. Backend v2 slugs end with the date and a 36-char UUID, so 408 of 3,000 live events (13.6%, up to 215 chars, all real titles) were `noindex` and missing from the events sitemap. After the release the production events sitemap lists 407 slugs over 120 chars (0 before), and the 127-char example serves `index, follow`.
+
+### Field data (CrUX): too early
+
+`python3 scripts/crux-check.py`, phone, p75, collection period 2026-10-07 to 2026-11-03, which ends before releases #657 (2026-11-05) and #665 (2026-11-06):
+
+| | Phone | Desktop |
+|---|---|---|
+| LCP | 2.58 s (73% good) | 2.26 s |
+| INP | 186 ms (81%) | 78 ms |
+| CLS | 0.22 (72%) | 0.01 |
+| FCP | 1.22 s (90%) | 0.75 s |
+| TTFB | 0.52 s (90%) | 0.41 s |
+
+Same values as the 2026-11-05 section; single URLs (`/`, `/catalunya`, `/barcelona`) still have no CrUX data. The phone-only CLS (desktop 0.01) fits shifts from ads on phones. GA4 `web_vitals` CLS attribution (#591) could not be read: the Analytics Data API needs `analytics.readonly`, and the local ADC token has expired (`gcloud auth application-default login --scopes=openid,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/analytics.readonly,https://www.googleapis.com/auth/webmasters.readonly`). **Next check: 2026-12-03**, with the GA4 query: event `web_vitals`, `metric = CLS`, by `element`, phone only.
+
+### TBT from Google scripts: what blocks, and when
+
+Production, first visit; `all` = as served, `noGtag` / `noFC` / `none` = gtag.js, Funding Choices, or both blocked. "Blocking by script" splits each long animation frame's blocking time by its scripts' duration (LoAF `scripts[]`). Script: `scripts/perf-google-tbt.mjs` (method below).
+
+| Page | Variant | load | LCP | TBT | Blocking by script (median run) | gtag.js frames (start, blocking) |
+|---|---|---|---|---|---|---|
+| `/` | all | 3975 ms | 1956 (image) | 426 | ours 198, FC 142, gtag 106 | 5228 ms 64, 5342 ms 54 |
+| | noGtag | 3979 | 2044 | 381 | ours 235, FC 181 | |
+| | noFC | 2816 | 1808 | 309 | gtag 212, ours 167 | 4451 ms 87, 4588 ms 65 |
+| | none | 2868 | 1892 | 168 | ours 399* | |
+| `/barcelona` | all | 4396 | 992 (image) | 591 | FC 260, ours 205, gtag 138 | 6487 ms 129, 6668 ms 149 |
+| | noGtag | 4427 | 1000 | 307 | FC 169, ours 129 | |
+| | noFC | 2793 | 960 | 386 | gtag 178, ours 168 | |
+| | none | 2762 | 968 | 127 | ours 88 | |
+| Event (image) | all | 5020 | 1052 (image) | 986 | gtag 393, ours 330, FC 265 | 6336 ms 202, 6588 ms 257 |
+| | noGtag | 4615 | 1028 | 408 | FC 198, ours 180 | |
+| | noFC | 2637 | 960 | 356 | gtag 222, ours 86 | |
+| | none | 2685 | 972 | 238 | ours 175 | |
+
+\* LoAF split by script duration; one run, noisy.
+
+- gtag.js runs two long frames **1.1-1.6 s after the load event** and blocks 100-400 ms per page. FC blocks 140-300 ms and **delays the load event by 1.2-2.4 s** (it loads during parsing).
+- A tap 1 s after load (5 runs per variant) took 16-88 ms in every variant: gtag hadn't started yet.
+- Because FC delays `load`, `lazyOnload` already starts gtag.js 5-6.5 s after navigation on this profile. "First interaction or timeout" (as AdSense) would start it **earlier** for visitors who scroll or tap first, and put its 250-580 ms of frames right after that first interaction, where the next tap is likely. Lab TBT would only drop because `perf-lab.mjs` stops counting 5 s after load.
+- Cost side: page_view, consent-mode pings and early `web_vitals` events stay queued in `dataLayer` until gtag.js loads, so visits that end before the trigger are lost.
+- **Decision: not built.** The work doesn't go away, and its timing gets worse for engaged visitors. INP (186 ms phone p75, 81% good) is the metric to watch: when the GA4 API is available, check `web_vitals` INP by `load_state` and `element`; only INPs during gtag's frames would justify moving it.
+- **The "event page paints 9464 ms late" case** (2026-11-05, event without an image, local TLS proxy) does not reproduce on production. On a no-image event the LCP is the FC consent box at **3.56-3.82 s** with or without gtag (3 runs each); with FC blocked the h1 paints at 0.77-0.85 s. FC stays where it is (hard rule); its box is the LCP of first visits on pages without an LCP image.
+
+### Stored listing pages
+
+**Step 1, Redis compression (#669, released in #675).** A local production build against `redis:7-alpine` stores one entry per route and locale (`/ca`, `/ca/[place]`, `/es/[place]`, `/ca/e/[eventId]`), 375-404 KB each: html 41-47 KB, `rscData` 109-117 KB and `segmentData` 217-234 KB, the last two base64. gzip of that JSON: 2.9x. Unpacking the base64 first and using brotli q4: **9.1x (≈43 KB)**, 1.6-1.9 ms per set and 0.5-0.7 ms per get (`JSON.parse` alone: 0.24 ms). Raw bytes instead of base64 text would give 12.1x but needs a Buffer client wrapped around the library's internals. Same pages before/after: `used_memory_dataset` 2.15 → 0.69 MB.
+Found on the way: the stale-build purge had never worked (node-redis 6 rejects a numeric `SCAN` cursor: `"arguments[1]" must be of type "string | Buffer"`), so every deploy's keys stayed until `allkeys-lru` evicted them. With #669 the old build's 12 keys were removed at start.
+
+**Step 2, production Redis and Cloudflare.**
+- Redis, read with the authenticated `/api/health` (#670): production `maxmemory` is **450 MiB** (471,859,200 bytes, `allkeys-lru`; `docs/self-hosted-resource-limits.md` said 256 MB), staging **200 MiB** (the doc said 64 MB). Production since its Redis last started: 0 evictions, 1.11 M hits and 0.94 M misses (54%). Staging before #669: 499 keys, **172 MB of 200 MB**, 65% hits; right after #669 deployed, the purge left 4 keys and 1.4 MB. Production right after release #675: 54 keys, 2.6 MB; 132 keys and 3.4 MB after a few page loads. The memory was old builds' keys, not current pages.
+- Cloudflare, listings (one request per URL, 120 random place pages in ca/es/en + 10 busy ones, PoP MAD, 2026-11-06 ~10:20 UTC): **124 MISS, 5 HIT, 1 EXPIRED**. Even `/tarragona`, `/sabadell`, `/terrassa` and `/es/barcelona` were misses; `/`, `/barcelona`, `/girona` and `/lleida` were hits. MISS: TTFB 0.26 s, last byte 0.79 s (median); HIT: 0.075 / 0.14 s. Cloudflare analytics by cache status needs a token with Analytics read (the deploy token only purges) or the dashboard.
+
+**Step 3, would a stored `/[place]` page help?** When the content bytes arrive on an origin miss (`?nc=<random>` skips Cloudflare; 5-7 runs, median, ms):
+
+| Page | First chunk | LCP image in HTML | Visible h1 | Last byte |
+|---|---|---|---|---|
+| `/barcelona` (two sessions) | 202 / 213 | 278 / 387 | 299 / 387 | 364 / 681 |
+| `/girona` | 172 | 298 | 298 | 385 |
+| `/catalunya` | 189 | 250 | 250 | 301 |
+| `/es/barcelona` | 174 | 292 | 292 | 339 |
+| `/tarragona` | 189 | 284 | 284 | 362 |
+| `/barcelona/avui` | 169 | 464 | 514 | 602 |
+| Event, `"use cache"` body (two events) | 127 / 154 | 160 / 201 | 160 / 201 | 216 / 265 |
+| `/barcelona`, Cloudflare HIT | 54 | 57 | 58 | 61 |
+
+The listing body arrives 61-174 ms after the first chunk (295 ms on `/barcelona/avui`); a stored event body 33-47 ms after. **A stored listing would save about 30-130 ms** of content arrival, on Cloudflare misses only, not the 0.1-0.3 s estimated earlier. **Decision: not built.** It is still the ~12-file refactor listed in the 2026-11-06 section, with the silent-Catalan locale trap, for a gain smaller than the run-to-run noise of these pages. Cheaper target if listings come back: why `/barcelona/avui` waits 295 ms (date pages may miss the `fetchEventsCached` entry).
+
+### Method: TBT by script
+
+Playwright on production with `page.route` blocking the analytics/ads hits above plus the variant's script; observers for `longtask` (TBT = sum over 50 ms until load + 5 s, as `perf-lab.mjs`), `long-animation-frame` (blocking time and `scripts[].sourceURL`), `largest-contentful-paint` (element; text inside `.fc-consent-root` counts as "consent box") and `event` (interaction duration for the tap). Stream timing (`scripts/perf-stream.mjs`): Node `fetch` with a Chrome UA and `accept-encoding: br`, reading chunks and noting when `fetchPriority="high"` and the first `<h1>` without `sr-only` appear.
