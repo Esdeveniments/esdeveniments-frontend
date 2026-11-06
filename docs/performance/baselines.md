@@ -148,7 +148,7 @@ Lab: before = develop `a1ea418d`, after = `2f91ca83` (first #609 commit; the rev
 Listings render their events on each request and reveal them through Suspense, 0.3-0.6 s after the first paint. That gap includes the React 19.2 reveal throttle (up to 300 ms). The ISR event page has no gap. A static listing shell would likely save 0.3-0.6 s of LCP. The cost:
 - Every listing reader needs `"use cache"`, and the `connection()` calls on the listing path must go or move into a smaller dynamic part: `fetchWithHmac`, `generatePagesData`, `PlacePageShell` and `HomeStructuredData` (`app/[locale]/page.tsx`; the last two were added for tree mismatches), plus `SponsorBannerSlot` (sponsor lookup) and `lib/api/promotions.ts` (promoted events).
 - Date filters ("avui", "demà") change at midnight, so they need a cached date.
-- Cache size: a listing is 0.3-0.7 MB of HTML plus a similar RSC payload. The production Redis is 450 MB `allkeys-lru`, shared with event ISR pages. Places × dates × categories × 3 languages is far more than fits, so caching only the plain place pages (or the busiest places) is the realistic first step.
+- Cache size: a listing is 0.3-0.7 MB of HTML plus a similar RSC payload. The production Redis is 450 MB `allkeys-lru`, shared with event ISR pages. Places × dates × categories × 3 languages is far more than fits, so caching only the plain place pages (or the busiest places) is the realistic first step. Re-checked on 2026-11-06 (see that section): a stored page still streams its body as a hidden segment, and the estimated saving is 0.1-0.3 s, on Cloudflare misses only.
 
 ### INP
 
@@ -334,3 +334,30 @@ CLS is the same on every page (0 to 0.006 here; 0 to 0.008 in every other lab ru
 FCP moved by 30 ms or less either way, the navbar paints at the same time, and TBT is the same within noise (no Google: 152-187 → 159-174 ms; Google: 553-711 → 512-736 ms). Max CLS with the script was 0-0.008. One with-Google `/barcelona` run without the script hit 0.125, the only lab run in this section above 0.008; it wasn't reproduced. `test/react-reveal-throttle.test.ts` fails if a React upgrade changes the `$RT` code the script relies on.
 
 **Next check:** CrUX about 4 weeks after 2026-11-05 (FCP should drop; watch CLS); TBT from gtag.js and Funding Choices (for example, start gtag.js after the first interaction, like AdSense); GA `web_vitals` CLS attribution (#591) to find the field shifts.
+
+## 2026-11-06: listing content in the first HTML?
+
+Question after release #665 (the reveal-throttle fix on production): can the listing and event content (h1, first cards, LCP image) be part of the first HTML instead of a streamed section? Short answer: not with a `<Suspense>` around the page body, and the part that can be done (a stored listing page) saves little for its cost. Not built.
+
+**Where the content sits today** (staging, `/barcelona`, repeat visits so the page is warm): 342 KB of HTML (44 KB brotli). The shell (head, navbar, skeleton) ends at 27 KB. The list is the hidden segment `S:14` at 167 KB, after about 115 KB of inline RSC data; the LCP image is at 168 KB and the h1 at 175 KB. Production `/barcelona` (604 KB) is the same: shell to 27 KB, LCP image at 168 KB, h1 at 185 KB. The event page (its body is already `"use cache"`) is the same too: the h1 is in a hidden segment at 59 KB.
+
+**Why a stored page doesn't change that:** React 19.2 moves a finished `<Suspense>` boundary into a hidden `<div id="S:…">` (revealed by `$RC`) when it is over 500 B and the bytes already written in the same flush plus its own pass 12.8 KB, or when it holds suspensey images or deferred content at any size (`isEligibleForOutlining` and `progressiveChunkSize` in `react-dom-server`; Next keeps the 12.8 KB default for page renders). Every page body here passes the size rule, cached or not. The listing and event bodies need their boundary (the skeleton for unknown params, `partialPrefetching`), so their content always arrives as a hidden segment. With the throttle fix the reveal costs one frame, so what matters is how soon those bytes arrive.
+
+**What a stored listing would save** (production origin, a cache-busting query to skip Cloudflare, 4 runs each, after the deploy):
+
+| Page | First byte | Last byte |
+|---|---|---|
+| `/catalunya`, `/barcelona`, `/girona`, `/barcelona/avui` | 0.15-0.34 s | 0.34-0.60 s |
+| Event (`"use cache"` body, stored) | 0.15-0.19 s | 0.26 s (one run 0.49 s) |
+| Cloudflare HIT (`/barcelona`) | 0.08 s | 0.13 s |
+
+Estimate, not measured: if a stored `/[place]` page behaved like the stored event page, its content would arrive about 0.1-0.3 s sooner, but only on a Cloudflare miss or expiry. The table compares different pages and their last byte, not when the list arrives; measure the same listing before and after storing it to confirm. Hits, the common case for busy pages, would not change. Cloudflare caches per PoP, so misses are common on long-tail places.
+
+**Cost:**
+- Next 16.4 stores a URL after its first visit (`node_modules/next/dist/docs/01-app/02-guides/incremental-static-regeneration-cache-components.md`). Parts that reach uncached data or request-time APIs (`connection()`, `headers()`, `cookies()`) stay as their `<Suspense>` fallbacks in the stored page and render per request. So the list, the h1 and everything above them must be cacheable; the sponsor and promoted row can stay request-time holes. On `/[place]` that means about 12 files:
+  - Readers that call `connection()`: `fetchCategories`, `fetchPlaceBySlug` (alias redirect), `fetchRegionsWithCities` (`ExploreNearby`), `generatePagesData`, `PlacePageShell`, `fetchPromotedEvents`.
+  - `getLocaleSafely()` in `PlacePageShell`, `PlacePageExploreNav`, `CategoryQuicklinks`, `ExploreNearby` and `PromotedEventsSection`. Inside `"use cache"` its `headers()` call throws and it silently returns `ca`, so Spanish and English pages would render in Catalan. It must become a locale prop.
+  - `SponsorBannerSlot` (inside `HybridEventsList`) and the promoted row become request-time slots.
+- Storage: a stored listing is about 0.6 MB (HTML plus RSC), uncompressed in Redis (`cache-handler.mjs`). Production Redis is `maxmemory 256mb` `allkeys-lru` per `docs/self-hosted-resource-limits.md` (the 2026-11-02 section above says 450 MB; not checked). About 400-750 listing URLs (places × 3 languages, which crawlers request) would fill it and evict the stored event pages, which are smaller and already fast. The `"use cache"` store adds 64 MB per process.
+
+**Do first, if this comes back:** compress Redis entries in `cache-handler.mjs` (HTML and RSC compress about 8x: 342 → 44 KB here), then measure Redis memory and the CDN hit rate on production. With compressed entries, storing `/[place]` pages becomes cheap; the refactor above is still needed.
