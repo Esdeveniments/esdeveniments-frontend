@@ -321,7 +321,7 @@ CLS is the same on every page (0 to 0.006 here; 0 to 0.008 in every other lab ru
 - The extra 7-22 KB of raw HTML is the RSC payload of the new loading skeletons (on `/preferits`, six skeleton cards). Markup is unchanged; transferred bytes grew 2-6 KB.
 - Field CLS (0.22) predates this release. Lab CLS is 0-0.008 on every page (one unreproduced exception in the follow-up), so the field shifts come from what the lab doesn't show (ads, the consent box; see 2026-11-02).
 
-**Follow-up: no 300 ms reveal throttle** (`REVEAL_THROTTLE_OFF_SCRIPT` in `utils/constants.ts`, the first inline script in the root `<head>`; it makes `window.$RT` never a number, so `$RC` reveals on the next frame). Production builds of e768a37d with and without the script, same lab profile, runs alternated:
+**Follow-up: no 300 ms reveal throttle** (`REVEAL_THROTTLE_OFF_SCRIPT` in `utils/constants.ts`, the first inline script in the root `<head>`; it makes `window.$RT` read as undefined while the tab is visible, so `$RC` reveals on the next frame; hidden tabs keep React's timeout). Production builds of e768a37d with and without the script, same lab profile, runs alternated:
 
 | Page | LCP without → with (no Google, median of 7) | LCP without → with (Google, median of 5) |
 |---|---|---|

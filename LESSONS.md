@@ -775,13 +775,17 @@ later: `/preferits` LCP went from 624 to 916 ms against the old root
 boundary, which painted everything in one frame.
 
 Fix: `REVEAL_THROTTLE_OFF_SCRIPT` (`utils/constants.ts`), an inline script at
-the top of the root `<head>`, defines `window.$RT` as an accessor that always
-returns `undefined` and ignores writes. `$RC` then always takes the
+the top of the root `<head>`, defines `window.$RT` as an accessor that returns
+`undefined` while the tab is visible, so `$RC` takes the
 `requestAnimationFrame` path; boundaries that arrive in the same frame are
-still batched. Nothing on the client reads `$RT` (checked in the react-dom
-client bundles). If React renames it the script does nothing, so
-`test/react-reveal-throttle.test.ts` checks both the stable and experimental
-server runtimes for the code it depends on. Measured on production builds
+still batched. In a hidden tab it returns React's value: hidden tabs run no
+animation frames, so a tab hidden after the shell painted would otherwise
+keep its skeleton (and skip hydration) until shown again; React's
+`setTimeout` path still runs there. Nothing on the client reads `$RT`
+(checked in the react-dom client bundles). If React renames it the script
+does nothing, so `test/react-reveal-throttle.test.ts` runs the real `$RC`
+from both the stable and experimental server runtimes and checks which path
+it takes, visible and hidden. Measured on production builds
 (median of 7, 4× CPU, 150 ms RTT, 1.6 Mbps, no Google scripts): LCP 932 → 684
 ms on `/preferits`, 992 → 820 on `/catalunya`, 980 → 752 on `/barcelona`,
 1000 → 756 on an event, `/` unchanged (its LCP is the hero image); FCP, TBT

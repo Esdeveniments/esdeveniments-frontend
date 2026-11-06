@@ -430,9 +430,10 @@ export const NO_VIGNETTE_LINK_ATTRS = {
 // boundary until `$RT + 300 ms` (`$RC` in react-dom-server). Our shell paints
 // the navbar and a skeleton, so content that is ready sooner waited up to
 // 300 ms: LCP -170 to -250 ms without it, same CLS and TBT
-// (docs/performance/baselines.md, 2026-11-05). With `$RT` never a number,
-// `$RC` reveals on the next animation frame, still batching boundaries that
-// arrive in the same frame. test/react-reveal-throttle.test.ts fails if React
-// changes this contract.
+// (docs/performance/baselines.md, 2026-11-05). While `$RT` reads as
+// undefined, `$RC` reveals on the next animation frame, still batching
+// boundaries that arrive in the same frame. A hidden tab runs no animation
+// frames, so there `$RT` keeps React's value and its setTimeout path.
+// test/react-reveal-throttle.test.ts fails if React changes this contract.
 export const REVEAL_THROTTLE_OFF_SCRIPT =
-  'Object.defineProperty(window,"$RT",{get:function(){},set:function(){}});';
+  '(function(){var t;Object.defineProperty(window,"$RT",{get:function(){return document.hidden?t:void 0},set:function(v){t=v}})})();';
