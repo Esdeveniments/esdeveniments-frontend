@@ -26,7 +26,7 @@ Lab numbers (this machine, `scripts/perf-lab.mjs`) are proxies. They explain why
 
 - **Field (production):** `python3 scripts/crux-check.py`. It needs a free CrUX API key. Data covers the last 28 days, so a change needs about 4 weeks to show fully. Single pages have too few visits; only the whole site has data.
 - **Google scripts on production:** `node scripts/perf-google-tbt.mjs https://www.esdeveniments.cat 5 <out.json> <path>...` splits blocking time by script (gtag.js, Funding Choices, ours), with variants that block each one. `node scripts/perf-stream.mjs '<url>?nc=NC' 7` times when the LCP image and h1 bytes arrive (`NC` skips Cloudflare).
-- **Redis:** `curl -s "https://www.esdeveniments.cat/api/health?secret=$REVALIDATE_SECRET" | jq .cache.redis`.
+- **Redis:** `curl -s -H "x-health-secret: $HEALTH_SECRET" https://www.esdeveniments.cat/api/health | jq .cache.redis`.
 - **Lab:** build each version with `E2E_TEST_MODE=1 NEXT_PUBLIC_E2E_TEST_MODE=1 yarn build`, start it with `INTERNAL_SITE_URL=http://localhost:<port> E2E_TEST_MODE=1 yarn start -p <port>`, then `node scripts/perf-lab.mjs http://localhost:<port> <label> <out.json> / /catalunya /barcelona /e/<slug>`.
   - Measure all versions in the same session, with the same API and the same event slugs.
   - E2E mode turns off Google scripts (consent box, ads, analytics), so lab LCP never includes the consent box.
