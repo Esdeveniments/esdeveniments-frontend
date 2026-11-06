@@ -8,6 +8,7 @@ import { isValidDateSlug } from "@lib/dates";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { stripLocalePrefix } from "./i18n-routing";
 import { sanitize } from "./sanitize-segment";
+import { isValidCategorySlugFormat } from "./category-mapping";
 import {
   DEFAULT_FILTER_VALUE,
   MAX_QUERY_STRING_LENGTH,
@@ -153,7 +154,13 @@ export function handleCanonicalRedirects(
     return null;
   }
 
-  const queryCategory = searchParams.get("category");
+  // Only a slug-shaped ?category= value may become a path segment; anything
+  // else (dots, slashes) is ignored so the redirect is built from safe parts.
+  const rawQueryCategory = searchParams.get("category");
+  const queryCategory =
+    rawQueryCategory && isValidCategorySlugFormat(rawQueryCategory)
+      ? rawQueryCategory
+      : null;
   const queryDate = searchParams.get("date");
 
   const place = segmentsToUse[0] || "catalunya";

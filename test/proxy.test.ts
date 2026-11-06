@@ -200,7 +200,14 @@ describe("proxy", () => {
         expect(cacheTag).toBe(expected);
       });
 
-      it.each(["/preferits", "/perfil/edita", "/e/concert/edita", "/e/concert/promote"])(
+      it.each([
+        "/preferits",
+        "/preferits/passats",
+        "/es/preferits/passats",
+        "/perfil/edita",
+        "/e/concert/edita",
+        "/e/concert/promote",
+      ])(
         "does not tag the private page %s",
         async (pathname) => {
           const { cacheTag, cacheControl } = await cacheTagFor(pathname);

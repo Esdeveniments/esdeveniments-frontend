@@ -47,3 +47,11 @@ export function filterActiveEvents(
   ) as EventSummaryResponseDTO[];
   return realEvents.filter(isEventActive);
 }
+
+// Event slugs are words, digits and an id joined by "-" (all 2,499 sitemap
+// slugs matched on 2026-11-06). Validate before a slug reaches a backend path.
+const EVENT_SLUG_RE = /^[A-Za-z0-9-]{1,512}$/;
+
+export function isValidEventSlug(slug: string): boolean {
+  return EVENT_SLUG_RE.test(slug);
+}

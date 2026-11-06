@@ -230,6 +230,7 @@ export interface EventShareBarClientProps extends EventShareBarProps {
 }
 
 export interface EventDescriptionProps {
+  slug: string;
   description: string;
   introText?: string;
   locale?: AppLocale;
