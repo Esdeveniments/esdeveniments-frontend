@@ -13,6 +13,7 @@ import Script from "next/script";
 import { routing } from "@i18n/routing";
 import { isE2ETestBuild } from "@utils/env";
 import { FUNDING_CHOICES_SRC } from "@utils/analytics";
+import { REVEAL_THROTTLE_OFF_SCRIPT } from "@utils/constants";
 import GoogleScripts from "../GoogleScripts";
 import AuthEventTracker from "@components/analytics/AuthEventTracker";
 import { AdProvider } from "@lib/context/AdContext";
@@ -152,6 +153,10 @@ export default async function LocaleLayout({
         <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
         {/* MCP server discovery for AI agents (WebMCP + Streamable HTTP) */}
         <link rel="mcp-server-sse" href="/.well-known/mcp" />
+        {/* Before React's streaming scripts: see REVEAL_THROTTLE_OFF_SCRIPT. */}
+        <script
+          dangerouslySetInnerHTML={{ __html: REVEAL_THROTTLE_OFF_SCRIPT }}
+        />
         {/* Early PWA install-prompt capture. Chromium fires `beforeinstallprompt`
             once, often before lazy React chunks hydrate; if no listener exists
             yet, the install CTA is lost for the whole session. This synchronous
