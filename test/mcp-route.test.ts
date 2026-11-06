@@ -67,6 +67,31 @@ describe("MCP route", () => {
     expect(blocked.headers.get("Retry-After")).toBeTruthy();
   });
 
+  it.each(["../../internal/x?draft=true", "%2e%2e/%2e%2e/internal/y", "a/b", "a b"])(
+    "rejects the getEvent slug %s without calling the backend",
+    async (slug) => {
+      const fetchMock = vi
+        .spyOn(global, "fetch")
+        .mockResolvedValue(new Response(null, { status: 404 }));
+
+      const response = await POST(
+        buildMcpBodyRequest(
+          {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "tools/call",
+            params: { name: "getEvent", arguments: { slug } },
+          },
+          "203.0.113.40",
+        ),
+      );
+      const body = await response.json();
+
+      expect(body.result.isError).toBe(true);
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
   it("bounds resource fetches with an abort signal", async () => {
     (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
 

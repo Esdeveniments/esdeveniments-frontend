@@ -6,6 +6,7 @@ import type { EventDescriptionProps } from "types/event";
 const DESCRIPTION_BODY_ID = "event-description-body";
 
 const EventDescription: React.FC<EventDescriptionProps> = ({
+  slug,
   description,
   introText,
   locale,
@@ -20,6 +21,7 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
         headerActions={
           showTranslate ? (
             <TranslateDescription
+              slug={slug}
               description={description}
               locale={locale}
               targetId={DESCRIPTION_BODY_ID}

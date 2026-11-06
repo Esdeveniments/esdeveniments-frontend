@@ -2,7 +2,8 @@
  * Generic image proxy to handle flaky/insecure external images.
  * - HTTPS-first; retries HTTP if original was HTTP-only.
  * - Validates protocol and URL length to reduce SSRF risk.
- * - Enforces timeouts and size guard; falls back to 1x1 PNG.
+ * - Enforces a header timeout, a total deadline (body included, also ended by
+ *   a client disconnect) and a size guard; falls back to 1x1 PNG.
  * - Supports image optimization: resizing, format conversion (WebP/AVIF), quality control
  */
 import { NextResponse } from "next/server";
@@ -30,7 +31,10 @@ import {
 import type { Sharp } from "sharp";
 
 const MAX_BYTES = 5_000_000; // 5MB guard
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 5000; // DNS check, connect, headers and redirects
+// Whole upstream exchange, body included. Linked to the client's signal so a
+// disconnect also frees the socket and the buffered chunks.
+const TOTAL_TIMEOUT_MS = 15_000;
 const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 const MAX_REDIRECTS = 2;
@@ -130,6 +134,7 @@ async function retryBrowserTolerableFailure(
 
 async function fetchWithTimeout(
   url: string,
+  outerSignal: AbortSignal,
   redirectsRemaining = MAX_REDIRECTS,
   deadline = Date.now() + TIMEOUT_MS,
 ): Promise<UpstreamResponse> {
@@ -143,8 +148,10 @@ async function fetchWithTimeout(
     throw new Error("Image upstream fetch timed out");
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), remainingMs);
+  const headerController = new AbortController();
+  const timeout = setTimeout(() => headerController.abort(), remainingMs);
+  // outerSignal keeps covering the body after the header timer is cleared.
+  const signal = AbortSignal.any([outerSignal, headerController.signal]);
   try {
     const bypassTls = shouldBypassTlsVerification(url);
     const pinnedDnsDispatcher = targetSafety.dnsRecords
@@ -152,7 +159,7 @@ async function fetchWithTimeout(
       : null;
     // Typed as undici's own request init so `dispatcher` is properly typed.
     const init: NonNullable<Parameters<typeof undiciFetch>[1]> = {
-      signal: controller.signal,
+      signal,
       redirect: "manual",
     };
 
@@ -173,7 +180,7 @@ async function fetchWithTimeout(
       response = await retryBrowserTolerableFailure(
         error,
         url,
-        controller.signal,
+        signal,
         targetSafety.dnsRecords,
         bypassTls,
       );
@@ -185,7 +192,12 @@ async function fetchWithTimeout(
         throw new Error("Blocked image upstream redirect");
       }
       const redirectUrl = new URL(location, url).toString();
-      return await fetchWithTimeout(redirectUrl, redirectsRemaining - 1, deadline);
+      return await fetchWithTimeout(
+        redirectUrl,
+        outerSignal,
+        redirectsRemaining - 1,
+        deadline,
+      );
     }
     return response;
   } catch (error) {
@@ -389,8 +401,13 @@ export async function GET(request: Request) {
   const candidates = buildFetchCandidates(upstreamUrl, originalWasHttp);
 
   for (const candidate of candidates) {
+    if (request.signal.aborted) break;
+    const upstreamSignal = AbortSignal.any([
+      request.signal,
+      AbortSignal.timeout(TOTAL_TIMEOUT_MS),
+    ]);
     try {
-      const response = await fetchWithTimeout(candidate);
+      const response = await fetchWithTimeout(candidate, upstreamSignal);
       if (!response.ok) {
         console.error(
           `[image-proxy] Upstream returned ${response.status} for ${candidate.slice(0, 200)}`,
