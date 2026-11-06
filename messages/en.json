@@ -187,10 +187,9 @@
       "breadcrumbNews": "News",
       "sectionWeekend": "Weekend",
       "sectionWeek": "Week",
-      "readingTime": "{minutes} min read",
       "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
-      "mustSee": "MUST-SEE",
-      "moreProposals": "MORE IDEAS",
+      "mustSee": "Must-see",
+      "moreProposals": "More ideas",
       "relatedArticles": "Related articles",
       "shareArticle": "Share this article"
     },
@@ -276,12 +275,8 @@
     "NewsPlace": {
       "metaTitle": "News and plans in {place} | Agenda and recommendations - Esdeveniments.cat",
       "metaDescription": "Discover the latest news, recommendations and cultural plans in {place}. Concerts, exhibitions, theatre and more.",
-      "breadcrumbHome": "Home",
-      "breadcrumbNews": "News",
       "heading": "News in {place}",
       "seeAgenda": "See agenda for {place}",
-      "seeAll": "See all news",
-      "rssLabel": "RSS",
       "rssTitle": "RSS News {place}"
     },
     "NewsArticleFallback": {
@@ -907,9 +902,7 @@
       "search": "Search"
     },
     "News": {
-      "readMore": "Read more",
-      "readMoreAria": "Read more about {title}",
-      "viewCategory": "See category {name}"
+      "readingTime": "{minutes} min read"
     },
     "LocationDiscovery": {
       "heading": "Viewing events in",
@@ -1127,24 +1120,21 @@
     "NewsList": {
       "emptyTitle": "We haven't found recent news",
       "emptyBody": "We don't have updates yet for {place}, but we keep adding more every week. Meanwhile, explore the latest news from other areas.",
-      "viewAll": "See all news →",
+      "viewAll": "See all news",
       "itemListName": "News in {place}",
-      "prev": "← Previous",
-      "next": "More news →"
-    },
-    "NewsHubsGrid": {
-      "itemListTitle": "Latest news by hub",
-      "titleWithPlace": "Latest news {place}",
-      "seeMore": "See more…",
-      "seeAgenda": "See agenda for {place}",
-      "nearbyLabel": "Nearby:",
-      "title": "Latest news by hub",
-      "hubTitle": "Latest news {hubName}"
+      "prev": "Newer",
+      "next": "Older",
+      "emptyBodyIndex": "No news has been published yet. Meanwhile, check the agenda to find plans near you.",
+      "viewAgenda": "See the agenda",
+      "emptyPageTitle": "This page has no news",
+      "firstPage": "See the latest news",
+      "paginationLabel": "News pagination",
+      "pageOf": "Page {page} of {total}",
+      "pageTitle": "{title} (page {page})"
     },
     "NewsCities": {
       "title": "Cities with news",
-      "showMore": "See more…",
-      "showLess": "See less"
+      "all": "All"
     },
     "NewsArticleDetail": {
       "breadcrumbNews": "News",

@@ -6,7 +6,9 @@ import { formatPlacePreposition } from "@utils/helpers";
 import type { LatestNewsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
-import { NEWS_FRESHNESS_DAYS } from "@utils/constants";
+import { NEWS_FRESHNESS_DAYS, SEE_ALL_LINK_CLASS } from "@utils/constants";
+import List from "@components/ui/list";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
 export default async function LatestNewsSection({
   placeSlug,
@@ -20,8 +22,8 @@ export default async function LatestNewsSection({
   // the resume tree → "Expected Fragment but got script" PPR resume errors.
   await connection();
 
-  const t = await getTranslations("Components.LatestNewsSection");
   const locale = await getLocaleSafely();
+  const t = await getTranslations({ locale, namespace: "Components.LatestNewsSection" });
   const newsResponse = await fetchNews({ page: 0, size: 3, place: placeSlug });
   const latestNews = newsResponse.content || [];
 
@@ -47,42 +49,28 @@ export default async function LatestNewsSection({
 
   return (
     <div className="w-full bg-background pb-8">
-      <section className="container w-full flex flex-col gap-element-gap">
-        <div className="w-full flex items-center justify-between">
+      <section className="container w-full stack">
+        <div className="flex-between gap-element-gap">
           <h2 className="heading-2">{title}</h2>
           <PressableAnchor
             href={newsHref}
             prefetch={false}
-            className="body-small text-primary underline hover:no-underline"
+            className={SEE_ALL_LINK_CLASS}
             variant="inline"
           >
-            {t("viewAll")}
+            {t("viewAll")} <ChevronRightIcon className="w-5 h-5" />
           </PressableAnchor>
         </div>
-        <div className="flex flex-col gap-element-gap">
-          {/* Hero card — full width */}
-          <NewsCard
-            key={latestNews[0].id}
-            event={latestNews[0]}
-            placeSlug={placeSlug}
-            placeLabel={placeLabel}
-            variant="hero"
-            priority={false}
-          />
-          {/* Remaining cards — 2-column grid on desktop */}
-          {latestNews.length > 1 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-element-gap">
-              {latestNews.slice(1, 3).map((newsItem) => (
-                <NewsCard
-                  key={newsItem.id}
-                  event={newsItem}
-                  placeSlug={placeSlug}
-                  placeLabel={placeLabel}
-                />
-              ))}
-            </div>
+        <List events={latestNews}>
+          {(newsItem) => (
+            <NewsCard
+              key={newsItem.id}
+              event={newsItem}
+              placeSlug={placeSlug}
+              placeLabel={placeLabel}
+            />
           )}
-        </div>
+        </List>
       </section>
     </div>
   );

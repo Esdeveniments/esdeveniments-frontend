@@ -99,10 +99,13 @@ export function buildPageMeta({
   locale,
   robotsOverride,
   openGraphType,
+  canonicalSearch,
 }: {
   title: string;
   description: string;
   canonical: string;
+  /** Query kept on the canonical and hreflang URLs (e.g. `page=2`) */
+  canonicalSearch?: string;
   image?: string;
   locale?: AppLocale;
   robotsOverride?: string;
@@ -110,7 +113,13 @@ export function buildPageMeta({
 }) {
   const resolvedLocale = locale ?? DEFAULT_LOCALE;
   const basePathname = stripLocaleFromPathname(getSafePathname(canonical));
-  const localizedUrls = buildLocalizedUrls(basePathname);
+  const search = canonicalSearch ? `?${canonicalSearch}` : "";
+  const localizedUrls = Object.fromEntries(
+    Object.entries(buildLocalizedUrls(basePathname)).map(([key, url]) => [
+      key,
+      `${url}${search}`,
+    ]),
+  ) as Record<AppLocale, string>;
   const canonicalUrl = localizedUrls[resolvedLocale] ?? canonical;
   const languageAlternates = Object.entries(localizedUrls).reduce<
     Record<string, string>
