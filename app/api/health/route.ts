@@ -77,6 +77,8 @@ async function checkRedis(): Promise<RedisStats | null> {
       const replies = parseRespReplies(buffer, commands.length);
       if (!replies) return;
       const [pong, memory, stats, keys] = replies.slice(auth.length);
+      // node-redis fails to connect when AUTH fails, even if PING would work.
+      if (auth.length && replies[0] !== "OK") return finish(null);
       if (pong !== "PONG") return finish(null);
       finish(parseRedisStats(`${memory ?? ""}\r\n${stats ?? ""}`, Number(keys)));
     });
