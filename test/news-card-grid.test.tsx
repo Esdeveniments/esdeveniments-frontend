@@ -41,6 +41,32 @@ describe("NewsCardGrid", () => {
     expect(html).toContain(">Sitges<");
   });
 
+  it("uses the region when there is no city, and the city over the region", () => {
+    const html = renderToStaticMarkup(
+      <NewsCardGrid
+        place="catalunya"
+        placeLabel="Catalunya"
+        items={[
+          {
+            ...baseNews,
+            id: "n3",
+            slug: "region-only",
+            region: { id: 2, name: "Garraf", slug: "garraf" } as NewsSummaryResponseDTO["region"],
+          },
+          {
+            ...baseNews,
+            id: "n4",
+            slug: "both",
+            city: { id: 1, name: "Sitges", slug: "sitges" } as NewsSummaryResponseDTO["city"],
+            region: { id: 2, name: "Garraf", slug: "garraf" } as NewsSummaryResponseDTO["region"],
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain('href="/noticies/garraf/region-only"');
+    expect(html).toContain('href="/noticies/sitges/both"');
+  });
+
   it("falls back to the page's place when the article has no city or region", () => {
     const html = renderToStaticMarkup(
       <NewsCardGrid

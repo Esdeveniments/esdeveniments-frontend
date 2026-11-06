@@ -54,8 +54,8 @@ export default async function LatestNewsSection({
         className="container w-full stack"
         data-analytics-container="true"
         data-analytics-context="event_news"
-        data-analytics-source-event-id={sourceEventId ?? ""}
-        data-analytics-source-event-slug={sourceEventSlug ?? ""}
+        data-analytics-source-event-id={sourceEventId}
+        data-analytics-source-event-slug={sourceEventSlug}
       >
         <div className="flex-between gap-element-gap">
           <h2 className="heading-2">{title}</h2>

@@ -29,10 +29,11 @@ export default async function NewsList({
   ]);
   const t = await getTranslations({ locale, namespace: "Components.NewsList" });
   const cities = Array.isArray(citiesResponse.content) ? citiesResponse.content : [];
+  const fallbackPlace = place ?? "catalunya";
   // Link each article to its own city/region so it doesn't 301 on click.
   const items = response.content.map((item) => ({
     ...item,
-    place: resolveNewsItemPlace(item, place ?? "catalunya", placeLabel),
+    place: resolveNewsItemPlace(item, fallbackPlace, placeLabel),
   }));
   const [featured, ...rest] = items;
 
@@ -97,7 +98,7 @@ export default async function NewsList({
           priority
         />
         {rest.length > 0 && (
-          <NewsCardGrid items={rest} place={place ?? "catalunya"} placeLabel={placeLabel} />
+          <NewsCardGrid items={rest} place={fallbackPlace} placeLabel={placeLabel} />
         )}
         <NewsPagination basePath={basePath} page={page} totalPages={response.totalPages} />
       </div>
