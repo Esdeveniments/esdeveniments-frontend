@@ -5,6 +5,7 @@ import {
 } from "../utils/host-validation";
 import {
   getPublicFetchSafety,
+  isBlockedAddress,
   isSafePublicFetchUrl,
 } from "../utils/public-fetch-safety";
 
@@ -121,6 +122,46 @@ describe("utils/public-fetch-safety", () => {
     await expect(
       isSafePublicFetchUrl("https://images.example.test/cartell.jpg"),
     ).resolves.toBe(false);
+  });
+
+  it("classifies addresses by range, not by text form", () => {
+    expect(isBlockedAddress("127.0.0.1")).toBe(true);
+    expect(isBlockedAddress("::ffff:7f00:1")).toBe(true);
+    expect(isBlockedAddress("fd00::1")).toBe(true);
+    expect(isBlockedAddress("8.8.8.8")).toBe(false);
+    expect(isBlockedAddress("2001:4860:4860::8888")).toBe(false);
+    expect(isBlockedAddress("fcm.googleapis.com")).toBe(false);
+  });
+
+  it.each([
+    "http://[::ffff:7f00:1]/x",
+    "http://[::ffff:127.0.0.1]/x",
+    "http://[::ffff:a9fe:a9fe]/x",
+    "http://[::ffff:a00:1]/x",
+    "http://[::ffff:0:0]/x",
+    "http://[64:ff9b::7f00:1]/x",
+    "http://[2002:7f00:1::]/x",
+  ])("rejects the non-public IPv6 literal %s", async (url) => {
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+
+    await expect(isSafePublicFetchUrl(url)).resolves.toBe(false);
+  });
+
+  it("rejects hostnames whose AAAA answers map to non-public addresses", async () => {
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+    lookupMock.mockResolvedValueOnce([{ address: "::ffff:7f00:1", family: 6 }]);
+
+    await expect(
+      isSafePublicFetchUrl("https://images.example.test/cartell.jpg"),
+    ).resolves.toBe(false);
+  });
+
+  it("allows a public IPv6 literal", async () => {
+    (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
+
+    await expect(
+      isSafePublicFetchUrl("https://[2001:4860:4860::8888]/logo.png"),
+    ).resolves.toBe(true);
   });
 
   it("returns validated DNS records for callers that pin the fetch connection", async () => {

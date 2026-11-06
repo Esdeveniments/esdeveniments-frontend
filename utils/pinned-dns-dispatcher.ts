@@ -3,6 +3,8 @@ import type { LookupAddress } from "node:dns";
 import type { LookupFunction } from "node:net";
 import { rootCertificates } from "node:tls";
 
+const BODY_IDLE_TIMEOUT_MS = 15_000;
+
 /**
  * A `net.connect` lookup that always answers with the given records. We
  * resolve the host once (in getPublicFetchSafety) to run SSRF checks, then pin
@@ -44,6 +46,9 @@ export function buildPinnedDnsDispatcher(
   if (dnsRecords.length === 0) return null;
 
   return new Agent({
+    // undici's default is 300 s between body chunks; callers also set a total
+    // deadline through their signal.
+    bodyTimeout: BODY_IDLE_TIMEOUT_MS,
     connect: {
       keepAlive: false,
       rejectUnauthorized,

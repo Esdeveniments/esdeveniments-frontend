@@ -155,7 +155,7 @@ export async function fetchEventBySlug(
   try {
     // Read via internal API route (stable cache, HMAC stays server-side)
     // Use getInternalApiUrl which resolves the correct internal origin
-    const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`, {
+    const internalApiUrl = await getInternalApiUrl(`/api/events/${encodeURIComponent(fullSlug)}`, {
       preferConfiguredOrigin: options.preferConfiguredOrigin,
     });
 
@@ -202,7 +202,7 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
   }
 
   try {
-    const internalApiUrl = await getInternalApiUrl(`/api/events/${fullSlug}`);
+    const internalApiUrl = await getInternalApiUrl(`/api/events/${encodeURIComponent(fullSlug)}`);
 
     const res = await fetch(internalApiUrl, {
       headers: getVercelProtectionBypassHeaders(),
@@ -271,7 +271,7 @@ export async function updateEventById(
   const { apiUrl, authToken } = await requireAuth();
 
   const response = await fetchWithHmac(
-    `${apiUrl}/events/${id}`,
+    `${apiUrl}/events/${encodeURIComponent(id)}`,
     {
       method: "PUT",
       headers: {
@@ -297,7 +297,7 @@ export async function deleteEventById(id: string): Promise<void> {
   const { apiUrl, authToken } = await requireAuth();
 
   const response = await fetchWithHmac(
-    `${apiUrl}/events/${id}`,
+    `${apiUrl}/events/${encodeURIComponent(id)}`,
     {
       method: "DELETE",
       headers: {

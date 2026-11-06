@@ -1,18 +1,39 @@
 "use server";
 
+import { headers } from "next/headers";
 import { captureException } from "@sentry/nextjs";
 import { createKeyedCache } from "@lib/api/cache";
+import { getCachedEventBySlug } from "@lib/api/events";
+import { isValidEventSlug } from "@utils/event-helpers";
+import { createRateLimiter } from "@utils/rate-limit";
 import { getCacheKey } from "./translation-utils";
 
 const TRANSLATION_TTL_MS = 1000 * 60 * 60 * 24; // 24h
+const TRANSLATION_CACHE_MAX_ENTRIES = 2000;
+const MAX_TRANSLATE_CHARS = 20_000;
+const DEEPL_TIMEOUT_MS = 10_000;
 const DEFAULT_BASE_URL = "https://api-free.deepl.com";
 const ERROR_API_REQUEST_FAILED = "API_REQUEST_FAILED";
 const ERROR_EMPTY_RESPONSE = "EMPTY_RESPONSE";
 
 // Cache translations for 24h to reduce API calls and improve performance
 // This helps stay within free tier limits by avoiding duplicate translations
-const { cache: translationCache } =
-  createKeyedCache<string>(TRANSLATION_TTL_MS);
+const { cache: translationCache } = createKeyedCache<string>(
+  TRANSLATION_TTL_MS,
+  { maxEntries: TRANSLATION_CACHE_MAX_ENTRIES },
+);
+
+// A visitor translates one or two descriptions per page view.
+const translateLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
+
+async function isRateLimited(): Promise<boolean> {
+  const requestHeaders = await headers();
+  return (
+    translateLimiter.check(
+      new Request("http://localhost/", { headers: requestHeaders }),
+    ) !== null
+  );
+}
 
 function getBaseUrl() {
   const base = process.env.DEEPL_API_BASE;
@@ -50,6 +71,7 @@ async function fetchTranslationFromDeepL(args: {
       Authorization: `DeepL-Auth-Key ${authKey}`,
     },
     body: JSON.stringify(requestBody),
+    signal: AbortSignal.timeout(DEEPL_TIMEOUT_MS),
   });
 
   if (!response.ok) {
@@ -108,26 +130,53 @@ async function fetchTranslationFromDeepL(args: {
   return result;
 }
 
+/**
+ * Translates the stored description of the event `slug`. The text is loaded
+ * on the server, never taken from the client, so the action can only spend
+ * DeepL quota on real event descriptions.
+ */
 export async function translateDescription({
-  text,
+  slug,
   targetLang,
 }: {
-  text: string;
+  slug: string;
   targetLang: "en" | "es";
 }) {
-  const trimmed = (text || "").trim();
-  if (!trimmed) {
-    return { ok: false as const, error: "empty" as const };
-  }
-
   if (targetLang !== "en" && targetLang !== "es") {
     return { ok: false as const, error: "unsupported-lang" as const };
+  }
+
+  if (typeof slug !== "string" || !isValidEventSlug(slug)) {
+    return { ok: false as const, error: "not-found" as const };
   }
 
   const authKey = process.env.DEEPL_API_KEY;
   if (!authKey) {
     console.error("[translateDescription] DEEPL_API_KEY is not set");
     return { ok: false as const, error: "missing-key" as const };
+  }
+
+  if (await isRateLimited()) {
+    return { ok: false as const, error: "rate-limited" as const };
+  }
+
+  let event: Awaited<ReturnType<typeof getCachedEventBySlug>>;
+  try {
+    event = await getCachedEventBySlug(slug);
+  } catch (error) {
+    console.error("[translateDescription] Failed to load event", error);
+    return { ok: false as const, error: "request-failed" as const };
+  }
+  if (!event) {
+    return { ok: false as const, error: "not-found" as const };
+  }
+
+  const trimmed = (event.description || "").trim();
+  if (!trimmed) {
+    return { ok: false as const, error: "empty" as const };
+  }
+  if (trimmed.length > MAX_TRANSLATE_CHARS) {
+    return { ok: false as const, error: "too-long" as const };
   }
 
   const cacheKey = getCacheKey(trimmed, targetLang);
@@ -152,6 +201,10 @@ export async function translateDescription({
     }
     if (error instanceof Error && error.message === ERROR_EMPTY_RESPONSE) {
       return { ok: false as const, error: "empty-response" as const };
+    }
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      console.error("[translateDescription] DeepL request timed out");
+      return { ok: false as const, error: "request-failed" as const };
     }
 
     console.error("DeepL translation error", error);

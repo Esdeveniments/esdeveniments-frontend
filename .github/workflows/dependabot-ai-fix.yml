@@ -67,8 +67,11 @@ jobs:
             --jq '.pull_requests[0].number // empty')
           if [ -z "$PR_NUMBER" ]; then
             # workflow_run sometimes omits pull_requests; fall back to branch lookup.
-            PR_NUMBER=$(gh pr list -R "$REPO" --head "$HEAD_BRANCH" --state open \
-              --json number --jq '.[0].number // empty')
+            # --head matches the branch name only, so a fork branch with the same
+            # name would also match: keep PRs from this repository's owner.
+            PR_NUMBER=$(REPO_OWNER="${REPO%%/*}" gh pr list -R "$REPO" \
+              --head "$HEAD_BRANCH" --state open --json number,headRepositoryOwner \
+              --jq '[.[] | select(.headRepositoryOwner.login == env.REPO_OWNER)][0].number // empty')
           fi
           if [ -z "$PR_NUMBER" ]; then
             echo "No open PR found for run $RUN_ID (branch $HEAD_BRANCH); will skip."

@@ -60,7 +60,9 @@ export async function fetchRegionByIdExternal(
   const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const res = await fetchWithHmac(`${api}/places/regions/${id}`);
+    const res = await fetchWithHmac(
+      `${api}/places/regions/${encodeURIComponent(String(id))}`,
+    );
     if (!res.ok) return null;
     return res.json();
   } catch (error) {

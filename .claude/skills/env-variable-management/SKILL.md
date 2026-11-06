@@ -20,7 +20,9 @@ Coolify does **not** build. `deploy-coolify.yml` builds a Docker image in GitHub
 | Server-only runtime value (`LOGTO_*`, `STRIPE_*`, `REDIS_URL`, `TURSO_*`, `API_URL`, `SENTRY_DSN`, `REVALIDATE_SECRET`, …) | Runtime, by the Node server | Coolify → Application → Environment |
 | Workflow-only (`COOLIFY_TOKEN`, `COOLIFY_WEBHOOK_URL`) | During the workflow | GitHub secret → step `env:` |
 
-`REVALIDATE_SECRET` is both: `app/api/revalidate/route.ts` and `app/api/health/route.ts` read it at runtime (Coolify), and `deploy-coolify.yml` sends the same value from a GitHub secret on post-deploy calls.
+`REVALIDATE_SECRET` is both: `app/api/revalidate/route.ts` reads it at runtime (Coolify), and `deploy-coolify.yml` sends the same value from a GitHub secret on post-deploy calls.
+
+`HEALTH_SECRET` is both too: `app/api/health/route.ts` reads it at runtime (Coolify) from the `x-health-secret` header, and `deploy-coolify.yml` sends it from a GitHub secret (never in the query string, so it stays out of access logs). While it is unset, both sides fall back to `REVALIDATE_SECRET`, so set it in Coolify (staging and production) and GitHub together, then deploy.
 
 `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` are both too: the post-deploy purge in `deploy-coolify.yml` uses the GitHub secrets, and the app reads them at runtime (Coolify) to purge Cache-Tags on publish, edit and delete (`lib/cdn/cloudflare-purge.ts`). The token needs the zone's Cache Purge permission. Without them the purge is skipped and pages stay stale until `s-maxage` expires; `/api/health` (authenticated) reports `cloudflarePurgeConfigured`.
 

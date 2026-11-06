@@ -22,7 +22,9 @@ export async function fetchEventBySlug(
   const apiUrl = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const response = await fetchWithHmac(`${apiUrl}/events/${slug}`);
+    const response = await fetchWithHmac(
+      `${apiUrl}/events/${encodeURIComponent(slug)}`,
+    );
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const json = await response.json();
