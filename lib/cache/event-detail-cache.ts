@@ -18,6 +18,9 @@ import type { EventDetailResponseDTO } from "types/api/event";
  * for up to 30 minutes, so the user would not see their changes.
  */
 const EVENT_DETAIL_TTL_MS = 30 * 60 * 1000; // 30 minutes
+// Keyed by the requested slug, which anyone can choose: drop the oldest entry
+// past this cap (same bound as fetchPlaceBySlug).
+const EVENT_DETAIL_MAX_ENTRIES = 5000;
 
 const globalForEventDetail = globalThis as unknown as {
   __appEventDetailCache?: ReturnType<
@@ -27,6 +30,8 @@ const globalForEventDetail = globalThis as unknown as {
 
 const { cache: eventDetailCache, delete: deleteEventDetailCache } =
   (globalForEventDetail.__appEventDetailCache ??=
-    createKeyedCache<EventDetailResponseDTO | null>(EVENT_DETAIL_TTL_MS));
+    createKeyedCache<EventDetailResponseDTO | null>(EVENT_DETAIL_TTL_MS, {
+      maxEntries: EVENT_DETAIL_MAX_ENTRIES,
+    }));
 
 export { eventDetailCache, deleteEventDetailCache };
