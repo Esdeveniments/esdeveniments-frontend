@@ -62,7 +62,7 @@ export default function CardLayout({
           location={imageContext?.location}
           region={imageContext?.region}
           date={imageContext?.date ?? cardDate}
-          context={isFeatured ? "hero" : "list"}
+          context={isFeatured ? "featured" : "list"}
           cacheKey={imageCacheKey}
         />
 

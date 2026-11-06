@@ -33,7 +33,9 @@ export async function buildNewsListMetadata({
       fetchNews({ page: page - 1, size: NEWS_PAGE_SIZE, place }),
     ]);
     pageTitle = t("pageTitle", { title, page });
-    if (page > totalPages) robotsOverride = "noindex, follow";
+    // fetchNews falls back to an empty page (totalPages 0) on errors; don't
+    // noindex real pages during an outage (Cloudflare keeps the HTML 30 min).
+    if (totalPages > 0 && page > totalPages) robotsOverride = "noindex, follow";
   }
 
   return buildPageMeta({
