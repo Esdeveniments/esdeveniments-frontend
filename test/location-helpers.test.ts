@@ -149,6 +149,15 @@ describe("buildEventVenueLabel", () => {
   it("falls back to the city and skips a city equal to the venue", () => {
     expect(buildEventVenueLabel({ location: "", cityName: "Girona" })).toBe("Girona");
     expect(buildEventVenueLabel({ location: "Girona", cityName: "Girona" })).toBe("Girona");
+    expect(buildEventVenueLabel({ location: "Plaça Major, Vic", cityName: "Vic" })).toBe(
+      "Plaça Major, Vic",
+    );
+    expect(
+      buildEventVenueLabel({
+        location: "Museu municipal de Vilassar de Dalt, Vilassar de Dalt, Maresme",
+        cityName: "Vilassar de Dalt",
+      }),
+    ).toBe("Museu municipal de Vilassar de Dalt, Vilassar de Dalt…");
   });
 });
 

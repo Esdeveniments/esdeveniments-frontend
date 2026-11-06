@@ -80,6 +80,24 @@ describe("buildEventExcerpt", () => {
     }
   });
 
+  it("keeps a lead sentence or paragraph that names the event", () => {
+    expect(
+      buildEventExcerpt(
+        "La Fira de Sant Andreu torna aquest cap de setmana amb més de 100 parades. Hi haurà música.",
+        "Fira de Sant Andreu",
+      ),
+    ).toMatch(/^La Fira de Sant Andreu torna/);
+    expect(
+      buildEventExcerpt(
+        "El Concert de Nadal de l'Orfeó omplirà l'església.\n\nEntrada lliure.",
+        "Concert de Nadal",
+      ),
+    ).toMatch(/^El Concert de Nadal de l'Orfeó/);
+    expect(
+      buildEventExcerpt("Castanyada popular a la plaça Major. Organitza l'Ajuntament.", "Castanyada"),
+    ).toMatch(/^Castanyada popular/);
+  });
+
   it("strips HTML, entities and markdown links", () => {
     expect(
       buildEventExcerpt(

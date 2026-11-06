@@ -21,7 +21,11 @@ function stripMarkdown(text: string): string {
 
 /** True when `segment` is a short heading that repeats the event title. */
 function isTitleEcho(segment: string, title: string): boolean {
-  if (segment.length > TITLE_ECHO_MAX_LENGTH) return false;
+  const trimmed = segment.trim();
+  // A heading has no sentence ending; a lead sentence that names the event is body text.
+  if (trimmed.length > TITLE_ECHO_MAX_LENGTH || /[.!?…]$/u.test(trimmed)) {
+    return false;
+  }
   const titleTokens = tokenize(title);
   const segmentTokens = tokenize(segment);
   if (titleTokens.length === 0 || segmentTokens.length === 0) return false;
@@ -41,14 +45,9 @@ function isTitleEcho(segment: string, title: string): boolean {
 }
 
 // Many descriptions open with "**Title** – Venue (date)": drop that first
-// paragraph, line or sentence (longest first) when it only repeats the title.
+// paragraph or line (longest first) when it only repeats the title.
 function dropTitleEcho(text: string, title: string): string {
-  const sentence = /[.!?](?=\s)/.exec(text);
-  const ends = [
-    text.search(/\n\s*\n/),
-    text.indexOf("\n"),
-    sentence ? sentence.index + 1 : -1,
-  ];
+  const ends = [text.search(/\n\s*\n/), text.indexOf("\n")];
   const candidates = [...new Set(ends)]
     .filter((end) => end > 0 && end < text.length)
     .sort((a, b) => b - a);
@@ -61,7 +60,8 @@ function dropTitleEcho(text: string, title: string): string {
 
 /**
  * Plain-text excerpt of an event description for list rows: no HTML or
- * markdown, no leading line that repeats the title, cut at a word boundary.
+ * markdown, no leading heading line that repeats the title, cut at a word
+ * boundary.
  */
 export function buildEventExcerpt(
   description: string | null | undefined,

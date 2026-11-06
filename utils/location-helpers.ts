@@ -220,7 +220,9 @@ export const buildEventVenueLabel = ({
   const city = formatOptionalPlace(cityName);
   if (!venue) return city;
   const shortVenue = truncateAtWord(venue, EVENT_VENUE_LABEL_MAX_LENGTH);
-  return city && isDistinctLabel(city, venue)
+  // "Plaça Major, Vic" already names the city.
+  const venueParts = venue.split(",").map((part) => part.trim());
+  return city && isDistinctLabel(city, ...venueParts)
     ? `${shortVenue}, ${city}`
     : shortVenue;
 };
