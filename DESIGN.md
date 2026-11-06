@@ -750,6 +750,10 @@ tile is a clickable article element with the link absolutely positioned to
 cover the card. Hovering tightens the border and zooms the image to 1.03
 over 300ms. The favorite button overlays the image in the top-right and
 heart-beats (1 → 1.15 → 1) on activation.
+News articles use the same card (`CardLayout`): reading time after the
+date, the city as the location, no favorite button. The first article of a
+news list uses the `featured` variant: image and text side by side from md
+up, with a three-line summary.
 
 **Chips** have two contexts: on-light (white fill, hairline border, hover
 shades to muted) and on-photo (glassmorphic over hero photography). The

@@ -77,7 +77,7 @@ import {
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
-import type { NewsEventItemDTO, NewsSummaryResponseDTO } from "types/api/news";
+import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { AppLocale } from "types/i18n";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
@@ -128,6 +128,14 @@ export interface CardContentProps {
 export interface CardLayoutProps {
   /** Event slug for links and analytics */
   slug: string;
+  /** Card link; defaults to the event page (`/e/{slug}`) */
+  href?: string;
+  /** GA4 event sent on click; defaults to `select_event` */
+  analyticsEventName?: string;
+  /** `featured` lays the card out side by side from md up and shows the description */
+  variant?: "default" | "featured";
+  /** Plain-text summary, shown only by the `featured` variant */
+  description?: string;
   /** Event ID for analytics */
   eventId?: string;
   /** Prepared title text */
@@ -157,11 +165,11 @@ export interface CardLayoutProps {
   /** Multi-day label suffix */
   multiDayLabel?: string;
   /** Whether to show favorite button */
-  shouldShowFavoriteButton: boolean;
+  shouldShowFavoriteButton?: boolean;
   /** Whether this event is favorited */
-  isFavorite: boolean;
-  /** Favorite button labels */
-  favoriteLabels: FavoriteButtonLabels;
+  isFavorite?: boolean;
+  /** Favorite button labels (required to show the favorite button) */
+  favoriteLabels?: FavoriteButtonLabels;
   /** Image location/region/date for alt-text context */
   imageContext?: {
     location?: string;
@@ -722,26 +730,14 @@ export interface NewsShareButtonsProps {
 
 export interface NewsEventsSectionProps {
   title: string;
-  events: NewsEventItemDTO[];
-  showHero?: boolean;
-  showNumbered?: boolean;
-}
-
-export interface NewsHeroEventProps {
-  event: NewsEventItemDTO;
-}
-
-export interface NewsRichCardProps {
-  event: NewsEventItemDTO;
-  variant?: "default" | "horizontal";
-  numbered?: number;
+  events: import("./api/event").EventSummaryResponseDTO[];
 }
 
 export interface NewsCardProps {
   event: NewsSummaryResponseDTO;
   placeSlug: string;
   placeLabel?: string;
-  variant?: "default" | "hero";
+  variant?: "default" | "featured";
   priority?: boolean;
 }
 
@@ -752,36 +748,47 @@ export interface NewsArticleDetailProps {
   article: string;
 }
 
-export interface HubResult {
-  hub: { slug: string; name: string };
-  items: NewsSummaryResponseDTO[];
-}
-
-export interface NewsHubsGridProps {
-  promise: Promise<HubResult[]>;
-}
-
 export interface NewsCitiesSectionProps {
-  citiesPromise: Promise<
-    import("./api/event").PagedResponseDTO<
-      import("./api/city").CitySummaryResponseDTO
-    >
-  >;
-  showAll: boolean;
-  showMoreHref: import("./common").Href;
-  showLessHref: import("./common").Href;
+  cities: import("./api/city").CitySummaryResponseDTO[];
+  /** Slug of the city page being viewed; none on the all-news index */
+  currentPlace?: string;
+}
+
+export interface NewsPaginationProps {
+  /** List path without query, e.g. "/noticies/barcelona" */
+  basePath: string;
+  /** 1-based */
+  page: number;
+  totalPages: number;
 }
 
 export interface NewsListProps {
   newsPromise: Promise<
     import("./api/event").PagedResponseDTO<NewsSummaryResponseDTO>
   >;
-  placeTypePromise: Promise<PlaceTypeAndLabel>;
-  place: string;
-  currentPage: number;
-  pageSize: number;
-  /** Optional override for pagination base URL (e.g., "/noticies" for global feed). */
-  basePath?: string;
+  citiesPromise: Promise<
+    import("./api/event").PagedResponseDTO<
+      import("./api/city").CitySummaryResponseDTO
+    >
+  >;
+  /** Place slug; none on the all-news index */
+  place?: string;
+  placeLabel: string;
+  /** 1-based */
+  page: number;
+  basePath: string;
+}
+
+export interface NewsListPageProps {
+  /** Place slug; none on the all-news index */
+  place?: string;
+  placeLabel: string;
+  title: string;
+  subtitle: string;
+  /** 1-based */
+  page: number;
+  /** Links next to the title */
+  cta?: ReactNode;
 }
 
 // Mobile share island component props

@@ -97,6 +97,8 @@ export const getOptimalImageWidth = (
     list: 500,
     // Detail page images: 1200px for crisp desktop display
     detail: 1200,
+    // Featured card (news lead): half the container from md up
+    featured: 800,
   };
 
   return widthMap[context];
@@ -122,6 +124,8 @@ export const getResponsiveWidths = (
     list: [300, 500],
     // Detail hero same as hero
     detail: [500, 800, 1200],
+    // Featured card: full width on mobile, at most ~640px wide from md up
+    featured: [500, 800],
   };
 
   return widthsMap[context];
@@ -153,6 +157,9 @@ export const getOptimalImageSizes = (
     // Mobile: 100vw (~400px) - fast LCP, quality 50
     // Desktop: 1200px triggers quality boost for crisp display
     detail: "(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px",
+    // Featured card (CardLayout `featured`): full width below md, then the
+    // image takes half of the 1280px container
+    featured: "(max-width: 767px) 100vw, (max-width: 1280px) 50vw, 640px",
   };
 
   return sizesMap[context];

@@ -13,6 +13,7 @@ import {
 import {
   ensureGtag,
   CONSENT_MODE_DEFAULTS,
+  CONSENT_WAIT_FOR_UPDATE_MS,
   FUNDING_CHOICES_SRC,
 } from "@utils/analytics";
 import type { GoogleScriptsHeavyProps, TcfCallback } from "types/ads";
@@ -32,9 +33,6 @@ const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 // drops any event queued before 'config'. This script only renders on the
 // production host, so it needs no host check of its own.
 const GTAG_SHIM = `window.dataLayer=window.dataLayer||[];if(typeof window.gtag!=='function'){window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('consent','default',${JSON.stringify(CONSENT_MODE_DEFAULTS)});window.gtag('js',new Date());window.gtag('config','${GA_MEASUREMENT_ID}');}`;
-
-// Idle timeout for consent state updates (allows main thread work to complete first)
-const CONSENT_UPDATE_IDLE_TIMEOUT_MS = 1000;
 
 // adsbygoogle.js waits for the first tap, key press or scroll, so it does not
 // compete with the user's first interactions. Without one, it loads this long
@@ -154,9 +152,10 @@ export default function GoogleScripts() {
     };
   }, []);
 
-  // Track last consent state to avoid duplicate consent updates
-  // Using useRef (not module-level) to handle React Strict Mode correctly
+  // Last consent state sent to GA; null until the CMP has decided.
   const lastConsentStateRef = useRef<"granted" | "denied" | null>(null);
+  // When gtag.js finished loading: its wait for our consent update starts then.
+  const gtagLoadedAtRef = useRef<number | null>(null);
 
   // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
   // Note: We use the same consent signal (adsAllowed) for both ads and analytics
@@ -164,40 +163,41 @@ export default function GoogleScripts() {
   // This is intentional and aligns with our CMP's consent structure.
   useEffect(() => {
     if (!GA_MEASUREMENT_ID || isE2ETestBuild || !isProdHost) return;
+    const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
+    if (lastConsentStateRef.current === consentState) return;
+    // adsAllowed starts false before the CMP answers. The default is already
+    // denied, and an early "denied" update would end gtag's wait_for_update,
+    // so the landing page_view would go out denied for everyone.
+    if (lastConsentStateRef.current === null && consentState === "denied") return;
     const win = ensureGtag();
     if (!win) return;
+    lastConsentStateRef.current = consentState;
 
-    const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
+    // Pushed right away (a dataLayer push is cheap) so it lands inside
+    // gtag's wait window.
+    win.gtag("consent", "update", {
+      ad_user_data: consentState,
+      ad_personalization: consentState,
+      ad_storage: consentState,
+      analytics_storage: consentState,
+    });
+    win.dataLayer.push({
+      event: "consent_state_change",
+      consent_state: consentState,
+      consent_timestamp: Date.now(),
+    });
 
-    // Skip if consent state hasn't actually changed (prevents duplicate events)
-    if (lastConsentStateRef.current === consentState) return;
-
-    // Use idle callback to avoid blocking main thread during consent updates
-    // Note: We update lastConsentStateRef inside the callback to ensure it only
-    // updates when gtag is actually called (fixes React Strict Mode double-invoke)
-    const cleanup = scheduleIdleCallback(
-      () => {
-        // Double-check inside callback in case state changed during idle wait
-        if (lastConsentStateRef.current === consentState) return;
-        lastConsentStateRef.current = consentState;
-
-        win.gtag("consent", "update", {
-          ad_user_data: consentState,
-          ad_personalization: consentState,
-          ad_storage: consentState,
-          analytics_storage: consentState,
-        });
-
-        win.dataLayer.push({
-          event: "consent_state_change",
-          consent_state: consentState,
-          consent_timestamp: Date.now(),
-        });
-      },
-      { timeout: CONSENT_UPDATE_IDLE_TIMEOUT_MS }
-    );
-
-    return cleanup;
+    // Granted after gtag's wait ran out (a first visit where the visitor
+    // read the consent box): this page's page_view already went out denied,
+    // which GA reports leave out. Send it again with consent.
+    const loadedAt = gtagLoadedAtRef.current;
+    if (
+      consentState === "granted" &&
+      loadedAt !== null &&
+      performance.now() - loadedAt > CONSENT_WAIT_FOR_UPDATE_MS
+    ) {
+      win.gtag("event", "page_view");
+    }
   }, [adsAllowed, isProdHost]);
 
   // Load heavy tracking + Auto Ads only after hydration.
@@ -235,6 +235,9 @@ export default function GoogleScripts() {
             id="google-analytics-gtag"
             strategy="lazyOnload"
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            onLoad={() => {
+              gtagLoadedAtRef.current = performance.now();
+            }}
           />
         </>
       )}

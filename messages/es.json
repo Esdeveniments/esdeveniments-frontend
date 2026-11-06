@@ -187,10 +187,9 @@
       "breadcrumbNews": "Noticias",
       "sectionWeekend": "Fin de semana",
       "sectionWeek": "Semana",
-      "readingTime": "{minutes} min de lectura",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
-      "mustSee": "IMPRESCINDIBLES",
-      "moreProposals": "MÁS PROPUESTAS",
+      "mustSee": "Imprescindibles",
+      "moreProposals": "Más propuestas",
       "relatedArticles": "Artículos relacionados",
       "shareArticle": "Compartir el artículo"
     },
@@ -276,12 +275,8 @@
     "NewsPlace": {
       "metaTitle": "Noticias y planes en {place} | Agenda y recomendaciones - Esdeveniments.cat",
       "metaDescription": "Descubre las últimas noticias, recomendaciones y planes culturales en {place}. Conciertos, exposiciones, teatro y más.",
-      "breadcrumbHome": "Inicio",
-      "breadcrumbNews": "Noticias",
       "heading": "Noticias de {place}",
       "seeAgenda": "Ver agenda de {place}",
-      "seeAll": "Ver todas las noticias",
-      "rssLabel": "RSS",
       "rssTitle": "RSS Noticias {place}"
     },
     "NewsArticleFallback": {
@@ -907,9 +902,7 @@
       "search": "Buscar"
     },
     "News": {
-      "readMore": "Leer más",
-      "readMoreAria": "Leer más sobre {title}",
-      "viewCategory": "Ver categoría {name}"
+      "readingTime": "{minutes} min de lectura"
     },
     "LocationDiscovery": {
       "heading": "Viendo eventos en",
@@ -1127,24 +1120,21 @@
     "NewsList": {
       "emptyTitle": "No hemos encontrado noticias recientes",
       "emptyBody": "Todavía no tenemos novedades para {place}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras zonas.",
-      "viewAll": "Ver todas las noticias →",
+      "viewAll": "Ver todas las noticias",
       "itemListName": "Noticias de {place}",
-      "prev": "← Anterior",
-      "next": "Más noticias →"
-    },
-    "NewsHubsGrid": {
-      "itemListTitle": "Últimas noticias por hub",
-      "titleWithPlace": "Últimas noticias {place}",
-      "seeMore": "Ver más…",
-      "seeAgenda": "Ver agenda de {place}",
-      "nearbyLabel": "Cerca:",
-      "title": "Últimas noticias por hub",
-      "hubTitle": "Últimas noticias {hubName}"
+      "prev": "Más recientes",
+      "next": "Más antiguas",
+      "emptyBodyIndex": "Todavía no hay noticias publicadas. Mientras tanto, consulta la agenda para encontrar planes cerca de ti.",
+      "viewAgenda": "Ver la agenda",
+      "emptyPageTitle": "Esta página no tiene noticias",
+      "firstPage": "Ver las últimas noticias",
+      "paginationLabel": "Paginación de noticias",
+      "pageOf": "Página {page} de {total}",
+      "pageTitle": "{title} (página {page})"
     },
     "NewsCities": {
       "title": "Ciudades con noticias",
-      "showMore": "Ver más…",
-      "showLess": "Ver menos"
+      "all": "Todas"
     },
     "NewsArticleDetail": {
       "breadcrumbNews": "Noticias",

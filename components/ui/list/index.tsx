@@ -1,7 +1,11 @@
 import type { JSX } from "react";
-import type { ListProps } from "types/common";
+import type { ListEvent } from "types/api/event";
+import type { ListItem, ListProps } from "types/common";
 
-export default function List({ events, children }: ListProps): JSX.Element {
+export default function List<T extends ListItem = ListEvent>({
+  events,
+  children,
+}: ListProps<T>): JSX.Element {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
       {events?.map((event, index) => (

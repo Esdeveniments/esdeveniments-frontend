@@ -73,7 +73,7 @@ export async function generateMetadata({
       title: `${detail.title} | ${placeType.label}`,
       description: detail.description,
       canonical: `${siteUrl}/noticies/${canonicalPlace}/${article}`,
-      image: detail.events?.[0]?.imageUrl,
+      image: detail.events?.[0]?.imageUrl ?? undefined,
       locale,
     }) as unknown as Metadata;
     const augmented: Metadata = {
