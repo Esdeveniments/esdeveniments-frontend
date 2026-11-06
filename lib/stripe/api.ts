@@ -125,7 +125,6 @@ export async function updatePaymentIntentMetadata(
  * Update metadata on a Stripe Checkout Session.
  *
  * @param sessionId - The checkout session ID (cs_xxx)
- * @param timeoutMs - Optional request timeout (default: 10s)
  * @param metadata - Key-value pairs to set on the session
  * @returns true if successful, false otherwise
  */
@@ -157,6 +156,7 @@ export async function updateCheckoutSessionMetadata(
  * Fetch a Stripe Checkout Session by ID.
  *
  * @param sessionId - The checkout session ID (cs_xxx)
+ * @param timeoutMs - Optional request timeout (default: 10s)
  * @returns The session object (unknown type - caller should validate)
  * @throws Error if fetch fails
  */
