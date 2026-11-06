@@ -1,12 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  addCacheKeyToNewsList,
-  addCacheKeyToNewsDetail,
-} from "@utils/news-cache";
-import type {
-  NewsSummaryResponseDTO,
-  NewsDetailResponseDTO,
-} from "types/api/news";
+import { addCacheKeyToNewsList } from "@utils/news-cache";
+import type { NewsSummaryResponseDTO } from "types/api/news";
 
 const summary: NewsSummaryResponseDTO = {
   id: "news-1",
@@ -33,49 +27,3 @@ describe("addCacheKeyToNewsList", () => {
     expect(result.imageUrl).toContain("v=news-1");
   });
 });
-
-describe("addCacheKeyToNewsDetail", () => {
-  it("normalizes images for related events", () => {
-    const detail: NewsDetailResponseDTO = {
-      id: "detail-1",
-      type: "WEEKLY",
-      title: "News detail",
-      description: "Full description",
-      startDate: "2024-01-01",
-      endDate: "2024-01-07",
-      readingTime: 5,
-      visits: 100,
-      createdAt: "2024-01-01T00:00:00Z",
-      events: [
-        {
-          id: "event-1",
-          hash: "event-hash",
-          slug: "event-1",
-          title: "Event title",
-          type: "FREE",
-          url: "https://example.com/event-1",
-          description: "Event description",
-          imageUrl: "https://cdn.example.com/event.jpg",
-          startDate: "2024-01-05",
-          endDate: "2024-01-05",
-          location: "Barcelona",
-          visits: 5,
-          origin: "MANUAL",
-          categories: [],
-        },
-      ],
-    };
-
-    const result = addCacheKeyToNewsDetail(detail);
-    expect(result.events[0].imageUrl).toContain("v=event-hash");
-  });
-});
-
-
-
-
-
-
-
-
-

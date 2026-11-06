@@ -34,4 +34,21 @@ test.describe("News pages", () => {
     const rss = await request.get("/noticies/barcelona/rss.xml");
     expect(rss.status()).toBe(200);
   });
+
+  test("old 0-based pagination URLs 301 to ?page=N", async ({ request }) => {
+    const response = await request.get("/noticies?page=1&size=10", {
+      maxRedirects: 0,
+    });
+    expect(response.status()).toBe(301);
+    const location = new URL(response.headers()["location"], "http://localhost");
+    expect(location.pathname + location.search).toBe("/noticies?page=2");
+  });
+
+  test("a paginated news page is its own canonical", async ({ page }) => {
+    await page.goto("/noticies?page=2", { waitUntil: "domcontentloaded" });
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      /\/noticies\?page=2$/,
+    );
+  });
 });

@@ -393,9 +393,15 @@ export interface BaseLayoutProps {
   children: React.ReactNode;
 }
 
-export interface ListProps {
-  events: ListEvent[];
-  children: (event: ListEvent, index: number) => React.ReactElement;
+/** Any item the shared card grid can lay out; ads span the full row. */
+export interface ListItem {
+  id?: string;
+  isAd?: boolean;
+}
+
+export interface ListProps<T extends ListItem = ListEvent> {
+  events: T[];
+  children: (event: T, index: number) => React.ReactElement;
 }
 
 export interface ViewCounterProps {
@@ -514,6 +520,8 @@ export interface BadgeProps {
   variant?: "outline" | "solid";
   onClick?: () => void;
   ariaLabel?: string;
+  /** Marks the chip for the current page */
+  ariaCurrent?: "page";
   children?: React.ReactNode;
   ref?: React.Ref<HTMLSpanElement>;
   [key: `data-${string}`]: string | undefined;

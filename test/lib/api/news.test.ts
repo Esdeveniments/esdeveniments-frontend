@@ -17,7 +17,6 @@ vi.mock("@utils/api-helpers", async (importOriginal) => ({
 
 vi.mock("@utils/news-cache", () => ({
   addCacheKeyToNewsList: vi.fn((list: unknown[]) => list),
-  addCacheKeyToNewsDetail: vi.fn((detail: unknown) => detail),
 }));
 
 vi.mock("../cache/tags", () => ({

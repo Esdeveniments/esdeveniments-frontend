@@ -5,6 +5,7 @@ import {
   generateWebPageSchema,
   generateCollectionPageSchema,
   generateItemListStructuredData,
+  buildPageMeta,
 } from "@components/partials/seo-meta";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import type { BreadcrumbItem } from "types/common";
@@ -317,5 +318,22 @@ describe("generateItemListStructuredData", () => {
       { "@type": "ListItem", position: 1, url: `${siteUrl}/en/e/concert-a`, name: "Concert A" },
       { "@type": "ListItem", position: 2, url: `${siteUrl}/en/e/fira-b`, name: "Fira B" },
     ]);
+  });
+});
+
+describe("buildPageMeta canonicalSearch", () => {
+  it("keeps the query on the canonical and every hreflang URL", () => {
+    const meta = buildPageMeta({
+      title: "T",
+      description: "D",
+      canonical: `${siteUrl}/noticies`,
+      canonicalSearch: "page=2",
+      locale: "es",
+    });
+
+    expect(meta.alternates.canonical).toBe(`${siteUrl}/es/noticies?page=2`);
+    expect(meta.alternates.languages.ca).toBe(`${siteUrl}/noticies?page=2`);
+    expect(meta.alternates.languages["x-default"]).toBe(`${siteUrl}/noticies?page=2`);
+    expect(meta.openGraph.url).toBe(`${siteUrl}/es/noticies?page=2`);
   });
 });

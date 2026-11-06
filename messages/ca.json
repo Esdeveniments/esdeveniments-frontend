@@ -187,10 +187,9 @@
       "breadcrumbNews": "Notícies",
       "sectionWeekend": "Cap de setmana",
       "sectionWeek": "Setmana",
-      "readingTime": "{minutes} min lectura",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
-      "mustSee": "ELS IMPRESCINDIBLES",
-      "moreProposals": "MÉS PROPOSTES",
+      "mustSee": "Els imprescindibles",
+      "moreProposals": "Més propostes",
       "relatedArticles": "Articles relacionats",
       "shareArticle": "Comparteix l'article"
     },
@@ -276,12 +275,8 @@
     "NewsPlace": {
       "metaTitle": "Notícies i plans a {place} | Agenda i recomanacions - Esdeveniments.cat",
       "metaDescription": "Descobreix les últimes notícies, recomanacions i plans culturals a {place}. Concerts, exposicions, teatre i més.",
-      "breadcrumbHome": "Inici",
-      "breadcrumbNews": "Notícies",
       "heading": "Notícies de {place}",
       "seeAgenda": "Veure agenda de {place}",
-      "seeAll": "Veure totes les notícies",
-      "rssLabel": "RSS",
       "rssTitle": "RSS Notícies {place}"
     },
     "NewsArticleFallback": {
@@ -616,10 +611,17 @@
     "NewsList": {
       "emptyTitle": "No hem trobat notícies recents",
       "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
-      "viewAll": "Veure totes les notícies →",
+      "viewAll": "Veure totes les notícies",
       "itemListName": "Notícies de {place}",
-      "prev": "← Anterior",
-      "next": "Més notícies →"
+      "prev": "Més recents",
+      "next": "Més antigues",
+      "emptyBodyIndex": "Encara no hi ha notícies publicades. Mentrestant, consulta l'agenda per trobar plans a prop teu.",
+      "viewAgenda": "Veure l'agenda",
+      "emptyPageTitle": "Aquesta pàgina no té notícies",
+      "firstPage": "Veure les últimes notícies",
+      "paginationLabel": "Paginació de notícies",
+      "pageOf": "Pàgina {page} de {total}",
+      "pageTitle": "{title} (pàgina {page})"
     },
     "CulturalMessage": {
       "explorePrefix": "Explora més plans {location}:",
@@ -915,9 +917,7 @@
       "search": "Cerca"
     },
     "News": {
-      "readMore": "Llegir més",
-      "readMoreAria": "Llegir-ne més de {title}",
-      "viewCategory": "Veure categoria {name}"
+      "readingTime": "{minutes} min de lectura"
     },
     "LocationDiscovery": {
       "heading": "Mirant esdeveniments a",
@@ -1132,19 +1132,9 @@
       "citiesTitle": "Poblacions principals",
       "footer": "L'arxiu conté esdeveniments culturals de totes les comarques de Catalunya. Cada enllaç et porta a un històric detallat organitzat per anys i mesos."
     },
-    "NewsHubsGrid": {
-      "itemListTitle": "Últimes notícies per hub",
-      "titleWithPlace": "Últimes notícies {place}",
-      "seeMore": "Veure més…",
-      "seeAgenda": "Veure agenda de {place}",
-      "nearbyLabel": "A prop:",
-      "title": "Últimes notícies per hub",
-      "hubTitle": "Últimes notícies {hubName}"
-    },
     "NewsCities": {
       "title": "Ciutats amb notícies",
-      "showMore": "Veure més…",
-      "showLess": "Veure menys"
+      "all": "Totes"
     },
     "NewsArticleDetail": {
       "breadcrumbNews": "Notícies",
