@@ -13,14 +13,13 @@
  * generator is fixed (strip HTML before sluggifying), the frontend filters
  * these from the events sitemap and emits noindex on the detail page.
  *
- * Heuristics chosen to avoid false positives on legitimate long slugs while
- * catching the leak pattern: tokens ("httpswww", "linkdescription", "cdata")
- * that should never appear in a real Catalan event title slug, plus an
- * upper length bound. Real slugs cap around 80–100 chars in production.
+ * Only the leak tokens count, never length: slugs end with the date and a
+ * 36-char UUID, and 14% of real upcoming events have slugs over 120 chars
+ * (up to 215, November 2026). A length cap noindexed them and dropped them
+ * from the sitemap.
  */
 export function isMalformedEventSlug(slug: string | undefined | null): boolean {
   if (!slug) return true;
-  if (slug.length > 120) return true;
   const lowered = slug.toLowerCase();
   return (
     lowered.includes("httpswww") ||
