@@ -3,20 +3,27 @@ import { createConnection } from "node:net";
 import { connect as tlsConnect } from "node:tls";
 import { isApiUrlConfigured } from "@utils/api-helpers";
 import { isCloudflarePurgeConfigured } from "@lib/cdn/cloudflare-config";
+import { parseRedisStats, parseRespReplies, respCommand } from "@utils/redis-resp";
+import type { RedisStats } from "types/cache";
 
 /**
  * Health check endpoint for monitoring runtime configuration.
  *
  * Public access: Returns simple status only (no sensitive details)
- * Authenticated access: Returns full diagnostic info including Redis connectivity
+ * Authenticated access: Returns full diagnostic info including Redis
+ * connectivity, memory (used vs maxmemory), evictions and hit counters
  *
  * Usage:
  *   GET /api/health → { status: "healthy" | "degraded" }
  *   GET /api/health?secret=<REVALIDATE_SECRET> → full details
  */
 
-/** Lightweight Redis PING using raw TCP — avoids importing the redis package. */
-async function checkRedisConnectivity(): Promise<boolean> {
+/**
+ * One raw RESP connection (avoids importing the redis package): AUTH when a
+ * password is set, then PING, INFO memory/stats and DBSIZE, pipelined.
+ * Returns null when Redis is unreachable or doesn't answer PONG.
+ */
+async function checkRedis(): Promise<RedisStats | null> {
   let parsedUrl: URL | null = null;
   try {
     if (process.env.REDIS_URL) parsedUrl = new URL(process.env.REDIS_URL);
@@ -27,63 +34,54 @@ async function checkRedisConnectivity(): Promise<boolean> {
   const host = parsedUrl?.hostname || process.env.REDIS_HOST;
   const port = Number(parsedUrl?.port || process.env.REDIS_PORT || "6379");
   const useTls = parsedUrl?.protocol === "rediss:";
-  // Node's URL constructor already decodes username/password — no decodeURIComponent needed
-  const password = parsedUrl?.password || process.env.REDIS_PASSWORD;
-  const username = parsedUrl?.username || process.env.REDIS_USERNAME;
+  // URL keeps userinfo percent-encoded ("p%40ss"); node-redis decodes it, so must we.
+  const decode = (value: string) => {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
+  const password = decode(parsedUrl?.password ?? "") || process.env.REDIS_PASSWORD;
+  const username = decode(parsedUrl?.username ?? "") || process.env.REDIS_USERNAME;
 
-  if (!host) return false;
+  if (!host) return null;
+
+  const auth = password
+    ? [username ? respCommand("AUTH", username, password) : respCommand("AUTH", password)]
+    : [];
+  const commands = [
+    ...auth,
+    respCommand("PING"),
+    respCommand("INFO", "memory"),
+    respCommand("INFO", "stats"),
+    respCommand("DBSIZE"),
+  ];
 
   return new Promise((resolve) => {
-    let authenticated = !password; // skip auth if no password
     const socket = useTls
       ? tlsConnect({ host, port, rejectUnauthorized: false }, onConnect)
       : createConnection({ host, port }, onConnect);
-
-    /** Build a RESP array command — handles passwords with spaces/special chars. */
-    function respCmd(...args: string[]): string {
-      let cmd = `*${args.length}\r\n`;
-      for (const arg of args) {
-        cmd += `$${Buffer.byteLength(arg)}\r\n${arg}\r\n`;
-      }
-      return cmd;
-    }
-
     function onConnect() {
-      if (password) {
-        socket.write(
-          username ? respCmd("AUTH", username, password) : respCmd("AUTH", password)
-        );
-      } else {
-        socket.write(respCmd("PING"));
-      }
+      socket.write(commands.join(""));
     }
+    const finish = (result: RedisStats | null) => {
+      socket.destroy();
+      resolve(result);
+    };
     socket.setTimeout(2000);
-    // Accumulate TCP data — responses may arrive across multiple packets
-    let buffer = "";
+    // Replies may arrive across several packets.
+    let buffer = Buffer.alloc(0);
     socket.on("data", (data) => {
-      buffer += data.toString();
-      // RESP responses are terminated by \r\n — wait for complete response
-      if (!buffer.includes("\r\n")) return;
-
-      if (!authenticated && buffer.startsWith("+OK")) {
-        authenticated = true;
-        // Keep any data after the +OK\r\n (e.g. +PONG\r\n in same packet)
-        buffer = buffer.substring(buffer.indexOf("\r\n") + 2);
-        socket.write(respCmd("PING"));
-        if (!buffer.includes("\r\n")) return; // wait for PONG in next packet
-        // fall through to check for PONG below
-      }
-      socket.destroy();
-      resolve(buffer.startsWith("+PONG"));
+      buffer = Buffer.concat([buffer, Buffer.from(data)]);
+      const replies = parseRespReplies(buffer, commands.length);
+      if (!replies) return;
+      const [pong, memory, stats, keys] = replies.slice(auth.length);
+      if (pong !== "PONG") return finish(null);
+      finish(parseRedisStats(`${memory ?? ""}\r\n${stats ?? ""}`, Number(keys)));
     });
-    socket.on("error", () => {
-      socket.destroy();
-      resolve(false);
-    });
-    socket.on("timeout", () => {
-      socket.destroy();
-      resolve(false);
-    });
+    socket.on("error", () => finish(null));
+    socket.on("timeout", () => finish(null));
   });
 }
 
@@ -122,7 +120,8 @@ export async function GET(request: NextRequest) {
   }
 
   // Authenticated response: full diagnostic details with Redis connectivity
-  const redisReachable = redisConfigured ? await checkRedisConnectivity() : false;
+  const redis = redisConfigured ? await checkRedis() : null;
+  const redisReachable = redis !== null;
   // Degrade status when Redis is expected but unreachable (cache layer is down)
   const isFullyHealthy = isHealthy && (!redisConfigured || redisReachable);
   // Use the same validated resolution as the app: isApiUrlConfigured() treats a
@@ -138,6 +137,7 @@ export async function GET(request: NextRequest) {
         shared: redisReachable,
         connected: redisReachable,
         configured: redisConfigured,
+        redis,
       },
       config: {
         apiUrlConfigured,
