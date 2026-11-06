@@ -810,3 +810,32 @@ variables never reach the browser
   as the start step. A `NEXT_PUBLIC_*` variable that is unset at build is not
   inlined: the server bundle still reads it at runtime, while the browser gets
   `undefined`.
+
+## Slug length is not a quality signal
+
+`isMalformedEventSlug` flagged every slug over 120 chars as feed garbage, back
+when real slugs were 80-100 chars. Backend v2 slugs end with the date and a
+36-char UUID, so 14% of live events (408 of 3,000) quietly got `noindex` and
+fell out of the events sitemap; Search Console showed them as "Excluded by
+noindex", next to the expired events that are excluded on purpose (#668).
+Flag only content that can't be a real title (the feed-leak tokens), and when
+"Excluded by noindex" grows, sample its URLs against the backend before
+assuming they are all intended.
+
+## The Redis page-cache purge never ran, and `URL` keeps credentials encoded
+
+Two silent failures around Redis, both found by reading the server log and
+running against a real Redis rather than a mock:
+
+- `purgeStaleBuildCaches` passed `SCAN` the number `0`; node-redis 6 only
+  accepts a string and threw (`"arguments[1]" must be of type "string |
+  Buffer"`), so every deploy's keys stayed. Staging sat at 172 MB of 200 MB
+  with 499 keys; the fix (#669) left 4. The test's fake client now rejects a
+  numeric cursor like the real one.
+- `new URL("redis://:p%40ss@host").password` is `"p%40ss"`: the WHATWG URL
+  keeps userinfo percent-encoded. node-redis decodes it, our raw health check
+  didn't (#670).
+
+To see production Redis without shell access:
+`/api/health?secret=$REVALIDATE_SECRET` → `cache.redis`.
+
