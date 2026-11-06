@@ -12,7 +12,7 @@ describe("isMalformedEventSlug", () => {
     expect(isMalformedEventSlug("concert-de-jazz-a-barcelona")).toBe(false);
     expect(isMalformedEventSlug("festa-major-de-vic-2026")).toBe(false);
     expect(isMalformedEventSlug("3-de-juny-del-2026")).toBe(false);
-    // 80-char realistic upper bound
+    // Long real title
     expect(
       isMalformedEventSlug(
         "fira-internacional-del-circ-trapezi-de-reus-edicio-2026-juny-juliol-agost"
@@ -39,10 +39,13 @@ describe("isMalformedEventSlug", () => {
     expect(isMalformedEventSlug("event-CDATA-foo")).toBe(true);
   });
 
-  it("flags any slug longer than 120 chars", () => {
-    const long = "a".repeat(121);
-    expect(isMalformedEventSlug(long)).toBe(true);
-    const justUnder = "a".repeat(120);
-    expect(isMalformedEventSlug(justUnder)).toBe(false);
+  it("does not flag long real slugs (title + date + UUID)", () => {
+    // Real production slug, 127 chars, noindexed by the old 120-char cap.
+    expect(
+      isMalformedEventSlug(
+        "musicalbruc26-laura-simo-amp-francesc-capella-trio-west-side-songs-19-de-desembre-del-2026-33971e73-b369-4cfb-9bf8-16af3f42351b"
+      )
+    ).toBe(false);
+    expect(isMalformedEventSlug("a".repeat(250))).toBe(false);
   });
 });

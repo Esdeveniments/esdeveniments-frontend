@@ -89,3 +89,17 @@ export type CacheSlot<T> = {
   generation: number;
 };
 
+
+/** One parsed RESP reply. Redis errors (and nil bulk strings) are null. */
+export type RedisReply = string | number | null;
+
+/** Redis memory and hit counters for the authenticated /api/health response. */
+export type RedisStats = {
+  usedMemoryBytes: number;
+  maxmemoryBytes: number;
+  maxmemoryPolicy: string;
+  keys: number;
+  evictedKeys: number;
+  keyspaceHits: number;
+  keyspaceMisses: number;
+};

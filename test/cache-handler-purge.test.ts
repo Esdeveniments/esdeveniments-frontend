@@ -14,7 +14,11 @@ function createFakeRedis(keys: string[], { pageSize = 2 } = {}) {
   const unlinked: string[] = [];
   return {
     unlinked,
-    scan(cursor: number | string, _options?: { MATCH?: string; COUNT?: number }) {
+    scan(cursor: string, _options?: { MATCH?: string; COUNT?: number }) {
+      // node-redis 6 throws on a numeric cursor; the purge used to pass 0.
+      if (typeof cursor !== "string") {
+        return Promise.reject(new TypeError('"arguments[1]" must be of type "string | Buffer"'));
+      }
       const start = Number(cursor);
       const page = keys.slice(start, start + pageSize);
       const next = start + pageSize >= keys.length ? "0" : String(start + pageSize);
