@@ -113,6 +113,15 @@ describe("sanitizeReturnTo", () => {
   it("rejects over-long paths to bound the Set-Cookie size", () => {
     expect(sanitizeReturnTo("/" + "a".repeat(3000))).toBeNull();
   });
+  it("rejects dot-dot segments in the path or query", () => {
+    expect(sanitizeReturnTo("/barcelona/../x")).toBeNull();
+    expect(sanitizeReturnTo("/barcelona/..//x.invalid")).toBeNull();
+    expect(sanitizeReturnTo("/barcelona?category=..//x.invalid")).toBeNull();
+    expect(sanitizeReturnTo("/a/%2E%2e/b")).toBeNull();
+    expect(sanitizeReturnTo("/a/.%2e")).toBeNull();
+    expect(sanitizeReturnTo("/e/festa...-2026")).toBe("/e/festa...-2026");
+    expect(sanitizeReturnTo("/preferits")).toBe("/preferits");
+  });
   it("rejects the DEL control character", () => {
     expect(sanitizeReturnTo("/foo\x7fbar")).toBeNull();
   });

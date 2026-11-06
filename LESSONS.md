@@ -837,7 +837,8 @@ running against a real Redis rather than a mock:
   didn't (#670).
 
 To see production Redis without shell access:
-`/api/health?secret=$REVALIDATE_SECRET` → `cache.redis`.
+`curl -s -H "x-health-secret: $HEALTH_SECRET" https://www.esdeveniments.cat/api/health`
+→ `cache.redis` (the route ignores `?secret=`).
 
 
 ## GA's landing `page_view` must wait for the consent update

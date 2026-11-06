@@ -6,6 +6,7 @@ import { fetchCategoriesExternal } from "lib/api/categories-external";
 import { fetchPlacesAggregatedExternal } from "lib/api/places-external";
 import type { JsonRpcRequest, JsonRpcResponse } from "types/mcp";
 import { createRateLimiter } from "@utils/rate-limit";
+import { isValidEventSlug } from "@utils/event-helpers";
 import { isSafePublicFetchUrl } from "@utils/public-fetch-safety";
 
 /**
@@ -179,6 +180,12 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
       if (!slug) {
         return {
           content: [{ type: "text", text: "Error: slug parameter is required" }],
+          isError: true,
+        };
+      }
+      if (!isValidEventSlug(slug)) {
+        return {
+          content: [{ type: "text", text: "Error: invalid slug" }],
           isError: true,
         };
       }

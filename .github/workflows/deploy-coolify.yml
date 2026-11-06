@@ -489,7 +489,8 @@ jobs:
 
       - name: Wait for Coolify deployment to complete
         env:
-          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          # Falls back to REVALIDATE_SECRET until HEALTH_SECRET is set (Coolify first).
+          HEALTH_SECRET: ${{ secrets.HEALTH_SECRET || secrets.REVALIDATE_SECRET }}
           EXPECTED_VERSION: ${{ github.sha }}
           SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
@@ -513,12 +514,12 @@ jobs:
 
           # Record the current live version before deployment
           PRE_DEPLOY_VERSION=$(curl -s --max-time 5 \
-            "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}" \
+            -H "x-health-secret: ${HEALTH_SECRET}" "${SITE_URL}/api/health" \
             | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || PRE_DEPLOY_VERSION=""
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
             RESPONSE=$(curl -s --max-time 5 \
-              "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}") || RESPONSE=""
+              -H "x-health-secret: ${HEALTH_SECRET}" "${SITE_URL}/api/health") || RESPONSE=""
 
             LIVE_VERSION=$(echo "$RESPONSE" | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || LIVE_VERSION=""
             HTTP_OK=$(echo "$RESPONSE" | grep -o '"status":"healthy"') || HTTP_OK=""
@@ -621,7 +622,8 @@ jobs:
 
       - name: Post-deploy smoke tests
         env:
-          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          # Falls back to REVALIDATE_SECRET until HEALTH_SECRET is set (Coolify first).
+          HEALTH_SECRET: ${{ secrets.HEALTH_SECRET || secrets.REVALIDATE_SECRET }}
           IS_PRODUCTION_DEPLOY: ${{ github.ref_name == 'main' }}
           SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
@@ -663,7 +665,7 @@ jobs:
           # still route one request to the old container (a lone 502 on
           # 2026-11-05 failed a healthy deploy).
           for attempt in 1 2 3; do
-            HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 5 "${SITE_URL}/api/health?secret=${REVALIDATE_SECRET}") || HTTP_CODE="000"
+            HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 5 -H "x-health-secret: ${HEALTH_SECRET}" "${SITE_URL}/api/health") || HTTP_CODE="000"
             [ "$HTTP_CODE" = "200" ] && break
             [ "$attempt" -lt 3 ] && { echo "  attempt $attempt: HTTP $HTTP_CODE — retrying in 5s"; sleep 5; }
           done

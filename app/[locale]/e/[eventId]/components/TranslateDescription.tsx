@@ -10,10 +10,12 @@ import type { AppLocale } from "types/i18n";
 import Button from "@components/ui/common/button";
 
 export default function TranslateDescription({
+  slug,
   description,
   locale,
   targetId = "event-description-body",
 }: {
+  slug: string;
   description: string;
   locale?: AppLocale;
   targetId?: string;
@@ -66,10 +68,7 @@ export default function TranslateDescription({
           return;
         }
 
-        const result = await translateDescription({
-          text: description,
-          targetLang,
-        });
+        const result = await translateDescription({ slug, targetLang });
 
         if (result?.ok && result.translation) {
           const processed = processDescription(result.translation);

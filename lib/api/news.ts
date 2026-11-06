@@ -59,7 +59,7 @@ export async function fetchNewsBySlug(
 ): Promise<NewsDetailResponseDTO | null> {
   // Internal route
   try {
-    const url = await getInternalApiUrl(`/api/news/${slug}`, {
+    const url = await getInternalApiUrl(`/api/news/${encodeURIComponent(slug)}`, {
       preferConfiguredOrigin: options.preferConfiguredOrigin,
     });
     const response = await fetch(url, {

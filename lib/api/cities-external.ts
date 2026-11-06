@@ -31,7 +31,9 @@ export async function fetchCityByIdExternal(
   const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const res = await fetchWithHmac(`${api}/places/cities/${id}`);
+    const res = await fetchWithHmac(
+      `${api}/places/cities/${encodeURIComponent(String(id))}`,
+    );
     if (!res.ok) {
       console.error("fetchCityByIdExternal:", id, "HTTP", res.status);
       return null;

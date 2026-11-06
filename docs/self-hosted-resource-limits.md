@@ -119,7 +119,7 @@ the backstop if a purge is ever skipped.
 Until #669 (2026-11-06) the purge failed on every start (node-redis 6 rejects a
 numeric `SCAN` cursor), so staging sat at 172 MB of 200 MB with 499 keys; the first
 start with the fix left 4. Entries are also brotli-compressed since #669 (a route
-shell is ~43 KB instead of ~390 KB). `/api/health?secret=…` reports `used_memory`,
+shell is ~43 KB instead of ~390 KB). `/api/health` with the `x-health-secret` header reports `used_memory`,
 `maxmemory`, evictions and hits under `cache.redis`.
 
 ## Quick check on the server
