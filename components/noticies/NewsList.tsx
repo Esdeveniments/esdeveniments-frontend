@@ -1,160 +1,109 @@
-import { getTranslations } from "next-intl/server";
-import NewsCard from "@components/ui/newsCard";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import type { NewsSummaryResponseDTO } from "types/api/news";
-import type { NewsListProps } from "types/props";
-import { siteUrl } from "@config/index";
-import JsonLdServer from "@components/partials/JsonLdServer";
-import {
-  getLocaleSafely,
-  withLocalePath,
-} from "@utils/i18n-seo";
-import { resolveNewsItemPlace } from "@utils/news-helpers";
 import { connection } from "next/server";
+import { getTranslations } from "next-intl/server";
+import type { NewsListProps } from "types/props";
+import JsonLdServer from "@components/partials/JsonLdServer";
+import NewsCard from "@components/ui/newsCard";
+import List from "@components/ui/list";
+import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import NewsCitiesSection from "@components/noticies/NewsCitiesSection";
+import NewsPagination from "@components/noticies/NewsPagination";
+import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { resolveNewsItemPlace } from "@utils/news-helpers";
 
 export default async function NewsList({
   newsPromise,
-  placeTypePromise,
+  citiesPromise,
   place,
-  currentPage,
-  pageSize,
+  placeLabel,
+  page,
   basePath,
 }: NewsListProps) {
-  // Opt out of cacheComponents caching — early return on empty list produces
-  // a completely different tree (no JsonLdServer) vs the normal path.
+  // Opt out of cacheComponents caching: an empty list renders a different
+  // tree (no JSON-LD, empty state) than a full one.
   await connection();
 
-  const locale = await getLocaleSafely();
-  const t = await getTranslations({ locale, namespace: "Components.NewsList" });
-  const withLocale = (path: string) => withLocalePath(path, locale);
-  const [response, placeType] = await Promise.all([
+  const [locale, response, citiesResponse] = await Promise.all([
+    getLocaleSafely(),
     newsPromise,
-    placeTypePromise,
+    citiesPromise,
   ]);
-  const list = response.content;
+  const t = await getTranslations({ locale, namespace: "Components.NewsList" });
+  const cities = Array.isArray(citiesResponse.content) ? citiesResponse.content : [];
+  // Link each article to its own city/region so it doesn't 301 on click.
+  const items = response.content.map((item) => ({
+    ...item,
+    place: resolveNewsItemPlace(item, place ?? "catalunya", placeLabel),
+  }));
+  const [featured, ...rest] = items;
 
-  if (!list || list.length === 0) {
+  const chips = <NewsCitiesSection cities={cities} currentPlace={place} />;
+
+  if (!featured) {
+    const empty =
+      page > 1
+        ? { title: t("emptyPageTitle"), body: null, href: basePath, cta: t("firstPage") }
+        : place
+          ? { title: t("emptyTitle"), body: t("emptyBody", { place: placeLabel }), href: "/noticies", cta: t("viewAll") }
+          : { title: t("emptyTitle"), body: t("emptyBodyIndex"), href: "/catalunya", cta: t("viewAgenda") };
+
     return (
-      <div className="flex flex-col items-center gap-4 px-2 lg:px-0 text-center">
-        <h2 className="heading-3" data-testid="not-found-title">
-          {t("emptyTitle")}
-        </h2>
-        <p className="text-foreground-strong/70 max-w-2xl">
-          {t("emptyBody", { place: placeType.label })}
-        </p>
-        <PressableAnchor
-          href={withLocale("/noticies")}
-          className="text-primary underline"
-          variant="inline"
-          prefetch={false}
-        >
-          {t("viewAll")}
-        </PressableAnchor>
-      </div>
+      <>
+        {chips}
+        <div className="flex-center-col gap-element-gap py-section-y text-center">
+          <h2 className="heading-3 text-foreground-strong" data-testid="not-found-title">
+            {empty.title}
+          </h2>
+          {empty.body && <p className="body-normal max-w-2xl">{empty.body}</p>}
+          <PressableAnchor href={empty.href} className="btn-primary" variant="plain">
+            {empty.cta}
+          </PressableAnchor>
+        </div>
+      </>
     );
   }
 
-  const resolvedBasePath = basePath || `/noticies/${place}`;
-
-  const defaultPlace = { slug: place, label: placeType.label };
-  const resolvePlace = (item: NewsSummaryResponseDTO) =>
-    basePath
-      ? resolveNewsItemPlace(item, place, placeType.label)
-      : defaultPlace;
-
+  const itemUrl = (item: (typeof items)[number]) =>
+    toLocalizedUrl(`/noticies/${item.place.slug}/${item.slug}`, locale);
   const newsItemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "@id": `${siteUrl}${withLocale(resolvedBasePath)}#news-itemlist`,
-    name: t("itemListName", { place: placeType.label }),
-    numberOfItems: list.length,
-    itemListElement: list.map((item: NewsSummaryResponseDTO, index: number) => {
-      const itemPlace = resolvePlace(item);
-
-      return {
-        "@type": "ListItem",
-        position: index + 1,
-        item: {
-          "@type": "NewsArticle",
-          "@id": `${siteUrl}${withLocale(`/noticies/${itemPlace.slug}/${item.slug}`)}`,
-          url: `${siteUrl}${withLocale(`/noticies/${itemPlace.slug}/${item.slug}`)}`,
-          headline: item.title,
-          ...(item.imageUrl ? { image: item.imageUrl } : {}),
-        },
-      };
-    }),
+    "@id": `${toLocalizedUrl(basePath, locale)}#news-itemlist`,
+    name: t("itemListName", { place: placeLabel }),
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "NewsArticle",
+        "@id": itemUrl(item),
+        url: itemUrl(item),
+        headline: item.title,
+        ...(item.imageUrl ? { image: item.imageUrl } : {}),
+      },
+    })),
   };
 
   return (
     <>
-
       <JsonLdServer id="news-place-itemlist" data={newsItemList} />
-
-      <section className="px-2 lg:px-0">
-        {/* First card as hero (full width) */}
-        {list.length > 0 && (() => {
-          const heroPlace = resolvePlace(list[0]);
-          return (
-            <div className="mb-6">
-              <NewsCard
-                key={`${list[0].id}-hero`}
-                event={list[0]}
-                placeSlug={heroPlace.slug}
-                placeLabel={heroPlace.label}
-                variant="hero"
-              />
-            </div>
-          );
-        })()}
-
-        {/* Remaining cards in responsive grid */}
-        {list.length > 1 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-element-gap">
-            {list.slice(1).map((event: NewsSummaryResponseDTO, index: number) => {
-              const itemPlace = resolvePlace(event);
-
-              return (
-                <NewsCard
-                  key={`${event.id}-${index + 1}`}
-                  event={event}
-                  placeSlug={itemPlace.slug}
-                  placeLabel={itemPlace.label}
-                  variant="default"
-                />
-              );
-            })}
-          </div>
+      {chips}
+      {/* gap-5 matches the List grid, so the featured card sits like a row */}
+      <div className="flex flex-col gap-5">
+        <NewsCard
+          event={featured}
+          placeSlug={featured.place.slug}
+          placeLabel={featured.place.label}
+          variant="featured"
+          priority
+        />
+        {rest.length > 0 && (
+          <List events={rest}>
+            {(item) => (
+              <NewsCard event={item} placeSlug={item.place.slug} placeLabel={item.place.label} />
+            )}
+          </List>
         )}
-      </section>
-      <div className="w-full flex justify-between items-center mt-6 px-2 lg:px-0 text-sm">
-        {currentPage > 0 ? (
-          <PressableAnchor
-            href={{
-              pathname: withLocale(resolvedBasePath),
-              query: { page: String(currentPage - 1), size: String(pageSize) },
-            }}
-            prefetch={false}
-            className="text-primary underline"
-            variant="inline"
-          >
-            {t("prev")}
-          </PressableAnchor>
-        ) : (
-          <span />
-        )}
-        {!response.last && (
-          <PressableAnchor
-            href={{
-              pathname: withLocale(resolvedBasePath),
-              query: { page: String(currentPage + 1), size: String(pageSize) },
-            }}
-            prefetch={false}
-            className="text-primary underline"
-            variant="inline"
-          >
-            {t("next")}
-          </PressableAnchor>
-        )}
+        <NewsPagination basePath={basePath} page={page} totalPages={response.totalPages} />
       </div>
     </>
   );

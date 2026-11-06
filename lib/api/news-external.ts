@@ -7,6 +7,7 @@ import type { FetchNewsParams } from "./news";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { PagedResponseDTO } from "types/api/event";
 import { buildNewsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helpers";
+import { parseEventSummaryList } from "@lib/validation/event";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
 // This creates a separate cache entry for every unique URL.
@@ -46,7 +47,10 @@ export async function fetchNewsBySlugExternal(
       console.error("fetchNewsBySlugExternal:", slug, "HTTP", res.status);
       return null;
     }
-    return (await res.json()) as NewsDetailResponseDTO;
+    const data = (await res.json()) as NewsDetailResponseDTO;
+    // Events render with the shared event card, so they get the same parser
+    // (drops invalid items, adds image cache keys) as every other event list.
+    return { ...data, events: parseEventSummaryList(data.events ?? []) };
   } catch (error) {
     console.error("fetchNewsBySlugExternal:", slug, "failed", error);
     return null;

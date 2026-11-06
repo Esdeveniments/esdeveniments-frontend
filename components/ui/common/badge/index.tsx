@@ -11,6 +11,7 @@ const Badge = ({
   className = "",
   onClick,
   ariaLabel,
+  ariaCurrent,
   ref,
   ...rest
 }: BadgeProps) => {
@@ -27,6 +28,7 @@ const Badge = ({
         href={href}
         className={combined}
         aria-label={ariaLabel}
+        aria-current={ariaCurrent}
         variant="chip"
         prefetch={false}
         {...dataAttrs}
@@ -46,6 +48,7 @@ const Badge = ({
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
       aria-label={ariaLabel}
+      aria-current={ariaCurrent}
       className={combined}
       {...dataAttrs}
     >

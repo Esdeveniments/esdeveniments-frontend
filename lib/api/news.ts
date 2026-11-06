@@ -14,7 +14,7 @@ import {
 } from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
 import type { CacheTag } from "types/cache";
-import { addCacheKeyToNewsList, addCacheKeyToNewsDetail } from "@utils/news-cache";
+import { addCacheKeyToNewsList } from "@utils/news-cache";
 import type { InternalOriginOptions } from "types/api/internal";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -69,7 +69,7 @@ export async function fetchNewsBySlug(
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data: NewsDetailResponseDTO = await response.json();
-    return addCacheKeyToNewsDetail(data);
+    return data;
   } catch (e) {
     console.error("Error fetching news by slug:", e);
     // Transient failure: re-throw for cached metadata readers so the error is

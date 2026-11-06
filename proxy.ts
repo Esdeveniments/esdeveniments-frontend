@@ -11,6 +11,7 @@ import {
   persistLocaleCookie,
 } from "@utils/proxy-locale";
 import { getLoginEntryRedirect } from "@utils/proxy-login";
+import { getNewsPaginationRedirect } from "@utils/proxy-news";
 import { applyPageHeaders } from "@utils/proxy-page-headers";
 import { checkCategory, checkPlace } from "@utils/proxy-place";
 import { DEFAULT_LOCALE } from "types/i18n";
@@ -58,7 +59,9 @@ export default async function proxy(request: NextRequest) {
   const pathLocaleToPersist =
     localeFromPath !== localeFromCookie ? localeFromPath : null;
 
-  const canonicalRedirect = handleCanonicalRedirects(request);
+  const canonicalRedirect =
+    handleCanonicalRedirects(request) ??
+    getNewsPaginationRedirect(request, pathnameWithoutLocale);
   if (canonicalRedirect) {
     if (pathLocaleToPersist) {
       persistLocaleCookie(canonicalRedirect, pathLocaleToPersist);

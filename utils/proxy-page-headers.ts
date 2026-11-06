@@ -16,6 +16,7 @@ const THREE_SEGMENT_LISTING_RE =
   /^\/[a-z0-9-]+\/(?:avui|dema|setmana|cap-de-setmana)\/[a-z0-9-]+$/;
 
 const PROMOTE_PATH_RE = /\/promote(\/|$)/;
+const FAVORITES_PATH_RE = /^\/preferits(\/|$)/;
 
 // Agent discovery (RFC 8288 Link header).
 const AGENT_DISCOVERY_LINKS = [
@@ -26,13 +27,13 @@ const AGENT_DISCOVERY_LINKS = [
 ].join(", ");
 
 /**
- * Owner-only or per-user pages: favorites, edit forms (a non-creator's 404 or
- * a creator's form must never be shared via the CDN) and promote pages
- * (payment status, Stripe checkout URLs). Matched on the decoded, lowercased,
- * slash-collapsed path so /e/x/promot%65 or /e/x//promote can't slip through.
+ * Owner-only or per-user pages: favorites (/preferits and its subpages),
+ * edit forms (a non-creator's 404 or a creator's form must never be shared
+ * via the CDN) and promote pages (payment status, Stripe checkout URLs).
+ * Matched on the decoded, lowercased, slash-collapsed path so
+ * /e/x/promot%65 or /e/x//promote can't slip through.
  */
 function isPersonalizedPath(path: string): boolean {
-  if (path === "/preferits") return true;
   let decoded = path;
   try {
     decoded = decodeURIComponent(path);
@@ -40,7 +41,11 @@ function isPersonalizedPath(path: string): boolean {
     // Malformed escapes: fall back to the raw path.
   }
   decoded = decoded.toLowerCase().replace(/\/{2,}/g, "/");
-  return decoded.includes("/edita") || PROMOTE_PATH_RE.test(decoded);
+  return (
+    FAVORITES_PATH_RE.test(decoded) ||
+    decoded.includes("/edita") ||
+    PROMOTE_PATH_RE.test(decoded)
+  );
 }
 
 function hasFilterParams(searchParams: URLSearchParams): boolean {

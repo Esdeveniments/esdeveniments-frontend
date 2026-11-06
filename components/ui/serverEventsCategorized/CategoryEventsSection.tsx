@@ -3,7 +3,7 @@ import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import AdArticle from "@components/ui/adArticle";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { buildCanonicalUrl } from "@utils/url-filters";
-import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { DEFAULT_FILTER_VALUE, SEE_ALL_LINK_CLASS } from "@utils/constants";
 import { DateFilterBadges } from "./DateFilterBadges";
 import type { CategoryEventsSectionProps } from "types/props";
 
@@ -31,7 +31,7 @@ export function CategoryEventsSection({
             },
             categories
           )}
-          className="flex-center gap-1 body-small text-primary hover:text-primary/80 transition-interactive whitespace-nowrap"
+          className={SEE_ALL_LINK_CLASS}
           prefetch={false}
           variant="inline"
         >
