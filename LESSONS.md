@@ -839,3 +839,19 @@ running against a real Redis rather than a mock:
 To see production Redis without shell access:
 `/api/health?secret=$REVALIDATE_SECRET` → `cache.redis`.
 
+
+## GA's landing `page_view` must wait for the consent update
+
+#591 queued `config` right after the denied Consent Mode default, so gtag.js
+sent the landing `page_view` before our `consent update` arrived, even for
+visitors who had consented on an earlier visit (`gcs=G100`). GA reports leave
+denied hits out, and most visits are a single page: GA4 sessions fell from
+~440 to 31-80 a day after the release on 2026-11-04, while Search Console
+clicks fell about half. GoogleScripts also pushed a "denied" update for the
+CMP's not-yet-known state. Fix: `wait_for_update` in the default, no update
+until the CMP has decided, updates pushed at once (not on idle), and one
+`page_view` after a grant that comes after gtag's wait ran out (a first visit
+where the visitor read the box). To check, watch `/g/collect` requests: the
+`page_view` of a consented visitor must carry `gcs=G111`
+(`docs/performance/baselines.md` method: local build served as the
+production host through a TLS proxy).
