@@ -43,7 +43,9 @@ export async function fetchCategoryByIdExternal(
   const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const res = await fetchWithHmac(`${api}/categories/${id}`);
+    const res = await fetchWithHmac(
+      `${api}/categories/${encodeURIComponent(String(id))}`,
+    );
     if (!res.ok) {
       console.error("fetchCategoryByIdExternal:", id, "HTTP", res.status);
       return null;

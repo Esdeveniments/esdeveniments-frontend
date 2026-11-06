@@ -40,7 +40,7 @@ export async function fetchNewsBySlugExternal(
   const api = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const res = await fetchWithHmac(`${api}/news/${slug}`);
+    const res = await fetchWithHmac(`${api}/news/${encodeURIComponent(slug)}`);
     if (res.status === 404) return null;
     if (!res.ok) {
       console.error("fetchNewsBySlugExternal:", slug, "HTTP", res.status);
