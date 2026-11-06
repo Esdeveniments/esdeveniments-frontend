@@ -84,6 +84,8 @@ async function checkRedis(): Promise<RedisStats | null> {
     });
     socket.on("error", () => finish(null));
     socket.on("timeout", () => finish(null));
+    // A close before every reply arrived (no error) would otherwise hang the request.
+    socket.on("close", () => finish(null));
   });
 }
 
