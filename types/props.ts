@@ -125,6 +125,15 @@ export interface CardContentProps {
   initialIsFavorite?: boolean;
 }
 
+/** Server card options for the `row` layout (news article event lists). */
+export interface CardContentServerProps extends CardContentProps {
+  variant?: CardLayoutProps["variant"];
+  /** Number shown before the title */
+  position?: number;
+  /** Plain-text excerpt, shown by the side-by-side variants */
+  description?: string;
+}
+
 export interface CardLayoutProps {
   /** Event slug for links and analytics */
   slug: string;
@@ -132,10 +141,15 @@ export interface CardLayoutProps {
   href?: string;
   /** GA4 event sent on click; defaults to `select_event` */
   analyticsEventName?: string;
-  /** `featured` lays the card out side by side from md up and shows the description */
-  variant?: "default" | "featured";
-  /** Plain-text summary, shown only by the `featured` variant */
+  /**
+   * `featured` and `row` lay the card out side by side from md up and show the
+   * description; `featured` gives the image half the width, `row` 40%.
+   */
+  variant?: "default" | "featured" | "row";
+  /** Plain-text summary, shown only by the `featured` and `row` variants */
   description?: string;
+  /** Number shown before the title (numbered lists) */
+  position?: number;
   /** Event ID for analytics */
   eventId?: string;
   /** Prepared title text */
@@ -731,6 +745,8 @@ export interface NewsShareButtonsProps {
 export interface NewsEventsSectionProps {
   title: string;
   events: import("./api/event").EventSummaryResponseDTO[];
+  /** Number of the first event, so the list continues across sections */
+  startPosition?: number;
 }
 
 export interface NewsCardProps {

@@ -21,6 +21,10 @@ export const NEWS_FRESHNESS_DAYS = 7;
 export const NEWS_PAGE_SIZE = 10;
 // Cities with news, shown as chips; all of them fit one request.
 export const NEWS_CITIES_LIMIT = 100;
+// News article event rows: excerpt length and venue label length (some
+// multi-venue strings run to ~150 chars).
+export const NEWS_EVENT_EXCERPT_MAX_LENGTH = 220;
+export const EVENT_VENUE_LABEL_MAX_LENGTH = 60;
 
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;

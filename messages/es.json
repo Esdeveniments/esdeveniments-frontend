@@ -187,7 +187,7 @@
       "breadcrumbNews": "Noticias",
       "sectionWeekend": "Fin de semana",
       "sectionWeek": "Semana",
-      "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
+      "eventsCount": "{count, plural, one {{count} propuesta} other {{count} propuestas}}",
       "mustSee": "Imprescindibles",
       "moreProposals": "Más propuestas",
       "relatedArticles": "Artículos relacionados",
@@ -900,9 +900,6 @@
       "placeholder": "¿Qué estás buscando?",
       "clear": "Limpiar la búsqueda",
       "search": "Buscar"
-    },
-    "News": {
-      "readingTime": "{minutes} min de lectura"
     },
     "LocationDiscovery": {
       "heading": "Viendo eventos en",

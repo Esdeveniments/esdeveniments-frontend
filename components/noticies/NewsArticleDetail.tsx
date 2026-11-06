@@ -20,7 +20,10 @@ import { captureException } from "@sentry/nextjs";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { resolveNewsItemPlace } from "@utils/news-helpers";
-import { buildNewsArticleSchema } from "@components/noticies/newsArticleSchema";
+import {
+  buildNewsArticleSchema,
+  buildNewsEventsItemListSchema,
+} from "@components/noticies/newsArticleSchema";
 
 
 export default async function NewsArticleDetail({
@@ -72,10 +75,7 @@ export default async function NewsArticleDetail({
   }
 
   const locale = await getLocaleSafely();
-  const [t, tNews] = await Promise.all([
-    getTranslations({ locale, namespace: "App.NewsArticleDetail" }),
-    getTranslations({ locale, namespace: "Components.News" }),
-  ]);
+  const t = await getTranslations({ locale, namespace: "App.NewsArticleDetail" });
 
   const plainDescription = stripHtmlTags(detail.description || "");
   const dateRangeText = (() => {
@@ -109,6 +109,12 @@ export default async function NewsArticleDetail({
   });
 
   const events = detail.events ?? [];
+  const eventsListSchema = buildNewsEventsItemListSchema({
+    events,
+    name: detail.title,
+    url: absolute(`/noticies/${place}/${article}`),
+    locale,
+  });
   const relatedNews = (detail.relatedNews ?? []).slice(0, 3);
 
   return (
@@ -116,6 +122,9 @@ export default async function NewsArticleDetail({
       <div className="container-article flex flex-col gap-section-y min-w-0">
         <JsonLdServer id="news-article-schema" data={articleSchema} />
         <JsonLdServer id="news-webpage-breadcrumbs" data={webPageSchema} />
+        {eventsListSchema && (
+          <JsonLdServer id="news-events-item-list" data={eventsListSchema} />
+        )}
 
         <article className="w-full flex flex-col gap-section-y">
           {/* PWA back button — only renders in installed standalone mode */}
@@ -136,11 +145,9 @@ export default async function NewsArticleDetail({
             />
             <h1 className="heading-1 text-balance break-words">{detail.title}</h1>
             <p className="body-small text-muted-foreground">
-              {[
-                dateRangeText,
-                tNews("readingTime", { minutes: detail.readingTime }),
-                t("visitsCount", { count: detail.visits }),
-              ].join(" · ")}
+              {events.length > 0
+                ? `${dateRangeText} · ${t("eventsCount", { count: events.length })}`
+                : dateRangeText}
             </p>
             {plainDescription && <p className="body-large">{plainDescription}</p>}
             <NewsShareButtons place={place} slug={article} label={t("shareArticle")} />
@@ -149,10 +156,20 @@ export default async function NewsArticleDetail({
           <AdArticle slot="news_in_article" isDisplay={false} />
 
           {events.length > 0 && (
-            <NewsEventsSection title={t("mustSee")} events={events.slice(0, 3)} />
-          )}
-          {events.length > 3 && (
-            <NewsEventsSection title={t("moreProposals")} events={events.slice(3)} />
+            <div
+              className="flex flex-col gap-section-y"
+              data-analytics-container="true"
+              data-analytics-context="news_article"
+            >
+              <NewsEventsSection title={t("mustSee")} events={events.slice(0, 3)} />
+              {events.length > 3 && (
+                <NewsEventsSection
+                  title={t("moreProposals")}
+                  events={events.slice(3)}
+                  startPosition={4}
+                />
+              )}
+            </div>
           )}
 
           {relatedNews.length > 0 && (

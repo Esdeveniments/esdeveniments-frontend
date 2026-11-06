@@ -60,3 +60,28 @@ describe("CardLayout icons", () => {
     expect(symbolIds).toEqual(expect.arrayContaining(usedIds));
   });
 });
+
+describe("CardLayout row variant", () => {
+  it("numbers the title and shows the excerpt beside a 40% image", () => {
+    const html = renderToStaticMarkup(
+      <CardLayout
+        slug="concert-ginesta"
+        variant="row"
+        position={4}
+        description="Ginestà s'ha consolidat com un dels grups imprescindibles del pop català…"
+        title={'Concert "Ginestà"'}
+        originalTitle={'Concert "Ginestà"'}
+        image=""
+        isPriority={false}
+        cardDate="7 de novembre"
+        timeDisplay="21:00"
+        primaryLocation="Razzmatazz (Sant Martí), Barcelona"
+        renderLink={({ children, ...props }) => <a {...props}>{children}</a>}
+      />
+    );
+    expect(html).toMatch(/<h3[^>]*>4\. Concert &quot;Ginestà&quot;<\/h3>/);
+    expect(html).toContain("md:w-2/5");
+    expect(html).toContain("line-clamp-3");
+    expect(html).toContain("Ginestà s&#x27;ha consolidat");
+  });
+});

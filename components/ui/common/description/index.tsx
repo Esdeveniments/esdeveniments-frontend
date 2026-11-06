@@ -36,7 +36,7 @@ export default async function Description({
           )}
           <div
             id={descriptionHtmlId}
-            className="body-normal leading-[1.75] text-foreground-strong/90 [&>*]:body-normal [&>*]:leading-[1.75] [&>*]:text-foreground-strong/90"
+            className="body-normal leading-[1.75] text-foreground-strong/90 [&>*]:body-normal [&>*]:leading-[1.75] [&>*]:text-foreground-strong/90 [&_strong]:font-semibold"
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
         </div>
