@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import webpush from "web-push";
@@ -10,6 +9,7 @@ import {
 } from "@lib/db/push-subscriptions";
 import { isInternalHost } from "@config/index";
 import { normalizeHost } from "@utils/host-validation";
+import { safeEqual } from "@utils/safe-equal";
 
 // Only relevant on Vercel preview deploys (production runs a persistent
 // Node server on Coolify where route duration is unbounded). Keeps the
@@ -17,22 +17,6 @@ import { normalizeHost } from "@utils/host-validation";
 export const maxDuration = 60;
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
-
-/**
- * Constant-time string compare for the bearer secret. A length mismatch
- * short-circuits (the only thing it leaks is length), and equal-length
- * inputs are compared without an early-exit byte loop, so response time
- * doesn't reveal how many bytes matched. The 512-char cap rejects oversized
- * Authorization headers before allocating a Buffer (a valid `Bearer <secret>`
- * is well under that), avoiding attacker-controlled large allocations.
- */
-function safeEqual(a: string, b: string): boolean {
-  if (a.length > 512) return false;
-  const ab = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ab.length !== bb.length) return false;
-  return timingSafeEqual(ab, bb);
-}
 
 /**
  * Same-origin relative path: must start with a single "/" ("//host" is a

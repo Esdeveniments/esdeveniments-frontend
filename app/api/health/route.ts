@@ -4,6 +4,7 @@ import { connect as tlsConnect } from "node:tls";
 import { isApiUrlConfigured } from "@utils/api-helpers";
 import { isCloudflarePurgeConfigured } from "@lib/cdn/cloudflare-config";
 import { parseRedisStats, parseRespReplies, respCommand } from "@utils/redis-resp";
+import { safeEqual } from "@utils/safe-equal";
 import type { RedisStats } from "types/cache";
 
 /**
@@ -15,8 +16,18 @@ import type { RedisStats } from "types/cache";
  *
  * Usage:
  *   GET /api/health → { status: "healthy" | "degraded" }
- *   GET /api/health?secret=<REVALIDATE_SECRET> → full details
+ *   GET /api/health with header `x-health-secret: <HEALTH_SECRET>` → full details
+ *
+ * The secret goes in a header, never the query string, so it stays out of
+ * CDN and proxy access logs. Until HEALTH_SECRET is set, REVALIDATE_SECRET
+ * is accepted instead.
  */
+
+function isHealthSecret(provided: string | null): boolean {
+  const expected = process.env.HEALTH_SECRET || process.env.REVALIDATE_SECRET;
+  if (!expected || !provided) return false;
+  return safeEqual(provided, expected);
+}
 
 /**
  * One raw RESP connection (avoids importing the redis package): AUTH when a
@@ -103,9 +114,7 @@ export async function GET(request: NextRequest) {
   );
   const isHealthy = hmacConfigured;
 
-  // Check if authenticated (use same secret as revalidation endpoint)
-  const secret = request.nextUrl.searchParams.get("secret");
-  const isAuthenticated = secret && secret === process.env.REVALIDATE_SECRET;
+  const isAuthenticated = isHealthSecret(request.headers.get("x-health-secret"));
 
   // Public response: minimal info only
   if (!isAuthenticated) {
@@ -148,6 +157,7 @@ export async function GET(request: NextRequest) {
         hmacConfigured,
         backendKeyConfigured: Boolean(process.env.BACKEND_SERVICE_SECRET),
         revalidateSecretConfigured: Boolean(process.env.REVALIDATE_SECRET),
+        healthSecretConfigured: Boolean(process.env.HEALTH_SECRET),
         cloudflarePurgeConfigured: isCloudflarePurgeConfigured(),
         redisConfigured,
       },
