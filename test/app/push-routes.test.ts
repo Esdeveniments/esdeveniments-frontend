@@ -7,7 +7,8 @@
  *   persist), and the https-only / shape validation.
  * - send: the auth gate, VAPID gating, the same-origin relative-path guard
  *   for notification urls, and the send-time filter that drops internal-IP
- *   endpoints (exercised against the REAL isInternalHost, not a stub).
+ *   endpoints (exercised against the REAL isInternalHost and
+ *   isBlockedAddress, not stubs).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -24,7 +25,10 @@ const db = vi.hoisted(() => ({
 vi.mock("@lib/db/push-subscriptions", () => db);
 
 const safety = vi.hoisted(() => ({ isSafePublicFetchUrl: vi.fn() }));
-vi.mock("@utils/public-fetch-safety", () => safety);
+vi.mock("@utils/public-fetch-safety", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@utils/public-fetch-safety")>()),
+  ...safety,
+}));
 
 const webpush = vi.hoisted(() => ({
   setVapidDetails: vi.fn(),
@@ -32,8 +36,8 @@ const webpush = vi.hoisted(() => ({
 }));
 vi.mock("web-push", () => ({ default: webpush }));
 
-// Real isInternalHost / normalizeHost are intentionally NOT mocked — the
-// send-route filter is the thing under test.
+// Real isInternalHost / normalizeHost / isBlockedAddress are intentionally NOT
+// mocked — the send-route filter is the thing under test.
 import { POST as subscribePOST } from "../../app/api/push/subscribe/route";
 import { POST as sendPOST } from "../../app/api/push/send/route";
 
@@ -191,7 +195,8 @@ describe("POST /api/push/send", () => {
       .mockResolvedValueOnce([
         { id: 1, endpoint: "https://127.0.0.1/fcm/send/x", p256dh: "k1", auth: "a1" },
         { id: 2, endpoint: "https://192.168.1.10/fcm/send/y", p256dh: "k2", auth: "a2" },
-        { id: 3, endpoint: VALID_ENDPOINT, p256dh: "k3", auth: "a3" },
+        { id: 3, endpoint: "https://[::ffff:7f00:1]/fcm/send/z", p256dh: "k3", auth: "a3" },
+        { id: 4, endpoint: VALID_ENDPOINT, p256dh: "k4", auth: "a4" },
       ])
       .mockResolvedValueOnce([]);
 

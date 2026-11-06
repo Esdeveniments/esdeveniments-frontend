@@ -10,6 +10,7 @@ import {
 } from "@lib/db/push-subscriptions";
 import { isInternalHost } from "@config/index";
 import { normalizeHost } from "@utils/host-validation";
+import { isBlockedAddress } from "@utils/public-fetch-safety";
 
 // Only relevant on Vercel preview deploys (production runs a persistent
 // Node server on Coolify where route duration is unbounded). Keeps the
@@ -150,7 +151,8 @@ export async function POST(request: Request) {
         try {
           const url = new URL(sub.endpoint);
           if (url.protocol !== "https:") return false;
-          return !isInternalHost(normalizeHost(url.hostname));
+          const hostname = normalizeHost(url.hostname);
+          return !isInternalHost(hostname) && !isBlockedAddress(hostname);
         } catch {
           return false;
         }
