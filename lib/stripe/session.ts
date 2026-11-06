@@ -35,6 +35,8 @@ export function getPaymentIntentId(session: unknown): string | null {
 }
 
 const CHECKOUT_SESSION_ID = /^cs_[A-Za-z0-9_]{1,250}$/;
+// Analytics only: give up quickly and fall back to the saved list price.
+const AMOUNT_LOOKUP_TIMEOUT_MS = 3000;
 
 /**
  * What a paid sponsor checkout actually charged (after promotion codes), or
@@ -45,7 +47,10 @@ export async function getSponsorAmountPaid(
 ): Promise<CheckoutAmount | null> {
   if (!CHECKOUT_SESSION_ID.test(sessionId)) return null;
   try {
-    const session = await fetchCheckoutSession(sessionId);
+    const session = await fetchCheckoutSession(
+      sessionId,
+      AMOUNT_LOOKUP_TIMEOUT_MS,
+    );
     if (!isPaidSession(session) || !isSponsorCheckoutSession(session)) {
       return null;
     }

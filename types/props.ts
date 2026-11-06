@@ -1105,7 +1105,3 @@ export interface CheckoutReturnTrackerProps {
   params?: Record<string, string>;
 }
 
-export interface SponsorUploadPageClientProps {
-  /** What Stripe charged for this session, or null when it couldn't be verified. */
-  amountPaid: import("types/analytics").CheckoutAmount | null;
-}

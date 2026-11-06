@@ -125,6 +125,7 @@ export async function updatePaymentIntentMetadata(
  * Update metadata on a Stripe Checkout Session.
  *
  * @param sessionId - The checkout session ID (cs_xxx)
+ * @param timeoutMs - Optional request timeout (default: 10s)
  * @param metadata - Key-value pairs to set on the session
  * @returns true if successful, false otherwise
  */
@@ -160,10 +161,13 @@ export async function updateCheckoutSessionMetadata(
  * @throws Error if fetch fails
  */
 export async function fetchCheckoutSession(
-  sessionId: string
+  sessionId: string,
+  timeoutMs?: number
 ): Promise<unknown> {
   const response = await stripeRequest(
-    `/checkout/sessions/${encodeURIComponent(sessionId)}`
+    `/checkout/sessions/${encodeURIComponent(sessionId)}`,
+    {},
+    timeoutMs
   );
 
   if (!response.ok) {

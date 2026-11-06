@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
 import SponsorUploadPageClient from "@components/ui/sponsor/SponsorUploadPageClient";
+import CheckoutReturnTracker from "@components/analytics/CheckoutReturnTracker";
 import { getSponsorAmountPaid } from "@lib/stripe/session";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,14 +31,25 @@ function UploadPageSkeleton() {
   );
 }
 
-// Reads what Stripe charged (after promotion codes) for GA4 purchase revenue.
-async function SponsorUploadContent({
+// Stripe only sends visitors here after a completed checkout. The amount it
+// charged (after promotion codes) is for GA4 only, so this sits in its own
+// Suspense boundary and never holds back the upload form.
+async function SponsorPurchaseTracker({
   searchParams,
 }: Pick<PageProps<"/[locale]/patrocina/upload">, "searchParams">) {
   const { session_id: sessionId } = await searchParams;
-  const amountPaid =
-    typeof sessionId === "string" ? await getSponsorAmountPaid(sessionId) : null;
-  return <SponsorUploadPageClient amountPaid={amountPaid} />;
+  if (typeof sessionId !== "string" || !sessionId) return null;
+  const amount = await getSponsorAmountPaid(sessionId);
+  return (
+    <CheckoutReturnTracker
+      flow="sponsor"
+      outcome="success"
+      transactionId={sessionId}
+      paid
+      requirePending
+      amount={amount}
+    />
+  );
 }
 
 export default async function PatrocinaUploadPage({
@@ -50,7 +62,10 @@ export default async function PatrocinaUploadPage({
     <main className="min-h-screen bg-background py-section-y px-section-x">
       <div className="max-w-5xl mx-auto">
         <Suspense fallback={<UploadPageSkeleton />}>
-          <SponsorUploadContent searchParams={searchParams} />
+          <SponsorUploadPageClient />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SponsorPurchaseTracker searchParams={searchParams} />
         </Suspense>
       </div>
     </main>
