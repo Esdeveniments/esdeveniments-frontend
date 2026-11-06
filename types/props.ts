@@ -3,6 +3,9 @@ export interface LatestNewsSectionProps {
   placeLabel: string;
   placeType: Exclude<PlaceType, "">;
   newsHref: string;
+  /** Event page the section sits on, for click analytics */
+  sourceEventId?: string;
+  sourceEventSlug?: string;
 }
 
 export interface PublishDraftPanelProps {
@@ -747,6 +750,13 @@ export interface NewsEventsSectionProps {
   events: import("./api/event").EventSummaryResponseDTO[];
   /** Number of the first event, so the list continues across sections */
   startPosition?: number;
+}
+
+export interface NewsCardGridProps {
+  items: NewsSummaryResponseDTO[];
+  /** Fallback place for items without their own city/region */
+  place: string;
+  placeLabel: string;
 }
 
 export interface NewsCardProps {

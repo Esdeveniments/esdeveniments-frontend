@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import type { NewsListProps } from "types/props";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import NewsCard from "@components/ui/newsCard";
-import List from "@components/ui/list";
+import NewsCardGrid from "@components/noticies/NewsCardGrid";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import NewsCitiesSection from "@components/noticies/NewsCitiesSection";
 import NewsPagination from "@components/noticies/NewsPagination";
@@ -97,11 +97,7 @@ export default async function NewsList({
           priority
         />
         {rest.length > 0 && (
-          <List events={rest}>
-            {(item) => (
-              <NewsCard event={item} placeSlug={item.place.slug} placeLabel={item.place.label} />
-            )}
-          </List>
+          <NewsCardGrid items={rest} place={place ?? "catalunya"} placeLabel={placeLabel} />
         )}
         <NewsPagination basePath={basePath} page={page} totalPages={response.totalPages} />
       </div>

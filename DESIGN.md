@@ -753,7 +753,11 @@ heart-beats (1 → 1.15 → 1) on activation.
 News articles use the same card (`CardLayout`): the date, the city as the
 location, no favorite button. The first article of a news list uses the
 `featured` variant: image and text side by side from md up, with a
-three-line summary.
+three-line summary. Every grid of news cards (the news lists, the related articles
+of an article, and the latest news on the event page) goes through
+`NewsCardGrid`, which links each card to the article's own city or region.
+On the event page that block is `data-analytics-context="event_news"`, with
+the event as the source.
 
 Inside a news article the events are a numbered list (`<ol>`), one `row`
 card per event. `row` shares `featured`'s side-by-side layout, but the 3:2
