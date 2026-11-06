@@ -1,3 +1,4 @@
+import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
 import { createClient } from "redis";
 import { PHASE_PRODUCTION_BUILD } from "next/constants.js";
 import { CacheHandler } from "@fortedigital/nextjs-cache-handler";
@@ -43,6 +44,79 @@ const GLOBAL_CACHE_KEY_PREFIX = "next:cache:";
  */
 const LRU_MAX_TOTAL_BYTES = 50 * 1024 * 1024;
 
+/** Marks a compressed Redis entry. Older entries are plain JSON (they start with "{"). */
+const COMPRESSED_PREFIX = "br1:";
+
+// The library hands the serializer page and route data as base64 strings,
+// which brotli can't shrink much (2.9x on a stored page). Turning them back
+// into bytes first gives 9x (a ~390 KB listing shell to ~43 KB) for ~1-2 ms
+// per set and under 1 ms per get. Quality 4: higher levels cost more CPU for
+// a few percent.
+const BINARY_FIELDS = { APP_PAGE: ["rscData", "segmentData"], APP_ROUTE: ["body"] };
+
+/**
+ * valueSerializer for the Redis handler: binary fields go into one buffer
+ * after a JSON header, the whole buffer is brotli-compressed, and the result
+ * is stored as base64 text (the client returns strings). Plain JSON entries
+ * are still read, so the change needs no cache flush.
+ */
+export const compressedValueSerializer = {
+  serialize(entry) {
+    const blobs = [];
+    const toBlob = (base64) => blobs.push(Buffer.from(base64, "base64")) - 1;
+    const value = entry.value ? { ...entry.value } : entry.value;
+    for (const field of BINARY_FIELDS[value?.kind] ?? []) {
+      const data = value[field];
+      if (typeof data === "string") value[field] = toBlob(data);
+      else if (data && typeof data === "object") {
+        value[field] = Object.fromEntries(
+          Object.entries(data).map(([key, base64]) => [key, toBlob(base64)]),
+        );
+      }
+    }
+    const header = Buffer.from(
+      JSON.stringify({ ...entry, value, blobLengths: blobs.map((b) => b.length) }),
+    );
+    const headerLength = Buffer.alloc(4);
+    headerLength.writeUInt32BE(header.length);
+    const packed = Buffer.concat([headerLength, header, ...blobs]);
+    const compressed = brotliCompressSync(packed, {
+      params: {
+        [zlib.BROTLI_PARAM_QUALITY]: 4,
+        [zlib.BROTLI_PARAM_SIZE_HINT]: packed.length,
+      },
+    });
+    return COMPRESSED_PREFIX + compressed.toString("base64");
+  },
+  deserialize(stored) {
+    const text = String(stored);
+    if (!text.startsWith(COMPRESSED_PREFIX)) return JSON.parse(text);
+
+    const packed = brotliDecompressSync(
+      Buffer.from(text.slice(COMPRESSED_PREFIX.length), "base64"),
+    );
+    const headerEnd = 4 + packed.readUInt32BE(0);
+    const { blobLengths, ...entry } = JSON.parse(packed.toString("utf8", 4, headerEnd));
+    const blobs = [];
+    let offset = headerEnd;
+    for (const length of blobLengths) {
+      blobs.push(packed.toString("base64", offset, offset + length));
+      offset += length;
+    }
+    const value = entry.value;
+    for (const field of BINARY_FIELDS[value?.kind] ?? []) {
+      const data = value[field];
+      if (typeof data === "number") value[field] = blobs[data];
+      else if (data && typeof data === "object") {
+        value[field] = Object.fromEntries(
+          Object.entries(data).map(([key, index]) => [key, blobs[index]]),
+        );
+      }
+    }
+    return entry;
+  },
+};
+
 /** Shared LRU fallback — created once, reused across all requests and cooldown periods. */
 const lruFallbackConfig = {
   handlers: [createLruHandler({ maxItemSizeBytes: LRU_MAX_TOTAL_BYTES })],
@@ -68,7 +142,9 @@ export async function purgeStaleBuildCaches({ client, keyPrefix, scanCount = 500
   // the global namespace itself, so current and stale are indistinguishable — skip.
   if (!keyPrefix || keyPrefix === GLOBAL_CACHE_KEY_PREFIX) return 0;
 
-  let cursor = 0;
+  // node-redis 6 rejects a numeric cursor ("arguments[1]" must be of type
+  // "string | Buffer"), so every purge failed and old builds' keys stayed.
+  let cursor = "0";
   let removed = 0;
   do {
     const { cursor: next, keys } = await client.scan(cursor, {
@@ -178,6 +254,7 @@ CacheHandler.onCreation(({ buildId } = {}) => {
     const redisHandler = createRedisHandler({
       client: redisClient,
       keyPrefix: cacheKeyPrefix,
+      valueSerializer: compressedValueSerializer,
     });
 
     // Fire-and-forget: drop previous deploys' cache keys so Redis can't grow
