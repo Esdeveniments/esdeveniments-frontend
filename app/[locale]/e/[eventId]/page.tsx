@@ -500,6 +500,7 @@ async function EventPageBody({
                 <DetailSectionTracker section="description">
                   <CollapsibleDescription>
                     <EventDescription
+                      slug={event.slug}
                       description={event.description}
                       introText={introText}
                       locale={locale as AppLocale}
