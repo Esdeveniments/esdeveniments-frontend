@@ -157,7 +157,13 @@ describe("buildEventVenueLabel", () => {
         location: "Museu municipal de Vilassar de Dalt, Vilassar de Dalt, Maresme",
         cityName: "Vilassar de Dalt",
       }),
-    ).toBe("Museu municipal de Vilassar de Dalt, Vilassar de Dalt…");
+    ).toBe("Museu municipal de Vilassar de Dalt, Maresme, Vilassar de Dalt");
+    expect(
+      buildEventVenueLabel({
+        location: "Centre Cultural i Social de la Fundació Antiga Caixa Sabadell 1859, Sabadell",
+        cityName: "Sabadell",
+      }),
+    ).toBe("Centre Cultural i Social de la Fundació Antiga Caixa…, Sabadell");
   });
 });
 

@@ -216,15 +216,18 @@ export const buildEventVenueLabel = ({
   location,
   cityName,
 }: Pick<EventPlaceLabelOptions, "location" | "cityName">): string => {
-  const venue = (location ?? "").replace(/\s+/g, " ").trim();
   const city = formatOptionalPlace(cityName);
+  // Drop venue segments that are the city ("Plaça Major, Vic"), then cut the
+  // venue, so the city always ends the label exactly once.
+  const venue = (location ?? "")
+    .replace(/\s+/g, " ")
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => isDistinctLabel(part, city))
+    .join(", ");
   if (!venue) return city;
   const shortVenue = truncateAtWord(venue, EVENT_VENUE_LABEL_MAX_LENGTH);
-  // "Plaça Major, Vic" already names the city.
-  const venueParts = venue.split(",").map((part) => part.trim());
-  return city && isDistinctLabel(city, ...venueParts)
-    ? `${shortVenue}, ${city}`
-    : shortVenue;
+  return city ? `${shortVenue}, ${city}` : shortVenue;
 };
 
 export const getPlaceTypeAndLabel = async (
