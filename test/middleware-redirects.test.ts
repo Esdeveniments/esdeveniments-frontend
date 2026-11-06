@@ -266,6 +266,40 @@ describe("handleCanonicalRedirects", () => {
       expect(redirectUrl.pathname).toBe("/barcelona/avui/teatre");
     });
 
+    it.each([
+      ["/barcelona", "?category=..%2F%2Fother.example"],
+      ["/barcelona", "?category=..//other.example"],
+      ["/barcelona", "?date=avui&category=..%2F..%2F%2Fother.example"],
+      ["/barcelona/avui", "?category=..%2F..%2F..%2F%2Fother.example"],
+      ["/barcelona/tots", "?category=..%2F%2Fother.example"],
+      ["/es/barcelona", "?category=..%2F..%2F%2Fother.example"],
+      ["/barcelona", "?category=%2F%2Fother.example"],
+    ])(
+      "never redirects %s%s off the site or to a // path",
+      (pathname, search) => {
+        handleCanonicalRedirects(createMockRequest(pathname, search));
+
+        for (const [target] of vi.mocked(NextResponse.redirect).mock.calls) {
+          const redirectUrl = target as URL;
+          expect(redirectUrl.host).toBe("example.com");
+          expect(redirectUrl.pathname.startsWith("//")).toBe(false);
+          expect(redirectUrl.pathname).not.toContain("other.example");
+        }
+      },
+    );
+
+    it("ignores a ?category= value that is not a slug", () => {
+      const request = createMockRequest(
+        "/barcelona",
+        "?date=avui&category=..%2F%2Fx",
+      );
+      handleCanonicalRedirects(request);
+
+      const redirectUrl = vi.mocked(NextResponse.redirect).mock
+        .calls[0]?.[0] as URL;
+      expect(redirectUrl.pathname).toBe("/barcelona/avui");
+    });
+
     it("redirects /place/category?date=avui to /place/avui/category", () => {
       const request = createMockRequest("/barcelona/teatre", "?date=avui");
       const result = handleCanonicalRedirects(request);

@@ -3,12 +3,18 @@
  * protocol-relative (`//`), backslash tricks (`/\`) that browsers normalize to
  * `//`, raw control characters, and percent-encoded slashes/backslashes
  * (`%2f`, `%5c`) and control chars (`%0d`, `%0a`, `%09`) that decode into `//`
- * or enable header injection. Shared by the OIDC routes and the middleware so
- * the login entry point and the sign-in route sanitize identically.
+ * or enable header injection, and `..` segments (also `%2e`-encoded) in the
+ * path or query, which can resolve or later be resolved to `//`. Shared by the
+ * OIDC routes, the middleware and getSafeRedirect so every redirect entry
+ * point sanitizes identically.
  */
 // Cap length so a huge ?redirect= can't produce an oversized Set-Cookie header.
 // Measured in encoded bytes (non-ASCII paths can exceed the per-cookie limit).
 const MAX_RETURN_TO_BYTES = 2048;
+
+function isDotDotSegment(segment: string): boolean {
+  return segment.replace(/%2e/gi, ".") === "..";
+}
 
 export function sanitizeReturnTo(
   value: string | null | undefined,
@@ -23,5 +29,6 @@ export function sanitizeReturnTo(
     const code = value.charCodeAt(i);
     if (code < 0x20 || code === 0x7f) return null; // C0 control chars + DEL
   }
+  if (value.split(/[/?#&=]/).some(isDotDotSegment)) return null;
   return value;
 }
