@@ -2,7 +2,6 @@
 
 import { memo, useState, Suspense, useCallback } from "react";
 import { useNavbarVisible } from "@components/hooks/useNavbarVisible";
-import { useHydration } from "@components/hooks/useHydration";
 import { usePathname } from "next/navigation";
 import Search from "@components/ui/search";
 import FiltersClient from "@components/ui/filters/FiltersClient";
@@ -20,7 +19,6 @@ function ClientInteractiveLayerContent({
   placeTypeLabel,
   filterLabels,
   isNavbarVisible,
-  isHydrated,
   isModalOpen,
   handleOpenModal,
   handleCloseModal,
@@ -43,20 +41,21 @@ function ClientInteractiveLayerContent({
   // Debug URL parsing in development
   debugURLParsing(pathname || "/", parsed.segments, parsed);
 
-  // Prevent hydration mismatch by using consistent initial state
   // Use navbar visibility for robust positioning (works with mobile browser UI hide)
-  // - When navbar is visible: place just below it (top-14)
-  // - When navbar is out of view: stick to the very top (top-0)
-  const stickyClasses =
-    isHydrated && isNavbarVisible
-      ? "top-14 z-sticky"
-      : "!top-0 z-sticky border-border md:border-b-0 shadow-sm md:shadow-none pt-element-gap-sm";
+  // - When navbar is visible: just below it (translate-y-14)
+  // - When navbar is out of view: at the very top
+  // Moved with a transform, not `top`: every frame of a `top` transition is a
+  // layout shift (CLS), a transform change is not. The layer is client-only
+  // (ssr: false), so it mounts straight in place, with no hydration gate.
+  const stickyClasses = isNavbarVisible
+    ? "translate-y-14"
+    : "translate-y-0 border-border md:border-b-0 shadow-sm md:shadow-none pt-element-gap-sm";
 
   return (
     <>
       {/* Fixed Search and Filters Bar */}
       <div
-        className={`w-full bg-background fixed inset-x-0 transition-all duration-500 ease-in-out ${stickyClasses} flex justify-center items-center md:pt-element-gap-sm`}
+        className={`w-full bg-background fixed inset-x-0 top-0 z-sticky transition-transform duration-500 ease-in-out ${stickyClasses} flex justify-center items-center md:pt-element-gap-sm`}
       >
         <div className="container flex flex-col justify-center items-center md:items-start">
           <Suspense
@@ -98,7 +97,6 @@ function ClientInteractiveLayer({
   filterLabels,
 }: ClientInteractiveLayerProps) {
   const isNavbarVisible = useNavbarVisible();
-  const isHydrated = useHydration();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = useCallback(() => {
@@ -121,7 +119,6 @@ function ClientInteractiveLayer({
           placeTypeLabel={placeTypeLabel}
           filterLabels={filterLabels}
           isNavbarVisible={isNavbarVisible}
-          isHydrated={isHydrated}
           isModalOpen={isModalOpen}
           handleOpenModal={handleOpenModal}
           handleCloseModal={handleCloseModal}

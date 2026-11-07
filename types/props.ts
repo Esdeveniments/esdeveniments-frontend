@@ -500,7 +500,6 @@ export interface ClientInteractiveLayerProps {
 
 export interface ClientInteractiveLayerContentProps extends ClientInteractiveLayerProps {
   isNavbarVisible: boolean;
-  isHydrated: boolean;
   isModalOpen: boolean;
   handleOpenModal: () => void;
   handleCloseModal: () => void;

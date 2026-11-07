@@ -8,6 +8,10 @@
  *
  * `element` uses the same format as `rage_click` (one GA4 dimension for both):
  * the interaction target for INP, the LCP element, the largest CLS shift.
+ * For CLS, `shift_time` (ms since navigation start), `shift_value` (x1000),
+ * `load_state` and `shift_rect` describe that largest shift, so field data
+ * tells a load-time shift from one while reading, even when `element` is
+ * missing (the moved node was gone when the shift was reported).
  */
 import {
   onCLS,
@@ -29,6 +33,16 @@ const interactionTarget = (node: Node | null): string | undefined =>
     node instanceof Element ? (node.closest(INTERACTIVE_SELECTORS) ?? node) : node,
   );
 
+const roundOrUndefined = (n: number | undefined) =>
+  n === undefined ? undefined : Math.round(n);
+
+// "y,height>y,height" of the moved element before and after the shift, in
+// viewport px. Kept short: GA4 caps parameter values at 100 characters.
+const shiftRect = ({ previousRect: a, currentRect: b }: LayoutShiftAttribution) =>
+  [a.y, a.height].map(Math.round).join(",") +
+  ">" +
+  [b.y, b.height].map(Math.round).join(",");
+
 function attributionParams(metric: MetricWithAttribution) {
   switch (metric.name) {
     case "INP":
@@ -39,8 +53,17 @@ function attributionParams(metric: MetricWithAttribution) {
       };
     case "LCP":
       return { element: metric.attribution.target };
-    case "CLS":
-      return { element: metric.attribution.largestShiftTarget };
+    case "CLS": {
+      const { largestShiftTarget, largestShiftTime, largestShiftValue, largestShiftSource, loadState } =
+        metric.attribution;
+      return {
+        element: largestShiftTarget,
+        load_state: loadState,
+        shift_time: roundOrUndefined(largestShiftTime),
+        shift_value: roundOrUndefined(largestShiftValue && largestShiftValue * 1000),
+        shift_rect: largestShiftSource && shiftRect(largestShiftSource),
+      };
+    }
     default:
       return {};
   }
