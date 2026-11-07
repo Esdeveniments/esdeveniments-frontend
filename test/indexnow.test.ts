@@ -2,6 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
+let requestHost: string | null = "www.esdeveniments.cat";
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers(requestHost ? { host: requestHost } : {}),
+}));
+
 const originalFetch = global.fetch;
 
 async function loadWithSiteUrl(siteUrl: string) {
@@ -14,6 +19,7 @@ describe("submitEventsToIndexNow", () => {
   let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
 
   beforeEach(() => {
+    requestHost = "www.esdeveniments.cat";
     mockFetch = vi.fn<typeof fetch>(
       async () => new Response("", { status: 202 }),
     );
@@ -52,6 +58,17 @@ describe("submitEventsToIndexNow", () => {
     const { submitEventsToIndexNow } = await loadWithSiteUrl(
       "https://staging.esdeveniments.cat",
     );
+
+    await submitEventsToIndexNow(["slug"]);
+
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("never submits from a preview host that falls back to the production URL", async () => {
+    const { submitEventsToIndexNow } = await loadWithSiteUrl(
+      "https://www.esdeveniments.cat",
+    );
+    requestHost = "pr-705.esdeveniments.cat";
 
     await submitEventsToIndexNow(["slug"]);
 

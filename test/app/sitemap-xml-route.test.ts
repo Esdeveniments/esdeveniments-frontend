@@ -141,6 +141,20 @@ describe("app/sitemap.xml/route", () => {
     expect(await eventChunkCount()).toBe(5);
   });
 
+  it("keeps the fallback place chunks when places can't be read", async () => {
+    const { getSiteUrlFromRequest } = await import("../../config/index");
+    vi.mocked(getSiteUrlFromRequest).mockReturnValue(
+      "https://www.esdeveniments.cat"
+    );
+    const { fetchPlaces } = await import("../../lib/api/places");
+    // fetchPlaces returns [] when the backend fails
+    vi.mocked(fetchPlaces).mockResolvedValueOnce([]);
+
+    const text = await (await GET(indexRequest)).text();
+
+    expect(text.match(/\/sitemap-places\/\d+\.xml/g)).toHaveLength(5);
+  });
+
   it("does not include self-reference to /sitemap.xml", async () => {
     const { getSiteUrlFromRequest } = await import("../../config/index");
     vi.mocked(getSiteUrlFromRequest).mockReturnValue(

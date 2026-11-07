@@ -21,15 +21,11 @@ export async function fetchEventSitemapChunkCount(): Promise<number> {
   );
 }
 
-// Chunk count for /sitemap-places/N.xml. Falls back only when the fetch
-// throws: an empty list is a real "no places" and must publish zero chunks,
-// since out-of-range chunks 404 and show up as sitemap errors.
+// Chunk count for /sitemap-places/N.xml. fetchPlaces returns [] on failure,
+// and production always has places, so an empty list means the backend
+// couldn't be read.
 export async function fetchPlaceSitemapChunkCount(): Promise<number> {
-  try {
-    const places = await fetchPlaces();
-    return Math.ceil(places.length / SITEMAP_PLACES_PER_CHUNK);
-  } catch (error) {
-    console.error("sitemap: fetchPlaces failed, using fallback chunk count", error);
-    return CHUNKS_FALLBACK;
-  }
+  const places = await fetchPlaces();
+  if (places.length === 0) return CHUNKS_FALLBACK;
+  return Math.ceil(places.length / SITEMAP_PLACES_PER_CHUNK);
 }
