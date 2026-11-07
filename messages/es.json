@@ -115,7 +115,7 @@
       "heading": "API de Esdeveniments.cat",
       "intro": "Una API REST pública y gratuita con la agenda cultural de Cataluña: eventos, noticias, categorías y lugares, en catalán, castellano e inglés. Úsala en tu app, en tu web o con un agente de IA.",
       "keysTitle": "Claves de API",
-      "keysBody": "No necesitas ninguna clave. Los endpoints de lectura (GET) son públicos y no piden autenticación. El límite es de 60 peticiones por minuto por IP; si lo superas, recibes un 429 con la cabecera Retry-After.",
+      "keysBody": "No necesitas ninguna clave. Los endpoints de lectura (GET) son públicos y no piden autenticación. Haz un uso razonable: menos de 60 peticiones por minuto por IP. El servidor MCP lo aplica y, si lo superas, responde con un 429 y la cabecera Retry-After.",
       "quickstartTitle": "Inicio rápido",
       "quickstartBody": "Haz la primera llamada con curl. Las listas llegan paginadas: si el campo last es false, pide la página siguiente.",
       "docsTitle": "Documentación",

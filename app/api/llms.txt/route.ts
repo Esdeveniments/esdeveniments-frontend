@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl } from "@config/index";
 import { MCP_TOOLS } from "@config/mcp-tools";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 /**
  * Modular llms.txt for the API section.
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     "All list endpoints return paginated responses. Check `last: true` to detect the final page. Default page size is 15.",
     "",
     "## Rate Limits",
-    "60 requests per minute per IP. HTTP 429 with Retry-After header when exceeded.",
+    PUBLIC_RATE_LIMIT_TEXT,
     "",
     "## Error Handling",
     "Errors return JSON: { error: string, status: number }. Respect Cache-Control headers to minimize requests.",

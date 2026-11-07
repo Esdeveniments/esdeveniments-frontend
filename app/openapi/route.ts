@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { siteUrl } from "@config/index";
+import {
+  PUBLIC_RATE_LIMIT_PER_MINUTE,
+  PUBLIC_RATE_LIMIT_TEXT,
+} from "@utils/constants";
 import { SPONSOR_DURATIONS, VALID_GEO_SCOPES } from "types/sponsor";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "types/i18n";
 
@@ -26,8 +30,8 @@ export async function GET() {
     },
     servers: [{ url: siteUrl, description: "Production" }],
     "x-rateLimit": {
-      description: "60 requests per minute per IP. Returns 429 with Retry-After header when exceeded.",
-      limit: 60,
+      description: PUBLIC_RATE_LIMIT_TEXT,
+      limit: PUBLIC_RATE_LIMIT_PER_MINUTE,
       window: "1 minute",
     },
     externalDocs: {

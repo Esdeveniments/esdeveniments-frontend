@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl } from "@config/index";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 /**
  * /agent.txt — Explicit agent instruction file with when-to-use guidance.
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
     "Check `last: true` to detect the final page.",
     "",
     "## Rate Limits",
-    "60 requests per minute per IP. HTTP 429 with Retry-After header when exceeded.",
+    PUBLIC_RATE_LIMIT_TEXT,
     "",
     "## Discovery Endpoints",
     `- Full documentation: ${siteUrl}/llms.txt`,

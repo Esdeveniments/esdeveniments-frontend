@@ -6,6 +6,7 @@ import { fetchCategoriesExternal } from "lib/api/categories-external";
 import { fetchPlacesAggregatedExternal } from "lib/api/places-external";
 import type { JsonRpcRequest, JsonRpcResponse } from "types/mcp";
 import { createRateLimiter } from "@utils/rate-limit";
+import { PUBLIC_RATE_LIMIT_PER_MINUTE } from "@utils/constants";
 import { isValidEventSlug } from "@utils/event-helpers";
 import { isSafePublicFetchUrl } from "@utils/public-fetch-safety";
 import { MCP_TOOLS as TOOLS } from "@config/mcp-tools";
@@ -21,7 +22,10 @@ import { MCP_TOOLS as TOOLS } from "@config/mcp-tools";
 const MCP_PROTOCOL_VERSION = "2025-03-26";
 const MAX_MCP_BODY_BYTES = 100_000;
 const MAX_MCP_BATCH_SIZE = 5;
-const mcpLimiter = createRateLimiter({ maxRequests: 60, windowMs: 60_000 });
+const mcpLimiter = createRateLimiter({
+  maxRequests: PUBLIC_RATE_LIMIT_PER_MINUTE,
+  windowMs: 60_000,
+});
 const SERVER_INFO = {
   name: "esdeveniments-cat",
   version: "1.0.0",

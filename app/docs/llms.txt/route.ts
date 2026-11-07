@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl } from "@config/index";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 /**
  * /docs/llms.txt — Modular llms.txt for documentation section.
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
     "Write endpoints use HMAC signatures (not available externally).",
     "",
     "## Rate Limits",
-    "60 requests per minute per IP. HTTP 429 with Retry-After header.",
+    PUBLIC_RATE_LIMIT_TEXT,
     "",
     "## About the Platform",
     "- Coverage: 900+ municipalities across all 4 provinces of Catalonia",

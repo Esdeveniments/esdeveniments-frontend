@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl, socialLinks } from "@config/index";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 export async function GET(request: NextRequest) {
 
@@ -87,8 +88,7 @@ export async function GET(request: NextRequest) {
     "- Idempotency: POST /api/sponsors/checkout accepts an `Idempotency-Key` header. Send a new key per purchase attempt and reuse it on retries so only one checkout session is created.",
     "",
     "## Rate Limits",
-    "- Public GET endpoints: 60 requests per minute per IP.",
-    "- Exceeding the limit returns HTTP 429 with a Retry-After header.",
+    `- ${PUBLIC_RATE_LIMIT_TEXT}`,
     "- Responses include Cache-Control headers; respect them to reduce unnecessary requests.",
     "",
     "## Languages / Locales",
