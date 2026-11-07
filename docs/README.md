@@ -30,6 +30,8 @@ pipeline.
 - [`design-rationale.md`](./design-rationale.md) — competitive UI/UX
   benchmarking and card/layout decisions. Screenshots in
   `competitor-screenshots/`.
+- [`card-refactor-plan.md`](./card-refactor-plan.md) — plan for one accessible
+  event card (link in the title, shared layout, focus ring). Delete when shipped.
 
 ## Infra & Deploys
 
