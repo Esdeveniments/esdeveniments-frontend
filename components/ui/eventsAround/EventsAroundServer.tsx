@@ -78,7 +78,7 @@ async function EventsAroundServer({
     return null;
   }
 
-  const t = await getTranslations("Components.EventsAround");
+  const t = await getTranslations({ locale, namespace: "Components.EventsAround" });
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tScroll = await getTranslations({
     locale,

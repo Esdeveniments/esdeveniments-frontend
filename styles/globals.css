@@ -455,6 +455,9 @@ p {
      the title. The article is `relative`. */
   .card-event-link {
     outline: none;
+    /* iOS would flash only the title text; the card gives its own press
+       feedback below. */
+    -webkit-tap-highlight-color: transparent;
     /* Margins apply to the link, so they add the card part below the title
        (rest of the 2-line title min height, location, padding: ~66px
        measured) and keep it clear of the mobile bottom bar. */
@@ -510,7 +513,12 @@ p {
     }
   }
 
-  /* Press feedback only when the link is pressed, not the favorite button. */
+  /* Press feedback only when the link is pressed, not the favorite button:
+     a darker border for everyone, plus the press transform with motion. */
+  .card-event:has(.card-event-link:active) {
+    @apply border-border/60;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     .card-event:has(.card-event-link:active) {
       transform: translateY(1px) scale(0.995);

@@ -760,7 +760,8 @@ tile is clickable and is read once; the image is decorative (`alt=""`). The
 focus ring is drawn inside the card (2px primary over a 4px white band), since
 the card clips anything outside it. Hovering (only on devices that hover)
 tightens the border and zooms the image to 1.03 over 300ms; pressing the
-link scales the card to 0.995. Zoom and press are off with reduced motion. The favorite button overlays the image in the top-right and
+link darkens the border and scales the card to 0.995. Zoom and the press
+scale are off with reduced motion; the border change stays. The favorite button overlays the image in the top-right and
 heart-beats (1 → 1.15 → 1) on activation.
 News articles use the same card (`CardLayout`): the date, the city as the
 location, no favorite button. The first article of a news list uses the
