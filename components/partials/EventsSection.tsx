@@ -6,7 +6,8 @@ import type { EventSummaryResponseDTO } from "types/api/event";
 // Presentational half of ProfileEventsSection/FavoritesEventsSection: given
 // already-fetched events, render the list or an empty state. Both callers
 // fetch from different sources (profile events vs. favourite events) but
-// share this exact rendering shape.
+// share this exact rendering shape. Both pages render it right under their
+// <h1>, so card titles are h2.
 export default function EventsSection({
   events,
   emptyTitle,
@@ -32,6 +33,7 @@ export default function EventsSection({
               event={event}
               isPriority={index === 0}
               initialIsFavorite={initialIsFavorite}
+              headingLevel="h2"
             />
           )}
         </List>

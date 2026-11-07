@@ -290,4 +290,32 @@ describe("prepareCardContentData", () => {
 
     expect(result.shouldShowFavoriteButton).toBe(false);
   });
+
+  it("gives single-day events a <time> value, with the start time when known", () => {
+    const tCard = vi.fn((key: string) => key);
+
+    const allDay = prepareCardContentData({
+      event: makeEvent({ startDate: "2025-01-01", endDate: "2025-01-01" }),
+      locale: "ca",
+      tCard,
+    });
+    expect(allDay.dateTime).toBe("2025-01-01");
+
+    const timed = prepareCardContentData({
+      event: makeEvent({ startDate: "2025-01-01", endDate: "2025-01-01", startTime: "18:30" }),
+      locale: "ca",
+      tCard,
+    });
+    expect(timed.dateTime).toBe("2025-01-01T18:30");
+  });
+
+  it("gives multi-day events no <time> value (a range can't be one <time>)", () => {
+    formatCardDateMock.mockReturnValue({ cardDate: "1 gen. – 2 gen.", isMultiDay: true });
+    const result = prepareCardContentData({
+      event: makeEvent(),
+      locale: "ca",
+      tCard: vi.fn((key: string) => key),
+    });
+    expect(result.dateTime).toBeUndefined();
+  });
 });

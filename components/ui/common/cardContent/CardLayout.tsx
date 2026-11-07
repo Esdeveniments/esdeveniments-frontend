@@ -6,7 +6,8 @@ import type { CardLayoutProps } from "types/props";
 
 /**
  * Shared presentational card layout used by CardContentServer, CardContentClient and NewsCard.
- * Receives a render prop for the link (server vs client variants).
+ * The title is the only link; `.card-event-link::after` stretches it over the card
+ * (styles/globals.css). Receives a render prop for the link (server vs client variants).
  */
 export default function CardLayout({
   card,
@@ -17,6 +18,7 @@ export default function CardLayout({
   description,
   position,
   isPriority,
+  headingLevel: Heading = "h3",
   renderLink,
 }: CardLayoutProps) {
   const {
@@ -25,6 +27,7 @@ export default function CardLayout({
     title,
     image,
     cardDate,
+    dateTime,
     timeDisplay,
     primaryLocation,
     categoryLabel,
@@ -51,26 +54,24 @@ export default function CardLayout({
     : compact
       ? "text-sm font-semibold leading-normal line-clamp-2 mb-1.5"
       : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 min-h-[2.75rem]";
+  const dateText = urgencyLabel ? (
+    <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
+      {urgencyLabel}
+    </span>
+  ) : (
+    cardDate
+  );
 
   return (
-    <article className={`relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col${isHorizontal ? " md:flex-row" : ""}`}>
-      {renderLink({
-        href,
-        className: "absolute inset-0 z-[1]",
-        "aria-label": title,
-        "data-analytics-event-name": analyticsEventName,
-        "data-analytics-event-id": eventId ?? "",
-        "data-analytics-event-slug": slug || "",
-        children: <span className="sr-only">{title}</span>,
-      })}
-
+    <article className={`card-event relative rounded-card overflow-hidden bg-background border border-border/20 transition-[transform,border-color] duration-normal ease-smooth h-full flex flex-col${isHorizontal ? " card-event-split md:flex-row" : ""}`}>
       <div className={`relative aspect-[3/2] overflow-hidden bg-muted${isHorizontal ? imageWidthClass : ""}`}>
+        {/* Decorative: the title link already names the card. */}
         <Image
-          className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
+          className="card-event-image w-full h-full object-cover transition-transform duration-slow"
           title={title}
           image={image}
           priority={isPriority}
-          alt={title}
+          alt=""
           location={imageContext?.location}
           region={imageContext?.region}
           date={imageContext?.date ?? cardDate}
@@ -84,42 +85,46 @@ export default function CardLayout({
             eventId={eventId}
             initialIsFavorite={Boolean(isFavorite)}
             labels={favoriteLabels}
-            wrapperClassName="pointer-events-auto z-[2]"
           />
         )}
       </div>
 
-      <div className={`flex-1 flex flex-col pointer-events-none ${bodyClass}`}>
-        {promotedLabel && (
-          <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
-        )}
-        <CategoryBadge label={categoryLabel} />
+      {/* Title first in the DOM (read first); `order-*` keeps badges and date above it. */}
+      <div className={`flex-1 flex flex-col ${bodyClass}`}>
+        <Heading className={`order-2 ${titleClass} text-foreground-strong`}>
+          {position !== undefined && <span aria-hidden="true">{position}. </span>}
+          {renderLink({
+            href,
+            className: "card-event-link",
+            variant: "plain",
+            "data-analytics-event-name": analyticsEventName,
+            "data-analytics-event-id": eventId ?? "",
+            "data-analytics-event-slug": slug || "",
+            children: title,
+          })}
+        </Heading>
 
-        <p className={`${compact ? "text-xs" : "text-sm"} text-muted-foreground mb-1${compact ? " truncate" : ""}`}>
-          {urgencyLabel ? (
-            <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
-              {urgencyLabel}
-            </span>
-          ) : (
-            cardDate
+        <div className="order-1 flex flex-col">
+          {promotedLabel && (
+            <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
           )}
-          {timeDisplay && <> · {timeDisplay}</>}
-          {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
-        </p>
+          <CategoryBadge label={categoryLabel} />
 
-        <h3 className={`${titleClass} text-foreground-strong group-hover:text-primary/85 transition-colors`}>
-          {position !== undefined && `${position}. `}
-          {title}
-        </h3>
+          <p className={`${compact ? "text-xs" : "text-sm"} text-muted-foreground mb-1${compact ? " truncate" : ""}`}>
+            {dateTime ? <time dateTime={dateTime}>{dateText}</time> : dateText}
+            {timeDisplay && <> · {timeDisplay}</>}
+            {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
+          </p>
+        </div>
 
         {isHorizontal && description && (
-          <p className="body-normal text-muted-foreground line-clamp-3 mb-3">
+          <p className="order-3 body-normal text-muted-foreground line-clamp-3 mb-3">
             {description}
           </p>
         )}
 
         {primaryLocation && (
-          <div className={`mt-auto flex items-center gap-1 ${compact ? "text-xs" : "text-sm"} text-muted-foreground min-w-0${isHorizontal ? " md:mt-0" : ""}`}>
+          <div className={`order-3 mt-auto flex items-center gap-1 ${compact ? "text-xs" : "text-sm"} text-muted-foreground min-w-0${isHorizontal ? " md:mt-0" : ""}`}>
             <svg className={`${compact ? "w-3.5 h-3.5" : "w-4 h-4"} flex-shrink-0`} aria-hidden="true">
               <use href={`#${SPRITE_ICON.mapPin}`} />
             </svg>

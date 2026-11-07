@@ -5,13 +5,14 @@ import type { CardLinkProps } from "types/ui";
 
 export default function CardLinkClient({
   className = "",
+  variant = "card",
   ...props
 }: CardLinkProps) {
   return (
     <PressableAnchorClient
       {...props}
       className={className}
-      variant="card"
+      variant={variant}
       prefetch={props.prefetch ?? false}
     />
   );

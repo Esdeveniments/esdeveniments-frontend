@@ -98,9 +98,15 @@ export default async function NewsList({
           placeLabel={featuredPlace.label}
           variant="featured"
           priority
+          headingLevel="h2"
         />
         {rest.length > 0 && (
-          <NewsCardGrid items={rest} place={fallbackPlace} placeLabel={placeLabel} />
+          <NewsCardGrid
+            items={rest}
+            place={fallbackPlace}
+            placeLabel={placeLabel}
+            headingLevel="h2"
+          />
         )}
         <NewsPagination basePath={basePath} page={page} totalPages={response.totalPages} />
       </div>

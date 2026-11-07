@@ -6,8 +6,10 @@ import type { NewsCardProps } from "types/props";
 
 // NewsCard is an async server component; stub it to expose the place it gets.
 vi.mock("@components/ui/newsCard", () => ({
-  default: ({ event, placeSlug, placeLabel }: NewsCardProps) => (
-    <a href={`/noticies/${placeSlug}/${event.slug}`}>{placeLabel}</a>
+  default: ({ event, placeSlug, placeLabel, headingLevel }: NewsCardProps) => (
+    <a href={`/noticies/${placeSlug}/${event.slug}`} data-heading={headingLevel ?? "default"}>
+      {placeLabel}
+    </a>
   ),
 }));
 
@@ -77,5 +79,17 @@ describe("NewsCardGrid", () => {
     );
     expect(html).toContain('href="/noticies/barcelones/news-two"');
     expect(html).toContain(">Barcelonès<");
+  });
+
+  it("passes the heading level to every card (h2 only under the page h1)", () => {
+    const items = [{ ...baseNews, id: "n5", slug: "news-five" }];
+    const listHtml = renderToStaticMarkup(
+      <NewsCardGrid place="barcelones" placeLabel="Barcelonès" items={items} headingLevel="h2" />,
+    );
+    expect(listHtml).toContain('data-heading="h2"');
+    const sectionHtml = renderToStaticMarkup(
+      <NewsCardGrid place="barcelones" placeLabel="Barcelonès" items={items} />,
+    );
+    expect(sectionHtml).toContain('data-heading="default"');
   });
 });

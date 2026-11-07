@@ -12,6 +12,7 @@ export default async function NewsCard({
   placeLabel,
   variant = "default",
   priority = false,
+  headingLevel,
 }: NewsCardProps) {
   const locale = await getLocaleSafely();
   const { cardDate } = formatCardDate(event.startDate, event.endDate, locale);
@@ -38,6 +39,7 @@ export default async function NewsCard({
           : undefined
       }
       isPriority={priority}
+      headingLevel={headingLevel}
       renderLink={(props) => <CardLink {...props} />}
     />
   );

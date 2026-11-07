@@ -10,6 +10,7 @@ export default async function CardServer({
   isLoading = false,
   isPriority = false,
   initialIsFavorite,
+  headingLevel,
 }: CardProps): Promise<ReactElement> {
   if (isLoading) return <EventCardSkeleton />;
   if (event.isAd) return <AdCardClient />;
@@ -21,6 +22,7 @@ export default async function CardServer({
       event={event}
       isPriority={isPriority}
       initialIsFavorite={initialIsFavoriteSafe}
+      headingLevel={headingLevel}
     />
   );
 }

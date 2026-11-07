@@ -15,6 +15,7 @@ async function CardContentServer({
   description,
   compact = false,
   locale: localeProp,
+  headingLevel,
 }: CardContentServerProps) {
   // Callers that already hold rootLocale() pass it, so they don't start reading headers().
   const locale = localeProp ?? (await getLocaleSafely());
@@ -47,6 +48,7 @@ async function CardContentServer({
       position={position}
       description={description}
       isPriority={isPriority}
+      headingLevel={headingLevel}
       renderLink={(props) => <CardLink {...props} />}
     />
   );

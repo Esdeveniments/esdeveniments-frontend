@@ -9,6 +9,7 @@ import {
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 
 // Server-side compatible Image component: <picture> with WebP and a JPEG fallback.
+// `alt=""` marks the image decorative, placeholder included.
 function ImageServer({
   title = "",
   image,
@@ -48,7 +49,7 @@ function ImageServer({
         }}
       >
         <ImgDefaultServer
-          title={title}
+          title={alt === "" ? "" : title}
           location={location}
           region={region}
           date={date}

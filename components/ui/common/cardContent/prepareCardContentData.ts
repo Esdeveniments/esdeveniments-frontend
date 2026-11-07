@@ -92,6 +92,18 @@ export function prepareCardContentData({
   const hasStartTime = !!cleanStart && cleanStart !== "00:00";
   const hasEndTime = !!normalizedEnd && normalizedEnd !== "00:00";
 
+  // Single-day events only: `<time>` can't hold a range. Computed here, not in
+  // date-helpers, because the unit test mocks that module export by export.
+  let dateTime: string | undefined;
+  if (!isMultiDay) {
+    const start = convertTZ(new Date(event.startDate), TIMEZONE_MADRID);
+    if (!Number.isNaN(start.getTime())) {
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const day = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+      dateTime = hasStartTime ? `${day}T${cleanStart}` : day;
+    }
+  }
+
   let timeDisplay = "";
   if (hasStartTime) {
     if (hasEndTime) {
@@ -129,6 +141,7 @@ export function prepareCardContentData({
     primaryLocation,
     image,
     cardDate,
+    dateTime,
     urgencyLabel,
     urgencyType,
     multiDayLabel,

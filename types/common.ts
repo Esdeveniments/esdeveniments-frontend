@@ -346,6 +346,8 @@ export interface CardProps {
   isLoading?: boolean;
   isPriority?: boolean;
   initialIsFavorite?: boolean;
+  /** Card title level: `h2` directly under the page `<h1>`, else `h3` */
+  headingLevel?: "h2" | "h3";
 }
 
 export interface CardShareButtonProps {

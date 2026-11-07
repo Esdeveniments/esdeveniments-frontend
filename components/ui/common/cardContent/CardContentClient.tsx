@@ -10,6 +10,7 @@ export default function CardContentClient({
   event,
   isPriority = false,
   initialIsFavorite = false,
+  headingLevel,
 }: CardContentProps) {
   const tCard = useTranslations("Components.CardContent");
   const tCategories = useTranslations("Config.Categories");
@@ -27,6 +28,7 @@ export default function CardContentClient({
     <CardLayout
       card={card}
       isPriority={isPriority}
+      headingLevel={headingLevel}
       renderLink={(props) => <CardLinkClient {...props} />}
     />
   );

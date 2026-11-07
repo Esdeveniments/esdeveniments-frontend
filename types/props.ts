@@ -126,6 +126,7 @@ export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
   initialIsFavorite?: boolean;
+  headingLevel?: CardLayoutProps["headingLevel"];
 }
 
 /** Server card options: `row` layout (news article event lists) and the home carousel. */
@@ -152,6 +153,8 @@ export interface CardData {
   image: string;
   /** Formatted card date */
   cardDate: string;
+  /** `<time dateTime>` value; single-day events only (a range can't be one `<time>`) */
+  dateTime?: string;
   /** Formatted time ("" when there is no time) */
   timeDisplay: string;
   /** City/region (or venue) text */
@@ -198,11 +201,13 @@ export interface CardLayoutProps {
   position?: number;
   /** Whether this card's image should be priority-loaded */
   isPriority: boolean;
-  /** Render the card link wrapper. Receives children (sr-only label) and props */
+  /** `h2` where cards sit directly under the page `<h1>`; `h3` (default) under a section `<h2>` */
+  headingLevel?: "h2" | "h3";
+  /** Render the title link (server or client link component) */
   renderLink: (props: {
     href: string;
     className: string;
-    "aria-label": string;
+    variant: "plain";
     "data-analytics-event-name": string;
     "data-analytics-event-id": string;
     "data-analytics-event-slug": string;
@@ -757,6 +762,8 @@ export interface NewsCardGridProps {
   /** Fallback place for items without their own city/region */
   place: string;
   placeLabel: string;
+  /** `h2` when the grid sits right under the page `<h1>` (the news list) */
+  headingLevel?: CardLayoutProps["headingLevel"];
 }
 
 export interface NewsCardProps {
@@ -765,6 +772,7 @@ export interface NewsCardProps {
   placeLabel?: string;
   variant?: "default" | "featured";
   priority?: boolean;
+  headingLevel?: CardLayoutProps["headingLevel"];
 }
 
 export interface NewsArticleDetailProps {

@@ -75,11 +75,11 @@ describe("CardLayout compact (home carousel)", () => {
     const html = renderToStaticMarkup(
       <CardLayout card={baseCard} compact isPriority={false} renderLink={renderLink} />
     );
-    expect(html).toContain('class="flex-1 flex flex-col pointer-events-none px-3.5 pt-2.5 pb-3.5"');
+    expect(html).toContain('class="flex-1 flex flex-col px-3.5 pt-2.5 pb-3.5"');
     expect(html).toContain('class="text-xs text-muted-foreground mb-1 truncate"');
-    expect(html).toMatch(/<h3 class="text-sm font-semibold leading-normal line-clamp-2 mb-1\.5 text-foreground-strong[^"]*">/);
+    expect(html).toMatch(/<h3 class="order-2 text-sm font-semibold leading-normal line-clamp-2 mb-1\.5 text-foreground-strong[^"]*">/);
     expect(html).not.toContain("min-h-[2.75rem]");
-    expect(html).toContain('class="mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0"');
+    expect(html).toContain('class="order-3 mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0"');
     expect(html).toContain('class="w-3.5 h-3.5 flex-shrink-0"');
   });
 });
@@ -105,9 +105,59 @@ describe("CardLayout row layout", () => {
         renderLink={renderLink}
       />
     );
-    expect(html).toMatch(/<h3[^>]*>4\. Concert &quot;Ginestà&quot;<\/h3>/);
+    // The <ol> already gives the order, so the number stays out of the link name.
+    expect(html).toMatch(
+      /<h3[^>]*><span aria-hidden="true">4\. <\/span><a [^>]*>Concert &quot;Ginestà&quot;<\/a><\/h3>/,
+    );
     expect(html).toContain("md:w-2/5");
+    expect(html).toContain("card-event-split");
     expect(html).toContain("line-clamp-3");
     expect(html).toContain("Ginestà s&#x27;ha consolidat");
+  });
+});
+
+describe("CardLayout link", () => {
+  it("makes the title the only link, without a duplicate label", () => {
+    const html = renderCard();
+    expect(html.match(/<a /g)).toHaveLength(1);
+    expect(html).toMatch(
+      /<h3 class="order-2[^"]*"><a href="\/e\/concert-de-nadal" class="card-event-link"[^>]*>Concert de Nadal<\/a><\/h3>/,
+    );
+    expect(html).not.toContain("aria-label=\"Concert de Nadal\"");
+    expect(html).not.toContain("sr-only");
+    expect(html).not.toContain("pointer-events-none");
+  });
+
+  it("keeps the analytics attributes on the link", () => {
+    const html = renderCard();
+    expect(html).toContain('data-analytics-event-name="select_event"');
+    expect(html).toContain('data-analytics-event-id="42"');
+    expect(html).toContain('data-analytics-event-slug="concert-de-nadal"');
+  });
+
+  it("puts the title before the date in the DOM", () => {
+    const html = renderCard();
+    expect(html.indexOf("Concert de Nadal</a>")).toBeLessThan(
+      html.indexOf("Dissabte, 20 de desembre"),
+    );
+  });
+
+  it("uses the heading level it is given", () => {
+    const html = renderToStaticMarkup(
+      <CardLayout card={baseCard} headingLevel="h2" isPriority={false} renderLink={renderLink} />
+    );
+    expect(html).toMatch(/<h2 class="order-2[^"]*"><a /);
+    expect(html).not.toContain("<h3");
+  });
+
+  it("wraps a single-day date in <time>", () => {
+    const html = renderToStaticMarkup(
+      <CardLayout
+        card={{ ...baseCard, dateTime: "2026-12-20T18:00" }}
+        isPriority={false}
+        renderLink={renderLink}
+      />
+    );
+    expect(html).toContain('<time dateTime="2026-12-20T18:00">Dissabte, 20 de desembre</time>');
   });
 });
