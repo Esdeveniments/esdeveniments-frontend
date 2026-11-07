@@ -24,14 +24,17 @@ import { EventFormStepSchema } from "types/event";
 import { isOption, Option } from "types/common";
 import { getZodValidationState } from "@utils/form-validation";
 import { isValidEventUrl } from "@utils/event-url";
+import { parsePaidAmount } from "@utils/event-price";
+import PriceField from "./PriceField";
 import { sendGoogleEvent } from "@utils/analytics";
 import { buildPublishContext } from "@utils/publica-analytics";
 import { useTranslations } from "next-intl";
 
 // Fields checked when leaving each step, and the element to focus first.
-const STEP_FIELDS = [["title", "description", "url"], ["town", "location"], []] as const;
+const STEP_FIELDS = [["title", "description", "url"], ["town", "location"], ["price"]] as const;
 const FIELD_FOCUS_IDS = {
   title: "title", description: "description", url: "url", town: "town-input", location: "location",
+  price: "price-amount",
 } as const;
 
 export const EventForm: React.FC<EventFormProps> = ({
@@ -174,7 +177,9 @@ export const EventForm: React.FC<EventFormProps> = ({
       zodLabels
     );
 
-    if (!submitValidation.isDisabled) {
+    // Price has no Zod rule (it depends on two fields), so check the step fields too.
+    const firstInvalidStep = STEP_FIELDS.findIndex((fields) => fields.some((field) => fieldErrors[field]));
+    if (!submitValidation.isDisabled && firstInvalidStep === -1) {
       onSubmit(e);
       return;
     }
@@ -186,13 +191,14 @@ export const EventForm: React.FC<EventFormProps> = ({
       });
     }
     // A restored draft can reach the last step with earlier fields empty: send the user there.
-    const firstInvalidStep = STEP_FIELDS.findIndex((fields) => fields.some((field) => fieldErrors[field]));
     if (firstInvalidStep !== -1 && firstInvalidStep < step) {
       markAttempted(firstInvalidStep);
       pendingFocusStepRef.current = firstInvalidStep;
       changeStep(firstInvalidStep);
       return;
     }
+    const invalidHere = STEP_FIELDS[step]?.find((field) => fieldErrors[field]);
+    if (invalidHere) document.getElementById(FIELD_FOCUS_IDS[invalidHere])?.focus();
     markAttempted(step);
   };
 
@@ -220,6 +226,7 @@ export const EventForm: React.FC<EventFormProps> = ({
     url: form.url.trim() && !isValidEventUrl(form.url) ? t("invalidUrl") : undefined,
     town: form.town ? undefined : t("townRequired"),
     location: form.location.trim() ? undefined : t("locationRequired"),
+    price: form.priceType === "paid" && parsePaidAmount(form.priceAmount) === null ? t("invalidPrice") : undefined,
   };
   const showErrors = attemptedSteps.has(step);
   const errorFor = (field: keyof typeof fieldErrors) => (showErrors ? fieldErrors[field] : undefined);
@@ -438,7 +445,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               className="w-full"
             />
 
-
+            <PriceField form={form} error={errorFor("price")} onChange={handleFormChange} />
 
             {isEditMode && (
               <Input

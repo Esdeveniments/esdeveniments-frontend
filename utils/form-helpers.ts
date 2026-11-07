@@ -5,6 +5,7 @@ import type {
 } from "types/api/event";
 import type { FormData } from "types/event";
 import { formatTimeForAPI, splitLocalDateTime } from "./date-helpers";
+import { formPriceToPayload, priceToFormFields } from "./event-price";
 
 // Centralized helpers for extracting region/town values from form fields
 export function getRegionValue(
@@ -65,6 +66,7 @@ export function formDataToBackendDTO(
           )
           .filter((id): id is number => typeof id === "number" && !isNaN(id))
       : [],
+    price: formPriceToPayload(form),
   };
 }
 
@@ -93,6 +95,7 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
       ? event.categories.map((cat) => ({ id: cat.id, name: cat.name }))
       : [],
     email: "", // UI only
+    ...priceToFormFields(event.price),
   };
   // The picker cannot leave a time open. A null start is how the site marks an
   // all-day event (event-status.ts), and end of day keeps the event listed all

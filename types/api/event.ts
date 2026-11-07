@@ -144,6 +144,9 @@ export interface EventBaseRequestDTO {
   endTime: string;
   location: string;
   categories: number[];
+  // "0" = free, "10" = 10 €, null = not given. Update replaces it, so edits must
+  // always send the current value or the backend clears it.
+  price: string | null;
 }
 
 // `indexed` is required by the backend's UpdateEventRequestDTO (PUT /events/{uuid}).

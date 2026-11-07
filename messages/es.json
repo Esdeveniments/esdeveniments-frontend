@@ -1027,7 +1027,14 @@
       "optional": "(opcional)",
       "stepDone": "completado",
       "stepCurrent": "paso actual",
-      "stepTodo": "pendiente"
+      "stepTodo": "pendiente",
+      "price": "Precio",
+      "priceFree": "Gratis",
+      "pricePaid": "De pago",
+      "priceUnknown": "Sin especificar",
+      "priceAmount": "Precio en euros",
+      "priceAmountHint": "Si hay varias tarifas, indica la más económica.",
+      "priceCurrent": "Precio actual: «{price}». Se mantendrá si no eliges otra opción."
     },
     "Layout": {
       "rss": "RSS",
@@ -1474,7 +1481,8 @@
       "locationRequired": "Indica el lugar",
       "invalidUrl": "Escribe un enlace válido, como ejemplo.com",
       "invalidEmail": "Escribe un correo electrónico válido",
-      "townRequired": "Elige un municipio"
+      "townRequired": "Elige un municipio",
+      "invalidPrice": "Escribe un precio mayor que 0, como 10 o 12,50. Si es gratis, elige «Gratis»."
     },
     "EventStatus": {
       "past": "Evento finalizado",

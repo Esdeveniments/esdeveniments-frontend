@@ -1027,7 +1027,14 @@
       "optional": "(optional)",
       "stepDone": "completed",
       "stepCurrent": "current step",
-      "stepTodo": "not started"
+      "stepTodo": "not started",
+      "price": "Price",
+      "priceFree": "Free",
+      "pricePaid": "Paid",
+      "priceUnknown": "Not specified",
+      "priceAmount": "Price in euros",
+      "priceAmountHint": "If there are several rates, enter the cheapest.",
+      "priceCurrent": "Current price: “{price}”. It stays unless you pick another option."
     },
     "Layout": {
       "rss": "RSS",
@@ -1474,7 +1481,8 @@
       "locationRequired": "Enter the venue",
       "invalidUrl": "Enter a valid link, like example.com",
       "invalidEmail": "Enter a valid email address",
-      "townRequired": "Choose a town"
+      "townRequired": "Choose a town",
+      "invalidPrice": "Enter a price above 0, such as 10 or 12.50. If it's free, choose “Free”."
     },
     "EventStatus": {
       "past": "Event finished",

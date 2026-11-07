@@ -83,6 +83,7 @@ import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { AppLocale } from "types/i18n";
+import type { EventFormProps, EventPriceFormFields } from "types/event";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -380,6 +381,12 @@ export interface InputProps {
   inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
   autoComplete?: string;
   maxLength?: number;
+}
+
+export interface EventPriceFieldProps {
+  form: EventPriceFormFields;
+  error?: string;
+  onChange: EventFormProps["handleFormChange"];
 }
 
 export type RadioInputValue = string | number;
