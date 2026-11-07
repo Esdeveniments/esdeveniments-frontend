@@ -365,7 +365,7 @@ def collect_data(days, sections, country=None):
         }}
         d["search_terms"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
-            "dimensions": [{"name": "customEvent:search_term"}],
+            "dimensions": [{"name": "searchTerm"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
             "dimensionFilter": with_country_filter(search_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
@@ -379,7 +379,7 @@ def collect_data(days, sections, country=None):
         }}
         d["search_results"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
-            "dimensions": [{"name": "customEvent:search_term"},
+            "dimensions": [{"name": "searchTerm"},
                            {"name": "customEvent:results_count"}],
             "metrics": [{"name": "eventCount"}],
             "dimensionFilter": with_country_filter(search_results_filter, country),
@@ -390,22 +390,30 @@ def collect_data(days, sections, country=None):
             "fieldName": "eventName",
             "stringFilter": {"matchType": "CONTAINS", "value": "filter"},
         }}
-        d["filters"] = extract_rows(api_call("runReport", {
+        filter_rows = extract_rows(api_call("runReport", {
             "dateRanges": rng,
-            "dimensions": [{"name": "customEvent:filter_key"},
-                           {"name": "customEvent:filter_value"}],
+            "dimensions": [{"name": "eventName"},
+                           {"name": "customEvent:filter_key"}],
             "metrics": [{"name": "eventCount"}],
             "dimensionFilter": with_country_filter(filter_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
             "limit": 20,
         }))
+        # Only filter_chip_click/filter_remove send filter_key; GA returns the
+        # others as both "(not set)" and "", so merge those into one row.
+        merged = {}
+        for (event, key), mets in filter_rows:
+            row = (event, key if key not in ("(not set)", "") else "—")
+            merged[row] = merged.get(row, 0) + safe_int(mets[0])
+        d["filters"] = [([event, key], [str(count)]) for (event, key), count
+                        in sorted(merged.items(), key=lambda item: -item[1])]
         share_filter = {"filter": {
             "fieldName": "eventName",
             "stringFilter": {"matchType": "CONTAINS", "value": "share"},
         }}
         d["shares"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
-            "dimensions": [{"name": "eventName"}, {"name": "customEvent:method"}],
+            "dimensions": [{"name": "eventName"}, {"name": "method"}],
             "metrics": [{"name": "eventCount"}],
             "dimensionFilter": with_country_filter(share_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
@@ -447,7 +455,7 @@ def collect_data(days, sections, country=None):
         }}
         d["calendar"] = extract_rows(api_call("runReport", {
             "dateRanges": rng,
-            "dimensions": [{"name": "eventName"}, {"name": "customEvent:method"}],
+            "dimensions": [{"name": "eventName"}, {"name": "method"}],
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
             "dimensionFilter": with_country_filter(calendar_filter, country),
             "limit": 10,
@@ -1062,9 +1070,7 @@ def render_text(d, days, sections):
         print(f"\n  Filter usage:")
         if d.get("filters"):
             for dims, mets in d["filters"]:
-                k = dims[0] if dims[0] != "(not set)" else "—"
-                v = dims[1] if dims[1] != "(not set)" else ""
-                print(f"    {mets[0]:>4}x  {k}={v}")
+                print(f"    {mets[0]:>4}x  {dims[0]}  {dims[1]}")
         else:
             print("    (no filter data)")
 
@@ -1574,12 +1580,10 @@ def render_markdown(d, days):
         if d.get("filters"):
             L.append("**Filter usage:**")
             L.append("")
-            L.append("| Count | Filter | Value |")
-            L.append("|------:|--------|-------|")
+            L.append("| Count | Event | Filter |")
+            L.append("|------:|-------|--------|")
             for dims, mets in d["filters"]:
-                k = dims[0] if dims[0] != "(not set)" else "—"
-                v = dims[1] if dims[1] != "(not set)" else ""
-                L.append(f"| {mets[0]} | {k} | {v} |")
+                L.append(f"| {mets[0]} | {dims[0]} | {dims[1]} |")
             L.append("")
 
     # ── Engagement ──

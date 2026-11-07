@@ -87,19 +87,35 @@ function hostContainsLabel(host: string, label: string): boolean {
   return host.split(".").some((part) => part === label);
 }
 
-function detectReferrerCategory(): AnalyticsUserProperties["referrer_category"] {
-  if (typeof document === "undefined") return "other";
+function isAiHost(host: string): boolean {
+  return AI_SUFFIXES.some((s) => hostEndsWith(host, s));
+}
+
+function detectReferrer(): {
+  category: AnalyticsUserProperties["referrer_category"];
+  host?: string;
+} {
+  if (typeof document === "undefined") return { category: "other" };
   const ref = document.referrer;
-  if (!ref) return "direct";
+  if (!ref) {
+    // AI assistants often open links without a referrer and tag the URL
+    // instead (ChatGPT adds ?utm_source=chatgpt.com).
+    const utmSource = new URLSearchParams(window.location.search)
+      .get("utm_source")
+      ?.toLowerCase();
+    return utmSource && isAiHost(utmSource)
+      ? { category: "ai", host: utmSource }
+      : { category: "direct" };
+  }
 
   try {
     const host = new URL(ref).hostname.toLowerCase();
-    if (AI_SUFFIXES.some((s) => hostEndsWith(host, s))) return "ai";
-    if (SOCIAL_SUFFIXES.some((s) => hostEndsWith(host, s))) return "social";
-    if (ORGANIC_LABELS.some((l) => hostContainsLabel(host, l))) return "organic";
-    return "other";
+    if (isAiHost(host)) return { category: "ai", host };
+    if (SOCIAL_SUFFIXES.some((s) => hostEndsWith(host, s))) return { category: "social" };
+    if (ORGANIC_LABELS.some((l) => hostContainsLabel(host, l))) return { category: "organic" };
+    return { category: "other" };
   } catch {
-    return "other";
+    return { category: "other" };
   }
 }
 
@@ -140,9 +156,10 @@ export function setUserProperties(locale: string, attempt = 0): void {
     return;
   }
 
+  const referrer = detectReferrer();
   const props: AnalyticsUserProperties = {
     is_returning: detectReturning(),
-    referrer_category: detectReferrerCategory(),
+    referrer_category: referrer.category,
     preferred_locale: locale,
     device_class: detectDeviceClass(),
   };
@@ -155,17 +172,16 @@ export function setUserProperties(locale: string, attempt = 0): void {
   // assistant. user_properties alone don't support funnel/key-event analysis
   // in GA4 — a custom event with the referrer domain lets us segment AI
   // traffic per-source. sessionStorage dedupes across page navigations.
-  if (props.referrer_category === "ai") {
+  if (referrer.category === "ai" && referrer.host) {
     try {
       if (!sessionStorage.getItem("ai_referrer_fired")) {
-        const host = new URL(document.referrer).hostname.toLowerCase();
-        gtagWindow.gtag("event", "ai_referrer", { referrer_domain: host });
+        gtagWindow.gtag("event", "ai_referrer", { referrer_domain: referrer.host });
         sessionStorage.setItem("ai_referrer_fired", "1");
       }
     } catch {
       // sessionStorage throws in Safari private mode / storage-disabled
-      // contexts; referrer URL may also be malformed. Silent fallback is
-      // intentional — analytics loss is acceptable, page must not break.
+      // contexts. Silent fallback is intentional — analytics loss is
+      // acceptable, page must not break.
     }
   }
 }
