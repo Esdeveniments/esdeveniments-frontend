@@ -1934,12 +1934,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/context-async-hooks@npm:^2.12.0":
-  version: 2.12.0
-  resolution: "@opentelemetry/context-async-hooks@npm:2.12.0"
+"@opentelemetry/context-async-hooks@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@opentelemetry/context-async-hooks@npm:3.0.0"
   peerDependencies:
-    "@opentelemetry/api": ">=1.0.0 <1.10.0"
-  checksum: 10c0/fc4185cc643562527532cc5de985edc963a02a68aa1cf6ec517da5602cb51620ea9ffd2201f0fb75295eb9eb7d281a517598a081eeda79a905245a110f21282c
+    "@opentelemetry/api": ">=1.0.0 <1.11.0"
+  checksum: 10c0/ab566b9299740c9ecc8fe92d506468e4d61f5cd3b9fa6ca5b74707f56f9bbd7ad41c036cc48ac44f4e5efa15a6ae0a78529e51e56714229774e4196f5cab0952
   languageName: node
   linkType: hard
 
@@ -10643,7 +10643,7 @@ __metadata:
     "@lingual/i18n-check": "npm:^0.9.5"
     "@next/bundle-analyzer": "npm:^16.4.4"
     "@opentelemetry/api": "npm:^1.10.0"
-    "@opentelemetry/context-async-hooks": "npm:^2.12.0"
+    "@opentelemetry/context-async-hooks": "npm:^3.0.0"
     "@opentelemetry/core": "npm:^2.12.0"
     "@opentelemetry/sdk-trace-base": "npm:^2.12.0"
     "@playwright/test": "npm:1.64.1"
