@@ -99,6 +99,14 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 **Decision**: Compact related-event cards use `text-muted-foreground` for dates, not `text-primary`.
 **Why**: On a related-events section (user is already on a detail page), the title should be the visual anchor, not the date. Red dates on compact cards made dates more dominant than titles, which inverts the information hierarchy.
 
+#### One icon per card: the location pin
+
+**Decision**: The location row has a map pin; the date row has no calendar icon.
+**Why**: The date is the first meta line, right above the title, and "Avui"/"Demà" are colored, so it reads as a date without an icon; a calendar would compete with that color. The location sits alone at the bottom of the card, and a bare "El Masnou, Maresme" needs the pin to read as a place. An icon before the date would push it right of the category and title, which share one left edge, and on 256px carousel cards the date line is already truncated when it has a time range.
+**Competitors (checked Nov 2026)**: Eventbrite now puts an icon on every meta line (calendar, pin, organizer); its cards stack three or four plain gray lines. Meetup (Mar 2026 screenshot) shows date and place without icons.
+**Cost either way**: icons are `aria-hidden` sprite references (no SEO effect, no extra request); 92 bytes of HTML per card (measured on `/barcelona`), plus its copy in the RSC payload.
+**Revisit with data**: to try a date icon, add it to listing cards only and compare `select_event` click-through in GA4.
+
 #### Category badge above the date
 
 **Decision**: A text pill (`CategoryBadge`, 12px semibold, `text-xs`) in the card body, above the date. It used to overlay the image (frosted glass).
