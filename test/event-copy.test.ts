@@ -158,6 +158,29 @@ describe("buildEventIntroText", () => {
       expect(result).toContain("al Vallès Oriental");
     });
 
+    it("keeps an elided town article lowercase", async () => {
+      const event = createTestEvent({
+        title: "Fira de la Sal",
+        city: { ...MOCK_CITIES.tona, id: 99, name: "L'Escala", slug: "l-escala" },
+        region: undefined,
+      });
+
+      const result = await buildEventIntroText(event);
+
+      expect(result).toContain("a l'Escala.");
+      expect(result).not.toContain("L'Escala");
+    });
+
+    it("contracts a town article with the preposition", async () => {
+      const event = createTestEvent({
+        title: "Concert",
+        city: { ...MOCK_CITIES.tona, id: 98, name: "El Masnou", slug: "el-masnou" },
+        region: undefined,
+      });
+
+      expect(await buildEventIntroText(event)).toContain("al Masnou.");
+    });
+
     it("should use 'a la' for feminine regions", async () => {
       const event = createTestEvent({
         title: "Fira Medieval",

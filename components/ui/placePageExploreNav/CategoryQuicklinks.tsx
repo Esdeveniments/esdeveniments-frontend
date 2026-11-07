@@ -15,7 +15,7 @@ export default async function CategoryQuicklinks({
   date,
   currentCategory,
   categories = [],
-  placeLabel,
+  placeIn,
 }: CategoryQuicklinksProps) {
   const locale = await getLocaleSafely();
   const t = await getTranslations({
@@ -72,7 +72,7 @@ export default async function CategoryQuicklinks({
     <div>
       <h2 className="body-normal font-medium text-muted-foreground mb-element-gap-sm">
         {currentCategory
-          ? t("otherCategoryTitle", { place: placeLabel })
+          ? t("otherCategoryTitle", { placeIn })
           : t("categoryTitle")}
       </h2>
       <nav aria-label={t("categoryAriaLabel")}>
@@ -83,7 +83,7 @@ export default async function CategoryQuicklinks({
                 href={buildCategoryUrl(category.slug)}
                 ariaLabel={t("categoryLinkAria", {
                   category: getCategoryLabel(category.slug, category.name, tCategories),
-                  place: placeLabel,
+                  placeIn,
                 })}
                 data-analytics-event-name="category_quicklink_click"
                 data-analytics-category-slug={category.slug}

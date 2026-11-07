@@ -37,6 +37,5 @@ export interface SitemapContentProps {
 }
 
 export interface SitemapHeaderProps {
-  town: string;
-  placePromise: Promise<import("./api/place").PlaceResponseDTO | null>;
+  placePromise: Promise<import("./common").PlaceTypeAndLabel>;
 }

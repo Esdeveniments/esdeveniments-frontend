@@ -7,10 +7,10 @@ import {
 } from "@utils/constants";
 // No headers/nonce needed with relaxed CSP
 import JsonLdServer from "@components/partials/JsonLdServer";
-import { getPlaceBySlug } from "@lib/api/places";
 import { getTranslations } from "next-intl/server";
 import type { AppLocale } from "types/i18n";
-import { formatPlacePreposition } from "@utils/helpers";
+import { formatPlacePhrases } from "@utils/string-helpers";
+import { getPlaceTypeAndLabelCached } from "@utils/location-helpers";
 import {
   buildPageMeta,
   generateCollectionPageSchema,
@@ -32,18 +32,14 @@ export async function generateMetadata({
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const { town } = await params;
-  // Tolerate backend 5xx: getPlaceBySlug throws on non-200/404. Falling back
-  // to null lets the page render with the slug as the label instead of 500ing
-  // — fixes ~698 5xx errors flagged by GSC on /sitemap/<town>/...
-  const place = await getPlaceBySlug(town).catch(() => null);
-  const label = place?.name || town;
-  const placeType: "region" | "town" =
-    place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatPlacePreposition(label, placeType, locale, false);
+  // Never throws: a backend error falls back to a label built from the slug,
+  // so the archive renders instead of 500ing (~698 GSC 5xx on /sitemap/<town>).
+  const { type, label } = await getPlaceTypeAndLabelCached(town);
+  const { placeIn, placeOf } = formatPlacePhrases(label, type, locale);
 
   return buildPageMeta({
-    title: t("metaTitle", { locationPhrase }),
-    description: t("metaDescription", { locationPhrase, town }),
+    title: t("metaTitle", { placeIn }),
+    description: t("metaDescription", { placeIn, placeOf }),
     canonical: `${siteUrl}/sitemap/${town}`,
     locale,
   });
@@ -80,10 +76,9 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
     };
   });
 
-  // Start fetch
-  const placePromise = getPlaceBySlug(town).catch(() => null);
-  const place = await placePromise;
-  const townLabel = place?.name || town;
+  const placePromise = getPlaceTypeAndLabelCached(town);
+  const { type, label: townLabel } = await placePromise;
+  const { placeIn, placeOf } = formatPlacePhrases(townLabel, type, locale);
 
   const breadcrumbs = [
     { name: t("breadcrumbs.home"), url: toLocalizedUrl("/", locale) },
@@ -92,8 +87,8 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
   ];
 
   const collectionPageSchema = generateCollectionPageSchema({
-    title: t("collectionTitle", { town: townLabel }),
-    description: t("collectionDescription", { town: townLabel }),
+    title: t("collectionTitle", { placeOf }),
+    description: t("collectionDescription", { placeIn }),
     url: toLocalizedUrl(`/sitemap/${town}`, locale),
     breadcrumbs,
     locale,
@@ -101,8 +96,8 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
     mainEntity: {
       "@type": "ItemList",
       "@id": `${toLocalizedUrl(`/sitemap/${town}`, locale)}#archivelist`,
-      name: t("mainEntityName", { town: townLabel }),
-      description: t("mainEntityDescription", { town: townLabel }),
+      name: t("mainEntityName", { placeOf }),
+      description: t("mainEntityDescription", { placeIn }),
       numberOfItems: years.length * months.length,
       itemListElement: [], // Empty for now or we'd have to map all years which is fast
     },
@@ -117,7 +112,7 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
         <SitemapBreadcrumb items={breadcrumbs} />
 
         <Suspense fallback={<SitemapHeaderSkeleton />}>
-          <SitemapHeader town={town} placePromise={placePromise} />
+          <SitemapHeader placePromise={placePromise} />
         </Suspense>
 
         <section className="grid overflow-hidden grid-cols-2 lg:grid-cols-4 auto-rows-auto gap-4 grid-flow-row w-full">
@@ -149,7 +144,7 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
             <div className="stack gap-2">
               <h3 className="heading-4">{t("aboutTitle")}</h3>
               <p className="body-small text-foreground/80">
-                {t("aboutBody", { town })}
+                {t("aboutBody", { placeIn })}
               </p>
             </div>
             <div className="stack gap-2">

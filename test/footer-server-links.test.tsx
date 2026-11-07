@@ -43,6 +43,13 @@ describe("Footer", () => {
     }
   });
 
+  it("contracts the article in the featured agenda labels", async () => {
+    const masnou = collectByHref(await Footer()).find(
+      (el) => (el.props as { href: string }).href === "/el-masnou",
+    );
+    expect(masnou?.props).toMatchObject({ children: "Agenda del Masnou" });
+  });
+
   it("keeps the analytics hook on the login link", async () => {
     const login = collectByHref(await Footer()).find(
       (el) => (el.props as { href: string }).href === "/iniciar-sessio",

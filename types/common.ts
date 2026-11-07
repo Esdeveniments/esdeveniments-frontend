@@ -278,6 +278,25 @@ export interface ArticleLabels {
   les: string;
 }
 
+export type CatalanArticle = keyof ArticleLabels;
+
+/** "in" → a/en/in, "of" → de/de/of, "from" → des de/desde/from. */
+export type PlaceRelation = "in" | "of" | "from";
+
+export type PlacePhraseType = PlaceType | "general";
+
+/** What a Catalan "de" phrase names: a place, or a category ("de música"). */
+export type CatalanPhraseType = PlacePhraseType | "category";
+
+/** Message placeholders for one place: "al Masnou", "del Masnou", "des del Masnou". */
+export type PlacePhrases = Record<"placeIn" | "placeOf" | "placeFrom", string>;
+
+/** "al Masnou" → { preposition: "al", place: "Masnou" }. */
+export interface PlacePhraseParts {
+  preposition: string;
+  place: string;
+}
+
 export interface PrepositionLabels {
   a: string;
   al: string;
@@ -300,6 +319,8 @@ export interface StringHelperLabels {
   articles: ArticleLabels;
   prepositions: PrepositionLabels;
   capitalizePrepositions: string[];
+  /** Lowercased place names that never take an article ("a Osona"). */
+  articlelessPlaces: string[];
   feminineExceptions: string[];
   masculineExceptions: string[];
 }

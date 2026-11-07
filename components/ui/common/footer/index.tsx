@@ -1,10 +1,12 @@
 import { cacheLife } from "next/cache";
+import { locale as rootLocale } from "next/root-params";
 import { getTranslations } from "next-intl/server";
 import { JSX } from "react";
 import { Link } from "@i18n/routing";
 import Social from "@components/ui/common/social";
 import CopyrightNotice from "./CopyrightYear";
-import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
+import { buildTopAgendaLinks } from "@config/top-agenda-links";
+import type { AppLocale } from "types/i18n";
 import { contactEmail, socialLinks } from "@config/index";
 
 // Reading the clock while rendering made the footer boundary dynamic under
@@ -17,10 +19,16 @@ async function getCopyrightYear(): Promise<number> {
 }
 
 export default async function Footer(): Promise<JSX.Element> {
-  const t = await getTranslations("Components.Footer");
-  const tSponsor = await getTranslations("Sponsor");
-  const tTopAgenda = await getTranslations("Config.TopAgenda");
-  const agendaLabel = tTopAgenda("agenda");
+  const locale = (await rootLocale()) as AppLocale;
+  const [t, tSponsor, tTopAgenda] = await Promise.all([
+    getTranslations({ locale, namespace: "Components.Footer" }),
+    getTranslations({ locale, namespace: "Sponsor" }),
+    getTranslations({ locale, namespace: "Config.TopAgenda" }),
+  ]);
+  const topAgendaLinks = buildTopAgendaLinks(
+    (placeOf) => tTopAgenda("agendaOf", { placeOf }),
+    locale
+  );
 
   const navigation = [
     { name: t("navigation.home"), href: "/", kind: "internal", current: false },
@@ -157,7 +165,7 @@ export default async function Footer(): Promise<JSX.Element> {
           </h2>
           <div className="w-full max-w-5xl bg-background/50 rounded-card p-6 shadow-sm border border-border/40">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3">
-              {TOP_AGENDA_LINKS.map((item) => (
+              {topAgendaLinks.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -165,7 +173,7 @@ export default async function Footer(): Promise<JSX.Element> {
                   data-pressable-link="inline"
                   className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1 pressable-inline"
                 >
-                  {`${agendaLabel} ${item.name}`}
+                  {item.label}
                 </Link>
               ))}
             </div>

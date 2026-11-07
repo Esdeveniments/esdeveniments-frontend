@@ -483,7 +483,7 @@ export async function ServerEventsCategorizedContent({
     locale,
     namespace: "Components.DateFilterBadges",
   });
-  const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
+  const badgeLabels = createDateFilterBadgeLabels(tDateFilters, locale);
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;
     if (!localePrefix) return path;

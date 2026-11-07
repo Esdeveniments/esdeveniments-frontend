@@ -7,33 +7,6 @@
         "tarragona": "Tarragona",
         "lleida": "Lleida"
       },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
-      },
       "days": [
         "Diumenge",
         "Dilluns",
@@ -102,33 +75,6 @@
         "tarragona": "Tarragona",
         "lleida": "Lleida"
       },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
-      },
       "days": [
         "Domingo",
         "Lunes",
@@ -196,33 +142,6 @@
         "barcelona": "Barcelona",
         "tarragona": "Tarragona",
         "lleida": "Lleida"
-      },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
       },
       "days": [
         "Sunday",
@@ -366,6 +285,10 @@
         "de l'",
         "pel",
         "pels"
+      ],
+      "articlelessPlaces": [
+        "catalunya",
+        "osona"
       ],
       "feminineExceptions": [
         "gent gran",

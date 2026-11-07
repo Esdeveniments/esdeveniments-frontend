@@ -19,7 +19,7 @@ import { CategorizedEvents } from "types/api/event";
 import ServerEventsCategorized from "@components/ui/serverEventsCategorized";
 import type { FeaturedPlaceConfig, SeoLinkSection } from "types/props";
 import { filterActiveEvents } from "@utils/event-helpers";
-import { TOP_AGENDA_LINKS } from "@config/top-agenda-links";
+import { buildTopAgendaLinks } from "@config/top-agenda-links";
 import { connection } from "next/server";
 import { HERO_IMAGE } from "@config/hero-image";
 import HomePageSkeleton from "@components/ui/common/skeletons/HomePageSkeleton";
@@ -153,7 +153,6 @@ async function HomeContent({
     getTranslations({ locale, namespace: "Config.TopAgenda" }),
     generatePagesData({ place: "", byDate: "", locale }),
   ]);
-  const agendaLabel = tTopAgenda("agenda");
 
   const homeSeoLinkSections: SeoLinkSection[] = [
     {
@@ -209,10 +208,10 @@ async function HomeContent({
   const localAgendasSection: SeoLinkSection = {
     id: "local-agendas",
     title: t("seoSections.localAgendas.title"),
-    links: TOP_AGENDA_LINKS.map((link) => ({
-      href: link.href,
-      label: `${agendaLabel} ${link.name}`,
-    })),
+    links: buildTopAgendaLinks(
+      (placeOf) => tTopAgenda("agendaOf", { placeOf }),
+      locale
+    ),
   };
 
   const homeNavigationItems: NavigationItem[] = [
@@ -229,17 +228,20 @@ async function HomeContent({
     {
       title: t("featuredPlaces.barcelona.title"),
       subtitle: t("featuredPlaces.barcelona.subtitle"),
+      placeLabel: "Barcelona",
       slug: "barcelona",
       filter: { city: "barcelona" },
     },
     {
       title: t("featuredPlaces.maresme.title"),
       subtitle: t("featuredPlaces.maresme.subtitle"),
+      placeLabel: "Maresme",
       slug: "maresme",
       filter: { region: "maresme" },
     },
     {
       title: t("featuredPlaces.vallesOccidental.title"),
+      placeLabel: "Vallès Occidental",
       slug: "valles-occidental",
       filter: { region: "valles-occidental" },
     },

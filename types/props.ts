@@ -67,6 +67,7 @@ import {
   PageData,
   PlaceType,
   PlaceTypeAndLabel,
+  PlacePhraseType,
   JsonLdScript,
   Href,
   NavigationItem,
@@ -306,7 +307,7 @@ export interface SocialPopupState {
 export interface CulturalMessageProps {
   location: string;
   locationValue: string; // URL-friendly version for analytics
-  locationType?: "region" | "town" | "general"; // Type of location for proper preposition
+  locationType?: PlacePhraseType;
 }
 
 export interface DescriptionProps {
@@ -655,6 +656,8 @@ export interface PlacePageShellProps {
 
 export interface FeaturedPlaceConfig {
   title: string;
+  /** Place name for generated copy ("a Barcelona", "al Maresme"). */
+  placeLabel: string;
   subtitle?: string;
   slug: string;
   filter: {
@@ -710,21 +713,6 @@ export interface HybridEventsHeadingLayoutProps {
 }
 
 // Location Discovery Widget Props
-export interface LocationDiscoveryWidgetProps {
-  className?: string;
-  onLocationChange?: (location: Option) => void;
-  onSearchSubmit?: (location: Option, searchTerm: string) => void;
-}
-
-export interface LocationDropdownProps {
-  selectedLocation: Option | null;
-  regions: RegionsGroupedByCitiesResponseDTO[];
-  onLocationSelect: (location: Option) => void;
-  isLoading?: boolean;
-  placeholder?: string;
-  className?: string;
-}
-
 export interface GeolocationButtonProps {
   onLocationDetected: (location: Option) => void;
   isLoading?: boolean;
@@ -808,6 +796,7 @@ export interface NewsListProps {
   /** Place slug; none on the all-news index */
   place?: string;
   placeLabel: string;
+  placeType?: PlaceType;
   /** 1-based */
   page: number;
   basePath: string;
@@ -817,6 +806,7 @@ export interface NewsListPageProps {
   /** Place slug; none on the all-news index */
   place?: string;
   placeLabel: string;
+  placeType?: PlaceType;
   title: string;
   subtitle: string;
   /** 1-based */
@@ -838,7 +828,9 @@ export interface DateFilterBadgesProps {
   placeSlug: string;
   categorySlug?: string;
   categories?: CategorySummaryResponseDTO[];
+  /** Category label when `categorySlug` is set, otherwise the place name. */
   contextName: string;
+  placeType?: PlaceType;
   ariaLabel?: string;
   labels?: DateFilterBadgeLabels;
 }
@@ -853,7 +845,11 @@ export type DateFilterBadgeLabels = {
   today: { label: string; ariaLabelText: string };
   tomorrow: { label: string; ariaLabelText: string };
   weekend: { label: string; ariaLabelText: string };
-  ariaPlace: (args: { ariaLabelText: string; contextName: string }) => string;
+  ariaPlace: (args: {
+    ariaLabelText: string;
+    placeName: string;
+    placeType?: PlaceType;
+  }) => string;
   ariaCategory: (args: {
     ariaLabelText: string;
     contextName: string;
@@ -902,6 +898,7 @@ export interface PlacePageExploreNavProps {
   category?: string;
   categories?: CategorySummaryResponseDTO[];
   placeLabel: string;
+  placeType?: PlaceType;
   /**
    * Whether this place has enough event depth to warrant filter URLs
    * (mirrors the sitemap policy). When false, the explore nav renders
@@ -918,7 +915,8 @@ export interface CategoryQuicklinksProps {
   date?: string;
   currentCategory?: string;
   categories?: CategorySummaryResponseDTO[];
-  placeLabel: string;
+  /** Place with its preposition: "al Masnou", "en El Masnou". */
+  placeIn: string;
 }
 
 // Explore nearby places navigation

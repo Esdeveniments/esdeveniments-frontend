@@ -1,4 +1,5 @@
 import { insertAds } from "@lib/api/events";
+import { formatPlacePreposition } from "@utils/string-helpers";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -256,6 +257,7 @@ export default async function FilteredPage({
         category: filters.category,
         categoryName: categoryData?.name,
         t: tFallback,
+        locale,
       });
     }
   })();
@@ -317,14 +319,17 @@ function buildFallbackCategoryShellData({
   category,
   categoryName,
   t,
+  locale,
 }: {
   place: string;
   byDate: string;
   category: string;
   categoryName?: string;
   t: (key: string, values?: Record<string, string>) => string;
+  locale: AppLocale;
 }): { placeTypeLabel: PlaceTypeAndLabel; pageData: PageData } {
   const placeTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
+  const placeIn = formatPlacePreposition(place, "", locale, false);
   const hasSpecificDate =
     byDate && byDate !== DEFAULT_FILTER_VALUE && byDate !== "";
   const dateLabel = hasSpecificDate ? byDate : t("dateFallback");
@@ -361,10 +366,10 @@ function buildFallbackCategoryShellData({
     ? `/${[place, category].join("/")}`
     : canonicalPath;
   const canonical = `${siteUrl}${canonicalForLink}`;
-  const title = t("title", { categoryLabel: titleCategoryLabel, dateLabel, place });
+  const title = t("title", { categoryLabel: titleCategoryLabel, dateLabel, placeIn });
   const subTitle = hasSpecificDate
-    ? t("subtitleWithDate", { plansLabel, date: byDate, place })
-    : t("subtitleFallback", { plansLabel, place });
+    ? t("subtitleWithDate", { plansLabel, date: byDate, placeIn })
+    : t("subtitleFallback", { plansLabel, placeIn });
 
   return {
     placeTypeLabel,
@@ -373,13 +378,13 @@ function buildFallbackCategoryShellData({
       subTitle,
       metaTitle: t("metaTitle", { title }),
       metaDescription: hasSpecificDate
-        ? t("metaDescriptionWithDate", { proposalsLabel, date: byDate, place })
-        : t("metaDescriptionFallback", { proposalsLabel, place }),
+        ? t("metaDescriptionWithDate", { proposalsLabel, date: byDate, placeIn })
+        : t("metaDescriptionFallback", { proposalsLabel, placeIn }),
       canonical,
       notFoundTitle: t("notFoundTitle"),
       notFoundDescription: hasSpecificDate
-        ? t("notFoundDescriptionWithDate", { activitiesLabel, date: byDate, place })
-        : t("notFoundDescriptionFallback", { activitiesLabel, place }),
+        ? t("notFoundDescriptionWithDate", { activitiesLabel, date: byDate, placeIn })
+        : t("notFoundDescriptionFallback", { activitiesLabel, placeIn }),
     },
   };
 }

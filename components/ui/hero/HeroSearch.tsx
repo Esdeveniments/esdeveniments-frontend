@@ -15,7 +15,12 @@ import {
 } from "@heroicons/react/24/solid";
 import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
-import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
+import { generateRegionsAndTownsOptions } from "@utils/helpers";
+import {
+  formatPlacePrepositionParts,
+  joinPlacePhrase,
+} from "@utils/string-helpers";
+import type { AppLocale } from "types/i18n";
 import { stripLocalePrefix } from "@utils/i18n-routing";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
@@ -35,7 +40,7 @@ const Select = dynamic(() => import("@components/ui/common/form/select"), {
 
 export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const t = useTranslations("Components.HeroSearch");
-  const locale = useLocale();
+  const locale = useLocale() as AppLocale;
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -142,28 +147,14 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     return null;
   }, [localPlaceValue, regionsAndCitiesArray]);
 
-  const displayLabel = useMemo(() => {
-    if (place === "catalunya") return label;
-
-    // EN/ES already include the preposition in surrounding copy (e.g. "What to do in").
-    // Keep the visible label clean (no "a/al/a la...").
-    if (locale !== "ca") return label;
-
-    const withArticle = formatCatalanA(
-      label,
-      (placeType || "general") as "region" | "town" | "general",
-      false
-    );
-
-    // Strip leading Catalan preposition/article forms.
-    return withArticle
-      .replace(/^a\s+l[’']/, "")
-      .replace(/^a\s+les\s+/i, "")
-      .replace(/^a\s+la\s+/i, "")
-      .replace(/^als\s+/i, "")
-      .replace(/^al\s+/i, "")
-      .replace(/^a\s+/i, "");
-  }, [label, locale, place, placeType]);
+  // The preposition joins the title prefix so the button shows only the place:
+  // "Què fer al" + "Masnou", "Qué hacer en" + "El Masnou".
+  const placeParts = useMemo(
+    () =>
+      formatPlacePrepositionParts(label, placeType, locale, false),
+    [label, placeType, locale]
+  );
+  const placeIn = joinPlacePhrase(placeParts);
 
   // --- Search Logic ---
 
@@ -203,7 +194,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       {/* Title Section */}
       <div className="flex flex-col items-center justify-center text-center gap-2">
         <h1 className="heading-1 text-white drop-shadow-lg flex flex-wrap items-center justify-center gap-2">
-          <span>{t("titlePrefix")}</span>
+          <span>{`${t("titlePrefix")} ${placeParts.preposition}`}</span>{" "}
           <div className="relative inline-block">
             <button
               type="button"
@@ -215,7 +206,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
               className="flex flex-wrap items-center justify-center gap-2 font-semibold uppercase tracking-wide text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
               aria-expanded={isModalOpen}
             >
-              {displayLabel}
+              {placeParts.place}
               <ChevronDownIcon
                 className={`h-8 w-8 transition-transform duration-200 ${isModalOpen ? "rotate-180" : ""
                   }`}
@@ -281,7 +272,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           <input
             type="text"
             className="w-full pl-11 pr-12 py-3 bg-background border border-input rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-muted-foreground"
-            placeholder={t("searchPlaceholder", { location: label })}
+            placeholder={t("searchPlaceholder", { placeIn })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleKeyDown}

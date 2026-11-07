@@ -1,8 +1,10 @@
 import type { SeoLinkItem } from "types/props";
+import type { AppLocale } from "types/i18n";
+import { formatPlacePreposition } from "@utils/string-helpers";
 
 /**
  * Top agenda links for featured local agendas.
- * Town/region names are not localized; only the "Agenda" label is translated.
+ * Town names are not localized; the label comes from `Config.TopAgenda.agendaOf`.
  */
 export const TOP_AGENDA_LINKS: (Omit<SeoLinkItem, "label"> & {
   name: string;
@@ -21,3 +23,16 @@ export const TOP_AGENDA_LINKS: (Omit<SeoLinkItem, "label"> & {
   { href: "/arenys-de-munt", name: "Arenys de Munt" },
   { href: "/mataro", name: "Mataró" },
 ];
+
+/** Links labelled "Agenda del Masnou" / "Agenda de El Masnou" / "Agenda of El Masnou". */
+export function buildTopAgendaLinks(
+  formatLabel: (placeOf: string) => string,
+  locale: AppLocale
+): SeoLinkItem[] {
+  return TOP_AGENDA_LINKS.map(({ href, name }) => ({
+    href,
+    label: formatLabel(
+      formatPlacePreposition(name, "town", locale, false, "of")
+    ),
+  }));
+}

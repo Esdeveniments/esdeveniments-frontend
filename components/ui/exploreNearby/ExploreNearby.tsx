@@ -1,9 +1,14 @@
 import { fetchRegionsWithCities } from "@lib/api/regions";
-import { formatPlaceName, sanitize } from "@utils/string-helpers";
+import {
+  formatPlaceName,
+  formatPlacePreposition,
+  sanitize,
+} from "@utils/string-helpers";
 import Badge from "@components/ui/common/badge";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import type { ExploreNearbyProps } from "types/props";
+import type { PlaceType } from "types/common";
 
 /** Maximum place links to show (avoid visual overload + HTML bloat). */
 const MAX_LINKS = 12;
@@ -31,6 +36,10 @@ export default async function ExploreNearby({
     locale,
     namespace: "Components.ExploreNearby",
   });
+  const linkAria = (label: string, type: PlaceType) => {
+    const placeIn = formatPlacePreposition(label, type, locale, false);
+    return t("linkAria", { placeIn });
+  };
 
   // Catalunya → show all regions
   if (place === "catalunya") {
@@ -57,7 +66,7 @@ export default async function ExploreNearby({
               <li key={r.slug}>
                 <Badge
                   href={`/${r.slug}`}
-                  ariaLabel={t("linkAria", { place: r.label })}
+                  ariaLabel={linkAria(r.label, "region")}
                   data-analytics-event-name="explore_nearby_click"
                   data-analytics-place-slug={r.slug}
                   data-analytics-context="explore_nearby_regions"
@@ -97,7 +106,15 @@ export default async function ExploreNearby({
         aria-label={t("sectionAriaLabel")}
       >
         <h2 className="body-normal font-medium text-muted-foreground mb-element-gap-sm">
-          {t("citiesTitle", { region: formatPlaceName(region.name) })}
+          {t("citiesTitle", {
+            placeOf: formatPlacePreposition(
+              formatPlaceName(region.name),
+              "region",
+              locale,
+              false,
+              "of"
+            ),
+          })}
         </h2>
         <nav aria-label={t("citiesAriaLabel")}>
           <ul className="flex flex-wrap gap-element-gap-sm">
@@ -105,7 +122,7 @@ export default async function ExploreNearby({
               <li key={c.slug}>
                 <Badge
                   href={`/${c.slug}`}
-                  ariaLabel={t("linkAria", { place: c.label })}
+                  ariaLabel={linkAria(c.label, "town")}
                   data-analytics-event-name="explore_nearby_click"
                   data-analytics-place-slug={c.slug}
                   data-analytics-context="explore_nearby_cities"
@@ -122,7 +139,8 @@ export default async function ExploreNearby({
 
   // Town → show parent region + sibling cities in one compact section
   if (placeType === "town") {
-    let parentRegion: { slug: string; label: string } | null = null;
+    let parentRegion: { slug: string; label: string; type: PlaceType } | null =
+      null;
     let siblingCities: { slug: string; label: string }[] = [];
 
     for (const region of regionsWithCities) {
@@ -131,6 +149,7 @@ export default async function ExploreNearby({
         parentRegion = {
           slug: region.slug ?? sanitize(region.name),
           label: formatPlaceName(region.name),
+          type: "region",
         };
         const seenSiblings = new Set<string>();
         siblingCities = region.cities
@@ -152,7 +171,7 @@ export default async function ExploreNearby({
     // Combine region + siblings into a single badge list for a cleaner UI
     const allLinks = [
       ...(parentRegion ? [parentRegion] : []),
-      ...siblingCities,
+      ...siblingCities.map((c) => ({ ...c, type: "town" as const })),
     ];
 
     return (
@@ -169,7 +188,7 @@ export default async function ExploreNearby({
               <li key={link.slug}>
                 <Badge
                   href={`/${link.slug}`}
-                  ariaLabel={t("linkAria", { place: link.label })}
+                  ariaLabel={linkAria(link.label, link.type)}
                   data-analytics-event-name="explore_nearby_click"
                   data-analytics-place-slug={link.slug}
                   data-analytics-context="explore_nearby_siblings"

@@ -1,6 +1,9 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
+import { locale as rootLocale } from "next/root-params";
 import { CulturalMessageProps } from "types/props";
-import { formatCatalanA, formatPlaceName } from "@utils/helpers";
+import type { AppLocale } from "types/i18n";
+import { formatPlaceName } from "@utils/helpers";
+import { formatPlacePreposition } from "@utils/string-helpers";
 import Badge from "../badge";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
@@ -14,19 +17,23 @@ const CulturalMessage = async ({
     return null;
   }
 
-  const t = await getTranslations("Components.CulturalMessage");
-  const locale = await getLocale();
-  const capitalizedLocation = formatPlaceName(location);
-  const locationText =
-    locale === "ca"
-      ? formatCatalanA(capitalizedLocation, locationType, false)
-      : capitalizedLocation;
+  const locale = (await rootLocale()) as AppLocale;
+  const t = await getTranslations({
+    locale,
+    namespace: "Components.CulturalMessage",
+  });
+  const placeIn = formatPlacePreposition(
+    formatPlaceName(location),
+    locationType,
+    locale,
+    false
+  );
 
   return (
     <div className="w-full flex flex-col gap-element-gap min-w-0">
         <SectionHeading
           Icon={MagnifyingGlassIcon}
-          title={t("explorePrefix", { location: locationText })}
+          title={t("explorePrefix", { placeIn })}
           titleClassName="heading-2"
         />
         <div className="flex flex-wrap gap-2 px-section-x">

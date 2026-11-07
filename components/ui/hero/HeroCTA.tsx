@@ -12,6 +12,7 @@ import { formatPlacePreposition } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
 import useTrackedCta from "@components/hooks/useTrackedCta";
 import { useLocale } from "next-intl";
+import type { AppLocale } from "types/i18n";
 
 export default function HeroCTA() {
   const t = useTranslations("Components.HeroCTA");
@@ -41,8 +42,8 @@ export default function HeroCTA() {
     if (place !== "catalunya") {
       const locationCopy = formatPlacePreposition(
         label,
-        (placeType || "general") as "region" | "town" | "general" | "",
-        locale as "ca" | "es" | "en",
+        placeType,
+        locale as AppLocale,
         false
       );
       text += ` ${locationCopy}`;
