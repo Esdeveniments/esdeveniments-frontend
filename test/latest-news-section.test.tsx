@@ -5,7 +5,6 @@ import type { NewsSummaryResponseDTO } from "types/api/news";
 const fetchNews = vi.fn();
 
 vi.mock("@lib/api/news", () => ({ fetchNews: (...args: unknown[]) => fetchNews(...args) }));
-vi.mock("next/server", () => ({ connection: async () => undefined }));
 vi.mock("@utils/i18n-seo", () => ({ getLocaleSafely: async () => "ca" }));
 vi.mock("@components/noticies/NewsCardGrid", () => ({
   default: ({ items }: { items: unknown[] }) => <div data-testid="grid">{items.length}</div>,

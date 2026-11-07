@@ -757,8 +757,6 @@ three-line summary. The grids of news cards (the news lists below the featured c
 related articles of an article, and the latest news on the event page) go
 through `NewsCardGrid`, which links each card to the article's own city or
 region.
-On the event page that block is `data-analytics-context="event_news"`, with
-the event as the source.
 
 Inside a news article the events are a numbered list (`<ol>`), one `row`
 card per event. `row` shares `featured`'s side-by-side layout, but the 3:2
