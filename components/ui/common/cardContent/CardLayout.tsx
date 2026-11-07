@@ -108,7 +108,8 @@ export default function CardLayout({
           {promotedLabel && (
             <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
           )}
-          <CategoryBadge label={categoryLabel} />
+          {/* -ml-2 = the pill's px-2: its light fill reads as text, so the label lines up with the date and title */}
+          <CategoryBadge label={categoryLabel} className="-ml-2" />
 
           <p className={`${compact ? "text-xs" : "text-sm"} text-muted-foreground mb-1${compact ? " truncate" : ""}`}>
             {dateTime ? <time dateTime={dateTime}>{dateText}</time> : dateText}

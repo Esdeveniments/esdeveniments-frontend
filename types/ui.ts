@@ -85,6 +85,7 @@ export type CardVariant = "standard" | "carousel" | "compact";
 
 export interface CategoryBadgeProps {
   label: string | undefined;
+  className?: string;
 }
 
 export interface HeroContextType {
