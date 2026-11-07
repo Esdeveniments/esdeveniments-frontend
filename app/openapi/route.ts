@@ -14,7 +14,7 @@ export async function GET() {
       title: "Esdeveniments.cat API",
       version: "1.0.0",
       description:
-        "Public API for discovering cultural events, news, places, and categories in Catalonia (Spain). Multilingual support (ca/es/en). All GET endpoints are public and require no authentication. Write operations accept an Idempotency-Key header so retries are safe. Developer portal: " + `${siteUrl}/developers`,
+        "Public API for discovering cultural events, news, places, and categories in Catalonia (Spain). Multilingual support (ca/es/en). All GET endpoints are public and require no authentication. POST /api/sponsors/checkout accepts an Idempotency-Key header so retries are safe. Developer portal: " + `${siteUrl}/developers`,
       contact: {
         name: "Esdeveniments.cat",
         url: `${siteUrl}/qui-som`,
@@ -561,7 +561,8 @@ export async function GET() {
               content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
             "409": {
-              description: "The place already has an active sponsor",
+              description:
+                "The place already has an active sponsor, or the Idempotency-Key was already used for a different request",
               content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
             "500": {

@@ -19,6 +19,11 @@ import { DURATION_DAYS, VALID_GEO_SCOPES } from "types/sponsor";
 
 // Stripe rejects idempotency keys longer than 255 characters.
 const MAX_IDEMPOTENCY_KEY_LENGTH = 255;
+const MIN_SESSION_SECONDS = 30 * 60;
+const EXPIRY_BUCKET_SECONDS = 60 * 60;
+
+/** Stripe saw this Idempotency-Key before, with different parameters. */
+class StripeIdempotencyError extends Error {}
 
 /**
  * Create Stripe Checkout Session using REST API (no SDK needed)
@@ -68,8 +73,14 @@ async function createStripeCheckoutSession(
     "ESDEV-CAT",
   );
 
-  // Session expiration - 30 minutes for better UX (default is 24h)
-  const expiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
+  // Session expiration: 30-90 minutes (Stripe's default is 24h). Stripe replays
+  // a request with a known Idempotency-Key only if every param matches, so
+  // expires_at is rounded up to the hour to stay identical across retries.
+  const expiresAt =
+    Math.ceil(
+      (Math.floor(Date.now() / 1000) + MIN_SESSION_SECONDS) /
+        EXPIRY_BUCKET_SECONDS,
+    ) * EXPIRY_BUCKET_SECONDS;
   params.append("expires_at", String(expiresAt));
 
   const response = await stripeRequest("/checkout/sessions", {
@@ -81,6 +92,9 @@ async function createStripeCheckoutSession(
   if (!response.ok) {
     const errorBody = await response.text();
     console.error("Stripe API error:", response.status, errorBody);
+    if (errorBody.includes('"idempotency_error"')) {
+      throw new StripeIdempotencyError(errorBody.slice(0, 500));
+    }
     throw new Error(
       `Stripe API error ${response.status}: ${errorBody.slice(0, 500)}`,
     );
@@ -216,6 +230,15 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
+    if (error instanceof StripeIdempotencyError) {
+      return NextResponse.json(
+        {
+          error:
+            "Idempotency-Key was already used for a different request. Send a new key.",
+        },
+        { status: 409 },
+      );
+    }
     const message =
       error instanceof Error ? error.message : "Unknown error";
     console.error("Checkout error:", message);

@@ -131,7 +131,7 @@
       "agentsBody": "Conecta un agente de IA a nuestro servidor MCP, o usa las herramientas WebMCP que la web registra en el navegador.",
       "agentsMcpLink": "Servidor MCP de Esdeveniments.cat",
       "writesTitle": "Escrituras e idempotencia",
-      "writesBody": "Las operaciones de escritura aceptan la cabecera Idempotency-Key. Envía una clave nueva (un UUID) en cada intento y repítela si vuelves a probar: la petición solo se ejecuta una vez.",
+      "writesBody": "El pago de un patrocinio (POST /api/sponsors/checkout) acepta la cabecera Idempotency-Key. Envía una clave nueva (un UUID) en cada intento y repítela si vuelves a probar: solo se crea una sesión de pago.",
       "githubTitle": "GitHub y contacto",
       "githubBody": "Sigue el proyecto en GitHub o escríbenos si necesitas más datos o un límite más alto.",
       "githubLink": "Esdeveniments.cat en GitHub"
