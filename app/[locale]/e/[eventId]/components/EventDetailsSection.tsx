@@ -4,7 +4,10 @@ const GlobeIcon = GlobeAltIcon;
 import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { Link } from "@i18n/routing";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getProfileDisplayName } from "@utils/profile-name";
+import { formatNamePrepositionParts } from "@utils/string-helpers";
+import type { AppLocale } from "types/i18n";
 import EventOwnerActions from "./EventOwnerActions";
 
 /**
@@ -20,6 +23,10 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const eventUrl = event.url ?? "";
   const hasValidUrl = /^https?:\/\//i.test(eventUrl);
   const owner = event.owner;
+  const locale = useLocale() as AppLocale;
+  const ownerBy = owner
+    ? formatNamePrepositionParts(getProfileDisplayName(owner), locale, "by")
+    : null;
 
   // Only render if there's something to show
   if (!event.duration && !hasValidUrl && !owner) return null;
@@ -69,10 +76,8 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
               <UserIcon className="w-4 h-4" />
               <span>
                 {t.rich("createdBy", {
-                  name:
-                    owner.displayName ??
-                    owner.username ??
-                    "",
+                  by: ownerBy?.preposition ?? "",
+                  name: ownerBy?.place ?? "",
                   link: (chunks) =>
                     owner.username ? (
                       <Link

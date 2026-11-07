@@ -1,8 +1,10 @@
 import { siteUrl } from "@config/index";
 import { normalizeEndTime } from "@utils/date-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
-import { getProfileSlug } from "@utils/user-helpers";
+import { getProfileSlug, isVerifiedOrganization } from "@utils/user-helpers";
+import { getProfileDisplayName } from "@utils/profile-name";
 import { getEventPriceText, parseSchemaPrice } from "@utils/event-price";
+import { formatCatalanA } from "@utils/string-helpers";
 import { TIMEZONE_MADRID } from "@utils/constants";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
@@ -113,9 +115,9 @@ const buildOrganizer = (
   locale: AppLocale
 ): SchemaOrganizer | undefined => {
   const owner = "owner" in event ? event.owner : null;
-  if (!owner?.verified || owner.role !== "ORGANIZATION") return undefined;
+  if (!owner || !isVerifiedOrganization(owner)) return undefined;
   const slug = getProfileSlug(owner);
-  const name = owner.displayName?.trim() || owner.username?.trim();
+  const name = getProfileDisplayName(owner);
   if (!slug || !name) return undefined;
   return {
     "@type": "Organization",
@@ -167,6 +169,8 @@ export const generateJsonData = (
   const regionName = sanitizeText(region?.name);
   const fallbackPlace =
     cityName || regionName || sanitizedLocation || "Catalunya";
+  // The fallback copy is Catalan, so contract an article in the name ("al Masnou").
+  const fallbackPlaceIn = formatCatalanA(fallbackPlace, "general", false);
 
   if (!cityName && !regionName && !sanitizedLocation) {
     logSchemaWarning(slug, "address", "missing location context");
@@ -199,7 +203,7 @@ export const generateJsonData = (
   }
   const descriptionValue =
     sanitizedDescription ||
-    `${trimmedTitle || "Esdeveniment cultural"} a ${fallbackPlace}`;
+    `${trimmedTitle || "Esdeveniment cultural"} ${fallbackPlaceIn}`;
 
   const startDateWithTime = buildDateTime(startDate, startTime);
   const resolvedStartDate =
@@ -272,7 +276,7 @@ export const generateJsonData = (
   // values — emitting them suppresses Google Event rich results. Past events
   // are filtered by Google's freshness policy regardless of this field.
 
-  const schemaName = trimmedTitle || `Esdeveniment a ${fallbackPlace}`.trim();
+  const schemaName = trimmedTitle || `Esdeveniment ${fallbackPlaceIn}`.trim();
   const organizer = buildOrganizer(event, localeToUse);
   const placeName = sanitizedLocation || addressLocality || fallbackPlace;
 

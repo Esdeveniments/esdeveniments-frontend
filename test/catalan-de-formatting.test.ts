@@ -122,12 +122,12 @@ describe("formatCatalanDe with article support", () => {
     });
 
     it("should handle towns with embedded article L' (EDGE CASE FIX)", () => {
-      // Towns that already have "L'" should use "de" not "d'" to avoid double contraction
+      // Towns that already have "L'" use "de l'" (article lowercased mid-sentence)
       expect(
         formatCatalanDe("L'Hospitalet de Llobregat", false, true, "town")
-      ).toBe("de L'Hospitalet de Llobregat");
+      ).toBe("de l'Hospitalet de Llobregat");
       expect(formatCatalanDe("L'Escala", false, true, "town")).toBe(
-        "de L'Escala"
+        "de l'Escala"
       );
       expect(formatCatalanDe("l'escala", true, false, "town")).toBe(
         "de l'escala"

@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
@@ -19,9 +20,12 @@ export async function FeaturedPlaceSection({
     usePriority: boolean;
   };
 }) {
-  const t = await getTranslations("Components.FeaturedPlaceSection");
-  const tDateFilters = await getTranslations("Components.DateFilterBadges");
-  const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
+  const locale = await getLocaleSafely();
+  const [t, tDateFilters] = await Promise.all([
+    getTranslations({ locale, namespace: "Components.FeaturedPlaceSection" }),
+    getTranslations({ locale, namespace: "Components.DateFilterBadges" }),
+  ]);
+  const badgeLabels = createDateFilterBadgeLabels(tDateFilters, locale);
   return (
     <section className="py-section-y border-b">
       <div className="flex-between gap-element-gap">
@@ -44,7 +48,8 @@ export async function FeaturedPlaceSection({
 
       <DateFilterBadges
         placeSlug={section.placeSlug}
-        contextName={section.title}
+        contextName={section.placeLabel}
+        placeType={section.filter.city ? "town" : section.filter.region ? "region" : ""}
         ariaLabel={t("aria", { title: section.title })}
         labels={badgeLabels}
       />

@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
 import type { NewsListProps } from "types/props";
+import type { PlaceRelation } from "types/common";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import NewsCard from "@components/ui/newsCard";
@@ -10,12 +11,14 @@ import NewsCitiesSection from "@components/noticies/NewsCitiesSection";
 import NewsPagination from "@components/noticies/NewsPagination";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { resolveNewsItemPlace } from "@utils/news-helpers";
+import { formatPlacePreposition } from "@utils/string-helpers";
 
 export default async function NewsList({
   newsPromise,
   citiesPromise,
   place,
   placeLabel,
+  placeType = "",
   page,
   basePath,
 }: NewsListProps) {
@@ -33,8 +36,10 @@ export default async function NewsList({
   const fallbackPlace = place ?? "catalunya";
   // The article's own city/region is its canonical place; any other place
   // redirects.
-  const placeOf = (item: NewsSummaryResponseDTO) =>
+  const itemPlace = (item: NewsSummaryResponseDTO) =>
     resolveNewsItemPlace(item, fallbackPlace, placeLabel);
+  const placePhrase = (relation: PlaceRelation) =>
+    formatPlacePreposition(placeLabel, placeType, locale, false, relation);
   const items = response.content;
   const [featured, ...rest] = items;
 
@@ -45,7 +50,7 @@ export default async function NewsList({
       page > 1
         ? { title: t("emptyPageTitle"), body: null, href: basePath, cta: t("firstPage") }
         : place
-          ? { title: t("emptyTitle"), body: t("emptyBody", { place: placeLabel }), href: "/noticies", cta: t("viewAll") }
+          ? { title: t("emptyTitle"), body: t("emptyBody", { placeIn: placePhrase("in") }), href: "/noticies", cta: t("viewAll") }
           : { title: t("emptyTitle"), body: t("emptyBodyIndex"), href: "/catalunya", cta: t("viewAgenda") };
 
     return (
@@ -65,13 +70,13 @@ export default async function NewsList({
   }
 
   const itemUrl = (item: NewsSummaryResponseDTO) =>
-    toLocalizedUrl(`/noticies/${placeOf(item).slug}/${item.slug}`, locale);
-  const featuredPlace = placeOf(featured);
+    toLocalizedUrl(`/noticies/${itemPlace(item).slug}/${item.slug}`, locale);
+  const featuredPlace = itemPlace(featured);
   const newsItemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     "@id": `${toLocalizedUrl(basePath, locale)}#news-itemlist`,
-    name: t("itemListName", { place: placeLabel }),
+    name: t("itemListName", { placeOf: placePhrase("of") }),
     numberOfItems: items.length,
     itemListElement: items.map((item, index) => ({
       "@type": "ListItem",

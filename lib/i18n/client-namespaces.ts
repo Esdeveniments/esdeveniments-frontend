@@ -34,7 +34,6 @@ export const CLIENT_COMPONENT_KEYS = [
   "HybridEventsListClient",
   "ImageUploader",
   "LoadMoreButton",
-  "LocationDiscovery",
   "Modal",
   "MultiSelect",
   "Navbar",

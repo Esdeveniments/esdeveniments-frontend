@@ -142,6 +142,13 @@ describe("generateJsonData", () => {
     });
   });
 
+  it("adds the missing de to a council organizer name", () => {
+    expect(
+      generateJsonData(withOwner({ displayName: "Ajuntament El Masnou" }))
+        .organizer?.name
+    ).toBe("Ajuntament del Masnou");
+  });
+
   it.each([
     ["unverified organization", { verified: false }],
     ["verified admin", { role: "ADMIN" as const }],

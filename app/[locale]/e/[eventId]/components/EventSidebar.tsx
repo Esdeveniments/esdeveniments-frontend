@@ -8,6 +8,7 @@ import EventCalendar from "./EventCalendar";
 import EventLocation from "./EventLocation";
 import Weather from "components/ui/weather";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { getProfileDisplayName } from "@utils/profile-name";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { getProfileSlug } from "@utils/user-helpers";
@@ -116,7 +117,7 @@ export default async function EventSidebar({
                   </h3>
                   <span className="inline-flex items-center gap-1.5 body-small font-semibold text-foreground-strong">
                     <UserIcon className="w-4 h-4 flex-shrink-0" />
-                    {event.owner.displayName ?? event.owner.username ?? ""}
+                    {getProfileDisplayName(event.owner)}
                   </span>
                   <Link
                     href={`/perfil/${encodeURIComponent(creatorSlug)}`}

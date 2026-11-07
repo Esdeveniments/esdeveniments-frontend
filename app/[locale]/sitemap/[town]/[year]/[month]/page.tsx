@@ -1,13 +1,11 @@
 // No headers/nonce needed with relaxed CSP
 import JsonLdServer from "@components/partials/JsonLdServer";
-import {
-  getFormattedDate,
-  formatPlacePreposition,
-} from "@utils/helpers";
+import { getFormattedDate } from "@utils/helpers";
+import { formatPlacePhrases } from "@utils/string-helpers";
+import { getPlaceTypeAndLabelCached } from "@utils/location-helpers";
 import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
-import { getPlaceBySlug } from "@lib/api/places";
 import {
   getHistoricDates,
   normalizeMonthParam,
@@ -89,19 +87,10 @@ export async function generateMetadata({
   const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
   const monthLabel =
     monthLabels[monthIndex] || normalizeMonthParam(canonicalMonthSlug).label;
-  // Tolerate backend 5xx for place lookup (cosmetic; town slug is an acceptable
-  // fallback). Prevents archive 500s from intermittent backend errors — the
-  // main 5xx source per GSC on /sitemap/<town>/<year>/<month>.
-  const place = await getPlaceBySlug(town).catch(() => null);
-  const townLabel = place?.name || town;
-  const placeType: "region" | "town" =
-    place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatPlacePreposition(
-    townLabel,
-    placeType,
-    locale,
-    false
-  );
+  // Never throws: a backend error falls back to a label built from the slug,
+  // so intermittent errors don't 500 the archive (main GSC 5xx source here).
+  const { type, label } = await getPlaceTypeAndLabelCached(town);
+  const { placeIn, placeOf } = formatPlacePhrases(label, type, locale);
 
   // Probe events to set robots policy: noindex empty months so GSC stops
   // flagging them as soft 404 / "Crawled - currently not indexed". Uses the
@@ -121,13 +110,8 @@ export async function generateMetadata({
   const robotsOverride = realEventCount === 0 ? "noindex, follow" : undefined;
 
   return buildPageMeta({
-    title: t("metaTitle", { town: townLabel, month: monthLabel, year }),
-    description: t("metaDescription", {
-      locationPhrase,
-      month: monthLabel,
-      year,
-      town: townLabel,
-    }),
+    title: t("metaTitle", { placeOf, month: monthLabel, year }),
+    description: t("metaDescription", { placeIn, month: monthLabel, year }),
     canonical: `${siteUrl}/sitemap/${town}/${year}/${canonicalMonthSlug}`,
     locale,
     robotsOverride,
@@ -184,17 +168,10 @@ export default async function Page({
   const toStr = until.toISOString().split("T")[0];
   const [events, place] = await Promise.all([
     fetchMonthEvents(town, fromStr, toStr),
-    getPlaceBySlug(town).catch(() => null),
+    getPlaceTypeAndLabelCached(town),
   ]);
-  const townLabel = place?.name || town;
-  const placeType: "region" | "town" =
-    place?.type === "CITY" ? "town" : "region";
-  const locationPhrase = formatPlacePreposition(
-    townLabel,
-    placeType,
-    locale,
-    false
-  );
+  const townLabel = place.label;
+  const { placeIn, placeOf } = formatPlacePhrases(townLabel, place.type, locale);
 
   const filteredEvents = Array.isArray(events.content)
     ? (events.content as EventSummaryResponseDTO[]).filter(
@@ -222,8 +199,8 @@ export default async function Page({
     eventsForJsonLd.length > 0
       ? generateItemListStructuredData(
         eventsForJsonLd,
-        t("itemListTitle", { town: townLabel, month: monthLabel, year }),
-        t("itemListDescription", { town: townLabel, month: monthLabel, year }),
+        t("itemListTitle", { placeIn, month: monthLabel, year }),
+        t("itemListDescription", { placeIn, month: monthLabel, year }),
         locale,
         toLocalizedUrl(`/sitemap/${town}/${year}/${canonicalMonthSlug}`, locale)
       )
@@ -231,9 +208,9 @@ export default async function Page({
 
   // Generate collection page schema
   const collectionPageSchema = generateCollectionPageSchema({
-    title: t("collectionTitle", { town: townLabel, month: monthLabel, year }),
+    title: t("collectionTitle", { placeOf, month: monthLabel, year }),
     description: t("collectionDescription", {
-      locationPhrase,
+      placeIn,
       month: monthLabel,
       year,
     }),
@@ -247,7 +224,7 @@ export default async function Page({
       ? { "@id": eventsItemList["@id"] }
       : {
           "@type": "Thing",
-          name: t("itemListTitle", { town: townLabel, month: monthLabel, year }),
+          name: t("itemListTitle", { placeIn, month: monthLabel, year }),
           description: t("collectionFallbackDescription"),
         },
   });
@@ -273,7 +250,7 @@ export default async function Page({
 
         <header className="text-center">
           <h1 className="heading-2 mb-2">
-            {t("headerTitle", { town: townLabel, month: monthLabel, year })}
+            {t("headerTitle", { placeOf, month: monthLabel, year })}
           </h1>
           <p className="body-normal text-foreground/80">
             {filteredEvents.length > 0
@@ -344,7 +321,7 @@ export default async function Page({
         {filteredEvents.length > 0 && (
           <footer className="pt-8 border-t border-border text-center">
             <p className="body-small text-foreground/80 mb-4">
-              {t("footerExplore", { town: townLabel })}
+              {t("footerExplore", { placeIn })}
             </p>
             <div className="flex-center gap-4">
               <PressableAnchor

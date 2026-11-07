@@ -21,6 +21,8 @@ const DateRangeCalendar = dynamic(
   { ssr: false, loading: () => <div className="h-[220px] w-full animate-pulse bg-muted/30 rounded-card" /> },
 );
 import { generateRegionsAndTownsOptions } from "@utils/helpers";
+import { formatPlacePreposition } from "@utils/string-helpers";
+import type { AppLocale } from "types/i18n";
 import { sendGoogleEvent } from "@utils/analytics";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import type { Option, PlaceType } from "types/common";
@@ -579,10 +581,18 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       return t("distance.label");
     }
     if (selectedOption && localPlaceCoords) {
-      return t("distance.labelFromPlace", { place: selectedOption.label });
+      return t("distance.labelFromPlace", {
+        placeFrom: formatPlacePreposition(
+          selectedOption.label,
+          selectedOption.placeType ?? "town",
+          locale as AppLocale,
+          false,
+          "from"
+        ),
+      });
     }
     return t("distance.labelFromLocation");
-  }, [selectedOption, localPlaceCoords, isRegionSelected, t]);
+  }, [selectedOption, localPlaceCoords, isRegionSelected, locale, t]);
 
   // Helper text explaining the distance filter behavior
   const distanceHelperText = useMemo(() => {

@@ -183,6 +183,20 @@ describe("DateFilterBadges", () => {
       );
     });
 
+    it("contracts the place article in aria labels", () => {
+      renderComponent({
+        placeSlug: "el-masnou",
+        contextName: "El Masnou",
+        placeType: "town",
+      });
+
+      const badges = screen.getAllByTestId("date-filter-badge");
+      expect(badges[0]).toHaveAttribute(
+        "aria-label",
+        "Veure activitats d'avui al Masnou"
+      );
+    });
+
     it("generates correct aria labels for category context", () => {
       const categories: CategorySummaryResponseDTO[] = [
         { id: 1, name: "Teatre", slug: "teatre" },

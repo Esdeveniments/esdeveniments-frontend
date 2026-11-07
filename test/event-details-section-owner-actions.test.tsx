@@ -14,6 +14,7 @@ vi.mock("next-intl", () => ({
     t.rich = (key: string) => key;
     return t;
   },
+  useLocale: () => "ca",
 }));
 
 vi.mock("@i18n/routing", () => ({

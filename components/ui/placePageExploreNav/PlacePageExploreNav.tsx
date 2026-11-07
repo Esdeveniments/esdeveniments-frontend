@@ -6,6 +6,8 @@ import {
 } from "@components/ui/serverEventsCategorized/DateFilterBadges";
 import CategoryQuicklinks from "./CategoryQuicklinks";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { getCategoryLabel } from "@utils/category-helpers";
+import { formatPlacePreposition } from "@utils/string-helpers";
 import type { PlacePageExploreNavProps } from "types/props";
 
 /**
@@ -27,6 +29,7 @@ export default async function PlacePageExploreNav({
   category,
   categories = [],
   placeLabel,
+  placeType = "",
   expandable = true,
 }: PlacePageExploreNavProps) {
   // When a place lacks event depth (sitemap excludes its /[date] and /[category]
@@ -42,10 +45,10 @@ export default async function PlacePageExploreNav({
     locale,
     namespace: "Components.PlacePageExploreNav",
   });
-  const tDateFilters = await getTranslations({
-    locale,
-    namespace: "Components.DateFilterBadges",
-  });
+  const [tDateFilters, tCategories] = await Promise.all([
+    getTranslations({ locale, namespace: "Components.DateFilterBadges" }),
+    getTranslations({ locale, namespace: "Config.Categories" }),
+  ]);
 
   // Determine what to show based on current filter state
   const hasDate = !!date && date !== DEFAULT_FILTER_VALUE;
@@ -62,7 +65,15 @@ export default async function PlacePageExploreNav({
   }
 
   // Prepare date filter badge labels
-  const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
+  const badgeLabels = createDateFilterBadgeLabels(tDateFilters, locale);
+  const selectedCategory = hasCategory
+    ? categories.find((c) => c.slug === category)
+    : undefined;
+  // Date badges keep the selected category, so their aria label names it.
+  const badgeContextName =
+    hasCategory && category
+      ? getCategoryLabel(category, selectedCategory?.name ?? category, tCategories)
+      : placeLabel;
 
   return (
     <section
@@ -79,7 +90,8 @@ export default async function PlacePageExploreNav({
             placeSlug={place}
             categorySlug={hasCategory ? category : undefined}
             categories={categories}
-            contextName={placeLabel}
+            contextName={badgeContextName}
+            placeType={placeType}
             ariaLabel={t("dateAriaLabel")}
             labels={badgeLabels}
           />
@@ -93,7 +105,7 @@ export default async function PlacePageExploreNav({
           date={hasDate ? date : undefined}
           currentCategory={hasCategory ? category : undefined}
           categories={categories}
-          placeLabel={placeLabel}
+          placeIn={formatPlacePreposition(placeLabel, placeType, locale, false)}
         />
       )}
     </section>

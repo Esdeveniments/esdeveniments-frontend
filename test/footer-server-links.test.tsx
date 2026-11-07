@@ -7,6 +7,7 @@ import Footer from "components/ui/common/footer";
 import { Link } from "@i18n/routing";
 import ActiveLink from "@components/ui/common/link";
 import PressableAnchorClient from "@components/ui/primitives/PressableAnchorClient";
+import { buildTopAgendaLinks } from "@config/top-agenda-links";
 
 function collectByHref(node: unknown): ReactElement[] {
   const found: ReactElement[] = [];
@@ -41,6 +42,24 @@ describe("Footer", () => {
         "data-pressable-link": "inline",
       });
     }
+  });
+
+  it("contracts the article in the featured agenda labels", async () => {
+    const masnou = collectByHref(await Footer()).find(
+      (el) => (el.props as { href: string }).href === "/el-masnou",
+    );
+    expect(masnou?.props).toMatchObject({ children: "Agenda del Masnou" });
+  });
+
+  it("keeps the bare town name for the home chips", () => {
+    const masnou = buildTopAgendaLinks((placeOf) => `Agenda ${placeOf}`, "ca").find(
+      (link) => link.href === "/el-masnou"
+    );
+    expect(masnou).toEqual({
+      href: "/el-masnou",
+      shortLabel: "El Masnou",
+      label: "Agenda del Masnou",
+    });
   });
 
   it("keeps the analytics hook on the login link", async () => {

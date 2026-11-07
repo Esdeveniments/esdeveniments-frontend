@@ -30,6 +30,7 @@ import EventCategories from "./components/EventCategories";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import {
   buildEventIntroText,
+  formatCatalanA,
   formatPlaceName,
 } from "@utils/helpers";
 import {
@@ -356,7 +357,9 @@ async function EventPageBody({
   // Ensure breadcrumb name is never empty (required by Google structured data)
   const breadcrumbName = (() => {
     if (title) return title;
-    if (placeLabel) return `Esdeveniment a ${placeLabel}`;
+    if (placeLabel) {
+      return `Esdeveniment ${formatCatalanA(placeLabel, "general", false)}`;
+    }
     return "Esdeveniment";
   })();
 

@@ -35,6 +35,13 @@ export interface UserPublicResponseDTO {
   createdAt?: string; // ISO date-time
 }
 
+/** Fields any profile shape (public profile, event owner) carries for its on-screen name. */
+export interface ProfileNameSource {
+  displayName?: string | null;
+  name?: string | null;
+  username?: string | null;
+}
+
 /** Minimal user shape needed to build a public profile slug. */
 export interface ProfileSlugUser {
   id: string;

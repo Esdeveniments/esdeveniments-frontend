@@ -1,7 +1,9 @@
 import type { PastEventBannerProps } from "types/common";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import type { AppLocale } from "types/i18n";
+import { formatPlacePreposition } from "@utils/string-helpers";
 
 export default function PastEventBanner({
   temporalStatus,
@@ -12,7 +14,14 @@ export default function PastEventBanner({
   primaryCategorySlug,
 }: PastEventBannerProps) {
   const t = useTranslations("Components.PastEventBanner");
+  const locale = useLocale() as AppLocale;
   const placeLabel = cityName || regionName || "Catalunya";
+  const placeIn = formatPlacePreposition(
+    placeLabel,
+    cityName ? "town" : regionName ? "region" : "general",
+    locale,
+    false
+  );
   const timeWindow = t("timeWindow");
 
   return (
@@ -33,7 +42,7 @@ export default function PastEventBanner({
                 {t("title")}
               </h3>
               <p className="body-small text-muted-foreground leading-snug">
-                {t("subtitle", { timeWindow, placeLabel })}
+                {t("subtitle", { timeWindow, placeIn })}
               </p>
               {/* Hidden readable state for screen readers */}
               <span className="sr-only">

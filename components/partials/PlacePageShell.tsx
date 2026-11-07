@@ -377,6 +377,7 @@ async function PlacePageContent({
           category={category}
           categories={categories}
           placeLabel={placeTypeLabel.label || place}
+          placeType={placeTypeLabel.type}
           expandable={placeIsExpandable}
         />
       </Suspense>

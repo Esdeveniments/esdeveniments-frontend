@@ -5,6 +5,7 @@ import AvatarInitials from "@components/ui/common/AvatarInitials";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { parseBackendDateAsUtcMs } from "@utils/date-helpers";
+import { getProfileDisplayName } from "@utils/profile-name";
 import type { AppLocale } from "types/i18n";
 import type { ProfileHeaderProps } from "types/props";
 
@@ -31,10 +32,8 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
     ? formatJoinedDate(profile.createdAt, locale)
     : "";
 
-  // 2026-07-25 backend moved to `displayName`/`avatarUrl`. Legacy fields
-  // come from older backend instances during the cut-over window.
-  const displayName =
-    profile.displayName?.trim() || profile.name?.trim() || profile.username;
+  // Legacy `pictureUrl` comes from older backend instances.
+  const displayName = getProfileDisplayName(profile);
   const avatarSrc = profile.avatarUrl || profile.pictureUrl;
 
   // Cap runs of blank lines before rendering with whitespace-pre-line: the
