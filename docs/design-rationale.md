@@ -319,14 +319,14 @@ Every field from `EventSummaryResponseDTO` and its card usage:
 | Field                 | Standard           | Carousel           | Compact          | Notes                                     |
 | --------------------- | ------------------ | ------------------ | ---------------- | ----------------------------------------- |
 | `imageUrl`            | ✅ 3:2             | ✅ 3:2             | ✅ 4:3           | `object-cover` on all                     |
-| `title`               | ✅ truncate(75)    | ✅ truncate(60)    | ✅ truncate(50)  | `line-clamp-2` CSS does visual truncation |
-| `startDate`/`endDate` | ✅ abbreviated     | ✅ abbreviated     | ✅ abbreviated   | `formatCardDate()`                        |
+| `title`               | ✅ full            | ✅ full            | ✅ full          | No JS truncation; `line-clamp-2` (3 on `featured`/`row`); two lines reserved on Standard and Carousel |
+| `startDate`/`endDate` | ✅ abbreviated     | ✅ abbreviated     | ✅ abbreviated   | `formatCardDate()`; a running multi-day event shows `Fins al …` (Standard, Carousel) |
 | `startTime`/`endTime` | ✅ if real time    | ✅ if real time    | ✅ if real time  | Suppresses "00:00" / null                 |
-| `categories[0]`       | ✅ frosted badge   | ✅ smaller badge   | ❌ omitted       | Localized via config                      |
-| `location`            | ❌ not on cards    | ❌ not on cards    | ❌ not on cards  | Venue belongs on detail page              |
+| `categories[0]`       | ✅ pill above date | ✅ pill above date | ❌ omitted       | 12px semibold, `getCategoryLabel`         |
+| `location`            | ❌ not on cards    | ❌ not on cards    | ❌ not on cards  | Venue belongs on detail page, except the news article `row` cards (venue + city) |
 | `city.name`           | ✅ primary label   | ✅ primary label   | ✅ primary label | Via `buildEventPlaceLabels`               |
 | `region.name`         | ✅ secondary label | ✅ secondary label | ❌ omitted       | Combined: "City, Region"                  |
-| `visits`              | ✅ compact counter | ✅ compact counter | ❌ omitted       | Reduced `min-w` in `hideText` mode        |
+| `visits`              | ❌ not shown       | ❌ not shown       | ❌ not shown     | See "No view counter on cards"            |
 | `slug`                | ✅ link + favorite | ✅ link + favorite | ✅ link only     | —                                         |
 | `type`                | ❌ not shown       | ❌ not shown       | ❌ not shown     | Data quality concern (defaults to FREE)   |
 | `weather`             | ❌ not on cards    | ❌ not on cards    | ❌ not on cards  | Detail page only                          |
