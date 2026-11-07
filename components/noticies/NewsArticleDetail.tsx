@@ -6,9 +6,8 @@ import { generateWebPageSchema } from "@components/partials/seo-meta";
 import AdArticle from "@components/ui/adArticle";
 import NewsEventsSection from "@components/noticies/NewsEventsSection";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import List from "@components/ui/list";
 import CategoryBadge from "@components/ui/common/cardContent/CategoryBadge";
-import NewsCard from "@components/ui/newsCard";
+import NewsCardGrid from "@components/noticies/NewsCardGrid";
 import NewsShareButtons from "@components/noticies/NewsShareButtons";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import PwaBackButton from "@components/ui/common/PwaBackButton";
@@ -19,7 +18,6 @@ import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
-import { resolveNewsItemPlace } from "@utils/news-helpers";
 import {
   buildNewsArticleSchema,
   buildNewsEventsItemListSchema,
@@ -175,19 +173,7 @@ export default async function NewsArticleDetail({
           {relatedNews.length > 0 && (
             <section className="stack">
               <SectionHeading title={t("relatedArticles")} titleClassName="heading-2 text-foreground-strong" />
-              <List events={relatedNews}>
-                {(item) => {
-                  const itemPlace = resolveNewsItemPlace(item, place, placeType.label);
-                  return (
-                    <NewsCard
-                      key={item.id}
-                      event={item}
-                      placeSlug={itemPlace.slug}
-                      placeLabel={itemPlace.label}
-                    />
-                  );
-                }}
-              </List>
+              <NewsCardGrid items={relatedNews} place={place} placeLabel={placeType.label} />
             </section>
           )}
         </article>

@@ -187,6 +187,8 @@ async function EventPageContent({
             placeLabel={placeLabel}
             placeType={placeType}
             newsHref={newsHref}
+            sourceEventId={event.id ? String(event.id) : undefined}
+            sourceEventSlug={event.slug || slug}
           />
         </Suspense>
       }

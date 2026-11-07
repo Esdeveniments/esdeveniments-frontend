@@ -1,9 +1,10 @@
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
 import type { NewsListProps } from "types/props";
+import type { NewsSummaryResponseDTO } from "types/api/news";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import NewsCard from "@components/ui/newsCard";
-import List from "@components/ui/list";
+import NewsCardGrid from "@components/noticies/NewsCardGrid";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import NewsCitiesSection from "@components/noticies/NewsCitiesSection";
 import NewsPagination from "@components/noticies/NewsPagination";
@@ -29,11 +30,12 @@ export default async function NewsList({
   ]);
   const t = await getTranslations({ locale, namespace: "Components.NewsList" });
   const cities = Array.isArray(citiesResponse.content) ? citiesResponse.content : [];
-  // Link each article to its own city/region so it doesn't 301 on click.
-  const items = response.content.map((item) => ({
-    ...item,
-    place: resolveNewsItemPlace(item, place ?? "catalunya", placeLabel),
-  }));
+  const fallbackPlace = place ?? "catalunya";
+  // The article's own city/region is its canonical place; any other place
+  // redirects.
+  const placeOf = (item: NewsSummaryResponseDTO) =>
+    resolveNewsItemPlace(item, fallbackPlace, placeLabel);
+  const items = response.content;
   const [featured, ...rest] = items;
 
   const chips = <NewsCitiesSection cities={cities} currentPlace={place} />;
@@ -62,8 +64,9 @@ export default async function NewsList({
     );
   }
 
-  const itemUrl = (item: (typeof items)[number]) =>
-    toLocalizedUrl(`/noticies/${item.place.slug}/${item.slug}`, locale);
+  const itemUrl = (item: NewsSummaryResponseDTO) =>
+    toLocalizedUrl(`/noticies/${placeOf(item).slug}/${item.slug}`, locale);
+  const featuredPlace = placeOf(featured);
   const newsItemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -91,17 +94,13 @@ export default async function NewsList({
       <div className="flex flex-col gap-5">
         <NewsCard
           event={featured}
-          placeSlug={featured.place.slug}
-          placeLabel={featured.place.label}
+          placeSlug={featuredPlace.slug}
+          placeLabel={featuredPlace.label}
           variant="featured"
           priority
         />
         {rest.length > 0 && (
-          <List events={rest}>
-            {(item) => (
-              <NewsCard event={item} placeSlug={item.place.slug} placeLabel={item.place.label} />
-            )}
-          </List>
+          <NewsCardGrid items={rest} place={fallbackPlace} placeLabel={placeLabel} />
         )}
         <NewsPagination basePath={basePath} page={page} totalPages={response.totalPages} />
       </div>

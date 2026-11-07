@@ -1028,7 +1028,9 @@
       "profileLink": "Profile of {name}"
     },
     "EventCalendar": {
-      "title": "Date and time"
+      "title": "Date and time",
+      "priceLabel": "Price:",
+      "priceFree": "Free"
     },
     "Select": {
       "placeholder": "an option",

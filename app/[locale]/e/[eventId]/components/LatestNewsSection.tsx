@@ -1,13 +1,12 @@
 import { getTranslations } from "next-intl/server";
 import { connection } from "next/server";
 import { fetchNews } from "@lib/api/news";
-import NewsCard from "@components/ui/newsCard";
+import NewsCardGrid from "@components/noticies/NewsCardGrid";
 import { formatPlacePreposition } from "@utils/helpers";
 import type { LatestNewsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { NEWS_FRESHNESS_DAYS, SEE_ALL_LINK_CLASS } from "@utils/constants";
-import List from "@components/ui/list";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
 export default async function LatestNewsSection({
@@ -15,6 +14,8 @@ export default async function LatestNewsSection({
   placeLabel,
   placeType,
   newsHref,
+  sourceEventId,
+  sourceEventSlug,
 }: LatestNewsSectionProps) {
   // Opt out of cacheComponents caching: this component renders a variable-shape
   // tree (early `return null`, freshness-dependent title) driven by `new Date()`
@@ -49,7 +50,13 @@ export default async function LatestNewsSection({
 
   return (
     <div className="w-full bg-background pb-8">
-      <section className="container w-full stack">
+      <section
+        className="container w-full stack"
+        data-analytics-container="true"
+        data-analytics-context="event_news"
+        data-analytics-source-event-id={sourceEventId}
+        data-analytics-source-event-slug={sourceEventSlug}
+      >
         <div className="flex-between gap-element-gap">
           <h2 className="heading-2">{title}</h2>
           <PressableAnchor
@@ -61,16 +68,7 @@ export default async function LatestNewsSection({
             {t("viewAll")} <ChevronRightIcon className="w-5 h-5" />
           </PressableAnchor>
         </div>
-        <List events={latestNews}>
-          {(newsItem) => (
-            <NewsCard
-              key={newsItem.id}
-              event={newsItem}
-              placeSlug={placeSlug}
-              placeLabel={placeLabel}
-            />
-          )}
-        </List>
+        <NewsCardGrid items={latestNews} place={placeSlug} placeLabel={placeLabel} />
       </section>
     </div>
   );
