@@ -1,3 +1,5 @@
+import { normalizeForSearch } from "@utils/string-helpers";
+
 // `price` is short free text written by the scraper AI ("Gratuït",
 // "10 €", "10 € taquilla · 5 € online") or null when unknown.
 
@@ -28,10 +30,7 @@ export function getEventPriceText(price: string | null | undefined): string | nu
 
 /** True only when the whole text says "free" and nothing else. */
 export function isFreePriceText(text: string): boolean {
-  const normalized = text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
+  const normalized = normalizeForSearch(text)
     .replace(/[.!]+$/, "")
     .replace(/\s+/g, " ")
     .trim();
