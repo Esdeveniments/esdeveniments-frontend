@@ -402,6 +402,8 @@ export const formatEventTimeDisplayDetail = (
 /**
  * Format a date for card display: abbreviated weekday + day + abbreviated month.
  * Omits year when the event is in the current year.
+ * Multi-day events also return the end date alone (`endLabel`, `endDay`) for
+ * "Until …" labels.
  * Examples:
  *   ca: "Ds. 28 feb." | "Ds. 28 feb. 2027"
  *   en: "Sat, Feb 28" | "Sat, Feb 28, 2027"
@@ -411,7 +413,7 @@ export const formatCardDate = (
   start: string,
   end?: string,
   locale: AppLocale = DEFAULT_LOCALE,
-): { cardDate: string; isMultiDay: boolean } => {
+): { cardDate: string; isMultiDay: boolean; endLabel?: string; endDay?: number } => {
   const shortDays = getShortDayNames(locale);
   const shortMonths = getShortMonthNames(locale);
 
@@ -480,6 +482,8 @@ export const formatCardDate = (
   return {
     cardDate: `${startPart} – ${endPart}`,
     isMultiDay: true,
+    endLabel: endPart,
+    endDay,
   };
 };
 

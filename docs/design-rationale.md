@@ -43,7 +43,7 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 | Variant                 | Component                                 | Used In                        | Image Ratio |
 | ----------------------- | ----------------------------------------- | ------------------------------ | ----------- |
 | Standard (listing grid) | `CardContentServer` / `CardContentClient` | `/[place]` listing pages       | 3:2         |
-| Horizontal (carousel)   | `CardHorizontalServer`                    | Homepage categorized sections  | 3:2         |
+| Horizontal (carousel)   | `CardContentServer compact`               | Homepage categorized sections  | 3:2         |
 | Compact (related)       | `CompactCard`                             | Related events on detail pages | 4:3         |
 
 ### 2.2 Decisions Made (with rationale)
@@ -60,17 +60,17 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 **Why**: 16:9 is too short for portrait-oriented event posters. 1:1 wastes horizontal space. 2:1 (Eventbrite) was tried but was too wide for a 2-col grid. 3:2 balances visual impact with space efficiency.
 **Previous state**: Variable heights with `object-contain` — caused layout instability and unpredictable scrolling.
 
-#### 2-column grid (not 3, not 1)
+#### 1/2/3-column grid (3 only at `xl`)
 
-**Decision**: `grid-cols-1 md:grid-cols-2` on listing pages.
+**Decision**: `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` (`gap-5`) on listing pages.
 **Why**: This is a cultural events discovery site with wildly diverse imagery (jazz posters vs. school open days vs. festival flyers). Larger images improve visual assessment. 3 columns were tested but made images too small for visual scanning. Eventbrite uses 4-col because their content is visually homogeneous (professional event photos). Our content is not.
-**Note**: 3 columns on `xl:` screens (≥1280px) was considered as a future improvement — see §7.
+**Note**: The 3 columns rejected above started at `lg` (1024px, `4f23479`). At `xl` (≥1280px) a third column keeps each card about as wide as a 2-column card at `md` (328px at 1280px vs 366px at 768px, measured on `/barcelona`), so images stay large enough to scan. First listed as a future improvement in §7.
 
-#### Contained cards (border + shadow + rounded corners)
+#### Contained cards (border + rounded corners, no shadow)
 
-**Decision**: Cards use `card-bordered` / `shadow-sm` with `rounded-card` (12px).
+**Decision**: Cards use a hairline border (`border-border/20`, `border-border/40` on hover) with `rounded-card` (12px) and no shadow.
 **Why**: Production had no card containment — images/titles/metadata floated in open space separated only by whitespace. This made it hard to parse where one card ended and the next began. All competitors use contained card surfaces.
-**Design system**: Uses existing `card-bordered`, `rounded-card`, `shadow-card` tokens.
+**Design system**: `rounded-card`, `border-border`; the `.card-event*` classes in `styles/globals.css` add the link, focus, hover and press rules.
 
 #### Share buttons removed from cards
 
@@ -99,20 +99,34 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 **Decision**: Compact related-event cards use `text-muted-foreground` for dates, not `text-primary`.
 **Why**: On a related-events section (user is already on a detail page), the title should be the visual anchor, not the date. Red dates on compact cards made dates more dominant than titles, which inverts the information hierarchy.
 
-#### Category badge on image (frosted glass)
+#### Card text stays together; spare height at the bottom
 
-**Decision**: Text badge overlay at top-left of image with `bg-background/90 backdrop-blur-sm`.
+**Decision**: Category, date, title and location sit together under the image. Cards in a grid row keep the same height (they have borders), and a shorter card's spare height goes below the location, not between the title and the location.
+**Why**: With the location pinned to the bottom, a one-line title without a category left 55px between the title and its location, while the date sat 4px above the title: the location read as a separate group (NN/g, "Proximity Principle in Visual Design": far-away elements appear unrelated and are easily overlooked). The location answers "is this near me?", so it shouldn't drift away. The cost is that locations no longer line up across a row.
+**Competitors (checked Nov 2026)**: Meetup, Eventbrite (category cards) and Airbnb Experiences keep card text together, with ragged rows; none pins metadata to the bottom. Time Out was not checked (consent wall).
+
+#### One icon per card: the location pin
+
+**Decision**: The location row has a map pin; the date row has no calendar icon.
+**Why**: The date is the first meta line, right above the title, and "Avui"/"Demà" are colored, so it reads as a date without an icon; a calendar would compete with that color. The location is the last line, and a bare "El Masnou, Maresme" needs the pin to read as a place. An icon before the date would push it right of the category and title, which share one left edge, and on 256px carousel cards the date line is already truncated when it has a time range.
+**Competitors (checked Nov 2026)**: Eventbrite now puts an icon on every meta line (calendar, pin, organizer); its cards stack three or four plain gray lines. Meetup (Mar 2026 screenshot) shows date and place without icons.
+**Cost either way**: icons are `aria-hidden` sprite references (no SEO effect, no extra request); 92 bytes of HTML per card (measured on `/barcelona`), plus its copy in the RSC payload.
+**Revisit with data**: to try a date icon, add it to listing cards only and compare `select_event` click-through in GA4.
+
+#### Category badge above the date
+
+**Decision**: A text pill (`CategoryBadge`, 12px semibold, `text-xs`) in the card body, above the date. It used to overlay the image (frosted glass).
 **Why**: For mixed-category listings, category is the #1 scanning signal. Users need to quickly identify "is this a concert or a workshop?" Color-coded vertical bars (production) required memorizing a color→category mapping and were problematic for colorblind users (~8% of males). Text badges are universally understood. DICE uses a similar approach.
 **Localization**: Badges use `getCategoryLabel` instead of raw API names.
 
-#### View counter behavior
+#### No view counter on cards
 
-**Decision**: Show visits with reduced visual weight (`min-w` reduced, smaller icon in `hideText` mode). Bar chart icon retained.
-**Why**: Low view counts (29, 31) add no social proof signal. Future consideration: threshold display (≥50 only) or reframing as "🔥 Popular" badge. Current implementation reduces space usage without removing the data.
+**Decision**: Cards show no view count (the old `viewCountAria` label was removed with it).
+**Why**: Low view counts (29, 31) add no social proof signal. A future "Popular" badge would need a threshold.
 
 ### 2.3 DRY Architecture
 
-All 3 card variants use `prepareCardContentData({ variant })` — a single function that centralizes:
+Event cards (`CardLayout` in its `default`, `featured`, `row` and `compact` forms, and `CompactCard`) get their data from `prepareCardContentData({ variant })`, which returns a `CardData` (news cards build theirs by hand). One function centralizes:
 
 - Title truncation (per-variant config)
 - Location building
@@ -319,14 +333,14 @@ Every field from `EventSummaryResponseDTO` and its card usage:
 | Field                 | Standard           | Carousel           | Compact          | Notes                                     |
 | --------------------- | ------------------ | ------------------ | ---------------- | ----------------------------------------- |
 | `imageUrl`            | ✅ 3:2             | ✅ 3:2             | ✅ 4:3           | `object-cover` on all                     |
-| `title`               | ✅ truncate(75)    | ✅ truncate(60)    | ✅ truncate(50)  | `line-clamp-2` CSS does visual truncation |
-| `startDate`/`endDate` | ✅ abbreviated     | ✅ abbreviated     | ✅ abbreviated   | `formatCardDate()`                        |
+| `title`               | ✅ full            | ✅ full            | ✅ full          | No JS truncation; `line-clamp-2` (3 on `featured`/`row`) |
+| `startDate`/`endDate` | ✅ abbreviated     | ✅ abbreviated     | ✅ abbreviated   | `formatCardDate()`; a running multi-day event shows `Fins al …` (Standard, Carousel) |
 | `startTime`/`endTime` | ✅ if real time    | ✅ if real time    | ✅ if real time  | Suppresses "00:00" / null                 |
-| `categories[0]`       | ✅ frosted badge   | ✅ smaller badge   | ❌ omitted       | Localized via config                      |
-| `location`            | ❌ not on cards    | ❌ not on cards    | ❌ not on cards  | Venue belongs on detail page              |
+| `categories[0]`       | ✅ pill above date | ✅ pill above date | ❌ omitted       | 12px semibold, `getCategoryLabel`         |
+| `location`            | ❌ not on cards    | ❌ not on cards    | ❌ not on cards  | Venue belongs on detail page, except the news article `row` cards (venue + city) |
 | `city.name`           | ✅ primary label   | ✅ primary label   | ✅ primary label | Via `buildEventPlaceLabels`               |
 | `region.name`         | ✅ secondary label | ✅ secondary label | ❌ omitted       | Combined: "City, Region"                  |
-| `visits`              | ✅ compact counter | ✅ compact counter | ❌ omitted       | Reduced `min-w` in `hideText` mode        |
+| `visits`              | ❌ not shown       | ❌ not shown       | ❌ not shown     | See "No view counter on cards"            |
 | `slug`                | ✅ link + favorite | ✅ link + favorite | ✅ link only     | —                                         |
 | `type`                | ❌ not shown       | ❌ not shown       | ❌ not shown     | Data quality concern (defaults to FREE)   |
 | `weather`             | ❌ not on cards    | ❌ not on cards    | ❌ not on cards  | Detail page only                          |

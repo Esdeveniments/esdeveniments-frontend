@@ -193,13 +193,6 @@
       "relatedArticles": "Articles relacionats",
       "shareArticle": "Comparteix l'article"
     },
-    "NewsHubsGrid": {
-      "itemListTitle": "Últimes notícies per hub",
-      "titleWithPlace": "Últimes notícies {place}",
-      "seeMore": "Veure més…",
-      "seeAgenda": "Veure agenda {place}",
-      "nearbyLabel": "A prop:"
-    },
     "EventEdit": {
       "coverUpdateFailed": "L'esdeveniment s'ha desat, però no s'ha pogut actualitzar la imatge.",
       "title": "Editar esdeveniment",
@@ -273,10 +266,10 @@
       "locationUnavailable": "Localització no disponible"
     },
     "NewsPlace": {
-      "metaTitle": "Notícies i plans a {place} | Agenda i recomanacions - Esdeveniments.cat",
-      "metaDescription": "Descobreix les últimes notícies, recomanacions i plans culturals a {place}. Concerts, exposicions, teatre i més.",
-      "heading": "Notícies de {place}",
-      "seeAgenda": "Veure agenda de {place}",
+      "metaTitle": "Notícies i plans {placeIn} | Agenda i recomanacions - Esdeveniments.cat",
+      "metaDescription": "Descobreix les últimes notícies, recomanacions i plans culturals {placeIn}. Concerts, exposicions, teatre i més.",
+      "heading": "Notícies {placeOf}",
+      "seeAgenda": "Veure agenda {placeOf}",
       "rssTitle": "RSS Notícies {place}"
     },
     "NewsArticleFallback": {
@@ -285,7 +278,7 @@
     },
     "NewsPlaceRss": {
       "title": "Notícies {place} - Esdeveniments.cat",
-      "description": "Les últimes notícies i recomanacions culturals de {place}"
+      "description": "Les últimes notícies i recomanacions culturals {placeOf}"
     },
     "NewsRss": {
       "title": "Notícies - Esdeveniments.cat",
@@ -368,7 +361,7 @@
       }
     },
     "PlaceFallback": {
-      "placeSuffix": " a {place}",
+      "placeSuffix": " {placeIn}",
       "catalunyaSuffix": " a Catalunya",
       "title": "Esdeveniments{suffix}",
       "subTitle": "Descobreix plans i activitats{suffix}.",
@@ -384,35 +377,35 @@
     },
     "PlaceByDate": {
       "dateFallback": "els propers dies",
-      "title": "Esdeveniments {dateLabel} a {place}{categoryLabel}",
-      "subtitleWithDate": "Descobreix plans per {date} a {place}{categoryLabel}.",
-      "subtitleFallback": "Descobreix plans per als propers dies a {place}{categoryLabel}.",
+      "title": "Esdeveniments {dateLabel} {placeIn}{categoryLabel}",
+      "subtitleWithDate": "Descobreix plans per {date} {placeIn}{categoryLabel}.",
+      "subtitleFallback": "Descobreix plans per als propers dies {placeIn}{categoryLabel}.",
       "categoryDescriptionSuffix": " en la categoria {categoryLabel}",
       "metaTitle": "{title} | Esdeveniments.cat",
-      "metaDescriptionWithDate": "Explora activitats i plans per {date} a {place}{categoryDescriptionSuffix}.",
-      "metaDescriptionFallback": "Explora activitats i plans per als propers dies a {place}{categoryDescriptionSuffix}.",
+      "metaDescriptionWithDate": "Explora activitats i plans per {date} {placeIn}{categoryDescriptionSuffix}.",
+      "metaDescriptionFallback": "Explora activitats i plans per als propers dies {placeIn}{categoryDescriptionSuffix}.",
       "notFoundTitle": "Sense esdeveniments disponibles",
-      "notFoundDescriptionWithDate": "No hem trobat esdeveniments per {date} a {place}. Torna-ho a intentar més tard.",
-      "notFoundDescriptionFallback": "No hem trobat esdeveniments per als propers dies a {place}. Torna-ho a intentar més tard."
+      "notFoundDescriptionWithDate": "No hem trobat esdeveniments per {date} {placeIn}. Torna-ho a intentar més tard.",
+      "notFoundDescriptionFallback": "No hem trobat esdeveniments per als propers dies {placeIn}. Torna-ho a intentar més tard."
     },
     "PlaceByDateCategory": {
       "dateFallback": "els propers dies",
       "categoryFallback": "Esdeveniments",
-      "plansWithCategory": "plans de {categoryLabel}",
+      "plansWithCategory": "plans {categoryPhrase}",
       "plansFallback": "plans",
-      "proposalsWithCategory": "propostes de {categoryLabel}",
+      "proposalsWithCategory": "propostes {categoryPhrase}",
       "proposalsFallback": "propostes",
-      "activitiesWithCategory": "activitats de {categoryLabel}",
+      "activitiesWithCategory": "activitats {categoryPhrase}",
       "activitiesFallback": "activitats",
-      "title": "{categoryLabel} {dateLabel} a {place}",
-      "subtitleWithDate": "Descobreix {plansLabel} per {date} a {place}.",
-      "subtitleFallback": "Descobreix {plansLabel} per als propers dies a {place}.",
+      "title": "{categoryLabel} {dateLabel} {placeIn}",
+      "subtitleWithDate": "Descobreix {plansLabel} per {date} {placeIn}.",
+      "subtitleFallback": "Descobreix {plansLabel} per als propers dies {placeIn}.",
       "metaTitle": "{title} | Esdeveniments.cat",
-      "metaDescriptionWithDate": "Explora {proposalsLabel} per {date} a {place}.",
-      "metaDescriptionFallback": "Explora {proposalsLabel} per als propers dies a {place}.",
+      "metaDescriptionWithDate": "Explora {proposalsLabel} per {date} {placeIn}.",
+      "metaDescriptionFallback": "Explora {proposalsLabel} per als propers dies {placeIn}.",
       "notFoundTitle": "Sense esdeveniments disponibles",
-      "notFoundDescriptionWithDate": "No hem trobat {activitiesLabel} per {date} a {place}.",
-      "notFoundDescriptionFallback": "No hem trobat {activitiesLabel} per als propers dies a {place}."
+      "notFoundDescriptionWithDate": "No hem trobat {activitiesLabel} per {date} {placeIn}.",
+      "notFoundDescriptionFallback": "No hem trobat {activitiesLabel} per als propers dies {placeIn}."
     },
     "EventPromote": {
       "refreshingSession": "S'està restaurant la sessió...",
@@ -488,7 +481,7 @@
     },
     "Profile": {
       "title": "{name} — Perfil",
-      "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+      "metaDescription": "Descobreix els esdeveniments {nameOf}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
       "events": "Esdeveniments",
       "verified": "Verificat",
       "verifiedOrganizer": "Organitzador verificat",
@@ -508,11 +501,11 @@
       "noPastEvents": "Encara no hi ha esdeveniments passats",
       "statsPublished": "Publicats",
       "viewAllPastEvents": "Veure els passats ({count})",
-      "upcomingInTown": "Propers esdeveniments a {town}",
-      "moreInTown": "Més esdeveniments a {town}",
+      "upcomingInTown": "Propers esdeveniments {placeIn}",
+      "moreInTown": "Més esdeveniments {placeIn}",
       "statsVisits": "Visites",
-      "pastTitle": "Esdeveniments passats de {name} — Perfil",
-      "pastMetaDescription": "Consulta els esdeveniments passats de {name}: concerts, exposicions i activitats que ja ha organitzat."
+      "pastTitle": "Esdeveniments passats {nameOf} — Perfil",
+      "pastMetaDescription": "Consulta els esdeveniments passats {nameOf}: concerts, exposicions i activitats que ja ha organitzat."
     },
     "Footer": {
       "navigation": {
@@ -603,16 +596,16 @@
     },
     "LatestNewsSection": {
       "title": "Últimes notícies",
-      "titleWithPlace": "Últimes notícies {place}",
+      "titleWithPlace": "Últimes notícies {placeIn}",
       "titleStale": "Notícies",
-      "titleStaleWithPlace": "Notícies {place}",
+      "titleStaleWithPlace": "Notícies {placeIn}",
       "viewAll": "Veure totes"
     },
     "NewsList": {
       "emptyTitle": "No hem trobat notícies recents",
-      "emptyBody": "Encara no tenim novetats per {place}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
+      "emptyBody": "Encara no tenim novetats {placeIn}, però continuem afegint-ne cada setmana. Mentrestant, pots explorar les últimes notícies d'altres zones.",
       "viewAll": "Veure totes les notícies",
-      "itemListName": "Notícies de {place}",
+      "itemListName": "Notícies {placeOf}",
       "prev": "Més recents",
       "next": "Més antigues",
       "emptyBodyIndex": "Encara no hi ha notícies publicades. Mentrestant, consulta l'agenda per trobar plans a prop teu.",
@@ -624,21 +617,21 @@
       "pageTitle": "{title} (pàgina {page})"
     },
     "CulturalMessage": {
-      "explorePrefix": "Explora més plans {location}:",
+      "explorePrefix": "Explora més plans {placeIn}:",
       "today": "Què fer avui",
       "tomorrow": "Què fer demà",
       "week": "Què fer aquesta setmana",
       "weekend": "Què fer aquest cap de setmana"
     },
     "HeroSearch": {
-      "titlePrefix": "Què fer a",
+      "titlePrefix": "Què fer",
       "modalTitle": "Selecciona població",
       "modalAction": "Seleccionar",
       "errorLoadingLocations": "Error carregant les poblacions.",
       "retry": "Torna-ho a provar",
       "selectPlaceholder": "Cercar població o comarca...",
       "subtitleDefault": "Agenda cultural, festes majors i activitats",
-      "searchPlaceholder": "Cerca esdeveniments a {location}...",
+      "searchPlaceholder": "Cerca esdeveniments {placeIn}...",
       "clearSearch": "Neteja la cerca",
       "search": "Cerca"
     },
@@ -654,33 +647,6 @@
         "barcelona": "Barcelona",
         "tarragona": "Tarragona",
         "lleida": "Lleida"
-      },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
       }
     },
     "HomePageSkeleton": {
@@ -787,7 +753,7 @@
       },
       "distance": {
         "label": "Distància",
-        "labelFromPlace": "Distància des de {place}",
+        "labelFromPlace": "Distància {placeFrom}",
         "labelFromLocation": "Distància des de la teva ubicació",
         "helperRegion": "Per utilitzar el filtre de distància, selecciona una població específica o la teva ubicació actual.",
         "helperPlace": "Si tries una població, calcularem el radi des d'aquell punt. Si no n'hi ha cap, utilitzarem la teva ubicació actual. Activa el filtre per limitar els resultats a un radi concret.",
@@ -890,43 +856,35 @@
         "aria": "Veure activitats aquest cap de setmana"
       },
       "ariaCategory": "{ariaLabelText} per la categoria {contextName}",
-      "ariaPlace": "{ariaLabelText} a {contextName}"
+      "ariaPlace": "{ariaLabelText} {placeIn}"
     },
     "PlacePageExploreNav": {
       "sectionAriaLabel": "Explora per data o categoria",
       "dateTitle": "Cerca per data",
       "dateAriaLabel": "Filtra per data",
       "categoryTitle": "Explora categories",
-      "otherCategoryTitle": "Altres categories a {place}",
+      "otherCategoryTitle": "Altres categories {placeIn}",
       "categoryAriaLabel": "Navega per categories",
-      "categoryLinkAria": "Veure {category} a {place}"
+      "categoryLinkAria": "Veure {category} {placeIn}"
     },
     "ExploreNearby": {
       "sectionAriaLabel": "Explora llocs propers",
       "regionsTitle": "Comarques de Catalunya",
       "regionsAriaLabel": "Navega per comarques",
-      "citiesTitle": "Pobles i ciutats de {region}",
+      "citiesTitle": "Pobles i ciutats {placeOf}",
       "citiesAriaLabel": "Navega per pobles i ciutats",
       "nearbyTitle": "Pobles propers",
       "nearbyAriaLabel": "Descobreix esdeveniments a pobles propers",
-      "linkAria": "Veure esdeveniments a {place}"
+      "linkAria": "Veure esdeveniments {placeIn}"
     },
     "SearchBar": {
       "placeholder": "Què estàs buscant?",
       "clear": "Neteja la cerca",
       "search": "Cerca"
     },
-    "LocationDiscovery": {
-      "heading": "Mirant esdeveniments a",
-      "selectLocation": "Selecciona ubicació",
-      "searchPlaceholder": "Cercar ubicació...",
-      "discover": "Descobrir altres esdeveniments",
-      "loading": "Carregant ubicacions...",
-      "noResults": "No hi ha resultats"
-    },
     "PastEventBanner": {
       "title": "Aquest esdeveniment ja ha finalitzat",
-      "subtitle": "No et perdis què passa {timeWindow} a {placeLabel}",
+      "subtitle": "No et perdis què passa {timeWindow} {placeIn}",
       "primaryCta": "Consulta l'agenda",
       "secondaryCta": "o explora aquesta categoria",
       "srStatus": "Estat: {label}.",
@@ -971,8 +929,7 @@
       "favoriteRemoveAria": "Elimina de preferits",
       "today": "Avui",
       "tomorrow": "Demà",
-      "multipleDates": "Diversos dies",
-      "viewCountAria": "{count, plural, one {{count} visualització} other {{count} visualitzacions}}",
+      "until": "{day, select, 1 {Fins a l''{date}} 11 {Fins a l''{date}} other {Fins al {date}}}",
       "promoted": "Patrocinat"
     },
     "EventForm": {
@@ -1033,17 +990,19 @@
       "title": "Detalls de l'esdeveniment",
       "eventLink": "Enllaç a l'esdeveniment:",
       "duration": "Durada aproximada: {duration}",
-      "createdBy": "Publicat per <link>{name}</link>"
+      "createdBy": "Publicat {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicació",
       "showMap": "Mostrar mapa",
       "hideMap": "Tancar mapa",
       "getDirections": "Com arribar",
-      "profileLink": "Perfil de {name}"
+      "profileLink": "Perfil {nameOf}"
     },
     "EventCalendar": {
-      "title": "Data i hora"
+      "title": "Data i hora",
+      "priceLabel": "Preu:",
+      "priceFree": "Gratuït"
     },
     "Select": {
       "placeholder": "una opció",
@@ -1082,7 +1041,12 @@
       "errorTitle": "Error al carregar esdeveniments",
       "error": "Si us plau, torna-ho a intentar més tard.",
       "resultsCount": "{count, plural, =0 {Cap esdeveniment} one {# esdeveniment} other {# esdeveniments}}",
-      "retry": "Torna-ho a provar"
+      "retry": "Torna-ho a provar",
+      "recoveryTitle": "Amplia la cerca",
+      "recoveryPlace": "«{search}» a tot Catalunya",
+      "recoveryDate": "«{search}» en qualsevol data",
+      "recoveryCategory": "«{search}» a totes les categories",
+      "recoveryDistance": "«{search}» sense límit de distància"
     },
     "Hero": {
       "options": {
@@ -1119,8 +1083,8 @@
       "previous": "Anterior"
     },
     "SitemapHeader": {
-      "title": "Arxiu històric de {label}",
-      "subtitle": "Descobreix l'evolució cultural de {label} any rere any. Cada enllaç et porta als esdeveniments d'un mes específic."
+      "title": "Arxiu històric {placeOf}",
+      "subtitle": "Descobreix l'evolució cultural {placeOf} any rere any. Cada enllaç et porta als esdeveniments d'un mes específic."
     },
     "SitemapContent": {
       "title": "Arxiu d'esdeveniments culturals",
@@ -1397,38 +1361,38 @@
   },
   "Pages": {
     "SitemapMonth": {
-      "metaTitle": "Arxiu de {town} del {month} del {year} - Esdeveniments.cat",
-      "metaDescription": "Descobreix què va passar {locationPhrase} el {month} del {year}. Teatre, cinema, música, art i altres excuses per no parar de descobrir {town} - Arxiu - Esdeveniments.cat",
+      "metaTitle": "Arxiu {placeOf} del {month} del {year} - Esdeveniments.cat",
+      "metaDescription": "Descobreix què va passar {placeIn} el {month} del {year}. Teatre, cinema, música, art i moltes més excuses per no parar de descobrir - Arxiu - Esdeveniments.cat",
       "breadcrumbs": {
         "home": "Inici",
         "archive": "Arxiu"
       },
-      "itemListTitle": "Esdeveniments de {town} - {month} {year}",
-      "itemListDescription": "Col·lecció d'esdeveniments culturals de {town} del {month} del {year}",
-      "collectionTitle": "Arxiu de {town} - {month} {year}",
-      "collectionDescription": "Esdeveniments culturals que van tenir lloc {locationPhrase} durant el {month} del {year}",
+      "itemListTitle": "Esdeveniments {placeIn} - {month} {year}",
+      "itemListDescription": "Col·lecció d'esdeveniments culturals {placeIn} del {month} del {year}",
+      "collectionTitle": "Arxiu {placeOf} - {month} {year}",
+      "collectionDescription": "Esdeveniments culturals que van tenir lloc {placeIn} durant el {month} del {year}",
       "collectionFallbackDescription": "Col·lecció d'esdeveniments culturals",
-      "headerTitle": "Arxiu {town} - {month} del {year}",
+      "headerTitle": "Arxiu {placeOf} - {month} del {year}",
       "headerCount": "{count} esdeveniments culturals documentats",
       "headerEmpty": "No s'han trobat esdeveniments per aquest període",
       "srList": "Llista d'esdeveniments",
-      "footerExplore": "Vols explorar més esdeveniments de {town}?",
+      "footerExplore": "Vols explorar més esdeveniments {placeIn}?",
       "footerViewArchives": "Veure tots els arxius",
       "footerCurrentEvents": "Esdeveniments actuals"
     },
     "SitemapTown": {
-      "metaTitle": "Arxiu. Descobreix tot el que ha passat {locationPhrase} - Esdeveniments.cat",
-      "metaDescription": "Descobreix tot el què ha passat {locationPhrase} cada any. Les millors propostes culturals per esprémer al màxim de {town} - Arxiu - Esdeveniments.cat",
+      "metaTitle": "Arxiu. Descobreix tot el que ha passat {placeIn} - Esdeveniments.cat",
+      "metaDescription": "Descobreix tot el què ha passat {placeIn} cada any. Les millors propostes culturals per esprémer al màxim {placeOf} - Arxiu - Esdeveniments.cat",
       "breadcrumbs": {
         "home": "Inici",
         "archive": "Arxiu"
       },
-      "collectionTitle": "Arxiu de {town}",
-      "collectionDescription": "Històric d'esdeveniments culturals de {town} organitzat per anys i mesos",
-      "mainEntityName": "Arxiu històric de {town}",
-      "mainEntityDescription": "Col·lecció d'esdeveniments culturals de {town}",
+      "collectionTitle": "Arxiu {placeOf}",
+      "collectionDescription": "Històric d'esdeveniments culturals {placeIn} organitzat per anys i mesos",
+      "mainEntityName": "Arxiu històric {placeOf}",
+      "mainEntityDescription": "Col·lecció d'esdeveniments culturals {placeIn}",
       "aboutTitle": "Sobre aquest arxiu",
-      "aboutBody": "Aquest arxiu conté una recopilació d'esdeveniments culturals de {town} organitzats cronològicament. Cada mes inclou teatre, música, art, festivals i altres activitats culturals.",
+      "aboutBody": "Aquest arxiu conté una recopilació d'esdeveniments culturals {placeIn} organitzats cronològicament. Cada mes inclou teatre, música, art, festivals i altres activitats culturals.",
       "quickNavTitle": "Navegació ràpida",
       "quickNavBody": "Utilitza els enllaços per navegar directament a un mes específic. Els anys més recents apareixen primer per facilitar la cerca."
     }
@@ -1518,7 +1482,10 @@
         "dels": "dels",
         "deLa": "de la",
         "deLes": "de les",
-        "deL": "de l'"
+        "deL": "de l'",
+        "per": "per",
+        "pel": "pel",
+        "perLa": "per la"
       }
     },
     "Calendar": {
@@ -1534,19 +1501,15 @@
       },
       "ariaAdd": "Afegeix a {name}"
     },
-    "LocationHelpers": {
-      "newsAll": "Notícies de Catalunya",
-      "newsWithPlace": "Notícies {deLabel}"
-    },
     "Rss": {
       "feedTitle": "Rss {site} - {place}",
-      "feedDescription": "Rss {site} de {place}",
+      "feedDescription": "Rss {site} {placeOf}",
       "itemDescription": "{title}\n\n🗓️ {nameDay} {formattedStart}\n\n🏡 {location}, {town}, {region} \n\nℹ️ Més informació disponible a la nostra pàgina web!"
     }
   },
   "Config": {
     "TopAgenda": {
-      "agenda": "Agenda"
+      "agendaOf": "Agenda {placeOf}"
     },
     "Filters": {
       "place": "Població",

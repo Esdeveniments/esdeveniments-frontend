@@ -59,9 +59,10 @@ export interface HorizontalScrollProps {
   labels?: HorizontalScrollLabels;
 }
 
+/** `variant` defaults to `card`; CardLayout's stretched title link uses `plain`. */
 export interface CardLinkProps extends Omit<
   PressableLinkBaseProps,
-  "variant" | "disableNavigationSignal"
+  "disableNavigationSignal"
 > {}
 
 export type PressableLinkVariant = "inline" | "card" | "chip" | "plain";
@@ -84,6 +85,7 @@ export type CardVariant = "standard" | "carousel" | "compact";
 
 export interface CategoryBadgeProps {
   label: string | undefined;
+  className?: string;
 }
 
 export interface HeroContextType {

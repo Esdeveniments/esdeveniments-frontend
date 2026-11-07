@@ -7,33 +7,6 @@
         "tarragona": "Tarragona",
         "lleida": "Lleida"
       },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
-      },
       "days": [
         "Diumenge",
         "Dilluns",
@@ -102,33 +75,6 @@
         "tarragona": "Tarragona",
         "lleida": "Lleida"
       },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
-      },
       "days": [
         "Domingo",
         "Lunes",
@@ -196,33 +142,6 @@
         "barcelona": "Barcelona",
         "tarragona": "Tarragona",
         "lleida": "Lleida"
-      },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
       },
       "days": [
         "Sunday",
@@ -353,7 +272,10 @@
         "dels": "dels",
         "deLa": "de la",
         "deLes": "de les",
-        "deL": "de l'"
+        "deL": "de l'",
+        "per": "per",
+        "pel": "pel",
+        "perLa": "per la"
       },
       "capitalizePrepositions": [
         "al",
@@ -366,6 +288,10 @@
         "de l'",
         "pel",
         "pels"
+      ],
+      "articlelessPlaces": [
+        "catalunya",
+        "osona"
       ],
       "feminineExceptions": [
         "gent gran",
@@ -389,7 +315,69 @@
         "baix ebre",
         "maresme",
         "bages"
-      ]
+      ],
+      "institutionArticles": {
+        "agrupació": "l",
+        "agència": "l",
+        "ajuntament": "l",
+        "arxiu": "l",
+        "associació": "l",
+        "ateneu": "l",
+        "auditori": "l",
+        "banda": "la",
+        "biblioteca": "la",
+        "casal": "el",
+        "castell": "el",
+        "centre": "el",
+        "cinema": "el",
+        "circ": "el",
+        "club": "el",
+        "cobla": "la",
+        "colla": "la",
+        "col·lectiu": "el",
+        "col·legi": "el",
+        "comissió": "la",
+        "companyia": "la",
+        "consell": "el",
+        "consorci": "el",
+        "cooperativa": "la",
+        "cor": "el",
+        "coral": "la",
+        "departament": "el",
+        "diputació": "la",
+        "entitat": "l",
+        "esbart": "l",
+        "escola": "l",
+        "espai": "l",
+        "federació": "la",
+        "festival": "el",
+        "fira": "la",
+        "fundació": "la",
+        "generalitat": "la",
+        "grup": "el",
+        "hospital": "l",
+        "hotel": "l",
+        "institució": "la",
+        "institut": "l",
+        "llibreria": "la",
+        "mancomunitat": "la",
+        "mercat": "el",
+        "monestir": "el",
+        "museu": "el",
+        "oficina": "l",
+        "orfeó": "l",
+        "parròquia": "la",
+        "patronat": "el",
+        "penya": "la",
+        "plataforma": "la",
+        "regidoria": "la",
+        "sala": "la",
+        "servei": "el",
+        "societat": "la",
+        "teatre": "el",
+        "universitat": "la",
+        "unió": "la"
+      }
     }
   }
 }

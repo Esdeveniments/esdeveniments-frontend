@@ -22,6 +22,7 @@ import { NEWS_CITIES_LIMIT, NEWS_PAGE_SIZE } from "@utils/constants";
 export default async function NewsListPage({
   place,
   placeLabel,
+  placeType,
   title,
   subtitle,
   page,
@@ -74,6 +75,7 @@ export default async function NewsListPage({
             citiesPromise={citiesPromise}
             place={place}
             placeLabel={placeLabel}
+            placeType={placeType}
             page={page}
             basePath={basePath}
           />

@@ -14,6 +14,13 @@ import {
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import type { ResponsivePictureSourceUrls } from "types/common";
 
+// The placeholder shown instead of a missing or broken image. `alt=""` marks the
+// image decorative (the card title names it), so the placeholder stays silent too.
+function fallbackLabel(title: string, alt: string) {
+  if (alt === "") return { "aria-hidden": true } as const;
+  return { role: "img", "aria-label": title || "Imatge no disponible" } as const;
+}
+
 /**
  * ClientImage: <picture> with a WebP source and a JPEG fallback.
  * Assumes a non-empty image URL is provided. Missing-image cases should be
@@ -51,15 +58,14 @@ function ClientImage({
     return (
       <div
         className={className}
-        role="img"
-        aria-label={title || "Imatge no disponible"}
+        {...fallbackLabel(title, alt)}
         style={{
           position: "relative",
           aspectRatio: "500 / 260",
           maxWidth: "100%",
         }}
       >
-        <ImgDefault title={title} location={location} region={region} date={date} />
+        <ImgDefault title={alt === "" ? "" : title} location={location} region={region} date={date} />
       </div>
     );
   }
@@ -126,11 +132,10 @@ function ClientImageInner({
     return (
       <div
         className={className}
-        role="img"
-        aria-label={title || "Imatge no disponible"}
+        {...fallbackLabel(title, alt)}
         style={containerStyle}
       >
-        <ImgDefault title={title} location={location} region={region} date={date} />
+        <ImgDefault title={alt === "" ? "" : title} location={location} region={region} date={date} />
       </div>
     );
   }

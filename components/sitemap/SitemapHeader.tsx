@@ -1,20 +1,26 @@
-
 import { getTranslations } from "next-intl/server";
+import { getLocaleSafely } from "@utils/i18n-seo";
+import { formatPlacePhrases } from "@utils/string-helpers";
 import type { SitemapHeaderProps } from "types/sitemap";
 
 export default async function SitemapHeader({
-  town,
   placePromise,
 }: SitemapHeaderProps) {
-  const t = await getTranslations("Components.SitemapHeader");
-  const place = await placePromise;
-  const label = place?.name || town;
+  const [locale, { type, label }] = await Promise.all([
+    getLocaleSafely(),
+    placePromise,
+  ]);
+  const t = await getTranslations({
+    locale,
+    namespace: "Components.SitemapHeader",
+  });
+  const { placeOf } = formatPlacePhrases(label, type, locale);
 
   return (
     <header>
-      <h1 className="heading-1 mb-4">{t("title", { label })}</h1>
+      <h1 className="heading-1 mb-4">{t("title", { placeOf })}</h1>
       <p className="body-large text-foreground">
-        {t("subtitle", { label })}
+        {t("subtitle", { placeOf })}
       </p>
     </header>
   );

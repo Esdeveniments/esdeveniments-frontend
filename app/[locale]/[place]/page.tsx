@@ -30,6 +30,7 @@ import { twoWeeksDefault } from "@lib/dates";
 import { siteUrl } from "@config/index";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
+import { formatPlacePreposition } from "@utils/string-helpers";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { addLocalizedDateFields } from "@utils/mappers/event";
 import { toLocalizedUrl } from "@utils/i18n-seo";
@@ -135,7 +136,11 @@ export async function PlacePageGate({ place }: { place: string }): Promise<JSX.E
       console.error("Place page: unable to build shell data", error);
       // Fetch translations only on error path (avoids blocking happy path)
       const t = await getTranslations({ locale, namespace: "App.Publish" });
-      return await buildFallbackPlaceShellData(place, t("noEventsFound"));
+      return await buildFallbackPlaceShellData(
+        place,
+        t("noEventsFound"),
+        locale
+      );
     }
   })();
 
@@ -187,21 +192,25 @@ export async function PlacePageGate({ place }: { place: string }): Promise<JSX.E
 
 async function buildFallbackPlaceShellData(
   place: string,
-  notFoundDescription: string
+  notFoundDescription: string,
+  locale: AppLocale
 ): Promise<{
   placeTypeLabel: PlaceTypeAndLabel;
   pageData: PageData;
 }> {
-  const tFallback = await getTranslations("App.PlaceFallback");
+  const tFallback = await getTranslations({
+    locale,
+    namespace: "App.PlaceFallback",
+  });
   const fallbackPlaceTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
   const pathSegment = place === "catalunya" ? "" : `/${place}`;
   const canonical = `${siteUrl}${pathSegment}`;
+  const placeSuffix = tFallback("placeSuffix", {
+    placeIn: formatPlacePreposition(place, "", locale, false),
+  });
   const titleSuffix =
-    place === "catalunya"
-      ? tFallback("catalunyaSuffix")
-      : tFallback("placeSuffix", { place });
-  const descriptionSuffix =
-    place === "catalunya" ? "" : tFallback("placeSuffix", { place });
+    place === "catalunya" ? tFallback("catalunyaSuffix") : placeSuffix;
+  const descriptionSuffix = place === "catalunya" ? "" : placeSuffix;
 
   return {
     placeTypeLabel: fallbackPlaceTypeLabel,

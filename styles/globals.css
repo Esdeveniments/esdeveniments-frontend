@@ -449,6 +449,76 @@ p {
     }
   }
 
+  /* Event card (CardLayout): the title link stretches over the whole card
+     with ::after, so the card has one link named by its title. The link and
+     its heading must not be positioned or transformed, or ::after shrinks to
+     the title. The article is `relative`. */
+  .card-event-link {
+    outline: none;
+    /* iOS would flash only the title text; the card gives its own press
+       feedback below. */
+    -webkit-tap-highlight-color: transparent;
+    /* Margins apply to the link, so they add the card part below the title:
+       location, padding and the spare height a shorter card gets in a row
+       (up to ~115px: sponsored badge, category and a second title line on
+       a neighbour). Keeps the card clear of the mobile bottom bar too. */
+    scroll-margin-top: 1rem;
+    scroll-margin-bottom: calc(var(--mobile-nav-clearance) + 7.5rem);
+    scroll-margin-inline: 1rem;
+  }
+
+  /* featured/row: up to 3 description lines, gaps, location and padding
+     below the title (~143px at most). */
+  .card-event-split .card-event-link {
+    scroll-margin-bottom: calc(var(--mobile-nav-clearance) + 9rem);
+  }
+
+  @screen nav {
+    .card-event-link {
+      scroll-margin-top: calc(theme("spacing.14") + 1rem);
+    }
+  }
+
+  .card-event-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: calc(theme("borderRadius.card") - 1px);
+  }
+
+  /* The article clips anything outside it, so the ring is drawn inside, with
+     a white band that keeps it at 3:1 over photos. */
+  .card-event-link:focus-visible::after {
+    outline: 2px solid theme("colors.primary");
+    outline-offset: -2px;
+    box-shadow: inset 0 0 0 6px theme("colors.background");
+  }
+
+  @media (hover: hover) {
+    .card-event:hover {
+      @apply border-border/40;
+    }
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .card-event:hover .card-event-image {
+      transform: scale(1.03);
+    }
+  }
+
+  /* Press feedback only when the link is pressed, not the favorite button:
+     a darker border for everyone, plus the press transform with motion. */
+  .card-event:has(.card-event-link:active) {
+    @apply border-border/60;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card-event:has(.card-event-link:active) {
+      transform: translateY(1px) scale(0.995);
+    }
+  }
+
   /* Hover effects */
   .hover-lift {
     @apply hover:-translate-y-0.5 hover:shadow-card-hover;

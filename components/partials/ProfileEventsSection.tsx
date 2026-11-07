@@ -1,11 +1,14 @@
 import { fetchUserEvents } from "@lib/api/profiles";
 import { fetchEventsCached } from "@lib/api/events";
 import { getTranslations } from "next-intl/server";
+import { locale as rootLocale } from "next/root-params";
 import { Link } from "@i18n/routing";
 import List from "@components/ui/list";
 import CardServer from "@components/ui/card/CardServer";
 import EventsSection from "./EventsSection";
 import type { ProfileEventsSectionProps } from "types/props";
+import type { AppLocale } from "types/i18n";
+import { formatPlacePreposition } from "@utils/string-helpers";
 
 // First page of the profile's event listing, scoped to upcoming or past by
 // the backend. Client pagination ("load more") via /api/users/[username]/events
@@ -20,8 +23,9 @@ export default async function ProfileEventsSection({
   username,
   status,
 }: ProfileEventsSectionProps) {
+  const locale = (await rootLocale()) as AppLocale;
   const [t, eventsResponse] = await Promise.all([
-    getTranslations("Components.Profile"),
+    getTranslations({ locale, namespace: "Components.Profile" }),
     fetchUserEvents(username, 0, PROFILE_EVENTS_PAGE_SIZE, status),
   ]);
   const events = eventsResponse.content;
@@ -46,6 +50,9 @@ export default async function ProfileEventsSection({
             })
           ).content
         : [];
+      const townIn = town
+        ? formatPlacePreposition(town.name, "town", locale, false)
+        : "";
       return (
         <section aria-label={sectionLabel} data-testid="profile-events">
           <div className="flex flex-col items-center gap-element-gap py-section-y text-center">
@@ -63,7 +70,7 @@ export default async function ProfileEventsSection({
           {town && townEvents.length > 0 && (
             <>
               <h2 className="heading-3 text-foreground-strong mb-element-gap">
-                {t("upcomingInTown", { town: town.name })}
+                {t("upcomingInTown", { placeIn: townIn })}
               </h2>
               <List events={townEvents}>
                 {(event, index) => (
@@ -80,7 +87,7 @@ export default async function ProfileEventsSection({
                   className="btn-outline"
                   data-testid="profile-view-town"
                 >
-                  {t("moreInTown", { town: town.name })}
+                  {t("moreInTown", { placeIn: townIn })}
                 </Link>
               </div>
             </>

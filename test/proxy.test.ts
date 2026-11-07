@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import proxy from "../proxy";
 import { resolvePlaceForProxy } from "../lib/api/places-proxy";
 import { getCategoriesForProxy } from "../lib/api/categories-proxy";
+import { isProfileMissingForProxy } from "../lib/api/profiles-proxy";
 import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -75,6 +76,11 @@ vi.mock("../lib/api/categories-proxy", () => ({
   getCategoriesForProxy: vi.fn(),
 }));
 
+vi.mock("../lib/api/profiles-proxy", () => ({
+  isProfileMissingForProxy: vi.fn().mockResolvedValue(false),
+  PROFILE_EXISTS_TTL_MS: 300_000,
+}));
+
 describe("proxy", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -98,6 +104,7 @@ describe("proxy", () => {
     (NextResponse.redirect as any).mockReset();
     (NextResponse.rewrite as any).mockReset();
     (resolvePlaceForProxy as Mock).mockReset();
+    (isProfileMissingForProxy as Mock).mockReset().mockResolvedValue(false);
     (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "unknown" });
     (getCategoriesForProxy as Mock).mockReset();
     (getCategoriesForProxy as Mock).mockResolvedValue(null);
@@ -525,6 +532,53 @@ describe("proxy", () => {
       await proxy(placeRequest(pathname, method));
 
       expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("profile existence (real 404)", () => {
+    const profileRequest = (pathname: string, method = "GET") =>
+      ({
+        nextUrl: mockNextUrl({ pathname }),
+        headers: new Headers({ accept: "text/html", host: "www.esdeveniments.cat" }),
+        method,
+      }) as unknown as NextRequest;
+
+    it("rewrites an unknown username with a 404 and a short CDN TTL", async () => {
+      (isProfileMissingForProxy as Mock).mockResolvedValue(true);
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      const result = await proxy(profileRequest("/perfil/nobody/passats"));
+
+      expect(isProfileMissingForProxy).toHaveBeenCalledWith("nobody");
+      const [url, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe("/ca/perfil/nobody/passats");
+      expect(init.status).toBe(404);
+      expect(result.headers.get("cache-control")).toBe(
+        "public, max-age=0, s-maxage=300",
+      );
+    });
+
+    it("serves a known profile with the normal status and cache", async () => {
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      const result = await proxy(profileRequest("/perfil/somebody"));
+
+      const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(init.status).toBeUndefined();
+      expect(result.headers.get("cache-control")).toContain("s-maxage=1800");
+    });
+
+    it.each([
+      ["the edit form", "/perfil/edita", "GET"],
+      ["a non-GET request", "/perfil/somebody", "POST"],
+      ["an invalid username", "/perfil/foo--bar", "GET"],
+      ["a deeper path", "/perfil/somebody/other", "GET"],
+    ])("skips the backend check for %s", async (_, pathname, method) => {
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+      await proxy(profileRequest(pathname, method));
+
+      expect(isProfileMissingForProxy).not.toHaveBeenCalled();
     });
   });
 

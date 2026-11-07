@@ -7,6 +7,7 @@ export default function Card({
   event,
   isLoading = false,
   isPriority = false,
+  headingLevel,
 }: CardProps) {
   if (isLoading) return <EventCardSkeleton />;
   if (event.isAd) return <AdCardClient />;
@@ -14,6 +15,7 @@ export default function Card({
     <CardContentClient
       event={event}
       isPriority={isPriority}
+      headingLevel={headingLevel}
     />
   );
 }

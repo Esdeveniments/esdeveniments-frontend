@@ -2,7 +2,10 @@ import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { fetchNews } from "@lib/api/news";
+import { getPlaceTypeAndLabelCached } from "@utils/location-helpers";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { resolveNewsItemPlace } from "@utils/news-helpers";
+import { formatPlacePreposition } from "@utils/string-helpers";
 import { localeToHrefLang } from "types/i18n";
 
 export async function GET(
@@ -11,13 +14,18 @@ export async function GET(
 ) {
   const { place } = await params;
   const locale = await getLocaleSafely();
-  const t = await getTranslations({ locale, namespace: "App.NewsPlaceRss" });
+  const [t, { type, label }] = await Promise.all([
+    getTranslations({ locale, namespace: "App.NewsPlaceRss" }),
+    getPlaceTypeAndLabelCached(place).catch(() => ({ type: "" as const, label: place })),
+  ]);
   const language = localeToHrefLang[locale] ?? locale;
   const feed = new Feed({
     id: toLocalizedUrl(`/noticies/${place}`, locale),
     link: toLocalizedUrl(`/noticies/${place}`, locale),
-    title: t("title", { place }),
-    description: t("description", { place }),
+    title: t("title", { place: label }),
+    description: t("description", {
+      placeOf: formatPlacePreposition(label, type, locale, false, "of"),
+    }),
     copyright: "Esdeveniments.cat",
     updated: new Date(),
     language,
@@ -31,8 +39,11 @@ export async function GET(
     const res = await fetchNews({ page: 0, size: 20, place });
     const items = Array.isArray(res.content) ? res.content : [];
     for (const item of items) {
+      // A region's feed lists its cities' articles: link each under its own
+      // city/region, the canonical URL, not under the feed's place.
+      const itemPlace = resolveNewsItemPlace(item, place, place).slug;
       const articleUrl = toLocalizedUrl(
-        `/noticies/${place}/${item.slug}`,
+        `/noticies/${itemPlace}/${item.slug}`,
         locale
       );
       feed.addItem({

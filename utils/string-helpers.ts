@@ -2,14 +2,31 @@
  * String helpers (Catalan-aware)
  * ======================================================= */
 
-import type { StringHelperLabels } from "types/common";
+import type {
+  CatalanArticle,
+  CatalanPhraseType,
+  InstitutionArticle,
+  NameRelation,
+  PlacePhraseParts,
+  PlacePhrases,
+  PlacePhraseType,
+  PlaceRelation,
+  StringHelperLabels,
+} from "types/common";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import localeLabels from "../i18n/locale-labels.generated.json";
 import { sanitize, sanitizeLegacyApostrophe } from "./sanitize-segment";
 
 const stringHelperLabels: StringHelperLabels = localeLabels.utils
   .StringHelpers as StringHelperLabels;
-const { articles, prepositions, feminineExceptions, masculineExceptions } =
+const {
+  articles,
+  prepositions,
+  articlelessPlaces,
+  feminineExceptions,
+  masculineExceptions,
+  institutionArticles,
+} =
   stringHelperLabels;
 
 export { sanitize, sanitizeLegacyApostrophe };
@@ -78,31 +95,54 @@ export function normalizeForSearch(input: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+// Letters NFKD doesn't split into base + mark.
+const FOLD_LETTERS: Record<string, string> = {
+  ß: "ss",
+  æ: "ae",
+  œ: "oe",
+  ø: "o",
+  ł: "l",
+  đ: "d",
+};
+
 /**
- * Matches a search term against a list of place options using accent-insensitive comparison.
- * Returns the first exact match, or the first startsWith match if no exact match.
- * Used to detect when users type place names (e.g. "Cardedeu", "sant vicen") in the search bar
- * and redirect them to the place page instead of a text search.
+ * Folds text for search matching: lowercase, no accents, Catalan `l·l` → `ll`,
+ * and every run of other characters → one space. Must match the backend's
+ * `search_fold` (Esdeveniments/esdeveniments-backend#59).
+ * Example: "L’Auditori" → "l auditori", "Col·lecció" → "colleccio".
+ */
+export function foldForSearch(input: string): string {
+  if (!input) return "";
+  return input
+    .toLowerCase()
+    .replace(/[ßæœøłđ]/g, (char) => FOLD_LETTERS[char])
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/l[·.\u0140]+l/g, "ll")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * Returns the place whose name (or slug) equals the search term after
+ * `foldForSearch`, so "cardedeu" or "L’Hospitalet de Llobregat" go to the
+ * place page. Prefixes don't match: "Castell" or "Gran" are often event words,
+ * and a prefix used to send them to Castellví de Rosanes or Granollers.
  */
 export function matchSearchToPlace(
   searchTerm: string,
   places: ReadonlyArray<{ label: string; value: string }>
 ): { label: string; value: string } | null {
-  const normalized = normalizeForSearch(searchTerm);
-  if (!normalized || normalized.length < 2) return null;
+  const folded = foldForSearch(searchTerm);
+  if (folded.length < 2) return null;
 
-  let startsWithMatch: { label: string; value: string } | null = null;
-
-  for (const place of places) {
-    const normalizedLabel = normalizeForSearch(place.label);
-    if (normalizedLabel === normalized) return place;
-    // Require at least 4 chars for prefix matching to avoid greedy matches ("ba" → "Barcelona")
-    if (!startsWithMatch && normalized.length >= 4 && normalizedLabel.startsWith(normalized)) {
-      startsWithMatch = place;
-    }
-  }
-
-  return startsWithMatch;
+  return (
+    places.find(
+      (place) =>
+        foldForSearch(place.label) === folded ||
+        foldForSearch(place.value) === folded,
+    ) ?? null
+  );
 }
 
 /* =========================================================
@@ -110,6 +150,8 @@ export function matchSearchToPlace(
  * ======================================================= */
 
 const VOWEL_OR_H = /^[aeiouàáèéíïòóúüh]/i;
+// No elision before a semivowel i/u ("de iogurt", "de Huelva", "el iaio").
+const SEMIVOWEL_START = /^h?(?:i[aeouàèéòóú]|u[aeoàèéòó])/i;
 const PLACE_PARTICLES = new Set(
   [...Object.values(prepositions), ...Object.values(articles), "i"].flatMap(
     (token) => {
@@ -185,7 +227,8 @@ export function formatPlaceName(name: string): string {
 }
 
 function startsWithVowelOrH(s: string): boolean {
-  return VOWEL_OR_H.test((s || "").trim());
+  const text = (s || "").trim();
+  return VOWEL_OR_H.test(text) && !SEMIVOWEL_START.test(text);
 }
 
 /** Capitalize first token, lowercase the rest; for one-word names, lowercase it. */
@@ -224,57 +267,141 @@ function classifyCategory(
   return { plural: isPlural, feminine: isFeminine };
 }
 
+/* ---------- Place phrases: preposition + place with article contraction ---------- */
+
+const ELIDED_ARTICLE = articles.l.toLowerCase();
+const LEADING_ARTICLE = /^(?:(els|el|les|la)\s+|(l)['’])(?=\S)/i;
+const CATALAN_CONTRACTIONS: Record<
+  "a" | "de",
+  Record<Exclude<CatalanArticle, "l">, string>
+> = {
+  a: {
+    el: prepositions.al,
+    els: prepositions.als,
+    la: prepositions.aLa,
+    les: prepositions.aLes,
+  },
+  de: {
+    el: prepositions.del,
+    els: prepositions.dels,
+    la: prepositions.deLa,
+    les: prepositions.deLes,
+  },
+};
+const PLACE_RELATION_PREPOSITIONS: Record<
+  Exclude<AppLocale, "ca">,
+  Record<PlaceRelation, string>
+> = {
+  es: { in: "en", of: "de", from: "desde" },
+  en: { in: "in", of: "of", from: "from" },
+};
+
+/** "El Masnou" → { article: "el", rest: "Masnou" }; "L'Escala" → { article: "l", rest: "Escala" }. */
+function splitCatalanArticle(name: string): {
+  article: CatalanArticle | null;
+  rest: string;
+} {
+  const match = LEADING_ARTICLE.exec(name);
+  if (!match) return { article: null, rest: name };
+  return {
+    article: (match[1] ?? match[2]).toLowerCase() as CatalanArticle,
+    rest: name.slice(match[0].length),
+  };
+}
+
+/** Article a region takes in running text: "Maresme" → el, "Selva" → la, "Garrigues" → les. */
+const ARTICLELESS_PLACES = new Set(articlelessPlaces);
+const MASCULINE_EXCEPTIONS = new Set(
+  masculineExceptions.map((e) => e.toLowerCase())
+);
+
+// Region names usually arrive without their article ("Maresme", "Anoia").
+// An unaccented -es first word reads as plural ("Garrigues", "Terres de
+// l'Ebre") unless it is a listed masculine singular ("Bages").
+function inferRegionArticle(name: string): CatalanArticle | null {
+  const lowerName = name.toLowerCase();
+  if (!name || ARTICLELESS_PLACES.has(lowerName)) return null;
+  const firstWord = name.split(/\s+/)[0];
+  if (/[^èé]es$/i.test(firstWord) && !MASCULINE_EXCEPTIONS.has(lowerName)) {
+    return /[ae]$/i.test(firstWord.slice(0, -1)) || isFemininePlaceName(name)
+      ? "les"
+      : "els";
+  }
+  if (startsWithVowelOrH(name)) return "l";
+  return isFemininePlaceName(name) ? "la" : "el";
+}
+
+function casePlace(
+  rest: string,
+  type: CatalanPhraseType,
+  article: CatalanArticle | null,
+  lowercase: boolean
+): string {
+  if (!lowercase) return rest;
+  if (type !== "region") return rest.toLowerCase();
+  // Regions use narrative case; single-word feminine ones read fully lowercase ("a la selva")
+  const narrative = narrativeRegionCase(rest);
+  return !narrative.includes(" ") && (article === "la" || article === null)
+    ? narrative.toLowerCase()
+    : narrative;
+}
+
+/**
+ * Single source for Catalan "a"/"de" + place. A leading article in the name
+ * contracts ("El Masnou" → "al Masnou" / "del Masnou", "Els Prats de Rei" →
+ * "als Prats de Rei", "L'Escala" → "a l'Escala"); regions without one get the
+ * article they take in running text ("Maresme" → "al Maresme").
+ */
+function catalanPlaceParts(
+  name: string,
+  type: CatalanPhraseType,
+  preposition: "a" | "de",
+  lowercase: boolean,
+  inferArticle: boolean = true
+): PlacePhraseParts {
+  const { article: ownArticle, rest } = splitCatalanArticle((name || "").trim());
+  const article =
+    ownArticle ??
+    (type === "region" && inferArticle ? inferRegionArticle(rest) : null);
+  const place = casePlace(rest, type, article, lowercase);
+
+  if (article === "l") {
+    return { preposition: prepositions[preposition], place: `${ELIDED_ARTICLE}${place}` };
+  }
+  if (article) {
+    return { preposition: CATALAN_CONTRACTIONS[preposition][article], place };
+  }
+  const elide = preposition === "de" && startsWithVowelOrH(rest);
+  return { preposition: elide ? "d'" : prepositions[preposition], place };
+}
+
+export function joinPlacePhrase({ preposition, place }: PlacePhraseParts): string {
+  return preposition.endsWith("'")
+    ? `${preposition}${place}`
+    : `${preposition} ${place}`;
+}
+
 /**
  * Catalan contraction for the preposition "de".
- * - type "town": never injects articles; returns "de X" / "d'X"
- * - type "region": heuristic handling for plural vs singular and gender
+ * - "town": "de Barcelona", "d'Arenys", "del Masnou", "de l'Escala"
+ * - "region": with includeArticle, adds the article the region takes ("del Maresme")
  * - "category"/"general": if includeArticle=true, adds article with number/gender heuristics
  */
 export function formatCatalanDe(
   name: string,
   lowercase: boolean = true,
   includeArticle: boolean = false,
-  type: "category" | "region" | "town" | "general" = "category"
+  type: CatalanPhraseType = "category"
 ): string {
+  if (type === "town" || type === "region" || !includeArticle) {
+    return joinPlacePhrase(
+      catalanPlaceParts(name, type, "de", lowercase, includeArticle)
+    );
+  }
+
   const raw = (name || "").trim();
   const text = lowercase ? raw.toLowerCase() : raw;
-  const { de, del, dels, deLa, deLes, deL } = prepositions;
-
-  // ---- towns: keep simple (your tests expect only "de"/"d'")
-  if (type === "town") {
-    return startsWithVowelOrH(text) ? `d'${text}` : `${de} ${text}`;
-  }
-
-  // ---- regions: plural detection + gender heuristic (no external table required)
-  if (type === "region") {
-    if (!includeArticle) {
-      return startsWithVowelOrH(text) ? `d'${text}` : `${de} ${text}`;
-    }
-
-    const firstWord = text.split(/\s+/)[0];
-    const fwLower = firstWord.toLowerCase();
-
-    // True plural only if ends in unaccented -es; exclude singular -ès/-és
-    const regionIsPlural =
-      /s$/i.test(firstWord) &&
-      firstWord.length > 2 &&
-      /[^èé]es$/i.test(fwLower);
-
-    if (regionIsPlural) {
-      // Feminine plural guess: stems ending in -a/-e or overall feminine pattern
-      const stem = firstWord.slice(0, -1);
-      const isFemPl = /a$|e$/i.test(stem) || isFemininePlaceName(text);
-      return isFemPl ? `${deLes} ${text}` : `${dels} ${text}`;
-    }
-
-    if (startsWithVowelOrH(firstWord)) return `${deL}${text}`;
-    return isFemininePlaceName(text) ? `${deLa} ${text}` : `${del} ${text}`;
-  }
-
-  // ---- categories / general nouns
-  if (!includeArticle) {
-    return startsWithVowelOrH(text) ? `d'${text}` : `${de} ${text}`;
-  }
+  const { del, dels, deLa, deLes, deL } = prepositions;
 
   const firstWord = text.split(/\s+/)[0];
   const { plural, feminine } = classifyCategory(firstWord, text);
@@ -289,117 +416,129 @@ export function formatCatalanDe(
 }
 
 /**
- * Catalan preposition "a" with proper article handling.
- * - "town": handles contractions for towns starting with "El "/"La ":
- *     - "El Masnou" → "al Masnou" (a + El = al)
- *     - "La Granada" → "a la Granada" (feminine article lowercased)
- *     - "Barcelona" → "a Barcelona" (no article)
- * - "region": narrative case + correct articles:
- *     - plural: "a les … / als …"
- *     - singular vowel/h: "a l’…"
- *     - singular feminine consonant: "a La …" (capital La)
- *     - singular masculine consonant: "al …"
+ * Catalan preposition "a" with article handling:
+ * - "town": "a Barcelona", "al Masnou", "als Prats de Rei", "a la Garriga", "a l'Escala"
+ * - "region": adds the article the region takes ("al Maresme", "a la Selva", "a l'Alt Empordà")
+ * - "general": "a X", contracting only an article that is part of the name
  */
 export function formatCatalanA(
   name: string,
-  type: "region" | "town" | "general" | "" = "general",
+  type: PlacePhraseType = "general",
   lowercase: boolean = true
 ): string {
-  const raw = (name || "").trim();
-  const text = lowercase ? raw.toLowerCase() : raw;
-  const normalizedType = type === "" ? ("general" as const) : type;
-  const { a, al, als, aLa, aLes, aL } = prepositions;
-
-  if (normalizedType === "town") {
-    // Handle contractions for towns starting with definite article "El " or "La "
-    const rawLower = raw.toLowerCase();
-    if (rawLower.startsWith("el ")) {
-      // "a + El" contracts to "al" in Catalan
-      const restOfName = raw.slice(3); // Remove "El "
-      const displayRest = lowercase ? restOfName.toLowerCase() : restOfName;
-      return `${al} ${displayRest}`;
-    }
-    if (rawLower.startsWith("la ")) {
-      // "a + La" becomes "a la" (feminine article lowercased in narrative)
-      const restOfName = raw.slice(3); // Remove "La "
-      const displayRest = lowercase ? restOfName.toLowerCase() : restOfName;
-      return `${aLa} ${displayRest}`;
-    }
-    return `${a} ${text}`;
-  }
-
-  if (normalizedType === "region") {
-    // Handle empty string early
-    if (!raw) {
-      return `${a} `;
-    }
-
-    // Special-case proper name that does not take an article in Catalan
-    // e.g., "Catalunya" → "a Catalunya" (never "a la Catalunya")
-    if ((raw || "").trim().toLowerCase() === "catalunya") {
-      return lowercase ? `${a} catalunya` : `${a} Catalunya`;
-    }
-
-    // Respect requested casing:
-    // - when lowercase=true → narrative/lowercased style (phrase = narrativeRegionCase)
-    // - when lowercase=false → preserve original casing (phrase = raw)
-    const display = lowercase ? text : raw;
-    const phrase = lowercase ? narrativeRegionCase(display) : display;
-
-    // Quick plural detection for regions (same rule as above)
-    const firstWord = (display || "").split(/\s+/)[0];
-    const fwLower = firstWord.toLowerCase();
-    const regionIsPlural =
-      /s$/i.test(firstWord) &&
-      firstWord.length > 2 &&
-      /[^èé]es$/i.test(fwLower);
-
-    if (regionIsPlural) {
-      const stem = firstWord.slice(0, -1);
-      const femPl = /a$|e$/i.test(stem) || isFemininePlaceName(display);
-      return femPl ? `${aLes} ${phrase}` : `${als} ${phrase}`;
-    }
-
-    if (startsWithVowelOrH(display)) {
-      return `${aL}${phrase}`;
-    }
-
-    // singular consonant-start
-    // For single-word regions with lowercase=true, use fully lowercased phrase
-    // For multi-word regions with lowercase=true, use narrative case (first word capitalized)
-    if (isFemininePlaceName(display)) {
-      // Single-word feminine regions should be fully lowercased when lowercase=true
-      const finalPhrase =
-        lowercase && phrase.split(/\s+/).length === 1
-          ? phrase.toLowerCase()
-          : phrase;
-      return `${aLa} ${finalPhrase}`;
-    }
-    return `${al} ${phrase}`;
-  }
-
-  // general
-  return `${a} ${text}`;
+  return joinPlacePhrase(catalanPlaceParts(name, type, "a", lowercase));
 }
 
 /**
- * Locale-aware place preposition formatting.
- * - ca: uses Catalan "a" + article handling via formatCatalanA
- * - es: "en <place>"
- * - en: "in <place>"
+ * Locale-aware preposition + place, split so UI can style the parts apart.
+ * relation "in": ca a/al/a la…, es "en", en "in"
+ * relation "of": ca de/del/d'…, es "de", en "of"
+ * relation "from": ca des de/des del…, es "desde", en "from"
+ * Spanish keeps "El Masnou" uncontracted: the article is part of the official name.
  */
-export function formatPlacePreposition(
+export function formatPlacePrepositionParts(
   name: string,
-  type: "region" | "town" | "general" | "" = "general",
+  type: PlacePhraseType = "general",
   locale: AppLocale = DEFAULT_LOCALE,
-  lowercase: boolean = true
-): string {
-  if (locale === "ca") return formatCatalanA(name, type, lowercase);
+  lowercase: boolean = true,
+  relation: PlaceRelation = "in"
+): PlacePhraseParts {
+  if (locale === "ca") {
+    const parts = catalanPlaceParts(
+      name,
+      type,
+      relation === "in" ? "a" : "de",
+      lowercase
+    );
+    return relation === "from"
+      ? { ...parts, preposition: `des ${parts.preposition}` }
+      : parts;
+  }
 
   const raw = (name || "").trim();
-  const text = lowercase ? raw.toLowerCase() : raw;
-  const prep = locale === "es" ? "en" : "in";
-  return `${prep} ${text}`;
+  return {
+    preposition: PLACE_RELATION_PREPOSITIONS[locale][relation],
+    place: lowercase ? raw.toLowerCase() : raw,
+  };
+}
+
+/** Locale-aware preposition + place as one phrase ("al Masnou", "en El Masnou", "in El Masnou"). */
+export function formatPlacePreposition(
+  name: string,
+  type: PlacePhraseType = "general",
+  locale: AppLocale = DEFAULT_LOCALE,
+  lowercase: boolean = true,
+  relation: PlaceRelation = "in"
+): string {
+  return joinPlacePhrase(
+    formatPlacePrepositionParts(name, type, locale, lowercase, relation)
+  );
+}
+
+/** All place placeholders used by messages, in display case. */
+export function formatPlacePhrases(
+  name: string,
+  type: PlacePhraseType,
+  locale: AppLocale
+): PlacePhrases {
+  const phrase = (relation: PlaceRelation) =>
+    formatPlacePreposition(name, type, locale, false, relation);
+  return {
+    placeIn: phrase("in"),
+    placeOf: phrase("of"),
+    placeFrom: phrase("from"),
+  };
+}
+
+const INSTITUTION_ARTICLES = new Map(Object.entries(institutionArticles));
+const CATALAN_NAME_PREPOSITIONS: Record<
+  NameRelation,
+  Record<Exclude<InstitutionArticle, "l">, string> & { bare: string }
+> = {
+  of: { bare: prepositions.de, el: prepositions.del, la: prepositions.deLa },
+  by: { bare: prepositions.per, el: prepositions.pel, la: prepositions.perLa },
+};
+const NAME_PREPOSITIONS: Record<
+  Exclude<AppLocale, "ca">,
+  Record<NameRelation, string>
+> = {
+  es: { of: "de", by: "por" },
+  en: { of: "of", by: "by" },
+};
+
+/**
+ * Locale-aware preposition + an organisation or person name, split so the
+ * name alone can be a link. Catalan institutions named after a common noun
+ * take a lowercase article ("de l'Ajuntament del Masnou", "pel Museu del
+ * Joguet", "de la Biblioteca Can Fabra"). Other names only elide ("d'Òmnium",
+ * "de Pau Riba"), and a brand's own article doesn't contract ("d'El Temps").
+ */
+export function formatNamePrepositionParts(
+  name: string,
+  locale: AppLocale = DEFAULT_LOCALE,
+  relation: NameRelation = "of"
+): PlacePhraseParts {
+  const text = (name || "").trim();
+  if (locale !== "ca") {
+    return { preposition: NAME_PREPOSITIONS[locale][relation], place: text };
+  }
+
+  const forms = CATALAN_NAME_PREPOSITIONS[relation];
+  const article = INSTITUTION_ARTICLES.get(text.split(/\s+/)[0].toLowerCase());
+  if (article === "l") {
+    return { preposition: forms.bare, place: `${ELIDED_ARTICLE}${text}` };
+  }
+  if (article) return { preposition: forms[article], place: text };
+  const elide = relation === "of" && startsWithVowelOrH(text);
+  return { preposition: elide ? "d'" : forms.bare, place: text };
+}
+
+/** "de l'Ajuntament del Masnou", "d'Òmnium"; es "de …", en "of …". */
+export function formatNameOf(
+  name: string,
+  locale: AppLocale = DEFAULT_LOCALE
+): string {
+  return joinPlacePhrase(formatNamePrepositionParts(name, locale, "of"));
 }
 
 /**
@@ -410,8 +549,7 @@ function isFemininePlaceName(name: string): boolean {
   const lowerName = (name || "").toLowerCase();
 
   // Masculine exceptions that often match feminine-looking patterns
-  const MASCULINE_EXCEPTIONS = masculineExceptions.map((e) => e.toLowerCase());
-  if (MASCULINE_EXCEPTIONS.includes(lowerName)) return false;
+  if (MASCULINE_EXCEPTIONS.has(lowerName)) return false;
 
   // Feminine-ish endings
   const feminineSuffixes = [

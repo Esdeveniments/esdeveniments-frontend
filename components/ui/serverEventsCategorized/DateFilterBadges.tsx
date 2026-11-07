@@ -1,5 +1,7 @@
 import Badge from "@components/ui/common/badge";
 import { buildCanonicalUrl } from "@utils/url-filters";
+import { formatPlacePreposition } from "@utils/string-helpers";
+import type { AppLocale } from "types/i18n";
 import type {
   DateFilterBadgeLabels,
   DateFilterBadgesProps,
@@ -17,14 +19,15 @@ const FALLBACK_DATE_FILTER_BADGE_LABELS: DateFilterBadgeLabels = {
     label: "Cap de setmana",
     ariaLabelText: "Veure activitats aquest cap de setmana",
   },
-  ariaPlace: ({ ariaLabelText, contextName }) =>
-    `${ariaLabelText} a ${contextName}`,
+  ariaPlace: ({ ariaLabelText, placeName, placeType }) =>
+    `${ariaLabelText} ${formatPlacePreposition(placeName, placeType ?? "", "ca", false)}`,
   ariaCategory: ({ ariaLabelText, contextName }) =>
     `${ariaLabelText} per la categoria ${contextName}`,
 };
 
 export const createDateFilterBadgeLabels = (
-  t: TranslationFn
+  t: TranslationFn,
+  locale: AppLocale
 ): DateFilterBadgeLabels => ({
   navAriaLabel: t("ariaLabel"),
   today: {
@@ -39,8 +42,10 @@ export const createDateFilterBadgeLabels = (
     label: t("weekend.label"),
     ariaLabelText: t("weekend.aria"),
   },
-  ariaPlace: ({ ariaLabelText, contextName }) =>
-    t("ariaPlace", { ariaLabelText, contextName }),
+  ariaPlace: ({ ariaLabelText, placeName, placeType }) => {
+    const placeIn = formatPlacePreposition(placeName, placeType ?? "", locale, false);
+    return t("ariaPlace", { ariaLabelText, placeIn });
+  },
   ariaCategory: ({ ariaLabelText, contextName }) =>
     t("ariaCategory", { ariaLabelText, contextName }),
 });
@@ -50,6 +55,7 @@ export function DateFilterBadges({
   categorySlug,
   categories,
   contextName,
+  placeType,
   ariaLabel,
   labels,
 }: DateFilterBadgesProps) {
@@ -83,7 +89,8 @@ export function DateFilterBadges({
     }
     return resolvedLabels.ariaPlace({
       ariaLabelText: dateFilter.ariaLabelText,
-      contextName,
+      placeName: contextName,
+      placeType,
     });
   };
 

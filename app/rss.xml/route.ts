@@ -4,6 +4,7 @@ import { Feed } from "feed";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceTypeAndLabel, getFormattedDate } from "@utils/helpers";
 import { captureException } from "@sentry/nextjs";
+import { formatPlacePhrases } from "@utils/string-helpers";
 import type { RssEvent } from "types/common";
 import { EventSummaryResponseDTO } from "types/api/event";
 import { getTranslations } from "next-intl/server";
@@ -84,15 +85,14 @@ const buildFeed = async (
   locale: AppLocale
 ): Promise<Feed> => {
   const defaultImage = `${siteUrl}/static/images/logo-seo-meta.webp`;
-  const { label: regionLabel } = await getPlaceTypeAndLabel(region);
-  const { label: townLabel } = await getPlaceTypeAndLabel(town);
-  const t = await getTranslations("Utils.Rss");
-  const placeLabel = townLabel || regionLabel || "Catalunya";
+  // An empty slug resolves to Catalunya, so the town wins only when set.
+  const [{ type, label: placeLabel }, t] = await Promise.all([
+    getPlaceTypeAndLabel(town || region),
+    getTranslations({ locale, namespace: "Utils.Rss" }),
+  ]);
+  const { placeOf } = formatPlacePhrases(placeLabel, type, locale);
   const feedTitle = t("feedTitle", { site: SITE_NAME, place: placeLabel });
-  const feedDescription = t("feedDescription", {
-    site: SITE_NAME,
-    place: placeLabel,
-  });
+  const feedDescription = t("feedDescription", { site: SITE_NAME, placeOf });
 
   // feed escapes the channel fields and enclosure URLs and wraps item fields in CDATA, so pass raw strings.
 

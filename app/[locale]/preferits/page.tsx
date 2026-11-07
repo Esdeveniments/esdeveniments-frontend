@@ -197,6 +197,7 @@ export default async function PreferitsPage() {
             event={event}
             isPriority={index === 0}
             initialIsFavorite
+            headingLevel="h2"
           />
         )}
       </List>

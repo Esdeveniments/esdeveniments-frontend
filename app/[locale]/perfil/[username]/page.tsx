@@ -11,6 +11,8 @@ import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkelet
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
+import { getProfileDisplayName } from "@utils/profile-name";
+import { formatNameOf } from "@utils/string-helpers";
 import type { BreadcrumbItem } from "types/common";
 import ProfilePageTracker from "./ProfilePageTracker";
 
@@ -31,13 +33,11 @@ export async function generateMetadata({
     return { title: "Not Found" };
   }
 
-  // 2026-07-25 backend moved to `displayName`; keep `name` as a fallback
-  // during the cut-over window so SEO titles don't render as "undefined".
-  const displayName =
-    profile.displayName?.trim() || profile.name?.trim() || profile.username;
+  const displayName = getProfileDisplayName(profile);
+  const nameOf = formatNameOf(displayName, locale);
   const title = t("title", { name: displayName });
-  const description = t("metaDescription", { name: displayName });
-  const canonical = toLocalizedUrl(`/perfil/${username}`, locale);
+  const description = t("metaDescription", { nameOf });
+  const canonical = toLocalizedUrl(`/perfil/${profile.username}`, locale);
 
   return buildPageMeta({
     title,
@@ -67,14 +67,7 @@ export default async function ProfilePage({
 
   const profileUrl = toLocalizedUrl(`/perfil/${profile.username}`, locale);
 
-  // 2026-07-25 backend migration: profile.displayName is canonical; profile.name
-  // is the legacy field; profile.username is the safety net. Breadcrumb
-  // schemas and the Person schema require string `name`, so coalesce.
-  const profileDisplayName =
-    profile.displayName?.trim() ||
-    profile.name?.trim() ||
-    profile.username?.trim() ||
-    "";
+  const profileDisplayName = getProfileDisplayName(profile);
 
   // No middle "Profiles" crumb: /perfil has no index route to link to.
   const breadcrumbItems: BreadcrumbItem[] = [
@@ -84,9 +77,10 @@ export default async function ProfilePage({
 
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbItems);
 
-  const personSchema = {
+  // Google's ProfilePage docs: use Organization when the profile is one.
+  const profileSchema = {
     "@context": "https://schema.org",
-    "@type": "Person",
+    "@type": profile.role === "ORGANIZATION" ? "Organization" : "Person",
     name: profileDisplayName,
     url: profileUrl,
     identifier: profile.username,
@@ -99,7 +93,7 @@ export default async function ProfilePage({
       {breadcrumbListSchema && (
         <JsonLdServer id="breadcrumbs-schema" data={breadcrumbListSchema} />
       )}
-      <JsonLdServer id={`person-${profile.username}`} data={personSchema} />
+      <JsonLdServer id={`person-${profile.username}`} data={profileSchema} />
 
       <Tabs
         items={tabItems}

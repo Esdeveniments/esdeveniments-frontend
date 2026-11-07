@@ -9,10 +9,6 @@ import type {
 } from "../types/api/event";
 
 // Mock modules that aren't relevant for these tests
-vi.mock("@components/ui/locationDiscoveryWidget", () => ({
-  default: () => <div data-testid="location-discovery-widget" />,
-}));
-
 vi.mock("@components/ui/search", () => ({
   default: () => <div data-testid="search-component" />,
 }));

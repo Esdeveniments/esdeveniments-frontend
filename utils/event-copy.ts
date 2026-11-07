@@ -243,14 +243,15 @@ function capitalizePlaces(text: string): string {
       const placePortion =
         seIndex >= 0 ? trimmedPlace.slice(0, seIndex).trim() : trimmedPlace;
       const remainder = seIndex >= 0 ? trimmedPlace.slice(seIndex) : "";
+      // "l'" elides with no space ("a l'Escala"); keep the article lowercase.
       const articleMatch = placePortion.match(
-        /^(l['’]|el|la|els|les)\s+(.*)$/i
+        /^(?:(l['’])\s*|(el|la|els|les)\s+)(\S.*)$/i
       );
       if (articleMatch) {
-        const article = articleMatch[1].toLowerCase();
-        const rest = articleMatch[2];
+        const article = (articleMatch[1] ?? articleMatch[2]).toLowerCase();
+        const rest = articleMatch[3];
         const formattedRest = formatPlaceName(rest);
-        const spacer = article.endsWith("'") ? "" : " ";
+        const spacer = /['’]$/.test(article) ? "" : " ";
         return `${prep} ${article}${spacer}${formattedRest}${remainder}`;
       }
 

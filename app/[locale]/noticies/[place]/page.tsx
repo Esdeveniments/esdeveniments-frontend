@@ -2,17 +2,16 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
-import type { RouteSearchParams } from "types/common";
+import type { PlaceTypeAndLabel, RouteSearchParams } from "types/common";
 import NewsListPage from "@components/noticies/NewsListPage";
 import { buildNewsListMetadata } from "@components/noticies/newsListMetadata";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { parseNewsPage } from "@utils/news-helpers";
+import { formatPlacePreposition } from "@utils/string-helpers";
 
-const getPlaceLabel = (place: string) =>
-  getPlaceTypeAndLabelCached(place)
-    .then((value) => value.label)
-    .catch(() => place);
+const getPlace = (place: string): Promise<PlaceTypeAndLabel> =>
+  getPlaceTypeAndLabelCached(place).catch(() => ({ type: "", label: place }));
 
 export async function generateMetadata({
   params,
@@ -23,13 +22,14 @@ export async function generateMetadata({
     rootLocale() as Promise<AppLocale>,
     searchParams as Promise<RouteSearchParams>,
   ]);
-  const [placeLabel, t] = await Promise.all([
-    getPlaceLabel(place),
+  const [{ type, label: placeLabel }, t] = await Promise.all([
+    getPlace(place),
     getTranslations({ locale, namespace: "App.NewsPlace" }),
   ]);
+  const placeIn = formatPlacePreposition(placeLabel, type, locale, false);
   const meta = await buildNewsListMetadata({
-    title: t("metaTitle", { place: placeLabel }),
-    description: t("metaDescription", { place: placeLabel }),
+    title: t("metaTitle", { placeIn }),
+    description: t("metaDescription", { placeIn }),
     place,
     page: parseNewsPage(query),
     locale,
@@ -60,17 +60,20 @@ export default async function Page({
     rootLocale() as Promise<AppLocale>,
     searchParams as Promise<RouteSearchParams>,
   ]);
-  const [placeLabel, t] = await Promise.all([
-    getPlaceLabel(place),
+  const [{ type, label: placeLabel }, t] = await Promise.all([
+    getPlace(place),
     getTranslations({ locale, namespace: "App.NewsPlace" }),
   ]);
+  const placeIn = formatPlacePreposition(placeLabel, type, locale, false);
+  const placeOf = formatPlacePreposition(placeLabel, type, locale, false, "of");
 
   return (
     <NewsListPage
       place={place}
       placeLabel={placeLabel}
-      title={t("heading", { place: placeLabel })}
-      subtitle={t("metaDescription", { place: placeLabel })}
+      placeType={type}
+      title={t("heading", { placeOf })}
+      subtitle={t("metaDescription", { placeIn })}
       page={parseNewsPage(query)}
       cta={
         <PressableAnchor
@@ -78,7 +81,7 @@ export default async function Page({
           className="btn-outline btn-sm shrink-0 mb-element-gap md:mb-0"
           variant="plain"
         >
-          {t("seeAgenda", { place: placeLabel })}
+          {t("seeAgenda", { placeOf })}
         </PressableAnchor>
       }
     />

@@ -169,13 +169,6 @@ async function ServerEventsCategorized({
       Boolean(section?.links && section.links.length > 0)
   );
 
-  const formatLinkLabel = (sectionId: string, label: string) => {
-    if (sectionId === "local-agendas") {
-      return label.replace(/^Agenda\s+/i, "");
-    }
-    return label;
-  };
-
   // Only the categories with an icon get a home quick link.
   const quickCategoryLinks = Object.entries(CATEGORY_ICONS).map(
     ([slug, Icon]) => ({
@@ -230,7 +223,7 @@ async function ServerEventsCategorized({
                     data-analytics-date-slug={link.dateSlug}
                     data-analytics-category-slug={link.categorySlug}
                   >
-                    {formatLinkLabel(section.id, link.label)}
+                    {link.shortLabel ?? link.label}
                   </PressableAnchor>
                 ))}
               </div>
@@ -483,7 +476,7 @@ export async function ServerEventsCategorizedContent({
     locale,
     namespace: "Components.DateFilterBadges",
   });
-  const badgeLabels = createDateFilterBadgeLabels(tDateFilters);
+  const badgeLabels = createDateFilterBadgeLabels(tDateFilters, locale);
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;
     if (!localePrefix) return path;
@@ -596,7 +589,7 @@ export async function ServerEventsCategorizedContent({
                   data-analytics-event-name="home_chip_click"
                   data-analytics-context="home_seo_local-agendas"
                 >
-                  {link.label.replace(/^Agenda\s+/i, "")}
+                  {link.shortLabel ?? link.label}
                 </PressableAnchor>
               ))}
             </div>

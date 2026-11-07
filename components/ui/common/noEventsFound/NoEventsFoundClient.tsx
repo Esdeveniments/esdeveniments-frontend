@@ -7,6 +7,7 @@ import NoEventsFoundContent from "./NoEventsFoundContent";
 export default function NoEventsFoundClient({
   title,
   description,
+  children,
 }: NoEventsFoundProps) {
   const t = useTranslations("Components.NoEventsFound");
 
@@ -16,7 +17,9 @@ export default function NoEventsFoundClient({
       description={description}
       ctaLabel={t("cta")}
       helperText={t("helper")}
-    />
+    >
+      {children}
+    </NoEventsFoundContent>
   );
 }
 

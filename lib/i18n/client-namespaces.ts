@@ -34,7 +34,6 @@ export const CLIENT_COMPONENT_KEYS = [
   "HybridEventsListClient",
   "ImageUploader",
   "LoadMoreButton",
-  "LocationDiscovery",
   "Modal",
   "MultiSelect",
   "Navbar",
@@ -54,7 +53,6 @@ export const CLIENT_COMPONENT_KEYS = [
 export const CLIENT_UTILS_KEYS = [
   "Calendar",
   "EventStatus",
-  "EventTime",
   "Validation",
 ] as const;
 

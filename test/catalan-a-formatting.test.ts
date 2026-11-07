@@ -118,7 +118,7 @@ describe("formatCatalanA", () => {
         "a Sant Cugat del Vallès"
       );
       expect(formatCatalanA("L'Hospitalet de Llobregat", "town", false)).toBe(
-        "a L'Hospitalet de Llobregat"
+        "a l'Hospitalet de Llobregat"
       );
     });
 

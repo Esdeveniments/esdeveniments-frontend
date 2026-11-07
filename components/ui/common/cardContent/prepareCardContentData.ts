@@ -7,7 +7,11 @@ import {
   convertTZ,
 } from "@utils/date-helpers";
 import { getCategoryLabel } from "@utils/category-helpers";
-import type { CardContentProps, FavoriteButtonLabels } from "types/props";
+import type {
+  CardContentProps,
+  CardData,
+  FavoriteButtonLabels,
+} from "types/props";
 import type { AppLocale } from "types/i18n";
 import type { CardVariant } from "types/ui";
 import { TIMEZONE_MADRID } from "@utils/constants";
@@ -17,25 +21,16 @@ export function prepareCardContentData({
   variant = "standard",
   locale,
   tCard,
-  tTime,
-  preferPreformattedDates: _preferPreformattedDates,
   tCategories,
+  isFavorite = false,
 }: {
   event: CardContentProps["event"];
   variant?: CardVariant;
   locale: AppLocale;
   tCard: (key: string, values?: Record<string, string | number>) => string;
-  tTime: (key: string, values?: Record<string, string | number>) => string;
-  preferPreformattedDates?: boolean;
   tCategories?: (key: string) => string;
-}) {
-  const timeLabels = {
-    consult: tTime("consult"),
-    startsAt: tTime("startsAt", { time: "{time}" }),
-    range: tTime("range", { start: "{start}", end: "{end}" }),
-    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
-  };
-
+  isFavorite?: boolean;
+}): CardData {
   const title = event.title || "";
 
   const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
@@ -50,7 +45,7 @@ export function prepareCardContentData({
 
   const image = event.imageUrl || "";
 
-  const { cardDate, isMultiDay } = formatCardDate(
+  const { cardDate, isMultiDay, endLabel, endDay } = formatCardDate(
     event.startDate,
     event.endDate,
     locale,
@@ -59,6 +54,7 @@ export function prepareCardContentData({
   // Urgency signals: "Today" / "Tomorrow"
   let urgencyLabel: string | undefined;
   let urgencyType: "today" | "tomorrow" | undefined;
+  let diffDays: number;
   {
     const now = convertTZ(new Date(), TIMEZONE_MADRID);
     const eventStart = convertTZ(new Date(event.startDate), TIMEZONE_MADRID);
@@ -77,7 +73,7 @@ export function prepareCardContentData({
 
     const diffTime = startOfEventDay.getTime() - startOfToday.getTime();
     // Use Math.round to handle DST changes gracefully
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
       urgencyLabel = tCard("today");
@@ -88,8 +84,12 @@ export function prepareCardContentData({
     }
   }
 
-  // Multi-day label
-  const multiDayLabel = isMultiDay ? tCard("multipleDates") : undefined;
+  // A multi-day event that is running, or starts today or tomorrow, shows its
+  // end ("Fins al 30 nov."); later ones keep the range. CompactCard keeps the range.
+  const untilLabel =
+    isMultiDay && endLabel && endDay !== undefined && diffDays <= 1 && variant !== "compact"
+      ? tCard("until", { day: String(endDay), date: endLabel })
+      : undefined;
 
   const cleanStart = event.startTime ? formatTimeForAPI(event.startTime) : null;
   const cleanEnd = event.endTime ? formatTimeForAPI(event.endTime) : null;
@@ -97,8 +97,21 @@ export function prepareCardContentData({
   const hasStartTime = !!cleanStart && cleanStart !== "00:00";
   const hasEndTime = !!normalizedEnd && normalizedEnd !== "00:00";
 
+  // Single-day events only: `<time>` can't hold a range. Computed here, not in
+  // date-helpers, because the unit test mocks that module export by export.
+  let dateTime: string | undefined;
+  if (!isMultiDay) {
+    const start = convertTZ(new Date(event.startDate), TIMEZONE_MADRID);
+    if (!Number.isNaN(start.getTime())) {
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const day = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+      dateTime = hasStartTime ? `${day}T${cleanStart}` : day;
+    }
+  }
+
   let timeDisplay = "";
-  if (hasStartTime) {
+  // Next to "Until 30 Nov." a time would read as the end time.
+  if (hasStartTime && !untilLabel) {
     if (hasEndTime) {
       timeDisplay = `${cleanStart} – ${normalizedEnd}`;
     } else {
@@ -115,16 +128,9 @@ export function prepareCardContentData({
 
   const promotedLabel = event.isPromoted ? tCard("promoted") : undefined;
 
-  // View count aria label
-  const viewCountAriaLabel = tCard("viewCountAria", {
-    count: event.visits ?? 0,
-  });
-
   const firstCategory = event.categories?.[0];
   let categoryLabel: string | undefined;
-  let categorySlug: string | undefined;
   if (firstCategory && variant !== "compact") {
-    categorySlug = firstCategory.slug;
     categoryLabel = tCategories
       ? getCategoryLabel(
           firstCategory.slug,
@@ -135,22 +141,27 @@ export function prepareCardContentData({
   }
 
   return {
-    variant,
-    timeLabels,
+    slug: event.slug,
+    eventId: event.id ? String(event.id) : undefined,
     title,
     primaryLocation,
     image,
     cardDate,
-    isMultiDay,
+    dateTime,
     urgencyLabel,
     urgencyType,
-    multiDayLabel,
+    untilLabel,
     timeDisplay,
     favoriteLabels,
     shouldShowFavoriteButton,
+    isFavorite: Boolean(event.slug && isFavorite),
     promotedLabel,
-    viewCountAriaLabel,
     categoryLabel,
-    categorySlug,
+    imageContext: {
+      location: event.city?.name || event.location,
+      region: event.region?.name || event.city?.name,
+      date: cardDate,
+    },
+    imageCacheKey: event.hash || event.updatedAt,
   };
 }

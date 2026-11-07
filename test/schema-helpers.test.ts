@@ -63,7 +63,7 @@ describe("generateJsonData", () => {
     expect(schema.offers).toBeUndefined();
   });
 
-  it("omits offers because the backend has no price data", () => {
+  it("omits offers when the event has no price", () => {
     const schema = generateJsonData(
       createEvent({
         description: "Gran concert",
@@ -75,6 +75,40 @@ describe("generateJsonData", () => {
     // misleading. offers is recommended, not required.
     expect(schema.offers).toBeUndefined();
     expect(schema.location.address.streetAddress).toBe("Palau de la Música");
+  });
+
+  it.each([
+    ["Gratuït", 0],
+    ["Entrada lliure.", 0],
+    ["10 €", 10],
+    ["12,50 euros", 12.5],
+    ["€8", 8],
+  ])("emits a numeric EUR offer for %j", (price, expected) => {
+    const schema = generateJsonData({
+      ...createEvent(),
+      price,
+    } as EventDetailResponseDTO);
+
+    expect(schema.offers).toEqual({
+      "@type": "Offer",
+      price: expected,
+      priceCurrency: "EUR",
+    });
+  });
+
+  it.each([
+    "10 € taquilla · 5 € online",
+    "10-25 €",
+    "Gratuït fins a 12 anys, 10 €",
+    "1.000 €",
+    "   ",
+  ])("omits offers when the price text is not one clear value: %j", (price) => {
+    const schema = generateJsonData({
+      ...createEvent(),
+      price,
+    } as EventDetailResponseDTO);
+
+    expect(schema.offers).toBeUndefined();
   });
 
   it("does not present the venue as performer or organizer", () => {
@@ -106,6 +140,13 @@ describe("generateJsonData", () => {
       name: "Ajuntament de Premià de Dalt",
       url: `${siteUrl}/es/perfil/ajuntament-premia-de-dalt`,
     });
+  });
+
+  it("adds the missing de to a council organizer name", () => {
+    expect(
+      generateJsonData(withOwner({ displayName: "Ajuntament El Masnou" }))
+        .organizer?.name
+    ).toBe("Ajuntament del Masnou");
   });
 
   it.each([

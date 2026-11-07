@@ -193,13 +193,6 @@
       "relatedArticles": "Artículos relacionados",
       "shareArticle": "Compartir el artículo"
     },
-    "NewsHubsGrid": {
-      "itemListTitle": "Últimas noticias por hub",
-      "titleWithPlace": "Últimas noticias {place}",
-      "seeMore": "Ver más…",
-      "seeAgenda": "Ver agenda de {place}",
-      "nearbyLabel": "Cerca:"
-    },
     "EventEdit": {
       "coverUpdateFailed": "El evento se ha guardado, pero no se ha podido actualizar la imagen.",
       "title": "Editar evento",
@@ -273,10 +266,10 @@
       "locationUnavailable": "Localización no disponible"
     },
     "NewsPlace": {
-      "metaTitle": "Noticias y planes en {place} | Agenda y recomendaciones - Esdeveniments.cat",
-      "metaDescription": "Descubre las últimas noticias, recomendaciones y planes culturales en {place}. Conciertos, exposiciones, teatro y más.",
-      "heading": "Noticias de {place}",
-      "seeAgenda": "Ver agenda de {place}",
+      "metaTitle": "Noticias y planes {placeIn} | Agenda y recomendaciones - Esdeveniments.cat",
+      "metaDescription": "Descubre las últimas noticias, recomendaciones y planes culturales {placeIn}. Conciertos, exposiciones, teatro y más.",
+      "heading": "Noticias {placeOf}",
+      "seeAgenda": "Ver agenda {placeOf}",
       "rssTitle": "RSS Noticias {place}"
     },
     "NewsArticleFallback": {
@@ -285,7 +278,7 @@
     },
     "NewsPlaceRss": {
       "title": "Noticias {place} - Esdeveniments.cat",
-      "description": "Las últimas noticias y recomendaciones culturales de {place}"
+      "description": "Las últimas noticias y recomendaciones culturales {placeOf}"
     },
     "NewsRss": {
       "title": "Noticias - Esdeveniments.cat",
@@ -368,7 +361,7 @@
       }
     },
     "PlaceFallback": {
-      "placeSuffix": " en {place}",
+      "placeSuffix": " {placeIn}",
       "catalunyaSuffix": " en Cataluña",
       "title": "Eventos{suffix}",
       "subTitle": "Descubre planes y actividades{suffix}.",
@@ -384,35 +377,35 @@
     },
     "PlaceByDate": {
       "dateFallback": "los próximos días",
-      "title": "Eventos {dateLabel} en {place}{categoryLabel}",
-      "subtitleWithDate": "Descubre planes para {date} en {place}{categoryLabel}.",
-      "subtitleFallback": "Descubre planes para los próximos días en {place}{categoryLabel}.",
+      "title": "Eventos {dateLabel} {placeIn}{categoryLabel}",
+      "subtitleWithDate": "Descubre planes para {date} {placeIn}{categoryLabel}.",
+      "subtitleFallback": "Descubre planes para los próximos días {placeIn}{categoryLabel}.",
       "categoryDescriptionSuffix": " en la categoría {categoryLabel}",
       "metaTitle": "{title} | Esdeveniments.cat",
-      "metaDescriptionWithDate": "Explora actividades y planes para {date} en {place}{categoryDescriptionSuffix}.",
-      "metaDescriptionFallback": "Explora actividades y planes para los próximos días en {place}{categoryDescriptionSuffix}.",
+      "metaDescriptionWithDate": "Explora actividades y planes para {date} {placeIn}{categoryDescriptionSuffix}.",
+      "metaDescriptionFallback": "Explora actividades y planes para los próximos días {placeIn}{categoryDescriptionSuffix}.",
       "notFoundTitle": "Sin eventos disponibles",
-      "notFoundDescriptionWithDate": "No hemos encontrado eventos para {date} en {place}. Inténtalo más tarde.",
-      "notFoundDescriptionFallback": "No hemos encontrado eventos para los próximos días en {place}. Inténtalo más tarde."
+      "notFoundDescriptionWithDate": "No hemos encontrado eventos para {date} {placeIn}. Inténtalo más tarde.",
+      "notFoundDescriptionFallback": "No hemos encontrado eventos para los próximos días {placeIn}. Inténtalo más tarde."
     },
     "PlaceByDateCategory": {
       "dateFallback": "los próximos días",
       "categoryFallback": "Eventos",
-      "plansWithCategory": "planes de {categoryLabel}",
+      "plansWithCategory": "planes {categoryPhrase}",
       "plansFallback": "planes",
-      "proposalsWithCategory": "propuestas de {categoryLabel}",
+      "proposalsWithCategory": "propuestas {categoryPhrase}",
       "proposalsFallback": "propuestas",
-      "activitiesWithCategory": "actividades de {categoryLabel}",
+      "activitiesWithCategory": "actividades {categoryPhrase}",
       "activitiesFallback": "actividades",
-      "title": "{categoryLabel} {dateLabel} en {place}",
-      "subtitleWithDate": "Descubre {plansLabel} para {date} en {place}.",
-      "subtitleFallback": "Descubre {plansLabel} para los próximos días en {place}.",
+      "title": "{categoryLabel} {dateLabel} {placeIn}",
+      "subtitleWithDate": "Descubre {plansLabel} para {date} {placeIn}.",
+      "subtitleFallback": "Descubre {plansLabel} para los próximos días {placeIn}.",
       "metaTitle": "{title} | Esdeveniments.cat",
-      "metaDescriptionWithDate": "Explora {proposalsLabel} para {date} en {place}.",
-      "metaDescriptionFallback": "Explora {proposalsLabel} para los próximos días en {place}.",
+      "metaDescriptionWithDate": "Explora {proposalsLabel} para {date} {placeIn}.",
+      "metaDescriptionFallback": "Explora {proposalsLabel} para los próximos días {placeIn}.",
       "notFoundTitle": "Sin eventos disponibles",
-      "notFoundDescriptionWithDate": "No hemos encontrado {activitiesLabel} para {date} en {place}.",
-      "notFoundDescriptionFallback": "No hemos encontrado {activitiesLabel} para los próximos días en {place}."
+      "notFoundDescriptionWithDate": "No hemos encontrado {activitiesLabel} para {date} {placeIn}.",
+      "notFoundDescriptionFallback": "No hemos encontrado {activitiesLabel} para los próximos días {placeIn}."
     },
     "EventPromote": {
       "refreshingSession": "Restaurando la sesión...",
@@ -488,7 +481,7 @@
     },
     "Profile": {
       "title": "{name} — Perfil",
-      "metaDescription": "Descubre los eventos de {name}. Consulta sus próximos eventos, conciertos, exposiciones y mucho más.",
+      "metaDescription": "Descubre los eventos {nameOf}. Consulta sus próximos eventos, conciertos, exposiciones y mucho más.",
       "events": "Eventos",
       "verified": "Verificado",
       "verifiedOrganizer": "Organizador verificado",
@@ -508,11 +501,11 @@
       "noPastEvents": "Todavía no hay eventos pasados",
       "statsPublished": "Publicados",
       "viewAllPastEvents": "Ver los pasados ({count})",
-      "upcomingInTown": "Próximos eventos en {town}",
-      "moreInTown": "Más eventos en {town}",
+      "upcomingInTown": "Próximos eventos {placeIn}",
+      "moreInTown": "Más eventos {placeIn}",
       "statsVisits": "Visitas",
-      "pastTitle": "Eventos pasados de {name} — Perfil",
-      "pastMetaDescription": "Consulta los eventos pasados de {name}: conciertos, exposiciones y actividades que ya ha organizado."
+      "pastTitle": "Eventos pasados {nameOf} — Perfil",
+      "pastMetaDescription": "Consulta los eventos pasados {nameOf}: conciertos, exposiciones y actividades que ya ha organizado."
     },
     "Footer": {
       "navigation": {
@@ -603,27 +596,27 @@
     },
     "LatestNewsSection": {
       "title": "Últimas noticias",
-      "titleWithPlace": "Últimas noticias {place}",
+      "titleWithPlace": "Últimas noticias {placeIn}",
       "titleStale": "Noticias",
-      "titleStaleWithPlace": "Noticias {place}",
+      "titleStaleWithPlace": "Noticias {placeIn}",
       "viewAll": "Ver todas"
     },
     "CulturalMessage": {
-      "explorePrefix": "Explora más planes {location}:",
+      "explorePrefix": "Explora más planes {placeIn}:",
       "today": "Qué hacer hoy",
       "tomorrow": "Qué hacer mañana",
       "week": "Qué hacer esta semana",
       "weekend": "Qué hacer este fin de semana"
     },
     "HeroSearch": {
-      "titlePrefix": "Qué hacer en",
+      "titlePrefix": "Qué hacer",
       "modalTitle": "Selecciona población",
       "modalAction": "Seleccionar",
       "errorLoadingLocations": "Error cargando las poblaciones.",
       "retry": "Volver a intentar",
       "selectPlaceholder": "Buscar población o comarca...",
       "subtitleDefault": "Agenda cultural, fiestas mayores y actividades",
-      "searchPlaceholder": "Busca eventos en {location}...",
+      "searchPlaceholder": "Busca eventos {placeIn}...",
       "clearSearch": "Limpiar búsqueda",
       "search": "Buscar"
     },
@@ -639,33 +632,6 @@
         "barcelona": "Barcelona",
         "tarragona": "Tarragona",
         "lleida": "Lleida"
-      },
-      "nearbyHubs": {
-        "mataro": {
-          "vilassar-de-mar": "Vilassar de Mar",
-          "premia-de-dalt": "Premià de Dalt",
-          "argentona": "Argentona",
-          "calella": "Calella",
-          "canet-de-mar": "Canet de Mar"
-        },
-        "barcelona": {
-          "l-hospitalet-de-llobregat": "L'Hospitalet de Llobregat",
-          "badalona": "Badalona",
-          "sant-just-desvern": "Sant Just Desvern",
-          "cardedeu": "Cardedeu",
-          "granollers": "Granollers",
-          "castelldefels": "Castelldefels"
-        },
-        "tarragona": {
-          "reus": "Reus",
-          "cambrils": "Cambrils",
-          "salou": "Salou"
-        },
-        "lleida": {
-          "balaguer": "Balaguer",
-          "tremp": "Tremp",
-          "tarrega": "Tàrrega"
-        }
       }
     },
     "HomePageSkeleton": {
@@ -772,7 +738,7 @@
       },
       "distance": {
         "label": "Distancia",
-        "labelFromPlace": "Distancia desde {place}",
+        "labelFromPlace": "Distancia {placeFrom}",
         "labelFromLocation": "Distancia desde tu ubicación",
         "helperRegion": "Para utilizar el filtro de distancia, selecciona una población específica o tu ubicación actual.",
         "helperPlace": "Si eliges una población, calcularemos el radio desde ese punto. Si no hay ninguna, usaremos tu ubicación actual. Activa el filtro para limitar los resultados a un radio concreto.",
@@ -875,43 +841,35 @@
         "aria": "Ver actividades este fin de semana"
       },
       "ariaCategory": "{ariaLabelText} para la categoría {contextName}",
-      "ariaPlace": "{ariaLabelText} en {contextName}"
+      "ariaPlace": "{ariaLabelText} {placeIn}"
     },
     "PlacePageExploreNav": {
       "sectionAriaLabel": "Explorar por fecha o categoría",
       "dateTitle": "Buscar por fecha",
       "dateAriaLabel": "Filtrar por fecha",
       "categoryTitle": "Explorar categorías",
-      "otherCategoryTitle": "Otras categorías en {place}",
+      "otherCategoryTitle": "Otras categorías {placeIn}",
       "categoryAriaLabel": "Navegar por categorías",
-      "categoryLinkAria": "Ver {category} en {place}"
+      "categoryLinkAria": "Ver {category} {placeIn}"
     },
     "ExploreNearby": {
       "sectionAriaLabel": "Explorar lugares cercanos",
       "regionsTitle": "Comarcas de Cataluña",
       "regionsAriaLabel": "Navegar por comarcas",
-      "citiesTitle": "Pueblos y ciudades de {region}",
+      "citiesTitle": "Pueblos y ciudades {placeOf}",
       "citiesAriaLabel": "Navegar por pueblos y ciudades",
       "nearbyTitle": "Pueblos cercanos",
       "nearbyAriaLabel": "Descubre eventos en pueblos cercanos",
-      "linkAria": "Ver eventos en {place}"
+      "linkAria": "Ver eventos {placeIn}"
     },
     "SearchBar": {
       "placeholder": "¿Qué estás buscando?",
       "clear": "Limpiar la búsqueda",
       "search": "Buscar"
     },
-    "LocationDiscovery": {
-      "heading": "Viendo eventos en",
-      "selectLocation": "Selecciona ubicación",
-      "searchPlaceholder": "Buscar ubicación...",
-      "discover": "Descubrir otros eventos",
-      "loading": "Cargando ubicaciones...",
-      "noResults": "No hay resultados"
-    },
     "PastEventBanner": {
       "title": "Este evento ya ha finalizado",
-      "subtitle": "No te pierdas qué pasa {timeWindow} en {placeLabel}",
+      "subtitle": "No te pierdas qué pasa {timeWindow} {placeIn}",
       "primaryCta": "Consulta la agenda",
       "secondaryCta": "o explora esta categoría",
       "srStatus": "Estado: {label}.",
@@ -956,8 +914,7 @@
       "favoriteRemoveAria": "Quitar de favoritos",
       "today": "Hoy",
       "tomorrow": "Mañana",
-      "multipleDates": "Varios días",
-      "viewCountAria": "{count, plural, one {{count} visualización} other {{count} visualizaciones}}",
+      "until": "{day, select, 1 {Hasta el {date}} 11 {Hasta el {date}} other {Hasta el {date}}}",
       "promoted": "Patrocinado"
     },
     "EventForm": {
@@ -1018,17 +975,19 @@
       "title": "Detalles del evento",
       "eventLink": "Enlace al evento:",
       "duration": "Duración aproximada: {duration}",
-      "createdBy": "Publicado por <link>{name}</link>"
+      "createdBy": "Publicado {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicación",
       "showMap": "Mostrar mapa",
       "hideMap": "Cerrar mapa",
       "getDirections": "Cómo llegar",
-      "profileLink": "Perfil de {name}"
+      "profileLink": "Perfil {nameOf}"
     },
     "EventCalendar": {
-      "title": "Fecha y hora"
+      "title": "Fecha y hora",
+      "priceLabel": "Precio:",
+      "priceFree": "Gratis"
     },
     "Select": {
       "placeholder": "una opción",
@@ -1067,7 +1026,12 @@
       "errorTitle": "Error al cargar eventos",
       "error": "Por favor, inténtalo más tarde.",
       "resultsCount": "{count, plural, =0 {Ningún evento} one {# evento} other {# eventos}}",
-      "retry": "Reintentar"
+      "retry": "Reintentar",
+      "recoveryTitle": "Amplía la búsqueda",
+      "recoveryPlace": "«{search}» en toda Cataluña",
+      "recoveryDate": "«{search}» en cualquier fecha",
+      "recoveryCategory": "«{search}» en todas las categorías",
+      "recoveryDistance": "«{search}» sin límite de distancia"
     },
     "Hero": {
       "options": {
@@ -1104,8 +1068,8 @@
       "previous": "Anterior"
     },
     "SitemapHeader": {
-      "title": "Archivo histórico de {label}",
-      "subtitle": "Descubre la evolución cultural de {label} año tras año. Cada enlace te lleva a los eventos de un mes específico."
+      "title": "Archivo histórico {placeOf}",
+      "subtitle": "Descubre la evolución cultural {placeOf} año tras año. Cada enlace te lleva a los eventos de un mes específico."
     },
     "SitemapContent": {
       "title": "Archivo de eventos culturales",
@@ -1116,9 +1080,9 @@
     },
     "NewsList": {
       "emptyTitle": "No hemos encontrado noticias recientes",
-      "emptyBody": "Todavía no tenemos novedades para {place}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras zonas.",
+      "emptyBody": "Todavía no tenemos novedades {placeIn}, pero seguimos añadiendo cada semana. Mientras tanto, puedes explorar las últimas noticias de otras zonas.",
       "viewAll": "Ver todas las noticias",
-      "itemListName": "Noticias de {place}",
+      "itemListName": "Noticias {placeOf}",
       "prev": "Más recientes",
       "next": "Más antiguas",
       "emptyBodyIndex": "Todavía no hay noticias publicadas. Mientras tanto, consulta la agenda para encontrar planes cerca de ti.",
@@ -1397,38 +1361,38 @@
   },
   "Pages": {
     "SitemapMonth": {
-      "metaTitle": "Archivo de {town} de {month} de {year} - Esdeveniments.cat",
-      "metaDescription": "Descubre qué pasó {locationPhrase} el {month} de {year}. Teatro, cine, música, arte y otras excusas para seguir descubriendo {town} - Archivo - Esdeveniments.cat",
+      "metaTitle": "Archivo {placeOf} de {month} de {year} - Esdeveniments.cat",
+      "metaDescription": "Descubre qué pasó {placeIn} el {month} de {year}. Teatro, cine, música, arte y muchas más excusas para seguir descubriendo - Archivo - Esdeveniments.cat",
       "breadcrumbs": {
         "home": "Inicio",
         "archive": "Archivo"
       },
-      "itemListTitle": "Eventos de {town} - {month} {year}",
-      "itemListDescription": "Colección de eventos culturales de {town} de {month} de {year}",
-      "collectionTitle": "Archivo de {town} - {month} {year}",
-      "collectionDescription": "Eventos culturales que tuvieron lugar {locationPhrase} durante {month} de {year}",
+      "itemListTitle": "Eventos {placeIn} - {month} {year}",
+      "itemListDescription": "Colección de eventos culturales {placeIn} de {month} de {year}",
+      "collectionTitle": "Archivo {placeOf} - {month} {year}",
+      "collectionDescription": "Eventos culturales que tuvieron lugar {placeIn} durante {month} de {year}",
       "collectionFallbackDescription": "Colección de eventos culturales",
-      "headerTitle": "Archivo {town} - {month} de {year}",
+      "headerTitle": "Archivo {placeOf} - {month} de {year}",
       "headerCount": "{count} eventos culturales documentados",
       "headerEmpty": "No se han encontrado eventos para este periodo",
       "srList": "Lista de eventos",
-      "footerExplore": "¿Quieres explorar más eventos de {town}?",
+      "footerExplore": "¿Quieres explorar más eventos {placeIn}?",
       "footerViewArchives": "Ver todos los archivos",
       "footerCurrentEvents": "Eventos actuales"
     },
     "SitemapTown": {
-      "metaTitle": "Archivo. Descubre todo lo que ha pasado {locationPhrase} - Esdeveniments.cat",
-      "metaDescription": "Descubre todo lo que ha pasado {locationPhrase} cada año. Las mejores propuestas culturales para exprimir al máximo {town} - Archivo - Esdeveniments.cat",
+      "metaTitle": "Archivo. Descubre todo lo que ha pasado {placeIn} - Esdeveniments.cat",
+      "metaDescription": "Descubre todo lo que ha pasado {placeIn} cada año. Las mejores propuestas culturales para sacar el máximo partido {placeOf} - Archivo - Esdeveniments.cat",
       "breadcrumbs": {
         "home": "Inicio",
         "archive": "Archivo"
       },
-      "collectionTitle": "Archivo de {town}",
-      "collectionDescription": "Histórico de eventos culturales de {town} organizado por años y meses",
-      "mainEntityName": "Archivo histórico de {town}",
-      "mainEntityDescription": "Colección de eventos culturales de {town}",
+      "collectionTitle": "Archivo {placeOf}",
+      "collectionDescription": "Histórico de eventos culturales {placeIn} organizado por años y meses",
+      "mainEntityName": "Archivo histórico {placeOf}",
+      "mainEntityDescription": "Colección de eventos culturales {placeIn}",
       "aboutTitle": "Sobre este archivo",
-      "aboutBody": "Este archivo contiene una recopilación de eventos culturales de {town} organizados cronológicamente. Cada mes incluye teatro, música, arte, festivales y otras actividades culturales.",
+      "aboutBody": "Este archivo contiene una recopilación de eventos culturales {placeIn} organizados cronológicamente. Cada mes incluye teatro, música, arte, festivales y otras actividades culturales.",
       "quickNavTitle": "Navegación rápida",
       "quickNavBody": "Utiliza los enlaces para navegar directamente a un mes específico. Los años más recientes aparecen primero para facilitar la búsqueda."
     }
@@ -1518,7 +1482,10 @@
         "dels": "de los",
         "deLa": "de la",
         "deLes": "de las",
-        "deL": "del"
+        "deL": "del",
+        "per": "por",
+        "pel": "por el",
+        "perLa": "por la"
       }
     },
     "Calendar": {
@@ -1534,19 +1501,15 @@
       },
       "ariaAdd": "Añadir a {name}"
     },
-    "LocationHelpers": {
-      "newsAll": "Noticias de Cataluña",
-      "newsWithPlace": "Noticias {deLabel}"
-    },
     "Rss": {
       "feedTitle": "Rss {site} - {place}",
-      "feedDescription": "Rss {site} de {place}",
+      "feedDescription": "Rss {site} {placeOf}",
       "itemDescription": "{title}\n\n🗓️ {nameDay} {formattedStart}\n\n🏡 {location}, {town}, {region} \n\nℹ️ ¡Más información disponible en nuestra página web!"
     }
   },
   "Config": {
     "TopAgenda": {
-      "agenda": "Agenda"
+      "agendaOf": "Agenda {placeOf}"
     },
     "Filters": {
       "place": "Población",

@@ -5,6 +5,13 @@ import type { ProfileSlugSource } from "types/api/auth-validation";
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** A verified organization (e.g. a town council), shown as an Organization in schema.org. */
+export function isVerifiedOrganization(
+  user: Pick<ProfileSlugSource, "verified" | "role"> | null | undefined
+): boolean {
+  return Boolean(user?.verified) && user?.role === "ORGANIZATION";
+}
+
 /** True when the value is a hyphenated UUID. */
 export function isUuid(value: string): boolean {
   return UUID_RE.test(value);

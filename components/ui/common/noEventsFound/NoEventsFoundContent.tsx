@@ -7,6 +7,7 @@ export default function NoEventsFoundContent({
   description,
   ctaLabel,
   helperText,
+  children,
 }: NoEventsFoundContentProps): JSX.Element {
 
   return (
@@ -209,9 +210,10 @@ export default function NoEventsFoundContent({
           </svg>
         </div>
         {title && (
-          <h3 className="text-xl font-semibold text-foreground text-center">
+          // h2: every page renders this right under its <h1>, before the h2 card titles.
+          <h2 className="text-xl font-semibold text-foreground text-center">
             {title}
-          </h3>
+          </h2>
         )}
       </div>
       <div className="flex flex-col items-center gap-4 text-center max-w-lg">
@@ -219,6 +221,7 @@ export default function NoEventsFoundContent({
           <p className="text-foreground leading-relaxed">{description}</p>
         )}
       </div>
+      {children}
       <div className="flex flex-col items-center gap-3">
         <PressableAnchorClient
           href="/publica"

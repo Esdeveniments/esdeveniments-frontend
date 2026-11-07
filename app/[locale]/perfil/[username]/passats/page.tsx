@@ -9,6 +9,8 @@ import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkelet
 import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
+import { getProfileDisplayName } from "@utils/profile-name";
+import { formatNameOf } from "@utils/string-helpers";
 import ProfilePageTracker from "../ProfilePageTracker";
 
 // No generateStaticParams — mirrors the parent /perfil/[username] page.
@@ -27,11 +29,10 @@ export async function generateMetadata({
     return { title: "Not Found" };
   }
 
-  const displayName =
-    profile.displayName?.trim() || profile.name?.trim() || profile.username;
-  const title = t("pastTitle", { name: displayName });
-  const description = t("pastMetaDescription", { name: displayName });
-  const canonical = toLocalizedUrl(`/perfil/${username}/passats`, locale);
+  const nameOf = formatNameOf(getProfileDisplayName(profile), locale);
+  const title = t("pastTitle", { nameOf });
+  const description = t("pastMetaDescription", { nameOf });
+  const canonical = toLocalizedUrl(`/perfil/${profile.username}/passats`, locale);
 
   return buildPageMeta({
     title,
@@ -60,11 +61,7 @@ export default async function ProfilePastEventsPage({
     notFound();
   }
 
-  const displayName =
-    profile.displayName?.trim() ||
-    profile.name?.trim() ||
-    profile.username?.trim() ||
-    "";
+  const displayName = getProfileDisplayName(profile);
 
   const tabItems = buildProfileTabItems(profile, tProfile);
 

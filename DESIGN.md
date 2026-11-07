@@ -110,7 +110,7 @@ typography:
     letterSpacing: "0.05em"
     textTransform: "uppercase"
   label-tight:
-    fontSize: "11px"
+    fontSize: "12px"
     fontWeight: 600
     lineHeight: "1.25"
     letterSpacing: "0"
@@ -277,10 +277,12 @@ components:
     rounded: "{rounded.md}"
     padding: "{spacing.lg}"
     shadow: "none"
-    transition: "border-color {motion.duration-normal} {motion.easing-smooth}, box-shadow {motion.duration-normal} {motion.easing-smooth}"
+    transition: "border-color {motion.duration-normal} {motion.easing-smooth}, transform {motion.duration-normal} {motion.easing-smooth}"
   card-default-hover:
     border: "1px solid {colors.border-subtle}"
-    shadow: "{elevation.md}"
+    shadow: "none"
+  card-focus:
+    outline: "2px solid {colors.primary}, inset 2px, over a 4px {colors.background} band"
   card-elevated:
     background: "{colors.background}"
     rounded: "{rounded.md}"
@@ -295,12 +297,12 @@ components:
   card-title:
     fontSize: "{typography.body.fontSize}"
     fontWeight: 600
-    lineHeight: "1.4"
+    lineHeight: "1.5"
     color: "{colors.foreground-strong}"
-    minHeight: "44px"
-  card-title-hover:
-    color: "{colors.primary}"
-    opacity: 0.85
+  card-compact:
+    padding: "10px 14px 14px"
+    titleFontSize: "14px"
+    metaFontSize: "12px"
   card-meta:
     fontSize: "{typography.body-small.fontSize}"
     color: "{colors.foreground-muted}"
@@ -338,6 +340,7 @@ components:
     fontWeight: 600
     paddingX: "{spacing.sm}"
     paddingY: "2px"
+    cardAlignment: "on cards, pulled left by its paddingX so the label lines up with the date and title"
 
   tab-bar:
     borderBottom: "1px solid {colors.border}"
@@ -645,14 +648,16 @@ The type scale follows a four-level heading model:
 - **heading-2** (20/600 mobile → 24/600 desktop) — major section dividers.
 - **heading-3** (18/600 mobile → 20/600 desktop) — subsections, category
   headers.
-- **heading-4** (16/500 mobile → 18/500 desktop) — card titles, footer
-  block titles.
+- **heading-4** (16/500 mobile → 18/500 desktop) — footer block titles.
+  Card titles are 16/600 at every width (14/600 on the compact carousel
+  card).
 
 UI chrome — nav links and footer links — uses a small **label** style:
 12/500, **uppercase**, with widened tracking. Button labels use the same
 uppercase voice one step up, at 14/600, which gives buttons their
-characteristic civic-poster confidence without shouting. A `label-tight` (11/600) is reserved for category
-badges on cards.
+characteristic civic-poster confidence without shouting. A `label-tight` (12/600) is reserved for category
+badges on cards. 12px is the smallest text size; the badge stands apart
+from the 12–14px metadata by weight and its pill, not by a 1px size step.
 
 Body inputs are pinned to **16px** to defeat iOS Safari's focus auto-zoom.
 
@@ -673,10 +678,10 @@ drops to 0 and the container is centered. A `spacing.sticky-offset` of
 128px reserves space below the fixed search/filter bar on listing pages so
 the first row of cards never slides under the chrome.
 
-Cards live in a responsive grid: 1 column on mobile, 2 on **sm**, 3 on
-**md+**, with `spacing.md` (12px) between cells. Card titles use a 2-line
-clamp and a fixed `min-height` so adjacent cards visually align even when
-titles vary.
+Cards live in a responsive grid: 1 column on mobile, 2 on **md**, 3 on
+**xl**, with 20px (`gap-5`) between cells. Card titles use a 2-line
+clamp; cards in a row share one height, and the text inside each card stays
+together (no reserved title height, no location pinned to the bottom).
 
 Z-layers are explicit: 10 sticky chrome, 100 dropdowns, 900 modals, 1000
 tooltips. Anything above 1000 is forbidden.
@@ -693,9 +698,8 @@ its icon primary red.
 
 Shadows are deliberately soft. They use the body color (`#454545`) at low
 alpha rather than pure black, with short y-offsets and modest spreads, so
-they sit kindly on warm white. Cards default to a **hairline border + no
-shadow**; on hover the border tightens and a small `elevation.md` shadow
-blooms. Modals get `elevation.lg`. The hero banner gets `elevation.xl`.
+they sit kindly on warm white. Cards are a **hairline border + no
+shadow**, also on hover (the border tightens). Modals get `elevation.lg`. The hero banner gets `elevation.xl`.
 Anything beyond `xl` is forbidden.
 
 Focus is communicated as a **3-pixel `#D6002F33` glow ring** plus, on
@@ -744,16 +748,29 @@ rows. Confirm dialogs stack their actions full width, primary on top, so a
 long label never wraps inside a pill.
 
 **Cards** are an article tile: 3:2 image on top, category pill, then a
-muted metadata row (`date · time · price · multi-day`), a 2-line title, and
-finally a location row anchored to the bottom with a pin icon. The whole
-tile is a clickable article element with the link absolutely positioned to
-cover the card. Hovering tightens the border and zooms the image to 1.03
-over 300ms. The favorite button overlays the image in the top-right and
+muted metadata row (`date · time`), a 2-line title, and finally a location
+row with a pin icon right under the title. The text stays together (label,
+date, title, location); when cards in a row differ in height, the spare space
+sits at the bottom of the shorter card, not between the title and the location. A multi-day event that is
+running shows its end instead of the range (`Fins al 30 nov.`, no time);
+one starting today or tomorrow shows `Avui · Fins al …` / `Demà · Fins al …`.
+The title is the card's only link (`h2` right under a page `<h1>`, else
+`h3`) and comes first in the HTML; `order-*` keeps the pill and date above
+it. `.card-event-link::after` stretches the link over the card, so the whole
+tile is clickable and is read once; the image is decorative (`alt=""`). The
+focus ring is drawn inside the card (2px primary over a 4px white band), since
+the card clips anything outside it. Hovering (only on devices that hover)
+tightens the border and zooms the image to 1.03 over 300ms; pressing the
+link darkens the border and scales the card to 0.995. Zoom and the press
+scale are off with reduced motion; the border change stays. The favorite button overlays the image in the top-right and
 heart-beats (1 → 1.15 → 1) on activation.
 News articles use the same card (`CardLayout`): the date, the city as the
 location, no favorite button. The first article of a news list uses the
 `featured` variant: image and text side by side from md up, with a
-three-line summary.
+three-line summary. The grids of news cards (the news lists below the featured card, the
+related articles of an article, and the latest news on the event page) go
+through `NewsCardGrid`, which links each card to the article's own city or
+region.
 
 Inside a news article the events are a numbered list (`<ol>`), one `row`
 card per event. `row` shares `featured`'s side-by-side layout, but the 3:2
@@ -823,8 +840,7 @@ collapses to 0ms under `prefers-reduced-motion: reduce`.
   focus, and price/price-free accents. Treat it as a scarce resource.
 - Pair white type over photography with a `text-shadow` and a 60% overlay
   — never bare white on raw photography.
-- Default cards to a hairline border and *no* shadow. Let shadow bloom on
-  hover only.
+- Keep cards to a hairline border and *no* shadow, hover included.
 - Pin form inputs to 16px+ to prevent iOS auto-zoom.
 - Use `:focus-visible` (not `:focus`) for all focus rings.
 - Keep mobile interactive targets at 44×44 px minimum.
@@ -852,4 +868,4 @@ collapses to 0ms under `prefers-reduced-motion: reduce`.
   transitions. Reserve it for confirmation gestures only.
 - Don't use blur outside the hero / photographic surfaces.
 - Don't break the canonical hover pattern on cards (border tightens +
-  shadow blooms + image scales 1.03). Stay consistent across the grid.
+  image scales 1.03). Stay consistent across the grid.

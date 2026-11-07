@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { formatPlacePreposition } from "@utils/string-helpers";
 import { locale as rootLocale } from "next/root-params";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { insertAds } from "@lib/api/events";
@@ -263,6 +264,7 @@ export default async function ByDatePage({
         finalCategory,
         categoryName: categoryData?.name,
         t: tFallback,
+        locale,
       });
     }
   })();
@@ -326,14 +328,17 @@ function buildFallbackPlaceByDateShellData({
   finalCategory,
   categoryName,
   t,
+  locale,
 }: {
   place: string;
   actualDate: string;
   finalCategory?: string;
   categoryName?: string;
   t: (key: string, values?: Record<string, string>) => string;
+  locale: AppLocale;
 }): { placeTypeLabel: PlaceTypeAndLabel; pageData: PageData } {
   const placeTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
+  const placeIn = formatPlacePreposition(place, "", locale, false);
   const hasSpecificDate =
     actualDate && actualDate !== DEFAULT_FILTER_VALUE && actualDate !== "";
   const dateLabel = hasSpecificDate ? actualDate : t("dateFallback");
@@ -354,16 +359,16 @@ function buildFallbackPlaceByDateShellData({
   const canonical = `${siteUrl}${canonicalPath}`;
   const title = t("title", {
     dateLabel,
-    place,
+    placeIn,
     categoryLabel: categoryTitleSuffix,
   });
   const subTitle = hasSpecificDate
     ? t("subtitleWithDate", {
       date: actualDate,
-      place,
+      placeIn,
       categoryLabel: categorySubSuffix,
     })
-    : t("subtitleFallback", { place, categoryLabel: categorySubSuffix });
+    : t("subtitleFallback", { placeIn, categoryLabel: categorySubSuffix });
 
   return {
     placeTypeLabel,
@@ -374,18 +379,18 @@ function buildFallbackPlaceByDateShellData({
       metaDescription: hasSpecificDate
         ? t("metaDescriptionWithDate", {
           date: actualDate,
-          place,
+          placeIn,
           categoryDescriptionSuffix,
         })
         : t("metaDescriptionFallback", {
-          place,
+          placeIn,
           categoryDescriptionSuffix,
         }),
       canonical,
       notFoundTitle: t("notFoundTitle"),
       notFoundDescription: hasSpecificDate
-        ? t("notFoundDescriptionWithDate", { date: actualDate, place })
-        : t("notFoundDescriptionFallback", { place }),
+        ? t("notFoundDescriptionWithDate", { date: actualDate, placeIn })
+        : t("notFoundDescriptionFallback", { placeIn }),
     },
   };
 }

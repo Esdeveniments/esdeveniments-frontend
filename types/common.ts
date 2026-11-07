@@ -278,6 +278,29 @@ export interface ArticleLabels {
   les: string;
 }
 
+export type CatalanArticle = keyof ArticleLabels;
+/** Singular articles an institution name takes ("l'Ajuntament", "el Museu", "la Biblioteca"). */
+export type InstitutionArticle = Exclude<CatalanArticle, "els" | "les">;
+/** How a name attaches to copy: "of" (de/del/d') or "by" (per/pel). */
+export type NameRelation = "of" | "by";
+
+/** "in" → a/en/in, "of" → de/de/of, "from" → des de/desde/from. */
+export type PlaceRelation = "in" | "of" | "from";
+
+export type PlacePhraseType = PlaceType | "general";
+
+/** What a Catalan "de" phrase names: a place, or a category ("de música"). */
+export type CatalanPhraseType = PlacePhraseType | "category";
+
+/** Message placeholders for one place: "al Masnou", "del Masnou", "des del Masnou". */
+export type PlacePhrases = Record<"placeIn" | "placeOf" | "placeFrom", string>;
+
+/** "al Masnou" → { preposition: "al", place: "Masnou" }. */
+export interface PlacePhraseParts {
+  preposition: string;
+  place: string;
+}
+
 export interface PrepositionLabels {
   a: string;
   al: string;
@@ -291,6 +314,9 @@ export interface PrepositionLabels {
   deLa: string;
   deLes: string;
   deL: string;
+  per: string;
+  pel: string;
+  perLa: string;
 }
 
 export type CategorySeoSlug =
@@ -300,8 +326,12 @@ export interface StringHelperLabels {
   articles: ArticleLabels;
   prepositions: PrepositionLabels;
   capitalizePrepositions: string[];
+  /** Lowercased place names that never take an article ("a Osona"). */
+  articlelessPlaces: string[];
   feminineExceptions: string[];
   masculineExceptions: string[];
+  /** Institution head nouns and the article they take ("ajuntament" → l'). */
+  institutionArticles: Record<string, InstitutionArticle>;
 }
 
 export interface EventCopySentenceLabels {
@@ -346,18 +376,8 @@ export interface CardProps {
   isLoading?: boolean;
   isPriority?: boolean;
   initialIsFavorite?: boolean;
-}
-
-export interface CardHorizontalProps {
-  event: ListEvent;
-  isLoading?: boolean;
-  isPriority?: boolean;
-}
-
-export interface CardHorizontalServerProps {
-  event: EventSummaryResponseDTO;
-  isPriority?: boolean;
-  initialIsFavorite?: boolean;
+  /** Card title level: `h2` directly under the page `<h1>`, else `h3` */
+  headingLevel?: "h2" | "h3";
 }
 
 export interface CardShareButtonProps {
