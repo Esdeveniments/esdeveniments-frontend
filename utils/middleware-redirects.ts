@@ -89,6 +89,7 @@ export const NON_PLACE_FIRST_SEGMENTS: ReadonlySet<string> = new Set([
   "registre",
   "politica-privacitat",
   "termes-servei",
+  "developers",
 ]);
 
 /**

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { siteUrl } from "@config/index";
+import { SPONSOR_DURATIONS, VALID_GEO_SCOPES } from "types/sponsor";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "types/i18n";
 
 /**
  * OpenAPI 3.1.0 specification for public API endpoints.
@@ -12,7 +14,7 @@ export async function GET() {
       title: "Esdeveniments.cat API",
       version: "1.0.0",
       description:
-        "Public API for discovering cultural events, news, places, and categories in Catalonia (Spain). Multilingual support (ca/es/en). All GET endpoints are public and require no authentication.",
+        "Public API for discovering cultural events, news, places, and categories in Catalonia (Spain). Multilingual support (ca/es/en). All GET endpoints are public and require no authentication. Write operations accept an Idempotency-Key header so retries are safe. Developer portal: " + `${siteUrl}/developers`,
       contact: {
         name: "Esdeveniments.cat",
         url: `${siteUrl}/qui-som`,
@@ -44,6 +46,10 @@ export async function GET() {
       {
         name: "Reference",
         description: "Categories, places, regions, and cities",
+      },
+      {
+        name: "Sponsors",
+        description: "Buy a sponsor banner for a place (Stripe Checkout)",
       },
     ],
     paths: {
@@ -514,9 +520,82 @@ export async function GET() {
           },
         },
       },
+      "/api/sponsors/checkout": {
+        post: {
+          operationId: "createSponsorCheckout",
+          tags: ["Sponsors"],
+          summary: "Create a sponsor checkout session",
+          description:
+            "Creates a Stripe Checkout session to buy a sponsor banner for one place and returns its URL; a person completes the payment there. Browser-only: the request must come from an esdeveniments.cat page (Origin check). Send a new Idempotency-Key per purchase attempt and reuse it on retries: a retry with the same key returns the same session instead of creating a second one.",
+          parameters: [{ $ref: "#/components/parameters/IdempotencyKey" }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/SponsorCheckoutRequest" },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Checkout session created (or returned again for a repeated Idempotency-Key)",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    required: ["url", "sessionId"],
+                    properties: {
+                      url: { type: "string", format: "uri", description: "Stripe Checkout URL to open" },
+                      sessionId: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "Invalid body or Idempotency-Key",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "403": {
+              description: "Request did not come from an esdeveniments.cat page",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "409": {
+              description: "The place already has an active sponsor",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "500": {
+              description: "Internal server error",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+          },
+        },
+      },
     },
     components: {
+      parameters: {
+        IdempotencyKey: {
+          name: "Idempotency-Key",
+          in: "header",
+          required: false,
+          description:
+            "Client-generated unique key (a UUID v4 is recommended, max 255 characters). Reuse the same key when retrying the same request so it runs only once.",
+          schema: { type: "string", maxLength: 255 },
+          example: "2f1c9c1e-4b8a-4d6e-9a0b-3c5d7e9f1a2b",
+        },
+      },
       schemas: {
+        SponsorCheckoutRequest: {
+          type: "object",
+          required: ["duration", "place", "placeName", "geoScope"],
+          properties: {
+            duration: { type: "string", enum: SPONSOR_DURATIONS },
+            geoScope: { type: "string", enum: VALID_GEO_SCOPES },
+            place: { type: "string", description: "Place slug (e.g. barcelona)" },
+            placeName: { type: "string", description: "Place display name (e.g. Barcelona)" },
+            locale: { type: "string", enum: SUPPORTED_LOCALES, default: DEFAULT_LOCALE },
+          },
+        },
         PagedEvents: {
           type: "object",
           required: ["content", "currentPage", "pageSize", "totalElements", "totalPages", "last"],

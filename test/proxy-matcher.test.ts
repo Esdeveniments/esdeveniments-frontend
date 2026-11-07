@@ -16,6 +16,7 @@ describe("proxy matcher", () => {
     "/.well-known/mcp",
     "/mcp",
     "/llms.txt",
+    "/webmcp.js",
     "/robots.txt",
     "/favicon.ico",
     "/_next/static/chunks/app.js",
@@ -35,6 +36,8 @@ describe("proxy matcher", () => {
     "/askatasuna",
     "/openapi-events",
     "/docs",
+    "/webmcp.js-guide",
+    "/developers",
   ])("runs on %s", (path) => {
     expect(runsProxy(path)).toBe(true);
   });

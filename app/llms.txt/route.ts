@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
-import { siteUrl } from "@config/index";
+import { siteUrl, socialLinks } from "@config/index";
 
 export async function GET(request: NextRequest) {
 
@@ -64,7 +64,10 @@ export async function GET(request: NextRequest) {
     "```",
     "",
     "## API Reference",
+    `- Developer portal (Esdeveniments.cat API docs): [${siteUrl}/developers](${siteUrl}/developers)`,
+    `- Esdeveniments.cat MCP server docs: [${siteUrl}/developers/mcp](${siteUrl}/developers/mcp)`,
     `- OpenAPI spec: [${siteUrl}/openapi.json](${siteUrl}/openapi.json)`,
+    `- GitHub: ${socialLinks.github}`,
     "- Public GET endpoints (no auth required):",
     "  - GET /api/events — List events (params: page, size, place, category, byDate, from, to, term, lat, lon, radius)",
     "  - GET /api/events/{slug} — Event details",
@@ -81,6 +84,7 @@ export async function GET(request: NextRequest) {
     "## Authentication",
     "- Public read endpoints (listed above): No authentication required.",
     "- Write endpoints (POST/PUT/DELETE): Require HMAC signature via x-hmac and x-timestamp headers. Not available for external use.",
+    "- Idempotency: send an `Idempotency-Key` header on POST requests (for example POST /api/sponsors/checkout) and reuse it on retries to avoid duplicates.",
     "",
     "## Rate Limits",
     "- Public GET endpoints: 60 requests per minute per IP.",

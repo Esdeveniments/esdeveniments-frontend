@@ -58,7 +58,7 @@ export default function CheckoutButton({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Idempotency-Key": idempotencyKey,
+          "Idempotency-Key": idempotencyKey,
         },
         body: JSON.stringify({
           duration,

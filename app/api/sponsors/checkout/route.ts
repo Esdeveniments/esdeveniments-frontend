@@ -17,6 +17,9 @@ import type {
 } from "types/sponsor";
 import { DURATION_DAYS, VALID_GEO_SCOPES } from "types/sponsor";
 
+// Stripe rejects idempotency keys longer than 255 characters.
+const MAX_IDEMPOTENCY_KEY_LENGTH = 255;
+
 /**
  * Create Stripe Checkout Session using REST API (no SDK needed)
  */
@@ -148,7 +151,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Idempotency key: client sends a UUID per click attempt (X-Idempotency-Key header).
+    // Idempotency key: client sends a UUID per click attempt in the standard
+    // Idempotency-Key header (X-Idempotency-Key is the legacy name, still read
+    // for cached older bundles). Documented in /openapi.json.
     // Per Stripe docs: "We recommend creating a new Session each time your customer
     // attempts to pay" and "we suggest using V4 UUIDs" for idempotency keys.
     //
@@ -157,7 +162,17 @@ export async function POST(request: NextRequest) {
     //
     // Server-side fallback uses visitor_id + timestamp to avoid the old problem
     // where a deterministic key clashed with changing params (expires_at).
-    const clientKey = request.headers.get("x-idempotency-key");
+    const clientKey =
+      request.headers.get("idempotency-key") ||
+      request.headers.get("x-idempotency-key");
+    if (clientKey && clientKey.length > MAX_IDEMPOTENCY_KEY_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `Idempotency-Key must be at most ${MAX_IDEMPOTENCY_KEY_LENGTH} characters`,
+        },
+        { status: 400 },
+      );
+    }
     const idempotencyKey =
       clientKey ||
       `${request.headers.get("x-visitor-id") || "anon"}-${Date.now()}`;

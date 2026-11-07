@@ -294,6 +294,7 @@ export interface SocialProps {
     linkedin?: string;
     tiktok?: string;
     mastodon?: string;
+    github?: string;
   };
 }
 
@@ -1151,3 +1152,12 @@ export interface CheckoutReturnTrackerProps {
   params?: Record<string, string>;
 }
 
+
+export interface DocsCodeBlockProps {
+  code: string;
+}
+
+export interface DocsLinkProps {
+  href: string;
+  children: ReactNode;
+}

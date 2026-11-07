@@ -59,6 +59,7 @@ export default async function Footer(): Promise<JSX.Element> {
       kind: "mailto",
       current: false,
     },
+    { name: t("navigation.developers"), href: "/developers", kind: "internal", current: false },
     { name: t("navigation.archive"), href: "/sitemap", kind: "internal", current: false },
     { name: t("navigation.terms"), href: "/termes-servei", kind: "internal", current: false },
     { name: t("navigation.privacy"), href: "/politica-privacitat", kind: "internal", current: false },

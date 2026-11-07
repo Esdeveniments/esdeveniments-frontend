@@ -22,7 +22,6 @@ import BaseLayout from "@components/ui/layout/base";
 import IconSprite from "@components/ui/common/IconSprite";
 import WebsiteSchema from "@components/partials/WebsiteSchema";
 import AnalyticsBootstrap from "@components/partials/AnalyticsBootstrap";
-import WebMcpTools from "@components/partials/WebMcpTools";
 import type { AppLocale } from "types/i18n";
 import {
   CLIENT_APP_KEYS,
@@ -153,6 +152,8 @@ export default async function LocaleLayout({
         <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
         {/* MCP server discovery for AI agents (WebMCP + Streamable HTTP) */}
         <link rel="mcp-server-sse" href="/.well-known/mcp" />
+        {/* WebMCP tools for browser agents (public/webmcp.js). */}
+        <script src="/webmcp.js" async />
         {/* Before React's streaming scripts: see REVEAL_THROTTLE_OFF_SCRIPT. */}
         <script
           dangerouslySetInnerHTML={{ __html: REVEAL_THROTTLE_OFF_SCRIPT }}
@@ -252,7 +253,6 @@ export default async function LocaleLayout({
               </Suspense>
               <AuthEventTracker />
               <AnalyticsBootstrap />
-              <WebMcpTools locale={locale} />
               <BaseLayout>{children}</BaseLayout>
             </AuthProvider>
           </AdProvider>
