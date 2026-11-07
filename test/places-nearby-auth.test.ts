@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const getValidAccessToken = vi.fn();
-vi.mock("@utils/auth-cookies", () => ({
-  getValidAccessToken: () => getValidAccessToken(),
+const getCurrentUser = vi.fn();
+vi.mock("@lib/auth/session", () => ({
+  getCurrentUser: () => getCurrentUser(),
 }));
 
 const cacheGetJson = vi.fn();
@@ -18,8 +18,8 @@ const request = () =>
   new NextRequest("http://localhost/api/places/nearby?lat=41.9&lng=2.2");
 
 describe("GET /api/places/nearby auth", () => {
-  it("returns 401 without touching Google or the cache for guests", async () => {
-    getValidAccessToken.mockResolvedValueOnce(null);
+  it("returns 401 without touching Google or the cache when the session doesn't verify", async () => {
+    getCurrentUser.mockResolvedValueOnce(null);
 
     const response = await GET(request());
 

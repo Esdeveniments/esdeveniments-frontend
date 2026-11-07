@@ -16,23 +16,17 @@ import {
   nearbySearchCenter,
 } from "@lib/places/nearby-cache-key";
 import { cacheGetJson, cacheSetJson } from "@lib/cache/redis-client";
-import { getValidAccessToken } from "@utils/auth-cookies";
+import { getCurrentUser } from "@lib/auth/session";
 
 export async function GET(request: NextRequest) {
   // Logged-in only: every cache miss is a billed Google searchNearby call.
-  try {
-    if (!(await getValidAccessToken())) {
-      return NextResponse.json(
-        { error: "UNAUTHORIZED" },
-        { status: 401, headers: { "Cache-Control": "no-store" } }
-      );
-    }
-  } catch (error: unknown) {
-    const response = handleApiError(error, "/api/places/nearby", {
-      errorMessage: "Failed to verify session",
-    });
-    response.headers.set("Cache-Control", "no-store");
-    return response;
+  // getCurrentUser verifies the id_token (a bare cookie isn't enough, since
+  // this route never forwards it to a backend that would reject it).
+  if (!(await getCurrentUser())) {
+    return NextResponse.json(
+      { error: "UNAUTHORIZED" },
+      { status: 401, headers: { "Cache-Control": "no-store" } }
+    );
   }
 
   const t = await getTranslations("Api.PlacesNearby");
