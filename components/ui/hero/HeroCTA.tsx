@@ -1,12 +1,10 @@
 "use client";
 
 import { useHero } from "./HeroContext";
-import { useRouter } from "../../../i18n/routing";
+import { useHeroSearchSubmit } from "@components/hooks/useHeroSearchSubmit";
 import { useTranslations } from "next-intl";
-import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { MagnifyingGlassIcon as SearchIcon } from "@heroicons/react/24/solid";
 import Button from "@components/ui/common/button";
-import { buildHeroUrl } from "./utils";
 import { HERO_DATE_FILTERS } from "./constants";
 import { formatPlacePreposition } from "@utils/helpers";
 import { sendGoogleEvent } from "@utils/analytics";
@@ -19,7 +17,7 @@ export default function HeroCTA() {
   const tFilters = useTranslations("Components.HeroFilters");
   const locale = useLocale();
   const { place, label, placeType, date, searchTerm } = useHero();
-  const router = useRouter();
+  const submitSearch = useHeroSearchSubmit("hero_cta");
   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("hero_cta");
 
   const handleSearch = () => {
@@ -31,9 +29,7 @@ export default function HeroCTA() {
       date_slug: date || undefined,
       has_search: String(Boolean(searchTerm?.trim())),
     });
-    const url = buildHeroUrl(place, date, searchTerm);
-    startNavigationFeedback();
-    router.push(url);
+    submitSearch();
   };
 
   const getButtonText = () => {

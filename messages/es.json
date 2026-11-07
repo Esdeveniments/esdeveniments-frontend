@@ -1026,7 +1026,12 @@
       "errorTitle": "Error al cargar eventos",
       "error": "Por favor, inténtalo más tarde.",
       "resultsCount": "{count, plural, =0 {Ningún evento} one {# evento} other {# eventos}}",
-      "retry": "Reintentar"
+      "retry": "Reintentar",
+      "recoveryTitle": "Amplía la búsqueda",
+      "recoveryPlace": "«{search}» en toda Cataluña",
+      "recoveryDate": "«{search}» en cualquier fecha",
+      "recoveryCategory": "«{search}» en todas las categorías",
+      "recoveryDistance": "«{search}» sin límite de distancia"
     },
     "Hero": {
       "options": {

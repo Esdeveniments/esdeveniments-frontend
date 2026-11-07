@@ -165,6 +165,26 @@ export async function getUserByUsernameExternal(
 }
 
 /**
+ * Whether a public profile exists, for Proxy's 404 check. Unlike
+ * getUserByUsernameExternal, only a 404 means "no": any other failure throws
+ * so the caller can fail open instead of 404ing a real profile.
+ */
+export async function userExistsExternal(
+  username: string,
+  { signal }: Pick<RequestInit, "signal"> = {},
+): Promise<boolean> {
+  const response = await fetchWithHmac(
+    `${getApiUrl()}/users/${encodeURIComponent(username)}`,
+    { signal },
+  );
+  if (response.status === 404) return false;
+  if (!response.ok) {
+    throw new Error(`userExistsExternal: HTTP ${response.status}`);
+  }
+  return true;
+}
+
+/**
  * Shared shape for the "silent fallback" backend calls (public reads where a
  * 404/error should render as empty state, not surface as an error): fetch,
  * treat 404 as the fallback (the common, expected case, not an error), log +

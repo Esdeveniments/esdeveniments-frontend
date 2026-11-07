@@ -12,7 +12,6 @@ import { getTranslations } from "next-intl/server";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { siteUrl } from "@config/index";
 import { getProfileDisplayName } from "@utils/profile-name";
-import { isVerifiedOrganization } from "@utils/user-helpers";
 import { formatNameOf } from "@utils/string-helpers";
 import type { BreadcrumbItem } from "types/common";
 import ProfilePageTracker from "./ProfilePageTracker";
@@ -38,7 +37,7 @@ export async function generateMetadata({
   const nameOf = formatNameOf(displayName, locale);
   const title = t("title", { name: displayName });
   const description = t("metaDescription", { nameOf });
-  const canonical = toLocalizedUrl(`/perfil/${username}`, locale);
+  const canonical = toLocalizedUrl(`/perfil/${profile.username}`, locale);
 
   return buildPageMeta({
     title,
@@ -78,9 +77,10 @@ export default async function ProfilePage({
 
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbItems);
 
+  // Google's ProfilePage docs: use Organization when the profile is one.
   const profileSchema = {
     "@context": "https://schema.org",
-    "@type": isVerifiedOrganization(profile) ? "Organization" : "Person",
+    "@type": profile.role === "ORGANIZATION" ? "Organization" : "Person",
     name: profileDisplayName,
     url: profileUrl,
     identifier: profile.username,

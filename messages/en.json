@@ -1026,7 +1026,12 @@
       "errorTitle": "Error loading events",
       "error": "Please try again later.",
       "resultsCount": "{count, plural, =0 {No events} one {# event} other {# events}}",
-      "retry": "Try again"
+      "retry": "Try again",
+      "recoveryTitle": "Broaden your search",
+      "recoveryPlace": "“{search}” across Catalonia",
+      "recoveryDate": "“{search}” on any date",
+      "recoveryCategory": "“{search}” in all categories",
+      "recoveryDistance": "“{search}” with no distance limit"
     },
     "Hero": {
       "options": {

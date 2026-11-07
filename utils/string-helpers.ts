@@ -95,31 +95,54 @@ export function normalizeForSearch(input: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+// Letters NFKD doesn't split into base + mark.
+const FOLD_LETTERS: Record<string, string> = {
+  ß: "ss",
+  æ: "ae",
+  œ: "oe",
+  ø: "o",
+  ł: "l",
+  đ: "d",
+};
+
 /**
- * Matches a search term against a list of place options using accent-insensitive comparison.
- * Returns the first exact match, or the first startsWith match if no exact match.
- * Used to detect when users type place names (e.g. "Cardedeu", "sant vicen") in the search bar
- * and redirect them to the place page instead of a text search.
+ * Folds text for search matching: lowercase, no accents, Catalan `l·l` → `ll`,
+ * and every run of other characters → one space. Must match the backend's
+ * `search_fold` (Esdeveniments/esdeveniments-backend#59).
+ * Example: "L’Auditori" → "l auditori", "Col·lecció" → "colleccio".
+ */
+export function foldForSearch(input: string): string {
+  if (!input) return "";
+  return input
+    .toLowerCase()
+    .replace(/[ßæœøłđ]/g, (char) => FOLD_LETTERS[char])
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/l[·.\u0140]+l/g, "ll")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * Returns the place whose name (or slug) equals the search term after
+ * `foldForSearch`, so "cardedeu" or "L’Hospitalet de Llobregat" go to the
+ * place page. Prefixes don't match: "Castell" or "Gran" are often event words,
+ * and a prefix used to send them to Castellví de Rosanes or Granollers.
  */
 export function matchSearchToPlace(
   searchTerm: string,
   places: ReadonlyArray<{ label: string; value: string }>
 ): { label: string; value: string } | null {
-  const normalized = normalizeForSearch(searchTerm);
-  if (!normalized || normalized.length < 2) return null;
+  const folded = foldForSearch(searchTerm);
+  if (folded.length < 2) return null;
 
-  let startsWithMatch: { label: string; value: string } | null = null;
-
-  for (const place of places) {
-    const normalizedLabel = normalizeForSearch(place.label);
-    if (normalizedLabel === normalized) return place;
-    // Require at least 4 chars for prefix matching to avoid greedy matches ("ba" → "Barcelona")
-    if (!startsWithMatch && normalized.length >= 4 && normalizedLabel.startsWith(normalized)) {
-      startsWithMatch = place;
-    }
-  }
-
-  return startsWithMatch;
+  return (
+    places.find(
+      (place) =>
+        foldForSearch(place.label) === folded ||
+        foldForSearch(place.value) === folded,
+    ) ?? null
+  );
 }
 
 /* =========================================================

@@ -5,6 +5,7 @@ import {
   extractUuidFromSlug,
   truncateString,
   normalizeForSearch,
+  foldForSearch,
   matchSearchToPlace,
   formatPlaceName,
   slug,
@@ -103,6 +104,33 @@ describe("normalizeForSearch", () => {
   });
 });
 
+describe("foldForSearch", () => {
+  // Outputs checked against the backend's planned Postgres `search_fold`
+  // (unaccent + l·l + non-alphanumerics → space) on PG 17.
+  it.each([
+    ["ÀÉÏÇ Ñ", "aeic n"],
+    ["Col·lecció", "colleccio"],
+    ["col.lecció", "colleccio"],
+    ["COL·LECCIÓ", "colleccio"],
+    ["Paral·lel", "parallel"],
+    ["Ŀl", "ll"],
+    ["L’Auditori", "l auditori"],
+    ["Straße", "strasse"],
+    ["Æon œuvre", "aeon oeuvre"],
+    ["🎉 Festa 🎉", "festa"],
+    ["%%__", ""],
+    ["São Tomé", "sao tome"],
+    ["ﬁesta", "fiesta"],
+    ["２０２６", "2026"],
+    ["Café-Teatre", "cafe teatre"],
+    ["Dr. Roux 1.5", "dr roux 1 5"],
+    ["Øresund Łódź Đakovo", "oresund lodz dakovo"],
+    ["", ""],
+  ])("%j → %j", (input, expected) => {
+    expect(foldForSearch(input)).toBe(expected);
+  });
+});
+
 describe("matchSearchToPlace", () => {
   const places = [
     { label: "Barcelona", value: "barcelona" },
@@ -135,22 +163,40 @@ describe("matchSearchToPlace", () => {
     });
   });
 
-  it("falls back to startsWith when no exact match", () => {
-    expect(matchSearchToPlace("sant vicen", places)).toEqual({
-      label: "Sant Vicenç de Montalt",
-      value: "sant-vicenc-de-montalt",
-    });
+  it("does not match a prefix (event words like 'Castell' stay a text search)", () => {
+    const withPrefixes = [
+      ...places,
+      { label: "Castellví de Rosanes", value: "castellvi-de-rosanes" },
+      { label: "Granollers", value: "granollers" },
+    ];
+    expect(matchSearchToPlace("sant vicen", withPrefixes)).toBeNull();
+    expect(matchSearchToPlace("Castell", withPrefixes)).toBeNull();
+    expect(matchSearchToPlace("Gran", withPrefixes)).toBeNull();
+    expect(matchSearchToPlace("barc", withPrefixes)).toBeNull();
   });
 
-  it("prefers exact match over startsWith", () => {
+  it("matches the exact place when a longer name shares its prefix", () => {
     const withOverlap = [
-      { label: "Montgat", value: "montgat" },
       { label: "Montgat Playa", value: "montgat-playa" },
+      { label: "Montgat", value: "montgat" },
     ];
     expect(matchSearchToPlace("montgat", withOverlap)).toEqual({
       label: "Montgat",
       value: "montgat",
     });
+  });
+
+  it("ignores punctuation and apostrophe style, and matches the slug", () => {
+    const withApostrophe = [
+      { label: "L'Hospitalet de Llobregat", value: "lhospitalet-de-llobregat" },
+      { label: "Sant Cugat del Vallès", value: "sant-cugat-del-valles" },
+    ];
+    expect(matchSearchToPlace("L’Hospitalet de Llobregat", withApostrophe)?.value).toBe(
+      "lhospitalet-de-llobregat",
+    );
+    expect(matchSearchToPlace("sant-cugat-del-valles", withApostrophe)?.value).toBe(
+      "sant-cugat-del-valles",
+    );
   });
 
   it("returns null for empty or too-short input", () => {
@@ -159,19 +205,7 @@ describe("matchSearchToPlace", () => {
     expect(matchSearchToPlace("  ", places)).toBeNull();
   });
 
-  it("requires 4+ chars for startsWith (avoids greedy prefix matches)", () => {
-    // "ba" is too short for startsWith → no match (Barcelona is not an exact match for "ba")
-    expect(matchSearchToPlace("ba", places)).toBeNull();
-    // "bar" is still too short for startsWith
-    expect(matchSearchToPlace("bar", places)).toBeNull();
-    // "barc" is 4 chars → startsWith kicks in
-    expect(matchSearchToPlace("barc", places)).toEqual({
-      label: "Barcelona",
-      value: "barcelona",
-    });
-  });
-
-  it("still allows exact match at 2-3 chars", () => {
+  it("allows an exact match at 2-3 chars", () => {
     const shortPlaces = [{ label: "Eu", value: "eu" }];
     expect(matchSearchToPlace("eu", shortPlaces)).toEqual({
       label: "Eu",

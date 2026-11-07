@@ -7,6 +7,7 @@ export default function NoEventsFoundContent({
   description,
   ctaLabel,
   helperText,
+  children,
 }: NoEventsFoundContentProps): JSX.Element {
 
   return (
@@ -220,6 +221,7 @@ export default function NoEventsFoundContent({
           <p className="text-foreground leading-relaxed">{description}</p>
         )}
       </div>
+      {children}
       <div className="flex flex-col items-center gap-3">
         <PressableAnchorClient
           href="/publica"

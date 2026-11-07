@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
+import { useHeroSearchSubmit } from "@components/hooks/useHeroSearchSubmit";
 import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
 import {
   MagnifyingGlassIcon as SearchIcon,
@@ -50,6 +51,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [localPlaceValue, setLocalPlaceValue] = useState<string>("");
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
+  // Places load on first focus so Enter can match a typed place name.
+  const [hasFocusedSearch, setHasFocusedSearch] = useState(false);
 
   // The Modal mounts on first open; fetch its chunk now so that open is instant.
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     isLoading: loadingRegions,
     isError: regionsError,
     mutate,
-  } = useGetRegionsWithCities(hasOpenedModal || isPlacePage);
+  } = useGetRegionsWithCities(hasOpenedModal || isPlacePage || hasFocusedSearch);
 
   const regionsAndCitiesArray = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -157,6 +160,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const placeIn = joinPlacePhrase(placeParts);
 
   // --- Search Logic ---
+  const submitSearch = useHeroSearchSubmit("hero_search");
 
   const handleSearchSubmit = useCallback(() => {
     const value = searchTerm.trim();
@@ -169,11 +173,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       });
     }
 
-    // Always navigate (even with empty search to clear the param)
-    const url = buildHeroUrl(place, date, value);
-    startNavigationFeedback();
-    router.push(url);
-  }, [searchTerm, place, date, router]);
+    submitSearch();
+  }, [searchTerm, submitSearch]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -275,6 +276,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             placeholder={t("searchPlaceholder", { placeIn })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={() => setHasFocusedSearch(true)}
             onKeyDown={handleKeyDown}
             data-testid="search-input"
           />
