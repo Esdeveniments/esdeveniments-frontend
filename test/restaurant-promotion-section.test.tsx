@@ -19,9 +19,10 @@ vi.mock("../components/ui/restaurantPromotion/PromotionInfoModal", () => ({
 }));
 
 const signIn = vi.fn();
+const refetchUser = vi.fn();
 let isAuthenticated = true;
 vi.mock("@components/hooks/useAuth", () => ({
-  useAuth: () => ({ isAuthenticated, isLoading: false, signIn }),
+  useAuth: () => ({ isAuthenticated, isLoading: false, signIn, refetchUser }),
 }));
 
 // Mock computeTemporalStatus to use mocked time
@@ -481,6 +482,50 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       expect(
         await screen.findByText("Ara mateix no podem mostrar restaurants a prop.")
       ).toBeInTheDocument();
+    });
+
+    it("refreshes the session and retries once after a 401", async () => {
+      const today = baseNow.toISOString().split("T")[0];
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status: 401 })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ results: [{ place_id: "a", name: "A" }] }),
+        });
+      global.fetch = mockFetch;
+
+      render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Mostra restaurants a prop" }));
+
+      expect(await screen.findByTestId("where-to-eat-section")).toHaveTextContent(
+        "1 restaurants"
+      );
+      expect(refetchUser).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("shows the sign-in CTA when the session can't be refreshed", async () => {
+      const today = baseNow.toISOString().split("T")[0];
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 });
+      refetchUser.mockImplementationOnce(async () => {
+        isAuthenticated = false;
+      });
+
+      render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Mostra restaurants a prop" }));
+
+      expect(
+        await screen.findByRole("button", { name: "Inicia sessió per veure restaurants" })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Ara mateix no podem mostrar restaurants a prop.")
+      ).not.toBeInTheDocument();
     });
 
     it("asks guests to sign in instead of loading restaurants", () => {

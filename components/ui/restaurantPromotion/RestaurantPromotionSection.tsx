@@ -39,7 +39,8 @@ export default function RestaurantPromotionSection({
   const tStatus = useTranslations("Utils.EventStatus");
   const statusLabels = useMemo(() => buildEventStatusLabels(tStatus), [tStatus]);
   const t = useTranslations("Components.WhereToEatSection");
-  const { isAuthenticated, isLoading: isAuthLoading, signIn } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, signIn, refetchUser } =
+    useAuth();
 
   // Suppress unused parameter warning - eventId is used in commented-out form
   void eventId;
@@ -125,9 +126,21 @@ export default function RestaurantPromotionSection({
       const usedDate = isValid(parsed) ? parsed : new Date(eventStartDate);
       const dateParam = `&date=${format(usedDate, "yyyy-MM-dd")}`;
       const url = `/api/places/nearby?lat=${eventLat}&lng=${eventLng}&limit=2${dateParam}`;
-      const res = await fetch(url, {
-        signal: AbortSignal.timeout(PLACES_FETCH_TIMEOUT_MS),
-      });
+      const fetchPlaces = () =>
+        fetch(url, { signal: AbortSignal.timeout(PLACES_FETCH_TIMEOUT_MS) });
+      let res = await fetchPlaces();
+
+      if (res.status === 401) {
+        // The id_token may have expired since page load; /api/auth/me
+        // refreshes it. If the session is gone, useAuth flips to guest.
+        await refetchUser();
+        res = await fetchPlaces();
+        if (res.status === 401) {
+          // Back to the CTA (the sign-in one once useAuth reports a guest).
+          setHasRequested(false);
+          return;
+        }
+      }
 
       if (res.ok) {
         const data = await res.json();
