@@ -22,7 +22,7 @@ import { siteUrl } from "@config/index";
  * - Allow /_next/static/ (JS/CSS Google needs to render pages); block the
  *   rest of /_next/ (build internals)
  * - Block /api/ routes (internal endpoints, not for indexing)
- * - Declare multiple sitemaps for comprehensive discovery
+ * - Declare the sitemap index (it lists every child sitemap)
  *
  * The host is dynamically determined for multi-domain support.
  *
@@ -58,83 +58,45 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
   }
 
+  // Google must fetch JS/CSS to render pages; the longer Allow path wins over
+  // Disallow. Other Next.js internals, API routes and utility/login pages stay
+  // out of crawls.
+  const CRAWL_ALLOW = ["/", "/_next/static/"];
+  const CRAWL_DISALLOW = ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"];
+
   const robotsConfig: MetadataRoute.Robots = {
     rules: [
       // Default rules for all crawlers (including search engines)
+      { userAgent: "*", allow: CRAWL_ALLOW, disallow: CRAWL_DISALLOW },
+      // AI agent crawlers — all ALLOWED under 2026 policy (see header):
+      // trading training protection for discoverability in LLM answers and
+      // orank score. A crawler obeys only its most specific group, so this
+      // group repeats the `*` paths; an allow-only group would let these
+      // bots crawl /api/.
       {
-        userAgent: "*",
-        // Google must fetch JS/CSS to render pages; blocking them hurts
-        // rendering and indexing. The longer Allow path wins over Disallow.
-        allow: ["/", "/_next/static/"],
-        disallow: [
-          // Other Next.js internals (not page resources)
-          "/_next/",
-          // Block API routes - internal endpoints not meant for indexing
-          "/api/",
-          // Block internal/utility pages
-          "/e2e/",
-          "/offline/",
-          // Block login/auth pages
-          "/login/",
+        userAgent: [
+          // Search and browsing (cite and link to us)
+          "OAI-SearchBot",
+          "ChatGPT-User",
+          "Claude-SearchBot",
+          "Claude-User",
+          "Claude-Web",
+          "PerplexityBot",
+          "Perplexity-User",
+          "DeepSeekBot",
+          "ora-agent",
+          "Qwen-Agent",
+          // Training and AI features
+          "GPTBot",
+          "ClaudeBot",
+          "anthropic-ai",
+          "Google-Extended",
+          "Applebot-Extended",
+          "Meta-ExternalAgent",
+          "cohere-ai",
         ],
-      },
-      // AI agent crawlers — all ALLOWED under 2026 policy (see header).
-      // This includes both browsing/search bots (ChatGPT-User, Claude-Web,
-      // PerplexityBot, DeepSeekBot, ora-agent, Qwen-Agent) and training
-      // crawlers (GPTBot, ClaudeBot, anthropic-ai, Google-Extended,
-      // Applebot-Extended, Meta-ExternalAgent, cohere-ai). Trading training
-      // protection for discoverability in LLM answers and orank score.
-      {
-        userAgent: "ChatGPT-User", // OpenAI browsing feature
-        allow: ["/"],
-      },
-      {
-        userAgent: "Claude-Web", // Claude browsing feature
-        allow: ["/"],
-      },
-      {
-        userAgent: "PerplexityBot", // Perplexity search
-        allow: ["/"],
-      },
-      {
-        userAgent: "DeepSeekBot", // DeepSeek search
-        allow: ["/"],
-      },
-      {
-        userAgent: "ora-agent", // Ora.ai agent
-        allow: ["/"],
-      },
-      {
-        userAgent: "Qwen-Agent", // Alibaba Qwen agent
-        allow: ["/"],
-      },
-      {
-        userAgent: "Google-Extended", // Google AI features (Gemini, etc.)
-        allow: ["/"],
-      },
-      {
-        userAgent: "GPTBot", // OpenAI training crawler — ALLOWED (2026 policy)
-        allow: ["/"],
-      },
-      {
-        userAgent: "ClaudeBot", // Anthropic training bot — ALLOWED (2026 policy)
-        allow: ["/"],
-      },
-      {
-        userAgent: "anthropic-ai", // Anthropic training crawler — ALLOWED (2026 policy)
-        allow: ["/"],
-      },
-      {
-        userAgent: "Applebot-Extended", // Apple AI training — ALLOWED (2026 policy)
-        allow: ["/"],
-      },
-      {
-        userAgent: "Meta-ExternalAgent", // Meta AI training — ALLOWED (2026 policy)
-        allow: ["/"],
-      },
-      {
-        userAgent: "cohere-ai", // Cohere training — ALLOWED (2026 policy)
-        allow: ["/"],
+        allow: CRAWL_ALLOW,
+        disallow: CRAWL_DISALLOW,
       },
       // Still-blocked: non-vendor data harvesters with no direct
       // user-agent value. These resell scraped data without powering any
@@ -152,15 +114,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         disallow: ["/"],
       },
     ],
-    // Declare all sitemaps for comprehensive discovery
-    sitemap: [
-      `${siteUrl}/sitemap.xml`,
-      `${siteUrl}/server-static-sitemap.xml`,
-      `${siteUrl}/server-sitemap.xml`,
-      `${siteUrl}/server-news-sitemap.xml`,
-      `${siteUrl}/server-place-sitemap.xml`,
-      `${siteUrl}/server-google-news-sitemap.xml`,
-    ],
+    // One index: it lists every child sitemap, so naming them too only
+    // made crawlers fetch each one twice.
+    sitemap: [`${siteUrl}/sitemap.xml`],
     // Host directive (some search engines use this for canonical domain)
     host: siteUrl,
   };

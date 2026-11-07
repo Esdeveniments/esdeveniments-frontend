@@ -6,51 +6,33 @@ import { buildAlternateLinks } from "@utils/i18n-seo";
 
 export async function GET(request: NextRequest) {
   const siteUrl = getSiteUrlFromRequest(request);
-  const lastmod = new Date().toISOString();
-
+  // No lastmod: these pages have no real edit date, and "now" on every
+  // request teaches crawlers to ignore it.
   // Define static pages here
   // This replaces the automatic detection from next-sitemap
   const staticPages: SitemapField[] = [
     {
       loc: `${siteUrl}`,
-      lastmod,
-      changefreq: "daily",
-      priority: 1.0,
       alternates: buildAlternateLinks(`${siteUrl}/`),
     },
     {
       loc: `${siteUrl}/sitemap`, // Arxiu
-      lastmod,
-      changefreq: "daily",
-      priority: 0.7,
       alternates: buildAlternateLinks(`${siteUrl}/sitemap`),
     },
     {
       loc: `${siteUrl}/noticies`,
-      lastmod,
-      changefreq: "daily",
-      priority: 0.7,
       alternates: buildAlternateLinks(`${siteUrl}/noticies`),
     },
     {
       loc: `${siteUrl}/publica`,
-      lastmod,
-      changefreq: "daily",
-      priority: 0.7,
       alternates: buildAlternateLinks(`${siteUrl}/publica`),
     },
     {
       loc: `${siteUrl}/qui-som`,
-      lastmod,
-      changefreq: "daily",
-      priority: 0.7,
       alternates: buildAlternateLinks(`${siteUrl}/qui-som`),
     },
     ...["/developers", "/developers/mcp"].map((path) => ({
       loc: `${siteUrl}${path}`,
-      lastmod,
-      changefreq: "monthly" as const,
-      priority: 0.5,
       alternates: buildAlternateLinks(`${siteUrl}${path}`),
     })),
   ];

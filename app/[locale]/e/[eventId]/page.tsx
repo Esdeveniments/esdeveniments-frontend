@@ -72,12 +72,21 @@ export async function generateMetadata(props: PageProps<"/[locale]/e/[eventId]">
   // It throws on transient errors — let that bubble so Next does NOT cache a
   // broken render (SWR keeps the previous good page); only a genuine 404
   // returns null below.
-  const event = await getCachedEventBySlug(slug);
+  const [event, t] = await Promise.all([
+    getCachedEventBySlug(slug),
+    getTranslations({ locale, namespace: "App.EventMeta" }),
+  ]);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.
   const canonical = `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`;
-  return generateEventMetadata(event, canonical, undefined, locale);
+  return generateEventMetadata(
+    event,
+    canonical,
+    undefined,
+    locale,
+    t("descriptionSuffix"),
+  );
 }
 
 // Main page component: returns a Suspense boundary straight away so the shell

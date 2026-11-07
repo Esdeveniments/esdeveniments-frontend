@@ -268,6 +268,19 @@ describe("utils/safe-fetch", () => {
       expect(captureException).not.toHaveBeenCalled();
     });
 
+    it("accepts a non-JSON 2xx when expectJson is false", async () => {
+      mockFetch.mockResolvedValue(
+        new Response("", { status: 202, headers: { "content-type": "text/plain" } }),
+      );
+
+      const result = await safeFetch("https://example.com/ping", {
+        expectJson: false,
+      });
+
+      expect(result).toEqual({ data: null, error: null, status: 202 });
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
     it("merges external abort signal with timeout signal", async () => {
       const externalController = new AbortController();
 

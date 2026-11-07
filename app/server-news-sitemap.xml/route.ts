@@ -12,8 +12,6 @@ export async function GET() {
     return {
       loc,
       lastmod: new Date().toISOString(),
-      changefreq: "daily",
-      priority: 0.6,
       alternates: buildAlternateLinks(loc),
     };
   });
@@ -50,8 +48,6 @@ export async function GET() {
     articleEntries.push({
       loc,
       lastmod: new Date(lastDate).toISOString(),
-      changefreq: "daily",
-      priority: 0.7,
       alternates: buildAlternateLinks(loc),
     });
   }
