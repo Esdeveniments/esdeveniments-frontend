@@ -1,7 +1,8 @@
-import { CalendarIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, ClockIcon, TicketIcon } from "@heroicons/react/24/outline";
 import { siteUrl } from "@config/index";
 import { getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
+import { getEventPriceText, isFreePriceText } from "@utils/event-price";
 import { getTranslations } from "next-intl/server";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
@@ -50,6 +51,18 @@ export default async function EventCalendar({ event, compact = false }: EventCal
     ? `Del ${formattedStart} al ${formattedEnd}`
     : `${nameDay}, ${formattedStart}`;
 
+  // Shown as written by the backend; a plain "free" is translated. Hidden when unknown.
+  const priceText = getEventPriceText(event.price);
+  const priceRow = priceText ? (
+    <p className="body-normal flex items-start gap-2 text-foreground" data-testid="event-price">
+      <TicketIcon className="w-4 h-4 mt-0.5 flex-shrink-0 text-foreground-strong/70" aria-hidden="true" />
+      <span>
+        <span className="font-semibold text-foreground-strong">{t("priceLabel")}</span>{" "}
+        {isFreePriceText(priceText) ? t("priceFree") : priceText}
+      </span>
+    </p>
+  ) : null;
+
   if (compact) {
     return (
       <div className="w-full flex flex-col gap-2">
@@ -63,6 +76,7 @@ export default async function EventCalendar({ event, compact = false }: EventCal
           <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
           {formatEventTimeDisplayDetail(startTime, endTime, timeLabels)}
         </p>
+        {priceRow}
         <AddToCalendar
           title={title}
           description={description}
@@ -92,6 +106,7 @@ export default async function EventCalendar({ event, compact = false }: EventCal
             <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
             {formatEventTimeDisplayDetail(startTime, endTime, timeLabels)}
           </p>
+          {priceRow}
         </div>
         <div className="px-section-x">
           <AddToCalendar

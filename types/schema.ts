@@ -79,9 +79,9 @@ export interface SchemaOrgEvent {
     "@type": "Offer";
     price: number | string;
     priceCurrency: string;
-    availability: string;
-    url: string;
-    validFrom: string;
+    availability?: string;
+    url?: string;
+    validFrom?: string;
     priceSpecification?: {
       "@type": "PriceSpecification";
       priceCurrency: string;

@@ -1043,7 +1043,9 @@
       "profileLink": "Perfil de {name}"
     },
     "EventCalendar": {
-      "title": "Data i hora"
+      "title": "Data i hora",
+      "priceLabel": "Preu:",
+      "priceFree": "Gratuït"
     },
     "Select": {
       "placeholder": "una opció",

@@ -136,6 +136,8 @@ export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
   relatedEvents: z.array(RelatedEventSummarySchema).optional(),
+  // No length cap: a long price must not fail the whole event payload.
+  price: z.string().nullable().optional(),
   metaTitle: z
     .string()
     .max(200, "Meta title too long")
