@@ -140,7 +140,7 @@ export interface FormData {
   priceType?: EventPriceType; // missing = "unknown"
   priceAmount?: string; // user input for "paid", e.g. "10" or "12,50"
   // Stored price the form can't show as free or one amount (scraper text such
-  // as "10 € taquilla · 5 € online"). Sent back unchanged until the user picks a price.
+  // as "10 € taquilla · 5 € online"). Sent back unchanged while the price stays "unknown".
   originalPrice?: string | null;
 }
 

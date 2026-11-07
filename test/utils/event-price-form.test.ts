@@ -47,6 +47,13 @@ describe("event price in the publish and edit forms", () => {
     },
   );
 
+  it("keeps stored text after a paid → unknown round trip, and replaces it otherwise", () => {
+    const stored = "10 € taquilla · 5 € online";
+    expect(formPriceToPayload({ priceType: "unknown", priceAmount: "5", originalPrice: stored })).toBe(stored);
+    expect(formPriceToPayload({ priceType: "paid", priceAmount: "5", originalPrice: stored })).toBe("5");
+    expect(formPriceToPayload({ priceType: "free", originalPrice: stored })).toBe("0");
+  });
+
   it("reads stored prices back into the form", () => {
     expect(priceToFormFields("0")).toMatchObject({ priceType: "free" });
     expect(priceToFormFields("Gratuït")).toMatchObject({ priceType: "free" });

@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import Input from "@components/ui/common/form/input";
-import { EVENT_PRICE_TYPES, type EventPriceType } from "types/event";
+import { EVENT_PRICE_TYPES } from "types/event";
 import type { EventPriceFieldProps } from "types/props";
 
 const OPTION_LABEL_KEYS = {
@@ -14,18 +14,13 @@ export default function PriceField({ form, error, onChange }: EventPriceFieldPro
   const t = useTranslations("Components.EventForm");
   const priceType = form.priceType ?? "unknown";
 
-  const selectType = (type: EventPriceType) => {
-    onChange("priceType", type);
-    // Picking a price replaces stored text the form can't show.
-    if (form.originalPrice) onChange("originalPrice", null);
-  };
-
   return (
     <fieldset className="w-full">
       <legend className="form-label">
         {t("price")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
       </legend>
-      {form.originalPrice ? (
+      {/* Stored text the form can't show; formPriceToPayload sends it back only under "unknown". */}
+      {form.originalPrice && priceType === "unknown" ? (
         <p className="form-helper mt-1">{t("priceCurrent", { price: form.originalPrice })}</p>
       ) : null}
       <div className="mt-2 flex flex-col">
@@ -37,7 +32,7 @@ export default function PriceField({ form, error, onChange }: EventPriceFieldPro
                 name="price-type"
                 value={type}
                 checked={priceType === type}
-                onChange={() => selectType(type)}
+                onChange={() => onChange("priceType", type)}
               />
               {t(OPTION_LABEL_KEYS[type])}
             </label>
