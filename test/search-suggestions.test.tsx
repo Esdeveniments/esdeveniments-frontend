@@ -11,6 +11,9 @@ const h = vi.hoisted(() => ({
   push: vi.fn(),
   selectGA: vi.fn(),
   outcomeGA: vi.fn(),
+  markShown: vi.fn(),
+  flushAbandoned: vi.fn(),
+  search: "",
 }));
 
 vi.mock("@config/search", async (importOriginal) => {
@@ -24,7 +27,7 @@ vi.mock("@config/search", async (importOriginal) => {
 });
 
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(""),
+  useSearchParams: () => new URLSearchParams(h.search),
   usePathname: () => "/",
   useRouter: () => ({ push: h.push }),
 }));
@@ -39,6 +42,8 @@ vi.mock("@utils/analytics", async (importOriginal) => ({
   sendGoogleEvent: vi.fn(),
   sendSuggestionSelectGA: h.selectGA,
   sendSearchOutcomeGA: h.outcomeGA,
+  markSuggestionsShown: h.markShown,
+  flushAbandonedSearch: h.flushAbandoned,
 }));
 
 vi.mock("@components/hooks/useGetRegionsWithCities", () => ({
@@ -75,11 +80,12 @@ const profile = (username: string): UserSearchResultDTO => ({
 });
 
 function setup() {
-  const { unmount } = renderWithProviders(
+  const ui = (
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Search />
-    </SWRConfig>,
+    </SWRConfig>
   );
+  const { unmount, rerender } = renderWithProviders(ui);
   const input = screen.getByRole("combobox");
   const type = (value: string) => {
     fireEvent.focus(input);
@@ -88,7 +94,11 @@ function setup() {
   const key = (k: string, init: KeyboardEventInit = {}) =>
     fireEvent.keyDown(input, { key: k, ...init });
   const options = () => screen.queryAllByRole("option");
-  return { input, type, key, options, unmount };
+  const syncUrl = (search: string) => {
+    h.search = search;
+    rerender(ui);
+  };
+  return { input, type, key, options, unmount, syncUrl };
 }
 
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -98,6 +108,9 @@ beforeEach(() => {
   h.push.mockReset();
   h.selectGA.mockReset();
   h.outcomeGA.mockReset();
+  h.markShown.mockReset();
+  h.flushAbandoned.mockReset();
+  h.search = "";
   fetchMock = vi.fn();
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -185,37 +198,28 @@ describe("search suggestions (profiles off)", () => {
     expect(input).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("reports abandoned once when the user leaves after seeing the list", () => {
+  it("marks the shown list and checks for abandoned only when the user leaves", () => {
     const { type, key, unmount } = setup();
     type("Castell");
+    expect(h.markShown).toHaveBeenCalledWith("search");
     key("Escape");
     fireEvent.pointerDown(document.body);
+    expect(h.flushAbandoned).not.toHaveBeenCalled();
     expect(h.outcomeGA).not.toHaveBeenCalled();
     unmount();
-    expect(h.outcomeGA).toHaveBeenCalledTimes(1);
-    expect(h.outcomeGA).toHaveBeenCalledWith("search", "abandoned");
+    expect(h.flushAbandoned).toHaveBeenCalledTimes(1);
   });
 
-  it("doesn't report abandoned for a search submitted after closing the list", () => {
-    const { type, key, unmount } = setup();
-    type("Castell");
-    key("Escape");
+  it("doesn't reopen the list when the URL syncs the text after a search", () => {
+    const { input, type, key, syncUrl } = setup();
+    type("castell ");
     key("Enter");
-    unmount();
-    expect(h.outcomeGA).not.toHaveBeenCalledWith("search", "abandoned");
-  });
-
-  it("closes without an abandoned outcome when the tap submits the same search", () => {
-    const { input, type, unmount } = setup();
-    const cta = document.createElement("button");
-    cta.setAttribute("data-search-submit", "");
-    document.body.append(cta);
-    type("Castell");
-    fireEvent.pointerDown(cta);
     expect(input).toHaveAttribute("aria-expanded", "false");
-    unmount();
-    expect(h.outcomeGA).not.toHaveBeenCalled();
-    cta.remove();
+    syncUrl("search=castell");
+    expect(input).toHaveValue("castell");
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    type("castell d");
+    expect(input).toHaveAttribute("aria-expanded", "true");
   });
 
   it("keeps focus in the input on mousedown and opens the clicked option", () => {

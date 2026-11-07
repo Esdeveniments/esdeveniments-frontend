@@ -64,8 +64,6 @@ export default function HeroCTA() {
         type="button"
         variant="primary"
         onClick={handleSearch}
-        // Submits the hero search: tapping it isn't an abandoned suggestion list.
-        data-search-submit
         className="px-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 w-full max-w-[20rem] sm:w-auto sm:max-w-xl text-center"
       >
         <SearchIcon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />

@@ -178,7 +178,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
   const submitTypedSearch = useCallback(() => handleSearchSubmit(), [handleSearchSubmit]);
 
-  const { anchorRef, submit, inputProps, popupProps } = useSearchCombobox({
+  const { anchorRef, inputProps, popupProps } = useSearchCombobox({
     value: searchTerm,
     setValue: setSearchTerm,
     context: "hero_search",
@@ -278,7 +278,6 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             className="w-full pl-11 pr-12 py-3 bg-background border border-input rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-muted-foreground"
             placeholder={t("searchPlaceholder", { placeIn })}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
             {...inputProps}
             autoComplete="off"
             aria-label={t("search")}
@@ -296,7 +295,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           )}
           <Button
             variant="primary"
-            onClick={submit}
+            onClick={submitTypedSearch}
             className="absolute inset-y-1 right-1 min-h-0 px-3.5 flex items-center justify-center rounded-full"
             data-testid="search-button"
             aria-label={t("search")}

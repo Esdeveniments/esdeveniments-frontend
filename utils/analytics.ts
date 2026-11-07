@@ -140,7 +140,25 @@ export const sendSuggestionSelectGA = (
 export const sendSearchOutcomeGA = (
   context: SearchContext,
   outcome: SearchOutcome,
-): void => sendGoogleEvent("search_outcome", { context, outcome });
+): void => {
+  pendingAbandon = null;
+  sendGoogleEvent("search_outcome", { context, outcome });
+};
+
+// Set while a suggestion list has been shown and no search followed. Closing
+// the list isn't giving up (Esc then Enter still searches), so `abandoned` is
+// sent only when the user leaves. Any outcome or submit clears it, from any
+// component (the hero CTA submits outside the search box).
+let pendingAbandon: SearchContext | null = null;
+
+export const markSuggestionsShown = (context: SearchContext): void => {
+  pendingAbandon = context;
+};
+
+/** Sends `abandoned` if a shown list got no search; call when the user leaves. */
+export const flushAbandonedSearch = (): void => {
+  if (pendingAbandon) sendSearchOutcomeGA(pendingAbandon, "abandoned");
+};
 
 // A submitted text search waits here until its listing loads, so only searches
 // the user sent (not shared ?search= links) report events_results/events_zero.
@@ -151,6 +169,7 @@ export const markTextSearchSubmitted = (
   context: SearchContext,
   term: string,
 ): void => {
+  pendingAbandon = null;
   pendingTextSearch = term.trim()
     ? { term: toSearchTermParam(term), context }
     : null;

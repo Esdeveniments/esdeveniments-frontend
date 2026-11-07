@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
 import { useRouter } from "@i18n/routing";
 import { useProfileSuggestions } from "@components/hooks/useProfileSuggestions";
 import { useSearchPlaces } from "@components/hooks/useSearchPlaces";
 import { preloadSearchSuggestions } from "@components/ui/search/SearchSuggestionsLazy";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
-import { sendSearchOutcomeGA, sendSuggestionSelectGA } from "@utils/analytics";
+import {
+  flushAbandonedSearch,
+  markSuggestionsShown,
+  sendSearchOutcomeGA,
+  sendSuggestionSelectGA,
+} from "@utils/analytics";
 import {
   buildPlaceSearchIndex,
   suggestionDomId,
@@ -36,19 +41,8 @@ export function useSearchCombobox({
   const listboxId = useId();
   const anchorRef = useRef<HTMLDivElement>(null);
   const [activated, setActivated] = useState(false);
-  const [focused, setFocused] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-
-  // Typing opens the list and clears the active option; a value set from the
-  // URL while the box isn't focused doesn't open it.
-  // (react.dev: "Adjusting some state when a prop changes").
-  const [prevValue, setPrevValue] = useState(value);
-  if (value !== prevValue) {
-    setPrevValue(value);
-    setActiveId(null);
-    if (focused) setOpen(true);
-  }
 
   const places = useSearchPlaces(activated);
   const placeIndex = buildPlaceSearchIndex(places);
@@ -78,44 +72,28 @@ export function useSearchCombobox({
     ? (suggestions.find((suggestion) => suggestion.id === activeId) ?? null)
     : null;
 
-  // True while the list has been shown for a search with no outcome yet.
-  // Closing the list isn't giving up (Esc then Enter still searches), so
-  // `abandoned` goes out only when the user leaves: unmount or page hide.
-  const unresolvedRef = useRef(false);
   useEffect(() => {
-    if (isOpen) unresolvedRef.current = true;
-  }, [isOpen]);
+    if (isOpen) markSuggestionsShown(context);
+  }, [isOpen, context]);
   useEffect(() => {
-    const flush = () => {
-      if (!unresolvedRef.current) return;
-      unresolvedRef.current = false;
-      sendSearchOutcomeGA(context, "abandoned");
-    };
-    window.addEventListener("pagehide", flush);
+    window.addEventListener("pagehide", flushAbandonedSearch);
     return () => {
-      window.removeEventListener("pagehide", flush);
-      flush();
+      window.removeEventListener("pagehide", flushAbandonedSearch);
+      flushAbandonedSearch();
     };
-  }, [context]);
+  }, []);
 
   const close = () => {
     setOpen(false);
     setActiveId(null);
   };
 
-  const resolve = () => {
-    unresolvedRef.current = false;
-    close();
-  };
-
-  const dismiss = (submitsSearch: boolean) => {
-    if (submitsSearch) unresolvedRef.current = false;
-    close();
-  };
-
-  const submit = () => {
-    resolve();
-    onSubmit();
+  // Only user edits open the list: a value synced from the URL after a submit
+  // must not reopen it while the box keeps focus.
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
+    setActiveId(null);
+    setOpen(true);
   };
 
   const select = (suggestion: SearchSuggestion) => {
@@ -125,7 +103,7 @@ export function useSearchCombobox({
       suggestions.indexOf(suggestion) + 1,
       query.length,
     );
-    resolve();
+    close();
     if (suggestion.type === "events") {
       onSelect(suggestion);
       return;
@@ -167,7 +145,8 @@ export function useSearchCombobox({
           select(activeSuggestion);
           return;
         }
-        submit();
+        close();
+        onSubmit();
         return;
       case "Escape":
         // First Esc closes the list, a second one clears the text (without
@@ -184,7 +163,6 @@ export function useSearchCombobox({
   };
 
   const onFocus = () => {
-    setFocused(true);
     if (!activated) {
       setActivated(true);
       preloadSearchSuggestions();
@@ -194,13 +172,11 @@ export function useSearchCombobox({
   // Tab or a click on another control. Taps on plain page areas don't blur on
   // iOS; the popup's outside-pointerdown handler covers those.
   const onBlur = () => {
-    setFocused(false);
     close();
   };
 
   return {
     anchorRef,
-    submit,
     inputProps: {
       role: "combobox",
       "aria-autocomplete": "list",
@@ -209,6 +185,7 @@ export function useSearchCombobox({
       "aria-activedescendant": activeSuggestion
         ? suggestionDomId(listboxId, activeSuggestion.id)
         : undefined,
+      onChange,
       onFocus,
       onBlur,
       onKeyDown,
@@ -222,7 +199,7 @@ export function useSearchCombobox({
           activeId: activeSuggestion?.id ?? null,
           profilesLoading,
           onSelect: select,
-          onDismiss: dismiss,
+          onDismiss: close,
         }
       : null,
   };

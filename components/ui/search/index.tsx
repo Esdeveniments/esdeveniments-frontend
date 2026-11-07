@@ -4,7 +4,6 @@ import {
   useCallback,
   useState,
   startTransition,
-  ChangeEvent,
   JSX,
 } from "react";
 import { useRouter, usePathname } from "../../../i18n/routing";
@@ -111,17 +110,13 @@ export default function Search(): JSX.Element {
 
   const submitSearch = useCallback(() => triggerSearch(), [triggerSearch]);
 
-  const { anchorRef, submit, inputProps, popupProps } = useSearchCombobox({
+  const { anchorRef, inputProps, popupProps } = useSearchCombobox({
     value: inputValue,
     setValue: setInputValue,
     context: "search",
     onSubmit: submitSearch,
     onSelect: triggerSearch,
   });
-
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  }, []);
 
   const clearSearchTerm = useCallback((): void => {
     setInputValue("");
@@ -153,7 +148,6 @@ export default function Search(): JSX.Element {
           placeholder={t("placeholder")}
           value={inputValue}
           {...inputProps}
-          onChange={handleChange}
           autoComplete="off"
           aria-label={t("search")}
           data-testid="search-input"
@@ -173,7 +167,7 @@ export default function Search(): JSX.Element {
         {/* Search button on the right */}
         <button
           type="button"
-          onClick={submit}
+          onClick={submitSearch}
           className="h-10 flex justify-center items-center cursor-pointer px-2 bg-muted hover:bg-muted/80 active:bg-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground-strong rounded-r-input"
           aria-label={t("search")}
           data-testid="search-button"

@@ -1,4 +1,9 @@
-import type { FocusEventHandler, KeyboardEventHandler, RefObject } from "react";
+import type {
+  ChangeEventHandler,
+  FocusEventHandler,
+  KeyboardEventHandler,
+  RefObject,
+} from "react";
 import type { UserSearchResultDTO } from "./api/user";
 import type { Option } from "./common";
 
@@ -47,11 +52,8 @@ export interface SearchSuggestionsProps {
   activeId: string | null;
   profilesLoading: boolean;
   onSelect: (suggestion: SearchSuggestion) => void;
-  /**
-   * Tap or click outside the search box and the popup. `submitsSearch` is true
-   * when the tap lands on a control that submits the same search.
-   */
-  onDismiss: (submitsSearch: boolean) => void;
+  /** Tap or click outside the search box and the popup. */
+  onDismiss: () => void;
 }
 
 export interface SearchSuggestionOptionProps {
@@ -73,6 +75,7 @@ export interface SearchComboboxInputProps {
   "aria-expanded": boolean;
   "aria-controls": string | undefined;
   "aria-activedescendant": string | undefined;
+  onChange: ChangeEventHandler<HTMLInputElement>;
   onFocus: FocusEventHandler<HTMLInputElement>;
   onBlur: FocusEventHandler<HTMLInputElement>;
   onKeyDown: KeyboardEventHandler<HTMLInputElement>;
@@ -81,8 +84,6 @@ export interface SearchComboboxInputProps {
 export interface SearchCombobox {
   /** Wraps the input and its buttons; the popup opens below it. */
   anchorRef: RefObject<HTMLDivElement | null>;
-  /** Submits the typed text; use it for the box's own search button. */
-  submit: () => void;
   inputProps: SearchComboboxInputProps;
   /** Null until the first focus, so the popup chunk isn't needed before. */
   popupProps: SearchSuggestionsProps | null;

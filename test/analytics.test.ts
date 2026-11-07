@@ -6,6 +6,9 @@ import {
   CONSENT_MODE_DEFAULTS,
   markTextSearchSubmitted,
   sendTextSearchOutcomeGA,
+  markSuggestionsShown,
+  flushAbandonedSearch,
+  sendSearchOutcomeGA,
 } from "@utils/analytics";
 import type { WindowWithGtag } from "types/common";
 
@@ -149,5 +152,23 @@ describe("text search outcome", () => {
     sendTextSearchOutcomeGA("other", 0);
     sendTextSearchOutcomeGA("xyz", 0);
     expect(outcomes()).toEqual([{ context: "search", outcome: "events_zero" }]);
+  });
+
+  it("reports abandoned once when the user leaves after a shown list", () => {
+    markSuggestionsShown("hero_search");
+    flushAbandonedSearch();
+    flushAbandonedSearch();
+    expect(outcomes()).toEqual([{ context: "hero_search", outcome: "abandoned" }]);
+  });
+
+  it("doesn't report abandoned after a submit from anywhere, or another outcome", () => {
+    markSuggestionsShown("hero_search");
+    // The hero CTA submits outside the search box, even with the list closed.
+    markTextSearchSubmitted("hero_cta", "castell");
+    flushAbandonedSearch();
+    markSuggestionsShown("search");
+    sendSearchOutcomeGA("search", "place");
+    flushAbandonedSearch();
+    expect(outcomes()).toEqual([{ context: "search", outcome: "place" }]);
   });
 });
