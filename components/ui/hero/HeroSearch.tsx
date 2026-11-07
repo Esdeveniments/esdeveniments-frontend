@@ -7,11 +7,8 @@ import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-import {
-  sendGoogleEvent,
-  sendPlaceRedirectGA,
-  toSearchTermParam,
-} from "@utils/analytics";
+import { useHeroSearchSubmit } from "@components/hooks/useHeroSearchSubmit";
+import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
 import {
   MagnifyingGlassIcon as SearchIcon,
   ChevronDownIcon,
@@ -21,7 +18,6 @@ import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
 import { stripLocalePrefix } from "@utils/i18n-routing";
-import { matchSearchToPlace } from "@utils/string-helpers";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
 import { useHero } from "./HeroContext";
@@ -173,6 +169,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   }, [label, locale, place, placeType]);
 
   // --- Search Logic ---
+  const submitSearch = useHeroSearchSubmit("hero_search");
 
   const handleSearchSubmit = useCallback(() => {
     const value = searchTerm.trim();
@@ -185,22 +182,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       });
     }
 
-    // A typed place name opens that place. Until places load, Enter stays a
-    // text search.
-    const matchedPlace = value ? matchSearchToPlace(value, allLocations) : null;
-    if (matchedPlace) {
-      sendPlaceRedirectGA("hero_search", value, matchedPlace.value);
-      setSearchTerm("");
-      startNavigationFeedback();
-      router.push(buildHeroUrl(matchedPlace.value, date, ""));
-      return;
-    }
-
-    // Always navigate (even with empty search to clear the param)
-    const url = buildHeroUrl(place, date, value);
-    startNavigationFeedback();
-    router.push(url);
-  }, [searchTerm, place, date, router, allLocations, setSearchTerm]);
+    submitSearch();
+  }, [searchTerm, submitSearch]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {

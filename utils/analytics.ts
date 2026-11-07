@@ -106,7 +106,7 @@ export const toSearchTermParam = (term: string): string =>
 
 /** A typed search matched a place name and opened that place's page. */
 export const sendPlaceRedirectGA = (
-  context: "search" | "hero_search",
+  context: "search" | "hero_search" | "hero_cta",
   term: string,
   placeSlug: string,
 ): void =>
