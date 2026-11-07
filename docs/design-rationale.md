@@ -60,11 +60,11 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 **Why**: 16:9 is too short for portrait-oriented event posters. 1:1 wastes horizontal space. 2:1 (Eventbrite) was tried but was too wide for a 2-col grid. 3:2 balances visual impact with space efficiency.
 **Previous state**: Variable heights with `object-contain` — caused layout instability and unpredictable scrolling.
 
-#### 2-column grid (not 3, not 1)
+#### 1/2/3-column grid (3 only at `xl`)
 
 **Decision**: `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` (`gap-5`) on listing pages.
 **Why**: This is a cultural events discovery site with wildly diverse imagery (jazz posters vs. school open days vs. festival flyers). Larger images improve visual assessment. 3 columns were tested but made images too small for visual scanning. Eventbrite uses 4-col because their content is visually homogeneous (professional event photos). Our content is not.
-**Note**: 3 columns on `xl:` screens (≥1280px), first listed as a future improvement in §7, is now in the grid.
+**Note**: The 3 columns rejected above started at `lg` (1024px, `4f23479`). At `xl` (≥1280px) a third column keeps each card about as wide as a 2-column card at `md` (328px at 1280px vs 366px at 768px, measured on `/barcelona`), so images stay large enough to scan. First listed as a future improvement in §7.
 
 #### Contained cards (border + rounded corners, no shadow)
 
