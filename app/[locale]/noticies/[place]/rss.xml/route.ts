@@ -3,6 +3,7 @@ import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { fetchNews } from "@lib/api/news";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
+import { resolveNewsItemPlace } from "@utils/news-helpers";
 import { localeToHrefLang } from "types/i18n";
 
 export async function GET(
@@ -31,8 +32,11 @@ export async function GET(
     const res = await fetchNews({ page: 0, size: 20, place });
     const items = Array.isArray(res.content) ? res.content : [];
     for (const item of items) {
+      // A region's feed lists its cities' articles: link each under its own
+      // city/region, the canonical URL, not under the feed's place.
+      const itemPlace = resolveNewsItemPlace(item, place, place).slug;
       const articleUrl = toLocalizedUrl(
-        `/noticies/${place}/${item.slug}`,
+        `/noticies/${itemPlace}/${item.slug}`,
         locale
       );
       feed.addItem({
