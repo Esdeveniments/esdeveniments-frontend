@@ -18,6 +18,12 @@ vi.mock("../components/ui/restaurantPromotion/PromotionInfoModal", () => ({
   default: () => null,
 }));
 
+const signIn = vi.fn();
+let isAuthenticated = true;
+vi.mock("@components/hooks/useAuth", () => ({
+  useAuth: () => ({ isAuthenticated, isLoading: false, signIn }),
+}));
+
 // Mock computeTemporalStatus to use mocked time
 vi.mock("@utils/event-status", async () => {
   const actual = await vi.importActual<typeof import("@utils/event-status")>(
@@ -57,6 +63,7 @@ describe("RestaurantPromotionSection - Date Logic", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    isAuthenticated = true;
     // Use real timers for async operations (fetch, useEffect, waitFor)
     vi.useRealTimers();
 
@@ -474,6 +481,23 @@ describe("RestaurantPromotionSection - Date Logic", () => {
       expect(
         await screen.findByText("Ara mateix no podem mostrar restaurants a prop.")
       ).toBeInTheDocument();
+    });
+
+    it("asks guests to sign in instead of loading restaurants", () => {
+      isAuthenticated = false;
+      const today = baseNow.toISOString().split("T")[0];
+      const mockFetch = vi.fn();
+      global.fetch = mockFetch;
+
+      render(
+        <RestaurantPromotionSection {...defaultProps} eventStartDate={today} />
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: "Inicia sessió per veure restaurants" })
+      );
+
+      expect(signIn).toHaveBeenCalledWith(window.location.pathname);
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 });

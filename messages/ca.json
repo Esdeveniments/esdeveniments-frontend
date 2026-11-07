@@ -822,6 +822,7 @@
       "showPhoto": "Veure foto",
       "loadIntro": "Troba on menjar a prop de l'esdeveniment.",
       "loadCta": "Mostra restaurants a prop",
+      "loginCta": "Inicia sessió per veure restaurants",
       "empty": "Ara mateix no podem mostrar restaurants a prop."
     },
     "FeaturedPlaceSection": {

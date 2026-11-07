@@ -16,8 +16,25 @@ import {
   nearbySearchCenter,
 } from "@lib/places/nearby-cache-key";
 import { cacheGetJson, cacheSetJson } from "@lib/cache/redis-client";
+import { getValidAccessToken } from "@utils/auth-cookies";
 
 export async function GET(request: NextRequest) {
+  // Logged-in only: every cache miss is a billed Google searchNearby call.
+  try {
+    if (!(await getValidAccessToken())) {
+      return NextResponse.json(
+        { error: "UNAUTHORIZED" },
+        { status: 401, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+  } catch (error: unknown) {
+    const response = handleApiError(error, "/api/places/nearby", {
+      errorMessage: "Failed to verify session",
+    });
+    response.headers.set("Cache-Control", "no-store");
+    return response;
+  }
+
   const t = await getTranslations("Api.PlacesNearby");
   const { searchParams } = new URL(request.url);
   const latStr = searchParams.get("lat");
@@ -525,8 +542,8 @@ export async function GET(request: NextRequest) {
       {
         status: 200,
         headers: {
-          // Edge/CDN cache for 5 minutes, serve stale while revalidating
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=300",
+          // Per-session now (401 for guests), so no shared CDN caching.
+          "Cache-Control": "private, max-age=300",
         },
       }
     );

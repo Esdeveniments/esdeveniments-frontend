@@ -5,6 +5,7 @@ import { parseISO, isValid, differenceInCalendarDays, format } from "date-fns";
 import { useTranslations } from "next-intl";
 import { computeTemporalStatus, buildEventStatusLabels } from "@utils/event-status";
 import { sendGoogleEvent } from "@utils/analytics";
+import { useAuth } from "@components/hooks/useAuth";
 import {
   RestaurantPromotionSectionProps,
   PlacesResponse,
@@ -38,6 +39,7 @@ export default function RestaurantPromotionSection({
   const tStatus = useTranslations("Utils.EventStatus");
   const statusLabels = useMemo(() => buildEventStatusLabels(tStatus), [tStatus]);
   const t = useTranslations("Components.WhereToEatSection");
+  const { isAuthenticated, isLoading: isAuthLoading, signIn } = useAuth();
 
   // Suppress unused parameter warning - eventId is used in commented-out form
   void eventId;
@@ -110,7 +112,8 @@ export default function RestaurantPromotionSection({
   );
 
   const handleLoadPlaces = async () => {
-    if (hasRequested || !canLoadPlaces || !eventStartDate) return;
+    if (hasRequested || !canLoadPlaces || !eventStartDate || !isAuthenticated)
+      return;
     setHasRequested(true);
     setIsLoading(true);
     // The clicked button unmounts; keep keyboard focus inside the widget.
@@ -170,13 +173,27 @@ export default function RestaurantPromotionSection({
           ) : (
             <div className="stack px-section-x">
               <p className="body-small text-muted-foreground">{t("loadIntro")}</p>
-              <button
-                type="button"
-                onClick={handleLoadPlaces}
-                className="btn-outline btn-sm self-start"
-              >
-                {t("loadCta")}
-              </button>
+              {isAuthenticated || isAuthLoading ? (
+                <button
+                  type="button"
+                  onClick={handleLoadPlaces}
+                  disabled={isAuthLoading}
+                  className="btn-outline btn-sm self-start"
+                >
+                  {t("loadCta")}
+                </button>
+              ) : (
+                // Places lookups are billed per Google call, so they're a
+                // logged-in perk; guests get a sign-in CTA instead.
+                <button
+                  type="button"
+                  onClick={() => signIn(window.location.pathname)}
+                  className="btn-outline btn-sm self-start"
+                  data-analytics-action="restaurants_login"
+                >
+                  {t("loginCta")}
+                </button>
+              )}
             </div>
           )}
         </section>
