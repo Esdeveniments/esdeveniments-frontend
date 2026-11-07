@@ -13,69 +13,42 @@ async function CardContentServer({
   variant = "default",
   position,
   description,
+  compact = false,
+  locale: localeProp,
+  headingLevel,
 }: CardContentServerProps) {
-  const locale = await getLocaleSafely();
+  // Callers that already hold rootLocale() pass it, so they don't start reading headers().
+  const locale = localeProp ?? (await getLocaleSafely());
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
-  const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const tCategories = await getTranslations({ locale, namespace: "Config.Categories" });
-  const {
-    title,
-    primaryLocation,
-    image,
-    cardDate,
-    timeDisplay,
-    favoriteLabels,
-    shouldShowFavoriteButton,
-    categoryLabel,
-    categorySlug,
-    promotedLabel,
-    urgencyLabel,
-    urgencyType,
-    multiDayLabel,
-  } = prepareCardContentData({
+  const card = prepareCardContentData({
     event,
     variant: "standard",
     locale,
     tCard,
-    tTime,
     tCategories,
+    isFavorite: initialIsFavorite,
   });
-
-  const isFavorite = Boolean(event.slug && initialIsFavorite);
 
   return (
     <CardLayout
-      slug={event.slug}
-      variant={variant}
+      card={
+        variant === "row"
+          ? {
+              ...card,
+              primaryLocation: buildEventVenueLabel({
+                location: event.location,
+                cityName: event.city?.name,
+              }),
+            }
+          : card
+      }
+      layout={variant}
+      compact={compact}
       position={position}
       description={description}
-      eventId={event.id ? String(event.id) : undefined}
-      title={title}
-      originalTitle={event.title}
-      image={image}
       isPriority={isPriority}
-      cardDate={cardDate}
-      timeDisplay={timeDisplay}
-      primaryLocation={
-        variant === "row"
-          ? buildEventVenueLabel({ location: event.location, cityName: event.city?.name })
-          : primaryLocation
-      }
-      categoryLabel={categoryLabel}
-      categorySlug={categorySlug}
-      promotedLabel={promotedLabel}
-      urgencyLabel={urgencyLabel}
-      urgencyType={urgencyType}
-      multiDayLabel={multiDayLabel}
-      shouldShowFavoriteButton={shouldShowFavoriteButton}
-      isFavorite={isFavorite}
-      favoriteLabels={favoriteLabels}
-      imageContext={{
-        location: event.city?.name || event.location,
-        region: event.region?.name || event.city?.name,
-        date: cardDate,
-      }}
-      imageCacheKey={event.hash || event.updatedAt}
+      headingLevel={headingLevel}
       renderLink={(props) => <CardLink {...props} />}
     />
   );

@@ -11,7 +11,7 @@ const formatCardDateMock =
       start: string,
       end?: string,
       locale?: string,
-    ) => { cardDate: string; isMultiDay: boolean }
+    ) => { cardDate: string; isMultiDay: boolean; endLabel?: string; endDay?: number }
   >();
 
 const buildEventPlaceLabelsMock =
@@ -126,7 +126,6 @@ describe("prepareCardContentData", () => {
 
   it("uses abbreviated card date format", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
 
     const event = makeEvent();
 
@@ -135,7 +134,6 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
     });
 
     expect(formatCardDateMock).toHaveBeenCalledWith(
@@ -148,7 +146,6 @@ describe("prepareCardContentData", () => {
 
   it("uses buildEventPlaceLabels for location with city + region", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
 
     const event = makeEvent();
 
@@ -157,7 +154,6 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
     });
 
     expect(buildEventPlaceLabelsMock).toHaveBeenCalledWith({
@@ -169,7 +165,6 @@ describe("prepareCardContentData", () => {
 
   it("passes through title without truncation (CSS line-clamp handles it)", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
     const event = makeEvent({
       title:
         "A very long event title that should not be truncated by data prep",
@@ -180,7 +175,6 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
     });
 
     expect(result.title).toBe(
@@ -190,7 +184,6 @@ describe("prepareCardContentData", () => {
 
   it("omits time display when startTime is null (no 'Check schedules' filler)", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
 
     const event = makeEvent({ startTime: null, endTime: null });
 
@@ -199,7 +192,6 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
     });
 
     expect(result.timeDisplay).toBe("");
@@ -207,7 +199,6 @@ describe("prepareCardContentData", () => {
 
   it("shows time when startTime is valid", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
 
     const event = makeEvent({ startTime: "14:30", endTime: "16:00" });
 
@@ -216,7 +207,6 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
     });
 
     expect(result.timeDisplay).toBe("14:30 – 16:00");
@@ -224,7 +214,6 @@ describe("prepareCardContentData", () => {
 
   it("shows only start time when endTime equals startTime", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
 
     const event = makeEvent({ startTime: "19:00", endTime: "19:00" });
 
@@ -233,7 +222,6 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
     });
 
     expect(result.timeDisplay).toBe("19:00");
@@ -241,7 +229,6 @@ describe("prepareCardContentData", () => {
 
   it("localizes category when tCategories is provided", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
     const tCategories = vi.fn((key: string) => `cat:${key}`);
 
     const event = makeEvent();
@@ -251,7 +238,6 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
       tCategories,
     });
 
@@ -260,7 +246,6 @@ describe("prepareCardContentData", () => {
 
   it("falls back to raw category name without tCategories", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
 
     const event = makeEvent();
 
@@ -269,7 +254,6 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
     });
 
     expect(result.categoryLabel).toBe("Music");
@@ -277,7 +261,6 @@ describe("prepareCardContentData", () => {
 
   it("skips category resolution for compact variant", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
     const tCategories = vi.fn((key: string) => `cat:${key}`);
 
     const event = makeEvent();
@@ -287,7 +270,6 @@ describe("prepareCardContentData", () => {
       variant: "compact",
       locale: "ca",
       tCard,
-      tTime,
       tCategories,
     });
 
@@ -296,7 +278,6 @@ describe("prepareCardContentData", () => {
 
   it("hides favorite button when slug is empty", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => key);
 
     const event = makeEvent({ slug: "" });
 
@@ -305,42 +286,79 @@ describe("prepareCardContentData", () => {
       variant: "standard",
       locale: "ca",
       tCard,
-      tTime,
     });
 
     expect(result.shouldShowFavoriteButton).toBe(false);
   });
 
-  it("returns the variant passed in", () => {
+  it("gives single-day events a <time> value, with the start time when known", () => {
     const tCard = vi.fn((key: string) => key);
-    const tTime = vi.fn((key: string) => `time:${key}`);
-    const event = makeEvent();
 
-    const standard = prepareCardContentData({
-      event,
-      variant: "standard",
+    const allDay = prepareCardContentData({
+      event: makeEvent({ startDate: "2025-01-01", endDate: "2025-01-01" }),
       locale: "ca",
       tCard,
-      tTime,
     });
-    expect(standard.variant).toBe("standard");
+    expect(allDay.dateTime).toBe("2025-01-01");
 
-    const carousel = prepareCardContentData({
-      event,
-      variant: "carousel",
+    const timed = prepareCardContentData({
+      event: makeEvent({ startDate: "2025-01-01", endDate: "2025-01-01", startTime: "18:30" }),
       locale: "ca",
       tCard,
-      tTime,
     });
-    expect(carousel.variant).toBe("carousel");
+    expect(timed.dateTime).toBe("2025-01-01T18:30");
+  });
 
-    const compact = prepareCardContentData({
-      event,
-      variant: "compact",
+  it("gives multi-day events no <time> value (a range can't be one <time>)", () => {
+    formatCardDateMock.mockReturnValue({ cardDate: "1 gen. – 2 gen.", isMultiDay: true });
+    const result = prepareCardContentData({
+      event: makeEvent(),
       locale: "ca",
-      tCard,
-      tTime,
+      tCard: vi.fn((key: string) => key),
     });
-    expect(compact.variant).toBe("compact");
+    expect(result.dateTime).toBeUndefined();
+  });
+
+  describe("multi-day events", () => {
+    const tCard = vi.fn((key: string, values?: Record<string, string | number>) =>
+      key === "until" ? `until:${values?.day}:${values?.date}` : key,
+    );
+    const isoDay = (offset: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    const multiDay = (startOffset: number) => {
+      formatCardDateMock.mockReturnValue({
+        cardDate: "range",
+        isMultiDay: true,
+        endLabel: "30 nov.",
+        endDay: 30,
+      } as ReturnType<typeof formatCardDateMock>);
+      return prepareCardContentData({
+        event: makeEvent({ startDate: isoDay(startOffset), startTime: "18:00" }),
+        locale: "ca",
+        tCard,
+      });
+    };
+
+    it("shows the end date, without a start time, once running", () => {
+      const result = multiDay(-3);
+      expect(result.untilLabel).toBe("until:30:30 nov.");
+      expect(result.urgencyLabel).toBeUndefined();
+      expect(result.timeDisplay).toBe("");
+    });
+
+    it("keeps Today/Tomorrow next to the end date", () => {
+      expect(multiDay(0)).toMatchObject({ urgencyLabel: "today", untilLabel: "until:30:30 nov." });
+      expect(multiDay(1)).toMatchObject({ urgencyLabel: "tomorrow", untilLabel: "until:30:30 nov." });
+    });
+
+    it("keeps the range for later starts", () => {
+      const result = multiDay(5);
+      expect(result.untilLabel).toBeUndefined();
+      expect(result.cardDate).toBe("range");
+      expect(result.timeDisplay).toBe("18:00");
+    });
   });
 });

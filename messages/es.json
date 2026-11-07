@@ -956,8 +956,7 @@
       "favoriteRemoveAria": "Quitar de favoritos",
       "today": "Hoy",
       "tomorrow": "Mañana",
-      "multipleDates": "Varios días",
-      "viewCountAria": "{count, plural, one {{count} visualización} other {{count} visualizaciones}}",
+      "until": "{day, select, 1 {Hasta el {date}} 11 {Hasta el {date}} other {Hasta el {date}}}",
       "promoted": "Patrocinado"
     },
     "EventForm": {

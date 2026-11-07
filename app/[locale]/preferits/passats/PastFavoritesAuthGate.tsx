@@ -20,13 +20,11 @@ export default async function PastFavoritesAuthGate() {
         </div>
       </div>
 
-      {/* h3, not h1: app/[locale]/preferits/layout.tsx already renders the
-          page's h1 ("Preferits"); NoEventsFound (this page's error/empty
-          states) uses h3 for its own in-page heading, so this matches that
-          convention instead of EditProfileAuthGate's h1 — that component has
-          no wrapping layout heading, so h1 is correct there but would be a
-          second h1 on this page. */}
-      <h3 className="heading-2 text-foreground">{t("pastAuthGateTitle")}</h3>
+      {/* h2, not h1: app/[locale]/preferits/layout.tsx already renders the
+          page's h1 ("Preferits"), and NoEventsFound (this page's error/empty
+          states) is an h2 under it too. EditProfileAuthGate uses h1 because it
+          has no wrapping layout heading; here that would be a second h1. */}
+      <h2 className="heading-2 text-foreground">{t("pastAuthGateTitle")}</h2>
       <p className="body-normal text-foreground/80">
         {t("pastAuthGateDescription")}
       </p>

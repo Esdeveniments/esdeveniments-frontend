@@ -78,6 +78,7 @@ async function HybridEventsList({
               key={`${event.id}-${index}`}
               event={event}
               isPriority={index === priorityIndex}
+              headingLevel="h2"
             />
           )}
         </List>
@@ -110,6 +111,7 @@ async function HybridEventsList({
               key={`${event.id ?? "ad"}-${index}`}
               event={event}
               isPriority={index === priorityIndex}
+              headingLevel="h2"
             />
           )}
         </List>

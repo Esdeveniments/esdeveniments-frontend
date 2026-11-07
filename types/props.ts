@@ -126,68 +126,53 @@ export interface CardContentProps {
   event: EventSummaryResponseDTO; // CardContent should only receive real events, not ads
   isPriority?: boolean;
   initialIsFavorite?: boolean;
+  headingLevel?: CardLayoutProps["headingLevel"];
 }
 
-/** Server card options for the `row` layout (news article event lists). */
+/** Server card options: `row` layout (news article event lists) and the home carousel. */
 export interface CardContentServerProps extends CardContentProps {
-  variant?: CardLayoutProps["variant"];
+  variant?: CardLayoutProps["layout"];
   /** Number shown before the title */
   position?: number;
   /** Plain-text excerpt, shown by the side-by-side variants */
   description?: string;
+  /** Smaller carousel card (`CardLayoutProps["compact"]`) */
+  compact?: boolean;
+  /** Locale from `rootLocale()`; without it the card reads `headers()` */
+  locale?: AppLocale;
 }
 
-export interface CardLayoutProps {
-  /** Event slug for links and analytics */
+/** What one card shows. Events build it with `prepareCardContentData`, news by hand. */
+export interface CardData {
+  /** Event slug for analytics and the favorite button */
   slug: string;
-  /** Card link; defaults to the event page (`/e/{slug}`) */
-  href?: string;
-  /** GA4 event sent on click; defaults to `select_event` */
-  analyticsEventName?: string;
-  /**
-   * `featured` and `row` lay the card out side by side from md up and show the
-   * description; `featured` gives the image half the width, `row` 40%.
-   */
-  variant?: "default" | "featured" | "row";
-  /** Plain-text summary, shown only by the `featured` and `row` variants */
-  description?: string;
-  /** Number shown before the title (numbered lists) */
-  position?: number;
   /** Event ID for analytics */
   eventId?: string;
-  /** Prepared title text */
   title: string;
-  /** Original (un-truncated) title for alt text */
-  originalTitle: string;
-  /** Prepared image URL */
+  /** Image URL ("" when the event has none) */
   image: string;
-  /** Whether this card's image should be priority-loaded */
-  isPriority: boolean;
-  /** Formatted card date string */
+  /** Formatted card date */
   cardDate: string;
-  /** Formatted time display (empty string if no time) */
+  /** `<time dateTime>` value; single-day events only (a range can't be one `<time>`) */
+  dateTime?: string;
+  /** Formatted time ("" when there is no time) */
   timeDisplay: string;
-  /** City/region location text */
+  /** City/region (or venue) text */
   primaryLocation: string;
   /** Localized category label */
   categoryLabel?: string;
-  /** Category slug for analytics/URL building */
-  categorySlug?: string;
   /** Localized badge for events with an active paid promotion */
   promotedLabel?: string;
   /** Urgency label ("Today" / "Tomorrow") */
   urgencyLabel?: string;
-  /** Urgency type for styling */
   urgencyType?: "today" | "tomorrow";
-  /** Multi-day label suffix */
-  multiDayLabel?: string;
-  /** Whether to show favorite button */
+  /** End of a running multi-day event ("Until 30 Nov."), shown instead of the range */
+  untilLabel?: string;
   shouldShowFavoriteButton?: boolean;
-  /** Whether this event is favorited */
   isFavorite?: boolean;
   /** Favorite button labels (required to show the favorite button) */
   favoriteLabels?: FavoriteButtonLabels;
-  /** Image location/region/date for alt-text context */
+  /** Image location/region/date for the placeholder */
   imageContext?: {
     location?: string;
     region?: string;
@@ -195,13 +180,34 @@ export interface CardLayoutProps {
   };
   /** Cache key for image optimization */
   imageCacheKey?: string;
-  /** Optional view transition name for the image container */
-  imageViewTransitionName?: string;
-  /** Render the card link wrapper. Receives children (sr-only label) and props */
+}
+
+export interface CardLayoutProps {
+  card: CardData;
+  /**
+   * `featured` and `row` lay the card out side by side from md up and show the
+   * description; `featured` gives the image half the width, `row` 40%.
+   */
+  layout?: "default" | "featured" | "row";
+  /** Smaller text and padding for the home carousel (`default` layout only) */
+  compact?: boolean;
+  /** Card link; defaults to the event page (`/e/{slug}`) */
+  href?: string;
+  /** GA4 event sent on click; defaults to `select_event` */
+  analyticsEventName?: string;
+  /** Plain-text summary, shown only by the `featured` and `row` layouts */
+  description?: string;
+  /** Number shown before the title (numbered lists) */
+  position?: number;
+  /** Whether this card's image should be priority-loaded */
+  isPriority: boolean;
+  /** `h2` where cards sit directly under the page `<h1>`; `h3` (default) under a section `<h2>` */
+  headingLevel?: "h2" | "h3";
+  /** Render the title link (server or client link component) */
   renderLink: (props: {
     href: string;
     className: string;
-    "aria-label": string;
+    variant: "plain";
     "data-analytics-event-name": string;
     "data-analytics-event-id": string;
     "data-analytics-event-slug": string;
@@ -213,7 +219,6 @@ export interface CompactCardProps {
   event: EventSummaryResponseDTO;
   locale: AppLocale;
   tCard: (key: string, values?: Record<string, string | number>) => string;
-  tTime: (key: string, values?: Record<string, string | number>) => string;
   index: number;
   analyticsEventName?: string;
 }
@@ -757,6 +762,8 @@ export interface NewsCardGridProps {
   /** Fallback place for items without their own city/region */
   place: string;
   placeLabel: string;
+  /** `h2` when the grid sits right under the page `<h1>` (the news list) */
+  headingLevel?: CardLayoutProps["headingLevel"];
 }
 
 export interface NewsCardProps {
@@ -765,6 +772,7 @@ export interface NewsCardProps {
   placeLabel?: string;
   variant?: "default" | "featured";
   priority?: boolean;
+  headingLevel?: CardLayoutProps["headingLevel"];
 }
 
 export interface NewsArticleDetailProps {

@@ -8,7 +8,6 @@ export default function CompactCard({
   event,
   locale,
   tCard,
-  tTime,
   index,
   analyticsEventName = "related_event_click",
 }: CompactCardProps) {
@@ -23,7 +22,6 @@ export default function CompactCard({
     variant: "compact",
     locale,
     tCard,
-    tTime,
   });
 
   return (

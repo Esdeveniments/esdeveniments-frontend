@@ -856,3 +856,23 @@ where the visitor read the box). To check, watch `/g/collect` requests: the
 `page_view` of a consented visitor must carry `gcs=G111`
 (`docs/performance/baselines.md` method: local build served as the
 production host through a TLS proxy).
+
+## Card "Avui"/"Demà" can be up to 30 minutes stale after midnight
+
+`prepareCardContentData` picks "Avui"/"Demà" (and "Fins al …" for running
+multi-day events) from the time of render. Listing pages render per request
+(`PlacePageShell` awaits `connection()`), but Cloudflare caches their HTML for
+`s-maxage=1800`, so just after midnight a card can still say "Demà" for an
+event that is now today. Known limit, 30 minutes at most. Don't move these
+labels into a `"use cache"` scope without a `cacheLife` short enough for them.
+
+## Tailwind classes that don't exist in 3.3.6 generate no CSS, silently
+
+`text-primary/85` produced nothing (Tailwind 3 only knows the opacity scale:
+5, 10, 20, 25, …, 80, 90, 95), so the card title hover colour it was meant to
+give never shipped. `min-h-12` produced nothing either: in 3.3.6 `min-h-*`
+only has `0/full/screen/min/max/fit` plus our `button` sizes (spacing values
+came in 3.4), so a skeleton lost 12px. Nothing warns in the class attribute;
+`@apply` of the same class fails the build. Check the compiled CSS for any
+class you haven't seen used in the repo:
+`npx tailwindcss -i styles/globals.css -o /tmp/out.css && grep -c '\.min-h-12' /tmp/out.css`.

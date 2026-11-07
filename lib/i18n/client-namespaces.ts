@@ -54,7 +54,6 @@ export const CLIENT_COMPONENT_KEYS = [
 export const CLIENT_UTILS_KEYS = [
   "Calendar",
   "EventStatus",
-  "EventTime",
   "Validation",
 ] as const;
 
