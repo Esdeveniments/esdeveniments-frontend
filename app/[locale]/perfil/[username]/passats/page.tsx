@@ -31,7 +31,7 @@ export async function generateMetadata({
     profile.displayName?.trim() || profile.name?.trim() || profile.username;
   const title = t("pastTitle", { name: displayName });
   const description = t("pastMetaDescription", { name: displayName });
-  const canonical = toLocalizedUrl(`/perfil/${username}/passats`, locale);
+  const canonical = toLocalizedUrl(`/perfil/${profile.username}/passats`, locale);
 
   return buildPageMeta({
     title,

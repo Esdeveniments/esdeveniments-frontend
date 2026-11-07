@@ -104,6 +104,18 @@ const MAX_SEARCH_TERM_LENGTH = 100;
 export const toSearchTermParam = (term: string): string =>
   term.trim().replace(/\s+/g, " ").toLowerCase().slice(0, MAX_SEARCH_TERM_LENGTH);
 
+/** A typed search matched a place name and opened that place's page. */
+export const sendPlaceRedirectGA = (
+  context: "search" | "hero_search",
+  term: string,
+  placeSlug: string,
+): void =>
+  sendGoogleEvent("search_place_redirect", {
+    context,
+    search_term: toSearchTermParam(term),
+    matched_place: placeSlug,
+  });
+
 /** Last path segment of a shared URL (the event slug), never the title. */
 export const getShareItemId = (url: string): string => {
   try {

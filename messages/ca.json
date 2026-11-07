@@ -1083,7 +1083,12 @@
       "errorTitle": "Error al carregar esdeveniments",
       "error": "Si us plau, torna-ho a intentar més tard.",
       "resultsCount": "{count, plural, =0 {Cap esdeveniment} one {# esdeveniment} other {# esdeveniments}}",
-      "retry": "Torna-ho a provar"
+      "retry": "Torna-ho a provar",
+      "recoveryTitle": "Amplia la cerca",
+      "recoveryPlace": "«{search}» a tot Catalunya",
+      "recoveryDate": "«{search}» en qualsevol data",
+      "recoveryCategory": "«{search}» a totes les categories",
+      "recoveryDistance": "«{search}» sense límit de distància"
     },
     "Hero": {
       "options": {

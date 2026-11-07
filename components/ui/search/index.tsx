@@ -17,7 +17,11 @@ import {
   MagnifyingGlassIcon as SearchIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
-import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
+import {
+  sendGoogleEvent,
+  sendPlaceRedirectGA,
+  toSearchTermParam,
+} from "@utils/analytics";
 import { matchSearchToPlace } from "@utils/string-helpers";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
@@ -100,11 +104,7 @@ export default function Search(): JSX.Element {
     if (value && places.length > 0) {
       const matchedPlace = matchSearchToPlace(value, places);
       if (matchedPlace) {
-        sendGoogleEvent("search_place_redirect", {
-          context: "search",
-          search_term: toSearchTermParam(value),
-          matched_place: matchedPlace.value,
-        });
+        sendPlaceRedirectGA("search", value, matchedPlace.value);
         startNavigationFeedback();
         startTransition(() => setLoading(true));
         setInputValue("");

@@ -413,6 +413,8 @@ export interface RangeInputProps {
 export interface NoEventsFoundProps {
   title?: string;
   description?: string;
+  /** Shown under the description, above the publish button */
+  children?: ReactNode;
 }
 
 export interface NoEventsFoundContentProps extends NoEventsFoundProps {

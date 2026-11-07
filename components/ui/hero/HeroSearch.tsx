@@ -7,7 +7,11 @@ import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
+import {
+  sendGoogleEvent,
+  sendPlaceRedirectGA,
+  toSearchTermParam,
+} from "@utils/analytics";
 import {
   MagnifyingGlassIcon as SearchIcon,
   ChevronDownIcon,
@@ -17,6 +21,7 @@ import { useLocale } from "next-intl";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { formatCatalanA, generateRegionsAndTownsOptions } from "@utils/helpers";
 import { stripLocalePrefix } from "@utils/i18n-routing";
+import { matchSearchToPlace } from "@utils/string-helpers";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
 import { useHero } from "./HeroContext";
@@ -45,6 +50,8 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [localPlaceValue, setLocalPlaceValue] = useState<string>("");
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
+  // Places load on first focus so Enter can match a typed place name.
+  const [hasFocusedSearch, setHasFocusedSearch] = useState(false);
 
   // The Modal mounts on first open; fetch its chunk now so that open is instant.
   useEffect(() => {
@@ -63,7 +70,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     isLoading: loadingRegions,
     isError: regionsError,
     mutate,
-  } = useGetRegionsWithCities(hasOpenedModal || isPlacePage);
+  } = useGetRegionsWithCities(hasOpenedModal || isPlacePage || hasFocusedSearch);
 
   const regionsAndCitiesArray = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -178,11 +185,22 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       });
     }
 
+    // A typed place name opens that place. Until places load, Enter stays a
+    // text search.
+    const matchedPlace = value ? matchSearchToPlace(value, allLocations) : null;
+    if (matchedPlace) {
+      sendPlaceRedirectGA("hero_search", value, matchedPlace.value);
+      setSearchTerm("");
+      startNavigationFeedback();
+      router.push(buildHeroUrl(matchedPlace.value, date, ""));
+      return;
+    }
+
     // Always navigate (even with empty search to clear the param)
     const url = buildHeroUrl(place, date, value);
     startNavigationFeedback();
     router.push(url);
-  }, [searchTerm, place, date, router]);
+  }, [searchTerm, place, date, router, allLocations, setSearchTerm]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -284,6 +302,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             placeholder={t("searchPlaceholder", { location: label })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={() => setHasFocusedSearch(true)}
             onKeyDown={handleKeyDown}
             data-testid="search-input"
           />

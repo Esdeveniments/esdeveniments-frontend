@@ -14,6 +14,8 @@ export const RESERVED_USERNAMES: readonly string[] = [
   "me",
   "login",
   "logout",
+  // /perfil/edita is the edit page, so a user named "edita" has no profile URL.
+  "edita",
 ] as const;
 
 // Username rules:

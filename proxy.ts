@@ -13,6 +13,7 @@ import {
 import { getLoginEntryRedirect } from "@utils/proxy-login";
 import { getNewsPaginationRedirect } from "@utils/proxy-news";
 import { applyPageHeaders } from "@utils/proxy-page-headers";
+import { getProfileCaseRedirect } from "@utils/proxy-profile";
 import { checkCategory, checkPlace } from "@utils/proxy-place";
 import { DEFAULT_LOCALE } from "types/i18n";
 
@@ -61,7 +62,8 @@ export default async function proxy(request: NextRequest) {
 
   const canonicalRedirect =
     handleCanonicalRedirects(request) ??
-    getNewsPaginationRedirect(request, pathnameWithoutLocale);
+    getNewsPaginationRedirect(request, pathnameWithoutLocale) ??
+    getProfileCaseRedirect(request, pathnameWithoutLocale);
   if (canonicalRedirect) {
     if (pathLocaleToPersist) {
       persistLocaleCookie(canonicalRedirect, pathLocaleToPersist);
