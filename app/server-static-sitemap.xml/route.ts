@@ -33,9 +33,6 @@ export async function GET(request: NextRequest) {
     },
     ...["/developers", "/developers/mcp"].map((path) => ({
       loc: `${siteUrl}${path}`,
-      lastmod,
-      changefreq: "monthly" as const,
-      priority: 0.5,
       alternates: buildAlternateLinks(`${siteUrl}${path}`),
     })),
   ];
