@@ -7,13 +7,13 @@ export default function EventCardSkeleton() {
         <div className="w-16 h-4 bg-border/40 rounded-badge animate-pulse mb-1" />
         {/* Date line skeleton */}
         <div className="w-2/3 h-3.5 bg-border/40 rounded animate-pulse mb-1" />
-        {/* Title skeleton (min-h matches real card) */}
-        <div className="text-base card-event-title-2-lines mb-1.5">
+        {/* Title skeleton (two lines) */}
+        <div className="mb-1.5">
           <div className="w-full h-4 bg-border/40 rounded animate-pulse mb-1" />
           <div className="w-3/4 h-4 bg-border/40 rounded animate-pulse" />
         </div>
         {/* Location skeleton */}
-        <div className="mt-auto w-1/2 h-3.5 bg-border/40 rounded animate-pulse" />
+        <div className="mt-1 w-1/2 h-3.5 bg-border/40 rounded animate-pulse" />
       </div>
     </div>
   );

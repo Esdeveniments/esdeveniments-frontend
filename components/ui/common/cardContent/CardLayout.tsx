@@ -52,8 +52,8 @@ export default function CardLayout({
   const titleClass = isHorizontal
     ? "heading-3 line-clamp-3 mb-2"
     : compact
-      ? "text-sm font-semibold leading-normal line-clamp-2 mb-1.5 card-event-title-2-lines"
-      : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 card-event-title-2-lines";
+      ? "text-sm font-semibold leading-normal line-clamp-2 mb-1.5"
+      : "text-base font-semibold leading-normal line-clamp-2 mb-1.5";
   const dateText = urgencyLabel ? (
     <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
       {urgencyLabel}
@@ -125,7 +125,8 @@ export default function CardLayout({
         )}
 
         {primaryLocation && (
-          <div className={`order-3 mt-auto flex items-center gap-1 ${compact ? "text-xs" : "text-sm"} text-muted-foreground min-w-0${isHorizontal ? " md:mt-0" : ""}`}>
+          // Stays right under the title (proximity); a short card's spare height goes below it.
+          <div className={`order-3 ${isHorizontal ? "mt-auto md:mt-0" : "mt-1"} flex items-center gap-1 ${compact ? "text-xs" : "text-sm"} text-muted-foreground min-w-0`}>
             <svg className={`${compact ? "w-3.5 h-3.5" : "w-4 h-4"} flex-shrink-0`} aria-hidden="true">
               <use href={`#${SPRITE_ICON.mapPin}`} />
             </svg>

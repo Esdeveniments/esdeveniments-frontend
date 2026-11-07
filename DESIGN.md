@@ -299,10 +299,9 @@ components:
     fontWeight: 600
     lineHeight: "1.5"
     color: "{colors.foreground-strong}"
-    minHeight: "3em (two lines: 48px)"
   card-compact:
     padding: "10px 14px 14px"
-    titleFontSize: "14px (two lines reserved: 42px)"
+    titleFontSize: "14px"
     metaFontSize: "12px"
   card-meta:
     fontSize: "{typography.body-small.fontSize}"
@@ -651,7 +650,7 @@ The type scale follows a four-level heading model:
   headers.
 - **heading-4** (16/500 mobile → 18/500 desktop) — footer block titles.
   Card titles are 16/600 at every width (14/600 on the compact carousel
-  card), two lines reserved (`card-title`).
+  card).
 
 UI chrome — nav links and footer links — uses a small **label** style:
 12/500, **uppercase**, with widened tracking. Button labels use the same
@@ -681,8 +680,8 @@ the first row of cards never slides under the chrome.
 
 Cards live in a responsive grid: 1 column on mobile, 2 on **md**, 3 on
 **xl**, with 20px (`gap-5`) between cells. Card titles use a 2-line
-clamp and a fixed `min-height` so adjacent cards visually align even when
-titles vary.
+clamp; cards in a row share one height, and the text inside each card stays
+together (no reserved title height, no location pinned to the bottom).
 
 Z-layers are explicit: 10 sticky chrome, 100 dropdowns, 900 modals, 1000
 tooltips. Anything above 1000 is forbidden.
@@ -750,7 +749,9 @@ long label never wraps inside a pill.
 
 **Cards** are an article tile: 3:2 image on top, category pill, then a
 muted metadata row (`date · time`), a 2-line title, and finally a location
-row anchored to the bottom with a pin icon. A multi-day event that is
+row with a pin icon right under the title. The text stays together (label,
+date, title, location); when cards in a row differ in height, the spare space
+sits at the bottom of the shorter card, not between the title and the location. A multi-day event that is
 running shows its end instead of the range (`Fins al 30 nov.`, no time);
 one starting today or tomorrow shows `Avui · Fins al …` / `Demà · Fins al …`.
 The title is the card's only link (`h2` right under a page `<h1>`, else

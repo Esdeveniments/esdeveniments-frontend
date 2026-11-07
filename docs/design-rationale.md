@@ -99,10 +99,16 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 **Decision**: Compact related-event cards use `text-muted-foreground` for dates, not `text-primary`.
 **Why**: On a related-events section (user is already on a detail page), the title should be the visual anchor, not the date. Red dates on compact cards made dates more dominant than titles, which inverts the information hierarchy.
 
+#### Card text stays together; spare height at the bottom
+
+**Decision**: Category, date, title and location sit together under the image. Cards in a grid row keep the same height (they have borders), and a shorter card's spare height goes below the location, not between the title and the location.
+**Why**: With the location pinned to the bottom, a one-line title without a category left 55px between the title and its location, while the date sat 4px above the title: the location read as a separate group (NN/g, "Proximity Principle in Visual Design": far-away elements appear unrelated and are easily overlooked). The location answers "is this near me?", so it shouldn't drift away. The cost is that locations no longer line up across a row.
+**Competitors (checked Nov 2026)**: Meetup, Eventbrite (category cards) and Airbnb Experiences keep card text together, with ragged rows; none pins metadata to the bottom. Time Out was not checked (consent wall).
+
 #### One icon per card: the location pin
 
 **Decision**: The location row has a map pin; the date row has no calendar icon.
-**Why**: The date is the first meta line, right above the title, and "Avui"/"Demà" are colored, so it reads as a date without an icon; a calendar would compete with that color. The location sits alone at the bottom of the card, and a bare "El Masnou, Maresme" needs the pin to read as a place. An icon before the date would push it right of the category and title, which share one left edge, and on 256px carousel cards the date line is already truncated when it has a time range.
+**Why**: The date is the first meta line, right above the title, and "Avui"/"Demà" are colored, so it reads as a date without an icon; a calendar would compete with that color. The location is the last line, and a bare "El Masnou, Maresme" needs the pin to read as a place. An icon before the date would push it right of the category and title, which share one left edge, and on 256px carousel cards the date line is already truncated when it has a time range.
 **Competitors (checked Nov 2026)**: Eventbrite now puts an icon on every meta line (calendar, pin, organizer); its cards stack three or four plain gray lines. Meetup (Mar 2026 screenshot) shows date and place without icons.
 **Cost either way**: icons are `aria-hidden` sprite references (no SEO effect, no extra request); 92 bytes of HTML per card (measured on `/barcelona`), plus its copy in the RSC payload.
 **Revisit with data**: to try a date icon, add it to listing cards only and compare `select_event` click-through in GA4.
@@ -327,7 +333,7 @@ Every field from `EventSummaryResponseDTO` and its card usage:
 | Field                 | Standard           | Carousel           | Compact          | Notes                                     |
 | --------------------- | ------------------ | ------------------ | ---------------- | ----------------------------------------- |
 | `imageUrl`            | ✅ 3:2             | ✅ 3:2             | ✅ 4:3           | `object-cover` on all                     |
-| `title`               | ✅ full            | ✅ full            | ✅ full          | No JS truncation; `line-clamp-2` (3 on `featured`/`row`); two lines reserved on Standard and Carousel |
+| `title`               | ✅ full            | ✅ full            | ✅ full          | No JS truncation; `line-clamp-2` (3 on `featured`/`row`) |
 | `startDate`/`endDate` | ✅ abbreviated     | ✅ abbreviated     | ✅ abbreviated   | `formatCardDate()`; a running multi-day event shows `Fins al …` (Standard, Carousel) |
 | `startTime`/`endTime` | ✅ if real time    | ✅ if real time    | ✅ if real time  | Suppresses "00:00" / null                 |
 | `categories[0]`       | ✅ pill above date | ✅ pill above date | ❌ omitted       | 12px semibold, `getCategoryLabel`         |

@@ -458,11 +458,12 @@ p {
     /* iOS would flash only the title text; the card gives its own press
        feedback below. */
     -webkit-tap-highlight-color: transparent;
-    /* Margins apply to the link, so they add the card part below the title
-       (rest of the 2-line title min height, location, padding: ~66px
-       measured) and keep it clear of the mobile bottom bar. */
+    /* Margins apply to the link, so they add the card part below the title:
+       location, padding and the spare height a shorter card gets in a row
+       (up to ~115px: sponsored badge, category and a second title line on
+       a neighbour). Keeps the card clear of the mobile bottom bar too. */
     scroll-margin-top: 1rem;
-    scroll-margin-bottom: calc(var(--mobile-nav-clearance) + 4.5rem);
+    scroll-margin-bottom: calc(var(--mobile-nav-clearance) + 7.5rem);
     scroll-margin-inline: 1rem;
   }
 
@@ -476,13 +477,6 @@ p {
     .card-event-link {
       scroll-margin-top: calc(theme("spacing.14") + 1rem);
     }
-  }
-
-  /* Card titles reserve two lines (3em = 2 × leading-normal 1.5), so cards
-     with one-line titles keep the same rhythm: 48px on listings, 42px on
-     the compact carousel card. */
-  .card-event-title-2-lines {
-    min-height: 3em;
   }
 
   .card-event-link::after {

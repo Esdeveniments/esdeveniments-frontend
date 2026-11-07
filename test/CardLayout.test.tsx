@@ -78,9 +78,9 @@ describe("CardLayout compact (home carousel)", () => {
     expect(html).toContain('class="flex-1 flex flex-col px-3.5 pt-2.5 pb-3.5"');
     expect(html).toContain('class="text-xs text-muted-foreground mb-1 truncate"');
     expect(html).toMatch(
-      /<h3 class="order-2 text-sm font-semibold leading-normal line-clamp-2 mb-1\.5 card-event-title-2-lines text-foreground-strong[^"]*">/,
+      /<h3 class="order-2 text-sm font-semibold leading-normal line-clamp-2 mb-1\.5 text-foreground-strong[^"]*">/,
     );
-    expect(html).toContain('class="order-3 mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0"');
+    expect(html).toContain('class="order-3 mt-1 flex items-center gap-1 text-xs text-muted-foreground min-w-0"');
     expect(html).toContain('class="w-3.5 h-3.5 flex-shrink-0"');
   });
 });
