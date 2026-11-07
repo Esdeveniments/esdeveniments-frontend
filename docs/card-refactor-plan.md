@@ -36,7 +36,7 @@ This plan was reviewed by two independent AI reviewers (accessibility/CSS, repo 
 
 ## Commit 3: copy and visual
 
-1. **Multi-day dates.** `formatCardDate` also returns `endLabel` and `endDay`. A running event shows `Fins al 30 nov.`; one starting today or tomorrow shows `Avui · Fins al 12 nov.`; later ones keep the range. `· Diversos dies` goes (`multipleDates` deleted from ca, es, en: `i18n:check` does not flag unused keys). New key `CardContent.until`, with Catalan elision for days 1 and 11 (`Fins a l'1`, `Fins a l'11`) through an ICU `select`; es `Hasta el {date}`, en `Until {date}`. When the until label is shown the start time is hidden, because `Fins al 30 nov. · 18:00` reads as an end time.
+1. **Multi-day dates.** `formatCardDate` also returns `endLabel` and `endDay`. A running event shows `Fins al 30 nov.`; one starting today shows `Avui · Fins al 12 nov.` and one starting tomorrow `Demà · Fins al 12 nov.` (the existing urgency label, so the start day stays right); later ones keep the range. `· Diversos dies` goes (`multipleDates` deleted from ca, es, en: `i18n:check` does not flag unused keys). New key `CardContent.until`, with Catalan elision for days 1 and 11 (`Fins a l'1`, `Fins a l'11`) through an ICU `select`; es `Hasta el {date}`, en `Until {date}`. When the until label is shown the start time is hidden, because `Fins al 30 nov. · 18:00` reads as an end time.
 2. Category badge `text-[11px]` to `text-xs`.
 3. Ad card: reuse `Components.EventPage.sponsored` (client-listed) instead of hard-coded Catalan, `<p>` instead of `<h3>`, drop `cursor-pointer`.
 4. Docs:
