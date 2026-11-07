@@ -461,7 +461,7 @@ Playwright on production with `page.route` blocking the analytics/ads hits above
 | Ad-intent chip in an event description, ad-intent anchor sliding in | ~6 s; when scrolling | 0.009; 0.002 | AdSense ad intents | Not changed (the description is where ad intents earn; owner's call in AdSense › Auto ads) |
 | Navbar avatar replacing the login placeholder | ~0.5 s | 0.001 | logged-in visitors only | Not changed |
 
-With the strut emulated on production (same DOM change by script, real ads, AdSense rewrote both `<main>` and the new row): `<main>` stayed 915 px during the loading skeleton, the footer stayed at y=972 (below the 915 px viewport), no layout shift. With `google-anno-skip` emulated on the listing subtitle: no chip at all on listings (Google didn't place it elsewhere), no 26 px shift.
+With the strut emulated on production (same DOM change by script, real ads, AdSense rewrote both `<main>` and the new row): `<main>` stayed 915 px during the loading skeleton, the footer stayed at y=972 (below the 915 px viewport), no layout shift. With `google-anno-skip` emulated on the listing subtitle: no chip at all on listings (Google didn't place it elsewhere), no 26 px shift. Trade-off: listings no longer earn from ad-intent chips. If AdSense reports show that revenue matters more than 0.018 CLS on visits that stay at the top for ~6 s, remove the class from `HeadingLayout`.
 
 **Lab, before (production) → after (local build of this branch)** (Playwright, Pixel 7, headless, no ad fill; AdSense's ancestor rewrite reproduced by script from `show_ads_impl`, then a click on a card; median not needed, every run gave the same numbers):
 
