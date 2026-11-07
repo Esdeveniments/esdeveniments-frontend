@@ -176,13 +176,19 @@ export async function POST(request: NextRequest) {
     //
     // Server-side fallback uses visitor_id + timestamp to avoid the old problem
     // where a deterministic key clashed with changing params (expires_at).
-    const clientKey =
-      request.headers.get("idempotency-key") ||
-      request.headers.get("x-idempotency-key");
-    if (clientKey && clientKey.length > MAX_IDEMPOTENCY_KEY_LENGTH) {
+    // `??`, not `||`: an empty key is a client bug and must get a 400, not a
+    // server key that would make each retry a new session.
+    const clientKey = (
+      request.headers.get("idempotency-key") ??
+      request.headers.get("x-idempotency-key")
+    )?.trim();
+    if (
+      clientKey !== undefined &&
+      (clientKey === "" || clientKey.length > MAX_IDEMPOTENCY_KEY_LENGTH)
+    ) {
       return NextResponse.json(
         {
-          error: `Idempotency-Key must be at most ${MAX_IDEMPOTENCY_KEY_LENGTH} characters`,
+          error: `Idempotency-Key must be 1 to ${MAX_IDEMPOTENCY_KEY_LENGTH} characters`,
         },
         { status: 400 },
       );

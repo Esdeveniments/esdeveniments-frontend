@@ -202,6 +202,13 @@ describe("Sponsor Checkout Idempotency-Key", () => {
     expect(expiresAt).toBe(Date.parse("2026-11-07T11:00:00Z") / 1000);
   });
 
+  it("rejects an empty key instead of generating one", async () => {
+    const res = await POST(requestWithKey(" "));
+
+    expect(res.status).toBe(400);
+    expect(mockStripeRequest).not.toHaveBeenCalled();
+  });
+
   it("returns 409 when Stripe rejects a reused key", async () => {
     mockStripeRequest.mockResolvedValueOnce({
       ok: false,

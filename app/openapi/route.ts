@@ -581,7 +581,7 @@ export async function GET() {
           required: false,
           description:
             "Client-generated unique key (a UUID v4 is recommended, max 255 characters). Reuse the same key when retrying the same request so it runs only once.",
-          schema: { type: "string", maxLength: 255 },
+          schema: { type: "string", minLength: 1, maxLength: 255 },
           example: "2f1c9c1e-4b8a-4d6e-9a0b-3c5d7e9f1a2b",
         },
       },
