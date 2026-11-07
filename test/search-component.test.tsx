@@ -16,7 +16,10 @@ vi.mock("next/navigation", () => {
 });
 
 // avoid GA noise
-vi.mock("../utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
+vi.mock("../utils/analytics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../utils/analytics")>()),
+  sendGoogleEvent: vi.fn(),
+}));
 
 describe("Search component", () => {
   it("renders search input and accepts typing (black-box via testid)", () => {

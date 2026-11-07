@@ -4,6 +4,11 @@ import {
   sendGoogleEvent,
   setAnalyticsUserId,
   CONSENT_MODE_DEFAULTS,
+  markTextSearchSubmitted,
+  sendTextSearchOutcomeGA,
+  markSuggestionsShown,
+  flushAbandonedSearch,
+  sendSearchOutcomeGA,
 } from "@utils/analytics";
 import type { WindowWithGtag } from "types/common";
 
@@ -121,5 +126,49 @@ describe("setAnalyticsUserId", () => {
       ["set", { user_id: "user-123" }],
       ["set", { user_id: null }],
     ]);
+  });
+});
+
+describe("text search outcome", () => {
+  let gtag: ReturnType<typeof vi.fn<(...args: unknown[]) => void>>;
+  const outcomes = () =>
+    gtag.mock.calls.filter((call) => call[1] === "search_outcome").map((call) => call[2]);
+
+  beforeEach(() => {
+    gtag = vi.fn<(...args: unknown[]) => void>();
+    win().dataLayer = [];
+    win().gtag = gtag;
+  });
+
+  it("reports a submitted search once, when its listing loads", () => {
+    markTextSearchSubmitted("hero_search", "  Castell ");
+    sendTextSearchOutcomeGA("castell", 4);
+    sendTextSearchOutcomeGA("castell", 4);
+    expect(outcomes()).toEqual([{ context: "hero_search", outcome: "events_results" }]);
+  });
+
+  it("reports zero results, and ignores listings for other searches", () => {
+    markTextSearchSubmitted("search", "xyz");
+    sendTextSearchOutcomeGA("other", 0);
+    sendTextSearchOutcomeGA("xyz", 0);
+    expect(outcomes()).toEqual([{ context: "search", outcome: "events_zero" }]);
+  });
+
+  it("reports abandoned once when the user leaves after a shown list", () => {
+    markSuggestionsShown("hero_search");
+    flushAbandonedSearch();
+    flushAbandonedSearch();
+    expect(outcomes()).toEqual([{ context: "hero_search", outcome: "abandoned" }]);
+  });
+
+  it("doesn't report abandoned after a submit from anywhere, or another outcome", () => {
+    markSuggestionsShown("hero_search");
+    // The hero CTA submits outside the search box, even with the list closed.
+    markTextSearchSubmitted("hero_cta", "castell");
+    flushAbandonedSearch();
+    markSuggestionsShown("search");
+    sendSearchOutcomeGA("search", "place");
+    flushAbandonedSearch();
+    expect(outcomes()).toEqual([{ context: "search", outcome: "place" }]);
   });
 });

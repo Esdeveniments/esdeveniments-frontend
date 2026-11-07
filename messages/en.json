@@ -865,7 +865,18 @@
     "SearchBar": {
       "placeholder": "What are you looking for?",
       "clear": "Clear search",
-      "search": "Search"
+      "search": "Search",
+      "suggestions": {
+        "label": "Search suggestions",
+        "searchEvents": "Search events for “{query}”",
+        "places": "Places",
+        "profiles": "Profiles across Catalonia",
+        "placeType": "place",
+        "profileType": "profile",
+        "loadingProfiles": "Searching profiles…",
+        "upcomingEvents": "{count, plural, =0 {No upcoming events} one {# upcoming event} other {# upcoming events}}",
+        "count": "{count, plural, one {# suggestion} other {# suggestions}}"
+      }
     },
     "PastEventBanner": {
       "title": "This event has already ended",

@@ -151,3 +151,16 @@ export interface UserPublicProfileDTO {
 export type PublicUserEventDTO = EventSummaryResponseDTO & {
   isFavorite?: boolean;
 };
+
+/**
+ * One profile from `GET /api/users?q=&size=`, the search suggestions endpoint
+ * (Esdeveniments/esdeveniments-backend#59). The backend returns a plain array.
+ */
+export interface UserSearchResultDTO {
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  verified: boolean;
+  role: AuthRole;
+  upcomingEventCount: number;
+}

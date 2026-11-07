@@ -153,6 +153,16 @@ describe("service worker template", () => {
       expect(authIdx).toBeGreaterThan(-1);
       expect(authIdx).toBeLessThan(catchAllIdx);
     });
+
+    it("never caches profile search queries, so typing can't evict the API cache", () => {
+      const contents = getContents();
+      const userSearchIdx = contents.search(
+        /url\.pathname === "\/api\/users" && url\.searchParams\.has\("q"\),\s*new workbox\.strategies\.NetworkOnly\(\)/
+      );
+      const catchAllIdx = contents.indexOf('!url.pathname.startsWith("/api/image-proxy")');
+      expect(userSearchIdx).toBeGreaterThan(-1);
+      expect(userSearchIdx).toBeLessThan(catchAllIdx);
+    });
   });
 
   describe("performance optimizations", () => {
