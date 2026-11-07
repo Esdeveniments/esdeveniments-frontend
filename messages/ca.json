@@ -109,6 +109,47 @@
       "teamHeading": "El nostre equip",
       "linkedin": "LinkedIn"
     },
+    "Developers": {
+      "metaTitle": "API d'Esdeveniments.cat per a desenvolupadors",
+      "metaDescription": "Documentació de l'API d'Esdeveniments.cat: API REST pública i gratuïta amb l'agenda cultural de Catalunya, servidor MCP, inici ràpid i OpenAPI.",
+      "heading": "API d'Esdeveniments.cat",
+      "intro": "Una API REST pública i gratuïta amb l'agenda cultural de Catalunya: esdeveniments, notícies, categories i llocs, en català, castellà i anglès. Fes-la servir a la teva app, al teu web o amb un agent d'IA.",
+      "keysTitle": "Claus d'API",
+      "keysBody": "No et cal cap clau. Els endpoints de lectura (GET) són públics i no demanen autenticació. Fes-ne un ús raonable: menys de 60 peticions per minut per IP. El servidor MCP ho aplica i, si el passes, respon amb un 429 i la capçalera Retry-After.",
+      "quickstartTitle": "Inici ràpid",
+      "quickstartBody": "Fes la primera crida amb curl. Les llistes arriben paginades: si el camp last és false, demana la pàgina següent.",
+      "docsTitle": "Documentació",
+      "docsOpenapi": "Especificació OpenAPI 3.1",
+      "docsLlms": "Guia per a LLM (llms.txt)",
+      "docsApiLlms": "Referència de l'API en text pla",
+      "sandboxTitle": "Prova l'API",
+      "sandboxBody": "Les crides de lectura no canvien res, així que les pots provar directament contra l'API de producció. Obre aquests exemples al navegador:",
+      "sandboxToday": "Esdeveniments d'avui a Barcelona",
+      "sandboxSearch": "Cerca de concerts de jazz",
+      "sandboxCategories": "Totes les categories",
+      "agentsTitle": "Agents d'IA i MCP",
+      "agentsBody": "Connecta un agent d'IA al nostre servidor MCP, o fes servir les eines WebMCP que el web registra al navegador.",
+      "agentsMcpLink": "Servidor MCP d'Esdeveniments.cat",
+      "writesTitle": "Escriptures i idempotència",
+      "writesBody": "El pagament d'un patrocini (POST /api/sponsors/checkout) accepta la capçalera Idempotency-Key. Envia una clau nova (un UUID) a cada intent i repeteix-la si tornes a provar: només es crea una sessió de pagament.",
+      "githubTitle": "GitHub i contacte",
+      "githubBody": "Segueix el projecte a GitHub o escriu-nos si necessites més dades o un límit més alt.",
+      "githubLink": "Esdeveniments.cat a GitHub"
+    },
+    "DevelopersMcp": {
+      "metaTitle": "Servidor MCP d'Esdeveniments.cat",
+      "metaDescription": "Connecta Claude, ChatGPT o qualsevol client MCP a l'agenda cultural de Catalunya amb el servidor MCP d'Esdeveniments.cat. Gratuït i sense clau.",
+      "heading": "Servidor MCP d'Esdeveniments.cat",
+      "intro": "El servidor MCP (Model Context Protocol) d'Esdeveniments.cat permet que un agent d'IA cerqui esdeveniments culturals a Catalunya. És gratuït, només de lectura i no demana cap clau.",
+      "endpointTitle": "Connexió",
+      "endpointBody": "Transport Streamable HTTP (JSON-RPC 2.0). Afegeix aquesta configuració al teu client MCP:",
+      "toolsTitle": "Eines",
+      "discoveryTitle": "Descobriment",
+      "discoveryBody": "La fitxa del servidor i les habilitats per a agents són a:",
+      "webmcpTitle": "WebMCP al navegador",
+      "webmcpBody": "Cada pàgina del web també registra eines WebMCP (document.modelContext.registerTool), perquè els agents del navegador puguin cercar esdeveniments des de la mateixa pàgina.",
+      "backLink": "Tota la documentació de l'API"
+    },
     "TermsOfService": {
       "metaTitle": "Termes de servei - Esdeveniments.cat",
       "metaDescription": "Condicions d'ús del lloc web Esdeveniments.cat. Consulta les normes d'ús, responsabilitats i drets sobre el contingut de l'agenda cultural de Catalunya.",
@@ -520,7 +561,8 @@
         "archive": "Arxiu",
         "terms": "Termes de servei",
         "privacy": "Privacitat",
-        "login": "Iniciar sessió"
+        "login": "Iniciar sessió",
+        "developers": "API per a desenvolupadors"
       },
       "sponsorCta": {
         "title": "Fes visible el teu negoci local",

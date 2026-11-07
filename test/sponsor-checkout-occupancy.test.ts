@@ -5,7 +5,7 @@
  * have an active or pending sponsor. This is the server-side guard
  * that prevents double-booking even if client-side UI is bypassed.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock getOccupiedPlaceStatus before importing the route
 const mockGetOccupiedPlaceStatus = vi.fn<() => Promise<Map<string, number>>>();
@@ -43,6 +43,7 @@ vi.mock("config/index", () => ({
 }));
 
 import { POST } from "app/api/sponsors/checkout/route";
+import { stripeRequest } from "lib/stripe/api";
 import { NextRequest } from "next/server";
 
 function createCheckoutRequest(body: Record<string, unknown>): NextRequest {
@@ -156,5 +157,71 @@ describe("Sponsor Checkout Occupancy Validation", () => {
     const json = await res.json();
     expect(json.daysLeft).toBe(14);
     expect(json.message).toContain("14");
+  });
+});
+
+describe("Sponsor Checkout Idempotency-Key", () => {
+  const mockStripeRequest = vi.mocked(stripeRequest);
+
+  function requestWithKey(key: string): NextRequest {
+    return new NextRequest(
+      "https://www.esdeveniments.cat/api/sponsors/checkout",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": key,
+        },
+        body: JSON.stringify(validBody),
+      },
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetOccupiedPlaceStatus.mockResolvedValue(new Map());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("sends Stripe identical params when a retry reuses the key", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-07T10:05:00Z"));
+    await POST(requestWithKey("key-1"));
+    vi.setSystemTime(new Date("2026-11-07T10:20:00Z"));
+    await POST(requestWithKey("key-1"));
+
+    const [first, retry] = mockStripeRequest.mock.calls.map(
+      ([, init]) => init as { body: URLSearchParams; headers: HeadersInit },
+    );
+    expect(retry.headers).toEqual({ "Idempotency-Key": "key-1" });
+    expect(retry.body.toString()).toBe(first.body.toString());
+    const expiresAt = Number(first.body.get("expires_at"));
+    expect(expiresAt).toBe(Date.parse("2026-11-07T11:00:00Z") / 1000);
+  });
+
+  it("rejects an empty key instead of generating one", async () => {
+    const res = await POST(requestWithKey(" "));
+
+    expect(res.status).toBe(400);
+    expect(mockStripeRequest).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 when Stripe rejects a reused key", async () => {
+    mockStripeRequest.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: () =>
+        Promise.resolve(
+          '{"error":{"type":"idempotency_error","message":"Keys for idempotent requests can only be used with the same parameters"}}',
+        ),
+    } as Response);
+
+    const res = await POST(requestWithKey("key-2"));
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toContain("Idempotency-Key");
   });
 });

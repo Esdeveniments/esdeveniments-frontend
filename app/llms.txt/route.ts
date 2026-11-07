@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
-import { siteUrl } from "@config/index";
+import { siteUrl, socialLinks } from "@config/index";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 export async function GET(request: NextRequest) {
 
@@ -64,7 +65,10 @@ export async function GET(request: NextRequest) {
     "```",
     "",
     "## API Reference",
+    `- Developer portal (Esdeveniments.cat API docs): [${siteUrl}/developers](${siteUrl}/developers)`,
+    `- Esdeveniments.cat MCP server docs: [${siteUrl}/developers/mcp](${siteUrl}/developers/mcp)`,
     `- OpenAPI spec: [${siteUrl}/openapi.json](${siteUrl}/openapi.json)`,
+    `- GitHub: ${socialLinks.github}`,
     "- Public GET endpoints (no auth required):",
     "  - GET /api/events — List events (params: page, size, place, category, byDate, from, to, term, lat, lon, radius)",
     "  - GET /api/events/{slug} — Event details",
@@ -80,11 +84,11 @@ export async function GET(request: NextRequest) {
     "",
     "## Authentication",
     "- Public read endpoints (listed above): No authentication required.",
-    "- Write endpoints (POST/PUT/DELETE): Require HMAC signature via x-hmac and x-timestamp headers. Not available for external use.",
+    "- Write endpoints (POST/PUT/DELETE): internal, not available for external use. The exception is POST /api/sponsors/checkout, which only works from an esdeveniments.cat page.",
+    "- Idempotency: POST /api/sponsors/checkout accepts an `Idempotency-Key` header. Send a new key per purchase attempt and reuse it on retries so only one checkout session is created.",
     "",
     "## Rate Limits",
-    "- Public GET endpoints: 60 requests per minute per IP.",
-    "- Exceeding the limit returns HTTP 429 with a Retry-After header.",
+    `- ${PUBLIC_RATE_LIMIT_TEXT}`,
     "- Responses include Cache-Control headers; respect them to reduce unnecessary requests.",
     "",
     "## Languages / Locales",

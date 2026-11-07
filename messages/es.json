@@ -109,6 +109,47 @@
       "teamHeading": "Nuestro equipo",
       "linkedin": "LinkedIn"
     },
+    "Developers": {
+      "metaTitle": "API de Esdeveniments.cat para desarrolladores",
+      "metaDescription": "Documentación de la API de Esdeveniments.cat: API REST pública y gratuita con la agenda cultural de Cataluña, servidor MCP, inicio rápido y OpenAPI.",
+      "heading": "API de Esdeveniments.cat",
+      "intro": "Una API REST pública y gratuita con la agenda cultural de Cataluña: eventos, noticias, categorías y lugares, en catalán, castellano e inglés. Úsala en tu app, en tu web o con un agente de IA.",
+      "keysTitle": "Claves de API",
+      "keysBody": "No necesitas ninguna clave. Los endpoints de lectura (GET) son públicos y no piden autenticación. Haz un uso razonable: menos de 60 peticiones por minuto por IP. El servidor MCP lo aplica y, si lo superas, responde con un 429 y la cabecera Retry-After.",
+      "quickstartTitle": "Inicio rápido",
+      "quickstartBody": "Haz la primera llamada con curl. Las listas llegan paginadas: si el campo last es false, pide la página siguiente.",
+      "docsTitle": "Documentación",
+      "docsOpenapi": "Especificación OpenAPI 3.1",
+      "docsLlms": "Guía para LLM (llms.txt)",
+      "docsApiLlms": "Referencia de la API en texto plano",
+      "sandboxTitle": "Prueba la API",
+      "sandboxBody": "Las llamadas de lectura no cambian nada, así que puedes probarlas directamente contra la API de producción. Abre estos ejemplos en el navegador:",
+      "sandboxToday": "Eventos de hoy en Barcelona",
+      "sandboxSearch": "Búsqueda de conciertos de jazz",
+      "sandboxCategories": "Todas las categorías",
+      "agentsTitle": "Agentes de IA y MCP",
+      "agentsBody": "Conecta un agente de IA a nuestro servidor MCP, o usa las herramientas WebMCP que la web registra en el navegador.",
+      "agentsMcpLink": "Servidor MCP de Esdeveniments.cat",
+      "writesTitle": "Escrituras e idempotencia",
+      "writesBody": "El pago de un patrocinio (POST /api/sponsors/checkout) acepta la cabecera Idempotency-Key. Envía una clave nueva (un UUID) en cada intento y repítela si vuelves a probar: solo se crea una sesión de pago.",
+      "githubTitle": "GitHub y contacto",
+      "githubBody": "Sigue el proyecto en GitHub o escríbenos si necesitas más datos o un límite más alto.",
+      "githubLink": "Esdeveniments.cat en GitHub"
+    },
+    "DevelopersMcp": {
+      "metaTitle": "Servidor MCP de Esdeveniments.cat",
+      "metaDescription": "Conecta Claude, ChatGPT o cualquier cliente MCP a la agenda cultural de Cataluña con el servidor MCP de Esdeveniments.cat. Gratuito y sin clave.",
+      "heading": "Servidor MCP de Esdeveniments.cat",
+      "intro": "El servidor MCP (Model Context Protocol) de Esdeveniments.cat permite que un agente de IA busque eventos culturales en Cataluña. Es gratuito, de solo lectura y no pide ninguna clave.",
+      "endpointTitle": "Conexión",
+      "endpointBody": "Transporte Streamable HTTP (JSON-RPC 2.0). Añade esta configuración a tu cliente MCP:",
+      "toolsTitle": "Herramientas",
+      "discoveryTitle": "Descubrimiento",
+      "discoveryBody": "La ficha del servidor y las habilidades para agentes están en:",
+      "webmcpTitle": "WebMCP en el navegador",
+      "webmcpBody": "Cada página de la web también registra herramientas WebMCP (document.modelContext.registerTool), para que los agentes del navegador puedan buscar eventos desde la misma página.",
+      "backLink": "Toda la documentación de la API"
+    },
     "TermsOfService": {
       "metaTitle": "Términos de servicio - Esdeveniments.cat",
       "metaDescription": "Condiciones de uso del sitio web Esdeveniments.cat. Consulta las normas de uso, responsabilidades y derechos sobre el contenido de la agenda cultural de Cataluña.",
@@ -520,7 +561,8 @@
         "archive": "Archivo",
         "terms": "Términos de servicio",
         "privacy": "Privacidad",
-        "login": "Iniciar sesión"
+        "login": "Iniciar sesión",
+        "developers": "API para desarrolladores"
       },
       "sponsorCta": {
         "title": "Da visibilidad a tu negocio local",

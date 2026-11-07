@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl } from "@config/index";
+import { MCP_TOOLS } from "@config/mcp-tools";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 /**
  * Modular llms.txt for the API section.
@@ -43,16 +45,18 @@ export async function GET(request: NextRequest) {
     "All list endpoints return paginated responses. Check `last: true` to detect the final page. Default page size is 15.",
     "",
     "## Rate Limits",
-    "60 requests per minute per IP. HTTP 429 with Retry-After header when exceeded.",
+    PUBLIC_RATE_LIMIT_TEXT,
     "",
     "## Error Handling",
     "Errors return JSON: { error: string, status: number }. Respect Cache-Control headers to minimize requests.",
     "",
     "## MCP Server",
     `POST ${siteUrl}/mcp — MCP Streamable HTTP endpoint (JSON-RPC 2.0)`,
-    "Tools: listEvents, getEvent, listNews, listCategories, listPlaces",
+    `Tools: ${MCP_TOOLS.map((tool) => tool.name).join(", ")}`,
+    `Docs: ${siteUrl}/developers/mcp`,
     "",
     "## Full Documentation",
+    `- Developer portal: ${siteUrl}/developers`,
     `- Complete guide: ${siteUrl}/llms.txt`,
     `- OpenAPI spec: ${siteUrl}/openapi.json`,
     `- MCP Server Card: ${siteUrl}/.well-known/mcp/server-card.json`,

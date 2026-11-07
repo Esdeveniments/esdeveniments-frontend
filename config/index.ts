@@ -172,6 +172,7 @@ export const socialLinks: SocialLinks = {
   linkedin: "https://www.linkedin.com/company/esdeveniments-cat",
   // tiktok: "https://www.tiktok.com/@esdeveniments",
   mastodon: "https://mastodon.social/@esdeveniments",
+  github: "https://github.com/esdeveniments",
 };
 
 /** Social links for JSON-LD sameAs (excludes web, telegram). */
@@ -183,6 +184,6 @@ export const socialLinksSameAs: string[] = [
   socialLinks.threads,
   socialLinks.mastodon,
   socialLinks.linkedin,
-  "https://github.com/esdeveniments",
+  socialLinks.github,
   "https://www.wikidata.org/wiki/Q139549463",
 ];

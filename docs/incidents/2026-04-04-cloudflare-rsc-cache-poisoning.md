@@ -38,6 +38,7 @@ The issue self-resolved after ~30 minutes when the `s-maxage=1800` TTL expired, 
 | 2026-07-31 19:01 UTC | An untracked Coolify deployment (no GitHub Actions run, no webhook, no API call) silently reverted the 14:34 fix — see "Recurrence #2" below. |
 | 2026-08-01      | **Recurrence #2 discovered**: origin still served `public, s-maxage=1800` for RSC requests; the Cloudflare bypass rule added in response also turned out not to be firing. Both root-caused and fixed — see below. |
 | 2026-11-04      | **Correction.** The `proxy.ts` RSC check never fired: Next strips the `RSC` header (and `_rsc`) before the proxy runs. What protects us is the Cloudflare bypass rule, plus Next 16.4's `_rsc` check after the develop → main release. The proxy check is removed. See "Correction (2026-11-04)" below. |
+| 2026-11-07      | **Recurrence #3, markdown instead of RSC**: an `Accept: text/markdown` request fills the HTML URL's cache entry with llms.txt markdown. Reproduced on production; see "Recurrence #3" below. |
 
 ## Root Cause
 
@@ -81,6 +82,8 @@ The proxy split (#625) dropped the check from develop, and the develop → main 
 3. **Check after any Cloudflare cache rule change or cache purge**, on a fresh, rarely visited URL on `www`:
    - `curl -sIL -H 'RSC: 1' <url>`. `-L` follows Next's `307` to the `?_rsc=` URL, so the last hop is a real flight response. Every hop must show `cf-cache-status: DYNAMIC` or `BYPASS`, and the last hop must be `text/x-component`.
    - Then a plain `curl -sI <url>`. It must be `200 text/html`, never `text/x-component` or a `307`.
+   - Same for markdown on another fresh URL: `curl -sI -H 'Accept: text/markdown' <url>` must show `DYNAMIC` or `BYPASS`, and a plain `curl -sI <url>` after it must be `text/html`. The production post-deploy smoke test runs this one.
+4. **Cloudflare bypass rule for markdown negotiation**, ordered below the HTML rule (see Recurrence #3).
 
 ### Cloudflare Cache Rule Reminder
 
@@ -88,6 +91,7 @@ If modifying the Cloudflare cache rule for `www.esdeveniments.cat`, be aware tha
 - Cloudflare doesn't vary cache by custom request headers (only `Accept-Encoding`)
 - Any cached page URL can receive both HTML and RSC requests
 - The zone's "RSC flight payloads — never cache" rule is what keeps RSC responses out of the cache. The proxy can't do it (see "Correction (2026-11-04)")
+- The same goes for markdown negotiation (see "Recurrence #3" below): the zone needs a "Markdown negotiation — never cache" Bypass rule with `any(http.request.headers["accept"][*] contains "text/markdown")`, below the HTML rule. The production deploy's post-deploy smoke test fails without it
 - **Cache Rules apply cumulatively, and where two rules set the same field (e.g. Cache Eligibility) for a matching request, the LAST matching rule in the ordered list wins** — not the first. A narrow bypass rule placed *above* a broad "cache everything" rule gets silently overridden. Any bypass rule (RSC, AI bots, `/_next/image`) must sit *below* the broad HTML-caching rule in the Cache Rules list.
 
 ## Recurrence #2 (2026-08-01): two independent bugs stacked
@@ -118,6 +122,12 @@ The zone's Cache Rules, in order:
 Rule 3 has no RSC or bot-UA exclusion and matches `/en` (and effectively any non-`/api/` HTML path). Per the Cache Rules last-match-wins semantics documented above, rule 3 overrode rules 1 and 2's bypass for any request that also matched rule 3 — meaning **both the RSC bypass and the AI-bot bypass had been silently inert** since rule 3 was added or last reordered.
 
 **Fix:** reorder so "Cache HTML pages - regular traffic" is evaluated first (position 1), with all bypass rules below it.
+
+## Recurrence #3 (2026-11-07): markdown negotiation
+
+`utils/proxy-agent.ts` answers `Accept: text/markdown` on any page URL with the llms.txt markdown ("Markdown for Agents"), with `Cache-Control: private, no-store`. The "Cache HTML pages" rule ignores that header, and Cloudflare doesn't vary on `Accept`. Reproduced on fresh `www` URLs (`/barcelona?search=…`, `/?…`): the markdown request got `MISS`, and the next `Accept: text/html` request got `HIT` with `content-type: text/markdown`. So the first agent to ask for markdown after an entry expires or is purged (publishing an event purges `home`) shows markdown to every visitor, and to crawlers, for up to 30 minutes. A sample of 12 sitemap pages was clean when found.
+
+**Fix:** a Cache Rule "Markdown negotiation — never cache", expression `any(http.request.headers["accept"][*] contains "text/markdown")`, action Bypass, placed below "Cache HTML pages - regular traffic". The proxy can't fix it, for the same reason as RSC. To stop it going silent again (as Bug B did), the production deploy's post-deploy smoke test sends a markdown request and then an HTML request to a fresh URL, and fails if the HTML request gets markdown.
 
 ## Lessons Learned
 

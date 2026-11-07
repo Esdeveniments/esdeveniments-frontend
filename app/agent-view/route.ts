@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSiteUrlFromRequest } from "@config/index";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 /**
  * Agent mode view — structured, machine-readable homepage for AI agents.
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
       openapi: `${url}/openapi.json`,
       catalog: `${url}/.well-known/api-catalog`,
       authentication: "none (public read endpoints)",
-      rateLimit: "60 requests/minute per IP",
+      rateLimit: PUBLIC_RATE_LIMIT_TEXT,
       endpoints: [
         {
           method: "GET",

@@ -54,6 +54,7 @@ export default async function Social({ links }: SocialProps): Promise<JSX.Elemen
         {renderSocialButton("mastodon", "Mastodon", links.mastodon, "me")}
         {renderSocialButton("linkedin", "LinkedIn", links.linkedin)}
         {renderSocialButton("telegram", "Telegram", links.telegram)}
+        {renderSocialButton("github", "GitHub", links.github)}
       </div>
     </div>
   );

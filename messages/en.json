@@ -109,6 +109,47 @@
       "teamHeading": "Our team",
       "linkedin": "LinkedIn"
     },
+    "Developers": {
+      "metaTitle": "Esdeveniments.cat API for developers",
+      "metaDescription": "Esdeveniments.cat API docs: a free public REST API for cultural events in Catalonia, plus an MCP server, a quickstart and the OpenAPI spec.",
+      "heading": "Esdeveniments.cat API",
+      "intro": "A free public REST API for Catalonia's cultural agenda: events, news, categories and places, in Catalan, Spanish and English. Use it in your app, your website or an AI agent.",
+      "keysTitle": "API keys",
+      "keysBody": "You don't need a key. Read (GET) endpoints are public and need no authentication. Please stay under 60 requests per minute per IP. The MCP server enforces it and answers a 429 with a Retry-After header above it.",
+      "quickstartTitle": "Quickstart",
+      "quickstartBody": "Make your first call with curl. Lists are paginated: when the last field is false, ask for the next page.",
+      "docsTitle": "Documentation",
+      "docsOpenapi": "OpenAPI 3.1 spec",
+      "docsLlms": "LLM guide (llms.txt)",
+      "docsApiLlms": "Plain-text API reference",
+      "sandboxTitle": "Try the API",
+      "sandboxBody": "Read calls change nothing, so you can try them right against the production API. Open these examples in your browser:",
+      "sandboxToday": "Today's events in Barcelona",
+      "sandboxSearch": "Search for jazz concerts",
+      "sandboxCategories": "All categories",
+      "agentsTitle": "AI agents and MCP",
+      "agentsBody": "Connect an AI agent to our MCP server, or use the WebMCP tools the site registers in the browser.",
+      "agentsMcpLink": "Esdeveniments.cat MCP server",
+      "writesTitle": "Writes and idempotency",
+      "writesBody": "Sponsor checkout (POST /api/sponsors/checkout) accepts an Idempotency-Key header. Send a new key (a UUID) for each attempt and reuse it when you retry: only one checkout session is created.",
+      "githubTitle": "GitHub and contact",
+      "githubBody": "Follow the project on GitHub, or email us if you need more data or a higher limit.",
+      "githubLink": "Esdeveniments.cat on GitHub"
+    },
+    "DevelopersMcp": {
+      "metaTitle": "Esdeveniments.cat MCP server",
+      "metaDescription": "Connect Claude, ChatGPT or any MCP client to Catalonia's cultural agenda with the Esdeveniments.cat MCP server. Free, no key needed.",
+      "heading": "Esdeveniments.cat MCP server",
+      "intro": "The Esdeveniments.cat MCP (Model Context Protocol) server lets an AI agent search cultural events in Catalonia. It is free, read-only and needs no key.",
+      "endpointTitle": "Connect",
+      "endpointBody": "Streamable HTTP transport (JSON-RPC 2.0). Add this to your MCP client config:",
+      "toolsTitle": "Tools",
+      "discoveryTitle": "Discovery",
+      "discoveryBody": "The server card and the agent skills are at:",
+      "webmcpTitle": "WebMCP in the browser",
+      "webmcpBody": "Every page of the site also registers WebMCP tools (document.modelContext.registerTool), so browser agents can search events from the page itself.",
+      "backLink": "All API documentation"
+    },
     "TermsOfService": {
       "metaTitle": "Terms of Service - Esdeveniments.cat",
       "metaDescription": "Terms of use for the Esdeveniments.cat website. Review the rules, responsibilities and rights regarding the content of the cultural agenda of Catalonia.",
@@ -520,7 +561,8 @@
         "archive": "Archive",
         "terms": "Terms",
         "privacy": "Privacy",
-        "login": "Log in"
+        "login": "Log in",
+        "developers": "Developer API"
       },
       "sponsorCta": {
         "title": "Make your local business visible",

@@ -404,3 +404,7 @@ export const NO_VIGNETTE_LINK_ATTRS = {
 // test/react-reveal-throttle.test.ts fails if React changes this contract.
 export const REVEAL_THROTTLE_OFF_SCRIPT =
   '(function(){var t;Object.defineProperty(window,"$RT",{get:function(){return document.hidden?t:void 0},set:function(v){t=v}})})();';
+
+// Fair-use read limit we publish for agents. Only /mcp enforces it in code.
+export const PUBLIC_RATE_LIMIT_PER_MINUTE = 60;
+export const PUBLIC_RATE_LIMIT_TEXT = `Fair use: stay under ${PUBLIC_RATE_LIMIT_PER_MINUTE} requests per minute per IP. /mcp enforces it with HTTP 429 and a Retry-After header.`;

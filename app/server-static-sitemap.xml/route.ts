@@ -46,6 +46,13 @@ export async function GET(request: NextRequest) {
       priority: 0.7,
       alternates: buildAlternateLinks(`${siteUrl}/qui-som`),
     },
+    ...["/developers", "/developers/mcp"].map((path) => ({
+      loc: `${siteUrl}${path}`,
+      lastmod,
+      changefreq: "monthly" as const,
+      priority: 0.5,
+      alternates: buildAlternateLinks(`${siteUrl}${path}`),
+    })),
   ];
 
   const xml = buildSitemap(staticPages);

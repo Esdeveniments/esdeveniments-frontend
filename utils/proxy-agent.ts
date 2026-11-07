@@ -13,6 +13,8 @@ export function getAgentRewrite(request: NextRequest): NextResponse | null {
   }
 
   // Proxy still runs for /_next/data even though the matcher excludes _next.
+  // Same URL as the HTML page: only the Cloudflare "Markdown negotiation —
+  // never cache" bypass rule keeps this response out of the shared cache.
   if (
     request.headers.get("accept")?.includes("text/markdown") &&
     !request.nextUrl.pathname.startsWith("/_next/")
