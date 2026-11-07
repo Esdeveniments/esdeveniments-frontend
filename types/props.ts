@@ -584,6 +584,10 @@ export type ProfileTranslator = Awaited<
 
 export interface AvatarInitialsProps {
   name: string;
+  /** Size and text classes; defaults to the 80 px profile-header size. */
+  className?: string;
+  /** Hide from assistive tech when the name is already shown next to it. */
+  decorative?: boolean;
 }
 
 export interface ProfileEventsSectionProps {

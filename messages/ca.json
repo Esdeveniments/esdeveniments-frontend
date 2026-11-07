@@ -881,7 +881,18 @@
     "SearchBar": {
       "placeholder": "Què estàs buscant?",
       "clear": "Neteja la cerca",
-      "search": "Cerca"
+      "search": "Cerca",
+      "suggestions": {
+        "label": "Suggeriments de cerca",
+        "searchEvents": "Cerca esdeveniments «{query}»",
+        "places": "Llocs",
+        "profiles": "Perfils de tot Catalunya",
+        "placeType": "lloc",
+        "profileType": "perfil",
+        "loadingProfiles": "Cercant perfils…",
+        "upcomingEvents": "{count, plural, =0 {Sense esdeveniments propers} one {# esdeveniment proper} other {# esdeveniments propers}}",
+        "count": "{count, plural, one {# suggeriment} other {# suggeriments}}"
+      }
     },
     "PastEventBanner": {
       "title": "Aquest esdeveniment ja ha finalitzat",

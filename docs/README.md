@@ -30,8 +30,6 @@ pipeline.
 - [`design-rationale.md`](./design-rationale.md) — competitive UI/UX
   benchmarking and card/layout decisions. Screenshots in
   `competitor-screenshots/`.
-- [`card-refactor-plan.md`](./card-refactor-plan.md) — plan for one accessible
-  event card (link in the title, shared layout, focus ring). Delete when shipped.
 
 ## Infra & Deploys
 
@@ -39,6 +37,12 @@ pipeline.
   deploy a prebuilt image to Coolify.
 - [`self-hosted-resource-limits.md`](./self-hosted-resource-limits.md) —
   Coolify/Hetzner box resource limits.
+
+## Growth
+
+- [`growth/paid-acquisition-research-2026-11.md`](./growth/paid-acquisition-research-2026-11.md)
+  — real traffic baseline (bot and Zaraz cleanup), the town-page ranking
+  drop, free-first growth plan, ad channel costs and a parked paid test.
 
 ## Product
 

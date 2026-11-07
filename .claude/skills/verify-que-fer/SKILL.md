@@ -114,6 +114,7 @@ Top user paths, how to reach them, and what observable end state proves them.
 | Feature | Reach | Proof |
 |---|---|---|
 | Home + search | `GET /` | `data-testid="search-input"` visible |
+| Search suggestions | focus the navbar or hero search and type (e.g. `Csrdedeu`) | `data-testid="search-suggestions"` lists the text option, then places; profiles only with `PROFILE_SEARCH_ENABLED` (`config/search.ts`) |
 | Event listing | `GET /<place>` (e.g. `/barcelona`) | event cards render, no `$RX` suspense errors |
 | Event detail | click an event card | title, date, JSON-LD `Event` block present |
 | Filters | listing page, then filters | results update client-side via SWR; date and category go in the path, search and distance in the query (see `url-canonicalization`) |

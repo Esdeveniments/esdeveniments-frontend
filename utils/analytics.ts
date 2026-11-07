@@ -1,4 +1,5 @@
 import { GoogleAnalyticsEvent, WindowWithGtag } from "../types/common";
+import type { SearchContext, SearchOutcome, SearchSuggestion } from "../types/search";
 import { isE2ETestMode } from "./env";
 import { isProductionHost } from "./production-host";
 
@@ -104,17 +105,88 @@ const MAX_SEARCH_TERM_LENGTH = 100;
 export const toSearchTermParam = (term: string): string =>
   term.trim().replace(/\s+/g, " ").toLowerCase().slice(0, MAX_SEARCH_TERM_LENGTH);
 
-/** A typed search matched a place name and opened that place's page. */
+/** A typed place name opened its place page (also a `place` search outcome). */
 export const sendPlaceRedirectGA = (
-  context: "search" | "hero_search" | "hero_cta",
+  context: SearchContext,
   term: string,
   placeSlug: string,
-): void =>
+): void => {
   sendGoogleEvent("search_place_redirect", {
     context,
     search_term: toSearchTermParam(term),
     matched_place: placeSlug,
   });
+  sendSearchOutcomeGA(context, "place");
+};
+
+/**
+ * A picked search suggestion. No typed text and no username: either can hold
+ * personal data.
+ */
+export const sendSuggestionSelectGA = (
+  context: SearchContext,
+  type: SearchSuggestion["type"],
+  position: number,
+  queryLength: number,
+): void =>
+  sendGoogleEvent("search_suggestion_select", {
+    context,
+    type,
+    position,
+    query_length: queryLength,
+  });
+
+/** Where a search ended up: the success metric for search suggestions. */
+export const sendSearchOutcomeGA = (
+  context: SearchContext,
+  outcome: SearchOutcome,
+): void => {
+  pendingAbandon = null;
+  sendGoogleEvent("search_outcome", { context, outcome });
+};
+
+// Set while a suggestion list has been shown and no search followed. Closing
+// the list isn't giving up (Esc then Enter still searches), so `abandoned` is
+// sent only when the user leaves. Any outcome or submit clears it, from any
+// component (the hero CTA submits outside the search box).
+let pendingAbandon: SearchContext | null = null;
+
+export const markSuggestionsShown = (context: SearchContext): void => {
+  pendingAbandon = context;
+};
+
+/** Sends `abandoned` if a shown list got no search; call when the user leaves. */
+export const flushAbandonedSearch = (): void => {
+  if (pendingAbandon) sendSearchOutcomeGA(pendingAbandon, "abandoned");
+};
+
+// A submitted text search waits here until its listing loads, so only searches
+// the user sent (not shared ?search= links) report events_results/events_zero.
+// Module state survives client navigations, which is how searches navigate.
+let pendingTextSearch: { term: string; context: SearchContext } | null = null;
+
+export const markTextSearchSubmitted = (
+  context: SearchContext,
+  term: string,
+): void => {
+  pendingAbandon = null;
+  pendingTextSearch = term.trim()
+    ? { term: toSearchTermParam(term), context }
+    : null;
+};
+
+/** Sends the events outcome once, if `search` is the last submitted search. */
+export const sendTextSearchOutcomeGA = (
+  search: string,
+  resultsCount: number,
+): void => {
+  if (pendingTextSearch?.term !== toSearchTermParam(search)) return;
+  sendSearchOutcomeGA(
+    pendingTextSearch.context,
+    resultsCount > 0 ? "events_results" : "events_zero",
+  );
+  pendingTextSearch = null;
+};
 
 /** Last path segment of a shared URL (the event slug), never the title. */
 export const getShareItemId = (url: string): string => {
