@@ -101,7 +101,7 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 
 #### Category badge above the date
 
-**Decision**: A text pill (`CategoryBadge`, `text-xs`) in the card body, above the date. It used to overlay the image (frosted glass).
+**Decision**: A text pill (`CategoryBadge`, 12px semibold, `text-xs`) in the card body, above the date. It used to overlay the image (frosted glass).
 **Why**: For mixed-category listings, category is the #1 scanning signal. Users need to quickly identify "is this a concert or a workshop?" Color-coded vertical bars (production) required memorizing a color→category mapping and were problematic for colorblind users (~8% of males). Text badges are universally understood. DICE uses a similar approach.
 **Localization**: Badges use `getCategoryLabel` instead of raw API names.
 

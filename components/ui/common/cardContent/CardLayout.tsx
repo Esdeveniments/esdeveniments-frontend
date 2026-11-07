@@ -52,8 +52,8 @@ export default function CardLayout({
   const titleClass = isHorizontal
     ? "heading-3 line-clamp-3 mb-2"
     : compact
-      ? "text-sm font-semibold leading-normal line-clamp-2 mb-1.5"
-      : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 min-h-[2.75rem]";
+      ? "text-sm font-semibold leading-normal line-clamp-2 mb-1.5 card-event-title-2-lines"
+      : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 card-event-title-2-lines";
   const dateText = urgencyLabel ? (
     <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
       {urgencyLabel}

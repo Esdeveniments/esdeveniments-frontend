@@ -475,6 +475,13 @@ p {
     }
   }
 
+  /* Card titles reserve two lines (3em = 2 × leading-normal 1.5), so cards
+     with one-line titles keep the same rhythm: 48px on listings, 42px on
+     the compact carousel card. */
+  .card-event-title-2-lines {
+    min-height: 3em;
+  }
+
   .card-event-link::after {
     content: "";
     position: absolute;

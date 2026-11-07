@@ -110,7 +110,7 @@ typography:
     letterSpacing: "0.05em"
     textTransform: "uppercase"
   label-tight:
-    fontSize: "11px"
+    fontSize: "12px"
     fontWeight: 600
     lineHeight: "1.25"
     letterSpacing: "0"
@@ -297,9 +297,13 @@ components:
   card-title:
     fontSize: "{typography.body.fontSize}"
     fontWeight: 600
-    lineHeight: "1.4"
+    lineHeight: "1.5"
     color: "{colors.foreground-strong}"
-    minHeight: "44px"
+    minHeight: "3em (two lines: 48px)"
+  card-compact:
+    padding: "10px 14px 14px"
+    titleFontSize: "14px (two lines reserved: 42px)"
+    metaFontSize: "12px"
   card-meta:
     fontSize: "{typography.body-small.fontSize}"
     color: "{colors.foreground-muted}"
@@ -337,6 +341,7 @@ components:
     fontWeight: 600
     paddingX: "{spacing.sm}"
     paddingY: "2px"
+    cardAlignment: "on cards, pulled left by its paddingX so the label lines up with the date and title"
 
   tab-bar:
     borderBottom: "1px solid {colors.border}"
@@ -644,14 +649,16 @@ The type scale follows a four-level heading model:
 - **heading-2** (20/600 mobile → 24/600 desktop) — major section dividers.
 - **heading-3** (18/600 mobile → 20/600 desktop) — subsections, category
   headers.
-- **heading-4** (16/500 mobile → 18/500 desktop) — card titles, footer
-  block titles.
+- **heading-4** (16/500 mobile → 18/500 desktop) — footer block titles.
+  Card titles are 16/600 at every width (14/600 on the compact carousel
+  card), two lines reserved (`card-title`).
 
 UI chrome — nav links and footer links — uses a small **label** style:
 12/500, **uppercase**, with widened tracking. Button labels use the same
 uppercase voice one step up, at 14/600, which gives buttons their
-characteristic civic-poster confidence without shouting. A `label-tight` (11/600) is reserved for category
-badges on cards.
+characteristic civic-poster confidence without shouting. A `label-tight` (12/600) is reserved for category
+badges on cards. 12px is the smallest text size; the badge stands apart
+from the 12–14px metadata by weight and its pill, not by a 1px size step.
 
 Body inputs are pinned to **16px** to defeat iOS Safari's focus auto-zoom.
 
