@@ -202,9 +202,54 @@ Still unverified: Keyword Planner volumes (needs billing on the Ads account),
 whether Meta offers Catalan as a target language, the Cloudflare Zaraz state,
 the project's legal form, and why town pages lost ranking.
 
+## 5. Free options by effort (not yet checked against current work)
+
+Many of these may already be done or in progress. Check before starting
+(see the follow-up prompt below).
+
+Quick (hours):
+
+1. Title test on ~10 town pages ("Agenda {town}: concerts, fires i festes"),
+   with ~10 similar towns as the control; compare in Search Console after
+   4–6 weeks.
+2. Links from each town page to its comarca weekend page.
+3. Fix the "10K+ monthly users" claim in the GitHub org README (real: ~1.5K).
+4. GA4 internal-traffic filter (#663; needs the team's IPs).
+
+Medium (days to weeks):
+
+5. Richer town pages: a short unique intro per town, and nearby towns' events
+   when a town has few.
+6. Retention: a weekly "this weekend in your comarca" channel
+   (Telegram/WhatsApp) and better push timing (10% return today).
+7. One weekly social post per comarca (Instagram, TikTok, Bluesky).
+
+Bigger:
+
+8. Ask town councils (they rank first for their own towns) for a link or an
+   embedded widget.
+9. Google Ad Grants (needs an associació).
+
+### Follow-up prompt
+
+Paste this into a new session:
+
+```text
+Read docs/growth/paid-acquisition-research-2026-11.md (sections 1, 3 and 5).
+With no assumptions, check each option in section 5 against what already
+exists or is in progress: code on develop and main, open PRs and branches,
+plans/, docs/, GitHub issues (#663 and others), and the live site. For each
+option give HAVE / PARTIAL / MISSING / IN PROGRESS with proof (file:line, PR,
+issue or URL). Then re-pull Search Console for the town pages (section 4 shows
+how) to see whether the ranking drop is still going. Propose a short plan for
+the MISSING and PARTIAL items only, ordered by impact per hour, free work only
+(no ad spend). Wait for my OK before coding. Work in a separate worktree off
+develop; don't touch my current branch.
+```
+
 ## Appendix: Google Search test (ready, not launched)
 
-Only when there's money for it (step 6). Nothing here has run.
+Only when there's money for it (section 3, step 6). Nothing here has run.
 
 - **Account**: Esdeveniments, 467-859-2752. Turn off Display and Search
   partners. Location: Catalonia, "presence" (people in the area).
