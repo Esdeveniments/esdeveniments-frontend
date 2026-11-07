@@ -82,6 +82,7 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@eslint-react/eslint-plugin": "^5.28.8",
     "@eslint/compat": "^2.1.1",
     "@eslint/eslintrc": "^3.3.7",
