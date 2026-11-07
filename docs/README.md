@@ -38,6 +38,12 @@ pipeline.
 - [`self-hosted-resource-limits.md`](./self-hosted-resource-limits.md) —
   Coolify/Hetzner box resource limits.
 
+## Growth
+
+- [`growth/paid-acquisition-research-2026-11.md`](./growth/paid-acquisition-research-2026-11.md)
+  — real traffic baseline (bot and Zaraz cleanup), the town-page ranking
+  drop, free-first growth plan, ad channel costs and a parked paid test.
+
 ## Product
 
 - [`strategy-pricing.md`](./strategy-pricing.md) — self-service sponsor
