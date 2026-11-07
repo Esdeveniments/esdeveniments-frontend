@@ -903,7 +903,15 @@
       "citiesAriaLabel": "Navegar por pueblos y ciudades",
       "nearbyTitle": "Pueblos cercanos",
       "nearbyAriaLabel": "Descubre eventos en pueblos cercanos",
-      "linkAria": "Ver eventos {placeIn}"
+      "linkAria": "Ver eventos {placeIn}",
+      "regionWeekend": "Este fin de semana {placeIn}"
+    },
+    "TownGuide": {
+      "title": "Agenda {placeOf}",
+      "summary": "{count, plural, =0 {Ahora mismo no hay actividades programadas {placeIn}.} one {Ahora mismo hay # actividad programada {placeIn}.} other {Ahora mismo hay # actividades programadas {placeIn}.}}",
+      "categories": "Las más habituales: {categories}.",
+      "region": "{place} está {regionIn}.",
+      "regionEvents": "Más planes {regionIn}"
     },
     "SearchBar": {
       "placeholder": "¿Qué estás buscando?",
@@ -1335,6 +1343,9 @@
           "title": "Qué hacer {label}. Agenda {year}",
           "metaTitle": "Qué hacer {label} - Agenda y planes {year}",
           "metaDescription": "Descubre la agenda hoy {label} este {month}: conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes."
+        },
+        "titleTest": {
+          "metaTitle": "Agenda {placeOf}: conciertos, ferias y fiestas"
         },
         "subTitle": "Descubre los mejores planes de ocio y cultura {label} este {month}. Consulta la agenda actualizada con fiestas, conciertos, teatro, cine, exposiciones y actividades familiares.",
         "notFound": "Lo sentimos, pero no hay eventos {label} para esta fecha. Prueba a cambiar la fecha, explorar otras categorías o mirar municipios cercanos para encontrar actividades que te interesen.",

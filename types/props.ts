@@ -642,6 +642,16 @@ export interface PlacePageEventsResult {
   structuredScripts?: JsonLdScript[];
   /** Gates date/category explore links (see lib/seo/place-expandability.ts) */
   placeIsExpandable: boolean;
+  /** Upcoming events in the place itself (0 when the list is a fallback) */
+  totalEvents?: number;
+}
+
+export interface TownGuideProps {
+  placeLabel: string;
+  regionLabel?: string;
+  regionSlug?: string;
+  events: ListEvent[];
+  totalEvents: number;
 }
 
 export interface PlaceShellData {

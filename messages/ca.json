@@ -918,7 +918,15 @@
       "citiesAriaLabel": "Navega per pobles i ciutats",
       "nearbyTitle": "Pobles propers",
       "nearbyAriaLabel": "Descobreix esdeveniments a pobles propers",
-      "linkAria": "Veure esdeveniments {placeIn}"
+      "linkAria": "Veure esdeveniments {placeIn}",
+      "regionWeekend": "Aquest cap de setmana {placeIn}"
+    },
+    "TownGuide": {
+      "title": "L'agenda {placeOf}",
+      "summary": "{count, plural, =0 {Ara mateix no hi ha activitats programades {placeIn}.} one {Ara mateix hi ha # activitat programada {placeIn}.} other {Ara mateix hi ha # activitats programades {placeIn}.}}",
+      "categories": "Les més habituals: {categories}.",
+      "region": "{place} és {regionIn}.",
+      "regionEvents": "Més plans {regionIn}"
     },
     "SearchBar": {
       "placeholder": "Què estàs buscant?",
@@ -1335,6 +1343,9 @@
           "title": "Què fer {label}. Agenda {year}",
           "metaTitle": "Què fer {label} - Agenda i plans {year}",
           "metaDescription": "Descobreix què fer {label} aquest {month}: concerts, festes, activitats familiars, tallers, exposicions i altres plans al municipi."
+        },
+        "titleTest": {
+          "metaTitle": "Agenda {placeOf}: concerts, fires i festes"
         },
         "subTitle": "Descobreix els millors plans d’oci i cultura {label} aquest {month}. Consulta l’agenda actualitzada amb festes, concerts, teatre, cinema, exposicions i activitats familiars.",
         "notFound": "Ho sentim, però no hi ha esdeveniments {label} per a aquesta data. Prova de canviar la data, explorar altres categories o mirar municipis propers per trobar activitats que t'interessin.",

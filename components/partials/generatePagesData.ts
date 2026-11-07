@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { TOWN_TEST_TITLE_GROUP } from "@config/town-seo-test";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
 import { connection } from "next/server";
@@ -383,10 +384,20 @@ export async function generatePagesData({
         });
     const metaTitle = isBarcelona
       ? t("townNoDate.barcelona.metaTitle", { year: effectiveYear })
-      : t("townNoDate.default.metaTitle", {
-          label: labelWithArticle,
-          year: effectiveYear,
-        });
+      : TOWN_TEST_TITLE_GROUP.has(place)
+        ? t("townNoDate.titleTest.metaTitle", {
+            placeOf: formatPlacePreposition(
+              label,
+              type,
+              resolvedLocale,
+              false,
+              "of"
+            ),
+          })
+        : t("townNoDate.default.metaTitle", {
+            label: labelWithArticle,
+            year: effectiveYear,
+          });
     const metaDescription = isBarcelona
       ? t("townNoDate.barcelona.metaDescription", { month })
       : t("townNoDate.default.metaDescription", {
