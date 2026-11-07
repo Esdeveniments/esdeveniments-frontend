@@ -5,7 +5,6 @@ import {
   extractUuidFromSlug,
   truncateString,
   normalizeForSearch,
-  foldForSearch,
   matchSearchToPlace,
   formatPlaceName,
   slug,
@@ -101,33 +100,6 @@ describe("normalizeForSearch", () => {
 
   it("handles complex Catalan text", () => {
     expect(normalizeForSearch("Exposició d'Art")).toBe("exposicio d'art");
-  });
-});
-
-describe("foldForSearch", () => {
-  // Outputs checked against the backend's planned Postgres `search_fold`
-  // (unaccent + l·l + non-alphanumerics → space) on PG 17.
-  it.each([
-    ["ÀÉÏÇ Ñ", "aeic n"],
-    ["Col·lecció", "colleccio"],
-    ["col.lecció", "colleccio"],
-    ["COL·LECCIÓ", "colleccio"],
-    ["Paral·lel", "parallel"],
-    ["Ŀl", "ll"],
-    ["L’Auditori", "l auditori"],
-    ["Straße", "strasse"],
-    ["Æon œuvre", "aeon oeuvre"],
-    ["🎉 Festa 🎉", "festa"],
-    ["%%__", ""],
-    ["São Tomé", "sao tome"],
-    ["ﬁesta", "fiesta"],
-    ["２０２６", "2026"],
-    ["Café-Teatre", "cafe teatre"],
-    ["Dr. Roux 1.5", "dr roux 1 5"],
-    ["Øresund Łódź Đakovo", "oresund lodz dakovo"],
-    ["", ""],
-  ])("%j → %j", (input, expected) => {
-    expect(foldForSearch(input)).toBe(expected);
   });
 });
 

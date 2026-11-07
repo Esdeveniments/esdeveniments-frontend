@@ -1,7 +1,11 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { fetchWithHmac } from "./fetch-wrapper";
-import { parseAuthenticatedUser, parseUserPublic } from "@lib/validation/user";
+import {
+  parseAuthenticatedUser,
+  parseUserPublic,
+  parseUserSearchResults,
+} from "@lib/validation/user";
 import { parsePagedEvents } from "@lib/validation/event";
 import { getApiUrl, isApiUrlConfigured, emptyPagedResponse } from "@utils/api-helpers";
 import { getErrorStatus } from "@utils/error-status";
@@ -10,6 +14,7 @@ import type {
   ProfileUpdateRequestDTO,
   ProfileUpdateResponseDTO,
   UserPublicResponseDTO,
+  UserSearchResultDTO,
 } from "types/api/user";
 import type {
   EventSummaryResponseDTO,
@@ -407,4 +412,24 @@ export async function getUserEventsExternal(
     empty,
     "getUserEventsExternal",
   );
+}
+
+/**
+ * Profile search suggestions: GET /api/users?q=&size= (backend#59). Returns
+ * null on any failure (unconfigured URL, non-OK, network, invalid payload) so
+ * the route can answer 502 instead of a cached "no profiles".
+ */
+export async function searchUsersExternal(
+  q: string,
+  size: number,
+): Promise<UserSearchResultDTO[] | null> {
+  if (!isApiUrlConfigured()) return null;
+  const params = new URLSearchParams({ q, size: String(size) });
+  const results = await fetchJsonWithFallback(
+    `${getApiUrl()}/users?${params}`,
+    parseUserSearchResults,
+    null,
+    "searchUsersExternal",
+  );
+  return results?.slice(0, size) ?? null;
 }

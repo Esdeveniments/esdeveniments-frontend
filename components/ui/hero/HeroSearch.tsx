@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import type { KeyboardEvent } from "react";
 import { useRouter, usePathname } from "../../../i18n/routing";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useHeroSearchSubmit } from "@components/hooks/useHeroSearchSubmit";
+import { useSearchCombobox } from "@components/hooks/useSearchCombobox";
+import SearchSuggestions from "@components/ui/search/SearchSuggestionsLazy";
 import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
 import {
   MagnifyingGlassIcon as SearchIcon,
@@ -25,6 +26,7 @@ import type { AppLocale } from "types/i18n";
 import { stripLocalePrefix } from "@utils/i18n-routing";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { Option } from "types/common";
+import type { SearchBoxSuggestion } from "types/search";
 import { useHero } from "./HeroContext";
 import { buildHeroUrl } from "./utils";
 import Button from "@components/ui/common/button";
@@ -51,8 +53,6 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [localPlaceValue, setLocalPlaceValue] = useState<string>("");
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
-  // Places load on first focus so Enter can match a typed place name.
-  const [hasFocusedSearch, setHasFocusedSearch] = useState(false);
 
   // The Modal mounts on first open; fetch its chunk now so that open is instant.
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     isLoading: loadingRegions,
     isError: regionsError,
     mutate,
-  } = useGetRegionsWithCities(hasOpenedModal || isPlacePage || hasFocusedSearch);
+  } = useGetRegionsWithCities(hasOpenedModal || isPlacePage);
 
   const regionsAndCitiesArray = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -162,7 +162,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
   // --- Search Logic ---
   const submitSearch = useHeroSearchSubmit("hero_search");
 
-  const handleSearchSubmit = useCallback(() => {
+  const handleSearchSubmit = useCallback((suggestion?: SearchBoxSuggestion) => {
     const value = searchTerm.trim();
 
     // Send analytics only for non-empty searches
@@ -173,15 +173,18 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       });
     }
 
-    submitSearch();
+    submitSearch(suggestion);
   }, [searchTerm, submitSearch]);
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSearchSubmit();
-    }
-  };
+  const submitTypedSearch = useCallback(() => handleSearchSubmit(), [handleSearchSubmit]);
+
+  const { anchorRef, inputProps, popupProps } = useSearchCombobox({
+    value: searchTerm,
+    setValue: setSearchTerm,
+    context: "hero_search",
+    onSubmit: submitTypedSearch,
+    onSelect: handleSearchSubmit,
+  });
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm("");
@@ -266,7 +269,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
       {/* Search Bar */}
       <div className="w-full max-w-2xl mx-auto relative">
-        <div className="relative group">
+        <div ref={anchorRef} className="relative group">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <SearchIcon className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           </div>
@@ -276,8 +279,9 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             placeholder={t("searchPlaceholder", { placeIn })}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={() => setHasFocusedSearch(true)}
-            onKeyDown={handleKeyDown}
+            {...inputProps}
+            autoComplete="off"
+            aria-label={t("search")}
             data-testid="search-input"
           />
           {searchTerm && (
@@ -292,7 +296,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           )}
           <Button
             variant="primary"
-            onClick={handleSearchSubmit}
+            onClick={submitTypedSearch}
             className="absolute inset-y-1 right-1 min-h-0 px-3.5 flex items-center justify-center rounded-full"
             data-testid="search-button"
             aria-label={t("search")}
@@ -300,6 +304,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
             <SearchIcon className="h-5 w-5" />
           </Button>
         </div>
+        {popupProps && <SearchSuggestions {...popupProps} />}
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ vi.mock("@components/context/UrlFiltersContext", () => ({
 }));
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: vi.fn(),
+  sendTextSearchOutcomeGA: vi.fn(),
   toSearchTermParam: (term: string) => term,
 }));
 vi.mock("@components/hooks/useListingAnalytics", () => ({ default: vi.fn() }));

@@ -2,11 +2,9 @@
 
 import {
   useCallback,
-  useMemo,
   useState,
   startTransition,
   ChangeEvent,
-  KeyboardEvent,
   JSX,
 } from "react";
 import { useRouter, usePathname } from "../../../i18n/routing";
@@ -18,15 +16,18 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import {
+  markTextSearchSubmitted,
   sendGoogleEvent,
   sendPlaceRedirectGA,
   toSearchTermParam,
 } from "@utils/analytics";
-import { matchSearchToPlace } from "@utils/string-helpers";
+import { placeForSearch } from "@utils/search-query";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
-import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
-import { transformRegionsToOptions } from "@components/ui/locationDiscoveryWidget/utils";
+import { useSearchCombobox } from "@components/hooks/useSearchCombobox";
+import { useSearchPlaces } from "@components/hooks/useSearchPlaces";
+import SearchSuggestions from "./SearchSuggestionsLazy";
+import type { SearchBoxSuggestion } from "types/search";
 
 const sendSearchTermGA = (searchTerm: string): void => {
   if (searchTerm && searchTerm.length > 0) {
@@ -45,18 +46,14 @@ export default function Search(): JSX.Element {
   const isHomePage = pathname === "/";
   const { setLoading } = useFilterLoading();
 
-  // Lazy-load places for place-name detection (SWR-cached 24h, no cost if unused)
-  const [hasSearched, setHasSearched] = useState(false);
-  const { regionsWithCities } = useGetRegionsWithCities(hasSearched);
-  const places = useMemo(
-    () => (regionsWithCities ? transformRegionsToOptions(regionsWithCities) : []),
-    [regionsWithCities]
-  );
-
   // Get current search term from URL
   const urlSearchTerm = searchParams?.get("search") || "";
 
   const [inputValue, setInputValue] = useState<string>(urlSearchTerm);
+
+  // Places for the exact place-name redirect (SWR-cached 24 h, loaded once
+  // there is text, shared with the suggestions).
+  const places = useSearchPlaces(inputValue.trim().length > 0);
 
   // Sync input with URL search term when URL changes
   // (react.dev: "Adjusting some state when a prop changes").
@@ -89,49 +86,42 @@ export default function Search(): JSX.Element {
     [searchParams, router, pathname, isHomePage, setLoading]
   );
 
-  // Function to trigger search (called by button click or Enter key)
-  const triggerSearch = useCallback(() => {
+  // Search button, Enter, or a picked suggestion. Without one, a typed place
+  // name opens its page; anything else is a text search.
+  const triggerSearch = useCallback((suggestion?: SearchBoxSuggestion) => {
     const value = inputValue.trim();
     // Avoid redundant searches if the term hasn't changed
-    if (value === urlSearchTerm) return;
-
-    // Enable place data fetch for future searches
-    if (!hasSearched) setHasSearched(true);
+    if (suggestion?.type !== "place" && value === urlSearchTerm) return;
 
     sendSearchTermGA(value);
 
-    // If the search term matches a known place, navigate to its page instead
-    if (value && places.length > 0) {
-      const matchedPlace = matchSearchToPlace(value, places);
-      if (matchedPlace) {
-        sendPlaceRedirectGA("search", value, matchedPlace.value);
-        startNavigationFeedback();
-        startTransition(() => setLoading(true));
-        setInputValue("");
-        router.push(`/${matchedPlace.value}`);
-        return;
-      }
+    const matchedPlace = placeForSearch(value, places, suggestion);
+    if (matchedPlace) {
+      if (!suggestion) sendPlaceRedirectGA("search", value, matchedPlace.value);
+      startNavigationFeedback();
+      startTransition(() => setLoading(true));
+      setInputValue("");
+      router.push(`/${matchedPlace.value}`);
+      return;
     }
 
+    markTextSearchSubmitted("search", value);
     updateSearchUrl(value);
-  }, [inputValue, updateSearchUrl, urlSearchTerm, places, hasSearched, setLoading, router]);
+  }, [inputValue, updateSearchUrl, urlSearchTerm, places, setLoading, router]);
+
+  const submitSearch = useCallback(() => triggerSearch(), [triggerSearch]);
+
+  const { anchorRef, inputProps, popupProps } = useSearchCombobox({
+    value: inputValue,
+    setValue: setInputValue,
+    context: "search",
+    onSubmit: submitSearch,
+    onSelect: triggerSearch,
+  });
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-    // Prefetch place data on first keystroke so it's ready when user submits
-    if (!hasSearched && value.length > 0) setHasSearched(true);
-  }, [hasSearched]);
-
-  const handleKeyPress = useCallback(
-    (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        triggerSearch();
-      }
-    },
-    [triggerSearch]
-  );
+    setInputValue(e.target.value);
+  }, []);
 
   const clearSearchTerm = useCallback((): void => {
     setInputValue("");
@@ -142,6 +132,7 @@ export default function Search(): JSX.Element {
 
   return (
     <div
+      ref={anchorRef}
       className={`w-full flex justify-center border rounded-input pl-input-x transition-interactive ${isSearchActive ? "border-primary border-2" : "border-input"
         }`}
       data-testid="search-bar"
@@ -161,7 +152,7 @@ export default function Search(): JSX.Element {
           className="w-full border-0 placeholder:text-muted-foreground body-normal focus:outline-none"
           placeholder={t("placeholder")}
           value={inputValue}
-          onKeyDown={handleKeyPress}
+          {...inputProps}
           onChange={handleChange}
           autoComplete="off"
           aria-label={t("search")}
@@ -182,7 +173,7 @@ export default function Search(): JSX.Element {
         {/* Search button on the right */}
         <button
           type="button"
-          onClick={triggerSearch}
+          onClick={submitSearch}
           className="h-10 flex justify-center items-center cursor-pointer px-2 bg-muted hover:bg-muted/80 active:bg-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground-strong rounded-r-input"
           aria-label={t("search")}
           data-testid="search-button"
@@ -190,6 +181,7 @@ export default function Search(): JSX.Element {
           <ChevronRightIcon className="h-5 w-5 text-foreground-strong" />
         </button>
       </div>
+      {popupProps && <SearchSuggestions {...popupProps} />}
     </div>
   );
 }

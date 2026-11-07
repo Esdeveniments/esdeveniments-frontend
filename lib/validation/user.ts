@@ -1,5 +1,10 @@
 import { z } from "zod";
-import type { AuthenticatedUserDTO, UserPublicResponseDTO } from "types/api/user";
+import { MATCH_USERNAME_RE } from "@lib/validation/username";
+import type {
+  AuthenticatedUserDTO,
+  UserPublicResponseDTO,
+  UserSearchResultDTO,
+} from "types/api/user";
 
 // Accept BOTH the new schema (2026-07-25 backend handoff) and the legacy
 // `name/pictureUrl` shape so a partial cut-over doesn't blow up the parser.
@@ -83,4 +88,33 @@ export function parseAuthenticatedUser(
     return null;
   }
   return result.data;
+}
+
+// One suggestion from GET /api/users?q= (backend#59). The username becomes a
+// /perfil/ link, so it must be a valid username; other fields fall back so
+// one odd row (or a new role) doesn't drop the whole list.
+const UserSearchResultSchema = z.object({
+  username: z.string().regex(MATCH_USERNAME_RE),
+  displayName: z.string().nullish().transform((v) => v || null),
+  avatarUrl: z.string().nullish().transform((v) => v || null),
+  verified: z.boolean().catch(false),
+  role: z.enum(["USER", "ADMIN", "ORGANIZATION"]).catch("USER"),
+  upcomingEventCount: z.number().int().nonnegative().catch(0),
+});
+
+/**
+ * Parses the profile search array, dropping invalid rows. Returns null when
+ * the payload isn't an array, so callers can tell an outage from "no matches".
+ */
+export function parseUserSearchResults(
+  input: unknown
+): UserSearchResultDTO[] | null {
+  if (!Array.isArray(input)) {
+    console.error("parseUserSearchResults: payload is not an array");
+    return null;
+  }
+  return input.flatMap((row) => {
+    const result = UserSearchResultSchema.safeParse(row);
+    return result.success ? [result.data] : [];
+  });
 }

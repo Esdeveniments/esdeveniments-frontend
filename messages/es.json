@@ -865,7 +865,18 @@
     "SearchBar": {
       "placeholder": "¿Qué estás buscando?",
       "clear": "Limpiar la búsqueda",
-      "search": "Buscar"
+      "search": "Buscar",
+      "suggestions": {
+        "label": "Sugerencias de búsqueda",
+        "searchEvents": "Buscar eventos «{query}»",
+        "places": "Lugares",
+        "profiles": "Perfiles de toda Cataluña",
+        "placeType": "lugar",
+        "profileType": "perfil",
+        "loadingProfiles": "Buscando perfiles…",
+        "upcomingEvents": "{count, plural, =0 {Sin eventos próximos} one {# evento próximo} other {# eventos próximos}}",
+        "count": "{count, plural, one {# sugerencia} other {# sugerencias}}"
+      }
     },
     "PastEventBanner": {
       "title": "Este evento ya ha finalizado",
