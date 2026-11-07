@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
 import NoEventsFound from "@components/ui/common/noEventsFound/NoEventsFoundClient";
+import SearchRecoveryLinks from "./SearchRecoveryLinks";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
@@ -226,7 +227,9 @@ function HybridEventsListClientContent({
           <NoEventsFound
             title={notFoundTitle}
             description={pageData?.notFoundDescription}
-          />
+          >
+            {profileSlug ? null : <SearchRecoveryLinks />}
+          </NoEventsFound>
           {showFallbackEvents && (
             <div className="w-full mt-section-y">
               <ClientCardsList events={realInitialEvents} />

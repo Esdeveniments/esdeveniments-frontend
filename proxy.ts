@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { PROXY_LIST_TTL_MS } from "@lib/api/proxy-list";
+import { PROFILE_EXISTS_TTL_MS } from "@lib/api/profiles-proxy";
 import { gateApiRequest } from "@utils/api-gate";
 import { stripLocalePrefix } from "@utils/i18n-routing";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
@@ -13,6 +14,10 @@ import {
 import { getLoginEntryRedirect } from "@utils/proxy-login";
 import { getNewsPaginationRedirect } from "@utils/proxy-news";
 import { applyPageHeaders } from "@utils/proxy-page-headers";
+import {
+  getProfileCaseRedirect,
+  isMissingProfilePath,
+} from "@utils/proxy-profile";
 import { checkCategory, checkPlace } from "@utils/proxy-place";
 import { DEFAULT_LOCALE } from "types/i18n";
 
@@ -61,7 +66,8 @@ export default async function proxy(request: NextRequest) {
 
   const canonicalRedirect =
     handleCanonicalRedirects(request) ??
-    getNewsPaginationRedirect(request, pathnameWithoutLocale);
+    getNewsPaginationRedirect(request, pathnameWithoutLocale) ??
+    getProfileCaseRedirect(request, pathnameWithoutLocale);
   if (canonicalRedirect) {
     if (pathLocaleToPersist) {
       persistLocaleCookie(canonicalRedirect, pathLocaleToPersist);
@@ -70,9 +76,11 @@ export default async function proxy(request: NextRequest) {
   }
 
   // Both lists are cached for an hour, so this rarely waits on the backend.
-  const [placeCheck, categoryRedirectUrl] = await Promise.all([
+  // Profile lookups are cached for a few minutes per username.
+  const [placeCheck, categoryRedirectUrl, isMissingProfile] = await Promise.all([
     checkPlace(request, pathnameWithoutLocale, localeFromPath),
     checkCategory(request, pathnameWithoutLocale, localeFromPath),
+    isMissingProfilePath(request, pathnameWithoutLocale),
   ]);
   const redirectUrl =
     placeCheck?.kind === "alias"
@@ -104,14 +112,15 @@ export default async function proxy(request: NextRequest) {
   const init = { request: { headers: requestHeaders } };
 
   // Pages live under app/[locale]/. Prefixed paths (/es/foo) already match;
-  // unprefixed ones (/foo) are rewritten to /ca/foo. Unknown places render
-  // the same page with a 404 status (NextResponse.next() can't set one).
+  // unprefixed ones (/foo) are rewritten to /ca/foo. Unknown places and
+  // profiles render the same page with a 404 status (NextResponse.next()
+  // can't set one).
   const url = request.nextUrl.clone();
   if (!localeFromPath) {
     url.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
   }
   const response =
-    placeCheck?.kind === "missing"
+    placeCheck?.kind === "missing" || isMissingProfile
       ? NextResponse.rewrite(url, { ...init, status: 404 })
       : localeFromPath
         ? NextResponse.next(init)
@@ -131,6 +140,17 @@ export default async function proxy(request: NextRequest) {
 
   applyCsp(response);
   applyPageHeaders(request, response, pathnameWithoutLocale, locale);
+  // A username can be claimed at any time and nothing purges its 404, so the
+  // CDN keeps it no longer than Proxy's own lookup cache.
+  if (
+    isMissingProfile &&
+    response.headers.get("Cache-Control")?.startsWith("public")
+  ) {
+    response.headers.set(
+      "Cache-Control",
+      `public, max-age=0, s-maxage=${PROFILE_EXISTS_TTL_MS / 1000}`,
+    );
+  }
   return response;
 }
 

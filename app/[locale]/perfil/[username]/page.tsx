@@ -37,7 +37,7 @@ export async function generateMetadata({
     profile.displayName?.trim() || profile.name?.trim() || profile.username;
   const title = t("title", { name: displayName });
   const description = t("metaDescription", { name: displayName });
-  const canonical = toLocalizedUrl(`/perfil/${username}`, locale);
+  const canonical = toLocalizedUrl(`/perfil/${profile.username}`, locale);
 
   return buildPageMeta({
     title,
@@ -69,7 +69,7 @@ export default async function ProfilePage({
 
   // 2026-07-25 backend migration: profile.displayName is canonical; profile.name
   // is the legacy field; profile.username is the safety net. Breadcrumb
-  // schemas and the Person schema require string `name`, so coalesce.
+  // schemas and the profile schema require string `name`, so coalesce.
   const profileDisplayName =
     profile.displayName?.trim() ||
     profile.name?.trim() ||
@@ -84,9 +84,10 @@ export default async function ProfilePage({
 
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbItems);
 
-  const personSchema = {
+  // Google's ProfilePage docs: use Organization when the profile is one.
+  const profileSchema = {
     "@context": "https://schema.org",
-    "@type": "Person",
+    "@type": profile.role === "ORGANIZATION" ? "Organization" : "Person",
     name: profileDisplayName,
     url: profileUrl,
     identifier: profile.username,
@@ -99,7 +100,7 @@ export default async function ProfilePage({
       {breadcrumbListSchema && (
         <JsonLdServer id="breadcrumbs-schema" data={breadcrumbListSchema} />
       )}
-      <JsonLdServer id={`person-${profile.username}`} data={personSchema} />
+      <JsonLdServer id={`person-${profile.username}`} data={profileSchema} />
 
       <Tabs
         items={tabItems}

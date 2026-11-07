@@ -82,3 +82,11 @@ export type FilterErrorBoundaryState = {
   hasError: boolean;
   error?: Error;
 };
+
+/** Which filter a zero-results link widens; "place" also drops the radius. */
+export type SearchRecoveryAction = "place" | "date" | "category" | "distance";
+
+export interface SearchRecoveryLink {
+  action: SearchRecoveryAction;
+  href: string;
+}

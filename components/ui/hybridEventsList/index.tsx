@@ -3,6 +3,7 @@ import { HybridEventsListProps } from "types/props";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
+import SearchRecoveryLinks from "./SearchRecoveryLinks";
 import List from "@components/ui/list";
 import CardServer from "@components/ui/card/CardServer";
 import AdArticle from "../adArticle";
@@ -71,7 +72,15 @@ async function HybridEventsList({
         <NoEventsFound
           title={pageData?.notFoundTitle}
           description={pageData?.notFoundDescription}
-        />
+        >
+          {/* The client list doesn't mount here, so a search shows its
+              recovery links from this branch. */}
+          {profileSlug ? null : (
+            <Suspense fallback={null}>
+              <SearchRecoveryLinks />
+            </Suspense>
+          )}
+        </NoEventsFound>
         <List events={initialEvents}>
           {(event: ListEvent, index: number) => (
             <CardServer
