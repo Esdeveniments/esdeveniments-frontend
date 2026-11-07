@@ -18,25 +18,26 @@ export default async function NewsCard({
 
   return (
     <CardLayout
-      slug={event.slug}
+      card={{
+        slug: event.slug,
+        eventId: event.id,
+        title: event.title,
+        image: event.imageUrl,
+        cardDate,
+        timeDisplay: "",
+        primaryLocation: placeLabel ?? "",
+        imageContext: { location: placeLabel, date: cardDate },
+        imageCacheKey: event.updatedAt,
+      }}
       href={`/noticies/${placeSlug}/${event.slug}`}
       analyticsEventName="select_news"
-      variant={variant}
+      layout={variant}
       description={
         variant === "featured"
           ? stripHtmlTags(event.description || "")
           : undefined
       }
-      eventId={event.id}
-      title={event.title}
-      originalTitle={event.title}
-      image={event.imageUrl}
       isPriority={priority}
-      cardDate={cardDate}
-      timeDisplay=""
-      primaryLocation={placeLabel ?? ""}
-      imageContext={{ location: placeLabel, date: cardDate }}
-      imageCacheKey={event.updatedAt}
       renderLink={(props) => <CardLink {...props} />}
     />
   );

@@ -972,7 +972,6 @@
       "today": "Avui",
       "tomorrow": "Demà",
       "multipleDates": "Diversos dies",
-      "viewCountAria": "{count, plural, one {{count} visualització} other {{count} visualitzacions}}",
       "promoted": "Patrocinat"
     },
     "EventForm": {

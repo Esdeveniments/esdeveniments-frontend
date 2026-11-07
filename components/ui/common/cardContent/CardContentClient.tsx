@@ -12,59 +12,21 @@ export default function CardContentClient({
   initialIsFavorite = false,
 }: CardContentProps) {
   const tCard = useTranslations("Components.CardContent");
-  const tTime = useTranslations("Utils.EventTime");
   const tCategories = useTranslations("Config.Categories");
   const locale = (useLocale() || DEFAULT_LOCALE) as AppLocale;
-  const {
-    title,
-    primaryLocation,
-    image,
-    cardDate,
-    timeDisplay,
-    favoriteLabels,
-    shouldShowFavoriteButton,
-    categoryLabel,
-    categorySlug,
-    promotedLabel,
-    urgencyLabel,
-    urgencyType,
-    multiDayLabel,
-  } = prepareCardContentData({
+  const card = prepareCardContentData({
     event,
     variant: "standard",
     locale,
     tCard,
-    tTime,
     tCategories,
+    isFavorite: initialIsFavorite,
   });
 
   return (
     <CardLayout
-      slug={event.slug}
-      eventId={event.id ? String(event.id) : undefined}
-      title={title}
-      originalTitle={event.title}
-      image={image}
+      card={card}
       isPriority={isPriority}
-      cardDate={cardDate}
-      timeDisplay={timeDisplay}
-      primaryLocation={primaryLocation}
-      categoryLabel={categoryLabel}
-      categorySlug={categorySlug}
-      promotedLabel={promotedLabel}
-      urgencyLabel={urgencyLabel}
-      urgencyType={urgencyType}
-      multiDayLabel={multiDayLabel}
-      shouldShowFavoriteButton={shouldShowFavoriteButton}
-      isFavorite={initialIsFavorite}
-      favoriteLabels={favoriteLabels}
-      imageContext={{
-        location: event.city?.name || event.location,
-        region: event.region?.name || event.city?.name,
-        date: cardDate,
-      }}
-      imageCacheKey={event.hash || event.updatedAt}
-      imageViewTransitionName={`event-image-${event.id}`}
       renderLink={(props) => <CardLinkClient {...props} />}
     />
   );

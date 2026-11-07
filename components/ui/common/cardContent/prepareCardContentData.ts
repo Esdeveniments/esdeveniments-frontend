@@ -7,7 +7,11 @@ import {
   convertTZ,
 } from "@utils/date-helpers";
 import { getCategoryLabel } from "@utils/category-helpers";
-import type { CardContentProps, FavoriteButtonLabels } from "types/props";
+import type {
+  CardContentProps,
+  CardData,
+  FavoriteButtonLabels,
+} from "types/props";
 import type { AppLocale } from "types/i18n";
 import type { CardVariant } from "types/ui";
 import { TIMEZONE_MADRID } from "@utils/constants";
@@ -17,25 +21,16 @@ export function prepareCardContentData({
   variant = "standard",
   locale,
   tCard,
-  tTime,
-  preferPreformattedDates: _preferPreformattedDates,
   tCategories,
+  isFavorite = false,
 }: {
   event: CardContentProps["event"];
   variant?: CardVariant;
   locale: AppLocale;
   tCard: (key: string, values?: Record<string, string | number>) => string;
-  tTime: (key: string, values?: Record<string, string | number>) => string;
-  preferPreformattedDates?: boolean;
   tCategories?: (key: string) => string;
-}) {
-  const timeLabels = {
-    consult: tTime("consult"),
-    startsAt: tTime("startsAt", { time: "{time}" }),
-    range: tTime("range", { start: "{start}", end: "{end}" }),
-    simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
-  };
-
+  isFavorite?: boolean;
+}): CardData {
   const title = event.title || "";
 
   const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
@@ -115,16 +110,9 @@ export function prepareCardContentData({
 
   const promotedLabel = event.isPromoted ? tCard("promoted") : undefined;
 
-  // View count aria label
-  const viewCountAriaLabel = tCard("viewCountAria", {
-    count: event.visits ?? 0,
-  });
-
   const firstCategory = event.categories?.[0];
   let categoryLabel: string | undefined;
-  let categorySlug: string | undefined;
   if (firstCategory && variant !== "compact") {
-    categorySlug = firstCategory.slug;
     categoryLabel = tCategories
       ? getCategoryLabel(
           firstCategory.slug,
@@ -135,22 +123,26 @@ export function prepareCardContentData({
   }
 
   return {
-    variant,
-    timeLabels,
+    slug: event.slug,
+    eventId: event.id ? String(event.id) : undefined,
     title,
     primaryLocation,
     image,
     cardDate,
-    isMultiDay,
     urgencyLabel,
     urgencyType,
     multiDayLabel,
     timeDisplay,
     favoriteLabels,
     shouldShowFavoriteButton,
+    isFavorite: Boolean(event.slug && isFavorite),
     promotedLabel,
-    viewCountAriaLabel,
     categoryLabel,
-    categorySlug,
+    imageContext: {
+      location: event.city?.name || event.location,
+      region: event.region?.name || event.city?.name,
+      date: cardDate,
+    },
+    imageCacheKey: event.hash || event.updatedAt,
   };
 }

@@ -957,7 +957,6 @@
       "today": "Hoy",
       "tomorrow": "Mañana",
       "multipleDates": "Varios días",
-      "viewCountAria": "{count, plural, one {{count} visualización} other {{count} visualizaciones}}",
       "promoted": "Patrocinado"
     },
     "EventForm": {

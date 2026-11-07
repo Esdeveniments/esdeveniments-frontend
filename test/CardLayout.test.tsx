@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import CardLayout from "@components/ui/common/cardContent/CardLayout";
 import IconSprite, { SPRITE_ICON } from "@components/ui/common/IconSprite";
+import type { CardData } from "types/props";
 
 vi.mock("@components/ui/common/image", () => ({
   default: () => <span />,
@@ -19,22 +20,29 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
+const baseCard: CardData = {
+  slug: "concert-de-nadal",
+  eventId: "42",
+  title: "Concert de Nadal",
+  image: "https://example.com/image.jpg",
+  cardDate: "Dissabte, 20 de desembre",
+  timeDisplay: "18:00",
+  primaryLocation: "Cardedeu",
+  shouldShowFavoriteButton: true,
+  favoriteLabels: { add: "Afegeix", remove: "Treu" },
+};
+
+const renderLink: Parameters<typeof CardLayout>[0]["renderLink"] = ({
+  children,
+  ...props
+}) => <a {...props}>{children}</a>;
+
 function renderCard(isFavorite = false) {
   return renderToStaticMarkup(
     <CardLayout
-      slug="concert-de-nadal"
-      eventId="42"
-      title="Concert de Nadal"
-      originalTitle="Concert de Nadal"
-      image="https://example.com/image.jpg"
+      card={{ ...baseCard, isFavorite }}
       isPriority={false}
-      cardDate="Dissabte, 20 de desembre"
-      timeDisplay="18:00"
-      primaryLocation="Cardedeu"
-      shouldShowFavoriteButton
-      isFavorite={isFavorite}
-      favoriteLabels={{ add: "Afegeix", remove: "Treu" }}
-      renderLink={({ children, ...props }) => <a {...props}>{children}</a>}
+      renderLink={renderLink}
     />
   );
 }
@@ -61,22 +69,40 @@ describe("CardLayout icons", () => {
   });
 });
 
-describe("CardLayout row variant", () => {
+describe("CardLayout compact (home carousel)", () => {
+  // The classes of the former CardHorizontalServer, so merging it changed nothing visible.
+  it("keeps the carousel card's smaller padding, text and icon", () => {
+    const html = renderToStaticMarkup(
+      <CardLayout card={baseCard} compact isPriority={false} renderLink={renderLink} />
+    );
+    expect(html).toContain('class="flex-1 flex flex-col pointer-events-none px-3.5 pt-2.5 pb-3.5"');
+    expect(html).toContain('class="text-xs text-muted-foreground mb-1 truncate"');
+    expect(html).toMatch(/<h3 class="text-sm font-semibold leading-normal line-clamp-2 mb-1\.5 text-foreground-strong[^"]*">/);
+    expect(html).not.toContain("min-h-[2.75rem]");
+    expect(html).toContain('class="mt-auto flex items-center gap-1 text-xs text-muted-foreground min-w-0"');
+    expect(html).toContain('class="w-3.5 h-3.5 flex-shrink-0"');
+  });
+});
+
+describe("CardLayout row layout", () => {
   it("numbers the title and shows the excerpt beside a 40% image", () => {
     const html = renderToStaticMarkup(
       <CardLayout
-        slug="concert-ginesta"
-        variant="row"
+        card={{
+          ...baseCard,
+          slug: "concert-ginesta",
+          title: 'Concert "Ginestà"',
+          image: "",
+          cardDate: "7 de novembre",
+          timeDisplay: "21:00",
+          primaryLocation: "Razzmatazz (Sant Martí), Barcelona",
+          shouldShowFavoriteButton: false,
+        }}
+        layout="row"
         position={4}
         description="Ginestà s'ha consolidat com un dels grups imprescindibles del pop català…"
-        title={'Concert "Ginestà"'}
-        originalTitle={'Concert "Ginestà"'}
-        image=""
         isPriority={false}
-        cardDate="7 de novembre"
-        timeDisplay="21:00"
-        primaryLocation="Razzmatazz (Sant Martí), Barcelona"
-        renderLink={({ children, ...props }) => <a {...props}>{children}</a>}
+        renderLink={renderLink}
       />
     );
     expect(html).toMatch(/<h3[^>]*>4\. Concert &quot;Ginestà&quot;<\/h3>/);

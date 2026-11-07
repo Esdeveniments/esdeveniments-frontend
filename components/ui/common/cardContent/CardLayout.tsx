@@ -5,74 +5,83 @@ import CategoryBadge from "./CategoryBadge";
 import type { CardLayoutProps } from "types/props";
 
 /**
- * Shared presentational card layout used by both CardContentServer and CardContentClient.
- * Receives render props for the link and counter components (server vs client variants).
+ * Shared presentational card layout used by CardContentServer, CardContentClient and NewsCard.
+ * Receives a render prop for the link (server vs client variants).
  */
 export default function CardLayout({
-  slug,
-  href = `/e/${slug}`,
+  card,
+  layout = "default",
+  compact = false,
+  href = `/e/${card.slug}`,
   analyticsEventName = "select_event",
-  variant = "default",
   description,
   position,
-  eventId,
-  title,
-  originalTitle,
-  image,
   isPriority,
-  cardDate,
-  timeDisplay,
-  primaryLocation,
-  categoryLabel,
-  promotedLabel,
-  urgencyLabel,
-  urgencyType,
-  multiDayLabel,
-  shouldShowFavoriteButton,
-  isFavorite,
-  favoriteLabels,
-  imageContext,
-  imageCacheKey,
-  imageViewTransitionName,
   renderLink,
 }: CardLayoutProps) {
+  const {
+    slug,
+    eventId,
+    title,
+    image,
+    cardDate,
+    timeDisplay,
+    primaryLocation,
+    categoryLabel,
+    promotedLabel,
+    urgencyLabel,
+    urgencyType,
+    multiDayLabel,
+    shouldShowFavoriteButton,
+    isFavorite,
+    favoriteLabels,
+    imageContext,
+    imageCacheKey,
+  } = card;
   // `featured` and `row` share the side-by-side layout; only the image width differs.
-  const isHorizontal = variant !== "default";
-  const imageWidthClass = variant === "row" ? " md:w-2/5 md:shrink-0" : " md:w-1/2 md:shrink-0";
+  const isHorizontal = layout !== "default";
+  const imageWidthClass = layout === "row" ? " md:w-2/5 md:shrink-0" : " md:w-1/2 md:shrink-0";
+  const bodyClass = isHorizontal
+    ? "px-4 pt-3 pb-4 md:p-card-padding md:justify-center"
+    : compact
+      ? "px-3.5 pt-2.5 pb-3.5"
+      : "px-4 pt-3 pb-4";
+  const titleClass = isHorizontal
+    ? "heading-3 line-clamp-3 mb-2"
+    : compact
+      ? "text-sm font-semibold leading-normal line-clamp-2 mb-1.5"
+      : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 min-h-[2.75rem]";
 
   return (
     <article className={`relative rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full flex flex-col${isHorizontal ? " md:flex-row" : ""}`}>
       {renderLink({
         href,
         className: "absolute inset-0 z-[1]",
-        "aria-label": originalTitle || title,
+        "aria-label": title,
         "data-analytics-event-name": analyticsEventName,
-        "data-analytics-event-id": eventId ? String(eventId) : "",
+        "data-analytics-event-id": eventId ?? "",
         "data-analytics-event-slug": slug || "",
-        children: <span className="sr-only">{originalTitle || title}</span>,
+        children: <span className="sr-only">{title}</span>,
       })}
 
-      <div
-        className={`relative aspect-[3/2] overflow-hidden bg-muted${isHorizontal ? imageWidthClass : ""}`}
-        style={imageViewTransitionName ? { viewTransitionName: imageViewTransitionName } : undefined}
-      >
+      <div className={`relative aspect-[3/2] overflow-hidden bg-muted${isHorizontal ? imageWidthClass : ""}`}>
         <Image
           className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
-          title={originalTitle}
+          title={title}
           image={image}
           priority={isPriority}
-          alt={originalTitle}
+          alt={title}
           location={imageContext?.location}
           region={imageContext?.region}
           date={imageContext?.date ?? cardDate}
-          context={isHorizontal ? variant : "list"}
+          context={isHorizontal ? layout : "list"}
           cacheKey={imageCacheKey}
         />
 
         {shouldShowFavoriteButton && favoriteLabels && (
           <FavoriteButtonOverlay
             eventSlug={slug}
-            eventId={eventId ? String(eventId) : undefined}
+            eventId={eventId}
             initialIsFavorite={Boolean(isFavorite)}
             labels={favoriteLabels}
             wrapperClassName="pointer-events-auto z-[2]"
@@ -80,13 +89,13 @@ export default function CardLayout({
         )}
       </div>
 
-      <div className={`flex-1 flex flex-col pointer-events-none ${isHorizontal ? "px-4 pt-3 pb-4 md:p-card-padding md:justify-center" : "px-4 pt-3 pb-4"}`}>
+      <div className={`flex-1 flex flex-col pointer-events-none ${bodyClass}`}>
         {promotedLabel && (
           <span className="badge-primary mb-1 w-fit">{promotedLabel}</span>
         )}
         <CategoryBadge label={categoryLabel} />
 
-        <p className="text-sm text-muted-foreground mb-1">
+        <p className={`${compact ? "text-xs" : "text-sm"} text-muted-foreground mb-1${compact ? " truncate" : ""}`}>
           {urgencyLabel ? (
             <span className={urgencyType === "today" ? "text-primary font-semibold" : "text-warning-dark font-medium"}>
               {urgencyLabel}
@@ -98,7 +107,7 @@ export default function CardLayout({
           {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
         </p>
 
-        <h3 className={`${isHorizontal ? "heading-3 line-clamp-3 mb-2" : "text-base font-semibold leading-normal line-clamp-2 mb-1.5 min-h-[2.75rem]"} text-foreground-strong group-hover:text-primary/85 transition-colors`}>
+        <h3 className={`${titleClass} text-foreground-strong group-hover:text-primary/85 transition-colors`}>
           {position !== undefined && `${position}. `}
           {title}
         </h3>
@@ -110,8 +119,8 @@ export default function CardLayout({
         )}
 
         {primaryLocation && (
-          <div className={`mt-auto flex items-center gap-1 text-sm text-muted-foreground min-w-0${isHorizontal ? " md:mt-0" : ""}`}>
-            <svg className="w-4 h-4 flex-shrink-0" aria-hidden="true">
+          <div className={`mt-auto flex items-center gap-1 ${compact ? "text-xs" : "text-sm"} text-muted-foreground min-w-0${isHorizontal ? " md:mt-0" : ""}`}>
+            <svg className={`${compact ? "w-3.5 h-3.5" : "w-4 h-4"} flex-shrink-0`} aria-hidden="true">
               <use href={`#${SPRITE_ICON.mapPin}`} />
             </svg>
             <span className="truncate">{primaryLocation}</span>

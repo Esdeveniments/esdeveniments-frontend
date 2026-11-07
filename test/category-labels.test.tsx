@@ -159,12 +159,11 @@ describe("category labels", () => {
           categories: [category],
         } as CardContentProps["event"];
 
-        // Server cards (CardContentServer, CardHorizontalServer)
+        // Server cards (CardContentServer, including the compact carousel card)
         const serverCard = prepareCardContentData({
           event,
           locale,
           tCard: (key) => key,
-          tTime: (key) => key,
           tCategories,
         });
         expect(serverCard.categoryLabel).toBe(expected);

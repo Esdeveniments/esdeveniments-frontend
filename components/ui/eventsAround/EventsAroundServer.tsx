@@ -1,4 +1,4 @@
-import CardHorizontalServer from "@components/ui/cardHorizontal/CardHorizontalServer";
+import CardContentServer from "@components/ui/common/cardContent/CardContentServer";
 import CompactCard from "@components/ui/common/cardContent/CompactCard";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { buildEventListItems } from "@utils/schema-helpers";
@@ -12,7 +12,7 @@ import type { AppLocale } from "types/i18n";
 function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
   const isHorizontal = layout === "horizontal";
   return (
-    <div className={`rounded-card overflow-hidden bg-background shadow-sm flex flex-col ${isHorizontal ? "w-full" : "w-44 min-w-[11rem]"}`}>
+    <div className={`rounded-card overflow-hidden bg-background border border-border/20 flex flex-col ${isHorizontal ? "w-full" : "w-44 min-w-[11rem]"}`}>
       <div className={`bg-muted animate-fast-pulse ${isHorizontal ? "aspect-[3/2]" : "aspect-[4/3]"}`} />
       <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1.5">
         <div className="w-2/3 h-3 bg-border/40 rounded animate-fast-pulse" />
@@ -80,7 +80,6 @@ async function EventsAroundServer({
 
   const t = await getTranslations("Components.EventsAround");
   const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
-  const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
   const tScroll = await getTranslations({
     locale,
     namespace: "Components.HorizontalScroll",
@@ -118,8 +117,10 @@ async function EventsAroundServer({
                 key={event.id ?? event.slug ?? index}
                 className="snap-start flex-none w-[75vw] min-w-[75vw] sm:w-64 sm:min-w-[16rem]"
               >
-                <CardHorizontalServer
+                <CardContentServer
                   event={event}
+                  compact
+                  locale={locale}
                   isPriority={usePriority && index <= 2}
                 />
               </div>
@@ -140,7 +141,6 @@ async function EventsAroundServer({
             event={event}
             locale={locale}
             tCard={tCard}
-            tTime={tTime}
             index={index}
           />
         ))}

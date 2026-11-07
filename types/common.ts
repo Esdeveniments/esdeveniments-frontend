@@ -348,18 +348,6 @@ export interface CardProps {
   initialIsFavorite?: boolean;
 }
 
-export interface CardHorizontalProps {
-  event: ListEvent;
-  isLoading?: boolean;
-  isPriority?: boolean;
-}
-
-export interface CardHorizontalServerProps {
-  event: EventSummaryResponseDTO;
-  isPriority?: boolean;
-  initialIsFavorite?: boolean;
-}
-
 export interface CardShareButtonProps {
   slug: string;
   url?: string; // If provided, used as share URL. Otherwise defaults to `${siteUrl}/e/${slug}`.
