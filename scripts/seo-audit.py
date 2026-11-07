@@ -803,7 +803,7 @@ def collect_ga4_data():
 
     # Search terms
     search_rows = ga_report(
-        ["customEvent:search_term"], ["eventCount"],
+        ["searchTerm"], ["eventCount"],
         dim_filter=FilterExpression(
             filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value="search"))
         ),
@@ -856,7 +856,7 @@ def collect_ga4_data():
 
     # Share by method
     share_rows = ga_report(
-        ["customEvent:method"], ["eventCount"],
+        ["method"], ["eventCount"],
         dim_filter=FilterExpression(
             filter=Filter(field_name="eventName", string_filter=Filter.StringFilter(value="share"))
         ),
@@ -969,7 +969,7 @@ def collect_ga4_data():
 
     # Zero-result searches (results_count = 0)
     zero_result_rows = ga_report(
-        ["customEvent:search_term"], ["eventCount"],
+        ["searchTerm"], ["eventCount"],
         dim_filter=FilterExpression(and_group=FilterExpressionList(expressions=[
             FilterExpression(filter=Filter(
                 field_name="eventName",

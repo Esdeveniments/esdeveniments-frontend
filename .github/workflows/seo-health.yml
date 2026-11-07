@@ -265,14 +265,15 @@ jobs:
 
           client = BetaAnalyticsDataClient()
 
-          # Sessions with referrer_category=ai (event-scoped custom dimension in GA4).
+          # AI sessions as GA itself classifies them (built-in channel), so the
+          # check doesn't depend on our own detection in utils/userProperties.ts.
           ai_sessions = client.run_report(RunReportRequest(
               property=f"properties/{PROPERTY_ID}",
               date_ranges=[DateRange(start_date="2daysAgo", end_date="today")],
               metrics=[Metric(name="sessions")],
               dimension_filter=FilterExpression(filter=Filter(
-                  field_name="customEvent:referrer_category",
-                  string_filter=Filter.StringFilter(value="ai"),
+                  field_name="sessionDefaultChannelGroup",
+                  string_filter=Filter.StringFilter(value="AI Assistant"),
               )),
           ))
           ai_session_count = int(ai_sessions.rows[0].metric_values[0].value) if ai_sessions.rows else 0
