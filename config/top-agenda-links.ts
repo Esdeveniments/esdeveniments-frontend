@@ -24,13 +24,14 @@ export const TOP_AGENDA_LINKS: (Omit<SeoLinkItem, "label"> & {
   { href: "/mataro", name: "Mataró" },
 ];
 
-/** Links labelled "Agenda del Masnou" / "Agenda de El Masnou" / "Agenda of El Masnou". */
+/** Links labelled "Agenda del Masnou" / "Agenda de El Masnou" / "Agenda of El Masnou"; chips show `shortLabel` ("El Masnou"). */
 export function buildTopAgendaLinks(
   formatLabel: (placeOf: string) => string,
   locale: AppLocale
 ): SeoLinkItem[] {
   return TOP_AGENDA_LINKS.map(({ href, name }) => ({
     href,
+    shortLabel: name,
     label: formatLabel(
       formatPlacePreposition(name, "town", locale, false, "of")
     ),

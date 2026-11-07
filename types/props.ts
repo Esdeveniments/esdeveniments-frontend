@@ -670,6 +670,8 @@ export interface FeaturedPlaceConfig {
 export interface SeoLinkItem {
   href: Href;
   label: string;
+  /** Visible text for compact chips (e.g. the town name); `label` stays the full link name. */
+  shortLabel?: string;
 }
 
 export interface SeoLinkSection {

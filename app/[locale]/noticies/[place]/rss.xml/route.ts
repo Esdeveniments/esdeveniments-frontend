@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { fetchNews } from "@lib/api/news";
-import { getPlaceTypeAndLabelCached } from "@utils/helpers";
+import { getPlaceTypeAndLabelCached } from "@utils/location-helpers";
 import { getLocaleSafely, toLocalizedUrl } from "@utils/i18n-seo";
 import { resolveNewsItemPlace } from "@utils/news-helpers";
 import { formatPlacePreposition } from "@utils/string-helpers";
