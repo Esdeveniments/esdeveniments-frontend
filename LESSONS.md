@@ -866,11 +866,13 @@ multi-day events) from the time of render. Listing pages render per request
 event that is now today. Known limit, 30 minutes at most. Don't move these
 labels into a `"use cache"` scope without a `cacheLife` short enough for them.
 
-## Tailwind opacity modifiers outside the scale generate no CSS
+## Tailwind classes that don't exist in 3.3.6 generate no CSS, silently
 
 `text-primary/85` produced nothing (Tailwind 3 only knows the opacity scale:
-5, 10, 20, 25, …, 80, 90, 95). The card title hover colour it was meant to
-give never shipped, and nothing warned. `@apply text-primary/85` fails the
-build instead, which is how it was found. Use a scale value or an arbitrary
-one (`text-primary/[.85]`), and check the compiled CSS for new modifiers:
-`npx tailwindcss -i styles/globals.css -o /tmp/out.css`.
+5, 10, 20, 25, …, 80, 90, 95), so the card title hover colour it was meant to
+give never shipped. `min-h-12` produced nothing either: in 3.3.6 `min-h-*`
+only has `0/full/screen/min/max/fit` plus our `button` sizes (spacing values
+came in 3.4), so a skeleton lost 12px. Nothing warns in the class attribute;
+`@apply` of the same class fails the build. Check the compiled CSS for any
+class you haven't seen used in the repo:
+`npx tailwindcss -i styles/globals.css -o /tmp/out.css && grep -c '\.min-h-12' /tmp/out.css`.
