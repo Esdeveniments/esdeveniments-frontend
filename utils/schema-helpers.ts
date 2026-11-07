@@ -1,7 +1,8 @@
 import { siteUrl } from "@config/index";
 import { normalizeEndTime } from "@utils/date-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
-import { getProfileSlug } from "@utils/user-helpers";
+import { getProfileSlug, isVerifiedOrganization } from "@utils/user-helpers";
+import { getProfileDisplayName } from "@utils/profile-name";
 import { getEventPriceText, parseSchemaPrice } from "@utils/event-price";
 import { formatCatalanA } from "@utils/string-helpers";
 import { TIMEZONE_MADRID } from "@utils/constants";
@@ -114,9 +115,9 @@ const buildOrganizer = (
   locale: AppLocale
 ): SchemaOrganizer | undefined => {
   const owner = "owner" in event ? event.owner : null;
-  if (!owner?.verified || owner.role !== "ORGANIZATION") return undefined;
+  if (!owner || !isVerifiedOrganization(owner)) return undefined;
   const slug = getProfileSlug(owner);
-  const name = owner.displayName?.trim() || owner.username?.trim();
+  const name = getProfileDisplayName(owner);
   if (!slug || !name) return undefined;
   return {
     "@type": "Organization",

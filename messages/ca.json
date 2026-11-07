@@ -391,11 +391,11 @@
     "PlaceByDateCategory": {
       "dateFallback": "els propers dies",
       "categoryFallback": "Esdeveniments",
-      "plansWithCategory": "plans de {categoryLabel}",
+      "plansWithCategory": "plans {categoryPhrase}",
       "plansFallback": "plans",
-      "proposalsWithCategory": "propostes de {categoryLabel}",
+      "proposalsWithCategory": "propostes {categoryPhrase}",
       "proposalsFallback": "propostes",
-      "activitiesWithCategory": "activitats de {categoryLabel}",
+      "activitiesWithCategory": "activitats {categoryPhrase}",
       "activitiesFallback": "activitats",
       "title": "{categoryLabel} {dateLabel} {placeIn}",
       "subtitleWithDate": "Descobreix {plansLabel} per {date} {placeIn}.",
@@ -481,7 +481,7 @@
     },
     "Profile": {
       "title": "{name} — Perfil",
-      "metaDescription": "Descobreix els esdeveniments de {name}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+      "metaDescription": "Descobreix els esdeveniments {nameOf}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
       "events": "Esdeveniments",
       "verified": "Verificat",
       "verifiedOrganizer": "Organitzador verificat",
@@ -504,8 +504,8 @@
       "upcomingInTown": "Propers esdeveniments {placeIn}",
       "moreInTown": "Més esdeveniments {placeIn}",
       "statsVisits": "Visites",
-      "pastTitle": "Esdeveniments passats de {name} — Perfil",
-      "pastMetaDescription": "Consulta els esdeveniments passats de {name}: concerts, exposicions i activitats que ja ha organitzat."
+      "pastTitle": "Esdeveniments passats {nameOf} — Perfil",
+      "pastMetaDescription": "Consulta els esdeveniments passats {nameOf}: concerts, exposicions i activitats que ja ha organitzat."
     },
     "Footer": {
       "navigation": {
@@ -990,14 +990,14 @@
       "title": "Detalls de l'esdeveniment",
       "eventLink": "Enllaç a l'esdeveniment:",
       "duration": "Durada aproximada: {duration}",
-      "createdBy": "Publicat per <link>{name}</link>"
+      "createdBy": "Publicat {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicació",
       "showMap": "Mostrar mapa",
       "hideMap": "Tancar mapa",
       "getDirections": "Com arribar",
-      "profileLink": "Perfil de {name}"
+      "profileLink": "Perfil {nameOf}"
     },
     "EventCalendar": {
       "title": "Data i hora",
@@ -1477,7 +1477,10 @@
         "dels": "dels",
         "deLa": "de la",
         "deLes": "de les",
-        "deL": "de l'"
+        "deL": "de l'",
+        "per": "per",
+        "pel": "pel",
+        "perLa": "per la"
       }
     },
     "Calendar": {

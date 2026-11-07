@@ -8,7 +8,10 @@ import { EventLocationProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import EventLocationClient from "./EventLocationClient";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getProfileDisplayName } from "@utils/profile-name";
+import { formatNameOf } from "@utils/string-helpers";
+import type { AppLocale } from "types/i18n";
 
 export default function EventLocation({
   location,
@@ -20,6 +23,7 @@ export default function EventLocation({
   compact = false,
 }: EventLocationProps) {
   const t = useTranslations("Components.EventLocation");
+  const locale = useLocale() as AppLocale;
   const cityHref = citySlug ? `/${citySlug}` : null;
   const regionHref = regionSlug ? `/${regionSlug}` : null;
   const showPlaceLinks = Boolean(cityHref || regionHref);
@@ -41,16 +45,8 @@ export default function EventLocation({
     hidePlaceSegments: showPlaceLinks, // Hide city/region from the string if we show them as links below
   });
 
-  // 2026-07-25 backend migration: profile.displayName is canonical; profile.name
-  // is the legacy field; profile.username is the safety net. The profileLink
-  // translation expects a string, so we coalesce to "" rather than flow
-  // undefined through the i18n interpolation (different locales break
-  // differently on undefined).
-  const profileDisplayName = profile
-    ? profile.displayName?.trim() ||
-      profile.name?.trim() ||
-      profile.username?.trim() ||
-      ""
+  const profileNameOf = profile
+    ? formatNameOf(getProfileDisplayName(profile), locale)
     : "";
 
   if (compact) {
@@ -102,7 +98,7 @@ export default function EventLocation({
             className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
             variant="inline"
           >
-            {t("profileLink", { name: profileDisplayName })}
+            {t("profileLink", { nameOf: profileNameOf })}
           </PressableAnchor>
         )}
       </div>
@@ -160,7 +156,7 @@ export default function EventLocation({
               <PressableAnchor
                 href={`/perfil/${encodeURIComponent(profile.username)}`}
               >
-                {t("profileLink", { name: profileDisplayName })}
+                {t("profileLink", { nameOf: profileNameOf })}
               </PressableAnchor>
             )}
           </div>

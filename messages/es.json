@@ -391,11 +391,11 @@
     "PlaceByDateCategory": {
       "dateFallback": "los próximos días",
       "categoryFallback": "Eventos",
-      "plansWithCategory": "planes de {categoryLabel}",
+      "plansWithCategory": "planes {categoryPhrase}",
       "plansFallback": "planes",
-      "proposalsWithCategory": "propuestas de {categoryLabel}",
+      "proposalsWithCategory": "propuestas {categoryPhrase}",
       "proposalsFallback": "propuestas",
-      "activitiesWithCategory": "actividades de {categoryLabel}",
+      "activitiesWithCategory": "actividades {categoryPhrase}",
       "activitiesFallback": "actividades",
       "title": "{categoryLabel} {dateLabel} {placeIn}",
       "subtitleWithDate": "Descubre {plansLabel} para {date} {placeIn}.",
@@ -481,7 +481,7 @@
     },
     "Profile": {
       "title": "{name} — Perfil",
-      "metaDescription": "Descubre los eventos de {name}. Consulta sus próximos eventos, conciertos, exposiciones y mucho más.",
+      "metaDescription": "Descubre los eventos {nameOf}. Consulta sus próximos eventos, conciertos, exposiciones y mucho más.",
       "events": "Eventos",
       "verified": "Verificado",
       "verifiedOrganizer": "Organizador verificado",
@@ -504,8 +504,8 @@
       "upcomingInTown": "Próximos eventos {placeIn}",
       "moreInTown": "Más eventos {placeIn}",
       "statsVisits": "Visitas",
-      "pastTitle": "Eventos pasados de {name} — Perfil",
-      "pastMetaDescription": "Consulta los eventos pasados de {name}: conciertos, exposiciones y actividades que ya ha organizado."
+      "pastTitle": "Eventos pasados {nameOf} — Perfil",
+      "pastMetaDescription": "Consulta los eventos pasados {nameOf}: conciertos, exposiciones y actividades que ya ha organizado."
     },
     "Footer": {
       "navigation": {
@@ -975,14 +975,14 @@
       "title": "Detalles del evento",
       "eventLink": "Enlace al evento:",
       "duration": "Duración aproximada: {duration}",
-      "createdBy": "Publicado por <link>{name}</link>"
+      "createdBy": "Publicado {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicación",
       "showMap": "Mostrar mapa",
       "hideMap": "Cerrar mapa",
       "getDirections": "Cómo llegar",
-      "profileLink": "Perfil de {name}"
+      "profileLink": "Perfil {nameOf}"
     },
     "EventCalendar": {
       "title": "Fecha y hora",
@@ -1477,7 +1477,10 @@
         "dels": "de los",
         "deLa": "de la",
         "deLes": "de las",
-        "deL": "del"
+        "deL": "del",
+        "per": "por",
+        "pel": "por el",
+        "perLa": "por la"
       }
     },
     "Calendar": {

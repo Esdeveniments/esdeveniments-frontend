@@ -5,6 +5,8 @@
 import type {
   CatalanArticle,
   CatalanPhraseType,
+  InstitutionArticle,
+  NameRelation,
   PlacePhraseParts,
   PlacePhrases,
   PlacePhraseType,
@@ -23,6 +25,7 @@ const {
   articlelessPlaces,
   feminineExceptions,
   masculineExceptions,
+  institutionArticles,
 } =
   stringHelperLabels;
 
@@ -124,6 +127,8 @@ export function matchSearchToPlace(
  * ======================================================= */
 
 const VOWEL_OR_H = /^[aeiouàáèéíïòóúüh]/i;
+// No elision before a semivowel i/u ("de iogurt", "de Huelva", "el iaio").
+const SEMIVOWEL_START = /^h?(?:i[aeouàèéòóú]|u[aeoàèéòó])/i;
 const PLACE_PARTICLES = new Set(
   [...Object.values(prepositions), ...Object.values(articles), "i"].flatMap(
     (token) => {
@@ -199,7 +204,8 @@ export function formatPlaceName(name: string): string {
 }
 
 function startsWithVowelOrH(s: string): boolean {
-  return VOWEL_OR_H.test((s || "").trim());
+  const text = (s || "").trim();
+  return VOWEL_OR_H.test(text) && !SEMIVOWEL_START.test(text);
 }
 
 /** Capitalize first token, lowercase the rest; for one-word names, lowercase it. */
@@ -459,6 +465,57 @@ export function formatPlacePhrases(
     placeOf: phrase("of"),
     placeFrom: phrase("from"),
   };
+}
+
+const INSTITUTION_ARTICLES = new Map(Object.entries(institutionArticles));
+const CATALAN_NAME_PREPOSITIONS: Record<
+  NameRelation,
+  Record<Exclude<InstitutionArticle, "l">, string> & { bare: string }
+> = {
+  of: { bare: prepositions.de, el: prepositions.del, la: prepositions.deLa },
+  by: { bare: prepositions.per, el: prepositions.pel, la: prepositions.perLa },
+};
+const NAME_PREPOSITIONS: Record<
+  Exclude<AppLocale, "ca">,
+  Record<NameRelation, string>
+> = {
+  es: { of: "de", by: "por" },
+  en: { of: "of", by: "by" },
+};
+
+/**
+ * Locale-aware preposition + an organisation or person name, split so the
+ * name alone can be a link. Catalan institutions named after a common noun
+ * take a lowercase article ("de l'Ajuntament del Masnou", "pel Museu del
+ * Joguet", "de la Biblioteca Can Fabra"). Other names only elide ("d'Òmnium",
+ * "de Pau Riba"), and a brand's own article doesn't contract ("d'El Temps").
+ */
+export function formatNamePrepositionParts(
+  name: string,
+  locale: AppLocale = DEFAULT_LOCALE,
+  relation: NameRelation = "of"
+): PlacePhraseParts {
+  const text = (name || "").trim();
+  if (locale !== "ca") {
+    return { preposition: NAME_PREPOSITIONS[locale][relation], place: text };
+  }
+
+  const forms = CATALAN_NAME_PREPOSITIONS[relation];
+  const article = INSTITUTION_ARTICLES.get(text.split(/\s+/)[0].toLowerCase());
+  if (article === "l") {
+    return { preposition: forms.bare, place: `${ELIDED_ARTICLE}${text}` };
+  }
+  if (article) return { preposition: forms[article], place: text };
+  const elide = relation === "of" && startsWithVowelOrH(text);
+  return { preposition: elide ? "d'" : forms.bare, place: text };
+}
+
+/** "de l'Ajuntament del Masnou", "d'Òmnium"; es "de …", en "of …". */
+export function formatNameOf(
+  name: string,
+  locale: AppLocale = DEFAULT_LOCALE
+): string {
+  return joinPlacePhrase(formatNamePrepositionParts(name, locale, "of"));
 }
 
 /**

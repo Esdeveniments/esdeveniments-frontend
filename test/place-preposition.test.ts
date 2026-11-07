@@ -1,8 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
+  formatCatalanDe,
+  formatNameOf,
+  formatNamePrepositionParts,
   formatPlacePreposition,
   formatPlacePrepositionParts,
 } from "../utils/string-helpers";
+import { getProfileDisplayName } from "../utils/profile-name";
 
 describe("formatPlacePreposition", () => {
   it("uses Catalan a/al forms for ca locale", () => {
@@ -96,5 +100,79 @@ describe("place phrases with an article in the name", () => {
       preposition: "en",
       place: "El Masnou",
     });
+  });
+});
+
+describe("formatNameOf", () => {
+  it.each([
+    ["Ajuntament del Masnou", "de l'Ajuntament del Masnou"],
+    ["Museu del Joguet", "del Museu del Joguet"],
+    ["Biblioteca Can Fabra", "de la Biblioteca Can Fabra"],
+    ["Universitat de Vic", "de la Universitat de Vic"],
+    ["Òmnium Cultural", "d'Òmnium Cultural"],
+    ["Pau Riba", "de Pau Riba"],
+    // A brand's own article doesn't contract
+    ["El Temps", "d'El Temps"],
+    ["La Vanguardia", "de La Vanguardia"],
+    ["Iaia Teatre", "de Iaia Teatre"],
+  ])("ca: %s → %s", (name, expected) => {
+    expect(formatNameOf(name, "ca")).toBe(expected);
+  });
+
+  it.each([
+    ["Ajuntament del Masnou", "per", "l'Ajuntament del Masnou"],
+    ["Museu del Joguet", "pel", "Museu del Joguet"],
+    ["Biblioteca Can Fabra", "per la", "Biblioteca Can Fabra"],
+    ["Òmnium Cultural", "per", "Òmnium Cultural"],
+  ])("ca by: %s → %s %s", (name, preposition, place) => {
+    expect(formatNamePrepositionParts(name, "ca", "by")).toEqual({
+      preposition,
+      place,
+    });
+  });
+
+  it("uses plain de/of in Spanish and English", () => {
+    expect(formatNameOf("Ajuntament del Masnou", "es")).toBe(
+      "de Ajuntament del Masnou"
+    );
+    expect(formatNameOf("Ajuntament del Masnou", "en")).toBe(
+      "of Ajuntament del Masnou"
+    );
+  });
+});
+
+describe("elision before a semivowel", () => {
+  it("doesn't elide de before i/u + vowel", () => {
+    expect(formatCatalanDe("Huelva", false, false, "town")).toBe("de Huelva");
+    expect(formatCatalanDe("Iecla", false, false, "town")).toBe("de Iecla");
+    expect(formatCatalanDe("Ullastrell", false, false, "town")).toBe(
+      "d'Ullastrell"
+    );
+    expect(formatCatalanDe("Hostalric", false, false, "town")).toBe(
+      "d'Hostalric"
+    );
+  });
+});
+
+describe("getProfileDisplayName", () => {
+  it.each([
+    ["Ajuntament El Masnou", "Ajuntament del Masnou"],
+    ["Ajuntament Les Masies de Voltregà", "Ajuntament de les Masies de Voltregà"],
+    ["Ajuntament Òrrius", "Ajuntament d'Òrrius"],
+    ["Ajuntament Sora", "Ajuntament de Sora"],
+    ["Ajuntament de Premià de Dalt", "Ajuntament de Premià de Dalt"],
+    ["Ajuntament d'Arenys de Mar", "Ajuntament d'Arenys de Mar"],
+    ["Ajuntament del Masnou", "Ajuntament del Masnou"],
+    ["Pau Riba", "Pau Riba"],
+  ])("%s → %s", (displayName, expected) => {
+    expect(getProfileDisplayName({ displayName })).toBe(expected);
+  });
+
+  it("falls back to the legacy name, then the username", () => {
+    expect(getProfileDisplayName({ displayName: " ", name: "Anna" })).toBe("Anna");
+    expect(getProfileDisplayName({ displayName: null, username: "anna" })).toBe(
+      "anna"
+    );
+    expect(getProfileDisplayName(null)).toBe("");
   });
 });

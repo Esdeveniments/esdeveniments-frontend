@@ -391,11 +391,11 @@
     "PlaceByDateCategory": {
       "dateFallback": "the coming days",
       "categoryFallback": "Events",
-      "plansWithCategory": "{categoryLabel} plans",
+      "plansWithCategory": "{categoryPhrase} plans",
       "plansFallback": "plans",
-      "proposalsWithCategory": "{categoryLabel} ideas",
+      "proposalsWithCategory": "{categoryPhrase} ideas",
       "proposalsFallback": "ideas",
-      "activitiesWithCategory": "{categoryLabel} activities",
+      "activitiesWithCategory": "{categoryPhrase} activities",
       "activitiesFallback": "activities",
       "title": "{categoryLabel} {dateLabel} {placeIn}",
       "subtitleWithDate": "Discover {plansLabel} for {date} {placeIn}.",
@@ -481,7 +481,7 @@
     },
     "Profile": {
       "title": "{name} — Profile",
-      "metaDescription": "Discover events by {name}. Browse their upcoming events, concerts, exhibitions and more.",
+      "metaDescription": "Discover the events {nameOf}. Browse their upcoming events, concerts, exhibitions and more.",
       "events": "Events",
       "verified": "Verified",
       "verifiedOrganizer": "Verified organizer",
@@ -504,8 +504,8 @@
       "upcomingInTown": "Upcoming events {placeIn}",
       "moreInTown": "More events {placeIn}",
       "statsVisits": "Visits",
-      "pastTitle": "{name}'s past events — Profile",
-      "pastMetaDescription": "Check out {name}'s past events: concerts, exhibitions and activities they've already organized."
+      "pastTitle": "Past events {nameOf} — Profile",
+      "pastMetaDescription": "Check out the past events {nameOf}: concerts, exhibitions and activities they've already organized."
     },
     "Footer": {
       "navigation": {
@@ -975,14 +975,14 @@
       "title": "Event details",
       "eventLink": "Event link:",
       "duration": "Approximate duration: {duration}",
-      "createdBy": "Published by <link>{name}</link>"
+      "createdBy": "Published {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
       "hideMap": "Close map",
       "getDirections": "Get directions",
-      "profileLink": "Profile of {name}"
+      "profileLink": "Profile {nameOf}"
     },
     "EventCalendar": {
       "title": "Date and time",
@@ -1477,7 +1477,10 @@
         "dels": "of the",
         "deLa": "of the",
         "deLes": "of the",
-        "deL": "of the"
+        "deL": "of the",
+        "per": "by",
+        "pel": "by the",
+        "perLa": "by the"
       }
     },
     "Calendar": {

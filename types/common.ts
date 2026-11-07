@@ -279,6 +279,10 @@ export interface ArticleLabels {
 }
 
 export type CatalanArticle = keyof ArticleLabels;
+/** Singular articles an institution name takes ("l'Ajuntament", "el Museu", "la Biblioteca"). */
+export type InstitutionArticle = Exclude<CatalanArticle, "els" | "les">;
+/** How a name attaches to copy: "of" (de/del/d') or "by" (per/pel). */
+export type NameRelation = "of" | "by";
 
 /** "in" → a/en/in, "of" → de/de/of, "from" → des de/desde/from. */
 export type PlaceRelation = "in" | "of" | "from";
@@ -310,6 +314,9 @@ export interface PrepositionLabels {
   deLa: string;
   deLes: string;
   deL: string;
+  per: string;
+  pel: string;
+  perLa: string;
 }
 
 export type CategorySeoSlug =
@@ -323,6 +330,8 @@ export interface StringHelperLabels {
   articlelessPlaces: string[];
   feminineExceptions: string[];
   masculineExceptions: string[];
+  /** Institution head nouns and the article they take ("ajuntament" → l'). */
+  institutionArticles: Record<string, InstitutionArticle>;
 }
 
 export interface EventCopySentenceLabels {

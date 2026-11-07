@@ -1,5 +1,5 @@
 import { insertAds } from "@lib/api/events";
-import { formatPlacePreposition } from "@utils/string-helpers";
+import { formatPlaceName, formatPlacePreposition } from "@utils/string-helpers";
 import { getCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import { generatePagesData } from "@components/partials/generatePagesData";
@@ -329,7 +329,7 @@ function buildFallbackCategoryShellData({
   locale: AppLocale;
 }): { placeTypeLabel: PlaceTypeAndLabel; pageData: PageData } {
   const placeTypeLabel: PlaceTypeAndLabel = { type: "", label: place };
-  const placeIn = formatPlacePreposition(place, "", locale, false);
+  const placeIn = formatPlacePreposition(formatPlaceName(place), "", locale, false);
   const hasSpecificDate =
     byDate && byDate !== DEFAULT_FILTER_VALUE && byDate !== "";
   const dateLabel = hasSpecificDate ? byDate : t("dateFallback");
@@ -338,14 +338,19 @@ function buildFallbackCategoryShellData({
       ? categoryName || category
       : "";
   const titleCategoryLabel = categoryLabel || t("categoryFallback");
+  // How the category attaches to a noun: ca "d'exposicions", es "de exposicions", en "exposicions"
+  const categoryPhrase =
+    locale === "en"
+      ? categoryLabel.toLowerCase()
+      : formatPlacePreposition(categoryLabel, "general", locale, true, "of");
   const plansLabel = categoryLabel
-    ? t("plansWithCategory", { categoryLabel })
+    ? t("plansWithCategory", { categoryPhrase })
     : t("plansFallback");
   const proposalsLabel = categoryLabel
-    ? t("proposalsWithCategory", { categoryLabel })
+    ? t("proposalsWithCategory", { categoryPhrase })
     : t("proposalsFallback");
   const activitiesLabel = categoryLabel
-    ? t("activitiesWithCategory", { categoryLabel })
+    ? t("activitiesWithCategory", { categoryPhrase })
     : t("activitiesFallback");
   const canonicalSegments = [place];
   if (hasSpecificDate) {
