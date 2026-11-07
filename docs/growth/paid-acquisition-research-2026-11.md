@@ -202,7 +202,7 @@ Still unverified: Keyword Planner volumes (needs billing on the Ads account),
 whether Meta offers Catalan as a target language, the Cloudflare Zaraz state,
 the project's legal form, and why town pages lost ranking.
 
-## 5. Free options by effort (not yet checked against current work)
+## 5. Free options by effort (checked 2026-11-07, see below)
 
 Many of these may already be done or in progress. Check before starting
 (see the follow-up prompt below).
@@ -229,6 +229,42 @@ Bigger:
 8. Ask town councils (they rank first for their own towns) for a link or an
    embedded widget.
 9. Google Ad Grants (needs an associació).
+
+### Status (checked 2026-11-07)
+
+- 1 and 5: started as the town-page test below.
+- 2: done. Town pages link to their comarca weekend page
+  (`ExploreNearby`).
+- 3: dropped (no SEO effect).
+- 4: open in #663, with the China-bot rule.
+- 6 and 7: the social publisher already posts the weekly "Què fer el cap de
+  setmana a …" news articles. Push by comarca needs a place on each
+  subscription first.
+- 8: tried by email, no replies.
+- 9: blocked on the legal form.
+
+### Town-page test (starts the day it reaches main; write the date here)
+
+Town pages are not penalised: no manual action or security issue in Search
+Console, and URL Inspection shows them indexed with our canonical. They lost
+about 4 positions at each of the March and May 2026 core updates while event
+pages held, which fits a quality re-rating of thin, templated pages. The
+cause is not proven, so we test it.
+
+30 towns with similar impressions (Mar–Jun 2026) were split at random in
+blocks of three (`config/town-seo-test.ts`, ~3,900 impressions per group):
+
+| Group | Change | Towns |
+|---|---|---|
+| A | Meta title "Agenda {town}: concerts, fires i festes" | tarragona, canet-de-mar, sant-pol-de-mar, vilanova-i-la-geltru, palamos, mataro, sant-quirze-del-valles, figueres, castellbisbal, llinars-del-valles |
+| B | Short guide from the town's data (event count, main categories, comarca) and up to 8 comarca events when the town has 1–7 (`TownGuide`) | granollers, argentona, la-garriga, arenys-de-munt, vilassar-de-mar, tona, bigues-i-riells, calella, vallirana, alella |
+| C | None (control) | el-masnou, altafulla, arenys-de-mar, cardedeu, malgrat-de-mar, caldes-de-montbui, igualada, badalona, montgat, roda-de-ter |
+
+Measure per group (impressions, clicks, average position, all locales) for
+the 6 weeks before the deploy and 4–6 weeks after, and again after the next
+core update. Compare each group's change with C's. Keep other town-page
+changes out until then, or apply them to all three groups. When it ends,
+roll out the winner and delete `config/town-seo-test.ts`.
 
 ### Follow-up prompt
 

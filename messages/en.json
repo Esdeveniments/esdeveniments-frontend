@@ -903,7 +903,15 @@
       "citiesAriaLabel": "Browse towns and cities",
       "nearbyTitle": "Nearby towns",
       "nearbyAriaLabel": "Discover events in nearby towns",
-      "linkAria": "View events {placeIn}"
+      "linkAria": "View events {placeIn}",
+      "regionWeekend": "This weekend {placeIn}"
+    },
+    "TownGuide": {
+      "title": "The agenda {placeOf}",
+      "summary": "{count, plural, =0 {There are no events scheduled {placeIn} right now.} one {There is # event scheduled {placeIn} right now.} other {There are # events scheduled {placeIn} right now.}}",
+      "categories": "The most common: {categories}.",
+      "region": "{place} is {regionIn}.",
+      "regionEvents": "More plans {regionIn}"
     },
     "SearchBar": {
       "placeholder": "What are you looking for?",
@@ -1335,6 +1343,9 @@
           "title": "What to do {label}. Agenda {year}",
           "metaTitle": "What to do {label} - Agenda and plans {year}",
           "metaDescription": "Discover what's on {label} this {month}: concerts, festivals, family activities, workshops, exhibitions, and other plans."
+        },
+        "titleTest": {
+          "metaTitle": "Agenda {placeOf}: concerts, fairs and festivals"
         },
         "subTitle": "Discover the best leisure and cultural plans {label} this {month}. Check the updated agenda with festivals, concerts, theatre, cinema, exhibitions, and family activities.",
         "notFound": "Sorry, there are no events {label} for this date. Try changing the date, exploring other categories, or looking at nearby towns to find activities that interest you.",

@@ -314,5 +314,6 @@ export async function buildPlaceEventsPromise({
     ssrPageSize,
     structuredScripts,
     placeIsExpandable,
+    totalEvents: noEventsFound ? 0 : (eventsResponse?.totalElements ?? 0),
   };
 }
