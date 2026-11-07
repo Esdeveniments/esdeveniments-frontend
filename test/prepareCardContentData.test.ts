@@ -11,7 +11,7 @@ const formatCardDateMock =
       start: string,
       end?: string,
       locale?: string,
-    ) => { cardDate: string; isMultiDay: boolean }
+    ) => { cardDate: string; isMultiDay: boolean; endLabel?: string; endDay?: number }
   >();
 
 const buildEventPlaceLabelsMock =
@@ -317,5 +317,48 @@ describe("prepareCardContentData", () => {
       tCard: vi.fn((key: string) => key),
     });
     expect(result.dateTime).toBeUndefined();
+  });
+
+  describe("multi-day events", () => {
+    const tCard = vi.fn((key: string, values?: Record<string, string | number>) =>
+      key === "until" ? `until:${values?.day}:${values?.date}` : key,
+    );
+    const isoDay = (offset: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    const multiDay = (startOffset: number) => {
+      formatCardDateMock.mockReturnValue({
+        cardDate: "range",
+        isMultiDay: true,
+        endLabel: "30 nov.",
+        endDay: 30,
+      } as ReturnType<typeof formatCardDateMock>);
+      return prepareCardContentData({
+        event: makeEvent({ startDate: isoDay(startOffset), startTime: "18:00" }),
+        locale: "ca",
+        tCard,
+      });
+    };
+
+    it("shows the end date, without a start time, once running", () => {
+      const result = multiDay(-3);
+      expect(result.untilLabel).toBe("until:30:30 nov.");
+      expect(result.urgencyLabel).toBeUndefined();
+      expect(result.timeDisplay).toBe("");
+    });
+
+    it("keeps Today/Tomorrow next to the end date", () => {
+      expect(multiDay(0)).toMatchObject({ urgencyLabel: "today", untilLabel: "until:30:30 nov." });
+      expect(multiDay(1)).toMatchObject({ urgencyLabel: "tomorrow", untilLabel: "until:30:30 nov." });
+    });
+
+    it("keeps the range for later starts", () => {
+      const result = multiDay(5);
+      expect(result.untilLabel).toBeUndefined();
+      expect(result.cardDate).toBe("range");
+      expect(result.timeDisplay).toBe("18:00");
+    });
   });
 });

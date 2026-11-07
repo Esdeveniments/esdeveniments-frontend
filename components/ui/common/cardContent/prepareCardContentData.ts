@@ -45,7 +45,7 @@ export function prepareCardContentData({
 
   const image = event.imageUrl || "";
 
-  const { cardDate, isMultiDay } = formatCardDate(
+  const { cardDate, isMultiDay, endLabel, endDay } = formatCardDate(
     event.startDate,
     event.endDate,
     locale,
@@ -54,6 +54,7 @@ export function prepareCardContentData({
   // Urgency signals: "Today" / "Tomorrow"
   let urgencyLabel: string | undefined;
   let urgencyType: "today" | "tomorrow" | undefined;
+  let diffDays: number;
   {
     const now = convertTZ(new Date(), TIMEZONE_MADRID);
     const eventStart = convertTZ(new Date(event.startDate), TIMEZONE_MADRID);
@@ -72,7 +73,7 @@ export function prepareCardContentData({
 
     const diffTime = startOfEventDay.getTime() - startOfToday.getTime();
     // Use Math.round to handle DST changes gracefully
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
       urgencyLabel = tCard("today");
@@ -83,8 +84,12 @@ export function prepareCardContentData({
     }
   }
 
-  // Multi-day label
-  const multiDayLabel = isMultiDay ? tCard("multipleDates") : undefined;
+  // A multi-day event that is running, or starts today or tomorrow, shows its
+  // end ("Fins al 30 nov."); later ones keep the range. CompactCard keeps the range.
+  const untilLabel =
+    isMultiDay && endLabel && endDay !== undefined && diffDays <= 1 && variant !== "compact"
+      ? tCard("until", { day: String(endDay), date: endLabel })
+      : undefined;
 
   const cleanStart = event.startTime ? formatTimeForAPI(event.startTime) : null;
   const cleanEnd = event.endTime ? formatTimeForAPI(event.endTime) : null;
@@ -105,7 +110,8 @@ export function prepareCardContentData({
   }
 
   let timeDisplay = "";
-  if (hasStartTime) {
+  // Next to "Until 30 Nov." a time would read as the end time.
+  if (hasStartTime && !untilLabel) {
     if (hasEndTime) {
       timeDisplay = `${cleanStart} – ${normalizedEnd}`;
     } else {
@@ -144,7 +150,7 @@ export function prepareCardContentData({
     dateTime,
     urgencyLabel,
     urgencyType,
-    multiDayLabel,
+    untilLabel,
     timeDisplay,
     favoriteLabels,
     shouldShowFavoriteButton,

@@ -166,8 +166,8 @@ export interface CardData {
   /** Urgency label ("Today" / "Tomorrow") */
   urgencyLabel?: string;
   urgencyType?: "today" | "tomorrow";
-  /** Multi-day label suffix */
-  multiDayLabel?: string;
+  /** End of a running multi-day event ("Until 30 Nov."), shown instead of the range */
+  untilLabel?: string;
   shouldShowFavoriteButton?: boolean;
   isFavorite?: boolean;
   /** Favorite button labels (required to show the favorite button) */

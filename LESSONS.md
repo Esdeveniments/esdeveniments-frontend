@@ -856,3 +856,21 @@ where the visitor read the box). To check, watch `/g/collect` requests: the
 `page_view` of a consented visitor must carry `gcs=G111`
 (`docs/performance/baselines.md` method: local build served as the
 production host through a TLS proxy).
+
+## Card "Avui"/"Demà" can be up to 30 minutes stale after midnight
+
+`prepareCardContentData` picks "Avui"/"Demà" (and "Fins al …" for running
+multi-day events) from the time of render. Listing pages render per request
+(`PlacePageShell` awaits `connection()`), but Cloudflare caches their HTML for
+`s-maxage=1800`, so just after midnight a card can still say "Demà" for an
+event that is now today. Known limit, 30 minutes at most. Don't move these
+labels into a `"use cache"` scope without a `cacheLife` short enough for them.
+
+## Tailwind opacity modifiers outside the scale generate no CSS
+
+`text-primary/85` produced nothing (Tailwind 3 only knows the opacity scale:
+5, 10, 20, 25, …, 80, 90, 95). The card title hover colour it was meant to
+give never shipped, and nothing warned. `@apply text-primary/85` fails the
+build instead, which is how it was found. Use a scale value or an arbitrary
+one (`text-primary/[.85]`), and check the compiled CSS for new modifiers:
+`npx tailwindcss -i styles/globals.css -o /tmp/out.css`.

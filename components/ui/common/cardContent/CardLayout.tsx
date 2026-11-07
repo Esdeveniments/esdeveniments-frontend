@@ -34,7 +34,7 @@ export default function CardLayout({
     promotedLabel,
     urgencyLabel,
     urgencyType,
-    multiDayLabel,
+    untilLabel,
     shouldShowFavoriteButton,
     isFavorite,
     favoriteLabels,
@@ -59,7 +59,7 @@ export default function CardLayout({
       {urgencyLabel}
     </span>
   ) : (
-    cardDate
+    untilLabel ?? cardDate
   );
 
   return (
@@ -112,8 +112,8 @@ export default function CardLayout({
 
           <p className={`${compact ? "text-xs" : "text-sm"} text-muted-foreground mb-1${compact ? " truncate" : ""}`}>
             {dateTime ? <time dateTime={dateTime}>{dateText}</time> : dateText}
+            {urgencyLabel && untilLabel && <> · {untilLabel}</>}
             {timeDisplay && <> · {timeDisplay}</>}
-            {multiDayLabel && <> · <span className="text-muted-foreground">{multiDayLabel}</span></>}
           </p>
         </div>
 

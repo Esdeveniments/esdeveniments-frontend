@@ -971,7 +971,7 @@
       "favoriteRemoveAria": "Elimina de preferits",
       "today": "Avui",
       "tomorrow": "Demà",
-      "multipleDates": "Diversos dies",
+      "until": "{day, select, 1 {Fins a l''{date}} 11 {Fins a l''{date}} other {Fins al {date}}}",
       "promoted": "Patrocinat"
     },
     "EventForm": {

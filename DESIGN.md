@@ -277,10 +277,12 @@ components:
     rounded: "{rounded.md}"
     padding: "{spacing.lg}"
     shadow: "none"
-    transition: "border-color {motion.duration-normal} {motion.easing-smooth}, box-shadow {motion.duration-normal} {motion.easing-smooth}"
+    transition: "border-color {motion.duration-normal} {motion.easing-smooth}, transform {motion.duration-normal} {motion.easing-smooth}"
   card-default-hover:
     border: "1px solid {colors.border-subtle}"
-    shadow: "{elevation.md}"
+    shadow: "none"
+  card-focus:
+    outline: "2px solid {colors.primary}, inset 2px, over a 4px {colors.background} band"
   card-elevated:
     background: "{colors.background}"
     rounded: "{rounded.md}"
@@ -298,9 +300,6 @@ components:
     lineHeight: "1.4"
     color: "{colors.foreground-strong}"
     minHeight: "44px"
-  card-title-hover:
-    color: "{colors.primary}"
-    opacity: 0.85
   card-meta:
     fontSize: "{typography.body-small.fontSize}"
     color: "{colors.foreground-muted}"
@@ -673,8 +672,8 @@ drops to 0 and the container is centered. A `spacing.sticky-offset` of
 128px reserves space below the fixed search/filter bar on listing pages so
 the first row of cards never slides under the chrome.
 
-Cards live in a responsive grid: 1 column on mobile, 2 on **sm**, 3 on
-**md+**, with `spacing.md` (12px) between cells. Card titles use a 2-line
+Cards live in a responsive grid: 1 column on mobile, 2 on **md**, 3 on
+**xl**, with 20px (`gap-5`) between cells. Card titles use a 2-line
 clamp and a fixed `min-height` so adjacent cards visually align even when
 titles vary.
 
@@ -693,9 +692,8 @@ its icon primary red.
 
 Shadows are deliberately soft. They use the body color (`#454545`) at low
 alpha rather than pure black, with short y-offsets and modest spreads, so
-they sit kindly on warm white. Cards default to a **hairline border + no
-shadow**; on hover the border tightens and a small `elevation.md` shadow
-blooms. Modals get `elevation.lg`. The hero banner gets `elevation.xl`.
+they sit kindly on warm white. Cards are a **hairline border + no
+shadow**, also on hover (the border tightens). Modals get `elevation.lg`. The hero banner gets `elevation.xl`.
 Anything beyond `xl` is forbidden.
 
 Focus is communicated as a **3-pixel `#D6002F33` glow ring** plus, on
@@ -744,11 +742,18 @@ rows. Confirm dialogs stack their actions full width, primary on top, so a
 long label never wraps inside a pill.
 
 **Cards** are an article tile: 3:2 image on top, category pill, then a
-muted metadata row (`date · time · price · multi-day`), a 2-line title, and
-finally a location row anchored to the bottom with a pin icon. The whole
-tile is a clickable article element with the link absolutely positioned to
-cover the card. Hovering tightens the border and zooms the image to 1.03
-over 300ms. The favorite button overlays the image in the top-right and
+muted metadata row (`date · time`), a 2-line title, and finally a location
+row anchored to the bottom with a pin icon. A multi-day event that is
+running shows its end instead of the range (`Fins al 30 nov.`, no time);
+one starting today or tomorrow shows `Avui · Fins al …` / `Demà · Fins al …`.
+The title is the card's only link (`h2` right under a page `<h1>`, else
+`h3`) and comes first in the HTML; `order-*` keeps the pill and date above
+it. `.card-event-link::after` stretches the link over the card, so the whole
+tile is clickable and is read once; the image is decorative (`alt=""`). The
+focus ring is drawn inside the card (2px primary over a 4px white band), since
+the card clips anything outside it. Hovering (only on devices that hover)
+tightens the border and zooms the image to 1.03 over 300ms; pressing the
+link scales the card to 0.995. Zoom and press are off with reduced motion. The favorite button overlays the image in the top-right and
 heart-beats (1 → 1.15 → 1) on activation.
 News articles use the same card (`CardLayout`): the date, the city as the
 location, no favorite button. The first article of a news list uses the
@@ -826,8 +831,7 @@ collapses to 0ms under `prefers-reduced-motion: reduce`.
   focus, and price/price-free accents. Treat it as a scarce resource.
 - Pair white type over photography with a `text-shadow` and a 60% overlay
   — never bare white on raw photography.
-- Default cards to a hairline border and *no* shadow. Let shadow bloom on
-  hover only.
+- Keep cards to a hairline border and *no* shadow, hover included.
 - Pin form inputs to 16px+ to prevent iOS auto-zoom.
 - Use `:focus-visible` (not `:focus`) for all focus rings.
 - Keep mobile interactive targets at 44×44 px minimum.
@@ -855,4 +859,4 @@ collapses to 0ms under `prefers-reduced-motion: reduce`.
   transitions. Reserve it for confirmation gestures only.
 - Don't use blur outside the hero / photographic surfaces.
 - Don't break the canonical hover pattern on cards (border tightens +
-  shadow blooms + image scales 1.03). Stay consistent across the grid.
+  image scales 1.03). Stay consistent across the grid.

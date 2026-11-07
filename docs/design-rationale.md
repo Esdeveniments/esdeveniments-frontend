@@ -43,7 +43,7 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 | Variant                 | Component                                 | Used In                        | Image Ratio |
 | ----------------------- | ----------------------------------------- | ------------------------------ | ----------- |
 | Standard (listing grid) | `CardContentServer` / `CardContentClient` | `/[place]` listing pages       | 3:2         |
-| Horizontal (carousel)   | `CardHorizontalServer`                    | Homepage categorized sections  | 3:2         |
+| Horizontal (carousel)   | `CardContentServer compact`               | Homepage categorized sections  | 3:2         |
 | Compact (related)       | `CompactCard`                             | Related events on detail pages | 4:3         |
 
 ### 2.2 Decisions Made (with rationale)
@@ -62,15 +62,15 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 
 #### 2-column grid (not 3, not 1)
 
-**Decision**: `grid-cols-1 md:grid-cols-2` on listing pages.
+**Decision**: `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` (`gap-5`) on listing pages.
 **Why**: This is a cultural events discovery site with wildly diverse imagery (jazz posters vs. school open days vs. festival flyers). Larger images improve visual assessment. 3 columns were tested but made images too small for visual scanning. Eventbrite uses 4-col because their content is visually homogeneous (professional event photos). Our content is not.
-**Note**: 3 columns on `xl:` screens (≥1280px) was considered as a future improvement — see §7.
+**Note**: 3 columns on `xl:` screens (≥1280px), first listed as a future improvement in §7, is now in the grid.
 
-#### Contained cards (border + shadow + rounded corners)
+#### Contained cards (border + rounded corners, no shadow)
 
-**Decision**: Cards use `card-bordered` / `shadow-sm` with `rounded-card` (12px).
+**Decision**: Cards use a hairline border (`border-border/20`, `border-border/40` on hover) with `rounded-card` (12px) and no shadow.
 **Why**: Production had no card containment — images/titles/metadata floated in open space separated only by whitespace. This made it hard to parse where one card ended and the next began. All competitors use contained card surfaces.
-**Design system**: Uses existing `card-bordered`, `rounded-card`, `shadow-card` tokens.
+**Design system**: `rounded-card`, `border-border`; the `.card-event*` classes in `styles/globals.css` add the link, focus, hover and press rules.
 
 #### Share buttons removed from cards
 
@@ -99,20 +99,20 @@ A card must give enough **information scent** for users to quickly decide "yes, 
 **Decision**: Compact related-event cards use `text-muted-foreground` for dates, not `text-primary`.
 **Why**: On a related-events section (user is already on a detail page), the title should be the visual anchor, not the date. Red dates on compact cards made dates more dominant than titles, which inverts the information hierarchy.
 
-#### Category badge on image (frosted glass)
+#### Category badge above the date
 
-**Decision**: Text badge overlay at top-left of image with `bg-background/90 backdrop-blur-sm`.
+**Decision**: A text pill (`CategoryBadge`, `text-xs`) in the card body, above the date. It used to overlay the image (frosted glass).
 **Why**: For mixed-category listings, category is the #1 scanning signal. Users need to quickly identify "is this a concert or a workshop?" Color-coded vertical bars (production) required memorizing a color→category mapping and were problematic for colorblind users (~8% of males). Text badges are universally understood. DICE uses a similar approach.
 **Localization**: Badges use `getCategoryLabel` instead of raw API names.
 
-#### View counter behavior
+#### No view counter on cards
 
-**Decision**: Show visits with reduced visual weight (`min-w` reduced, smaller icon in `hideText` mode). Bar chart icon retained.
-**Why**: Low view counts (29, 31) add no social proof signal. Future consideration: threshold display (≥50 only) or reframing as "🔥 Popular" badge. Current implementation reduces space usage without removing the data.
+**Decision**: Cards show no view count (the old `viewCountAria` label was removed with it).
+**Why**: Low view counts (29, 31) add no social proof signal. A future "Popular" badge would need a threshold.
 
 ### 2.3 DRY Architecture
 
-All 3 card variants use `prepareCardContentData({ variant })` — a single function that centralizes:
+Event cards (`CardLayout` in its `default`, `featured`, `row` and `compact` forms, and `CompactCard`) get their data from `prepareCardContentData({ variant })`, which returns a `CardData` (news cards build theirs by hand). One function centralizes:
 
 - Title truncation (per-variant config)
 - Location building
