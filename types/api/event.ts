@@ -105,6 +105,8 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   relatedEvents?: EventSummaryResponseDTO[]; // Related events from list endpoint (no location fields)
   metaTitle?: string;
   metaDescription?: string;
+  /** Short free text from the backend ("Gratuït", "10 € taquilla · 5 € online"); null when unknown. */
+  price?: string | null;
   /**
    * Public owner summary embedded in event detail. No email — the backend's
    * latest auth handoff drops email from the creator payload, the UI must

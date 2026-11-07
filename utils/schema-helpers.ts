@@ -2,6 +2,7 @@ import { siteUrl } from "@config/index";
 import { normalizeEndTime } from "@utils/date-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getProfileSlug } from "@utils/user-helpers";
+import { getEventPriceText, parseSchemaPrice } from "@utils/event-price";
 import { TIMEZONE_MADRID } from "@utils/constants";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
@@ -154,6 +155,8 @@ export const generateJsonData = (
   // Handle optional properties that only exist in EventDetailResponseDTO
   const eventDuration = "duration" in event ? event.duration || "" : "";
   const videoUrl = "videoUrl" in event ? event.videoUrl : undefined;
+  const priceText = "price" in event ? getEventPriceText(event.price) : null;
+  const schemaPrice = priceText ? parseSchemaPrice(priceText) : null;
   const startTime = "startTime" in event ? event.startTime : null;
   const endTime = "endTime" in event ? event.endTime : null;
   const normalizedEndTime = normalizeEndTime(startTime, endTime);
@@ -312,6 +315,15 @@ export const generateJsonData = (
     ...(organizer && { organizer }),
     // isAccessibleForFree removed: event.type defaults to "FREE" so this is unreliable.
     // We only want to claim "Free" when we are 100% sure.
+    // offers only when the price text is exactly "free" (0) or one euro
+    // amount; no url, since Google wants a ticket page there, not ours.
+    ...(schemaPrice !== null && {
+      offers: {
+        "@type": "Offer" as const,
+        price: schemaPrice,
+        priceCurrency: "EUR",
+      },
+    }),
     ...(isValidHttpUrl(event.url) && {
       sameAs: event.url,
     }),
