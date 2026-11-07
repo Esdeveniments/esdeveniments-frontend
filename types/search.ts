@@ -48,10 +48,10 @@ export interface SearchSuggestionsProps {
   profilesLoading: boolean;
   onSelect: (suggestion: SearchSuggestion) => void;
   /**
-   * Tap or click outside the search box and the popup. `abandoned` is false
+   * Tap or click outside the search box and the popup. `submitsSearch` is true
    * when the tap lands on a control that submits the same search.
    */
-  onDismiss: (abandoned: boolean) => void;
+  onDismiss: (submitsSearch: boolean) => void;
 }
 
 export interface SearchSuggestionOptionProps {
@@ -81,6 +81,8 @@ export interface SearchComboboxInputProps {
 export interface SearchCombobox {
   /** Wraps the input and its buttons; the popup opens below it. */
   anchorRef: RefObject<HTMLDivElement | null>;
+  /** Submits the typed text; use it for the box's own search button. */
+  submit: () => void;
   inputProps: SearchComboboxInputProps;
   /** Null until the first focus, so the popup chunk isn't needed before. */
   popupProps: SearchSuggestionsProps | null;

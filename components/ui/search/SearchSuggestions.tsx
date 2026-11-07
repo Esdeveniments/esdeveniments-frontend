@@ -78,7 +78,7 @@ export default function SearchSuggestions({
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as Node;
       if (anchorRef.current?.contains(target) || popupRef.current?.contains(target)) return;
-      dismissRef.current(!(target instanceof Element && target.closest("[data-search-submit]")));
+      dismissRef.current(target instanceof Element && !!target.closest("[data-search-submit]"));
     };
     document.addEventListener("pointerdown", onPointerDown, true);
     return () => document.removeEventListener("pointerdown", onPointerDown, true);

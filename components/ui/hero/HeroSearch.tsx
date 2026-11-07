@@ -178,7 +178,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
 
   const submitTypedSearch = useCallback(() => handleSearchSubmit(), [handleSearchSubmit]);
 
-  const { anchorRef, inputProps, popupProps } = useSearchCombobox({
+  const { anchorRef, submit, inputProps, popupProps } = useSearchCombobox({
     value: searchTerm,
     setValue: setSearchTerm,
     context: "hero_search",
@@ -296,7 +296,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           )}
           <Button
             variant="primary"
-            onClick={submitTypedSearch}
+            onClick={submit}
             className="absolute inset-y-1 right-1 min-h-0 px-3.5 flex items-center justify-center rounded-full"
             data-testid="search-button"
             aria-label={t("search")}

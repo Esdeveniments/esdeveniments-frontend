@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useRouter } from "@i18n/routing";
 import { useProfileSuggestions } from "@components/hooks/useProfileSuggestions";
@@ -78,14 +78,44 @@ export function useSearchCombobox({
     ? (suggestions.find((suggestion) => suggestion.id === activeId) ?? null)
     : null;
 
+  // True while the list has been shown for a search with no outcome yet.
+  // Closing the list isn't giving up (Esc then Enter still searches), so
+  // `abandoned` goes out only when the user leaves: unmount or page hide.
+  const unresolvedRef = useRef(false);
+  useEffect(() => {
+    if (isOpen) unresolvedRef.current = true;
+  }, [isOpen]);
+  useEffect(() => {
+    const flush = () => {
+      if (!unresolvedRef.current) return;
+      unresolvedRef.current = false;
+      sendSearchOutcomeGA(context, "abandoned");
+    };
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, [context]);
+
   const close = () => {
     setOpen(false);
     setActiveId(null);
   };
 
-  const dismiss = (abandoned = true) => {
-    if (isOpen && abandoned) sendSearchOutcomeGA(context, "abandoned");
+  const resolve = () => {
+    unresolvedRef.current = false;
     close();
+  };
+
+  const dismiss = (submitsSearch: boolean) => {
+    if (submitsSearch) unresolvedRef.current = false;
+    close();
+  };
+
+  const submit = () => {
+    resolve();
+    onSubmit();
   };
 
   const select = (suggestion: SearchSuggestion) => {
@@ -95,7 +125,7 @@ export function useSearchCombobox({
       suggestions.indexOf(suggestion) + 1,
       query.length,
     );
-    close();
+    resolve();
     if (suggestion.type === "events") {
       onSelect(suggestion);
       return;
@@ -137,15 +167,14 @@ export function useSearchCombobox({
           select(activeSuggestion);
           return;
         }
-        close();
-        onSubmit();
+        submit();
         return;
       case "Escape":
         // First Esc closes the list, a second one clears the text (without
         // navigating), like a native search field.
         if (isOpen) {
           e.preventDefault();
-          dismiss();
+          close();
         } else if (value) {
           e.preventDefault();
           setValue("");
@@ -171,6 +200,7 @@ export function useSearchCombobox({
 
   return {
     anchorRef,
+    submit,
     inputProps: {
       role: "combobox",
       "aria-autocomplete": "list",

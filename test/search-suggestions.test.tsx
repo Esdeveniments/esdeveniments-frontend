@@ -75,7 +75,7 @@ const profile = (username: string): UserSearchResultDTO => ({
 });
 
 function setup() {
-  renderWithProviders(
+  const { unmount } = renderWithProviders(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <Search />
     </SWRConfig>,
@@ -88,7 +88,7 @@ function setup() {
   const key = (k: string, init: KeyboardEventInit = {}) =>
     fireEvent.keyDown(input, { key: k, ...init });
   const options = () => screen.queryAllByRole("option");
-  return { input, type, key, options };
+  return { input, type, key, options, unmount };
 }
 
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -171,7 +171,6 @@ describe("search suggestions (profiles off)", () => {
     type("Castell");
     key("Escape");
     expect(input).toHaveAttribute("aria-expanded", "false");
-    expect(h.outcomeGA).toHaveBeenCalledWith("search", "abandoned");
     key("Escape");
     expect(input).toHaveValue("");
     expect(h.push).not.toHaveBeenCalled();
@@ -184,17 +183,37 @@ describe("search suggestions (profiles off)", () => {
     expect(input).toHaveAttribute("aria-expanded", "true");
     fireEvent.pointerDown(document.body);
     expect(input).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("reports abandoned once when the user leaves after seeing the list", () => {
+    const { type, key, unmount } = setup();
+    type("Castell");
+    key("Escape");
+    fireEvent.pointerDown(document.body);
+    expect(h.outcomeGA).not.toHaveBeenCalled();
+    unmount();
+    expect(h.outcomeGA).toHaveBeenCalledTimes(1);
     expect(h.outcomeGA).toHaveBeenCalledWith("search", "abandoned");
   });
 
+  it("doesn't report abandoned for a search submitted after closing the list", () => {
+    const { type, key, unmount } = setup();
+    type("Castell");
+    key("Escape");
+    key("Enter");
+    unmount();
+    expect(h.outcomeGA).not.toHaveBeenCalledWith("search", "abandoned");
+  });
+
   it("closes without an abandoned outcome when the tap submits the same search", () => {
-    const { input, type } = setup();
+    const { input, type, unmount } = setup();
     const cta = document.createElement("button");
     cta.setAttribute("data-search-submit", "");
     document.body.append(cta);
     type("Castell");
     fireEvent.pointerDown(cta);
     expect(input).toHaveAttribute("aria-expanded", "false");
+    unmount();
     expect(h.outcomeGA).not.toHaveBeenCalled();
     cta.remove();
   });

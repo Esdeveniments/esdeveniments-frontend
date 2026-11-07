@@ -111,7 +111,7 @@ export default function Search(): JSX.Element {
 
   const submitSearch = useCallback(() => triggerSearch(), [triggerSearch]);
 
-  const { anchorRef, inputProps, popupProps } = useSearchCombobox({
+  const { anchorRef, submit, inputProps, popupProps } = useSearchCombobox({
     value: inputValue,
     setValue: setInputValue,
     context: "search",
@@ -173,7 +173,7 @@ export default function Search(): JSX.Element {
         {/* Search button on the right */}
         <button
           type="button"
-          onClick={submitSearch}
+          onClick={submit}
           className="h-10 flex justify-center items-center cursor-pointer px-2 bg-muted hover:bg-muted/80 active:bg-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground-strong rounded-r-input"
           aria-label={t("search")}
           data-testid="search-button"
