@@ -5,6 +5,8 @@
 export interface SafeFetchOptions extends RequestInit {
   /** Timeout in milliseconds (default: 5000) */
   timeout?: number;
+  /** Parse the body as JSON (default: true). False: any 2xx succeeds, body ignored. */
+  expectJson?: boolean;
   /** Context for error logging */
   context?: {
     tags?: Record<string, string>;

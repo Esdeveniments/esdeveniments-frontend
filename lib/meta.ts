@@ -15,6 +15,7 @@ import {
   stripLocaleFromPathname,
 } from "@utils/i18n-seo";
 import { getFormattedDate } from "@utils/helpers";
+import { formatShortDateRange } from "@utils/date-helpers";
 import { isProductionSiteUrl } from "@utils/production-host";
 import { parseDateFromIso } from "@utils/schema-helpers";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
@@ -54,6 +55,13 @@ function appendIfFits(base: string, addition: string, maxLength = 60): string {
   return candidate.length <= maxLength ? candidate : base;
 }
 
+const META_TITLE_MAX = 60;
+// A dated title may run a bit longer: search results cut the tail, but the
+// date still tells ca/es/en pages (and repeat editions) apart.
+const META_TITLE_WITH_DATE_MAX = 70;
+const META_DESCRIPTION_MAX = 156;
+const META_DESCRIPTION_SHORT = 120;
+
 // --- Meta Title/Description Generators ---
 export function generateMetaTitle(
   title: string,
@@ -61,9 +69,13 @@ export function generateMetaTitle(
   location?: string,
   town?: string,
   region?: string,
+  dateLabel?: string,
 ): string {
   const titleSanitized = sanitizeAndTrim(title);
-  let metaTitle = smartTruncate(titleSanitized, 60);
+  const maxLength = dateLabel ? META_TITLE_WITH_DATE_MAX : META_TITLE_MAX;
+  let metaTitle = dateLabel
+    ? `${smartTruncate(titleSanitized, maxLength - dateLabel.length - 6)} | ${dateLabel}`
+    : smartTruncate(titleSanitized, maxLength);
   const titleParts = [];
   if (location) titleParts.push(sanitizeAndTrim(location));
   if (town && sanitizeAndTrim(town) !== titleParts[0])
@@ -71,14 +83,14 @@ export function generateMetaTitle(
   if (region && !titleParts.includes(sanitizeAndTrim(region)))
     titleParts.push(sanitizeAndTrim(region));
   titleParts.forEach((part) => {
-    metaTitle = appendIfFits(metaTitle, part);
+    metaTitle = appendIfFits(metaTitle, part, maxLength);
   });
   if (
     description &&
     sanitizeAndTrim(description) !== "" &&
-    metaTitle.length < 50
+    metaTitle.length < maxLength - 10
   ) {
-    metaTitle = appendIfFits(metaTitle, sanitizeAndTrim(description));
+    metaTitle = appendIfFits(metaTitle, sanitizeAndTrim(description), maxLength);
   }
   return metaTitle;
 }
@@ -96,7 +108,16 @@ export function generateMetaDescription(
     const descriptionSanitized = sanitizeInput(description);
     metaDescription += ` - ${descriptionSanitized}`;
   }
-  return smartTruncate(metaDescription, 156);
+  return smartTruncate(metaDescription, META_DESCRIPTION_MAX);
+}
+
+// Pads a short description with a generic sentence, only when it fits whole.
+function appendSentenceIfShort(base: string, sentence?: string): string {
+  const addition = sentence?.trim();
+  if (!addition || base.length >= META_DESCRIPTION_SHORT) return base;
+  const separator = /[.!?…]$/.test(base) ? " " : ". ";
+  const candidate = `${base}${separator}${addition}`;
+  return candidate.length <= META_DESCRIPTION_MAX ? candidate : base;
 }
 
 // --- Open Graph/SEO Metadata Generator ---
@@ -105,21 +126,25 @@ export function generateEventMetadata(
   url?: string,
   prefixTitle?: string,
   locale: AppLocale = DEFAULT_LOCALE,
+  descriptionSuffix?: string,
 ): Metadata {
   if (!event) return { title: "No event found" };
 
   const localeToUse = locale ?? DEFAULT_LOCALE;
 
-  // Use backend metaTitle if available and non-empty, otherwise generate it
-  const enhancedTitle = event.metaTitle?.trim()
-    ? event.metaTitle.trim()
-    : generateMetaTitle(
-        event.title,
-        event.description,
-        event.location,
-        event.city?.name,
-        event.region?.name,
-      );
+  // The backend metaTitle is Catalan (with a Catalan date), so only the
+  // default locale uses it; es/en get a generated title with a localized date.
+  const enhancedTitle =
+    event.metaTitle?.trim() && localeToUse === DEFAULT_LOCALE
+      ? event.metaTitle.trim()
+      : generateMetaTitle(
+          event.title,
+          event.description,
+          event.location,
+          event.city?.name,
+          event.region?.name,
+          formatShortDateRange(event.startDate, event.endDate, localeToUse),
+        );
 
   const pageTitle =
     prefixTitle && prefixTitle.length > 0
@@ -149,8 +174,12 @@ export function generateEventMetadata(
     if (event.location && event.location.trim().length > 0) {
       descriptionParts.push(event.location);
     }
-    finalDescription = smartTruncate(descriptionParts.join(" - "), 156);
+    finalDescription = smartTruncate(
+      descriptionParts.join(" - "),
+      META_DESCRIPTION_MAX,
+    );
   }
+  finalDescription = appendSentenceIfShort(finalDescription, descriptionSuffix);
 
   const image = event.imageUrl ? [event.imageUrl] : [];
   const canonicalBase = url || `${siteUrl}/e/${event.slug}`;

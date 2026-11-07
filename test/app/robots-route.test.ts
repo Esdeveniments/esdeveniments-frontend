@@ -94,12 +94,17 @@ describe("app/robots.txt/route (production-host allowlist)", () => {
     expect(body).toMatch(/User-Agent: \*\nAllow: \//);
     // Google needs JS/CSS to render; only other Next internals are blocked
     expect(body).toContain("Allow: /_next/static/\nDisallow: /_next/\n");
-    // Sitemaps are declared
-    expect(body).toContain(
+    // Only the sitemap index is declared; it lists every child sitemap
+    expect(body.match(/^Sitemap: .*$/gm)).toEqual([
       "Sitemap: https://www.esdeveniments.cat/sitemap.xml",
-    );
-    // Known AI crawlers are still listed
-    expect(body).toContain("ChatGPT-User");
+    ]);
+    // Named AI crawlers ignore the `*` group, so their group must also
+    // block /api/ (an allow-only group let them crawl it).
+    const aiGroup = body
+      .split("\n\n")
+      .find((group) => group.includes("User-Agent: OAI-SearchBot"));
+    expect(aiGroup).toContain("User-Agent: GPTBot");
+    expect(aiGroup).toContain("Disallow: /api/");
     expect(response.headers.get("X-Robots-Source")).toBe("route-handler-v2");
   });
 

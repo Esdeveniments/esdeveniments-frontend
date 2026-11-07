@@ -29,8 +29,6 @@ function buildNewsSitemap(
         `  <url>\n` +
         `    <loc>${escapeXml(i.loc)}</loc>\n` +
         `    <lastmod>${escapeXml(lastmod)}</lastmod>\n` +
-        `    <changefreq>daily</changefreq>\n` +
-        `    <priority>0.8</priority>\n` +
         `    <news:news>\n` +
         `      <news:publication>\n` +
         `        <news:name>${escapeXml(i.publicationName)}</news:name>\n` +

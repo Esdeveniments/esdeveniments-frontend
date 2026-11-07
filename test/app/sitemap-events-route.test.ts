@@ -64,4 +64,25 @@ describe("app/sitemap-events/[...parts]/route", () => {
     expect(Object.keys(bySlug)).not.toContain("expired-long-ago");
     expect(Object.keys(bySlug)).toHaveLength(3);
   });
+
+  it("lists every locale version as its own <url> with the same alternates", async () => {
+    const { GET } = await import("../../app/sitemap-events/[...parts]/route");
+    const context: RouteContext<"/sitemap-events/[...parts]"> = {
+      params: Promise.resolve({ parts: ["1.xml"] }),
+    };
+
+    const response = await GET(new Request("https://x/sitemap-events/1.xml"), context);
+    const xml = await response.text();
+    const locs = [...xml.matchAll(/<loc>([^<]*upcoming-edited)<\/loc>/g)].map(
+      ([, loc]) => new URL(loc).pathname,
+    );
+
+    expect(locs).toEqual([
+      "/e/upcoming-edited",
+      "/es/e/upcoming-edited",
+      "/en/e/upcoming-edited",
+    ]);
+    // ca + es + en + x-default on each of the three entries
+    expect(xml.match(/hreflang="es" href="[^"]*\/es\/e\/upcoming-edited"/g)).toHaveLength(3);
+  });
 });
