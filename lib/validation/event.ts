@@ -58,6 +58,13 @@ const EventSummaryBaseSchema = z
     endDate: z.string().nullable(),
     endTime: z.string().nullable(),
     location: z.string(),
+    // A bad coordinate drops the pin, never the event.
+    latitude: z.number().nullish().catch(null),
+    longitude: z.number().nullish().catch(null),
+    locationPrecision: z
+      .enum(["VENUE", "CITY", "UNKNOWN"])
+      .nullish()
+      .catch(null),
     visits: z.number(),
     origin: EventOriginEnum,
     categories: z.array(CategorySummaryResponseDTOSchema),

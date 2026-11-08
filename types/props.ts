@@ -52,7 +52,14 @@ export interface ClientImageInnerProps {
   date?: string;
 }
 
-import { ChangeEvent, InputHTMLAttributes, MouseEvent, ReactNode } from "react";
+import {
+  ChangeEvent,
+  ComponentType,
+  InputHTMLAttributes,
+  MouseEvent,
+  ReactNode,
+} from "react";
+import type { CardLinkProps } from "types/ui";
 
 // Detail page section tracker
 export interface DetailSectionTrackerProps {
@@ -222,6 +229,10 @@ export interface CompactCardProps {
   tCard: (key: string, values?: Record<string, string | number>) => string;
   index: number;
   analyticsEventName?: string;
+}
+
+export interface CompactCardViewProps extends CompactCardProps {
+  LinkComponent: ComponentType<CardLinkProps>;
 }
 
 export interface FavoriteButtonLabels {

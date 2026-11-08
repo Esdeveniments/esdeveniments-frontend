@@ -149,6 +149,14 @@ if (!self.workbox) {
     new workbox.strategies.NetworkOnly()
   );
 
+  // Listing map (OpenFreeMap style, tiles, glyphs, sprites): one pan loads
+  // dozens of tiles that would evict pages from the default cache. The
+  // browser's HTTP cache already keeps them (max-age=86400).
+  workbox.routing.registerRoute(
+    ({ url }) => url.hostname === "tiles.openfreemap.org",
+    new workbox.strategies.NetworkOnly()
+  );
+
   // Strategy for Static Assets (CSS, JS, Fonts) - Cache First
   // These files don't change often, so serving them from the cache first is fastest.
   workbox.routing.registerRoute(

@@ -12,6 +12,7 @@ import { useEvents } from "@components/hooks/useEvents";
 import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
+import { usePublishListingEvents } from "@components/context/ListingEventsContext";
 import { hasActiveClientFilters } from "@utils/url-filters";
 import { useTranslations, useLocale } from "next-intl";
 import {
@@ -208,6 +209,14 @@ function HybridEventsListClientContent({
   // Show fallback events when filters return no results but we have initial events
   // (initialEvents may contain region or latest events as fallback from server)
   const showFallbackEvents = showNoEventsFound && realInitialEvents.length > 0;
+
+  usePublishListingEvents({
+    realInitialEvents,
+    displayedEvents,
+    hasClientFilters,
+    showFallbackEvents,
+    isLoading,
+  });
 
   const notFoundTitle = useMemo(() => {
     if (!pageData?.notFoundTitle) {

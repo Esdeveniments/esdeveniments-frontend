@@ -23,6 +23,7 @@ export const CLIENT_COMPONENT_KEYS = [
   "EventForm",
   "EventLocation",
   "EventPage",
+  "EventsMap",
   "FavoriteButton",
   "FavoritesLoginNudge",
   "Filters",
