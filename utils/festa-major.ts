@@ -13,6 +13,12 @@ import { stripHtmlTags } from "./sanitize";
 
 /** Acts more than this many days after the previous one start a new festa. */
 const CLUSTER_GAP_DAYS = 14;
+/**
+ * Unnamed acts longer than this from the first one start a new festa: in a city
+ * with festes all year ("Concert de Festa Major" every other week) they would
+ * otherwise chain into one festa running for months.
+ */
+const MAX_UNNAMED_SPAN_DAYS = 28;
 /** Longer acts (exhibitions) count only by their start day for a festa's dates. */
 const MAX_COUNTED_SPAN_DAYS = 3;
 
@@ -85,14 +91,27 @@ const isWithin = (date: string, edition: FestaMajorEdition): boolean =>
   dayNumber(date) >= dayNumber(edition.start) - 1 &&
   dayNumber(date) <= dayNumber(edition.end) + 1;
 
-/** Splits acts into runs where each act starts at most CLUSTER_GAP_DAYS after the run's latest start. */
-function clusterByTime(acts: FestaMajorAct[]): FestaMajorAct[][] {
+/**
+ * Splits acts into runs where each act starts at most CLUSTER_GAP_DAYS after
+ * the run's latest start and at most `maxSpanDays` after its first.
+ */
+function clusterByTime(
+  acts: FestaMajorAct[],
+  maxSpanDays = Number.POSITIVE_INFINITY,
+): FestaMajorAct[][] {
   const clusters: FestaMajorAct[][] = [];
   let latest = Number.NEGATIVE_INFINITY;
+  let first = Number.NEGATIVE_INFINITY;
   for (const act of [...acts].sort(compareActs)) {
     const day = dayNumber(act.startDate);
-    if (clusters.length === 0 || day - latest > CLUSTER_GAP_DAYS)
+    if (
+      clusters.length === 0 ||
+      day - latest > CLUSTER_GAP_DAYS ||
+      day - first > maxSpanDays
+    ) {
       clusters.push([]);
+      first = day;
+    }
     clusters[clusters.length - 1].push(act);
     latest = Math.max(latest, day);
   }
@@ -142,9 +161,9 @@ export function groupEditions(
       ...namedEditions.map(({ key, label, acts: group }) =>
         toEdition({ key, label }, group),
       ),
-      ...(leftover.length > 0
-        ? [toEdition({ key: "", label: null }, leftover)]
-        : []),
+      ...clusterByTime(leftover, MAX_UNNAMED_SPAN_DAYS).map((group) =>
+        toEdition({ key: "", label: null }, group),
+      ),
     );
   }
   return editions.sort(

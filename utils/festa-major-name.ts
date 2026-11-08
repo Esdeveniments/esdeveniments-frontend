@@ -44,10 +44,25 @@ const QUALIFIERS = new Set([
   "popular",
   "musical",
 ]);
+// Act types written after "Festa Major" ("FESTA MAJOR Concert de…"), not a
+// festa's name. Compared without accents.
+const ACT_WORDS = new Set([
+  "concert",
+  "prego",
+  "ball",
+  "sopar",
+  "dinar",
+  "correfoc",
+  "cercavila",
+  "exposicio",
+  "programa",
+  "senior",
+  "seniors",
+]);
 // Adjectives that name a festa without a preposition: "Festa Major Petita".
 const ADJECTIVES = new Set(["petita"]);
 
-const WORD = String.raw`(?:[DdLl]')?\p{Lu}[\p{Ll}\p{M}·]*(?:-\p{L}[\p{Ll}\p{M}·]*)*(?![\p{L}\p{N}])`;
+const WORD = String.raw`(?:[DdLlNn]')?\p{Lu}[\p{Ll}\p{M}·]*(?:-\p{L}[\p{Ll}\p{M}·]*)*(?![\p{L}\p{N}])`;
 const NAME_RE = new RegExp(
   String.raw`^${WORD}(?:\s+(?:(?:de|del|dels|la|les|i|el|els|d'en|en|na)\s+)*${WORD})*`,
   "u",
@@ -60,6 +75,10 @@ const FESTA_MAJOR_RE = new RegExp(
 
 const normalizeApostrophes = (value: string): string =>
   value.replace(/[’`´]/g, "'");
+
+/** "St. Joan" → "Sant Joan", "Sta. Anna" → "Santa Anna". */
+const expandSaints = (value: string): string =>
+  value.replace(/\bSt\.\s*/g, "Sant ").replace(/\bSta\.\s*/g, "Santa ");
 
 const normalizeWord = (word: string): string =>
   normalizeForSearch(word).replace(/^[dl]'/, "");
@@ -97,7 +116,7 @@ export function extractFestaName(
   title: string,
   townLabel: string,
 ): FestaMajorName {
-  const text = normalizeApostrophes(title);
+  const text = expandSaints(normalizeApostrophes(title));
   const found = FESTA_MAJOR_RE.exec(text);
   if (!found) return UNNAMED;
   let rest = text.slice(found.index + found[0].length);
@@ -117,7 +136,8 @@ export function extractFestaName(
   if (significant.length === 0 || significant.length > MAX_NAME_WORDS) {
     return UNNAMED;
   }
-  if (QUALIFIERS.has(normalizeForSearch(words[0]))) return UNNAMED;
+  const firstWord = normalizeForSearch(words[0]);
+  if (QUALIFIERS.has(firstWord) || ACT_WORDS.has(firstWord)) return UNNAMED;
 
   const name = words.join(" ");
   const normalizedName = words.map(normalizeWord).join(" ");

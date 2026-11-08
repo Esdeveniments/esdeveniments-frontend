@@ -1508,6 +1508,7 @@
       "title": "Catalonia festes majors {year}",
       "intro": "{count, plural, one {# town} other {# towns}}, sorted by date. If a town hasn't published its {year} programme yet, we show last year's dates.",
       "nowTitle": "On now and coming up",
+      "calendarTitle": "All of {year}, month by month",
       "regionsTitle": "By comarca",
       "nadalTitle": "At Christmas",
       "empty": "We don't have any festes majors in the calendar yet.",

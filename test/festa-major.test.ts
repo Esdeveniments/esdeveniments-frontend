@@ -79,6 +79,18 @@ describe("extractFestaName", () => {
       "font-d-en-fargues",
       "Festa Major de Font d'en Fargues",
     ],
+    [
+      "Festa Major de Ca n'Olivella",
+      "Olesa de Bonesvalls",
+      "ca-n-olivella",
+      "Festa Major de Ca n'Olivella",
+    ],
+    [
+      "Festa Major de St. Salvador",
+      "El Brull",
+      "sant-salvador",
+      "Festa Major de Sant Salvador",
+    ],
   ])("%s → %s", (title, town, key, label) => {
     expect(extractFestaName(title, town)).toEqual({ key, label });
   });
@@ -100,6 +112,8 @@ describe("extractFestaName", () => {
     ["Festa Majorca", "Begues"],
     ["Festa Major de Sant Joan Concert Banda Municipal Gran", "Begues"],
     ["Pregó de festa major a Sant Pol", "Sant Pol"],
+    ["FESTA MAJOR Concert d'Estoparte", "Taradell"],
+    ["Festa Major de Sèniors", "Caldes d'Estrac"],
   ])("%s is the town's own festa", (title, town) => {
     expect(extractFestaName(title, town)).toEqual({ key: "", label: null });
   });
@@ -268,6 +282,32 @@ describe("groupEditions", () => {
       ["", "2026-07-10", 2],
     ]);
     expect(mainEdition(editions)?.start).toBe("2026-07-10");
+  });
+
+  it("doesn't chain a city's unnamed acts into a festa of months", () => {
+    const dates = [
+      "08-14",
+      "08-22",
+      "09-04",
+      "09-16",
+      "10-02",
+      "10-12",
+      "10-17",
+    ];
+    const editions = groupEditions(
+      [
+        ...dates.map((d) => act("Concert de Festa Major", `2026-${d}`)),
+        act("Dates de festa major", "2026-10-30"),
+        act("Festa Major Alternativa", "2026-11-12", { endDate: "2026-11-15" }),
+      ],
+      "Barcelona",
+    );
+    expect(editions.map((e) => [e.start, e.end])).toEqual([
+      ["2026-08-14", "2026-09-04"],
+      ["2026-09-16", "2026-09-16"],
+      ["2026-10-02", "2026-10-30"],
+      ["2026-11-12", "2026-11-15"],
+    ]);
   });
 
   it("doesn't stretch a festa with a long exhibition", () => {

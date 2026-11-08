@@ -107,12 +107,20 @@ export default async function Page() {
               towns={upcoming}
               locale={locale}
               headingLevel="h3"
+              today={today}
             />
           </section>
         )}
 
         {towns.length > 0 && (
-          <FestaMajorTownList towns={towns} locale={locale} headingLevel="h2" />
+          <section className="stack gap-4 w-full">
+            <h2 className="heading-2">{t("calendarTitle", { year })}</h2>
+            <FestaMajorTownList
+              towns={towns}
+              locale={locale}
+              headingLevel="h3"
+            />
+          </section>
         )}
 
         <FestaMajorLinkList

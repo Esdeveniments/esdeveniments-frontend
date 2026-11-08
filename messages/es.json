@@ -1508,6 +1508,7 @@
       "title": "Fiestas mayores de Cataluña {year}",
       "intro": "{count, plural, one {# pueblo} other {# pueblos}}, ordenados por fecha. Si aún no han publicado el programa de {year}, te ponemos las fechas del año pasado.",
       "nowTitle": "Estos días",
+      "calendarTitle": "Todo {year}, mes a mes",
       "regionsTitle": "Por comarcas",
       "nadalTitle": "En Navidad",
       "empty": "Aún no tenemos fiestas mayores en el calendario.",

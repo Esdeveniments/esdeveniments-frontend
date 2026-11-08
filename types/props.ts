@@ -14,7 +14,9 @@ export interface PublishDraftPanelProps {
   state: import("./publish-draft").PublishDraftSessionState;
   onRestore: () => void;
   onRestoreGuest: () => Promise<void>;
-  onDiscard: () => Promise<import("./publish-draft").PublishDraftFlushResult | undefined>;
+  onDiscard: () => Promise<
+    import("./publish-draft").PublishDraftFlushResult | undefined
+  >;
   onRetry: () => void;
   warnings: import("./publish-draft").PublishDraftWarning[];
 }
@@ -1170,7 +1172,6 @@ export interface CheckoutReturnTrackerProps {
   params?: Record<string, string>;
 }
 
-
 export interface DocsCodeBlockProps {
   code: string;
 }
@@ -1195,6 +1196,8 @@ export interface FestaMajorTownListProps {
   locale: AppLocale;
   /** Heading level of the month headings. */
   headingLevel: "h2" | "h3";
+  /** Lists festes already on under this YYYY-MM-DD date's month, not their start's. */
+  today?: string;
 }
 
 export interface FestaMajorFestaListProps {

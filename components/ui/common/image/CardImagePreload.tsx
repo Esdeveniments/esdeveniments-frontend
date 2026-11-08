@@ -24,6 +24,8 @@ export default function CardImagePreload({ events }: CardImagePreloadProps) {
     <link
       rel="preload"
       as="image"
+      // href lets React hoist the preload into <head>.
+      href={sources.webp}
       imageSrcSet={sources.webpSrcSet}
       imageSizes={getOptimalImageSizes("list")}
       type="image/webp"

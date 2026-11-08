@@ -22,6 +22,8 @@ export default function ImagePreload({ image, context }: ImagePreloadProps) {
     <link
       rel="preload"
       as="image"
+      // href lets React hoist the preload into <head>.
+      href={sources.webp}
       imageSrcSet={sources.webpSrcSet}
       imageSizes={getOptimalImageSizes(context)}
       type="image/webp"

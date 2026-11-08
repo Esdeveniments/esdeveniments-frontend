@@ -7,16 +7,19 @@ import { festaMajorPath } from "@utils/festa-major-paths";
 import type { FestaMajorTownSummary } from "types/festa-major";
 import type { FestaMajorTownListProps } from "types/props";
 
-/** Towns by the month of their main festa; last-year-only towns show those dates. */
+/** Towns by the month of their festa, in the given order; last-year-only towns show those dates. */
 export default async function FestaMajorTownList({
   towns,
   locale,
   headingLevel,
+  today,
 }: FestaMajorTownListProps) {
   const t = await getTranslations({ locale, namespace: "Pages.FestaMajor" });
   const months = new Map<string, FestaMajorTownSummary[]>();
   for (const town of towns) {
-    const month = town.main.start.slice(5, 7);
+    const date = today && town.main.start < today ? today : town.main.start;
+    // By month only: last-year towns share this year's months.
+    const month = date.slice(5, 7);
     months.set(month, [...(months.get(month) ?? []), town]);
   }
   const Heading = headingLevel;
@@ -26,7 +29,7 @@ export default async function FestaMajorTownList({
       {[...months].map(([month, monthTowns]) => (
         <section key={month} className="stack gap-2 w-full">
           <Heading className="heading-3">
-            {formatMonthHeading(monthTowns[0].main.start, locale)}
+            {formatMonthHeading(`2000-${month}-01`, locale)}
           </Heading>
           <ul className="stack gap-2 w-full">
             {monthTowns.map((town) => {

@@ -485,3 +485,25 @@ The 0.0048 left on the bar is its top padding, added when the navbar is out of v
 ### Method: CLS with real ads
 
 `agent-browser --session cls --profile Default --headed --init-script recorder.js`, `set device "Pixel 7"`, production. The init script observes `layout-shift` (buffered) and stores value, time, `hadRecentInput`, `scrollY` and each source's node path and previous/current rect. Scroll with `scrollBy(0, 350)` every 700 ms. The Funding Choices offerwall ("Veure un anunci curt") covers the page after a few views: remove `.fc-message-root` from the DOM. Never watch the rewarded ad or click near an ad. Click links with `element.click()`, not by coordinates: an ad that has just loaded can be under the pointer. A JS click isn't a trusted input, so shifts within 500 ms of it are reported but wouldn't count for a real tap. Ads fill on most loads but not all, and AdSense rewrites `<main>` only on some: check `ins[data-ad-status=filled]` and `main`'s `style` before trusting a run.
+
+## 2026-11-08: festa major and Nadal hubs (#715)
+
+New pages, first measurement. Lab, local build of `feat/festes-majors` (method above, median of 3, same session as the `/barcelona` and event rows):
+
+| Page | LCP (element) | FCP | TBT | CLS | JS | HTML raw | Server cold → warm |
+|---|---|---|---|---|---|---|---|
+| `/barcelona` (reference) | 0.66 s (text) | 0.58 s | 49 ms | 0 | 351 KB | 577 KB | 0.48 → 0.19 s |
+| Event with image (reference) | 4.60 s (image, 364 KB) | 0.62 s | 76 ms | 0 | 322 KB | 371 KB | 0.46 → 0.02 s |
+| `/festes-majors` | 0.65 s (text) | 0.58 s | 45 ms | 0 | 230 KB | 604 KB | 40 s (empty cache) → 0.04 s |
+| `/festa-major/cardedeu` | 2.36 s (cover image) | 0.58 s | 47 ms | 0 | 223 KB | 267 KB | 0.38 → 0.20 s |
+| `/festa-major/valles-oriental` | 0.60 s (text) | 0.59 s | 46 ms | 0 | 223 KB | 299 KB | 5.0 → 0.03 s |
+| `/pessebres-vivents` | 1.49 s (card image) | 0.61 s | 62 ms | 0 | 240 KB | 358 KB | 2.5 → 0.02 s |
+| `/fires-de-nadal` | 1.00 s (card image) | 0.61 s | 44 ms | 0 | 240 KB | 514 KB | 5.3 → 0.03 s |
+| `/cavalcades-de-reis` | 0.62 s (text) | 0.60 s | 47 ms | 0 | 240 KB | 463 KB | 8.2 → 0.03 s |
+
+- All pages are server components with no new client JS; they ship less JS than `/barcelona` (no filters, no SWR list).
+- The town cover is the only large image: 800w WebP at quality 50, 97 KB, with a matching preload (same helper, widths, sizes, quality), so it downloads once. On the 1.6 Mbps profile, it shares the line with 223 KB of JS. 500w (46 KB) would save about 0.25 s but looks soft on a phone, which needs about 1080 px. Kept: 2.36 s is under the 2.5 s "good" limit and half the event-page hero.
+- `CardImagePreload` and `ImagePreload` now set `href`, so React emits the preload ahead of the streamed body. This also covers `PlacePageShell`.
+- Cold cache: the hubs read a whole year of events into the in-memory `"use cache"` store, which each deploy empties. The first `/festes-majors` request after a deploy waited 40 s for its content (the `loading.tsx` skeleton arrives in 0.25 s). The deploy workflow now requests the four Catalonia-wide hubs once after the smoke tests ("Warm festivity hubs", never fails the deploy). Town and region hubs are a single place's read (0.4-5 s), so they aren't warmed.
+
+**Next check:** CrUX for `/festes-majors` and `/festa-major/*` once they get traffic; the "Warm festivity hubs" times in the deploy log.

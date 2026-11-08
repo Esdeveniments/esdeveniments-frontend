@@ -1508,6 +1508,7 @@
       "title": "Festes majors de Catalunya {year}",
       "intro": "{count, plural, one {# poble} other {# pobles}}, ordenats per data. Si encara no han publicat el programa del {year}, et posem les dates de l'any passat.",
       "nowTitle": "Aquests dies",
+      "calendarTitle": "Tot el {year}, mes a mes",
       "regionsTitle": "Per comarques",
       "nadalTitle": "Per Nadal",
       "empty": "Encara no tenim festes majors al calendari.",
