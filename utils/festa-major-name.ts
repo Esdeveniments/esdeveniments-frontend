@@ -9,7 +9,8 @@ import { normalizeForSearch, slugifySegment } from "./string-helpers";
 //   "Festa Major 2026 - Pregó", "Concert de Festa Major" → the town's own one
 // Names are capitalised words; lowercase words ("de maig"), digits, dashes and
 // colons end them. Matching is case-sensitive on purpose: with the `i` flag,
-// \p{Lu} also matches lowercase letters.
+// \p{Lu} also matches lowercase letters. A title that opens with "FESTA MAJOR
+// DE/DEL/D'…" in caps is recased first ("… DE CAL ROSAL" → Festa Major de Cal Rosal).
 
 const UNNAMED: FestaMajorName = { key: "", label: null };
 const MAX_NAME_WORDS = 4;
@@ -61,8 +62,22 @@ const ACT_WORDS = new Set([
 ]);
 // Adjectives that name a festa without a preposition: "Festa Major Petita".
 const ADJECTIVES = new Set(["petita"]);
+// Lowercase words that end a name, for all-caps titles ("… AMB LA COBLA").
+const FUNCTION_WORDS = new Set([
+  "a",
+  "al",
+  "als",
+  "amb",
+  "o",
+  "per",
+  "pel",
+  "pels",
+  "que",
+  "sense",
+]);
 
-const WORD = String.raw`(?:[DdLlNn]')?\p{Lu}[\p{Ll}\p{M}·]*(?:-\p{L}[\p{Ll}\p{M}·]*)*(?![\p{L}\p{N}])`;
+// A word ends before a space or punctuation; "L'" before a letter is an elision, not a word.
+const WORD = String.raw`(?:[DdLlNn]')?\p{Lu}[\p{Ll}\p{M}·]*(?:-\p{L}[\p{Ll}\p{M}·]*)*(?![\p{L}\p{N}]|'\p{L})`;
 const NAME_RE = new RegExp(
   String.raw`^${WORD}(?:\s+(?:(?:de|del|dels|la|les|i|el|els|d'en|en|na)\s+)*${WORD})*`,
   "u",
@@ -79,6 +94,18 @@ const normalizeApostrophes = (value: string): string =>
 /** "St. Joan" → "Sant Joan", "Sta. Anna" → "Santa Anna". */
 const expandSaints = (value: string): string =>
   value.replace(/\bSt\.\s*/g, "Sant ").replace(/\bSta\.\s*/g, "Santa ");
+
+/** "DEL BARRI DE L'ESTALVI AMB…" → "del Barri de l'Estalvi amb…". */
+const unshout = (value: string): string =>
+  value.replace(/[\p{L}\p{M}·'-]+/gu, (word) => {
+    if (/\p{Ll}/u.test(word)) return word;
+    const lower = word.toLowerCase();
+    if (CONNECTORS.has(lower) || FUNCTION_WORDS.has(lower)) return lower;
+    return lower.replace(
+      /^((?:[dln]')?)(\p{L})/u,
+      (_, prefix: string, first: string) => prefix + first.toUpperCase(),
+    );
+  });
 
 const normalizeWord = (word: string): string =>
   normalizeForSearch(word).replace(/^[dl]'/, "");
@@ -126,6 +153,12 @@ export function extractFestaName(
   const lower = rest.toLowerCase();
   const preposition = PREPOSITIONS.find((p) => lower.startsWith(p)) ?? null;
   if (preposition) rest = rest.slice(preposition.length);
+  // "FESTA MAJOR DE CAL ROSAL" names its festa in caps. Without "de", caps
+  // words may be an act ("FESTA MAJOR SERENATES"), so those stay unnamed.
+  const opensInCaps =
+    !/[\p{L}\p{N}]/u.test(text.slice(0, found.index)) &&
+    !/\p{Ll}/u.test(found[0]);
+  if (preposition && opensInCaps) rest = unshout(rest);
 
   const match = NAME_RE.exec(rest);
   if (!match) return UNNAMED;

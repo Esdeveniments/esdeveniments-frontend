@@ -91,6 +91,30 @@ describe("extractFestaName", () => {
       "sant-salvador",
       "Festa Major de Sant Salvador",
     ],
+    [
+      "FESTA MAJOR DEL BARRI DE L'ESTALVI",
+      "Cardedeu",
+      "barri-de-l-estalvi",
+      "Festa Major del Barri de l'Estalvi",
+    ],
+    [
+      "FESTA MAJOR DE SANT MARTÍ SESCORTS 2026",
+      "L'Esquirol",
+      "sant-marti-sescorts",
+      "Festa Major de Sant Martí Sescorts",
+    ],
+    [
+      "FESTA MAJOR DE CAL ROSAL",
+      "Olvan",
+      "cal-rosal",
+      "Festa Major de Cal Rosal",
+    ],
+    [
+      "FESTA MAJOR DE SANT ROC AMB LA COBLA",
+      "Begues",
+      "sant-roc",
+      "Festa Major de Sant Roc",
+    ],
   ])("%s → %s", (title, town, key, label) => {
     expect(extractFestaName(title, town)).toEqual({ key, label });
   });
@@ -114,6 +138,12 @@ describe("extractFestaName", () => {
     ["Pregó de festa major a Sant Pol", "Sant Pol"],
     ["FESTA MAJOR Concert d'Estoparte", "Taradell"],
     ["Festa Major de Sèniors", "Caldes d'Estrac"],
+    ["FESTA MAJOR DE TORDERA", "Tordera"],
+    ["FESTA MAJOR D'OLVAN : Tir al Plat", "Olvan"],
+    ["FESTA MAJOR AMB LA COBLA MONTGRINS", "Celrà"],
+    ["SOPAR DE FESTA MAJOR DE NENS I NENES", "Santpedor"],
+    ["FESTA MAJOR MERCÈ", "Vallgorguina"],
+    ["FESTA MAJOR L'ENVELAT de la Plaça de les Eres", "Taradell"],
   ])("%s is the town's own festa", (title, town) => {
     expect(extractFestaName(title, town)).toEqual({ key: "", label: null });
   });
