@@ -58,7 +58,7 @@ export default function EventsMapToggle() {
         type="button"
         aria-haspopup="dialog"
         onClick={() => eventsMapLauncher.get()?.("floating_pill")}
-        className="md:hidden above-mobile-nav fixed left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 min-h-button px-button-x rounded-full bg-foreground-strong text-background text-sm font-semibold shadow-lg focus-ring"
+        className="md:hidden above-mobile-nav fixed left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 min-h-button px-button-x rounded-button bg-foreground-strong text-background body-small font-semibold shadow-lg focus-ring"
         data-testid="events-map-pill"
       >
         <MapIcon className="w-5 h-5" aria-hidden="true" />
@@ -77,7 +77,7 @@ export default function EventsMapToggle() {
               type="button"
               aria-label={t("close")}
               onClick={() => setOpen(false)}
-              className="flex-center h-button w-button rounded-full hover:bg-muted focus-ring"
+              className="flex-center h-button w-button rounded-button hover:bg-muted focus-ring"
             >
               <XMarkIcon className="w-6 h-6" aria-hidden="true" />
             </button>

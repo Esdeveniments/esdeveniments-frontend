@@ -18,7 +18,7 @@
     "build:production": "NODE_ENV=production env-cmd -f .env.production yarn run prebuild && env-cmd -f .env.production next build",
     "build:staging": "NODE_ENV=staging env-cmd -f .env.staging yarn run prebuild && env-cmd -f .env.staging next build",
     "dev": "node scripts/copy-maplibre-worker.mjs && next dev",
-    "dev:inspect": "next dev --inspect",
+    "dev:inspect": "node scripts/copy-maplibre-worker.mjs && next dev --inspect",
     "lint": "eslint .",
     "prebuild": "node scripts/generate-sw.mjs && node scripts/generate-robots.mjs && node scripts/copy-maplibre-worker.mjs",
     "prepare": "husky",

@@ -46,17 +46,3 @@ export interface UseEventsMapLibreInput {
   // MapLibre's own UI text (zoom buttons, attribution), localised.
   uiStrings: Record<string, string>;
 }
-
-// Side panel (desktop) / bottom sheet (mobile): the places, or the events of
-// the selected one.
-export interface EventsMapPanelProps {
-  points: EventMapPoint[];
-  selected: EventMapPoint | null;
-  hoveredId: string | null;
-  onSelect: (point: EventMapPoint | null) => void;
-  onHover: (id: string | null) => void;
-}
-
-export interface EventsMapProps {
-  onRetry: () => void;
-}

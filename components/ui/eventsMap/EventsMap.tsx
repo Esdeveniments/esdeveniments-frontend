@@ -8,7 +8,8 @@ import { useListingEvents } from "@components/context/ListingEventsContext";
 import { buildEventMapPoints } from "@utils/event-map";
 import EventsMapPanel from "./EventsMapPanel";
 import { useEventsMapLibre } from "./useEventsMapLibre";
-import type { EventMapPoint, EventsMapProps } from "types/event-map";
+import type { EventMapPoint } from "types/event-map";
+import type { EventsMapProps } from "types/props";
 
 // Loaded only when the map opens (next/dynamic in EventsMapToggle), so
 // maplibre-gl and its CSS never reach the listing's initial bundle.

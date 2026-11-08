@@ -4,11 +4,11 @@ import { useEffect, useId, useMemo, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import CompactCardClient from "@components/ui/common/cardContent/CompactCardClient";
-import type { EventsMapPanelProps } from "types/event-map";
+import type { EventsMapPanelProps } from "types/props";
 import type { AppLocale } from "types/i18n";
 
 const ICON_BUTTON =
-  "flex-center flex-none h-button w-button rounded-full bg-background text-foreground hover:bg-muted focus-ring";
+  "flex-center flex-none h-button w-button rounded-button bg-background text-foreground hover:bg-muted focus-ring";
 
 // Desktop: the left column next to the map. Mobile: a sheet over the bottom
 // of the map. Lists the places (the keyboard way to pick one; hovering a row
