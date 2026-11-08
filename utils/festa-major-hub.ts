@@ -196,11 +196,18 @@ export function buildFestaMajorPageData({
 
   if (place.type === "region") {
     if (festaKey !== undefined) return base;
-    const region = summarizeTowns(years.current, years.previous, years.year);
+    const region = summarizeTowns(
+      years.current,
+      years.previous,
+      years.year,
+      years.complete,
+    );
     return {
       ...base,
       region,
-      indexable: countIndexableTowns(region) >= MIN_INDEXABLE_REGION_TOWNS,
+      indexable:
+        years.complete &&
+        countIndexableTowns(region) >= MIN_INDEXABLE_REGION_TOWNS,
     };
   }
 
@@ -216,7 +223,8 @@ export function buildFestaMajorPageData({
       ...base,
       town,
       festes,
-      indexable: town.acts.length >= FESTA_MAJOR_MIN_INDEXABLE_ACTS,
+      indexable:
+        years.complete && town.acts.length >= FESTA_MAJOR_MIN_INDEXABLE_ACTS,
     };
   }
 
@@ -233,6 +241,6 @@ export function buildFestaMajorPageData({
       festaKey,
     ),
     festaLabel: link.label,
-    indexable: link.hasPage,
+    indexable: years.complete && link.hasPage,
   };
 }

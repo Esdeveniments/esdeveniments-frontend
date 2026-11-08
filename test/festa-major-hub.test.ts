@@ -82,7 +82,7 @@ const page = (
 const years = (
   current: FestaMajorPlacedAct[],
   previous: FestaMajorPlacedAct[] = [],
-): FestaMajorPlaceYears => ({ year: 2026, current, previous });
+): FestaMajorPlaceYears => ({ year: 2026, current, previous, complete: true });
 
 // Sant Roc in August (6 acts) and Sant Nicolau in December (2 acts).
 const twoFestes = () =>
@@ -109,6 +109,15 @@ describe("buildFestaMajorPageData", () => {
     expect(data.indexable).toBe(true);
     expect(data.town).toMatchObject({ year: 2026, isCurrentYear: true });
     expect(data.canonicalPath).toBe("/festa-major/malgrat-de-mar");
+  });
+
+  it("shows a hub cut short by the request cap, but noindexes it", () => {
+    const data = page(town, {
+      ...years(acts("Festa Major: correfoc", "2026-08-10", 5)),
+      complete: false,
+    });
+    expect(data).toMatchObject({ available: true, indexable: false });
+    expect(data.town?.acts).toHaveLength(5);
   });
 
   it("noindexes a thin town hub, and one with no acts at all", () => {
@@ -236,6 +245,7 @@ describe("calendar helpers", () => {
     ],
     acts("Festa Major: ball", "2025-07-22", 9, "blanes", "selva"),
     2026,
+    true,
   );
 
   it("lists festes on now or in the next days by date, skipping last-year guesses", () => {

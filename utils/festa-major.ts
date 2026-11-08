@@ -189,22 +189,6 @@ export function pickYear(
   };
 }
 
-/** Distinct named festes in a year: sub-hubs only make sense with two or more festes. */
-export const namedKeys = (
-  editions: Pick<FestaMajorEdition, "key">[],
-): string[] => [...new Set(editions.map((e) => e.key).filter(Boolean))];
-
-export const hasSubHubs = (
-  editions: Pick<FestaMajorEdition, "key">[],
-): boolean => new Set(editions.map((e) => e.key)).size >= 2;
-
-/** Acts of one festa (all its editions in the year). */
-export const actsForKey = (
-  editions: FestaMajorEdition[],
-  key: string,
-): FestaMajorAct[] =>
-  editions.filter((e) => e.key === key).flatMap((e) => e.acts);
-
 /** Groups acts by start day, in order. */
 export function groupByDay<T extends FestaMajorAct>(
   acts: T[],

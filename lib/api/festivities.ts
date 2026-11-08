@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { connection } from "next/server";
-import { cacheLife, cacheTag } from "next/cache";
+import { cacheLife } from "next/cache";
 import { captureException } from "@sentry/nextjs";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import type {
@@ -9,7 +9,6 @@ import type {
   FestivitySlug,
 } from "types/festivity";
 import { madridTodayYmd } from "@lib/dates";
-import { eventsTag } from "@lib/cache/tags";
 import {
   buildFestivityPageData,
   getFestivityType,
@@ -44,13 +43,14 @@ async function fetchSeason(
 }
 
 // Keyed by primitives only: the type's RegExps can't be cache arguments.
-// Tagged with `events` so a publish, edit or delete on our site refreshes it.
+// Up to 2 seasons × 3 terms × 30 requests per rebuild, so, like the festa
+// major calendar, it isn't tagged with `events` (every publish would expire it
+// with no stale copy) and refreshes in the background every hour.
 async function getFestivitySeasons(
   slug: FestivitySlug,
   seasonYear: number,
 ): Promise<FestivitySeasons> {
   "use cache";
-  cacheTag(eventsTag);
   cacheLife({ stale: 300, revalidate: 3600, expire: 86400 });
   const type = getFestivityType(slug);
   const [current, previous] = await Promise.all([

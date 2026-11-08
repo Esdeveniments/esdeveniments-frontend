@@ -9,7 +9,6 @@ import {
 import {
   dedupeActs,
   groupEditions,
-  hasSubHubs,
   mainEdition,
   pickYear,
   summarizeEdition,
@@ -226,7 +225,6 @@ describe("groupEditions", () => {
         ["sant-nicolau", "2026-12-06", "2026-12-06", 1],
       ],
     );
-    expect(hasSubHubs(editions)).toBe(true);
   });
 
   it("puts unnamed acts in the one named festa that covers their date", () => {
@@ -240,7 +238,6 @@ describe("groupEditions", () => {
     );
     expect(editions).toHaveLength(1);
     expect(editions[0].acts).toHaveLength(3);
-    expect(hasSubHubs(editions)).toBe(false);
   });
 
   it("keeps unnamed acts apart when two named festes overlap", () => {

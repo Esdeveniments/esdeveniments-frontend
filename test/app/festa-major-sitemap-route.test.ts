@@ -56,6 +56,7 @@ describe("server-festa-major-sitemap.xml", () => {
           .concat(act("tordera", 10)),
         [],
         2026,
+        true,
       ),
     );
 
@@ -82,10 +83,20 @@ describe("server-festa-major-sitemap.xml", () => {
 
   it("caches briefly when a Nadal collection failed to load", async () => {
     vi.mocked(fetchFestaMajorCalendar).mockResolvedValue(
-      summarizeTowns([], [], 2026),
+      summarizeTowns([], [], 2026, true),
     );
     vi.mocked(fetchFestivityPage).mockImplementation(async (slug) =>
       festivity(slug, false, slug !== "fires-de-nadal"),
+    );
+
+    const response = await GET(request);
+
+    expect(response.headers.get("Cache-Control")).toContain("s-maxage=300");
+  });
+
+  it("caches briefly when the calendar was cut short", async () => {
+    vi.mocked(fetchFestaMajorCalendar).mockResolvedValue(
+      summarizeTowns([], [], 2026, false),
     );
 
     const response = await GET(request);

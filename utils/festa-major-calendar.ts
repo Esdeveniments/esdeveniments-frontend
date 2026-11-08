@@ -33,6 +33,7 @@ export function summarizeTowns(
   currentActs: FestaMajorPlacedAct[],
   previousActs: FestaMajorPlacedAct[],
   currentYear: number,
+  complete: boolean,
 ): FestaMajorCalendar {
   const current = byTown(startingIn(currentActs, currentYear));
   const previous = byTown(startingIn(previousActs, currentYear - 1));
@@ -62,7 +63,7 @@ export function summarizeTowns(
       a.main.start.slice(5).localeCompare(b.main.start.slice(5)) ||
       a.name.localeCompare(b.name, "ca"),
   );
-  return { currentYear, towns };
+  return { currentYear, towns, complete };
 }
 
 const isIndexableTown = (town: FestaMajorTownSummary): boolean =>

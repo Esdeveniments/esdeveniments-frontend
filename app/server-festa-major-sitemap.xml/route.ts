@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
     fetchFestaMajorCalendar(),
     Promise.all(FESTIVITY_SLUGS.map((slug) => fetchFestivityPage(slug))),
   ]);
-  const complete = calendar !== null && festivities.every((p) => p.available);
+  const complete =
+    calendar?.complete === true && festivities.every((p) => p.available);
   const paths = [
     `/${FESTES_MAJORS_SEGMENT}`,
     ...(calendar ? indexableHubPaths(calendar) : []),

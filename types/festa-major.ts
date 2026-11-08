@@ -60,11 +60,19 @@ export interface FestaMajorTownData extends FestaMajorYearChoice {
   announced: FestaMajorAct[];
 }
 
+/** One year's acts as read from the backend. */
+export interface FestaMajorYearActs {
+  acts: FestaMajorPlacedAct[];
+  complete: boolean;
+}
+
 /** This and last year's acts of a town or region, as the backend returns them. */
 export interface FestaMajorPlaceYears {
   year: number;
   current: FestaMajorPlacedAct[];
   previous: FestaMajorPlacedAct[];
+  /** false when a request cap cut the read short: shown, but not indexed. */
+  complete: boolean;
 }
 
 /** A town in the Catalonia-wide calendar. */
@@ -82,6 +90,8 @@ export interface FestaMajorTownSummary extends FestaMajorYearChoice {
 export interface FestaMajorCalendar {
   currentYear: number;
   towns: FestaMajorTownSummary[];
+  /** false when a request cap cut the read short. */
+  complete: boolean;
 }
 
 export interface FestaMajorPlaceInfo {
