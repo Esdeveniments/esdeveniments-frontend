@@ -12,6 +12,7 @@ import {
   type PointLike,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { sendGoogleEvent } from "@utils/analytics";
 import {
   EVENTS_MAP_CLICK_LAYERS,
   EVENTS_MAP_MAX_ZOOM,
@@ -21,7 +22,12 @@ import {
   toEventsMapSource,
   toFeatureCollection,
 } from "@utils/event-map-layers";
-import type { EventMapPoint, EventsMapStatus, UseEventsMapLibreInput } from "types/event-map";
+import type {
+  EventMapPoint,
+  EventsMapLoadFailure,
+  EventsMapStatus,
+  UseEventsMapLibreInput,
+} from "types/event-map";
 
 // Self-hosted by scripts/copy-maplibre-worker.mjs (same origin for the CSP).
 setWorkerUrl(`/static/maplibre-v${getVersion()}/maplibre-gl-worker.mjs`);
@@ -80,9 +86,13 @@ export function useEventsMapLibre({
     const container = containerRef.current;
     if (!container) return;
     let loaded = false;
+    let failed = false;
     let map: MapLibre;
-    const fail = () => {
-      if (!loaded) setStatus("error");
+    const fail = (reason: EventsMapLoadFailure) => {
+      if (loaded || failed) return;
+      failed = true;
+      setStatus("error");
+      sendGoogleEvent("map_load_error", { reason });
     };
     try {
       map = new MapLibre({
@@ -96,7 +106,7 @@ export function useEventsMapLibre({
         locale: uiStrings,
       });
     } catch {
-      fail();
+      fail("init");
       return;
     }
     mapRef.current = map;
@@ -104,7 +114,7 @@ export function useEventsMapLibre({
     map.addControl(new NavigationControl({ showCompass: false }), "top-right");
     map.addControl(new GeolocateControl({ fitBoundsOptions: { maxZoom: EVENTS_MAP_MAX_ZOOM } }), "top-right");
 
-    const timer = setTimeout(fail, LOAD_TIMEOUT_MS);
+    const timer = setTimeout(() => fail("timeout"), LOAD_TIMEOUT_MS);
     const featureAt = ({ x, y }: { x: number; y: number }) => {
       // Our layers exist only after "load"; querying them earlier fires an
       // "error" event, which would show the error screen on a hover.
@@ -127,7 +137,7 @@ export function useEventsMapLibre({
       setStatus("ready");
     });
     map.on("error", (event) => {
-      if (!("sourceId" in event)) fail();
+      if (!("sourceId" in event)) fail("error");
     });
     let hovered: string | null = null;
     const setHovered = (id: string | null) => {
@@ -146,6 +156,9 @@ export function useEventsMapLibre({
       if (!feature || feature.geometry.type !== "Point") return;
       const center = feature.geometry.coordinates as [number, number];
       const clusterId = feature.properties?.cluster_id;
+      sendGoogleEvent("map_pin_click", {
+        source: clusterId == null ? String(feature.properties?.kind) : "cluster",
+      });
       if (clusterId == null) {
         onSelectRef.current(String(feature.properties?.id));
         return;
