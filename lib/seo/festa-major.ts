@@ -15,14 +15,14 @@ import type { AppLocale } from "types/i18n";
 
 const MAX_JSON_LD_ACTS = 50;
 
-/** Title, description and breadcrumbs of a /festa-major/<place>[/<festa>] page. */
+/** Title, description and breadcrumbs of a /festa-major/<place> page. */
 export async function getFestaMajorCopy(
   data: FestaMajorPageData,
   locale: AppLocale,
 ) {
   const t = await getTranslations({ locale, namespace: "Pages.FestaMajor" });
-  const { place, currentYear: year, festaLabel } = data;
-  const { placeIn, placeOf } = formatPlacePhrases(
+  const { place, currentYear: year } = data;
+  const { placeOf } = formatPlacePhrases(
     place.label,
     place.type,
     locale,
@@ -35,25 +35,11 @@ export async function getFestaMajorCopy(
           metaTitle: t("regionMetaTitle", { placeOf, year }),
           metaDescription: t("regionMetaDescription", { placeOf, year }),
         }
-      : festaLabel
-        ? {
-            title: t("festaTitle", { festa: festaLabel, placeIn, year }),
-            metaTitle: t("festaMetaTitle", {
-              festa: festaLabel,
-              placeIn,
-              year,
-            }),
-            metaDescription: t("festaMetaDescription", {
-              festa: festaLabel,
-              placeIn,
-              year,
-            }),
-          }
-        : {
-            title: t("title", { placeOf, year }),
-            metaTitle: t("metaTitle", { placeOf, year }),
-            metaDescription: t("metaDescription", { placeOf, year }),
-          };
+      : {
+          title: t("title", { placeOf, year }),
+          metaTitle: t("metaTitle", { placeOf, year }),
+          metaDescription: t("metaDescription", { placeOf, year }),
+        };
 
   const breadcrumbs = [
     { name: t("breadcrumbHome"), url: toLocalizedUrl("/", locale) },
@@ -73,14 +59,6 @@ export async function getFestaMajorCopy(
       name: place.label,
       url: toLocalizedUrl(festaMajorPath(place.slug), locale),
     },
-    ...(festaLabel
-      ? [
-          {
-            name: festaLabel,
-            url: toLocalizedUrl(data.canonicalPath, locale),
-          },
-        ]
-      : []),
   ];
 
   return {
@@ -127,7 +105,7 @@ export function buildFestaMajorSchemas({
   breadcrumbs: { name: string; url: string }[];
 }) {
   const url = toLocalizedUrl(data.canonicalPath, locale);
-  const acts = (data.festa ?? data.town)?.acts ?? [];
+  const acts = data.town?.acts ?? [];
   const itemList = generateItemListStructuredData(
     acts.slice(0, MAX_JSON_LD_ACTS),
     title,

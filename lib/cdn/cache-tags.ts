@@ -85,8 +85,8 @@ export function buildPageCdnTags(
     tags.push(cdnTag(host, "home"));
   } else if (isPlacePath && first) {
     tags.push(cdnTag(host, "place", decodeSegment(first)));
-  } else if (first === FESTA_MAJOR_SEGMENT && second && segments.length <= 3) {
-    // /festa-major/<place>[/<festa>] lists the place's events.
+  } else if (first === FESTA_MAJOR_SEGMENT && second && segments.length === 2) {
+    // /festa-major/<place> lists the place's events.
     tags.push(cdnTag(host, "place", decodeSegment(second)));
   } else if (segments.length === 1 && CATALONIA_HUBS.has(first)) {
     // Catalonia-wide event collections: every event purge clears this tag.

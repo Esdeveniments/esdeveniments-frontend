@@ -72,12 +72,10 @@ const region: FestaMajorPlaceInfo = {
 const page = (
   place: FestaMajorPlaceInfo,
   years: FestaMajorPlaceYears | null,
-  festaKey?: string,
 ) =>
   buildFestaMajorPageData({
     place,
     years,
-    festaKey,
     currentYear: 2026,
     today: "2026-07-20",
   });
@@ -86,13 +84,6 @@ const years = (
   current: FestaMajorPlacedAct[],
   previous: FestaMajorPlacedAct[] = [],
 ): FestaMajorPlaceYears => ({ year: 2026, current, previous, complete: true });
-
-// Sant Roc in August (6 acts) and Sant Nicolau in December (2 acts).
-const twoFestes = () =>
-  years([
-    ...acts("Festa Major de Sant Roc: concert", "2026-08-10", 6),
-    ...acts("Festa Major de Sant Nicolau: ball", "2026-12-10", 2),
-  ]);
 
 describe("buildFestaMajorPageData", () => {
   it("keeps default robots and shows nothing when the backend failed", () => {
@@ -146,75 +137,37 @@ describe("buildFestaMajorPageData", () => {
     expect(data.indexable).toBe(true);
   });
 
-  it("lists a town's festes and gives a page only to named ones with enough acts", () => {
-    const data = page(town, twoFestes());
-    expect(data.festes.map((f) => [f.key, f.hasPage])).toEqual([
-      ["sant-roc", true],
-      ["sant-nicolau", false],
-    ]);
-  });
-
-  it("links each festa to its page, the hub programme or its first act", () => {
-    const nicolau = acts("Festa Major de Sant Nicolau: ball", "2026-12-10", 2);
+  it("links each festa to its part of the hub programme", () => {
     const data = page(
       town,
       years([
         ...acts("Festa Major: correfoc", "2026-05-10", 3),
         ...acts("Festa Major de Sant Roc: concert", "2026-08-10", 6),
-        ...[...nicolau].reverse(),
+        ...acts("Festa Major de Sant Nicolau: ball", "2026-12-10", 2),
       ]),
     );
     expect(
       data.festes.map((festa) => festaLinkPath(town.slug, festa)),
     ).toEqual([
-      "/festa-major/malgrat-de-mar#programa",
-      "/festa-major/malgrat-de-mar/sant-roc",
-      `/e/${nicolau[0].slug}`,
+      "/festa-major/malgrat-de-mar#festa-major",
+      "/festa-major/malgrat-de-mar#festa-sant-roc",
+      "/festa-major/malgrat-de-mar#festa-sant-nicolau",
     ]);
   });
 
-  it("indexes a festa page with its own acts only", () => {
-    const data = page(town, twoFestes(), "sant-roc");
-    expect(data).toMatchObject({
-      indexable: true,
-      festaKey: "sant-roc",
-      festaLabel: "Festa Major de Sant Roc",
-      canonicalPath: "/festa-major/malgrat-de-mar/sant-roc",
-    });
-    expect(data.festa?.acts).toHaveLength(6);
-  });
-
-  it("renders a small festa but noindexes it", () => {
-    const data = page(town, twoFestes(), "sant-nicolau");
-    expect(data.festa?.acts).toHaveLength(2);
-    expect(data.indexable).toBe(false);
-  });
-
-  it("noindexes an unknown festa, and a town's only festa (the hub has it)", () => {
-    expect(page(town, twoFestes(), "sant-joan")).toMatchObject({
-      festa: null,
-      indexable: false,
-    });
-    const single = page(
-      town,
-      years(acts("Festa Major de Sant Roc: concert", "2026-08-10", 6)),
-      "sant-roc",
-    );
-    expect(single.festes).toHaveLength(1);
-    expect(single.festa?.acts).toHaveLength(6);
-    expect(single.indexable).toBe(false);
-  });
-
-  it("gives no page to a festa with every act of the hub (the other is last year's)", () => {
+  it("links a festa from another year than the programme to its first act", () => {
+    const nicolau = acts("Festa Major de Sant Nicolau: ball", "2025-12-10", 5);
     const data = page(
       town,
       years(acts("Festa Major de Sant Roc: concert", "2026-08-10", 6), [
-        ...acts("Festa Major de Sant Nicolau: ball", "2025-12-10", 5),
-      ]),
+        ...nicolau,
+      ].reverse()),
     );
-    expect(data.festes.map((f) => [f.key, f.hasPage])).toEqual([
-      ["sant-roc", false],
-      ["sant-nicolau", true],
+    expect(
+      data.festes.map((festa) => festaLinkPath(town.slug, festa)),
+    ).toEqual([
+      "/festa-major/malgrat-de-mar#festa-sant-roc",
+      `/e/${nicolau[0].slug}`,
     ]);
   });
 
@@ -230,19 +183,6 @@ describe("buildFestaMajorPageData", () => {
       "tordera",
       "calella",
     ]);
-  });
-
-  it("noindexes a festa segment under a region", () => {
-    const data = page(
-      region,
-      years(acts("Festa Major: ball", "2026-07-10", 9)),
-      "x",
-    );
-    expect(data).toMatchObject({
-      region: null,
-      indexable: false,
-      festaKey: "x",
-    });
   });
 });
 
@@ -288,7 +228,7 @@ describe("calendar helpers", () => {
     ]);
   });
 
-  it("puts indexable regions, towns and festa pages in the sitemap", () => {
+  it("puts indexable regions and towns in the sitemap", () => {
     expect(indexableHubPaths(calendar).sort()).toEqual(
       [
         "/festa-major/maresme",
@@ -296,8 +236,6 @@ describe("calendar helpers", () => {
         "/festa-major/calella",
         "/festa-major/girona",
         "/festa-major/blanes",
-        "/festa-major/malgrat-de-mar/sant-roc",
-        "/festa-major/malgrat-de-mar/sant-nicolau",
       ].sort(),
     );
   });

@@ -102,16 +102,16 @@ export interface FestaMajorPlaceInfo {
   regionLabel: string | null;
 }
 
-/** A named festa listed on its town's hub. */
+/** A festa listed on its town's hub. */
 export interface FestaMajorFestaLink extends FestaMajorEditionSummary {
   year: number;
-  /** Only festes with enough acts get a (indexable) page of their own. */
-  hasPage: boolean;
-  /** Where a festa without a page links: its first act. */
+  /** Shown in the hub's programme (same year), so it links to its part of it. */
+  inProgramme: boolean;
+  /** Where a festa outside the programme links: its first act. */
   firstActSlug: string;
 }
 
-/** Everything a /festa-major/<place>[/<festa>] page renders. */
+/** Everything a /festa-major/<place> page renders. */
 export interface FestaMajorPageData {
   place: FestaMajorPlaceInfo;
   currentYear: number;
@@ -119,11 +119,6 @@ export interface FestaMajorPageData {
   today: string;
   /** The town's festes. null for a region, or when the backend failed. */
   town: FestaMajorTownData | null;
-  /** The <festa> URL segment, or null on the place hub. */
-  festaKey: string | null;
-  /** That festa's acts. null when the town has no such festa. */
-  festa: FestaMajorTownData | null;
-  festaLabel: string | null;
   /** The town's festes; listed only when there are two or more. */
   festes: FestaMajorFestaLink[];
   /** A region's towns. null for a town, or when the backend failed. */

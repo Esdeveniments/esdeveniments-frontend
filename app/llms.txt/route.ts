@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     "  - Canonical omission rules: default values are omitted (avoid /tots in the path).",
     "- Event detail pages: /e/{eventIdOrSlug}",
     "- News: /noticies and /noticies/{slug}",
-    "- Festes majors (town festivals): calendar /festes-majors; one town's or region's programme /festa-major/{place}; a named festa /festa-major/{town}/{festa}",
+    "- Festes majors (town festivals): calendar /festes-majors; one town's or region's programme /festa-major/{place}",
     "- Christmas across Catalonia, by season: Christmas markets /fires-de-nadal; living nativity scenes /pessebres-vivents; Three Kings parades /cavalcades-de-reis",
     "- Optional query params used for interactive filtering (may be non-canonical): search, distance, lat, lon",
     "",

@@ -120,25 +120,10 @@ export function upcomingTowns(
     );
 }
 
-/**
- * Indexable hub paths for the sitemap: towns, regions and named festes with
- * their own page (from the calendar's year per town).
- */
+/** Indexable hub paths for the sitemap: regions and towns. */
 export function indexableHubPaths(calendar: FestaMajorCalendar): string[] {
-  const towns = calendar.towns.filter(isIndexableTown);
-  const festes = towns.flatMap((town) => {
-    const counts = new Map<string, number>();
-    for (const e of town.editions) {
-      counts.set(e.key, (counts.get(e.key) ?? 0) + e.count);
-    }
-    if (counts.size < 2) return [];
-    return [...counts]
-      .filter(([key, count]) => key && count >= FESTA_MAJOR_MIN_INDEXABLE_ACTS)
-      .map(([key]) => festaMajorPath(town.slug, key));
-  });
   return [
     ...listRegions(calendar).map((region) => festaMajorPath(region.slug)),
-    ...towns.map((town) => festaMajorPath(town.slug)),
-    ...festes,
+    ...calendar.towns.filter(isIndexableTown).map((t) => festaMajorPath(t.slug)),
   ];
 }

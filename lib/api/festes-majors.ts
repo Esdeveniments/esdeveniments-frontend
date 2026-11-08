@@ -131,9 +131,9 @@ export const fetchFestaMajorCalendar = cache(
   },
 );
 
-/** A /festa-major/<place>[/<festa>] page. Deduped per request (metadata and page). */
+/** A /festa-major/<place> page. Deduped per request (metadata and page). */
 export const fetchFestaMajorPage = cache(
-  async (slug: string, festaKey?: string): Promise<FestaMajorPageData> => {
+  async (slug: string): Promise<FestaMajorPageData> => {
     // Postpone the prerender here: otherwise the place lookup starts, hits
     // its own connection() and logs the prerender's rejection as an error.
     await connection();
@@ -151,7 +151,6 @@ export const fetchFestaMajorPage = cache(
         regionLabel: place.regionLabel ?? null,
       },
       years,
-      festaKey,
       currentYear: Number(today.slice(0, 4)),
       today,
     });

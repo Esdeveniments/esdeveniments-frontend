@@ -1476,12 +1476,9 @@
     "FestaMajor": {
       "metaTitle": "Fiesta mayor {placeOf} {year}: programa y actos",
       "metaDescription": "Programa de la fiesta mayor {placeOf} {year}: fechas, horarios y todos los actos, día a día. Conciertos, pasacalles, correfocs y mucho más.",
-      "festaMetaTitle": "{festa} {placeIn} {year}: programa y actos",
-      "festaMetaDescription": "Programa de la {festa} {placeIn} {year}: fechas, horarios y todos los actos, día a día.",
       "regionMetaTitle": "Fiestas mayores {placeOf} {year}: calendario por pueblos",
       "regionMetaDescription": "¿Cuándo es la fiesta mayor de cada pueblo {placeOf}? Calendario de las fiestas mayores de {year} con el programa de actos.",
       "title": "Fiesta mayor {placeOf} {year}",
-      "festaTitle": "{festa} {placeIn} {year}",
       "regionTitle": "Fiestas mayores {placeOf} {year}",
       "breadcrumbHome": "Inicio",
       "breadcrumbAll": "Fiestas mayores",
@@ -1490,7 +1487,6 @@
       "previousYearNotice": "El programa de {currentYear} aún no se ha publicado. Mientras tanto, aquí tienes el de {year}.",
       "announcedTitle": "Ya anunciado para {year}",
       "empty": "Aún no tenemos actos de la fiesta mayor {placeOf}. Cuando se publique el programa, lo encontrarás aquí.",
-      "festaEmpty": "Esta fiesta no tiene actos publicados ni este año ni el anterior.",
       "unavailable": "Ahora mismo no podemos cargar el programa. Vuelve a probarlo dentro de un rato.",
       "festesTitle": "Fiestas mayores {placeOf}",
       "ownFesta": "Fiesta mayor {placeOf}",
@@ -1502,7 +1498,6 @@
       "townAgenda": "Agenda {placeOf}",
       "regionHub": "Fiestas mayores {placeOf}",
       "allFestes": "Calendario de fiestas mayores de Cataluña",
-      "backToTown": "Toda la fiesta mayor {placeOf}",
       "regionIntro": "{count, plural, one {# pueblo} other {# pueblos}} con fiesta mayor en el calendario.",
       "regionEmpty": "Aún no tenemos fiestas mayores {placeOf}.",
       "lastYearDates": "fechas de {year}"

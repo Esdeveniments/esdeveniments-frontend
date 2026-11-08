@@ -9,7 +9,7 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/festa-major/[place]">) {
   const locale = (await rootLocale()) as AppLocale;
   const { place } = await params;
-  const data = await loadFestaMajorPage(place, undefined, locale);
+  const data = await loadFestaMajorPage(place, locale);
   return buildFestaMajorMetadata(data, locale);
 }
 
@@ -18,6 +18,6 @@ export default async function Page({
 }: PageProps<"/[locale]/festa-major/[place]">) {
   const locale = (await rootLocale()) as AppLocale;
   const { place } = await params;
-  const data = await loadFestaMajorPage(place, undefined, locale);
+  const data = await loadFestaMajorPage(place, locale);
   return <FestaMajorPageView data={data} locale={locale} />;
 }

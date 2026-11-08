@@ -1,24 +1,24 @@
 import type { FestaMajorFestaLink, FestaMajorHubEvent } from "types/festa-major";
-import { FESTA_MAJOR_PROGRAMME_ID, FESTA_MAJOR_SEGMENT } from "./constants";
+import { FESTA_MAJOR_SEGMENT } from "./constants";
 import { isFestaMajorTitle } from "./festa-major-name";
 
-export const festaMajorPath = (place: string, festa?: string): string =>
-  `/${FESTA_MAJOR_SEGMENT}/${place}${festa ? `/${festa}` : ""}`;
+export const festaMajorPath = (place: string): string =>
+  `/${FESTA_MAJOR_SEGMENT}/${place}`;
+
+/** The id of a festa's part of a hub programme ("" is the town's own festa). */
+export const festaAnchorId = (key: string): string => `festa-${key || "major"}`;
 
 /**
- * Where a festa in a town's list links: its own page, the hub's programme
- * (the town's own, unnamed festa) or, for a small named one, its first act.
+ * Where a festa in a town's list links: its part of the hub's programme, or
+ * its first act when the programme shows another year.
  */
-export function festaLinkPath(
+export const festaLinkPath = (
   townSlug: string,
   festa: FestaMajorFestaLink,
-): string {
-  if (festa.hasPage) return festaMajorPath(townSlug, festa.key);
-  if (festa.key === "") {
-    return `${festaMajorPath(townSlug)}#${FESTA_MAJOR_PROGRAMME_ID}`;
-  }
-  return `/e/${festa.firstActSlug}`;
-}
+): string =>
+  festa.inProgramme
+    ? `${festaMajorPath(townSlug)}#${festaAnchorId(festa.key)}`
+    : `/e/${festa.firstActSlug}`;
 
 /** Town hubs a changed festa major act appears on (for IndexNow). */
 export function festaMajorHubPathsFor(

@@ -5,9 +5,13 @@ import {
   formatShortDateRange,
 } from "@utils/date-helpers";
 import { formatDayHeading, groupByDay } from "@utils/festa-major";
+import { festaAnchorId } from "@utils/festa-major-paths";
 import type { FestaMajorProgrammeProps } from "types/props";
 
-/** A festa's acts by day: one section per festa when there are several. */
+/**
+ * A festa's acts by day: one section per festa when there are several. With an
+ * `id`, each festa's first section is also an anchor (festaAnchorId).
+ */
 export default async function FestaMajorProgramme({
   id,
   title,
@@ -25,15 +29,20 @@ export default async function FestaMajorProgramme({
   };
   const showEditionHeadings = editions.length > 1;
   const DayHeading = showEditionHeadings ? "h4" : "h3";
+  const anchored = new Set<string>();
 
   return (
     <section id={id} className="stack gap-6 w-full">
       <h2 className="heading-2">{title}</h2>
       {editions.map((edition) => {
         const dates = formatShortDateRange(edition.start, edition.end, locale);
+        const anchor =
+          id && !anchored.has(edition.key) ? festaAnchorId(edition.key) : null;
+        if (anchor) anchored.add(edition.key);
         return (
           <div
             key={`${edition.key}-${edition.start}`}
+            id={anchor ?? undefined}
             className="stack gap-4 w-full"
           >
             {showEditionHeadings && (

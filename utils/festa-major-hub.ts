@@ -107,12 +107,13 @@ export function buildTownData(
 const monthDay = (date: string): string => date.slice(5);
 
 /**
- * A town's festes (this or last year each). Only a town with two or more
- * festes lists them and gives the named ones with enough acts a page.
+ * A town's festes (this or last year each), listed on its hub when there are
+ * two or more. `townYear` is the year the hub's programme shows.
  */
 export function listFestes(
   years: FestaMajorPlaceYears,
   townLabel: string,
+  townYear: number,
 ): FestaMajorFestaLink[] {
   const keys = new Set(
     [
@@ -120,13 +121,6 @@ export function listFestes(
       ...yearEditions(years.previous, years.year - 1, townLabel),
     ].map((edition) => edition.key),
   );
-  // A festa with every act of the town hub would duplicate it.
-  const townActs = buildTownData(
-    years.current,
-    years.previous,
-    years.year,
-    townLabel,
-  ).acts.length;
   const festes: FestaMajorFestaLink[] = [];
   for (const key of keys) {
     const data = buildTownData(
@@ -146,11 +140,7 @@ export function listFestes(
       end: last.end,
       count: data.acts.length,
       year: data.year,
-      hasPage:
-        keys.size >= 2 &&
-        key !== "" &&
-        data.acts.length >= FESTA_MAJOR_MIN_INDEXABLE_ACTS &&
-        data.acts.length < townActs,
+      inProgramme: data.year === townYear,
       firstActSlug: data.acts[0].slug,
     });
   }
@@ -162,20 +152,17 @@ export function listFestes(
 }
 
 /**
- * What /festa-major/<place>[/<festa>] shows. `years` null means the backend
- * failed: the page says so and keeps default robots, so a blip doesn't
- * noindex a good hub.
+ * What /festa-major/<place> shows. `years` null means the backend failed: the
+ * page says so and keeps default robots, so a blip doesn't noindex a good hub.
  */
 export function buildFestaMajorPageData({
   place,
   years,
-  festaKey,
   currentYear,
   today,
 }: {
   place: FestaMajorPlaceInfo;
   years: FestaMajorPlaceYears | null;
-  festaKey?: string;
   currentYear: number;
   today: string;
 }): FestaMajorPageData {
@@ -184,19 +171,15 @@ export function buildFestaMajorPageData({
     currentYear,
     today,
     town: null,
-    festaKey: festaKey ?? null,
-    festa: null,
-    festaLabel: null,
     festes: [],
     region: null,
     available: years !== null,
     indexable: false,
-    canonicalPath: festaMajorPath(place.slug, festaKey),
+    canonicalPath: festaMajorPath(place.slug),
   };
   if (!years) return base;
 
   if (place.type === "region") {
-    if (festaKey !== undefined) return base;
     const region = summarizeTowns(
       years.current,
       years.previous,
@@ -212,36 +195,17 @@ export function buildFestaMajorPageData({
     };
   }
 
-  const festes = listFestes(years, place.label);
-  if (festaKey === undefined) {
-    const town = buildTownData(
-      years.current,
-      years.previous,
-      years.year,
-      place.label,
-    );
-    return {
-      ...base,
-      town,
-      festes,
-      indexable:
-        years.complete && town.acts.length >= FESTA_MAJOR_MIN_INDEXABLE_ACTS,
-    };
-  }
-
-  const link = festes.find((festa) => festa.key === festaKey && festa.key);
-  if (!link) return { ...base, festes };
+  const town = buildTownData(
+    years.current,
+    years.previous,
+    years.year,
+    place.label,
+  );
   return {
     ...base,
-    festes,
-    festa: buildTownData(
-      years.current,
-      years.previous,
-      years.year,
-      place.label,
-      festaKey,
-    ),
-    festaLabel: link.label,
-    indexable: years.complete && link.hasPage,
+    town,
+    festes: listFestes(years, place.label, town.year),
+    indexable:
+      years.complete && town.acts.length >= FESTA_MAJOR_MIN_INDEXABLE_ACTS,
   };
 }

@@ -90,6 +90,20 @@ Single festes and event types (peak month):
   - Fira de Santa Llúcia: 6,600
   - Mercat de nadal: 5,400
   - Parc de nadal: 2,400
+- **Second festes of a town** (avg/peak per month): the town's main search
+  gets 30–100 times more. Festa major petita Blanes 10/140 (Blanes
+  260/2,400), festa major d'hivern Castelldefels 30/210 (390/2,900), festa
+  major d'hivern Sant Celoni 10/20, festa major petita Vilafranca 10/40.
+  "Festa major sant roc / sant nicolau malgrat", Gleva, Vilalleons, "hivern
+  Begues / Parets / Navarcles": 0. Barceloneta 110/480 is the only one of
+  the 18 festes that had their own page with real demand. Gràcia and Sants
+  are big, but we have almost no acts for them. So named festes are sections of
+  their town hub (`#festa-<key>`), not pages.
+- **Plural and calendar searches:** festes majors Catalunya 590/1,300,
+  festes majors avui 390/1,600, festes majors aquest cap de setmana 210/590,
+  festes majors Maresme 90/390, Girona 90/260, Vallès Oriental 50/170,
+  festes majors agost 40/260. Search Console shows us at position 40–60 for
+  these.
 - **Generic, no local intent:**
   - Revetlla de Sant Joan: 22,200
   - Castanyada: 33,100 (October)
@@ -122,7 +136,12 @@ queries, and we were not in the top 8.
 
 - **programesfestamajor.cat** was registered on 2026-08-10. It has 64
   `/town/2026` pages and 7,382 activity pages, and already ranks #3. Proof
-  that per-town programme pages rank quickly.
+  that per-town programme pages rank quickly. Its index lists "Festes en
+  curs", then upcoming festes by date, then past ones; each card has the
+  dates, "N activitats" and "Consulta el programa". A town page has the
+  dates, a poster, 3 key acts ("No t'ho perdis"), then the whole programme
+  at `#programa`. It has a URL per festa only when the town's festa major
+  itself has a name (`/sant-celoni/2026/sant-marti`).
 - **festacatalunya** has 978 municipality URLs and 8,442 thin "experience"
   pages, which are at risk in a Google quality update.
 
@@ -138,7 +157,7 @@ queries, and we were not in the top 8.
 | `/sitemap/[town]/[year]/[month]`                                | yes                                       | no, a month archive                           |
 | `/e/[event]`                                                    | until the event ends                      | one act; the URL dies after                   |
 | `/noticies/[place]/[article]`                                   | yes                                       | only if an article exists                     |
-| `/festa-major/[place](/[festa])`, `/festes-majors`              | when the index gates pass                 | yes                                           |
+| `/festa-major/[place]`, `/festes-majors`                        | when the index gates pass                 | yes                                           |
 
 Why a separate segment and not `/[place]/festes-majors`:
 
@@ -156,7 +175,7 @@ The hubs share the town and region data, the proxy's 404/301 checks (`checkPlace
 | Searches land on one act, often of the wrong year                | One evergreen URL per town, titled "Festa Major de {town} {year}: programa i actes", with the whole programme                                                             |
 | Event URLs die after the event (soft 404s), losing their ranking | The hub URL stays the same every year, showing this year's acts or last year's until the new ones exist                                                                   |
 | Ranking event pages pass nothing on                              | Every festa major event page, past or upcoming, links to its town hub                                                                                                     |
-| Thin or duplicate pages (the festacatalunya risk)                | Index gates: a town needs 5 or more acts, a region 2 or more such towns, a named festa page needs fewer acts than its town. Otherwise noindex and left out of the sitemap |
+| Thin or duplicate pages (the festacatalunya risk)                | Index gates: a town needs 5 or more acts, a region 2 or more such towns. Otherwise noindex and left out of the sitemap. No per-festa pages (see below)                     |
 | Google finds new programmes slowly                               | A dedicated sitemap, IndexNow on publish, edit and delete, and CDN purge through `place:<slug>`                                                                           |
 
 Not fixed yet:

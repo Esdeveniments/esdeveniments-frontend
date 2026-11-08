@@ -1476,12 +1476,9 @@
     "FestaMajor": {
       "metaTitle": "Festa Major {placeOf} {year}: programa i actes",
       "metaDescription": "Programa de la Festa Major {placeOf} {year}: dates, horaris i tots els actes, dia a dia. Concerts, cercaviles, correfocs i molt més.",
-      "festaMetaTitle": "{festa} {placeIn} {year}: programa i actes",
-      "festaMetaDescription": "Programa de la {festa} {placeIn} {year}: dates, horaris i tots els actes, dia a dia.",
       "regionMetaTitle": "Festes majors {placeOf} {year}: calendari per pobles",
       "regionMetaDescription": "Quan és la festa major de cada poble {placeOf}? Calendari de les festes majors del {year} amb el programa d'actes.",
       "title": "Festa Major {placeOf} {year}",
-      "festaTitle": "{festa} {placeIn} {year}",
       "regionTitle": "Festes majors {placeOf} {year}",
       "breadcrumbHome": "Inici",
       "breadcrumbAll": "Festes majors",
@@ -1490,7 +1487,6 @@
       "previousYearNotice": "El programa del {currentYear} encara no s'ha publicat. Mentrestant, aquí tens el del {year}.",
       "announcedTitle": "Ja anunciat per al {year}",
       "empty": "Encara no tenim actes de la festa major {placeOf}. Quan es publiqui el programa, el trobaràs aquí.",
-      "festaEmpty": "Aquesta festa no té actes publicats ni aquest any ni l'anterior.",
       "unavailable": "Ara mateix no podem carregar el programa. Torna-ho a provar d'aquí a una estona.",
       "festesTitle": "Festes majors {placeOf}",
       "ownFesta": "Festa Major {placeOf}",
@@ -1502,7 +1498,6 @@
       "townAgenda": "Agenda {placeOf}",
       "regionHub": "Festes majors {placeOf}",
       "allFestes": "Calendari de festes majors de Catalunya",
-      "backToTown": "Tota la Festa Major {placeOf}",
       "regionIntro": "{count, plural, one {# poble} other {# pobles}} amb festa major al calendari.",
       "regionEmpty": "Encara no tenim festes majors {placeOf}.",
       "lastYearDates": "dates del {year}"

@@ -1211,8 +1211,6 @@ export interface FestaMajorTownListProps {
 export interface FestaMajorFestaListProps {
   festes: FestaMajorFestaLink[];
   townSlug: string;
-  /** The festa whose page this is; undefined on the town hub. */
-  currentKey?: string;
   currentYear: number;
   locale: AppLocale;
   title: string;

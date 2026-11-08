@@ -56,20 +56,17 @@ export async function checkPlace(
   if (segments.length > 1 && ONE_PAGE_HUBS.has(segments[0]))
     return { kind: "missing" };
 
-  // Festa major hubs: /festa-major/<place>[/<festa>].
-  if (segments[0] === FESTA_MAJOR_SEGMENT && segments.length <= 3) {
+  // Festa major hubs: /festa-major/<place>. Deeper paths would fall through
+  // to the listing route and render its 404 with a 200.
+  if (segments[0] === FESTA_MAJOR_SEGMENT) {
     const slug = segments[1];
     if (!slug || slug === "catalunya")
       return redirectTo([FESTES_MAJORS_SEGMENT]);
-    if (!isValidPlace(slug)) return { kind: "missing" };
+    if (segments.length > 2 || !isValidPlace(slug)) return { kind: "missing" };
     const resolution = await resolvePlaceForProxy(slug);
     if (resolution.kind === "missing") return { kind: "missing" };
     if (resolution.kind !== "alias") return null;
-    return redirectTo([
-      FESTA_MAJOR_SEGMENT,
-      resolution.slug,
-      ...segments.slice(2),
-    ]);
+    return redirectTo([FESTA_MAJOR_SEGMENT, resolution.slug]);
   }
 
   const slug = segments[0] ?? "";

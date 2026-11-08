@@ -8,7 +8,6 @@ import type { FestaMajorFestaListProps } from "types/props";
 export default async function FestaMajorFestaList({
   festes,
   townSlug,
-  currentKey,
   currentYear,
   locale,
   title,
@@ -23,8 +22,6 @@ export default async function FestaMajorFestaList({
       <ul className="stack gap-2 w-full">
         {festes.map((festa) => {
           const name = festa.label ?? ownFestaLabel;
-          const isCurrent = festa.key === currentKey;
-          const link = isCurrent ? null : festaLinkPath(townSlug, festa);
           const details = [
             formatShortDateRange(festa.start, festa.end, locale),
             t("actsCount", { count: festa.count }),
@@ -39,28 +36,19 @@ export default async function FestaMajorFestaList({
               key={festa.key || "own"}
               className="border-b border-border/30 pb-2 w-full"
             >
-              {link ? (
-                <PressableAnchor
-                  href={link}
-                  className="group block"
-                  variant="inline"
-                  prefetch={false}
-                >
-                  <span className="body-normal font-semibold text-primary group-hover:text-primary-dark transition-colors">
-                    {name}
-                  </span>
-                  <span className="block body-small text-muted-foreground">
-                    {details}
-                  </span>
-                </PressableAnchor>
-              ) : (
-                <div aria-current={isCurrent ? "page" : undefined}>
-                  <span className="body-normal font-semibold">{name}</span>
-                  <span className="block body-small text-muted-foreground">
-                    {details}
-                  </span>
-                </div>
-              )}
+              <PressableAnchor
+                href={festaLinkPath(townSlug, festa)}
+                className="group block"
+                variant="inline"
+                prefetch={false}
+              >
+                <span className="body-normal font-semibold text-primary group-hover:text-primary-dark transition-colors">
+                  {name}
+                </span>
+                <span className="block body-small text-muted-foreground">
+                  {details}
+                </span>
+              </PressableAnchor>
             </li>
           );
         })}

@@ -28,15 +28,9 @@ describe("buildPageCdnTags", () => {
   });
 
   it("tags festa major hubs with their place, so event purges reach them", () => {
-    for (const segments of [
-      ["festa-major", "malgrat-de-mar"],
-      ["festa-major", "malgrat-de-mar", "sant-roc"],
-    ]) {
-      expect(buildPageCdnTags(HOST, segments, false)).toEqual([
-        `${HOST}:html`,
-        `${HOST}:place:malgrat-de-mar`,
-      ]);
-    }
+    expect(
+      buildPageCdnTags(HOST, ["festa-major", "malgrat-de-mar"], false),
+    ).toEqual([`${HOST}:html`, `${HOST}:place:malgrat-de-mar`]);
   });
 
   it("tags the Catalonia-wide hubs like /catalunya", () => {

@@ -23,15 +23,14 @@ import {
 } from "@utils/constants";
 import type { FestaMajorPageViewProps } from "types/props";
 
-/** The body of /festa-major/<place> (town or region) and /festa-major/<town>/<festa>. */
+/** The body of /festa-major/<place> (town or region). */
 export default async function FestaMajorPageView({
   data,
   locale,
 }: FestaMajorPageViewProps) {
   const { t, title, metaDescription, breadcrumbs, placeOf } =
     await getFestaMajorCopy(data, locale);
-  const { place, currentYear, today, region, festaKey } = data;
-  const shown = festaKey === null ? data.town : data.festa;
+  const { place, currentYear, today, region, town: shown } = data;
   const ownFestaLabel = t("ownFesta", { placeOf });
   const { collection, itemList } = buildFestaMajorSchemas({
     data,
@@ -41,32 +40,18 @@ export default async function FestaMajorPageView({
     breadcrumbs,
   });
 
-  // The town hub gives its main festa's dates; a festa page its whole span.
+  // The hub gives its main festa's dates.
   const main = shown ? mainEdition(shown.editions) : null;
-  const span =
-    festaKey === null ? (main ? [main] : []) : (shown?.editions ?? []);
-  const first = span[0];
-  const last = span[span.length - 1];
-  const dates =
-    first && last ? formatShortDateRange(first.start, last.end, locale) : "";
+  const dates = main ? formatShortDateRange(main.start, main.end, locale) : "";
   // The first act with an image (often the festa's poster) is the page's LCP.
-  const cover = [
-    ...span.flatMap((edition) => edition.acts),
-    ...(shown?.announced ?? []),
-  ].find((act) => act.imageUrl);
+  const cover = [...(main?.acts ?? []), ...(shown?.announced ?? [])].find(
+    (act) => act.imageUrl,
+  );
   const regionPhrases = place.regionLabel
     ? formatPlacePhrases(place.regionLabel, "region", locale)
     : null;
 
   const links = [
-    ...(festaKey !== null
-      ? [
-          {
-            href: festaMajorPath(place.slug),
-            label: t("backToTown", { placeOf }),
-          },
-        ]
-      : []),
     { href: `/${place.slug}`, label: t("townAgenda", { placeOf }) },
     ...(place.regionSlug && regionPhrases
       ? [
@@ -125,9 +110,6 @@ export default async function FestaMajorPageView({
         {!data.available && (
           <p className="body-normal text-center">{t("unavailable")}</p>
         )}
-        {data.available && festaKey !== null && !shown && (
-          <p className="body-normal text-center">{t("festaEmpty")}</p>
-        )}
         {shown && shown.acts.length === 0 && (
           <p className="body-normal text-center">{t("empty", { placeOf })}</p>
         )}
@@ -171,7 +153,6 @@ export default async function FestaMajorPageView({
         <FestaMajorFestaList
           festes={data.festes}
           townSlug={place.slug}
-          currentKey={festaKey ?? undefined}
           currentYear={currentYear}
           locale={locale}
           title={t("festesTitle", { placeOf })}

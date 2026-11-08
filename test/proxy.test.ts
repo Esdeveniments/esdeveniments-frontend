@@ -535,18 +535,30 @@ describe("proxy", () => {
     });
 
     describe("festa major hubs", () => {
-      it("301s an alias, keeping the festa segment and locale", async () => {
+      it("301s an alias, keeping the locale", async () => {
         (resolvePlaceForProxy as Mock).mockResolvedValue({
           kind: "alias",
           slug: "la-garriga",
         });
 
-        await proxy(placeRequest("/es/festa-major/lagarriga/sant-esteve"));
+        await proxy(placeRequest("/es/festa-major/lagarriga"));
 
         expect(resolvePlaceForProxy).toHaveBeenCalledWith("lagarriga");
         const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
         expect(status).toBe(301);
-        expect(url.pathname).toBe("/es/festa-major/la-garriga/sant-esteve");
+        expect(url.pathname).toBe("/es/festa-major/la-garriga");
+      });
+
+      it("404s a path below a hub without asking the backend", async () => {
+        (NextResponse.rewrite as Mock).mockReturnValue({
+          headers: new Headers(),
+        });
+
+        await proxy(placeRequest("/festa-major/malgrat-de-mar/sant-roc"));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBe(404);
       });
 
       it("rewrites an unknown town with a 404 status", async () => {

@@ -1476,12 +1476,9 @@
     "FestaMajor": {
       "metaTitle": "Festa Major {placeOf} {year}: programme and events",
       "metaDescription": "The {year} Festa Major {placeOf} programme: dates, times and every event, day by day. Concerts, parades, correfocs and much more.",
-      "festaMetaTitle": "{festa} {placeIn} {year}: programme and events",
-      "festaMetaDescription": "The {year} {festa} {placeIn} programme: dates, times and every event, day by day.",
       "regionMetaTitle": "Festes majors {placeOf} {year}: calendar by town",
       "regionMetaDescription": "The {year} calendar of the festes majors {placeOf}: when each town celebrates, with every programme.",
       "title": "Festa Major {placeOf} {year}",
-      "festaTitle": "{festa} {placeIn} {year}",
       "regionTitle": "Festes majors {placeOf} {year}",
       "breadcrumbHome": "Home",
       "breadcrumbAll": "Festes majors",
@@ -1490,7 +1487,6 @@
       "previousYearNotice": "The {currentYear} programme isn't out yet. Meanwhile, here is the {year} one.",
       "announcedTitle": "Already announced for {year}",
       "empty": "We don't have any Festa Major {placeOf} events yet. Once the programme is out, you'll find it here.",
-      "festaEmpty": "This festa has no events published this year or last year.",
       "unavailable": "We can't load the programme right now. Please try again in a while.",
       "festesTitle": "Festes majors {placeOf}",
       "ownFesta": "Festa Major {placeOf}",
@@ -1502,7 +1498,6 @@
       "townAgenda": "The agenda {placeOf}",
       "regionHub": "Festes majors {placeOf}",
       "allFestes": "Catalonia festes majors calendar",
-      "backToTown": "The whole Festa Major {placeOf}",
       "regionIntro": "{count, plural, one {# town} other {# towns}} with a festa major in the calendar.",
       "regionEmpty": "We don't have any festes majors {placeOf} yet.",
       "lastYearDates": "{year} dates"
