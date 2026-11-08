@@ -22,7 +22,11 @@ import {
   getProfileCaseRedirect,
   isMissingProfilePath,
 } from "@utils/proxy-profile";
-import { checkCategory, checkPlace } from "@utils/proxy-place";
+import {
+  checkCategory,
+  checkPlace,
+  isUnroutablePath,
+} from "@utils/proxy-place";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 // Static headers, trust-page redirects and the /openapi.json and
@@ -115,7 +119,9 @@ export default async function proxy(request: NextRequest) {
     return getMarkdownResponse(
       request,
       pathnameWithoutLocale,
-      placeCheck?.kind === "missing" || isMissingProfile,
+      placeCheck?.kind === "missing" ||
+        isMissingProfile ||
+        isUnroutablePath(pathnameWithoutLocale),
     );
   }
 

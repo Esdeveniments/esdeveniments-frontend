@@ -22,6 +22,21 @@ export function isPlacePath(segments: readonly string[]): boolean {
 }
 
 /**
+ * No page route can match: not a top-level route folder and not a place
+ * listing (e.g. /a/b/c/d). Dotted first segments (icons, files) are left alone.
+ */
+export function isUnroutablePath(pathnameWithoutLocale: string): boolean {
+  const segments = pathnameWithoutLocale.split("/").filter(Boolean);
+  const slug = segments[0];
+  return (
+    !!slug &&
+    !slug.includes(".") &&
+    !NON_PLACE_FIRST_SEGMENTS.has(slug) &&
+    !isPlacePath(segments)
+  );
+}
+
+/**
  * Unknown places get a real 404 and aliases a 301. Pages stream inside the
  * root layout's Suspense, so notFound()/redirect() there can't set a status
  * (they become 200 + noindex / a client redirect). Next's docs recommend

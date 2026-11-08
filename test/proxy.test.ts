@@ -570,6 +570,21 @@ describe("proxy", () => {
       expect(NextResponse.rewrite).not.toHaveBeenCalled();
     });
 
+    it("answers a path no route can match with a markdown 404", async () => {
+      const result = await proxy(mdRequest("/a/b/c/d"));
+
+      expect(result.status).toBe(404);
+      expect(result.headers.get("content-type")).toContain("text/markdown");
+      expect(NextResponse.rewrite).not.toHaveBeenCalled();
+    });
+
+    it("keeps the guide for real routes outside place listings", async () => {
+      await proxy(mdRequest("/noticies/barcelona/some-article"));
+
+      const [url] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe("/llms.txt");
+    });
+
     it("advertises the markdown twin only on the homepage", async () => {
       (NextResponse.rewrite as Mock).mockImplementation(() => ({
         headers: new Headers(),
