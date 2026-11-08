@@ -6,7 +6,7 @@ import { siteUrl } from "@config/index";
 import { withLocalePath } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import { fetchRegionsWithCities } from "lib/api/regions";
-import { getOwnedEventBySlug } from "@lib/auth/owned-event";
+import { getManageableEventBySlug } from "@lib/auth/owned-event";
 import EditEventClient from "./EditEventClient";
 
 export async function generateMetadata({
@@ -28,10 +28,10 @@ export default async function EditaPage({
   params,
 }: PageProps<"/[locale]/e/[eventId]/edita">) {
   const slug = (await params).eventId;
-  const event = await getOwnedEventBySlug(slug);
+  const event = await getManageableEventBySlug(slug);
   if (!event) return notFound();
 
-  // Fetch region data only after confirming the user is the creator.
+  // Fetch region data only after confirming the user may edit the event.
   const regionsWithCities = await fetchRegionsWithCities();
   if (!regionsWithCities) return notFound();
 

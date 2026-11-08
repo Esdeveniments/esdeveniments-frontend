@@ -6,7 +6,7 @@ import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external
 import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
 import { handleApiError } from "@utils/api-error-handler";
-import { isEventOwner } from "@utils/event-helpers";
+import { canManageEvent } from "@utils/event-helpers";
 import { eventDetailCache, deleteEventDetailCache } from "@lib/cache/event-detail-cache";
 import { revalidateEventPages } from "@lib/cache/revalidate-event-pages";
 import { eventTag, eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
@@ -35,7 +35,7 @@ export async function GET(
 }
 
 // DELETE /api/events/[slug] - delete event by slug (requires auth cookie).
-// The backend enforces the creator check; we fail fast if no session exists.
+// The backend enforces the creator/admin check; we fail fast if no session exists.
 export async function DELETE(
   _request: Request,
   context: RouteContext<"/api/events/[slug]">
@@ -54,10 +54,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Fail fast if the session does not belong to the event creator. The
-    // backend also enforces this, but checking here avoids issuing a mutation
-    // for events the caller does not own.
-    if (!isEventOwner(currentUser.id, event.owner?.id)) {
+    // Fail fast unless the session belongs to the event creator or an admin.
+    // The backend also enforces this, but checking here avoids issuing a
+    // mutation the backend would reject.
+    if (!canManageEvent(currentUser, event.owner?.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

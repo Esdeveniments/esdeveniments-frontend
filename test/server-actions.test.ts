@@ -561,7 +561,7 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       expect(result).toEqual({
         success: false,
-        error: "Unauthorized: only the event creator can edit this event",
+        error: "Unauthorized: only the event creator or an admin can edit this event",
       });
       expect(mockUpdateEventById).not.toHaveBeenCalled();
       expect(mockUpdateTag).not.toHaveBeenCalled();
@@ -589,11 +589,25 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       expect(result).toEqual({
         success: false,
-        error: "Unauthorized: only the event creator can edit this event",
+        error: "Unauthorized: only the event creator or an admin can edit this event",
       });
       expect(mockUpdateEventById).not.toHaveBeenCalled();
       expect(mockUpdateTag).not.toHaveBeenCalled();
       expect(mockRefresh).not.toHaveBeenCalled();
+    });
+
+    it("lets an admin edit a scraped event that has no creator", async () => {
+      mockGetCurrentUser.mockResolvedValue({ ...otherUser, role: "ADMIN" });
+      mockFetchEventBySlug.mockResolvedValue(buildEvent({ owner: undefined }));
+      mockUpdateEventById.mockResolvedValue(buildEvent({ owner: undefined }));
+
+      const result = await editEvent("test-id", "test-event", coverEditData);
+
+      expect(mockUpdateEventById).toHaveBeenCalledWith("test-id", {
+        ...coverEditData,
+        indexed: true,
+      });
+      expect(result).toMatchObject({ success: true });
     });
 
     it("returns an unauthorized result when the event has no creator info", async () => {
@@ -617,7 +631,7 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       expect(result).toEqual({
         success: false,
-        error: "Unauthorized: only the event creator can edit this event",
+        error: "Unauthorized: only the event creator or an admin can edit this event",
       });
       expect(mockUpdateEventById).not.toHaveBeenCalled();
       expect(mockUpdateTag).not.toHaveBeenCalled();

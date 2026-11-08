@@ -47,6 +47,19 @@ describe("EventOwnerActions", () => {
   });
 
   it.each([
+    ["someone else's event", OWNER_ID],
+    // Scraped/RSS events have no owner; admins still manage them.
+    ["an event with no owner", undefined],
+  ])("shows edit and delete, but not promote, to an admin on %s", (_label, ownerId) => {
+    authUser = { ...owner, id: "admin-id", role: "ADMIN" };
+    render(<EventOwnerActions ownerId={ownerId} slug="my-event" />);
+
+    expect(screen.getByTestId("event-edit-link")).toBeTruthy();
+    expect(screen.getByTestId("event-delete-button")).toBeTruthy();
+    expect(screen.queryByTestId("event-promote-link")).toBeNull();
+  });
+
+  it.each([
     ["a signed-in user who is not the owner", { ...owner, id: "someone-else" }, OWNER_ID],
     ["a logged-out visitor", null, OWNER_ID],
     // Scraped/RSS events have no owner; a logged-out user must not match them.

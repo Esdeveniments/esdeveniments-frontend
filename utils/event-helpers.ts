@@ -1,6 +1,7 @@
 import { computeTemporalStatus } from "@utils/event-status";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import type { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import type { AuthUser } from "types/auth";
 
 /**
  * The card that gets the LCP preload and fetchPriority="high". Ads and events
@@ -21,6 +22,17 @@ export const isEventOwner = (
   userId: string | null | undefined,
   ownerId: string | null | undefined
 ): boolean => Boolean(userId) && userId === ownerId;
+
+/**
+ * True when the user may edit or delete the event: its creator or an admin.
+ * Admins can manage any event, including scraped ones with no owner. The
+ * backend runs the same check on every mutation, so this only decides what
+ * the UI shows and lets our routes fail fast.
+ */
+export const canManageEvent = (
+  user: Pick<AuthUser, "id" | "role"> | null | undefined,
+  ownerId: string | null | undefined
+): boolean => user?.role === "ADMIN" || isEventOwner(user?.id, ownerId);
 
 /**
  * Returns true when the provided event is still live or upcoming.
