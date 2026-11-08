@@ -4,7 +4,11 @@ import { PROFILE_EXISTS_TTL_MS } from "@lib/api/profiles-proxy";
 import { gateApiRequest } from "@utils/api-gate";
 import { stripLocalePrefix } from "@utils/i18n-routing";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
-import { getAgentRewrite } from "@utils/proxy-agent";
+import {
+  getAgentRewrite,
+  getMarkdownResponse,
+  wantsMarkdown,
+} from "@utils/proxy-agent";
 import { applyCsp } from "@utils/proxy-csp";
 import {
   getLocaleFromCookie,
@@ -103,6 +107,16 @@ export default async function proxy(request: NextRequest) {
       persistLocaleCookie(response, pathLocaleToPersist);
     }
     return response;
+  }
+
+  // After the redirects and existence checks, so an agent asking for
+  // markdown gets the canonical URL and a real 404 for a missing page.
+  if (wantsMarkdown(request)) {
+    return getMarkdownResponse(
+      request,
+      pathnameWithoutLocale,
+      placeCheck?.kind === "missing" || isMissingProfile,
+    );
   }
 
   const locale = localeFromPath ?? DEFAULT_LOCALE;

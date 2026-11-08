@@ -175,6 +175,10 @@ export const socialLinks: SocialLinks = {
   github: "https://github.com/esdeveniments",
 };
 
+/** Public source repo; its AGENTS.md documents the site for coding agents. */
+export const githubRepoUrl =
+  "https://github.com/Esdeveniments/esdeveniments-frontend";
+
 /** Social links for JSON-LD sameAs (excludes web, telegram). */
 export const socialLinksSameAs: string[] = [
   socialLinks.facebook,

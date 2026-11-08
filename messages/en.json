@@ -134,7 +134,8 @@
       "writesBody": "Sponsor checkout (POST /api/sponsors/checkout) accepts an Idempotency-Key header. Send a new key (a UUID) for each attempt and reuse it when you retry: only one checkout session is created.",
       "githubTitle": "GitHub and contact",
       "githubBody": "Follow the project on GitHub, or email us if you need more data or a higher limit.",
-      "githubLink": "Esdeveniments.cat on GitHub"
+      "githubLink": "Esdeveniments.cat on GitHub",
+      "githubRepoLink": "Website source code (with AGENTS.md)"
     },
     "DevelopersMcp": {
       "metaTitle": "Esdeveniments.cat MCP server",

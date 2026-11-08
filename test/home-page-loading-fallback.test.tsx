@@ -35,5 +35,7 @@ describe("home page loading fallback", () => {
     expect(html).toContain('data-testid="home-page-skeleton"');
     expect(html).toContain('data-testid="home-events-skeleton"');
     expect(html).toContain('href="/openapi.json"');
+    // Crawlers that don't run JS read headings in source order.
+    expect(html.match(/<h[1-6][\s>]/)?.[0]).toBe("<h1 ");
   });
 });
