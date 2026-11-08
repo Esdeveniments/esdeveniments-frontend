@@ -32,6 +32,10 @@ export const MS_PER_DAY = 86_400_000;
 /** Canonical timezone for all date operations in this app. */
 export const TIMEZONE_MADRID = "Europe/Madrid";
 
+// IndexNow (Bing, Yandex, Seznam…) key. Public by design: search engines
+// verify it at /<key>.txt (public/), so it is not a secret.
+export const INDEXNOW_KEY = "f47260be292a3281b5da5b89815e6ed4";
+
 // Year range for sitemap/archive pages validation
 export const MIN_VALID_YEAR = 2000;
 export const MAX_VALID_YEAR = 2100;
@@ -49,6 +53,8 @@ export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
 export const PUBLISH_DRAFT_MAX_COUNT = 5;
 // Sitemap chunking: places per chunk to keep response sizes manageable
 export const SITEMAP_PLACES_PER_CHUNK = 100;
+// Events per /sitemap-events/N.xml chunk (one <url> per locale: ~1,500 URLs, ~2 MB)
+export const SITEMAP_EVENTS_PER_CHUNK = 500;
 // Minimum event count for a place to get full date/category expansion in sitemap.
 // Places below this threshold only get the base /[place] URL to avoid
 // submitting thin/empty filtered pages that waste crawl budget.
@@ -404,3 +410,7 @@ export const NO_VIGNETTE_LINK_ATTRS = {
 // test/react-reveal-throttle.test.ts fails if React changes this contract.
 export const REVEAL_THROTTLE_OFF_SCRIPT =
   '(function(){var t;Object.defineProperty(window,"$RT",{get:function(){return document.hidden?t:void 0},set:function(v){t=v}})})();';
+
+// Fair-use read limit we publish for agents. Only /mcp enforces it in code.
+export const PUBLIC_RATE_LIMIT_PER_MINUTE = 60;
+export const PUBLIC_RATE_LIMIT_TEXT = `Fair use: stay under ${PUBLIC_RATE_LIMIT_PER_MINUTE} requests per minute per IP. /mcp enforces it with HTTP 429 and a Retry-After header.`;

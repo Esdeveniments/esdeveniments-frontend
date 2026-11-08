@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl } from "@config/index";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 /**
  * /pricing.md — Machine-readable pricing information for AI agents.
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
     "| --- | --- |",
     "| Price | Free (€0) |",
     "| Authentication | None required |",
-    "| Rate limit | 60 requests/minute per IP |",
+    `| Rate limit | ${PUBLIC_RATE_LIMIT_TEXT} |`,
     "| Endpoints | Events, News, Categories, Places, Regions, Cities |",
     "| Data format | JSON with pagination |",
     "| MCP Server | Free access via Streamable HTTP |",

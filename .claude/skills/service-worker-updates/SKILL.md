@@ -40,6 +40,7 @@ Before any Workbox route, a plain `fetch` listener calls `stopImmediatePropagati
 | `/api/events`, `/api/events/categorized` | StaleWhileRevalidate | `esdeveniments-events-api-cache` | 50 / 10 min |
 | `/api/news`, `/api/news/*` | StaleWhileRevalidate | `esdeveniments-news-api-cache` | 30 / 3 min |
 | `/api/image-proxy*` | NetworkFirst (5 s timeout) | `esdeveniments-image-proxy-cache` | 100 / 7 d |
+| `/api/users?q=` (profile search suggestions) | NetworkOnly (one URL per typed query) | – | – |
 | other `/api/*` | StaleWhileRevalidate | `esdeveniments-local-api-cache` | 50 / 24 h |
 | `url.origin === "{{API_ORIGIN}}"` | StaleWhileRevalidate | `esdeveniments-external-api-cache` | 100 / 30 min |
 | anything else (`setDefaultHandler`) | NetworkFirst | `esdeveniments-default-cache` | 50 / 24 h |

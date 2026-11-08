@@ -173,6 +173,19 @@ export default async function ExploreNearby({
       ...(parentRegion ? [parentRegion] : []),
       ...siblingCities.map((c) => ({ ...c, type: "town" as const })),
     ];
+    const regionWeekend = parentRegion
+      ? {
+          href: `/${parentRegion.slug}/cap-de-setmana`,
+          label: t("regionWeekend", {
+            placeIn: formatPlacePreposition(
+              parentRegion.label,
+              "region",
+              locale,
+              false,
+            ),
+          }),
+        }
+      : null;
 
     return (
       <section
@@ -197,6 +210,18 @@ export default async function ExploreNearby({
                 </Badge>
               </li>
             ))}
+            {regionWeekend && (
+              <li>
+                <Badge
+                  href={regionWeekend.href}
+                  data-analytics-event-name="explore_nearby_click"
+                  data-analytics-place-slug={parentRegion?.slug}
+                  data-analytics-context="explore_nearby_region_weekend"
+                >
+                  {regionWeekend.label}
+                </Badge>
+              </li>
+            )}
           </ul>
         </nav>
       </section>

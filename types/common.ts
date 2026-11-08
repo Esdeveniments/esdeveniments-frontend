@@ -140,6 +140,7 @@ export interface SocialLinks {
   linkedin: string;
   tiktok?: string;
   mastodon: string;
+  github: string;
   [key: string]: string | undefined;
 }
 

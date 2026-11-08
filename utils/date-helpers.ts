@@ -3,6 +3,7 @@ import {
   getMonthNames,
   getShortDayNames,
   getShortMonthNames,
+  TIMEZONE_MADRID,
 } from "./constants";
 import type {
   DateObject,
@@ -52,6 +53,36 @@ function calculateDetailedDurationISO8601(start: Date, end: Date): string {
   return duration === "P" ? "PT1H" : duration;
 }
 
+// Ranges longer than this (exhibitions, seasons) get no date label.
+const MAX_DATE_LABEL_RANGE_DAYS = 31;
+
+/**
+ * Short localized day/month label for titles, without the year:
+ * "7 d’octubre", "7–9 de novembre", "October 30 – November 2".
+ * Returns "" for invalid dates or ranges over a month.
+ */
+export function formatShortDateRange(
+  start: string | Date,
+  end: string | Date | undefined,
+  locale: AppLocale,
+): string {
+  const startDate = new Date(start);
+  const endDate = end ? new Date(end) : startDate;
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return "";
+  }
+  const spanDays = (endDate.getTime() - startDate.getTime()) / 86_400_000;
+  if (spanDays > MAX_DATE_LABEL_RANGE_DAYS) return "";
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "long",
+    timeZone: TIMEZONE_MADRID,
+  });
+  return spanDays > 0
+    ? formatter.formatRange(startDate, endDate)
+    : formatter.format(startDate);
+}
+
 const formatDateForLocale = (
   locale: AppLocale,
   day: number,
@@ -69,10 +100,13 @@ const formatDateForLocale = (
         ? `${monthName} ${day}, ${year}`
         : `${monthName} ${day}`;
     case "ca":
-    default:
+    default: {
+      // Catalan elides "de" before a vowel: "d’abril", "d’agost", "d’octubre".
+      const de = /^[aeiouàèéíòóú]/i.test(monthName) ? "d’" : "de ";
       return includeYear
-        ? `${day} de ${monthName} del ${year}`
-        : `${day} de ${monthName}`;
+        ? `${day} ${de}${monthName} del ${year}`
+        : `${day} ${de}${monthName}`;
+    }
   }
 };
 

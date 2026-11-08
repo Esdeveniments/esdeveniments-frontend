@@ -269,6 +269,14 @@ if (!self.workbox) {
     })
   );
 
+  // Profile search suggestions (/api/users?q=): one URL per typed query, so
+  // caching them would fill the 50-entry API cache below and evict useful
+  // entries. Registered before that catch-all so it wins.
+  workbox.routing.registerRoute(
+    ({ url }) => url.pathname === "/api/users" && url.searchParams.has("q"),
+    new workbox.strategies.NetworkOnly()
+  );
+
   // Strategy for Other Local API Requests - Stale-While-Revalidate
   // This strategy serves a cached response immediately for speed,
   // then updates the cache in the background with a fresh network response for the next time.

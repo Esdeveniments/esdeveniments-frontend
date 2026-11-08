@@ -32,6 +32,7 @@ import type { AppLocale } from "types/i18n";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
 import { hasCardImage } from "@utils/event-helpers";
+import { TOWN_TEST_CONTENT_GROUP } from "@config/town-seo-test";
 import { connection } from "next/server";
 
 // Lazy load below-the-fold client component via client component wrapper
@@ -47,6 +48,12 @@ const PlacePageExploreNav = dynamic(
 // Lazy load nearby places cross-links - below the fold, server component
 const ExploreNearby = dynamic(
   () => import("@components/ui/exploreNearby/ExploreNearby"),
+  { loading: () => null }
+);
+
+// Town-page test, group B only (config/town-seo-test.ts)
+const TownGuide = dynamic(
+  () => import("@components/ui/townGuide/TownGuide"),
   { loading: () => null }
 );
 
@@ -270,7 +277,7 @@ async function PlacePageContent({
   // row never pops in later and pushes the list down.
   const [
     { placeTypeLabel, pageData },
-    { events, noEventsFound, serverHasMore, ssrPageSize, structuredScripts, placeIsExpandable },
+    { events, noEventsFound, serverHasMore, ssrPageSize, structuredScripts, placeIsExpandable, totalEvents },
     promotedEvents,
   ] = await Promise.all([shellDataPromise, eventsPromise, getPromotedEvents(place)]);
 
@@ -327,6 +334,13 @@ async function PlacePageContent({
 
   const breadcrumbListSchema = generateBreadcrumbList(breadcrumbItems);
 
+  const showTownGuide =
+    placeTypeLabel.type === "town" &&
+    TOWN_TEST_CONTENT_GROUP.has(place) &&
+    !hasSpecificDate &&
+    !hasSpecificCategory &&
+    totalEvents !== undefined;
+
   return (
     <>
       {/* Preload LCP card image for faster Largest Contentful Paint */}
@@ -368,6 +382,18 @@ async function PlacePageContent({
           promotedSlot={<PromotedEventsRow events={promotedEvents} placeSlug={place} />}
         />
       </FilterLoadingGate>
+
+      {showTownGuide && (
+        <Suspense fallback={null}>
+          <TownGuide
+            placeLabel={placeTypeLabel.label || place}
+            regionLabel={placeTypeLabel.regionLabel}
+            regionSlug={placeTypeLabel.regionSlug}
+            events={events}
+            totalEvents={totalEvents ?? 0}
+          />
+        </Suspense>
+      )}
 
       {/* Explore Navigation - SEO internal links (below events) */}
       <Suspense fallback={null}>

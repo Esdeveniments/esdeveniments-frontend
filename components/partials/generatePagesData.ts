@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { TOWN_TEST_TITLE_GROUP } from "@config/town-seo-test";
 import { getPlaceTypeAndLabel } from "@utils/helpers";
 import { getTranslations } from "next-intl/server";
 import { connection } from "next/server";
@@ -12,6 +13,8 @@ import { splitNotFoundText } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical } from "@utils/i18n-seo";
 import { DEFAULT_FILTER_VALUE, getMonthNames } from "@utils/constants";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { getDateRangeFromByDate } from "@lib/dates";
+import { formatShortDateRange } from "@utils/date-helpers";
 import type { CategorySeoSlug } from "types/common";
 
 // Normalize subtitles for LLM/AI SEO extractability:
@@ -182,6 +185,13 @@ export async function generatePagesData({
     false
   );
 
+  // Calendar days the byDate filter covers (same range as the events query),
+  // for titles like "… aquest cap de setmana (6–8 de novembre)".
+  const byDateRange = byDate ? getDateRangeFromByDate(byDate) : null;
+  const dateLabel = byDateRange
+    ? formatShortDateRange(byDateRange.from, byDateRange.until, resolvedLocale)
+    : "";
+
   // Get category-specific SEO data
   const categorySEO = getCategorySEO(category);
   const createPageData = (
@@ -238,6 +248,7 @@ export async function generatePagesData({
           label: labelWithArticle,
         }),
         t("categoryWithDate.avui.metaTitle", {
+          dates: dateLabel,
           categoryTitle,
           label: labelWithArticle,
         }),
@@ -263,6 +274,7 @@ export async function generatePagesData({
           label: labelWithArticle,
         }),
         t("categoryWithDate.dema.metaTitle", {
+          dates: dateLabel,
           categoryTitle,
           label: labelWithArticle,
         }),
@@ -288,6 +300,7 @@ export async function generatePagesData({
           label: labelWithArticle,
         }),
         t("categoryWithDate.setmana.metaTitle", {
+          dates: dateLabel,
           categoryTitle,
           label: labelWithArticle,
         }),
@@ -313,6 +326,7 @@ export async function generatePagesData({
           label: labelWithArticle,
         }),
         t("categoryWithDate.capDeSetmana.metaTitle", {
+          dates: dateLabel,
           categoryTitle,
           label: labelWithArticle,
         }),
@@ -383,10 +397,20 @@ export async function generatePagesData({
         });
     const metaTitle = isBarcelona
       ? t("townNoDate.barcelona.metaTitle", { year: effectiveYear })
-      : t("townNoDate.default.metaTitle", {
-          label: labelWithArticle,
-          year: effectiveYear,
-        });
+      : TOWN_TEST_TITLE_GROUP.has(place)
+        ? t("townNoDate.titleTest.metaTitle", {
+            placeOf: formatPlacePreposition(
+              label,
+              type,
+              resolvedLocale,
+              false,
+              "of"
+            ),
+          })
+        : t("townNoDate.default.metaTitle", {
+            label: labelWithArticle,
+            year: effectiveYear,
+          });
     const metaDescription = isBarcelona
       ? t("townNoDate.barcelona.metaDescription", { month })
       : t("townNoDate.default.metaDescription", {
@@ -420,7 +444,10 @@ export async function generatePagesData({
       return createPageData(
         t("byDatePlace.avui.title", { label: labelWithArticle }),
         t("byDatePlace.avui.subTitle", { label: labelWithArticle }),
-        t("byDatePlace.avui.metaTitle", { label: labelWithArticle }),
+        t("byDatePlace.avui.metaTitle", {
+          dates: dateLabel,
+          label: labelWithArticle,
+        }),
         t("byDatePlace.avui.metaDescription", { label: labelWithArticle }),
         byDatePlaceCanonical,
         t("byDatePlace.avui.notFound", { label: labelWithArticle })
@@ -429,7 +456,10 @@ export async function generatePagesData({
       return createPageData(
         t("byDatePlace.dema.title", { label: labelWithArticle }),
         t("byDatePlace.dema.subTitle", { label: labelWithArticle }),
-        t("byDatePlace.dema.metaTitle", { label: labelWithArticle }),
+        t("byDatePlace.dema.metaTitle", {
+          dates: dateLabel,
+          label: labelWithArticle,
+        }),
         t("byDatePlace.dema.metaDescription", { label: labelWithArticle }),
         byDatePlaceCanonical,
         t("byDatePlace.dema.notFound", { label: labelWithArticle })
@@ -438,7 +468,10 @@ export async function generatePagesData({
       return createPageData(
         t("byDatePlace.setmana.title", { label: labelWithArticle }),
         t("byDatePlace.setmana.subTitle", { label: labelWithArticle }),
-        t("byDatePlace.setmana.metaTitle", { label: labelWithArticle }),
+        t("byDatePlace.setmana.metaTitle", {
+          dates: dateLabel,
+          label: labelWithArticle,
+        }),
         t("byDatePlace.setmana.metaDescription", { label: labelWithArticle }),
         byDatePlaceCanonical,
         t("byDatePlace.setmana.notFound", { label: labelWithArticle })
@@ -447,7 +480,10 @@ export async function generatePagesData({
       return createPageData(
         t("byDatePlace.capDeSetmana.title", { label: labelWithArticle }),
         t("byDatePlace.capDeSetmana.subTitle", { label: labelWithArticle }),
-        t("byDatePlace.capDeSetmana.metaTitle", { label: labelWithArticle }),
+        t("byDatePlace.capDeSetmana.metaTitle", {
+          dates: dateLabel,
+          label: labelWithArticle,
+        }),
         t("byDatePlace.capDeSetmana.metaDescription", {
           label: labelWithArticle,
         }),
@@ -462,7 +498,7 @@ export async function generatePagesData({
       return createPageData(
         t("byDateNoPlace.avui.title"),
         t("byDateNoPlace.avui.subTitle"),
-        t("byDateNoPlace.avui.metaTitle"),
+        t("byDateNoPlace.avui.metaTitle", { dates: dateLabel }),
         t("byDateNoPlace.avui.metaDescription"),
         t("byDateNoPlace.avui.canonical", { siteUrl, byDate }),
         t("byDateNoPlace.avui.notFound")
@@ -471,7 +507,7 @@ export async function generatePagesData({
       return createPageData(
         t("byDateNoPlace.dema.title"),
         t("byDateNoPlace.dema.subTitle"),
-        t("byDateNoPlace.dema.metaTitle"),
+        t("byDateNoPlace.dema.metaTitle", { dates: dateLabel }),
         t("byDateNoPlace.dema.metaDescription"),
         t("byDateNoPlace.dema.canonical", { siteUrl, byDate }),
         t("byDateNoPlace.dema.notFound")
@@ -480,7 +516,7 @@ export async function generatePagesData({
       return createPageData(
         t("byDateNoPlace.setmana.title"),
         t("byDateNoPlace.setmana.subTitle"),
-        t("byDateNoPlace.setmana.metaTitle"),
+        t("byDateNoPlace.setmana.metaTitle", { dates: dateLabel }),
         t("byDateNoPlace.setmana.metaDescription"),
         t("byDateNoPlace.setmana.canonical", { siteUrl, byDate }),
         t("byDateNoPlace.setmana.notFound")
@@ -489,7 +525,7 @@ export async function generatePagesData({
       return createPageData(
         t("byDateNoPlace.capDeSetmana.title"),
         t("byDateNoPlace.capDeSetmana.subTitle"),
-        t("byDateNoPlace.capDeSetmana.metaTitle"),
+        t("byDateNoPlace.capDeSetmana.metaTitle", { dates: dateLabel }),
         t("byDateNoPlace.capDeSetmana.metaDescription"),
         t("byDateNoPlace.capDeSetmana.canonical", { siteUrl, byDate }),
         t("byDateNoPlace.capDeSetmana.notFound")

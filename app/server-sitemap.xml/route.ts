@@ -1,18 +1,12 @@
 import { siteUrl } from "@config/index";
-import { buildSitemapIndex } from "@utils/sitemap";
+import { buildSitemapIndex, sitemapChunkUrls } from "@utils/sitemap";
+import { fetchEventSitemapChunkCount } from "@lib/seo/sitemap-chunks";
 
+// Legacy index of the event chunks; robots.txt points to /sitemap.xml, which
+// lists them too. Kept because Search Console may still have it submitted.
 export async function GET() {
-  // Sitemap index: references chunked event sitemaps to keep response sizes manageable
-  // Each chunk handles 500 events (see sitemap-events route)
-  // Adjust CHUNKS based on expected total event count (~2500 events = 5 chunks)
-  const CHUNKS = 5;
-
-  const sitemaps = Array.from(
-    { length: CHUNKS },
-    (_, i) => `${siteUrl}/sitemap-events/${i + 1}.xml`
-  );
-
-  const xml = buildSitemapIndex(sitemaps);
+  const chunks = await fetchEventSitemapChunkCount();
+  const xml = buildSitemapIndex(sitemapChunkUrls(siteUrl, "sitemap-events", chunks));
 
   return new Response(xml, {
     headers: {

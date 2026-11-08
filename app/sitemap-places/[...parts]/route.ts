@@ -131,8 +131,6 @@ export async function GET(
     fields.push({
       loc: placeLoc,
       lastmod: lastmod,
-      changefreq: "daily",
-      priority: shouldExpand ? 0.9 : 0.6,
       alternates: buildAlternateLinks(placeLoc),
     });
 
@@ -148,8 +146,6 @@ export async function GET(
       fields.push({
         loc: dateLoc,
         lastmod: lastmod,
-        changefreq: "daily",
-        priority: 0.7,
         alternates: buildAlternateLinks(dateLoc),
       });
 
@@ -168,8 +164,6 @@ export async function GET(
       fields.push({
         loc: catLoc,
         lastmod: lastmod,
-        changefreq: "daily",
-        priority: 0.7,
         alternates: buildAlternateLinks(catLoc),
       });
     }

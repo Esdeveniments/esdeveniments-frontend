@@ -38,10 +38,10 @@ test.describe("Sitemaps and feed", () => {
 
     expect(sitemaps.length).toBeGreaterThan(0);
 
-    // Check lastmod dates are not 2023
-    sitemaps.forEach((sitemap: { lastmod?: string }) => {
-      expect(sitemap.lastmod).toBeDefined();
-      expect(sitemap.lastmod).not.toContain("2023");
+    // No index lastmod: a fake "now" teaches crawlers to ignore it
+    sitemaps.forEach((sitemap: { loc?: string; lastmod?: string }) => {
+      expect(sitemap.loc).toContain("/sitemap-events/");
+      expect(sitemap.lastmod).toBeUndefined();
     });
   });
 

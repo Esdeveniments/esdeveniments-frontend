@@ -16,7 +16,10 @@ describe("proxy matcher", () => {
     "/.well-known/mcp",
     "/mcp",
     "/llms.txt",
+    "/webmcp.js",
     "/robots.txt",
+    // IndexNow key file (INDEXNOW_KEY)
+    "/f47260be292a3281b5da5b89815e6ed4.txt",
     "/favicon.ico",
     "/_next/static/chunks/app.js",
   ])("skips %s", (path) => {
@@ -35,6 +38,9 @@ describe("proxy matcher", () => {
     "/askatasuna",
     "/openapi-events",
     "/docs",
+    "/webmcp.js-guide",
+    "/developers",
+    "/barcelona.txt",
   ])("runs on %s", (path) => {
     expect(runsProxy(path)).toBe(true);
   });

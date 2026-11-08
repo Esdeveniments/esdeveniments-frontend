@@ -658,6 +658,20 @@ jobs:
             echo "$ROBOTS_TXT" | grep -q "Disallow: /" && echo "robots.txt: OK (staging disallows crawlers)" || { echo "::error::staging robots.txt does not disallow crawlers"; FAILED=1; }
           fi
 
+          # Markdown negotiation (Accept: text/markdown) answers on page URLs and
+          # Cloudflare ignores Vary: Accept, so only the zone's "Markdown
+          # negotiation — never cache" bypass rule (ordered below the HTML rule)
+          # keeps markdown away from browsers. Fresh URL so no old entry can hide it.
+          if [ "$IS_PRODUCTION_DEPLOY" = "true" ]; then
+            MD_URL="${SITE_URL}/?_smoke_md=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            curl -s -o /dev/null --max-time 10 -H "Accept: text/markdown" "$MD_URL" || true
+            CONTENT_TYPE=$(curl -s -o /dev/null -w "%{content_type}" --max-time 10 -H "Accept: text/html" "$MD_URL") || CONTENT_TYPE=""
+            case "$CONTENT_TYPE" in
+              text/html*) echo "Markdown kept out of the HTML cache: OK" ;;
+              *) echo "::error::A browser got '$CONTENT_TYPE' after an Accept: text/markdown request to the same URL. Add or reorder the Cloudflare bypass rule (docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md)"; FAILED=1 ;;
+            esac
+          fi
+
           # Health check with details
           echo ""
           echo "Checking deployment health..."

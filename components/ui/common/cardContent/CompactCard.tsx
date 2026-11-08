@@ -4,6 +4,9 @@ import { prepareCardContentData } from "./prepareCardContentData";
 import type { CompactCardProps } from "types/props";
 import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 
+// Related-events card (event page). Same link pattern as CardLayout: the title is
+// the only link and `.card-event-link::after` stretches it over the card. It
+// renders inside the event page's "use cache" body, so the locale comes as a prop.
 export default function CompactCard({
   event,
   locale,
@@ -16,6 +19,7 @@ export default function CompactCard({
     primaryLocation,
     image,
     cardDate,
+    dateTime,
     timeDisplay,
   } = prepareCardContentData({
     event,
@@ -25,47 +29,50 @@ export default function CompactCard({
   });
 
   return (
-    <div className="flex-none w-44 min-w-[11rem]">
-      <CardLink
-        href={`/e/${event.slug}`}
-        className="block rounded-card overflow-hidden bg-background border border-border/20 hover:border-border/40 transition-colors duration-normal group h-full"
-        data-analytics-event-name={analyticsEventName}
-        data-analytics-event-id={event.id ? String(event.id) : ""}
-        data-analytics-event-slug={event.slug || ""}
-        data-analytics-position={String(index + 1)}
-      >
-        <div className="aspect-[4/3] overflow-hidden bg-muted">
-          <Image
-            className="w-full h-full object-cover transition-transform duration-slow group-hover:scale-[1.03]"
-            title={event.title}
-            alt={event.title}
-            image={image}
-            priority={false}
-            fetchPriority="low"
-            location={primaryLocation}
-            date={cardDate}
-            context="card"
-            cacheKey={event.hash || event.updatedAt}
-          />
-        </div>
-        <div className="px-2.5 pt-2 pb-2.5">
-          <p className="text-[11px] text-muted-foreground mb-0.5 truncate">
-            {cardDate}
-            {timeDisplay && <> · {timeDisplay}</>}
-          </p>
-          <h3 className="text-sm font-medium leading-normal line-clamp-2 text-foreground-strong group-hover:text-primary/85 transition-colors mb-1">
+    <article className="card-event relative flex-none w-44 min-w-[11rem] rounded-card overflow-hidden bg-background border border-border/20 transition-[transform,border-color] duration-normal ease-smooth flex flex-col">
+      <div className="aspect-[4/3] overflow-hidden bg-muted">
+        {/* Decorative: the title link already names the card. */}
+        <Image
+          className="card-event-image w-full h-full object-cover transition-transform duration-slow"
+          title={event.title}
+          alt=""
+          image={image}
+          priority={false}
+          fetchPriority="low"
+          location={primaryLocation}
+          date={cardDate}
+          context="card"
+          cacheKey={event.hash || event.updatedAt}
+        />
+      </div>
+      {/* Title first in the DOM (read first); `order-*` keeps the date above it. */}
+      <div className="px-2.5 pt-2 pb-2.5 flex flex-col">
+        <h3 className="order-2 text-sm font-medium leading-normal line-clamp-2 text-foreground-strong mb-1">
+          <CardLink
+            href={`/e/${event.slug}`}
+            className="card-event-link"
+            variant="plain"
+            data-analytics-event-name={analyticsEventName}
+            data-analytics-event-id={event.id ? String(event.id) : ""}
+            data-analytics-event-slug={event.slug || ""}
+            data-analytics-position={String(index + 1)}
+          >
             {title}
-          </h3>
-          {primaryLocation && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <svg className="w-3 h-3 flex-shrink-0" aria-hidden="true">
-                <use href={`#${SPRITE_ICON.mapPin}`} />
-              </svg>
-              <span className="truncate">{primaryLocation}</span>
-            </div>
-          )}
-        </div>
-      </CardLink>
-    </div>
+          </CardLink>
+        </h3>
+        <p className="order-1 text-xs text-muted-foreground mb-0.5 truncate">
+          {dateTime ? <time dateTime={dateTime}>{cardDate}</time> : cardDate}
+          {timeDisplay && <> · {timeDisplay}</>}
+        </p>
+        {primaryLocation && (
+          <div className="order-3 flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+            <svg className="w-3 h-3 flex-shrink-0" aria-hidden="true">
+              <use href={`#${SPRITE_ICON.mapPin}`} />
+            </svg>
+            <span className="truncate">{primaryLocation}</span>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }

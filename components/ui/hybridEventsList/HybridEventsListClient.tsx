@@ -14,7 +14,11 @@ import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
 import { hasActiveClientFilters } from "@utils/url-filters";
 import { useTranslations, useLocale } from "next-intl";
-import { sendGoogleEvent, toSearchTermParam } from "@utils/analytics";
+import {
+  sendGoogleEvent,
+  sendTextSearchOutcomeGA,
+  toSearchTermParam,
+} from "@utils/analytics";
 import useListingAnalytics from "@components/hooks/useListingAnalytics";
 import type { AppLocale } from "types/i18n";
 
@@ -140,6 +144,7 @@ function HybridEventsListClientContent({
         category: category || undefined,
         date: date || undefined,
       });
+      sendTextSearchOutcomeGA(search, displayedEvents.length);
     }
   }, [search, isLoading, error, hasClientFilters, displayedEvents.length, place, category, date]);
 

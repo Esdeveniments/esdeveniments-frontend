@@ -55,3 +55,25 @@ describe("generatePagesData search-aware notFound copy", () => {
     );
   });
 });
+
+describe("generatePagesData town title test", () => {
+  it("uses the test title for towns in the title group", async () => {
+    const result = await generatePagesData({
+      ...baseParams,
+      place: "canet-de-mar",
+      placeTypeLabel: { type: "town", label: "Canet de Mar" },
+    });
+
+    expect(result.metaTitle).toBe("Agenda de Canet de Mar: concerts, fires i festes");
+  });
+
+  it("keeps the default title for other towns", async () => {
+    const result = await generatePagesData({
+      ...baseParams,
+      place: "el-masnou",
+      placeTypeLabel: { type: "town", label: "El Masnou" },
+    });
+
+    expect(result.metaTitle).toBe("Què fer al Masnou - Agenda i plans 2024");
+  });
+});

@@ -446,3 +446,42 @@ The listing body arrives 61-174 ms after the first chunk (295 ms on `/barcelona/
 ### Method: TBT by script
 
 Playwright on production with `page.route` blocking the analytics/ads hits above plus the variant's script; observers for `longtask` (TBT = sum over 50 ms until load + 5 s, as `perf-lab.mjs`), `long-animation-frame` (blocking time and `scripts[].sourceURL`), `largest-contentful-paint` (element; text inside `.fc-consent-root` counts as "consent box") and `event` (interaction duration for the tap). Stream timing (`scripts/perf-stream.mjs`): Node `fetch` with a Chrome UA and `accept-encoding: br`, reading chunks and noting when `fetchPriority="high"` and the first `<h1>` without `sr-only` appear.
+
+## 2026-11-07: phone CLS, what we cause (#697)
+
+**Field (CrUX via PageSpeed, phone, p75, 28 days to about 2026-11-04):** CLS 0.190, desktop 0.020. Part of it is the AdSense "Banner ads" experiment, turned off 2026-11-01; its days leave the window by about 2026-11-29. GA4 `web_vitals` (2026-11-01 → 11-07, ~112 phone CLS events, consented visitors only): 13 above "good", with the moved element `(not set)` (0.13-0.99, mostly event pages), the site `footer` (0.42-1.01, `/barcelona/avui`, an event page) and the list wrapper (`FilterLoadingGate`, 0.11-0.30, `/catalunya`, `/valles-oriental`).
+
+**Real ads, headed Chrome** (the owner's profile, Pixel 7 emulation, production, consent given, `layout-shift` observer with sources and rects). Load + slow scroll to the bottom: total CLS 0.009-0.036 on `/barcelona/avui`, `/catalunya`, `/valles-oriental`, `/es/maresme` and 0.000-0.013 on three event pages, with in-feed ads filled at 412-457 px (one 915 px). Scrolling over ads moved nothing (scroll anchoring). What did shift:
+
+| Source | When | CLS | Cause | Fix |
+|---|---|---|---|---|
+| Footer jumps on a client-side navigation | after any ad has loaded, ~0.3-0.9 s after the tap | **0.24 per navigation** (0.34 lab, both entries) | AdSense sets `height: auto; min-height: 0` (inline, `!important`) on every ancestor of an ad except `html`/`body`, `<main>` included. `min-h-screen` on `<main>` is gone, the next page's loading skeleton (639 px on an event) is shorter than the screen, the footer shows at y≈700, then the page streams in and pushes it away. Shifts within 500 ms of the tap don't count; on a phone network the content often arrives later. | Zero-width `min-h-screen` strut next to `<main>` (`BaseLayout`), never an ancestor of an ad |
+| Ad-intent chip ("Explorar ciutats") inserted into the listing subtitle | ~6-7 s after load, if still at the top | 0.018 (26 px) | AdSense ad intents | `google-anno-skip` on the subtitle (`HeadingLayout`) |
+| Fixed filter bar | on mount, and each time the navbar scrolls in or out | 0.005-0.006 on mount, ~0.005 per crossing | `ssr: false` layer mounted at `top-0`, then a hydration flag animated `top` to `top-14` (500 ms); every frame of a `top` transition is a layout shift | Position with `translate-y`, no hydration flag |
+| Ad-intent chip in an event description, ad-intent anchor sliding in | ~6 s; when scrolling | 0.009; 0.002 | AdSense ad intents | Not changed (the description is where ad intents earn; owner's call in AdSense › Auto ads) |
+| Navbar avatar replacing the login placeholder | ~0.5 s | 0.001 | logged-in visitors only | Not changed |
+
+With the strut emulated on production (same DOM change by script, real ads, AdSense rewrote both `<main>` and the new row): `<main>` stayed 915 px during the loading skeleton, the footer stayed at y=972 (below the 915 px viewport), no layout shift. With `google-anno-skip` emulated on the listing subtitle: no chip at all on listings (Google didn't place it elsewhere), no 26 px shift. Trade-off: listings no longer earn from ad-intent chips. If AdSense reports show that revenue matters more than 0.018 CLS on visits that stay at the top for ~6 s, remove the class from `HeadingLayout`.
+
+**Lab, before (production) → after (local build of this branch)** (Playwright, Pixel 7, headless, no ad fill; AdSense's ancestor rewrite reproduced by script from `show_ads_impl`, then a click on a card; median not needed, every run gave the same numbers):
+
+| Page | Filter bar on mount | Bar, 4 navbar crossings | Load + scroll total | Footer shift on navigation |
+|---|---|---|---|---|
+| `/barcelona/avui` | 0.0056 → **0** | 0.0232 → **0.0048** | 0.0345 → **0.006** | 0.3408 → **0** |
+| `/catalunya` | 0.0063 → **0** | 0.0238 → **0.0048** | 0.0369 → **0.006** | 0.3408 → **0** |
+| `/valles-oriental` | 0.0060 → **0** | 0.0236 → **0.0048** | 0.0353 → **0.006** | 0.3408 → **0** |
+| `/es/maresme` | 0.0060 → **0** | 0.0232 → **0.0048** | 0.0349 → **0.006** | 0.3408 → **0** |
+
+The 0.0048 left on the bar is its top padding, added when the navbar is out of view. Layout boxes (`<main>`, first child, h1, footer on short pages) are the same on phone and desktop for `/barcelona`, `/preferits` and a 404.
+
+**Lighthouse 12 mobile** (median of 3; production has Google scripts, the local build doesn't, so only CLS compares 1:1): `/barcelona` CLS 0.009 → **0.000** (prod runs 0.009/0.013/0.006), score 75 → 86, LCP 4.01 → 4.22 s, TBT 268 → 57 ms; event `oficina-itinerant-dhabitatge-i-rehabilitacio-11-de-novembre-del-2026-221a4fc1-aff6-4795-8da8-ef0ea943bffc` CLS 0.000 → 0.000, score 77 → 89, LCP 4.64 → 3.73 s, TBT 325 → 37 ms.
+
+**Not reproduced, not changed:** the `FilterLoadingGate` shifts (0.11-0.30) and most `(not set)` ones. `FilterLoadingGate` is the first box in `<main>`, so it moves when anything above it changes height: our navbar didn't, an AdSense top anchor would, but none showed in these runs. `(not set)` means the moved node had no element when reported: AdSense and Funding Choices dialogs (the offerwall grew in with `node: null`), or a node React removed (a skeleton). The other candidates (the `fallback={null}` boundaries in `PlacePageShell` and the event page, the sponsor and promoted rows, the `.content-auto*` size estimates against 348-457 px real heights) moved nothing in any run.
+
+**Field data from now on:** `web_vitals` CLS events also send `shift_time` (ms after navigation start), `shift_value` (x1000), `load_state` and `shift_rect` (`y,height>y,height` of the moved box in viewport px), all registered as GA4 event-scoped custom dimensions. A footer shift with a `shift_time` of several seconds and `shift_rect` like `696,219>0,0` is the navigation case; `y` near 0 moved by a fixed amount is a top anchor.
+
+**Next check:** GA4 two weeks after the deploy (query in the PR); CrUX after 2026-11-29, when the banner-ads days have left the window.
+
+### Method: CLS with real ads
+
+`agent-browser --session cls --profile Default --headed --init-script recorder.js`, `set device "Pixel 7"`, production. The init script observes `layout-shift` (buffered) and stores value, time, `hadRecentInput`, `scrollY` and each source's node path and previous/current rect. Scroll with `scrollBy(0, 350)` every 700 ms. The Funding Choices offerwall ("Veure un anunci curt") covers the page after a few views: remove `.fc-message-root` from the DOM. Never watch the rewarded ad or click near an ad. Click links with `element.click()`, not by coordinates: an ad that has just loaded can be under the pointer. A JS click isn't a trusted input, so shifts within 500 ms of it are reported but wouldn't count for a real tap. Ads fill on most loads but not all, and AdSense rewrites `<main>` only on some: check `ins[data-ad-status=filled]` and `main`'s `style` before trusting a run.

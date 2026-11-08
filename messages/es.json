@@ -109,6 +109,47 @@
       "teamHeading": "Nuestro equipo",
       "linkedin": "LinkedIn"
     },
+    "Developers": {
+      "metaTitle": "API de Esdeveniments.cat para desarrolladores",
+      "metaDescription": "Documentación de la API de Esdeveniments.cat: API REST pública y gratuita con la agenda cultural de Cataluña, servidor MCP, inicio rápido y OpenAPI.",
+      "heading": "API de Esdeveniments.cat",
+      "intro": "Una API REST pública y gratuita con la agenda cultural de Cataluña: eventos, noticias, categorías y lugares, en catalán, castellano e inglés. Úsala en tu app, en tu web o con un agente de IA.",
+      "keysTitle": "Claves de API",
+      "keysBody": "No necesitas ninguna clave. Los endpoints de lectura (GET) son públicos y no piden autenticación. Haz un uso razonable: menos de 60 peticiones por minuto por IP. El servidor MCP lo aplica y, si lo superas, responde con un 429 y la cabecera Retry-After.",
+      "quickstartTitle": "Inicio rápido",
+      "quickstartBody": "Haz la primera llamada con curl. Las listas llegan paginadas: si el campo last es false, pide la página siguiente.",
+      "docsTitle": "Documentación",
+      "docsOpenapi": "Especificación OpenAPI 3.1",
+      "docsLlms": "Guía para LLM (llms.txt)",
+      "docsApiLlms": "Referencia de la API en texto plano",
+      "sandboxTitle": "Prueba la API",
+      "sandboxBody": "Las llamadas de lectura no cambian nada, así que puedes probarlas directamente contra la API de producción. Abre estos ejemplos en el navegador:",
+      "sandboxToday": "Eventos de hoy en Barcelona",
+      "sandboxSearch": "Búsqueda de conciertos de jazz",
+      "sandboxCategories": "Todas las categorías",
+      "agentsTitle": "Agentes de IA y MCP",
+      "agentsBody": "Conecta un agente de IA a nuestro servidor MCP, o usa las herramientas WebMCP que la web registra en el navegador.",
+      "agentsMcpLink": "Servidor MCP de Esdeveniments.cat",
+      "writesTitle": "Escrituras e idempotencia",
+      "writesBody": "El pago de un patrocinio (POST /api/sponsors/checkout) acepta la cabecera Idempotency-Key. Envía una clave nueva (un UUID) en cada intento y repítela si vuelves a probar: solo se crea una sesión de pago.",
+      "githubTitle": "GitHub y contacto",
+      "githubBody": "Sigue el proyecto en GitHub o escríbenos si necesitas más datos o un límite más alto.",
+      "githubLink": "Esdeveniments.cat en GitHub"
+    },
+    "DevelopersMcp": {
+      "metaTitle": "Servidor MCP de Esdeveniments.cat",
+      "metaDescription": "Conecta Claude, ChatGPT o cualquier cliente MCP a la agenda cultural de Cataluña con el servidor MCP de Esdeveniments.cat. Gratuito y sin clave.",
+      "heading": "Servidor MCP de Esdeveniments.cat",
+      "intro": "El servidor MCP (Model Context Protocol) de Esdeveniments.cat permite que un agente de IA busque eventos culturales en Cataluña. Es gratuito, de solo lectura y no pide ninguna clave.",
+      "endpointTitle": "Conexión",
+      "endpointBody": "Transporte Streamable HTTP (JSON-RPC 2.0). Añade esta configuración a tu cliente MCP:",
+      "toolsTitle": "Herramientas",
+      "discoveryTitle": "Descubrimiento",
+      "discoveryBody": "La ficha del servidor y las habilidades para agentes están en:",
+      "webmcpTitle": "WebMCP en el navegador",
+      "webmcpBody": "Cada página de la web también registra herramientas WebMCP (document.modelContext.registerTool), para que los agentes del navegador puedan buscar eventos desde la misma página.",
+      "backLink": "Toda la documentación de la API"
+    },
     "TermsOfService": {
       "metaTitle": "Términos de servicio - Esdeveniments.cat",
       "metaDescription": "Condiciones de uso del sitio web Esdeveniments.cat. Consulta las normas de uso, responsabilidades y derechos sobre el contenido de la agenda cultural de Cataluña.",
@@ -467,6 +508,9 @@
       "cancelPage": {
         "title": "Pago cancelado"
       }
+    },
+    "EventMeta": {
+      "descriptionSuffix": "Consulta el horario, cómo llegar y más planes cerca."
     }
   },
   "Components": {
@@ -520,7 +564,8 @@
         "archive": "Archivo",
         "terms": "Términos de servicio",
         "privacy": "Privacidad",
-        "login": "Iniciar sesión"
+        "login": "Iniciar sesión",
+        "developers": "API para desarrolladores"
       },
       "sponsorCta": {
         "title": "Da visibilidad a tu negocio local",
@@ -805,6 +850,7 @@
       "showPhoto": "Ver foto",
       "loadIntro": "Encuentra dónde comer cerca del evento.",
       "loadCta": "Mostrar restaurantes cercanos",
+      "loginCta": "Inicia sesión para ver restaurantes",
       "empty": "Ahora mismo no podemos mostrar restaurantes cercanos.",
       "title": "Dónde puedes comer",
       "promote": "Promociona tu restaurante"
@@ -860,12 +906,31 @@
       "citiesAriaLabel": "Navegar por pueblos y ciudades",
       "nearbyTitle": "Pueblos cercanos",
       "nearbyAriaLabel": "Descubre eventos en pueblos cercanos",
-      "linkAria": "Ver eventos {placeIn}"
+      "linkAria": "Ver eventos {placeIn}",
+      "regionWeekend": "Este fin de semana {placeIn}"
+    },
+    "TownGuide": {
+      "title": "Agenda {placeOf}",
+      "summary": "{count, plural, =0 {Ahora mismo no hay actividades programadas {placeIn}.} one {Ahora mismo hay # actividad programada {placeIn}.} other {Ahora mismo hay # actividades programadas {placeIn}.}}",
+      "categories": "Las más habituales: {categories}.",
+      "region": "{place} está {regionIn}.",
+      "regionEvents": "Más planes {regionIn}"
     },
     "SearchBar": {
       "placeholder": "¿Qué estás buscando?",
       "clear": "Limpiar la búsqueda",
-      "search": "Buscar"
+      "search": "Buscar",
+      "suggestions": {
+        "label": "Sugerencias de búsqueda",
+        "searchEvents": "Buscar eventos «{query}»",
+        "places": "Lugares",
+        "profiles": "Perfiles de toda Cataluña",
+        "placeType": "lugar",
+        "profileType": "perfil",
+        "loadingProfiles": "Buscando perfiles…",
+        "upcomingEvents": "{count, plural, =0 {Sin eventos próximos} one {# evento próximo} other {# eventos próximos}}",
+        "count": "{count, plural, one {# sugerencia} other {# sugerencias}}"
+      }
     },
     "PastEventBanner": {
       "title": "Este evento ya ha finalizado",
@@ -1230,28 +1295,28 @@
         "avui": {
           "title": "{titleSuffix} hoy {label}",
           "subTitle": "Descubre {titleSuffix} hoy {label} con propuestas actualizadas y planes de última hora. Conciertos, teatro, exposiciones y actividades para todos los gustos.",
-          "metaTitle": "{categoryTitle} hoy {label} - Agenda cultural y planes",
+          "metaTitle": "{categoryTitle} hoy {label} ({dates})",
           "metaDescription": "{context} hoy {label}.",
           "notFound": "Lo sentimos, pero no hay {noEventsText} hoy {label}. Mira las propuestas para mañana, este fin de semana u otras localidades cercanas para encontrar planes que te puedan interesar."
         },
         "dema": {
           "title": "{titleSuffix} mañana {label}",
           "subTitle": "Descubre {titleSuffix} mañana {label} y prepara tu plan con antelación. Música, teatro, exposiciones y actividades para disfrutar de la cultura.",
-          "metaTitle": "{categoryTitle} mañana {label} - Ideas y planes culturales",
+          "metaTitle": "{categoryTitle} mañana {label} ({dates})",
           "metaDescription": "{context} mañana {label}.",
           "notFound": "Lo sentimos, pero no hay {noEventsText} mañana {label}. Consulta la agenda para hoy, esta semana u otros destinos cercanos para encontrar nuevas propuestas."
         },
         "setmana": {
           "title": "{titleSuffix} esta semana {label}",
           "subTitle": "Descubre {titleSuffix} esta semana {label} y llena tu agenda de planes. Conciertos, talleres, exposiciones y actividades familiares.",
-          "metaTitle": "{categoryTitle} esta semana {label} - Agenda completa",
+          "metaTitle": "{categoryTitle} esta semana {label} ({dates})",
           "metaDescription": "{context} esta semana {label}.",
           "notFound": "Lo sentimos, pero no hay {noEventsText} esta semana {label}. Prueba a cambiar la fecha o explora otros municipios y comarcas cercanas para encontrar nuevos planes."
         },
         "capDeSetmana": {
           "title": "{titleSuffix} este fin de semana {label}",
           "subTitle": "Descubre {titleSuffix} este fin de semana {label} con propuestas para salir y disfrutar en familia. Conciertos, actividades con niños y cultura local.",
-          "metaTitle": "{categoryTitle} este fin de semana {label} - Planes y agenda",
+          "metaTitle": "{categoryTitle} este fin de semana {label} ({dates})",
           "metaDescription": "{context} este fin de semana {label}.",
           "notFound": "Lo sentimos, pero no hay {noEventsText} este fin de semana {label}. Consulta otras fechas, explora actividades en el resto de Cataluña o ajusta los filtros de la búsqueda para descubrir más opciones."
         }
@@ -1282,6 +1347,9 @@
           "metaTitle": "Qué hacer {label} - Agenda y planes {year}",
           "metaDescription": "Descubre la agenda hoy {label} este {month}: conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes."
         },
+        "titleTest": {
+          "metaTitle": "Agenda {placeOf}: conciertos, ferias y fiestas"
+        },
         "subTitle": "Descubre los mejores planes de ocio y cultura {label} este {month}. Consulta la agenda actualizada con fiestas, conciertos, teatro, cine, exposiciones y actividades familiares.",
         "notFound": "Lo sentimos, pero no hay eventos {label} para esta fecha. Prueba a cambiar la fecha, explorar otras categorías o mirar municipios cercanos para encontrar actividades que te interesen.",
         "canonical": "{siteUrl}/{place}"
@@ -1290,28 +1358,28 @@
         "avui": {
           "title": "Qué hacer hoy {label}",
           "subTitle": "Descubre qué hacer hoy {label}: conciertos, teatro, exposiciones, actividades familiares y planes de última hora. Consulta la agenda actualizada y no te pierdas nada.",
-          "metaTitle": "Qué hacer hoy {label} - Planes y agenda",
+          "metaTitle": "Qué hacer hoy {label} ({dates})",
           "metaDescription": "Descubre qué hacer hoy {label}: conciertos, fiestas, actividades con niños, propuestas gratuitas y otros planes cerca de ti.",
           "notFound": "Lo sentimos, pero no hay eventos hoy {label}. Mira las propuestas para mañana, esta semana u otras localidades cercanas para encontrar planes que encajen contigo."
         },
         "dema": {
           "title": "Qué hacer mañana {label}",
           "subTitle": "Organiza tu día y descubre qué hacer mañana {label}: conciertos, teatro, exposiciones y actividades familiares. Consulta la agenda y elige tu plan.",
-          "metaTitle": "Qué hacer mañana {label} - Ideas y planes",
+          "metaTitle": "Qué hacer mañana {label} ({dates})",
           "metaDescription": "Descubre qué hacer mañana {label}: conciertos, actividades para niños, exposiciones, rutas y otros planes para organizar tu día.",
           "notFound": "Lo sentimos, pero no hay eventos mañana {label}. Consulta la agenda para hoy, esta semana u otros destinos cercanos para descubrir nuevas opciones."
         },
         "setmana": {
           "title": "Agenda semanal {label}",
           "subTitle": "Descubre qué hacer esta semana {label} con conciertos, talleres, exposiciones y actividades en familia. Planes y cultura para llenar la semana.",
-          "metaTitle": "Qué hacer esta semana {label} - Agenda completa",
+          "metaTitle": "Qué hacer esta semana {label} ({dates})",
           "metaDescription": "La agenda cultural de esta semana {label}: conciertos, exposiciones, teatro, actividades en familia, rutas y otros planes.",
           "notFound": "Lo sentimos, pero no hay eventos esta semana {label}. Prueba otras semanas, cambia de categoría o explora localidades cercanas para encontrar más actividades."
         },
         "capDeSetmana": {
           "title": "Qué hacer este fin de semana {label}",
           "subTitle": "Descubre qué hacer este fin de semana {label}: conciertos, fiestas, actividades familiares y propuestas al aire libre. Encuentra tu plan y aprovecha el fin de semana.",
-          "metaTitle": "Qué hacer este fin de semana {label} - Planes y agenda",
+          "metaTitle": "Qué hacer este fin de semana {label} ({dates})",
           "metaDescription": "Los mejores planes para este fin de semana {label}: conciertos, fiestas populares, actividades con niños, rutas y otras propuestas.",
           "notFound": "Lo sentimos, pero no hay eventos este fin de semana {label}. Consulta otras fechas, explora categorías diferentes o mira qué se hace en el resto de Cataluña para encontrar nuevos planes."
         }
@@ -1320,7 +1388,7 @@
         "avui": {
           "title": "Qué hacer hoy en Cataluña",
           "subTitle": "Descubre qué hacer hoy en Cataluña con una agenda cultural actualizada. Conciertos, teatro, exposiciones, planes en familia y actividades gratis por todo el territorio.",
-          "metaTitle": "Qué hacer hoy en Cataluña - Planes y agenda",
+          "metaTitle": "Qué hacer hoy en Cataluña ({dates})",
           "metaDescription": "Descubre qué hacer hoy en Cataluña: conciertos, festivales, actividades con niños, propuestas gratuitas y planes de última hora.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Lo sentimos, pero no hay eventos hoy en Cataluña. Mira las propuestas para mañana, esta semana o filtra por localidad y categoría para encontrar otros planes interesantes."
@@ -1328,7 +1396,7 @@
         "dema": {
           "title": "Qué hacer mañana en Cataluña",
           "subTitle": "Descubre qué hacer mañana en Cataluña y planifica tu tiempo libre. Conciertos, teatro, exposiciones, actividades en familia y planes para todos los gustos.",
-          "metaTitle": "Qué hacer mañana en Cataluña - Ideas y planes",
+          "metaTitle": "Qué hacer mañana en Cataluña ({dates})",
           "metaDescription": "Descubre qué hacer mañana en Cataluña: conciertos, actividades familiares, rutas, fiestas y otros planes para tu tiempo libre.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Lo sentimos, pero no hay eventos mañana en Cataluña. Consulta la agenda para hoy, esta semana o explora diferentes categorías y localidades para descubrir nuevas opciones."
@@ -1336,7 +1404,7 @@
         "setmana": {
           "title": "Agenda semanal en Cataluña",
           "subTitle": "Descubre qué hacer esta semana en Cataluña con planes culturales para cada día. Conciertos, exposiciones, teatro, fiestas y actividades familiares.",
-          "metaTitle": "Qué hacer esta semana en Cataluña - Agenda completa",
+          "metaTitle": "Qué hacer esta semana en Cataluña ({dates})",
           "metaDescription": "La agenda cultural de esta semana en Cataluña: conciertos, festivales, rutas, talleres, actividades para niños y otros planes de ocio.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Lo sentimos, pero no hay eventos esta semana en Cataluña. Prueba a cambiar la semana, ajustar los filtros o explorar diferentes zonas del territorio para encontrar más actividades."
@@ -1344,7 +1412,7 @@
         "capDeSetmana": {
           "title": "Qué hacer este fin de semana en Cataluña",
           "subTitle": "Descubre qué hacer este fin de semana en Cataluña y aprovéchalo al máximo. Conciertos, fiestas populares, actividades con niños, rutas y escapadas.",
-          "metaTitle": "Qué hacer este fin de semana en Cataluña - Planes y agenda",
+          "metaTitle": "Qué hacer este fin de semana en Cataluña ({dates})",
           "metaDescription": "Los mejores planes para este fin de semana en Cataluña: conciertos, fiestas populares, actividades para niños, rutas y planes de ocio.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Lo sentimos, pero no hay eventos este fin de semana en Cataluña. Mira otros fines de semana, explora diferentes categorías o céntrate en una zona concreta para encontrar nuevas ideas."

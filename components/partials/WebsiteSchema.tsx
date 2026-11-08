@@ -20,6 +20,8 @@ export default function WebsiteSchema({
       areaName: "Catalunya",
       areaSameAs: "https://ca.wikipedia.org/wiki/Catalunya",
       knowsAbout: [
+        "Agenda cultural",
+        "Festes majors",
         "Esdeveniments culturals",
         "Concerts",
         "Teatre",
@@ -44,6 +46,8 @@ export default function WebsiteSchema({
       areaName: "Cataluña",
       areaSameAs: "https://es.wikipedia.org/wiki/Cataluña",
       knowsAbout: [
+        "Agenda cultural",
+        "Fiestas mayores",
         "Eventos culturales",
         "Conciertos",
         "Teatro",
@@ -68,11 +72,12 @@ export default function WebsiteSchema({
       areaName: "Catalonia",
       areaSameAs: "https://en.wikipedia.org/wiki/Catalonia",
       knowsAbout: [
+        "Cultural agenda",
+        "Festivals",
         "Cultural events",
         "Concerts",
         "Theatre",
         "Exhibitions",
-        "Festivals",
         "Catalonia",
       ],
       featureList: [
@@ -91,7 +96,7 @@ export default function WebsiteSchema({
       "Plataforma gratuïta i multilingüe per descobrir esdeveniments culturals a Catalunya.",
     areaName: "Catalunya",
     areaSameAs: "https://ca.wikipedia.org/wiki/Catalunya",
-    knowsAbout: ["Esdeveniments culturals", "Catalunya"],
+    knowsAbout: ["Agenda cultural", "Esdeveniments culturals", "Catalunya"],
     featureList: [
       "Descobriment d'esdeveniments culturals",
       "API pública REST",

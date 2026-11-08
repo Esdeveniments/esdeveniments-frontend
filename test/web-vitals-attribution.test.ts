@@ -88,4 +88,34 @@ describe("web vitals attribution", () => {
       }),
     );
   });
+
+  it("sends when, how much and how far the largest CLS shift moved", () => {
+    callbacks.CLS.cb({
+      name: "CLS",
+      delta: 0.31,
+      rating: "poor",
+      navigationType: "navigate",
+      attribution: {
+        largestShiftTime: 5321.7,
+        largestShiftValue: 0.2104,
+        loadState: "complete",
+        largestShiftSource: {
+          node: null,
+          previousRect: { y: 120.4, height: 360.6 },
+          currentRect: { y: 410.5, height: 360.6 },
+        },
+      },
+    });
+    expect(sendGoogleEvent).toHaveBeenLastCalledWith("web_vitals", {
+      metric: "CLS",
+      value: 310,
+      rating: "poor",
+      navigation_type: "navigate",
+      element: undefined,
+      load_state: "complete",
+      shift_time: 5322,
+      shift_value: 210,
+      shift_rect: "120,361>411,361",
+    });
+  });
 });

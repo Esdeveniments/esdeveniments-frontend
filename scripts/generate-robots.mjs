@@ -62,43 +62,49 @@ try {
  *   rest of /_next/ (build internals)
  * - Block /api/ routes (internal endpoints, not for indexing)
  */
+const CRAWL_ALLOW = ["/", "/_next/static/"];
+const CRAWL_DISALLOW = ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"];
+
 const robotsConfig = {
   rules: [
     // Default rules for all crawlers (including search engines)
+    { userAgent: "*", allow: CRAWL_ALLOW, disallow: CRAWL_DISALLOW },
+    // AI agent crawlers (browsing/search + training) — explicit allow (see
+    // header). A crawler obeys only its most specific group, so this group
+    // repeats the `*` paths; an allow-only group would let them crawl /api/.
+    // Keep in sync with app/robots.txt/route.ts.
     {
-      userAgent: "*",
-      allow: ["/", "/_next/static/"],
-      disallow: ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"],
+      userAgent: [
+        "OAI-SearchBot",
+        "ChatGPT-User",
+        "Claude-SearchBot",
+        "Claude-User",
+        "Claude-Web",
+        "PerplexityBot",
+        "Perplexity-User",
+        "DeepSeekBot",
+        "ora-agent",
+        "Qwen-Agent",
+        "GPTBot",
+        "ClaudeBot",
+        "anthropic-ai",
+        "Google-Extended",
+        "Applebot-Extended",
+        "Meta-ExternalAgent",
+        "cohere-ai",
+      ],
+      allow: CRAWL_ALLOW,
+      disallow: CRAWL_DISALLOW,
     },
-    // AI agent BROWSING/SEARCH crawlers — explicit allow (agent readiness)
-    { userAgent: "ChatGPT-User", allow: ["/"] },
-    { userAgent: "Claude-Web", allow: ["/"] },
-    { userAgent: "PerplexityBot", allow: ["/"] },
-    { userAgent: "DeepSeekBot", allow: ["/"] },
-    // AI TRAINING crawlers — explicit allow (2026 policy; see header).
-    // Removing these explicit rules would also allow them (via `*`), but we
-    // list them to make the policy visible to maintainers and to scanners.
-    { userAgent: "GPTBot", allow: ["/"] },
-    { userAgent: "ClaudeBot", allow: ["/"] },
-    { userAgent: "anthropic-ai", allow: ["/"] },
-    { userAgent: "Google-Extended", allow: ["/"] },
-    { userAgent: "Applebot-Extended", allow: ["/"] },
-    { userAgent: "Meta-ExternalAgent", allow: ["/"] },
-    { userAgent: "cohere-ai", allow: ["/"] },
     // Still-blocked: non-vendor data harvesters with no direct user-agent
     // value. These resell scraped data without powering any end-user agent.
     { userAgent: "CCBot", disallow: ["/"] },
     { userAgent: "Bytespider", disallow: ["/"] },
     { userAgent: "Omgilibot", disallow: ["/"] },
   ],
-  sitemaps: [
-    `${normalizedSiteUrl}/sitemap.xml`,
-    `${normalizedSiteUrl}/server-static-sitemap.xml`,
-    `${normalizedSiteUrl}/server-sitemap.xml`,
-    `${normalizedSiteUrl}/server-news-sitemap.xml`,
-    `${normalizedSiteUrl}/server-place-sitemap.xml`,
-    `${normalizedSiteUrl}/server-google-news-sitemap.xml`,
-  ],
+  // One index: it lists every child sitemap, so naming them too only
+  // made crawlers fetch each one twice.
+  sitemaps: [`${normalizedSiteUrl}/sitemap.xml`],
   host: normalizedSiteUrl,
 };
 
@@ -124,7 +130,9 @@ function generateRobotsTxt() {
 
   // Add rules
   for (const rule of robotsConfig.rules) {
-    lines.push(`User-Agent: ${rule.userAgent}`);
+    for (const userAgent of [rule.userAgent].flat()) {
+      lines.push(`User-Agent: ${userAgent}`);
+    }
 
     if (rule.allow) {
       for (const path of rule.allow) {
@@ -171,6 +179,7 @@ writeFileSync(outputPath, robotsTxt, "utf-8");
 
 console.log(`✅ Generated ${outputPath}`);
 console.log(`   Site URL: ${normalizedSiteUrl}`);
-const blocked = robotsConfig.rules.filter((r) => r.disallow && !r.allow).length;
-const allowed = robotsConfig.rules.filter((r) => r.allow).length;
-console.log(`   User-agent rules: ${allowed} allow, ${blocked} disallow`);
+const countAgents = (rules) => rules.flatMap((r) => [r.userAgent].flat()).length;
+const blocked = countAgents(robotsConfig.rules.filter((r) => r.disallow && !r.allow));
+const allowed = countAgents(robotsConfig.rules.filter((r) => r.allow));
+console.log(`   User-agents: ${allowed} allowed, ${blocked} blocked`);

@@ -294,6 +294,7 @@ export interface SocialProps {
     linkedin?: string;
     tiktok?: string;
     mastodon?: string;
+    github?: string;
   };
 }
 
@@ -500,7 +501,6 @@ export interface ClientInteractiveLayerProps {
 
 export interface ClientInteractiveLayerContentProps extends ClientInteractiveLayerProps {
   isNavbarVisible: boolean;
-  isHydrated: boolean;
   isModalOpen: boolean;
   handleOpenModal: () => void;
   handleCloseModal: () => void;
@@ -584,6 +584,10 @@ export type ProfileTranslator = Awaited<
 
 export interface AvatarInitialsProps {
   name: string;
+  /** Size and text classes; defaults to the 80 px profile-header size. */
+  className?: string;
+  /** Hide from assistive tech when the name is already shown next to it. */
+  decorative?: boolean;
 }
 
 export interface ProfileEventsSectionProps {
@@ -638,6 +642,16 @@ export interface PlacePageEventsResult {
   structuredScripts?: JsonLdScript[];
   /** Gates date/category explore links (see lib/seo/place-expandability.ts) */
   placeIsExpandable: boolean;
+  /** Upcoming events in the place itself (0 when the list is a fallback) */
+  totalEvents?: number;
+}
+
+export interface TownGuideProps {
+  placeLabel: string;
+  regionLabel?: string;
+  regionSlug?: string;
+  events: ListEvent[];
+  totalEvents: number;
 }
 
 export interface PlaceShellData {
@@ -1148,3 +1162,12 @@ export interface CheckoutReturnTrackerProps {
   params?: Record<string, string>;
 }
 
+
+export interface DocsCodeBlockProps {
+  code: string;
+}
+
+export interface DocsLinkProps {
+  href: string;
+  children: ReactNode;
+}

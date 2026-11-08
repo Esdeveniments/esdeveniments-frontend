@@ -876,3 +876,20 @@ came in 3.4), so a skeleton lost 12px. Nothing warns in the class attribute;
 `@apply` of the same class fails the build. Check the compiled CSS for any
 class you haven't seen used in the repo:
 `npx tailwindcss -i styles/globals.css -o /tmp/out.css && grep -c '\.min-h-12' /tmp/out.css`.
+
+## AdSense rewrites the height of every ancestor of an ad
+
+Once an ad loads, AdSense sets `height: auto !important` on every ancestor of the
+`<ins>` up to (not including) `body`, and `min-height: 0px !important` on any of
+them with a min-height (`show_ads_impl`: it skips only `html`/`body`, an ancestor
+whose computed `min-height` is `100%`, or one with `overflow-y: auto|scroll`; it
+stops at a `position: absolute|fixed` or floated ancestor). Inline `!important`
+beats every stylesheet, so a `min-h-screen` on `<main>` or a page wrapper is gone
+for the rest of the visit. Ours kept the footer below the fold while the next
+page loaded; without it the footer showed under the short loading skeleton and
+jumped away when the page streamed in (0.24 CLS per client-side navigation, the
+footer shifts in GA `web_vitals`, #697). Headless Chrome gets no ad fill, so lab
+runs never showed it. Put any size floor on something that is never an ancestor
+of an ad: `BaseLayout` uses a zero-width `min-h-screen` strut next to `<main>`.
+To test it, reproduce the rewrite by script, or use real ads (method in
+`docs/performance/baselines.md`, 2026-11-07).

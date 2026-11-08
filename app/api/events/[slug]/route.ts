@@ -1,6 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { revalidateTag } from "next/cache";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
+import { submitEventsToIndexNow } from "@lib/seo/indexnow";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
 import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
@@ -72,7 +73,10 @@ export async function DELETE(
     // Next's tags don't reach Cloudflare: purge the pages that showed the
     // event. Next starts the revalidations above before the response is sent,
     // and after() runs once it has been sent.
-    after(() => purgeEventPagesFromCdn([event]));
+    after(async () => {
+      await purgeEventPagesFromCdn([event]);
+      await submitEventsToIndexNow([slug]);
+    });
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     return handleApiError(e, "/api/events/[slug] DELETE");
