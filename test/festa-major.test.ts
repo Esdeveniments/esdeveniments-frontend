@@ -166,6 +166,24 @@ describe("toFestaMajorAct", () => {
     });
   });
 
+  it("keeps only the venue, without the town and region", () => {
+    const placed = {
+      ...base,
+      city: { name: "Cardedeu" },
+      region: { name: "Vallès Oriental" },
+    } as EventSummaryResponseDTO;
+    expect(
+      toFestaMajorAct({
+        ...placed,
+        location: "Plaça de la Creu, Cardedeu, Vallès Oriental",
+      })?.location,
+    ).toBe("Plaça de la Creu");
+    expect(
+      toFestaMajorAct({ ...placed, location: "Cardedeu, Cardedeu, Vallès Oriental" })
+        ?.location,
+    ).toBe("");
+  });
+
   it("drops events without a date or slug", () => {
     expect(toFestaMajorAct({ ...base, startDate: "" })).toBeNull();
     expect(toFestaMajorAct({ ...base, slug: "" })).toBeNull();

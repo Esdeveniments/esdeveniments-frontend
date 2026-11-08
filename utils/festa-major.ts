@@ -8,7 +8,7 @@ import type {
 } from "types/festa-major";
 import { FESTA_MAJOR_MIN_INDEXABLE_ACTS, MS_PER_DAY } from "./constants";
 import { consolidateKeys, extractFestaName } from "./festa-major-name";
-import { normalizeForSearch } from "./string-helpers";
+import { dropPlaceParts, normalizeForSearch } from "./string-helpers";
 import { stripHtmlTags } from "./sanitize";
 
 /** Acts more than this many days after the previous one start a new festa. */
@@ -50,7 +50,12 @@ export function toFestaMajorAct(
     startTime: event.startTime || null,
     endDate: endDate && endDate >= startDate ? endDate : startDate,
     endTime: event.endTime || null,
-    location: stripHtmlTags(event.location ?? ""),
+    // The hub already names the town: "Plaça de la Creu, Cardedeu, Vallès Oriental" → "Plaça de la Creu".
+    location: dropPlaceParts(
+      stripHtmlTags(event.location ?? ""),
+      event.city?.name,
+      event.region?.name,
+    ),
     ...(event.imageUrl?.trim() ? { imageUrl: event.imageUrl } : {}),
   };
 }
