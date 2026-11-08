@@ -2,7 +2,7 @@
 // copy it from node_modules into a versioned folder under /static (outside
 // the proxy matcher, same origin for CSP `worker-src 'self'`). The events map
 // points setWorkerUrl() at `/static/maplibre-v<version>/maplibre-gl-worker.mjs`
-// (components/ui/eventsMap/maplibre.ts).
+// (components/ui/eventsMap/useEventsMapLibre.ts).
 import fs from "fs";
 import path from "path";
 import { createRequire } from "module";

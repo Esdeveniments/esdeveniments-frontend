@@ -1,9 +1,9 @@
 {
   "version": "1.0",
-  "generatedAt": "2026-11-03T09:43:06.252Z",
-  "lastUpdated": "2026-11-03T09:43:06.252Z",
+  "generatedAt": "2026-11-08T09:43:05.689Z",
+  "lastUpdated": "2026-11-08T09:48:00.446Z",
   "client": {
-    "totalBytes": 2060513,
+    "totalBytes": 3332665,
     "topBundles": [
       {
         "path": ".next/static/chunks/2b298ujrsehu-.js",
@@ -123,15 +123,15 @@
       "fileCount": 8
     },
     "/[locale]/[place]/[byDate]/[category]": {
-      "serverBytes": 239818,
+      "serverBytes": 252488,
       "fileCount": 8
     },
     "/[locale]/[place]/[byDate]": {
-      "serverBytes": 236008,
+      "serverBytes": 248666,
       "fileCount": 8
     },
     "/[locale]/[place]": {
-      "serverBytes": 232228,
+      "serverBytes": 244874,
       "fileCount": 8
     },
     "/[locale]": {
@@ -523,5 +523,19 @@
       "fileCount": 4
     }
   },
-  "clientTotalBytes": 2060513
+  "clientTotalBytes": 3332665,
+  "pages": {
+    "/ca": {
+      "jsGzipBytes": 338836,
+      "chunkCount": 24
+    },
+    "/ca/[place]": {
+      "jsGzipBytes": 344017,
+      "chunkCount": 23
+    },
+    "/ca/e/[eventId]": {
+      "jsGzipBytes": 326551,
+      "chunkCount": 22
+    }
+  }
 }
