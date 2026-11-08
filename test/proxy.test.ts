@@ -533,6 +533,92 @@ describe("proxy", () => {
 
       expect(resolvePlaceForProxy).not.toHaveBeenCalled();
     });
+
+    describe("festa major hubs", () => {
+      it("301s an alias, keeping the festa segment and locale", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({
+          kind: "alias",
+          slug: "la-garriga",
+        });
+
+        await proxy(placeRequest("/es/festa-major/lagarriga/sant-esteve"));
+
+        expect(resolvePlaceForProxy).toHaveBeenCalledWith("lagarriga");
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe("/es/festa-major/la-garriga/sant-esteve");
+      });
+
+      it("rewrites an unknown town with a 404 status", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+        (NextResponse.rewrite as Mock).mockReturnValue({
+          headers: new Headers(),
+        });
+
+        await proxy(placeRequest("/festa-major/no-such-place"));
+
+        const [url, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(url.pathname).toBe("/ca/festa-major/no-such-place");
+        expect(init.status).toBe(404);
+      });
+
+      it.each([
+        ["/festa-major", "/festes-majors"],
+        ["/festa-major/catalunya", "/festes-majors"],
+        ["/en/festa-major/catalunya/x", "/en/festes-majors"],
+      ])("301s %s to the calendar", async (pathname, target) => {
+        await proxy(placeRequest(pathname));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe(target);
+      });
+
+      it("404s an invalid slug without asking the backend", async () => {
+        (NextResponse.rewrite as Mock).mockReturnValue({
+          headers: new Headers(),
+        });
+
+        await proxy(placeRequest("/festa-major/favicon.ico"));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBe(404);
+      });
+
+      it.each([
+        "/festes-majors/valles-oriental",
+        "/es/fires-de-nadal/cardedeu",
+        "/cavalcades-de-reis/avui/concerts",
+      ])("404s %s under a one-page hub", async (pathname) => {
+        (NextResponse.rewrite as Mock).mockReturnValue({
+          headers: new Headers(),
+          cookies: { set: vi.fn() },
+        });
+
+        await proxy(placeRequest(pathname));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBe(404);
+      });
+
+      it.each(["/festes-majors", "/pessebres-vivents"])(
+        "serves %s without a place check",
+        async (pathname) => {
+          (NextResponse.rewrite as Mock).mockReturnValue({
+            headers: new Headers(),
+          });
+
+          await proxy(placeRequest(pathname));
+
+          expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+          const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+          expect(init.status).toBeUndefined();
+        },
+      );
+    });
   });
 
   describe("profile existence (real 404)", () => {

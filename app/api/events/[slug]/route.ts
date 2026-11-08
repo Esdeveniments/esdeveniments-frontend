@@ -2,6 +2,7 @@ import { NextResponse, after } from "next/server";
 import { revalidateTag } from "next/cache";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { submitEventsToIndexNow } from "@lib/seo/indexnow";
+import { hubPathsFor } from "@utils/festivity";
 import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external";
 import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
@@ -75,7 +76,7 @@ export async function DELETE(
     // and after() runs once it has been sent.
     after(async () => {
       await purgeEventPagesFromCdn([event]);
-      await submitEventsToIndexNow([slug]);
+      await submitEventsToIndexNow([slug], hubPathsFor([event]));
     });
     return new NextResponse(null, { status: 204 });
   } catch (e) {

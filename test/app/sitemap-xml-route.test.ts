@@ -99,6 +99,7 @@ describe("app/sitemap.xml/route", () => {
 
     // Static sitemap
     expect(text).toContain("/server-static-sitemap.xml");
+    expect(text).toContain("/server-festa-major-sitemap.xml");
     // Chunked event sitemaps (no longer /server-sitemap.xml which is now an index)
     expect(text).toContain("/sitemap-events/1.xml");
     expect(text).toContain("/sitemap-events/5.xml");

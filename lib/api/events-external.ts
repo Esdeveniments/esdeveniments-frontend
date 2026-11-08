@@ -1,13 +1,18 @@
 import { fetchWithHmac } from "./fetch-wrapper";
 import { parseEventDetail, parsePagedEvents } from "lib/validation/event";
 import { buildEventsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helpers";
+import { addDaysYmd, daysBetweenYmd } from "@utils/date-helpers";
 import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
   PagedResponseDTO,
   CategorizedEvents,
 } from "types/api/event";
-import type { FetchEventsParams } from "types/event";
+import type {
+  AllEventPages,
+  AllEventPagesOptions,
+  FetchEventsParams,
+} from "types/event";
 import type { SafeFetchResult } from "types/fetch";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
@@ -132,4 +137,90 @@ export async function fetchEventCountExternal(
     console.error("fetchEventCountExternal: failed", error);
     return null;
   }
+}
+
+const PARALLEL_REQUESTS = 4;
+const MAX_PAGE_SIZE = 50; // the backend clamps larger pages
+// Windows are cut to about half a page, so most fit on the first try.
+const WINDOW_FILL = 0.5;
+
+type PageTask = { from?: string; to?: string; page: number };
+
+/** Equal day windows covering from..to, each expected to hold about half a page. */
+function splitWindow(from: string, to: string, total: number, size: number) {
+  const days = daysBetweenYmd(from, to) + 1;
+  const parts = Math.min(days, Math.ceil(total / (size * WINDOW_FILL)));
+  const step = Math.ceil(days / parts);
+  const windows: PageTask[] = [];
+  for (let offset = 0; offset < days; offset += step) {
+    const end = addDaysYmd(from, Math.min(offset + step, days) - 1);
+    windows.push({ from: addDaysYmd(from, offset), to: end, page: 0 });
+  }
+  return windows;
+}
+
+/**
+ * Every event of a query. With from/to the backend returns rows in no fixed
+ * order (Esdeveniments/esdeveniments-backend#63), so walking pages skips some
+ * events and repeats others. Instead the date range is split until each
+ * window fits in one page; only a single day (or a query without dates) that
+ * still overflows is paged, deduped by id.
+ *
+ * For readers inside "use cache": skips connection() and throws on any failed
+ * request, so a partial list is never cached. `complete` is false when the
+ * request budget ran out or a paged window came back with fewer unique events
+ * than its total.
+ */
+export async function fetchAllEventPagesExternal(
+  params: Omit<FetchEventsParams, "page" | "size">,
+  { maxRequests, pageSize = MAX_PAGE_SIZE, timeout }: AllEventPagesOptions,
+): Promise<AllEventPages> {
+  const size = Math.min(pageSize, MAX_PAGE_SIZE);
+  const fetchPage = async ({ from, to, page }: PageTask) => {
+    const qs = buildEventsQuery({ ...params, from, to, page, size });
+    // No `next: { revalidate }` - uses no-store to avoid cache explosion
+    const res = await fetchWithHmac(`${getApiUrl()}/events?${qs}`, {
+      skipConnection: true,
+      timeout,
+    });
+    if (!res.ok) throw new Error(`fetchAllEventPagesExternal: HTTP ${res.status}`);
+    const data = parsePagedEvents(await res.json());
+    if (!data) throw new Error("fetchAllEventPagesExternal: invalid payload");
+    return data;
+  };
+
+  const byId = new Map<string, EventSummaryResponseDTO>();
+  // Windows walked page by page: their unique ids must reach their total.
+  const paged = new Map<string, { ids: Set<string>; total: number }>();
+  const queue: PageTask[] = [{ from: params.from, to: params.to, page: 0 }];
+  let requests = 0;
+
+  while (queue.length > 0 && requests < maxRequests) {
+    const batch = queue.splice(0, Math.min(PARALLEL_REQUESTS, maxRequests - requests));
+    requests += batch.length;
+    const results = await Promise.all(batch.map(fetchPage));
+    batch.forEach((task, i) => {
+      const { content, totalElements, totalPages } = results[i];
+      for (const event of content) byId.set(event.id, event);
+      const key = `${task.from}|${task.to}`;
+      if (task.page > 0) {
+        content.forEach((event) => paged.get(key)?.ids.add(event.id));
+        return;
+      }
+      if (totalElements <= content.length) return;
+      if (task.from && task.to && task.from < task.to) {
+        queue.push(...splitWindow(task.from, task.to, totalElements, size));
+        return;
+      }
+      paged.set(key, { ids: new Set(content.map((event) => event.id)), total: totalElements });
+      for (let page = 1; page < totalPages; page++) {
+        queue.push({ from: task.from, to: task.to, page });
+      }
+    });
+  }
+
+  const complete =
+    queue.length === 0 &&
+    [...paged.values()].every(({ ids, total }) => ids.size >= total);
+  return { events: [...byId.values()], complete };
 }

@@ -101,6 +101,7 @@ export const getOptimalImageWidth = (
     featured: 800,
     // Row card (news article events): full width below md, 40% of the article column
     row: 800,
+    thumb: 120,
   };
 
   return widthMap[context];
@@ -130,6 +131,8 @@ export const getResponsiveWidths = (
     featured: [500, 800],
     // Row card: ~360px wide on mobile and desktop, so 500 (1x) and 800 (2x)
     row: [500, 800],
+    // Thumbnail beside a list row: 56px, so 120 covers 2x
+    thumb: [120],
   };
 
   return widthsMap[context];
@@ -167,6 +170,7 @@ export const getOptimalImageSizes = (
     // Row card (CardLayout `row`): full width below md, then 40% of the
     // 896px article column
     row: "(max-width: 767px) 100vw, 360px",
+    thumb: "56px",
   };
 
   return sizesMap[context];

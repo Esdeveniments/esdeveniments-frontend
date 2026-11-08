@@ -3,6 +3,7 @@ import {
   getMonthNames,
   getShortDayNames,
   getShortMonthNames,
+  MS_PER_DAY,
   TIMEZONE_MADRID,
 } from "./constants";
 import type {
@@ -272,6 +273,16 @@ export function parseTimeToEventTimeDTO(
 export const toLocalDateString = (date: Date): string => {
   return date.toISOString().slice(0, 10);
 };
+
+/** Shifts a "YYYY-MM-DD" date by whole days (noon UTC, so DST can't move it). */
+export const addDaysYmd = (date: string, days: number): string =>
+  new Date(Date.parse(`${date}T12:00:00Z`) + days * MS_PER_DAY)
+    .toISOString()
+    .slice(0, 10);
+
+/** Whole days from `from` to `to`, both "YYYY-MM-DD". */
+export const daysBetweenYmd = (from: string, to: string): number =>
+  Math.round((Date.parse(to) - Date.parse(from)) / MS_PER_DAY);
 
 /**
  * Parses a form date value in local time. Edit forms prefill date-only

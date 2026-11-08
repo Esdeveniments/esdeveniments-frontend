@@ -565,7 +565,8 @@
         "terms": "Términos de servicio",
         "privacy": "Privacidad",
         "login": "Iniciar sesión",
-        "developers": "API para desarrolladores"
+        "developers": "API para desarrolladores",
+        "festesMajors": "Fiestas mayores"
       },
       "sponsorCta": {
         "title": "Da visibilidad a tu negocio local",
@@ -1182,6 +1183,9 @@
     },
     "Modal": {
       "close": "Cerrar"
+    },
+    "FestaMajorLink": {
+      "label": "Programa completo de la fiesta mayor {placeOf}"
     }
   },
   "Partials": {
@@ -1463,6 +1467,90 @@
       "aboutBody": "Este archivo contiene una recopilación de eventos culturales {placeIn} organizados cronológicamente. Cada mes incluye teatro, música, arte, festivales y otras actividades culturales.",
       "quickNavTitle": "Navegación rápida",
       "quickNavBody": "Utiliza los enlaces para navegar directamente a un mes específico. Los años más recientes aparecen primero para facilitar la búsqueda."
+    },
+    "FestaMajor": {
+      "metaTitle": "Fiesta mayor {placeOf} {year}: programa y actos",
+      "metaDescription": "Programa de la fiesta mayor {placeOf} {year}: fechas, horarios y todos los actos, día a día. Conciertos, pasacalles, correfocs y mucho más.",
+      "festaMetaTitle": "{festa} {placeIn} {year}: programa y actos",
+      "festaMetaDescription": "Programa de la {festa} {placeIn} {year}: fechas, horarios y todos los actos, día a día.",
+      "regionMetaTitle": "Fiestas mayores {placeOf} {year}: calendario por pueblos",
+      "regionMetaDescription": "¿Cuándo es la fiesta mayor de cada pueblo {placeOf}? Calendario de las fiestas mayores de {year} con el programa de actos.",
+      "title": "Fiesta mayor {placeOf} {year}",
+      "festaTitle": "{festa} {placeIn} {year}",
+      "regionTitle": "Fiestas mayores {placeOf} {year}",
+      "breadcrumbHome": "Inicio",
+      "breadcrumbAll": "Fiestas mayores",
+      "intro": "{count, plural, one {# acto} other {# actos}} en el programa.",
+      "introDates": "Fechas: {dates}.",
+      "previousYearNotice": "El programa de {currentYear} aún no se ha publicado. Mientras tanto, aquí tienes el de {year}.",
+      "announcedTitle": "Ya anunciado para {year}",
+      "empty": "Aún no tenemos actos de la fiesta mayor {placeOf}. Cuando se publique el programa, lo encontrarás aquí.",
+      "festaEmpty": "Esta fiesta no tiene actos publicados ni este año ni el anterior.",
+      "unavailable": "Ahora mismo no podemos cargar el programa. Vuelve a probarlo dentro de un rato.",
+      "festesTitle": "Fiestas mayores {placeOf}",
+      "ownFesta": "Fiesta mayor {placeOf}",
+      "actsCount": "{count, plural, one {# acto} other {# actos}}",
+      "programmeTitle": "Programa",
+      "previousTitle": "Fiesta mayor de {year}",
+      "previousLink": "Mira los actos",
+      "moreTitle": "También te puede interesar",
+      "townAgenda": "Agenda {placeOf}",
+      "regionHub": "Fiestas mayores {placeOf}",
+      "allFestes": "Calendario de fiestas mayores de Cataluña",
+      "backToTown": "Toda la fiesta mayor {placeOf}",
+      "regionIntro": "{count, plural, one {# pueblo} other {# pueblos}} con fiesta mayor en el calendario.",
+      "regionEmpty": "Aún no tenemos fiestas mayores {placeOf}.",
+      "lastYearDates": "fechas de {year}"
+    },
+    "FestesMajors": {
+      "metaTitle": "Fiestas mayores de Cataluña {year}: calendario por meses",
+      "metaDescription": "¿Cuándo es la fiesta mayor de cada pueblo? Calendario de las fiestas mayores de Cataluña de {year}, mes a mes, con el programa de actos.",
+      "title": "Fiestas mayores de Cataluña {year}",
+      "intro": "{count, plural, one {# pueblo} other {# pueblos}}, ordenados por fecha. Si aún no han publicado el programa de {year}, te ponemos las fechas del año pasado.",
+      "nowTitle": "Estos días",
+      "regionsTitle": "Por comarcas",
+      "nadalTitle": "En Navidad",
+      "empty": "Aún no tenemos fiestas mayores en el calendario.",
+      "unavailable": "Ahora mismo no podemos cargar el calendario. Vuelve a probarlo dentro de un rato.",
+      "lead": "Pasacalles, correfocs, gigantes, conciertos y habaneras: cada pueblo tiene su fiesta mayor, y las hay todo el año. Busca la de tu pueblo o descubre otras nuevas."
+    },
+    "Festivity": {
+      "intro": "{count, plural, one {# pueblo ya ha anunciado la fecha.} other {# pueblos ya han anunciado la fecha.}}",
+      "upcomingTitle": "Próximas fechas",
+      "noUpcoming": "Todavía no se ha anunciado ninguna fecha. Los pueblos suelen publicarlas a partir de noviembre.",
+      "pendingTitle": "Pendientes de confirmar",
+      "pendingIntro": "Estos pueblos lo celebraron la Navidad pasada, pero aún no han anunciado la fecha. Para que te hagas una idea, aquí tienes la de la Navidad pasada.",
+      "pastTitle": "Ya han pasado",
+      "empty": "De momento no tenemos ninguna fecha. Vuelve a finales de noviembre.",
+      "unavailable": "Ahora mismo no podemos cargar el calendario. Vuelve a intentarlo dentro de un rato.",
+      "moreTitle": "También te puede interesar",
+      "catalunyaAgenda": "Agenda de Cataluña",
+      "types": {
+        "firesDeNadal": {
+          "name": "Ferias de Navidad",
+          "title": "Ferias de Navidad en Cataluña {year}",
+          "metaTitle": "Ferias de Navidad {year} en Cataluña: fechas por pueblos",
+          "metaDescription": "¿Cuándo es la feria de Navidad de cada pueblo? Calendario de las ferias y mercados de Navidad y de Santa Lucía en Cataluña en {year}, con fechas y horarios.",
+          "eventLink": "Todas las ferias de Navidad de Cataluña",
+          "lead": "Tiós, caganers, figuras para el belén y turrones: desde finales de noviembre hasta Reyes, las ferias de Navidad y de Santa Llúcia llenan las plazas. Mira cuándo es la de tu pueblo."
+        },
+        "pessebresVivents": {
+          "name": "Belenes vivientes",
+          "title": "Belenes vivientes de Cataluña {year}",
+          "metaTitle": "Belenes vivientes {year} en Cataluña: fechas y horarios",
+          "metaDescription": "¿Dónde y cuándo hay belenes vivientes esta Navidad? Calendario de los belenes vivientes de Cataluña {year}, con fechas, horarios y pueblos.",
+          "eventLink": "Todos los belenes vivientes de Cataluña",
+          "lead": "Actores, animales y decorados de verdad: en Navidad, muchos pueblos representan el nacimiento de Jesús. Aquí tienes los días y los horarios de cada belén viviente."
+        },
+        "cavalcadesDeReis": {
+          "name": "Cabalgatas de Reyes",
+          "title": "Cabalgatas de Reyes {year} en Cataluña",
+          "metaTitle": "Cabalgatas de Reyes {year} en Cataluña: horarios por pueblos",
+          "metaDescription": "¿A qué hora pasa la cabalgata de Reyes por tu pueblo? Horarios de las cabalgatas de Reyes {year} en Cataluña, pueblo a pueblo.",
+          "eventLink": "Todas las cabalgatas de Reyes de Cataluña",
+          "lead": "La tarde del 5 de enero, los Reyes Magos llegan a cada pueblo con los pajes y las carrozas. Mira a qué hora pasa la cabalgata por el tuyo."
+        }
+      }
     }
   },
   "Utils": {

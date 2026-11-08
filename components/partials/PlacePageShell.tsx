@@ -29,9 +29,7 @@ import {
 } from "@utils/breadcrumb-helpers";
 import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
-import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
-import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
-import { hasCardImage } from "@utils/event-helpers";
+import CardImagePreload from "@components/ui/common/image/CardImagePreload";
 import { TOWN_TEST_CONTENT_GROUP } from "@config/town-seo-test";
 import { connection } from "next/server";
 
@@ -285,21 +283,6 @@ async function PlacePageContent({
   const tByDates = await getTranslations("Config.ByDates");
   const locale = await getLocaleSafely();
 
-  // Preload LCP image: the same card HybridEventsList marks as priority.
-  // Uses responsive srcSet so the browser picks the right width for the viewport.
-  const firstImageEvent = events.find(hasCardImage);
-  const lcpSources = firstImageEvent
-    ? buildResponsivePictureSourceUrls(
-      firstImageEvent.imageUrl,
-      firstImageEvent.hash || firstImageEvent.updatedAt,
-      {
-        quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
-      },
-      getResponsiveWidths("list")
-    )
-    : null;
-  const lcpSizes = getOptimalImageSizes("list");
-
   // Generate webPageSchema after shell data is available
   const webPageSchema = webPageSchemaFactory
     ? webPageSchemaFactory({ placeTypeLabel, pageData })
@@ -344,16 +327,7 @@ async function PlacePageContent({
   return (
     <>
       {/* Preload LCP card image for faster Largest Contentful Paint */}
-      {lcpSources && (
-        <link
-          rel="preload"
-          as="image"
-          imageSrcSet={lcpSources.webpSrcSet}
-          imageSizes={lcpSizes}
-          type="image/webp"
-          fetchPriority="high"
-        />
-      )}
+      <CardImagePreload events={events} />
 
       {webPageSchema && (
         <JsonLdServer id="webpage-schema" data={webPageSchema} />

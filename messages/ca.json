@@ -565,7 +565,8 @@
         "terms": "Termes de servei",
         "privacy": "Privacitat",
         "login": "Iniciar sessió",
-        "developers": "API per a desenvolupadors"
+        "developers": "API per a desenvolupadors",
+        "festesMajors": "Festes majors"
       },
       "sponsorCta": {
         "title": "Fes visible el teu negoci local",
@@ -1182,6 +1183,9 @@
     },
     "Modal": {
       "close": "Tanca"
+    },
+    "FestaMajorLink": {
+      "label": "Programa complet de la Festa Major {placeOf}"
     }
   },
   "Partials": {
@@ -1463,6 +1467,90 @@
       "aboutBody": "Aquest arxiu conté una recopilació d'esdeveniments culturals {placeIn} organitzats cronològicament. Cada mes inclou teatre, música, art, festivals i altres activitats culturals.",
       "quickNavTitle": "Navegació ràpida",
       "quickNavBody": "Utilitza els enllaços per navegar directament a un mes específic. Els anys més recents apareixen primer per facilitar la cerca."
+    },
+    "FestaMajor": {
+      "metaTitle": "Festa Major {placeOf} {year}: programa i actes",
+      "metaDescription": "Programa de la Festa Major {placeOf} {year}: dates, horaris i tots els actes, dia a dia. Concerts, cercaviles, correfocs i molt més.",
+      "festaMetaTitle": "{festa} {placeIn} {year}: programa i actes",
+      "festaMetaDescription": "Programa de la {festa} {placeIn} {year}: dates, horaris i tots els actes, dia a dia.",
+      "regionMetaTitle": "Festes majors {placeOf} {year}: calendari per pobles",
+      "regionMetaDescription": "Quan és la festa major de cada poble {placeOf}? Calendari de les festes majors del {year} amb el programa d'actes.",
+      "title": "Festa Major {placeOf} {year}",
+      "festaTitle": "{festa} {placeIn} {year}",
+      "regionTitle": "Festes majors {placeOf} {year}",
+      "breadcrumbHome": "Inici",
+      "breadcrumbAll": "Festes majors",
+      "intro": "{count, plural, one {# acte} other {# actes}} al programa.",
+      "introDates": "Dates: {dates}.",
+      "previousYearNotice": "El programa del {currentYear} encara no s'ha publicat. Mentrestant, aquí tens el del {year}.",
+      "announcedTitle": "Ja anunciat per al {year}",
+      "empty": "Encara no tenim actes de la festa major {placeOf}. Quan es publiqui el programa, el trobaràs aquí.",
+      "festaEmpty": "Aquesta festa no té actes publicats ni aquest any ni l'anterior.",
+      "unavailable": "Ara mateix no podem carregar el programa. Torna-ho a provar d'aquí a una estona.",
+      "festesTitle": "Festes majors {placeOf}",
+      "ownFesta": "Festa Major {placeOf}",
+      "actsCount": "{count, plural, one {# acte} other {# actes}}",
+      "programmeTitle": "Programa",
+      "previousTitle": "Festa major del {year}",
+      "previousLink": "Mira els actes",
+      "moreTitle": "També et pot interessar",
+      "townAgenda": "Agenda {placeOf}",
+      "regionHub": "Festes majors {placeOf}",
+      "allFestes": "Calendari de festes majors de Catalunya",
+      "backToTown": "Tota la Festa Major {placeOf}",
+      "regionIntro": "{count, plural, one {# poble} other {# pobles}} amb festa major al calendari.",
+      "regionEmpty": "Encara no tenim festes majors {placeOf}.",
+      "lastYearDates": "dates del {year}"
+    },
+    "FestesMajors": {
+      "metaTitle": "Festes majors de Catalunya {year}: calendari per mesos",
+      "metaDescription": "Quan és la festa major de cada poble? Calendari de les festes majors de Catalunya del {year}, mes a mes, amb el programa d'actes.",
+      "title": "Festes majors de Catalunya {year}",
+      "intro": "{count, plural, one {# poble} other {# pobles}}, ordenats per data. Si encara no han publicat el programa del {year}, et posem les dates de l'any passat.",
+      "nowTitle": "Aquests dies",
+      "regionsTitle": "Per comarques",
+      "nadalTitle": "Per Nadal",
+      "empty": "Encara no tenim festes majors al calendari.",
+      "unavailable": "Ara mateix no podem carregar el calendari. Torna-ho a provar d'aquí a una estona.",
+      "lead": "Cercaviles, correfocs, gegants, concerts i havaneres: cada poble té la seva festa major, i n'hi ha tot l'any. Busca la del teu poble o descobreix-ne de noves."
+    },
+    "Festivity": {
+      "intro": "{count, plural, one {# poble ja ha anunciat la data.} other {# pobles ja han anunciat la data.}}",
+      "upcomingTitle": "Properes dates",
+      "noUpcoming": "Encara no s'ha anunciat cap data. Els pobles les solen publicar a partir de novembre.",
+      "pendingTitle": "Pendents de confirmar",
+      "pendingIntro": "Aquests pobles en van fer el Nadal passat, però encara no n'han anunciat la data. Perquè et facis una idea, aquí tens la del Nadal passat.",
+      "pastTitle": "Ja han passat",
+      "empty": "De moment no tenim cap data. Torna-hi cap a finals de novembre.",
+      "unavailable": "Ara mateix no podem carregar el calendari. Torna-ho a provar d'aquí a una estona.",
+      "moreTitle": "També et pot interessar",
+      "catalunyaAgenda": "Agenda de Catalunya",
+      "types": {
+        "firesDeNadal": {
+          "name": "Fires de Nadal",
+          "title": "Fires de Nadal a Catalunya {year}",
+          "metaTitle": "Fires de Nadal {year} a Catalunya: dates per pobles",
+          "metaDescription": "Quan és la fira de Nadal de cada poble? Calendari de les fires i els mercats de Nadal i de Santa Llúcia a Catalunya el {year}, amb dates i horaris.",
+          "eventLink": "Totes les fires de Nadal de Catalunya",
+          "lead": "Tions, caganers, figures per al pessebre i torrons: de finals de novembre fins a Reis, les fires de Nadal i de Santa Llúcia omplen les places. Mira quan es fa la del teu poble."
+        },
+        "pessebresVivents": {
+          "name": "Pessebres vivents",
+          "title": "Pessebres vivents de Catalunya {year}",
+          "metaTitle": "Pessebres vivents {year} a Catalunya: dates i horaris",
+          "metaDescription": "On i quan es fan els pessebres vivents aquest Nadal? Calendari dels pessebres vivents de Catalunya {year}, amb dates, horaris i pobles.",
+          "eventLink": "Tots els pessebres vivents de Catalunya",
+          "lead": "Actors, animals i decorats de veritat: per Nadal, molts pobles representen el naixement de Jesús. Aquí tens els dies i els horaris de cada pessebre vivent."
+        },
+        "cavalcadesDeReis": {
+          "name": "Cavalcades de Reis",
+          "title": "Cavalcades de Reis {year} a Catalunya",
+          "metaTitle": "Cavalcades de Reis {year} a Catalunya: horaris per pobles",
+          "metaDescription": "A quina hora passa la cavalcada de Reis pel teu poble? Horaris de les cavalcades de Reis {year} a Catalunya, poble a poble.",
+          "eventLink": "Totes les cavalcades de Reis de Catalunya",
+          "lead": "La tarda del 5 de gener, els Reis d'Orient arriben a cada poble amb els patges i les carrosses. Mira a quina hora passa la cavalcada pel teu."
+        }
+      }
     }
   },
   "Utils": {

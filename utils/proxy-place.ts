@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server";
 import { getCategoriesForProxy } from "@lib/api/categories-proxy";
 import { resolvePlaceForProxy } from "@lib/api/places-proxy";
 import { isValidDateSlug } from "@lib/dates";
+import { FESTIVITY_SLUGS } from "@config/festivities";
+import { FESTA_MAJOR_SEGMENT, FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import { NON_PLACE_FIRST_SEGMENTS } from "@utils/middleware-redirects";
 import { isValidPlace } from "@utils/route-validation";
 import { getRedirectUrl, parseFiltersFromUrl } from "@utils/url-filters";
@@ -22,6 +24,15 @@ export function isPlacePath(segments: readonly string[]): boolean {
 }
 
 /**
+ * One-page hubs. Anything under them (/festes-majors/x) would match
+ * /[place]/[date] and render a 200 soft 404, so it gets a real 404.
+ */
+const ONE_PAGE_HUBS: ReadonlySet<string> = new Set([
+  FESTES_MAJORS_SEGMENT,
+  ...FESTIVITY_SLUGS,
+]);
+
+/**
  * Unknown places get a real 404 and aliases a 301. Pages stream inside the
  * root layout's Suspense, so notFound()/redirect() there can't set a status
  * (they become 200 + noindex / a client redirect). Next's docs recommend
@@ -35,20 +46,39 @@ export async function checkPlace(
   if (request.method !== "GET" && request.method !== "HEAD") return null;
 
   const segments = pathnameWithoutLocale.split("/").filter(Boolean);
+  const localePrefix = localeFromPath ? `/${localeFromPath}` : "";
+  const redirectTo = (path: string[]): ProxyPlaceCheck => {
+    const url = request.nextUrl.clone();
+    url.pathname = `${localePrefix}/${path.join("/")}`;
+    return { kind: "alias", url };
+  };
+
+  if (segments.length > 1 && ONE_PAGE_HUBS.has(segments[0]))
+    return { kind: "missing" };
+
+  // Festa major hubs: /festa-major/<place>[/<festa>].
+  if (segments[0] === FESTA_MAJOR_SEGMENT && segments.length <= 3) {
+    const slug = segments[1];
+    if (!slug || slug === "catalunya")
+      return redirectTo([FESTES_MAJORS_SEGMENT]);
+    if (!isValidPlace(slug)) return { kind: "missing" };
+    const resolution = await resolvePlaceForProxy(slug);
+    if (resolution.kind === "missing") return { kind: "missing" };
+    if (resolution.kind !== "alias") return null;
+    return redirectTo([
+      FESTA_MAJOR_SEGMENT,
+      resolution.slug,
+      ...segments.slice(2),
+    ]);
+  }
+
   const slug = segments[0] ?? "";
   if (slug === "catalunya" || !isPlacePath(segments)) return null;
 
   const resolution = await resolvePlaceForProxy(slug);
   if (resolution.kind === "missing") return { kind: "missing" };
   if (resolution.kind !== "alias") return null;
-
-  const url = request.nextUrl.clone();
-  url.pathname = [
-    localeFromPath ? `/${localeFromPath}` : "",
-    `/${resolution.slug}`,
-    ...segments.slice(1).map((segment) => `/${segment}`),
-  ].join("");
-  return { kind: "alias", url };
+  return redirectTo([resolution.slug, ...segments.slice(1)]);
 }
 
 /**
