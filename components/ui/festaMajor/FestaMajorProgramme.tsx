@@ -9,6 +9,7 @@ import type { FestaMajorProgrammeProps } from "types/props";
 
 /** A festa's acts by day: one section per festa when there are several. */
 export default async function FestaMajorProgramme({
+  id,
   title,
   editions,
   locale,
@@ -26,7 +27,7 @@ export default async function FestaMajorProgramme({
   const DayHeading = showEditionHeadings ? "h4" : "h3";
 
   return (
-    <section className="stack gap-6 w-full">
+    <section id={id} className="stack gap-6 w-full">
       <h2 className="heading-2">{title}</h2>
       {editions.map((edition) => {
         const dates = formatShortDateRange(edition.start, edition.end, locale);

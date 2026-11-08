@@ -107,6 +107,8 @@ export interface FestaMajorFestaLink extends FestaMajorEditionSummary {
   year: number;
   /** Only festes with enough acts get a (indexable) page of their own. */
   hasPage: boolean;
+  /** Where a festa without a page links: its first act. */
+  firstActSlug: string;
 }
 
 /** Everything a /festa-major/<place>[/<festa>] page renders. */

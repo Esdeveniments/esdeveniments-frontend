@@ -151,6 +151,7 @@ export function listFestes(
         key !== "" &&
         data.acts.length >= FESTA_MAJOR_MIN_INDEXABLE_ACTS &&
         data.acts.length < townActs,
+      firstActSlug: data.acts[0].slug,
     });
   }
   return festes.sort(

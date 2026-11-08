@@ -9,6 +9,7 @@ import {
   festivityPathsFor,
   getFestivityType,
   indexableFestivityPaths,
+  isInFestivitySeason,
   seasonYearOf,
   selectSeasonEvents,
 } from "@utils/festivity";
@@ -87,6 +88,19 @@ describe("seasonYearOf", () => {
     ["2027-10-31", 2027],
   ])("%s belongs to the season starting in %i", (date, year) => {
     expect(seasonYearOf(date)).toBe(year);
+  });
+});
+
+describe("isInFestivitySeason", () => {
+  it.each([
+    ["2026-10-31", false],
+    ["2026-11-01", true],
+    ["2026-12-25", true],
+    ["2027-01-10", true],
+    ["2027-01-11", false],
+    ["2027-07-15", false],
+  ])("%s → %s", (date, inSeason) => {
+    expect(isInFestivitySeason(date)).toBe(inSeason);
   });
 });
 

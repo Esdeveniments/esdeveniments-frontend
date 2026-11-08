@@ -35,6 +35,12 @@ export function seasonYearOf(date: string): number {
   return date.slice(5) <= FESTIVITY_SEASON.end ? year - 1 : year;
 }
 
+/** Whether a Madrid YYYY-MM-DD date falls in the Nadal season. */
+export function isInFestivitySeason(date: string): boolean {
+  const monthDay = date.slice(5);
+  return monthDay >= FESTIVITY_SEASON.start || monthDay <= FESTIVITY_SEASON.end;
+}
+
 export function matchesFestivity(type: FestivityType, title: string): boolean {
   const normalized = normalizeForSearch(stripHtmlTags(title));
   return type.include.test(normalized) && !type.exclude?.test(normalized);

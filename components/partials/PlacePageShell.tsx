@@ -49,6 +49,12 @@ const ExploreNearby = dynamic(
   { loading: () => null }
 );
 
+// Festa major and Nadal hub links - below the fold, server component
+const PlaceFestesLinks = dynamic(
+  () => import("@components/ui/festaMajor/PlaceFestesLinks"),
+  { loading: () => null }
+);
+
 // Town-page test, group B only (config/town-seo-test.ts)
 const TownGuide = dynamic(
   () => import("@components/ui/townGuide/TownGuide"),
@@ -387,6 +393,15 @@ async function PlacePageContent({
         <ExploreNearby
           place={place}
           placeType={placeTypeLabel.type}
+        />
+      </Suspense>
+
+      {/* Festa major and Nadal hubs - SEO links to the festivity pages */}
+      <Suspense fallback={null}>
+        <PlaceFestesLinks
+          place={place}
+          placeType={placeTypeLabel.type}
+          placeLabel={placeTypeLabel.label || place}
         />
       </Suspense>
 

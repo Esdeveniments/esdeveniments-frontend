@@ -17,7 +17,10 @@ import { formatShortDateRange } from "@utils/date-helpers";
 import { formatPlacePhrases } from "@utils/string-helpers";
 import { mainEdition } from "@utils/festa-major";
 import { festaMajorPath } from "@utils/festa-major-paths";
-import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
+import {
+  FESTA_MAJOR_PROGRAMME_ID,
+  FESTES_MAJORS_SEGMENT,
+} from "@utils/constants";
 import type { FestaMajorPageViewProps } from "types/props";
 
 /** The body of /festa-major/<place> (town or region) and /festa-major/<town>/<festa>. */
@@ -177,6 +180,7 @@ export default async function FestaMajorPageView({
 
         {shown && shown.editions.length > 0 && (
           <FestaMajorProgramme
+            id={FESTA_MAJOR_PROGRAMME_ID}
             title={t("programmeTitle")}
             editions={shown.editions}
             locale={locale}

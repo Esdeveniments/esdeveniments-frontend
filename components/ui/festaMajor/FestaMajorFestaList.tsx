@@ -1,10 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { formatShortDateRange } from "@utils/date-helpers";
-import { festaMajorPath } from "@utils/festa-major-paths";
+import { festaLinkPath } from "@utils/festa-major-paths";
 import type { FestaMajorFestaListProps } from "types/props";
 
-/** A town's festes; named ones with enough acts (and not all of the hub's) link to their own page. */
+/** A town's festes, each linking where festaLinkPath says. */
 export default async function FestaMajorFestaList({
   festes,
   townSlug,
@@ -24,14 +24,7 @@ export default async function FestaMajorFestaList({
         {festes.map((festa) => {
           const name = festa.label ?? ownFestaLabel;
           const isCurrent = festa.key === currentKey;
-          // A festa without its own page is part of the town hub.
-          const link = isCurrent
-            ? null
-            : festa.hasPage
-              ? festaMajorPath(townSlug, festa.key)
-              : currentKey === undefined
-                ? null
-                : festaMajorPath(townSlug);
+          const link = isCurrent ? null : festaLinkPath(townSlug, festa);
           const details = [
             formatShortDateRange(festa.start, festa.end, locale),
             t("actsCount", { count: festa.count }),

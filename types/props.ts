@@ -953,6 +953,12 @@ export interface ExploreNearbyProps {
   placeType: PlaceType;
 }
 
+export interface PlaceFestesLinksProps {
+  place: string;
+  placeType: PlaceType;
+  placeLabel: string;
+}
+
 // Profile owner actions client island props
 export interface ProfileOwnerActionsProps {
   username: string;
@@ -1182,6 +1188,8 @@ export interface DocsLinkProps {
 }
 
 export interface FestaMajorProgrammeProps {
+  /** Anchor for links to the programme. */
+  id?: string;
   title: string;
   editions: FestaMajorEdition[];
   locale: AppLocale;

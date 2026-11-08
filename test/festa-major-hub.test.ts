@@ -11,7 +11,10 @@ import {
   summarizeTowns,
   upcomingTowns,
 } from "@utils/festa-major-calendar";
-import { festaMajorHubPathsFor } from "@utils/festa-major-paths";
+import {
+  festaLinkPath,
+  festaMajorHubPathsFor,
+} from "@utils/festa-major-paths";
 
 let nextId = 0;
 const act = (
@@ -148,6 +151,25 @@ describe("buildFestaMajorPageData", () => {
     expect(data.festes.map((f) => [f.key, f.hasPage])).toEqual([
       ["sant-roc", true],
       ["sant-nicolau", false],
+    ]);
+  });
+
+  it("links each festa to its page, the hub programme or its first act", () => {
+    const nicolau = acts("Festa Major de Sant Nicolau: ball", "2026-12-10", 2);
+    const data = page(
+      town,
+      years([
+        ...acts("Festa Major: correfoc", "2026-05-10", 3),
+        ...acts("Festa Major de Sant Roc: concert", "2026-08-10", 6),
+        ...[...nicolau].reverse(),
+      ]),
+    );
+    expect(
+      data.festes.map((festa) => festaLinkPath(town.slug, festa)),
+    ).toEqual([
+      "/festa-major/malgrat-de-mar#programa",
+      "/festa-major/malgrat-de-mar/sant-roc",
+      `/e/${nicolau[0].slug}`,
     ]);
   });
 

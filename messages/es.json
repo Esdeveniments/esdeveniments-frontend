@@ -1186,6 +1186,11 @@
     },
     "FestaMajorLink": {
       "label": "Programa completo de la fiesta mayor {placeOf}"
+    },
+    "PlaceFestesLinks": {
+      "title": "Fiestas y tradiciones",
+      "town": "Fiesta mayor {placeOf}",
+      "region": "Fiestas mayores {placeOf}"
     }
   },
   "Partials": {

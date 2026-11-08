@@ -18,10 +18,10 @@ import { madridTodayYmd } from "@lib/dates";
 import { eventsTag, placeTag } from "@lib/cache/tags";
 import { fetchAllEventPagesExternal } from "./events-external";
 
-// Festa major acts are events whose title says "festa major". A town or region
-// needs a request or a few a year; all of Catalonia about 95 requests
-// (≈1,300 acts in 2026).
-const MAX_PLACE_REQUESTS = 20;
+// Festa major acts are events whose title says "festa major". A town needs a
+// request or a few a year, the biggest regions (Maresme, Vallès Oriental, ~245
+// acts) about 21, all of Catalonia about 95 (≈1,300 acts in 2026).
+const MAX_PLACE_REQUESTS = 40;
 const MAX_CATALONIA_REQUESTS = 150;
 const TIMEOUT_MS = 8000;
 

@@ -1186,6 +1186,11 @@
     },
     "FestaMajorLink": {
       "label": "Programa complet de la Festa Major {placeOf}"
+    },
+    "PlaceFestesLinks": {
+      "title": "Festes i tradicions",
+      "town": "Festa Major {placeOf}",
+      "region": "Festes majors {placeOf}"
     }
   },
   "Partials": {
