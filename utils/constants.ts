@@ -29,6 +29,9 @@ export const EVENT_VENUE_LABEL_MAX_LENGTH = 60;
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;
 
+/** Days after an event ends before its page is noindexed (crawl budget). */
+export const EXPIRED_EVENT_NOINDEX_DAYS = 60;
+
 /** Canonical timezone for all date operations in this app. */
 export const TIMEZONE_MADRID = "Europe/Madrid";
 

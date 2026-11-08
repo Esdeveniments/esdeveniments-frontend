@@ -182,10 +182,10 @@ Fixed later:
 
 - **The hubs were hard to find on the site.** Every listing (`/[place]` and below) now has a "Festes i tradicions" block that links to the hub, the calendar and the Nadal pages.
 - **`/[place]/festes-majors` and `/[place]/festa-major`** 301 to `/festa-major/[place]`, not to `/[place]`.
+- **Old festa major event URLs** 301 to their town hub once they ended more than 60 days ago (`EXPIRED_EVENT_NOINDEX_DAYS`, when they used to turn noindex), so their ranking moves to the hub. `checkExpiredFestaAct` (`utils/proxy-event.ts`) asks the backend only for `/e/` slugs that contain `festa-major` and whose date suffix is that old; the answer is cached for an hour. Deleted events still serve 200 + noindex. A town with no acts in the last two years shows the hub's "no programme yet" text.
 
 Not fixed yet:
 
-- **Old dead event URLs** still return a soft 404. A 301 to the hub would pass their ranking on.
 - **Town councils will keep #1** for their own festa. Our realistic target is #2–5.
 
 ## 6. Extending to other festivities

@@ -23,12 +23,14 @@ import type { SafeFetchResult } from "types/fetch";
 
 export async function fetchEventBySlug(
   slug: string,
+  { signal }: Pick<RequestInit, "signal"> = {},
 ): Promise<EventDetailResponseDTO | null> {
   const apiUrl = getApiUrl();
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     const response = await fetchWithHmac(
       `${apiUrl}/events/${encodeURIComponent(slug)}`,
+      { signal },
     );
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
