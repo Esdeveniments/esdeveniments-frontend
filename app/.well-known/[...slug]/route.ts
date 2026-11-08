@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
 import { getSiteUrlFromRequest } from "@config/index";
+import {
+  buildArdManifest,
+  buildSkillMarkdown,
+  buildSkillsIndex,
+  SKILL_PATH,
+} from "@utils/agent-discovery";
+import { MARKDOWN_CONTENT_TYPE } from "@utils/proxy-agent";
+
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
+};
 
 /**
  * .well-known catch-all route handler
@@ -13,41 +24,26 @@ export async function GET(
   const path = slug.join("/");
   const url = getSiteUrlFromRequest({ headers: request.headers });
 
-  // /.well-known/agent-skills/index.json
+  // Agent Skills discovery index (v0.2.0); the digest is over the served SKILL.md.
   if (path === "agent-skills/index.json") {
-    const skillsIndex = {
-      $schema: "https://agentskills.io/schema/v0.2.0/index.json",
-      skills: [
-        {
-          name: "events-discovery",
-          type: "api",
-          description:
-            "Discover cultural events in Catalonia by place, date, and category. Returns event listings with pagination.",
-          url: `${url}/llms.txt`,
-        },
-        {
-          name: "news-reader",
-          type: "api",
-          description:
-            "Read local news articles about events and culture in Catalonia.",
-          url: `${url}/llms.txt`,
-        },
-        {
-          name: "place-explorer",
-          type: "api",
-          description:
-            "Explore towns, cities, and regions in Catalonia to find events near a location.",
-          url: `${url}/llms.txt`,
-        },
-      ],
-    };
+    return NextResponse.json(buildSkillsIndex(url), {
+      headers: PUBLIC_CACHE_HEADERS,
+    });
+  }
 
-    return NextResponse.json(skillsIndex, {
-      status: 200,
+  if (path === SKILL_PATH) {
+    return new Response(buildSkillMarkdown(url), {
       headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
+        ...PUBLIC_CACHE_HEADERS,
+        "Content-Type": MARKDOWN_CONTENT_TYPE,
       },
+    });
+  }
+
+  // Agentic Resource Discovery manifest (ards-project/ard-spec).
+  if (path === "ard.json") {
+    return NextResponse.json(buildArdManifest(url), {
+      headers: PUBLIC_CACHE_HEADERS,
     });
   }
 
@@ -105,13 +101,7 @@ export async function GET(
       documentation: `${url}/llms.txt`,
     };
 
-    return NextResponse.json(serverCard, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(serverCard, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/mcp.json (MCP discovery — flat format matching orank convention)
@@ -168,13 +158,7 @@ export async function GET(
       openapi: `${url}/openapi.json`,
     };
 
-    return NextResponse.json(mcpDiscovery, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(mcpDiscovery, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/agent-card.json (Google A2A protocol)
@@ -225,13 +209,7 @@ export async function GET(
       defaultOutputModes: ["application/json"],
     };
 
-    return NextResponse.json(agentCard, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(agentCard, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/ai-plugin.json (OpenAI plugin manifest)
@@ -254,13 +232,7 @@ export async function GET(
       legal_info_url: `${url}/termes-servei`,
     };
 
-    return NextResponse.json(pluginManifest, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(pluginManifest, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/oauth-protected-resource (RFC 9728)
@@ -273,13 +245,7 @@ export async function GET(
       resource_documentation: `${url}/llms.txt`,
     };
 
-    return NextResponse.json(oauthResource, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(oauthResource, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/openid-configuration (OpenID Connect Discovery 1.0)
@@ -305,13 +271,7 @@ export async function GET(
       code_challenge_methods_supported: ["S256"],
     };
 
-    return NextResponse.json(oauthMeta, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(oauthMeta, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/ucp (Universal Commerce Protocol discovery profile)
@@ -349,13 +309,7 @@ export async function GET(
       },
     };
 
-    return NextResponse.json(ucpProfile, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(ucpProfile, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/mcp — Handled by proxy.ts rewrite to /mcp (preserves POST body)
@@ -369,12 +323,7 @@ export async function GET(
         transport: "streamable-http",
         method: "POST",
       },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
-        },
-      },
+      { headers: PUBLIC_CACHE_HEADERS },
     );
   }
 

@@ -1,13 +1,26 @@
 import { getSiteUrlFromRequest } from "@config/index";
+import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
+import {
+  isNegotiatedMarkdown,
+  MARKDOWN_CONTENT_TYPE,
+  NEGOTIATED_MARKDOWN_HEADERS,
+} from "@utils/proxy-agent";
 
 /**
  * /index.md — Markdown version of the homepage for AI agents.
- * Agents that prefer markdown over HTML can fetch this canonical URL.
+ * Agents that prefer markdown over HTML can fetch this canonical URL, and
+ * proxy.ts serves it for `Accept: text/markdown` on the homepage URL.
  */
 export async function GET(request: Request) {
   const url = getSiteUrlFromRequest({ headers: request.headers });
 
-  const markdown = `# Esdeveniments.cat — Cultural Events in Catalonia
+  const markdown = `---
+title: "Esdeveniments.cat — Cultural Events in Catalonia"
+description: "Free agenda of concerts, theatre, exhibitions, festivals and family plans in 900+ Catalan towns, with a free public API."
+canonical: "${url}/"
+---
+
+# Esdeveniments.cat — Cultural Events in Catalonia
 
 Esdeveniments.cat is the most comprehensive free platform for discovering cultural events across Catalonia. We cover 900+ municipalities with concerts, theatre, exhibitions, festivals, and more.
 
@@ -41,7 +54,7 @@ GET ${url}/api/events?place=catalunya&term=jazz&pageSize=5
 - **900+ municipalities** covered across Catalonia
 - **Multilingual**: Catalan, Spanish, English
 - **Free API**: No authentication for read endpoints
-- **60 req/min** rate limit per IP
+- **Rate limit**: ${PUBLIC_RATE_LIMIT_TEXT}
 - **Categories**: concerts, theatre, exhibitions, festivals, family, workshops, and more
 - **Date filters**: today (avui), tomorrow (dema), this week (setmana), weekend (cap-de-setmana)
 
@@ -74,8 +87,16 @@ GET ${url}/api/events?place=catalunya&term=jazz&pageSize=5
   return new Response(markdown, {
     status: 200,
     headers: {
-      "Content-Type": "text/markdown; charset=utf-8",
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
+      ...(isNegotiatedMarkdown(request)
+        ? NEGOTIATED_MARKDOWN_HEADERS
+        : {
+            "Content-Type": MARKDOWN_CONTENT_TYPE,
+            "Cache-Control":
+              "public, max-age=86400, stale-while-revalidate=86400",
+          }),
+      // The homepage links this file as an alternate; keep search engines
+      // indexing the HTML homepage, not a duplicate.
+      Link: `<${url}/>; rel="canonical"`,
     },
   });
 }

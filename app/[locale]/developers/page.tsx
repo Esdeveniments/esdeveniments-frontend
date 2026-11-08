@@ -2,7 +2,12 @@ import type { Metadata, NextPage } from "next";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { Link } from "@i18n/routing";
-import { contactEmail, siteUrl, socialLinks } from "@config/index";
+import {
+  contactEmail,
+  githubRepoUrl,
+  siteUrl,
+  socialLinks,
+} from "@config/index";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import {
@@ -152,6 +157,9 @@ const DevelopersPage: NextPage = async () => {
             <ul className="stack gap-1 body-normal list-disc pl-5">
               <li>
                 <DocsLink href={socialLinks.github}>{t("githubLink")}</DocsLink>
+              </li>
+              <li>
+                <DocsLink href={githubRepoUrl}>{t("githubRepoLink")}</DocsLink>
               </li>
               <li>
                 <DocsLink href={`mailto:${contactEmail}`}>

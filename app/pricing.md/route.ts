@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl } from "@config/index";
 import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
+import { MARKDOWN_CONTENT_TYPE } from "@utils/proxy-agent";
 
 /**
  * /pricing.md — Machine-readable pricing information for AI agents.
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
   return new NextResponse(content, {
     status: 200,
     headers: {
-      "Content-Type": "text/markdown; charset=utf-8",
+      "Content-Type": MARKDOWN_CONTENT_TYPE,
       "Cache-Control": cacheControl,
     },
   });
