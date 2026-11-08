@@ -6,7 +6,11 @@ import type {
   FestaMajorName,
   FestaMajorYearChoice,
 } from "types/festa-major";
-import { FESTA_MAJOR_MIN_INDEXABLE_ACTS, MS_PER_DAY } from "./constants";
+import {
+  EXPIRED_EVENT_NOINDEX_DAYS,
+  FESTA_MAJOR_MIN_INDEXABLE_ACTS,
+  MS_PER_DAY,
+} from "./constants";
 import { consolidateKeys, extractFestaName } from "./festa-major-name";
 import { dropPlaceParts, normalizeForSearch } from "./string-helpers";
 import { stripHtmlTags } from "./sanitize";
@@ -27,6 +31,16 @@ const ymd = (value: string | null | undefined): string =>
 
 export const dayNumber = (date: string): number =>
   Math.round(Date.parse(`${date}T00:00:00Z`) / MS_PER_DAY);
+
+/**
+ * Whether an act's page is still served on `today` (Madrid YYYY-MM-DD). Once
+ * it is expired (isExpiredEvent), the proxy 301s it to its town hub, so a hub
+ * linking it would loop back to itself.
+ */
+export const actHasPage = (
+  act: Pick<FestaMajorAct, "endDate">,
+  today: string,
+): boolean => dayNumber(today) - dayNumber(act.endDate) <= EXPIRED_EVENT_NOINDEX_DAYS;
 
 const sortKey = (act: FestaMajorAct): string =>
   `${act.startDate}T${act.startTime ?? "99:99"}`;
@@ -60,18 +74,27 @@ export function toFestaMajorAct(
   };
 }
 
-/** Drops repeats: same id, or the same title at the same start (scraped twice). */
+/**
+ * Drops repeats: same id, or the same title at the same start (scraped twice).
+ * Of two copies it keeps the same one in any backend order, so the calendar and
+ * the hub agree: the later end (more detail), then the lower id.
+ */
 export function dedupeActs<T extends FestaMajorAct>(acts: T[]): T[] {
   const seen = new Set<string>();
-  return acts.filter((act) => {
+  const kept = new Set<T>();
+  const preferred = [...acts].sort(
+    (a, b) => b.endDate.localeCompare(a.endDate) || a.id.localeCompare(b.id),
+  );
+  for (const act of preferred) {
     const keys = [
       `id:${act.id}`,
       `t:${normalizeForSearch(act.title)}|${act.startDate}|${act.startTime ?? ""}`,
     ];
-    if (keys.some((key) => seen.has(key))) return false;
+    if (keys.some((key) => seen.has(key))) continue;
     keys.forEach((key) => seen.add(key));
-    return true;
-  });
+    kept.add(act);
+  }
+  return acts.filter((act) => kept.has(act));
 }
 
 const countedEnd = (act: FestaMajorAct): string =>

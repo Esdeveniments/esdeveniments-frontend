@@ -5,7 +5,6 @@ import type {
   FestaMajorTownSummary,
 } from "types/festa-major";
 import { FESTA_MAJOR_MIN_INDEXABLE_ACTS } from "./constants";
-import { addDaysYmd } from "./date-helpers";
 import {
   dedupeActs,
   groupEditions,
@@ -95,21 +94,20 @@ export function listRegions(
 }
 
 /**
- * Towns with a festa on now or starting within `days`, by start date. Each
- * shows that festa (not its main one). Last-year-only towns are left out:
- * their dates are a guess.
+ * Towns with a festa on at some point from `from` to `until` (YYYY-MM-DD,
+ * inclusive), by start date. Each shows that festa (not its main one).
+ * Last-year-only towns are left out: their dates are a guess.
  */
-export function upcomingTowns(
+export function townsBetween(
   calendar: FestaMajorCalendar,
-  today: string,
-  days: number,
+  from: string,
+  until: string,
 ): FestaMajorTownSummary[] {
-  const until = addDaysYmd(today, days);
   return calendar.towns
     .filter((town) => town.isCurrentYear)
     .flatMap((town) => {
       const edition = town.editions.find(
-        (e) => e.end >= today && e.start <= until,
+        (e) => e.end >= from && e.start <= until,
       );
       return edition ? [{ ...town, main: edition }] : [];
     })
@@ -118,6 +116,24 @@ export function upcomingTowns(
         a.main.start.localeCompare(b.main.start) ||
         a.name.localeCompare(b.name, "ca"),
     );
+}
+
+/**
+ * Towns by the month ("01"–"12") of their festa, in the given order. With
+ * `today`, a festa already on is listed under today's month. By month only:
+ * last-year towns share this year's months.
+ */
+export function groupByMonth(
+  towns: FestaMajorTownSummary[],
+  today?: string,
+): [string, FestaMajorTownSummary[]][] {
+  const months = new Map<string, FestaMajorTownSummary[]>();
+  for (const town of towns) {
+    const date = today && town.main.start < today ? today : town.main.start;
+    const month = date.slice(5, 7);
+    months.set(month, [...(months.get(month) ?? []), town]);
+  }
+  return [...months];
 }
 
 /** Indexable hub paths for the sitemap: regions and towns. */

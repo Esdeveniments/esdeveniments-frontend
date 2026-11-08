@@ -31,24 +31,36 @@ export default async function FestaMajorFestaList({
           ]
             .filter(Boolean)
             .join(" · ");
+          const href = festaLinkPath(townSlug, festa);
+          const content = (
+            <>
+              <span
+                className={`body-normal font-semibold ${href ? "text-primary group-hover:text-primary-dark transition-colors" : ""}`}
+              >
+                {name}
+              </span>
+              <span className="block body-small text-muted-foreground">
+                {details}
+              </span>
+            </>
+          );
           return (
             <li
               key={festa.key || "own"}
               className="border-b border-border/30 pb-2 w-full"
             >
-              <PressableAnchor
-                href={festaLinkPath(townSlug, festa)}
-                className="group block"
-                variant="inline"
-                prefetch={false}
-              >
-                <span className="body-normal font-semibold text-primary group-hover:text-primary-dark transition-colors">
-                  {name}
-                </span>
-                <span className="block body-small text-muted-foreground">
-                  {details}
-                </span>
-              </PressableAnchor>
+              {href ? (
+                <PressableAnchor
+                  href={href}
+                  className="group block"
+                  variant="inline"
+                  prefetch={false}
+                >
+                  {content}
+                </PressableAnchor>
+              ) : (
+                content
+              )}
             </li>
           );
         })}

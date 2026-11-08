@@ -10,6 +10,7 @@ import { toLocalizedUrl } from "@utils/i18n-seo";
 import { formatPlacePhrases } from "@utils/string-helpers";
 import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import { festaMajorPath } from "@utils/festa-major-paths";
+import { actHasPage } from "@utils/festa-major";
 import type { FestaMajorPageData } from "types/festa-major";
 import type { AppLocale } from "types/i18n";
 
@@ -90,7 +91,7 @@ export async function buildFestaMajorMetadata(
   });
 }
 
-/** CollectionPage (with breadcrumbs) and, when there are acts, an ItemList. */
+/** CollectionPage (with breadcrumbs) and, when acts still have a page, an ItemList. */
 export function buildFestaMajorSchemas({
   data,
   locale,
@@ -107,7 +108,7 @@ export function buildFestaMajorSchemas({
   const url = toLocalizedUrl(data.canonicalPath, locale);
   const acts = data.town?.acts ?? [];
   const itemList = generateItemListStructuredData(
-    acts.slice(0, MAX_JSON_LD_ACTS),
+    acts.filter((act) => actHasPage(act, data.today)).slice(0, MAX_JSON_LD_ACTS),
     title,
     description,
     locale,

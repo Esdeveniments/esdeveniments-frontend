@@ -9,14 +9,21 @@ import {
 import SitemapLayout from "@components/ui/sitemap/SitemapLayout";
 import SitemapBreadcrumb from "@components/ui/sitemap/SitemapBreadcrumb";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+import FestaMajorChips from "@components/ui/festaMajor/FestaMajorChips";
 import FestaMajorLinkList from "@components/ui/festaMajor/FestaMajorLinkList";
 import FestaMajorTownList from "@components/ui/festaMajor/FestaMajorTownList";
 import { FESTIVITY_TYPES } from "@config/festivities";
 import { fetchFestaMajorCalendar } from "@lib/api/festes-majors";
-import { madridTodayYmd } from "@lib/dates";
+import { madridTodayYmd, weekend } from "@lib/dates";
 import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
-import { listRegions, upcomingTowns } from "@utils/festa-major-calendar";
-import { festaMajorPath } from "@utils/festa-major-paths";
+import { addDaysYmd, toLocalDateString } from "@utils/date-helpers";
+import { formatMonthHeading } from "@utils/festa-major";
+import {
+  groupByMonth,
+  listRegions,
+  townsBetween,
+} from "@utils/festa-major-calendar";
+import { festaMajorPath, monthAnchorId } from "@utils/festa-major-paths";
 import { festivityPath } from "@utils/festivity";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
@@ -57,10 +64,18 @@ export default async function Page() {
   ]);
   const title = t("title", { year });
   const towns = calendar?.towns ?? [];
+  const { from, until } = weekend();
+  const thisWeekend = calendar
+    ? townsBetween(calendar, toLocalDateString(from), toLocalDateString(until))
+    : [];
+  const onWeekend = new Set(thisWeekend.map((town) => town.slug));
   const upcoming = calendar
-    ? upcomingTowns(calendar, today, UPCOMING_DAYS)
+    ? townsBetween(calendar, today, addDaysYmd(today, UPCOMING_DAYS)).filter(
+        (town) => !onWeekend.has(town.slug),
+      )
     : [];
   const regions = calendar ? listRegions(calendar) : [];
+  const months = groupByMonth(towns).map(([month]) => month);
   const breadcrumbs = [
     { name: tHub("breadcrumbHome"), url: toLocalizedUrl("/", locale) },
     { name: tHub("breadcrumbAll"), url: toLocalizedUrl(PATH, locale) },
@@ -98,7 +113,34 @@ export default async function Page() {
           <p className="body-normal text-center">{t("empty")}</p>
         )}
 
+        <FestaMajorChips
+          title={t("monthsTitle")}
+          links={months.map((month) => ({
+            href: `${PATH}#${monthAnchorId(month)}`,
+            label: formatMonthHeading(`2000-${month}-01`, locale),
+          }))}
+        />
+        <FestaMajorChips
+          title={t("regionsTitle")}
+          links={regions.map((region) => ({
+            href: festaMajorPath(region.slug),
+            label: region.name,
+          }))}
+        />
+
         <SponsorBannerSlot place="catalunya" />
+
+        {thisWeekend.length > 0 && (
+          <section className="stack gap-4 w-full">
+            <h2 className="heading-2">{t("weekendTitle")}</h2>
+            <FestaMajorTownList
+              towns={thisWeekend}
+              locale={locale}
+              headingLevel="h3"
+              today={today}
+            />
+          </section>
+        )}
 
         {upcoming.length > 0 && (
           <section className="stack gap-4 w-full">
@@ -119,17 +161,11 @@ export default async function Page() {
               towns={towns}
               locale={locale}
               headingLevel="h3"
+              monthAnchors
             />
           </section>
         )}
 
-        <FestaMajorLinkList
-          title={t("regionsTitle")}
-          links={regions.map((region) => ({
-            href: festaMajorPath(region.slug),
-            label: region.name,
-          }))}
-        />
         <FestaMajorLinkList
           title={t("nadalTitle")}
           links={FESTIVITY_TYPES.map((type) => ({

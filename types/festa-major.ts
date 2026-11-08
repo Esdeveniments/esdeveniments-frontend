@@ -107,8 +107,8 @@ export interface FestaMajorFestaLink extends FestaMajorEditionSummary {
   year: number;
   /** Shown in the hub's programme (same year), so it links to its part of it. */
   inProgramme: boolean;
-  /** Where a festa outside the programme links: its first act. */
-  firstActSlug: string;
+  /** Where a festa outside the programme links: its first act, null once that act's page is gone (actHasPage). */
+  firstActSlug: string | null;
 }
 
 /** Everything a /festa-major/<place> page renders. */

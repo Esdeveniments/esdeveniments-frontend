@@ -128,6 +128,7 @@ export default async function FestaMajorPageView({
             ]}
             locale={locale}
             today={today}
+            mutePast
             ownFestaLabel={ownFestaLabel}
           />
         )}
@@ -147,6 +148,7 @@ export default async function FestaMajorPageView({
             towns={region.towns}
             locale={locale}
             headingLevel="h2"
+            showRegion={false}
           />
         )}
 
@@ -165,7 +167,8 @@ export default async function FestaMajorPageView({
             title={t("programmeTitle")}
             editions={shown.editions}
             locale={locale}
-            today={shown.isCurrentYear ? today : ""}
+            today={today}
+            mutePast={shown.isCurrentYear}
             ownFestaLabel={ownFestaLabel}
           />
         )}

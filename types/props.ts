@@ -1193,8 +1193,10 @@ export interface FestaMajorProgrammeProps {
   title: string;
   editions: FestaMajorEdition[];
   locale: AppLocale;
-  /** YYYY-MM-DD; earlier days are muted. Empty to mute none. */
+  /** Madrid YYYY-MM-DD: acts whose page is gone (actHasPage) aren't linked. */
   today: string;
+  /** Mute the days before `today`. */
+  mutePast?: boolean;
   /** Heading for a festa without its own name. */
   ownFestaLabel: string;
 }
@@ -1206,6 +1208,10 @@ export interface FestaMajorTownListProps {
   headingLevel: "h2" | "h3";
   /** Lists festes already on under this YYYY-MM-DD date's month, not their start's. */
   today?: string;
+  /** Gives each month section its `#mes-MM` id (once per page). */
+  monthAnchors?: boolean;
+  /** Adds each town's comarca; off on a comarca's own page. Default true. */
+  showRegion?: boolean;
 }
 
 export interface FestaMajorFestaListProps {

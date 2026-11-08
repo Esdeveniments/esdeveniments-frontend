@@ -4,7 +4,11 @@ import {
   formatEventTimeDisplay,
   formatShortDateRange,
 } from "@utils/date-helpers";
-import { formatDayHeading, groupByDay } from "@utils/festa-major";
+import {
+  actHasPage,
+  formatDayHeading,
+  groupByDay,
+} from "@utils/festa-major";
 import { festaAnchorId } from "@utils/festa-major-paths";
 import type { FestaMajorProgrammeProps } from "types/props";
 
@@ -18,6 +22,7 @@ export default async function FestaMajorProgramme({
   editions,
   locale,
   today,
+  mutePast = false,
   ownFestaLabel,
 }: FestaMajorProgrammeProps) {
   const tTime = await getTranslations({ locale, namespace: "Utils.EventTime" });
@@ -32,7 +37,10 @@ export default async function FestaMajorProgramme({
   const anchored = new Set<string>();
 
   return (
-    <section id={id} className="stack gap-6 w-full">
+    <section
+      id={id}
+      className="stack gap-6 w-full scroll-mt-4 nav:scroll-mt-20"
+    >
       <h2 className="heading-2">{title}</h2>
       {editions.map((edition) => {
         const dates = formatShortDateRange(edition.start, edition.end, locale);
@@ -43,7 +51,7 @@ export default async function FestaMajorProgramme({
           <div
             key={`${edition.key}-${edition.start}`}
             id={anchor ?? undefined}
-            className="stack gap-4 w-full"
+            className="stack gap-4 w-full scroll-mt-4 nav:scroll-mt-20"
           >
             {showEditionHeadings && (
               <h3 className="heading-3">
@@ -59,24 +67,19 @@ export default async function FestaMajorProgramme({
             {groupByDay(edition.acts).map(([day, acts]) => (
               <div
                 key={day}
-                className={`stack gap-2 w-full ${today && day < today ? "opacity-70" : ""}`}
+                className={`stack gap-2 w-full ${mutePast && day < today ? "opacity-70" : ""}`}
               >
                 <DayHeading className="heading-4">
                   <time dateTime={day}>{formatDayHeading(day, locale)}</time>
                 </DayHeading>
                 <ul className="stack gap-2 w-full">
-                  {acts.map((act) => (
-                    <li
-                      key={act.id}
-                      className="border-b border-border/30 pb-2 w-full"
-                    >
-                      <PressableAnchor
-                        href={`/e/${act.slug}`}
-                        className="group block"
-                        variant="inline"
-                        prefetch={false}
-                      >
-                        <span className="body-normal font-semibold group-hover:text-primary transition-colors">
+                  {acts.map((act) => {
+                    const linked = actHasPage(act, today);
+                    const content = (
+                      <>
+                        <span
+                          className={`body-normal font-semibold ${linked ? "group-hover:text-primary transition-colors" : ""}`}
+                        >
                           {act.title}
                         </span>
                         <span className="flex flex-col sm:flex-row sm:gap-2 body-small text-muted-foreground">
@@ -94,9 +97,28 @@ export default async function FestaMajorProgramme({
                             </>
                           )}
                         </span>
-                      </PressableAnchor>
-                    </li>
-                  ))}
+                      </>
+                    );
+                    return (
+                      <li
+                        key={act.id}
+                        className="border-b border-border/30 pb-2 w-full"
+                      >
+                        {linked ? (
+                          <PressableAnchor
+                            href={`/e/${act.slug}`}
+                            className="group block"
+                            variant="inline"
+                            prefetch={false}
+                          >
+                            {content}
+                          </PressableAnchor>
+                        ) : (
+                          <div>{content}</div>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}

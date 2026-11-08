@@ -11,6 +11,7 @@ import type {
 } from "types/festa-major";
 import { FESTA_MAJOR_MIN_INDEXABLE_ACTS } from "./constants";
 import {
+  actHasPage,
   compareActs,
   dedupeActs,
   groupEditions,
@@ -108,12 +109,14 @@ const monthDay = (date: string): string => date.slice(5);
 
 /**
  * A town's festes (this or last year each), listed on its hub when there are
- * two or more. `townYear` is the year the hub's programme shows.
+ * two or more. `townYear` is the year the hub's programme shows; `today`
+ * (Madrid YYYY-MM-DD) tells whether a festa's first act still has a page.
  */
 export function listFestes(
   years: FestaMajorPlaceYears,
   townLabel: string,
   townYear: number,
+  today: string,
 ): FestaMajorFestaLink[] {
   const keys = new Set(
     [
@@ -141,7 +144,7 @@ export function listFestes(
       count: data.acts.length,
       year: data.year,
       inProgramme: data.year === townYear,
-      firstActSlug: data.acts[0].slug,
+      firstActSlug: actHasPage(data.acts[0], today) ? data.acts[0].slug : null,
     });
   }
   return festes.sort(
@@ -204,7 +207,7 @@ export function buildFestaMajorPageData({
   return {
     ...base,
     town,
-    festes: listFestes(years, place.label, town.year),
+    festes: listFestes(years, place.label, town.year, today),
     indexable:
       years.complete && town.acts.length >= FESTA_MAJOR_MIN_INDEXABLE_ACTS,
   };

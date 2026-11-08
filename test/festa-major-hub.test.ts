@@ -6,10 +6,11 @@ import type {
 } from "types/festa-major";
 import { buildFestaMajorPageData } from "@utils/festa-major-hub";
 import {
+  groupByMonth,
   indexableHubPaths,
   listRegions,
   summarizeTowns,
-  upcomingTowns,
+  townsBetween,
 } from "@utils/festa-major-calendar";
 import {
   festaLinkPath,
@@ -155,20 +156,32 @@ describe("buildFestaMajorPageData", () => {
     ]);
   });
 
-  it("links a festa from another year than the programme to its first act", () => {
-    const nicolau = acts("Festa Major de Sant Nicolau: ball", "2025-12-10", 5);
+  it("links a festa from another year than the programme to its first act while it has a page", () => {
+    const nicolau = acts("Festa Major de Sant Nicolau: ball", "2026-12-10", 2);
     const data = page(
       town,
-      years(acts("Festa Major de Sant Roc: concert", "2026-08-10", 6), [
-        ...nicolau,
-      ].reverse()),
+      years(nicolau, acts("Festa Major de Sant Roc: concert", "2025-08-10", 6)),
     );
+    expect(data.town?.year).toBe(2025);
     expect(
       data.festes.map((festa) => festaLinkPath(town.slug, festa)),
     ).toEqual([
       "/festa-major/malgrat-de-mar#festa-sant-roc",
       `/e/${nicolau[0].slug}`,
     ]);
+  });
+
+  it("doesn't link a festa whose first act's page is gone", () => {
+    const data = page(
+      town,
+      years(
+        acts("Festa Major de Sant Roc: concert", "2026-08-10", 6),
+        acts("Festa Major de Sant Nicolau: ball", "2025-12-10", 5),
+      ),
+    );
+    expect(
+      data.festes.map((festa) => festaLinkPath(town.slug, festa)),
+    ).toEqual(["/festa-major/malgrat-de-mar#festa-sant-roc", null]);
   });
 
   it("indexes a region hub with two towns of five or more acts", () => {
@@ -210,16 +223,33 @@ describe("calendar helpers", () => {
     true,
   );
 
-  it("lists festes on now or in the next days by date, skipping last-year guesses", () => {
-    const upcoming = upcomingTowns(calendar, "2026-07-20", 14);
+  it("lists festes on between two dates by start, skipping last-year guesses", () => {
+    const upcoming = townsBetween(calendar, "2026-07-20", "2026-08-03");
     expect(upcoming.map((t) => [t.slug, t.main.start])).toEqual([
       ["tordera", "2026-07-18"],
       ["girona", "2026-07-21"],
       ["calella", "2026-07-25"],
     ]);
     expect(
-      upcomingTowns(calendar, "2026-12-12", 14).map((t) => t.main.key),
+      townsBetween(calendar, "2026-12-12", "2026-12-26").map(
+        (t) => t.main.key,
+      ),
     ).toEqual(["sant-nicolau"]);
+  });
+
+  it("groups towns by month, festes already on under today's month", () => {
+    const slugsByMonth = (today?: string) =>
+      groupByMonth(calendar.towns, today).map(([month, towns]) => [
+        month,
+        towns.map((t) => t.slug),
+      ]);
+    expect(slugsByMonth()).toEqual([
+      ["07", ["tordera", "girona", "blanes", "calella"]],
+      ["08", ["malgrat-de-mar"]],
+    ]);
+    expect(slugsByMonth("2026-08-01")).toEqual([
+      ["08", ["tordera", "girona", "blanes", "calella", "malgrat-de-mar"]],
+    ]);
   });
 
   it("links only regions with two indexable towns", () => {

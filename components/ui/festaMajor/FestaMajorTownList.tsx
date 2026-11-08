@@ -3,8 +3,8 @@ import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import Thumbnail from "@components/ui/common/image/Thumbnail";
 import { formatShortDateRange } from "@utils/date-helpers";
 import { formatMonthHeading } from "@utils/festa-major";
-import { festaMajorPath } from "@utils/festa-major-paths";
-import type { FestaMajorTownSummary } from "types/festa-major";
+import { groupByMonth } from "@utils/festa-major-calendar";
+import { festaMajorPath, monthAnchorId } from "@utils/festa-major-paths";
 import type { FestaMajorTownListProps } from "types/props";
 
 /** Towns by the month of their festa, in the given order; last-year-only towns show those dates. */
@@ -13,21 +13,20 @@ export default async function FestaMajorTownList({
   locale,
   headingLevel,
   today,
+  monthAnchors,
+  showRegion = true,
 }: FestaMajorTownListProps) {
   const t = await getTranslations({ locale, namespace: "Pages.FestaMajor" });
-  const months = new Map<string, FestaMajorTownSummary[]>();
-  for (const town of towns) {
-    const date = today && town.main.start < today ? today : town.main.start;
-    // By month only: last-year towns share this year's months.
-    const month = date.slice(5, 7);
-    months.set(month, [...(months.get(month) ?? []), town]);
-  }
   const Heading = headingLevel;
 
   return (
     <div className="stack gap-6 w-full">
-      {[...months].map(([month, monthTowns]) => (
-        <section key={month} className="stack gap-2 w-full">
+      {groupByMonth(towns, today).map(([month, monthTowns]) => (
+        <section
+          key={month}
+          id={monthAnchors ? monthAnchorId(month) : undefined}
+          className="stack gap-2 w-full scroll-mt-4 nav:scroll-mt-20"
+        >
           <Heading className="heading-3">
             {formatMonthHeading(`2000-${month}-01`, locale)}
           </Heading>
@@ -61,7 +60,7 @@ export default async function FestaMajorTownList({
                           town.isCurrentYear
                             ? null
                             : t("lastYearDates", { year: town.year }),
-                          town.regionName,
+                          showRegion ? town.regionName : null,
                         ]
                           .filter(Boolean)
                           .join(" · ")}

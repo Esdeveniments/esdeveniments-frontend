@@ -7,6 +7,7 @@ import {
   isFestaMajorTitle,
 } from "@utils/festa-major-name";
 import {
+  actHasPage,
   dedupeActs,
   groupEditions,
   mainEdition,
@@ -268,6 +269,24 @@ describe("dedupeActs", () => {
       a,
       otherDay,
     ]);
+  });
+
+  it("keeps the same copy in any order: the later end, then the lower id", () => {
+    const withEnd = act("Festa Major de Lleida", "2026-05-08", {
+      id: "2",
+      endDate: "2026-05-11",
+    });
+    const noEnd = act("FESTA MAJOR DE LLEIDA", "2026-05-08", { id: "1" });
+    expect(dedupeActs([withEnd, noEnd])).toEqual([withEnd]);
+    expect(dedupeActs([noEnd, withEnd])).toEqual([withEnd]);
+  });
+});
+
+describe("actHasPage", () => {
+  it("keeps an act's page for 60 days after it ends", () => {
+    const today = "2026-07-20";
+    expect(actHasPage({ endDate: "2026-05-21" }, today)).toBe(true);
+    expect(actHasPage({ endDate: "2026-05-20" }, today)).toBe(false);
   });
 });
 
