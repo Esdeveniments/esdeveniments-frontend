@@ -579,7 +579,7 @@ describe("proxy", () => {
     });
 
     it("keeps the guide for real routes outside place listings", async () => {
-      await proxy(mdRequest("/noticies/barcelona/some-article/extra"));
+      await proxy(mdRequest("/noticies/barcelona/some-article"));
 
       const [url] = (NextResponse.rewrite as Mock).mock.calls[0];
       expect(url.pathname).toBe("/llms.txt");
