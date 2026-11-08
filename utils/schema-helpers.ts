@@ -5,6 +5,7 @@ import { getProfileSlug, isVerifiedOrganization } from "@utils/user-helpers";
 import { getProfileDisplayName } from "@utils/profile-name";
 import { getEventPriceText, parseSchemaPrice } from "@utils/event-price";
 import { formatCatalanA } from "@utils/string-helpers";
+import { getEventVenueCoords } from "@utils/event-map";
 import { TIMEZONE_MADRID } from "@utils/constants";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
@@ -279,6 +280,12 @@ export const generateJsonData = (
   const schemaName = trimmedTitle || `Esdeveniment ${fallbackPlaceIn}`.trim();
   const organizer = buildOrganizer(event, localeToUse);
   const placeName = sanitizedLocation || addressLocality || fallbackPlace;
+  // Venue coordinates when the backend knows them, else the town centre.
+  const geo =
+    getEventVenueCoords(event) ??
+    (city?.latitude && city?.longitude
+      ? { lat: city.latitude, lon: city.longitude }
+      : null);
 
   return {
     "@context": "https://schema.org" as const,
@@ -293,14 +300,13 @@ export const generateJsonData = (
     location: {
       "@type": "Place" as const,
       name: placeName,
-      ...(city?.latitude &&
-        city?.longitude && {
-          geo: {
-            "@type": "GeoCoordinates" as const,
-            latitude: city.latitude,
-            longitude: city.longitude,
-          },
-        }),
+      ...(geo && {
+        geo: {
+          "@type": "GeoCoordinates" as const,
+          latitude: geo.lat,
+          longitude: geo.lon,
+        },
+      }),
       address: {
         "@type": "PostalAddress" as const,
         streetAddress: streetAddress || undefined,

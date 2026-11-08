@@ -18,6 +18,8 @@ blob-report/
 # generated service worker
 /public/sw.js
 /public/static/workbox-v*/
+# self-hosted MapLibre worker (scripts/copy-maplibre-worker.mjs)
+/public/static/maplibre-v*/
 
 # generated robots.txt (built from scripts/generate-robots.mjs)
 /public/robots.txt

@@ -1183,6 +1183,29 @@
     },
     "Modal": {
       "close": "Close"
+    },
+    "EventsMap": {
+      "loading": "Loading map…",
+      "error": "The map couldn't load.",
+      "retry": "Try again",
+      "placeOption": "{label} ({count})",
+      "showAll": "Show all",
+      "legendVenue": "Exact venue",
+      "legendTown": "Town (venue to be confirmed)",
+      "mappedCount": "{count, plural, one {# event on the map} other {# events on the map}}",
+      "hint": "Tap a point to see its events.",
+      "townNote": "We don't know the exact venue of these events yet: the point marks the town.",
+      "empty": "No events to show on the map.",
+      "mapTitle": "Events map",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "findMyLocation": "My location",
+      "locationNotAvailable": "Location not available",
+      "toggleAttribution": "Show credits",
+      "close": "Close map",
+      "floating": "Map",
+      "back": "All places",
+      "eventsCount": "{count, plural, one {# event} other {# events}}"
     }
   },
   "Partials": {
