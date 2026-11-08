@@ -142,6 +142,15 @@ describe("event edit form time", () => {
     },
   );
 
+  it("ends an imported event with no stored end date on its start day", () => {
+    // The API sends null (lib/validation/event.ts) although the DTO type says string.
+    const imported = { ...stored, endDate: null, endTime: null } as unknown as EventDetailResponseDTO;
+    const dto = formDataToBackendDTO(eventDtoToFormData(imported));
+
+    expect([dto.startDate, dto.startTime, dto.endDate, dto.endTime])
+      .toEqual(["2026-12-05", "21:00", "2026-12-05", "23:59"]);
+  });
+
   it("reopens a saved all-day event as all-day", () => {
     const saved = formDataToBackendDTO(eventDtoToFormData({ ...stored, startTime: null, endTime: null }));
     const reopened = eventDtoToFormData({ ...stored, startTime: `${saved.startTime}:00`, endTime: `${saved.endTime}:00` });
