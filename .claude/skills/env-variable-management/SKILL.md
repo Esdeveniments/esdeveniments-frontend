@@ -30,7 +30,7 @@ Coolify does **not** build. `deploy-coolify.yml` builds a Docker image in GitHub
 
 GitHub secrets resolve per Environment (`production` on `main`, `staging` otherwise) and fall back to repo-level values. The workflow blanks `NEXT_PUBLIC_GOOGLE_ANALYTICS`/`_ADS` on non-`main` builds so prod IDs never land in staging.
 
-PR E2E (`ci.yml` `e2e` job) runs against the preproduction API with the `staging` Environment's secrets (`deployment: false`), so production keys never reach PR jobs. Dependabot PRs see only Dependabot secrets, so the Dependabot `BACKEND_SERVICE_SECRET` and `HMAC_SECRET` hold the preproduction values. Don't add a repo-level `NEXT_PUBLIC_API_URL` variable: the `e2e` job's preproduction fallback must win wherever the Environment variable isn't visible.
+PR E2E (`ci.yml` `e2e` job) runs against the preproduction API with the `staging` Environment's secrets (`deployment: false`), so PR E2E doesn't use the production keys (the `quality` build and `prod-arch-smoke.yml` still read the repo-level secrets). Dependabot PRs see only Dependabot secrets, so the Dependabot `BACKEND_SERVICE_SECRET` and `HMAC_SECRET` hold the preproduction values. Don't add a repo-level `NEXT_PUBLIC_API_URL` variable: the `e2e` job's preproduction fallback must win wherever the Environment variable isn't visible.
 
 ## Adding a variable: the five locations
 
