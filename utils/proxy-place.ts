@@ -32,6 +32,11 @@ const ONE_PAGE_HUBS: ReadonlySet<string> = new Set([
   ...FESTIVITY_SLUGS,
 ]);
 
+const FESTA_MAJOR_SEGMENTS: ReadonlySet<string> = new Set([
+  FESTA_MAJOR_SEGMENT,
+  FESTES_MAJORS_SEGMENT,
+]);
+
 /**
  * Unknown places get a real 404 and aliases a 301. Pages stream inside the
  * root layout's Suspense, so notFound()/redirect() there can't set a status
@@ -70,6 +75,20 @@ export async function checkPlace(
   }
 
   const slug = segments[0] ?? "";
+  // /<place>/festes-majors would 301 to /<place> as an unknown category.
+  // Send it to the hub, which then handles aliases and unknown towns.
+  if (
+    segments.length === 2 &&
+    FESTA_MAJOR_SEGMENTS.has(segments[1]) &&
+    isPlacePath(segments)
+  ) {
+    return redirectTo(
+      slug === "catalunya"
+        ? [FESTES_MAJORS_SEGMENT]
+        : [FESTA_MAJOR_SEGMENT, slug],
+    );
+  }
+
   if (slug === "catalunya" || !isPlacePath(segments)) return null;
 
   const resolution = await resolvePlaceForProxy(slug);

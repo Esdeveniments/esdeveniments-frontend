@@ -587,6 +587,19 @@ describe("proxy", () => {
         expect(url.pathname).toBe(target);
       });
 
+      it.each([
+        ["/cardedeu/festes-majors", "/festa-major/cardedeu"],
+        ["/es/cardedeu/festa-major", "/es/festa-major/cardedeu"],
+        ["/catalunya/festes-majors", "/festes-majors"],
+      ])("301s %s to its hub, not the listing", async (pathname, target) => {
+        await proxy(placeRequest(pathname));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe(target);
+      });
+
       it("404s an invalid slug without asking the backend", async () => {
         (NextResponse.rewrite as Mock).mockReturnValue({
           headers: new Headers(),

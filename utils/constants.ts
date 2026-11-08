@@ -36,7 +36,7 @@ export const TIMEZONE_MADRID = "Europe/Madrid";
 // verify it at /<key>.txt (public/), so it is not a secret.
 export const INDEXNOW_KEY = "f47260be292a3281b5da5b89815e6ed4";
 
-// Festa major hubs: /festa-major/<place>[/<festa>] and the /festes-majors calendar.
+// Festa major hubs: /festa-major/<place> and the /festes-majors calendar.
 export const FESTA_MAJOR_SEGMENT = "festa-major";
 export const FESTES_MAJORS_SEGMENT = "festes-majors";
 /** Anchor of a town hub's programme. */

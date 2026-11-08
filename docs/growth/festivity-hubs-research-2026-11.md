@@ -161,7 +161,7 @@ queries, and we were not in the top 8.
 
 Why a separate segment and not `/[place]/festes-majors`:
 
-- **Unknown category slugs redirect.** `/cardedeu/festes-majors` is read as a category; it's unknown, so the proxy 301s it to `/cardedeu`.
+- **Unknown category slugs redirect.** `/cardedeu/festes-majors` would be read as an unknown category and 301 to `/cardedeu`. The proxy now sends `/[place]/festes-majors` and `/[place]/festa-major` to `/festa-major/[place]` instead.
 - **Listings are a different kind of page.** They are filtered lists, updated client-side with SWR, that fall back to the region or the latest events when a town has none. A programme needs grouping by festa and by day, last year's programme until the new one is out, and no unrelated events.
 - **A festivity is a search term plus a date window.** Listings can only express that through query params, which stay noindex: indexing them caused the $300 cache incident (AGENTS.md › Hard rules). A festivity path segment would also multiply ~1,000 places × dates × categories × festivities.
 - **It follows the search wording** ("festa major cardedeu 2026") and the existing pattern of `/noticies/[place]` and `/sitemap/[town]/…`. Both segments are in `NON_PLACE_FIRST_SEGMENTS`.
@@ -178,11 +178,14 @@ The hubs share the town and region data, the proxy's 404/301 checks (`checkPlace
 | Thin or duplicate pages (the festacatalunya risk)                | Index gates: a town needs 5 or more acts, a region 2 or more such towns. Otherwise noindex and left out of the sitemap. No per-festa pages (see below)                     |
 | Google finds new programmes slowly                               | A dedicated sitemap, IndexNow on publish, edit and delete, and CDN purge through `place:<slug>`                                                                           |
 
+Fixed later:
+
+- **The hubs were hard to find on the site.** Every listing (`/[place]` and below) now has a "Festes i tradicions" block that links to the hub, the calendar and the Nadal pages.
+- **`/[place]/festes-majors` and `/[place]/festa-major`** 301 to `/festa-major/[place]`, not to `/[place]`.
+
 Not fixed yet:
 
 - **Old dead event URLs** still return a soft 404. A 301 to the hub would pass their ranking on.
-- **The hubs are hard to find on the site.** There is no link from the navbar, the home page or the town listings yet. The cheapest change is a "Festa Major de X" link on `/[place]` and `/[place]/festes-populars` when the town has a hub this year.
-- **`/[place]/festes-majors` and `/[place]/festa-major`** could 301 to `/festa-major/[place]` instead of `/[place]`.
 - **Town councils will keep #1** for their own festa. Our realistic target is #2–5.
 
 ## 6. Extending to other festivities
