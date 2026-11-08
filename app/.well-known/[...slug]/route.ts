@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
 import { getSiteUrlFromRequest } from "@config/index";
+import {
+  buildArdManifest,
+  buildSkillMarkdown,
+  buildSkillsIndex,
+  SKILL_PATH,
+} from "@utils/agent-discovery";
+
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
+};
 
 /**
  * .well-known catch-all route handler
@@ -13,41 +23,26 @@ export async function GET(
   const path = slug.join("/");
   const url = getSiteUrlFromRequest({ headers: request.headers });
 
-  // /.well-known/agent-skills/index.json
+  // Agent Skills discovery index (v0.2.0); the digest is over the served SKILL.md.
   if (path === "agent-skills/index.json") {
-    const skillsIndex = {
-      $schema: "https://agentskills.io/schema/v0.2.0/index.json",
-      skills: [
-        {
-          name: "events-discovery",
-          type: "api",
-          description:
-            "Discover cultural events in Catalonia by place, date, and category. Returns event listings with pagination.",
-          url: `${url}/llms.txt`,
-        },
-        {
-          name: "news-reader",
-          type: "api",
-          description:
-            "Read local news articles about events and culture in Catalonia.",
-          url: `${url}/llms.txt`,
-        },
-        {
-          name: "place-explorer",
-          type: "api",
-          description:
-            "Explore towns, cities, and regions in Catalonia to find events near a location.",
-          url: `${url}/llms.txt`,
-        },
-      ],
-    };
+    return NextResponse.json(buildSkillsIndex(url), {
+      headers: PUBLIC_CACHE_HEADERS,
+    });
+  }
 
-    return NextResponse.json(skillsIndex, {
-      status: 200,
+  if (path === SKILL_PATH) {
+    return new Response(buildSkillMarkdown(url), {
       headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
+        ...PUBLIC_CACHE_HEADERS,
+        "Content-Type": "text/markdown; charset=utf-8",
       },
+    });
+  }
+
+  // Agentic Resource Discovery manifest (ards-project/ard-spec).
+  if (path === "ard.json") {
+    return NextResponse.json(buildArdManifest(url), {
+      headers: PUBLIC_CACHE_HEADERS,
     });
   }
 

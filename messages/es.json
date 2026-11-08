@@ -134,7 +134,8 @@
       "writesBody": "El pago de un patrocinio (POST /api/sponsors/checkout) acepta la cabecera Idempotency-Key. Envía una clave nueva (un UUID) en cada intento y repítela si vuelves a probar: solo se crea una sesión de pago.",
       "githubTitle": "GitHub y contacto",
       "githubBody": "Sigue el proyecto en GitHub o escríbenos si necesitas más datos o un límite más alto.",
-      "githubLink": "Esdeveniments.cat en GitHub"
+      "githubLink": "Esdeveniments.cat en GitHub",
+      "githubRepoLink": "Código fuente de la web (con AGENTS.md)"
     },
     "DevelopersMcp": {
       "metaTitle": "Servidor MCP de Esdeveniments.cat",

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
-import { siteUrl, socialLinks } from "@config/index";
+import { githubRepoUrl, siteUrl, socialLinks } from "@config/index";
 import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
 
 export async function GET(request: NextRequest) {
@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
     `- Esdeveniments.cat MCP server docs: [${siteUrl}/developers/mcp](${siteUrl}/developers/mcp)`,
     `- OpenAPI spec: [${siteUrl}/openapi.json](${siteUrl}/openapi.json)`,
     `- GitHub: ${socialLinks.github}`,
+    `- Source code (with AGENTS.md): ${githubRepoUrl}`,
     "- Public GET endpoints (no auth required):",
     "  - GET /api/events — List events (params: page, size, place, category, byDate, from, to, term, lat, lon, radius)",
     "  - GET /api/events/{slug} — Event details",
@@ -116,6 +117,7 @@ export async function GET(request: NextRequest) {
     `- MCP Server Card: ${siteUrl}/.well-known/mcp/server-card.json`,
     `- MCP Endpoint (Streamable HTTP): ${siteUrl}/mcp`,
     `- Agent Skills: ${siteUrl}/.well-known/agent-skills/index.json`,
+    `- Agentic Resource Discovery (ARD): ${siteUrl}/.well-known/ard.json`,
     `- API-specific llms.txt: ${siteUrl}/api/llms.txt`,
     "",
     "## Crawling & policies",
@@ -163,6 +165,8 @@ export async function GET(request: NextRequest) {
     headers: {
       "Content-Type": contentType,
       "Cache-Control": cacheControl,
+      // The body's Content-Type depends on Accept.
+      Vary: "Accept",
       "X-LLMS-Source": "route-handler-v1",
     },
   });
