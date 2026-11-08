@@ -6,6 +6,7 @@ import {
   buildSkillsIndex,
   SKILL_PATH,
 } from "@utils/agent-discovery";
+import { MARKDOWN_CONTENT_TYPE } from "@utils/proxy-agent";
 
 const PUBLIC_CACHE_HEADERS = {
   "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
@@ -34,7 +35,7 @@ export async function GET(
     return new Response(buildSkillMarkdown(url), {
       headers: {
         ...PUBLIC_CACHE_HEADERS,
-        "Content-Type": "text/markdown; charset=utf-8",
+        "Content-Type": MARKDOWN_CONTENT_TYPE,
       },
     });
   }
@@ -100,13 +101,7 @@ export async function GET(
       documentation: `${url}/llms.txt`,
     };
 
-    return NextResponse.json(serverCard, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(serverCard, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/mcp.json (MCP discovery — flat format matching orank convention)
@@ -163,13 +158,7 @@ export async function GET(
       openapi: `${url}/openapi.json`,
     };
 
-    return NextResponse.json(mcpDiscovery, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(mcpDiscovery, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/agent-card.json (Google A2A protocol)
@@ -220,13 +209,7 @@ export async function GET(
       defaultOutputModes: ["application/json"],
     };
 
-    return NextResponse.json(agentCard, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(agentCard, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/ai-plugin.json (OpenAI plugin manifest)
@@ -249,13 +232,7 @@ export async function GET(
       legal_info_url: `${url}/termes-servei`,
     };
 
-    return NextResponse.json(pluginManifest, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(pluginManifest, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/oauth-protected-resource (RFC 9728)
@@ -268,13 +245,7 @@ export async function GET(
       resource_documentation: `${url}/llms.txt`,
     };
 
-    return NextResponse.json(oauthResource, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(oauthResource, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/openid-configuration (OpenID Connect Discovery 1.0)
@@ -300,13 +271,7 @@ export async function GET(
       code_challenge_methods_supported: ["S256"],
     };
 
-    return NextResponse.json(oauthMeta, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(oauthMeta, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/ucp (Universal Commerce Protocol discovery profile)
@@ -344,13 +309,7 @@ export async function GET(
       },
     };
 
-    return NextResponse.json(ucpProfile, {
-      status: 200,
-      headers: {
-        "Cache-Control":
-          "public, max-age=86400, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(ucpProfile, { headers: PUBLIC_CACHE_HEADERS });
   }
 
   // /.well-known/mcp — Handled by proxy.ts rewrite to /mcp (preserves POST body)
@@ -364,12 +323,7 @@ export async function GET(
         transport: "streamable-http",
         method: "POST",
       },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
-        },
-      },
+      { headers: PUBLIC_CACHE_HEADERS },
     );
   }
 

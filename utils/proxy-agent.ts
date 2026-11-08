@@ -1,5 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+export const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
+const NEGOTIATION_HEADER = "x-markdown-negotiation";
+
+// Markdown served on a page URL shares the URL with the HTML. Cloudflare keys
+// on the URL only and ignores Vary, so it must never be stored there.
+export const NEGOTIATED_MARKDOWN_HEADERS = {
+  "Content-Type": MARKDOWN_CONTENT_TYPE,
+  "Cache-Control": "private, no-store",
+  Vary: "Accept",
+};
+
+/** True when proxy.ts rewrote a page request here for `Accept: text/markdown`. */
+export function isNegotiatedMarkdown(request: Request): boolean {
+  return request.headers.get(NEGOTIATION_HEADER) === "1";
+}
+
 /** `?mode=agent` returns the structured agent view. */
 export function getAgentRewrite(request: NextRequest): NextResponse | null {
   if (request.nextUrl.searchParams.get("mode") === "agent") {
@@ -32,9 +48,8 @@ There is no page at this URL on Esdeveniments.cat.
  * "Markdown for Agents": `Accept: text/markdown` on a page URL. The homepage
  * gets its markdown twin (/index.md), other pages the llms.txt guide, and a
  * path Proxy already knows is missing a markdown 404.
- *
- * Same URL as the HTML page: only the Cloudflare "Markdown negotiation —
- * never cache" bypass rule keeps these responses out of the shared cache.
+ * The Cloudflare "Markdown negotiation — never cache" bypass rule also keeps
+ * them, and any redirect served to a markdown request, out of the CDN.
  */
 export function getMarkdownResponse(
   request: NextRequest,
@@ -42,17 +57,15 @@ export function getMarkdownResponse(
   isMissing: boolean,
 ): NextResponse {
   if (isMissing) {
-    const response = new NextResponse(NOT_FOUND_MARKDOWN, { status: 404 });
-    response.headers.set("Content-Type", "text/markdown; charset=utf-8");
-    response.headers.set("Cache-Control", "private, no-store");
-    response.headers.set("Vary", "Accept");
-    return response;
+    return new NextResponse(NOT_FOUND_MARKDOWN, {
+      status: 404,
+      headers: NEGOTIATED_MARKDOWN_HEADERS,
+    });
   }
 
   const rewriteUrl = request.nextUrl.clone();
   rewriteUrl.pathname = path === "/" ? "/index.md" : "/llms.txt";
-  rewriteUrl.searchParams.set("_accept", "text/markdown");
   const headers = new Headers(request.headers);
-  headers.set("x-markdown-negotiation", "1");
+  headers.set(NEGOTIATION_HEADER, "1");
   return NextResponse.rewrite(rewriteUrl, { request: { headers } });
 }

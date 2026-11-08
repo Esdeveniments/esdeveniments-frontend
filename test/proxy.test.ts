@@ -19,11 +19,11 @@ vi.mock("next/server", () => {
   // Use a function constructor wrapped with vi.fn() for Vitest 4 compatibility
   const MockNextResponseFn = vi.fn(function (
     body?: unknown,
-    options?: { status?: number },
+    options?: { status?: number; headers?: HeadersInit },
   ) {
     return {
       status: options?.status || 200,
-      headers: new Headers(),
+      headers: new Headers(options?.headers),
       cookies: {
         set: vi.fn(),
       },

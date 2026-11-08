@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { githubRepoUrl, siteUrl, socialLinks } from "@config/index";
 import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
+import {
+  isNegotiatedMarkdown,
+  NEGOTIATED_MARKDOWN_HEADERS,
+} from "@utils/proxy-agent";
 
 export async function GET(request: NextRequest) {
 
@@ -142,31 +146,23 @@ export async function GET(request: NextRequest) {
 
   const llmsTxt = lines.join("\n");
 
-  // Support Markdown for Agents content negotiation
-  // When proxy.ts rewrites with _accept=text/markdown or x-markdown-negotiation header
-  const isNegotiatedRewrite =
-    request.nextUrl.searchParams.get("_accept") === "text/markdown" ||
-    request.headers.get("x-markdown-negotiation") === "1";
+  // Markdown for Agents: proxy.ts rewrites page requests here, and a direct
+  // /llms.txt request may also ask for markdown.
   const isMarkdownNegotiation =
-    isNegotiatedRewrite ||
-    request.headers.get("accept")?.includes("text/markdown");
-  const contentType = isMarkdownNegotiation
-    ? "text/markdown; charset=utf-8"
-    : "text/plain; charset=utf-8";
-  // A markdown response shares its URL with the HTML page (or the plain-text
-  // /llms.txt). The CDN keys on the URL only (Cloudflare ignores
-  // Vary: Accept), so a shared copy would be served to every visitor.
-  const cacheControl = isMarkdownNegotiation
-    ? "private, no-store"
-    : getCacheControlHeader(request, 300);
+    isNegotiatedMarkdown(request) ||
+    !!request.headers.get("accept")?.includes("text/markdown");
 
   return new NextResponse(llmsTxt, {
     status: 200,
     headers: {
-      "Content-Type": contentType,
-      "Cache-Control": cacheControl,
-      // The body's Content-Type depends on Accept.
-      Vary: "Accept",
+      ...(isMarkdownNegotiation
+        ? NEGOTIATED_MARKDOWN_HEADERS
+        : {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": getCacheControlHeader(request, 300),
+            // The body's Content-Type depends on Accept.
+            Vary: "Accept",
+          }),
       "X-LLMS-Source": "route-handler-v1",
     },
   });

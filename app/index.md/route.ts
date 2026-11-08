@@ -1,5 +1,10 @@
 import { getSiteUrlFromRequest } from "@config/index";
 import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
+import {
+  isNegotiatedMarkdown,
+  MARKDOWN_CONTENT_TYPE,
+  NEGOTIATED_MARKDOWN_HEADERS,
+} from "@utils/proxy-agent";
 
 /**
  * /index.md — Markdown version of the homepage for AI agents.
@@ -79,19 +84,19 @@ GET ${url}/api/events?place=catalunya&term=jazz&pageSize=5
 - Website: [${url}](${url})
 `;
 
-  // On the homepage URL the CDN must not keep this copy (it keys on the URL
-  // only), and Vary tells other caches the body depends on Accept.
-  const isNegotiated = request.headers.get("x-markdown-negotiation") === "1";
   return new Response(markdown, {
     status: 200,
     headers: {
-      "Content-Type": "text/markdown; charset=utf-8",
-      ...(isNegotiated
-        ? { "Cache-Control": "private, no-store", Vary: "Accept" }
+      ...(isNegotiatedMarkdown(request)
+        ? NEGOTIATED_MARKDOWN_HEADERS
         : {
+            "Content-Type": MARKDOWN_CONTENT_TYPE,
             "Cache-Control":
               "public, max-age=86400, stale-while-revalidate=86400",
           }),
+      // The homepage links this file as an alternate; keep search engines
+      // indexing the HTML homepage, not a duplicate.
+      Link: `<${url}/>; rel="canonical"`,
     },
   });
 }
