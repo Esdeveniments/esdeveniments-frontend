@@ -2,7 +2,7 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import SitemapLayout from "@components/ui/sitemap/SitemapLayout";
 import SitemapBreadcrumb from "@components/ui/sitemap/SitemapBreadcrumb";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
-import ImageServer from "@components/ui/common/image/ImageServer";
+import Image from "@components/ui/common/image";
 import ImagePreload from "@components/ui/common/image/ImagePreload";
 import FestaMajorFestaList from "@components/ui/festaMajor/FestaMajorFestaList";
 import FestaMajorLinkList from "@components/ui/festaMajor/FestaMajorLinkList";
@@ -107,13 +107,15 @@ export default async function FestaMajorPageView({
         {cover?.imageUrl && (
           <>
             <ImagePreload image={cover.imageUrl} context="featured" />
-            <ImageServer
-              image={cover.imageUrl}
-              title={cover.title}
-              priority
-              context="featured"
-              className="w-full max-w-2xl mx-auto overflow-hidden rounded-card bg-muted"
-            />
+            <div className="relative w-full max-w-2xl mx-auto aspect-[3/2] overflow-hidden rounded-card bg-muted">
+              <Image
+                image={cover.imageUrl}
+                title={cover.title}
+                priority
+                context="featured"
+                className="w-full h-full"
+              />
+            </div>
           </>
         )}
 

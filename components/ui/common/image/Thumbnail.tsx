@@ -1,7 +1,10 @@
-import ImageServer from "@components/ui/common/image/ImageServer";
+import Image from "@components/ui/common/image";
 import type { ThumbnailProps } from "types/props";
 
-/** A 56px square beside a list row: the event's image, or the label's initial. */
+/**
+ * A 56px square beside a list row: the event's image, or the label's initial.
+ * A broken image falls back to the branded placeholder, as on cards.
+ */
 export default function Thumbnail({
   image,
   label,
@@ -13,11 +16,11 @@ export default function Thumbnail({
       className={`relative w-14 h-14 shrink-0 overflow-hidden rounded-card bg-muted flex-center${muted ? " opacity-60 grayscale" : ""}`}
     >
       {image ? (
-        <ImageServer
+        <Image
           image={image}
           title={label}
           alt=""
-          className="w-14 h-14"
+          className="w-full h-full"
           context="thumb"
         />
       ) : (
