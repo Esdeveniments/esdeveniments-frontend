@@ -348,15 +348,22 @@ jobs:
       (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'skipped') &&
       (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped') &&
       (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped')
-    # 20 min = 15 min MAX_WAIT for Coolify build (prod Next.js + Docker rebuilds
-    # run ~12 min) + ~5 min for webhook trigger, smoke tests, and runner overhead.
-    timeout-minutes: 20
+    # 25 min = 15 min MAX_WAIT for Coolify build (prod Next.js + Docker rebuilds
+    # run ~12 min) + up to 3 min for the old container to drain + ~5 min for
+    # webhook trigger, CDN purge, smoke tests, and runner overhead.
+    timeout-minutes: 25
     # GitHub Environment enables protection rules, required reviewers, and environment-specific secrets
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
       url: ${{ env.DEPLOY_URL }}
 
     steps:
+      - name: Checkout deploy scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/check-static-assets.sh
+          sparse-checkout-cone-mode: false
+
       - name: Deployment mode summary
         run: |
           echo "## Deployment Mode" >> $GITHUB_STEP_SUMMARY
@@ -566,6 +573,27 @@ jobs:
             echo "::warning::CLOUDFLARE_ZONE_ID/CLOUDFLARE_API_TOKEN are not set in Coolify: event changes won't purge Cloudflare (listings stay stale up to 30 min)."
           fi
 
+          # Coolify keeps the old container in the proxy until the new one is
+          # healthy, plus its stop grace period. Purging or asset-checking in
+          # that overlap mixes builds: the old container re-caches old HTML and
+          # 404s for the new build's chunks (2026-11-08 outage). Continue only
+          # once 10 health checks in a row answer with the new commit.
+          echo "Waiting for the old container to leave the proxy..."
+          STREAK=0
+          DEADLINE=$((SECONDS + 180))
+          while [ "$SECONDS" -lt "$DEADLINE" ]; do
+            LIVE=$(curl -s --max-time 5 -H "x-health-secret: ${HEALTH_SECRET}" "${SITE_URL}/api/health" \
+              | grep -o '"buildVersion":"[^"]*"' | cut -d'"' -f4) || LIVE=""
+            if [ "$LIVE" = "$EXPECTED_VERSION" ]; then STREAK=$((STREAK + 1)); else STREAK=0; fi
+            [ "$STREAK" -ge 10 ] && break
+            sleep 2
+          done
+          if [ "$STREAK" -ge 10 ]; then
+            echo "Only ${EXPECTED_VERSION:0:7} is answering"
+          else
+            echo "::warning::Old container still answering after 3 min; continuing anyway"
+          fi
+
       - name: Smoke — OIDC sign-in redirects to Logto (guards public host + LOGTO_* env)
         env:
           SITE_URL: ${{ env.DEPLOY_URL }}
@@ -599,26 +627,43 @@ jobs:
         env:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
           if [ -z "$CLOUDFLARE_ZONE_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
             echo "::warning::CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN not set — skipping CDN purge"
             exit 0
           fi
 
-          echo "Purging Cloudflare cache to prevent stale chunk references..."
-          HTTP_CODE=$(curl -s -o /tmp/cf-purge.json -w "%{http_code}" \
-            -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            --data '{"purge_everything":true}' \
-            --max-time 10) || HTTP_CODE="000"
+          purge() {
+            HTTP_CODE=$(curl -s -o /tmp/cf-purge.json -w "%{http_code}" \
+              -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              --data '{"purge_everything":true}' \
+              --max-time 10) || HTTP_CODE="000"
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Cloudflare cache purged successfully"
+            else
+              echo "::warning::Cloudflare purge returned HTTP $HTTP_CODE"
+              cat /tmp/cf-purge.json 2>/dev/null || true
+            fi
+          }
 
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "Cloudflare cache purged successfully"
-          else
-            echo "::warning::Cloudflare purge returned HTTP $HTTP_CODE (non-fatal)"
-            cat /tmp/cf-purge.json 2>/dev/null || true
+          echo "Purging Cloudflare cache to prevent stale chunk references..."
+          purge
+          sleep 5
+          # First check reports as warnings: the retry below may still fix it.
+          set -o pipefail
+          if bash scripts/check-static-assets.sh "$SITE_URL" / /barcelona | sed 's/^::error::/::warning::/'; then
+            exit 0
           fi
+
+          # Something old got cached anyway: purge once more, then fail loudly.
+          echo "Static assets broken after purge; purging again in 15s..."
+          sleep 15
+          purge
+          sleep 5
+          bash scripts/check-static-assets.sh "$SITE_URL" / /barcelona
 
       - name: Post-deploy smoke tests
         env:
@@ -647,6 +692,9 @@ jobs:
             echo "::error::Barcelona page returned HTTP $HTTP_CODE"
             FAILED=1
           fi
+
+          # A 200 page whose JS/CSS 404s renders unstyled and dead (2026-11-08).
+          bash scripts/check-static-assets.sh "$SITE_URL" / /barcelona || FAILED=1
 
           ROBOTS_TXT=$(curl -sf --max-time 5 "${SITE_URL}/robots.txt") || ROBOTS_TXT=""
           if [ -z "$ROBOTS_TXT" ]; then
