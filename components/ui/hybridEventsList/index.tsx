@@ -12,6 +12,9 @@ import SearchAwareHeading from "./SearchAwareHeading";
 import HeadingLayout from "./HeadingLayout";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { hasCardImage } from "@utils/event-helpers";
+import { buildEventMapPoints } from "@utils/event-map";
+import { ListingEventsProvider } from "@components/context/ListingEventsContext";
+import EventsMapToggle from "@components/ui/eventsMap/EventsMapToggle";
 
 async function HybridEventsList({
   initialEvents = [],
@@ -27,6 +30,7 @@ async function HybridEventsList({
   promotedSlot,
 }: HybridEventsListProps): Promise<ReactElement> {
   const priorityIndex = initialEvents.findIndex(hasCardImage);
+  const showMap = buildEventMapPoints(initialEvents).length >= 2;
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
 
@@ -109,36 +113,41 @@ async function HybridEventsList({
       {promotedSlot}
       {sponsorSlot}
 
-      {/* Initial SSR list with ads (no hydration beyond card internals).
-          Hidden when client filters are active (SsrListWrapper). No Suspense
-          here: SsrListWrapper reads the shared URL filters context, and a
-          fallback that repeated the list sent every card twice in the HTML. */}
-      <SsrListWrapper categories={categories}>
-        <List events={initialEvents}>
-          {(event: ListEvent, index: number) => (
-            <CardServer
-              key={`${event.id ?? "ad"}-${index}`}
-              event={event}
-              isPriority={index === priorityIndex}
-              headingLevel="h2"
-            />
-          )}
-        </List>
-        <AdArticle slot="9643657007" />
-      </SsrListWrapper>
+      <ListingEventsProvider>
+        {/* One town bubble alone is no map: show it from two places. */}
+        {showMap ? <EventsMapToggle /> : null}
 
-      {/* Client enhancer for pagination */}
-      <HybridEventsListClient
-        initialEvents={initialEvents}
-        place={place}
-        category={category}
-        date={date}
-        profileSlug={profileSlug}
-        serverHasMore={serverHasMore}
-        ssrPageSize={ssrPageSize}
-        categories={categories}
-        pageData={pageData}
-      />
+        {/* Initial SSR list with ads (no hydration beyond card internals).
+            Hidden when client filters are active (SsrListWrapper). No Suspense
+            here: SsrListWrapper reads the shared URL filters context, and a
+            fallback that repeated the list sent every card twice in the HTML. */}
+        <SsrListWrapper categories={categories}>
+          <List events={initialEvents}>
+            {(event: ListEvent, index: number) => (
+              <CardServer
+                key={`${event.id ?? "ad"}-${index}`}
+                event={event}
+                isPriority={index === priorityIndex}
+                headingLevel="h2"
+              />
+            )}
+          </List>
+          <AdArticle slot="9643657007" />
+        </SsrListWrapper>
+
+        {/* Client enhancer for pagination */}
+        <HybridEventsListClient
+          initialEvents={initialEvents}
+          place={place}
+          category={category}
+          date={date}
+          profileSlug={profileSlug}
+          serverHasMore={serverHasMore}
+          ssrPageSize={ssrPageSize}
+          categories={categories}
+          pageData={pageData}
+        />
+      </ListingEventsProvider>
     </div>
   );
 }

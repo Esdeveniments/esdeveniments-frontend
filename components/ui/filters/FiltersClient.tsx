@@ -10,6 +10,7 @@ import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { FiltersClientProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
 import { getCategoryLabel } from "@utils/category-helpers";
+import EventsMapChip from "@components/ui/eventsMap/EventsMapChip";
 
 const FiltersClient = ({
   segments,
@@ -164,6 +165,7 @@ const FiltersClient = ({
             );
           })}
         </div>
+        <EventsMapChip />
       </div>
     </div>
   );

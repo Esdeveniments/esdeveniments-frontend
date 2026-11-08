@@ -31,6 +31,10 @@ export interface ProvinceSummaryResponseDTO {
   slug: string;
 }
 
+// How precise an event's own coordinates are. VENUE: the real venue. CITY:
+// only the town is known (the map shows a town bubble, not a pin).
+export type EventLocationPrecision = "VENUE" | "CITY" | "UNKNOWN";
+
 export interface EventSummaryResponseDTO {
   id: string; // UUID
   hash: string;
@@ -45,6 +49,10 @@ export interface EventSummaryResponseDTO {
   endDate: string; // ISO date
   endTime: string | null; // ISO time or null
   location: string;
+  // Venue coordinates; null/absent until the backend geocodes the venue.
+  latitude?: number | null;
+  longitude?: number | null;
+  locationPrecision?: EventLocationPrecision | null;
   visits: number;
   origin: EventOrigin;
   city?: CitySummaryResponseDTO;
