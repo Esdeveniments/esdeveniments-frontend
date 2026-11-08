@@ -190,7 +190,7 @@ jobs:
           echo "$robots" | grep -F -i "disallow: /_next/" > /dev/null
           echo "$robots" | grep -F -i "disallow: /api/" > /dev/null
           echo "$robots" | grep -F -i "user-agent: gptbot" > /dev/null
-          echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/server-static-sitemap.xml" > /dev/null
+          echo "$robots" | grep -F -i "sitemap: https://www.esdeveniments.cat/sitemap.xml" > /dev/null
           echo "robots.txt looks correct"
 
       - name: Run E2E tests
