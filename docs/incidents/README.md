@@ -25,6 +25,7 @@ Reports marked *(in git)* were removed from the tree; read them with
 
 | Date       | Incident | Impact | Status |
 | ---------- | -------- | ------ | ------ |
+| 2026-11-08 | [Cloudflare Cached a 404 for a New JS Chunk After Deploy](./2026-11-08-cloudflare-cached-chunk-404.md) | Downtime (~27 min, unstyled dead pages) | Resolved (Cloudflare status-code TTL pending) |
 | 2026-08-18 | [Cloudflare Zaraz fires production Google tags on staging and Coolify](./2026-08-18-zaraz-zone-wide-google-tags.md) | Analytics (polluted GA4 data) | Open (manual Zaraz fix) |
 | 2026-07-26 | [PR Review Loop Missed 12 of 13 Threads on PR #426](./2026-07-26-pr-review-loop-missed-threads.md) | Process (would have shipped 2 P1 regressions) | Resolved (Documented) |
 | 2026-07-07 | [Production Container Crash-Loop from Healthcheck Timeout](./2026-07-07-coolify-container-healthcheck-crash.md) | Downtime (~21h, manual recovery) | Resolved |
