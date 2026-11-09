@@ -24,6 +24,21 @@ export function isPlacePath(segments: readonly string[]): boolean {
 }
 
 /**
+ * No page route can match: not a top-level route folder and not a place
+ * listing (e.g. /a/b/c/d). Dotted first segments (icons, files) are left alone.
+ */
+export function isUnroutablePath(pathnameWithoutLocale: string): boolean {
+  const segments = pathnameWithoutLocale.split("/").filter(Boolean);
+  const slug = segments[0];
+  return (
+    !!slug &&
+    !slug.includes(".") &&
+    !NON_PLACE_FIRST_SEGMENTS.has(slug) &&
+    !isPlacePath(segments)
+  );
+}
+
+/**
  * One-page hubs. Anything under them (/festes-majors/x) would match
  * /[place]/[date] and render a 200 soft 404, so it gets a real 404.
  */

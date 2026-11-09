@@ -24,7 +24,11 @@ const AGENT_DISCOVERY_LINKS = [
   '</openapi.json>; rel="service-desc"; type="application/openapi+json"',
   '</llms.txt>; rel="service-doc"; type="text/plain"',
   '</.well-known/agent-skills/index.json>; rel="describedby"',
+  '</.well-known/ard.json>; rel="ard"',
 ].join(", ");
+// Only the homepage has a real markdown twin; other pages negotiate to the
+// generic llms.txt guide, which is not an alternate of the page.
+const HOME_MARKDOWN_LINK = '</index.md>; rel="alternate"; type="text/markdown"';
 
 /**
  * Owner-only or per-user pages: favorites (/preferits and its subpages),
@@ -97,10 +101,15 @@ export function applyPageHeaders(
   }
 
   response.headers.set("Content-Language", locale);
-  response.headers.set("Link", AGENT_DISCOVERY_LINKS);
+  response.headers.set(
+    "Link",
+    path === "/"
+      ? `${AGENT_DISCOVERY_LINKS}, ${HOME_MARKDOWN_LINK}`
+      : AGENT_DISCOVERY_LINKS,
+  );
   // No Vary: Accept here: Next replaces Vary on page responses, and Cloudflare
   // ignores it. The markdown variant is kept out of the CDN by its own
-  // Cache-Control instead (app/llms.txt/route.ts).
+  // Cache-Control instead (utils/proxy-agent.ts).
 
   // Default-deny: every host outside the production allowlist (staging, PR
   // previews) is noindexed. Filtered listings stay crawlable but unindexed,

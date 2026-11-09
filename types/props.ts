@@ -54,7 +54,15 @@ export interface ClientImageInnerProps {
   date?: string;
 }
 
-import { ChangeEvent, InputHTMLAttributes, MouseEvent, ReactNode } from "react";
+import {
+  ChangeEvent,
+  ComponentType,
+  InputHTMLAttributes,
+  MouseEvent,
+  ReactNode,
+} from "react";
+import type { CardLinkProps } from "types/ui";
+import type { EventMapPoint } from "types/event-map";
 
 // Detail page section tracker
 export interface DetailSectionTrackerProps {
@@ -232,6 +240,24 @@ export interface CompactCardProps {
   tCard: (key: string, values?: Record<string, string | number>) => string;
   index: number;
   analyticsEventName?: string;
+}
+
+// Side panel (desktop) / bottom sheet (mobile): the places, or the events of
+// the selected one.
+export interface EventsMapPanelProps {
+  points: EventMapPoint[];
+  selected: EventMapPoint | null;
+  hoveredId: string | null;
+  onSelect: (point: EventMapPoint | null) => void;
+  onHover: (id: string | null) => void;
+}
+
+export interface EventsMapProps {
+  onRetry: () => void;
+}
+
+export interface CompactCardViewProps extends CompactCardProps {
+  LinkComponent: ComponentType<CardLinkProps>;
 }
 
 export interface FavoriteButtonLabels {

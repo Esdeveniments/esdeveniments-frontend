@@ -1,19 +1,34 @@
-# Auto-merge low-risk Dependabot PRs after CI passes
-# GitHub Actions updates are typically safe - CI will catch any issues
+# Auto-merge low-risk Dependabot PRs after the required checks pass, then
+# deploy the merged branch.
 # https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions
 
 name: Dependabot auto-merge
 on: pull_request
 
+# One run per PR: a Dependabot rebase supersedes the older wait.
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write
+  actions: write # dispatch deploy-coolify.yml after the merge
+  checks: read # gh pr checks
+  statuses: read
 
 jobs:
   dependabot:
     runs-on: ubuntu-latest
+    # Covers queueing behind the PR's E2E run (35 min timeout) plus the merge.
+    timeout-minutes: 80
     # Security: verify both actor AND repository to prevent forks from triggering
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'Esdeveniments/esdeveniments-frontend'
+    env:
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
@@ -22,37 +37,63 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Auto-merge GitHub Actions updates
-        if: steps.metadata.outputs.package-ecosystem == 'github_actions'
-        run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # npm patch + minor auto-merge (any dependency-type).
-      # Safety: branch protection on main/develop must require the e2e + quality
-      # checks. `gh pr merge --auto` queues the merge and only completes when
-      # all required checks pass. Production majors are still gated below.
-      - name: Auto-merge npm patch and minor updates
+      # Merged automatically:
+      # - GitHub Actions updates (CI catches breakage);
+      # - npm patch and minor updates (any dependency type);
+      # - npm majors ONLY for dev dependencies (@types/*, test tooling), which
+      #   don't ship to production. Production majors (react, next, zod,
+      #   sentry, …) still need human review.
+      # `--auto` merges only once the branch protection's required checks pass
+      # (quality + E2E on develop and main).
+      - name: Enable auto-merge
+        id: merge
         if: |
-          steps.metadata.outputs.package-ecosystem == 'npm_and_yarn' &&
-          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-           steps.metadata.outputs.update-type == 'version-update:semver-minor')
+          steps.metadata.outputs.package-ecosystem == 'github_actions' ||
+          (steps.metadata.outputs.package-ecosystem == 'npm_and_yarn' &&
+           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+            steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+            (steps.metadata.outputs.update-type == 'version-update:semver-major' &&
+             steps.metadata.outputs.dependency-type == 'direct:development')))
         run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # npm major auto-merge ONLY for dev-dependencies (e.g. @types/*,
-      # lint-staged, test tooling). Green CI is a strong signal for dev deps
-      # because they don't ship to production. Production majors (react, next,
-      # zod, sentry, etc.) still require human review.
-      - name: Auto-merge npm dev-dependency major updates
-        if: |
-          steps.metadata.outputs.package-ecosystem == 'npm_and_yarn' &&
-          steps.metadata.outputs.update-type == 'version-update:semver-major' &&
-          steps.metadata.outputs.dependency-type == 'direct:development'
-        run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # A merge made with GITHUB_TOKEN starts no push workflows, so the deploy
+      # that a human merge would trigger never ran. workflow_dispatch is the
+      # documented exception: wait for the merge, then start the deploy.
+      - name: Wait for the merge
+        id: merged
+        if: steps.merge.outcome == 'success'
+        run: |
+          # A re-run of failed CI starts no new run of this workflow, so turn
+          # auto-merge off before giving up: a later merge is then a human one,
+          # whose push triggers the deploy as usual.
+          give_up() {
+            echo "::error::$1"
+            for _ in 1 2 3; do
+              timeout 30 gh pr merge --disable-auto "$PR_URL" && exit 1
+              sleep 5
+            done
+            echo "::error::Could not turn auto-merge off. Disable it by hand on $PR_URL, or a later merge won't deploy."
+            exit 1
+          }
+          # Stop on elapsed time, with every gh call capped, so give_up always
+          # runs well before the job's 80-minute timeout.
+          deadline=$((SECONDS + 70 * 60))
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            state=$(timeout 30 gh pr view "$PR_URL" --json state --jq .state || true)
+            case "$state" in
+              MERGED) echo "merged=true" >> "$GITHUB_OUTPUT"; exit 0 ;;
+              CLOSED) echo "PR closed without merging."; exit 0 ;;
+            esac
+            # A failed query just retries on the next poll.
+            if failed=$(timeout 30 gh pr checks "$PR_URL" --required --json bucket \
+                --jq '[.[] | select(.bucket == "fail")] | length') \
+                && [ "$failed" -gt 0 ]; then
+              give_up "A required check failed; auto-merge turned off."
+            fi
+            sleep 30
+          done
+          give_up "Still not merged after 70 minutes; auto-merge turned off."
+
+      - name: Deploy the merged branch
+        if: steps.merged.outputs.merged == 'true'
+        run: gh workflow run deploy-coolify.yml --ref "$BASE_REF"

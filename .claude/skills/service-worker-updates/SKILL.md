@@ -35,6 +35,7 @@ Before any Workbox route, a plain `fetch` listener calls `stopImmediatePropagati
 | `/api/auth/*`, `/api/favorites` | NetworkOnly | – | – |
 | Navigations (`request.mode === "navigate"`) | NetworkFirst (uses and caches the navigation preload response) + `BroadcastUpdatePlugin` + skip `private`/`no-store`; offline page on failure | `esdeveniments-pages-cache` | 50 / 7 d |
 | Google ads/analytics, Sentry | NetworkOnly | – | – |
+| `tiles.openfreemap.org` (listing map tiles, glyphs, sprites) | NetworkOnly (browser HTTP cache only) | – | – |
 | style, script, worker, font | CacheFirst | `esdeveniments-static-assets-cache` | 100 / 30 d |
 | images | StaleWhileRevalidate | `esdeveniments-images-cache` | 200 / 7 d |
 | `/api/events`, `/api/events/categorized` | StaleWhileRevalidate | `esdeveniments-events-api-cache` | 50 / 10 min |

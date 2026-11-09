@@ -24,6 +24,8 @@ export default [
       ".next/**/*",
       // Workbox runtime copied from node_modules by scripts/generate-sw.mjs
       "public/static/workbox-v*/**",
+      // MapLibre worker copied from node_modules by scripts/copy-maplibre-worker.mjs
+      "public/static/maplibre-v*/**",
     ],
   },
   // Patch legacy rule context for ESLint 10 compatibility

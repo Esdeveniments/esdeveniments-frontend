@@ -6,7 +6,7 @@ describe("GET /llms.txt", () => {
   it("keeps the markdown served for another page's URL out of the CDN", async () => {
     // proxy.ts rewrites `Accept: text/markdown` requests for any page here.
     const request = new NextRequest(
-      "https://example.com/llms.txt?_accept=text%2Fmarkdown",
+      "https://example.com/llms.txt",
       { headers: { "x-markdown-negotiation": "1" } },
     );
 

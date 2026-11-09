@@ -20,11 +20,11 @@ vi.mock("next/server", () => {
   // Use a function constructor wrapped with vi.fn() for Vitest 4 compatibility
   const MockNextResponseFn = vi.fn(function (
     body?: unknown,
-    options?: { status?: number },
+    options?: { status?: number; headers?: HeadersInit },
   ) {
     return {
       status: options?.status || 200,
-      headers: new Headers(),
+      headers: new Headers(options?.headers),
       cookies: {
         set: vi.fn(),
       },
@@ -674,6 +674,77 @@ describe("proxy", () => {
           expect(init.status).toBeUndefined();
         },
       );
+    });
+  });
+
+  describe("markdown negotiation", () => {
+    const mdRequest = (pathname: string) =>
+      ({
+        nextUrl: mockNextUrl({ pathname }),
+        headers: new Headers({ accept: "text/markdown" }),
+        method: "GET",
+      }) as unknown as NextRequest;
+
+    it("serves the homepage's markdown twin", async () => {
+      await proxy(mdRequest("/"));
+
+      const [url, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe("/index.md");
+      expect(init.request.headers.get("x-markdown-negotiation")).toBe("1");
+    });
+
+    it("serves the llms.txt guide for other pages", async () => {
+      await proxy(mdRequest("/barcelona"));
+
+      const [url] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe("/llms.txt");
+    });
+
+    it("answers a missing place with a markdown 404", async () => {
+      (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+
+      const result = await proxy(mdRequest("/no-such-place"));
+
+      expect(result.status).toBe(404);
+      expect(result.headers.get("content-type")).toContain("text/markdown");
+      expect(result.headers.get("cache-control")).toBe("private, no-store");
+      expect(result.headers.get("vary")).toBe("Accept");
+      expect(NextResponse.rewrite).not.toHaveBeenCalled();
+    });
+
+    it("answers a path no route can match with a markdown 404", async () => {
+      const result = await proxy(mdRequest("/a/b/c/d"));
+
+      expect(result.status).toBe(404);
+      expect(result.headers.get("content-type")).toContain("text/markdown");
+      expect(NextResponse.rewrite).not.toHaveBeenCalled();
+    });
+
+    it("keeps the guide for real routes outside place listings", async () => {
+      await proxy(mdRequest("/noticies/barcelona/some-article"));
+
+      const [url] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe("/llms.txt");
+    });
+
+    it("advertises the markdown twin only on the homepage", async () => {
+      (NextResponse.rewrite as Mock).mockImplementation(() => ({
+        headers: new Headers(),
+      }));
+      const htmlRequest = (pathname: string) =>
+        ({
+          nextUrl: mockNextUrl({ pathname }),
+          headers: new Headers({ accept: "text/html" }),
+          method: "GET",
+        }) as unknown as NextRequest;
+
+      const home = await proxy(htmlRequest("/"));
+      const place = await proxy(htmlRequest("/barcelona"));
+
+      expect(home.headers.get("link")).toContain(
+        '</index.md>; rel="alternate"; type="text/markdown"',
+      );
+      expect(place.headers.get("link")).not.toContain("index.md");
     });
   });
 

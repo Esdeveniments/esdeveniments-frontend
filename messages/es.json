@@ -134,7 +134,8 @@
       "writesBody": "El pago de un patrocinio (POST /api/sponsors/checkout) acepta la cabecera Idempotency-Key. Envía una clave nueva (un UUID) en cada intento y repítela si vuelves a probar: solo se crea una sesión de pago.",
       "githubTitle": "GitHub y contacto",
       "githubBody": "Sigue el proyecto en GitHub o escríbenos si necesitas más datos o un límite más alto.",
-      "githubLink": "Esdeveniments.cat en GitHub"
+      "githubLink": "Esdeveniments.cat en GitHub",
+      "githubRepoLink": "Código fuente de la web (con AGENTS.md)"
     },
     "DevelopersMcp": {
       "metaTitle": "Servidor MCP de Esdeveniments.cat",
@@ -1191,6 +1192,29 @@
       "title": "Fiestas y tradiciones",
       "town": "Fiesta mayor {placeOf}",
       "region": "Fiestas mayores {placeOf}"
+    },
+    "EventsMap": {
+      "loading": "Cargando el mapa…",
+      "error": "No se ha podido cargar el mapa.",
+      "retry": "Vuelve a intentarlo",
+      "placeOption": "{label} ({count})",
+      "showAll": "Mostrar todo",
+      "legendVenue": "Lugar exacto",
+      "legendTown": "Pueblo (lugar por confirmar)",
+      "mappedCount": "{count, plural, one {# actividad en el mapa} other {# actividades en el mapa}}",
+      "hint": "Toca un punto para ver sus actividades.",
+      "townNote": "Aún no sabemos el lugar exacto de estas actividades: el punto marca el pueblo.",
+      "empty": "No hay actividades para mostrar en el mapa.",
+      "mapTitle": "Mapa de actividades",
+      "zoomIn": "Acercar",
+      "zoomOut": "Alejar",
+      "findMyLocation": "Mi ubicación",
+      "locationNotAvailable": "Ubicación no disponible",
+      "toggleAttribution": "Mostrar los créditos",
+      "close": "Cierra el mapa",
+      "floating": "Mapa",
+      "back": "Todos los lugares",
+      "eventsCount": "{count, plural, one {# actividad} other {# actividades}}"
     }
   },
   "Partials": {

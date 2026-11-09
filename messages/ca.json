@@ -134,7 +134,8 @@
       "writesBody": "El pagament d'un patrocini (POST /api/sponsors/checkout) accepta la capçalera Idempotency-Key. Envia una clau nova (un UUID) a cada intent i repeteix-la si tornes a provar: només es crea una sessió de pagament.",
       "githubTitle": "GitHub i contacte",
       "githubBody": "Segueix el projecte a GitHub o escriu-nos si necessites més dades o un límit més alt.",
-      "githubLink": "Esdeveniments.cat a GitHub"
+      "githubLink": "Esdeveniments.cat a GitHub",
+      "githubRepoLink": "Codi font del web (amb AGENTS.md)"
     },
     "DevelopersMcp": {
       "metaTitle": "Servidor MCP d'Esdeveniments.cat",
@@ -1191,6 +1192,29 @@
       "title": "Festes i tradicions",
       "town": "Festa Major {placeOf}",
       "region": "Festes majors {placeOf}"
+    },
+    "EventsMap": {
+      "loading": "Carregant el mapa…",
+      "error": "No s'ha pogut carregar el mapa.",
+      "retry": "Torna-ho a provar",
+      "placeOption": "{label} ({count})",
+      "showAll": "Mostra-ho tot",
+      "legendVenue": "Lloc exacte",
+      "legendTown": "Poble (lloc per confirmar)",
+      "mappedCount": "{count, plural, one {# activitat al mapa} other {# activitats al mapa}}",
+      "hint": "Toca un punt per veure'n les activitats.",
+      "townNote": "Encara no sabem el lloc exacte d'aquestes activitats: el punt marca el poble.",
+      "empty": "No hi ha activitats per mostrar al mapa.",
+      "mapTitle": "Mapa d'activitats",
+      "zoomIn": "Apropa",
+      "zoomOut": "Allunya",
+      "findMyLocation": "La meva ubicació",
+      "locationNotAvailable": "Ubicació no disponible",
+      "toggleAttribution": "Mostra els crèdits",
+      "close": "Tanca el mapa",
+      "floating": "Mapa",
+      "back": "Tots els llocs",
+      "eventsCount": "{count, plural, one {# activitat} other {# activitats}}"
     }
   },
   "Partials": {
