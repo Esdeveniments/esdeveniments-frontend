@@ -98,6 +98,7 @@ NON_PLACE_SEGMENTS = {
     "iniciar-sessio", "registre", "preferits", "qui-som", "politica-privacitat",
     "termes-servei", "sitemap", "offline", "developers", "festa-major",
     "festes-majors", "cavalcades-de-reis", "fires-de-nadal", "pessebres-vivents",
+    "carnaval",
     "api", "agent-view", "ask", "docs", "mcp", "openapi", "sitemap-events",
     "sitemap-places",
 }
