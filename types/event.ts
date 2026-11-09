@@ -98,8 +98,6 @@ export interface FormattedDateResult {
   startTime: string;
   endTime: string;
   nameDay: string;
-  startDate: Date;
-  isLessThanFiveDays: boolean;
   isMultipleDays: boolean;
   duration: string;
 }
@@ -158,6 +156,13 @@ export interface FetchEventsParams {
   // Note: API expects 'term' for search queries
 }
 
+/** fetchNextEdition: the ended event whose next edition we look for. */
+export interface NextEditionQuery {
+  slug: string;
+  title: string;
+  citySlug: string;
+}
+
 /** fetchAllEventPagesExternal: page size, request cap and per-request timeout. */
 export interface AllEventPagesOptions {
   maxRequests: number;
@@ -176,7 +181,7 @@ export interface EventFallbackStageOptions {
   size?: number;
   includeCategory?: boolean;
   includeDateRange?: boolean;
-  dateRangeFactory?: () => DateRange;
+  dateRangeFactory?: () => DateRange | Promise<DateRange>;
   place?: string;
 }
 

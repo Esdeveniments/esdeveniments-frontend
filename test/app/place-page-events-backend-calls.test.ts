@@ -3,6 +3,11 @@ import { buildPlaceEventsPromise } from "app/[locale]/[place]/page";
 import { getPlaceTypeAndLabelCached } from "@utils/helpers";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
+vi.mock("next/cache", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/cache")>()),
+  cacheLife: vi.fn(),
+}));
+
 vi.mock("@utils/helpers", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@utils/helpers")>()),
   getPlaceTypeAndLabelCached: vi.fn(),

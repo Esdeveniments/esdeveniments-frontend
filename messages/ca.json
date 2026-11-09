@@ -955,7 +955,8 @@
       "primaryCta": "Consulta l'agenda",
       "secondaryCta": "o explora aquesta categoria",
       "srStatus": "Estat: {label}.",
-      "timeWindow": "aquesta setmana"
+      "timeWindow": "aquesta setmana",
+      "nextEdition": "Propera edició: {dates}"
     },
     "EventPage": {
       "sponsored": "Contingut patrocinat",

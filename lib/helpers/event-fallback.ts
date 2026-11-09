@@ -1,4 +1,6 @@
+import { cacheLife } from "next/cache";
 import { fetchEvents } from "@lib/api/events";
+import { twoWeeksDefault } from "@lib/dates";
 import { fetchRegionsWithCities, fetchRegions } from "@lib/api/regions";
 import { toLocalDateString } from "@utils/helpers";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
@@ -12,8 +14,20 @@ import type {
   EventSummaryResponseDTO,
   PagedResponseDTO,
 } from "types/api/event";
+import type { DateRange } from "types/common";
 
 const DEFAULT_STAGE_SIZE = 7;
+
+/**
+ * twoWeeksDefault for listing pages. It reads the clock, which a prerender may
+ * only do inside "use cache" (Next blocks the route otherwise). An hour-old
+ * "today" is fine for a fallback range.
+ */
+export async function twoWeeksDefaultCached(): Promise<DateRange> {
+  "use cache";
+  cacheLife("hours");
+  return twoWeeksDefault();
+}
 
 export async function fetchEventsWithFallback(
   options: FetchEventsWithFallbackOptions
@@ -37,7 +51,7 @@ export async function fetchEventsWithFallback(
     const regionSlug = await resolveRegionSlugForPlace(place);
 
     if (regionSlug) {
-      const regionParams = buildStageParams(
+      const regionParams = await buildStageParams(
         initialParams,
         {
           page: 0,
@@ -68,7 +82,7 @@ export async function fetchEventsWithFallback(
   }
 
   const finalOptions = options.finalFallback ?? {};
-  const finalParams = buildStageParams(
+  const finalParams = await buildStageParams(
     initialParams,
     {
       page: 0,
@@ -135,11 +149,11 @@ async function resolveRegionSlugForPlace(
   }
 }
 
-function buildStageParams(
+async function buildStageParams(
   initialParams: FetchEventsParams,
   overrides: Partial<FetchEventsParams>,
   stageOptions?: EventFallbackStageOptions
-): FetchEventsParams {
+): Promise<FetchEventsParams> {
   const params: FetchEventsParams = {
     ...initialParams,
     ...overrides,
@@ -153,7 +167,7 @@ function buildStageParams(
     delete params.from;
     delete params.to;
   } else if ((!params.from || !params.to) && stageOptions?.dateRangeFactory) {
-    const range = stageOptions.dateRangeFactory();
+    const range = await stageOptions.dateRangeFactory();
     params.from = toLocalDateString(range.from);
     params.to = toLocalDateString(range.until);
   }

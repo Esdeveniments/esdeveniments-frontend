@@ -897,3 +897,35 @@ runs never showed it. Put any size floor on something that is never an ancestor
 of an ad: `BaseLayout` uses a zero-width `min-h-screen` strut next to `<main>`.
 To test it, reproduce the rewrite by script, or use real ads (method in
 `docs/performance/baselines.md`, 2026-11-07).
+
+## Clock reads in metadata and fallbacks block the prerender, and only dev tells you
+
+With `cacheComponents`, reading `new Date()` or `Date.now()` during a prerender,
+outside `"use cache"` and before `connection()`, stops the static shell at that
+point. Next shows a "Blocking Route: encountered the unstable value `new Date()`"
+error, but only in the `next dev` overlay. `next build` never renders event,
+listing or sitemap pages for slugs it doesn't know, and CI doesn't check the dev
+overlay, so these errors sat unnoticed from #605/#705 (Nov 2025) on:
+
+- the event page's `generateMetadata` (`isLessThanFiveDays` in `getFormattedDate`,
+  and `isExpiredEvent` for the 60-day `noindex`). In production, browser requests
+  to an ended event got `x-nextjs-postponed: 1`, with title, canonical and robots
+  streamed into the `<body>` instead of the `<head>`. Googlebot still got them in
+  `<head>`, because Next blocks the response on metadata for known bots;
+- `/[place]` listings: `Date.now()` used for timing in `fetchEventsCached`, plus
+  `twoWeeksDefault()` in the fallback chain. The fallback runs only for places with
+  no events, so the error appears on a cold cache for an empty town, not on
+  `/barcelona`;
+- `/sitemap/[town]`: the `getAllYears()` year list.
+
+Fixes: read the clock inside a `"use cache"` helper with `cacheLife`
+(`buildEventPageMetadata`, `twoWeeksDefaultCached`, `getSitemapYears`), use
+`performance.now()` to measure durations, and delete clock reads nobody uses.
+Route handlers (`app/api/*`, sitemap XML routes) can read the clock freely.
+
+To check a route, open it in `next dev` and read the overlay's issue count.
+Next shows one error per route at a time, so reload after each fix. Also try a
+town with no events, a past event and a date or category listing. The dev
+"Insights" (instant-navigation hints such as `connection()` or `params` outside
+`<Suspense>`) are speed hints, not errors. Before testing, run `yarn prebuild`:
+without `public/sw.js`, dev renders `/sw.js` as a locale page and crashes.

@@ -3,7 +3,10 @@ import { Suspense, use } from "react";
 import type { JSX } from "react";
 import { fetchCategories } from "@lib/api/categories";
 import { getPlaceTypeAndLabelCached, formatPlaceName } from "@utils/helpers";
-import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
+import {
+  fetchEventsWithFallback,
+  twoWeeksDefaultCached,
+} from "@lib/helpers/event-fallback";
 import { generatePagesData } from "@components/partials/generatePagesData";
 import {
   buildPageMeta,
@@ -26,7 +29,6 @@ import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import { redirect, notFound } from "next/navigation";
 import type { PlacePageEventsResult } from "types/props";
-import { twoWeeksDefault } from "@lib/dates";
 import { siteUrl } from "@config/index";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
@@ -264,7 +266,7 @@ export async function buildPlaceEventsPromise({
         size: 7,
         includeCategory: false,
         includeDateRange: true,
-        dateRangeFactory: twoWeeksDefault,
+        dateRangeFactory: twoWeeksDefaultCached,
         place: undefined,
       },
     });

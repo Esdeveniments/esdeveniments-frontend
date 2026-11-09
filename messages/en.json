@@ -940,7 +940,8 @@
       "primaryCta": "Check the agenda",
       "secondaryCta": "or explore this category",
       "srStatus": "Status: {label}.",
-      "timeWindow": "this week"
+      "timeWindow": "this week",
+      "nextEdition": "Next edition: {dates}"
     },
     "EventPage": {
       "sponsored": "Sponsored content",

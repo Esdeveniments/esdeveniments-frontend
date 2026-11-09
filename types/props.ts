@@ -1092,6 +1092,8 @@ export interface EventPageBodyProps {
   mobileSponsorSlot: import("react").ReactNode;
   sidebarSponsorSlot: import("react").ReactNode;
   latestNewsSlot: import("react").ReactNode;
+  /** Rendered only once the event has ended. */
+  nextEditionSlot: import("react").ReactNode;
 }
 
 // Sticky sidebar for event detail page (desktop)
@@ -1278,6 +1280,11 @@ export interface HubLinkProps {
   href: string;
   label: string;
   analyticsEventName: string;
+}
+
+export interface NextEditionLinkProps {
+  event: import("./event").NextEditionQuery;
+  locale: AppLocale;
 }
 
 export interface FestivityHubLinkProps {

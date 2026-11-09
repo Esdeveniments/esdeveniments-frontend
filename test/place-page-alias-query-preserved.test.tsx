@@ -44,6 +44,7 @@ vi.mock("@lib/helpers/event-fallback", () => {
       events: [],
       noEventsFound: false,
     })),
+    twoWeeksDefaultCached: vi.fn(),
   };
 });
 

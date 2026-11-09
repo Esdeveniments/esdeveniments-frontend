@@ -13,7 +13,6 @@ import {
   generateCollectionPageSchema,
 } from "@components/partials/seo-meta";
 import {
-  twoWeeksDefault,
   getDateRangeFromByDate,
   isValidDateSlug,
 } from "@lib/dates";
@@ -26,7 +25,10 @@ import {
 import type { AppLocale } from "types/i18n";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import { FetchEventsParams } from "types/event";
-import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
+import {
+  fetchEventsWithFallback,
+  twoWeeksDefaultCached,
+} from "@lib/helpers/event-fallback";
 import PlacePageShell from "@components/partials/PlacePageShell";
 import {
   parseFiltersFromUrl,
@@ -421,13 +423,13 @@ export async function buildPlaceByDateEventsPromise({
       regionFallback: {
         size: 7,
         includeDateRange: true,
-        dateRangeFactory: twoWeeksDefault,
+        dateRangeFactory: twoWeeksDefaultCached,
       },
       finalFallback: {
         size: 7,
         includeCategory: false,
         includeDateRange: true,
-        dateRangeFactory: twoWeeksDefault,
+        dateRangeFactory: twoWeeksDefaultCached,
         place: undefined,
       },
     });

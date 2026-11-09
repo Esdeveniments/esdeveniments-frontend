@@ -127,7 +127,9 @@ async function getCachedEventsPage(
 export async function fetchEventsCached(
   params: FetchEventsParams,
 ): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const startedAt = Date.now();
+  // performance.now(), not Date.now(): a clock read before the cached read
+  // blocks the listing's prerender under cacheComponents. It only times it.
+  const startedAt = performance.now();
   try {
     return await getCachedEventsPage(buildEventsQuery(params).toString());
   } catch (error) {
@@ -138,7 +140,7 @@ export async function fetchEventsCached(
     // Errors thrown inside "use cache" reach us without their type in
     // production, so detect a timeout by the time spent. A retry would only
     // time out again and double the wait on each fallback stage.
-    if (Date.now() - startedAt >= CACHED_EVENTS_TIMEOUT_MS) {
+    if (performance.now() - startedAt >= CACHED_EVENTS_TIMEOUT_MS) {
       return emptyPagedResponse(params.page ?? 0, params.size ?? 12);
     }
     return fetchEvents(params);
