@@ -1537,7 +1537,7 @@
       "monthsTitle": "Por meses",
       "calendarTitle": "Todo {year}, mes a mes",
       "regionsTitle": "Por comarcas",
-      "nadalTitle": "En Navidad",
+      "festivitiesTitle": "Fiestas de temporada",
       "empty": "Aún no tenemos fiestas mayores en el calendario.",
       "unavailable": "Ahora mismo no podemos cargar el calendario. Vuelve a probarlo dentro de un rato.",
       "lead": "Pasacalles, correfocs, gigantes, conciertos y habaneras: cada pueblo tiene su fiesta mayor, y las hay todo el año. Busca la de tu pueblo o descubre otras nuevas."

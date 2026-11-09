@@ -1537,7 +1537,7 @@
       "monthsTitle": "Per mesos",
       "calendarTitle": "Tot el {year}, mes a mes",
       "regionsTitle": "Per comarques",
-      "nadalTitle": "Per Nadal",
+      "festivitiesTitle": "Festes de temporada",
       "empty": "Encara no tenim festes majors al calendari.",
       "unavailable": "Ara mateix no podem carregar el calendari. Torna-ho a provar d'aquí a una estona.",
       "lead": "Cercaviles, correfocs, gegants, concerts i havaneres: cada poble té la seva festa major, i n'hi ha tot l'any. Busca la del teu poble o descobreix-ne de noves."

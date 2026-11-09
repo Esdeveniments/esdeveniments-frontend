@@ -1537,7 +1537,7 @@
       "monthsTitle": "By month",
       "calendarTitle": "All of {year}, month by month",
       "regionsTitle": "By comarca",
-      "nadalTitle": "At Christmas",
+      "festivitiesTitle": "Seasonal festivities",
       "empty": "We don't have any festes majors in the calendar yet.",
       "unavailable": "We can't load the calendar right now. Please try again in a while.",
       "lead": "Parades, correfocs, giants, concerts and havaneres: every town has its own festa major, and they run all year round. Find yours or discover new ones."
