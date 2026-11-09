@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import path from "node:path";
 import { mockAuthenticatedUser } from "./helpers/auth";
+import { readSavedDraftTitles } from "./helpers/publish-draft";
 
 test.describe("Publish - Preview", () => {
   // Publishing is gated behind auth — sign the session in before each test.
@@ -20,6 +21,8 @@ test.describe("Publish - Preview", () => {
     await page.locator("input#title").fill("Pending SPA draft");
     await page.locator('a[href="/"]').first().click();
     await expect(page).not.toHaveURL(/\/publica$/);
+    // The unmount save is async; a full reload before it lands aborts the IndexedDB write.
+    await expect.poll(() => readSavedDraftTitles(page)).toContain("Pending SPA draft");
     await page.goto("/publica");
     await page.getByRole("button", { name: "Recupera l'esborrany" }).click();
     await expect(page.locator("input#title")).toHaveValue("Pending SPA draft");
