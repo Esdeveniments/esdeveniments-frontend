@@ -49,8 +49,14 @@ Server: one 8 GB, 4 vCPU box. Read with the Coolify API (`get_application` /
 | Postgres pre | 1g | 256m | 60 | 0.5 |
 | 4× Redis | 512m + 512m + 256m + 256m | 100–150m | 0–60 | 0.2–0.5 |
 | Logto pro / pre | **none** | none | — | **none** |
+| Admin dashboard prod / pre | 384m | 128m | 60 | none (`cpu_shares` 256) |
 
-The capped containers alone add up to ~9.5 GB, so the box is oversubscribed,
+The admin dashboards (`Esdeveniments/esdeveniments-dashboard`, added
+2026-11-09) idle at ~47 MB each in Coolify Metrics. Server memory went from
+70.4% to 72.1% after both started. They are admin-only and low-traffic, so
+they get the lowest CPU weight.
+
+The capped containers alone add up to ~10 GB, so the box is oversubscribed,
 and backend prod (2 GB in July, lost when the v2 app was created) and Logto
 have no cap at all.
 
