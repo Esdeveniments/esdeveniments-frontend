@@ -20,6 +20,9 @@ const GEMINI = MODEL.startsWith("gemini");
 const CONCURRENCY = 2;
 const ATTEMPTS = 3;
 const TIMEOUT_MS = 120_000;
+// No new question or retry after this, so the results are written well before
+// the workflow's 30-minute timeout.
+const DEADLINE = Date.now() + 20 * 60_000;
 
 /** Unique cited URLs: web search annotations first, then markdown links in the text. */
 export function citationsOf(message) {
@@ -126,6 +129,7 @@ async function askOpenRouter(prompt, system) {
 async function run(item, date) {
   const system = `Today is ${date}. Answer in the language of the question.`;
   for (let attempt = 1; ; attempt++) {
+    if (Date.now() > DEADLINE) return { ...item, citations: [], error: "Out of time" };
     try {
       return { ...item, ...(await (GEMINI ? askGemini : askOpenRouter)(item.prompt, system)) };
     } catch (error) {
