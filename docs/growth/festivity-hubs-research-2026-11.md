@@ -252,6 +252,15 @@ The Nadal pages followed this plan with less machinery: one shared season and ty
 - **Visuals:** cards for upcoming events; 56 px thumbnails on rows and on the festa major town lists (`Thumbnail`, image context `thumb`, 120 px, lazy); a cover on each festa major town hub (its first act with an image, the page's one priority image, preloaded with `ImagePreload`). Rows with no image show the town's initial.
 - **Copy:** rewritten after reading betevé, 3Cat and Diba, which write short, concrete text (tions, caganers, actors and animals, the 5 January afternoon), not generic "calendar" text. Checked with the Softcatalà corrector.
 
+### What shipped (Carnaval, 2026-11)
+
+`/carnaval` is one Catalonia-wide type page (#728), on the same engine. Each type now has its own season (`window(seasonYear)`), so the shared `FESTIVITY_SEASON` is gone.
+
+- **Season:** Ash Wednesday − 14 to + 13 days (Easter from `easterSundayYmd`). Checked on 2026's acts: before it come only sign-ups, workshops and poster launches; after it only Barcelona's "Rua de Carnaval Oruro" (+24 days).
+- **Matching:** terms `carnaval`, `carnestoltes`, `rua`; the title regex takes `carnaval*` (Carnavaler), `carnestoltes`, `rua`/`rues` and drops sign-ups (`inscripci…`), workshops, pick-ups and "El carnaval dels animals". It found 262 acts in 93 towns in 2026.
+- **Links:** from `leadDays` before its season (21 for Carnaval, so from early January), every listing links the festivity pages that are in season and indexable (`fetchSeasonalFestivities`), and the home "Festes i tradicions" row (#735) links the ones in season by date (`inSeasonFestivities`), so home never waits on a festivity read.
+- **Copy:** the shared lines that name the season ("el Nadal passat", "a partir de novembre") pick Carnaval's wording with ICU `select`.
+
 ### Backend problems found
 
 - **esdeveniments-backend#63:** `GET /events` with `from`/`to` and no `place` has no `ORDER BY`, so each page comes back in a new order. Paging "festa major 2026" (1,275 events) got only 655–843 of them. It also affects `/catalunya/avui|dema|setmana|cap-de-setmana` "load more". Until it's fixed, `fetchAllEventPagesExternal` splits a range into day windows that each fit one 50-event page (about 95 requests for the whole year, 1,275 of 1,275 found). Related: `size` is capped at 50, and `sort` and `byDate` are ignored.

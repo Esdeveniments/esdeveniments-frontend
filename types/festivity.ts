@@ -1,13 +1,25 @@
 import type { EventSummaryResponseDTO } from "./api/event";
 import type { FestaMajorPlacedAct } from "./festa-major";
 
-/** Catalonia-wide Nadal collections; each is also its URL segment (/fires-de-nadal). */
+/** Catalonia-wide festivity collections; each is also its URL segment (/fires-de-nadal). */
 export type FestivitySlug =
-  "fires-de-nadal" | "pessebres-vivents" | "cavalcades-de-reis";
+  | "fires-de-nadal"
+  | "pessebres-vivents"
+  | "cavalcades-de-reis"
+  | "carnaval";
 
 /** Message key under Pages.Festivity.types (next-intl keys are camelCase). */
 export type FestivityMessageKey =
-  "firesDeNadal" | "pessebresVivents" | "cavalcadesDeReis";
+  | "firesDeNadal"
+  | "pessebresVivents"
+  | "cavalcadesDeReis"
+  | "carnaval";
+
+/** A season's dates, both "YYYY-MM-DD" and inclusive. */
+export interface FestivityWindow {
+  from: string;
+  to: string;
+}
 
 export interface FestivityType {
   slug: FestivitySlug;
@@ -23,6 +35,13 @@ export interface FestivityType {
   exclude?: RegExp;
   /** Added to the season's start year in titles: the Reis ride in January. */
   yearOffset: 0 | 1;
+  /**
+   * The dates an event must start in to count for the season that starts in
+   * `seasonYear`. A season may cross the year (Nadal) or move (Carnaval).
+   */
+  window: (seasonYear: number) => FestivityWindow;
+  /** Days before `window.from` that site links to the page start showing. */
+  leadDays: number;
 }
 
 /** A compact row (past acts, last season's towns) with a thumbnail; links to the event. */

@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
 import Badge from "@components/ui/common/badge";
 import { fetchFestaMajorPage } from "@lib/api/festes-majors";
-import { madridTodayYmd } from "@lib/dates";
+import { fetchSeasonalFestivities } from "@lib/api/festivities";
 import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import { festaMajorPath } from "@utils/festa-major-paths";
 import { seasonalFestivityLinks } from "@utils/festivity";
@@ -12,7 +12,8 @@ import type { PlaceFestesLinksProps } from "types/props";
 
 /**
  * On a listing page: the place's festa major hub (only when it is indexable),
- * the festes majors calendar and, from November to Reis, the Nadal pages.
+ * the festes majors calendar and the festivity pages in season (Nadal from
+ * November to Reis, Carnaval from mid-January), when indexable.
  */
 export default async function PlaceFestesLinks({
   place,
@@ -21,10 +22,11 @@ export default async function PlaceFestesLinks({
 }: PlaceFestesLinksProps) {
   await connection();
   const hasHub = place !== "catalunya" && placeType !== "";
-  // The calendar and Nadal links don't depend on the hub: keep them if it fails.
-  const [locale, hub] = await Promise.all([
+  // The calendar and seasonal links don't depend on the hub: keep them if it fails.
+  const [locale, hub, seasonal] = await Promise.all([
     getLocaleSafely(),
     hasHub ? fetchFestaMajorPage(place).catch(() => null) : null,
+    fetchSeasonalFestivities().catch(() => []),
   ]);
   const [t, tHub, tFestivity] = await Promise.all([
     getTranslations({ locale, namespace: "Components.PlaceFestesLinks" }),
@@ -48,7 +50,7 @@ export default async function PlaceFestesLinks({
       label: tHub("allFestes"),
       event: "festa_major_hub_click",
     },
-    ...seasonalFestivityLinks(madridTodayYmd(), (type) =>
+    ...seasonalFestivityLinks(seasonal, (type) =>
       tFestivity(`types.${type.messageKey}.name`),
     ).map((link) => ({ ...link, event: "festivity_hub_click" })),
   ];

@@ -17,12 +17,12 @@ import { getFestivityCopy } from "@lib/seo/festivity";
 import { FESTIVITY_TYPES } from "@config/festivities";
 import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import { hasCardImage } from "@utils/event-helpers";
-import { festivityPath } from "@utils/festivity";
+import { festivityPath, getFestivityType } from "@utils/festivity";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 import type { FestivityPageViewProps } from "types/props";
 
-/** The body of /fires-de-nadal, /pessebres-vivents and /cavalcades-de-reis. */
+/** The body of every festivity page (/fires-de-nadal, /carnaval, …). */
 export default async function FestivityPageView({
   slug,
 }: FestivityPageViewProps) {
@@ -31,6 +31,8 @@ export default async function FestivityPageView({
   const { t, tHub, path, title, lead, metaDescription, breadcrumbs } =
     await getFestivityCopy(data, locale);
   const { upcoming, past, pending, towns } = data;
+  // Selects the season's wording ("el Nadal passat", "el Carnaval passat").
+  const season = { type: getFestivityType(slug).messageKey };
   const pageUrl = toLocalizedUrl(path, locale);
   const collection = generateCollectionPageSchema({
     title,
@@ -73,7 +75,7 @@ export default async function FestivityPageView({
           <p className="body-normal text-center">{t("unavailable")}</p>
         )}
         {data.available && isEmpty && (
-          <p className="body-normal text-center">{t("empty")}</p>
+          <p className="body-normal text-center">{t("empty", season)}</p>
         )}
 
         <SponsorBannerSlot place="catalunya" />
@@ -94,7 +96,7 @@ export default async function FestivityPageView({
               </List>
             ) : (
               <p className="body-normal text-foreground/80">
-                {t("noUpcoming")}
+                {t("noUpcoming", season)}
               </p>
             )}
           </section>
@@ -102,7 +104,7 @@ export default async function FestivityPageView({
 
         <FestivityActList
           title={t("pendingTitle")}
-          intro={t("pendingIntro")}
+          intro={t("pendingIntro", season)}
           items={pending}
           locale={locale}
         />

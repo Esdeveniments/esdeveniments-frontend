@@ -7,12 +7,13 @@ import type {
   FestivityPageData,
   FestivitySeasons,
   FestivitySlug,
+  FestivityType,
 } from "types/festivity";
 import { madridTodayYmd } from "@lib/dates";
 import {
   buildFestivityPageData,
   getFestivityType,
-  seasonWindow,
+  inSeasonFestivities,
   seasonYearOf,
   selectSeasonEvents,
 } from "@utils/festivity";
@@ -30,10 +31,11 @@ async function fetchSeason(
   slug: FestivitySlug,
   seasonYear: number,
 ): Promise<EventSummaryResponseDTO[]> {
-  const window = seasonWindow(seasonYear);
+  const type = getFestivityType(slug);
+  const window = type.window(seasonYear);
   // One term at a time: each fetch already runs 4 requests in parallel.
   const events: EventSummaryResponseDTO[] = [];
-  for (const term of getFestivityType(slug).terms) {
+  for (const term of type.terms) {
     const result = await fetchAllEventPagesExternal(
       { term, ...window },
       { maxRequests: MAX_REQUESTS_PER_TERM, timeout: TIMEOUT_MS },
@@ -74,7 +76,7 @@ export const fetchFestivityPage = cache(
     // The season depends on today, so read the clock after connection().
     await connection();
     const today = madridTodayYmd();
-    const seasonYear = seasonYearOf(today);
+    const seasonYear = seasonYearOf(getFestivityType(slug), today);
     let seasons: FestivitySeasons | null = null;
     try {
       seasons = await getFestivitySeasons(slug, seasonYear);
@@ -87,3 +89,17 @@ export const fetchFestivityPage = cache(
     return buildFestivityPageData({ slug, seasons, seasonYear, today });
   },
 );
+
+/**
+ * The festivity pages to link from the site today: in season (from each
+ * type's lead days to its last day) and indexable, in config order.
+ */
+export async function fetchSeasonalFestivities(): Promise<FestivityType[]> {
+  await connection();
+  const today = madridTodayYmd();
+  const inSeason = inSeasonFestivities(today);
+  const pages = await Promise.all(
+    inSeason.map((type) => fetchFestivityPage(type.slug)),
+  );
+  return inSeason.filter((_, index) => pages[index].indexable);
+}

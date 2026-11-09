@@ -24,7 +24,10 @@ import { connection } from "next/server";
 import { HERO_IMAGE } from "@config/hero-image";
 import { madridTodayYmd } from "@lib/dates";
 import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
-import { seasonalFestivityLinks } from "@utils/festivity";
+import {
+  inSeasonFestivities,
+  seasonalFestivityLinks,
+} from "@utils/festivity";
 import HomePageSkeleton from "@components/ui/common/skeletons/HomePageSkeleton";
 
 export async function generateMetadata() {
@@ -219,7 +222,7 @@ async function HomeContent({
       id: "festes",
       title: tFestes("title"),
       links: [
-        ...seasonalFestivityLinks(madridTodayYmd(), (type) =>
+        ...seasonalFestivityLinks(inSeasonFestivities(madridTodayYmd()), (type) =>
           tFestivity(`types.${type.messageKey}.name`),
         ),
         { href: `/${FESTES_MAJORS_SEGMENT}`, label: tHub("allFestes") },
