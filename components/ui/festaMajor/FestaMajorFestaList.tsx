@@ -22,15 +22,12 @@ export default async function FestaMajorFestaList({
       <ul className="stack gap-2 w-full">
         {festes.map((festa) => {
           const name = festa.label ?? ownFestaLabel;
-          const details = [
-            formatShortDateRange(festa.start, festa.end, locale),
-            t("actsCount", { count: festa.count }),
-            festa.year === currentYear
-              ? null
-              : t("lastYearDates", { year: festa.year }),
-          ]
-            .filter(Boolean)
-            .join(" · ");
+          // Spans over a month have no date label, so no "dates del" either.
+          const dates = formatShortDateRange(festa.start, festa.end, locale);
+          const details =
+            dates && festa.year !== currentYear
+              ? `${dates} · ${t("lastYearDates", { year: festa.year })}`
+              : dates;
           const href = festaLinkPath(townSlug, festa);
           const content = (
             <>
@@ -39,9 +36,11 @@ export default async function FestaMajorFestaList({
               >
                 {name}
               </span>
-              <span className="block body-small text-muted-foreground">
-                {details}
-              </span>
+              {details && (
+                <span className="block body-small text-muted-foreground">
+                  {details}
+                </span>
+              )}
             </>
           );
           return (

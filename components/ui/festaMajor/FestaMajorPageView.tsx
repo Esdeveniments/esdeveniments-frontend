@@ -82,7 +82,12 @@ export default async function FestaMajorPageView({
           {shown && shown.acts.length > 0 && (
             <p className="body-normal text-foreground/80">
               {t("intro", { count: shown.acts.length })}
-              {dates && ` ${t("introDates", { dates })}`}
+              {dates &&
+                ` ${
+                  main?.label
+                    ? t("introFestaDates", { festa: main.label, dates })
+                    : t("introDates", { dates })
+                }`}
             </p>
           )}
           {shown && !shown.isCurrentYear && (

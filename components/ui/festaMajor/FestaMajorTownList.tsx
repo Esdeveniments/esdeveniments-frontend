@@ -57,9 +57,9 @@ export default async function FestaMajorTownList({
                         {[
                           town.main.label,
                           dates,
-                          town.isCurrentYear
-                            ? null
-                            : t("lastYearDates", { year: town.year }),
+                          dates && !town.isCurrentYear
+                            ? t("lastYearDates", { year: town.year })
+                            : null,
                           showRegion ? town.regionName : null,
                         ]
                           .filter(Boolean)

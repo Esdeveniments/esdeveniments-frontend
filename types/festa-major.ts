@@ -103,7 +103,8 @@ export interface FestaMajorPlaceInfo {
 }
 
 /** A festa listed on its town's hub. */
-export interface FestaMajorFestaLink extends FestaMajorEditionSummary {
+export interface FestaMajorFestaLink
+  extends Omit<FestaMajorEditionSummary, "count"> {
   year: number;
   /** Shown in the hub's programme (same year), so it links to its part of it. */
   inProgramme: boolean;

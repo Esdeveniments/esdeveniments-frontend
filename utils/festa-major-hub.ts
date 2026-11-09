@@ -141,7 +141,6 @@ export function listFestes(
       label: first.label,
       start: first.start,
       end: last.end,
-      count: data.acts.length,
       year: data.year,
       inProgramme: data.year === townYear,
       firstActSlug: actHasPage(data.acts[0], today) ? data.acts[0].slug : null,
