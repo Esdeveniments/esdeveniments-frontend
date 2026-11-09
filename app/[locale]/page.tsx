@@ -22,6 +22,9 @@ import { filterActiveEvents } from "@utils/event-helpers";
 import { buildTopAgendaLinks } from "@config/top-agenda-links";
 import { connection } from "next/server";
 import { HERO_IMAGE } from "@config/hero-image";
+import { madridTodayYmd } from "@lib/dates";
+import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
+import { seasonalFestivityLinks } from "@utils/festivity";
 import HomePageSkeleton from "@components/ui/common/skeletons/HomePageSkeleton";
 
 export async function generateMetadata() {
@@ -153,11 +156,16 @@ async function HomeContent({
   const categoriesPromise = fetchCategories();
 
   // Parallelize independent operations to eliminate waterfall (3 calls → 1 round trip)
-  const [t, tTopAgenda, pageData] = await Promise.all([
-    getTranslations({ locale, namespace: "App.Home" }),
-    getTranslations({ locale, namespace: "Config.TopAgenda" }),
-    generatePagesData({ place: "", byDate: "", locale }),
-  ]);
+  // generatePagesData awaits connection(), so reading today's date below is safe.
+  const [t, tTopAgenda, tFestes, tHub, tFestivity, pageData] =
+    await Promise.all([
+      getTranslations({ locale, namespace: "App.Home" }),
+      getTranslations({ locale, namespace: "Config.TopAgenda" }),
+      getTranslations({ locale, namespace: "Components.PlaceFestesLinks" }),
+      getTranslations({ locale, namespace: "Pages.FestaMajor" }),
+      getTranslations({ locale, namespace: "Pages.Festivity" }),
+      generatePagesData({ place: "", byDate: "", locale }),
+    ]);
 
   const homeSeoLinkSections: SeoLinkSection[] = [
     {
@@ -205,6 +213,16 @@ async function HomeContent({
           href: "/valles-oriental/dema",
           label: t("seoSections.tomorrow.links.vallesOriental"),
         },
+      ],
+    },
+    {
+      id: "festes",
+      title: tFestes("title"),
+      links: [
+        ...seasonalFestivityLinks(madridTodayYmd(), (type) =>
+          tFestivity(`types.${type.messageKey}.name`),
+        ),
+        { href: `/${FESTES_MAJORS_SEGMENT}`, label: tHub("allFestes") },
       ],
     },
   ];

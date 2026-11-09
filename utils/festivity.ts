@@ -7,6 +7,7 @@ import type {
   FestivitySlug,
   FestivityType,
 } from "types/festivity";
+import type { SeoLinkItem } from "types/props";
 import { FESTIVITY_SEASON, FESTIVITY_TYPES } from "@config/festivities";
 import { FESTIVITY_MIN_INDEXABLE_TOWNS } from "./constants";
 import { compareActs } from "./festa-major";
@@ -15,7 +16,8 @@ import { festaMajorHubPathsFor } from "./festa-major-paths";
 import { normalizeForSearch } from "./string-helpers";
 import { stripHtmlTags } from "./sanitize";
 
-export const festivityPath = (slug: FestivitySlug): string => `/${slug}`;
+export const festivityPath = (slug: FestivitySlug): `/${FestivitySlug}` =>
+  `/${slug}`;
 
 export const getFestivityType = (slug: FestivitySlug): FestivityType =>
   FESTIVITY_TYPES.find((type) => type.slug === slug) ?? FESTIVITY_TYPES[0];
@@ -40,6 +42,18 @@ export function isInFestivitySeason(date: string): boolean {
   const monthDay = date.slice(5);
   return monthDay >= FESTIVITY_SEASON.start || monthDay <= FESTIVITY_SEASON.end;
 }
+
+/** Links to the Nadal pages while their season runs; none otherwise. */
+export const seasonalFestivityLinks = (
+  today: string,
+  name: (type: FestivityType) => string,
+): SeoLinkItem[] =>
+  isInFestivitySeason(today)
+    ? FESTIVITY_TYPES.map((type) => ({
+        href: festivityPath(type.slug),
+        label: name(type),
+      }))
+    : [];
 
 export function matchesFestivity(type: FestivityType, title: string): boolean {
   const normalized = normalizeForSearch(stripHtmlTags(title));

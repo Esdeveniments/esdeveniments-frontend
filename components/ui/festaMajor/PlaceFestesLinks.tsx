@@ -3,10 +3,9 @@ import { getTranslations } from "next-intl/server";
 import Badge from "@components/ui/common/badge";
 import { fetchFestaMajorPage } from "@lib/api/festes-majors";
 import { madridTodayYmd } from "@lib/dates";
-import { FESTIVITY_TYPES } from "@config/festivities";
 import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import { festaMajorPath } from "@utils/festa-major-paths";
-import { festivityPath, isInFestivitySeason } from "@utils/festivity";
+import { seasonalFestivityLinks } from "@utils/festivity";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { formatPlacePhrases } from "@utils/string-helpers";
 import type { PlaceFestesLinksProps } from "types/props";
@@ -49,13 +48,9 @@ export default async function PlaceFestesLinks({
       label: tHub("allFestes"),
       event: "festa_major_hub_click",
     },
-    ...(isInFestivitySeason(madridTodayYmd())
-      ? FESTIVITY_TYPES.map((type) => ({
-          href: festivityPath(type.slug),
-          label: tFestivity(`types.${type.messageKey}.name`),
-          event: "festivity_hub_click",
-        }))
-      : []),
+    ...seasonalFestivityLinks(madridTodayYmd(), (type) =>
+      tFestivity(`types.${type.messageKey}.name`),
+    ).map((link) => ({ ...link, event: "festivity_hub_click" })),
   ];
 
   return (
