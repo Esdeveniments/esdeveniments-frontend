@@ -1,6 +1,18 @@
 import { computeTemporalStatus } from "@utils/event-status";
+import { EXPIRED_EVENT_NOINDEX_DAYS, MS_PER_DAY } from "@utils/constants";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import type { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+
+/**
+ * Whether an event ended more than EXPIRED_EVENT_NOINDEX_DAYS ago. Its page is
+ * then noindexed, and a festa major act 301s to its town hub (proxy).
+ */
+export const isExpiredEvent = (
+  end: Date | undefined,
+  now = Date.now()
+): boolean =>
+  end !== undefined &&
+  now - end.getTime() > EXPIRED_EVENT_NOINDEX_DAYS * MS_PER_DAY;
 
 /**
  * The card that gets the LCP preload and fetchPriority="high". Ads and events

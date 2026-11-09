@@ -54,6 +54,23 @@ describe("submitEventsToIndexNow", () => {
     ]);
   });
 
+  it("adds extra paths, such as festa major hubs, once", async () => {
+    const { submitEventsToIndexNow } = await loadWithSiteUrl(
+      "https://www.esdeveniments.cat",
+    );
+
+    await submitEventsToIndexNow(["slug"], ["/festa-major/gracia"]);
+
+    const body = JSON.parse(String(mockFetch.mock.calls[0]![1]?.body));
+    expect(body.urlList).toContain(
+      "https://www.esdeveniments.cat/festa-major/gracia",
+    );
+    expect(body.urlList).toContain(
+      "https://www.esdeveniments.cat/en/festa-major/gracia",
+    );
+    expect(body.urlList).toHaveLength(6);
+  });
+
   it("never submits from staging or previews", async () => {
     const { submitEventsToIndexNow } = await loadWithSiteUrl(
       "https://staging.esdeveniments.cat",

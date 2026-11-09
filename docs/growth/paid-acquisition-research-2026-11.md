@@ -168,6 +168,10 @@ money (see step 6).
    (AdSense earns ~€6/month, so dropping it costs almost nothing), else the
    Google Search test in the appendix, then one Meta weekend test.
 
+7. **Festivity hubs.** Evergreen festa major pages per town (built), then
+   Carnaval and Nadal. Data and plan:
+   [`festivity-hubs-research-2026-11.md`](./festivity-hubs-research-2026-11.md).
+
 Skip: TikTok always-on, push/native networks (they risk the AdSense account),
 Bing, paid AI creative tools.
 

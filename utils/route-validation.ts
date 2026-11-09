@@ -25,6 +25,7 @@ const INVALID_PLACES = [
   "server-news-sitemap.xml",
   "server-place-sitemap.xml",
   "server-google-news-sitemap.xml",
+  "server-festa-major-sitemap.xml",
   "ads.txt",
   "manifest.json",
 ] as const;

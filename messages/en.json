@@ -566,7 +566,8 @@
         "terms": "Terms",
         "privacy": "Privacy",
         "login": "Log in",
-        "developers": "Developer API"
+        "developers": "Developer API",
+        "festesMajors": "Festes majors"
       },
       "sponsorCta": {
         "title": "Make your local business visible",
@@ -1184,6 +1185,14 @@
     "Modal": {
       "close": "Close"
     },
+    "FestaMajorLink": {
+      "label": "Full Festa Major {placeOf} programme"
+    },
+    "PlaceFestesLinks": {
+      "title": "Festivals and traditions",
+      "town": "Festa Major {placeOf}",
+      "region": "Festes majors {placeOf}"
+    },
     "EventsMap": {
       "loading": "Loading map…",
       "error": "The map couldn't load.",
@@ -1487,6 +1496,88 @@
       "aboutBody": "This archive contains a compilation of cultural events {placeIn} organized chronologically. Each month includes theatre, music, art, festivals, and other cultural activities.",
       "quickNavTitle": "Quick navigation",
       "quickNavBody": "Use the links to jump directly to a specific month. The most recent years appear first for easier browsing."
+    },
+    "FestaMajor": {
+      "metaTitle": "Festa Major {placeOf} {year}: programme and events",
+      "metaDescription": "The {year} Festa Major {placeOf} programme: dates, times and every event, day by day. Concerts, parades, correfocs and much more.",
+      "regionMetaTitle": "Festes majors {placeOf} {year}: calendar by town",
+      "regionMetaDescription": "The {year} calendar of the festes majors {placeOf}: when each town celebrates, with every programme.",
+      "title": "Festa Major {placeOf} {year}",
+      "regionTitle": "Festes majors {placeOf} {year}",
+      "breadcrumbHome": "Home",
+      "breadcrumbAll": "Festes majors",
+      "intro": "{count, plural, one {# event} other {# events}} in the programme.",
+      "introDates": "Dates: {dates}.",
+      "introFestaDates": "{festa} dates: {dates}.",
+      "previousYearNotice": "We don't have the full {currentYear} programme yet. Here is the {year} one.",
+      "announcedTitle": "{year} events",
+      "empty": "We don't have any Festa Major {placeOf} events yet. Once the programme is out, you'll find it here.",
+      "unavailable": "We can't load the programme right now. Please try again in a while.",
+      "festesTitle": "Festes majors {placeOf}",
+      "ownFesta": "Festa Major {placeOf}",
+      "programmeTitle": "Programme",
+      "previousTitle": "{year} festa major",
+      "previousLink": "See the events",
+      "moreTitle": "You might also like",
+      "townAgenda": "The agenda {placeOf}",
+      "regionHub": "Festes majors {placeOf}",
+      "allFestes": "Catalonia festes majors calendar",
+      "regionIntro": "{count, plural, one {# town} other {# towns}} with a festa major in the calendar.",
+      "regionEmpty": "We don't have any festes majors {placeOf} yet.",
+      "lastYearDates": "{year} dates"
+    },
+    "FestesMajors": {
+      "metaTitle": "Catalonia festes majors {year}: calendar by month",
+      "metaDescription": "When is each town's festa major? The {year} calendar of Catalonia's festes majors, month by month, with every programme.",
+      "title": "Catalonia festes majors {year}",
+      "intro": "{count, plural, one {# town} other {# towns}}, sorted by date. If a town hasn't published its {year} programme yet, we show last year's dates.",
+      "weekendTitle": "This weekend",
+      "nowTitle": "On now and coming up",
+      "monthsTitle": "By month",
+      "calendarTitle": "All of {year}, month by month",
+      "regionsTitle": "By comarca",
+      "nadalTitle": "At Christmas",
+      "empty": "We don't have any festes majors in the calendar yet.",
+      "unavailable": "We can't load the calendar right now. Please try again in a while.",
+      "lead": "Parades, correfocs, giants, concerts and havaneres: every town has its own festa major, and they run all year round. Find yours or discover new ones."
+    },
+    "Festivity": {
+      "intro": "{count, plural, one {# town has announced its date.} other {# towns have announced their dates.}}",
+      "upcomingTitle": "Coming up",
+      "noUpcoming": "No dates announced yet. Towns usually publish them from November.",
+      "pendingTitle": "Not confirmed yet",
+      "pendingIntro": "These towns held one last Christmas but haven't announced a date yet. Here's last Christmas's date to give you an idea.",
+      "pastTitle": "Already happened",
+      "empty": "No dates yet. Check back in late November.",
+      "unavailable": "We can't load the calendar right now. Please try again in a while.",
+      "moreTitle": "You might also like",
+      "catalunyaAgenda": "Events in Catalonia",
+      "types": {
+        "firesDeNadal": {
+          "name": "Christmas markets",
+          "title": "Christmas markets in Catalonia {year}",
+          "metaTitle": "Christmas markets in Catalonia {year}: dates by town",
+          "metaDescription": "When is each town's Christmas market? Calendar of Christmas and Santa Llúcia fairs and markets in Catalonia in {year}, with dates and times.",
+          "eventLink": "All Christmas markets in Catalonia",
+          "lead": "Tiós, caganers, nativity figures and turró: from late November until Epiphany, Christmas and Santa Llúcia fairs fill the town squares. See when your town's fair is on."
+        },
+        "pessebresVivents": {
+          "name": "Living nativity scenes",
+          "title": "Living nativity scenes in Catalonia {year}",
+          "metaTitle": "Living nativity scenes in Catalonia {year}: dates and times",
+          "metaDescription": "Where and when are the living nativity scenes this Christmas? Calendar of living nativity scenes in Catalonia {year}, with dates, times and towns.",
+          "eventLink": "All living nativity scenes in Catalonia",
+          "lead": "Real actors, animals and sets: at Christmas, many Catalan towns stage the birth of Jesus. Here are the days and times of every living nativity scene."
+        },
+        "cavalcadesDeReis": {
+          "name": "Three Kings parades",
+          "title": "Three Kings parades in Catalonia {year}",
+          "metaTitle": "Three Kings parades in Catalonia {year}: times by town",
+          "metaDescription": "What time does the Three Kings parade pass through your town? Times of the {year} Three Kings parades in Catalonia, town by town.",
+          "eventLink": "All Three Kings parades in Catalonia",
+          "lead": "On the evening of 5 January, the Three Kings arrive in every town with their pages and floats. See what time the parade comes through yours."
+        }
+      }
     }
   },
   "Utils": {

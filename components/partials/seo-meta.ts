@@ -59,7 +59,7 @@ export const defaultMeta = {
 
 // Generate ItemList structured data for event collections
 export function generateItemListStructuredData(
-  events: EventSummaryResponseDTO[],
+  events: Pick<EventSummaryResponseDTO, "slug" | "title">[],
   listName: string,
   description?: string,
   locale?: AppLocale,

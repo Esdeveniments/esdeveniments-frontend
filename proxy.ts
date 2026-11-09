@@ -27,6 +27,7 @@ import {
   checkPlace,
   isUnroutablePath,
 } from "@utils/proxy-place";
+import { checkExpiredFestaAct } from "@utils/proxy-event";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 // Static headers, trust-page redirects and the /openapi.json and
@@ -84,18 +85,21 @@ export default async function proxy(request: NextRequest) {
   }
 
   // Both lists are cached for an hour, so this rarely waits on the backend.
-  // Profile lookups are cached for a few minutes per username.
-  const [placeCheck, categoryRedirectUrl, isMissingProfile] = await Promise.all([
-    checkPlace(request, pathnameWithoutLocale, localeFromPath),
-    checkCategory(request, pathnameWithoutLocale, localeFromPath),
-    isMissingProfilePath(request, pathnameWithoutLocale),
-  ]);
+  // Profile lookups are cached for a few minutes per username; the festa act
+  // check reaches the backend only for old festa major slugs.
+  const [placeCheck, categoryRedirectUrl, isMissingProfile, festaActRedirectUrl] =
+    await Promise.all([
+      checkPlace(request, pathnameWithoutLocale, localeFromPath),
+      checkCategory(request, pathnameWithoutLocale, localeFromPath),
+      isMissingProfilePath(request, pathnameWithoutLocale),
+      checkExpiredFestaAct(request, pathnameWithoutLocale, localeFromPath),
+    ]);
   const redirectUrl =
     placeCheck?.kind === "alias"
       ? placeCheck.url
       : placeCheck?.kind === "missing"
         ? null
-        : categoryRedirectUrl;
+        : (categoryRedirectUrl ?? festaActRedirectUrl);
   if (redirectUrl) {
     const response = NextResponse.redirect(redirectUrl, 301);
     if (redirectUrl === categoryRedirectUrl) {

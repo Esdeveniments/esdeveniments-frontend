@@ -82,6 +82,23 @@ export function truncateAtWord(str: string, max: number): string {
 }
 
 /**
+ * A location's comma-separated parts minus empty ones and any that is one of
+ * `places` (case-insensitive): "Plaça Major, Vic, Osona" → "Plaça Major".
+ */
+export function dropPlaceParts(
+  location: string,
+  ...places: (string | null | undefined)[]
+): string {
+  const names = places.map((place) => place?.trim().toLowerCase());
+  return location
+    .replace(/\s+/g, " ")
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part && !names.includes(part.toLowerCase()))
+    .join(", ");
+}
+
+/**
  * Normalizes a string for search/filtering by removing accents and converting to lowercase.
  * Useful for case-insensitive and accent-insensitive text matching.
  * Example: "Premià" -> "premia", "Barcelona" -> "barcelona"

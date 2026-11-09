@@ -785,6 +785,23 @@ jobs:
             exit 1
           fi
 
+      # The festivity hubs read a year of events (~150 backend calls for
+      # /festes-majors) into the in-memory "use cache" store, which each deploy
+      # empties: the first visitor, maybe Googlebot, would wait ~40 s. Request
+      # them once here instead. Never fails the deploy, and the step timeout
+      # keeps it inside the job's 25 min after a 15 min Coolify wait.
+      - name: Warm festivity hubs
+        continue-on-error: true
+        timeout-minutes: 4
+        env:
+          SITE_URL: ${{ env.DEPLOY_URL }}
+        run: |
+          for path in /festes-majors /fires-de-nadal /pessebres-vivents /cavalcades-de-reis; do
+            curl -s -o /dev/null --max-time 120 \
+              -w "${path}: HTTP %{http_code} in %{time_total}s\n" \
+              "${SITE_URL}${path}" || echo "${path}: not warmed"
+          done
+
       - name: Deployment summary
         if: success()
         run: |

@@ -27,6 +27,21 @@ describe("buildPageCdnTags", () => {
     ]);
   });
 
+  it("tags festa major hubs with their place, so event purges reach them", () => {
+    expect(
+      buildPageCdnTags(HOST, ["festa-major", "malgrat-de-mar"], false),
+    ).toEqual([`${HOST}:html`, `${HOST}:place:malgrat-de-mar`]);
+  });
+
+  it("tags the Catalonia-wide hubs like /catalunya", () => {
+    for (const first of ["festes-majors", "fires-de-nadal"]) {
+      expect(buildPageCdnTags(HOST, [first], false)).toEqual([
+        `${HOST}:html`,
+        `${HOST}:place:catalunya`,
+      ]);
+    }
+  });
+
   it("tags the home page", () => {
     expect(buildPageCdnTags(HOST, [], false)).toEqual([`${HOST}:html`, `${HOST}:home`]);
   });

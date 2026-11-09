@@ -8,6 +8,7 @@ import CopyrightNotice from "./CopyrightYear";
 import { buildTopAgendaLinks } from "@config/top-agenda-links";
 import type { AppLocale } from "types/i18n";
 import { contactEmail, socialLinks } from "@config/index";
+import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
 
 // Reading the clock while rendering made the footer boundary dynamic under
 // cacheComponents. The shell then dropped the <footer>, but still streamed its
@@ -51,6 +52,7 @@ export default async function Footer(): Promise<JSX.Element> {
       current: false,
     },
     { name: t("navigation.news"), href: "/noticies", kind: "internal", current: false },
+    { name: t("navigation.festesMajors"), href: `/${FESTES_MAJORS_SEGMENT}`, kind: "internal", current: false },
     { name: t("navigation.about"), href: "/qui-som", kind: "internal", current: false },
     { name: t("navigation.advertise"), href: "/patrocina", kind: "internal", current: false },
     {

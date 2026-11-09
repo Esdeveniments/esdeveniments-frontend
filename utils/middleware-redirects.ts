@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { isValidDateSlug } from "@lib/dates";
+import { FESTIVITY_SLUGS } from "@config/festivities";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { stripLocalePrefix } from "./i18n-routing";
 import { sanitize } from "./sanitize-segment";
@@ -90,6 +91,10 @@ export const NON_PLACE_FIRST_SEGMENTS: ReadonlySet<string> = new Set([
   "politica-privacitat",
   "termes-servei",
   "developers",
+  "festa-major",
+  "festes-majors",
+  "server-festa-major-sitemap.xml",
+  ...FESTIVITY_SLUGS,
 ]);
 
 /**
