@@ -38,9 +38,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # Gemini with Google Search grounding by default (free tier). Set the repo
-      # variable AI_VISIBILITY_MODEL to an OpenRouter model such as
-      # openai/gpt-6.1-terra to ask ChatGPT's model instead (about $0.35 a run).
+      # ChatGPT's model through OpenRouter by default (about $0.85 a run). Set
+      # the repo variable AI_VISIBILITY_MODEL to gemini-3.5-flash-lite to use a
+      # paid Gemini project instead (Google Search grounding isn't on the free tier).
       - name: Run prompts
         env:
           AI_VISIBILITY_MODEL: ${{ vars.AI_VISIBILITY_MODEL }}

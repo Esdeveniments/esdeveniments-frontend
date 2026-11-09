@@ -3,19 +3,20 @@
 // records which sites it cites. The admin dashboard reads the JSON artifact to
 // track how often esdeveniments.cat is cited versus other sites.
 //
-// The model picks the engine: `gemini-*` uses the Gemini API with Google Search
-// grounding (free tier: 500 grounded requests a day on gemini-2.5-flash);
-// anything else, such as `openai/gpt-6.1-terra`, goes through OpenRouter with
-// the provider's native web search ($0.01 a request plus tokens).
+// The model picks the engine. By default it asks ChatGPT's model through
+// OpenRouter with OpenAI's native web search (about $0.035 a question), since
+// ChatGPT sends almost all of our AI assistant visits. A `gemini-*` model, such
+// as gemini-3.5-flash-lite, uses the Gemini API with Google Search grounding
+// instead; that needs a paid Gemini project (5,000 free searches a month).
 //
-// Usage: GEMINI_API_KEY=... node scripts/ai-visibility/run.mjs [out.json]
-//        AI_VISIBILITY_MODEL=openai/gpt-6.1-terra OPENROUTER_API_KEY=... node scripts/ai-visibility/run.mjs
+// Usage: OPENROUTER_API_KEY=... node scripts/ai-visibility/run.mjs [out.json]
+//        AI_VISIBILITY_MODEL=gemini-3.5-flash-lite GEMINI_API_KEY=... node scripts/ai-visibility/run.mjs
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-const MODEL = process.env.AI_VISIBILITY_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.AI_VISIBILITY_MODEL || "openai/gpt-6.1-terra";
 const GEMINI = MODEL.startsWith("gemini");
-// Gemini's free tier allows about 10 requests a minute.
+// Low enough for Gemini's per-minute limits.
 const CONCURRENCY = 2;
 const ATTEMPTS = 3;
 const TIMEOUT_MS = 120_000;
@@ -64,6 +65,13 @@ async function geminiCitations(chunks = []) {
   return [...new Set(urls.map(cleanUrl).filter(Boolean))];
 }
 
+/** Rate limits and server errors are worth retrying; a bad key or request isn't. */
+function httpError(status, body) {
+  const error = new Error(`HTTP ${status}: ${body?.error?.message ?? "no body"}`);
+  error.retry = status === 429 || status >= 500;
+  return error;
+}
+
 async function askGemini(prompt, system) {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
@@ -79,7 +87,7 @@ async function askGemini(prompt, system) {
     },
   );
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${body?.error?.message ?? "no body"}`);
+  if (!res.ok) throw httpError(res.status, body);
   const candidate = body?.candidates?.[0];
   if (!candidate) throw new Error("No candidate in the response");
   return {
@@ -109,7 +117,7 @@ async function askOpenRouter(prompt, system) {
     }),
   });
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${body?.error?.message ?? "no body"}`);
+  if (!res.ok) throw httpError(res.status, body);
   const message = body?.choices?.[0]?.message;
   if (!message) throw new Error("No message in the response");
   return { answer: message.content ?? "", citations: citationsOf(message) };
@@ -121,7 +129,9 @@ async function run(item, date) {
     try {
       return { ...item, ...(await (GEMINI ? askGemini : askOpenRouter)(item.prompt, system)) };
     } catch (error) {
-      if (attempt === ATTEMPTS) return { ...item, citations: [], error: String(error.message ?? error) };
+      if (attempt === ATTEMPTS || error.retry === false) {
+        return { ...item, citations: [], error: String(error.message ?? error) };
+      }
       // Mostly rate limits: wait before trying again.
       await new Promise((resolve) => setTimeout(resolve, 20_000 * attempt));
     }
@@ -142,6 +152,8 @@ async function main() {
       while (next < prompts.length) {
         const i = next++;
         results[i] = await run(prompts[i], date);
+        const { error, citations } = results[i];
+        console.log(`${i + 1}/${prompts.length} ${prompts[i].place}: ${error ?? `${citations.length} citations`}`);
       }
     }),
   );
