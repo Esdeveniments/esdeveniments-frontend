@@ -258,7 +258,7 @@ The Nadal pages followed this plan with less machinery: one shared season and ty
 
 - **Season:** Ash Wednesday − 14 to + 13 days (Easter from `easterSundayYmd`). Checked on 2026's acts: before it come only sign-ups, workshops and poster launches; after it only Barcelona's "Rua de Carnaval Oruro" (+24 days).
 - **Matching:** terms `carnaval`, `carnestoltes`, `rua`; the title regex takes `carnaval*` (Carnavaler), `carnestoltes`, `rua`/`rues` and drops sign-ups (`inscripci…`), workshops, pick-ups and "El carnaval dels animals". It found 262 acts in 93 towns in 2026.
-- **Links:** from `leadDays` before its season (21 for Carnaval, so from early January), every listing links the festivity pages that are in season and indexable (`fetchSeasonalFestivities`), and the home "Festes i tradicions" row (#735) links the ones in season by date (`inSeasonFestivities`), so home never waits on a festivity read.
+- **Links:** from `leadDays` before its season (21 for Carnaval, so from early January), every listing and the home "Festes i tradicions" row (#735) link the festivity pages in season, by date only (`inSeasonFestivities`), so these often-rendered pages never wait on a festivity read.
 - **Copy:** the shared lines that name the season ("el Nadal passat", "a partir de novembre") pick Carnaval's wording with ICU `select`.
 
 ### Backend problems found

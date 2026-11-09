@@ -7,13 +7,11 @@ import type {
   FestivityPageData,
   FestivitySeasons,
   FestivitySlug,
-  FestivityType,
 } from "types/festivity";
 import { madridTodayYmd } from "@lib/dates";
 import {
   buildFestivityPageData,
   getFestivityType,
-  inSeasonFestivities,
   seasonYearOf,
   selectSeasonEvents,
 } from "@utils/festivity";
@@ -89,17 +87,3 @@ export const fetchFestivityPage = cache(
     return buildFestivityPageData({ slug, seasons, seasonYear, today });
   },
 );
-
-/**
- * The festivity pages to link from the site today: in season (from each
- * type's lead days to its last day) and indexable, in config order.
- */
-export async function fetchSeasonalFestivities(): Promise<FestivityType[]> {
-  await connection();
-  const today = madridTodayYmd();
-  const inSeason = inSeasonFestivities(today);
-  const pages = await Promise.all(
-    inSeason.map((type) => fetchFestivityPage(type.slug)),
-  );
-  return inSeason.filter((_, index) => pages[index].indexable);
-}
