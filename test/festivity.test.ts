@@ -203,7 +203,6 @@ describe("buildFestivityPageData", () => {
           item("a", "2025-11-29"),
           item("e", "2025-12-06"),
         ],
-        complete: true,
       },
     });
     expect(data.upcoming.map((e) => e.city?.slug)).toEqual(["b", "c"]);
@@ -223,7 +222,6 @@ describe("buildFestivityPageData", () => {
       seasons: {
         current: [],
         previous: towns.map((t) => item(t, "2026-01-05")),
-        complete: true,
       },
     });
     expect(data.year).toBe(2027);
@@ -235,19 +233,7 @@ describe("buildFestivityPageData", () => {
     ]);
   });
 
-  it("is not indexable from capped results or a backend failure", () => {
-    const seasons = {
-      current: [],
-      previous: towns.map((t) => item(t, "2025-12-13")),
-      complete: false,
-    };
-    const capped = buildFestivityPageData({
-      slug: "fires-de-nadal",
-      seasonYear: 2026,
-      today: "2026-11-08",
-      seasons,
-    });
-    expect(capped.indexable).toBe(false);
+  it("is not indexable after a backend failure", () => {
     const failed = buildFestivityPageData({
       slug: "fires-de-nadal",
       seasonYear: 2026,

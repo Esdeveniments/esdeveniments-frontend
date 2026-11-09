@@ -101,7 +101,8 @@ export function selectSeasonEvents(
  * What /<festivity> shows: this season's events still to come (as cards),
  * the ones already over, and last season's towns with no date yet. `seasons`
  * null means the backend failed. Indexable with events in enough towns this
- * season or last, and only from complete results.
+ * season or last. The reader keeps capped reads: the Reis fill 5 January past
+ * one page, and esdeveniments-backend#63 keeps that day from paging complete.
  */
 export function buildFestivityPageData({
   slug,
@@ -147,9 +148,8 @@ export function buildFestivityPageData({
       .sort(compareActs),
     towns: currentTowns.size,
     indexable:
-      seasons.complete &&
       Math.max(currentTowns.size, previousTowns.size) >=
-        FESTIVITY_MIN_INDEXABLE_TOWNS,
+      FESTIVITY_MIN_INDEXABLE_TOWNS,
   };
 }
 
