@@ -4,6 +4,7 @@ import type {
   EventDetailResponseDTO,
 } from "types/api/event";
 import type { FormData } from "types/event";
+import { addDays, format, parseISO } from "date-fns";
 import { formatTimeForAPI, splitLocalDateTime } from "./date-helpers";
 
 // Centralized helpers for extracting region/town values from form fields
@@ -97,10 +98,15 @@ export function eventDtoToFormData(event: EventDetailResponseDTO): FormData {
   // The picker cannot leave a time open. A null start is how the site marks an
   // all-day event (event-status.ts), and end of day keeps the event listed all
   // day, as a null end does in the backend's lists. Imported events can lack
-  // an end date too (the API sends null), so they end on their start day.
+  // an end date too (the API sends null), so they end on their start day, or
+  // the next day when the end time is before the start (21:00 to 02:00).
   const startTime = (event.startTime || "00:00").slice(0, 5);
   const endTime = (event.endTime || "23:59").slice(0, 5);
-  const endDate = event.endDate || event.startDate;
+  const endDate =
+    event.endDate ||
+    (event.startDate && endTime < startTime
+      ? format(addDays(parseISO(event.startDate), 1), "yyyy-MM-dd")
+      : event.startDate);
   // The picker edits one local "YYYY-MM-DDTHH:mm" per field; the stored times
   // kept separately above would outrank what the user changes in it.
   return {

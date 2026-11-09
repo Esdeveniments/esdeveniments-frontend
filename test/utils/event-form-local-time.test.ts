@@ -151,6 +151,14 @@ describe("event edit form time", () => {
       .toEqual(["2026-12-05", "21:00", "2026-12-05", "23:59"]);
   });
 
+  it("ends an imported overnight event with no stored end date on the next day", () => {
+    const imported = { ...stored, endDate: null, endTime: "02:00:00" } as unknown as EventDetailResponseDTO;
+    const dto = formDataToBackendDTO(eventDtoToFormData(imported));
+
+    expect([dto.startDate, dto.startTime, dto.endDate, dto.endTime])
+      .toEqual(["2026-12-05", "21:00", "2026-12-06", "02:00"]);
+  });
+
   it("reopens a saved all-day event as all-day", () => {
     const saved = formDataToBackendDTO(eventDtoToFormData({ ...stored, startTime: null, endTime: null }));
     const reopened = eventDtoToFormData({ ...stored, startTime: `${saved.startTime}:00`, endTime: `${saved.endTime}:00` });
