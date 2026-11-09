@@ -3,13 +3,21 @@
 // records which sites it cites. The admin dashboard reads the JSON artifact to
 // track how often esdeveniments.cat is cited versus other sites.
 //
-// Usage: OPENROUTER_API_KEY=... node scripts/ai-visibility/run.mjs [out.json]
+// The model picks the engine: `gemini-*` uses the Gemini API with Google Search
+// grounding (free tier: 500 grounded requests a day on gemini-2.5-flash);
+// anything else, such as `openai/gpt-6.1-terra`, goes through OpenRouter with
+// the provider's native web search ($0.01 a request plus tokens).
+//
+// Usage: GEMINI_API_KEY=... node scripts/ai-visibility/run.mjs [out.json]
+//        AI_VISIBILITY_MODEL=openai/gpt-6.1-terra OPENROUTER_API_KEY=... node scripts/ai-visibility/run.mjs
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = process.env.AI_VISIBILITY_MODEL || "openai/gpt-6.1-terra";
-const CONCURRENCY = 5;
+const MODEL = process.env.AI_VISIBILITY_MODEL || "gemini-2.5-flash";
+const GEMINI = MODEL.startsWith("gemini");
+// Gemini's free tier allows about 10 requests a minute.
+const CONCURRENCY = 2;
+const ATTEMPTS = 3;
 const TIMEOUT_MS = 120_000;
 
 /** Unique cited URLs: web search annotations first, then markdown links in the text. */
@@ -36,21 +44,66 @@ function cleanUrl(raw) {
   }
 }
 
-async function ask(prompt, key, date) {
-  const res = await fetch(API_URL, {
+/** Real page URLs behind Gemini's grounding redirects; the source domain when a redirect can't be read. */
+async function geminiCitations(chunks = []) {
+  const urls = await Promise.all(
+    chunks
+      .map((chunk) => chunk.web)
+      .filter((web) => web?.uri)
+      .map(async ({ uri, title }) => {
+        try {
+          const res = await fetch(uri, { redirect: "manual", signal: AbortSignal.timeout(15_000) });
+          const location = res.headers.get("location");
+          if (location) return location;
+        } catch {
+          // Fall back to the domain below.
+        }
+        return title ? `https://${title}/` : uri;
+      }),
+  );
+  return [...new Set(urls.map(cleanUrl).filter(Boolean))];
+}
+
+async function askGemini(prompt, system) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+    {
+      method: "POST",
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      headers: { "x-goog-api-key": process.env.GEMINI_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        tools: [{ google_search: {} }],
+      }),
+    },
+  );
+  const body = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${body?.error?.message ?? "no body"}`);
+  const candidate = body?.candidates?.[0];
+  if (!candidate) throw new Error("No candidate in the response");
+  return {
+    answer: (candidate.content?.parts ?? []).map((part) => part.text ?? "").join(""),
+    citations: await geminiCitations(candidate.groundingMetadata?.groundingChunks),
+  };
+}
+
+async function askOpenRouter(prompt, system) {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     signal: AbortSignal.timeout(TIMEOUT_MS),
     headers: {
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
       "Content-Type": "application/json",
       "HTTP-Referer": "https://www.esdeveniments.cat",
       "X-Title": "esdeveniments.cat AI visibility",
     },
     body: JSON.stringify({
       model: MODEL,
+      max_tokens: 2000,
       plugins: [{ id: "web", engine: "native" }],
       messages: [
-        { role: "system", content: `Today is ${date}. Answer in the language of the question.` },
+        { role: "system", content: system },
         { role: "user", content: prompt },
       ],
     }),
@@ -62,19 +115,22 @@ async function ask(prompt, key, date) {
   return { answer: message.content ?? "", citations: citationsOf(message) };
 }
 
-async function run(item, key, date) {
+async function run(item, date) {
+  const system = `Today is ${date}. Answer in the language of the question.`;
   for (let attempt = 1; ; attempt++) {
     try {
-      return { ...item, ...(await ask(item.prompt, key, date)) };
+      return { ...item, ...(await (GEMINI ? askGemini : askOpenRouter)(item.prompt, system)) };
     } catch (error) {
-      if (attempt === 2) return { ...item, citations: [], error: String(error.message ?? error) };
+      if (attempt === ATTEMPTS) return { ...item, citations: [], error: String(error.message ?? error) };
+      // Mostly rate limits: wait before trying again.
+      await new Promise((resolve) => setTimeout(resolve, 20_000 * attempt));
     }
   }
 }
 
 async function main() {
-  const key = process.env.OPENROUTER_API_KEY;
-  if (!key) throw new Error("OPENROUTER_API_KEY is not set");
+  const keyName = GEMINI ? "GEMINI_API_KEY" : "OPENROUTER_API_KEY";
+  if (!process.env[keyName]) throw new Error(`${keyName} is not set`);
   const out = process.argv[2] || "ai-visibility.json";
   const prompts = JSON.parse(await readFile(new URL("./prompts.json", import.meta.url), "utf8"));
   const date = new Date().toISOString().slice(0, 10);
@@ -85,7 +141,7 @@ async function main() {
     Array.from({ length: CONCURRENCY }, async () => {
       while (next < prompts.length) {
         const i = next++;
-        results[i] = await run(prompts[i], key, date);
+        results[i] = await run(prompts[i], date);
       }
     }),
   );

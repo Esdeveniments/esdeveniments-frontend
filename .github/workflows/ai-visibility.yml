@@ -25,7 +25,7 @@ jobs:
   ai-visibility:
     name: Ask AI assistants local questions
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     # Fork PRs get no secrets
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
@@ -38,9 +38,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # About 25 prompts × $0.01 web search + tokens ≈ $0.35 a run
+      # Gemini with Google Search grounding by default (free tier). Set the repo
+      # variable AI_VISIBILITY_MODEL to an OpenRouter model such as
+      # openai/gpt-6.1-terra to ask ChatGPT's model instead (about $0.35 a run).
       - name: Run prompts
         env:
+          AI_VISIBILITY_MODEL: ${{ vars.AI_VISIBILITY_MODEL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: node scripts/ai-visibility/run.mjs ai-visibility.json
 
