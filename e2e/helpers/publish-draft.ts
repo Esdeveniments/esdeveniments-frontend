@@ -26,6 +26,21 @@ export async function readSavedDraft(page: Page, accountId?: string, draftKey?: 
   }, { expectedAccount: accountId, dbName: PUBLISH_DRAFT_DB_NAME, draftKey });
 }
 
+export async function readSavedDraftTitles(page: Page) {
+  return page.evaluate((dbName) => new Promise<string[]>((resolve) => {
+    const open = indexedDB.open(dbName);
+    // Never create the DB here: an empty v1 DB would skip the app's own upgrade.
+    open.onupgradeneeded = () => open.transaction?.abort();
+    open.onerror = () => resolve([]);
+    open.onsuccess = () => {
+      const db = open.result;
+      const read: IDBRequest<PublishDraftRecord[]> = db.transaction("drafts").objectStore("drafts").getAll();
+      read.onsuccess = () => { db.close(); resolve(read.result.map((record) => record.form.title ?? "")); };
+      read.onerror = () => { db.close(); resolve([]); };
+    };
+  }), PUBLISH_DRAFT_DB_NAME);
+}
+
 export async function readPublishRequest(page: Page, request: Request, accountId: string) {
   const draft = await readSavedDraft(page, accountId);
   const intent = await page.evaluate((key) => sessionStorage.getItem(key), PUBLISH_RESUME_STORAGE_KEY);
