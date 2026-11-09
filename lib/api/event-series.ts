@@ -31,13 +31,22 @@ export async function fetchNextEdition(
   await connection();
   return nextEditionCache.cache(event.slug, async () => {
     const from = madridTodayYmd();
-    const { data, error } = await fetchEventsExternalResult({
-      term: seriesSearchTerm(event.title),
-      from,
-      to: addDaysYmd(from, 400),
-      size: 50,
-    });
-    if (!data) throw error ?? new Error("fetchNextEdition: no data");
-    return pickNextEdition(event, data.content);
+    const search = async (place?: string) => {
+      const { data, error } = await fetchEventsExternalResult({
+        term: seriesSearchTerm(event.title),
+        from,
+        to: addDaysYmd(from, 400),
+        size: 50,
+        ...(place && { place }),
+      });
+      if (!data) throw error ?? new Error("fetchNextEdition: no data");
+      return data;
+    };
+    const page = await search();
+    const next = pickNextEdition(event, page.content);
+    // A common title ("Fira de Nadal") can fill more than one page, and the
+    // page has no stable order (esdeveniments-backend#63): retry in the town.
+    if (next || page.last) return next;
+    return pickNextEdition(event, (await search(event.citySlug)).content);
   });
 }

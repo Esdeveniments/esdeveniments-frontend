@@ -24,12 +24,13 @@ export function seriesKey(title: string): string | null {
   return key.split(" ").length >= 2 ? key : null;
 }
 
-// What changes between editions, in the raw title: "54è", "2026", "XX".
-const EDITION_PART_RE = /\b[IVXLC]{2,}\b|\d+\S*|\b(?:edició|edición|edition)\b/giu;
+// What changes between editions, in the raw title: "54è", "2026", "XX". Also
+// apostrophes: titles mix ’ and ', and the term must match both.
+const EDITION_PART_RE = /\b[IVXLC]{2,}\b|\d+\S*|\b(?:edició|edición|edition)\b|[’']/giu;
 
 /**
  * The longest unchanged stretch of the title, as written: "54è Pessebre Vivent
- * d’Osona 2025" → "Pessebre Vivent d’Osona". The backend's `term` is a plain
+ * d’Osona 2025" → "Pessebre Vivent d". The backend's `term` is a plain
  * substring match (accents and apostrophes count), so a folded key misses.
  */
 export function seriesSearchTerm(title: string): string {

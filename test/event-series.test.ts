@@ -1,10 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import {
   pickNextEdition,
   seriesKey,
   seriesSearchTerm,
 } from "@utils/event-series";
+import { fetchNextEdition } from "@lib/api/event-series";
+import { fetchEventsExternalResult } from "@lib/api/events-external";
+
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  connection: vi.fn(async () => {}),
+}));
+vi.mock("@lib/api/events-external", () => ({
+  fetchEventsExternalResult: vi.fn(),
+}));
 
 describe("seriesKey", () => {
   it.each([
@@ -29,7 +39,8 @@ describe("seriesKey", () => {
 
 describe("seriesSearchTerm", () => {
   it.each([
-    ["54è Pessebre Vivent d’Osona 2025", "Pessebre Vivent d’Osona"],
+    ["54è Pessebre Vivent d’Osona 2025", "Pessebre Vivent d"],
+    ["55è Pessebre Vivent d'Osona", "Pessebre Vivent d"],
     ["XX Rua de Carnaval de Castellví de la Marca", "Rua de Carnaval de Castellví de la Marca"],
     ["Els Pastorets de Cardedeu", "Els Pastorets de Cardedeu"],
     ["Carnestoltes 2026 a Sant Julià de Vilatorta", "a Sant Julià de Vilatorta"],
@@ -64,5 +75,34 @@ describe("pickNextEdition", () => {
         candidate("c", "Concert", "2026-06-27"),
       ]),
     ).toBeNull();
+  });
+});
+
+describe("fetchNextEdition", () => {
+  const event = (slug: string, title: string, city: string) =>
+    ({ slug, title, startDate: "2026-12-05", city: { slug: city } }) as EventSummaryResponseDTO;
+  const page = (content: EventSummaryResponseDTO[], last: boolean) => ({
+    data: { content, last, currentPage: 0, pageSize: 50, totalElements: 0, totalPages: 1 },
+    error: null,
+    status: 200,
+  });
+  const ended = { slug: "fira-2025", title: "Fira de Nadal 2025", citySlug: "olot" };
+
+  it("searches again in the town when a cut-off page has no match", async () => {
+    const fetchMock = vi.mocked(fetchEventsExternalResult);
+    fetchMock
+      .mockResolvedValueOnce(page([event("vic", "Fira de Nadal 2026", "vic")], false))
+      .mockResolvedValueOnce(page([event("olot-2026", "Fira de Nadal 2026", "olot")], true));
+
+    expect((await fetchNextEdition(ended))?.slug).toBe("olot-2026");
+    expect(fetchMock.mock.calls[1][0]).toMatchObject({ place: "olot", term: "Fira de Nadal" });
+  });
+
+  it("doesn't search again when the page was complete", async () => {
+    const fetchMock = vi.mocked(fetchEventsExternalResult);
+    fetchMock.mockReset().mockResolvedValueOnce(page([], true));
+
+    expect(await fetchNextEdition({ ...ended, slug: "fira-2024" })).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
