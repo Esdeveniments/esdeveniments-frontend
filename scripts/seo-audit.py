@@ -89,14 +89,17 @@ CATALAN_MONTHS = {
 # 3-segment URL path prefixes to exclude from indexing checks
 THREE_SEGMENT_EXCLUDE = ("e", "noticies", "api", "sitemap-places")
 
-# Static routes next to /[place]; any other first path segment is a place
-# (town, comarca, province or catalunya).
+# Routes that aren't places; any other first path segment is a place (town,
+# comarca, province or catalunya). Mirrors NON_PLACE_FIRST_SEGMENTS and
+# FESTIVITY_SLUGS in utils/middleware-redirects.ts, the source of truth;
+# test/middleware-redirects-non-place.test.ts keeps them in sync.
 NON_PLACE_SEGMENTS = {
-    "e", "e2e", "noticies", "perfil", "publica", "patrocina",
-    "preferits", "qui-som", "politica-privacitat", "termes-servei", "sitemap",
-    "offline", "developers", "festa-major", "festes-majors", "cavalcades-de-reis",
-    "fires-de-nadal", "pessebres-vivents", "api", "agent-view", "ask", "docs",
-    "mcp", "openapi", "sitemap-events", "sitemap-places",
+    "e", "e2e", "noticies", "perfil", "publica", "patrocina", "login",
+    "iniciar-sessio", "registre", "preferits", "qui-som", "politica-privacitat",
+    "termes-servei", "sitemap", "offline", "developers", "festa-major",
+    "festes-majors", "cavalcades-de-reis", "fires-de-nadal", "pessebres-vivents",
+    "api", "agent-view", "ask", "docs", "mcp", "openapi", "sitemap-events",
+    "sitemap-places",
 }
 PLACE_KEYWORDS_PLACES = 30
 PLACE_KEYWORDS_QUERIES = 5
