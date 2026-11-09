@@ -21,6 +21,7 @@ import re
 import argparse
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict
+from urllib.parse import urlparse
 
 import google.auth
 import requests
@@ -87,6 +88,21 @@ CATALAN_MONTHS = {
 
 # 3-segment URL path prefixes to exclude from indexing checks
 THREE_SEGMENT_EXCLUDE = ("e", "noticies", "api", "sitemap-places")
+
+# Routes that aren't places; any other first path segment is a place (town,
+# comarca, province or catalunya). Mirrors NON_PLACE_FIRST_SEGMENTS and
+# FESTIVITY_SLUGS in utils/middleware-redirects.ts, the source of truth;
+# test/middleware-redirects-non-place.test.ts keeps them in sync.
+NON_PLACE_SEGMENTS = {
+    "e", "e2e", "noticies", "perfil", "publica", "patrocina", "login",
+    "iniciar-sessio", "registre", "preferits", "qui-som", "politica-privacitat",
+    "termes-servei", "sitemap", "offline", "developers", "festa-major",
+    "festes-majors", "cavalcades-de-reis", "fires-de-nadal", "pessebres-vivents",
+    "api", "agent-view", "ask", "docs", "mcp", "openapi", "sitemap-events",
+    "sitemap-places",
+}
+PLACE_KEYWORDS_PLACES = 30
+PLACE_KEYWORDS_QUERIES = 5
 
 # Features to check for low engagement
 LOW_USAGE_FEATURES = ["share", "add_to_calendar"]
@@ -178,6 +194,17 @@ def ga_report(dimensions, metrics, start=START_90, end=END, limit=25, dim_filter
 def sanitize_md(text):
     """Escape Markdown special characters that could break tables."""
     return re.sub(r"([\|*_`\[\]\(\)])", r"\\\1", str(text))
+
+
+def place_of(url):
+    """The place slug of a listing page URL, or None for events and other pages."""
+    segments = [s for s in urlparse(url).path.split("/") if s]
+    if segments[:1] in (["es"], ["en"]):
+        segments = segments[1:]
+    first = segments[0] if segments else None
+    if not first or first in NON_PLACE_SEGMENTS or "." in first:
+        return None
+    return first
 
 
 def safe_float(val, default=0.0):
@@ -430,7 +457,8 @@ def collect_gsc_data():
 
     # i18n cannibalization: same slug appearing under /e/, /es/e/, /en/e/
     i18n_cannibal = defaultdict(list)
-    all_pages_rows = gsc_query(["page"], START_90, END, limit=500)
+    # Rows come most clicks first; zero-click (dead) pages are only in the long tail.
+    all_pages_rows = gsc_query(["page"], START_90, END, limit=5000)
     for r in all_pages_rows:
         url = r["keys"][0]
         for prefix, locale in I18N_EVENT_PREFIXES:
@@ -498,6 +526,48 @@ def collect_gsc_data():
         key=lambda r: r["impressions"],
         reverse=True,
     )[:15]
+
+    # Keywords per place: the non-brand queries that bring people to a town's
+    # (or comarca's) listing pages, all dates, categories and languages together.
+    place_rows = gsc_query(
+        ["query", "page"], START_90, END, limit=25000,
+        filters=[{"dimension": "page", "operator": "excludingRegex", "expression": "/e/"}],
+    )
+    places = defaultdict(lambda: {"clicks": 0, "impressions": 0, "queries": defaultdict(
+        lambda: {"clicks": 0, "impressions": 0, "position_sum": 0.0})})
+    for r in place_rows:
+        query, page = r["keys"]
+        place = place_of(page)
+        if not place or is_brand_query(query):
+            continue
+        totals = places[place]
+        totals["clicks"] += r["clicks"]
+        totals["impressions"] += r["impressions"]
+        q = totals["queries"][query]
+        q["clicks"] += r["clicks"]
+        q["impressions"] += r["impressions"]
+        q["position_sum"] += r["position"] * r["impressions"]
+    data["town_keywords"] = [
+        {
+            "place": place,
+            "clicks": totals["clicks"],
+            "impressions": totals["impressions"],
+            "queries": [
+                {
+                    "query": query,
+                    "clicks": q["clicks"],
+                    "impressions": q["impressions"],
+                    "position": round(q["position_sum"] / q["impressions"], 1) if q["impressions"] else None,
+                }
+                for query, q in sorted(
+                    totals["queries"].items(), key=lambda item: item[1]["impressions"], reverse=True
+                )[:PLACE_KEYWORDS_QUERIES]
+            ],
+        }
+        for place, totals in sorted(places.items(), key=lambda item: item[1]["impressions"], reverse=True)[
+            :PLACE_KEYWORDS_PLACES
+        ]
+    ]
 
     # AI Overview zero-click: queries at position 1-3 with 0 clicks
     # High position + 0 clicks strongly suggests AI Overview is answering the query
@@ -1331,6 +1401,22 @@ def generate_markdown(data, previous=None):
         for r in dead[:10]:
             path = sanitize_md(r["page"].replace(SITE, "/"))
             lines.append(f"| `{path}` | {r['impressions']:,} | {r['position']:.1f} |")
+        lines.append("")
+
+    # ── Keywords per Town ──
+    town_keywords = data["gsc"].get("town_keywords", [])
+    if town_keywords:
+        lines.append("## 🏘️ Keywords per Town")
+        lines.append("")
+        lines.append("Non-brand queries that lead to each place's listing pages.")
+        lines.append("")
+        lines.append("| Place | Impressions | Clicks | Top queries |")
+        lines.append("|-------|-------------|--------|-------------|")
+        for r in town_keywords[:10]:
+            queries = ", ".join(
+                f"{sanitize_md(q['query'])} ({q['impressions']:,})" for q in r["queries"][:3]
+            )
+            lines.append(f"| `{sanitize_md(r['place'])}` | {r['impressions']:,} | {r['clicks']} | {queries} |")
         lines.append("")
 
     # ── Mobile vs Desktop Bounce ──
