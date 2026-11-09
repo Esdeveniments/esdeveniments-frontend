@@ -1,32 +1,21 @@
 import { fetchEventBySlug } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
 import { getAccessTokenFromCookies, getRefreshTokenFromCookies } from "@utils/auth-cookies";
-import { canManageEvent, isEventOwner } from "@utils/event-helpers";
+import { isEventOwner } from "@utils/event-helpers";
 import type { EventDetailResponseDTO } from "types/api/event";
-import type { AuthUser } from "types/auth";
-
-async function getEventIf(
-  slug: string,
-  allowed: (user: AuthUser | null, event: EventDetailResponseDTO) => boolean,
-): Promise<EventDetailResponseDTO | null> {
-  const [event, currentUser] = await Promise.all([
-    fetchEventBySlug(slug),
-    getCurrentUser(),
-  ]);
-  return event && allowed(currentUser, event) ? event : null;
-}
 
 /**
  * The event if the signed-in user owns it, else null. Owner-only pages 404 on
  * null so they don't reveal that the page exists.
  */
-export function getOwnedEventBySlug(slug: string) {
-  return getEventIf(slug, (user, event) => isEventOwner(user?.id, event.owner?.id));
-}
-
-/** The event if the signed-in user owns it or is an admin, else null. */
-export function getManageableEventBySlug(slug: string) {
-  return getEventIf(slug, (user, event) => canManageEvent(user, event.owner?.id));
+export async function getOwnedEventBySlug(
+  slug: string,
+): Promise<EventDetailResponseDTO | null> {
+  const [event, currentUser] = await Promise.all([
+    fetchEventBySlug(slug),
+    getCurrentUser(),
+  ]);
+  return event && isEventOwner(currentUser?.id, event.owner?.id) ? event : null;
 }
 
 /**

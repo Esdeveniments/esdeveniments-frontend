@@ -129,14 +129,6 @@ describe("EventDetailsSection owner actions (mobile)", () => {
     expect(screen.queryByTestId("event-promote-link")).toBeNull();
   });
 
-  it("shows edit and delete to an admin on a scraped event with no owner", () => {
-    mockAuthUser = { id: "admin-id", email: "x@y.com", name: "X", username: "x", role: "ADMIN" };
-    render(<EventDetailsSection event={buildEvent({ owner: undefined })} />);
-
-    expect(screen.getByTestId("event-edit-link")).toBeTruthy();
-    expect(screen.getByTestId("event-delete-button")).toBeTruthy();
-  });
-
   it("does not show the owner links when logged out", () => {
     mockAuthUser = null;
     render(<EventDetailsSection event={buildEvent()} />);

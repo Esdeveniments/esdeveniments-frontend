@@ -21,7 +21,7 @@ no `@logto/*` SDK — to keep the client bundle untouched. Server code lives in
 | `refresh-token.ts` | `coordinateRefresh`: one refresh per refresh token across instances (claim stored in Turso, not Redis) |
 | `token-encryption.ts` | `sealToken` / `openToken`: encrypts tokens in cookies and in the refresh store |
 | `enrichment.ts` | `enrichWithBackendProfile`: adds backend UUID, role, profile state to the Logto user |
-| `owned-event.ts` | `getOwnedEventBySlug` (owner-only pages, e.g. promote) and `getManageableEventBySlug` (owner or ADMIN, e.g. edit) |
+| `owned-event.ts` | `getOwnedEventBySlug` for owner-only event pages |
 | `AuthProvider.tsx` | Client provider behind `useAuth()` |
 
 `getAccessTokenFromCookies` is in `utils/auth-cookies.ts`. The flow runs

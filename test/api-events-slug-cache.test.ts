@@ -197,24 +197,6 @@ describe("/api/events/[slug] DELETE cache invalidation", () => {
     expect(mockDeleteEventById).not.toHaveBeenCalled();
     expect(mockRevalidateTag).not.toHaveBeenCalled();
   });
-
-  it("lets an admin delete a scraped event that has no creator", async () => {
-    mockGetCurrentUser.mockResolvedValue({ ...creatorUser, id: "admin-uuid", role: "ADMIN" });
-    (fetchEventBySlug as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ...fakeEvent,
-      owner: undefined,
-    });
-    const { DELETE } = await import("app/api/events/[slug]/route");
-
-    const req = new Request("http://localhost/api/events/my-event", {
-      method: "DELETE",
-    });
-    const ctx = { params: Promise.resolve({ slug: "my-event" }) };
-
-    const res = await DELETE(req, ctx as any);
-    expect(res.status).toBe(204);
-    expect(mockDeleteEventById).toHaveBeenCalledWith("event-uuid");
-  });
 });
 
 

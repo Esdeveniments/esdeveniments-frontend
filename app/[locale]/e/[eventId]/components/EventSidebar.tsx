@@ -132,7 +132,7 @@ export default async function EventSidebar({
               </>
             )}
 
-            {/* Owner/admin actions */}
+            {/* Owner-only actions */}
             <EventOwnerActions ownerId={event.owner?.id} slug={event.slug ?? ""} />
 
           </div>

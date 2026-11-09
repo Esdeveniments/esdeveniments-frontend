@@ -15,7 +15,7 @@ import { revalidateEventPages } from "@lib/cache/revalidate-event-pages";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { submitEventsToIndexNow } from "@lib/seo/indexnow";
 import { getCurrentUser } from "@lib/auth/session";
-import { canManageEvent } from "@utils/event-helpers";
+import { isEventOwner } from "@utils/event-helpers";
 import { getValidatedImageFile } from "@utils/image-validation";
 
 /**
@@ -40,10 +40,10 @@ export async function editEvent(
     return { success: false, error: "Event not found" };
   }
 
-  if (event.id !== eventId || !canManageEvent(currentUser, event.owner?.id)) {
+  if (event.id !== eventId || !isEventOwner(currentUser?.id, event.owner?.id)) {
     return {
       success: false,
-      error: "Unauthorized: only the event creator or an admin can edit this event",
+      error: "Unauthorized: only the event creator can edit this event",
     };
   }
 

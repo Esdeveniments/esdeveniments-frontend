@@ -14,7 +14,7 @@ import EventOwnerActions from "./EventOwnerActions";
  * Renders ancillary event details: duration + external link + creator info.
  * Status badge and date/time info are intentionally NOT shown here
  * to avoid duplication (they already appear in EventHeader and EventCalendar).
- * Also renders the owner/admin actions (EventOwnerActions): EventSidebar has them
+ * Also renders the owner-only Edit and Promote actions: EventSidebar has them
  * too, but the sidebar is hidden below the lg breakpoint.
  */
 const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
@@ -28,10 +28,8 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
     ? formatNamePrepositionParts(getProfileDisplayName(owner), locale, "by")
     : null;
 
-  const actions = <EventOwnerActions ownerId={owner?.id} slug={event.slug ?? ""} />;
-
-  // Without details, keep only the actions (null unless the user can manage it).
-  if (!event.duration && !hasValidUrl && !owner) return actions;
+  // Only render if there's something to show
+  if (!event.duration && !hasValidUrl && !owner) return null;
 
   return (
     <div className="w-full">
@@ -99,7 +97,7 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
             </div>
           )}
 
-          {actions}
+          {owner && <EventOwnerActions ownerId={owner.id} slug={event.slug ?? ""} />}
         </div>
       </div>
     </div>
