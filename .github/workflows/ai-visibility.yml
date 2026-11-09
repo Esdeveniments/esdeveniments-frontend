@@ -1,0 +1,53 @@
+name: AI Visibility
+
+on:
+  # Weekly on Monday at 6 AM UTC (7–8 AM in Catalonia)
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+  # Validates changes to the script or prompts on their PR
+  pull_request:
+    paths:
+      - "scripts/ai-visibility/**"
+      - ".github/workflows/ai-visibility.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-visibility-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "26"
+
+jobs:
+  ai-visibility:
+    name: Ask AI assistants local questions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Fork PRs get no secrets
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # About 25 prompts × $0.01 web search + tokens ≈ $0.35 a run
+      - name: Run prompts
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node scripts/ai-visibility/run.mjs ai-visibility.json
+
+      # Unzipped under a fixed name so the admin dashboard can read the history
+      - name: Upload results for the dashboard
+        uses: actions/upload-artifact@v7
+        with:
+          path: ai-visibility.json
+          archive: false
+          retention-days: 90
