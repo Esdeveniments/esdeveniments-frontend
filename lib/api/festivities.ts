@@ -12,7 +12,6 @@ import { madridTodayYmd } from "@lib/dates";
 import {
   buildFestivityPageData,
   getFestivityType,
-  seasonWindow,
   seasonYearOf,
   selectSeasonEvents,
 } from "@utils/festivity";
@@ -30,10 +29,11 @@ async function fetchSeason(
   slug: FestivitySlug,
   seasonYear: number,
 ): Promise<EventSummaryResponseDTO[]> {
-  const window = seasonWindow(seasonYear);
+  const type = getFestivityType(slug);
+  const window = type.window(seasonYear);
   // One term at a time: each fetch already runs 4 requests in parallel.
   const events: EventSummaryResponseDTO[] = [];
-  for (const term of getFestivityType(slug).terms) {
+  for (const term of type.terms) {
     const result = await fetchAllEventPagesExternal(
       { term, ...window },
       { maxRequests: MAX_REQUESTS_PER_TERM, timeout: TIMEOUT_MS },
@@ -74,7 +74,7 @@ export const fetchFestivityPage = cache(
     // The season depends on today, so read the clock after connection().
     await connection();
     const today = madridTodayYmd();
-    const seasonYear = seasonYearOf(today);
+    const seasonYear = seasonYearOf(getFestivityType(slug), today);
     let seasons: FestivitySeasons | null = null;
     try {
       seasons = await getFestivitySeasons(slug, seasonYear);

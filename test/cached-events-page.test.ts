@@ -68,7 +68,7 @@ describe("fetchEventsCached", () => {
   });
 
   it("returns an empty page after a timeout instead of waiting for a second one", async () => {
-    const now = vi.spyOn(Date, "now");
+    const now = vi.spyOn(performance, "now");
     now.mockReturnValueOnce(0);
     now.mockReturnValue(8000);
     fetchMock.mockRejectedValue(new Error("generic error, as after use cache"));

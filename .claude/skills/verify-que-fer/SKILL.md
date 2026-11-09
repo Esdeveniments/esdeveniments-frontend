@@ -84,6 +84,13 @@ The script exits 0 unless a bot gets a cached PPR shell (`cf=HIT` together with
 count but does not check it. Read every row yourself: `cf` should be `BYPASS`
 or `DYNAMIC`, and `ld` should be at least 1.
 
+**3. Dev overlay (prerender errors).** Under `yarn dev` (after `yarn prebuild`),
+open each touched route and read the issue count in the Next overlay; it
+must be 0. `next build` misses "Blocking Route" errors on dynamic slugs, and
+the overlay shows one error at a time, so reload after each fix. Include a
+cold, empty town for listings (it runs the fallback chain). See LESSONS.md
+"Clock reads in metadata and fallbacks block the prerender".
+
 ## Evidence
 
 Capture the action and the resulting state, not just the final screen.
@@ -120,7 +127,7 @@ Top user paths, how to reach them, and what observable end state proves them.
 | Filters | listing page, then filters | results update client-side via SWR; date and category go in the path, search and distance in the query (see `url-canonicalization`) |
 | News | `GET /noticies/<place>` (e.g. `/noticies/barcelona`) | news cards + JSON-LD present |
 | Festa major hubs | `GET /festes-majors`, `/festa-major/<town>` (e.g. `/festa-major/cardedeu`), `/festa-major/<region>` | towns by month with thumbnails; the town hub has one `fetchPriority="high"` cover plus its `<link rel="preload" as="image">`; JSON-LD `CollectionPage` |
-| Festivity pages | `GET /fires-de-nadal`, `/pessebres-vivents`, `/cavalcades-de-reis` (`data-testid="festivity-page"`) | upcoming event cards, then "Pendents de confirmar" and "Ja han passat" rows with 56 px thumbnails (`w=120`, `loading="lazy"`). Some thumbnails 502 from the image proxy: dead or huge source images (esdeveniments-backend#64), not a bug here. Wait for `load`, not `networkidle` (ads keep polling) |
+| Festivity pages | `GET /fires-de-nadal`, `/pessebres-vivents`, `/cavalcades-de-reis`, `/carnaval` (`data-testid="festivity-page"`) | upcoming event cards, then "Pendents de confirmar" and "Ja han passat" rows with 56 px thumbnails (`w=120`, `loading="lazy"`). Some thumbnails 502 from the image proxy: dead or huge source images (esdeveniments-backend#64), not a bug here. Wait for `load`, not `networkidle` (ads keep polling) |
 
 ## Maintenance
 

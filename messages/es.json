@@ -940,7 +940,8 @@
       "primaryCta": "Consulta la agenda",
       "secondaryCta": "o explora esta categoría",
       "srStatus": "Estado: {label}.",
-      "timeWindow": "esta semana"
+      "timeWindow": "esta semana",
+      "nextEdition": "Próxima edición: {dates}"
     },
     "EventPage": {
       "sponsored": "Contenido patrocinado",
@@ -1536,7 +1537,7 @@
       "monthsTitle": "Por meses",
       "calendarTitle": "Todo {year}, mes a mes",
       "regionsTitle": "Por comarcas",
-      "nadalTitle": "En Navidad",
+      "festivitiesTitle": "Fiestas de temporada",
       "empty": "Aún no tenemos fiestas mayores en el calendario.",
       "unavailable": "Ahora mismo no podemos cargar el calendario. Vuelve a probarlo dentro de un rato.",
       "lead": "Pasacalles, correfocs, gigantes, conciertos y habaneras: cada pueblo tiene su fiesta mayor, y las hay todo el año. Busca la de tu pueblo o descubre otras nuevas."
@@ -1544,11 +1545,11 @@
     "Festivity": {
       "intro": "{count, plural, one {# pueblo ya ha anunciado la fecha.} other {# pueblos ya han anunciado la fecha.}}",
       "upcomingTitle": "Próximas fechas",
-      "noUpcoming": "Todavía no se ha anunciado ninguna fecha. Los pueblos suelen publicarlas a partir de noviembre.",
+      "noUpcoming": "Todavía no se ha anunciado ninguna fecha. Los pueblos suelen publicarlas a partir de {type, select, carnaval {enero} other {noviembre}}.",
       "pendingTitle": "Pendientes de confirmar",
-      "pendingIntro": "Estos pueblos lo celebraron la Navidad pasada, pero aún no han anunciado la fecha. Para que te hagas una idea, aquí tienes la de la Navidad pasada.",
+      "pendingIntro": "Estos pueblos lo celebraron {type, select, carnaval {el Carnaval pasado} other {la Navidad pasada}}, pero aún no han anunciado la fecha. Para que te hagas una idea, aquí tienes la {type, select, carnaval {del Carnaval pasado} other {de la Navidad pasada}}.",
       "pastTitle": "Ya han pasado",
-      "empty": "De momento no tenemos ninguna fecha. Vuelve a finales de noviembre.",
+      "empty": "De momento no tenemos ninguna fecha. Vuelve a finales de {type, select, carnaval {enero} other {noviembre}}.",
       "unavailable": "Ahora mismo no podemos cargar el calendario. Vuelve a intentarlo dentro de un rato.",
       "moreTitle": "También te puede interesar",
       "catalunyaAgenda": "Agenda de Cataluña",
@@ -1576,6 +1577,14 @@
           "metaDescription": "¿A qué hora pasa la cabalgata de Reyes por tu pueblo? Horarios de las cabalgatas de Reyes {year} en Cataluña, pueblo a pueblo.",
           "eventLink": "Todas las cabalgatas de Reyes de Cataluña",
           "lead": "La tarde del 5 de enero, los Reyes Magos llegan a cada pueblo con los pajes y las carrozas. Mira a qué hora pasa la cabalgata por el tuyo."
+        },
+        "carnaval": {
+          "name": "Carnaval",
+          "title": "Carnaval {year} en Cataluña",
+          "metaTitle": "Carnaval {year} en Cataluña: rúas y fechas por pueblos",
+          "metaDescription": "¿Cuándo es la rúa de Carnaval de tu pueblo? Calendario del Carnaval {year} en Cataluña: rúas, llegada del Rey Carnestoltes y entierro de la sardina, pueblo a pueblo.",
+          "eventLink": "Todos los carnavales de Cataluña",
+          "lead": "Disfraces, comparsas y carrozas: por Carnaval, el Rey Carnestoltes llega a los pueblos y las rúas llenan las calles hasta el entierro de la sardina. Mira cuándo es la del tuyo."
         }
       }
     }

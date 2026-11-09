@@ -28,11 +28,14 @@ import {
   validatePlaceForMetadata,
 } from "@utils/route-validation";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { fetchEventsWithFallback } from "@lib/helpers/event-fallback";
+import {
+  fetchEventsWithFallback,
+  twoWeeksDefaultCached,
+} from "@lib/helpers/event-fallback";
 import { siteUrl } from "@config/index";
 import { fetchPlaceBySlug } from "@lib/api/places";
 import { toLocalDateString } from "@utils/helpers";
-import { twoWeeksDefault, getDateRangeFromByDate } from "@lib/dates";
+import { getDateRangeFromByDate } from "@lib/dates";
 import { getTranslations } from "next-intl/server";
 import { redirect, notFound } from "next/navigation";
 import { locale as rootLocale } from "next/root-params";
@@ -418,13 +421,13 @@ async function buildCategoryEventsPromise({
       regionFallback: {
         size: 7,
         includeDateRange: true,
-        dateRangeFactory: twoWeeksDefault,
+        dateRangeFactory: twoWeeksDefaultCached,
       },
       finalFallback: {
         size: 7,
         includeCategory: false,
         includeDateRange: true,
-        dateRangeFactory: twoWeeksDefault,
+        dateRangeFactory: twoWeeksDefaultCached,
         place: undefined,
       },
     });

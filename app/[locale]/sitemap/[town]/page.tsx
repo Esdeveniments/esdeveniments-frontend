@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cacheLife } from "next/cache";
 import { siteUrl } from "@config/index";
 import { getAllYears, normalizeMonthParam } from "@lib/dates";
 import {
@@ -61,10 +62,18 @@ export default function Page({
   );
 }
 
+// The year list reads the clock, which a prerender may only do inside
+// "use cache". It changes once a year, so a day-long entry is plenty.
+async function getSitemapYears(): Promise<number[]> {
+  "use cache";
+  cacheLife("days");
+  return getAllYears();
+}
+
 async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">, "params">) {
   const { town } = await params;
   const locale: AppLocale = (await rootLocale()) as AppLocale;
-  const years: number[] = getAllYears();
+  const years = await getSitemapYears();
   const t = await getTranslations({ locale, namespace: "Pages.SitemapTown" });
   const withLocale = (path: string) => withLocalePath(path, locale);
   const monthLabels = getMonthNames(locale);

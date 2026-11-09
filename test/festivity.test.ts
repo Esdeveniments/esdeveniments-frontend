@@ -3,6 +3,7 @@ import type { EventSummaryResponseDTO } from "types/api/event";
 import type { FestivityListItem } from "types/festivity";
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
 import { fetchAllEventPagesExternal } from "@lib/api/events-external";
+import { easterSundayYmd } from "@utils/date-helpers";
 import {
   buildFestivityPageData,
   festivitiesForTitle,
@@ -51,6 +52,17 @@ describe("festivity matching (real titles)", () => {
   });
 
   it.each([
+    "Rua de Carnaval conjunta de Vilassar de Mar i Cabrera de Mar",
+    "Entrada de la Reina Carnestoltes XLIII, el seu Concubí XXX i els Sèquits",
+    "RUA DE CARNESTOLTES  2026",
+    "Rua Mortuòria",
+    "Vermut Carnavaler 2026",
+    "Cavalcada de Carnaval",
+  ])("%s is carnaval", (title) => {
+    expect(slugsFor(title)).toEqual(["carnaval"]);
+  });
+
+  it.each([
     "Nadal al mercat setmanal",
     "Concert de Nadal",
     "Rafa Nadal, l'exposició",
@@ -58,9 +70,12 @@ describe("festivity matching (real titles)", () => {
     "RECOLLIDA DELS REGALS QUE SERAN LLIURATS EL DIA DE LA CAVALCADA DE REIS",
     "Carta als Reis",
     "Arribada del Patge Reial",
-    "Cavalcada de Carnaval",
     "Concurs de pessebres",
     "Fira de Sant Ponç",
+    "Taller de Carnaval",
+    "Inscripcions a la rua de Carnaval",
+    '"El Carnaval dels animals", contacontes',
+    "Presoners de l'amor, Basel Abbas i Ruanne Abou-Rahme",
   ])("%s is none", (title) => {
     expect(slugsFor(title)).toEqual([]);
   });
@@ -77,6 +92,19 @@ describe("festivity matching (real titles)", () => {
   });
 });
 
+const nadal = getFestivityType("fires-de-nadal");
+const carnaval = getFestivityType("carnaval");
+
+describe("easterSundayYmd", () => {
+  it.each([
+    [2026, "2026-04-05"],
+    [2027, "2027-03-28"],
+    [2028, "2028-04-16"],
+  ])("%i → %s", (year, date) => {
+    expect(easterSundayYmd(year)).toBe(date);
+  });
+});
+
 describe("seasonYearOf", () => {
   it.each([
     ["2026-11-08", 2026],
@@ -87,7 +115,16 @@ describe("seasonYearOf", () => {
     ["2027-06-15", 2027],
     ["2027-10-31", 2027],
   ])("%s belongs to the season starting in %i", (date, year) => {
-    expect(seasonYearOf(date)).toBe(year);
+    expect(seasonYearOf(nadal, date)).toBe(year);
+  });
+
+  it.each([
+    ["2026-03-03", 2026],
+    ["2026-03-04", 2027],
+    ["2026-12-31", 2027],
+    ["2027-02-23", 2027],
+  ])("carnaval: %s belongs to %i", (date, year) => {
+    expect(seasonYearOf(carnaval, date)).toBe(year);
   });
 });
 
@@ -100,7 +137,17 @@ describe("isInFestivitySeason", () => {
     ["2027-01-11", false],
     ["2027-07-15", false],
   ])("%s → %s", (date, inSeason) => {
-    expect(isInFestivitySeason(date)).toBe(inSeason);
+    expect(isInFestivitySeason(nadal, date)).toBe(inSeason);
+  });
+
+  // Ash Wednesday 2027 is 10 Feb: season 27 Jan–23 Feb, linked from 21 days before.
+  it.each([
+    ["2027-01-05", false],
+    ["2027-01-06", true],
+    ["2027-02-23", true],
+    ["2027-02-24", false],
+  ])("carnaval: %s → %s", (date, inSeason) => {
+    expect(isInFestivitySeason(carnaval, date)).toBe(inSeason);
   });
 });
 

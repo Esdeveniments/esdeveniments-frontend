@@ -19,6 +19,7 @@ import type { EventCopyLabels } from "types/common";
 import PastEventBanner from "./components/PastEventBanner";
 import FestaMajorHubLink from "@components/ui/festaMajor/FestaMajorHubLink";
 import FestivityHubLink from "@components/ui/festivity/FestivityHubLink";
+import NextEditionLink from "./components/NextEditionLink";
 import { isFestaMajorTitle } from "@utils/festa-major-name";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import PwaBackButton from "@components/ui/common/PwaBackButton";
@@ -67,9 +68,25 @@ import EventDetailsSection from "./components/EventDetailsSection";
 // This allows us to use ssr: false in Next.js 16 (required for client components)
 import LazyRestaurantPromotion from "./components/LazyRestaurantPromotion";
 
+// The body and the metadata both read the current time (status pill, 60-day
+// noindex), which a stored page may only do inside "use cache". A 15 minute
+// life keeps them fresh; Cloudflare already serves copies up to 90 minutes old.
+const EVENT_PAGE_CACHE_LIFE = { stale: 300, revalidate: 900, expire: 86400 };
+
 export async function generateMetadata(props: PageProps<"/[locale]/e/[eventId]">): Promise<Metadata> {
   const slug = (await props.params).eventId;
   const locale = (await rootLocale()) as AppLocale;
+  return buildEventPageMetadata(slug, locale);
+}
+
+async function buildEventPageMetadata(
+  slug: string,
+  locale: AppLocale,
+): Promise<Metadata> {
+  "use cache";
+  cacheLife(EVENT_PAGE_CACHE_LIFE);
+  cacheTag(eventsTag, eventTag(slug));
+  setRequestLocale(locale);
   // Use the request-independent reader: reading headers() here would make
   // metadata dynamic under cacheComponents and mismatch the prerendered shell.
   // It throws on transient errors — let that bubble so Next does NOT cache a
@@ -184,7 +201,11 @@ async function EventPageContent({
     getPlaceContext(event, locale);
   // Request-time parts stay outside the cached body and pass through it.
   const sponsorSlot = (
-    <SponsorBannerSlot place={primaryPlaceSlug} fallbackPlaces={sponsorFallbackPlaces} />
+    <SponsorBannerSlot
+      key="sponsor"
+      place={primaryPlaceSlug}
+      fallbackPlaces={sponsorFallbackPlaces}
+    />
   );
 
   return (
@@ -194,7 +215,7 @@ async function EventPageContent({
       mobileSponsorSlot={sponsorSlot}
       sidebarSponsorSlot={sponsorSlot}
       latestNewsSlot={
-        <Suspense fallback={null}>
+        <Suspense key="latest-news" fallback={null}>
           <LatestNewsSection
             placeSlug={primaryPlaceSlug}
             placeLabel={placeLabel}
@@ -204,6 +225,20 @@ async function EventPageContent({
             sourceEventSlug={event.slug || slug}
           />
         </Suspense>
+      }
+      nextEditionSlot={
+        event.city?.slug ? (
+          <Suspense key="next-edition" fallback={null}>
+            <NextEditionLink
+              event={{
+                slug: event.slug || slug,
+                title: event.title,
+                citySlug: event.city.slug,
+              }}
+              locale={locale}
+            />
+          </Suspense>
+        ) : null
       }
     />
   );
@@ -215,12 +250,10 @@ async function EventPageBody({
   mobileSponsorSlot,
   sidebarSponsorSlot,
   latestNewsSlot,
+  nextEditionSlot,
 }: EventPageBodyProps): Promise<JSX.Element | null> {
   "use cache";
-  // The body reads the current time (status pill, date copy), which a stored
-  // page may only do inside "use cache". A 15 minute life keeps the status
-  // fresh; Cloudflare already serves copies up to 90 minutes old.
-  cacheLife({ stale: 300, revalidate: 900, expire: 86400 });
+  cacheLife(EVENT_PAGE_CACHE_LIFE);
   cacheTag(eventsTag, eventTag(slug));
   // The layout's setRequestLocale does not reach inside "use cache"; without
   // it next-intl falls back to reading headers(), which is not allowed here.
@@ -507,6 +540,7 @@ async function EventPageBody({
                     />
                   )}
                   <FestivityHubLink title={event.title} />
+                  {temporalStatus.state === "past" && nextEditionSlot}
                   <SocialProofCounter
                     visits={event.visits}
                     interestedLabel={tEvent("interested", { count: event.visits })}

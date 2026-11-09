@@ -3,17 +3,19 @@ import { getTranslations } from "next-intl/server";
 import Badge from "@components/ui/common/badge";
 import { fetchFestaMajorPage } from "@lib/api/festes-majors";
 import { madridTodayYmd } from "@lib/dates";
-import { FESTIVITY_TYPES } from "@config/festivities";
 import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import { festaMajorPath } from "@utils/festa-major-paths";
-import { festivityPath, isInFestivitySeason } from "@utils/festivity";
+import { inSeasonFestivities, seasonalFestivityLinks } from "@utils/festivity";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { formatPlacePhrases } from "@utils/string-helpers";
 import type { PlaceFestesLinksProps } from "types/props";
 
 /**
  * On a listing page: the place's festa major hub (only when it is indexable),
- * the festes majors calendar and, from November to Reis, the Nadal pages.
+ * the festes majors calendar and the festivity pages in season (Nadal from
+ * November to Reis, Carnaval from mid-January). The season is checked by date
+ * only: a festivity read is up to ~180 backend requests on a cold cache, too
+ * much for every listing render.
  */
 export default async function PlaceFestesLinks({
   place,
@@ -22,7 +24,7 @@ export default async function PlaceFestesLinks({
 }: PlaceFestesLinksProps) {
   await connection();
   const hasHub = place !== "catalunya" && placeType !== "";
-  // The calendar and Nadal links don't depend on the hub: keep them if it fails.
+  // The calendar and seasonal links don't depend on the hub: keep them if it fails.
   const [locale, hub] = await Promise.all([
     getLocaleSafely(),
     hasHub ? fetchFestaMajorPage(place).catch(() => null) : null,
@@ -49,13 +51,9 @@ export default async function PlaceFestesLinks({
       label: tHub("allFestes"),
       event: "festa_major_hub_click",
     },
-    ...(isInFestivitySeason(madridTodayYmd())
-      ? FESTIVITY_TYPES.map((type) => ({
-          href: festivityPath(type.slug),
-          label: tFestivity(`types.${type.messageKey}.name`),
-          event: "festivity_hub_click",
-        }))
-      : []),
+    ...seasonalFestivityLinks(inSeasonFestivities(madridTodayYmd()), (type) =>
+      tFestivity(`types.${type.messageKey}.name`),
+    ).map((link) => ({ ...link, event: "festivity_hub_click" })),
   ];
 
   return (

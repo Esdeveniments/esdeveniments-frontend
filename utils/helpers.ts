@@ -2,7 +2,6 @@
 
 // Date helpers
 export {
-  isLessThanFiveDays,
   convertTZ,
   getFormattedDate,
   parseTimeToEventTimeDTO,

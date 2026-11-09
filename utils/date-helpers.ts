@@ -17,13 +17,6 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export type { EventTimeLabels };
 
-export const isLessThanFiveDays = (date: Date): boolean => {
-  const currentDate = new Date();
-  const timeDiff = currentDate.getTime() - date.getTime();
-  const dayDiff = timeDiff / (1000 * 3600 * 24);
-  return Math.floor(Math.abs(dayDiff)) < 5;
-};
-
 export const convertTZ = (date: Date | string, tzString: string): Date =>
   new Date(
     (typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {
@@ -198,12 +191,6 @@ export const getFormattedDate = (
     startTime,
     endTime,
     nameDay,
-    startDate: isMultipleDays
-      ? (startDay <= new Date().getDate() &&
-          convertTZ(new Date(), "Europe/Madrid")) ||
-        startDateConverted
-      : startDateConverted,
-    isLessThanFiveDays: isLessThanFiveDays(startDate),
     isMultipleDays,
     duration,
   };
@@ -279,6 +266,25 @@ export const addDaysYmd = (date: string, days: number): string =>
   new Date(Date.parse(`${date}T12:00:00Z`) + days * MS_PER_DAY)
     .toISOString()
     .slice(0, 10);
+
+/** Easter Sunday of a year as "YYYY-MM-DD" (anonymous Gregorian algorithm). */
+export function easterSundayYmd(year: number): string {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
 
 /** Whole days from `from` to `to`, both "YYYY-MM-DD". */
 export const daysBetweenYmd = (from: string, to: string): number =>

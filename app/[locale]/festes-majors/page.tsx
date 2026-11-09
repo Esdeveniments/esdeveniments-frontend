@@ -167,7 +167,7 @@ export default async function Page() {
         )}
 
         <FestaMajorLinkList
-          title={t("nadalTitle")}
+          title={t("festivitiesTitle")}
           links={FESTIVITY_TYPES.map((type) => ({
             href: festivityPath(type.slug),
             label: tFestivity(`types.${type.messageKey}.name`),
