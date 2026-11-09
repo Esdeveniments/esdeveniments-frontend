@@ -88,7 +88,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - `proxy.ts`/`utils/api-gate.ts` gate most internal `/api/*` routes; public GETs (events, news, categories, places, regions, cities) are allowlisted.
 - Mapping: UI `distance` + `lat/lon` → API `radius/lat/lon` via `distanceToRadius` (`types/event.ts`), sent only when set; filter `searchTerm` → API `term`; `byDate` (`avui`, `dema`, `setmana`, `cap-de-setmana`) or explicit `from/to`, not both. Pagination uses `PagedResponseDTO.last`.
 - Place page fallback chain: requested place → its region → latest events overall. Keep this order.
-- Next's `updateTag`/`revalidateTag` don't reach Cloudflare. A mutation that changes public HTML must also purge its Cloudflare tags (see Hosting and deploys); `/api/revalidate` purges `<host>:html` for places/regions/cities/categories and falls back to purge-everything.
+- Next's `updateTag`/`revalidateTag` don't reach Cloudflare. A mutation that changes public HTML must also purge its Cloudflare tags (see Hosting and deploys); `/api/revalidate` purges `<host>:html` for places/regions/cities/categories and falls back to purge-everything; with `events` (sent by the admin dashboard after it edits or deletes an event) it expires and purges only those events' pages.
 - New endpoint: DTO in `types/api/` → `*-external.ts` → `lib/api/*.ts` reader that calls the wrapper (+ cache) → `app/api/` route only if browser code needs it.
 
 ## Filters and URLs

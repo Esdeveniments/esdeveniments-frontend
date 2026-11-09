@@ -106,7 +106,7 @@ describe("purgeCloudflareCache", () => {
   });
 
   it("purges an event's pages in one request, tagged with the site host", async () => {
-    await purgeEventPagesFromCdn([{ slug: "concert", city: undefined, region: { id: 1, name: "Maresme", slug: "maresme" } }]);
+    await purgeEventPagesFromCdn([{ slug: "concert", city: undefined, region: { slug: "maresme" } }]);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(JSON.parse(String(mockFetch.mock.calls[0][1]?.body))).toEqual({

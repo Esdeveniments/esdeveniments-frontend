@@ -1,10 +1,11 @@
 import { timingSafeEqual } from "crypto";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { revalidateTag } from "next/cache";
 import { handleApiError } from "@utils/api-error-handler";
 import type { RevalidatableTag } from "types/cache";
 import type {
   CloudflarePurgeResult,
+  RevalidateEventsResponseDTO,
   RevalidateResponseDTO,
 } from "types/api/revalidate";
 import { clearPlacesCaches } from "@lib/api/places";
@@ -14,12 +15,17 @@ import { clearCitiesCaches } from "@lib/api/cities";
 import {
   getAllHtmlCdnTag,
   purgeCloudflareCache,
+  purgeEventPagesFromCdn,
 } from "@lib/cdn/cloudflare-purge";
+import { expireEventCaches } from "@lib/cache/revalidate-event-pages";
+import { submitEventsToIndexNow } from "@lib/seo/indexnow";
+import { parseRevalidateEvents } from "@lib/validation/revalidate";
 
 /**
  * Whitelist of cache tags that can be revalidated via this endpoint.
  * Only includes tags related to places/regions data (infrequently changing).
- * Does NOT include events/news tags to prevent abuse.
+ * Does NOT include events/news tags to prevent abuse; changed events go in the
+ * body's `events` instead, which expires only those events' pages.
  */
 const ALLOWED_TAGS = [
   "places",
@@ -124,6 +130,31 @@ async function purgeAllHtml(): Promise<CloudflarePurgeResult> {
   };
 }
 
+function revalidateEvents(input: unknown): NextResponse {
+  const events = parseRevalidateEvents(input);
+  if (!events) {
+    return NextResponse.json(
+      { error: "Invalid events: send 1 to 10 events with a slug" },
+      { status: 400 },
+    );
+  }
+  const slugs = [...new Set(events.map((event) => event.slug))];
+  expireEventCaches(slugs);
+  // Next's tags don't reach Cloudflare. after() runs once the expirations
+  // above are committed, so Cloudflare's next fetch gets fresh HTML.
+  after(async () => {
+    await purgeEventPagesFromCdn(events);
+    await submitEventsToIndexNow(slugs);
+  });
+  console.log(`[revalidate] Events: ${slugs.join(", ")}`);
+  const response: RevalidateEventsResponseDTO = {
+    revalidated: true,
+    events: slugs,
+    timestamp: new Date().toISOString(),
+  };
+  return NextResponse.json(response, { status: 200 });
+}
+
 /**
  * POST /api/revalidate
  *
@@ -134,11 +165,16 @@ async function purgeAllHtml(): Promise<CloudflarePurgeResult> {
  * Headers:
  *   x-revalidate-secret: The revalidation secret (required)
  *
- * Body:
+ * Body, one of:
  *   { "tags": ["places", "regions"] }
+ *   { "events": [{ "slug", "city": { "slug" }, "region", "province", "owner": { "username" } }] }
+ *     Events changed outside the portal (the admin dashboard): send the event
+ *     before and after an edit, or before a delete. Expires their pages and
+ *     the event lists, then purges those pages from Cloudflare.
  *
  * Response:
  *   200: { "revalidated": true, "tags": [...], "cloudflare": {...} }
+ *        or { "revalidated": true, "events": [slugs] } (CDN purge runs after the response)
  *   400: { "error": "..." } - Invalid request
  *   401: { "error": "Unauthorized" } - Invalid/missing secret
  *   500: { "error": "..." } - Server error
@@ -175,11 +211,15 @@ export async function POST(request: Request) {
     }
 
     // 2. Parse and validate request body
-    let body: { tags?: unknown };
+    let body: { tags?: unknown; events?: unknown };
     try {
       body = await request.json();
     } catch {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    if (body.events !== undefined) {
+      return revalidateEvents(body.events);
     }
 
     const { tags } = body;
