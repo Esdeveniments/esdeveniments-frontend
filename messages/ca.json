@@ -1537,7 +1537,7 @@
       "monthsTitle": "Per mesos",
       "calendarTitle": "Tot el {year}, mes a mes",
       "regionsTitle": "Per comarques",
-      "nadalTitle": "Per Nadal",
+      "festivitiesTitle": "Festes de temporada",
       "empty": "Encara no tenim festes majors al calendari.",
       "unavailable": "Ara mateix no podem carregar el calendari. Torna-ho a provar d'aquí a una estona.",
       "lead": "Cercaviles, correfocs, gegants, concerts i havaneres: cada poble té la seva festa major, i n'hi ha tot l'any. Busca la del teu poble o descobreix-ne de noves."
@@ -1545,11 +1545,11 @@
     "Festivity": {
       "intro": "{count, plural, one {# poble ja ha anunciat la data.} other {# pobles ja han anunciat la data.}}",
       "upcomingTitle": "Properes dates",
-      "noUpcoming": "Encara no s'ha anunciat cap data. Els pobles les solen publicar a partir de novembre.",
+      "noUpcoming": "Encara no s'ha anunciat cap data. Els pobles les solen publicar a partir de {type, select, carnaval {gener} other {novembre}}.",
       "pendingTitle": "Pendents de confirmar",
-      "pendingIntro": "Aquests pobles en van fer el Nadal passat, però encara no n'han anunciat la data. Perquè et facis una idea, aquí tens la del Nadal passat.",
+      "pendingIntro": "Aquests pobles en van fer {type, select, carnaval {el Carnaval passat} other {el Nadal passat}}, però encara no n'han anunciat la data. Perquè et facis una idea, aquí tens la {type, select, carnaval {del Carnaval passat} other {del Nadal passat}}.",
       "pastTitle": "Ja han passat",
-      "empty": "De moment no tenim cap data. Torna-hi cap a finals de novembre.",
+      "empty": "De moment no tenim cap data. Torna-hi cap a finals de {type, select, carnaval {gener} other {novembre}}.",
       "unavailable": "Ara mateix no podem carregar el calendari. Torna-ho a provar d'aquí a una estona.",
       "moreTitle": "També et pot interessar",
       "catalunyaAgenda": "Agenda de Catalunya",
@@ -1577,6 +1577,14 @@
           "metaDescription": "A quina hora passa la cavalcada de Reis pel teu poble? Horaris de les cavalcades de Reis {year} a Catalunya, poble a poble.",
           "eventLink": "Totes les cavalcades de Reis de Catalunya",
           "lead": "La tarda del 5 de gener, els Reis d'Orient arriben a cada poble amb els patges i les carrosses. Mira a quina hora passa la cavalcada pel teu."
+        },
+        "carnaval": {
+          "name": "Carnaval",
+          "title": "Carnaval {year} a Catalunya",
+          "metaTitle": "Carnaval {year} a Catalunya: rues i dates per pobles",
+          "metaDescription": "Quan és la rua de Carnaval del teu poble? Calendari del Carnaval {year} a Catalunya: rues, arribada del Rei Carnestoltes i enterrament de la sardina, poble a poble.",
+          "eventLink": "Tots els carnavals de Catalunya",
+          "lead": "Disfresses, comparses i carrosses: per Carnaval, el Rei Carnestoltes arriba als pobles i les rues omplen els carrers fins a l'enterrament de la sardina. Mira quan es fa la del teu."
         }
       }
     }

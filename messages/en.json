@@ -1537,7 +1537,7 @@
       "monthsTitle": "By month",
       "calendarTitle": "All of {year}, month by month",
       "regionsTitle": "By comarca",
-      "nadalTitle": "At Christmas",
+      "festivitiesTitle": "Seasonal festivities",
       "empty": "We don't have any festes majors in the calendar yet.",
       "unavailable": "We can't load the calendar right now. Please try again in a while.",
       "lead": "Parades, correfocs, giants, concerts and havaneres: every town has its own festa major, and they run all year round. Find yours or discover new ones."
@@ -1545,11 +1545,11 @@
     "Festivity": {
       "intro": "{count, plural, one {# town has announced its date.} other {# towns have announced their dates.}}",
       "upcomingTitle": "Coming up",
-      "noUpcoming": "No dates announced yet. Towns usually publish them from November.",
+      "noUpcoming": "No dates announced yet. Towns usually publish them from {type, select, carnaval {January} other {November}}.",
       "pendingTitle": "Not confirmed yet",
-      "pendingIntro": "These towns held one last Christmas but haven't announced a date yet. Here's last Christmas's date to give you an idea.",
+      "pendingIntro": "These towns held one last {type, select, carnaval {Carnival} other {Christmas}} but haven't announced a date yet. Here's last {type, select, carnaval {Carnival's} other {Christmas's}} date to give you an idea.",
       "pastTitle": "Already happened",
-      "empty": "No dates yet. Check back in late November.",
+      "empty": "No dates yet. Check back in late {type, select, carnaval {January} other {November}}.",
       "unavailable": "We can't load the calendar right now. Please try again in a while.",
       "moreTitle": "You might also like",
       "catalunyaAgenda": "Events in Catalonia",
@@ -1577,6 +1577,14 @@
           "metaDescription": "What time does the Three Kings parade pass through your town? Times of the {year} Three Kings parades in Catalonia, town by town.",
           "eventLink": "All Three Kings parades in Catalonia",
           "lead": "On the evening of 5 January, the Three Kings arrive in every town with their pages and floats. See what time the parade comes through yours."
+        },
+        "carnaval": {
+          "name": "Carnival",
+          "title": "Carnival in Catalonia {year}",
+          "metaTitle": "Carnival {year} in Catalonia: parades and dates by town",
+          "metaDescription": "When is the Carnival parade in your town? Catalonia's {year} Carnival calendar: parades, the arrival of King Carnestoltes and the burial of the sardine, town by town.",
+          "eventLink": "All Carnival celebrations in Catalonia",
+          "lead": "Costumes, troupes and floats: at Carnival, King Carnestoltes arrives in each town and parades fill the streets until the burial of the sardine. See when yours is."
         }
       }
     }
