@@ -264,7 +264,7 @@ The Nadal pages followed this plan with less machinery: one shared season and ty
 
 ## 8. Measuring and re-running
 
-- **Target:** 3× the 2026 baseline next season, i.e. 42 clicks at position 16.1 on festa major searches and 589 clicks on festa major event pages. Track Search Console clicks by page segment (`/festa-major/`, `/carnaval/`, …).
+- **Target:** 3× the 2026 baseline next season. Baseline: 42 clicks at position 16.1 on festa major searches and 589 clicks on festa major event pages. Target: 126 clicks on festa major searches and 1,767 clicks on festa major hubs and event pages together. Track Search Console clicks by page segment (`/festa-major/`, `/carnaval/`, …).
 - **Search Console:**
   - Request `searchAnalytics/query` on `sc-domain:esdeveniments.cat` with dimension `query`, a `dimensionFilterGroups` filter using `includingRegex` (for example `festa major|carnaval|carnestoltes`), and the header `x-goog-user-project: esdeveniments-3`.
   - Authenticate with the `gcloud` login in section 4 of [`paid-acquisition-research-2026-11.md`](./paid-acquisition-research-2026-11.md).
@@ -274,4 +274,4 @@ The Nadal pages followed this plan with less machinery: one shared season and ty
   - The Google Ads credentials live in the opportunity-radar repo (`scripts/keyword-planner.py`).
   - Wait about 10 s between calls, or it returns 429 `RESOURCE_EXHAUSTED`.
   - Keyword ideas return almost nothing for these seeds; list exact "{festivity} {town}" keywords instead.
-- **Acts per festivity:** `GET /api/events?term=<term>&from=<date>&to=<date>&size=100&page=N` on the public site. Keep only titles that really contain the term, and count acts per `city.slug`.
+- **Acts per festivity:** `GET /api/events?term=<term>&from=<day>&to=<day>&size=50&page=N` on the public site, one day at a time. Paging a longer range misses events (esdeveniments-backend#63), so split it into days as `fetchAllEventPagesExternal` does, and dedupe by event `id`. Keep only titles that really contain the term, and count acts per `city.slug`.
