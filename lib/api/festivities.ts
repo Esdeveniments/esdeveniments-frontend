@@ -22,24 +22,25 @@ import { fetchAllEventPagesExternal } from "./events-external";
 const MAX_REQUESTS_PER_TERM = 30;
 const TIMEOUT_MS = 8000;
 
-/** Every event matching one of the type's terms in a season's window. Throws on any failed request. */
+/**
+ * Every event matching one of the type's terms in a season's window. Throws
+ * on any failed request. A capped read is kept: it can only miss towns.
+ */
 async function fetchSeason(
   slug: FestivitySlug,
   seasonYear: number,
-): Promise<{ events: EventSummaryResponseDTO[]; complete: boolean }> {
+): Promise<EventSummaryResponseDTO[]> {
   const window = seasonWindow(seasonYear);
   // One term at a time: each fetch already runs 4 requests in parallel.
   const events: EventSummaryResponseDTO[] = [];
-  let complete = true;
   for (const term of getFestivityType(slug).terms) {
     const result = await fetchAllEventPagesExternal(
       { term, ...window },
       { maxRequests: MAX_REQUESTS_PER_TERM, timeout: TIMEOUT_MS },
     );
     events.push(...result.events);
-    complete &&= result.complete;
   }
-  return { events, complete };
+  return events;
 }
 
 // Keyed by primitives only: the type's RegExps can't be cache arguments.
@@ -58,13 +59,12 @@ async function getFestivitySeasons(
     fetchSeason(slug, seasonYear - 1),
   ]);
   return {
-    current: selectSeasonEvents(type, current.events, seasonYear).map(
+    current: selectSeasonEvents(type, current, seasonYear).map(
       ({ event }) => event,
     ),
-    previous: selectSeasonEvents(type, previous.events, seasonYear - 1).map(
+    previous: selectSeasonEvents(type, previous, seasonYear - 1).map(
       ({ act }) => act,
     ),
-    complete: current.complete && previous.complete,
   };
 }
 

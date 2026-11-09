@@ -32,8 +32,6 @@ export type FestivityListItem = FestaMajorPlacedAct;
 export interface FestivitySeasons {
   current: EventSummaryResponseDTO[];
   previous: FestivityListItem[];
-  /** False when a page cap cut a term's results short. */
-  complete: boolean;
 }
 
 export interface FestivityPageData {
