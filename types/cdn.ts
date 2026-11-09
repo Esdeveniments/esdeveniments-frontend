@@ -1,5 +1,3 @@
-import type { EventDetailResponseDTO } from "types/api/event";
-
 /** What to purge from Cloudflare's cache (one `purge_cache` request body). */
 export type CloudflarePurgeTarget =
   | { purgeEverything: true }
@@ -26,6 +24,10 @@ export type CdnTagKind = "html" | "home" | "place" | "event" | "user";
  * The event fields that decide which CDN-cached pages show an event: its own
  * page, its city/region/province listings and its owner's profile.
  */
-export type EventCdnScope = Partial<
-  Pick<EventDetailResponseDTO, "slug" | "city" | "region" | "province" | "owner">
->;
+export interface EventCdnScope {
+  slug?: string;
+  city?: { slug?: string } | null;
+  region?: { slug?: string } | null;
+  province?: { slug?: string } | null;
+  owner?: { username?: string } | null;
+}

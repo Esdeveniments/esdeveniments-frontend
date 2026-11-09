@@ -31,3 +31,12 @@ export interface RevalidateResponseDTO {
   /** Warning message for transient errors (e.g., tag cache write failures) */
   warning?: string;
 }
+
+/** Response of POST /api/revalidate with `events` (changed outside the portal). */
+export interface RevalidateEventsResponseDTO {
+  revalidated: true;
+  /** Slugs whose pages and caches were expired */
+  events: string[];
+  /** ISO 8601 timestamp of revalidation */
+  timestamp: string;
+}

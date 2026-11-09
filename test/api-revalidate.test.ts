@@ -1,10 +1,20 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { after } from "next/server";
+import { submitEventsToIndexNow } from "@lib/seo/indexnow";
 
 // Mock next/cache
 vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
 }));
+
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: vi.fn(),
+}));
+
+vi.mock("@lib/seo/indexnow", () => ({ submitEventsToIndexNow: vi.fn() }));
 
 // Mock Sentry
 vi.mock("@sentry/nextjs", () => ({
@@ -364,6 +374,76 @@ describe("/api/revalidate", () => {
       expect(data.revalidated).toBe(true);
       expect(data.cloudflare.purged).toBe(false);
       expect(data.cloudflare.error).toBe("Cloudflare purge failed: 403");
+    });
+  });
+
+  describe("Event revalidation", () => {
+    const secretHeader = { "x-revalidate-secret": "test-revalidate-secret-12345678" };
+    const originalFetch = global.fetch;
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it.each([[[]], [[{ city: { slug: "girona" } }]], ["my-event"]])(
+      "returns 400 for invalid events %j",
+      async (events) => {
+        const { POST } = await import("../app/api/revalidate/route");
+        const response = await POST(
+          createMockRequest({ headers: secretHeader, body: { events } })
+        );
+
+        expect(response.status).toBe(400);
+        expect(revalidateTag).not.toHaveBeenCalled();
+      }
+    );
+
+    it("expires the events, then purges their pages from Cloudflare", async () => {
+      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+      process.env.CLOUDFLARE_ZONE_ID = "zone";
+      process.env.CLOUDFLARE_API_TOKEN = "token";
+      const mockFetch = vi.fn(async () =>
+        new Response(JSON.stringify({ success: true, errors: [] }))
+      );
+      global.fetch = mockFetch as unknown as typeof fetch;
+      vi.resetModules();
+      const { POST } = await import("../app/api/revalidate/route");
+
+      const response = await POST(
+        createMockRequest({
+          headers: secretHeader,
+          body: {
+            events: [
+              { slug: "old-title", city: { slug: "girona" }, owner: { username: "anna" } },
+              { slug: "new-title", city: { slug: "salt" } },
+            ],
+          },
+        })
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.events).toEqual(["old-title", "new-title"]);
+      expect(revalidateTag).toHaveBeenCalledWith("event:old-title", { expire: 0 });
+      expect(revalidateTag).toHaveBeenCalledWith("event:new-title", { expire: 0 });
+      expect(revalidateTag).toHaveBeenCalledWith("events", { expire: 0 });
+      expect(revalidatePath).toHaveBeenCalledWith("/ca/e/new-title");
+      expect(mockFetch).not.toHaveBeenCalled();
+
+      const task = vi.mocked(after).mock.calls[0][0] as () => Promise<void>;
+      await task();
+      const [, init] = mockFetch.mock.calls[0] as unknown as [string, RequestInit];
+      const purged = JSON.parse(String(init.body)).tags;
+      expect(purged).toEqual(
+        expect.arrayContaining([
+          "www.esdeveniments.cat:event:old-title",
+          "www.esdeveniments.cat:event:new-title",
+          "www.esdeveniments.cat:place:girona",
+          "www.esdeveniments.cat:place:salt",
+          "www.esdeveniments.cat:user:anna",
+        ])
+      );
+      expect(submitEventsToIndexNow).toHaveBeenCalledWith(["old-title", "new-title"]);
     });
   });
 });
