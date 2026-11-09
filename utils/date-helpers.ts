@@ -17,13 +17,6 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export type { EventTimeLabels };
 
-export const isLessThanFiveDays = (date: Date): boolean => {
-  const currentDate = new Date();
-  const timeDiff = currentDate.getTime() - date.getTime();
-  const dayDiff = timeDiff / (1000 * 3600 * 24);
-  return Math.floor(Math.abs(dayDiff)) < 5;
-};
-
 export const convertTZ = (date: Date | string, tzString: string): Date =>
   new Date(
     (typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {
@@ -198,12 +191,6 @@ export const getFormattedDate = (
     startTime,
     endTime,
     nameDay,
-    startDate: isMultipleDays
-      ? (startDay <= new Date().getDate() &&
-          convertTZ(new Date(), "Europe/Madrid")) ||
-        startDateConverted
-      : startDateConverted,
-    isLessThanFiveDays: isLessThanFiveDays(startDate),
     isMultipleDays,
     duration,
   };

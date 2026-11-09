@@ -84,6 +84,13 @@ The script exits 0 unless a bot gets a cached PPR shell (`cf=HIT` together with
 count but does not check it. Read every row yourself: `cf` should be `BYPASS`
 or `DYNAMIC`, and `ld` should be at least 1.
 
+**3. Dev overlay (prerender errors).** Under `yarn dev` (after `yarn prebuild`),
+open each touched route and read the issue count in the Next overlay; it
+must be 0. `next build` misses "Blocking Route" errors on dynamic slugs, and
+the overlay shows one error at a time, so reload after each fix. Include a
+cold, empty town for listings (it runs the fallback chain). See LESSONS.md
+"Clock reads in metadata and fallbacks block the prerender".
+
 ## Evidence
 
 Capture the action and the resulting state, not just the final screen.
