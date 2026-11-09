@@ -116,6 +116,18 @@ jobs:
             data/seo-audits/${{ steps.audit.outputs.run_date }}.md
           retention-days: 90
 
+      # The same JSON, unzipped and under a fixed name (the artifact is named
+      # after the file), so the admin dashboard can read the latest audit.
+      - name: Copy the audit JSON for the dashboard
+        run: cp "data/seo-audits/${{ steps.audit.outputs.run_date }}.json" seo-audit.json
+
+      - name: Upload audit JSON for the dashboard
+        uses: actions/upload-artifact@v7
+        with:
+          path: seo-audit.json
+          archive: false
+          retention-days: 90
+
       - name: Create GitHub Issue
         if: ${{ github.event.inputs.skip_issue != 'true' }}
         uses: peter-evans/create-issue-from-file@v6
