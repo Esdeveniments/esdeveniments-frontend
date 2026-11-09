@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
   // directly instead of the server-sitemap/server-place-sitemap indexes.
   const sitemapUrls = [
     `${siteUrl}/server-static-sitemap.xml`,
+    `${siteUrl}/server-festa-major-sitemap.xml`,
     ...sitemapChunkUrls(siteUrl, "sitemap-events", eventChunks),
     ...sitemapChunkUrls(siteUrl, "sitemap-places", placeChunks),
     `${siteUrl}/server-news-sitemap.xml`,

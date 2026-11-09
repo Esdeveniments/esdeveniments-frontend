@@ -17,6 +17,9 @@ import { buildEventStatusLabels, computeTemporalStatus } from "@utils/event-stat
 import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
 import PastEventBanner from "./components/PastEventBanner";
+import FestaMajorHubLink from "@components/ui/festaMajor/FestaMajorHubLink";
+import FestivityHubLink from "@components/ui/festivity/FestivityHubLink";
+import { isFestaMajorTitle } from "@utils/festa-major-name";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import PwaBackButton from "@components/ui/common/PwaBackButton";
 import type {
@@ -497,6 +500,13 @@ async function EventPageBody({
                 {/* Event Header with status pill + social proof */}
                 <div className="flex flex-col gap-1">
                   <EventHeader title={title} temporalStatus={temporalStatus} />
+                  {citySlug && cityName && isFestaMajorTitle(event.title) && (
+                    <FestaMajorHubLink
+                      citySlug={citySlug}
+                      cityName={cityName}
+                    />
+                  )}
+                  <FestivityHubLink title={event.title} />
                   <SocialProofCounter
                     visits={event.visits}
                     interestedLabel={tEvent("interested", { count: event.visits })}

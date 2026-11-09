@@ -158,6 +158,19 @@ export interface FetchEventsParams {
   // Note: API expects 'term' for search queries
 }
 
+/** fetchAllEventPagesExternal: page size, request cap and per-request timeout. */
+export interface AllEventPagesOptions {
+  maxRequests: number;
+  pageSize?: number;
+  timeout?: number;
+}
+
+/** Every event of a query; `complete` is false when events may be missing. */
+export interface AllEventPages {
+  events: EventSummaryResponseDTO[];
+  complete: boolean;
+}
+
 export interface EventFallbackStageOptions {
   enabled?: boolean;
   size?: number;

@@ -119,6 +119,8 @@ Top user paths, how to reach them, and what observable end state proves them.
 | Event detail | click an event card | title, date, JSON-LD `Event` block present |
 | Filters | listing page, then filters | results update client-side via SWR; date and category go in the path, search and distance in the query (see `url-canonicalization`) |
 | News | `GET /noticies/<place>` (e.g. `/noticies/barcelona`) | news cards + JSON-LD present |
+| Festa major hubs | `GET /festes-majors`, `/festa-major/<town>` (e.g. `/festa-major/cardedeu`), `/festa-major/<region>` | towns by month with thumbnails; the town hub has one `fetchPriority="high"` cover plus its `<link rel="preload" as="image">`; JSON-LD `CollectionPage` |
+| Festivity pages | `GET /fires-de-nadal`, `/pessebres-vivents`, `/cavalcades-de-reis` (`data-testid="festivity-page"`) | upcoming event cards, then "Pendents de confirmar" and "Ja han passat" rows with 56 px thumbnails (`w=120`, `loading="lazy"`). Some thumbnails 502 from the image proxy: dead or huge source images (esdeveniments-backend#64), not a bug here. Wait for `load`, not `networkidle` (ads keep polling) |
 
 ## Maintenance
 

@@ -29,6 +29,10 @@ export interface PublishListingEventsInput {
 
 export type EventsMapStatus = "loading" | "ready" | "error";
 
+// Why the map failed to load, sent as `map_load_error` in GA: "init" (no
+// WebGL), "timeout", or "error" (style, tiles or worker).
+export type EventsMapLoadFailure = "init" | "timeout" | "error";
+
 // Read from CSS (text-primary / text-foreground) so the map has no hex copies.
 export interface EventsMapColors {
   primary: string;

@@ -4,7 +4,7 @@ import { EventSummaryResponseDTO } from "types/api/event";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
-import { EXPIRED_EVENT_NOINDEX_DAYS } from "@lib/meta";
+import { EXPIRED_EVENT_NOINDEX_DAYS } from "@utils/constants";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
 import { SITEMAP_EVENTS_PER_CHUNK } from "@utils/constants";
 

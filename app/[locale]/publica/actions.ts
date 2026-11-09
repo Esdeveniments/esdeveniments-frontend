@@ -10,6 +10,7 @@ import type { CreateEventActionResult } from "types/event";
 import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { submitEventsToIndexNow } from "@lib/seo/indexnow";
+import { hubPathsFor } from "@utils/festivity";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
 import { env } from "@utils/misc-helpers";
 import { getValidatedImageFile } from "@utils/image-validation";
@@ -125,7 +126,10 @@ export async function createEventAction(
   // event. after() runs once the action's revalidations are applied.
   after(async () => {
     await purgeEventPagesFromCdn([created]);
-    await submitEventsToIndexNow([created?.slug]);
+    await submitEventsToIndexNow(
+      [created?.slug],
+      hubPathsFor([created]),
+    );
   });
   // Refresh the current request to reflect changes
   refresh();

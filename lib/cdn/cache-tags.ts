@@ -12,10 +12,16 @@
 import { getSiteUrl } from "@config/index";
 import { normalizeHost } from "@utils/host-validation";
 import { shortTagHash } from "@lib/cache/tags";
+import { FESTIVITY_SLUGS } from "@config/festivities";
+import { FESTA_MAJOR_SEGMENT, FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import type { CdnTagKind, EventCdnScope } from "types/cdn";
 
 /** The Catalonia listing shows events from every place. */
 const CATALONIA_PLACE_SLUG = "catalunya";
+const CATALONIA_HUBS: ReadonlySet<string> = new Set([
+  FESTES_MAJORS_SEGMENT,
+  ...FESTIVITY_SLUGS,
+]);
 
 // Cloudflare tags are case-insensitive printable ASCII without spaces or
 // commas, max 1,024 chars per purge. Slugs are already in this charset; any
@@ -79,6 +85,12 @@ export function buildPageCdnTags(
     tags.push(cdnTag(host, "home"));
   } else if (isPlacePath && first) {
     tags.push(cdnTag(host, "place", decodeSegment(first)));
+  } else if (first === FESTA_MAJOR_SEGMENT && second && segments.length === 2) {
+    // /festa-major/<place> lists the place's events.
+    tags.push(cdnTag(host, "place", decodeSegment(second)));
+  } else if (segments.length === 1 && CATALONIA_HUBS.has(first)) {
+    // Catalonia-wide event collections: every event purge clears this tag.
+    tags.push(cdnTag(host, "place", CATALONIA_PLACE_SLUG));
   } else if (segments.length === 2 && first === "e" && second) {
     tags.push(cdnTag(host, "event", decodeSegment(second)));
   } else if (segments.length >= 2 && first === "perfil" && second) {

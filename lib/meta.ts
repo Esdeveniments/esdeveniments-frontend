@@ -19,9 +19,7 @@ import { formatShortDateRange } from "@utils/date-helpers";
 import { isProductionSiteUrl } from "@utils/production-host";
 import { parseDateFromIso } from "@utils/schema-helpers";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
-
-// Days after event end date before we noindex it to save crawl budget
-export const EXPIRED_EVENT_NOINDEX_DAYS = 60;
+import { isExpiredEvent } from "@utils/event-helpers";
 
 // --- Default robots policy for indexable pages ---
 export const DEFAULT_ROBOTS_POLICY = {
@@ -263,13 +261,8 @@ export function generateEventMetadata(
         return { index: false, follow: true };
       }
       // Noindex events that ended more than 60 days ago to save crawl budget.
-      const endDateTime = parseDateFromIso(event.endDate, true);
-      if (endDateTime) {
-        const daysSinceEnd =
-          (Date.now() - endDateTime.getTime()) / (1000 * 60 * 60 * 24);
-        if (daysSinceEnd > EXPIRED_EVENT_NOINDEX_DAYS) {
-          return { index: false, follow: true };
-        }
+      if (isExpiredEvent(parseDateFromIso(event.endDate, true))) {
+        return { index: false, follow: true };
       }
       return DEFAULT_ROBOTS_POLICY;
     })(),

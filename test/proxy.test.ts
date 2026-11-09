@@ -4,6 +4,7 @@ import proxy from "../proxy";
 import { resolvePlaceForProxy } from "../lib/api/places-proxy";
 import { getCategoriesForProxy } from "../lib/api/categories-proxy";
 import { isProfileMissingForProxy } from "../lib/api/profiles-proxy";
+import { getExpiredFestaActTown } from "../lib/api/events-proxy";
 import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -79,6 +80,10 @@ vi.mock("../lib/api/categories-proxy", () => ({
 vi.mock("../lib/api/profiles-proxy", () => ({
   isProfileMissingForProxy: vi.fn().mockResolvedValue(false),
   PROFILE_EXISTS_TTL_MS: 300_000,
+}));
+
+vi.mock("../lib/api/events-proxy", () => ({
+  getExpiredFestaActTown: vi.fn().mockResolvedValue(null),
 }));
 
 describe("proxy", () => {
@@ -532,6 +537,143 @@ describe("proxy", () => {
       await proxy(placeRequest(pathname, method));
 
       expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+    });
+
+    describe("festa major hubs", () => {
+      it("301s an alias, keeping the locale", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({
+          kind: "alias",
+          slug: "la-garriga",
+        });
+
+        await proxy(placeRequest("/es/festa-major/lagarriga"));
+
+        expect(resolvePlaceForProxy).toHaveBeenCalledWith("lagarriga");
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe("/es/festa-major/la-garriga");
+      });
+
+      it("404s a path below a hub without asking the backend", async () => {
+        (NextResponse.rewrite as Mock).mockReturnValue({
+          headers: new Headers(),
+        });
+
+        await proxy(placeRequest("/festa-major/malgrat-de-mar/sant-roc"));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBe(404);
+      });
+
+      it("rewrites an unknown town with a 404 status", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+        (NextResponse.rewrite as Mock).mockReturnValue({
+          headers: new Headers(),
+        });
+
+        await proxy(placeRequest("/festa-major/no-such-place"));
+
+        const [url, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(url.pathname).toBe("/ca/festa-major/no-such-place");
+        expect(init.status).toBe(404);
+      });
+
+      it.each([
+        ["/festa-major", "/festes-majors"],
+        ["/festa-major/catalunya", "/festes-majors"],
+        ["/en/festa-major/catalunya/x", "/en/festes-majors"],
+      ])("301s %s to the calendar", async (pathname, target) => {
+        await proxy(placeRequest(pathname));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe(target);
+      });
+
+      it.each([
+        ["/cardedeu/festes-majors", "/festa-major/cardedeu"],
+        ["/es/cardedeu/festa-major", "/es/festa-major/cardedeu"],
+        ["/catalunya/festes-majors", "/festes-majors"],
+      ])("301s %s to its hub, not the listing", async (pathname, target) => {
+        await proxy(placeRequest(pathname));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe(target);
+      });
+
+      it("301s an expired festa major act to its town hub", async () => {
+        (getExpiredFestaActTown as Mock).mockResolvedValueOnce("cardedeu");
+        const slug =
+          "festa-major-cardedeu-2025-13-de-agost-del-2025-92d1olka3cpd3n80jabfkku9s0";
+
+        await proxy(placeRequest(`/es/e/${slug}`));
+
+        expect(getExpiredFestaActTown).toHaveBeenCalledWith(slug);
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe("/es/festa-major/cardedeu");
+      });
+
+      it.each([
+        ["an act that can't have expired", "/e/festa-major-cardedeu-13-de-agost-del-2099-92d1olka3cpd3n80jabfkku9s0"],
+        ["an event that isn't festa major", "/e/concert-13-de-agost-del-2025-92d1olka3cpd3n80jabfkku9s0"],
+        ["a page below the event", "/e/festa-major-cardedeu-13-de-agost-del-2025-92d1olka3cpd3n80jabfkku9s0/edita"],
+      ])("skips the backend for %s", async (_, pathname) => {
+        (NextResponse.next as Mock).mockReturnValue({ headers: new Headers() });
+
+        await proxy(placeRequest(pathname));
+
+        expect(getExpiredFestaActTown).not.toHaveBeenCalled();
+        expect(NextResponse.redirect).not.toHaveBeenCalled();
+      });
+
+      it("404s an invalid slug without asking the backend", async () => {
+        (NextResponse.rewrite as Mock).mockReturnValue({
+          headers: new Headers(),
+        });
+
+        await proxy(placeRequest("/festa-major/favicon.ico"));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBe(404);
+      });
+
+      it.each([
+        "/festes-majors/valles-oriental",
+        "/es/fires-de-nadal/cardedeu",
+        "/cavalcades-de-reis/avui/concerts",
+      ])("404s %s under a one-page hub", async (pathname) => {
+        (NextResponse.rewrite as Mock).mockReturnValue({
+          headers: new Headers(),
+          cookies: { set: vi.fn() },
+        });
+
+        await proxy(placeRequest(pathname));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBe(404);
+      });
+
+      it.each(["/festes-majors", "/pessebres-vivents"])(
+        "serves %s without a place check",
+        async (pathname) => {
+          (NextResponse.rewrite as Mock).mockReturnValue({
+            headers: new Headers(),
+          });
+
+          await proxy(placeRequest(pathname));
+
+          expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+          const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+          expect(init.status).toBeUndefined();
+        },
+      );
     });
   });
 

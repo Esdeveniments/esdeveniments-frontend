@@ -80,6 +80,10 @@ const madridToday = (): Date => {
   return new Date(`${ymd}T12:00:00Z`);
 };
 
+/** Today's Madrid calendar date as YYYY-MM-DD. */
+export const madridTodayYmd = (): string =>
+  madridToday().toISOString().slice(0, 10);
+
 const addDays = (date: Date, days: number): Date => {
   const result = new Date(date);
   result.setUTCDate(result.getUTCDate() + days);

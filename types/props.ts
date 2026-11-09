@@ -14,7 +14,9 @@ export interface PublishDraftPanelProps {
   state: import("./publish-draft").PublishDraftSessionState;
   onRestore: () => void;
   onRestoreGuest: () => Promise<void>;
-  onDiscard: () => Promise<import("./publish-draft").PublishDraftFlushResult | undefined>;
+  onDiscard: () => Promise<
+    import("./publish-draft").PublishDraftFlushResult | undefined
+  >;
   onRetry: () => void;
   warnings: import("./publish-draft").PublishDraftWarning[];
 }
@@ -91,6 +93,14 @@ import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { AppLocale } from "types/i18n";
+import type {
+  FestaMajorEdition,
+  FestaMajorEditionSummary,
+  FestaMajorFestaLink,
+  FestaMajorPageData,
+  FestaMajorTownSummary,
+} from "types/festa-major";
+import type { FestivityListItem, FestivitySlug } from "types/festivity";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -969,6 +979,12 @@ export interface ExploreNearbyProps {
   placeType: PlaceType;
 }
 
+export interface PlaceFestesLinksProps {
+  place: string;
+  placeType: PlaceType;
+  placeLabel: string;
+}
+
 // Profile owner actions client island props
 export interface ProfileOwnerActionsProps {
   username: string;
@@ -1072,7 +1088,7 @@ export interface EventPageGateProps {
 // Cached body of the event detail page; slots are request-time parts.
 export interface EventPageBodyProps {
   slug: string;
-  locale: import("./i18n").AppLocale;
+  locale: AppLocale;
   mobileSponsorSlot: import("react").ReactNode;
   sidebarSponsorSlot: import("react").ReactNode;
   latestNewsSlot: import("react").ReactNode;
@@ -1188,7 +1204,6 @@ export interface CheckoutReturnTrackerProps {
   params?: Record<string, string>;
 }
 
-
 export interface DocsCodeBlockProps {
   code: string;
 }
@@ -1196,4 +1211,105 @@ export interface DocsCodeBlockProps {
 export interface DocsLinkProps {
   href: string;
   children: ReactNode;
+}
+
+export interface FestaMajorProgrammeProps {
+  /** Anchor for links to the programme. */
+  id?: string;
+  title: string;
+  editions: FestaMajorEdition[];
+  locale: AppLocale;
+  /** Madrid YYYY-MM-DD: acts whose page is gone (actHasPage) aren't linked. */
+  today: string;
+  /** Mute the days before `today`. */
+  mutePast?: boolean;
+  /** Heading for a festa without its own name. */
+  ownFestaLabel: string;
+}
+
+export interface FestaMajorTownListProps {
+  towns: FestaMajorTownSummary[];
+  locale: AppLocale;
+  /** Heading level of the month headings. */
+  headingLevel: "h2" | "h3";
+  /** Lists festes already on under this YYYY-MM-DD date's month, not their start's. */
+  today?: string;
+  /** Gives each month section its `#mes-MM` id (once per page). */
+  monthAnchors?: boolean;
+  /** Adds each town's comarca; off on a comarca's own page. Default true. */
+  showRegion?: boolean;
+}
+
+export interface FestaMajorFestaListProps {
+  festes: FestaMajorFestaLink[];
+  townSlug: string;
+  currentYear: number;
+  locale: AppLocale;
+  title: string;
+  ownFestaLabel: string;
+}
+
+export interface FestaMajorPreviousYearProps {
+  title: string;
+  linkLabel: string;
+  editions: FestaMajorEditionSummary[];
+  townSlug: string;
+  year: number;
+  locale: AppLocale;
+  ownFestaLabel: string;
+}
+
+export interface FestaMajorPageViewProps {
+  data: FestaMajorPageData;
+  locale: AppLocale;
+}
+
+export interface FestaMajorLinkListProps {
+  title: string;
+  links: { href: string; label: string }[];
+}
+
+export interface FestaMajorHubLinkProps {
+  citySlug: string;
+  cityName: string;
+}
+
+export interface HubLinkProps {
+  href: string;
+  label: string;
+  analyticsEventName: string;
+}
+
+export interface FestivityHubLinkProps {
+  /** The event's title: a link per festivity page it belongs to. */
+  title: string;
+}
+
+export interface FestivityActListProps {
+  title: string;
+  intro?: string;
+  items: FestivityListItem[];
+  locale: AppLocale;
+  /** Mutes the rows: events that are over. */
+  muted?: boolean;
+}
+
+export interface FestivityPageViewProps {
+  slug: FestivitySlug;
+}
+
+export interface CardImagePreloadProps {
+  events: ListEvent[];
+}
+
+export interface ImagePreloadProps {
+  image: string;
+  context: ImageSizeContext;
+}
+
+export interface ThumbnailProps {
+  image?: string;
+  /** Names the row; its initial fills the tile when there's no image. */
+  label: string;
+  muted?: boolean;
 }

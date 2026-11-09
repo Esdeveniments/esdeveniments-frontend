@@ -15,8 +15,11 @@ permissions:
 
 env:
   NODE_VERSION: "26"
-  # Single source of truth for CI: set in GitHub Settings > Variables > Repository variables
-  NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api.esdeveniments.cat/api' }}
+  # Production API for the quality and Lighthouse builds. The E2E job overrides
+  # it with preproduction (the `staging` environment's variable, else its
+  # fallback). Keep NEXT_PUBLIC_API_URL out of repository variables: one would
+  # replace that fallback wherever the environment variable isn't visible.
+  NEXT_PUBLIC_API_URL: https://api.esdeveniments.cat/api
 
 jobs:
   quality:
@@ -173,6 +176,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     timeout-minutes: 35
+    # PR E2E tests against the preproduction backend with its own keys, so it
+    # doesn't use the production X-Backend-Key. The `staging` environment
+    # holds those values (as in e2e-integration.yml); `deployment: false` reads
+    # them without logging a deployment per PR. Dependabot runs get only
+    # Dependabot secrets, so those must hold the preproduction keys too.
+    environment:
+      name: staging
+      deployment: false
+    env:
+      NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
 
     steps:
       - name: Checkout repository
