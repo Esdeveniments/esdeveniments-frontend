@@ -490,5 +490,6 @@ export async function buildPlaceByDateEventsPromise({
       ? structuredScripts
       : undefined,
     placeIsExpandable,
+    totalEvents: noEventsFound ? 0 : (eventsResponse?.totalElements ?? 0),
   };
 }

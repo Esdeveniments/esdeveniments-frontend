@@ -912,6 +912,12 @@
       "region": "{place} está {regionIn}.",
       "regionEvents": "Más planes {regionIn}"
     },
+    "DateCountLine": {
+      "today": "{count, plural, one {# actividad hoy} other {# actividades hoy}}.",
+      "tomorrow": "{count, plural, one {# actividad mañana} other {# actividades mañana}}.",
+      "week": "{count, plural, one {# actividad esta semana} other {# actividades esta semana}}.",
+      "weekend": "{count, plural, one {# actividad este fin de semana} other {# actividades este fin de semana}}."
+    },
     "SearchBar": {
       "placeholder": "¿Qué estás buscando?",
       "clear": "Limpiar la búsqueda",

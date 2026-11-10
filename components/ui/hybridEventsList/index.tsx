@@ -9,6 +9,7 @@ import CardServer from "@components/ui/card/CardServer";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
+import CountLine from "./CountLine";
 import HeadingLayout from "./HeadingLayout";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { hasCardImage } from "@utils/event-helpers";
@@ -28,6 +29,7 @@ async function HybridEventsList({
   ssrPageSize,
   categories,
   promotedSlot,
+  countLine,
 }: HybridEventsListProps): Promise<ReactElement> {
   const priorityIndex = initialEvents.findIndex(hasCardImage);
   const showMap = buildEventMapPoints(initialEvents).length >= 2;
@@ -40,7 +42,16 @@ async function HybridEventsList({
       <div data-server-heading>
         <HeadingLayout
           title={pageData.title}
-          subtitle={pageData.subTitle}
+          subtitle={
+            countLine ? (
+              <>
+                <CountLine text={countLine} />
+                {pageData.subTitle}
+              </>
+            ) : (
+              pageData.subTitle
+            )
+          }
           titleClass={titleClass}
           subtitleClass={subtitleClass}
         />

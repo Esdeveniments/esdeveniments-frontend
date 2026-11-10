@@ -663,6 +663,8 @@ export interface HybridEventsListProps {
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // Rendered below the page heading, inside the space kept for the fixed filter bar.
   promotedSlot?: import("react").ReactNode;
+  /** Put before the server subtitle only; the search heading leaves it out. */
+  countLine?: string;
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
@@ -670,6 +672,10 @@ export type HybridEventsListClientProps = Omit<
   HybridEventsListProps,
   "placeTypeLabel" | "noEventsFound"
 >;
+
+export interface CountLineProps {
+  text: string;
+}
 
 export interface SsrListWrapperProps {
   children: ReactNode;
@@ -767,7 +773,7 @@ export interface SearchAwareHeadingProps {
 
 export interface HybridEventsHeadingLayoutProps {
   title: string;
-  subtitle: string;
+  subtitle: ReactNode;
   titleClass: string;
   subtitleClass: string;
   cta?: ReactNode;
