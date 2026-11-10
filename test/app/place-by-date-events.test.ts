@@ -107,6 +107,8 @@ describe("buildPlaceByDateEventsPromise", () => {
     expect(result.ssrPageSize).toBe(30);
     expect(realEvents(result.events)).toHaveLength(30);
     expect(result.serverHasMore).toBe(true);
+    // The count line (#748) shows the place's whole total, not the first page.
+    expect(result.totalEvents).toBe(50);
   });
 
   it("reports no more events when a thin place fits in the first page", async () => {

@@ -920,6 +920,12 @@
       "region": "{place} is {regionIn}.",
       "regionEvents": "More plans {regionIn}"
     },
+    "DateCountLine": {
+      "today": "{count, plural, one {# event today} other {# events today}}.",
+      "tomorrow": "{count, plural, one {# event tomorrow} other {# events tomorrow}}.",
+      "week": "{count, plural, one {# event this week} other {# events this week}}.",
+      "weekend": "{count, plural, one {# event this weekend} other {# events this weekend}}."
+    },
     "SearchBar": {
       "placeholder": "What are you looking for?",
       "clear": "Clear search",

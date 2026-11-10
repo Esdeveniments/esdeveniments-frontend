@@ -935,6 +935,12 @@
       "region": "{place} és {regionIn}.",
       "regionEvents": "Més plans {regionIn}"
     },
+    "DateCountLine": {
+      "today": "{count, plural, one {# activitat avui} other {# activitats avui}}.",
+      "tomorrow": "{count, plural, one {# activitat demà} other {# activitats demà}}.",
+      "week": "{count, plural, one {# activitat aquesta setmana} other {# activitats aquesta setmana}}.",
+      "weekend": "{count, plural, one {# activitat aquest cap de setmana} other {# activitats aquest cap de setmana}}."
+    },
     "SearchBar": {
       "placeholder": "Què estàs buscant?",
       "clear": "Neteja la cerca",

@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import type { ReactElement, ReactNode } from "react";
 import HybridEventsList from "@components/ui/hybridEventsList";
 import List from "@components/ui/list";
+import HeadingLayout from "@components/ui/hybridEventsList/HeadingLayout";
+import SearchAwareHeading from "@components/ui/hybridEventsList/SearchAwareHeading";
 import type { ListEvent } from "types/api/event";
 
 vi.mock("@components/ui/sponsor/SponsorBannerSlot", () => ({ default: () => null }));
@@ -15,10 +17,48 @@ function countLists(node: ReactNode): number {
   return self + countLists(el.props?.children) + countLists(el.props?.fallback);
 }
 
+function findProps(node: ReactNode, type: unknown): Record<string, unknown> | undefined {
+  if (!node || typeof node !== "object") return undefined;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findProps(child, type);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  const el = node as ReactElement<Record<string, unknown> & { children?: ReactNode }>;
+  if (el.type === type) return el.props;
+  return findProps(el.props?.children, type);
+}
+
 describe("HybridEventsList server render", () => {
   it("renders the SSR list once, not again as a Suspense fallback", async () => {
     const events = [{ id: "1", hash: "h", slug: "s", title: "t", imageUrl: null }] as ListEvent[];
     const tree = await HybridEventsList({ initialEvents: events, place: "catalunya" });
     expect(countLists(tree)).toBe(1);
+  });
+
+  it("puts the count line before the server subtitle only, not the search heading", async () => {
+    const events = [{ id: "1", hash: "h", slug: "s", title: "t", imageUrl: null }] as ListEvent[];
+    const pageData = {
+      title: "Què fer avui a Barcelona",
+      subTitle: "Descobreix què fer avui.",
+      metaTitle: "",
+      metaDescription: "",
+      canonical: "",
+      notFoundTitle: "",
+      notFoundDescription: "",
+    };
+    const tree = await HybridEventsList({
+      initialEvents: events,
+      place: "barcelona",
+      date: "avui",
+      pageData,
+      countLine: "103 activitats avui.",
+    });
+    expect(findProps(tree, HeadingLayout)?.subtitle).toBe(
+      "103 activitats avui. Descobreix què fer avui.",
+    );
+    expect(findProps(tree, SearchAwareHeading)?.pageData).toBe(pageData);
   });
 });
