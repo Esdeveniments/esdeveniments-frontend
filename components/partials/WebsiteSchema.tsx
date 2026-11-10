@@ -176,7 +176,6 @@ export default function WebsiteSchema({
     featureList: localized.featureList,
     provider: { "@id": `${siteUrl}#organization` },
     publisher: { "@id": `${siteUrl}#organization` },
-    screenshot: `${siteUrl}/static/images/og-home.jpg`,
     softwareHelp: { "@type": "CreativeWork", url: `${siteUrl}/llms.txt` },
     potentialAction: [
       {

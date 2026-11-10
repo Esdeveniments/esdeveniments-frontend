@@ -49,6 +49,10 @@ pipeline.
 - [`growth/ticketing-viability-2026-11.md`](./growth/ticketing-viability-2026-11.md)
   — per-ticket-fee ticketing for small venues: data, revenue math, outside
   facts, a parked backend build plan and the triggers to revisit it.
+- [`growth/traffic-decline-analysis-2026-11.md`](./growth/traffic-decline-analysis-2026-11.md)
+  — why search clicks fell: town pages and home lost ranking from December
+  2025, causes ruled out (indexing, robots, titles, inventory, GA4/Zaraz),
+  Google updates, AI Mode, the event `noindex` lead and crawl health.
 
 ## Product
 
