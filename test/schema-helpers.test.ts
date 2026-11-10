@@ -83,6 +83,9 @@ describe("generateJsonData", () => {
     ["10 €", 10],
     ["12,50 euros", 12.5],
     ["€8", 8],
+    // Bare amounts, as the publish and edit forms send them.
+    ["0", 0],
+    ["12.5", 12.5],
   ])("emits a numeric EUR offer for %j", (price, expected) => {
     const schema = generateJsonData({
       ...createEvent(),

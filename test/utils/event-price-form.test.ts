@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   formPriceToPayload,
   parsePaidAmount,
-  parseSchemaPrice,
   priceToFormFields,
 } from "@utils/event-price";
 import { eventDtoToFormData, formDataToBackendDTO } from "@utils/form-helpers";
@@ -76,10 +75,5 @@ describe("event price in the publish and edit forms", () => {
   it("drops the stored text once the user picks a price", () => {
     const form = eventDtoToFormData(storedEvent("10 € taquilla · 5 € online"));
     expect(formPriceToPayload({ ...form, priceType: "paid", priceAmount: "8", originalPrice: null })).toBe("8");
-  });
-
-  it("gives Google a number for the bare amounts the form sends", () => {
-    expect(parseSchemaPrice("0")).toBe(0);
-    expect(parseSchemaPrice("12.5")).toBe(12.5);
   });
 });
