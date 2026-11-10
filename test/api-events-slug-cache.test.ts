@@ -88,6 +88,25 @@ describe("/api/events/[slug] cache", () => {
     expect(body1).toEqual(fakeEvent);
     expect(body2).toEqual(fakeEvent);
   });
+
+  it("answers an upstream outage with its status, uncached, never as a 404", async () => {
+    const mocked = fetchEventBySlug as unknown as ReturnType<typeof vi.fn>;
+    mocked
+      .mockRejectedValueOnce(Object.assign(new Error("HTTP 503"), { status: 503 }))
+      .mockResolvedValueOnce({ id: "2", slug: "outage-slug" });
+
+    const { GET } = await import("app/api/events/[slug]/route");
+    const req = new Request("http://localhost/api/events/outage-slug");
+    const ctx = { params: Promise.resolve({ slug: "outage-slug" }) };
+
+    const failed = await GET(req, ctx as any);
+    expect(failed.status).toBe(503);
+    expect(failed.headers.get("Cache-Control")).toBe("no-store");
+
+    // The failure was not cached as "not found": the next request refetches.
+    expect((await GET(req, ctx as any)).status).toBe(200);
+    expect(mocked).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("/api/events/[slug] DELETE cache invalidation", () => {

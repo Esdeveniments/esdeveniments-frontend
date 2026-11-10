@@ -25,4 +25,11 @@ describe("getExpiredFestaActTown", () => {
     // One slug per case: results are cached by slug.
     expect(await getExpiredFestaActTown(name)).toBe(town);
   });
+
+  it("serves the event page as before when the backend fails", async () => {
+    fetchEventBySlug.mockRejectedValue(
+      Object.assign(new Error("timed out"), { status: 504 }),
+    );
+    expect(await getExpiredFestaActTown("backend-down")).toBeNull();
+  });
 });
