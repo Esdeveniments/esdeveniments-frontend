@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ProfileTranslator, TabItem } from "types/props";
+// Static imports: vi.mock is hoisted above them. A dynamic import() inside a
+// test spent ~3 s of its 5 s timeout loading the page and timed out under load.
+import PreferitsPassatsPage, {
+  PastFavoritesSectionOrError,
+} from "@app/[locale]/preferits/passats/page";
+import { getAccessTokenFromCookies } from "@utils/auth-cookies";
+import { getFavoritePeriodCounts } from "@lib/api/favorites-external";
+import FavoritesEventsSection from "@components/partials/FavoritesEventsSection";
 
 vi.mock("@utils/i18n-seo", () => ({
   getLocaleSafely: vi.fn(async () => "ca"),
@@ -25,7 +33,7 @@ vi.mock("@components/partials/FavoritesEventsSection", () => ({
   default: vi.fn(async () => null),
 }));
 
-const tabsItems: TabItem[][] = [];
+const { tabsItems } = vi.hoisted(() => ({ tabsItems: [] as TabItem[][] }));
 
 vi.mock("@components/ui/common/tabs", () => ({
   default: function TabsMock(props: { items: TabItem[] }) {
@@ -59,12 +67,6 @@ beforeEach(() => {
 
 describe("PreferitsPassatsPage", () => {
   it("renders the auth gate for guests", async () => {
-    const { default: PreferitsPassatsPage } = await import(
-      "@app/[locale]/preferits/passats/page"
-    );
-    const { getFavoritePeriodCounts } = await import(
-      "@lib/api/favorites-external"
-    );
     const element = await PreferitsPassatsPage();
     const html = renderToStaticMarkup(element);
     // PastFavoritesAuthGateMock renders null; assert the section/error/empty
@@ -74,10 +76,6 @@ describe("PreferitsPassatsPage", () => {
   });
 
   it("shows both period counts on the past route", async () => {
-    const { getAccessTokenFromCookies } = await import("@utils/auth-cookies");
-    const { getFavoritePeriodCounts } = await import(
-      "@lib/api/favorites-external"
-    );
 
     vi.mocked(getAccessTokenFromCookies).mockResolvedValue("token");
     vi.mocked(getFavoritePeriodCounts).mockResolvedValue({
@@ -85,9 +83,6 @@ describe("PreferitsPassatsPage", () => {
       pastCount: 1,
     });
 
-    const { default: PreferitsPassatsPage } = await import(
-      "@app/[locale]/preferits/passats/page"
-    );
     const element = await PreferitsPassatsPage();
     renderToStaticMarkup(element);
 
@@ -112,14 +107,8 @@ describe("PreferitsPassatsPage", () => {
     // PastFavoritesSectionOrError helper directly and awaits it, the same
     // way the top-level page component itself is tested below, instead of
     // going through the full page + Suspense boundary.
-    const { default: FavoritesEventsSection } = await import(
-      "@components/partials/FavoritesEventsSection"
-    );
     vi.mocked(FavoritesEventsSection).mockResolvedValue(null);
 
-    const { PastFavoritesSectionOrError } = await import(
-      "@app/[locale]/preferits/passats/page"
-    );
     const element = await PastFavoritesSectionOrError({
       accessToken: "token",
       t: ((key: string) => key) as ProfileTranslator,
