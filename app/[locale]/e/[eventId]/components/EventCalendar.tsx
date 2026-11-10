@@ -2,7 +2,7 @@ import { CalendarIcon, ClockIcon, TicketIcon } from "@heroicons/react/24/outline
 import { siteUrl } from "@config/index";
 import { getFormattedDate } from "@utils/helpers";
 import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
-import { getEventPriceText, isFreePriceText } from "@utils/event-price";
+import { formatPriceText, getEventPriceText, isFreePriceText } from "@utils/event-price";
 import { getTranslations } from "next-intl/server";
 import type { EventCalendarProps } from "types/event";
 import AddToCalendar from "@components/ui/addToCalendar";
@@ -51,14 +51,14 @@ export default async function EventCalendar({ event, compact = false }: EventCal
     ? `Del ${formattedStart} al ${formattedEnd}`
     : `${nameDay}, ${formattedStart}`;
 
-  // Shown as written by the backend; a plain "free" is translated. Hidden when unknown.
+  // "Free" (or 0) is translated, a bare amount gets the euro sign, other text shows as written. Hidden when unknown.
   const priceText = getEventPriceText(event.price);
   const priceRow = priceText ? (
     <p className="body-normal flex items-start gap-2 text-foreground" data-testid="event-price">
       <TicketIcon className="w-4 h-4 mt-0.5 flex-shrink-0 text-foreground-strong/70" aria-hidden="true" />
       <span>
         <span className="font-semibold text-foreground-strong">{t("priceLabel")}</span>{" "}
-        {isFreePriceText(priceText) ? t("priceFree") : priceText}
+        {isFreePriceText(priceText) ? t("priceFree") : formatPriceText(priceText, locale)}
       </span>
     </p>
   ) : null;

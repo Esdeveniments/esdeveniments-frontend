@@ -37,6 +37,16 @@ describe("EventCalendar price row", () => {
     expect(screen.getByTestId("event-price").textContent).toBe("Preu: Gratuït");
   });
 
+  it.each([
+    ["0", /^Preu: Gratuït$/],
+    ["10", /^Preu: 10\s€$/],
+    ["12.5", /^Preu: 12,50\s€$/],
+  ])("formats the form amount %j in euros", async (price, expected) => {
+    await renderCalendar(price);
+
+    expect(screen.getByTestId("event-price").textContent).toMatch(expected);
+  });
+
   it.each([null, undefined, "  "])("hides the row when the price is %j", async (price) => {
     await renderCalendar(price);
 

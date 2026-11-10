@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import type { EventFormStep, FormData } from "types/event";
+import type { EventFormProps, EventFormStep, FormData } from "types/event";
 
 vi.mock("@components/ui/common/form", async () => ({
   Input: (await import("@components/ui/common/form/input")).default,
@@ -17,10 +17,12 @@ const empty: FormData = {
   location: "", town: null, region: null, categories: [], url: "",
 };
 
-function Harness({ initial, initialStep = 0 }: { initial: FormData; initialStep?: EventFormStep }) {
+function Harness({ initial, initialStep = 0, onSubmit = vi.fn(), isEditMode }: {
+  initial: FormData; initialStep?: EventFormStep; onSubmit?: EventFormProps["onSubmit"]; isEditMode?: boolean;
+}) {
   const [form, setForm] = useState(initial);
   return (
-    <EventForm form={form} onSubmit={vi.fn()} submitLabel="Publica" cityOptions={[]} categoryOptions={[]}
+    <EventForm form={form} onSubmit={onSubmit} isEditMode={isEditMode} submitLabel="Publica" cityOptions={[]} categoryOptions={[]}
       analyticsContext="publica" initialStep={initialStep}
       handleFormChange={(name, value) => setForm((prev) => ({ ...prev, [name]: value }))}
       handleImageChange={vi.fn()} handleTownChange={vi.fn()} handleCategoriesChange={vi.fn()} imageToUpload={null} />
@@ -74,6 +76,35 @@ describe("EventForm step validation", () => {
       expect(document.activeElement).toBe(document.getElementById("title"));
       expect(sendGoogleEvent).toHaveBeenCalledWith("publish_submit_blocked",
         expect.objectContaining({ reason: "client_validation", source: "publica" }));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("blocks publishing a paid event until it has a valid amount", () => {
+    vi.useFakeTimers();
+    try {
+      const onSubmit = vi.fn();
+      const filled: FormData = {
+        ...empty, title: "Concert", description: "Una descripció", location: "Plaça Major",
+        town: { value: "2", label: "Vic" }, startDate: "2026-11-20T20:00", endDate: "2026-11-20T22:00",
+      };
+      render(<Harness initial={filled} initialStep={2} onSubmit={onSubmit} isEditMode />);
+      act(() => { vi.advanceTimersByTime(300); });
+
+      fireEvent.click(screen.getByLabelText("De pagament"));
+      fireEvent.change(document.getElementById("price-amount")!, { target: { value: "0" } });
+      fireEvent.click(screen.getByTestId("publish-button"));
+
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(screen.getByText(/Escriu un preu més gran que 0/)).toBeInTheDocument();
+      expect(document.activeElement).toBe(document.getElementById("price-amount"));
+
+      fireEvent.change(document.getElementById("price-amount")!, { target: { value: "12,50 €" } });
+      expect(document.getElementById("price-amount")).toHaveValue("12,50");
+      fireEvent.click(screen.getByTestId("publish-button"));
+
+      expect(onSubmit).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }

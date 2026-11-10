@@ -534,6 +534,7 @@ function createE2EEvent(
     endDate: data.endDate,
     endTime: data.endTime,
     location: data.location,
+    price: data.price,
     visits: 0,
     origin: "MANUAL",
     city: fallbackCity,

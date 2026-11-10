@@ -92,6 +92,10 @@ test.describe("Publica -> Event flow (deterministic)", () => {
       path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
     );
 
+    // Optional price: a paid amount typed the Catalan way.
+    await page.getByLabel("De pagament").check();
+    await page.fill("#price-amount", "12,50");
+
     const publishButton = page.getByTestId("publish-button");
     await expect(publishButton).toBeEnabled({ timeout: 20000 });
     await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
@@ -117,5 +121,18 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     await expect(
       page.getByText(venue, { exact: false }).filter({ visible: true }).first(),
     ).toBeVisible();
+
+    // The price shows in euros and reaches the JSON-LD offer as a number.
+    const price = page.getByTestId("event-price").filter({ visible: true }).first();
+    await expect(price).toHaveText(/^Preu: 12,50\s€$/);
+    const offers = await page
+      .locator('script[type="application/ld+json"]')
+      .evaluateAll((scripts) =>
+        scripts
+          .map((script) => JSON.parse(script.textContent || "null"))
+          .flat()
+          .find((item) => item?.["@type"] === "Event")?.offers,
+      );
+    expect(offers).toEqual({ "@type": "Offer", price: 12.5, priceCurrency: "EUR" });
   });
 });

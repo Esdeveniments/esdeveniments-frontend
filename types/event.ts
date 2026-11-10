@@ -37,6 +37,10 @@ const CategoryFormItemSchema = z.union([
   z.number(),
 ]);
 
+// Form choice for the optional price, in display order.
+export const EVENT_PRICE_TYPES = ["free", "paid", "unknown"] as const;
+export type EventPriceType = (typeof EVENT_PRICE_TYPES)[number];
+
 export type EventFormZodLabels = {
   titleRequired: string;
   descriptionRequired: string;
@@ -78,6 +82,9 @@ export const createEventFormSchema = (
     categories: z.array(CategoryFormItemSchema),
     email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
     isAllDay: z.boolean().optional(),
+    priceType: z.enum(EVENT_PRICE_TYPES).optional(),
+    priceAmount: z.string().optional(),
+    originalPrice: z.string().nullable().optional(),
   });
 
 // --- Zod schema for canonical event form data ---
@@ -128,7 +135,14 @@ export interface FormData {
   email?: string; // UI only
   // Flag to mark single-day/all-day events (end time auto-handled)
   isAllDay?: boolean;
+  priceType?: EventPriceType; // missing = "unknown"
+  priceAmount?: string; // user input for "paid", e.g. "10" or "12,50"
+  // Stored price the form can't show as free or one amount (scraper text such
+  // as "10 € taquilla · 5 € online"). Sent back unchanged while the price stays "unknown".
+  originalPrice?: string | null;
 }
+
+export type EventPriceFormFields = Pick<FormData, "priceType" | "priceAmount" | "originalPrice">;
 
 /**
  * Canonical FormData for event creation/edit forms.
