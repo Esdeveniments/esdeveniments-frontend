@@ -1,58 +1,35 @@
 import { siteUrl } from "@config/index";
-import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews } from "@lib/api/news";
 import { buildSitemap } from "@utils/sitemap";
+import { resolveNewsItemPlace } from "@utils/news-helpers";
 import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
 
+// Newest articles across every city (the API sorts by startDate, newest first).
+const ARTICLE_LIMIT = 100;
+
 export async function GET() {
-  // Include news list pages and a rolling window of article detail URLs per hub
-  const listEntries: SitemapField[] = NEWS_HUBS.map((hub) => {
-    const loc = `${siteUrl}/noticies/${hub.slug}`;
-    return {
-      loc,
-      lastmod: new Date().toISOString(),
-      alternates: buildAlternateLinks(loc),
-    };
-  });
+  const res = await fetchNews({ page: 0, size: ARTICLE_LIMIT });
+  const items = Array.isArray(res.content) ? res.content : [];
 
+  // No <lastmod>: the list API has no publish or edit date, and Google ignores
+  // a lastmod that isn't accurate (an article's event dates aren't edit dates).
+  const places = new Set<string>();
   const articleEntries: SitemapField[] = [];
-
-  // Fetch recent articles per hub IN PARALLEL. Sequential awaits blew past the
-  // 60s build-export limit when the API was slow. NEWS_HUBS is small, so an
-  // unbounded Promise.all is fine — add a concurrency cap if it ever grows.
-  const perHub = await Promise.all(
-    NEWS_HUBS.map(async (hub) => {
-      try {
-        const res = await fetchNews({ page: 0, size: 20, place: hub.slug });
-        return (Array.isArray(res.content) ? res.content : []).map((item) => ({
-          hub,
-          item,
-        }));
-      } catch (e) {
-        // Continue gracefully on a hub failure
-        console.error(
-          "server-news-sitemap: error fetching news for hub",
-          hub.slug,
-          e
-        );
-        return [];
-      }
-    })
-  );
-
-  for (const { hub, item } of perHub.flat()) {
-    const lastDate = item.endDate || item.startDate;
-    if (!item.slug || !lastDate) continue;
-    const loc = `${siteUrl}/noticies/${hub.slug}/${item.slug}`;
-    articleEntries.push({
-      loc,
-      lastmod: new Date(lastDate).toISOString(),
-      alternates: buildAlternateLinks(loc),
-    });
+  for (const item of items) {
+    if (!item.slug) continue;
+    const place = resolveNewsItemPlace(item, "catalunya", "").slug;
+    places.add(place);
+    const loc = `${siteUrl}/noticies/${place}/${item.slug}`;
+    articleEntries.push({ loc, alternates: buildAlternateLinks(loc) });
   }
 
-  const xml = buildSitemap([...listEntries, ...articleEntries], {});
+  const placeEntries: SitemapField[] = [...places].map((place) => {
+    const loc = `${siteUrl}/noticies/${place}`;
+    return { loc, alternates: buildAlternateLinks(loc) };
+  });
+
+  const xml = buildSitemap([...placeEntries, ...articleEntries], {});
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
