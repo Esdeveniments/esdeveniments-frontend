@@ -6,6 +6,7 @@ import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { getShareItemId, sendGoogleEvent } from "@utils/analytics";
 import { NativeShareButtonProps } from "../../../../types/props";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
+import { isShareAbort } from "@utils/share-kit";
 
 const NativeShareButton = ({
   title,
@@ -54,6 +55,8 @@ const NativeShareButton = ({
             item_id: getShareItemId(url),
           });
         } catch (error) {
+          // Closing the share sheet is not an error.
+          if (isShareAbort(error)) return;
           console.error("Error sharing:", error);
           sendGoogleEvent("share_error", {
             method: "native",

@@ -399,7 +399,9 @@
         "title": "Impulsa tu evento",
         "description": "Promociónalo para llegar a más gente y salir en los primeros puestos.",
         "promoteButton": "Promocionar",
-        "keepFreeButton": "Ahora no"
+        "keepFreeButton": "Ahora no",
+        "shareTitle": "¡Publicado! Ahora compártelo",
+        "shareDescription": "Envíalo a tus grupos y contactos: es la forma más rápida de llegar a más gente."
       }
     },
     "PlaceFallback": {
@@ -967,6 +969,7 @@
       "toolbarAriaLabel": "Acciones del evento",
       "sidebarCreatedBy": "Publicado por",
       "sidebarViewAllEvents": "Ver todos los eventos",
+      "shareEvent": "Compartir",
       "promoteEvent": "Promocionar",
       "deleteEvent": "Eliminar evento",
       "deleteConfirmTitle": "¿Quieres eliminar este evento?",
@@ -1216,6 +1219,21 @@
       "floating": "Mapa",
       "back": "Todos los lugares",
       "eventsCount": "{count, plural, one {# actividad} other {# actividades}}"
+    },
+    "ShareKit": {
+      "whatsapp": "Enviar por WhatsApp",
+      "facebook": "Compartir en Facebook",
+      "image": "Cartel",
+      "imageTitle": "Crea un cartel para subir a Instagram o al estado de WhatsApp",
+      "imageLoading": "Creando…",
+      "imageError": "No se ha podido crear el cartel. Inténtalo de nuevo.",
+      "more": "Más",
+      "copyLink": "Copiar",
+      "copyLinkLabel": "Copiar enlace",
+      "copied": "Copiado",
+      "copyError": "No se ha podido copiar el enlace. Inténtalo de nuevo.",
+      "modalTitle": "Comparte el evento",
+      "modalDescription": "Cuanta más gente lo sepa, más gente vendrá."
     }
   },
   "Partials": {

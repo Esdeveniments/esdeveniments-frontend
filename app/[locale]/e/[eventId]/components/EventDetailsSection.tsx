@@ -17,7 +17,7 @@ import EventOwnerActions from "./EventOwnerActions";
  * Also renders the owner-only Edit and Promote actions: EventSidebar has them
  * too, but the sidebar is hidden below the lg breakpoint.
  */
-const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
+const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event, shareEvent }) => {
   const t = useTranslations("Components.EventDetailsSection");
 
   const eventUrl = event.url ?? "";
@@ -97,7 +97,9 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
             </div>
           )}
 
-          {owner && <EventOwnerActions ownerId={owner.id} slug={event.slug ?? ""} />}
+          {owner && (
+            <EventOwnerActions ownerId={owner.id} slug={event.slug ?? ""} shareEvent={shareEvent} />
+          )}
         </div>
       </div>
     </div>

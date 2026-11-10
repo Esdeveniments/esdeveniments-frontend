@@ -50,6 +50,7 @@ import EventWeather from "./components/EventWeather";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
+import { buildShareKitEvent } from "@utils/share-kit-event";
 import type { AppLocale } from "types/i18n";
 import { getCategoryLabel } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
@@ -276,6 +277,7 @@ async function EventPageBody({
   const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";
   const primaryCategorySlug = event.categories?.[0]?.slug;
+  const shareEvent = buildShareKitEvent(event, cityName || regionName, locale);
   const clientEvent = {
     id: event.id,
     slug: event.slug,
@@ -286,6 +288,7 @@ async function EventPageBody({
     hasImage: Boolean(event.imageUrl),
     origin: event.origin,
     ownerId: event.owner?.id,
+    share: shareEvent,
   };
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug
@@ -570,7 +573,7 @@ async function EventPageBody({
                 {/* Event details: duration, external link, creator profile link.
                     Mobile only — desktop shows these in EventSidebar to avoid duplication. */}
                 <DetailSectionTracker section="details" className="lg:hidden">
-                  <EventDetailsSection event={event} />
+                  <EventDetailsSection event={event} shareEvent={shareEvent} />
                 </DetailSectionTracker>
 
                 {/* Location — mobile only */}
@@ -659,6 +662,7 @@ async function EventPageBody({
                 event={event}
                 cityName={cityName}
                 regionName={regionName}
+                shareEvent={shareEvent}
                 sponsorSlot={sidebarSponsorSlot}
               />
             </div>
