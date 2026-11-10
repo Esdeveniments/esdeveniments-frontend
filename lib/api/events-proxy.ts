@@ -24,7 +24,7 @@ export async function getExpiredFestaActTown(
   return expiredFestaActTownCache(slug, async (key) => {
     const event = await fetchEventBySlug(String(key), {
       signal: AbortSignal.timeout(PROXY_TIMEOUT_MS),
-    });
+    }).catch(() => null);
     const town = event?.city?.slug;
     // Many events have no end date: fall back to the start, as the events
     // sitemap does.

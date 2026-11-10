@@ -21,25 +21,58 @@ import type { SafeFetchResult } from "types/fetch";
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
 
+// Status for a backend request that never got a response: 504 when it was
+// aborted or timed out, 502 otherwise.
+function transportFailureStatus(error: unknown): number {
+  const name =
+    error instanceof Error || error instanceof DOMException ? error.name : "";
+  return name === "AbortError" || name === "TimeoutError" ? 504 : 502;
+}
+
+// Null only on a backend 404. Anything else (timeout, 5xx, invalid payload)
+// throws an error carrying its HTTP status (`getErrorStatus`): callers cache
+// a null as "not found" and the event page turns it into notFound() +
+// noindex, so an outage must not look like one.
 export async function fetchEventBySlug(
   slug: string,
   { signal }: Pick<RequestInit, "signal"> = {},
 ): Promise<EventDetailResponseDTO | null> {
   const apiUrl = getApiUrl();
+  let response: Response;
   try {
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
-    const response = await fetchWithHmac(
+    response = await fetchWithHmac(
       `${apiUrl}/events/${encodeURIComponent(slug)}`,
       { signal },
     );
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const json = await response.json();
-    return parseEventDetail(json);
   } catch (error) {
-    console.error("Error fetching event by slug (external):", error);
-    return null;
+    console.error("fetchEventBySlug (external): request failed", slug, error);
+    throw Object.assign(
+      new Error(`fetchEventBySlug: request failed for ${slug}`, {
+        cause: error,
+      }),
+      { status: transportFailureStatus(error) },
+    );
   }
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    console.error("fetchEventBySlug (external):", slug, "HTTP", response.status);
+    // A 3xx arrives here (fetchWithHmac uses redirect: "manual"); report it
+    // as a bad gateway so callers only ever see 4xx/5xx statuses.
+    throw Object.assign(
+      new Error(`fetchEventBySlug: HTTP ${response.status} for ${slug}`),
+      { status: response.status >= 400 ? response.status : 502 },
+    );
+  }
+  const event = parseEventDetail(await response.json().catch(() => null));
+  if (!event) {
+    console.error("fetchEventBySlug (external): invalid payload", slug);
+    throw Object.assign(
+      new Error(`fetchEventBySlug: invalid event payload for ${slug}`),
+      { status: 502 },
+    );
+  }
+  return event;
 }
 
 export async function fetchEventsExternal(
@@ -81,14 +114,7 @@ export async function fetchEventsExternalResult(
       error instanceof Error || error instanceof DOMException
         ? error
         : new Error(String(error));
-    return {
-      data: null,
-      error: failure,
-      status:
-        failure.name === "AbortError" || failure.name === "TimeoutError"
-          ? 504
-          : 502,
-    };
+    return { data: null, error: failure, status: transportFailureStatus(error) };
   }
 }
 
