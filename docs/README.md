@@ -49,6 +49,10 @@ pipeline.
 - [`growth/ticketing-viability-2026-11.md`](./growth/ticketing-viability-2026-11.md)
   — per-ticket-fee ticketing for small venues: data, revenue math, outside
   facts, a parked backend build plan and the triggers to revisit it.
+- [`growth/competitor-features-research-2026-11.md`](./growth/competitor-features-research-2026-11.md)
+  — who really ranks (15 Google result pages), search volumes, our Search
+  Console and GA4 numbers, what femturisme, surtdecasa and the editorial
+  guides do, and which features to copy or skip, each with its evidence.
 
 ## Product
 
