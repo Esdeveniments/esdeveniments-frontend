@@ -399,7 +399,9 @@
         "title": "Impulsa el teu esdeveniment",
         "description": "Promociona'l per arribar a més gent i sortir als primers llocs.",
         "promoteButton": "Promociona'l",
-        "keepFreeButton": "Ara no"
+        "keepFreeButton": "Ara no",
+        "shareTitle": "Publicat! Ara fes-lo córrer",
+        "shareDescription": "Envia'l als teus grups i contactes: és la manera més ràpida d'arribar a més gent."
       }
     },
     "PlaceFallback": {
@@ -982,6 +984,7 @@
       "toolbarAriaLabel": "Accions de l'esdeveniment",
       "sidebarCreatedBy": "Publicat per",
       "sidebarViewAllEvents": "Veure tots els esdeveniments",
+      "shareEvent": "Comparteix",
       "promoteEvent": "Promocionar",
       "deleteEvent": "Eliminar esdeveniment",
       "deleteConfirmTitle": "Vols eliminar aquest esdeveniment?",
@@ -1216,6 +1219,21 @@
       "floating": "Mapa",
       "back": "Tots els llocs",
       "eventsCount": "{count, plural, one {# activitat} other {# activitats}}"
+    },
+    "ShareKit": {
+      "whatsapp": "Envia per WhatsApp",
+      "facebook": "Comparteix a Facebook",
+      "image": "Cartell",
+      "imageTitle": "Descarrega un cartell per penjar a Instagram o a l'estat de WhatsApp",
+      "imageLoading": "Creant…",
+      "imageError": "No s'ha pogut crear el cartell. Torna-ho a provar.",
+      "more": "Més",
+      "copyLink": "Copia",
+      "copyLinkLabel": "Copia l'enllaç",
+      "copied": "Copiat",
+      "copyError": "No s'ha pogut copiar l'enllaç. Torna-ho a provar.",
+      "modalTitle": "Comparteix l'esdeveniment",
+      "modalDescription": "Com més gent ho sàpiga, més gent hi vindrà."
     }
   },
   "Partials": {

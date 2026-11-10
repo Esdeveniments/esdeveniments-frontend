@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import { RocketLaunchIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Modal from "@components/ui/common/modal";
 import Button from "@components/ui/common/button";
+import ShareKit from "@components/ui/shareKit/ShareKit";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { PromoteUpsellModalProps } from "types/props";
 
@@ -12,10 +14,14 @@ export default function PromoteUpsellModal({
   open,
   setOpen,
   slug,
+  shareEvent,
 }: PromoteUpsellModalProps) {
   const t = useTranslations("App.Publish.promoteUpsell");
   const tPromote = useTranslations("App.EventPromote");
   const router = useRouter();
+  // Promotion pays the bills, so it comes first; sharing is offered only
+  // after the organiser declines it.
+  const [step, setStep] = useState<"promote" | "share">("promote");
 
   const handlePromote = () => {
     sendGoogleEvent("promote_modal_cta_click", {
@@ -37,8 +43,23 @@ export default function PromoteUpsellModal({
       event_slug: slug,
       source: "event_detail",
     });
-    setOpen(false);
+    sendGoogleEvent("share_kit_shown", { event_slug: slug, source: "post_publish" });
+    setStep("share");
   };
+
+  if (step === "share") {
+    return (
+      <Modal open={open} setOpen={setOpen} title={t("shareTitle")} testId="promote-upsell-modal">
+        <div className="py-4">
+          <ShareKit
+            event={shareEvent}
+            source="post_publish"
+            description={t("shareDescription")}
+          />
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal

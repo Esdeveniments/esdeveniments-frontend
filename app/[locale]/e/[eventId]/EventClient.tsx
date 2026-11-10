@@ -109,6 +109,7 @@ export default function EventClient({
           open={showPromoteUpsell}
           setOpen={handlePromoteUpsellOpenChange}
           slug={slug}
+          shareEvent={event.share}
         />
       )}
 

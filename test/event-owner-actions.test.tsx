@@ -28,22 +28,26 @@ vi.mock("@app/[locale]/e/[eventId]/components/EventDeleteAction", () => ({
   ),
 }));
 
+import { SHARE_KIT_EVENT } from "./fixtures/share-kit-event";
 import EventOwnerActions from "@app/[locale]/e/[eventId]/components/EventOwnerActions";
 
-const ACTION_IDS = ["event-edit-link", "event-promote-link", "event-delete-button"];
+const ACTION_IDS = [
+  "event-share-kit-button",
+  "event-edit-link", "event-promote-link", "event-delete-button"];
 
 describe("EventOwnerActions", () => {
   beforeEach(() => {
     authUser = null;
   });
 
-  it("shows edit, promote and delete to the event's creator", () => {
+  it("shows share, edit, promote and delete to the event's creator", () => {
     authUser = owner;
-    render(<EventOwnerActions ownerId={OWNER_ID} slug="my-event" />);
+    render(<EventOwnerActions ownerId={OWNER_ID} slug="my-event" shareEvent={SHARE_KIT_EVENT} />);
 
     expect(screen.getByTestId("event-edit-link").getAttribute("href")).toBe("/e/my-event/edita");
     expect(screen.getByTestId("event-promote-link").getAttribute("href")).toBe("/e/my-event/promote");
     expect(screen.getByTestId("event-delete-button").dataset.slug).toBe("my-event");
+    expect(screen.getByTestId("event-share-kit-button")).toBeTruthy();
   });
 
   it.each([
@@ -53,7 +57,7 @@ describe("EventOwnerActions", () => {
     ["an event with no owner", owner, undefined],
   ])("renders nothing for %s", (_label, user, ownerId) => {
     authUser = user;
-    render(<EventOwnerActions ownerId={ownerId} slug="my-event" />);
+    render(<EventOwnerActions ownerId={ownerId} slug="my-event" shareEvent={SHARE_KIT_EVENT} />);
 
     for (const id of ACTION_IDS) expect(screen.queryByTestId(id)).toBeNull();
   });

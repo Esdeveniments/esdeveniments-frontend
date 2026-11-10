@@ -399,7 +399,9 @@
         "title": "Boost your event",
         "description": "Promote it to reach more people and appear near the top.",
         "promoteButton": "Promote",
-        "keepFreeButton": "Not now"
+        "keepFreeButton": "Not now",
+        "shareTitle": "It's live! Now spread the word",
+        "shareDescription": "Send it to your groups and contacts: it's the quickest way to reach more people."
       }
     },
     "PlaceFallback": {
@@ -967,6 +969,7 @@
       "toolbarAriaLabel": "Event actions",
       "sidebarCreatedBy": "Published by",
       "sidebarViewAllEvents": "View all events",
+      "shareEvent": "Share",
       "promoteEvent": "Promote",
       "deleteEvent": "Delete event",
       "deleteConfirmTitle": "Delete this event?",
@@ -1216,6 +1219,21 @@
       "floating": "Map",
       "back": "All places",
       "eventsCount": "{count, plural, one {# event} other {# events}}"
+    },
+    "ShareKit": {
+      "whatsapp": "Send on WhatsApp",
+      "facebook": "Share on Facebook",
+      "image": "Poster",
+      "imageTitle": "Download a poster to post on Instagram or your WhatsApp status",
+      "imageLoading": "Creating…",
+      "imageError": "Couldn't create the poster. Please try again.",
+      "more": "More",
+      "copyLink": "Copy",
+      "copyLinkLabel": "Copy link",
+      "copied": "Copied",
+      "copyError": "Couldn't copy the link. Please try again.",
+      "modalTitle": "Share event",
+      "modalDescription": "The more people know, the more will come."
     }
   },
   "Partials": {

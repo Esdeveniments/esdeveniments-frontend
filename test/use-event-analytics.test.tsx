@@ -14,6 +14,7 @@ vi.mock("@utils/analytics", () => ({
   ensureGtag: vi.fn(),
 }));
 
+import { SHARE_KIT_EVENT } from "./fixtures/share-kit-event";
 import { useEventAnalytics } from "@app/[locale]/e/[eventId]/hooks/useEventAnalytics";
 
 function makeEvent(
@@ -28,6 +29,7 @@ function makeEvent(
     hasImage: true,
     origin: "MANUAL",
     endDate: "2999-01-01T00:00:00.000Z",
+    share: SHARE_KIT_EVENT,
     ...overrides,
   };
 }

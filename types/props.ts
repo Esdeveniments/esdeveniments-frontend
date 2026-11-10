@@ -1063,6 +1063,7 @@ export interface EventClientPayload {
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
   ownerId?: string;
+  share: import("./event").ShareKitEvent;
 }
 
 export interface EventClientProps {
@@ -1079,6 +1080,7 @@ export interface CollapsibleDescriptionProps {
 // Event details section (duration + external link)
 export interface EventDetailsSectionProps {
   event: import("./api/event").EventDetailResponseDTO;
+  shareEvent: import("./event").ShareKitEvent;
 }
 
 export interface EventPageGateProps {
@@ -1101,6 +1103,7 @@ export interface EventSidebarProps {
   event: import("./api/event").EventDetailResponseDTO;
   cityName: string;
   regionName: string;
+  shareEvent: import("./event").ShareKitEvent;
   // Rendered outside the cached event body: the sponsor slot is request-time.
   sponsorSlot: import("react").ReactNode;
 }
@@ -1109,6 +1112,7 @@ export interface EventSidebarProps {
 export interface EventOwnerActionsProps {
   ownerId?: string;
   slug: string;
+  shareEvent: import("./event").ShareKitEvent;
 }
 
 export type EventDeleteActionProps = Pick<EventOwnerActionsProps, "slug">;
@@ -1117,6 +1121,19 @@ export interface PromoteUpsellModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   slug: string;
+  shareEvent: import("./event").ShareKitEvent;
+}
+
+export interface ShareKitProps {
+  event: import("./event").ShareKitEvent;
+  source: import("./event").ShareKitSource;
+  /** Short line under the event preview. */
+  description?: string;
+}
+
+export interface ShareKitModalProps extends ShareKitProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
 // /e/[eventId]/promote client page

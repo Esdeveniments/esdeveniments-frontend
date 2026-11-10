@@ -46,6 +46,7 @@ export const CLIENT_COMPONENT_KEYS = [
   "RestaurantPromotionForm",
   "SearchBar",
   "Select",
+  "ShareKit",
   "SocialFollowPopup",
   "TextArea",
   "WhereToEatSection",

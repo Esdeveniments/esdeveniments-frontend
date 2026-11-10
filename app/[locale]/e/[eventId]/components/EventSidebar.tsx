@@ -28,6 +28,7 @@ export default async function EventSidebar({
   event,
   cityName,
   regionName,
+  shareEvent,
   sponsorSlot,
 }: EventSidebarProps) {
   const locale = (await rootLocale()) as AppLocale;
@@ -133,7 +134,11 @@ export default async function EventSidebar({
             )}
 
             {/* Owner-only actions */}
-            <EventOwnerActions ownerId={event.owner?.id} slug={event.slug ?? ""} />
+            <EventOwnerActions
+              ownerId={event.owner?.id}
+              slug={event.slug ?? ""}
+              shareEvent={shareEvent}
+            />
 
           </div>
         </div>

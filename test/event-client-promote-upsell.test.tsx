@@ -88,6 +88,7 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
+import { SHARE_KIT_EVENT } from "./fixtures/share-kit-event";
 import EventClient from "../app/[locale]/e/[eventId]/EventClient";
 
 function buildEvent(): EventClientProps["event"] {
@@ -101,6 +102,7 @@ function buildEvent(): EventClientProps["event"] {
     hasImage: false,
     origin: "MANUAL",
     ownerId: OWNER_ID,
+    share: SHARE_KIT_EVENT,
   };
 }
 

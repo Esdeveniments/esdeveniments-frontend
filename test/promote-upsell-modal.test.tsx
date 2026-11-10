@@ -14,6 +14,18 @@ vi.mock("@i18n/routing", () => ({
 vi.mock("@heroicons/react/24/outline", () => ({
   RocketLaunchIcon: () => <svg data-testid="rocket-icon" />,
   CheckCircleIcon: () => <svg data-testid="check-icon" />,
+  ShareIcon: () => <svg data-testid="share-icon" />,
+}));
+
+const mockSendGoogleEvent = vi.fn();
+vi.mock("@utils/analytics", () => ({
+  sendGoogleEvent: (...args: unknown[]) => mockSendGoogleEvent(...args),
+}));
+
+vi.mock("@components/ui/shareKit/ShareKit", () => ({
+  default: ({ source }: { source: string }) => (
+    <div data-testid="share-kit" data-source={source} />
+  ),
 }));
 
 // Minimal Modal stub mirroring the real component's close/actionButton contract:
@@ -56,6 +68,7 @@ vi.mock("@components/ui/common/modal", () => ({
   },
 }));
 
+import { SHARE_KIT_EVENT } from "./fixtures/share-kit-event";
 import PromoteUpsellModal from "../app/[locale]/e/[eventId]/components/PromoteUpsellModal";
 
 describe("PromoteUpsellModal", () => {
@@ -66,7 +79,7 @@ describe("PromoteUpsellModal", () => {
 
   it("navigates to the promote page without letting Modal's own setOpen(false) fire on the same click", async () => {
     const setOpen = vi.fn();
-    render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" />);
+    render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" shareEvent={SHARE_KIT_EVENT} />);
 
     // Awaited via act: the stub's onClick is async (awaits onActionButtonClick
     // before deciding whether to call setOpen), so asserting setOpen
@@ -84,7 +97,7 @@ describe("PromoteUpsellModal", () => {
   });
 
   it("strips the promote marker from the current URL before navigating to the promote page", async () => {
-    render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" />);
+    render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" shareEvent={SHARE_KIT_EVENT} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("modal-action-button"));
@@ -94,18 +107,28 @@ describe("PromoteUpsellModal", () => {
     expect(window.location.search).toBe("");
   });
 
-  it("closes the modal without navigating on 'keep it free' (already on the event detail page)", () => {
+  it("offers the share kit only after the organiser declines promotion", () => {
     const setOpen = vi.fn();
-    render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" />);
+    render(<PromoteUpsellModal open setOpen={setOpen} slug="my-event" shareEvent={SHARE_KIT_EVENT} />);
+
+    expect(screen.queryByTestId("share-kit")).toBeNull();
 
     fireEvent.click(screen.getByTestId("promote-modal-keep-free"));
 
-    expect(setOpen).toHaveBeenCalledWith(false);
+    expect(screen.getByTestId("share-kit").dataset.source).toBe("post_publish");
+    expect(screen.getByText("App.Publish.promoteUpsell.shareTitle")).toBeInTheDocument();
+    expect(screen.queryByTestId("modal-action-button")).toBeNull();
+    expect(setOpen).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
+    expect(mockSendGoogleEvent).toHaveBeenCalledWith("promote_modal_dismiss", expect.any(Object));
+    expect(mockSendGoogleEvent).toHaveBeenCalledWith("share_kit_shown", {
+      event_slug: "my-event",
+      source: "post_publish",
+    });
   });
 
   it("shows the benefit list reusing the promote page's own copy", () => {
-    render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" />);
+    render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" shareEvent={SHARE_KIT_EVENT} />);
 
     expect(screen.getByText("App.EventPromote.benefit1")).toBeInTheDocument();
     expect(screen.getByText("App.EventPromote.benefit2")).toBeInTheDocument();
