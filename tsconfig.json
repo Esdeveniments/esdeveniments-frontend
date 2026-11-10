@@ -30,7 +30,6 @@
       "@config/*": ["./config/*"],
       "@public/*": ["./public/*"],
       "@i18n/*": ["./i18n/*"],
-      "react": ["./node_modules/@types/react"],
       "types/*": ["./types/*"],
       "lib/*": ["./lib/*"],
       "utils/*": ["./utils/*"],
