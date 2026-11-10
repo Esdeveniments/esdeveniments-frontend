@@ -80,7 +80,37 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Site is up, content is valid, image proxy works, and SSR metadata is present"
+          # Probe one random event page. The homepage is served from the
+          # Cloudflare cache, so it stayed 200 from Aug 18 to Nov 4 2026 while
+          # Googlebot got 5xx and slow answers on event pages (#752). Event
+          # pages usually miss that cache, so this measures the origin. A
+          # missing or failed event still answers 200 (the shell has already
+          # streamed), so also require its Event JSON-LD. No retry: a healthy
+          # origin returns almost no errors, so one is worth a look.
+          event_url=$(curl -s --max-time 20 https://www.esdeveniments.cat/sitemap-events/1.xml \
+            | grep -oE '<loc>[^<]+/e/[^<]+</loc>' | sed 's/<[^>]*>//g' | shuf -n 1 || true)
+          if [ -z "$event_url" ]; then
+            echo "❌ No event URL found in /sitemap-events/1.xml"
+            echo "error_message=No event URL found in /sitemap-events/1.xml" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          # curl's exit code tells a timeout (28) from DNS (6), refused (7) or
+          # TLS (35, 60) failures.
+          result=$(curl -s -o /tmp/event.html --max-time 10 \
+            -w "%{http_code} %{time_total}" "$event_url") || result="000 curl-exit-$?"
+          echo "Event probe: $event_url → $result"
+          if [ "${result%% *}" != "200" ]; then
+            echo "❌ Event page returned ${result} (status, seconds; 10 s limit)"
+            echo "error_message=Event page $event_url returned $result (HTTP status, seconds; 10 s limit) — the origin is failing or slow" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          if ! grep -q '"@type":"Event"' /tmp/event.html; then
+            echo "❌ Event page has no Event JSON-LD (not-found or error page)"
+            echo "error_message=Event page $event_url answered 200 without Event JSON-LD — it rendered the not-found or error page (backend failing?)" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "✅ Site is up, content is valid, image proxy works, SSR metadata is present, and an event page answers"
 
       - name: Send email notification on failure
         if: failure()

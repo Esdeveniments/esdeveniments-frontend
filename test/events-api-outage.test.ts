@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "app/api/events/route";
 import { fetchWithHmac } from "@lib/api/fetch-wrapper";
-import { fetchEventsExternal } from "@lib/api/events-external";
+import { fetchEventBySlug, fetchEventsExternal } from "@lib/api/events-external";
+import { getErrorStatus } from "@utils/error-status";
 import * as Sentry from "@sentry/nextjs";
 
 vi.mock("@lib/api/fetch-wrapper", () => ({ fetchWithHmac: vi.fn() }));
@@ -98,5 +99,35 @@ describe("events API outage distinction", () => {
     expect((await GET(new Request("http://localhost/api/events"))).status).toBe(503);
     expect((await GET(new Request("http://localhost/api/events"))).status).toBe(200);
     expect(fetchWithHmac).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("event detail outage distinction", () => {
+  it("returns null only for a backend 404", async () => {
+    vi.mocked(fetchWithHmac).mockResolvedValue(new Response(null, { status: 404 }));
+
+    expect(await fetchEventBySlug("gone")).toBeNull();
+  });
+
+  it.each([
+    ["HTTP 503", () => new Response(null, { status: 503 }), 503],
+    ["a backend redirect", () => new Response(null, { status: 302, headers: { Location: "/x" } }), 502],
+    ["an HTML 200", () => new Response("<html>unavailable</html>"), 502],
+    ["an invalid payload", () => Response.json({ id: 1 }), 502],
+  ])("throws on %s so it is never cached as not found", async (_name, upstream, status) => {
+    vi.mocked(fetchWithHmac).mockResolvedValue(upstream());
+
+    const error = await fetchEventBySlug("live").catch((e: unknown) => e);
+    expect(getErrorStatus(error)).toBe(status);
+  });
+
+  it.each([
+    [new TypeError("fetch failed"), 502],
+    [new DOMException("timed out", "TimeoutError"), 504],
+  ])("throws on transport failure %s with HTTP %i", async (failure, status) => {
+    vi.mocked(fetchWithHmac).mockRejectedValue(failure);
+
+    const error = await fetchEventBySlug("live").catch((e: unknown) => e);
+    expect(getErrorStatus(error)).toBe(status);
   });
 });

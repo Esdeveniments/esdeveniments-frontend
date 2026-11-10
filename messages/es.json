@@ -675,14 +675,6 @@
       "weekend": "Fin de semana",
       "active": "activo"
     },
-    "Constants": {
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      }
-    },
     "HomePageSkeleton": {
       "seeAlso": "Ver también"
     },

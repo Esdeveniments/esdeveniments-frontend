@@ -10,8 +10,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import ts from "typescript";
 import ca from "../messages/ca.json";
-import es from "../messages/es.json";
-import en from "../messages/en.json";
 import localeLabels from "../i18n/locale-labels.generated.json";
 import localeLists from "../i18n/locale-lists.json";
 
@@ -62,13 +60,11 @@ function importsMessagesJson(file: string): boolean {
 }
 
 describe("i18n/locale-labels.generated.json", () => {
-  it("matches Components.Constants plus the lists in every locale", () => {
-    for (const [locale, messages] of Object.entries({ ca, es, en })) {
-      const l = locale as keyof typeof localeLists.constants;
-      expect(localeLabels.constants[l], STALE).toEqual({
-        ...messages.Components.Constants,
-        ...localeLists.constants[l],
-      });
+  it("matches the constants lists in every locale", () => {
+    for (const locale of ["ca", "es", "en"] as const) {
+      expect(localeLabels.constants[locale], STALE).toEqual(
+        localeLists.constants[locale],
+      );
     }
   });
 

@@ -53,6 +53,10 @@ pipeline.
   — who really ranks (15 Google result pages), search volumes, our Search
   Console and GA4 numbers, what femturisme, surtdecasa and the editorial
   guides do, and which features to copy or skip, each with its evidence.
+- [`growth/traffic-decline-analysis-2026-11.md`](./growth/traffic-decline-analysis-2026-11.md)
+  — why search clicks fell: town pages and home lost ranking from December
+  2025, causes ruled out (indexing, robots, titles, inventory, GA4/Zaraz),
+  Google updates, AI Mode, the event `noindex` lead and crawl health.
 
 ## Product
 

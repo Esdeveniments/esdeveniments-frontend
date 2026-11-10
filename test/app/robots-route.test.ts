@@ -94,6 +94,15 @@ describe("app/robots.txt/route (production-host allowlist)", () => {
     expect(body).toMatch(/User-Agent: \*\nAllow: \//);
     // Google needs JS/CSS to render; only other Next internals are blocked
     expect(body).toContain("Allow: /_next/static/\nDisallow: /_next/\n");
+    // The sign-in entry is linked from every page with its own ?redirect=
+    for (const path of [
+      "/iniciar-sessio",
+      "/ca/iniciar-sessio",
+      "/es/iniciar-sessio",
+      "/en/iniciar-sessio",
+    ]) {
+      expect(body).toContain(`Disallow: ${path}\n`);
+    }
     // Only the sitemap index is declared; it lists every child sitemap
     expect(body.match(/^Sitemap: .*$/gm)).toEqual([
       "Sitemap: https://www.esdeveniments.cat/sitemap.xml",

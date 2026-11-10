@@ -122,19 +122,6 @@ export const DAY_NAMES: string[] = defaultConstantsLabels.days as string[];
 export const MONTH_NAMES: string[] = defaultConstantsLabels.months as string[];
 export const MONTHS_URL: string[] =
   defaultConstantsLabels.monthsUrl as string[];
-export const NEWS_HUBS = [
-  { slug: "mataro", name: defaultConstantsLabels.newsHubs.mataro as string },
-  {
-    slug: "barcelona",
-    name: defaultConstantsLabels.newsHubs.barcelona as string,
-  },
-  {
-    slug: "tarragona",
-    name: defaultConstantsLabels.newsHubs.tarragona as string,
-  },
-  { slug: "lleida", name: defaultConstantsLabels.newsHubs.lleida as string },
-];
-
 export function getDayNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
   return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
     .days as string[];

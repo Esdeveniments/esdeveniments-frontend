@@ -6,6 +6,7 @@ import { fetchEventBySlug as fetchExternalEvent } from "@lib/api/events-external
 import { deleteEventById } from "@lib/api/events";
 import { getCurrentUser } from "@lib/auth/session";
 import { handleApiError } from "@utils/api-error-handler";
+import { getErrorStatus } from "@utils/error-status";
 import { isEventOwner } from "@utils/event-helpers";
 import { eventDetailCache } from "@lib/cache/event-detail-cache";
 import { expireEventCaches } from "@lib/cache/revalidate-event-pages";
@@ -27,9 +28,22 @@ export async function GET(
       },
     });
   } catch (e) {
-    return handleApiError(e, "/api/events/[slug]", {
-      fallbackData: null,
+    // fetchEventBySlug already logged the upstream failure and attached its
+    // status. Answer with it (never 404, so no caller treats an outage as a
+    // deleted event) and skip handleApiError, so a backend outage doesn't
+    // send one Sentry event per request.
+    const status = getErrorStatus(e);
+    if (status !== undefined) {
+      return NextResponse.json(
+        { error: "Event service unavailable" },
+        { status, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    const response = handleApiError(e, "/api/events/[slug]", {
+      errorMessage: "Event service unavailable",
     });
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   }
 }
 
