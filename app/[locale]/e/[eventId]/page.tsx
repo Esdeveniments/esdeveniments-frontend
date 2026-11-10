@@ -3,6 +3,7 @@ import type { JSX } from "react";
 import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
 import { getCachedEventBySlug } from "@lib/api/events";
+import { markEventReadFailed } from "@lib/api/event-outage";
 import { cacheLife, cacheTag } from "next/cache";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import { Metadata } from "next";
@@ -178,10 +179,14 @@ async function EventPageContent({
 }): Promise<JSX.Element> {
   // Cached reader ("use cache" + event tags), so Next can store this page and
   // serve it without a render. It throws on transient API errors: an outage is
-  // never cached as "not found".
+  // never cached as "not found". The error page then goes out as a 200 (the
+  // shell is already sent), so proxy.ts 503s the next event pages for a while.
   const [locale, event] = await Promise.all([
     rootLocale() as Promise<AppLocale>,
-    getCachedEventBySlug(slug),
+    getCachedEventBySlug(slug).catch((error: unknown) => {
+      markEventReadFailed();
+      throw error;
+    }),
   ]);
 
   if (!event) notFound();
