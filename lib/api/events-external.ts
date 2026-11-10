@@ -57,9 +57,11 @@ export async function fetchEventBySlug(
   if (response.status === 404) return null;
   if (!response.ok) {
     console.error("fetchEventBySlug (external):", slug, "HTTP", response.status);
+    // A 3xx arrives here (fetchWithHmac uses redirect: "manual"); report it
+    // as a bad gateway so callers only ever see 4xx/5xx statuses.
     throw Object.assign(
       new Error(`fetchEventBySlug: HTTP ${response.status} for ${slug}`),
-      { status: response.status },
+      { status: response.status >= 400 ? response.status : 502 },
     );
   }
   const event = parseEventDetail(await response.json().catch(() => null));

@@ -111,6 +111,7 @@ describe("event detail outage distinction", () => {
 
   it.each([
     ["HTTP 503", () => new Response(null, { status: 503 }), 503],
+    ["a backend redirect", () => new Response(null, { status: 302, headers: { Location: "/x" } }), 502],
     ["an HTML 200", () => new Response("<html>unavailable</html>"), 502],
     ["an invalid payload", () => Response.json({ id: 1 }), 502],
   ])("throws on %s so it is never cached as not found", async (_name, upstream, status) => {
