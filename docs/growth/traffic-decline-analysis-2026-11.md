@@ -130,7 +130,9 @@ weeks, so whatever happened hit home and town pages specifically.
   3,823 → 5,622 (2025 → 2026). Inventory grew.
 - **Staging duplicate.** `staging.esdeveniments.cat` was indexed in April 2026
   (785 pages, 87 clicks). It now sends `X-Robots-Tag: noindex, nofollow` and
-  `Disallow: /`; its impressions are near zero. Fixed.
+  `Disallow: /`; its impressions are near zero. Whether Google still holds
+  old staging URLs is not verified (`Disallow: /` keeps it from seeing the
+  header).
 - **GA4 "−45.7%" (audit #697).** Measurement, not traffic. The ratio of GA4
   Spain organic Google sessions to Search Console clicks was about 2.0 until
   October 2025, 1.7 in mid-2026, 1.4 in August 2026 and 0.75 in Sep–Oct 2026.
@@ -153,7 +155,8 @@ weeks, so whatever happened hit home and town pages specifically.
 
 ## 6. Open lead: some upcoming events served `noindex` to Google
 
-URL Inspection on 80 random upcoming events (September–November 2026):
+URL Inspection, run 2026-11-10, on 80 random events dated September–November
+2026 (some had already ended by then; the rate is over these 80):
 
 | Result | Count |
 | --- | --- |
@@ -171,8 +174,9 @@ URL Inspection on 80 random upcoming events (September–November 2026):
   reader returned `null`, or the title is "CANCELLED") after metadata has
   already rendered, and Next adds `<meta name="robots" content="noindex">` to
   the streamed 404 (Google fetched these pages as HTTP 200). A short backend
-  404 or a stale cache entry would then be crawled as noindex. Tracked in
-  #750.
+  404, a stale cache entry or a backend timeout (the reader falls back to
+  `null`) would then be crawled as noindex. The timeout fits the slow, 5xx
+  period of Aug 18 – Nov 4 (§6b), but that's not proven. Tracked in #750.
 - Search Console "Excluded by noindex" export (2026-11-10): 22,960 pages on
   2026-08-14 → 43,739 on 2026-11-06. Of the 1,000 most recently crawled
   (Nov 6–8): 776 login URLs (`/iniciar-sessio?redirect=…`, #751), 154 events
@@ -229,6 +233,9 @@ URL Inspection on 80 random upcoming events (September–November 2026):
 - Read #706 around 2026-12-20, then again after the next core update.
 - Watch Crawl stats for a month to confirm the 5xx stay near 0 and the
   crawl rate holds after the Nov 2–4 release (#752).
+- After #753 blocks `/iniciar-sessio` in robots.txt, Google can no longer
+  see its `noindex` header. If Page indexing starts listing login URLs under
+  "Indexed, though blocked by robots.txt", remove the block.
 - Investigate the event noindex (§6, #750) with Sentry/logs on the
   `notFound()` path and the Search Console Page indexing report ("Excluded by
   'noindex' tag" trend).
