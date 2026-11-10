@@ -109,9 +109,9 @@ describe("app/sitemap.xml/route", () => {
     expect(text).toContain("/sitemap-places/3.xml");
     expect(text).not.toContain("/sitemap-places/4.xml");
     expect(text).not.toContain("/sitemap-places/5.xml");
-    // News sitemaps
+    // News sitemap; the Google News one 404s most days, so it isn't listed
     expect(text).toContain("/server-news-sitemap.xml");
-    expect(text).toContain("/server-google-news-sitemap.xml");
+    expect(text).not.toContain("/server-google-news-sitemap.xml");
   });
 
   it("sizes event chunks from the event count, with a fallback", async () => {

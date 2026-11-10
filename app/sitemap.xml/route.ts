@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
     ...sitemapChunkUrls(siteUrl, "sitemap-events", eventChunks),
     ...sitemapChunkUrls(siteUrl, "sitemap-places", placeChunks),
     `${siteUrl}/server-news-sitemap.xml`,
-    `${siteUrl}/server-google-news-sitemap.xml`,
   ];
 
   const xml = buildSitemapIndex(sitemapUrls);

@@ -787,19 +787,32 @@ jobs:
 
       # The festivity hubs read a year of events (~150 backend calls for
       # /festes-majors) into the in-memory "use cache" store, which each deploy
-      # empties: the first visitor, maybe Googlebot, would wait ~40 s. Request
-      # them once here instead. Never fails the deploy, and the step timeout
-      # keeps it inside the job's 25 min after a 15 min Coolify wait.
-      - name: Warm festivity hubs
+      # empties, and the purge above empties Cloudflare: the first request,
+      # maybe Googlebot, would wait 30–40 s. Request every sitemap in
+      # /sitemap.xml once instead: server-festa-major-sitemap.xml reads the
+      # calendar and every festivity in config/festivities.ts, the same cached
+      # reads the hub pages use. A sitemap that isn't 200 is a warning (Search
+      # Console logs it as an error). Never fails the deploy, and the step
+      # timeout keeps it inside the job's 25 min after a 15 min Coolify wait.
+      - name: Warm sitemaps and festivity hubs
         continue-on-error: true
         timeout-minutes: 4
         env:
           SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
-          for path in /festes-majors /fires-de-nadal /pessebres-vivents /cavalcades-de-reis; do
-            curl -s -o /dev/null --max-time 120 \
-              -w "${path}: HTTP %{http_code} in %{time_total}s\n" \
-              "${SITE_URL}${path}" || echo "${path}: not warmed"
+          SITEMAPS=$(curl -s --max-time 30 "${SITE_URL}/sitemap.xml" \
+            | grep -o "<loc>${SITE_URL}/[^<]*</loc>" | sed -e 's/<loc>//' -e 's/<\/loc>//' || true)
+          if [ -z "$SITEMAPS" ]; then
+            echo "::warning::${SITE_URL}/sitemap.xml listed no sitemaps"
+          fi
+          for url in $SITEMAPS; do
+            code=$(curl -s -o /dev/null --max-time 90 \
+              -w "%{http_code} in %{time_total}s" "$url") || code="000"
+            echo "${url#"$SITE_URL"}: HTTP ${code}"
+            case "$code" in
+              200*) ;;
+              *) echo "::warning::${url#"$SITE_URL"} returned HTTP ${code%% *}; Search Console will report the sitemap as an error" ;;
+            esac
           done
 
       - name: Deployment summary

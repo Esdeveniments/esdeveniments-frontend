@@ -929,3 +929,16 @@ town with no events, a past event and a date or category listing. The dev
 "Insights" (instant-navigation hints such as `connection()` or `params` outside
 `<Suspense>`) are speed hints, not errors. Before testing, run `yarn prebuild`:
 without `public/sw.js`, dev renders `/sw.js` as a locale page and crashes.
+
+## A sitemap index must not list a sitemap that can 404
+
+`/sitemap.xml` listed `server-google-news-sitemap.xml`, which answers 404 when
+there is no article from the last 48 hours. News comes out in bursts (none from
+February to November 2026), so it 404'd most days. Search Console logged it as an
+error on the index and stopped reading it after December 2025. Only list
+sitemaps that always answer 200. The deploy's "Warm sitemaps and festivity hubs"
+step requests every listed sitemap and warns on any other status.
+
+Search Console's API shows warnings per child sitemap:
+`GET webmasters/v3/sites/{site}/sitemaps?sitemapIndex=<index URL>`. It gives
+counts only; the reasons are in the Search Console UI.

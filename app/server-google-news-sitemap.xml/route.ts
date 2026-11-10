@@ -9,6 +9,10 @@ import {
 import { buildLocalizedUrls } from "@utils/i18n-seo";
 import { escapeXml } from "@utils/xml-escape";
 
+// Not listed in /sitemap.xml: most days have no article from the last 48 hours,
+// so this 404s, and Search Console logs a listed sitemap that 404s as an error.
+// Submit it in Search Console directly if the site joins Google News.
+
 function buildNewsSitemap(
   items: {
     loc: string;
