@@ -12,15 +12,20 @@ vi.mock("@lib/api/news", () => ({
   fetchNewsBySlug: vi.fn(),
 }));
 
-const article = (slug: string, city: string) =>
-  ({ slug, city: { slug: city } }) as NewsSummaryResponseDTO;
+const today = new Date().toISOString().slice(0, 10);
+const article = (slug: string, city: string, endDate = today) =>
+  ({ slug, endDate, city: { slug: city } }) as NewsSummaryResponseDTO;
 
 const list = (content: NewsSummaryResponseDTO[]) =>
   ({ content }) as Awaited<ReturnType<typeof fetchNews>>;
 
 beforeEach(() => {
   vi.mocked(fetchNews).mockResolvedValue(
-    list([article("cap-de-setmana-girona", "girona"), article("setmana-mataro", "mataro")]),
+    list([
+      article("cap-de-setmana-girona", "girona"),
+      article("setmana-mataro", "mataro"),
+      article("febrer-mataro", "mataro", "2026-02-08"),
+    ]),
   );
 });
 
@@ -66,5 +71,7 @@ describe("server-google-news-sitemap.xml", () => {
 
     expect(xml).toContain("/noticies/girona/cap-de-setmana-girona</loc>");
     expect(xml).not.toContain("setmana-mataro");
+    // An article whose dates ended long ago isn't fetched at all
+    expect(fetchNewsBySlug).not.toHaveBeenCalledWith("febrer-mataro");
   });
 });

@@ -61,13 +61,16 @@ export async function GET() {
     publicationDate: string;
   }[] = [];
 
-  // The API sorts by startDate, newest first, and articles are written just
-  // before the dates they cover, so anything from the last 48 hours is in the
-  // first page. The list has no publish time, so each detail is fetched,
-  // DETAIL_CONCURRENCY at a time to stay gentle on the API.
+  // The list has no publish time, so recent articles' details are fetched,
+  // DETAIL_CONCURRENCY at a time to stay gentle on the API. Articles are
+  // written before the dates they cover, so one whose endDate is over 48 hours
+  // old can't be recent and is skipped without a detail fetch. endDate is a
+  // date, parsed as its first moment, so allow one more day.
   const DETAIL_CONCURRENCY = 5;
-  const res = await fetchNews({ page: 0, size: 20 });
-  const items = Array.isArray(res.content) ? res.content : [];
+  const res = await fetchNews({ page: 0, size: 100 });
+  const items = (Array.isArray(res.content) ? res.content : []).filter(
+    (item) => Date.parse(item.endDate) >= now - cutoffMs - 24 * 60 * 60 * 1000
+  );
   const resolved: {
     item: (typeof items)[number];
     detail: Awaited<ReturnType<typeof fetchNewsBySlug>>;
