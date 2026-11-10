@@ -137,6 +137,18 @@ describe("EventClient promote upsell wiring", () => {
     });
   });
 
+  it("keeps the modal open after the share step strips the marker from the URL", async () => {
+    mockSearchParams = new URLSearchParams("promote=1");
+    const { rerender } = render(<EventClient event={buildEvent()} />);
+    await screen.findByTestId("promote-upsell-modal");
+
+    mockSearchParams = new URLSearchParams();
+    rerender(<EventClient event={buildEvent()} />);
+
+    expect(screen.getByTestId("promote-upsell-modal")).toBeInTheDocument();
+    expect(mockSendGoogleEvent).toHaveBeenCalledTimes(1);
+  });
+
   it("strips only the promote marker on close, preserving other query params", async () => {
     mockSearchParams = new URLSearchParams("promote=1&edit_suggested=true");
     render(<EventClient event={buildEvent()} />);

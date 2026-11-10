@@ -50,9 +50,14 @@ export default function EventClient({
   // /publica redirects here with ?promote=1 after a publish. Anyone can add
   // the marker to a URL, so show the upsell only once ownership is confirmed.
   const isOwner = Boolean(event.ownerId) && user?.id === event.ownerId;
+  // Latched: the share step strips ?promote=1 from the URL (so a reload
+  // doesn't reopen the upsell), and the modal must stay open after that.
+  const [promoteUpsellStarted, setPromoteUpsellStarted] = useState(false);
+  if (!promoteUpsellStarted && isOwner && searchParams.get("promote") === "1") {
+    setPromoteUpsellStarted(true);
+  }
   const [promoteDismissed, setPromoteDismissed] = useState(false);
-  const showPromoteUpsell =
-    searchParams.get("promote") === "1" && isOwner && !promoteDismissed;
+  const showPromoteUpsell = promoteUpsellStarted && !promoteDismissed;
 
   const hasFiredPromoteShownRef = useRef(false);
   useEffect(() => {

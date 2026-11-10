@@ -104,14 +104,20 @@ export default function ShareKit({ event, source, description }: ShareKitProps) 
       const file = new File([blob], `${event.slug || "esdeveniment"}.png`, { type: "image/png" });
       // Phones get the share sheet (Instagram, WhatsApp); desktops a download.
       const isTouch = window.matchMedia("(pointer: coarse)").matches;
+      let handled = false;
       if (isTouch && navigator.canShare?.({ files: [file] })) {
         try {
           await navigator.share({ files: [file], title: event.title });
           track("image_share");
+          handled = true;
         } catch (error) {
-          if (!isShareAbort(error)) throw error;
+          // A slow render can expire the tap's user activation
+          // (NotAllowedError); the poster exists, so download it instead.
+          handled = isShareAbort(error);
+          if (!handled) trackError("image_share", error);
         }
-      } else {
+      }
+      if (!handled) {
         const href = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = href;

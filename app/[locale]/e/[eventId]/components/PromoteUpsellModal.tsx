@@ -10,6 +10,15 @@ import ShareKit from "@components/ui/shareKit/ShareKit";
 import { sendGoogleEvent } from "@utils/analytics";
 import type { PromoteUpsellModalProps } from "types/props";
 
+// Drops ?promote=1 so a back navigation or a tab reload doesn't reopen the
+// modal. A raw history replace, because router.replace + router.push can
+// cancel each other. EventClient keeps the modal open once it has shown.
+function removePromoteMarker() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("promote");
+  window.history.replaceState(window.history.state, "", url);
+}
+
 export default function PromoteUpsellModal({
   open,
   setOpen,
@@ -28,11 +37,7 @@ export default function PromoteUpsellModal({
       event_slug: slug,
       source: "event_detail",
     });
-    // Drop ?promote=1 so browser-back doesn't reopen the modal. A raw history
-    // replace, because router.replace + router.push can cancel each other.
-    const url = new URL(window.location.href);
-    url.searchParams.delete("promote");
-    window.history.replaceState(window.history.state, "", url);
+    removePromoteMarker();
     router.push(`/e/${slug}/promote`);
     // false stops Modal's own setOpen(false) from racing this navigation.
     return false;
@@ -44,6 +49,9 @@ export default function PromoteUpsellModal({
       source: "event_detail",
     });
     sendGoogleEvent("share_kit_shown", { event_slug: slug, source: "post_publish" });
+    // The organiser may switch to WhatsApp and the phone may reload the tab;
+    // without the marker they come back to the event, not to the promote step.
+    removePromoteMarker();
     setStep("share");
   };
 

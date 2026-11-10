@@ -116,6 +116,8 @@ describe("PromoteUpsellModal", () => {
     fireEvent.click(screen.getByTestId("promote-modal-keep-free"));
 
     expect(screen.getByTestId("share-kit").dataset.source).toBe("post_publish");
+    // A tab reload while the organiser is in WhatsApp must not reopen the upsell.
+    expect(window.location.search).toBe("");
     expect(screen.getByText("App.Publish.promoteUpsell.shareTitle")).toBeInTheDocument();
     expect(screen.queryByTestId("modal-action-button")).toBeNull();
     expect(setOpen).not.toHaveBeenCalled();

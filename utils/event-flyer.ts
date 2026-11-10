@@ -43,14 +43,15 @@ function drawImage(
   ctx.drawImage(img, (WIDTH - w) / 2, (IMAGE_HEIGHT - h) / 2, w, h);
 }
 
-function wrapLines(
-  ctx: CanvasRenderingContext2D,
+export function wrapLines(
+  ctx: Pick<CanvasRenderingContext2D, "measureText">,
   text: string,
   maxWidth: number,
   maxLines: number,
 ): string[] {
   const lines: string[] = [];
   let line = "";
+  let truncated = false;
   for (const word of text.split(/\s+/).filter(Boolean)) {
     const candidate = line ? `${line} ${word}` : word;
     if (ctx.measureText(candidate).width <= maxWidth || !line) {
@@ -59,10 +60,14 @@ function wrapLines(
     }
     lines.push(line);
     line = word;
-    if (lines.length === maxLines) break;
+    // Words are left over only when the loop stops here.
+    if (lines.length === maxLines) {
+      truncated = true;
+      break;
+    }
   }
   if (lines.length < maxLines && line) lines.push(line);
-  if (lines.length === maxLines && lines.join(" ").length < text.trim().length) {
+  if (truncated) {
     let last = lines[maxLines - 1];
     while (last && ctx.measureText(`${last}…`).width > maxWidth) {
       last = last.slice(0, -1);
