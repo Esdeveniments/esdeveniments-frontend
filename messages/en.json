@@ -134,7 +134,8 @@
       "writesBody": "Sponsor checkout (POST /api/sponsors/checkout) accepts an Idempotency-Key header. Send a new key (a UUID) for each attempt and reuse it when you retry: only one checkout session is created.",
       "githubTitle": "GitHub and contact",
       "githubBody": "Follow the project on GitHub, or email us if you need more data or a higher limit.",
-      "githubLink": "Esdeveniments.cat on GitHub"
+      "githubLink": "Esdeveniments.cat on GitHub",
+      "githubRepoLink": "Website source code (with AGENTS.md)"
     },
     "DevelopersMcp": {
       "metaTitle": "Esdeveniments.cat MCP server",
@@ -398,7 +399,9 @@
         "title": "Boost your event",
         "description": "Promote it to reach more people and appear near the top.",
         "promoteButton": "Promote",
-        "keepFreeButton": "Not now"
+        "keepFreeButton": "Not now",
+        "shareTitle": "It's live! Now spread the word",
+        "shareDescription": "Send it to your groups and contacts: it's the quickest way to reach more people."
       }
     },
     "PlaceFallback": {
@@ -508,6 +511,9 @@
       "cancelPage": {
         "title": "Payment cancelled"
       }
+    },
+    "EventMeta": {
+      "descriptionSuffix": "See times, directions and more things to do nearby."
     }
   },
   "Components": {
@@ -562,7 +568,8 @@
         "terms": "Terms",
         "privacy": "Privacy",
         "login": "Log in",
-        "developers": "Developer API"
+        "developers": "Developer API",
+        "festesMajors": "Festes majors"
       },
       "sponsorCta": {
         "title": "Make your local business visible",
@@ -935,7 +942,8 @@
       "primaryCta": "Check the agenda",
       "secondaryCta": "or explore this category",
       "srStatus": "Status: {label}.",
-      "timeWindow": "this week"
+      "timeWindow": "this week",
+      "nextEdition": "Next edition: {dates}"
     },
     "EventPage": {
       "sponsored": "Sponsored content",
@@ -961,6 +969,7 @@
       "toolbarAriaLabel": "Event actions",
       "sidebarCreatedBy": "Published by",
       "sidebarViewAllEvents": "View all events",
+      "shareEvent": "Share",
       "promoteEvent": "Promote",
       "deleteEvent": "Delete event",
       "deleteConfirmTitle": "Delete this event?",
@@ -1186,6 +1195,52 @@
     },
     "Modal": {
       "close": "Close"
+    },
+    "FestaMajorLink": {
+      "label": "Full Festa Major {placeOf} programme"
+    },
+    "PlaceFestesLinks": {
+      "title": "Festivals and traditions",
+      "town": "Festa Major {placeOf}",
+      "region": "Festes majors {placeOf}"
+    },
+    "EventsMap": {
+      "loading": "Loading map…",
+      "error": "The map couldn't load.",
+      "retry": "Try again",
+      "placeOption": "{label} ({count})",
+      "showAll": "Show all",
+      "legendVenue": "Exact venue",
+      "legendTown": "Town (venue to be confirmed)",
+      "mappedCount": "{count, plural, one {# event on the map} other {# events on the map}}",
+      "hint": "Tap a point to see its events.",
+      "townNote": "We don't know the exact venue of these events yet: the point marks the town.",
+      "empty": "No events to show on the map.",
+      "mapTitle": "Events map",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "findMyLocation": "My location",
+      "locationNotAvailable": "Location not available",
+      "toggleAttribution": "Show credits",
+      "close": "Close map",
+      "floating": "Map",
+      "back": "All places",
+      "eventsCount": "{count, plural, one {# event} other {# events}}"
+    },
+    "ShareKit": {
+      "whatsapp": "Send on WhatsApp",
+      "facebook": "Share on Facebook",
+      "image": "Poster",
+      "imageTitle": "Create a poster to post on Instagram or your WhatsApp status",
+      "imageLoading": "Creating…",
+      "imageError": "Couldn't create the poster. Please try again.",
+      "more": "More",
+      "copyLink": "Copy",
+      "copyLinkLabel": "Copy link",
+      "copied": "Copied",
+      "copyError": "Couldn't copy the link. Please try again.",
+      "modalTitle": "Share event",
+      "modalDescription": "The more people know, the more will come."
     }
   },
   "Partials": {
@@ -1299,28 +1354,28 @@
         "avui": {
           "title": "{titleSuffix} today {label}",
           "subTitle": "Discover {titleSuffix} today {label} with updated proposals and last-minute plans. Concerts, theatre, exhibitions, and activities for all tastes.",
-          "metaTitle": "{categoryTitle} today {label} - Cultural agenda and plans",
+          "metaTitle": "{categoryTitle} today {label} ({dates})",
           "metaDescription": "{context} today {label}.",
           "notFound": "Sorry, there are no {noEventsText} today {label}. Check the proposals for tomorrow, this weekend, or other nearby locations to find plans that might interest you."
         },
         "dema": {
           "title": "{titleSuffix} tomorrow {label}",
           "subTitle": "Discover {titleSuffix} tomorrow {label} and plan ahead. Music, theatre, exhibitions, and activities to enjoy local culture.",
-          "metaTitle": "{categoryTitle} tomorrow {label} - Cultural ideas and plans",
+          "metaTitle": "{categoryTitle} tomorrow {label} ({dates})",
           "metaDescription": "{context} tomorrow {label}.",
           "notFound": "Sorry, there are no {noEventsText} tomorrow {label}. Check the agenda for today, this week, or other nearby destinations to find new proposals."
         },
         "setmana": {
           "title": "{titleSuffix} this week {label}",
           "subTitle": "Discover {titleSuffix} this week {label} and fill your agenda with plans. Concerts, workshops, exhibitions, and family activities.",
-          "metaTitle": "{categoryTitle} this week {label} - Complete agenda",
+          "metaTitle": "{categoryTitle} this week {label} ({dates})",
           "metaDescription": "{context} this week {label}.",
           "notFound": "Sorry, there are no {noEventsText} this week {label}. Try changing the date or explore other municipalities and nearby counties to find new plans."
         },
         "capDeSetmana": {
           "title": "{titleSuffix} this weekend {label}",
           "subTitle": "Discover {titleSuffix} this weekend {label} with going-out plans and family-friendly options. Concerts, activities with kids, and local culture.",
-          "metaTitle": "{categoryTitle} this weekend {label} - Plans and agenda",
+          "metaTitle": "{categoryTitle} this weekend {label} ({dates})",
           "metaDescription": "{context} this weekend {label}.",
           "notFound": "Sorry, there are no {noEventsText} this weekend {label}. Check other dates, explore activities across Catalonia, or adjust your search filters to discover more options."
         }
@@ -1362,28 +1417,28 @@
         "avui": {
           "title": "What to do today {label}",
           "subTitle": "Discover what to do today {label}: concerts, theatre, exhibitions, family activities, and last-minute plans. Check the updated agenda and don't miss out.",
-          "metaTitle": "What to do today {label} - Plans and agenda",
+          "metaTitle": "What to do today {label} ({dates})",
           "metaDescription": "Discover what to do today {label}: concerts, festivals, activities with kids, free plans, and more near you.",
           "notFound": "Sorry, there are no events today {label}. Check the proposals for tomorrow, this week, or other nearby locations to find plans that suit you."
         },
         "dema": {
           "title": "What to do tomorrow {label}",
           "subTitle": "Plan ahead and discover what to do tomorrow {label}: concerts, theatre, exhibitions, and family activities. Check the agenda and choose your plan.",
-          "metaTitle": "What to do tomorrow {label} - Ideas and plans",
+          "metaTitle": "What to do tomorrow {label} ({dates})",
           "metaDescription": "Discover what to do tomorrow {label}: concerts, activities for kids, exhibitions, routes, and other plans for your day.",
           "notFound": "Sorry, there are no events tomorrow {label}. Check the agenda for today, this week, or other nearby destinations to discover new options."
         },
         "setmana": {
           "title": "Weekly agenda {label}",
           "subTitle": "Discover what to do this week {label} with concerts, workshops, exhibitions, and family activities. Plans and culture to fill the week.",
-          "metaTitle": "What to do this week {label} - Complete agenda",
+          "metaTitle": "What to do this week {label} ({dates})",
           "metaDescription": "Explore the cultural agenda this week {label}: concerts, exhibitions, theatre, family activities, routes, and other plans.",
           "notFound": "Sorry, there are no events this week {label}. Try other weeks, change category, or explore nearby towns to find more activities."
         },
         "capDeSetmana": {
           "title": "What to do this weekend {label}",
           "subTitle": "Discover what to do this weekend {label}: concerts, festivals, family activities, and outdoor plans. Find your plan and make the most of the weekend.",
-          "metaTitle": "What to do this weekend {label} - Plans and agenda",
+          "metaTitle": "What to do this weekend {label} ({dates})",
           "metaDescription": "The best plans for this weekend {label}: concerts, popular festivals, activities with kids, routes, and other cultural ideas.",
           "notFound": "Sorry, there are no events this weekend {label}. Check other dates, explore different categories, or see what's on in the rest of Catalonia to find new plans."
         }
@@ -1392,7 +1447,7 @@
         "avui": {
           "title": "What to do today in Catalonia",
           "subTitle": "Discover things to do today in Catalonia with an up-to-date cultural agenda. Concerts, theatre, exhibitions, family activities, and free plans across the region.",
-          "metaTitle": "What to do today in Catalonia - Plans and agenda",
+          "metaTitle": "What to do today in Catalonia ({dates})",
           "metaDescription": "Discover what to do today in Catalonia: concerts, festivals, activities with kids, free plans, and last-minute ideas.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Sorry, there are no events today in Catalonia. Check the proposals for tomorrow, this week, or filter by location and category to find other interesting plans."
@@ -1400,7 +1455,7 @@
         "dema": {
           "title": "What to do tomorrow in Catalonia",
           "subTitle": "Discover things to do tomorrow in Catalonia and plan your free time ahead. Concerts, theatre, exhibitions, family activities, and ideas for every taste.",
-          "metaTitle": "What to do tomorrow in Catalonia - Ideas and plans",
+          "metaTitle": "What to do tomorrow in Catalonia ({dates})",
           "metaDescription": "Discover what to do tomorrow in Catalonia. Find concerts, family activities, routes, festivals, and other plans to organize your free time in advance.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Sorry, there are no events tomorrow in Catalonia. Check the agenda for today, this week, or explore different categories and locations to discover new options."
@@ -1408,7 +1463,7 @@
         "setmana": {
           "title": "Weekly agenda in Catalonia",
           "subTitle": "Discover things to do this week in Catalonia with cultural plans for every day. Concerts, exhibitions, theatre, festivals, and family activities.",
-          "metaTitle": "What to do this week in Catalonia - Complete agenda",
+          "metaTitle": "What to do this week in Catalonia ({dates})",
           "metaDescription": "This week's cultural agenda in Catalonia: concerts, festivals, routes, workshops, activities for kids, and other leisure plans.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Sorry, there are no events this week in Catalonia. Try changing the week, adjusting filters, or exploring different areas to find more activities."
@@ -1416,7 +1471,7 @@
         "capDeSetmana": {
           "title": "What to do this weekend in Catalonia",
           "subTitle": "Discover things to do this weekend in Catalonia and make the most of it. Concerts, local festivals, kids activities, routes, and getaways.",
-          "metaTitle": "What to do this weekend in Catalonia - Plans and agenda",
+          "metaTitle": "What to do this weekend in Catalonia ({dates})",
           "metaDescription": "The best plans for this weekend in Catalonia: concerts, popular festivals, activities for kids, routes, and other leisure ideas.",
           "canonical": "{siteUrl}/{byDate}",
           "notFound": "Sorry, there are no events this weekend in Catalonia. Check other weekends, explore different categories, or focus on a specific area to find new ideas."
@@ -1467,6 +1522,96 @@
       "aboutBody": "This archive contains a compilation of cultural events {placeIn} organized chronologically. Each month includes theatre, music, art, festivals, and other cultural activities.",
       "quickNavTitle": "Quick navigation",
       "quickNavBody": "Use the links to jump directly to a specific month. The most recent years appear first for easier browsing."
+    },
+    "FestaMajor": {
+      "metaTitle": "Festa Major {placeOf} {year}: programme and events",
+      "metaDescription": "The {year} Festa Major {placeOf} programme: dates, times and every event, day by day. Concerts, parades, correfocs and much more.",
+      "regionMetaTitle": "Festes majors {placeOf} {year}: calendar by town",
+      "regionMetaDescription": "The {year} calendar of the festes majors {placeOf}: when each town celebrates, with every programme.",
+      "title": "Festa Major {placeOf} {year}",
+      "regionTitle": "Festes majors {placeOf} {year}",
+      "breadcrumbHome": "Home",
+      "breadcrumbAll": "Festes majors",
+      "intro": "{count, plural, one {# event} other {# events}} in the programme.",
+      "introDates": "Dates: {dates}.",
+      "introFestaDates": "{festa} dates: {dates}.",
+      "previousYearNotice": "We don't have the full {currentYear} programme yet. Here is the {year} one.",
+      "announcedTitle": "{year} events",
+      "empty": "We don't have any Festa Major {placeOf} events yet. Once the programme is out, you'll find it here.",
+      "unavailable": "We can't load the programme right now. Please try again in a while.",
+      "festesTitle": "Festes majors {placeOf}",
+      "ownFesta": "Festa Major {placeOf}",
+      "programmeTitle": "Programme",
+      "previousTitle": "{year} festa major",
+      "previousLink": "See the events",
+      "moreTitle": "You might also like",
+      "townAgenda": "The agenda {placeOf}",
+      "regionHub": "Festes majors {placeOf}",
+      "allFestes": "Catalonia festes majors calendar",
+      "regionIntro": "{count, plural, one {# town} other {# towns}} with a festa major in the calendar.",
+      "regionEmpty": "We don't have any festes majors {placeOf} yet.",
+      "lastYearDates": "{year} dates"
+    },
+    "FestesMajors": {
+      "metaTitle": "Catalonia festes majors {year}: calendar by month",
+      "metaDescription": "When is each town's festa major? The {year} calendar of Catalonia's festes majors, month by month, with every programme.",
+      "title": "Catalonia festes majors {year}",
+      "intro": "{count, plural, one {# town} other {# towns}}, sorted by date. If a town hasn't published its {year} programme yet, we show last year's dates.",
+      "weekendTitle": "This weekend",
+      "nowTitle": "On now and coming up",
+      "monthsTitle": "By month",
+      "calendarTitle": "All of {year}, month by month",
+      "regionsTitle": "By comarca",
+      "festivitiesTitle": "Seasonal festivities",
+      "empty": "We don't have any festes majors in the calendar yet.",
+      "unavailable": "We can't load the calendar right now. Please try again in a while.",
+      "lead": "Parades, correfocs, giants, concerts and havaneres: every town has its own festa major, and they run all year round. Find yours or discover new ones."
+    },
+    "Festivity": {
+      "intro": "{count, plural, one {# town has announced its date.} other {# towns have announced their dates.}}",
+      "upcomingTitle": "Coming up",
+      "noUpcoming": "No dates announced yet. Towns usually publish them from {type, select, carnaval {January} other {November}}.",
+      "pendingTitle": "Not confirmed yet",
+      "pendingIntro": "These towns held one last {type, select, carnaval {Carnival} other {Christmas}} but haven't announced a date yet. Here's last {type, select, carnaval {Carnival's} other {Christmas's}} date to give you an idea.",
+      "pastTitle": "Already happened",
+      "empty": "No dates yet. Check back in late {type, select, carnaval {January} other {November}}.",
+      "unavailable": "We can't load the calendar right now. Please try again in a while.",
+      "moreTitle": "You might also like",
+      "catalunyaAgenda": "Events in Catalonia",
+      "types": {
+        "firesDeNadal": {
+          "name": "Christmas markets",
+          "title": "Christmas markets in Catalonia {year}",
+          "metaTitle": "Christmas markets in Catalonia {year}: dates by town",
+          "metaDescription": "When is each town's Christmas market? Calendar of Christmas and Santa Llúcia fairs and markets in Catalonia in {year}, with dates and times.",
+          "eventLink": "All Christmas markets in Catalonia",
+          "lead": "Tiós, caganers, nativity figures and turró: from late November until Epiphany, Christmas and Santa Llúcia fairs fill the town squares. See when your town's fair is on."
+        },
+        "pessebresVivents": {
+          "name": "Living nativity scenes",
+          "title": "Living nativity scenes in Catalonia {year}",
+          "metaTitle": "Living nativity scenes in Catalonia {year}: dates and times",
+          "metaDescription": "Where and when are the living nativity scenes this Christmas? Calendar of living nativity scenes in Catalonia {year}, with dates, times and towns.",
+          "eventLink": "All living nativity scenes in Catalonia",
+          "lead": "Real actors, animals and sets: at Christmas, many Catalan towns stage the birth of Jesus. Here are the days and times of every living nativity scene."
+        },
+        "cavalcadesDeReis": {
+          "name": "Three Kings parades",
+          "title": "Three Kings parades in Catalonia {year}",
+          "metaTitle": "Three Kings parades in Catalonia {year}: times by town",
+          "metaDescription": "What time does the Three Kings parade pass through your town? Times of the {year} Three Kings parades in Catalonia, town by town.",
+          "eventLink": "All Three Kings parades in Catalonia",
+          "lead": "On the evening of 5 January, the Three Kings arrive in every town with their pages and floats. See what time the parade comes through yours."
+        },
+        "carnaval": {
+          "name": "Carnival",
+          "title": "Carnival in Catalonia {year}",
+          "metaTitle": "Carnival {year} in Catalonia: parades and dates by town",
+          "metaDescription": "When is the Carnival parade in your town? Catalonia's {year} Carnival calendar: parades, the arrival of King Carnestoltes and the burial of the sardine, town by town.",
+          "eventLink": "All Carnival celebrations in Catalonia",
+          "lead": "Costumes, troupes and floats: at Carnival, King Carnestoltes arrives in each town and parades fill the streets until the burial of the sardine. See when yours is."
+        }
+      }
     }
   },
   "Utils": {

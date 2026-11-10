@@ -11,10 +11,10 @@ const HOST = "www.esdeveniments.cat";
 function event(overrides: EventCdnScope = {}): EventCdnScope {
   return {
     slug: "concert-girona",
-    city: { id: 1, name: "Girona", slug: "girona", latitude: 0, longitude: 0, postalCode: "17001", rssFeed: null, enabled: true },
-    region: { id: 2, name: "Gironès", slug: "girones" },
-    province: { id: 3, name: "Girona", slug: "girona" },
-    owner: { id: "u1", displayName: "Anna", username: "anna", avatarUrl: null, verified: false, role: "USER" },
+    city: { slug: "girona" },
+    region: { slug: "girones" },
+    province: { slug: "girona" },
+    owner: { username: "anna" },
     ...overrides,
   };
 }
@@ -25,6 +25,21 @@ describe("buildPageCdnTags", () => {
       `${HOST}:html`,
       `${HOST}:place:barcelona`,
     ]);
+  });
+
+  it("tags festa major hubs with their place, so event purges reach them", () => {
+    expect(
+      buildPageCdnTags(HOST, ["festa-major", "malgrat-de-mar"], false),
+    ).toEqual([`${HOST}:html`, `${HOST}:place:malgrat-de-mar`]);
+  });
+
+  it("tags the Catalonia-wide hubs like /catalunya", () => {
+    for (const first of ["festes-majors", "fires-de-nadal"]) {
+      expect(buildPageCdnTags(HOST, [first], false)).toEqual([
+        `${HOST}:html`,
+        `${HOST}:place:catalunya`,
+      ]);
+    }
   });
 
   it("tags the home page", () => {
@@ -69,8 +84,8 @@ describe("buildEventCdnTags", () => {
     const before = event();
     const after = event({
       slug: "concert-figueres",
-      city: { ...event().city!, slug: "figueres" },
-      region: { id: 4, name: "Alt Empordà", slug: "alt-emporda" },
+      city: { slug: "figueres" },
+      region: { slug: "alt-emporda" },
     });
 
     const tags = buildEventCdnTags(HOST, [before, after]);

@@ -1,23 +1,13 @@
-export type ChangeFreq =
-  | "always"
-  | "hourly"
-  | "daily"
-  | "weekly"
-  | "monthly"
-  | "yearly"
-  | "never";
-
+// Only <image:loc>: Google dropped image:title/caption support in 2022.
 export interface SitemapImage {
   loc: string;
-  title: string;
 }
 
+// No changefreq/priority: Google ignores both, so they only add bytes.
 export interface SitemapField {
   loc: string;
   /** Omitted when there is no real modification date (Google ignores or distrusts guessed values). */
   lastmod?: string;
-  changefreq: ChangeFreq;
-  priority: number;
   image?: SitemapImage;
   alternates?: Record<string, string>; // hreflang -> URL (include x-default)
 }

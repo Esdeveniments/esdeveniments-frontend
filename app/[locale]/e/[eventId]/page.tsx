@@ -17,6 +17,10 @@ import { buildEventStatusLabels, computeTemporalStatus } from "@utils/event-stat
 import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
 import PastEventBanner from "./components/PastEventBanner";
+import FestaMajorHubLink from "@components/ui/festaMajor/FestaMajorHubLink";
+import FestivityHubLink from "@components/ui/festivity/FestivityHubLink";
+import NextEditionLink from "./components/NextEditionLink";
+import { isFestaMajorTitle } from "@utils/festa-major-name";
 import Breadcrumbs from "@components/ui/common/Breadcrumbs";
 import PwaBackButton from "@components/ui/common/PwaBackButton";
 import type {
@@ -46,6 +50,7 @@ import EventWeather from "./components/EventWeather";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
+import { buildShareKitEvent } from "@utils/share-kit-event";
 import type { AppLocale } from "types/i18n";
 import { getCategoryLabel } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
@@ -64,20 +69,45 @@ import EventDetailsSection from "./components/EventDetailsSection";
 // This allows us to use ssr: false in Next.js 16 (required for client components)
 import LazyRestaurantPromotion from "./components/LazyRestaurantPromotion";
 
+// The body and the metadata both read the current time (status pill, 60-day
+// noindex), which a stored page may only do inside "use cache". A 15 minute
+// life keeps them fresh; Cloudflare already serves copies up to 90 minutes old.
+const EVENT_PAGE_CACHE_LIFE = { stale: 300, revalidate: 900, expire: 86400 };
+
 export async function generateMetadata(props: PageProps<"/[locale]/e/[eventId]">): Promise<Metadata> {
   const slug = (await props.params).eventId;
   const locale = (await rootLocale()) as AppLocale;
+  return buildEventPageMetadata(slug, locale);
+}
+
+async function buildEventPageMetadata(
+  slug: string,
+  locale: AppLocale,
+): Promise<Metadata> {
+  "use cache";
+  cacheLife(EVENT_PAGE_CACHE_LIFE);
+  cacheTag(eventsTag, eventTag(slug));
+  setRequestLocale(locale);
   // Use the request-independent reader: reading headers() here would make
   // metadata dynamic under cacheComponents and mismatch the prerendered shell.
   // It throws on transient errors — let that bubble so Next does NOT cache a
   // broken render (SWR keeps the previous good page); only a genuine 404
   // returns null below.
-  const event = await getCachedEventBySlug(slug);
+  const [event, t] = await Promise.all([
+    getCachedEventBySlug(slug),
+    getTranslations({ locale, namespace: "App.EventMeta" }),
+  ]);
   if (!event) return { title: "No event found" };
   // Use canonical derived from the event itself to avoid locking old slugs
   // into metadata; this helps consolidate SEO to the canonical path.
   const canonical = `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`;
-  return generateEventMetadata(event, canonical, undefined, locale);
+  return generateEventMetadata(
+    event,
+    canonical,
+    undefined,
+    locale,
+    t("descriptionSuffix"),
+  );
 }
 
 // Main page component: returns a Suspense boundary straight away so the shell
@@ -172,7 +202,11 @@ async function EventPageContent({
     getPlaceContext(event, locale);
   // Request-time parts stay outside the cached body and pass through it.
   const sponsorSlot = (
-    <SponsorBannerSlot place={primaryPlaceSlug} fallbackPlaces={sponsorFallbackPlaces} />
+    <SponsorBannerSlot
+      key="sponsor"
+      place={primaryPlaceSlug}
+      fallbackPlaces={sponsorFallbackPlaces}
+    />
   );
 
   return (
@@ -182,7 +216,7 @@ async function EventPageContent({
       mobileSponsorSlot={sponsorSlot}
       sidebarSponsorSlot={sponsorSlot}
       latestNewsSlot={
-        <Suspense fallback={null}>
+        <Suspense key="latest-news" fallback={null}>
           <LatestNewsSection
             placeSlug={primaryPlaceSlug}
             placeLabel={placeLabel}
@@ -192,6 +226,20 @@ async function EventPageContent({
             sourceEventSlug={event.slug || slug}
           />
         </Suspense>
+      }
+      nextEditionSlot={
+        event.city?.slug ? (
+          <Suspense key="next-edition" fallback={null}>
+            <NextEditionLink
+              event={{
+                slug: event.slug || slug,
+                title: event.title,
+                citySlug: event.city.slug,
+              }}
+              locale={locale}
+            />
+          </Suspense>
+        ) : null
       }
     />
   );
@@ -203,12 +251,10 @@ async function EventPageBody({
   mobileSponsorSlot,
   sidebarSponsorSlot,
   latestNewsSlot,
+  nextEditionSlot,
 }: EventPageBodyProps): Promise<JSX.Element | null> {
   "use cache";
-  // The body reads the current time (status pill, date copy), which a stored
-  // page may only do inside "use cache". A 15 minute life keeps the status
-  // fresh; Cloudflare already serves copies up to 90 minutes old.
-  cacheLife({ stale: 300, revalidate: 900, expire: 86400 });
+  cacheLife(EVENT_PAGE_CACHE_LIFE);
   cacheTag(eventsTag, eventTag(slug));
   // The layout's setRequestLocale does not reach inside "use cache"; without
   // it next-intl falls back to reading headers(), which is not allowed here.
@@ -231,6 +277,7 @@ async function EventPageBody({
   const eventSlug = event?.slug ?? "";
   const title = event?.title ?? "";
   const primaryCategorySlug = event.categories?.[0]?.slug;
+  const shareEvent = buildShareKitEvent(event, cityName || regionName, locale);
   const clientEvent = {
     id: event.id,
     slug: event.slug,
@@ -241,6 +288,7 @@ async function EventPageBody({
     hasImage: Boolean(event.imageUrl),
     origin: event.origin,
     ownerId: event.owner?.id,
+    share: shareEvent,
   };
   const explorePlaceHref = `/${primaryPlaceSlug}`;
   const exploreCategoryHref = primaryCategorySlug
@@ -488,6 +536,14 @@ async function EventPageBody({
                 {/* Event Header with status pill + social proof */}
                 <div className="flex flex-col gap-1">
                   <EventHeader title={title} temporalStatus={temporalStatus} />
+                  {citySlug && cityName && isFestaMajorTitle(event.title) && (
+                    <FestaMajorHubLink
+                      citySlug={citySlug}
+                      cityName={cityName}
+                    />
+                  )}
+                  <FestivityHubLink title={event.title} />
+                  {temporalStatus.state === "past" && nextEditionSlot}
                   <SocialProofCounter
                     visits={event.visits}
                     interestedLabel={tEvent("interested", { count: event.visits })}
@@ -517,7 +573,7 @@ async function EventPageBody({
                 {/* Event details: duration, external link, creator profile link.
                     Mobile only — desktop shows these in EventSidebar to avoid duplication. */}
                 <DetailSectionTracker section="details" className="lg:hidden">
-                  <EventDetailsSection event={event} />
+                  <EventDetailsSection event={event} shareEvent={shareEvent} />
                 </DetailSectionTracker>
 
                 {/* Location — mobile only */}
@@ -606,6 +662,7 @@ async function EventPageBody({
                 event={event}
                 cityName={cityName}
                 regionName={regionName}
+                shareEvent={shareEvent}
                 sponsorSlot={sidebarSponsorSlot}
               />
             </div>

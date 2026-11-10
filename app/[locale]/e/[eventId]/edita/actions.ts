@@ -13,6 +13,8 @@ import { eventsTag, eventTag } from "@lib/cache/tags";
 import { deleteEventDetailCache } from "@lib/cache/event-detail-cache";
 import { revalidateEventPages } from "@lib/cache/revalidate-event-pages";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
+import { submitEventsToIndexNow } from "@lib/seo/indexnow";
+import { hubPathsFor } from "@utils/festivity";
 import { getCurrentUser } from "@lib/auth/session";
 import { isEventOwner } from "@utils/event-helpers";
 import { getValidatedImageFile } from "@utils/image-validation";
@@ -86,7 +88,13 @@ export async function editEvent(
   revalidateEventPages([updatedEvent.slug, slug]);
   // Next's tags don't reach Cloudflare: purge the pages that showed the old
   // event and those that show the new one (place or slug may have changed).
-  after(() => purgeEventPagesFromCdn([event, updatedEvent]));
+  after(async () => {
+    await purgeEventPagesFromCdn([event, updatedEvent]);
+    await submitEventsToIndexNow(
+      [slug, updatedEvent.slug],
+      hubPathsFor([event, updatedEvent]),
+    );
+  });
   // Refresh the current request to reflect changes
   refresh();
 

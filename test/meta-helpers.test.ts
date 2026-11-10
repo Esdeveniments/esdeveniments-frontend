@@ -175,4 +175,82 @@ describe("meta helpers (black-box)", () => {
       expect(meta.robots).toEqual({ index: false, follow: true });
     });
   });
+
+  describe("generateEventMetadata title and description", () => {
+    const event = {
+      id: "1",
+      title: "6a Castaween",
+      description: "",
+      location: "La Llagosta",
+      city: { id: 1, name: "La Llagosta", slug: "la-llagosta" },
+      region: { id: 2, name: "Vallès Oriental", slug: "valles-oriental" },
+      startDate: "2099-10-07",
+      endDate: "2099-10-07",
+      slug: "6a-castaween",
+      categories: [],
+      visits: 0,
+      relatedEvents: [],
+      weather: null,
+    } as any;
+
+    it("adds a localized date so ca/es/en titles differ", () => {
+      expect(generateEventMetadata(event, undefined, undefined, "ca").title).toBe(
+        "6a Castaween | 7 d’octubre | La Llagosta | Vallès Oriental",
+      );
+      expect(generateEventMetadata(event, undefined, undefined, "es").title).toBe(
+        "6a Castaween | 7 de octubre | La Llagosta | Vallès Oriental",
+      );
+      expect(generateEventMetadata(event, undefined, undefined, "en").title).toBe(
+        "6a Castaween | October 7 | La Llagosta | Vallès Oriental",
+      );
+    });
+
+    it("keeps the date when a long title must be cut", () => {
+      const title = generateEventMetadata(
+        { ...event, title: "Festa Major 2099: taller de creació d'objectes amb llana i altres" },
+        undefined,
+        undefined,
+        "ca",
+      ).title as string;
+      expect(title.endsWith("| 7 d’octubre")).toBe(true);
+      expect(title.length).toBeLessThanOrEqual(70);
+    });
+
+    it("uses a date range for short multi-day events and none for long ones", () => {
+      const range = { ...event, endDate: "2099-10-09" };
+      expect(generateEventMetadata(range, undefined, undefined, "ca").title).toContain(
+        "7–9 d’octubre",
+      );
+      const exhibition = { ...event, endDate: "2099-12-31" };
+      expect(generateEventMetadata(exhibition, undefined, undefined, "ca").title).toBe(
+        "6a Castaween | La Llagosta | Vallès Oriental",
+      );
+    });
+
+    it("uses the Catalan backend metaTitle only for the default locale", () => {
+      const withBackend = { ...event, metaTitle: "6a Castaween – La Llagosta – 7 oct. 2099" };
+      expect(generateEventMetadata(withBackend, undefined, undefined, "ca").title).toBe(
+        "6a Castaween – La Llagosta – 7 oct. 2099",
+      );
+      expect(generateEventMetadata(withBackend, undefined, undefined, "es").title).toContain(
+        "7 de octubre",
+      );
+    });
+
+    it("pads a short description with the suffix sentence, only when it fits", () => {
+      const suffix = "Consulta l'horari, com arribar-hi i més plans a prop.";
+      const short = generateEventMetadata(event, undefined, undefined, "ca", suffix);
+      expect(short.description).toBe(
+        `6a Castaween - 7 d’octubre del 2099 - La Llagosta. ${suffix}`,
+      );
+      const long = generateEventMetadata(
+        { ...event, description: "Una festa de castanyes i disfresses ".repeat(5) },
+        undefined,
+        undefined,
+        "ca",
+        suffix,
+      );
+      expect(long.description).not.toContain(suffix);
+    });
+  });
 });

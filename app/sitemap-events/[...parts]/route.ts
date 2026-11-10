@@ -4,12 +4,9 @@ import { EventSummaryResponseDTO } from "types/api/event";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
-import { EXPIRED_EVENT_NOINDEX_DAYS } from "@lib/meta";
+import { EXPIRED_EVENT_NOINDEX_DAYS } from "@utils/constants";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
-
-// Chunk size chosen to keep response sizes manageable
-// With image URLs and hreflang alternates, ~500 events per chunk is safe
-const EVENTS_PER_CHUNK = 500;
+import { SITEMAP_EVENTS_PER_CHUNK } from "@utils/constants";
 
 export async function GET(
   _request: Request,
@@ -46,7 +43,7 @@ export async function GET(
   // Fetch events for this chunk (0-indexed pages)
   const response = await fetchEvents({
     page: chunkNumber - 1,
-    size: EVENTS_PER_CHUNK,
+    size: SITEMAP_EVENTS_PER_CHUNK,
   });
 
   const events = response.content;
@@ -93,9 +90,7 @@ export async function GET(
       return {
         loc,
         lastmod,
-        changefreq: "daily",
-        priority: 0.7,
-        image: image ? { loc: image, title: data.title } : undefined,
+        image: image ? { loc: image } : undefined,
         alternates: buildAlternateLinks(loc),
       };
     });

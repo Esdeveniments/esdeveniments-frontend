@@ -14,6 +14,7 @@ Usage:
     python3 scripts/ga-dashboard.py --events     # Custom events deep-dive
     python3 scripts/ga-dashboard.py --publish    # Publish funnel analysis
     python3 scripts/ga-dashboard.py --search     # Search terms + filters
+    python3 scripts/ga-dashboard.py --md --json out.json  # Also save the collected data
 
 Auth (in priority order):
   1. GOOGLE_APPLICATION_CREDENTIALS env var (service account — CI/CD)
@@ -1704,9 +1705,17 @@ def main():
         if idx + 1 < len(sys.argv):
             country = sys.argv[idx + 1]
 
+    json_path = None
+    if "--json" in args:
+        idx = sys.argv.index("--json")
+        if idx + 1 < len(sys.argv):
+            json_path = sys.argv[idx + 1]
+
     is_md = "--md" in args
     show_all = "--all" in args or is_md
-    skip_args = {"--days", str(days), "--country"}
+    skip_args = {"--days", str(days), "--country", "--json"}
+    if json_path:
+        skip_args.add(json_path)
     if country:
         skip_args.add(country)
     no_flags = not (args - skip_args)
@@ -1743,6 +1752,11 @@ def main():
         print(f"  Period: last {days} days{country_label}")
 
     d = collect_data(days, sections, country=country)
+
+    if json_path:
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump({"generated": datetime.now().isoformat(timespec="seconds"),
+                       "days": days, **d}, f, indent=2, default=str)
 
     if is_md:
         print(render_markdown(d, days))

@@ -162,7 +162,7 @@ describe("fetchEventsWithFallback", () => {
       finalFallback: {
         includeCategory: false,
         includeDateRange: true,
-        dateRangeFactory: () => dateRange,
+        dateRangeFactory: async () => dateRange,
         place: undefined,
       },
     });

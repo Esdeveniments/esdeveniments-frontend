@@ -105,8 +105,6 @@ export interface FormattedDateResult {
   startTime: string;
   endTime: string;
   nameDay: string;
-  startDate: Date;
-  isLessThanFiveDays: boolean;
   isMultipleDays: boolean;
   duration: string;
 }
@@ -172,12 +170,32 @@ export interface FetchEventsParams {
   // Note: API expects 'term' for search queries
 }
 
+/** fetchNextEdition: the ended event whose next edition we look for. */
+export interface NextEditionQuery {
+  slug: string;
+  title: string;
+  citySlug: string;
+}
+
+/** fetchAllEventPagesExternal: page size, request cap and per-request timeout. */
+export interface AllEventPagesOptions {
+  maxRequests: number;
+  pageSize?: number;
+  timeout?: number;
+}
+
+/** Every event of a query; `complete` is false when events may be missing. */
+export interface AllEventPages {
+  events: EventSummaryResponseDTO[];
+  complete: boolean;
+}
+
 export interface EventFallbackStageOptions {
   enabled?: boolean;
   size?: number;
   includeCategory?: boolean;
   includeDateRange?: boolean;
-  dateRangeFactory?: () => DateRange;
+  dateRangeFactory?: () => DateRange | Promise<DateRange>;
   place?: string;
 }
 
@@ -242,6 +260,29 @@ export interface EventShareBarProps {
 export interface EventShareBarClientProps extends EventShareBarProps {
   initialIsMobile?: boolean;
 }
+
+// Everything the organiser share kit needs, built on the server.
+export interface ShareKitEvent {
+  slug: string;
+  title: string;
+  /** Absolute, localized event URL without query params. */
+  url: string;
+  dateText: string;
+  placeText: string;
+  imageUrl: string | null;
+}
+
+/** Where the share kit was opened; sent as utm_campaign and GA `source`. */
+export type ShareKitSource = "post_publish" | "owner_actions";
+
+/** Share channel; sent as utm_source and GA `method`. */
+export type ShareKitChannel =
+  | "whatsapp"
+  | "facebook"
+  | "copy"
+  | "native"
+  | "image_share"
+  | "image_download";
 
 export interface EventDescriptionProps {
   slug: string;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { JSX } from "react";
 import { siteUrl } from "@config/index";
+import { buildFacebookShareHref, buildWhatsappShareHref } from "@utils/share-kit";
 
 export default function StaticShareButtons({
   slug,
@@ -37,9 +38,9 @@ export default function StaticShareButtons({
   // These URLs trigger native apps on mobile devices (true native sharing!)
   const shareUrls = {
     // Social apps (open native apps on mobile)
-    whatsapp: `https://wa.me/?text=${encodedShareText}`,
+    whatsapp: buildWhatsappShareHref(shareText),
     telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    facebook: buildFacebookShareHref(eventUrl),
     twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
 
     // Native device protocols (truly native!)

@@ -120,6 +120,10 @@ Merge the back-merge PR with a **merge commit, never squash**. A squash copies m
 
 Next strips the router headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, `next-router-segment-prefetch`) and the `_rsc` query param before `proxy.ts` runs (`FLIGHT_HEADERS` loop in `next/dist/server/web/adapter.js`). So `request.headers.get("RSC")` is always `null` there. A unit test that builds the request with that header by hand passes anyway. The RSC check from `0cdf6f8e` never fired for this reason. Cloudflare RSC cache poisoning is prevented by the Cloudflare bypass rule; Next's `_rsc` validation only narrows it (an empty `307` on the plain URL instead of a flight payload) (`docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md`).
 
+## A Cloudflare purge during a Coolify rollover re-caches the old build
+
+Coolify keeps the old container in the Traefik pool until the new one is healthy, plus its stop grace period. A purge in that window lets the old container refill Cloudflare with old HTML and with 404s for the new build's chunks, and the `/_next/static` cache rule keeps those 404s. Pages return 200 but render unstyled and dead. The deploy workflow now waits until 10 health checks in a row report the new commit before it purges or checks assets, then loads every referenced asset with `scripts/check-static-assets.sh`. See [docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md](docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md).
+
 ## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
 
 `next.config.js` enables the Redis `cacheHandler` only off-Vercel (`isVercel ? {} : { cacheHandler }`). So localhost and Vercel can never reproduce cache-handler bugs; only Coolify (persistent Redis across deploys) can. Keys are scoped by `buildId` so a new build never reads a previous build's prerendered shell — a stale shell makes React's resume mismatch (`Expected the resume to render ...`), fall back to client rendering, and emit HTML with no SSR `<title>`/description/canonical. The page still returns 200, so assert metadata in the **raw** HTML, not the status code. See [docs/incidents/2026-06-11-coolify-redis-stale-prerender.md](docs/incidents/2026-06-11-coolify-redis-stale-prerender.md).
@@ -893,3 +897,35 @@ runs never showed it. Put any size floor on something that is never an ancestor
 of an ad: `BaseLayout` uses a zero-width `min-h-screen` strut next to `<main>`.
 To test it, reproduce the rewrite by script, or use real ads (method in
 `docs/performance/baselines.md`, 2026-11-07).
+
+## Clock reads in metadata and fallbacks block the prerender, and only dev tells you
+
+With `cacheComponents`, reading `new Date()` or `Date.now()` during a prerender,
+outside `"use cache"` and before `connection()`, stops the static shell at that
+point. Next shows a "Blocking Route: encountered the unstable value `new Date()`"
+error, but only in the `next dev` overlay. `next build` never renders event,
+listing or sitemap pages for slugs it doesn't know, and CI doesn't check the dev
+overlay, so these errors sat unnoticed from #605/#705 (Nov 2025) on:
+
+- the event page's `generateMetadata` (`isLessThanFiveDays` in `getFormattedDate`,
+  and `isExpiredEvent` for the 60-day `noindex`). In production, browser requests
+  to an ended event got `x-nextjs-postponed: 1`, with title, canonical and robots
+  streamed into the `<body>` instead of the `<head>`. Googlebot still got them in
+  `<head>`, because Next blocks the response on metadata for known bots;
+- `/[place]` listings: `Date.now()` used for timing in `fetchEventsCached`, plus
+  `twoWeeksDefault()` in the fallback chain. The fallback runs only for places with
+  no events, so the error appears on a cold cache for an empty town, not on
+  `/barcelona`;
+- `/sitemap/[town]`: the `getAllYears()` year list.
+
+Fixes: read the clock inside a `"use cache"` helper with `cacheLife`
+(`buildEventPageMetadata`, `twoWeeksDefaultCached`, `getSitemapYears`), use
+`performance.now()` to measure durations, and delete clock reads nobody uses.
+Route handlers (`app/api/*`, sitemap XML routes) can read the clock freely.
+
+To check a route, open it in `next dev` and read the overlay's issue count.
+Next shows one error per route at a time, so reload after each fix. Also try a
+town with no events, a past event and a date or category listing. The dev
+"Insights" (instant-navigation hints such as `connection()` or `params` outside
+`<Suspense>`) are speed hints, not errors. Before testing, run `yarn prebuild`:
+without `public/sw.js`, dev renders `/sw.js` as a locale page and crashes.

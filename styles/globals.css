@@ -473,6 +473,23 @@ p {
     scroll-margin-bottom: calc(var(--mobile-nav-clearance) + 9rem);
   }
 
+  /* Floating "Mapa" pill on listings: sits just above the mobile bottom bar. */
+  .above-mobile-nav {
+    bottom: calc(var(--mobile-nav-clearance) + 1rem);
+  }
+
+  /* Map sheet (mobile): floats over the map, clear of the home indicator.
+     The dialog is in the top layer, so the bottom bar is not under it. */
+  .events-map-sheet {
+    padding: 0.5rem 0.5rem calc(0.5rem + var(--mobile-nav-safe-area));
+  }
+
+  /* Keep the map credits and other bottom controls above the mobile sheet. */
+  .events-map .maplibregl-ctrl-bottom-left,
+  .events-map .maplibregl-ctrl-bottom-right {
+    bottom: var(--events-map-inset, 0px);
+  }
+
   @screen nav {
     .card-event-link {
       scroll-margin-top: calc(theme("spacing.14") + 1rem);

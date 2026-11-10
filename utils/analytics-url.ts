@@ -1,4 +1,5 @@
 import { isValidDateSlug } from "@lib/dates";
+import { NON_PLACE_FIRST_SEGMENTS } from "./middleware-redirects";
 
 export function extractPlaceDateCategorySlugsFromHref(
   href: string
@@ -14,7 +15,7 @@ export function extractPlaceDateCategorySlugsFromHref(
   const second = segments[1] || "";
   const third = segments[2] || "";
 
-  if (!placeSlug) return {};
+  if (!placeSlug || NON_PLACE_FIRST_SEGMENTS.has(placeSlug)) return {};
 
   if (second && isValidDateSlug(second)) {
     return {

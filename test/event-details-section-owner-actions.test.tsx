@@ -30,6 +30,7 @@ vi.mock("@heroicons/react/24/outline", () => ({
   UserIcon: () => <svg data-testid="user-icon" />,
   MegaphoneIcon: () => <svg data-testid="megaphone-icon" />,
   PencilIcon: () => <svg data-testid="pencil-icon" />,
+  ShareIcon: () => <svg data-testid="share-icon" />,
   TrashIcon: () => <svg data-testid="trash-icon" />,
 }));
 
@@ -48,6 +49,7 @@ vi.mock("@components/hooks/useAuth", () => ({
 }));
 
 import EventDetailsSection from "@app/[locale]/e/[eventId]/components/EventDetailsSection";
+import { SHARE_KIT_EVENT } from "./fixtures/share-kit-event";
 
 function buildEvent(
   overrides: Partial<EventDetailResponseDTO> = {},
@@ -105,7 +107,7 @@ describe("EventDetailsSection owner actions (mobile)", () => {
       name: "A",
       username: "a",
     };
-    render(<EventDetailsSection event={buildEvent()} />);
+    render(<EventDetailsSection event={buildEvent()} shareEvent={SHARE_KIT_EVENT} />);
 
     expect(
       screen.getByTestId("event-edit-link").getAttribute("href"),
@@ -114,6 +116,7 @@ describe("EventDetailsSection owner actions (mobile)", () => {
       screen.getByTestId("event-promote-link").getAttribute("href"),
     ).toBe("/e/my-event/promote");
     expect(screen.getByTestId("event-delete-button")).toBeTruthy();
+    expect(screen.getByTestId("event-share-kit-button")).toBeTruthy();
   });
 
   it("does not show the owner links when the signed-in user is not the owner", () => {
@@ -123,7 +126,7 @@ describe("EventDetailsSection owner actions (mobile)", () => {
       name: "B",
       username: "b",
     };
-    render(<EventDetailsSection event={buildEvent()} />);
+    render(<EventDetailsSection event={buildEvent()} shareEvent={SHARE_KIT_EVENT} />);
 
     expect(screen.queryByTestId("event-edit-link")).toBeNull();
     expect(screen.queryByTestId("event-promote-link")).toBeNull();
@@ -131,7 +134,7 @@ describe("EventDetailsSection owner actions (mobile)", () => {
 
   it("does not show the owner links when logged out", () => {
     mockAuthUser = null;
-    render(<EventDetailsSection event={buildEvent()} />);
+    render(<EventDetailsSection event={buildEvent()} shareEvent={SHARE_KIT_EVENT} />);
 
     expect(screen.queryByTestId("event-edit-link")).toBeNull();
     expect(screen.queryByTestId("event-promote-link")).toBeNull();

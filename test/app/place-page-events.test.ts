@@ -7,6 +7,7 @@ import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 vi.mock("@lib/helpers/event-fallback", () => ({
   fetchEventsWithFallback: vi.fn(),
+  twoWeeksDefaultCached: vi.fn(),
 }));
 
 vi.mock("@lib/api/events", async (importOriginal) => ({

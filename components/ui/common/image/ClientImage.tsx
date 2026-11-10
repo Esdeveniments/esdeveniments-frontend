@@ -114,6 +114,17 @@ function ClientImageInner({
     handleError();
   }, [handleError]);
 
+  // An image that fails before hydration fires `error` before React listens,
+  // so check on mount. A lazy image that hasn't started has no currentSrc.
+  const checkAlreadyFailed = useCallback(
+    (img: HTMLImageElement | null) => {
+      if (img?.complete && img.naturalWidth === 0 && img.currentSrc) {
+        handleError();
+      }
+    },
+    [handleError],
+  );
+
   const containerStyle: React.CSSProperties = {
     position: "relative",
     ...(context === "card" || context === "list"
@@ -155,6 +166,7 @@ function ClientImageInner({
           height={260}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
+          ref={checkAlreadyFailed}
           onError={handleImageError}
           fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
           sizes={sizes}

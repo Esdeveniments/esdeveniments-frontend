@@ -22,6 +22,12 @@ import { filterActiveEvents } from "@utils/event-helpers";
 import { buildTopAgendaLinks } from "@config/top-agenda-links";
 import { connection } from "next/server";
 import { HERO_IMAGE } from "@config/hero-image";
+import { madridTodayYmd } from "@lib/dates";
+import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
+import {
+  inSeasonFestivities,
+  seasonalFestivityLinks,
+} from "@utils/festivity";
 import HomePageSkeleton from "@components/ui/common/skeletons/HomePageSkeleton";
 
 export async function generateMetadata() {
@@ -44,9 +50,10 @@ export async function generateMetadata() {
 // avoids a language mismatch for crawlers and SEO tools that don't execute JS.
 const STATIC_FALLBACK_CONTENT: Record<
   AppLocale,
-  { h2: string; description: string; apiNote: string }
+  { h1: string; h2: string; description: string; apiNote: string }
 > = {
   ca: {
+    h1: "Què fer a Catalunya",
     h2: "Agenda cultural a Catalunya amb concerts, exposicions, teatre, activitats familiars i plans per a totes les edats.",
     description:
       "Esdeveniments.cat és la plataforma gratuïta més completa per descobrir esdeveniments culturals a Catalunya. Consulta l'agenda de concerts, teatre, exposicions, festivals, activitats familiars i molt més en més de 900 municipis catalans. Troba què fer avui, demà o aquest cap de setmana a prop teu.",
@@ -54,6 +61,7 @@ const STATIC_FALLBACK_CONTENT: Record<
       "API pública gratuïta disponible a /llms.txt i /openapi.json — sense autenticació necessària.",
   },
   es: {
+    h1: "Qué hacer en Cataluña",
     h2: "Agenda cultural en Cataluña con conciertos, exposiciones, teatro, actividades familiares y planes para todas las edades.",
     description:
       "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y mucho más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti.",
@@ -61,6 +69,7 @@ const STATIC_FALLBACK_CONTENT: Record<
       "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria.",
   },
   en: {
+    h1: "What to do in Catalonia",
     h2: "Cultural agenda in Catalonia with concerts, exhibitions, theater, family activities and plans for all ages.",
     description:
       "Esdeveniments.cat is the most complete free platform to discover cultural events in Catalonia. Browse the agenda of concerts, theater, exhibitions, festivals, family activities and more across 900+ Catalan municipalities. Find what to do today, tomorrow or this weekend near you.",
@@ -73,6 +82,8 @@ function HomeStaticFallback({ locale }: { locale: AppLocale }) {
   const content = STATIC_FALLBACK_CONTENT[locale] ?? STATIC_FALLBACK_CONTENT.ca;
   return (
     <>
+      {/* Same text as the hero h1, so the shell's first heading is an h1. */}
+      <h1 className="sr-only">{content.h1}</h1>
       {/* API doc links — visible to crawlers for agent discovery (orank public-api-docs check).
           Uses <a> not <Link> because these are machine-readable file URLs, not navigable pages. */}
       {/* eslint-disable @next/next/no-html-link-for-pages */}
@@ -148,11 +159,16 @@ async function HomeContent({
   const categoriesPromise = fetchCategories();
 
   // Parallelize independent operations to eliminate waterfall (3 calls → 1 round trip)
-  const [t, tTopAgenda, pageData] = await Promise.all([
-    getTranslations({ locale, namespace: "App.Home" }),
-    getTranslations({ locale, namespace: "Config.TopAgenda" }),
-    generatePagesData({ place: "", byDate: "", locale }),
-  ]);
+  // generatePagesData awaits connection(), so reading today's date below is safe.
+  const [t, tTopAgenda, tFestes, tHub, tFestivity, pageData] =
+    await Promise.all([
+      getTranslations({ locale, namespace: "App.Home" }),
+      getTranslations({ locale, namespace: "Config.TopAgenda" }),
+      getTranslations({ locale, namespace: "Components.PlaceFestesLinks" }),
+      getTranslations({ locale, namespace: "Pages.FestaMajor" }),
+      getTranslations({ locale, namespace: "Pages.Festivity" }),
+      generatePagesData({ place: "", byDate: "", locale }),
+    ]);
 
   const homeSeoLinkSections: SeoLinkSection[] = [
     {
@@ -200,6 +216,16 @@ async function HomeContent({
           href: "/valles-oriental/dema",
           label: t("seoSections.tomorrow.links.vallesOriental"),
         },
+      ],
+    },
+    {
+      id: "festes",
+      title: tFestes("title"),
+      links: [
+        ...seasonalFestivityLinks(inSeasonFestivities(madridTodayYmd()), (type) =>
+          tFestivity(`types.${type.messageKey}.name`),
+        ),
+        { href: `/${FESTES_MAJORS_SEGMENT}`, label: tHub("allFestes") },
       ],
     },
   ];

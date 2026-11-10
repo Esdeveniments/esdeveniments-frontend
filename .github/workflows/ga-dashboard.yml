@@ -59,7 +59,16 @@ jobs:
           DAYS: ${{ github.event.inputs.days || '7' }}
         run: |
           [[ "$DAYS" =~ ^[0-9]+$ ]] || { echo "::error::days must be a number"; exit 1; }
-          python3 scripts/ga-dashboard.py --md --days "$DAYS" --country Spain > /tmp/dashboard-output.md
+          python3 scripts/ga-dashboard.py --md --days "$DAYS" --country Spain \
+            --json ga-dashboard.json > /tmp/dashboard-output.md
+
+      # Unzipped, named after the file, for the admin dashboard.
+      - name: Upload dashboard JSON
+        uses: actions/upload-artifact@v7
+        with:
+          path: ga-dashboard.json
+          archive: false
+          retention-days: 90
 
       - name: Create GitHub Issue
         id: create-issue

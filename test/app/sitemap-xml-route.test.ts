@@ -23,6 +23,25 @@ vi.mock("../../lib/api/places", () => ({
   ),
 }));
 
+// Event chunk count comes from the backend's totalElements (500 per chunk).
+vi.mock("../../lib/api/events-external", () => ({
+  // Default: 2,200 events → 5 chunks
+  fetchEventsExternalResult: vi.fn().mockResolvedValue({
+    data: { totalElements: 2200 },
+    error: null,
+    status: 200,
+  }),
+}));
+
+const indexRequest = {
+  nextUrl: {
+    protocol: "https:",
+    host: "www.esdeveniments.cat",
+    searchParams: new URLSearchParams(),
+  },
+  headers: new Headers(),
+} as unknown as NextRequest;
+
 describe("app/sitemap.xml/route", () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
@@ -80,6 +99,7 @@ describe("app/sitemap.xml/route", () => {
 
     // Static sitemap
     expect(text).toContain("/server-static-sitemap.xml");
+    expect(text).toContain("/server-festa-major-sitemap.xml");
     // Chunked event sitemaps (no longer /server-sitemap.xml which is now an index)
     expect(text).toContain("/sitemap-events/1.xml");
     expect(text).toContain("/sitemap-events/5.xml");
@@ -92,6 +112,48 @@ describe("app/sitemap.xml/route", () => {
     // News sitemaps
     expect(text).toContain("/server-news-sitemap.xml");
     expect(text).toContain("/server-google-news-sitemap.xml");
+  });
+
+  it("sizes event chunks from the event count, with a fallback", async () => {
+    const { getSiteUrlFromRequest } = await import("../../config/index");
+    vi.mocked(getSiteUrlFromRequest).mockReturnValue(
+      "https://www.esdeveniments.cat"
+    );
+    const { fetchEventsExternalResult } = await import(
+      "../../lib/api/events-external"
+    );
+    const eventChunkCount = async () => {
+      const text = await (await GET(indexRequest)).text();
+      return text.match(/\/sitemap-events\/\d+\.xml/g)?.length ?? 0;
+    };
+
+    vi.mocked(fetchEventsExternalResult).mockResolvedValueOnce({
+      data: { totalElements: 4203 } as never,
+      error: null,
+      status: 200,
+    });
+    expect(await eventChunkCount()).toBe(9);
+
+    vi.mocked(fetchEventsExternalResult).mockResolvedValueOnce({
+      data: null,
+      error: new Error("down"),
+      status: 503,
+    });
+    expect(await eventChunkCount()).toBe(5);
+  });
+
+  it("keeps the fallback place chunks when places can't be read", async () => {
+    const { getSiteUrlFromRequest } = await import("../../config/index");
+    vi.mocked(getSiteUrlFromRequest).mockReturnValue(
+      "https://www.esdeveniments.cat"
+    );
+    const { fetchPlaces } = await import("../../lib/api/places");
+    // fetchPlaces returns [] when the backend fails
+    vi.mocked(fetchPlaces).mockResolvedValueOnce([]);
+
+    const text = await (await GET(indexRequest)).text();
+
+    expect(text.match(/\/sitemap-places\/\d+\.xml/g)).toHaveLength(5);
   });
 
   it("does not include self-reference to /sitemap.xml", async () => {

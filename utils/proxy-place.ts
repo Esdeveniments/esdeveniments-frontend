@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server";
 import { getCategoriesForProxy } from "@lib/api/categories-proxy";
 import { resolvePlaceForProxy } from "@lib/api/places-proxy";
 import { isValidDateSlug } from "@lib/dates";
+import { FESTIVITY_SLUGS } from "@config/festivities";
+import { FESTA_MAJOR_SEGMENT, FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import { NON_PLACE_FIRST_SEGMENTS } from "@utils/middleware-redirects";
 import { isValidPlace } from "@utils/route-validation";
 import { getRedirectUrl, parseFiltersFromUrl } from "@utils/url-filters";
@@ -22,6 +24,35 @@ export function isPlacePath(segments: readonly string[]): boolean {
 }
 
 /**
+ * No page route can match: not a top-level route folder and not a place
+ * listing (e.g. /a/b/c/d). Dotted first segments (icons, files) are left alone.
+ */
+export function isUnroutablePath(pathnameWithoutLocale: string): boolean {
+  const segments = pathnameWithoutLocale.split("/").filter(Boolean);
+  const slug = segments[0];
+  return (
+    !!slug &&
+    !slug.includes(".") &&
+    !NON_PLACE_FIRST_SEGMENTS.has(slug) &&
+    !isPlacePath(segments)
+  );
+}
+
+/**
+ * One-page hubs. Anything under them (/festes-majors/x) would match
+ * /[place]/[date] and render a 200 soft 404, so it gets a real 404.
+ */
+const ONE_PAGE_HUBS: ReadonlySet<string> = new Set([
+  FESTES_MAJORS_SEGMENT,
+  ...FESTIVITY_SLUGS,
+]);
+
+const FESTA_MAJOR_SEGMENTS: ReadonlySet<string> = new Set([
+  FESTA_MAJOR_SEGMENT,
+  FESTES_MAJORS_SEGMENT,
+]);
+
+/**
  * Unknown places get a real 404 and aliases a 301. Pages stream inside the
  * root layout's Suspense, so notFound()/redirect() there can't set a status
  * (they become 200 + noindex / a client redirect). Next's docs recommend
@@ -35,20 +66,50 @@ export async function checkPlace(
   if (request.method !== "GET" && request.method !== "HEAD") return null;
 
   const segments = pathnameWithoutLocale.split("/").filter(Boolean);
+  const localePrefix = localeFromPath ? `/${localeFromPath}` : "";
+  const redirectTo = (path: string[]): ProxyPlaceCheck => {
+    const url = request.nextUrl.clone();
+    url.pathname = `${localePrefix}/${path.join("/")}`;
+    return { kind: "alias", url };
+  };
+
+  if (segments.length > 1 && ONE_PAGE_HUBS.has(segments[0]))
+    return { kind: "missing" };
+
+  // Festa major hubs: /festa-major/<place>. Deeper paths would fall through
+  // to the listing route and render its 404 with a 200.
+  if (segments[0] === FESTA_MAJOR_SEGMENT) {
+    const slug = segments[1];
+    if (!slug || slug === "catalunya")
+      return redirectTo([FESTES_MAJORS_SEGMENT]);
+    if (segments.length > 2 || !isValidPlace(slug)) return { kind: "missing" };
+    const resolution = await resolvePlaceForProxy(slug);
+    if (resolution.kind === "missing") return { kind: "missing" };
+    if (resolution.kind !== "alias") return null;
+    return redirectTo([FESTA_MAJOR_SEGMENT, resolution.slug]);
+  }
+
   const slug = segments[0] ?? "";
+  // /<place>/festes-majors would 301 to /<place> as an unknown category.
+  // Send it to the hub, which then handles aliases and unknown towns.
+  if (
+    segments.length === 2 &&
+    FESTA_MAJOR_SEGMENTS.has(segments[1]) &&
+    isPlacePath(segments)
+  ) {
+    return redirectTo(
+      slug === "catalunya"
+        ? [FESTES_MAJORS_SEGMENT]
+        : [FESTA_MAJOR_SEGMENT, slug],
+    );
+  }
+
   if (slug === "catalunya" || !isPlacePath(segments)) return null;
 
   const resolution = await resolvePlaceForProxy(slug);
   if (resolution.kind === "missing") return { kind: "missing" };
   if (resolution.kind !== "alias") return null;
-
-  const url = request.nextUrl.clone();
-  url.pathname = [
-    localeFromPath ? `/${localeFromPath}` : "",
-    `/${resolution.slug}`,
-    ...segments.slice(1).map((segment) => `/${segment}`),
-  ].join("");
-  return { kind: "alias", url };
+  return redirectTo([resolution.slug, ...segments.slice(1)]);
 }
 
 /**

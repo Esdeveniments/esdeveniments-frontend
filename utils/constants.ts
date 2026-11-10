@@ -29,8 +29,27 @@ export const EVENT_VENUE_LABEL_MAX_LENGTH = 60;
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;
 
+/** Days after an event ends before its page is noindexed (crawl budget). */
+export const EXPIRED_EVENT_NOINDEX_DAYS = 60;
+
 /** Canonical timezone for all date operations in this app. */
 export const TIMEZONE_MADRID = "Europe/Madrid";
+
+// IndexNow (Bing, Yandex, Seznam…) key. Public by design: search engines
+// verify it at /<key>.txt (public/), so it is not a secret.
+export const INDEXNOW_KEY = "f47260be292a3281b5da5b89815e6ed4";
+
+// Festa major hubs: /festa-major/<place> and the /festes-majors calendar.
+export const FESTA_MAJOR_SEGMENT = "festa-major";
+export const FESTES_MAJORS_SEGMENT = "festes-majors";
+/** Anchor of a town hub's programme. */
+export const FESTA_MAJOR_PROGRAMME_ID = "programa";
+/** Title text the backend matches (LIKE on the lowercased title). */
+export const FESTA_MAJOR_TERM = "festa major";
+/** A hub with fewer acts is thin: noindex, and kept out of sitemaps and links. */
+export const FESTA_MAJOR_MIN_INDEXABLE_ACTS = 5;
+/** A Nadal collection (/fires-de-nadal…) needs events in this many towns to be indexed. */
+export const FESTIVITY_MIN_INDEXABLE_TOWNS = 5;
 
 // Year range for sitemap/archive pages validation
 export const MIN_VALID_YEAR = 2000;
@@ -49,6 +68,8 @@ export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
 export const PUBLISH_DRAFT_MAX_COUNT = 5;
 // Sitemap chunking: places per chunk to keep response sizes manageable
 export const SITEMAP_PLACES_PER_CHUNK = 100;
+// Events per /sitemap-events/N.xml chunk (one <url> per locale: ~1,500 URLs, ~2 MB)
+export const SITEMAP_EVENTS_PER_CHUNK = 500;
 // Minimum event count for a place to get full date/category expansion in sitemap.
 // Places below this threshold only get the base /[place] URL to avoid
 // submitting thin/empty filtered pages that waste crawl budget.

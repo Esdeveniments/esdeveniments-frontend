@@ -14,7 +14,9 @@ export interface PublishDraftPanelProps {
   state: import("./publish-draft").PublishDraftSessionState;
   onRestore: () => void;
   onRestoreGuest: () => Promise<void>;
-  onDiscard: () => Promise<import("./publish-draft").PublishDraftFlushResult | undefined>;
+  onDiscard: () => Promise<
+    import("./publish-draft").PublishDraftFlushResult | undefined
+  >;
   onRetry: () => void;
   warnings: import("./publish-draft").PublishDraftWarning[];
 }
@@ -52,7 +54,15 @@ export interface ClientImageInnerProps {
   date?: string;
 }
 
-import { ChangeEvent, InputHTMLAttributes, MouseEvent, ReactNode } from "react";
+import {
+  ChangeEvent,
+  ComponentType,
+  InputHTMLAttributes,
+  MouseEvent,
+  ReactNode,
+} from "react";
+import type { CardLinkProps } from "types/ui";
+import type { EventMapPoint } from "types/event-map";
 
 // Detail page section tracker
 export interface DetailSectionTrackerProps {
@@ -84,6 +94,14 @@ import { RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { AppLocale } from "types/i18n";
 import type { EventFormProps, EventPriceFormFields } from "types/event";
+import type {
+  FestaMajorEdition,
+  FestaMajorEditionSummary,
+  FestaMajorFestaLink,
+  FestaMajorPageData,
+  FestaMajorTownSummary,
+} from "types/festa-major";
+import type { FestivityListItem, FestivitySlug } from "types/festivity";
 
 // Google Scripts and WebsiteSchema no longer require nonce props (relaxed CSP)
 
@@ -223,6 +241,24 @@ export interface CompactCardProps {
   tCard: (key: string, values?: Record<string, string | number>) => string;
   index: number;
   analyticsEventName?: string;
+}
+
+// Side panel (desktop) / bottom sheet (mobile): the places, or the events of
+// the selected one.
+export interface EventsMapPanelProps {
+  points: EventMapPoint[];
+  selected: EventMapPoint | null;
+  hoveredId: string | null;
+  onSelect: (point: EventMapPoint | null) => void;
+  onHover: (id: string | null) => void;
+}
+
+export interface EventsMapProps {
+  onRetry: () => void;
+}
+
+export interface CompactCardViewProps extends CompactCardProps {
+  LinkComponent: ComponentType<CardLinkProps>;
 }
 
 export interface FavoriteButtonLabels {
@@ -950,6 +986,12 @@ export interface ExploreNearbyProps {
   placeType: PlaceType;
 }
 
+export interface PlaceFestesLinksProps {
+  place: string;
+  placeType: PlaceType;
+  placeLabel: string;
+}
+
 // Profile owner actions client island props
 export interface ProfileOwnerActionsProps {
   username: string;
@@ -1028,6 +1070,7 @@ export interface EventClientPayload {
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
   ownerId?: string;
+  share: import("./event").ShareKitEvent;
 }
 
 export interface EventClientProps {
@@ -1044,6 +1087,7 @@ export interface CollapsibleDescriptionProps {
 // Event details section (duration + external link)
 export interface EventDetailsSectionProps {
   event: import("./api/event").EventDetailResponseDTO;
+  shareEvent: import("./event").ShareKitEvent;
 }
 
 export interface EventPageGateProps {
@@ -1053,10 +1097,12 @@ export interface EventPageGateProps {
 // Cached body of the event detail page; slots are request-time parts.
 export interface EventPageBodyProps {
   slug: string;
-  locale: import("./i18n").AppLocale;
+  locale: AppLocale;
   mobileSponsorSlot: import("react").ReactNode;
   sidebarSponsorSlot: import("react").ReactNode;
   latestNewsSlot: import("react").ReactNode;
+  /** Rendered only once the event has ended. */
+  nextEditionSlot: import("react").ReactNode;
 }
 
 // Sticky sidebar for event detail page (desktop)
@@ -1064,6 +1110,7 @@ export interface EventSidebarProps {
   event: import("./api/event").EventDetailResponseDTO;
   cityName: string;
   regionName: string;
+  shareEvent: import("./event").ShareKitEvent;
   // Rendered outside the cached event body: the sponsor slot is request-time.
   sponsorSlot: import("react").ReactNode;
 }
@@ -1072,6 +1119,7 @@ export interface EventSidebarProps {
 export interface EventOwnerActionsProps {
   ownerId?: string;
   slug: string;
+  shareEvent: import("./event").ShareKitEvent;
 }
 
 export type EventDeleteActionProps = Pick<EventOwnerActionsProps, "slug">;
@@ -1080,6 +1128,19 @@ export interface PromoteUpsellModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   slug: string;
+  shareEvent: import("./event").ShareKitEvent;
+}
+
+export interface ShareKitProps {
+  event: import("./event").ShareKitEvent;
+  source: import("./event").ShareKitSource;
+  /** Short line under the event preview. */
+  description?: string;
+}
+
+export interface ShareKitModalProps extends ShareKitProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
 // /e/[eventId]/promote client page
@@ -1169,7 +1230,6 @@ export interface CheckoutReturnTrackerProps {
   params?: Record<string, string>;
 }
 
-
 export interface DocsCodeBlockProps {
   code: string;
 }
@@ -1177,4 +1237,110 @@ export interface DocsCodeBlockProps {
 export interface DocsLinkProps {
   href: string;
   children: ReactNode;
+}
+
+export interface FestaMajorProgrammeProps {
+  /** Anchor for links to the programme. */
+  id?: string;
+  title: string;
+  editions: FestaMajorEdition[];
+  locale: AppLocale;
+  /** Madrid YYYY-MM-DD: acts whose page is gone (actHasPage) aren't linked. */
+  today: string;
+  /** Mute the days before `today`. */
+  mutePast?: boolean;
+  /** Heading for a festa without its own name. */
+  ownFestaLabel: string;
+}
+
+export interface FestaMajorTownListProps {
+  towns: FestaMajorTownSummary[];
+  locale: AppLocale;
+  /** Heading level of the month headings. */
+  headingLevel: "h2" | "h3";
+  /** Lists festes already on under this YYYY-MM-DD date's month, not their start's. */
+  today?: string;
+  /** Gives each month section its `#mes-MM` id (once per page). */
+  monthAnchors?: boolean;
+  /** Adds each town's comarca; off on a comarca's own page. Default true. */
+  showRegion?: boolean;
+}
+
+export interface FestaMajorFestaListProps {
+  festes: FestaMajorFestaLink[];
+  townSlug: string;
+  currentYear: number;
+  locale: AppLocale;
+  title: string;
+  ownFestaLabel: string;
+}
+
+export interface FestaMajorPreviousYearProps {
+  title: string;
+  linkLabel: string;
+  editions: FestaMajorEditionSummary[];
+  townSlug: string;
+  year: number;
+  locale: AppLocale;
+  ownFestaLabel: string;
+}
+
+export interface FestaMajorPageViewProps {
+  data: FestaMajorPageData;
+  locale: AppLocale;
+}
+
+export interface FestaMajorLinkListProps {
+  title: string;
+  links: { href: string; label: string }[];
+}
+
+export interface FestaMajorHubLinkProps {
+  citySlug: string;
+  cityName: string;
+}
+
+export interface HubLinkProps {
+  href: string;
+  label: string;
+  analyticsEventName: string;
+}
+
+export interface NextEditionLinkProps {
+  event: import("./event").NextEditionQuery;
+  locale: AppLocale;
+}
+
+export interface FestivityHubLinkProps {
+  /** The event's title: a link per festivity page it belongs to. */
+  title: string;
+}
+
+export interface FestivityActListProps {
+  title: string;
+  intro?: string;
+  items: FestivityListItem[];
+  locale: AppLocale;
+  /** Mutes the rows: events that are over. */
+  muted?: boolean;
+}
+
+export interface FestivityPageViewProps {
+  slug: FestivitySlug;
+}
+
+export interface CardImagePreloadProps {
+  events: ListEvent[];
+}
+
+export interface ImagePreloadProps {
+  image: string;
+  context: ImageSizeContext;
+}
+
+export interface ThumbnailProps {
+  image?: string;
+  /** Names the row; its initial fills the tile when there's no image. */
+  label: string;
+  muted?: boolean;
 }

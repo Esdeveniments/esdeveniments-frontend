@@ -28,6 +28,13 @@ describe("extractPlaceDateCategorySlugsFromHref", () => {
     });
   });
 
+  it.each(["/festes-majors", "/fires-de-nadal", "/noticies/barcelona"])(
+    "reports no place for the non-place route %s",
+    (href) => {
+      expect(extractPlaceDateCategorySlugsFromHref(href)).toEqual({});
+    },
+  );
+
   it("supports non-canonical /place/category/date by recognizing date in 3rd segment", () => {
     expect(
       extractPlaceDateCategorySlugsFromHref("/catalunya/musica/dema")

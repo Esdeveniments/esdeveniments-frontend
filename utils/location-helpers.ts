@@ -5,6 +5,7 @@ import {
   sanitizeLegacyApostrophe,
   formatPlaceName,
   truncateAtWord,
+  dropPlaceParts,
 } from "./string-helpers";
 import { EVENT_VENUE_LABEL_MAX_LENGTH } from "./constants";
 import type { Location, PlaceTypeAndLabel } from "types/common";
@@ -219,12 +220,7 @@ export const buildEventVenueLabel = ({
   const city = formatOptionalPlace(cityName);
   // Drop venue segments that are the city ("Plaça Major, Vic"), then cut the
   // venue, so the city always ends the label exactly once.
-  const venue = (location ?? "")
-    .replace(/\s+/g, " ")
-    .split(",")
-    .map((part) => part.trim())
-    .filter((part) => isDistinctLabel(part, city))
-    .join(", ");
+  const venue = dropPlaceParts(location ?? "", city);
   if (!venue) return city;
   const shortVenue = truncateAtWord(venue, EVENT_VENUE_LABEL_MAX_LENGTH);
   return city ? `${shortVenue}, ${city}` : shortVenue;

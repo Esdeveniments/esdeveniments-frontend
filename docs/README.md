@@ -43,6 +43,12 @@ pipeline.
 - [`growth/paid-acquisition-research-2026-11.md`](./growth/paid-acquisition-research-2026-11.md)
   — real traffic baseline (bot and Zaraz cleanup), the town-page ranking
   drop, free-first growth plan, ad channel costs and a parked paid test.
+- [`growth/festivity-hubs-research-2026-11.md`](./growth/festivity-hubs-research-2026-11.md)
+  — festa major hubs: demand (Search Console, Keyword Planner), our data,
+  competitors, URL fit, and the plan for Carnaval and Nadal pages.
+- [`growth/ticketing-viability-2026-11.md`](./growth/ticketing-viability-2026-11.md)
+  — per-ticket-fee ticketing for small venues: data, revenue math, outside
+  facts, a parked backend build plan and the triggers to revisit it.
 
 ## Product
 

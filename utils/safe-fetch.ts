@@ -47,6 +47,7 @@ export async function safeFetch<T = unknown>(
 ): Promise<SafeFetchResult<T>> {
   const {
     timeout = 5000,
+    expectJson = true,
     context,
     signal: externalSignal,
     ...fetchOptions
@@ -94,8 +95,9 @@ export async function safeFetch<T = unknown>(
     }
 
     // Handle 204 No Content (common for webhooks) - no body to parse
-    if (response.status === 204) {
-      return { data: null as T, error: null, status: 204 };
+    if (response.status === 204 || !expectJson) {
+      await response.body?.cancel().catch(() => {});
+      return { data: null as T, error: null, status: response.status };
     }
 
     const contentType = response.headers.get("content-type");

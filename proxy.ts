@@ -4,7 +4,11 @@ import { PROFILE_EXISTS_TTL_MS } from "@lib/api/profiles-proxy";
 import { gateApiRequest } from "@utils/api-gate";
 import { stripLocalePrefix } from "@utils/i18n-routing";
 import { handleCanonicalRedirects } from "@utils/middleware-redirects";
-import { getAgentRewrite } from "@utils/proxy-agent";
+import {
+  getAgentRewrite,
+  getMarkdownResponse,
+  wantsMarkdown,
+} from "@utils/proxy-agent";
 import { applyCsp } from "@utils/proxy-csp";
 import {
   getLocaleFromCookie,
@@ -18,7 +22,12 @@ import {
   getProfileCaseRedirect,
   isMissingProfilePath,
 } from "@utils/proxy-profile";
-import { checkCategory, checkPlace } from "@utils/proxy-place";
+import {
+  checkCategory,
+  checkPlace,
+  isUnroutablePath,
+} from "@utils/proxy-place";
+import { checkExpiredFestaAct } from "@utils/proxy-event";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 // Static headers, trust-page redirects and the /openapi.json and
@@ -76,18 +85,21 @@ export default async function proxy(request: NextRequest) {
   }
 
   // Both lists are cached for an hour, so this rarely waits on the backend.
-  // Profile lookups are cached for a few minutes per username.
-  const [placeCheck, categoryRedirectUrl, isMissingProfile] = await Promise.all([
-    checkPlace(request, pathnameWithoutLocale, localeFromPath),
-    checkCategory(request, pathnameWithoutLocale, localeFromPath),
-    isMissingProfilePath(request, pathnameWithoutLocale),
-  ]);
+  // Profile lookups are cached for a few minutes per username; the festa act
+  // check reaches the backend only for old festa major slugs.
+  const [placeCheck, categoryRedirectUrl, isMissingProfile, festaActRedirectUrl] =
+    await Promise.all([
+      checkPlace(request, pathnameWithoutLocale, localeFromPath),
+      checkCategory(request, pathnameWithoutLocale, localeFromPath),
+      isMissingProfilePath(request, pathnameWithoutLocale),
+      checkExpiredFestaAct(request, pathnameWithoutLocale, localeFromPath),
+    ]);
   const redirectUrl =
     placeCheck?.kind === "alias"
       ? placeCheck.url
       : placeCheck?.kind === "missing"
         ? null
-        : categoryRedirectUrl;
+        : (categoryRedirectUrl ?? festaActRedirectUrl);
   if (redirectUrl) {
     const response = NextResponse.redirect(redirectUrl, 301);
     if (redirectUrl === categoryRedirectUrl) {
@@ -103,6 +115,18 @@ export default async function proxy(request: NextRequest) {
       persistLocaleCookie(response, pathLocaleToPersist);
     }
     return response;
+  }
+
+  // After the redirects and existence checks, so an agent asking for
+  // markdown gets the canonical URL and a real 404 for a missing page.
+  if (wantsMarkdown(request)) {
+    return getMarkdownResponse(
+      request,
+      pathnameWithoutLocale,
+      placeCheck?.kind === "missing" ||
+        isMissingProfile ||
+        isUnroutablePath(pathnameWithoutLocale),
+    );
   }
 
   const locale = localeFromPath ?? DEFAULT_LOCALE;
@@ -162,6 +186,6 @@ export default async function proxy(request: NextRequest) {
 // alone.
 export const config = {
   matcher: [
-    "/((?!_next|favicon\\.ico|robots\\.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads\\.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view|monitoring$|ask$|openapi(?:\\.json)?$|index\\.md$|docs/|webmcp\\.js$).*)",
+    "/((?!_next|favicon\\.ico|robots\\.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads\\.txt|[0-9a-f]{32}\\.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view|monitoring$|ask$|openapi(?:\\.json)?$|index\\.md$|docs/|webmcp\\.js$).*)",
   ],
 };

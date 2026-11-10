@@ -111,6 +111,29 @@ describe("generateJsonData", () => {
     expect(schema.offers).toBeUndefined();
   });
 
+  it("uses venue coordinates for geo only when the backend marks them VENUE", () => {
+    const city = {
+      id: 1,
+      name: "Barcelona",
+      slug: "barcelona",
+      latitude: 41.3874,
+      longitude: 2.1686,
+      postalCode: "08001",
+      enabled: true,
+    };
+    const venue = { latitude: 41.3875, longitude: 2.1753 };
+
+    const exact = generateJsonData(
+      createEvent({ city, ...venue, locationPrecision: "VENUE" })
+    );
+    const guessed = generateJsonData(
+      createEvent({ city, ...venue, locationPrecision: "CITY" })
+    );
+
+    expect(exact.location.geo).toMatchObject({ latitude: 41.3875, longitude: 2.1753 });
+    expect(guessed.location.geo).toMatchObject({ latitude: 41.3874, longitude: 2.1686 });
+  });
+
   it("does not present the venue as performer or organizer", () => {
     const schema = generateJsonData(
       createEvent({ location: "Palau de la Música" })

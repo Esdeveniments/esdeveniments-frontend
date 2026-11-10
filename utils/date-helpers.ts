@@ -3,6 +3,8 @@ import {
   getMonthNames,
   getShortDayNames,
   getShortMonthNames,
+  MS_PER_DAY,
+  TIMEZONE_MADRID,
 } from "./constants";
 import type {
   DateObject,
@@ -14,13 +16,6 @@ import localeLabels from "../i18n/locale-labels.generated.json";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 
 export type { EventTimeLabels };
-
-export const isLessThanFiveDays = (date: Date): boolean => {
-  const currentDate = new Date();
-  const timeDiff = currentDate.getTime() - date.getTime();
-  const dayDiff = timeDiff / (1000 * 3600 * 24);
-  return Math.floor(Math.abs(dayDiff)) < 5;
-};
 
 export const convertTZ = (date: Date | string, tzString: string): Date =>
   new Date(
@@ -52,6 +47,36 @@ function calculateDetailedDurationISO8601(start: Date, end: Date): string {
   return duration === "P" ? "PT1H" : duration;
 }
 
+// Ranges longer than this (exhibitions, seasons) get no date label.
+const MAX_DATE_LABEL_RANGE_DAYS = 31;
+
+/**
+ * Short localized day/month label for titles, without the year:
+ * "7 d’octubre", "7–9 de novembre", "October 30 – November 2".
+ * Returns "" for invalid dates or ranges over a month.
+ */
+export function formatShortDateRange(
+  start: string | Date,
+  end: string | Date | undefined,
+  locale: AppLocale,
+): string {
+  const startDate = new Date(start);
+  const endDate = end ? new Date(end) : startDate;
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return "";
+  }
+  const spanDays = (endDate.getTime() - startDate.getTime()) / 86_400_000;
+  if (spanDays > MAX_DATE_LABEL_RANGE_DAYS) return "";
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "long",
+    timeZone: TIMEZONE_MADRID,
+  });
+  return spanDays > 0
+    ? formatter.formatRange(startDate, endDate)
+    : formatter.format(startDate);
+}
+
 const formatDateForLocale = (
   locale: AppLocale,
   day: number,
@@ -69,10 +94,13 @@ const formatDateForLocale = (
         ? `${monthName} ${day}, ${year}`
         : `${monthName} ${day}`;
     case "ca":
-    default:
+    default: {
+      // Catalan elides "de" before a vowel: "d’abril", "d’agost", "d’octubre".
+      const de = /^[aeiouàèéíòóú]/i.test(monthName) ? "d’" : "de ";
       return includeYear
-        ? `${day} de ${monthName} del ${year}`
-        : `${day} de ${monthName}`;
+        ? `${day} ${de}${monthName} del ${year}`
+        : `${day} ${de}${monthName}`;
+    }
   }
 };
 
@@ -163,12 +191,6 @@ export const getFormattedDate = (
     startTime,
     endTime,
     nameDay,
-    startDate: isMultipleDays
-      ? (startDay <= new Date().getDate() &&
-          convertTZ(new Date(), "Europe/Madrid")) ||
-        startDateConverted
-      : startDateConverted,
-    isLessThanFiveDays: isLessThanFiveDays(startDate),
     isMultipleDays,
     duration,
   };
@@ -238,6 +260,35 @@ export function parseTimeToEventTimeDTO(
 export const toLocalDateString = (date: Date): string => {
   return date.toISOString().slice(0, 10);
 };
+
+/** Shifts a "YYYY-MM-DD" date by whole days (noon UTC, so DST can't move it). */
+export const addDaysYmd = (date: string, days: number): string =>
+  new Date(Date.parse(`${date}T12:00:00Z`) + days * MS_PER_DAY)
+    .toISOString()
+    .slice(0, 10);
+
+/** Easter Sunday of a year as "YYYY-MM-DD" (anonymous Gregorian algorithm). */
+export function easterSundayYmd(year: number): string {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/** Whole days from `from` to `to`, both "YYYY-MM-DD". */
+export const daysBetweenYmd = (from: string, to: string): number =>
+  Math.round((Date.parse(to) - Date.parse(from)) / MS_PER_DAY);
 
 /**
  * Parses a form date value in local time. Edit forms prefill date-only
