@@ -91,7 +91,7 @@ jobs:
             | grep -oE '<loc>[^<]+/e/[^<]+</loc>' | sed 's/<[^>]*>//g' | shuf -n 1 || true)
           if [ -z "$event_url" ]; then
             echo "❌ No event URL found in /sitemap-events/1.xml"
-            echo "error_message=No event URL found in /sitemap-events/1.xml" >> $GITHUB_OUTPUT
+            echo "error_message=No event URL found in /sitemap-events/1.xml" >> "$GITHUB_OUTPUT"
             exit 1
           fi
           if ! result=$(curl -s -o /tmp/event.html --max-time 10 \
@@ -101,12 +101,12 @@ jobs:
           echo "Event probe: $event_url → $result"
           if [ "${result%% *}" != "200" ]; then
             echo "❌ Event page returned ${result} (status, seconds; 10 s limit)"
-            echo "error_message=Event page $event_url returned $result (HTTP status, seconds; 10 s limit) — the origin is failing or slow" >> $GITHUB_OUTPUT
+            echo "error_message=Event page $event_url returned $result (HTTP status, seconds; 10 s limit) — the origin is failing or slow" >> "$GITHUB_OUTPUT"
             exit 1
           fi
           if ! grep -q '"@type":"Event"' /tmp/event.html; then
             echo "❌ Event page has no Event JSON-LD (not-found or error page)"
-            echo "error_message=Event page $event_url answered 200 without Event JSON-LD — it rendered the not-found or error page (backend failing?)" >> $GITHUB_OUTPUT
+            echo "error_message=Event page $event_url answered 200 without Event JSON-LD — it rendered the not-found or error page (backend failing?)" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
