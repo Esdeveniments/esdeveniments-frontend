@@ -59,10 +59,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   // Google must fetch JS/CSS to render pages; the longer Allow path wins over
-  // Disallow. Other Next.js internals, API routes and utility/login pages stay
-  // out of crawls.
+  // Disallow. Other Next.js internals, API routes, utility pages and the
+  // sign-in entry (a 307 into Logto, linked from every page with its own
+  // ?redirect=) stay out of crawls.
   const CRAWL_ALLOW = ["/", "/_next/static/"];
-  const CRAWL_DISALLOW = ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"];
+  const CRAWL_DISALLOW = [
+    "/_next/",
+    "/api/",
+    "/e2e/",
+    "/offline/",
+    "/iniciar-sessio",
+    "/ca/iniciar-sessio",
+    "/es/iniciar-sessio",
+    "/en/iniciar-sessio",
+  ];
 
   const robotsConfig: MetadataRoute.Robots = {
     rules: [

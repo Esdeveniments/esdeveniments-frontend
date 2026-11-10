@@ -61,9 +61,20 @@ try {
  * - Allow /_next/static/ (JS/CSS Google needs to render pages); block the
  *   rest of /_next/ (build internals)
  * - Block /api/ routes (internal endpoints, not for indexing)
+ * - Block the sign-in entry (a 307 into Logto). Every page links to it with
+ *   its own ?redirect=, so a noindex alone still cost one crawl per page.
  */
 const CRAWL_ALLOW = ["/", "/_next/static/"];
-const CRAWL_DISALLOW = ["/_next/", "/api/", "/e2e/", "/offline/", "/login/"];
+const CRAWL_DISALLOW = [
+  "/_next/",
+  "/api/",
+  "/e2e/",
+  "/offline/",
+  "/iniciar-sessio",
+  "/ca/iniciar-sessio",
+  "/es/iniciar-sessio",
+  "/en/iniciar-sessio",
+];
 
 const robotsConfig = {
   rules: [
