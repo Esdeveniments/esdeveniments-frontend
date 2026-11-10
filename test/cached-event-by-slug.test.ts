@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { cacheLife, cacheTag } = vi.hoisted(() => ({
+const { cacheLife, cacheTag, markEventReadFailed } = vi.hoisted(() => ({
   cacheLife: vi.fn(),
   cacheTag: vi.fn(),
+  markEventReadFailed: vi.fn(),
 }));
 vi.mock("next/cache", () => ({ cacheLife, cacheTag }));
+vi.mock("@lib/api/event-outage", () => ({ markEventReadFailed }));
 vi.mock("@utils/api-helpers", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@utils/api-helpers")>()),
   getInternalApiUrl: vi.fn(async (path: string) => `http://internal${path}`),
@@ -31,6 +33,7 @@ describe("getCachedEventBySlug", () => {
     fetchMock.mockReset();
     cacheLife.mockReset();
     cacheTag.mockReset();
+    markEventReadFailed.mockReset();
   });
 
   it("returns the event, tags it and caches it for hours", async () => {
@@ -58,6 +61,14 @@ describe("getCachedEventBySlug", () => {
 
     await expect(getCachedEventBySlug("concert-1")).rejects.toThrow("503");
     expect(cacheLife).not.toHaveBeenCalled();
+    expect(markEventReadFailed).toHaveBeenCalledWith("concert-1");
+  });
+
+  it("doesn't count a 4xx for one URL as an outage", async () => {
+    fetchMock.mockResolvedValue(new Response("bad slug", { status: 400 }));
+
+    await expect(getCachedEventBySlug("a%2Fb")).rejects.toThrow("400");
+    expect(markEventReadFailed).not.toHaveBeenCalled();
   });
 
   it("throws when the network fails", async () => {
@@ -65,5 +76,6 @@ describe("getCachedEventBySlug", () => {
 
     await expect(getCachedEventBySlug("concert-1")).rejects.toThrow("fetch failed");
     expect(cacheLife).not.toHaveBeenCalled();
+    expect(markEventReadFailed).toHaveBeenCalledWith("concert-1");
   });
 });

@@ -27,7 +27,8 @@ import {
   checkPlace,
   isUnroutablePath,
 } from "@utils/proxy-place";
-import { checkExpiredFestaAct } from "@utils/proxy-event";
+import { checkExpiredFestaAct, isEventOutageRequest } from "@utils/proxy-event";
+import { EVENT_OUTAGE_WINDOW_MS } from "@lib/api/event-outage";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 // Static headers, trust-page redirects and the /openapi.json and
@@ -143,12 +144,15 @@ export default async function proxy(request: NextRequest) {
   if (!localeFromPath) {
     url.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
   }
+  const isEventOutage = isEventOutageRequest(request, pathnameWithoutLocale);
   const response =
     placeCheck?.kind === "missing" || isMissingProfile
       ? NextResponse.rewrite(url, { ...init, status: 404 })
-      : localeFromPath
-        ? NextResponse.next(init)
-        : NextResponse.rewrite(url, init);
+      : isEventOutage
+        ? NextResponse.rewrite(url, { ...init, status: 503 })
+        : localeFromPath
+          ? NextResponse.next(init)
+          : NextResponse.rewrite(url, init);
 
   if (pathLocaleToPersist) {
     persistLocaleCookie(response, pathLocaleToPersist);
@@ -173,6 +177,14 @@ export default async function proxy(request: NextRequest) {
     response.headers.set(
       "Cache-Control",
       `public, max-age=0, s-maxage=${PROFILE_EXISTS_TTL_MS / 1000}`,
+    );
+  }
+  if (isEventOutage) {
+    response.headers.set("Cache-Control", "private, no-store");
+    response.headers.delete("Cache-Tag");
+    response.headers.set(
+      "Retry-After",
+      String(EVENT_OUTAGE_WINDOW_MS / 1000),
     );
   }
   return response;

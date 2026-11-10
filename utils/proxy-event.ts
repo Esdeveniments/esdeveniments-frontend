@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { isEventReadFailing } from "@lib/api/event-outage";
 import { getExpiredFestaActTown } from "@lib/api/events-proxy";
 import { MONTHS_URL } from "@utils/constants";
 import { isExpiredEvent } from "@utils/event-helpers";
@@ -16,6 +17,32 @@ const slugStartDate = (slug: string): Date | undefined => {
   return new Date(Date.UTC(Number(match[3]), month, Number(match[1])));
 };
 
+// The slug of /e/<slug>, not of the pages below it (edita, promote).
+const eventPageSlug = (pathnameWithoutLocale: string): string | null => {
+  const [segment, slug, ...rest] = pathnameWithoutLocale
+    .split("/")
+    .filter(Boolean);
+  return segment === "e" && slug && rest.length === 0 ? slug : null;
+};
+
+/**
+ * True for an event page document request while event reads are failing
+ * (lib/api/event-outage.ts). Proxy then sets a 503: crawlers come back later
+ * instead of indexing the error page, and the CDN doesn't keep it. Server
+ * actions (POST) and client navigations (RSC) are left alone.
+ */
+export function isEventOutageRequest(
+  request: NextRequest,
+  pathnameWithoutLocale: string,
+): boolean {
+  return (
+    (request.method === "GET" || request.method === "HEAD") &&
+    !request.headers.has("rsc") &&
+    eventPageSlug(pathnameWithoutLocale) !== null &&
+    isEventReadFailing()
+  );
+}
+
 /**
  * Festa major acts 301 to their town's hub once they expire, instead of
  * staying as noindexed pages: the ranking they built moves to the hub that
@@ -30,13 +57,9 @@ export async function checkExpiredFestaAct(
 ): Promise<URL | null> {
   if (request.method !== "GET" && request.method !== "HEAD") return null;
 
-  const [segment, slug, ...rest] = pathnameWithoutLocale
-    .split("/")
-    .filter(Boolean);
+  const slug = eventPageSlug(pathnameWithoutLocale);
   if (
-    segment !== "e" ||
     !slug ||
-    rest.length > 0 ||
     !slug.includes("festa-major") ||
     !isExpiredEvent(slugStartDate(slug))
   )

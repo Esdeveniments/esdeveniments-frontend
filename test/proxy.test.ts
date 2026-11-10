@@ -5,6 +5,7 @@ import { resolvePlaceForProxy } from "../lib/api/places-proxy";
 import { getCategoriesForProxy } from "../lib/api/categories-proxy";
 import { isProfileMissingForProxy } from "../lib/api/profiles-proxy";
 import { getExpiredFestaActTown } from "../lib/api/events-proxy";
+import { isEventReadFailing } from "../lib/api/event-outage";
 import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -84,6 +85,10 @@ vi.mock("../lib/api/profiles-proxy", () => ({
 
 vi.mock("../lib/api/events-proxy", () => ({
   getExpiredFestaActTown: vi.fn().mockResolvedValue(null),
+}));
+vi.mock("../lib/api/event-outage", () => ({
+  EVENT_OUTAGE_WINDOW_MS: 60_000,
+  isEventReadFailing: vi.fn(() => false),
 }));
 
 describe("proxy", () => {
@@ -674,6 +679,60 @@ describe("proxy", () => {
           expect(init.status).toBeUndefined();
         },
       );
+    });
+  });
+
+  describe("event read outage", () => {
+    const slug = "concert-13-de-agost-del-2026-92d1olka3cpd3n80jabfkku9s0";
+    function eventRequest(pathname: string, method = "GET", headers = {}) {
+      return {
+        nextUrl: mockNextUrl({ pathname }),
+        headers: new Headers({ accept: "text/html", ...headers }),
+        method,
+      } as unknown as NextRequest;
+    }
+
+    beforeEach(() => {
+      (isEventReadFailing as Mock).mockReturnValue(true);
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+      (NextResponse.next as Mock).mockReturnValue({ headers: new Headers() });
+    });
+
+    afterEach(() => {
+      (isEventReadFailing as Mock).mockReturnValue(false);
+    });
+
+    it("503s event pages and keeps them out of the CDN", async () => {
+      const result = await proxy(eventRequest(`/e/${slug}`));
+
+      const [url, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe(`/ca/e/${slug}`);
+      expect(init.status).toBe(503);
+      expect(result.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(result.headers.get("Retry-After")).toBe("60");
+      expect(result.headers.has("Cache-Tag")).toBe(false);
+    });
+
+    it.each([
+      ["a server action", `/e/${slug}`, "POST", {}],
+      ["a client navigation", `/e/${slug}`, "GET", { rsc: "1" }],
+      ["a page below the event", `/e/${slug}/edita`, "GET", {}],
+      ["a place page", "/barcelona", "GET", {}],
+    ])("leaves %s alone", async (_, pathname, method, headers) => {
+      const result = await proxy(eventRequest(pathname, method, headers));
+
+      const init = (NextResponse.rewrite as Mock).mock.calls[0]?.[1];
+      expect(init?.status).toBeUndefined();
+      expect(result.headers.has("Retry-After")).toBe(false);
+    });
+
+    it("serves event pages as usual when reads work", async () => {
+      (isEventReadFailing as Mock).mockReturnValue(false);
+
+      await proxy(eventRequest(`/e/${slug}`));
+
+      const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(init.status).toBeUndefined();
     });
   });
 
