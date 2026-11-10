@@ -4,9 +4,17 @@ import HybridEventsList from "@components/ui/hybridEventsList";
 import List from "@components/ui/list";
 import HeadingLayout from "@components/ui/hybridEventsList/HeadingLayout";
 import SearchAwareHeading from "@components/ui/hybridEventsList/SearchAwareHeading";
+import CountLine from "@components/ui/hybridEventsList/CountLine";
+import { render, screen } from "@testing-library/react";
+import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
+import { parseFiltersFromUrl } from "@utils/url-filters";
+import { extractURLSegments } from "@utils/url-parsing";
 import type { ListEvent } from "types/api/event";
 
 vi.mock("@components/ui/sponsor/SponsorBannerSlot", () => ({ default: () => null }));
+vi.mock("@components/context/UrlFiltersContext", () => ({
+  useSharedUrlFilters: vi.fn(),
+}));
 
 // Count List elements anywhere in the tree, including Suspense fallbacks.
 function countLists(node: ReactNode): number {
@@ -56,9 +64,30 @@ describe("HybridEventsList server render", () => {
       pageData,
       countLine: "103 activitats avui.",
     });
-    expect(findProps(tree, HeadingLayout)?.subtitle).toBe(
-      "103 activitats avui. Descobreix què fer avui.",
-    );
+    const subtitle = findProps(tree, HeadingLayout)?.subtitle as ReactNode;
+    expect(findProps(subtitle, CountLine)?.text).toBe("103 activitats avui.");
     expect(findProps(tree, SearchAwareHeading)?.pageData).toBe(pageData);
+  });
+});
+
+describe("CountLine", () => {
+  const filtersFor = (query: string) =>
+    parseFiltersFromUrl(
+      extractURLSegments("/barcelona/avui"),
+      new URLSearchParams(query),
+    );
+
+  it("shows the count on the unfiltered page", () => {
+    vi.mocked(useSharedUrlFilters).mockReturnValue(filtersFor(""));
+    render(<CountLine text="22 activitats avui." />);
+    expect(screen.getByText("22 activitats avui.")).toBeVisible();
+  });
+
+  it("hides the count when a client filter narrows the list", () => {
+    vi.mocked(useSharedUrlFilters).mockReturnValue(
+      filtersFor("distance=5&lat=41.38&lon=2.17"),
+    );
+    render(<CountLine text="22 activitats avui." />);
+    expect(screen.getByText("22 activitats avui.")).not.toBeVisible();
   });
 });

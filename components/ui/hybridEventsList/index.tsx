@@ -9,6 +9,7 @@ import CardServer from "@components/ui/card/CardServer";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
+import CountLine from "./CountLine";
 import HeadingLayout from "./HeadingLayout";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import { hasCardImage } from "@utils/event-helpers";
@@ -42,7 +43,14 @@ async function HybridEventsList({
         <HeadingLayout
           title={pageData.title}
           subtitle={
-            countLine ? `${countLine} ${pageData.subTitle}` : pageData.subTitle
+            countLine ? (
+              <>
+                <CountLine text={countLine} />
+                {pageData.subTitle}
+              </>
+            ) : (
+              pageData.subTitle
+            )
           }
           titleClass={titleClass}
           subtitleClass={subtitleClass}

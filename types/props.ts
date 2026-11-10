@@ -673,6 +673,10 @@ export type HybridEventsListClientProps = Omit<
   "placeTypeLabel" | "noEventsFound"
 >;
 
+export interface CountLineProps {
+  text: string;
+}
+
 export interface SsrListWrapperProps {
   children: ReactNode;
   categories?: CategorySummaryResponseDTO[];
@@ -769,7 +773,7 @@ export interface SearchAwareHeadingProps {
 
 export interface HybridEventsHeadingLayoutProps {
   title: string;
-  subtitle: string;
+  subtitle: ReactNode;
   titleClass: string;
   subtitleClass: string;
   cta?: ReactNode;
