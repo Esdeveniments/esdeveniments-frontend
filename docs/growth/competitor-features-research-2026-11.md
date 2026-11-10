@@ -14,7 +14,7 @@ page, Keyword Planner, Search Console or GA4. Anything without one is marked
 | Google results | 15 queries recorded on google.es, `hl=ca`, `gl=es`, `pws=0`, in the owner's Chrome, 2026-11-10 | Location may still personalise. Top 7–9 organic only. 3 more queries hit a captcha (§2.3) |
 | Keyword Planner | `GenerateKeywordHistoricalMetrics`, Spain (geo 2724), Google Search, average monthly searches | Bucketed estimates; close variants get merged |
 | Search Console | `sc-domain:esdeveniments.cat`, queries, 2026-08-10 → 2026-11-08 (7,040 queries, 34,586 impressions, 225 clicks) | Anonymised queries are left out |
-| GA4 | Property 406884331, **country = Spain**, 2026-08-10 → 2026-11-08 | Spain filter needed: about 80% of raw traffic is bots |
+| GA4 | Property 406884331, **country = Spain**, 2026-08-17 → 2026-11-08 (starts after the Zaraz duplicate hits, see `paid-acquisition-research-2026-11.md`) | Spain filter needed: about 80% of raw traffic is bots |
 | Competitor pages | Fetched and read on 2026-11-10 | We have **no traffic data for any competitor** |
 | Our data | 1,000 upcoming events from `/api/events` (production), 2026-11-10 | One sample |
 
@@ -137,7 +137,7 @@ pages. That is the same set of page types we already have
 | culturaviva | Weekly Telegram channel per province, `/events/?free=1` (428 events), `/venues/` | Page |
 | Gencat agenda | Newsletter, "Posa l'Agenda al teu web" widget, RSS | Page |
 | festesmajorsdecatalunya | Dated weekend title, Event JSON-LD, newsletter "Cada dijous", "Ja som més de 50 mil" | Page; the 50k figure is **self-reported** |
-| planomato (Granollers) | About 3,149 words, Hoy / Esta semana / Fin de semana / Este mes / Próximo mes tabs | Page. It sends us 18 sessions in 90 days (GA4) |
+| planomato (Granollers) | About 3,149 words, Hoy / Esta semana / Fin de semana / Este mes / Próximo mes tabs | Page. It sends us 18 sessions in 12 weeks (GA4) |
 | festacatalunya `/comarca/maresme` | About 795 words, newsletter | Page |
 | criar.cat `/plans/` | Weekly dated family article | Page |
 
@@ -145,10 +145,10 @@ pages. That is the same set of page types we already have
 
 | Fact | Evidence |
 | --- | --- |
-| 91% of users are new | GA4 Spain: 4,382 new vs 416 returning |
-| Push opt-in doesn't convert | GA4 Spain: 435 `push_optin_offer_view`, 344 `push_optin_dismiss`, 1 `push_optin_click`, 1 `push_optin_failed`, 0 `push_optin_success` |
-| Social and Telegram bring almost nothing | GA4 Spain sessions: Organic Search 3,951, Direct 567, AI Assistant 561, Organic Social 34; no `t.me` source. `t.me/esdeveniments` (`config/index.ts:169`) has 7 members |
-| ChatGPT sends about as much as direct traffic | 559 sessions from `chatgpt.com`, about 10% of 5,328 (Google 2,772, Bing 648, direct 567) |
+| 91% of users are new | GA4 Spain: 3,752 new vs 350 returning |
+| Push opt-in doesn't convert | GA4 Spain: 408 `push_optin_offer_view`, 326 `push_optin_dismiss`, 1 `push_optin_click`, 1 `push_optin_failed`, 0 `push_optin_success` |
+| Social and Telegram bring almost nothing | GA4 Spain sessions: Organic Search 3,425, AI Assistant 495, Direct 473, Organic Social 26; no `t.me` source. `t.me/esdeveniments` (`config/index.ts:169`) has 7 members |
+| ChatGPT sends about as much as direct traffic | 493 sessions from `chatgpt.com`, about 11% of 4,599 (Google 2,389, Bing 573, direct 473) |
 | Free and age data are thin | Of 1,000 upcoming events, 45 (4.5%) say free and 46 (4.6%) state an age; 63 are family events, 21 of them with an age. Event summaries have no price or type field |
 | Event `offers` markup is coded but not emitted in what we checked | `utils/schema-helpers.ts:161-162, 326-336` and `utils/event-price.ts:45` build offers from `price`, but none of the 150 production API events checked had a `price` key, and 12 live event pages sampled from the event sitemaps on 2026-11-10 had no `offers` in their `Event` JSON-LD (the one `Offer` on each page belongs to the site-wide `WebApplication` block). Not proven for every event |
 | `eventStatus` is fixed to Scheduled | `utils/schema-helpers.ts:299`. Google treats a missing status as Scheduled and our API has no cancelled state, so there is nothing to fix |
@@ -163,12 +163,12 @@ Tracked in #706 (items 1 and 3, after the town-test readout) and #748 (item 2, c
 
 | # | Feature (who does it) | Why, with evidence | Confidence |
 | --- | --- | --- | --- |
-| 1 | **femturisme's town agenda model**: "Agenda {town}" title plus nearby events within a radius | femturisme is on 12 of 15 result pages and ranks for every "agenda {town}" query we checked (Masnou 2, Garriga 4, Granollers 4, Arenys 3, Vallès Oriental 1). Our town agendas sit at 20–49. Already being tested (groups A and B). **Action:** read the test between 2026-12-06 and 2026-12-20; if it wins, roll it out first to the largest towns outside the test: Girona (5,400 searches/month; `/girona` got 9–111 impressions a month, and for "agenda girona" Google shows `/en/girona` at 50, not `/girona`), Sabadell (390), Terrassa (320) | Medium: the test will tell |
+| 1 | **femturisme's town agenda model**: "Agenda {town}" title plus nearby events within a radius | femturisme is on 12 of 15 result pages and ranks for every "agenda {town}" query we checked (Masnou 2, Garriga 4, Granollers 4, Arenys 3, Vallès Oriental 1). Our town agendas sit at 20–49. Its two parts are tested separately, and not exactly: group A tests a new title alone, group B a data-built intro plus comarca events (not a radius) when a town has few events; nothing tests the two together. **Action:** read the test between 2026-12-06 and 2026-12-20 and roll out only the change that wins, first to the largest towns outside the test: Girona (5,400 searches/month; `/girona` got 9–111 impressions a month, and for "agenda girona" Google shows `/en/girona` at 50, not `/girona`), Sabadell (390), Terrassa (320) | Medium: the test will tell |
 | 2 | **Count line on today pages** ("103 activitats avui", from catalunyainfo's "182 activitats en 93 municipis") | Largest demand we checked: "que hacer hoy en barcelona" 9,900 (we're at 75), "que fer aquest cap de setmana" 4,400 (38), "que fer avui" 1,300 (51). The count is the page's own `totalElements` with `from`/`to` (103 today, 569 this weekend on 2026-11-10; `byDate` is ignored by the backend). Time Out's divendres / dissabte / diumenge sections are **out**: the backend returns weekend events in mixed date order (esdeveniments-backend#63), so sections would break on "load more". Run it as a date-type A/B test, `avui` vs `cap-de-setmana`, because 11 places hold 95% of date-page impressions and Barcelona alone 38%, so a split by place can't be balanced. This is a non-randomized comparison: `avui` and `cap-de-setmana` have different seasonal demand (a holiday can move one and not the other), so check their pre-test trends and read a difference as a signal, not proof. Whether a count causes ranking is unverified | Low–medium: the test will tell (#748) |
 | 3 | **A family page that can rank** (surtdecasa `/agenda/familia` at 3, betevé, Time Out `/nens`) | 390 + 170 searches/month. `/catalunya/cap-de-setmana/familia-i-infants` is `noindex, follow` and canonicalises to `/catalunya/familia-i-infants` by design (`utils/proxy-page-headers.ts:120-124`, `components/partials/generatePagesData.ts:233-238`: Search Console flagged 3-segment URLs as thin or duplicate). The indexed page `/catalunya/familia-i-infants` (URL Inspection: indexed, crawled 2026-10-17) gets 4 impressions at 40.8 for "que fer aquest cap de setmana amb nens". **Action:** after the town test, apply its title lesson to this page ("Què fer amb nens a Catalunya…"). Don't lift the 3-segment noindex for one category without new evidence | Low: one page, title-only lever |
 | 4 | ~~Event rich results on `es` pages~~ **dropped** | URL Inspection (2026-11-10) on two `/es/e/` pages and `/catalunya/familia-i-infants`: Event items detected, verdict PASS, only `performer` and `offers` warnings. Search Console records no search appearance of any type in 90 days. The markup is valid; whether Google shows the event experience is its choice. No code change is backed by evidence | — |
-| 5 | **Answer AI assistants well** | ChatGPT sends 559 sessions (about 10%, close to Bing's 648), and an AI Overview showed on every Google result page we recorded. No competitor feature to copy here; keep pages factual and crawlable. Don't make per-variation pages (Google's scaled content policy) | Data is solid; best action unclear |
-| 6 | **Weekly newsletter** (betevé, Time Out, Gencat, festesmajors, festacatalunya) | Every editorial competitor has one, but nothing shows our users want one: push gets 0 sign-ups of 435 offers, Telegram has 7 members, social sends 0.6% of sessions. Only worth a cheap test (an email field on weekend pages, counting sign-ups) before building anything | Low |
+| 5 | **Answer AI assistants well** | ChatGPT sends 493 sessions (about 11%, close to Bing's 573), and an AI Overview showed on every Google result page we recorded. No competitor feature to copy here; keep pages factual and crawlable. Don't make per-variation pages (Google's scaled content policy) | Data is solid; best action unclear |
+| 6 | **Weekly newsletter** (betevé, Time Out, Gencat, festesmajors, festacatalunya) | Every editorial competitor has one, but nothing shows our users want one: push gets 0 sign-ups of 408 offers, Telegram has 7 members, social sends 0.6% of sessions. Only worth a cheap test (an email field on weekend pages, counting sign-ups) before building anything | Low |
 
 ## 5. Don't copy (evidence says no)
 
