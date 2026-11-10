@@ -476,8 +476,8 @@ The bundler ships an imported JSON file whole. `utils/constants.ts` and five
 shared utils imported the locale files for a few labels, so every client
 component that reached them loaded a 72 KB gzip chunk holding `ca`, `es` and
 `en`. They now read `i18n/locale-labels.generated.json`; run
-`yarn i18n:labels` after editing `Components.Constants` or the `Utils` sections
-it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
+`yarn i18n:labels` after editing `i18n/locale-lists.json` or the `Utils`
+sections it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
 Outside tests, only `i18n/request.ts` loads the full message files.
 
 ## Messages are precompiled: strings only, no `t.raw()`
@@ -929,3 +929,23 @@ town with no events, a past event and a date or category listing. The dev
 "Insights" (instant-navigation hints such as `connection()` or `params` outside
 `<Suspense>`) are speed hints, not errors. Before testing, run `yarn prebuild`:
 without `public/sw.js`, dev renders `/sw.js` as a locale page and crashes.
+
+## A listed sitemap must answer 200, even when it's empty
+
+`/sitemap.xml` listed `server-google-news-sitemap.xml`, which answered 404 when
+there was no article from the last 48 hours. News comes out in bursts (none from
+February to November 2026), so it 404'd most days. Search Console logged it as an
+error on the index and stopped reading it after December 2025. Google's news
+sitemap docs say an empty news sitemap is fine (a harmless "Empty Sitemap"
+warning), so it now answers 200 with an empty `<urlset>`. The deploy's "Warm
+sitemaps and festivity hubs" step requests every listed sitemap and warns on any
+other status.
+
+Don't make up `<lastmod>`. Google uses it only when it's accurate; the news
+sitemap set the hub pages to "now" on every request. With no real edit date,
+leave it out. Build the news sitemaps from the API's news list, not a fixed list
+of cities: a fixed list left Girona, El Masnou and other cities' articles out.
+
+Search Console's API shows warnings per child sitemap:
+`GET webmasters/v3/sites/{site}/sitemaps?sitemapIndex=<index URL>`. It gives
+counts only; the reasons are in the Search Console UI.

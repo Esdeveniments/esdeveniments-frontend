@@ -1,12 +1,6 @@
 {
   "constants": {
     "ca": {
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      },
       "days": [
         "Diumenge",
         "Dilluns",
@@ -69,12 +63,6 @@
       ]
     },
     "es": {
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      },
       "days": [
         "Domingo",
         "Lunes",
@@ -137,12 +125,6 @@
       ]
     },
     "en": {
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      },
       "days": [
         "Sunday",
         "Monday",

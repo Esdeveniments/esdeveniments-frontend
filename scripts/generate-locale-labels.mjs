@@ -34,13 +34,7 @@ const pick = (value, keyPath) => {
 };
 const labels = {
   constants: Object.fromEntries(
-    LOCALES.map((l) => [
-      l,
-      {
-        ...pick(messages[l].Components?.Constants, `${l}.Components.Constants`),
-        ...pick(lists.constants[l], `locale-lists constants.${l}`),
-      },
-    ]),
+    LOCALES.map((l) => [l, pick(lists.constants[l], `locale-lists constants.${l}`)]),
   ),
   utils: Object.fromEntries(
     UTILS_KEYS.map((k) => [k, pick(messages.ca.Utils?.[k], `ca.Utils.${k}`)]),
