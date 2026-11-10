@@ -94,10 +94,10 @@ jobs:
             echo "error_message=No event URL found in /sitemap-events/1.xml" >> "$GITHUB_OUTPUT"
             exit 1
           fi
-          if ! result=$(curl -s -o /tmp/event.html --max-time 10 \
-            -w "%{http_code} %{time_total}" "$event_url"); then
-            result="000 timeout"
-          fi
+          # curl's exit code tells a timeout (28) from DNS (6), refused (7) or
+          # TLS (35, 60) failures.
+          result=$(curl -s -o /tmp/event.html --max-time 10 \
+            -w "%{http_code} %{time_total}" "$event_url") || result="000 curl-exit-$?"
           echo "Event probe: $event_url → $result"
           if [ "${result%% *}" != "200" ]; then
             echo "❌ Event page returned ${result} (status, seconds; 10 s limit)"
