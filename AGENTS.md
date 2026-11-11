@@ -149,7 +149,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 - Read `DESIGN.md` and the `design-system-conventions` skill. Semantic classes (`heading-*`, `body-*`, `btn-*`, `card-*`, `badge-*`, `flex-center`, `stack`) and tokens (`text-foreground`, `text-muted-foreground`, `bg-muted`, `border-border`, …). Never `gray-*`, hex colors or the removed aliases (`primarydark`, `whiteCorp`, …). Components: `Button` and `Badge` in `components/ui/common/`.
 - Dates in UI: `getFormattedDate(start, end)` from `utils/date-helpers.ts`, not `toLocaleDateString`.
-- Whether an event has started or ended comes from `computeTemporalStatus` (`utils/event-status.ts`), and its start and end from `resolveEventWindow` (`utils/event-window.ts`), both in Madrid time. Never compare `new Date(event.endDate)` with now or parse event times by hand: the server runs in UTC, so a hand-rolled check drifts by hours. New edge cases go in `test/event-status-matrix.test.ts`, which runs under four time zones (LESSONS.md › Event start and end come from one place).
+- Whether an event has started or ended comes from `computeTemporalStatus` (`utils/event-status.ts`; `hasEventEnded` in `utils/event-window.ts` when client code needs only past or not, without the status labels), and its start and end from `resolveEventWindow` (`utils/event-window.ts`), all in Madrid time. Never compare `new Date(event.endDate)` with now or parse event times by hand: the server runs in UTC, so a hand-rolled check drifts by hours. New edge cases go in `test/event-status-matrix.test.ts`, which runs under four time zones (LESSONS.md › Event start and end come from one place).
 
 ## Hosting and deploys
 
