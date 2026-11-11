@@ -246,6 +246,24 @@ describe("generateJsonData", () => {
       "2025-01-10",
     ],
     [
+      "a 00:00 end on a later day stays date-only",
+      { endDate: "2025-01-12", startTime: "19:00", endTime: "00:00" },
+      "2025-01-10T19:00+01:00",
+      "2025-01-12",
+    ],
+    [
+      "the same time on a later end day is kept",
+      { endDate: "2025-01-11", startTime: "19:00", endTime: "19:00" },
+      "2025-01-10T19:00+01:00",
+      "2025-01-11T19:00+01:00",
+    ],
+    [
+      "an impossible end date is ignored",
+      { endDate: "2025-01-32", startTime: "10:00" },
+      "2025-01-10T10:00+01:00",
+      "2025-01-10",
+    ],
+    [
       "an invalid time is ignored",
       { startTime: "25:00" },
       "2025-01-10",

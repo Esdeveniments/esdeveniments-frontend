@@ -1,8 +1,8 @@
 import { TIMEZONE_MADRID } from "@utils/constants";
 import type { EventWindow, EventWindowInput } from "types/event-status";
 
-const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}/;
-const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)/;
+const DATE_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:[T ](.+))?$/;
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d(?:\.\d+)?)?$/;
 const OFFSET_PATTERN = /T.*(Z|[+-]\d{2}:?\d{2})$/i;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -53,6 +53,12 @@ const cleanTime = (value?: string | null): string | null => {
   return match ? `${match[1]}:${match[2]}` : null;
 };
 
+const isCalendarDay = (day: string): boolean => {
+  // Date.parse rolls "2025-02-30" over to March and rejects "2025-01-32".
+  const ms = wallClockMs(day, "00:00");
+  return !Number.isNaN(ms) && wallClockDay(ms) === day;
+};
+
 /**
  * Splits a backend date into a Madrid day and time. A value with an offset
  * ("…+02:00", "…Z") is converted to Madrid; a bare one is Madrid already.
@@ -62,7 +68,8 @@ const splitDate = (
   value?: string | null,
 ): { day: string | null; time: string | null } => {
   const trimmed = value?.trim() ?? "";
-  if (!DAY_PATTERN.test(trimmed)) return { day: null, time: null };
+  const match = DATE_PATTERN.exec(trimmed);
+  if (!match || !isCalendarDay(match[1])) return { day: null, time: null };
   if (OFFSET_PATTERN.test(trimmed)) {
     const instant = new Date(trimmed);
     if (!Number.isNaN(instant.getTime())) {
@@ -70,9 +77,9 @@ const splitDate = (
       return { day, time: time === "00:00" ? null : time };
     }
   }
-  const time = cleanTime(trimmed.slice(11));
+  const time = cleanTime(match[2]);
   return {
-    day: trimmed.slice(0, 10),
+    day: match[1],
     time: time === "00:00" ? null : time,
   };
 };
@@ -82,13 +89,14 @@ const splitDate = (
  * status pill, card lists and JSON-LD agree on when it starts and ends.
  *
  * - A start time of "00:00" or none at all ("Consultar horaris") is all day.
- * - Times keep only "HH:mm"; an end time equal to the start time is no end.
+ * - Times keep only "HH:mm". An end time equal to the start time on the same
+ *   day is no end; so is "00:00" on a later end day.
  * - An end time with no end date ends on the start day.
  * - An end date before the start date is ignored (bad data).
  * - An end time at or before the start time on the same day is overnight:
  *   22:00–02:00 ends at 02:00 the next day.
  *
- * Returns null when the start date is not a "YYYY-MM-DD…" value.
+ * Returns null when the start date is not a real "YYYY-MM-DD" day.
  */
 export function resolveEventWindow({
   startDate,
@@ -111,13 +119,21 @@ export function resolveEventWindow({
     : endTime === undefined
       ? end.time
       : cleanTime(endTime);
-  if (resolvedEndTime === resolvedStartTime) resolvedEndTime = null;
 
-  let endDay = end.day ?? (resolvedEndTime ? start.day : null);
+  let endDay = end.day;
   if (endDay && endDay < start.day) {
     endDay = null;
     resolvedEndTime = null;
   }
+  const endsLater = !!endDay && endDay > start.day;
+  // On the start day an equal end time is no end; on a later day, "00:00"
+  // is no end, as the date display reads it.
+  if (
+    endsLater ? resolvedEndTime === "00:00" : resolvedEndTime === resolvedStartTime
+  ) {
+    resolvedEndTime = null;
+  }
+  endDay ??= resolvedEndTime ? start.day : null;
   if (
     endDay === start.day &&
     resolvedEndTime &&

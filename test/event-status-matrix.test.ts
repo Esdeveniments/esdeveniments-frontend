@@ -53,6 +53,8 @@ const cases: Case[] = [
   { name: "several days, no end time, last day", now: "2025-10-10T23:00", startDate: "2025-10-01", endDate: "2025-10-10", startTime: "19:00", state: "live" },
   { name: "several days, no end time, over", now: "2025-10-11T00:30", startDate: "2025-10-01", endDate: "2025-10-10", startTime: "19:00", state: "past", detail: /^2025-10-10$/ },
   { name: "several days, before the first start time", now: "2025-10-01T12:00", startDate: "2025-10-01", endDate: "2025-10-20", startTime: "19:00", state: "upcoming" },
+  { name: "several days ending at 00:00 run all of the last day", now: "2025-10-10T12:00", startDate: "2025-10-01", endDate: "2025-10-10", startTime: "19:00", endTime: "00:00", state: "live" },
+  { name: "the same time on a later end day is a real end", now: "2025-10-11T19:30", startDate: "2025-10-10", endDate: "2025-10-11", startTime: "19:00", endTime: "19:00", state: "past" },
   { name: "several days with an end time, last hours", now: "2025-10-10T12:00", startDate: "2025-10-01", endDate: "2025-10-10", startTime: "19:00", endTime: "15:00", state: "live", detail: /^3 hours$/ },
 
   // Bad data: an end date before the start date is ignored.
@@ -78,6 +80,8 @@ const cases: Case[] = [
 
   // Bad times are ignored rather than producing an invalid date.
   { name: "an invalid start time counts as all day", now: "2025-10-10T12:00", startDate: "2025-10-10", startTime: "25:00", state: "live" },
+  { name: "an end time with trailing text counts as no end time", now: "2025-10-10T15:00", startDate: "2025-10-10", endDate: "2025-10-10", startTime: "10:00", endTime: "14:00junk", state: "live" },
+  { name: "an impossible start date is treated as unknown", now: "2025-10-10T12:00", startDate: "2025-02-30", startTime: "10:00", state: "upcoming" },
   { name: "an invalid end time counts as no end time", now: "2025-10-10T12:00", startDate: "2025-10-10", endDate: "2025-10-10", startTime: "10:00", endTime: "xx", state: "live" },
 
   // Full timestamps with an offset, as some endpoints send them.
@@ -131,7 +135,7 @@ describe.each(["Europe/Madrid", "UTC", "America/New_York", "Asia/Tokyo"])(
       "a multi-day event with start time %s is live in between and past after",
       (startTime) => {
         process.env.TZ = tz;
-        for (const endTime of [null, "01:00", "18:00"]) {
+        for (const endTime of [null, "00:00", "01:00", "18:00"]) {
           for (let hour = 0; hour < 24; hour++) {
             const hh = String(hour).padStart(2, "0");
             const status = (now: string) =>
