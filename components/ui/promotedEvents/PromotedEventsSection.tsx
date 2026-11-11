@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import type { JSX } from "react";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import SectionHeading from "@components/ui/common/SectionHeading";
+import PromotedEventsTracker from "@components/ui/promotedEvents/PromotedEventsTracker";
 import { fetchPromotedEvents } from "@lib/api/promotions";
 import { getPlaceBySlug } from "@lib/api/places";
 import { getLocaleSafely } from "@utils/i18n-seo";
@@ -43,10 +44,10 @@ export async function PromotedEventsRow({
   return (
     <section className="py-section-y border-b">
       <SectionHeading title={t("title")} titleClassName="heading-2 text-foreground" />
-      <div
-        data-analytics-container="true"
-        data-analytics-context="promoted_carousel"
-        data-analytics-place-slug={key}
+      <PromotedEventsTracker
+        context="promoted_carousel"
+        placeSlug={key}
+        eventCount={promotedEvents.length}
       >
         <EventsAroundServer
           events={promotedEvents}
@@ -55,7 +56,7 @@ export async function PromotedEventsRow({
           title={t("title")}
           jsonLdId={`promoted-events-${key}`}
         />
-      </div>
+      </PromotedEventsTracker>
     </section>
   );
 }
