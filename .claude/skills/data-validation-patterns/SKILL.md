@@ -5,11 +5,11 @@ description: How to validate untrusted data with Zod in esdeveniments.cat - back
 
 # Data validation patterns
 
-Rule (AGENTS.md › API layer): parse every backend response with Zod in the external wrapper, and have reads return a safe fallback instead of throwing. Some older readers still cast raw JSON (`lib/api/news-external.ts`, `fetchCategorizedEventsExternal` in `lib/api/events-external.ts`); don't copy them, and add a parser when you touch them. Where the parse call sits in the three layers: `api-layer-patterns` skill.
+Rule (AGENTS.md › API layer): parse every backend response with Zod in the external wrapper, and have reads return a safe fallback instead of throwing. One older reader still casts raw JSON (`fetchCategorizedEventsExternal` in `lib/api/events-external.ts`); don't copy it, and add a parser when you touch them. Where the parse call sits in the three layers: `api-layer-patterns` skill.
 
 ## Where schemas live
 
-- Backend DTO schemas and their `parse*` helpers: `lib/validation/<resource>.ts`, one file per resource. Run `ls lib/validation/` to see them all (event, category, city, place, region, user, profile, favorites, promotion, upload, auth, username, publish-draft).
+- Backend DTO schemas and their `parse*` helpers: `lib/validation/<resource>.ts`, one file per resource. Run `ls lib/validation/` to see them all (event, category, city, news, place, region, user, profile, favorites, promotion, upload, auth, username, publish-draft).
 - TypeScript types stay in `types/` (DTOs in `types/api/`). Schemas import the DTO type and the parser returns it; don't declare `z.infer` aliases in `lib/validation/` (ESLint only allows type aliases in `types/`).
 - Shared building blocks are exported and reused: `EventSummaryResponseDTOSchema`, `CitySummaryResponseDTOSchema` and `CategorySummaryResponseDTOSchema` live in `lib/validation/event.ts` and are imported by `city.ts` and `category.ts`.
 - A request-body schema used by a single route may sit at the top of that route (`ToggleFavoriteSchema` in `app/api/favorites/route.ts`). Move it to `lib/validation/` once a second file needs it (`profileUpdateSchema` in `lib/validation/auth.ts`).
@@ -46,7 +46,7 @@ Fallbacks by shape:
 
 `fetchEventsExternalResult` (`lib/api/events-external.ts`) returns a 502 status on upstream or validation failure; `fetchEventsExternal` unwraps that result and falls back to an empty page.
 
-Parsers may also normalize after validation: `parseEventDetail` and `parsePagedEvents` add image cache keys, `parseRegionsGrouped` fills a missing `slug` from `name`. Keep that logic in the parser so every caller gets the same shape.
+Parsers may also normalize after validation: `parseEventDetail` and `parsePagedEvents` add image cache keys, `parsePagedNews` and `parseNewsDetail` contract Catalan place articles, `parseRegionsGrouped` fills a missing `slug` from `name`. Keep that logic in the parser so every caller gets the same shape.
 
 ## Writing a schema for a backend DTO
 

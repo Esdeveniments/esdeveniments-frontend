@@ -1,6 +1,10 @@
 import type { EventDetailResponseDTO } from "types/api/event";
 import { getFormattedDate, normalizeEndTime } from "@utils/date-helpers";
-import { capitalizeFirstLetter, formatPlaceName } from "./string-helpers";
+import {
+  capitalizeFirstLetter,
+  escapeRegex,
+  formatPlaceName,
+} from "./string-helpers";
 import { formatPlacePreposition } from "@utils/helpers";
 import type { EventCopyLabels, StringHelperLabels } from "types/common";
 import localeLabels from "../i18n/locale-labels.generated.json";
@@ -18,8 +22,6 @@ const canonicalArticleMap = Object.values(
 }, {} as Record<string, string>);
 const toCanonicalArticle = (token: string) =>
   canonicalArticleMap[token.toLowerCase()] || capitalizeFirstLetter(token);
-const escapeRegex = (value: string): string =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 function isValidTime(t: string | null): t is string {
   return !!t && t !== "00:00";

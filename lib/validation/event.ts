@@ -16,13 +16,13 @@ export const CategorySummaryResponseDTOSchema = z.object({
   slug: z.string(),
 });
 
-const RegionSummaryResponseDTOSchema = z.object({
+export const RegionSummaryResponseDTOSchema = z.object({
   id: z.number(),
   name: z.string(),
   slug: z.string(),
 });
 
-const ProvinceSummaryResponseDTOSchema = z.object({
+export const ProvinceSummaryResponseDTOSchema = z.object({
   id: z.number(),
   name: z.string(),
   slug: z.string(),
@@ -179,14 +179,18 @@ export function parseEventDetail(
   return enhanceEventDetail(event);
 }
 
-// Paged response schema for events
-export const PagedEventResponseDTOSchema = z.object({
-  content: z.array(EventSummaryResponseDTOSchema),
+/** Page fields of the backend's PagedResponseDTO; extend it with `content`. */
+export const PagedResponseMetaSchema = z.object({
   currentPage: z.number(),
   pageSize: z.number(),
   totalElements: z.number(),
   totalPages: z.number(),
   last: z.boolean(),
+});
+
+// Paged response schema for events
+export const PagedEventResponseDTOSchema = PagedResponseMetaSchema.extend({
+  content: z.array(EventSummaryResponseDTOSchema),
 });
 
 export function parsePagedEvents(

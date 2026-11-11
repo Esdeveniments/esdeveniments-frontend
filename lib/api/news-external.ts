@@ -7,7 +7,8 @@ import type { FetchNewsParams } from "./news";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { PagedResponseDTO } from "types/api/event";
 import { buildNewsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helpers";
-import { parseEventSummaryList } from "@lib/validation/event";
+import { parseNewsDetail, parsePagedNews } from "@lib/validation/news";
+import { parsePagedCities } from "@lib/validation/city";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
 // This creates a separate cache entry for every unique URL.
@@ -28,7 +29,7 @@ export async function fetchNewsExternal(
       console.error(`fetchNewsExternal: HTTP ${res.status}`);
       return emptyPagedResponse();
     }
-    return (await res.json()) as PagedResponseDTO<NewsSummaryResponseDTO>;
+    return parsePagedNews(await res.json()) ?? emptyPagedResponse();
   } catch (error) {
     console.error("fetchNewsExternal: failed", error);
     return emptyPagedResponse();
@@ -47,10 +48,7 @@ export async function fetchNewsBySlugExternal(
       console.error("fetchNewsBySlugExternal:", slug, "HTTP", res.status);
       return null;
     }
-    const data = (await res.json()) as NewsDetailResponseDTO;
-    // Events render with the shared event card, so they get the same parser
-    // (drops invalid items, adds image cache keys) as every other event list.
-    return { ...data, events: parseEventSummaryList(data.events ?? []) };
+    return parseNewsDetail(await res.json());
   } catch (error) {
     console.error("fetchNewsBySlugExternal:", slug, "failed", error);
     return null;
@@ -77,7 +75,7 @@ export async function fetchNewsCitiesExternal(
       console.error(`fetchNewsCitiesExternal: HTTP ${res.status}`);
       return emptyPagedResponse();
     }
-    return (await res.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
+    return parsePagedCities(await res.json()) ?? emptyPagedResponse();
   } catch (error) {
     console.error("fetchNewsCitiesExternal: failed", error);
     return emptyPagedResponse();
