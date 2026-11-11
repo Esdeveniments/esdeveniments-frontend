@@ -6,6 +6,7 @@ import {
   buildLineItemParams,
   buildCustomFieldParams,
   buildMetadataParams,
+  buildInvoicingParams,
 } from "@lib/stripe/checkout-helpers";
 import { isValidPlace } from "@utils/route-validation";
 import { getOccupiedPlaceStatus } from "@lib/db/sponsors";
@@ -53,6 +54,9 @@ async function createStripeCheckoutSession(
   buildLineItemParams(params, duration, geoScope, locale);
   buildCustomFieldParams(params, locale);
   buildMetadataParams(params, duration, place, placeName, geoScope);
+  if (process.env.STRIPE_INVOICING_ENABLED === "true") {
+    buildInvoicingParams(params, locale, baseUrl);
+  }
 
   // Locale for checkout page (Stripe doesn't support Catalan, use Spanish as fallback)
   const stripeLocale = ["ca", "es"].includes(locale) ? "es" : "en";
