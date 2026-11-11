@@ -14,6 +14,7 @@ import {
   summarizeEdition,
 } from "./festa-major";
 import { festaMajorPath } from "./festa-major-paths";
+import { comparePlaceNames } from "./string-helpers";
 
 /** Acts per town, deduped per town: two towns can share an act title and day. */
 const byTown = (
@@ -60,7 +61,7 @@ export function summarizeTowns(
   towns.sort(
     (a, b) =>
       a.main.start.slice(5).localeCompare(b.main.start.slice(5)) ||
-      a.name.localeCompare(b.name, "ca"),
+      comparePlaceNames(a.name, b.name, "ca"),
   );
   return { currentYear, towns, complete };
 }
@@ -90,7 +91,7 @@ export function listRegions(
   }
   return [...regions.values()]
     .filter((region) => region.towns >= MIN_INDEXABLE_REGION_TOWNS)
-    .sort((a, b) => a.name.localeCompare(b.name, "ca"));
+    .sort((a, b) => comparePlaceNames(a.name, b.name, "ca"));
 }
 
 /**
@@ -114,7 +115,7 @@ export function townsBetween(
     .sort(
       (a, b) =>
         a.main.start.localeCompare(b.main.start) ||
-        a.name.localeCompare(b.name, "ca"),
+        comparePlaceNames(a.name, b.name, "ca"),
     );
 }
 

@@ -107,11 +107,33 @@ describe("options-helpers", () => {
       expect(generateTownsOptions(regionsWithoutSlug, 999)).toEqual([]);
     });
 
-    it("returns towns sorted alphabetically", () => {
-      const towns = generateTownsOptions(regionsWithoutSlug, 1);
-      const labels = towns.map((t) => t.label);
+    it("returns towns sorted alphabetically by stem, ignoring leading Catalan and Aranese articles", () => {
+      const mixedRegion: RegionsGroupedByCitiesResponseDTO[] = [
+        {
+          id: 99,
+          name: "Test",
+          cities: [
+            { id: 1, value: "valls", label: "Valls", latitude: 41.28, longitude: 1.25 },
+            { id: 2, value: "el-masnou", label: "El Masnou", latitude: 41.48, longitude: 2.31 },
+            { id: 3, value: "l-hospitalet-de-llobregat", label: "L'Hospitalet de Llobregat", latitude: 41.36, longitude: 2.1 },
+            { id: 4, value: "es-bordes", label: "Es Bòrdes", latitude: 42.74, longitude: 0.72 },
+            { id: 5, value: "les", label: "Les", latitude: 42.81, longitude: 0.71 },
+            { id: 6, value: "abrera", label: "Abrera", latitude: 41.52, longitude: 1.9 },
+            { id: 7, value: "mataro", label: "Mataró", latitude: 41.54, longitude: 2.44 },
+          ],
+        },
+      ];
 
-      expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+      const labels = generateTownsOptions(mixedRegion, 99).map((t) => t.label);
+      expect(labels).toEqual([
+        "Abrera",
+        "Es Bòrdes",
+        "L'Hospitalet de Llobregat",
+        "Les",
+        "El Masnou",
+        "Mataró",
+        "Valls",
+      ]);
     });
   });
 

@@ -4,6 +4,7 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import { generateSiteNavigationElementSchema } from "@components/partials/seo-meta";
 import type { SitemapContentProps } from "types/sitemap";
 import { toLocalizedUrl, withLocalePath } from "@utils/i18n-seo";
+import { comparePlaceNames } from "@utils/string-helpers";
 import { connection } from "next/server";
 
 export default async function SitemapContent({
@@ -19,12 +20,12 @@ export default async function SitemapContent({
   const { regions, cities } = await dataPromise;
   const withLocale = (path: string) => withLocalePath(path, locale);
 
-  // Sort regions and cities by name
+  // Sort regions and cities by stem (ignoring leading Catalan/Aranese articles)
   const sortedRegions = [...regions].sort((a, b) =>
-    a.name.localeCompare(b.name, "ca")
+    comparePlaceNames(a.name, b.name, "ca")
   );
   const sortedCities = [...cities].sort((a, b) =>
-    a.name.localeCompare(b.name, "ca")
+    comparePlaceNames(a.name, b.name, "ca")
   );
 
   // Generate navigation schema for regions and cities
