@@ -5,6 +5,9 @@
 import { BASE_PRICES_CENTS } from "@config/pricing";
 import type { SponsorDuration, GeoScope } from "types/sponsor";
 import { DURATION_DAYS, SPONSOR_DURATIONS } from "types/sponsor";
+import type { AppLocale } from "types/i18n";
+import { ensureLocale } from "@utils/i18n-routing";
+import { withLocalePath } from "@utils/i18n-seo";
 
 /**
  * Get price in cents for Stripe
@@ -166,4 +169,49 @@ export function buildMetadataParams(
     params.append(`metadata[${key}]`, value);
     params.append(`payment_intent_data[metadata][${key}]`, value);
   }
+}
+
+/** Stripe Tax code for general electronically supplied services. */
+const SPONSOR_TAX_CODE = "txcd_10000000";
+
+/**
+ * Checkbox text: accepting the terms and asking for the sponsorship to start
+ * on payment, so a consumer who withdraws within 14 days pays only for the
+ * days already provided.
+ */
+const TERMS_ACCEPTANCE: Record<AppLocale, (termsUrl: string) => string> = {
+  ca: (url) =>
+    `Accepto les [condicions de venda](${url}) i demano que el patrocini comenci en pagar. Si desisteixo dins de 14 dies, em retornareu la part dels dies que no s'hagin fet.`,
+  es: (url) =>
+    `Acepto las [condiciones de venta](${url}) y pido que el patrocinio empiece al pagar. Si desisto en 14 días, me devolveréis la parte de los días que no se hayan prestado.`,
+  en: (url) =>
+    `I accept the [terms of sale](${url}) and ask for the sponsorship to start on payment. If I withdraw within 14 days, you will refund the days not yet provided.`,
+};
+
+/**
+ * Invoice parameters (behind STRIPE_INVOICING_ENABLED): Stripe Tax splits out
+ * the IVA already included in the price, Checkout asks for the billing address
+ * and an optional NIF or EU VAT ID, issues a paid invoice and requires the
+ * terms checkbox (needs the terms URL in the Stripe account's public details).
+ */
+export function buildInvoicingParams(
+  params: URLSearchParams,
+  locale: string,
+  baseUrl: string
+): void {
+  const appLocale = ensureLocale(locale);
+  const termsUrl = `${baseUrl}${withLocalePath("/termes-servei", appLocale)}`;
+
+  params.append("automatic_tax[enabled]", "true");
+  params.append("line_items[0][price_data][tax_behavior]", "inclusive");
+  params.append("line_items[0][price_data][product_data][tax_code]", SPONSOR_TAX_CODE);
+  params.append("billing_address_collection", "required");
+  params.append("tax_id_collection[enabled]", "true");
+  params.append("invoice_creation[enabled]", "true");
+  params.append("invoice_creation[invoice_data][metadata][product]", "sponsor_banner");
+  params.append("consent_collection[terms_of_service]", "required");
+  params.append(
+    "custom_text[terms_of_service_acceptance][message]",
+    TERMS_ACCEPTANCE[appLocale](termsUrl)
+  );
 }
