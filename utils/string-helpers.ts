@@ -291,7 +291,7 @@ function classifyCategory(
 
 const ELIDED_ARTICLE = articles.l.toLowerCase();
 const LEADING_ARTICLE = /^(?:(els|el|les|la)\s+|(l)['’])(?=\S)/i;
-const SORT_LEADING_ARTICLE = /^(?:(?:els|el|les|la|es)\s+|l['’])(?=\S)/i;
+const SORT_LEADING_ARTICLE = /^(?:(?:els|el|les|la|es|era)\s+|l['’])(?=\S)/i;
 
 /**
  * Sort Catalan/Aranese place names alphabetically by their stem, ignoring

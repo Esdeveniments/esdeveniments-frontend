@@ -118,6 +118,18 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
+  // App Router route.ts handlers (like /noticies/[place]/rss.xml) overwrite
+  // a rewrite's 404 status with their own Response status, so answer 404 directly.
+  if (
+    placeCheck?.kind === "missing" &&
+    pathnameWithoutLocale.endsWith("/rss.xml")
+  ) {
+    return new NextResponse("Not Found", {
+      status: 404,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
   // After the redirects and existence checks, so an agent asking for
   // markdown gets the canonical URL and a real 404 for a missing page.
   if (wantsMarkdown(request)) {
@@ -139,9 +151,16 @@ export default async function proxy(request: NextRequest) {
   // Pages live under app/[locale]/. Prefixed paths (/es/foo) already match;
   // unprefixed ones (/foo) are rewritten to /ca/foo. Unknown places and
   // profiles render the same page with a 404 status (NextResponse.next()
-  // can't set one).
+  // can't set one). On 3-segment /sitemap/<missing>/<year>, avoid rewriting to
+  // sitemap/[town]/[year]/page.tsx whose unconditional redirect() would clobber 404.
   const url = request.nextUrl.clone();
-  if (!localeFromPath) {
+  if (
+    placeCheck?.kind === "missing" &&
+    /^\/sitemap\/[^/]+\/[^/]+$/.test(pathnameWithoutLocale)
+  ) {
+    const missingTown = pathnameWithoutLocale.split("/")[2];
+    url.pathname = `/${locale}/sitemap/${missingTown}`;
+  } else if (!localeFromPath) {
     url.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
   }
   const isEventOutage = isEventOutageRequest(request, pathnameWithoutLocale);

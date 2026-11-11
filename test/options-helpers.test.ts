@@ -117,6 +117,7 @@ describe("options-helpers", () => {
             { id: 2, value: "el-masnou", label: "El Masnou", latitude: 41.48, longitude: 2.31 },
             { id: 3, value: "l-hospitalet-de-llobregat", label: "L'Hospitalet de Llobregat", latitude: 41.36, longitude: 2.1 },
             { id: 4, value: "es-bordes", label: "Es Bòrdes", latitude: 42.74, longitude: 0.72 },
+            { id: 8, value: "era-bordeta", label: "Era Bordeta", latitude: 42.77, longitude: 0.69 },
             { id: 5, value: "les", label: "Les", latitude: 42.81, longitude: 0.71 },
             { id: 6, value: "abrera", label: "Abrera", latitude: 41.52, longitude: 1.9 },
             { id: 7, value: "mataro", label: "Mataró", latitude: 41.54, longitude: 2.44 },
@@ -128,6 +129,7 @@ describe("options-helpers", () => {
       expect(labels).toEqual([
         "Abrera",
         "Es Bòrdes",
+        "Era Bordeta",
         "L'Hospitalet de Llobregat",
         "Les",
         "El Masnou",

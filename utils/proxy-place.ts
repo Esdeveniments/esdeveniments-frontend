@@ -114,14 +114,26 @@ export async function checkPlace(
   }
 
   // Archive routes: /sitemap/<town>(/<year>(/<month>)?)
+  // 3-segment /sitemap/<town>/<year> has no page of its own, so 301 verified/alias
+  // towns in one hop (/sitemap for catalunya, /sitemap/<canonical> otherwise).
   if (segments[0] === "sitemap") {
     if (segments.length === 1) return null;
     if (segments.length > 4) return { kind: "missing" };
     const townSlug = segments[1];
-    if (townSlug === "catalunya") return null;
+    if (townSlug === "catalunya") {
+      return segments.length === 3 ? redirectTo(["sitemap"]) : null;
+    }
     if (!isValidPlace(townSlug)) return { kind: "missing" };
     const resolution = await resolvePlaceForProxy(townSlug);
     if (resolution.kind === "missing") return { kind: "missing" };
+    if (
+      segments.length === 3 &&
+      (resolution.kind === "exists" || resolution.kind === "alias")
+    ) {
+      const canonicalSlug =
+        resolution.kind === "alias" ? resolution.slug : townSlug;
+      return redirectTo(["sitemap", canonicalSlug]);
+    }
     if (resolution.kind !== "alias") return null;
     return redirectTo(["sitemap", resolution.slug, ...segments.slice(2)]);
   }

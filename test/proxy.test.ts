@@ -687,6 +687,7 @@ describe("proxy", () => {
         ["/es/noticies/la-garrotxa/rss.xml", "la-garrotxa", "garrotxa", "/es/noticies/garrotxa/rss.xml", ""],
         ["/noticies/hospitalet-de-llobregat/cap-de-setmana", "hospitalet-de-llobregat", "l-hospitalet-de-llobregat", "/noticies/l-hospitalet-de-llobregat/cap-de-setmana", ""],
         ["/sitemap/l-alt-urgell", "l-alt-urgell", "alt-urgell", "/sitemap/alt-urgell", ""],
+        ["/sitemap/l-alt-urgell/2025", "l-alt-urgell", "alt-urgell", "/sitemap/alt-urgell", ""],
         ["/en/sitemap/bordes-es/2025/agost", "bordes-es", "es-bordes", "/en/sitemap/es-bordes/2025/agost", ""],
       ])("301s %s to %s", async (pathname, fromSlug, toSlug, target, search) => {
         (resolvePlaceForProxy as Mock).mockResolvedValue({
@@ -703,18 +704,43 @@ describe("proxy", () => {
         expect(url.search).toBe(search);
       });
 
+      it("301s 3-segment /sitemap/<valid-town>/<year> directly to /sitemap/<town> and /sitemap/catalunya/<year> to /sitemap", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "exists" });
+
+        await proxy(placeRequest("/sitemap/barcelona/2025"));
+        const [townUrl, townStatus] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(townStatus).toBe(301);
+        expect(townUrl.pathname).toBe("/sitemap/barcelona");
+
+        (NextResponse.redirect as Mock).mockReset();
+        await proxy(placeRequest("/es/sitemap/catalunya/2025"));
+        const [catUrl, catStatus] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(catStatus).toBe(301);
+        expect(catUrl.pathname).toBe("/es/sitemap");
+      });
+
+      it("returns a direct 404 Response on /noticies/<missing>/rss.xml without rewriting to route.ts", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+
+        const result = await proxy(placeRequest("/noticies/no-such-place/rss.xml"));
+
+        expect(result.status).toBe(404);
+        expect(NextResponse.rewrite).not.toHaveBeenCalled();
+      });
+
       it.each([
-        "/noticies/no-such-place",
-        "/noticies/no-such-place/rss.xml",
-        "/sitemap/no-such-place",
-        "/sitemap/no-such-place/2025/agost",
-      ])("404s %s when the place is missing", async (pathname) => {
+        ["/noticies/no-such-place", "/ca/noticies/no-such-place"],
+        ["/sitemap/no-such-place", "/ca/sitemap/no-such-place"],
+        ["/sitemap/no-such-place/2025", "/ca/sitemap/no-such-place"],
+        ["/sitemap/no-such-place/2025/agost", "/ca/sitemap/no-such-place/2025/agost"],
+      ])("404s %s when the place is missing (rewriting to %s)", async (pathname, expectedRewrite) => {
         (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
         (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
 
         await proxy(placeRequest(pathname));
 
-        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        const [rewriteUrl, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(rewriteUrl.pathname).toBe(expectedRewrite);
         expect(init.status).toBe(404);
       });
 
