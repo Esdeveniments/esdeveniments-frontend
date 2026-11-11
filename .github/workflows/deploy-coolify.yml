@@ -279,6 +279,7 @@ jobs:
         env:
           NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
         run: |
+          set -o pipefail
           if ! len=$(printf '%s' "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" | base64 -d 2>/dev/null | wc -c | tr -d '[:space:]'); then
             len=invalid
           fi
