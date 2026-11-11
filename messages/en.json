@@ -1236,7 +1236,11 @@
       "copied": "Copied",
       "copyError": "Couldn't copy the link. Please try again.",
       "modalTitle": "Share event",
-      "modalDescription": "The more people know, the more will come."
+      "modalDescription": "The more people know, the more will come.",
+      "share": "Share",
+      "shareLabel": "Share {title}",
+      "shareDate": "Date: {date}",
+      "sharePlace": "Place: {place}"
     }
   },
   "Partials": {

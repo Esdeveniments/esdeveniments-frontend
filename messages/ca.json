@@ -1236,7 +1236,11 @@
       "copied": "Copiat",
       "copyError": "No s'ha pogut copiar l'enllaç. Torna-ho a provar.",
       "modalTitle": "Comparteix l'esdeveniment",
-      "modalDescription": "Com més gent ho sàpiga, més gent hi vindrà."
+      "modalDescription": "Com més gent ho sàpiga, més gent hi vindrà.",
+      "share": "Comparteix",
+      "shareLabel": "Comparteix {title}",
+      "shareDate": "Data: {date}",
+      "sharePlace": "Lloc: {place}"
     }
   },
   "Partials": {

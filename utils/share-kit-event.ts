@@ -1,4 +1,4 @@
-import { getFormattedDate } from "@utils/date-helpers";
+import { formatEventDateLabel } from "@utils/date-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { ShareKitEvent } from "types/event";
@@ -11,18 +11,16 @@ export function buildShareKitEvent(
   locale: AppLocale,
 ): ShareKitEvent {
   const slug = event.slug ?? "";
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
-    event.startDate,
-    event.endDate,
-    locale,
-  );
   return {
     slug,
     title: event.title ?? "",
     url: toLocalizedUrl(`/e/${slug}`, locale),
-    dateText: formattedEnd
-      ? `${formattedStart} – ${formattedEnd}`
-      : `${nameDay}, ${formattedStart}`,
+    dateText: formatEventDateLabel(
+      event.startDate,
+      event.endDate,
+      locale,
+      (start, end) => `${start} – ${end}`,
+    ),
     placeText,
     imageUrl: event.imageUrl || null,
   };
