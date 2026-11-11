@@ -968,3 +968,24 @@ of cities: a fixed list left Girona, El Masnou and other cities' articles out.
 Search Console's API shows warnings per child sitemap:
 `GET webmasters/v3/sites/{site}/sitemaps?sitemapIndex=<index URL>`. It gives
 counts only; the reasons are in the Search Console UI.
+
+## Every deploy broke the Server Actions of pages already open
+
+A promote checkout on a phone failed with "Alguna cosa ha fallat" and nothing
+in the Coolify, backend or Sentry logs (Sentry was also over its error quota).
+The tab was opened before a staging deploy. Next salts each Server Action ID
+with `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`, and without one every `next build`
+generates a new key, so the old page's action ID no longer existed: the server
+answered "Failed to find Server Action" (a `console.warn`), the client threw
+`UnrecognizedActionError`, and our `catch` showed the generic error. Nothing
+reached the backend.
+
+The image now builds with a fixed key per Environment (GitHub secret → Docker
+secret mount; the deploy fails when it is missing). Two Turbopack builds with the
+same key gave the same IDs, even after editing an action's body and adding an
+export to its file; without the key, no ID matched. An ID still changes when an
+action is renamed or moved, or the key is rotated, so the promote page reloads
+on `unstable_isUnrecognizedActionError` (safe: the action never ran). The key
+must be set at build time: Coolify only runs the image, and a runtime value
+there doesn't change the IDs. `deploymentId` doesn't help here; it only reloads
+on navigations (and see `docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md`).
