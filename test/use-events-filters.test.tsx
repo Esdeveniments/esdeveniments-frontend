@@ -275,10 +275,10 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("does not send a type param when price is gratis", async () => {
+  it("sends price=FREE when price is gratis", async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input), "http://localhost");
-      expect(url.searchParams.get("type")).toBeNull();
+      expect(url.searchParams.get("price")).toBe("FREE");
       return new Response(
         JSON.stringify({
           content: [createMockEvent("p1", "Free Event", "free-event")],
@@ -314,10 +314,10 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("does not send a type param when price is pagament", async () => {
+  it("sends price=PAID when price is pagament", async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input), "http://localhost");
-      expect(url.searchParams.get("type")).toBeNull();
+      expect(url.searchParams.get("price")).toBe("PAID");
       return new Response(
         JSON.stringify({
           content: [createMockEvent("p2", "Paid Event", "paid-event")],
@@ -353,10 +353,10 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("does not include type when price is default", async () => {
+  it("does not send price when it is the default", async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input), "http://localhost");
-      expect(url.searchParams.has("type")).toBe(false);
+      expect(url.searchParams.has("price")).toBe(false);
       return new Response(
         JSON.stringify({
           content: [createMockEvent("p3", "Any Event", "any-event")],

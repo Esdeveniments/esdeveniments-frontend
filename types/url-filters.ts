@@ -27,6 +27,10 @@ export interface RouteSegments {
   category: string;
 }
 
+// `?price=` values in our URLs and the backend `price` param they map to
+export type PriceFilterValue = "gratis" | "pagament";
+export type PriceFilterApiValue = "FREE" | "PAID";
+
 // Query parameters for URL filtering (different from event QueryParams)
 export interface URLQueryParams {
   search?: string;

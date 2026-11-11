@@ -161,12 +161,17 @@ const buildFilterLabels = async () => {
       byDate: tFilters("date"),
       distance: tFilters("distance"),
       searchTerm: tFilters("search"),
+      price: tFilters("price"),
     },
     byDates: {
       avui: tByDates("today"),
       dema: tByDates("tomorrow"),
       setmana: tByDates("week"),
       "cap-de-setmana": tByDates("weekend"),
+    },
+    prices: {
+      gratis: tFiltersUi("priceFree"),
+      pagament: tFiltersUi("pricePaid"),
     },
   };
 };
@@ -228,8 +233,10 @@ export async function ClientLayerWithPlaceLabel({
         byDate: "date",
         distance: "distance",
         searchTerm: "search",
+        price: "price",
       },
       byDates: {},
+      prices: { gratis: "gratis", pagament: "pagament" },
     })));
   const { placeTypeLabel } = await shellDataPromise;
 

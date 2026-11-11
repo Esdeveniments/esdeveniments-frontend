@@ -132,3 +132,39 @@ describe("NavigationFiltersModal - byDate default value regression", () => {
     expect(changes.byDate).toBe("avui");
   });
 });
+
+describe("NavigationFiltersModal - price", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(nextIntl, "useLocale").mockReturnValue("ca");
+    window.history.pushState({}, "", "/catalunya/avui");
+  });
+
+  const applyWith = (price: string | undefined, click?: string) => {
+    render(
+      <NavigationFiltersModal
+        isOpen
+        onClose={vi.fn()}
+        currentSegments={{ place: "catalunya", date: "tots", category: "tots" }}
+        currentQueryParams={price ? { price } : {}}
+        userLocation={undefined}
+        categories={[]}
+      />,
+    );
+    if (click) fireEvent.click(document.getElementById(click)!);
+    fireEvent.click(screen.getByTestId("modal-action"));
+    return (mockBuildFilterUrl.mock.calls[0][2] as Record<string, unknown>).price;
+  };
+
+  it("applies the chosen price", () => {
+    expect(applyWith(undefined, "price-gratis")).toBe("gratis");
+  });
+
+  it("keeps the price from the URL", () => {
+    expect(applyWith("pagament")).toBe("pagament");
+  });
+
+  it("clears the price when the selected option is clicked again", () => {
+    expect(applyWith("pagament", "price-pagament")).toBe("tots");
+  });
+});

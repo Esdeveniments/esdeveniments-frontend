@@ -127,7 +127,12 @@ describe("category labels", () => {
             categories={[category]}
             placeTypeLabel={{ type: "", label: "Catalunya" }}
             onOpenModal={vi.fn()}
-            labels={{ triggerLabel: "", displayNameMap: {}, byDates: {} }}
+            labels={{
+              triggerLabel: "",
+              displayNameMap: {},
+              byDates: {},
+              prices: { gratis: "Gratuït", pagament: "De pagament" },
+            }}
           />,
         );
         expect(screen.getByTestId("filter-pill-category")).toHaveTextContent(

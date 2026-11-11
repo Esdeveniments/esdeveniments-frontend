@@ -150,8 +150,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const [localPlace, setLocalPlace] = useState<string>(defaults.place);
   const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
   const [localCategory, setLocalCategory] = useState<string>(defaults.category);
-  // TODO: Re-enable when backend supports the `type` query param
-  // const [localPrice, setLocalPrice] = useState<string>(defaults.price);
+  const [localPrice, setLocalPrice] = useState<string>(defaults.price);
   const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
   const [localToDate, setLocalToDate] = useState<string>(defaults.toDate);
   // Which date control the user touched last, for GA: preset, shortcut or calendar.
@@ -187,8 +186,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalPlace(defaults.place);
       setLocalByDate(defaults.byDate);
       setLocalCategory(defaults.category);
-      // TODO: Re-enable when backend supports the `type` query param
-      // setLocalPrice(defaults.price);
+      setLocalPrice(defaults.price);
       setLocalFromDate(defaults.fromDate);
       setLocalToDate(defaults.toDate);
       setDateSource("unchanged");
@@ -455,9 +453,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
           : localPlace || "catalunya",
       byDate: localFromDate ? DEFAULT_FILTER_VALUE : (localByDate || DEFAULT_FILTER_VALUE),
       category: localCategory || DEFAULT_FILTER_VALUE,
-      // Price UI is commented out (backend doesn't support type param yet).
-      // Always reset to default so stale ?price= values don't persist.
-      price: DEFAULT_FILTER_VALUE,
+      price: localPrice,
       from: localFromDate || undefined,
       to: (localToDate || localFromDate) || undefined,
       searchTerm: currentQueryParams.search || "",
@@ -503,6 +499,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         !changes.from && changes.byDate === DEFAULT_FILTER_VALUE ? "none" : dateSource,
       filter_category: changes.category,
       filter_distance: changes.distance !== undefined ? changes.distance.toString() : undefined,
+      filter_price: changes.price,
       context: "filters_modal_apply",
     });
 
@@ -545,13 +542,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     );
   }, []);
 
-  // TODO: Re-enable when backend supports the `type` query param
-  // const handlePriceChange = useCallback((value: string | number) => {
-  //   setLocalPrice(
-  //     (prevValue) =>
-  //       (prevValue === value ? DEFAULT_FILTER_VALUE : value) as string
-  //   );
-  // }, []);
+  const handlePriceChange = useCallback((value: string | number) => {
+    setLocalPrice(
+      (prevValue) =>
+        (prevValue === value ? DEFAULT_FILTER_VALUE : value) as string
+    );
+  }, []);
 
   // Determine if the selected place is a region (comarca) - regions don't have coordinates
   const isRegionSelected = localPlaceType === "region";
@@ -744,10 +740,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 </div>
               </fieldset>
             )}
-            {/* TODO: Re-enable price filter when backend supports the `type` query param.
-                Currently the API ignores `type=FREE|PAID` (returns same 5075 results).
-                All plumbing (config, state, URL parsing, API forwarding) is in place —
-                just uncomment this fieldset once the backend filters by event type.
             <fieldset className="w-full flex flex-col justify-start items-start gap-4">
               <p className="w-full font-semibold font-barlow uppercase">
                 {t("modal.priceHeading")}
@@ -771,7 +763,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 />
               </div>
             </fieldset>
-            */}
             <fieldset className="w-full flex flex-col justify-start items-start gap-6">
               <div className="w-full flex items-center justify-between gap-3">
                 <p className="font-semibold font-barlow uppercase pt-[5px]">
