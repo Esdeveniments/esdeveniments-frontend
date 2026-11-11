@@ -55,7 +55,6 @@ import type { AppLocale } from "types/i18n";
 import { getCategoryLabel } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
-import EventPagePromotedEvents from "@components/ui/promotedEvents/EventPagePromotedEvents";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
 import EventStickyCTA from "./components/EventStickyCTA";
@@ -228,16 +227,6 @@ async function EventPageContent({
           />
         </Suspense>
       }
-      promotedEventsSlot={
-        <Suspense key="promoted-events" fallback={null}>
-          <EventPagePromotedEvents
-            eventId={event.id}
-            cityId={event.city?.id}
-            citySlug={event.city?.slug}
-            regionId={event.region?.id}
-          />
-        </Suspense>
-      }
       nextEditionSlot={
         event.city?.slug ? (
           <Suspense key="next-edition" fallback={null}>
@@ -263,7 +252,6 @@ async function EventPageBody({
   sidebarSponsorSlot,
   latestNewsSlot,
   nextEditionSlot,
-  promotedEventsSlot,
 }: EventPageBodyProps): Promise<JSX.Element | null> {
   "use cache";
   cacheLife(EVENT_PAGE_CACHE_LIFE);
@@ -621,9 +609,6 @@ async function EventPageBody({
 
                 {/* Sponsor — mobile only */}
                 <div className="lg:hidden">{mobileSponsorSlot}</div>
-
-                {/* Promoted events nearby — request-time slot */}
-                {promotedEventsSlot}
 
                 {/* Related Events */}
                 {event.relatedEvents && event.relatedEvents.length > 0 && (

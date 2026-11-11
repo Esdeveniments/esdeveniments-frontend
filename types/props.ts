@@ -1112,7 +1112,6 @@ export interface EventPageBodyProps {
   latestNewsSlot: import("react").ReactNode;
   /** Rendered only once the event has ended. */
   nextEditionSlot: import("react").ReactNode;
-  promotedEventsSlot: import("react").ReactNode;
 }
 
 // Sticky sidebar for event detail page (desktop)
@@ -1193,22 +1192,6 @@ export interface PromotedEventsSectionProps {
 
 export interface PromotedEventsRowProps extends PromotedEventsSectionProps {
   events: import("./api/event").EventSummaryResponseDTO[];
-}
-
-export interface EventPagePromotedEventsProps {
-  /** The event being viewed, left out of the row. */
-  eventId?: string;
-  cityId?: number;
-  citySlug?: string;
-  regionId?: number;
-}
-
-export interface PromotedEventsTrackerProps {
-  /** `data-analytics-context` for clicks and the `section_view` context. */
-  context: "promoted_carousel" | "promoted_event_page";
-  placeSlug?: string;
-  eventCount: number;
-  children: ReactNode;
 }
 
 // /e/[eventId]/edita client form
