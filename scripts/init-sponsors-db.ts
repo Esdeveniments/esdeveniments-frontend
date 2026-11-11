@@ -12,7 +12,12 @@
  * @see lib/db/turso.ts for schema definition
  */
 
-import { SPONSORS_SCHEMA, SPONSORS_INDEXES } from "../lib/db/sponsors-schema";
+import {
+  SPONSORS_SCHEMA,
+  SPONSORS_INDEXES,
+  SPONSORS_MIGRATIONS,
+  isDuplicateColumnError,
+} from "../lib/db/sponsors-schema";
 
 const rawUrl = process.env.TURSO_DATABASE_URL;
 const authToken = process.env.TURSO_AUTH_TOKEN;
@@ -97,6 +102,11 @@ async function initSchema() {
   }
 
   await dbExecute(SPONSORS_SCHEMA);
+  for (const migration of SPONSORS_MIGRATIONS) {
+    await dbExecute(migration).catch((error: unknown) => {
+      if (!isDuplicateColumnError(error)) throw error;
+    });
+  }
 
   for (const idx of SPONSORS_INDEXES) {
     await dbExecute(idx);

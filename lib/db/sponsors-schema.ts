@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS sponsors (
   start_date TEXT NOT NULL,
   end_date TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending_image' CHECK (status IN ('pending_image','active','expired','cancelled')),
+  kind TEXT NOT NULL DEFAULT 'paid' CHECK (kind IN ('paid','backfill')),
   stripe_session_id TEXT UNIQUE,
   stripe_payment_intent_id TEXT,
   customer_email TEXT,
@@ -34,3 +35,15 @@ export const SPONSORS_INDEXES = [
   "CREATE INDEX IF NOT EXISTS idx_sponsors_dates ON sponsors(start_date, end_date);",
   "CREATE INDEX IF NOT EXISTS idx_sponsors_session ON sponsors(stripe_session_id);",
 ];
+
+/**
+ * Column added after the table shipped. `ALTER TABLE ADD COLUMN` fails with
+ * "duplicate column name" once applied; callers ignore that error.
+ */
+export const SPONSORS_MIGRATIONS = [
+  "ALTER TABLE sponsors ADD COLUMN kind TEXT NOT NULL DEFAULT 'paid' CHECK (kind IN ('paid','backfill'));",
+];
+
+export function isDuplicateColumnError(error: unknown): boolean {
+  return error instanceof Error && /duplicate column name/i.test(error.message);
+}

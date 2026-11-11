@@ -86,6 +86,8 @@ When rendering a banner, the system checks in order:
 - Country buyer is the ultimate fallback everywhere
 - Each tier has clear, differentiated value
 
+**Backfill banners.** Each sponsor row has a `kind`: `paid` (default, set by checkout) or `backfill` (our own banner for unsold places, e.g. El Temps Avui). The cascade runs twice: first over `paid` sponsors, then over `backfill` ones, so any paid sponsor in the cascade wins. Backfill rows never count as occupied, so they don't block checkout or show as taken on `/patrocina`. Rows added by hand for a real sale (e.g. paid by bank transfer) keep `kind = 'paid'`. To turn a hand-made row into backfill: `UPDATE sponsors SET kind = 'backfill' WHERE id = '<id>'`. The column is added by `ensureSchema` (any sponsor write) or `scripts/init-sponsors-db.ts`; until then every row counts as `paid`.
+
 ---
 
 ## Tier Value Proposition
