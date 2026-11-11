@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
+import { computeTemporalStatus } from "@utils/event-status";
 import type { EventClientProps } from "types/props";
 
 // Fires `view_event_page` once per event render. Extracted from EventClient
@@ -17,7 +18,14 @@ export function useEventAnalytics(event: EventClientProps["event"]): void {
     // ProfilePageTracker/FavoritesPageTracker.
     if (trackedEventIdRef.current === event.id) return;
 
-    const isPast = event.endDate ? new Date(event.endDate) < new Date() : false;
+    const isPast =
+      computeTemporalStatus(
+        event.startDate,
+        event.endDate,
+        undefined,
+        event.startTime,
+        event.endTime,
+      ).state === "past";
 
     ensureGtag();
     sendGoogleEvent("view_event_page", {
