@@ -1070,7 +1070,10 @@ export interface EventClientPayload {
   id: EventSummaryResponseDTO["id"];
   slug: EventSummaryResponseDTO["slug"];
   title: EventSummaryResponseDTO["title"];
+  startDate: EventSummaryResponseDTO["startDate"];
   endDate: EventSummaryResponseDTO["endDate"];
+  startTime: EventSummaryResponseDTO["startTime"];
+  endTime: EventSummaryResponseDTO["endTime"];
   categorySlug?: CategorySummaryResponseDTO["slug"];
   placeSlug?: string;
   hasImage: boolean;

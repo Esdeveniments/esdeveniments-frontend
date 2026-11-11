@@ -28,7 +28,10 @@ function makeEvent(
     placeSlug: "barcelona",
     hasImage: true,
     origin: "MANUAL",
-    endDate: "2999-01-01T00:00:00.000Z",
+    startDate: "2999-01-01",
+    endDate: "2999-01-01",
+    startTime: null,
+    endTime: null,
     share: SHARE_KIT_EVENT,
     ...overrides,
   };
@@ -56,12 +59,32 @@ describe("useEventAnalytics", () => {
 
   it("marks the event as past when endDate is before now", () => {
     renderHook(() =>
-      useEventAnalytics(makeEvent({ endDate: "2000-01-01T00:00:00.000Z" })),
+      useEventAnalytics(
+        makeEvent({ startDate: "2000-01-01", endDate: "2000-01-01" }),
+      ),
     );
 
     expect(sendGoogleEventMock).toHaveBeenCalledWith(
       "view_event_page",
       expect.objectContaining({ is_past: true }),
+    );
+  });
+
+  it("does not mark an event as past during its last day", () => {
+    vi.useFakeTimers({ now: new Date("2025-10-10T12:00:00+02:00") });
+    try {
+      renderHook(() =>
+        useEventAnalytics(
+          makeEvent({ startDate: "2025-10-08", endDate: "2025-10-10" }),
+        ),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "view_event_page",
+      expect.objectContaining({ is_past: false }),
     );
   });
 
