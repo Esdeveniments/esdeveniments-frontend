@@ -151,8 +151,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Server-side occupancy check — prevent checkout for already-occupied places
-    const occupiedStatus = await getOccupiedPlaceStatus();
+    // Server-side occupancy check — prevent checkout for already-occupied places.
+    // If occupancy can't be read, refuse: selling a booked place is worse.
+    let occupiedStatus: Map<string, number>;
+    try {
+      occupiedStatus = await getOccupiedPlaceStatus();
+    } catch {
+      return NextResponse.json(
+        { error: "availability_unavailable" },
+        { status: 503, headers: { "Retry-After": "60" } },
+      );
+    }
     if (occupiedStatus.has(place)) {
       const daysLeft = occupiedStatus.get(place);
       return NextResponse.json(

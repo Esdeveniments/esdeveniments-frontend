@@ -28,9 +28,10 @@ export async function GET() {
     );
   } catch (error) {
     console.error("Failed to fetch sponsor availability:", error);
+    // Never answer "all free" when occupancy is unknown.
     return NextResponse.json(
-      { occupied: {} },
-      { status: 200, headers: { "Cache-Control": "no-store" } },
+      { error: "availability_unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
 }

@@ -72,4 +72,13 @@ describe("backfill sponsors", () => {
     const occupied = await getOccupiedPlaceStatus();
     expect([...occupied.keys()]).toEqual(["barcelona"]);
   });
+
+  it("rejects instead of caching an empty map when the database fails", async () => {
+    const { getOccupiedPlaceStatus } = await loadModule([]);
+    execute.mockRejectedValueOnce(new Error("turso down"));
+    await expect(getOccupiedPlaceStatus()).rejects.toThrow("turso down");
+
+    execute.mockResolvedValueOnce({ rows: [row({ places: '["barcelona"]' })], rowsAffected: 0 });
+    expect((await getOccupiedPlaceStatus()).has("barcelona")).toBe(true);
+  });
 });

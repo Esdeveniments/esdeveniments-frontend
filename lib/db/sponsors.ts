@@ -298,6 +298,7 @@ export async function getAllActiveSponsors(): Promise<ActiveSponsor[]> {
  * Get occupied places with remaining days.
  * Includes both 'active' and 'pending_image' sponsors (place is booked).
  * Used by PlaceSelector to show availability status.
+ * Throws when the database can't be read, so callers fail closed.
  */
 export async function getOccupiedPlaceStatus(): Promise<Map<string, number>> {
   return occupiedStatusCache.cache(async () => {
@@ -338,7 +339,9 @@ export async function getOccupiedPlaceStatus(): Promise<Map<string, number>> {
       captureException(error, {
         tags: { db: "sponsors", operation: "getOccupiedPlaceStatus" },
       });
-      return new Map();
+      // Unknown occupancy must not read as "all free" (double booking), and
+      // createCache doesn't store a rejection, so the next call retries.
+      throw error;
     }
   });
 }

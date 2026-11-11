@@ -85,6 +85,16 @@ describe("Sponsor Checkout Occupancy Validation", () => {
     expect(json.daysLeft).toBe(5);
   });
 
+  it("refuses checkout with 503 when occupancy can't be read", async () => {
+    mockGetOccupiedPlaceStatus.mockRejectedValue(new Error("turso down"));
+
+    const res = await POST(createCheckoutRequest(validBody));
+
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("availability_unavailable");
+    expect(stripeRequest).not.toHaveBeenCalled();
+  });
+
   it("allows checkout for an unoccupied place", async () => {
     mockGetOccupiedPlaceStatus.mockResolvedValue(
       new Map([["mataro", 3]]), // Different place is occupied
