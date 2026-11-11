@@ -81,54 +81,15 @@ describe("fetchNewsBySlugExternal", () => {
     expect(result?.events).toEqual([]);
   });
 
-  it("contracts the place article in the title, description and related news", async () => {
-    const masnou = { ...event.city, id: 71, name: "El Masnou", slug: "el-masnou" };
-    mockFetchWithHmac.mockResolvedValue(
-      jsonResponse({
-        ...detail,
-        title: "Què fer el cap de setmana a El Masnou",
-        description: "A El Masnou hi trobaràs teatre.",
-        city: masnou,
-        relatedNews: [{ ...detail, title: "Plans a El Masnou", city: masnou }],
-      }),
-    );
-
-    const result = await fetchNewsBySlugExternal("slug");
-
-    expect(result?.title).toBe("Què fer el cap de setmana al Masnou");
-    expect(result?.description).toBe("Al Masnou hi trobaràs teatre.");
-    expect(result?.relatedNews?.[0].title).toBe("Plans al Masnou");
-  });
 });
 
 describe("fetchNewsExternal", () => {
-  it("contracts the place article in list titles", async () => {
-    mockFetchWithHmac.mockResolvedValue(
-      jsonResponse({
-        content: [
-          {
-            ...detail,
-            title: "Què fer a La Garriga",
-            city: { ...event.city, name: "La Garriga", slug: "la-garriga" },
-          },
-        ],
-        last: true,
-      }),
-    );
+  it("falls back to an empty page when the payload is invalid", async () => {
+    mockFetchWithHmac.mockResolvedValue(jsonResponse({ content: "oops" }));
 
     const result = await fetchNewsExternal({});
 
-    expect(result.content[0].title).toBe("Què fer a la Garriga");
-  });
-
-  it("passes malformed items through instead of dropping the page", async () => {
-    const malformed = { ...detail, title: 42, description: null, city: { name: 7 } };
-    mockFetchWithHmac.mockResolvedValue(
-      jsonResponse({ content: [null, malformed], last: true }),
-    );
-
-    const result = await fetchNewsExternal({});
-
-    expect(result.content).toEqual([null, malformed]);
+    expect(result.content).toEqual([]);
+    expect(result.last).toBe(true);
   });
 });

@@ -458,8 +458,7 @@ export function contractCatalanPlaceInText(
   text: string,
   placeName: string | undefined
 ): string {
-  if (typeof text !== "string" || typeof placeName !== "string") return text;
-  const name = placeName.trim();
+  const name = placeName?.trim();
   if (!text || !name || !LEADING_ARTICLE.test(name)) return text;
 
   // Exact name; only the article's first letter may differ ("a el Masnou").

@@ -7,27 +7,13 @@ import type { FetchNewsParams } from "./news";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { PagedResponseDTO } from "types/api/event";
 import { buildNewsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helpers";
-import { parseEventSummaryList } from "@lib/validation/event";
-import { contractCatalanPlaceInText } from "@utils/string-helpers";
+import { parseNewsDetail, parsePagedNews } from "@lib/validation/news";
+import { parsePagedCities } from "@lib/validation/city";
 
 // IMPORTANT: Do NOT add `next: { revalidate }` to external fetches.
 // This creates a separate cache entry for every unique URL.
 // Use `cache: "no-store"` (fetchWithHmac default) to avoid unbounded cache growth.
 // Internal API routes handle caching via Cache-Control headers instead.
-
-// Backend titles and descriptions say "a El Masnou"; Catalan contracts it.
-// The payload isn't schema-checked, so malformed items pass through untouched.
-function withCatalanPlaceArticles<T extends NewsSummaryResponseDTO | NewsDetailResponseDTO>(
-  news: T
-): T {
-  if (!news || typeof news !== "object") return news;
-  const fix = (text: string) =>
-    [news.city?.name, news.region?.name].reduce<string>(
-      (result, name) => contractCatalanPlaceInText(result, name),
-      text
-    );
-  return { ...news, title: fix(news.title), description: fix(news.description) };
-}
 
 export async function fetchNewsExternal(
   params: FetchNewsParams
@@ -43,10 +29,7 @@ export async function fetchNewsExternal(
       console.error(`fetchNewsExternal: HTTP ${res.status}`);
       return emptyPagedResponse();
     }
-    const data = (await res.json()) as PagedResponseDTO<NewsSummaryResponseDTO>;
-    return Array.isArray(data?.content)
-      ? { ...data, content: data.content.map(withCatalanPlaceArticles) }
-      : data;
+    return parsePagedNews(await res.json()) ?? emptyPagedResponse();
   } catch (error) {
     console.error("fetchNewsExternal: failed", error);
     return emptyPagedResponse();
@@ -65,16 +48,7 @@ export async function fetchNewsBySlugExternal(
       console.error("fetchNewsBySlugExternal:", slug, "HTTP", res.status);
       return null;
     }
-    const data = (await res.json()) as NewsDetailResponseDTO;
-    // Events render with the shared event card, so they get the same parser
-    // (drops invalid items, adds image cache keys) as every other event list.
-    return {
-      ...withCatalanPlaceArticles(data),
-      events: parseEventSummaryList(data.events ?? []),
-      relatedNews: Array.isArray(data.relatedNews)
-        ? data.relatedNews.map(withCatalanPlaceArticles)
-        : data.relatedNews,
-    };
+    return parseNewsDetail(await res.json());
   } catch (error) {
     console.error("fetchNewsBySlugExternal:", slug, "failed", error);
     return null;
@@ -101,7 +75,7 @@ export async function fetchNewsCitiesExternal(
       console.error(`fetchNewsCitiesExternal: HTTP ${res.status}`);
       return emptyPagedResponse();
     }
-    return (await res.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
+    return parsePagedCities(await res.json()) ?? emptyPagedResponse();
   } catch (error) {
     console.error("fetchNewsCitiesExternal: failed", error);
     return emptyPagedResponse();
