@@ -22,6 +22,7 @@ import type {
   DbSponsorRow,
   CreateSponsorInput,
   SponsorStatus,
+  SponsorKind,
 } from "types/sponsor";
 import { VALID_GEO_SCOPES } from "types/sponsor";
 
@@ -41,6 +42,8 @@ const allActiveSponsorsCache = createCache<ActiveSponsor[]>(SPONSOR_CACHE_TTL);
 const occupiedStatusCache = createCache<Map<string, number>>(
   AVAILABILITY_CACHE_TTL,
 );
+
+const SPONSOR_KIND_PRIORITY: readonly SponsorKind[] = ["paid", "backfill"];
 
 /**
  * Clear all sponsor caches. Called after writes (create, activate).
@@ -102,6 +105,7 @@ function rowToSponsorConfig(row: DbSponsorRow): SponsorConfig | null {
     geoScope: row.geo_scope,
     startDate: row.start_date,
     endDate: row.end_date,
+    kind: row.kind === "backfill" ? "backfill" : "paid",
   };
 }
 
@@ -239,11 +243,13 @@ export async function getActiveSponsorForPlace(
       // Check primary place first, then fallbacks (same cascade logic as before)
       const placesToCheck = [place, ...(fallbackPlaces ?? [])].filter(Boolean);
 
-      for (const checkPlace of placesToCheck) {
-        for (const sponsor of sponsors) {
-          if (sponsor.places.includes(checkPlace)) {
-            return { sponsor, matchedPlace: checkPlace };
-          }
+      // A paid sponsor anywhere in the cascade beats a backfill banner.
+      for (const kind of SPONSOR_KIND_PRIORITY) {
+        for (const checkPlace of placesToCheck) {
+          const sponsor = sponsors.find(
+            (s) => (s.kind ?? "paid") === kind && s.places.includes(checkPlace),
+          );
+          if (sponsor) return { sponsor, matchedPlace: checkPlace };
         }
       }
 
@@ -292,6 +298,7 @@ export async function getAllActiveSponsors(): Promise<ActiveSponsor[]> {
  * Get occupied places with remaining days.
  * Includes both 'active' and 'pending_image' sponsors (place is booked).
  * Used by PlaceSelector to show availability status.
+ * Throws when the database can't be read, so callers fail closed.
  */
 export async function getOccupiedPlaceStatus(): Promise<Map<string, number>> {
   return occupiedStatusCache.cache(async () => {
@@ -300,8 +307,9 @@ export async function getOccupiedPlaceStatus(): Promise<Map<string, number>> {
     try {
       const today = todayUtcString();
 
+      // SELECT * so this works before and after the `kind` migration.
       const result = await execute(
-        `SELECT places, end_date FROM sponsors
+        `SELECT * FROM sponsors
          WHERE status IN ('active', 'pending_image')
            AND start_date <= ?
            AND end_date >= ?`,
@@ -310,11 +318,13 @@ export async function getOccupiedPlaceStatus(): Promise<Map<string, number>> {
 
       const rows = result.rows as unknown as Pick<
         DbSponsorRow,
-        "places" | "end_date"
+        "places" | "end_date" | "kind"
       >[];
       const status = new Map<string, number>();
 
       for (const row of rows) {
+        // Backfill banners never block a sale.
+        if (row.kind === "backfill") continue;
         const places = parsePlaces(row.places);
         const remainingDays = getRemainingDays(row.end_date);
 
@@ -329,7 +339,9 @@ export async function getOccupiedPlaceStatus(): Promise<Map<string, number>> {
       captureException(error, {
         tags: { db: "sponsors", operation: "getOccupiedPlaceStatus" },
       });
-      return new Map();
+      // Unknown occupancy must not read as "all free" (double booking), and
+      // createCache doesn't store a rejection, so the next call retries.
+      throw error;
     }
   });
 }
