@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fetchWrapper from "@lib/api/fetch-wrapper";
-import { fetchNewsBySlugExternal } from "@lib/api/news-external";
+import { fetchNewsBySlugExternal, fetchNewsExternal } from "@lib/api/news-external";
 
 vi.mock("@lib/api/fetch-wrapper", () => ({
   fetchWithHmac: vi.fn(),
@@ -79,5 +79,17 @@ describe("fetchNewsBySlugExternal", () => {
     const result = await fetchNewsBySlugExternal("slug");
 
     expect(result?.events).toEqual([]);
+  });
+
+});
+
+describe("fetchNewsExternal", () => {
+  it("falls back to an empty page when the payload is invalid", async () => {
+    mockFetchWithHmac.mockResolvedValue(jsonResponse({ content: "oops" }));
+
+    const result = await fetchNewsExternal({});
+
+    expect(result.content).toEqual([]);
+    expect(result.last).toBe(true);
   });
 });

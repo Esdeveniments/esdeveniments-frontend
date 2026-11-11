@@ -61,6 +61,9 @@ export function capitalizeFirstLetter(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+export const escapeRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /** Extract trailing UUID v4 (or fallback last dash segment) */
 export const extractUuidFromSlug = (s: string): string => {
   const m = s.match(
@@ -460,6 +463,37 @@ export function formatCatalanA(
   lowercase: boolean = true
 ): string {
   return joinPlacePhrase(catalanPlaceParts(name, type, "a", lowercase));
+}
+
+/**
+ * Contracts "a"/"de" before a place name that starts with an article, in
+ * Catalan text we don't write ourselves (backend news: "a El Masnou" →
+ * "al Masnou", "A El Masnou," → "Al Masnou,", "de La Garriga" → "de la Garriga").
+ */
+export function contractCatalanPlaceInText(
+  text: string,
+  placeName: string | undefined
+): string {
+  const name = placeName?.trim();
+  if (!text || !name || !LEADING_ARTICLE.test(name)) return text;
+
+  // Exact name; only the article's first letter may differ ("a el Masnou").
+  const first = name[0];
+  const namePattern =
+    `[${first.toUpperCase()}${first.toLowerCase()}]` +
+    escapeRegex(name.slice(1)).replace(/['’]/g, "['’]");
+  const pattern = new RegExp(
+    `(^|[^\\p{L}'’])([Aa]|[Dd]e) ${namePattern}(?![\\p{L}])`,
+    "gu"
+  );
+  return text.replace(pattern, (_match, lead: string, preposition: string) => {
+    const phrase =
+      preposition.toLowerCase() === "a"
+        ? formatCatalanA(name, "town", false)
+        : formatCatalanDe(name, false, false, "town");
+    const capitalized = preposition[0] !== preposition[0].toLowerCase();
+    return lead + (capitalized ? capitalizeFirstLetter(phrase) : phrase);
+  });
 }
 
 /**
