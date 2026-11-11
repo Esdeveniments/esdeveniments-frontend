@@ -71,6 +71,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     isError: isErrorRegionsWithCities,
   } = useGetRegionsWithCities(isOpen);
   const t = useTranslations("Components.FiltersModal");
+  const tFilters = useTranslations("Components.Filters");
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -192,8 +193,6 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setDateSource("unchanged");
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
-      setLocalPlaceType(defaults.placeType);
-      setLocalPlaceCoords(defaults.placeCoords);
       setUserLocationLoading(false);
       setUserLocationError("");
       setIsDistanceActive(Boolean(defaults.distance));
@@ -209,10 +208,19 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.toDate,
     defaults.distance,
     defaults.userLocation,
-    defaults.placeType,
-    defaults.placeCoords,
     initialUseCurrentLocation,
   ]);
+
+  // Place type and coords arrive with the region options, which load after the
+  // modal opens. Sync them on their own so the load doesn't wipe the user's
+  // other choices; the place selector is a skeleton until then.
+  useEffect(() => {
+    if (!isOpen) return;
+    startTransition(() => {
+      setLocalPlaceType(defaults.placeType);
+      setLocalPlaceCoords(defaults.placeCoords);
+    });
+  }, [isOpen, defaults.placeType, defaults.placeCoords]);
 
   const router = useRouter();
   const locale = useLocale();
@@ -744,14 +752,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               <p className="w-full font-semibold font-barlow uppercase">
                 {t("modal.priceHeading")}
               </p>
-              <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+              <div className="w-full flex flex-wrap gap-x-4 gap-y-2">
                 <RadioInput
                   id="price-gratis"
                   name="price"
                   value="gratis"
                   checkedValue={localPrice}
                   onChange={handlePriceChange}
-                  label={t("modal.priceFree")}
+                  label={tFilters("priceFree")}
                 />
                 <RadioInput
                   id="price-pagament"
@@ -759,7 +767,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   value="pagament"
                   checkedValue={localPrice}
                   onChange={handlePriceChange}
-                  label={t("modal.pricePaid")}
+                  label={tFilters("pricePaid")}
                 />
               </div>
             </fieldset>

@@ -65,6 +65,17 @@ vi.mock("@utils/url-filters", async () => {
 });
 
 import * as nextIntl from "next-intl";
+import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
+
+// Region options load after the modal opens; tests swap in loaded data
+let mockRegions: RegionsGroupedByCitiesResponseDTO[] | undefined;
+vi.mock("@components/hooks/useGetRegionsWithCities", () => ({
+  useGetRegionsWithCities: () => ({
+    regionsWithCities: mockRegions,
+    isLoading: false,
+    isError: false,
+  }),
+}));
 
 describe("NavigationFiltersModal - byDate default value regression", () => {
   beforeEach(() => {
@@ -166,5 +177,41 @@ describe("NavigationFiltersModal - price", () => {
 
   it("clears the price when the selected option is clicked again", () => {
     expect(applyWith("pagament", "price-pagament")).toBe("tots");
+  });
+
+  it("keeps the chosen price when place options finish loading", () => {
+    mockRegions = undefined;
+    const props = {
+      isOpen: true,
+      onClose: vi.fn(),
+      currentSegments: { place: "granollers", date: "tots", category: "tots" },
+      currentQueryParams: {},
+      userLocation: undefined,
+      categories: [],
+    };
+    const { rerender } = render(<NavigationFiltersModal {...props} />);
+    fireEvent.click(document.getElementById("price-gratis")!);
+
+    mockRegions = [
+      {
+        id: 1,
+        name: "Vallès Oriental",
+        cities: [
+          { id: 2, value: "granollers", label: "Granollers", latitude: 41.6, longitude: 2.29 },
+        ],
+      },
+    ];
+    // The modal is memoized; in the app the SWR hook re-renders it
+    rerender(
+      <NavigationFiltersModal
+        {...props}
+        currentSegments={{ ...props.currentSegments }}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("modal-action"));
+
+    expect(
+      (mockBuildFilterUrl.mock.calls[0][2] as Record<string, unknown>).price,
+    ).toBe("gratis");
   });
 });
