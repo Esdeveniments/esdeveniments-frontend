@@ -1,18 +1,23 @@
 {
   "version": "1.0",
-  "generatedAt": "2026-11-08T09:43:05.689Z",
-  "lastUpdated": "2026-11-08T09:48:00.446Z",
+  "generatedAt": "2026-11-11T11:57:03.109Z",
+  "lastUpdated": "2026-11-11T11:57:03.109Z",
   "client": {
-    "totalBytes": 3332665,
+    "totalBytes": 3455168,
     "topBundles": [
       {
-        "path": ".next/static/chunks/2b298ujrsehu-.js",
-        "size": 287698,
+        "path": ".next/static/chunks/00ofm10vq52zz.js",
+        "size": 1098397,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/3xf-yb_anqv6s.js",
-        "size": 151175,
+        "path": ".next/static/chunks/22e94dbsk7g_k.js",
+        "size": 288347,
+        "type": "JS"
+      },
+      {
+        "path": ".next/static/chunks/0o_5zqwjjp4wf.js",
+        "size": 156344,
         "type": "JS"
       },
       {
@@ -21,8 +26,8 @@
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/3ib30fvfrmjtl.js",
-        "size": 91079,
+        "path": ".next/static/chunks/0k9l1q_1h7ck4.js",
+        "size": 90931,
         "type": "JS"
       },
       {
@@ -31,19 +36,19 @@
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/0ophg4ufmtu1w.css",
-        "size": 81735,
+        "path": ".next/static/chunks/44y0dbirqaa5-.js",
+        "size": 84102,
+        "type": "JS"
+      },
+      {
+        "path": ".next/static/chunks/1onpl_ynl-mi0.css",
+        "size": 82990,
         "type": "CSS"
       },
       {
-        "path": ".next/static/chunks/2k7jibtgxvwyy.js",
-        "size": 63892,
-        "type": "JS"
-      },
-      {
-        "path": ".next/static/chunks/27hlgd8vtokfm.js",
-        "size": 57375,
-        "type": "JS"
+        "path": ".next/static/chunks/2ddmrojwgxvfe.css",
+        "size": 71339,
+        "type": "CSS"
       },
       {
         "path": ".next/static/chunks/2ycvbkn8g8q_r.js",
@@ -51,58 +56,53 @@
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/19o1dr1ypdwdr.js",
-        "size": 48121,
+        "path": ".next/static/chunks/3l7nz14f2-eln.js",
+        "size": 54176,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/26weqkiol-mrp.js",
-        "size": 48071,
+        "path": ".next/static/chunks/09phxzzdnw0xn.js",
+        "size": 51153,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/3r28jgn48i_kg.js",
-        "size": 47706,
+        "path": ".next/static/chunks/001tq28mved3p.js",
+        "size": 47711,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/1cjnv-0wpl8yw.js",
-        "size": 43349,
+        "path": ".next/static/chunks/3rk4dl-t-v715.js",
+        "size": 47686,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/3ihyhmjjvbn7_.js",
-        "size": 39824,
+        "path": ".next/static/chunks/2dmh9tgw_dd9g.js",
+        "size": 44671,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/2abdg_zo7bi1d.js",
-        "size": 37838,
+        "path": ".next/static/chunks/111_sgx6-63zu.js",
+        "size": 40782,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/2ikisq8393pf4.js",
-        "size": 37420,
+        "path": ".next/static/chunks/2y740m5_5nybp.js",
+        "size": 38303,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/2e54c-9yqkylj.js",
-        "size": 36535,
+        "path": ".next/static/chunks/3g10cb0zfvu7p.js",
+        "size": 38109,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/0am-pbbl0nk86.js",
-        "size": 36518,
+        "path": ".next/static/chunks/3o0r2llivaezt.js",
+        "size": 37846,
         "type": "JS"
       },
       {
-        "path": ".next/static/chunks/3ahqfsc-4ixw5.js",
-        "size": 36225,
-        "type": "JS"
-      },
-      {
-        "path": ".next/static/chunks/15ibw_q96ld5a.js",
-        "size": 32675,
+        "path": ".next/static/chunks/1ut2bwh04hke4.js",
+        "size": 37670,
         "type": "JS"
       }
     ]
@@ -118,423 +118,463 @@
     }
   },
   "routes": {
-    "/[locale]/e/[eventId]": {
-      "serverBytes": 243454,
-      "fileCount": 8
-    },
     "/[locale]/[place]/[byDate]/[category]": {
-      "serverBytes": 252488,
+      "serverBytes": 260156,
       "fileCount": 8
     },
     "/[locale]/[place]/[byDate]": {
-      "serverBytes": 248666,
+      "serverBytes": 256277,
       "fileCount": 8
     },
     "/[locale]/[place]": {
-      "serverBytes": 244874,
+      "serverBytes": 252428,
+      "fileCount": 8
+    },
+    "/[locale]/e/[eventId]": {
+      "serverBytes": 251862,
       "fileCount": 8
     },
     "/[locale]": {
-      "serverBytes": 207245,
+      "serverBytes": 211844,
       "fileCount": 8
     },
     "/[locale]/perfil/[username]/passats": {
-      "serverBytes": 202498,
+      "serverBytes": 208336,
       "fileCount": 8
     },
     "/[locale]/perfil/[username]": {
-      "serverBytes": 199034,
-      "fileCount": 8
-    },
-    "/[locale]/preferits": {
-      "serverBytes": 190031,
-      "fileCount": 8
-    },
-    "/[locale]/preferits/passats": {
-      "serverBytes": 189716,
+      "serverBytes": 204594,
       "fileCount": 8
     },
     "/[locale]/noticies/[place]/[article]": {
-      "serverBytes": 188796,
+      "serverBytes": 196523,
+      "fileCount": 8
+    },
+    "/[locale]/preferits/passats": {
+      "serverBytes": 193641,
+      "fileCount": 8
+    },
+    "/[locale]/preferits": {
+      "serverBytes": 193589,
       "fileCount": 8
     },
     "/[locale]/sitemap/[town]/[year]/[month]": {
-      "serverBytes": 188586,
+      "serverBytes": 190806,
       "fileCount": 8
     },
     "/[locale]/e/[eventId]/promote/success": {
-      "serverBytes": 187281,
+      "serverBytes": 190722,
       "fileCount": 8
     },
     "/[locale]/e/[eventId]/promote/cancel": {
-      "serverBytes": 187270,
+      "serverBytes": 190709,
+      "fileCount": 8
+    },
+    "/[locale]/cavalcades-de-reis": {
+      "serverBytes": 189156,
+      "fileCount": 8
+    },
+    "/[locale]/pessebres-vivents": {
+      "serverBytes": 189147,
+      "fileCount": 8
+    },
+    "/[locale]/fires-de-nadal": {
+      "serverBytes": 189120,
+      "fileCount": 8
+    },
+    "/[locale]/carnaval": {
+      "serverBytes": 189066,
       "fileCount": 8
     },
     "/[locale]/e/[eventId]/edita": {
-      "serverBytes": 186212,
+      "serverBytes": 188428,
       "fileCount": 8
     },
     "/[locale]/e/[eventId]/promote": {
-      "serverBytes": 185686,
+      "serverBytes": 187555,
       "fileCount": 8
     },
-    "/[locale]/noticies": {
-      "serverBytes": 176916,
+    "/[locale]/festa-major/[place]": {
+      "serverBytes": 185889,
       "fileCount": 8
     },
     "/[locale]/noticies/[place]": {
-      "serverBytes": 176661,
+      "serverBytes": 182427,
+      "fileCount": 8
+    },
+    "/[locale]/festes-majors": {
+      "serverBytes": 182381,
       "fileCount": 8
     },
     "/[locale]/publica": {
-      "serverBytes": 176529,
+      "serverBytes": 179099,
       "fileCount": 8
     },
-    "/[locale]/e2e/load-more": {
-      "serverBytes": 175699,
-      "fileCount": 8
-    },
-    "/[locale]/sitemap/[town]/[year]": {
-      "serverBytes": 175163,
-      "fileCount": 8
-    },
-    "/[locale]/perfil/edita": {
-      "serverBytes": 174052,
+    "/[locale]/noticies": {
+      "serverBytes": 178774,
       "fileCount": 8
     },
     "/[locale]/patrocina/upload": {
-      "serverBytes": 174008,
+      "serverBytes": 177083,
+      "fileCount": 8
+    },
+    "/[locale]/e2e/load-more": {
+      "serverBytes": 176850,
+      "fileCount": 8
+    },
+    "/[locale]/sitemap/[town]/[year]": {
+      "serverBytes": 176330,
+      "fileCount": 8
+    },
+    "/[locale]/perfil/edita": {
+      "serverBytes": 175273,
       "fileCount": 8
     },
     "/[locale]/sitemap/[town]": {
-      "serverBytes": 173495,
-      "fileCount": 8
-    },
-    "/[locale]/patrocina/success": {
-      "serverBytes": 171946,
+      "serverBytes": 175224,
       "fileCount": 8
     },
     "/[locale]/patrocina/cancelled": {
-      "serverBytes": 171742,
+      "serverBytes": 174933,
+      "fileCount": 8
+    },
+    "/[locale]/developers/mcp": {
+      "serverBytes": 174793,
+      "fileCount": 8
+    },
+    "/[locale]/patrocina/success": {
+      "serverBytes": 173146,
       "fileCount": 8
     },
     "/[locale]/qui-som": {
-      "serverBytes": 171404,
+      "serverBytes": 173017,
       "fileCount": 8
     },
     "/[locale]/patrocina": {
-      "serverBytes": 171195,
+      "serverBytes": 172150,
       "fileCount": 8
     },
     "/[locale]/sitemap": {
-      "serverBytes": 170077,
+      "serverBytes": 171619,
       "fileCount": 8
     },
     "/[locale]/offline": {
-      "serverBytes": 169753,
+      "serverBytes": 171295,
+      "fileCount": 8
+    },
+    "/[locale]/developers": {
+      "serverBytes": 171205,
       "fileCount": 8
     },
     "/[locale]/politica-privacitat": {
-      "serverBytes": 169487,
+      "serverBytes": 170996,
       "fileCount": 8
     },
     "/[locale]/termes-servei": {
-      "serverBytes": 169449,
+      "serverBytes": 170958,
       "fileCount": 8
     },
-    "/api/users/me/avatar": {
-      "serverBytes": 136992,
+    "/[locale]/noticies/[place]/rss.xml": {
+      "serverBytes": 138004,
       "fileCount": 6
     },
     "/api/users/me/profile": {
-      "serverBytes": 136902,
+      "serverBytes": 136500,
+      "fileCount": 6
+    },
+    "/api/users/me/avatar": {
+      "serverBytes": 136494,
       "fileCount": 6
     },
     "/api/events/[slug]": {
-      "serverBytes": 134926,
+      "serverBytes": 135566,
       "fileCount": 6
     },
     "/api/favorites/migrate": {
-      "serverBytes": 134898,
-      "fileCount": 6
-    },
-    "/api/favorites/prune": {
-      "serverBytes": 133462,
-      "fileCount": 6
-    },
-    "/api/sponsors/image-upload": {
-      "serverBytes": 133139,
-      "fileCount": 6
-    },
-    "/api/users/[username]": {
-      "serverBytes": 133040,
-      "fileCount": 6
-    },
-    "/api/events/categorized": {
-      "serverBytes": 133012,
-      "fileCount": 6
-    },
-    "/api/categories/[id]": {
-      "serverBytes": 132994,
-      "fileCount": 6
-    },
-    "/api/cities/[id]": {
-      "serverBytes": 132843,
-      "fileCount": 6
-    },
-    "/api/regions/options": {
-      "serverBytes": 132837,
-      "fileCount": 6
-    },
-    "/api/regions/[id]": {
-      "serverBytes": 132819,
-      "fileCount": 6
-    },
-    "/api/auth/sign-in": {
-      "serverBytes": 132779,
-      "fileCount": 6
-    },
-    "/api/places/[slug]": {
-      "serverBytes": 132704,
-      "fileCount": 6
-    },
-    "/api/news/[slug]": {
-      "serverBytes": 132650,
-      "fileCount": 6
-    },
-    "/api/news/cities": {
-      "serverBytes": 132650,
+      "serverBytes": 134851,
       "fileCount": 6
     },
     "/api/places/nearby": {
-      "serverBytes": 132477,
+      "serverBytes": 133961,
+      "fileCount": 6
+    },
+    "/api/favorites/prune": {
+      "serverBytes": 133027,
+      "fileCount": 6
+    },
+    "/api/news/[slug]": {
+      "serverBytes": 132895,
+      "fileCount": 6
+    },
+    "/api/news/cities": {
+      "serverBytes": 132895,
+      "fileCount": 6
+    },
+    "/api/events/categorized": {
+      "serverBytes": 132778,
+      "fileCount": 6
+    },
+    "/api/sponsors/image-upload": {
+      "serverBytes": 132736,
+      "fileCount": 6
+    },
+    "/api/users/[username]": {
+      "serverBytes": 132605,
+      "fileCount": 6
+    },
+    "/api/categories/[id]": {
+      "serverBytes": 132601,
+      "fileCount": 6
+    },
+    "/api/cities/[id]": {
+      "serverBytes": 132567,
+      "fileCount": 6
+    },
+    "/api/regions/options": {
+      "serverBytes": 132444,
+      "fileCount": 6
+    },
+    "/api/regions/[id]": {
+      "serverBytes": 132426,
+      "fileCount": 6
+    },
+    "/api/auth/sign-in": {
+      "serverBytes": 132386,
+      "fileCount": 6
+    },
+    "/api/places/[slug]": {
+      "serverBytes": 132269,
       "fileCount": 6
     },
     "/api/sponsors/webhook": {
-      "serverBytes": 132404,
+      "serverBytes": 131969,
       "fileCount": 6
     },
     "/api/sponsors/checkout": {
-      "serverBytes": 132233,
-      "fileCount": 6
-    },
-    "/api/push/subscribe": {
-      "serverBytes": 132120,
+      "serverBytes": 131961,
       "fileCount": 6
     },
     "/api/push/send": {
-      "serverBytes": 132114,
+      "serverBytes": 131727,
       "fileCount": 6
     },
-    "/sitemap-events/[...parts]": {
-      "serverBytes": 132036,
+    "/api/push/subscribe": {
+      "serverBytes": 131725,
       "fileCount": 6
     },
     "/api/sponsors/availability": {
-      "serverBytes": 131987,
+      "serverBytes": 131721,
       "fileCount": 6
     },
-    "/_global-error": {
-      "serverBytes": 131872,
-      "fileCount": 8
-    },
     "/api/promotions/price-preview": {
-      "serverBytes": 131842,
+      "serverBytes": 131407,
+      "fileCount": 6
+    },
+    "/sitemap-events/[...parts]": {
+      "serverBytes": 131392,
       "fileCount": 6
     },
     "/api/leads/restaurant": {
-      "serverBytes": 131804,
+      "serverBytes": 131369,
       "fileCount": 6
     },
     "/_not-found": {
-      "serverBytes": 131732,
+      "serverBytes": 131315,
       "fileCount": 8
     },
     "/api/places/photo": {
-      "serverBytes": 131673,
+      "serverBytes": 131238,
       "fileCount": 6
     },
+    "/_global-error": {
+      "serverBytes": 130811,
+      "fileCount": 8
+    },
     "/api/revalidate": {
-      "serverBytes": 130182,
+      "serverBytes": 130548,
       "fileCount": 6
     },
     "/api/favorites": {
-      "serverBytes": 130030,
-      "fileCount": 6
-    },
-    "/api/categories": {
-      "serverBytes": 129580,
-      "fileCount": 6
-    },
-    "/api/events": {
-      "serverBytes": 129556,
-      "fileCount": 6
-    },
-    "/api/cities": {
-      "serverBytes": 129432,
-      "fileCount": 6
-    },
-    "/api/regions": {
-      "serverBytes": 129408,
-      "fileCount": 6
-    },
-    "/api/places": {
-      "serverBytes": 129284,
+      "serverBytes": 129604,
       "fileCount": 6
     },
     "/api/news": {
-      "serverBytes": 129230,
+      "serverBytes": 129472,
+      "fileCount": 6
+    },
+    "/api/events": {
+      "serverBytes": 129328,
+      "fileCount": 6
+    },
+    "/api/users": {
+      "serverBytes": 129324,
+      "fileCount": 6
+    },
+    "/api/categories": {
+      "serverBytes": 129196,
+      "fileCount": 6
+    },
+    "/api/cities": {
+      "serverBytes": 129162,
       "fileCount": 6
     },
     "/rss.xml": {
-      "serverBytes": 129025,
+      "serverBytes": 129127,
+      "fileCount": 6
+    },
+    "/api/regions": {
+      "serverBytes": 129024,
+      "fileCount": 6
+    },
+    "/api/places": {
+      "serverBytes": 128858,
+      "fileCount": 6
+    },
+    "/server-festa-major-sitemap.xml": {
+      "serverBytes": 128505,
       "fileCount": 6
     },
     "/api/image-proxy": {
-      "serverBytes": 128640,
-      "fileCount": 6
-    },
-    "/[locale]/noticies/[place]/rss.xml": {
-      "serverBytes": 138484,
+      "serverBytes": 128380,
       "fileCount": 6
     },
     "/api/auth/me": {
-      "serverBytes": 100079,
+      "serverBytes": 100016,
       "fileCount": 6
     },
     "/[locale]/noticies/rss.xml": {
-      "serverBytes": 100015,
-      "fileCount": 6
-    },
-    "/api/auth/sign-out": {
-      "serverBytes": 99078,
+      "serverBytes": 99920,
       "fileCount": 6
     },
     "/api/auth/callback": {
-      "serverBytes": 99044,
+      "serverBytes": 98981,
+      "fileCount": 6
+    },
+    "/api/auth/sign-out": {
+      "serverBytes": 98981,
       "fileCount": 6
     },
     "/api/promotions/active": {
-      "serverBytes": 97952,
+      "serverBytes": 97847,
       "fileCount": 6
     },
     "/api/promotions/config": {
-      "serverBytes": 97952,
+      "serverBytes": 97847,
       "fileCount": 6
     },
     "/api/cloudinary/sign": {
-      "serverBytes": 97940,
+      "serverBytes": 97835,
       "fileCount": 6
     },
     "/sitemap-places/[...parts]": {
-      "serverBytes": 97474,
+      "serverBytes": 97822,
       "fileCount": 6
     },
     "/api/health": {
-      "serverBytes": 95932,
-      "fileCount": 6
-    },
-    "/.well-known/api-catalog": {
-      "serverBytes": 95582,
+      "serverBytes": 95830,
       "fileCount": 6
     },
     "/.well-known/[...slug]": {
-      "serverBytes": 95570,
+      "serverBytes": 95582,
       "fileCount": 6
     },
     "/docs/llms.txt": {
-      "serverBytes": 95522,
+      "serverBytes": 95534,
       "fileCount": 6
     },
     "/api/llms.txt": {
-      "serverBytes": 95516,
+      "serverBytes": 95528,
       "fileCount": 6
     },
-    "/server-news-sitemap.xml": {
-      "serverBytes": 94491,
-      "fileCount": 6
-    },
-    "/server-google-news-sitemap.xml": {
-      "serverBytes": 94369,
+    "/.well-known/api-catalog": {
+      "serverBytes": 95480,
       "fileCount": 6
     },
     "/mcp": {
-      "serverBytes": 94246,
+      "serverBytes": 94781,
       "fileCount": 6
     },
     "/server-place-sitemap.xml": {
-      "serverBytes": 94032,
-      "fileCount": 6
-    },
-    "/sitemap.xml": {
-      "serverBytes": 93952,
-      "fileCount": 6
-    },
-    "/ask": {
-      "serverBytes": 93930,
-      "fileCount": 6
-    },
-    "/server-static-sitemap.xml": {
-      "serverBytes": 93154,
-      "fileCount": 6
-    },
-    "/agent-view": {
-      "serverBytes": 92975,
-      "fileCount": 6
-    },
-    "/pricing.md": {
-      "serverBytes": 92975,
-      "fileCount": 6
-    },
-    "/robots.txt": {
-      "serverBytes": 92975,
-      "fileCount": 6
-    },
-    "/agent.txt": {
-      "serverBytes": 92969,
-      "fileCount": 6
-    },
-    "/llms.txt": {
-      "serverBytes": 92963,
-      "fileCount": 6
-    },
-    "/openapi": {
-      "serverBytes": 92957,
-      "fileCount": 6
-    },
-    "/manifest.webmanifest": {
-      "serverBytes": 92894,
+      "serverBytes": 94708,
       "fileCount": 6
     },
     "/server-sitemap.xml": {
-      "serverBytes": 92568,
+      "serverBytes": 94672,
+      "fileCount": 6
+    },
+    "/sitemap.xml": {
+      "serverBytes": 94628,
+      "fileCount": 6
+    },
+    "/server-news-sitemap.xml": {
+      "serverBytes": 94245,
+      "fileCount": 6
+    },
+    "/server-google-news-sitemap.xml": {
+      "serverBytes": 94169,
+      "fileCount": 6
+    },
+    "/ask": {
+      "serverBytes": 94147,
+      "fileCount": 6
+    },
+    "/server-static-sitemap.xml": {
+      "serverBytes": 93055,
+      "fileCount": 6
+    },
+    "/agent-view": {
+      "serverBytes": 92987,
+      "fileCount": 6
+    },
+    "/pricing.md": {
+      "serverBytes": 92987,
+      "fileCount": 6
+    },
+    "/agent.txt": {
+      "serverBytes": 92981,
       "fileCount": 6
     },
     "/index.md": {
-      "serverBytes": 92490,
+      "serverBytes": 92975,
+      "fileCount": 6
+    },
+    "/llms.txt": {
+      "serverBytes": 92975,
+      "fileCount": 6
+    },
+    "/openapi": {
+      "serverBytes": 92969,
+      "fileCount": 6
+    },
+    "/robots.txt": {
+      "serverBytes": 92876,
+      "fileCount": 6
+    },
+    "/manifest.webmanifest": {
+      "serverBytes": 92795,
       "fileCount": 6
     },
     "/server-profile-sitemap.xml": {
-      "serverBytes": 92475,
+      "serverBytes": 92376,
       "fileCount": 6
     },
     "/apple-icon.png": {
-      "serverBytes": 92456,
+      "serverBytes": 92357,
       "fileCount": 4
     }
   },
-  "clientTotalBytes": 3332665,
+  "clientTotalBytes": 3455168,
   "pages": {
     "/ca": {
-      "jsGzipBytes": 338836,
-      "chunkCount": 24
+      "jsGzipBytes": 340876,
+      "chunkCount": 23
     },
     "/ca/[place]": {
-      "jsGzipBytes": 344017,
+      "jsGzipBytes": 346604,
       "chunkCount": 23
     },
     "/ca/e/[eventId]": {
-      "jsGzipBytes": 326551,
+      "jsGzipBytes": 327751,
       "chunkCount": 22
     }
   }
