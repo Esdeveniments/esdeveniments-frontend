@@ -56,7 +56,10 @@ describe("EventOwnerBar", () => {
     authUser = owner;
     renderBar(OWNER_ID);
 
-    expect(screen.getByTestId("event-edit-link").getAttribute("href")).toBe("/e/my-event/edita");
+    // The tools are loaded lazily, only once the viewer is the owner.
+    expect((await screen.findByTestId("event-edit-link")).getAttribute("href")).toBe(
+      "/e/my-event/edita",
+    );
     expect(screen.getByTestId("event-promote-link").getAttribute("href")).toBe("/e/my-event/promote");
     expect(screen.getByTestId("event-share-kit-button")).toBeTruthy();
     expect(screen.queryByTestId("event-delete-button")).toBeNull();

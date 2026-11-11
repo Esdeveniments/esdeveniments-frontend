@@ -1140,6 +1140,8 @@ export interface EventOwnerBarProps {
   shareEvent: import("./event").ShareKitEvent;
 }
 
+export type EventOwnerToolsProps = Omit<EventOwnerBarProps, "ownerId">;
+
 export interface EventDeleteDialogProps {
   slug: string;
   open: boolean;

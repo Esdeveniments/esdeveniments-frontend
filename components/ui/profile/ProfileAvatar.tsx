@@ -29,6 +29,11 @@ export default function ProfileAvatar({ avatarUrl, name, size }: ProfileAvatarPr
         height={px}
         loading="lazy"
         decoding="async"
+        // A server-rendered image can fail before hydration, when React isn't
+        // listening yet. A lazy image that hasn't started has no currentSrc.
+        ref={(img) => {
+          if (img?.complete && img.naturalWidth === 0 && img.currentSrc) setFailed(true);
+        }}
         onError={() => setFailed(true)}
         // bg-background: a transparent logo needs a neutral backdrop.
         className={`${box} shrink-0 rounded-full object-cover bg-background border border-border`}
