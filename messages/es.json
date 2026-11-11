@@ -952,7 +952,7 @@
     },
     "EventPage": {
       "sponsored": "Contenido patrocinado",
-      "editEvent": "Editar evento",
+      "editEvent": "Editar",
       "editTitle": "Editar: {title}",
       "editError": "Error al actualizar el evento",
       "editSave": "Guardar cambios",
@@ -981,7 +981,10 @@
       "deleteConfirmDescription": "Dejará de aparecer en la agenda y no se podrá recuperar.",
       "deleteConfirm": "Eliminar",
       "deleteCancel": "Cancelar",
-      "deleteError": "No se ha podido eliminar el evento. Vuelve a intentarlo."
+      "deleteError": "No se ha podido eliminar el evento. Vuelve a intentarlo.",
+      "ownerBarTitle": "Has publicado este evento",
+      "moreActions": "Más acciones",
+      "organizerEventCount": "{count, plural, one {# evento publicado} other {# eventos publicados}}"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",

@@ -952,7 +952,7 @@
     },
     "EventPage": {
       "sponsored": "Sponsored content",
-      "editEvent": "Edit event",
+      "editEvent": "Edit",
       "editTitle": "Edit: {title}",
       "editError": "Error updating event",
       "editSave": "Save changes",
@@ -981,7 +981,10 @@
       "deleteConfirmDescription": "It will no longer appear in the listings and can't be recovered.",
       "deleteConfirm": "Delete",
       "deleteCancel": "Cancel",
-      "deleteError": "The event couldn't be deleted. Please try again."
+      "deleteError": "The event couldn't be deleted. Please try again.",
+      "ownerBarTitle": "You published this event",
+      "moreActions": "More actions",
+      "organizerEventCount": "{count, plural, one {# event published} other {# events published}}"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",

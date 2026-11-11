@@ -45,11 +45,16 @@ test.describe("Creator-only delete (staging)", () => {
     const slug = createdEventSlug;
 
     await page.goto(`/en/e/${slug}`, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    const deleteButton = page.getByTestId("event-delete-button").filter({ visible: true });
-    await expect(deleteButton).toBeVisible({ timeout: 15_000 });
+    // Delete sits in the owner bar's "More actions" menu.
+    const moreButton = page.getByTestId("event-owner-more-button");
+    await expect(moreButton).toBeVisible({ timeout: 15_000 });
+    const openDeleteDialog = async () => {
+      await moreButton.click();
+      await page.getByRole("menuitem", { name: "Delete event" }).click();
+    };
 
     // Cancel keeps the event.
-    await deleteButton.click();
+    await openDeleteDialog();
     // The dialog root has no box of its own (its children are fixed), so
     // Playwright calls it hidden; check its heading instead.
     const dialog = page.getByRole("alertdialog", { name: "Delete this event?" });
@@ -58,7 +63,7 @@ test.describe("Creator-only delete (staging)", () => {
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(dialogTitle).toBeHidden();
 
-    await deleteButton.click();
+    await openDeleteDialog();
     const deleteResponse = page.waitForResponse(
       (res) => res.url().endsWith(`/api/events/${slug}`) && res.request().method() === "DELETE",
     );

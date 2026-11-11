@@ -128,6 +128,8 @@ export interface OwnerSummaryDTO {
   avatarUrl: string | null;
   verified: boolean;
   role: AuthRole;
+  /** Events the owner has published. Only the public event detail sends it. */
+  eventCount?: number;
 }
 
 /**

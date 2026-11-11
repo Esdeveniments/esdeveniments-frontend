@@ -168,7 +168,7 @@ test.describe("Creator-only edit access (staging)", () => {
     });
 
     await expect(page.getByTestId("event-edit-link")).not.toBeVisible();
-    await expect(page.getByTestId("event-delete-button")).not.toBeVisible();
+    await expect(page.getByTestId("event-owner-bar")).not.toBeVisible();
   });
 
   test("a different signed-in user cannot edit or promote the event", async ({
@@ -199,7 +199,7 @@ test.describe("Creator-only edit access (staging)", () => {
       await expect(page.getByRole("heading", { level: 1, name: UNIQUE_SUFFIX }),
       ).toBeVisible();
       await expect(page.getByTestId("event-edit-link")).toHaveCount(0);
-      await expect(page.getByTestId("event-delete-button")).toHaveCount(0);
+      await expect(page.getByTestId("event-owner-bar")).toHaveCount(0);
 
       for (const path of ["edita", "promote"]) {
         await page.goto(`/en/e/${createdEventSlug}/${path}`, {
