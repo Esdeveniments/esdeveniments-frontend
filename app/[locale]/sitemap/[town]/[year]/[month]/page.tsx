@@ -6,6 +6,7 @@ import { getPlaceTypeAndLabelCached } from "@utils/location-helpers";
 import { getTranslations } from "next-intl/server";
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
+import { getPlaceBySlug } from "@lib/api/places";
 import {
   getHistoricDates,
   normalizeMonthParam,
@@ -146,6 +147,12 @@ export default async function Page({
   const monthIndex = resolveMonthIndexFromSlug(month);
   if (monthIndex === null) {
     notFound();
+  }
+  if (town !== "catalunya") {
+    const existingPlace = await getPlaceBySlug(town).catch(() => undefined);
+    if (existingPlace === null) {
+      notFound();
+    }
   }
   const canonicalMonthSlug = DEFAULT_MONTHS_URL[monthIndex];
   const normalizedIncomingSlug = normalizeMonthParam(month).slug;

@@ -291,6 +291,22 @@ function classifyCategory(
 
 const ELIDED_ARTICLE = articles.l.toLowerCase();
 const LEADING_ARTICLE = /^(?:(els|el|les|la)\s+|(l)['’])(?=\S)/i;
+const SORT_LEADING_ARTICLE = /^(?:(?:els|el|les|la|es|era)\s+|l['’])(?=\S)/i;
+
+/**
+ * Sort Catalan/Aranese place names alphabetically by their stem, ignoring
+ * leading articles ("El Masnou" under M, "L'Hospitalet" under H, "Es Bòrdes" under B).
+ * Bare "Les" (municipality in Aran) has no trailing space and stays under L.
+ */
+export function comparePlaceNames(
+  a: string,
+  b: string,
+  locale: string = "ca"
+): number {
+  const stemA = a.trim().replace(SORT_LEADING_ARTICLE, "");
+  const stemB = b.trim().replace(SORT_LEADING_ARTICLE, "");
+  return stemA.localeCompare(stemB, locale) || a.localeCompare(b, locale);
+}
 const CATALAN_CONTRACTIONS: Record<
   "a" | "de",
   Record<Exclude<CatalanArticle, "l">, string>
@@ -592,19 +608,27 @@ export function formatNameOf(
   return joinPlacePhrase(formatNamePrepositionParts(name, locale, "of"));
 }
 
+const FEMININE_HEAD_WORDS = new Set(["vall", "val"]);
+
 /**
  * Determines if a place name is feminine in Catalan using linguistic patterns.
  * (Heuristic; we special-case a few masculine exceptions.)
  */
 function isFemininePlaceName(name: string): boolean {
-  const lowerName = (name || "").toLowerCase();
+  const lowerName = (name || "").trim().toLowerCase();
 
   // Masculine exceptions that often match feminine-looking patterns
   if (MASCULINE_EXCEPTIONS.has(lowerName)) return false;
 
-  // Feminine-ish endings
+  const firstWord = lowerName.split(/[\s'-]+/)[0] ?? "";
+  if (MASCULINE_EXCEPTIONS.has(firstWord)) return false;
+  if (FEMININE_HEAD_WORDS.has(firstWord)) return true;
+
+  // Feminine-ish endings on the head word ("Selva", "Conca de Barberà", "Ribera d'Ebre").
+  // Evaluate firstWord rather than lowerName so a feminine prepositional complement
+  // ("Camp de Tarragona") cannot flip a masculine head noun.
   const feminineSuffixes = [
-    /a$/, // Selva, Noguera, Osona, Anoia…
+    /a$/, // Selva, Noguera, Osona, Anoia, Conca, Ribera, Terra, Alta…
     /ia$/, // Cerdanya
     /ona$/, // Tarragona
     /ena$/, // Noguera (stem), etc.
@@ -616,5 +640,5 @@ function isFemininePlaceName(name: string): boolean {
     /xa$/, // Garrotxa
   ];
 
-  return feminineSuffixes.some((p) => p.test(lowerName));
+  return feminineSuffixes.some((p) => p.test(firstWord));
 }

@@ -21,9 +21,18 @@ describe("isSuspiciousPlaceSlug", () => {
     expect(isSuspiciousPlaceSlug("santcugatsesgarrigues")).toBe(true);
   });
 
-  it("allows normal canonical slugs", () => {
+  it("allows normal canonical slugs, including Nulles", () => {
     expect(isSuspiciousPlaceSlug("barcelona")).toBe(false);
     expect(isSuspiciousPlaceSlug("sant-cugat-sesgarrigues")).toBe(false);
     expect(isSuspiciousPlaceSlug("baix-llobregat")).toBe(false);
+    expect(isSuspiciousPlaceSlug("nulles")).toBe(false);
+  });
+
+  it("still rejects null and undefined placeholder slugs", () => {
+    expect(isSuspiciousPlaceSlug("null")).toBe(true);
+    expect(isSuspiciousPlaceSlug("foo-null")).toBe(true);
+    expect(isSuspiciousPlaceSlug("null-bar")).toBe(true);
+    expect(isSuspiciousPlaceSlug("undefined")).toBe(true);
+    expect(isSuspiciousPlaceSlug("foo-undefined")).toBe(true);
   });
 });

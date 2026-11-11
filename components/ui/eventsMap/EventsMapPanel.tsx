@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import CompactCardClient from "@components/ui/common/cardContent/CompactCardClient";
+import { comparePlaceNames } from "@utils/string-helpers";
 import type { EventsMapPanelProps } from "types/props";
 import type { AppLocale } from "types/i18n";
 
@@ -48,7 +49,9 @@ export default function EventsMapPanel({
   const places = useMemo(
     () =>
       [...points].sort(
-        (a, b) => b.events.length - a.events.length || a.label.localeCompare(b.label, locale),
+        (a, b) =>
+          b.events.length - a.events.length ||
+          comparePlaceNames(a.label, b.label, locale),
       ),
     [points, locale],
   );

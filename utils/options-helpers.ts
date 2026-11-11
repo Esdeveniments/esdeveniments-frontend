@@ -1,4 +1,4 @@
-import { sanitize } from "./string-helpers";
+import { comparePlaceNames, sanitize } from "./string-helpers";
 import type { Option, GroupedOption } from "types/common";
 import type { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 
@@ -18,7 +18,7 @@ export function generateRegionsOptions(
       label: region.name,
       placeType: "region" as const,
     }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .sort((a, b) => comparePlaceNames(a.label, b.label));
 }
 
 /**
@@ -44,7 +44,7 @@ export function generateTownsOptions(
           latitude: city.latitude,
           longitude: city.longitude,
         }))
-        .sort((a, b) => a.label.localeCompare(b.label))
+        .sort((a, b) => comparePlaceNames(a.label, b.label))
     : [];
 }
 
@@ -85,7 +85,7 @@ export function generateCityOptionsWithRegionMap(
   });
 
   return {
-    cityOptions: cityOptions.sort((a, b) => a.label.localeCompare(b.label)),
+    cityOptions: cityOptions.sort((a, b) => comparePlaceNames(a.label, b.label)),
     cityToRegionOptionMap,
   };
 }
@@ -117,9 +117,9 @@ export function generateRegionsAndTownsOptions(
           latitude: city.latitude,
           longitude: city.longitude,
         }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+        .sort((a, b) => comparePlaceNames(a.label, b.label)),
     }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .sort((a, b) => comparePlaceNames(a.label, b.label));
 
   // Return with "Comarques" group first, then towns grouped by regions
   return [{ label: "Comarques", options: regionsOptions }, ...townsOptions];

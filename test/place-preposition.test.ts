@@ -73,13 +73,68 @@ describe("place phrases with an article in the name", () => {
     ["Osona", "region", "a Osona", "d'Osona", "des d'Osona"],
     ["Bages", "region", "al Bages", "del Bages", "des del Bages"],
     ["Anoia", "region", "a l'Anoia", "de l'Anoia", "des de l'Anoia"],
+    ["Conca de Barberà", "region", "a la Conca de Barberà", "de la Conca de Barberà", "des de la Conca de Barberà"],
+    ["Ribera d'Ebre", "region", "a la Ribera d'Ebre", "de la Ribera d'Ebre", "des de la Ribera d'Ebre"],
+    ["Val d'Aran", "region", "a la Val d'Aran", "de la Val d'Aran", "des de la Val d'Aran"],
+    ["Aran", "region", "a l'Aran", "de l'Aran", "des de l'Aran"],
+    ["Es Bòrdes", "town", "a Es Bòrdes", "d'Es Bòrdes", "des d'Es Bòrdes"],
     ["L’Ametlla del Vallès", "town", "a l'Ametlla del Vallès", "de l'Ametlla del Vallès", "des de l'Ametlla del Vallès"],
     ["Ellera", "town", "a Ellera", "d'Ellera", "des d'Ellera"],
     ["Lamarca", "town", "a Lamarca", "de Lamarca", "des de Lamarca"],
+    ["Camp de Tarragona", "region", "al Camp de Tarragona", "del Camp de Tarragona", "des del Camp de Tarragona"],
   ] as const)("contracts %s in Catalan", (name, type, inPhrase, ofPhrase, fromPhrase) => {
     expect(formatPlacePreposition(name, type, "ca", false)).toBe(inPhrase);
     expect(formatPlacePreposition(name, type, "ca", false, "of")).toBe(ofPhrase);
     expect(formatPlacePreposition(name, type, "ca", false, "from")).toBe(fromPhrase);
+  });
+
+  it.each([
+    ["Alt Camp", "a l'Alt Camp", "de l'Alt Camp"],
+    ["Alt Empordà", "a l'Alt Empordà", "de l'Alt Empordà"],
+    ["Alt Penedès", "a l'Alt Penedès", "de l'Alt Penedès"],
+    ["Alt Urgell", "a l'Alt Urgell", "de l'Alt Urgell"],
+    ["Alta Ribagorça", "a l'Alta Ribagorça", "de l'Alta Ribagorça"],
+    ["Anoia", "a l'Anoia", "de l'Anoia"],
+    ["Aran", "a l'Aran", "de l'Aran"],
+    ["Bages", "al Bages", "del Bages"],
+    ["Baix Camp", "al Baix Camp", "del Baix Camp"],
+    ["Baix Ebre", "al Baix Ebre", "del Baix Ebre"],
+    ["Baix Empordà", "al Baix Empordà", "del Baix Empordà"],
+    ["Baix Llobregat", "al Baix Llobregat", "del Baix Llobregat"],
+    ["Baix Penedès", "al Baix Penedès", "del Baix Penedès"],
+    ["Barcelonès", "al Barcelonès", "del Barcelonès"],
+    ["Berguedà", "al Berguedà", "del Berguedà"],
+    ["Cerdanya", "a la Cerdanya", "de la Cerdanya"],
+    ["Conca de Barberà", "a la Conca de Barberà", "de la Conca de Barberà"],
+    ["Garraf", "al Garraf", "del Garraf"],
+    ["Garrigues", "a les Garrigues", "de les Garrigues"],
+    ["Garrotxa", "a la Garrotxa", "de la Garrotxa"],
+    ["Gironès", "al Gironès", "del Gironès"],
+    ["Lluçanès", "al Lluçanès", "del Lluçanès"],
+    ["Maresme", "al Maresme", "del Maresme"],
+    ["Moianès", "al Moianès", "del Moianès"],
+    ["Montsià", "al Montsià", "del Montsià"],
+    ["Noguera", "a la Noguera", "de la Noguera"],
+    ["Osona", "a Osona", "d'Osona"],
+    ["Pallars Jussà", "al Pallars Jussà", "del Pallars Jussà"],
+    ["Pallars Sobirà", "al Pallars Sobirà", "del Pallars Sobirà"],
+    ["Pla d'Urgell", "al Pla d'Urgell", "del Pla d'Urgell"],
+    ["Pla de l'Estany", "al Pla de l'Estany", "del Pla de l'Estany"],
+    ["Priorat", "al Priorat", "del Priorat"],
+    ["Ribera d'Ebre", "a la Ribera d'Ebre", "de la Ribera d'Ebre"],
+    ["Ripollès", "al Ripollès", "del Ripollès"],
+    ["Segarra", "a la Segarra", "de la Segarra"],
+    ["Segrià", "al Segrià", "del Segrià"],
+    ["Selva", "a la Selva", "de la Selva"],
+    ["Solsonès", "al Solsonès", "del Solsonès"],
+    ["Tarragonès", "al Tarragonès", "del Tarragonès"],
+    ["Terra Alta", "a la Terra Alta", "de la Terra Alta"],
+    ["Urgell", "a l'Urgell", "de l'Urgell"],
+    ["Vallès Occidental", "al Vallès Occidental", "del Vallès Occidental"],
+    ["Vallès Oriental", "al Vallès Oriental", "del Vallès Oriental"],
+  ] as const)("formats all 43 official Catalan comarques normatively: %s", (comarca, inPhrase, ofPhrase) => {
+    expect(formatPlacePreposition(comarca, "region", "ca", false)).toBe(inPhrase);
+    expect(formatPlacePreposition(comarca, "region", "ca", false, "of")).toBe(ofPhrase);
   });
 
   it("keeps the article in Spanish and English", () => {
