@@ -46,6 +46,25 @@ event many times as "missing organizer". Lists use `buildEventListItems`
 Europe/Madrid offset (`withMadridOffset`, `@date-fns/tz`, DST-aware); date-only
 values stay plain dates.
 
+## Event start and end come from one place, in Madrid time
+
+The "Finalitzat" bug fixed in #761 came from a rule written for one combination of
+fields (no end time → live 24 h) that never checked another (a later end
+date). Events arrive with any mix of `startDate`, `endDate`, `startTime` and
+`endTime`: times with seconds ("19:00:00"), "00:00" meaning "Consultar
+horaris", an end time and no end date, overnight 22:00–02:00 on one date, an
+end date before the start, full timestamps with an offset. The server runs in
+UTC (no `TZ` in the Docker image), so parsing "19:00" as runtime-local time or
+comparing days with `getDate()` was 1–2 h off from Madrid, and all-day events
+flipped at 00:00 UTC instead of Madrid midnight.
+`resolveEventWindow` (`utils/event-window.ts`) turns the raw fields into one
+Madrid wall-clock window; `computeTemporalStatus` (status pill, card lists,
+`filterActiveEvents`) and the JSON-LD dates both read it, so they can't drift
+apart. When you change a rule, add its cases to
+`test/event-status-matrix.test.ts`: it runs every combination under four
+runtime time zones, plus an invariant (a multi-day event is live on every
+inner day and past after its last, whatever its times).
+
 ## Guest and account publish drafts need an explicit choice after login
 
 A guest can finish all three steps while the same browser still holds an older
