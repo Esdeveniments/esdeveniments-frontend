@@ -112,6 +112,13 @@ describe("proxy", () => {
     // Reset NextResponse.next, redirect, and rewrite mocks
     (NextResponse.next as any).mockReset();
     (NextResponse.redirect as any).mockReset();
+    (NextResponse.redirect as Mock).mockImplementation(
+      (_: unknown, status?: number) => ({
+        status: status || 307,
+        headers: new Headers(),
+        cookies: { set: vi.fn() },
+      }),
+    );
     (NextResponse.rewrite as any).mockReset();
     (resolvePlaceForProxy as Mock).mockReset();
     (isProfileMissingForProxy as Mock).mockReset().mockResolvedValue(false);
@@ -492,19 +499,24 @@ describe("proxy", () => {
       } as unknown as NextRequest;
     }
 
-    it("301s an alias to the real slug, keeping locale, segments and query", async () => {
+    it("301s an alias to the real slug, keeping locale, segments and query, with a bounded browser TTL", async () => {
       (resolvePlaceForProxy as Mock).mockResolvedValue({
         kind: "alias",
         slug: "la-garriga",
       });
 
-      await proxy(placeRequest("/es/lagarriga/avui", "GET", "?search=jazz"));
+      const response = await proxy(
+        placeRequest("/es/lagarriga/avui", "GET", "?search=jazz"),
+      );
 
       expect(resolvePlaceForProxy).toHaveBeenCalledWith("lagarriga");
       const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
       expect(status).toBe(301);
       expect(url.pathname).toBe("/es/la-garriga/avui");
       expect(url.search).toBe("?search=jazz");
+      expect(response?.headers.get("Cache-Control")).toBe(
+        "private, max-age=3600",
+      );
     });
 
     it("rewrites a missing place with a 404 status and keeps page headers", async () => {

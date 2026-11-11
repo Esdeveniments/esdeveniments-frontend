@@ -1,10 +1,11 @@
-import type { PlaceResponseDTO } from "types/api/place";
+import type { PlaceAliasIndex, PlaceResponseDTO } from "types/api/place";
 import { fetchPlaces } from "@lib/api/places";
 
 const STOP_WORDS = new Set(["de", "del", "dels", "d"]);
 const LEADING_ARTICLE_PREFIXES = [
   "els-",
   "les-",
+  "era-",
   "el-",
   "la-",
   "es-",
@@ -72,12 +73,16 @@ function buildAliasKeys(slug: string): string[] {
   ).filter((key) => key.length > 0);
 }
 
-export function resolvePlaceSlugAliasFromPlaces(
-  inputSlug: string,
-  places: PlaceResponseDTO[]
-): string | null {
-  const candidate = inputSlug.trim().toLowerCase();
-  if (candidate.length === 0) return null;
+const aliasIndexCache = new WeakMap<
+  readonly PlaceResponseDTO[],
+  PlaceAliasIndex
+>();
+
+function getPlaceAliasIndex(
+  places: readonly PlaceResponseDTO[]
+): PlaceAliasIndex {
+  const cached = aliasIndexCache.get(places);
+  if (cached) return cached;
 
   const canonicalSlugs = new Set<string>();
   const keyToSlugOrNull = new Map<string, string | null>();
@@ -100,6 +105,19 @@ export function resolvePlaceSlugAliasFromPlaces(
     }
   }
 
+  const built: PlaceAliasIndex = { canonicalSlugs, keyToSlugOrNull };
+  aliasIndexCache.set(places, built);
+  return built;
+}
+
+export function resolvePlaceSlugAliasFromPlaces(
+  inputSlug: string,
+  places: readonly PlaceResponseDTO[]
+): string | null {
+  const candidate = inputSlug.trim().toLowerCase();
+  if (candidate.length === 0) return null;
+
+  const { canonicalSlugs, keyToSlugOrNull } = getPlaceAliasIndex(places);
   if (canonicalSlugs.has(candidate)) return null;
 
   const explicitTarget = HISTORICAL_PLACE_ALIASES[candidate];

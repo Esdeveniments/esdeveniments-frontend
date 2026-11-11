@@ -103,10 +103,14 @@ export default async function proxy(request: NextRequest) {
         : (categoryRedirectUrl ?? festaActRedirectUrl);
   if (redirectUrl) {
     const response = NextResponse.redirect(redirectUrl, 301);
-    if (redirectUrl === categoryRedirectUrl) {
-      // A new category can be missing from Proxy's list for up to its TTL;
-      // without a max-age, browsers may keep this 301 forever. `private`
-      // because it may set the NEXT_LOCALE cookie.
+    if (
+      redirectUrl === categoryRedirectUrl ||
+      placeCheck?.kind === "alias"
+    ) {
+      // Categories and place slugs derive from Proxy's 1h cached lists (and
+      // place aliases can flip across a backend rename migration); cap the
+      // browser TTL so a 301 is never cached forever. `private` because it
+      // may set the NEXT_LOCALE cookie.
       response.headers.set(
         "Cache-Control",
         `private, max-age=${PROXY_LIST_TTL_MS / 1000}`,
@@ -118,12 +122,7 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
-  // App Router route.ts handlers (like /noticies/[place]/rss.xml) overwrite
-  // a rewrite's 404 status with their own Response status, so answer 404 directly.
-  if (
-    placeCheck?.kind === "missing" &&
-    pathnameWithoutLocale.endsWith("/rss.xml")
-  ) {
+  if (placeCheck?.kind === "missing" && placeCheck.direct404) {
     return new NextResponse("Not Found", {
       status: 404,
       headers: { "Content-Type": "text/plain; charset=utf-8" },
@@ -151,15 +150,10 @@ export default async function proxy(request: NextRequest) {
   // Pages live under app/[locale]/. Prefixed paths (/es/foo) already match;
   // unprefixed ones (/foo) are rewritten to /ca/foo. Unknown places and
   // profiles render the same page with a 404 status (NextResponse.next()
-  // can't set one). On 3-segment /sitemap/<missing>/<year>, avoid rewriting to
-  // sitemap/[town]/[year]/page.tsx whose unconditional redirect() would clobber 404.
+  // can't set one).
   const url = request.nextUrl.clone();
-  if (
-    placeCheck?.kind === "missing" &&
-    /^\/sitemap\/[^/]+\/[^/]+$/.test(pathnameWithoutLocale)
-  ) {
-    const missingTown = pathnameWithoutLocale.split("/")[2];
-    url.pathname = `/${locale}/sitemap/${missingTown}`;
+  if (placeCheck?.kind === "missing" && placeCheck.rewritePath) {
+    url.pathname = `/${locale}${placeCheck.rewritePath}`;
   } else if (!localeFromPath) {
     url.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
   }

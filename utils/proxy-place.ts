@@ -72,6 +72,24 @@ export async function checkPlace(
     url.pathname = `${localePrefix}/${path.join("/")}`;
     return { kind: "alias", url };
   };
+  const resolveAndRedirect = async (
+    slug: string,
+    toPath: (resolvedSlug: string) => string[],
+    options: {
+      missing?: ProxyPlaceCheck | null;
+      redirectOnExists?: boolean;
+    } = {},
+  ): Promise<ProxyPlaceCheck | null> => {
+    const missing: ProxyPlaceCheck | null =
+      options.missing === undefined ? { kind: "missing" } : options.missing;
+    if (!isValidPlace(slug)) return missing;
+    const resolution = await resolvePlaceForProxy(slug);
+    if (resolution.kind === "missing") return missing;
+    if (resolution.kind === "alias") return redirectTo(toPath(resolution.slug));
+    if (options.redirectOnExists && resolution.kind === "exists")
+      return redirectTo(toPath(slug));
+    return null;
+  };
 
   if (segments.length > 1 && ONE_PAGE_HUBS.has(segments[0]))
     return { kind: "missing" };
@@ -82,15 +100,14 @@ export async function checkPlace(
     const slug = segments[1];
     if (!slug || slug === "catalunya")
       return redirectTo([FESTES_MAJORS_SEGMENT]);
-    if (segments.length > 2 || !isValidPlace(slug)) return { kind: "missing" };
-    const resolution = await resolvePlaceForProxy(slug);
-    if (resolution.kind === "missing") return { kind: "missing" };
-    if (resolution.kind !== "alias") return null;
-    return redirectTo([FESTA_MAJOR_SEGMENT, resolution.slug]);
+    if (segments.length > 2) return { kind: "missing" };
+    return resolveAndRedirect(slug, (resolved) => [
+      FESTA_MAJOR_SEGMENT,
+      resolved,
+    ]);
   }
 
   // News routes: /noticies/<place>, /noticies/<place>/rss.xml, /noticies/<place>/<article>.
-  // Redirect migrated place aliases (301) and 404 missing places on list/RSS paths;
   // 3-segment article paths keep missing-place pass-through so the article page can
   // permanent-redirect a wrong-place URL to the article's canonical place.
   if (segments[0] === "noticies") {
@@ -99,43 +116,42 @@ export async function checkPlace(
     const placeSlug = segments[1];
     if (segments.length === 2 && placeSlug === "rss.xml") return null;
     if (placeSlug === "catalunya") return null;
-    const isArticlePath = segments.length === 3 && segments[2] !== "rss.xml";
-    if (!isValidPlace(placeSlug)) {
-      return isArticlePath ? null : { kind: "missing" };
-    }
-    const resolution = await resolvePlaceForProxy(placeSlug);
-    if (resolution.kind === "alias") {
-      return redirectTo(["noticies", resolution.slug, ...segments.slice(2)]);
-    }
-    if (!isArticlePath && resolution.kind === "missing") {
-      return { kind: "missing" };
-    }
-    return null;
+    const isRss = segments.length === 3 && segments[2] === "rss.xml";
+    const isArticlePath = segments.length === 3 && !isRss;
+    return resolveAndRedirect(
+      placeSlug,
+      (resolved) => ["noticies", resolved, ...segments.slice(2)],
+      { missing: isArticlePath ? null : { kind: "missing", direct404: isRss } },
+    );
   }
 
   // Archive routes: /sitemap/<town>(/<year>(/<month>)?)
   // 3-segment /sitemap/<town>/<year> has no page of its own, so 301 verified/alias
-  // towns in one hop (/sitemap for catalunya, /sitemap/<canonical> otherwise).
+  // towns in one hop (/sitemap for catalunya, /sitemap/<canonical> otherwise), and
+  // rewrite missing 3-segment paths to /sitemap/<town> so [year]/page.tsx's redirect()
+  // does not clobber the 404 status.
   if (segments[0] === "sitemap") {
     if (segments.length === 1) return null;
     if (segments.length > 4) return { kind: "missing" };
     const townSlug = segments[1];
+    const isYearOnly = segments.length === 3;
     if (townSlug === "catalunya") {
-      return segments.length === 3 ? redirectTo(["sitemap"]) : null;
+      return isYearOnly ? redirectTo(["sitemap"]) : null;
     }
-    if (!isValidPlace(townSlug)) return { kind: "missing" };
-    const resolution = await resolvePlaceForProxy(townSlug);
-    if (resolution.kind === "missing") return { kind: "missing" };
-    if (
-      segments.length === 3 &&
-      (resolution.kind === "exists" || resolution.kind === "alias")
-    ) {
-      const canonicalSlug =
-        resolution.kind === "alias" ? resolution.slug : townSlug;
-      return redirectTo(["sitemap", canonicalSlug]);
-    }
-    if (resolution.kind !== "alias") return null;
-    return redirectTo(["sitemap", resolution.slug, ...segments.slice(2)]);
+    return resolveAndRedirect(
+      townSlug,
+      (resolved) => [
+        "sitemap",
+        resolved,
+        ...(isYearOnly ? [] : segments.slice(2)),
+      ],
+      isYearOnly
+        ? {
+            missing: { kind: "missing", rewritePath: `/sitemap/${townSlug}` },
+            redirectOnExists: true,
+          }
+        : undefined,
+    );
   }
 
   const slug = segments[0] ?? "";
@@ -155,10 +171,10 @@ export async function checkPlace(
 
   if (slug === "catalunya" || !isPlacePath(segments)) return null;
 
-  const resolution = await resolvePlaceForProxy(slug);
-  if (resolution.kind === "missing") return { kind: "missing" };
-  if (resolution.kind !== "alias") return null;
-  return redirectTo([resolution.slug, ...segments.slice(1)]);
+  return resolveAndRedirect(slug, (resolved) => [
+    resolved,
+    ...segments.slice(1),
+  ]);
 }
 
 /**
