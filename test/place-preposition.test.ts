@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  contractCatalanPlaceInText,
   formatCatalanDe,
   formatNameOf,
   formatNamePrepositionParts,
@@ -174,5 +175,33 @@ describe("getProfileDisplayName", () => {
       "anna"
     );
     expect(getProfileDisplayName(null)).toBe("");
+  });
+});
+
+describe("contractCatalanPlaceInText", () => {
+  it.each([
+    ["Què fer la setmana del 9 al 13 de novembre a El Masnou", "El Masnou", "Què fer la setmana del 9 al 13 de novembre al Masnou"],
+    ["A El Masnou, del 9 al 13 de novembre, hi trobaràs", "El Masnou", "Al Masnou, del 9 al 13 de novembre, hi trobaràs"],
+    ["Cap de setmana al poble de La Garriga, a La Garriga.", "La Garriga", "Cap de setmana al poble de la Garriga, a la Garriga."],
+    ["Plans a Els Prats de Rei", "Els Prats de Rei", "Plans als Prats de Rei"],
+    ["Plans a L’Escala i de L'Escala", "L'Escala", "Plans a l'Escala i de l'Escala"],
+  ])("%s", (text, place, expected) => {
+    expect(contractCatalanPlaceInText(text, place)).toBe(expected);
+  });
+
+  it("leaves other text alone", () => {
+    expect(contractCatalanPlaceInText("El Masnou acull la fira", "El Masnou")).toBe(
+      "El Masnou acull la fira"
+    );
+    expect(contractCatalanPlaceInText("Plans a El Masnoui", "El Masnou")).toBe(
+      "Plans a El Masnoui"
+    );
+    expect(contractCatalanPlaceInText("CAVALCADA A EL MASNOU", "El Masnou")).toBe(
+      "CAVALCADA A EL MASNOU"
+    );
+    expect(contractCatalanPlaceInText("Plans a Mataró", "Mataró")).toBe("Plans a Mataró");
+    expect(contractCatalanPlaceInText("Plans a El Masnou", undefined)).toBe(
+      "Plans a El Masnou"
+    );
   });
 });
