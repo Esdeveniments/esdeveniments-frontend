@@ -151,3 +151,39 @@ export function resolveEventWindow({
     isAllDay,
   };
 }
+
+/**
+ * When a timed event ends, in wall-clock ms. With no end time, a later end
+ * day runs to its end ("from 19:00" exhibitions); undefined means one day,
+ * which counts as over 24 h after it starts.
+ */
+export function timedEventEndMs(window: EventWindow): number | undefined {
+  const { startDay, endDay, endTime } = window;
+  if (endDay && endTime) return wallClockMs(endDay, endTime);
+  if (endDay && endDay > startDay) return wallClockMs(endDay, "23:59:59");
+  return undefined;
+}
+
+/** Whether the event is over at `nowMs` (from `madridWallClockMs`). */
+export function isWindowOver(window: EventWindow, nowMs: number): boolean {
+  if (window.isAllDay) {
+    return wallClockDay(nowMs) > (window.endDay ?? window.startDay);
+  }
+  const end = timedEventEndMs(window);
+  if (end !== undefined) return nowMs > end;
+  return (
+    nowMs - wallClockMs(window.startDay, window.startTime ?? "00:00") > DAY_MS
+  );
+}
+
+/**
+ * Whether an event has ended, by the same rules as `computeTemporalStatus`,
+ * without its labels (keeps client bundles small). Unparseable dates: false.
+ */
+export function hasEventEnded(
+  input: EventWindowInput,
+  now = new Date(),
+): boolean {
+  const window = resolveEventWindow(input);
+  return window ? isWindowOver(window, madridWallClockMs(now)) : false;
+}

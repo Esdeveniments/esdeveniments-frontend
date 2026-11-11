@@ -4,8 +4,10 @@ import type {
 } from "types/event-status";
 import {
   daysBetween,
+  isWindowOver,
   madridWallClockMs,
   resolveEventWindow,
+  timedEventEndMs,
   wallClockDay,
   wallClockMs,
 } from "@utils/event-window";
@@ -38,7 +40,6 @@ const formatCount = (template: string, count: number) =>
   template.replace("{count}", count.toString());
 
 const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
 
 /**
  * Compute temporal status of an event given start & optional end date.
@@ -68,12 +69,13 @@ export function computeTemporalStatus(
   const now = madridWallClockMs(nowOverride ?? new Date());
   const { startDay, endDay } = window;
 
+  if (isWindowOver(window, now)) {
+    return { state: "past", label: labels.past, endedOn: endDay ?? startDay };
+  }
+
   if (window.isAllDay) {
     const today = wallClockDay(now);
     const lastDay = endDay ?? startDay;
-    if (today > lastDay) {
-      return { state: "past", label: labels.past, endedOn: lastDay };
-    }
     if (today >= startDay) {
       const days = daysBetween(today, lastDay);
       return days > 0
@@ -92,21 +94,7 @@ export function computeTemporalStatus(
   }
 
   const start = wallClockMs(startDay, window.startTime ?? "00:00");
-  // A timed event with no end time that ends on a later day (an exhibition
-  // "from 19:00") runs until the end of that day, not 24 h after it starts.
-  const end =
-    endDay && window.endTime
-      ? wallClockMs(endDay, window.endTime)
-      : endDay && endDay > startDay
-        ? wallClockMs(endDay, "23:59:59")
-        : undefined;
-
-  if (
-    (end !== undefined && now > end) ||
-    (end === undefined && now - start > DAY_MS)
-  ) {
-    return { state: "past", label: labels.past, endedOn: endDay ?? startDay };
-  }
+  const end = timedEventEndMs(window);
 
   if (now >= start) {
     if (end === undefined) return { state: "live", label: labels.live };

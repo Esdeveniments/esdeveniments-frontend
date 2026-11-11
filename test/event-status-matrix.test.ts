@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { computeTemporalStatus } from "@utils/event-status";
+import { hasEventEnded } from "@utils/event-window";
 import type { EventTemporalStatus } from "types/event-status";
 
 // Every case is written in Madrid wall-clock time, the time the backend sends.
@@ -127,6 +128,11 @@ describe.each(["Europe/Madrid", "UTC", "America/New_York", "Asia/Tokyo"])(
       const status = run(c);
       expect(status.state).toBe(c.state);
       if (c.detail) expect(detailOf(status)).toMatch(c.detail);
+    });
+
+    it.each(cases)("hasEventEnded agrees with the status: $name", (c) => {
+      process.env.TZ = tz;
+      expect(hasEventEnded(c, madrid(c.now))).toBe(c.state === "past");
     });
 
     // Whatever the times, a multi-day event is live on every day strictly
