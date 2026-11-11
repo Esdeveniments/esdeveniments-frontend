@@ -19,6 +19,14 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
+const PAID_SERVICE_KEYS = [
+  "paidSeller",
+  "paidWhat",
+  "paidPrice",
+  "paidWithdrawal",
+  "paidRefunds",
+] as const;
+
 const TermesServei: NextPage = async () => {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({
@@ -93,6 +101,15 @@ const TermesServei: NextPage = async () => {
               <p className="body-normal text-foreground/80">
                 {t("modificationsBody")}
               </p>
+            </section>
+
+            <section className="stack gap-2">
+              <h2 className="heading-3">{t("paidTitle")}</h2>
+              {PAID_SERVICE_KEYS.map((key) => (
+                <p key={key} className="body-normal text-foreground/80">
+                  {t(key)}
+                </p>
+              ))}
             </section>
 
             <section className="stack gap-3">
