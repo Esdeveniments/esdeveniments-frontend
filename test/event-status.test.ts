@@ -100,6 +100,17 @@ describe("computeTemporalStatus", () => {
     expect(status.state).toBe("past");
   });
 
+  it("timed event with no end time stays live until the end of a later end date", () => {
+    // An exhibition "from 19:00" running for weeks, as the backend sends it.
+    const status = compute("2025-09-20", "2025-10-15", baseNow, "19:00", null);
+    expect(status.state).toBe("live");
+  });
+
+  it("timed event with no end time is past once its later end date is over", () => {
+    const status = compute("2025-09-01", "2025-09-28", baseNow, "19:00", null);
+    expect(status.state).toBe("past");
+  });
+
   it("date-only start on same day (no times) is considered live", () => {
     // start as bare date (midnight UTC)
     const start = baseNow.toISOString().split("T")[0]; // '2025-09-29'

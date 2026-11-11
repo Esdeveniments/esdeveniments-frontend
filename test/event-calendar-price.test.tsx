@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { locale as rootLocale } from "next/root-params";
 import EventCalendar from "app/[locale]/e/[eventId]/components/EventCalendar";
 import type { EventDetailResponseDTO } from "types/api/event";
 
@@ -35,6 +36,7 @@ describe("EventCalendar price row", () => {
     await renderCalendar("gratis");
 
     expect(screen.getByTestId("event-price").textContent).toBe("Preu: Gratuït");
+    expect(screen.getByText("Gratuït").className).toContain("text-success-dark");
   });
 
   it.each([
@@ -51,5 +53,19 @@ describe("EventCalendar price row", () => {
     await renderCalendar(price);
 
     expect(screen.queryByTestId("event-price")).toBeNull();
+  });
+});
+
+describe("EventCalendar date range", () => {
+  it("localizes a multi-day range", async () => {
+    vi.mocked(rootLocale).mockResolvedValueOnce("en");
+    render(
+      await EventCalendar({
+        event: { ...event, startDate: "2026-10-08", endDate: "2026-12-06" },
+        compact: true,
+      })
+    );
+
+    expect(screen.getByText(/^From .+ to .+$/)).toBeTruthy();
   });
 });

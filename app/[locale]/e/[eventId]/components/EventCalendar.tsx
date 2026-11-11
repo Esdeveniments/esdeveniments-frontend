@@ -20,6 +20,10 @@ export default async function EventCalendar({ event, compact = false }: EventCal
     locale,
     namespace: "Utils.EventTime",
   });
+  const tCalendar = await getTranslations({
+    locale,
+    namespace: "Utils.Calendar",
+  });
   const timeLabels = {
     consult: tTime("consult"),
     startsAt: tTime("startsAt", { time: "{time}" }),
@@ -48,17 +52,25 @@ export default async function EventCalendar({ event, compact = false }: EventCal
   );
 
   const eventDate = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
+    ? tCalendar("dateRange", { start: formattedStart, end: formattedEnd })
     : `${nameDay}, ${formattedStart}`;
 
   // "Free" (or 0) is translated, a bare amount gets the euro sign, other text shows as written. Hidden when unknown.
+  // Styled like the time row: the icon names the row, the label is for screen readers only.
   const priceText = getEventPriceText(event.price);
   const priceRow = priceText ? (
-    <p className="body-normal flex items-start gap-2 text-foreground" data-testid="event-price">
-      <TicketIcon className="w-4 h-4 mt-0.5 flex-shrink-0 text-foreground-strong/70" aria-hidden="true" />
+    <p
+      className={`body-normal flex items-start ${compact ? "gap-2" : "gap-element-gap"} text-foreground-strong/80`}
+      data-testid="event-price"
+    >
+      <TicketIcon className="w-4 h-4 mt-1 flex-shrink-0 text-foreground-strong/70" aria-hidden="true" />
       <span>
-        <span className="font-semibold text-foreground-strong">{t("priceLabel")}</span>{" "}
-        {isFreePriceText(priceText) ? t("priceFree") : formatPriceText(priceText, locale)}
+        <span className="sr-only">{t("priceLabel")} </span>
+        {isFreePriceText(priceText) ? (
+          <span className="font-semibold text-success-dark">{t("priceFree")}</span>
+        ) : (
+          formatPriceText(priceText, locale)
+        )}
       </span>
     </p>
   ) : null;

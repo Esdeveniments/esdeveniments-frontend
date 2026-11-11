@@ -82,10 +82,14 @@ export function computeTemporalStatus(
     (isAllDayEvent ||
       endDateHasTime ||
       (normalizedEndTime && normalizedEndTime.trim().length > 0));
+  // A timed event with no end time that ends on a later day (an exhibition
+  // "from 19:00") runs until the end of that day, not 24h after it starts.
   const end =
     shouldBuildEnd && endDate
       ? buildDateTime(endDate, normalizedEndTime)
-      : undefined;
+      : endDate && endDate.slice(0, 10) > startDate.slice(0, 10)
+        ? buildDateTime(endDate.slice(0, 10), "23:59:59")
+        : undefined;
 
   // Helper to compare dates at day-level (ignoring time)
   const isSameDay = (date1: Date, date2: Date) => {
