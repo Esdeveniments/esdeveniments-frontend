@@ -803,8 +803,6 @@
         "dateHeading": "Date",
         "categoriesHeading": "Categories",
         "priceHeading": "Price",
-        "priceFree": "Free",
-        "pricePaid": "Paid",
         "calendarLabel": "Or pick from calendar:"
       }
     },

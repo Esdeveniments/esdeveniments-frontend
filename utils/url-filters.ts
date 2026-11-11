@@ -13,11 +13,14 @@ import type {
   RouteSegments,
   URLQueryParams,
   ParsedFilters,
+  PriceFilterApiValue,
+  PriceFilterValue,
 } from "types/url-filters";
 import { isValidDateSlug } from "@lib/dates";
 import { isValidCategorySlugFormat } from "./category-mapping";
 import {
   DEFAULT_FILTER_VALUE,
+  PRICE_FILTER_API_VALUES,
   MAX_QUERY_PARAMS,
   MAX_PARAM_VALUE_LENGTH,
   MAX_PARAM_KEY_LENGTH,
@@ -339,6 +342,19 @@ export function urlToFilterState(parsed: ParsedFilters): URLFilterState {
   };
 }
 
+export function isPriceFilterValue(
+  value: string | undefined,
+): value is PriceFilterValue {
+  return value !== undefined && Object.hasOwn(PRICE_FILTER_API_VALUES, value);
+}
+
+/** Backend `price` param for a `?price=` value; undefined for "tots" or junk. */
+export function toPriceFilterApiValue(
+  value: string | undefined,
+): PriceFilterApiValue | undefined {
+  return isPriceFilterValue(value) ? PRICE_FILTER_API_VALUES[value] : undefined;
+}
+
 /**
  * Check if any client-only query-param filters are active.
  * Single source of truth — used by useEvents, SsrListWrapper, and HybridEventsListClient.
@@ -352,7 +368,7 @@ export function hasActiveClientFilters(
   return !!(
     queryParams.search ||
     queryParams.distance ||
-    (queryParams.price && queryParams.price !== DEFAULT_FILTER_VALUE) ||
+    isPriceFilterValue(queryParams.price) ||
     queryParams.from ||
     queryParams.to ||
     queryParams.lat ||
@@ -491,7 +507,7 @@ export function buildCanonicalUrlDynamic(
     params.set("distance", filters.distance.toString());
   }
 
-  if (filters.price === "gratis" || filters.price === "pagament") {
+  if (isPriceFilterValue(filters.price)) {
     params.set("price", filters.price);
   }
 

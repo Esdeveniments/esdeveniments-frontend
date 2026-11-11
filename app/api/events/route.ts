@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchEventsExternalResult } from "@lib/api/events-external";
 import { FetchEventsParams } from "types/event";
 import { handleApiError } from "@utils/api-error-handler";
+import { PRICE_FILTER_API_VALUES } from "@utils/constants";
 
 // GET /api/events - proxy to external API with server-side HMAC signing
 export async function GET(request: Request) {
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
     const latRaw = search.get("lat");
     const lonRaw = search.get("lon");
     const radiusRaw = search.get("radius");
+    const priceRaw = search.get("price");
 
     const params: FetchEventsParams = {
       page,
@@ -36,6 +38,8 @@ export async function GET(request: Request) {
       from: search.get("from") || undefined,
       to: search.get("to") || undefined,
       profileSlug: search.get("profileSlug") || undefined,
+      // Only FREE/PAID: the backend answers 400 to anything else
+      price: Object.values(PRICE_FILTER_API_VALUES).find((v) => v === priceRaw),
       lat:
         latRaw !== null && Number.isFinite(parseFloat(latRaw))
           ? parseFloat(latRaw)

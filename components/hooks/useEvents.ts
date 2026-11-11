@@ -2,7 +2,10 @@ import { useState } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
-import { hasActiveClientFilters } from "@utils/url-filters";
+import {
+  hasActiveClientFilters,
+  toPriceFilterApiValue,
+} from "@utils/url-filters";
 import { buildEventsQuery } from "@utils/api-helpers";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
@@ -11,6 +14,7 @@ import {
   UseEventsOptions,
   UseEventsReturn,
 } from "types/event";
+import type { PriceFilterApiValue } from "types/url-filters";
 import { captureException } from "@sentry/nextjs";
 
 // SWR fetcher function for events API (single page) via internal proxy
@@ -96,6 +100,7 @@ export const useEvents = ({
     lat: hasCoords && hasValidRadius ? latNumber : undefined,
     lon: hasCoords && hasValidRadius ? lonNumber : undefined,
     profileSlug,
+    price: toPriceFilterApiValue(price),
   };
 
   const getKey = (
@@ -115,6 +120,7 @@ export const useEvents = ({
       baseParams.lat,
       baseParams.lon,
       baseParams.profileSlug,
+      baseParams.price,
       pageIndex,
       baseParams.size,
     ] as const;
@@ -140,6 +146,7 @@ export const useEvents = ({
       latParam,
       lonParam,
       profileSlugParam,
+      priceParam,
       pageIndex,
       sizeParam,
     ]) =>
@@ -156,6 +163,7 @@ export const useEvents = ({
         lat: latParam as number | undefined,
         lon: lonParam as number | undefined,
         profileSlug: profileSlugParam as string | undefined,
+        price: priceParam as PriceFilterApiValue | undefined,
       }),
     {
       fallbackData:

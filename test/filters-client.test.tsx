@@ -40,6 +40,7 @@ describe("FiltersClient - Date Filter Capitalization", () => {
         distance: "Distància",
         searchTerm: "Cerca",
       },
+      prices: { gratis: "Gratuït", pagament: "De pagament" },
       byDates: {
         avui: "Avui",
         dema: "Demà",
@@ -172,6 +173,7 @@ describe("FiltersClient - Place Name Capitalization", () => {
         distance: "Distància",
         searchTerm: "Cerca",
       },
+      prices: { gratis: "Gratuït", pagament: "De pagament" },
       byDates: {},
     },
   };
@@ -233,6 +235,7 @@ describe("FiltersClient - Category Name Capitalization", () => {
         distance: "Distància",
         searchTerm: "Cerca",
       },
+      prices: { gratis: "Gratuït", pagament: "De pagament" },
       byDates: {},
     },
   };
@@ -296,6 +299,7 @@ describe("FiltersClient - Distance Formatting", () => {
         distance: "Distància",
         searchTerm: "Cerca",
       },
+      prices: { gratis: "Gratuït", pagament: "De pagament" },
       byDates: {},
     },
   };
@@ -353,6 +357,7 @@ describe("FiltersClient - Multiple Filters Capitalization", () => {
           distance: "Distància",
           searchTerm: "Cerca",
         },
+        prices: { gratis: "Gratuït", pagament: "De pagament" },
         byDates: {
           avui: "Avui",
           dema: "Demà",
@@ -372,3 +377,42 @@ describe("FiltersClient - Multiple Filters Capitalization", () => {
   });
 });
 
+
+describe("FiltersClient - Price", () => {
+  const baseProps = {
+    segments: {
+      place: "barcelona",
+      date: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
+    } as RouteSegments,
+    categories: [] as CategorySummaryResponseDTO[],
+    placeTypeLabel: { type: "" as const, label: "Barcelona" },
+    onOpenModal: vi.fn(),
+    labels: {
+      triggerLabel: "Filtres",
+      displayNameMap: { price: "Preu" },
+      prices: { gratis: "Gratuït", pagament: "De pagament" },
+      byDates: {},
+    },
+  };
+
+  it.each([
+    ["gratis", "Gratuït"],
+    ["pagament", "De pagament"],
+  ])("shows a removable chip with the translated label for %s", (price, label) => {
+    renderWithProviders(<FiltersClient {...baseProps} queryParams={{ price }} />);
+
+    expect(screen.getByTestId("filter-pill-price")).toHaveTextContent(label);
+    expect(screen.getByTestId("filter-pill-price-remove")).toBeInTheDocument();
+  });
+
+  it.each([undefined, DEFAULT_FILTER_VALUE, "junk"])(
+    "shows the inactive Preu chip when price is %j",
+    (price) => {
+      renderWithProviders(<FiltersClient {...baseProps} queryParams={{ price }} />);
+
+      expect(screen.getByTestId("filter-pill-price")).toHaveTextContent("Preu");
+      expect(screen.queryByTestId("filter-pill-price-remove")).toBeNull();
+    },
+  );
+});

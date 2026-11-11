@@ -7,6 +7,7 @@ import { FilterOperations } from "@utils/filter-operations";
 import type { FilterDisplayState } from "types/filters";
 import FilterButton from "./FilterButton";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { isPriceFilterValue } from "@utils/url-filters";
 import type { FiltersClientProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
 import { getCategoryLabel } from "@utils/category-helpers";
@@ -146,8 +147,8 @@ const FiltersClient = ({
                 ? translatedByDate(displayState.filters.byDate)
                 : config.key === "category" && displayText
                   ? translatedCategory(displayState.filters.category)
-                  : config.key === "price" && displayText
-                    ? labels.prices?.[displayText] || displayText
+                  : config.key === "price" && isPriceFilterValue(displayText)
+                    ? labels.prices[displayText]
                     : displayText;
             return (
               <FilterButton

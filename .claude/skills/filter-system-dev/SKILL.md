@@ -1,6 +1,6 @@
 ---
 name: filter-system-dev
-description: How the listing filters work (place, category, byDate, distance, searchTerm; price is ready but disabled) and how to add or change one. Use when editing config/filters.ts, utils/filter-operations.ts, filter chips (FiltersClient), the filters modal (NavigationFiltersModal), filter URL parsing/building, or when re-enabling the price filter or debugging filter removal URLs.
+description: How the listing filters work (place, category, byDate, distance, price, searchTerm) and how to add or change one. Use when editing config/filters.ts, utils/filter-operations.ts, filter chips (FiltersClient), the filters modal (NavigationFiltersModal), filter URL parsing/building or debugging filter removal URLs.
 ---
 
 # Filter system
@@ -13,13 +13,13 @@ description: How the listing filters work (place, category, byDate, distance, se
 | Config type | `types/filters.ts` (`FilterConfig`, `FilterDisplayState`) | Shape of each config |
 | Operations | `utils/filter-operations.ts` (`FilterOperations`) | Generic helpers over the configs |
 | Chips UI | `components/ui/filters/FiltersClient.tsx` | Renders a removable chip per active filter |
-| Filters modal | `components/ui/filtersModal/NavigationFiltersModal.tsx` | Inputs for place, date, category, distance (price is commented out) |
+| Filters modal | `components/ui/filtersModal/NavigationFiltersModal.tsx` | Inputs for place, date, category, price, distance |
 | URL state | `types/url-filters.ts`, `utils/url-filters.ts` | `URLFilterState`, `URLQueryParams`, `RouteSegments`; parse and build URLs |
 | Data | `components/hooks/useEvents.ts` | Maps URL filters to API params (SWR) |
 
 The configs drive the chips: whether a filter is active, its label, and its removal URL. URL parsing/building in `utils/url-filters.ts` and the API mapping in `useEvents` are written per filter; they don't read the configs. URL rules (canonical shape, `tots`, noindex, no `searchParams` in pages) are in the `url-canonicalization` skill.
 
-Current keys: `place`, `category`, `byDate`, `distance`, `searchTerm` (`searchTerm` never shows a chip; the search box shows it).
+Current keys: `place`, `category`, `byDate`, `distance`, `price`, `searchTerm` (`searchTerm` never shows a chip; the search box shows it).
 
 ## Config anatomy
 
@@ -94,11 +94,8 @@ Don't add filter-specific branches here.
 
 Every UI surface (chip, modal, cards, event page, quick links, home sections) gets a category's text from `getCategoryLabel(slug, backendName, tCategories)` in `utils/category-helpers.ts`: `CATEGORY_CONFIG[slug].labelKey` → `Config.Categories.<labelKey>`, else the backend `name`, else the slug. The chip (`FiltersClient`) and the modal call it on the client with `useTranslations("Config.Categories")` (`Config` already ships to the client in full). A new backend category needs a `CATEGORY_CONFIG` entry (camelCase `labelKey`) and the key in `messages/{ca,es,en}.json`; `test/category-labels.test.tsx` checks both. The SEO phrase `Partials.GeneratePagesData.categories.<slug>.titleSuffix` is for titles and meta descriptions only; no UI component reads it.
 
-## Re-enabling price
+## Price
 
-Price is wired for state and URLs (`price=gratis|pagament`, parsed, built, noindexed, chip label) but disabled because the backend ignores `type=FREE|PAID`. When the backend supports it:
+The URL uses `?price=gratis|pagament`; the backend takes `GET /events?price=FREE|PAID` (Spring binds the enum case-sensitively and answers 400 to anything else). `PRICE_FILTER_API_VALUES` (`utils/constants.ts`) maps one to the other; `isPriceFilterValue` and `toPriceFilterApiValue` (`utils/url-filters.ts`) drop any other value, so `?price=junk` shows no chip, doesn't switch the list to client mode and never reaches the backend. `app/api/events/route.ts` forwards only `FREE`/`PAID`. Chip labels come from `Components.Filters.priceFree`/`pricePaid` via `buildFilterLabels` (`PlacePageShell.tsx`).
 
-1. Uncomment the `price` config in `config/filters.ts`.
-2. Uncomment `localPrice` state and the price `<fieldset>` in `NavigationFiltersModal.tsx`.
-3. Forward it: `useEvents` doesn't send `price` to the API today. Add a `type` field to `FetchEventsParams`, map `gratis` → `FREE`, `pagament` → `PAID` in `useEvents`, carry it through the SWR chain from step 4 above (`baseParams`, `getKey` tuple, fetcher destructuring, `pageFetcher` object) into `buildEventsQuery`, and read it in `app/api/events/route.ts` (the route picks params one by one).
-4. Run the tests above.
+The backend reads the free-text `event.price`: free words ("gratuït", "gratis", "free", "entrada lliure", …) or a zero amount count as `FREE`; any other amount or "€" as `PAID`. Events with no price match neither, so both filtered lists are smaller than the unfiltered one.

@@ -162,6 +162,7 @@ describe("Filter Configuration System", () => {
         category: DEFAULT_FILTER_VALUE,
         searchTerm: "",
         distance: 50,
+        price: DEFAULT_FILTER_VALUE,
         lat: undefined,
         lon: undefined,
       });

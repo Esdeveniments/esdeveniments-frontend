@@ -90,7 +90,7 @@ import {
 } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
-import { RouteSegments, URLQueryParams } from "types/url-filters";
+import { PriceFilterValue, RouteSegments, URLQueryParams } from "types/url-filters";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { AppLocale } from "types/i18n";
 import type { EventFormProps, EventPriceFormFields } from "types/event";
@@ -553,7 +553,7 @@ export type FilterLabels = {
   triggerLabel: string;
   displayNameMap: Record<string, string>;
   byDates: Record<string, string>;
-  prices?: Record<string, string>;
+  prices: Record<PriceFilterValue, string>;
 };
 
 export interface FiltersClientProps {
