@@ -624,9 +624,11 @@ function isFemininePlaceName(name: string): boolean {
   if (MASCULINE_EXCEPTIONS.has(firstWord)) return false;
   if (FEMININE_HEAD_WORDS.has(firstWord)) return true;
 
-  // Feminine-ish endings (check both full name and head noun, e.g. "Conca de Barberà", "Ribera d'Ebre")
+  // Feminine-ish endings on the head word ("Selva", "Conca de Barberà", "Ribera d'Ebre").
+  // Evaluate firstWord rather than lowerName so a feminine prepositional complement
+  // ("Camp de Tarragona") cannot flip a masculine head noun.
   const feminineSuffixes = [
-    /a$/, // Selva, Noguera, Osona, Anoia, Conca, Ribera…
+    /a$/, // Selva, Noguera, Osona, Anoia, Conca, Ribera, Terra, Alta…
     /ia$/, // Cerdanya
     /ona$/, // Tarragona
     /ena$/, // Noguera (stem), etc.
@@ -638,7 +640,5 @@ function isFemininePlaceName(name: string): boolean {
     /xa$/, // Garrotxa
   ];
 
-  return feminineSuffixes.some(
-    (p) => p.test(lowerName) || p.test(firstWord)
-  );
+  return feminineSuffixes.some((p) => p.test(firstWord));
 }

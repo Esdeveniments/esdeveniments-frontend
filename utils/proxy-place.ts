@@ -89,6 +89,43 @@ export async function checkPlace(
     return redirectTo([FESTA_MAJOR_SEGMENT, resolution.slug]);
   }
 
+  // News routes: /noticies/<place>, /noticies/<place>/rss.xml, /noticies/<place>/<article>.
+  // Redirect migrated place aliases (301) and 404 missing places on list/RSS paths;
+  // 3-segment article paths keep missing-place pass-through so the article page can
+  // permanent-redirect a wrong-place URL to the article's canonical place.
+  if (segments[0] === "noticies") {
+    if (segments.length === 1) return null;
+    if (segments.length > 3) return { kind: "missing" };
+    const placeSlug = segments[1];
+    if (segments.length === 2 && placeSlug === "rss.xml") return null;
+    if (placeSlug === "catalunya") return null;
+    const isArticlePath = segments.length === 3 && segments[2] !== "rss.xml";
+    if (!isValidPlace(placeSlug)) {
+      return isArticlePath ? null : { kind: "missing" };
+    }
+    const resolution = await resolvePlaceForProxy(placeSlug);
+    if (resolution.kind === "alias") {
+      return redirectTo(["noticies", resolution.slug, ...segments.slice(2)]);
+    }
+    if (!isArticlePath && resolution.kind === "missing") {
+      return { kind: "missing" };
+    }
+    return null;
+  }
+
+  // Archive routes: /sitemap/<town>(/<year>(/<month>)?)
+  if (segments[0] === "sitemap") {
+    if (segments.length === 1) return null;
+    if (segments.length > 4) return { kind: "missing" };
+    const townSlug = segments[1];
+    if (townSlug === "catalunya") return null;
+    if (!isValidPlace(townSlug)) return { kind: "missing" };
+    const resolution = await resolvePlaceForProxy(townSlug);
+    if (resolution.kind === "missing") return { kind: "missing" };
+    if (resolution.kind !== "alias") return null;
+    return redirectTo(["sitemap", resolution.slug, ...segments.slice(2)]);
+  }
+
   const slug = segments[0] ?? "";
   // /<place>/festes-majors would 301 to /<place> as an unknown category.
   // Send it to the hub, which then handles aliases and unknown towns.

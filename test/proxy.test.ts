@@ -680,6 +680,68 @@ describe("proxy", () => {
         },
       );
     });
+
+    describe("news and archive place aliases / 404s", () => {
+      it.each([
+        ["/noticies/la-garrotxa", "la-garrotxa", "garrotxa", "/noticies/garrotxa", "?page=2"],
+        ["/es/noticies/la-garrotxa/rss.xml", "la-garrotxa", "garrotxa", "/es/noticies/garrotxa/rss.xml", ""],
+        ["/noticies/hospitalet-de-llobregat/cap-de-setmana", "hospitalet-de-llobregat", "l-hospitalet-de-llobregat", "/noticies/l-hospitalet-de-llobregat/cap-de-setmana", ""],
+        ["/sitemap/l-alt-urgell", "l-alt-urgell", "alt-urgell", "/sitemap/alt-urgell", ""],
+        ["/en/sitemap/bordes-es/2025/agost", "bordes-es", "es-bordes", "/en/sitemap/es-bordes/2025/agost", ""],
+      ])("301s %s to %s", async (pathname, fromSlug, toSlug, target, search) => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({
+          kind: "alias",
+          slug: toSlug,
+        });
+
+        await proxy(placeRequest(pathname, "GET", search));
+
+        expect(resolvePlaceForProxy).toHaveBeenCalledWith(fromSlug);
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe(target);
+        expect(url.search).toBe(search);
+      });
+
+      it.each([
+        "/noticies/no-such-place",
+        "/noticies/no-such-place/rss.xml",
+        "/sitemap/no-such-place",
+        "/sitemap/no-such-place/2025/agost",
+      ])("404s %s when the place is missing", async (pathname) => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+        (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+        await proxy(placeRequest(pathname));
+
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBe(404);
+      });
+
+      it("lets 3-segment news article paths pass through on missing place so the page can redirect to the article's canonical place", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+        (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+        await proxy(placeRequest("/noticies/no-such-place/real-article-slug"));
+
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBeUndefined();
+      });
+
+      it.each([
+        "/noticies/rss.xml",
+        "/noticies/catalunya",
+        "/noticies/catalunya/rss.xml",
+        "/sitemap",
+        "/sitemap/catalunya/2025/agost",
+      ])("skips place resolution for %s", async (pathname) => {
+        (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+        await proxy(placeRequest(pathname));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe("event read outage", () => {
