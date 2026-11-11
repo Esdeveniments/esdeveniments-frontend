@@ -120,4 +120,15 @@ describe("fetchNewsExternal", () => {
 
     expect(result.content[0].title).toBe("Què fer a la Garriga");
   });
+
+  it("passes malformed items through instead of dropping the page", async () => {
+    const malformed = { ...detail, title: 42, description: null, city: { name: 7 } };
+    mockFetchWithHmac.mockResolvedValue(
+      jsonResponse({ content: [null, malformed], last: true }),
+    );
+
+    const result = await fetchNewsExternal({});
+
+    expect(result.content).toEqual([null, malformed]);
+  });
 });

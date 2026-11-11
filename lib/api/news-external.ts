@@ -16,9 +16,11 @@ import { contractCatalanPlaceInText } from "@utils/string-helpers";
 // Internal API routes handle caching via Cache-Control headers instead.
 
 // Backend titles and descriptions say "a El Masnou"; Catalan contracts it.
+// The payload isn't schema-checked, so malformed items pass through untouched.
 function withCatalanPlaceArticles<T extends NewsSummaryResponseDTO | NewsDetailResponseDTO>(
   news: T
 ): T {
+  if (!news || typeof news !== "object") return news;
   const fix = (text: string) =>
     [news.city?.name, news.region?.name].reduce<string>(
       (result, name) => contractCatalanPlaceInText(result, name),
@@ -42,7 +44,9 @@ export async function fetchNewsExternal(
       return emptyPagedResponse();
     }
     const data = (await res.json()) as PagedResponseDTO<NewsSummaryResponseDTO>;
-    return { ...data, content: (data.content ?? []).map(withCatalanPlaceArticles) };
+    return Array.isArray(data?.content)
+      ? { ...data, content: data.content.map(withCatalanPlaceArticles) }
+      : data;
   } catch (error) {
     console.error("fetchNewsExternal: failed", error);
     return emptyPagedResponse();
@@ -67,7 +71,9 @@ export async function fetchNewsBySlugExternal(
     return {
       ...withCatalanPlaceArticles(data),
       events: parseEventSummaryList(data.events ?? []),
-      relatedNews: data.relatedNews?.map(withCatalanPlaceArticles),
+      relatedNews: Array.isArray(data.relatedNews)
+        ? data.relatedNews.map(withCatalanPlaceArticles)
+        : data.relatedNews,
     };
   } catch (error) {
     console.error("fetchNewsBySlugExternal:", slug, "failed", error);
