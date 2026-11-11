@@ -1,7 +1,9 @@
 import { CalendarIcon, ClockIcon, TicketIcon } from "@heroicons/react/24/outline";
 import { siteUrl } from "@config/index";
-import { getFormattedDate } from "@utils/helpers";
-import { formatEventTimeDisplayDetail } from "@utils/date-helpers";
+import {
+  formatEventDateLabel,
+  formatEventTimeDisplayDetail,
+} from "@utils/date-helpers";
 import { formatPriceText, getEventPriceText, isFreePriceText } from "@utils/event-price";
 import { getTranslations } from "next-intl/server";
 import type { EventCalendarProps } from "types/event";
@@ -12,14 +14,11 @@ import type { AppLocale } from "types/i18n";
 
 export default async function EventCalendar({ event, compact = false }: EventCalendarProps) {
   const locale = (await rootLocale()) as AppLocale;
-  const t = await getTranslations({
-    locale,
-    namespace: "Components.EventCalendar",
-  });
-  const tTime = await getTranslations({
-    locale,
-    namespace: "Utils.EventTime",
-  });
+  const [t, tTime, tCalendar] = await Promise.all([
+    getTranslations({ locale, namespace: "Components.EventCalendar" }),
+    getTranslations({ locale, namespace: "Utils.EventTime" }),
+    getTranslations({ locale, namespace: "Utils.Calendar" }),
+  ]);
   const timeLabels = {
     consult: tTime("consult"),
     startsAt: tTime("startsAt", { time: "{time}" }),
@@ -27,7 +26,6 @@ export default async function EventCalendar({ event, compact = false }: EventCal
     simpleRange: tTime("simpleRange", { start: "{start}", end: "{end}" }),
   };
 
-  // Extract needed fields
   const {
     title,
     description,
@@ -41,84 +39,83 @@ export default async function EventCalendar({ event, compact = false }: EventCal
     endTime,
   } = event;
 
-  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
-    startDate,
-    endDate,
-    locale
+  const eventDate = formatEventDateLabel(startDate, endDate, locale, (start, end) =>
+    tCalendar("dateRange", { start, end }),
   );
 
-  const eventDate = formattedEnd
-    ? `Del ${formattedStart} al ${formattedEnd}`
-    : `${nameDay}, ${formattedStart}`;
+  // Icon rows share one layout: 16 px icon nudged to the centre of the first 26 px line.
+  const rowClassName = `body-normal flex items-start ${compact ? "gap-2" : "gap-element-gap"} text-muted-foreground`;
+  const rowIconClassName = "w-4 h-4 mt-1 flex-shrink-0";
+
+  const timeRow = (
+    <p className={rowClassName}>
+      <ClockIcon className={rowIconClassName} aria-hidden="true" />
+      <span>{formatEventTimeDisplayDetail(startTime, endTime, timeLabels)}</span>
+    </p>
+  );
 
   // "Free" (or 0) is translated, a bare amount gets the euro sign, other text shows as written. Hidden when unknown.
+  // The icon names the row; the label is for screen readers only.
   const priceText = getEventPriceText(event.price);
   const priceRow = priceText ? (
-    <p className="body-normal flex items-start gap-2 text-foreground" data-testid="event-price">
-      <TicketIcon className="w-4 h-4 mt-0.5 flex-shrink-0 text-foreground-strong/70" aria-hidden="true" />
+    <p className={rowClassName} data-testid="event-price">
+      <TicketIcon className={rowIconClassName} aria-hidden="true" />
       <span>
-        <span className="font-semibold text-foreground-strong">{t("priceLabel")}</span>{" "}
-        {isFreePriceText(priceText) ? t("priceFree") : formatPriceText(priceText, locale)}
+        <span className="sr-only">{t("priceLabel")} </span>
+        {isFreePriceText(priceText) ? (
+          <span className="font-semibold text-success-dark">{t("priceFree")}</span>
+        ) : (
+          <span className="text-foreground-strong">
+            {formatPriceText(priceText, locale)}
+          </span>
+        )}
       </span>
     </p>
   ) : null;
 
+  const addToCalendar = (
+    <AddToCalendar
+      title={title}
+      description={description}
+      location={`${location}, ${city?.name || ""}, ${region?.name || ""}, ${city?.postalCode || ""}`}
+      startDate={startDate}
+      endDate={endDate}
+      canonical={`${siteUrl}/e/${slug}`}
+    />
+  );
+
+  const dateText = (
+    <p className="body-normal font-semibold text-foreground-strong">{eventDate}</p>
+  );
+
   if (compact) {
     return (
       <div className="w-full flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4 text-foreground-strong flex-shrink-0" />
-          <p className="body-normal font-semibold text-foreground-strong">
-            {eventDate}
-          </p>
+        <div className="flex items-start gap-2">
+          <CalendarIcon className="w-4 h-4 mt-1 flex-shrink-0 text-foreground-strong" aria-hidden="true" />
+          {dateText}
         </div>
-        <p className="body-normal flex items-center gap-2 text-foreground-strong/80">
-          <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
-          {formatEventTimeDisplayDetail(startTime, endTime, timeLabels)}
-        </p>
+        {timeRow}
         {priceRow}
-        <AddToCalendar
-          title={title}
-          description={description}
-          location={`${location}, ${city?.name || ""}, ${region?.name || ""}, ${city?.postalCode || ""}`}
-          startDate={startDate}
-          endDate={endDate}
-          canonical={`${siteUrl}/e/${slug}`}
-        />
+        {addToCalendar}
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      <div className="w-full flex flex-col gap-element-gap min-w-0">
-        <SectionHeading
-          Icon={CalendarIcon}
-          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
-          title={t("title")}
-          titleClassName="heading-2"
-        />
-        <div className="w-full flex flex-col gap-element-gap px-section-x">
-          <p className="body-normal font-semibold text-foreground-strong">
-            {eventDate}
-          </p>
-          <p className="body-normal flex items-center gap-element-gap text-foreground-strong/80">
-            <ClockIcon className="w-4 h-4 text-foreground-strong/70" />
-            {formatEventTimeDisplayDetail(startTime, endTime, timeLabels)}
-          </p>
-          {priceRow}
-        </div>
-        <div className="px-section-x">
-          <AddToCalendar
-            title={title}
-            description={description}
-            location={`${location}, ${city?.name || ""}, ${region?.name || ""}, ${city?.postalCode || ""}`}
-            startDate={startDate}
-            endDate={endDate}
-            canonical={`${siteUrl}/e/${slug}`}
-          />
-        </div>
+    <div className="w-full flex flex-col gap-element-gap min-w-0">
+      <SectionHeading
+        Icon={CalendarIcon}
+        iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
+        title={t("title")}
+        titleClassName="heading-2"
+      />
+      <div className="w-full flex flex-col gap-element-gap px-section-x">
+        {dateText}
+        {timeRow}
+        {priceRow}
       </div>
+      <div className="px-section-x">{addToCalendar}</div>
     </div>
   );
 }

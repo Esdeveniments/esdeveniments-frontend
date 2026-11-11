@@ -294,9 +294,6 @@ async function EventPageBody({
   const exploreCategoryHref = primaryCategorySlug
     ? `/${primaryPlaceSlug}/${primaryCategorySlug}`
     : explorePlaceHref;
-  const eventDateString = event.endDate
-    ? `Del ${event.startDate} al ${event.endDate}`
-    : `${event.startDate}`;
   const jsonData = generateJsonData({ ...event }, locale);
 
   // Parallelize all translation fetches to eliminate waterfall (8 calls → 1 round trip)
@@ -513,7 +510,7 @@ async function EventPageBody({
                       slug={eventSlug}
                       title={title}
                       description={event.description}
-                      eventDateString={eventDateString}
+                      eventDateString={shareEvent.dateText}
                       location={event.location}
                       initialIsMobile={initialIsMobile}
                       cityName={cityName}

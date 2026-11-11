@@ -49,4 +49,26 @@ describe("NativeShareButton", () => {
       expect.objectContaining({ method: "native" }),
     );
   });
+
+  it("shares a localized date and place, without an empty place part", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", { value: share, configurable: true });
+    render(
+      <NativeShareButton
+        title="Concert"
+        url="https://www.esdeveniments.cat/e/my-event"
+        date="dissabte, 28 de febrer"
+        location="Cardedeu"
+        subLocation=""
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Comparteix Concert" }));
+    });
+    expect(share).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: "Concert\n\nData: dissabte, 28 de febrer\nLloc: Cardedeu",
+      }),
+    );
+  });
 });
