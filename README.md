@@ -106,7 +106,9 @@ Export `HMAC_SECRET`, `BACKEND_SERVICE_SECRET` and
 `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` (`openssl rand -base64 32`) in your shell, and set
 `NEXT_PUBLIC_API_URL` to the v2 backend URL. The build preflight rejects a
 missing key or a backend without the v2 endpoints. BuildKit mounts the secrets
-for the build without storing them in image layers.
+for the build without storing them in image layers, except
+`NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`: Next writes it into the build output, so it
+ships inside the image. Don't share images built with a real key.
 
 ```bash
 # Build: public configuration is inlined; credentials use BuildKit secrets.
