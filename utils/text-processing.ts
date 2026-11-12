@@ -29,9 +29,11 @@ export function processDescription(description: string): string {
 
   // Markdown bold (`**text**`) from imported descriptions. Runs before the URL
   // step so a link never swallows the asterisks; callers sanitize the result
-  // (`<strong>` is allowlisted in utils/sanitize.ts).
+  // (`<strong>` is allowlisted in utils/sanitize.ts). Spaces inside the
+  // asterisks (`**Casa de Cultura. **`) are common in pasted text, so they
+  // are allowed and dropped.
   let processed = description.replace(
-    /\*\*(?=\S)([^*\n]*?\S)\*\*/g,
+    /\*\*[ \t]*([^*\n]*?\S)[ \t]*\*\*/g,
     "<strong>$1</strong>",
   );
 

@@ -18,6 +18,16 @@ describe("processDescription", () => {
     expect(processDescription("Preu: 5 € * IVA ** inclòs")).toBe("Preu: 5 € * IVA ** inclòs");
   });
 
+  it("bolds text with spaces inside the asterisks", () => {
+    expect(processDescription("**Casa de Cultura. **  \nEntrada gratuïta.")).toBe(
+      "<strong>Casa de Cultura.</strong>  <br>Entrada gratuïta.",
+    );
+    expect(processDescription("** Hora: ** 19:00 i **a** **b**")).toBe(
+      "<strong>Hora:</strong> 19:00 i <strong>a</strong> <strong>b</strong>",
+    );
+    expect(processDescription("**  **")).toBe("**  **");
+  });
+
   it("still lets the sanitizer drop markup injected inside bold", () => {
     const html = sanitizeHtml(processDescription("**<img src=x onerror=alert(1)>hola**"));
     expect(html).not.toContain("onerror");

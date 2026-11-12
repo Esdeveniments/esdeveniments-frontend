@@ -14,8 +14,8 @@ import { getProfileDisplayName } from "@utils/profile-name";
 import { formatNameOf } from "@utils/string-helpers";
 import type { AppLocale } from "types/i18n";
 
-const PLACE_LINK_CLASS =
-  "body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center";
+// Same text-link look as the byline: the page's red is kept for its main action.
+const PLACE_LINK_CLASS = "hover:text-foreground-strong hover:underline";
 
 /** Same layout in the main column (mobile) and the sidebar (desktop). */
 export default function EventLocation({
@@ -76,28 +76,28 @@ export default function EventLocation({
       )}
       <div className={`stack ${compact ? "" : "px-4"}`}>
         {(fullLocation || showPlaceLinks) && (
-          <div className="flex flex-col gap-element-gap-sm">
+          <div className="flex flex-col">
             {fullLocation && (
-              <p className="body-normal text-foreground break-words">{fullLocation}</p>
+              <p className="body-normal font-semibold text-foreground-strong break-words">
+                {fullLocation}
+              </p>
             )}
             {showPlaceLinks && (
-              <div className="flex flex-wrap items-center gap-element-gap-sm">
+              <p className="body-small text-muted-foreground">
                 {cityHref && cityLabel && (
                   <PressableAnchor href={cityHref} className={PLACE_LINK_CLASS} variant="inline">
                     {cityLabel}
                   </PressableAnchor>
                 )}
                 {cityHref && regionHref && cityLabel && regionLabel && (
-                  <span className="text-muted-foreground" aria-hidden="true">
-                    |
-                  </span>
+                  <span aria-hidden="true"> · </span>
                 )}
                 {regionHref && regionLabel && (
                   <PressableAnchor href={regionHref} className={PLACE_LINK_CLASS} variant="inline">
                     {regionLabel}
                   </PressableAnchor>
                 )}
-              </div>
+              </p>
             )}
           </div>
         )}
@@ -113,7 +113,7 @@ export default function EventLocation({
                 href={directionsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-outline btn-sm"
+                className="btn-neutral btn-sm"
                 data-analytics-link-type="maps_directions"
                 data-analytics-context="event_location"
               >
@@ -126,7 +126,7 @@ export default function EventLocation({
         {profile && (
           <PressableAnchor
             href={`/perfil/${encodeURIComponent(profile.username)}`}
-            className={PLACE_LINK_CLASS}
+            className="body-small font-semibold text-foreground-strong hover:underline"
             variant="inline"
           >
             {t("profileLink", { nameOf: profileNameOf })}

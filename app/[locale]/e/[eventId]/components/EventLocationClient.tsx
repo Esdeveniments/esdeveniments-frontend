@@ -29,7 +29,7 @@ export default function EventLocationClient({
         {children}
         <button
           type="button"
-          className="btn-ghost btn-sm"
+          className="btn-neutral btn-sm"
           aria-expanded={showMap}
           aria-controls={mapId}
           onClick={() => setShowMap((prev) => !prev)}
