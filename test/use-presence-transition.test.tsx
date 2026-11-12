@@ -18,6 +18,13 @@ const twoFrames = () =>
       )
   );
 
+function fakeAnimation(endTime: number, finished: Promise<unknown>) {
+  return {
+    finished,
+    effect: { getComputedTiming: () => ({ endTime }) },
+  } as unknown as Animation;
+}
+
 /** Fakes one running exit transition that ends when `finish` is called. */
 function runningTransition() {
   let finish = () => {};
@@ -26,7 +33,7 @@ function runningTransition() {
   });
   const spy = vi
     .spyOn(HTMLElement.prototype, "getAnimations")
-    .mockReturnValue([{ finished } as unknown as Animation]);
+    .mockReturnValue([fakeAnimation(200, finished)]);
   return { finish, spy };
 }
 
@@ -59,6 +66,18 @@ describe("usePresenceTransition", () => {
     expect(screen.getByTestId("toast")).toHaveAttribute("data-closed");
 
     await act(async () => finish());
+    expect(screen.queryByTestId("toast")).toBeNull();
+  });
+
+  it("doesn't wait for infinite animations inside it", async () => {
+    const { rerender } = render(<Toast show={true} />);
+    await twoFrames();
+    // A pulsing skeleton or spinner never finishes.
+    vi.spyOn(HTMLElement.prototype, "getAnimations").mockReturnValue([
+      fakeAnimation(Infinity, new Promise(() => {})),
+    ]);
+
+    rerender(<Toast show={false} />);
     expect(screen.queryByTestId("toast")).toBeNull();
   });
 
