@@ -32,7 +32,6 @@ export default function EventLocation({
   const locale = useLocale() as AppLocale;
   const cityHref = citySlug ? `/${citySlug}` : null;
   const regionHref = regionSlug ? `/${regionSlug}` : null;
-  const showPlaceLinks = Boolean(cityHref || regionHref);
   const { cityLabel, regionLabel } = buildEventLocationLabels({
     cityName,
     regionName,
@@ -40,11 +39,16 @@ export default function EventLocation({
     secondaryPreference: "region",
   });
 
+  const showCityLink = Boolean(cityHref && cityLabel);
+  const showRegionLink = Boolean(regionHref && regionLabel);
+  const showPlaceLinks = showCityLink || showRegionLink;
+
   const placeParts = { location, cityName: cityLabel, regionName: regionLabel };
-  // City and region are links below, so the address line shows only the venue.
+  // Linked places are listed below, so the address line leaves them out.
   const fullLocation = buildDisplayLocation({
     ...placeParts,
-    hidePlaceSegments: showPlaceLinks,
+    hideCity: showCityLink,
+    hideRegion: showRegionLink,
   });
   // "Online" or "Diversos espais" have no single place to route to or map.
   const isPreciseVenue = Boolean(venueCoords) || !isVagueLocation(location);
@@ -83,15 +87,15 @@ export default function EventLocation({
             )}
             {showPlaceLinks && (
               <p className="body-small text-muted-foreground">
-                {cityHref && cityLabel && (
+                {showCityLink && cityHref && (
                   <PressableAnchor href={cityHref} className={PLACE_LINK_CLASS} variant="inline">
                     {cityLabel}
                   </PressableAnchor>
                 )}
-                {cityHref && regionHref && cityLabel && regionLabel && (
+                {showCityLink && showRegionLink && (
                   <span aria-hidden="true"> · </span>
                 )}
-                {regionHref && regionLabel && (
+                {showRegionLink && regionHref && (
                   <PressableAnchor href={regionHref} className={PLACE_LINK_CLASS} variant="inline">
                     {regionLabel}
                   </PressableAnchor>

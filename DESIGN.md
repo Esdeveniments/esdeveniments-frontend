@@ -891,9 +891,11 @@ and copy that, adapted to these tokens.
   and move it with layout classes; only a separate sidebar may repeat facts.
   The same goes for items: an event in the promoted row is left out of the
   related row below it (paid placement wins).
-- **Cards show whole facts.** On an event card the date and time wrap to two
-  lines instead of being cut, and a narrow card shows the town only. Every
-  card row uses the same title weight and padding. A card with no image shows
+- **One card per job, whole facts.** Every event row (home rows, promoted
+  rows, the event page's related row, the town guide) uses the same card (`EventsAroundServer` → `CardContentServer compact`); the small
+  `CompactCardView` is only for the map panel. On a card the date and time
+  wrap to two lines instead of being cut, and the location starts with the
+  town, so only the region can be cut. A card with no image shows
   the brand placeholder (`ImgDefaultCore`, the tickets drawing), never a blank box
   that reads as a failed load.
 - **No layout shift by design.** Decide on the server what renders. Anything

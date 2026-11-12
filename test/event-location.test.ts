@@ -22,7 +22,8 @@ describe("buildDisplayLocation", () => {
       location: "Museu municipal de Vilassar de Dalt, Vilassar de Dalt, Maresme",
       cityName: "Vilassar de Dalt",
       regionName: "Maresme",
-      hidePlaceSegments: true,
+      hideCity: true,
+      hideRegion: true,
     });
 
     expect(result).toBe("Museu municipal de Vilassar de Dalt");
@@ -43,7 +44,8 @@ describe("buildDisplayLocation", () => {
       location: "Mataró",
       cityName: "Mataró",
       regionName: "Maresme",
-      hidePlaceSegments: true,
+      hideCity: true,
+      hideRegion: true,
     });
 
     expect(result).toBe("");

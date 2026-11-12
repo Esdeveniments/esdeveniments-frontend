@@ -362,8 +362,6 @@ export interface StringHelperLabels {
 }
 
 export interface EventCopySentenceLabels {
-  verbSingular: string;
-  verbPlural: string;
   dateRange: string;
   dateSingle: string;
   sentence: string;
@@ -422,8 +420,6 @@ export interface CustomIconProps {
   className?: string;
 }
 
-export type EventsAroundLayout = "compact" | "horizontal" | "cards";
-
 export interface EventsAroundProps {
   events: EventSummaryResponseDTO[];
   title?: string;
@@ -435,8 +431,6 @@ export interface EventsAroundSectionProps extends EventsAroundProps {
 }
 
 export interface EventsAroundServerProps extends EventsAroundProps {
-  layout?: EventsAroundLayout;
-  loading?: boolean;
   usePriority?: boolean;
   showJsonLd?: boolean;
   jsonLdId?: string;

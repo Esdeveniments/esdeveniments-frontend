@@ -18,14 +18,18 @@ describe("processDescription", () => {
     expect(processDescription("Preu: 5 € * IVA ** inclòs")).toBe("Preu: 5 € * IVA ** inclòs");
   });
 
-  it("bolds text with spaces inside the asterisks", () => {
+  it("bolds text with a space before the closing asterisks", () => {
     expect(processDescription("**Casa de Cultura. **  \nEntrada gratuïta.")).toBe(
       "<strong>Casa de Cultura.</strong>  <br>Entrada gratuïta.",
     );
-    expect(processDescription("** Hora: ** 19:00 i **a** **b**")).toBe(
-      "<strong>Hora:</strong> 19:00 i <strong>a</strong> <strong>b</strong>",
-    );
     expect(processDescription("**  **")).toBe("**  **");
+  });
+
+  it("never pairs an opening ** followed by a space", () => {
+    expect(processDescription("text ** then **bold** end")).toBe(
+      "text ** then <strong>bold</strong> end",
+    );
+    expect(processDescription("2 ** 3 = 8 and 4 ** 2")).toBe("2 ** 3 = 8 and 4 ** 2");
   });
 
   it("renders markdown links as one link with their text", () => {

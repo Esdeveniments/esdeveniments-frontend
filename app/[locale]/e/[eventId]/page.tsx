@@ -353,8 +353,6 @@ async function EventPageBody({
   const statusLabels = buildEventStatusLabels(tStatus);
   const eventCopyLabels: EventCopyLabels = {
     sentence: {
-      verbSingular: tCopy("sentence.verbSingular"),
-      verbPlural: tCopy("sentence.verbPlural"),
       dateRange: tCopy("sentence.dateRange", {
         start: "{start}",
         end: "{end}",
@@ -365,7 +363,6 @@ async function EventPageBody({
       }),
       sentence: tCopy("sentence.sentence", {
         title: "{title}",
-        verb: "{verb}",
         date: "{date}",
         time: "{time}",
         place: "{place}",

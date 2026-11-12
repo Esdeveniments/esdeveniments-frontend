@@ -33,13 +33,14 @@ const isDistinctLabel = (candidate: string, ...others: string[]): boolean => {
  * Build a clean location string:
  * - Deduplicate comma-separated segments
  * - Append city/region if missing
- * - Optionally hide city/region when separate links are displayed
+ * - Optionally hide the city and/or region the caller shows as links
  */
 export const buildDisplayLocation = ({
   location,
   cityName,
   regionName,
-  hidePlaceSegments,
+  hideCity = false,
+  hideRegion = false,
 }: BuildDisplayLocationOptions): string => {
   const formattedCityName = formatOptionalPlace(cityName);
   const formattedRegionName = formatOptionalPlace(regionName);
@@ -75,22 +76,22 @@ export const buildDisplayLocation = ({
     uniqueSegments.push(formattedRegionName);
   }
 
-  const displaySegments = hidePlaceSegments
-    ? uniqueSegments.filter((segment) => {
-        const normalized = normalize(segment);
-        return (
-          normalized !== normalize(formattedCityName || "") &&
-          normalized !== normalize(formattedRegionName || "")
-        );
-      })
-    : uniqueSegments;
+  const hidden = [
+    hideCity ? formattedCityName : "",
+    hideRegion ? formattedRegionName : "",
+  ]
+    .filter(Boolean)
+    .map(normalize);
+  const displaySegments = uniqueSegments.filter(
+    (segment) => !hidden.includes(normalize(segment)),
+  );
 
   if (displaySegments.length > 0) {
     return displaySegments.join(", ");
   }
 
   // Every segment is a city or region the caller already shows as a link.
-  return hidePlaceSegments ? "" : (uniqueSegments[0] ?? location);
+  return hidden.length > 0 ? "" : (uniqueSegments[0] ?? location);
 };
 
 export const buildEventLocationLabels = ({

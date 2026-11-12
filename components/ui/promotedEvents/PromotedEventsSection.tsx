@@ -51,7 +51,6 @@ export async function PromotedEventsRow({
       >
         <EventsAroundServer
           events={promotedEvents}
-          layout="horizontal"
           usePriority={false}
           title={t("title")}
           jsonLdId={`promoted-events-${key}`}

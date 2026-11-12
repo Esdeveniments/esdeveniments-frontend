@@ -24,7 +24,6 @@ export default async function EventsAroundSection({
       <div className={`overflow-hidden min-w-0 ${bleed ? "-mx-section-x" : "w-full"}`}>
         <EventsAroundServer
           events={events}
-          layout="compact"
           showJsonLd={false} // JSON-LD handled server-side for SEO
           title={displayTitle}
         />

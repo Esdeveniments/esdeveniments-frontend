@@ -49,14 +49,25 @@ describe("buildDisplayLocation", () => {
     expect(result).toBe("Barcelona");
   });
 
-  it("hides city and region when hidePlaceSegments=true", () => {
+  it("hides city and region when both are links", () => {
     const result = buildDisplayLocation({
       location: "Sala Apolo",
       cityName: "Barcelona",
       regionName: "Barcelonès",
-      hidePlaceSegments: true,
+      hideCity: true,
+      hideRegion: true,
     });
     expect(result).toBe("Sala Apolo");
+  });
+
+  it("keeps an unlinked city when only the region is a link", () => {
+    const result = buildDisplayLocation({
+      location: "Sala Apolo",
+      cityName: "Barcelona",
+      regionName: "Barcelonès",
+      hideRegion: true,
+    });
+    expect(result).toBe("Sala Apolo, Barcelona");
   });
 
   it("returns nothing when every segment is hidden", () => {
@@ -64,7 +75,8 @@ describe("buildDisplayLocation", () => {
       location: "Barcelona",
       cityName: "Barcelona",
       regionName: "",
-      hidePlaceSegments: true,
+      hideCity: true,
+      hideRegion: true,
     });
     // The city is already shown as a link, so no address line.
     expect(result).toBe("");

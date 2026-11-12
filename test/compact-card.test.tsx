@@ -1,16 +1,14 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import CompactCard from "@components/ui/common/cardContent/CompactCard";
+import CompactCardView from "@components/ui/common/cardContent/CompactCardView";
+import type { CardLinkProps } from "types/ui";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
-// PressableAnchor is an async server component; a plain <a> keeps the props it gets.
-vi.mock("@components/ui/common/cardContent/CardLink", () => ({
-  default: ({ children, variant, ...props }: Record<string, unknown> & { children: React.ReactNode }) => (
-    <a data-variant={String(variant)} {...props}>
-      {children}
-    </a>
-  ),
-}));
+const Link = ({ children, variant, ...props }: CardLinkProps) => (
+  <a data-variant={String(variant)} {...(props as Record<string, unknown>)}>
+    {children}
+  </a>
+);
 
 const event = {
   id: "e1",
@@ -30,10 +28,10 @@ const event = {
 
 const render = () =>
   renderToStaticMarkup(
-    <CompactCard event={event} locale="ca" tCard={(key) => key} index={2} />,
+    <CompactCardView event={event} locale="ca" tCard={(key) => key} index={2} LinkComponent={Link} />,
   );
 
-describe("CompactCard (related events)", () => {
+describe("CompactCardView (map panel)", () => {
   it("is one title link inside the h3, stretched over the card", () => {
     const html = render();
     expect(html.match(/<a /g)).toHaveLength(1);

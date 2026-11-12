@@ -1682,11 +1682,9 @@
     },
     "EventCopy": {
       "sentence": {
-        "verbSingular": "se celebra",
-        "verbPlural": "se celebran",
         "dateRange": "del {start} al {end}",
         "dateSingle": "el {nameDay}, {start}",
-        "sentence": "{title} {verb} {date}{time}{place}.",
+        "sentence": "«{title}» se celebra {date}{time}{place}.",
         "timeSuffix": ", a las {time}",
         "timeSuffixRange": ", de {start} a {end}",
         "placeSuffix": ", {place}"

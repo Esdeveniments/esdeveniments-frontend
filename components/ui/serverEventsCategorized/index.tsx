@@ -510,7 +510,6 @@ export async function ServerEventsCategorizedContent({
             />
             <EventsAroundServer
               events={popularEvents}
-              layout="horizontal"
               usePriority={false}
               showJsonLd
               title={tCta("popularTitle")}
