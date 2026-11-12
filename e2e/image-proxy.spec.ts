@@ -17,6 +17,53 @@ import { gotoFirstResolvableEvent } from "./helpers/events";
 const PROXY_502_RETRIES = 3;
 
 /**
+ * Source images for the direct proxy tests. The proxy only fetches public https
+ * URLs, so these must be real hosts. Both serve our own hero photo (1280×720,
+ * 72 KB: big enough that Sharp really resizes it) from two independent hosts:
+ * GitHub pinned to a merged commit (the bytes never change) and our own site.
+ * A third-party placeholder service (picsum.photos) was down on 2026-11-12 and
+ * failed the required E2E check on every PR.
+ */
+const PROXY_TEST_UPSTREAMS = [
+  "https://raw.githubusercontent.com/Esdeveniments/esdeveniments-frontend/a35c97b24a8bece57465351a946c017a8dd3fe71/public/static/images/hero-castellers-1280.webp",
+  "https://www.esdeveniments.cat/static/images/hero-castellers-1280.webp",
+];
+
+/** Direct GET of an upstream image, bypassing our proxy. */
+function isUpstreamLive(probe: APIRequestContext, url: string): Promise<boolean> {
+  return probe.get(url, { timeout: 5000 }).then(
+    (r) => r.ok(),
+    () => false,
+  );
+}
+
+let liveTestImage: Promise<string> | undefined;
+
+/**
+ * The first source image that answers on its own, probed once per worker, so a
+ * later 502 from the proxy means the proxy is broken. Fails (never skips) when
+ * neither host answers: that is a real network problem, not a pass.
+ */
+function getLiveTestImage(): Promise<string> {
+  liveTestImage ??= (async () => {
+    // A clean context: the config's extraHTTPHeaders carry the Vercel bypass
+    // secret, which must never reach other hosts.
+    const probe = await playwrightRequest.newContext();
+    try {
+      for (const url of PROXY_TEST_UPSTREAMS) {
+        if (await isUpstreamLive(probe, url)) return url;
+      }
+    } finally {
+      await probe.dispose();
+    }
+    throw new Error(
+      `No image-proxy test source answered: ${PROXY_TEST_UPSTREAMS.join(", ")}`,
+    );
+  })();
+  return liveTestImage;
+}
+
+/**
  * GET a proxied image, retrying on 502.
  *
  * A single 502 can be a genuinely flaky upstream. A *persistent* 502 means our
@@ -89,10 +136,7 @@ test.describe("Image Proxy", () => {
         // Same URL the proxy fetches: it strips the `v` cache key first.
         const target = new URL(upstream);
         target.searchParams.delete("v");
-        return probe.get(target.toString(), { timeout: 5000 }).then(
-          (r) => r.ok(),
-          () => false,
-        );
+        return isUpstreamLive(probe, target.toString());
       }),
     );
     await probe.dispose();
@@ -190,8 +234,7 @@ test.describe("Image Proxy", () => {
     test("returns optimized image with correct headers", async ({
       request,
     }) => {
-      // Test with a reliable public image (picsum.photos is more reliable than placeholder.com)
-      const testImageUrl = "https://picsum.photos/400/300.jpg";
+      const testImageUrl = await getLiveTestImage();
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
         testImageUrl
       )}&w=200&q=50`;
@@ -258,7 +301,7 @@ test.describe("Image Proxy", () => {
     });
 
     test("respects Accept header for format selection", async ({ request }) => {
-      const testImageUrl = "https://picsum.photos/400/300.jpg";
+      const testImageUrl = await getLiveTestImage();
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
         testImageUrl
       )}&w=200&q=50`;
@@ -287,7 +330,7 @@ test.describe("Image Proxy", () => {
     });
 
     test("includes optimization headers", async ({ request }) => {
-      const testImageUrl = "https://picsum.photos/800/600.jpg";
+      const testImageUrl = await getLiveTestImage();
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
         testImageUrl
       )}&w=400&q=60`;
@@ -331,7 +374,7 @@ test.describe("Image Proxy", () => {
         test.skip(true, "Sharp not available on Vercel previews — only on Docker/Coolify");
         return;
       }
-      const testImageUrl = "https://picsum.photos/800/600.jpg";
+      const testImageUrl = await getLiveTestImage();
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
         testImageUrl
       )}&w=400&q=50`;

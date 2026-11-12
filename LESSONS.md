@@ -129,6 +129,10 @@ Production runs on Coolify/Docker/Node 26; Vercel previews are a different runti
 
 That real-socket design has a cost: it's a real HTTP server on a real (ephemeral) port, so it can flake under CPU/port contention rather than a code bug. It failed once in `yarn test --run` right after a `git push` (2213/2215) while a dev server and browser automation were still running in the background, then passed 3/3 in isolation and 2215/2215 once those processes were killed. Before "fixing" a failure here, rule out background load (`next dev`, headless browsers, other test runs) rather than touching the dispatcher code.
 
+## E2E sources must be hosts we control
+
+The image-proxy e2e fetched `picsum.photos`. On 2026-11-12 it returned 522 and timed out for hours, and the required E2E check failed on every PR. The specs need a real public https image (the proxy refuses anything else), so `PROXY_TEST_UPSTREAMS` in `e2e/image-proxy.spec.ts` lists our own hero photo on two independent hosts: GitHub `raw` pinned to a merged commit, then our own site. `getLiveTestImage` probes them directly and uses the first that answers, so a 502 from the proxy afterwards means the proxy is broken. If neither answers, the test fails; it doesn't skip. Never point an e2e at a third-party demo or placeholder service.
+
 ## Back-merge main hotfixes into develop the same day
 
 main and develop diverge. A fix that lands directly on main (a hotfix) does not reach develop on its own, so develop can re-ship a bug main already fixed — and merging develop→main can even revert main's fix. This caused the Jun 11 2026 incident: `097e1275 fix(cache): scope Redis entries by build id` sat on main for weeks while develop kept the broken handler. The `branch-drift` CI workflow flags when main is ahead of develop on infra files (`cache-handler.mjs`, `next.config.js`, `Dockerfile`, `proxy.ts`). When you see that warning, back-merge before promoting.
