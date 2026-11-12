@@ -42,6 +42,28 @@ export function smoothScrollBehavior(): ScrollBehavior {
 }
 
 /**
+ * Calls `done` once every running transition and animation on `el` and its
+ * descendants has finished or been cancelled; at once when nothing runs
+ * (reduced motion, jsdom). Call it right after the style change:
+ * `getAnimations()` flushes styles, so new transitions are included.
+ * Returns a function that cancels the pending call.
+ */
+export function afterTransitions(el: Element, done: () => void): () => void {
+  const animations = el.getAnimations?.({ subtree: true }) ?? [];
+  if (animations.length === 0) {
+    done();
+    return () => {};
+  }
+  let cancelled = false;
+  void Promise.allSettled(animations.map((a) => a.finished)).then(() => {
+    if (!cancelled) done();
+  });
+  return () => {
+    cancelled = true;
+  };
+}
+
+/**
  * Run a callback once: on the first tap, key press or page scroll, or
  * `timeoutMs` after the window load event, whichever comes first.
  * Returns a cleanup function.

@@ -503,12 +503,9 @@ p {
     @apply transition-modal;
   }
 
+  /* A transition takes the duration of the style it moves to: 100ms out. */
   .events-map-dialog[data-closed] {
-    @apply opacity-0 translate-y-4;
-  }
-
-  .events-map-dialog[data-leave] {
-    @apply duration-fast;
+    @apply opacity-0 translate-y-4 duration-fast;
   }
 
   @screen md {
@@ -872,9 +869,9 @@ video {
 
 /* Entrances for menus and popovers that mount when opened and unmount at
    once when closed. Same curve and entry time as the shared Modal (DESIGN.md
-   › Motion). Anything that also animates out uses Headless UI `Transition`
-   with `.transition-modal` instead: a transition reverses from wherever it
-   is, a keyframe would jump. */
+   › Motion). Anything that also animates out uses `.transition-modal` on a
+   `data-closed` state instead (usePresenceTransition): a transition reverses
+   from wherever it is, a keyframe would jump. */
 @keyframes appear {
   from {
     opacity: 0;

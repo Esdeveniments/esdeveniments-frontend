@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { MapIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { sendGoogleEvent } from "@utils/analytics";
+import { afterTransitions } from "@utils/browser";
 import { eventsMapLauncher } from "./eventsMapLauncher";
 
 const EventsMap = dynamic(() => import("./EventsMap"), {
@@ -53,21 +54,12 @@ export default function EventsMapToggle() {
         void dialog.offsetWidth;
       }
       delete dialog.dataset.closed;
-      delete dialog.dataset.leave;
       document.documentElement.classList.add("overflow-hidden");
       return;
     }
     if (!dialog.open) return;
     dialog.dataset.closed = "";
-    dialog.dataset.leave = "";
-    let cancelled = false;
-    // No transitions under reduced motion: the list is empty and it closes now.
-    void Promise.allSettled(dialog.getAnimations().map((a) => a.finished)).then(() => {
-      if (!cancelled) dialog.close();
-    });
-    return () => {
-      cancelled = true;
-    };
+    return afterTransitions(dialog, () => dialog.close());
   }, [open]);
 
   // The page stays locked until the dialog has really closed (onClose).

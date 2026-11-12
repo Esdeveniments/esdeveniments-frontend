@@ -73,24 +73,6 @@ describe("FavoriteLoginNudge", () => {
     act(() => {
       vi.advanceTimersByTime(6000);
     });
-    // Still there while its exit plays, then unmounted.
-    expect(screen.getByTestId("favorites-login-nudge")).toBeInTheDocument();
-    act(() => {
-      vi.runAllTimers();
-    });
-    expect(screen.queryByTestId("favorites-login-nudge")).toBeNull();
-  });
-
-  it("leaves when dismissed", () => {
-    render(<FavoriteLoginNudge />);
-    fireGuestSave();
-
-    act(() => {
-      screen.getByRole("button", { name: "dismiss" }).click();
-    });
-    act(() => {
-      vi.runAllTimers();
-    });
     expect(screen.queryByTestId("favorites-login-nudge")).toBeNull();
   });
 

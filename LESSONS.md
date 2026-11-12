@@ -1006,12 +1006,14 @@ on navigations (and see `docs/incidents/2026-11-08-cloudflare-cached-chunk-404.m
 
 ## Reversible motion uses transitions; reduced motion misses delays and pseudo-elements
 A surface that animates both in and out (toast, popup, map dialog) uses CSS
-transitions driven by state (Headless UI `Transition` + `.transition-modal`,
-or `data-closed` on a native `<dialog>`), not an enter keyframe and an exit
-keyframe: closing during the entrance made the keyframe version jump back to
-fully open before leaving (opacity 0.33 → 1 in a Nov 2026 test). Unmount after
-the transition ends, never after a fixed timer: a 150ms timer on a 100ms exit
-left an invisible overlay catching taps. The global `prefers-reduced-motion`
+transitions on a `data-closed` state (`usePresenceTransition`, or by hand on
+a native `<dialog>`), not an enter keyframe and an exit keyframe: closing
+during the entrance made the keyframe version jump back to fully open before
+leaving (opacity 0.33 → 1 in a Nov 2026 test). Unmount when the transition
+ends (`afterTransitions`), never after a fixed timer: a 150ms timer on a 100ms
+exit left an invisible overlay catching taps. Don't reach for Headless UI
+`Transition` in a component that loads on every page (the favourites nudge):
+it put a 21 KB gzip chunk on home and listings. The global `prefers-reduced-motion`
 rule in `styles/globals.css` zeroes durations on `*` only, so put staggered
 `animation-delay`s and `::details-content` transitions inside
 `prefers-reduced-motion: no-preference`. In jsdom, React listens for

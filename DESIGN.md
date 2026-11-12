@@ -839,9 +839,9 @@ that enter or leave (the shared `Modal`) use `out-strong`,
 `cubic-bezier(0.23, 1, 0.32, 1)`: 200ms in, 100ms out, backdrop fading with
 the panel, a 16px rise on mobile and a 95% scale from `sm` up. Opening a
 modal on a section (a filter chip) jumps there instantly; don't animate the
-scroll. Everything else that both enters and leaves moves the same way
-with `.transition-modal` and Headless UI `Transition` (or `data-closed` on
-the native map `<dialog>`): the bottom toasts rise from and sink to the
+scroll. Everything else that both enters and leaves moves the same way,
+`.transition-modal` on a `data-closed` state (`usePresenceTransition`; the
+native map `<dialog>` does the same by hand): the bottom toasts rise from and sink to the
 bottom edge, the follow popup and the map behave like the `Modal` (the map
 zooms from 98%, being full screen). Transitions, not keyframes, because a
 close that starts mid-open must reverse from where it is. Menus that unmount

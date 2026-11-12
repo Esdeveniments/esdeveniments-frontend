@@ -379,7 +379,7 @@ describe("SocialFollowPopup – mobile vs desktop", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("moves focus into the desktop dialog and back when it closes", async () => {
+  it("moves focus into the desktop dialog and back when it closes", () => {
     seedPageViews(1, "/other");
     const trigger = document.createElement("button");
     document.body.appendChild(trigger);
@@ -389,8 +389,6 @@ describe("SocialFollowPopup – mobile vs desktop", () => {
     act(() => {
       vi.advanceTimersByTime(DELAY_MS + 100);
     });
-    // Headless UI starts the enter (and beforeEnter) from a promise chain.
-    await act(async () => {});
     expect(screen.getByRole("dialog")).toContainElement(
       document.activeElement as HTMLElement,
     );
