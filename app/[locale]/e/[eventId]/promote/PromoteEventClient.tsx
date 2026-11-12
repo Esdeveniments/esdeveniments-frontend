@@ -115,6 +115,9 @@ export default function PromoteEventClient({
     const key = `errors.${code}` as `errors.${PromotionCopyCode}`;
     return t.has(key) ? t(key) : t("errorGeneric");
   };
+  // The resume card already says a payment is pending.
+  const repeatsPendingCard = (code: string | null) =>
+    Boolean(pendingCheckoutUrl) && code === "CHECKOUT_ALREADY_PENDING";
 
   const formatPrice = (option: PromotionOptionDTO) =>
     new Intl.NumberFormat(locale, {
@@ -343,18 +346,20 @@ export default function PromoteEventClient({
             )}
           </div>
         ) : (
-          <div
-            className="w-full px-4 py-3 bg-muted rounded-lg"
-            role="status"
-            data-testid="promote-unavailable"
-          >
-            <p className="body-normal text-foreground/80">
-              {describeCode(unavailableCode)}
-            </p>
-          </div>
+          !repeatsPendingCard(unavailableCode) && (
+            <div
+              className="w-full px-4 py-3 bg-muted rounded-lg"
+              role="status"
+              data-testid="promote-unavailable"
+            >
+              <p className="body-normal text-foreground/80">
+                {describeCode(unavailableCode)}
+              </p>
+            </div>
+          )
         )}
 
-        {errorCode && (
+        {errorCode && !repeatsPendingCard(errorCode) && (
           <div
             className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg"
             role="alert"
