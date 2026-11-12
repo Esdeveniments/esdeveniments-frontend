@@ -482,13 +482,13 @@
         "PROVINCE": "Tu provincia",
         "CATALONIA": "Toda Cataluña"
       },
-      "pendingCheckout": "Tienes un pago pendiente para este evento.",
+      "pendingCheckout": "Tienes un pago pendiente para este evento. Puedes continuarlo ahora; si no, caduca en menos de una hora y entonces podrás elegir otra opción.",
       "resumeCheckout": "Continuar el pago",
       "refreshStatus": "Actualizar el estado",
       "tryAgain": "Volver a intentarlo",
       "errors": {
         "PROMOTION_ALREADY_ACTIVE": "Este evento ya está promocionado.",
-        "CHECKOUT_ALREADY_PENDING": "Ya tienes un pago pendiente para este evento.",
+        "CHECKOUT_ALREADY_PENDING": "Ya tienes un pago pendiente para este evento. Caduca en menos de una hora; después podrás elegir otra opción.",
         "REFUND_PENDING": "Hay un reembolso en curso para este evento.",
         "PROMOTIONS_DISABLED": "Las promociones no están disponibles ahora mismo.",
         "MISSING_EVENT_LOCATION": "El evento necesita una población para poder promocionarlo.",
@@ -518,7 +518,8 @@
         "title": "¡Gracias!"
       },
       "cancelPage": {
-        "title": "Pago cancelado"
+        "title": "Pago cancelado",
+        "pending": "No se ha hecho ningún cargo. Puedes continuar el pago ahora; si no, caduca en menos de una hora y entonces podrás elegir otra opción."
       }
     },
     "EventMeta": {

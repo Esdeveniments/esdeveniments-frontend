@@ -185,6 +185,61 @@ describe("PromoteEventClient", () => {
     expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 
+  it("says a payment is pending once when it can be resumed", () => {
+    const pendingUrl = "https://checkout.stripe.com/c/pay/cs_test_1";
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{
+          ok: true,
+          data: {
+            ...catalog,
+            options: catalog.options.map((o) => ({
+              ...o,
+              available: false,
+              unavailableReason: "CHECKOUT_ALREADY_PENDING",
+            })),
+            canPurchase: false,
+            unavailableReason: "CHECKOUT_ALREADY_PENDING",
+          },
+        }}
+        pendingCheckoutUrl={pendingUrl}
+        placeNames={placeNames}
+      />,
+    );
+
+    expect(screen.getAllByText(/pagament pendent/)).toHaveLength(1);
+    expect(screen.getByText(/caduca en menys d'una hora/)).toBeInTheDocument();
+    expect(screen.getByTestId("promote-resume-checkout")).toHaveAttribute("href", pendingUrl);
+    expect(screen.queryByTestId("promote-unavailable")).toBeNull();
+  });
+
+  it("drops the pending-payment error once the resume link shows", async () => {
+    mockCheckout.mockResolvedValue({ ok: false, code: "CHECKOUT_ALREADY_PENDING" });
+    const props = {
+      eventId: "uuid-1",
+      slug: "concert",
+      options: { ok: true as const, data: catalog },
+      placeNames,
+    };
+    const { rerender } = render(
+      <PromoteEventClient {...props} pendingCheckoutUrl={null} />,
+    );
+    fireEvent.click(screen.getByTestId("promote-confirm-button"));
+    await screen.findByRole("alert");
+
+    rerender(
+      <PromoteEventClient
+        {...props}
+        pendingCheckoutUrl="https://checkout.stripe.com/c/pay/cs_test_1"
+      />,
+    );
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getAllByText(/pagament pendent/)).toHaveLength(1);
+  });
+
   it("reloads instead of showing an error when a deploy removed the action", async () => {
     const original = window.location;
     const reload = vi.fn();

@@ -87,6 +87,9 @@ async function PromotionStatusPanel({
       : promotionEnded
         ? `promotion${status.promotionStatus}` as const
         : status.paymentStatus;
+  const resumeUrl = isStripeCheckoutUrl(status?.checkoutUrl)
+    ? status?.checkoutUrl
+    : null;
   const errorCopyKey = `errors.${errorCode}` as `errors.${PromotionCopyCode}`;
   const statusText = isActive
     ? t("status.ACTIVE", {
@@ -100,10 +103,9 @@ async function PromotionStatusPanel({
       })
     : !status && errorCode && t.has(errorCopyKey)
       ? t(errorCopyKey)
-      : t(`status.${statusKey as Exclude<typeof statusKey, "ACTIVE">}`);
-  const resumeUrl = isStripeCheckoutUrl(status?.checkoutUrl)
-    ? status?.checkoutUrl
-    : null;
+      : variant === "cancel" && resumeUrl
+        ? t("cancelPage.pending")
+        : t(`status.${statusKey as Exclude<typeof statusKey, "ACTIVE">}`);
   const pagePath = `/e/${slug}/promote/${variant}`;
 
   return (
