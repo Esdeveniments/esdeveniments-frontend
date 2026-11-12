@@ -234,7 +234,7 @@ export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
   if (params.from) query.from = params.from;
   if (params.to) query.to = params.to;
   if (params.profileSlug) query.profileSlug = params.profileSlug;
-  if (params.price) query.price = params.price;
+  if (params.free !== undefined) query.free = params.free;
 
   return new URLSearchParams(
     Object.fromEntries(

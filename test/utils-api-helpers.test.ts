@@ -81,6 +81,12 @@ describe("utils/api-helpers:getVercelProtectionBypassHeaders", () => {
 });
 
 describe("utils/api-helpers:buildEventsQuery", () => {
+  it("sends the backend free param, including false, and omits it when unset", () => {
+    expect(buildEventsQuery({ free: true }).get("free")).toBe("true");
+    expect(buildEventsQuery({ free: false }).get("free")).toBe("false");
+    expect(buildEventsQuery({}).has("free")).toBe(false);
+  });
+
   it("sets default page and size when not provided", () => {
     const params: FetchEventsParams = {};
     const query = buildEventsQuery(params);

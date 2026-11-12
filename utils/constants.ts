@@ -1,6 +1,6 @@
 import type { ByDateOption, DateRangeShortcut } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import type { PriceFilterApiValue, PriceFilterValue } from "types/url-filters";
+import type { PriceFilterValue } from "types/url-filters";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 // Not messages/*.json: client components import this file, and that would
 // ship all three locale files to the browser. See scripts/generate-locale-labels.mjs.
@@ -269,10 +269,10 @@ export const DISTANCES: number[] = [5, 10, 25, 50, 100];
  */
 export const DEFAULT_FILTER_VALUE = "tots";
 
-/** `?price=` URL value → backend `GET /events?price=` value. */
-export const PRICE_FILTER_API_VALUES: Record<PriceFilterValue, PriceFilterApiValue> = {
-  gratis: "FREE",
-  pagament: "PAID",
+/** `?price=` URL value → backend `GET /events?free=` value. */
+export const PRICE_FILTER_FREE_PARAM: Record<PriceFilterValue, boolean> = {
+  gratis: true,
+  pagament: false,
 };
 
 /**
