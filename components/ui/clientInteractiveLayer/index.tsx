@@ -7,6 +7,7 @@ import Search from "@components/ui/search";
 import FiltersClient from "@components/ui/filters/FiltersClient";
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
 import { debugURLParsing } from "@utils/url-parsing";
+import { followScrollLockPadding } from "@utils/browser";
 import {
   ClientInteractiveLayerProps,
   ClientInteractiveLayerContentProps,
@@ -57,6 +58,7 @@ function ClientInteractiveLayerContent({
     <>
       {/* Fixed Search and Filters Bar */}
       <div
+        ref={followScrollLockPadding}
         className={`w-full bg-background fixed inset-x-0 top-0 z-sticky transition-transform duration-500 ease-in-out ${stickyClasses} flex justify-center items-center md:pt-element-gap-sm`}
       >
         <div className="container flex flex-col justify-center items-center md:items-start">

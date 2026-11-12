@@ -103,3 +103,26 @@ export function keepScrolledToTop(
   );
   return stop;
 }
+
+/**
+ * Ref callback for full-width `position: fixed` bars. While a Headless UI
+ * dialog locks scroll, it hides the page scrollbar and pads `<html>` by its
+ * width; fixed bars sit outside that padding, so they widen and their centred
+ * content jumps sideways. Mirror the padding on the bar while it lasts.
+ */
+export function followScrollLockPadding(
+  bar: HTMLElement | null
+): (() => void) | undefined {
+  if (!bar || typeof MutationObserver === "undefined") return;
+  const html = document.documentElement;
+  const sync = () => {
+    bar.style.paddingRight = html.style.paddingRight;
+  };
+  sync();
+  const observer = new MutationObserver(sync);
+  observer.observe(html, { attributes: true, attributeFilter: ["style"] });
+  return () => {
+    observer.disconnect();
+    bar.style.paddingRight = "";
+  };
+}
