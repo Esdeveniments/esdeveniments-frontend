@@ -429,6 +429,16 @@ scrolled `<main>` itself, and a popover clipped for users looked fine in tests.
 To test what a user sees, scroll with `page.mouse.wheel()` and move the mouse
 by coordinates.
 
+## A direct child of `<main>` needs `w-full min-w-0`
+
+`<main>` (`components/ui/layout/base/index.tsx`) is `flex flex-col items-center`,
+so a child with no width of its own grows to the width of its widest content.
+`FilterLoadingGate` had none, and once the promoted carousel moved inside it
+(#607) its row of 75vw cards stretched it to ~950 px on phones: the carousel
+had nothing to scroll and `<main>`'s `overflow-x-clip` cut the listing off on
+both sides. Give such wrappers `w-full min-w-0`. Check it by comparing the
+wrapper's width with `innerWidth` on a 390 px viewport.
+
 ## AdSense vignettes put the old scroll position back after a client-side navigation
 
 An AdSense vignette can open when the user clicks an in-app `<a>`. It saves the

@@ -18,9 +18,11 @@ export default function FilterLoadingGate({
 }: FilterLoadingGateProps) {
   const { isLoading } = useFilterLoading();
 
+  // `<main>` is a centered flex column: without `w-full min-w-0` this div
+  // grows to its content, so the promoted carousel can't scroll.
   return (
     <div
-      className={`transition-opacity duration-150${
+      className={`w-full min-w-0 transition-opacity duration-150${
         isLoading ? " opacity-40 pointer-events-none" : ""
       }`}
       aria-busy={isLoading}
