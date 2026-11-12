@@ -88,7 +88,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const hasDismissedRef = useRef(false);
   const hasTrackedOfferRef = useRef(false);
   // Keeps the popup mounted while it animates out (DESIGN.md › Motion).
-  const { ref: dialogRef, mounted, closed } =
+  const { ref: dialogRef, mounted, closed, leaving } =
     usePresenceTransition<HTMLDivElement>(isVisible);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -395,6 +395,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
       <div
         ref={dialogRef}
         data-closed={closed ? "" : undefined}
+        inert={leaving}
         className="fixed bottom-[var(--mobile-nav-clearance)] inset-x-0 z-modal p-4 transition-modal data-[closed]:opacity-0 data-[closed]:translate-y-full data-[closed]:duration-fast data-[closed]:pointer-events-none"
         role="complementary"
         aria-label={canInstall ? t("ariaInstall") : t("aria")}
@@ -461,6 +462,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     <div
       ref={dialogRef}
       data-closed={closed ? "" : undefined}
+      inert={leaving}
       className="group fixed inset-0 z-modal flex-center p-4 data-[closed]:pointer-events-none"
       role="dialog"
       aria-modal="true"

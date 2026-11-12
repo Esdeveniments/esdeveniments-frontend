@@ -3,9 +3,9 @@ import { render, screen, act } from "@testing-library/react";
 import { usePresenceTransition } from "@components/hooks/usePresenceTransition";
 
 function Toast({ show }: { show: boolean }) {
-  const { ref, mounted, closed } = usePresenceTransition<HTMLDivElement>(show);
+  const { ref, mounted, closed, leaving } = usePresenceTransition<HTMLDivElement>(show);
   return mounted ? (
-    <div ref={ref} data-closed={closed ? "" : undefined} data-testid="toast" />
+    <div ref={ref} data-closed={closed ? "" : undefined} inert={leaving} data-testid="toast" />
   ) : null;
 }
 
@@ -64,6 +64,8 @@ describe("usePresenceTransition", () => {
 
     rerender(<Toast show={false} />);
     expect(screen.getByTestId("toast")).toHaveAttribute("data-closed");
+    // Out of the focus order and the accessibility tree while it leaves.
+    expect(screen.getByTestId("toast")).toHaveAttribute("inert");
 
     await act(async () => finish());
     expect(screen.queryByTestId("toast")).toBeNull();
@@ -90,6 +92,7 @@ describe("usePresenceTransition", () => {
     rerender(<Toast show={true} />);
     await twoFrames();
     expect(screen.getByTestId("toast")).not.toHaveAttribute("data-closed");
+    expect(screen.getByTestId("toast")).not.toHaveAttribute("inert");
 
     await act(async () => finish());
     expect(screen.getByTestId("toast")).toBeInTheDocument();

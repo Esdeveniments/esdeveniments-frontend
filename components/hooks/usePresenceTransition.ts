@@ -6,13 +6,15 @@ import { afterTransitions } from "@utils/browser";
 /**
  * Animates an element in and out with plain CSS transitions on its
  * `data-closed` state (styles: `data-[closed]:…` / `group-data-[closed]:…`).
- * Spread `data-closed={closed ? "" : undefined}` and `ref` on the element and
- * render it only while `mounted`.
+ * Give the element `ref`, `data-closed={closed ? "" : undefined}` and
+ * `inert={leaving}`, and render it only while `mounted`.
  *
  * - In: it renders closed for a frame, then opens, so it transitions in on
  *   every browser (no `@starting-style`).
  * - Out: it closes and stays mounted until its transitions, and its
- *   children's, have finished (at once under reduced motion).
+ *   children's, have finished (at once under reduced motion). Meanwhile
+ *   `leaving` is true: make it `inert`, so it takes no focus or clicks and
+ *   leaves the accessibility tree as soon as it's dismissed.
  * - Showing it again mid-exit reverses from where it is: transitions
  *   retarget, keyframes would jump.
  */
@@ -40,5 +42,5 @@ export function usePresenceTransition<T extends HTMLElement>(show: boolean) {
     return afterTransitions(el, () => setMounted(false));
   }, [show, closed, mounted]);
 
-  return { ref, mounted, closed };
+  return { ref, mounted, closed, leaving: !show };
 }

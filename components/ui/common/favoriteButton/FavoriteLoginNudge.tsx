@@ -72,7 +72,7 @@ export default function FavoriteLoginNudge() {
   // guarding at render (rather than via a setState effect) keeps this off
   // the cascading-render path the lint rule flags. It rises from the bottom
   // edge and sinks back the same way (DESIGN.md › Motion).
-  const { ref, mounted, closed } = usePresenceTransition<HTMLDivElement>(
+  const { ref, mounted, closed, leaving } = usePresenceTransition<HTMLDivElement>(
     visible && !isAuthenticated
   );
   if (!mounted) return null;
@@ -81,6 +81,7 @@ export default function FavoriteLoginNudge() {
     <div
       ref={ref}
       data-closed={closed ? "" : undefined}
+      inert={leaving}
       role="status"
       aria-live="polite"
       className="group fixed inset-x-0 bottom-4 z-900 flex justify-center px-section-x pointer-events-none transition-modal data-[closed]:opacity-0 data-[closed]:translate-y-full data-[closed]:duration-fast"
