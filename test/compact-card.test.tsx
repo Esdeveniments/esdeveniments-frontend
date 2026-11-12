@@ -24,6 +24,7 @@ const event = {
   endTime: null,
   location: "Plaça Major",
   city: { id: 1, name: "Cardedeu", slug: "cardedeu" },
+  region: { id: 2, name: "Vallès Oriental", slug: "valles-oriental" },
   categories: [],
 } as unknown as EventSummaryResponseDTO;
 
@@ -53,5 +54,11 @@ describe("CompactCard (related events)", () => {
     expect(html).toContain('alt=""');
     expect(html).not.toContain('alt="Concert de Nadal"');
     expect(html).toMatch(/<time dateTime="2026-12-20T18:00">[^<]+<\/time>/);
+  });
+
+  it("shows the town only: the region only got cut off on a narrow card", () => {
+    const html = render();
+    expect(html).toContain('<span class="truncate">Cardedeu</span>');
+    expect(html).not.toContain("Vallès Oriental");
   });
 });

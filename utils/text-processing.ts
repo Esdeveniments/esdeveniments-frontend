@@ -10,6 +10,33 @@ import {
 
 const LINE_BREAK = /\n|<br\s*\/?>|<\/(p|li|h[1-6]|div)>/gi;
 
+// `[text](url)` (the URL may hold one level of parentheses, as on Wikipedia),
+// or a bare URL. URL characters match the old autolinker.
+const MARKDOWN_LINK_OR_URL =
+  /\[([^\]\n]+)\]\(((?:https?:\/\/|www\.)(?:[^\s<>"{}|\\^`[\]()]|\([^\s<>"{}|\\^`[\]()]*\))+)\)|((?:https?:\/\/|www\.)[^\s<>"{}|\\^`[\]]+)/g;
+const URL_TRAILING_PUNCTUATION = /[.,;:!?'"]$/;
+
+const count = (text: string, char: string) => text.split(char).length - 1;
+
+/** Drops sentence punctuation and an unbalanced `)` from the end of a bare URL. */
+function trimUrlEnd(url: string): string {
+  let trimmed = url;
+  for (;;) {
+    if (URL_TRAILING_PUNCTUATION.test(trimmed)) {
+      trimmed = trimmed.slice(0, -1);
+    } else if (trimmed.endsWith(")") && count(trimmed, ")") > count(trimmed, "(")) {
+      trimmed = trimmed.slice(0, -1);
+    } else {
+      return trimmed;
+    }
+  }
+}
+
+function anchor(url: string, text: string): string {
+  const href = /^https?:\/\//i.test(url) ? url : `http://${url}`;
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+}
+
 /** Whether a description (plain text or HTML) is taller than the mobile fold. */
 export function isLongDescription(text: string): boolean {
   const lineBreaks = text.match(LINE_BREAK)?.length ?? 0;
@@ -37,15 +64,17 @@ export function processDescription(description: string): string {
     "<strong>$1</strong>",
   );
 
-  // Auto-convert plain text URLs to links
-  const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]+|www\.[^\s<>"{}|\\^`[\]]+)/g;
-  processed = processed.replace(urlRegex, function (url) {
-    let hyperlink = url;
-    if (!hyperlink.match("^https?://")) {
-      hyperlink = "http://" + hyperlink;
-    }
-    return `<a href="${hyperlink}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-  });
+  // One pass for markdown links (`[text](url)`, common in imported text) and
+  // bare URLs, so a URL inside a markdown link is never linked twice.
+  processed = processed.replace(
+    MARKDOWN_LINK_OR_URL,
+    (match, text: string | undefined, linkUrl: string | undefined, bareUrl: string | undefined) => {
+      if (text && linkUrl) return anchor(linkUrl, text);
+      const url = trimUrlEnd(bareUrl ?? match);
+      if (!/^(?:https?:\/\/|www\.)[^.]/i.test(url)) return match;
+      return anchor(url, url) + match.slice(url.length);
+    },
+  );
 
   // Convert line breaks to HTML breaks for better readability
   processed = processed.replace(/\n/g, "<br>");

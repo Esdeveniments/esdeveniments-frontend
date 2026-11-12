@@ -28,6 +28,28 @@ describe("processDescription", () => {
     expect(processDescription("**  **")).toBe("**  **");
   });
 
+  it("renders markdown links as one link with their text", () => {
+    expect(
+      processDescription(
+        "Inscripcions a [www.entrapolis.com](https://www.entrapolis.com/) i al [**reglament**](https://a.cat/r.htm).",
+      ),
+    ).toBe(
+      'Inscripcions a <a href="https://www.entrapolis.com/" target="_blank" rel="noopener noreferrer">www.entrapolis.com</a> i al <a href="https://a.cat/r.htm" target="_blank" rel="noopener noreferrer"><strong>reglament</strong></a>.',
+    );
+  });
+
+  it("keeps sentence punctuation and closing parentheses out of bare URLs", () => {
+    const link = (url: string) =>
+      `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    expect(processDescription("Web (https://a.cat/x). Fi")).toBe(
+      `Web (${link("https://a.cat/x")}). Fi`,
+    );
+    expect(processDescription("https://en.wikipedia.org/wiki/Foc_(festa)")).toBe(
+      link("https://en.wikipedia.org/wiki/Foc_(festa)"),
+    );
+    expect(processDescription("Fi de frase www..")).toBe("Fi de frase www..");
+  });
+
   it("still lets the sanitizer drop markup injected inside bold", () => {
     const html = sanitizeHtml(processDescription("**<img src=x onerror=alert(1)>hola**"));
     expect(html).not.toContain("onerror");
