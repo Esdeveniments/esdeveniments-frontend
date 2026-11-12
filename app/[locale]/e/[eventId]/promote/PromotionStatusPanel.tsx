@@ -133,7 +133,7 @@ async function PromotionStatusPanel({
           )}
           {!isActive && status?.canPurchase && (
             <Link href={`/e/${slug}/promote`} className="btn-outline">
-              {t("tryAgain")}
+              {resumeUrl ? t("chooseAnotherOption") : t("tryAgain")}
             </Link>
           )}
           <Link href={`/e/${slug}`} className={isActive ? "btn-primary" : "btn-outline"}>

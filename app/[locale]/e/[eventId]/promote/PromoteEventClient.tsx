@@ -28,6 +28,9 @@ const SCOPE_ORDER: readonly PromotionPlacement[] = [
   "CATALONIA",
 ];
 
+const isClosedOrder = (code: string) =>
+  code === "CHECKOUT_EXPIRED" || code === "ORDER_NOT_PENDING";
+
 export default function PromoteEventClient({
   eventId,
   slug,
@@ -137,11 +140,14 @@ export default function PromoteEventClient({
   const handleConfirm = async () => {
     if (!selectedId) return;
     const selectedOption = catalog.find((option) => option.id === selectedId);
-    let idempotencyKey = idempotencyKeysRef.current.get(selectedId);
-    if (!idempotencyKey) {
-      idempotencyKey = crypto.randomUUID();
-      idempotencyKeysRef.current.set(selectedId, idempotencyKey);
-    }
+    const keyFor = (optionId: string) => {
+      let key = idempotencyKeysRef.current.get(optionId);
+      if (!key) {
+        key = crypto.randomUUID();
+        idempotencyKeysRef.current.set(optionId, key);
+      }
+      return key;
+    };
 
     setErrorCode(null);
     setIsSubmitting(true);
@@ -155,19 +161,27 @@ export default function PromoteEventClient({
     }
 
     try {
-      const result = await createPromotionCheckoutAction(
+      let result = await createPromotionCheckoutAction(
         eventId,
         selectedId,
-        idempotencyKey,
+        keyFor(selectedId),
       );
+      // The backend ties a key to one order. Once that order closed (it
+      // expired, or choosing another option replaced it), start a new one.
+      if (!result.ok && isClosedOrder(result.code)) {
+        idempotencyKeysRef.current.delete(selectedId);
+        result = await createPromotionCheckoutAction(
+          eventId,
+          selectedId,
+          keyFor(selectedId),
+        );
+      }
       if (!result.ok) {
         sendGoogleEvent("promote_checkout_error", {
           event_slug: slug,
           reason: result.code,
         });
-        // The backend ties a key to one order; once it expired or closed,
-        // the same key can only return ORDER_NOT_PENDING.
-        if (result.code === "CHECKOUT_EXPIRED" || result.code === "ORDER_NOT_PENDING") {
+        if (isClosedOrder(result.code)) {
           idempotencyKeysRef.current.delete(selectedId);
         }
         setErrorCode(result.code);
