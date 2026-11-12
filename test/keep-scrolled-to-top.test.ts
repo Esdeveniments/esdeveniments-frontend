@@ -28,13 +28,19 @@ describe("keepScrolledToTop", () => {
     vi.stubGlobal(
       "ResizeObserver",
       class {
+        private connected = true;
         constructor(callback: () => void) {
-          resize = callback;
+          resize = () => {
+            if (this.connected) callback();
+          };
         }
         observe(element: Element) {
           observed.push(element);
         }
-        disconnect = disconnect;
+        disconnect = () => {
+          this.connected = false;
+          disconnect();
+        };
       }
     );
   });
@@ -86,8 +92,12 @@ describe("keepScrolledToTop", () => {
       keepScrolledToTop(container, target);
 
       target.dispatchEvent(new Event(type, { bubbles: true }));
+      container.scrollTop = 300; // the user scrolls away
+      offset.value = 700;
+      resize();
 
       expect(disconnect).toHaveBeenCalledTimes(1);
+      expect(container.scrollTop).toBe(300);
     }
   );
 });
