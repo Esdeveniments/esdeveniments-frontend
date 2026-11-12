@@ -730,7 +730,12 @@ date-picker's range-middle days (intentional — it stitches the range
 visually).
 
 The card image area is a strict **3:2 ratio** with a `surface-muted`
-placeholder for slow networks. The hero image is full-bleed, anchored to
+placeholder for slow networks. A card whose event has no image (or whose
+image fails) keeps the same box: the brand mark (the red shape of the logo)
+centered on `surface-muted`, at most 40px wide and in primary at 22%
+(`.card-placeholder`). It is the same on every card, so it reads as "no
+photo", not as loading (the skeleton is a plain pulsing block) and not as
+artwork that says something about the event. The hero image is full-bleed, anchored to
 `object-position: center 60%` to keep faces in frame on portrait crops.
 
 ## Components
@@ -896,8 +901,10 @@ and copy that, adapted to these tokens.
   `CompactCardView` is only for the map panel. On a card the date and time
   wrap to two lines instead of being cut, and the location starts with the
   town, so only the region can be cut. A card with no image shows
-  the brand placeholder (`ImgDefaultCore`, the tickets drawing), never a blank box
-  that reads as a failed load.
+  the brand placeholder (`ImgDefaultCore`, the soft brand mark), never a blank box
+  that reads as a failed load. It is one placeholder for every card: no
+  per-category icons or dates, which would make cards differ and repeat the
+  pill and date below.
 - **No layout shift by design.** Decide on the server what renders. Anything
   that appears after load either sits in a fixed overlay or replaces a
   reserved box of the same size. Heights may change only after a tap.
