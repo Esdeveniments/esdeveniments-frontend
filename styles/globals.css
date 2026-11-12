@@ -415,7 +415,7 @@ p {
   }
 
   .transition-modal {
-    @apply transition-[opacity,transform] duration-slow ease-smooth;
+    @apply transition-[opacity,transform] duration-normal ease-out-strong;
   }
 
   .pressable-inline,

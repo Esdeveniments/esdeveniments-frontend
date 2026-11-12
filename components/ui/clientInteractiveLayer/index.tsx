@@ -11,6 +11,7 @@ import {
   ClientInteractiveLayerProps,
   ClientInteractiveLayerContentProps,
 } from "types/props";
+import type { FilterKey } from "types/filters";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
 
 // Extract the parts that use useSearchParams and usePathname into a separate component
@@ -20,6 +21,7 @@ function ClientInteractiveLayerContent({
   filterLabels,
   isNavbarVisible,
   isModalOpen,
+  modalSection,
   handleOpenModal,
   handleCloseModal,
 }: ClientInteractiveLayerContentProps) {
@@ -86,6 +88,7 @@ function ClientInteractiveLayerContent({
         currentQueryParams={parsed.queryParams}
         userLocation={userLocation}
         categories={categories}
+        initialSection={modalSection}
       />
     </>
   );
@@ -98,8 +101,10 @@ function ClientInteractiveLayer({
 }: ClientInteractiveLayerProps) {
   const isNavbarVisible = useNavbarVisible();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalSection, setModalSection] = useState<FilterKey>();
 
-  const handleOpenModal = useCallback(() => {
+  const handleOpenModal = useCallback((section?: FilterKey) => {
+    setModalSection(section);
     setIsModalOpen(true);
   }, []);
 
@@ -120,6 +125,7 @@ function ClientInteractiveLayer({
           filterLabels={filterLabels}
           isNavbarVisible={isNavbarVisible}
           isModalOpen={isModalOpen}
+          modalSection={modalSection}
           handleOpenModal={handleOpenModal}
           handleCloseModal={handleCloseModal}
         />

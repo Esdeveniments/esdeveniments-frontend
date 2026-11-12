@@ -179,6 +179,7 @@ module.exports = {
       transitionTimingFunction: {
         "bounce-subtle": "cubic-bezier(0.34, 1.56, 0.64, 1)",
         smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+        "out-strong": "cubic-bezier(0.23, 1, 0.32, 1)", // Entrances/exits (modals)
         "ease-out-back": "cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
 

@@ -62,3 +62,44 @@ export function onFirstInteractionOrTimeout(
 
   return cleanup;
 }
+
+const USER_SCROLL_EVENTS = [...FIRST_INTERACTION_EVENTS, "wheel"] as const;
+
+/**
+ * Scroll `container` so `target` sits at its top (minus the target's
+ * `scroll-margin-top`), and keep it there while content above it changes
+ * size (lazy parts loading), until the user taps, types or scrolls in the
+ * container. Returns a cleanup function.
+ */
+export function keepScrolledToTop(
+  container: HTMLElement,
+  target: HTMLElement
+): () => void {
+  const marginTop = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+  const align = () => {
+    const box = container.getBoundingClientRect();
+    // Rects include transforms (a modal's entrance scale); scrollTop doesn't.
+    const scale =
+      box.height && container.offsetHeight
+        ? box.height / container.offsetHeight
+        : 1;
+    container.scrollTop +=
+      (target.getBoundingClientRect().top - box.top) / scale - marginTop;
+  };
+  align();
+  if (typeof ResizeObserver === "undefined") return () => {};
+
+  const observer = new ResizeObserver(align);
+  for (const child of Array.from(container.children)) observer.observe(child);
+  const options: AddEventListenerOptions = { capture: true, passive: true };
+  const stop = () => {
+    observer.disconnect();
+    USER_SCROLL_EVENTS.forEach((type) =>
+      container.removeEventListener(type, stop, options)
+    );
+  };
+  USER_SCROLL_EVENTS.forEach((type) =>
+    container.addEventListener(type, stop, options)
+  );
+  return stop;
+}

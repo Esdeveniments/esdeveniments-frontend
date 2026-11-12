@@ -61,7 +61,7 @@ const FilterButton = ({
         enabled,
       })
     );
-    onOpenModal();
+    onOpenModal(filterKey);
   };
 
   return (

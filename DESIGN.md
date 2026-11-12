@@ -161,6 +161,7 @@ motion:
   duration-slow:    "300ms"
   duration-slower:  "500ms"
   easing-smooth:    "cubic-bezier(0.4, 0, 0.2, 1)"
+  easing-out-strong: "cubic-bezier(0.23, 1, 0.32, 1)"
   easing-bounce:    "cubic-bezier(0.34, 1.56, 0.64, 1)"
 
 breakpoints:
@@ -833,8 +834,12 @@ specific link signature.
 **Navigation progress bar**: a 3px primary-red bar at the top of the page
 during client-side route changes, replacing the spinner pattern.
 
-**Motion**: the default easing is `cubic-bezier(0.4, 0, 0.2, 1)`. A
-`bounce-subtle` easing exists but is reserved for confirmations —
+**Motion**: the default easing is `cubic-bezier(0.4, 0, 0.2, 1)`. Things
+that enter or leave (the shared `Modal`) use `out-strong`,
+`cubic-bezier(0.23, 1, 0.32, 1)`: 200ms in, 100ms out, backdrop fading with
+the panel, a 16px rise on mobile and a 95% scale from `sm` up. Opening a
+modal on a section (a filter chip) jumps there instantly; don't animate the
+scroll. A `bounce-subtle` easing exists but is reserved for confirmations —
 favoriting an event, copying a share link. View Transitions fade the page
 root: 90ms ease-in out, 210ms ease-out in (delayed 90ms). Every transition
 collapses to 0ms under `prefers-reduced-motion: reduce`.

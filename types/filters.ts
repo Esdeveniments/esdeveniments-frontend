@@ -12,6 +12,8 @@ import type {
 // Unified filter value types
 export type FilterValue = string | number | boolean | undefined;
 
+export type FilterKey = keyof URLFilterState;
+
 // Legacy interface for backward compatibility
 export interface FilterState {
   place: string;
@@ -46,7 +48,7 @@ export interface FilterDisplayState {
 
 // Base filter configuration
 export interface FilterConfig<T extends FilterValue = FilterValue> {
-  key: keyof URLFilterState;
+  key: FilterKey;
   displayName: string;
   defaultValue: T;
   type:
