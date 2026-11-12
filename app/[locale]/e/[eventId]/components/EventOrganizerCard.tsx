@@ -30,12 +30,14 @@ export default function EventOrganizerCard({ owner }: EventOrganizerProps) {
           <span className="truncate body-normal font-semibold text-foreground-strong">{name}</span>
           <VerifiedBadge role={owner.role} verified={owner.verified} />
         </span>
-        {profileSlug && (
+        {eventCount ? (
           <span className="body-small text-muted-foreground">
-            {eventCount
-              ? t("organizerEventCount", { count: eventCount })
-              : t("sidebarViewAllEvents")}
+            {t("organizerEventCount", { count: eventCount })}
           </span>
+        ) : (
+          profileSlug && (
+            <span className="body-small text-muted-foreground">{t("sidebarViewAllEvents")}</span>
+          )
         )}
       </span>
     </>

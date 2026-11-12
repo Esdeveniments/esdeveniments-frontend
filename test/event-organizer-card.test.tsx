@@ -46,6 +46,19 @@ describe("EventOrganizerCard", () => {
     render(<EventOrganizerCard owner={{ ...OWNER, username: "", displayName: "anna@example.com" }} />);
 
     expect(screen.queryByTestId("event-created-by-link")).toBeNull();
-    expect(screen.getByTestId("event-created-by").textContent).toContain("anna@example.com");
+    const card = screen.getByTestId("event-created-by");
+    expect(card.textContent).toContain("anna@example.com");
+    expect(card.textContent).not.toContain("sidebarViewAllEvents");
+  });
+
+  it("still shows the event count when there is no profile link", () => {
+    render(
+      <EventOrganizerCard
+        owner={{ ...OWNER, username: "", displayName: "anna@example.com", eventCount: 3 }}
+      />,
+    );
+
+    expect(screen.queryByTestId("event-created-by-link")).toBeNull();
+    expect(screen.getByTestId("event-created-by").textContent).toContain("organizerEventCount:3");
   });
 });
