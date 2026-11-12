@@ -296,7 +296,17 @@ describe("getEventVenue", () => {
 });
 
 describe("isVagueLocation", () => {
-  it.each(["", "  ", "Diversos espais", "Online", "En línia", "Per determinar"])(
+  it.each([
+    "",
+    "  ",
+    "Diversos espais",
+    "Diverses ubicacions",
+    "Vàries places del poble",
+    "Varios lugares",
+    "Online",
+    "En línia",
+    "Per determinar",
+  ])(
     "treats %j as no single place",
     (location) => {
       expect(isVagueLocation(location)).toBe(true);

@@ -344,9 +344,9 @@ export const getEventVenue = (
   return normalize(venue) === normalize(title) ? "" : venue;
 };
 
-// "Diversos espais", "Online", "Per determinar": no single place to route to.
+// "Diversos espais", "Diverses ubicacions", "Online", "Per determinar": no single place to route to.
 const VAGUE_LOCATION =
-  /\b(divers[oa]s?|vari(s|es|os|as)|online|en l[ií]nia|virtual|per determinar|a determinar|por determinar)\b/i;
+  /\b(divers[oae]s?|v[aà]ri(s|es|os|as)|online|en l[ií]nia|virtual|per determinar|a determinar|por determinar)\b/i;
 
 export const isVagueLocation = (location: string | null | undefined): boolean =>
   !location?.trim() || VAGUE_LOCATION.test(location);
