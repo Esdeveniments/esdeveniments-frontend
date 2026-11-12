@@ -1,8 +1,9 @@
-import { MapPinIcon as LocationMarkerIcon } from "@heroicons/react/24/outline";
-const LocationIcon = LocationMarkerIcon;
+import { MapPinIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import {
   buildEventLocationLabels,
   buildDisplayLocation,
+  buildDirectionsUrl,
+  isVagueLocation,
 } from "@utils/location-helpers";
 import { EventLocationProps } from "types/event";
 import SectionHeading from "@components/ui/common/SectionHeading";
@@ -13,6 +14,10 @@ import { getProfileDisplayName } from "@utils/profile-name";
 import { formatNameOf } from "@utils/string-helpers";
 import type { AppLocale } from "types/i18n";
 
+const PLACE_LINK_CLASS =
+  "body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center";
+
+/** Same layout in the main column (mobile) and the sidebar (desktop). */
 export default function EventLocation({
   location,
   cityName,
@@ -20,6 +25,7 @@ export default function EventLocation({
   citySlug,
   regionSlug,
   profile,
+  venueCoords,
   compact = false,
 }: EventLocationProps) {
   const t = useTranslations("Components.EventLocation");
@@ -27,147 +33,101 @@ export default function EventLocation({
   const cityHref = citySlug ? `/${citySlug}` : null;
   const regionHref = regionSlug ? `/${regionSlug}` : null;
   const showPlaceLinks = Boolean(cityHref || regionHref);
-  const {
-    cityLabel,
-    regionLabel,
-  } = buildEventLocationLabels({
+  const { cityLabel, regionLabel } = buildEventLocationLabels({
     cityName,
     regionName,
     location,
     secondaryPreference: "region",
   });
 
-  // Build full location string: location, city, region
+  const placeParts = { location, cityName: cityLabel, regionName: regionLabel };
+  // City and region are links below, so the address line shows only the venue.
   const fullLocation = buildDisplayLocation({
-    location,
-    cityName: cityLabel,
-    regionName: regionLabel,
-    hidePlaceSegments: showPlaceLinks, // Hide city/region from the string if we show them as links below
+    ...placeParts,
+    hidePlaceSegments: showPlaceLinks,
   });
+  // "Online" or "Diversos espais" have no single place to route to or map.
+  const isPreciseVenue = Boolean(venueCoords) || !isVagueLocation(location);
+  const directionsUrl = isPreciseVenue
+    ? buildDirectionsUrl(buildDisplayLocation(placeParts), venueCoords)
+    : null;
 
   const profileNameOf = profile
     ? formatNameOf(getProfileDisplayName(profile), locale)
     : "";
 
-  if (compact) {
-    return (
-      <div className="w-full flex flex-col gap-2">
-        {fullLocation && (
-          <div className="flex items-start gap-2">
-            <LocationIcon className="h-4 w-4 text-foreground-strong flex-shrink-0 mt-0.5" />
-            <p className="body-normal text-foreground">{fullLocation}</p>
-          </div>
-        )}
-        {/* Inline map for sidebar */}
-        <EventLocationClient
-          location={location}
-          cityName={cityLabel}
-          regionName={regionLabel}
-          compact
+  return (
+    <section
+      id={compact ? undefined : "event-location"}
+      className="w-full stack min-w-0"
+      aria-labelledby={compact ? "event-location-heading-aside" : "event-location-heading"}
+    >
+      {compact ? (
+        <h2 id="event-location-heading-aside" className="heading-4">
+          {t("title")}
+        </h2>
+      ) : (
+        <SectionHeading
+          headingId="event-location-heading"
+          Icon={MapPinIcon}
+          title={t("title")}
+          titleClassName="heading-2"
         />
-        {/* Clickable city and region links */}
-        {showPlaceLinks && (
-          <div className="flex flex-wrap items-center gap-element-gap-sm">
-            {cityHref && cityLabel && (
-              <PressableAnchor
-                href={cityHref}
-                className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
-                variant="inline"
-              >
-                {cityLabel}
-              </PressableAnchor>
+      )}
+      <div className={`stack ${compact ? "" : "px-4"}`}>
+        {(fullLocation || showPlaceLinks) && (
+          <div className="flex flex-col gap-element-gap-sm">
+            {fullLocation && (
+              <p className="body-normal text-foreground break-words">{fullLocation}</p>
             )}
-            {cityHref && regionHref && cityLabel && regionLabel && (
-              <span className="text-muted-foreground">|</span>
-            )}
-            {regionHref && regionLabel && (
-              <PressableAnchor
-                href={regionHref}
-                className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
-                variant="inline"
-              >
-                {regionLabel}
-              </PressableAnchor>
+            {showPlaceLinks && (
+              <div className="flex flex-wrap items-center gap-element-gap-sm">
+                {cityHref && cityLabel && (
+                  <PressableAnchor href={cityHref} className={PLACE_LINK_CLASS} variant="inline">
+                    {cityLabel}
+                  </PressableAnchor>
+                )}
+                {cityHref && regionHref && cityLabel && regionLabel && (
+                  <span className="text-muted-foreground" aria-hidden="true">
+                    |
+                  </span>
+                )}
+                {regionHref && regionLabel && (
+                  <PressableAnchor href={regionHref} className={PLACE_LINK_CLASS} variant="inline">
+                    {regionLabel}
+                  </PressableAnchor>
+                )}
+              </div>
             )}
           </div>
         )}
-        {/* Profile/venue link */}
+        {isPreciseVenue && (
+          <EventLocationClient location={location} cityName={cityLabel} regionName={regionLabel}>
+            {directionsUrl && (
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-outline btn-sm"
+                data-analytics-link-type="maps_directions"
+                data-analytics-context="event_location"
+              >
+                {t("getDirections")}
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
+              </a>
+            )}
+          </EventLocationClient>
+        )}
         {profile && (
           <PressableAnchor
             href={`/perfil/${encodeURIComponent(profile.username)}`}
-            className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
+            className={PLACE_LINK_CLASS}
             variant="inline"
           >
             {t("profileLink", { nameOf: profileNameOf })}
           </PressableAnchor>
         )}
       </div>
-    );
-  }
-
-  return (
-    <div className="w-full">
-      <div className="w-full flex flex-col gap-element-gap min-w-0">
-        <SectionHeading
-          Icon={LocationIcon}
-          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
-          title={t("title")}
-          titleClassName="heading-2"
-        />
-        <div className="w-full flex flex-col gap-element-gap">
-          {/* Text content with padding */}
-          <div className="w-full flex flex-col justify-center items-start gap-element-gap px-4">
-            {/* Show full location: location, city, region */}
-            {fullLocation && (
-              <div className="w-full flex flex-col justify-start items-start gap-0.5">
-                <p className="body-normal text-foreground">
-                  {fullLocation}
-                </p>
-              </div>
-            )}
-            {/* Clickable city and region links */}
-            {showPlaceLinks && (
-              <div className="flex flex-wrap items-center gap-element-gap-sm">
-                {cityHref && cityLabel && (
-                  <PressableAnchor
-                    href={cityHref}
-                    className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
-                    variant="inline"
-                  >
-                    {cityLabel}
-                  </PressableAnchor>
-                )}
-                {cityHref && regionHref && cityLabel && regionLabel && (
-                  <span className="text-muted-foreground">|</span>
-                )}
-                {regionHref && regionLabel && (
-                  <PressableAnchor
-                    href={regionHref}
-                    className="body-small font-semibold text-primary hover:text-primary-dark inline-flex items-center"
-                    variant="inline"
-                  >
-                    {regionLabel}
-                  </PressableAnchor>
-                )}
-              </div>
-            )}
-            {/* Profile/venue link */}
-            {profile && (
-              <PressableAnchor
-                href={`/perfil/${encodeURIComponent(profile.username)}`}
-              >
-                {t("profileLink", { nameOf: profileNameOf })}
-              </PressableAnchor>
-            )}
-          </div>
-          {/* Map — full width, no padding */}
-          <EventLocationClient
-            location={location}
-            cityName={cityLabel}
-            regionName={regionLabel}
-          />
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }

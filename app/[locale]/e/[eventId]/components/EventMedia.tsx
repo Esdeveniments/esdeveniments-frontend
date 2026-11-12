@@ -13,13 +13,6 @@ const VideoDisplay = dynamic(
   }
 );
 
-// ImageDefault for fallback cases
-const ImageDefault = dynamic(() => import("components/ui/imgDefault"), {
-  loading: () => (
-    <div className="w-full aspect-[16/9] sm:aspect-[21/9] bg-muted animate-pulse rounded-card"></div>
-  ),
-});
-
 const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
   // Check if we have a video URL - if so, display video
   if (event.videoUrl) {
@@ -41,14 +34,8 @@ const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
     );
   }
 
-  // Fallback to default image
-  return (
-    <div className="w-full">
-      <div className="w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card">
-        <ImageDefault title={title} />
-      </div>
-    </div>
-  );
+  // No image: no placeholder box; the page starts with the title.
+  return null;
 };
 
 export default EventMedia;

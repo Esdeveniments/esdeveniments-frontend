@@ -45,7 +45,13 @@ const AddToCalendar: React.FC<AddToCalendarProps> = ({
   startDate,
   endDate,
   canonical,
-  hideText = false,
+  variant = "neutral",
+  iconOnly = false,
+  shortLabel = false,
+  fullWidth = false,
+  placement = "below",
+  source,
+  onOpen,
 }) => {
   const t = useTranslations("Utils.Calendar");
   const moreInfoText = t("moreInfoText", { url: "{url}" });
@@ -73,8 +79,9 @@ const AddToCalendar: React.FC<AddToCalendarProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleAgendaList = useCallback((): void => {
-    setShowAgendaList((prev) => !prev);
-  }, []);
+    if (!showAgendaList) onOpen?.();
+    setShowAgendaList(!showAgendaList);
+  }, [showAgendaList, onOpen]);
 
   const calendarUrls = useCallback(
     (): CalendarUrls =>
@@ -93,21 +100,26 @@ const AddToCalendar: React.FC<AddToCalendarProps> = ({
   useOutsideClick(containerRef, () => setShowAgendaList(false));
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={fullWidth ? "relative w-full" : "relative"}>
       <CalendarButton
         onClick={toggleAgendaList}
-        hideText={hideText}
         open={showAgendaList}
         label={t("button")}
+        visibleLabel={shortLabel ? t("buttonShort") : undefined}
+        variant={variant}
+        iconOnly={iconOnly}
+        fullWidth={fullWidth}
       />
 
       {showAgendaList && (
-        <Suspense fallback={<div>{t("loading")}</div>}>
+        <Suspense fallback={null}>
           <LazyCalendarList
             onClick={toggleAgendaList}
             getUrls={calendarUrls}
             title={title}
             labels={providerLabels}
+            placement={placement}
+            source={source}
           />
         </Suspense>
       )}

@@ -660,7 +660,7 @@
       "viewAll": "Ver todas"
     },
     "CulturalMessage": {
-      "explorePrefix": "Explora más planes {placeIn}:",
+      "explorePrefix": "Explora más planes {placeIn}",
       "today": "Qué hacer hoy",
       "tomorrow": "Qué hacer mañana",
       "week": "Qué hacer esta semana",
@@ -957,14 +957,8 @@
       "editError": "Error al actualizar el evento",
       "editSave": "Guardar cambios",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visitas}}",
-      "stickyMoreInfo": "Más info",
-      "stickyCalendar": "Calendario",
-      "stickySave": "Guardar",
       "free": "Gratis",
       "paid": "De pago",
-      "sidebarMoreInfo": "Más información",
-      "sidebarVisitWebsite": "Visita la web",
-      "sidebarOpenInMaps": "Abrir en Maps",
       "interested": "{count, plural, one {{count} interesado} other {{count} interesados}}",
       "popular": "Popular",
       "readMore": "Leer más",
@@ -972,7 +966,6 @@
       "durationLabel": "Duración: {duration}",
       "sidebarAriaLabel": "Detalles del evento",
       "toolbarAriaLabel": "Acciones del evento",
-      "sidebarCreatedBy": "Publicado por",
       "sidebarViewAllEvents": "Ver todos los eventos",
       "shareEvent": "Compartir",
       "promoteEvent": "Promocionar",
@@ -984,7 +977,16 @@
       "deleteError": "No se ha podido eliminar el evento. Vuelve a intentarlo.",
       "ownerBarTitle": "Has publicado este evento",
       "moreActions": "Más acciones",
-      "organizerEventCount": "{count, plural, one {# evento publicado} other {# eventos publicados}}"
+      "organizerEventCount": "{count, plural, one {# evento publicado} other {# eventos publicados}}",
+      "moreInfo": "Más info",
+      "organizer": "Organizador",
+      "reportPrompt": "¿Algún dato no es correcto?",
+      "reportLink": "Avísanos",
+      "reportSubject": "Revisión del evento: {title}",
+      "reportBody": "Página: {url}\n\n¿Qué hay que revisar?\n",
+      "houseAdTitle": "¿Organizas algo?",
+      "houseAdText": "Publica tu evento gratis y llega a más gente de la zona.",
+      "houseAdCta": "Publica un evento"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
@@ -1058,20 +1060,16 @@
       "rssNews": "RSS Noticias"
     },
     "EventDetailsSection": {
-      "title": "Detalles del evento",
-      "eventLink": "Enlace al evento:",
-      "duration": "Duración aproximada: {duration}",
       "createdBy": "Publicado {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicación",
       "showMap": "Mostrar mapa",
-      "hideMap": "Cerrar mapa",
+      "hideMap": "Ocultar mapa",
       "getDirections": "Cómo llegar",
       "profileLink": "Perfil {nameOf}"
     },
     "EventCalendar": {
-      "title": "Fecha y hora",
       "priceLabel": "Precio:",
       "priceFree": "Gratis"
     },
@@ -1252,7 +1250,9 @@
       "share": "Compartir",
       "shareLabel": "Compartir {title}",
       "shareDate": "Fecha: {date}",
-      "sharePlace": "Lugar: {place}"
+      "sharePlace": "Lugar: {place}",
+      "email": "Enviar por correo",
+      "moreOptions": "Más opciones"
     }
   },
   "Partials": {
@@ -1724,6 +1724,7 @@
       "dateSingle": "Del {start}",
       "loading": "Cargando...",
       "button": "Añadir al calendario",
+      "buttonShort": "Calendario",
       "providers": {
         "google": "Google Calendar",
         "outlook": "Outlook",

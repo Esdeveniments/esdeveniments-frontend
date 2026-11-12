@@ -710,7 +710,9 @@ critical actions, a 2-offset solid ring. Errors swap red for the
 The hero photograph carries the highest depth in the system: a `60%` black
 overlay sits between the image and the type. Below that, glassmorphic chips
 add a second layer of depth via `backdrop-filter: blur(8px)` over the
-photograph itself. Outside the hero, blur is never used.
+photograph itself. The other use is the backdrop behind an event cover (a
+blurred copy of the same image fills the box around an `object-contain`
+poster; see Page composition). Outside photographs, blur is never used.
 
 ## Shapes
 
@@ -831,6 +833,55 @@ during client-side route changes, replacing the spinner pattern.
 favoriting an event, copying a share link. View Transitions fade the page
 root: 90ms ease-in out, 210ms ease-out in (delayed 90ms). Every transition
 collapses to 0ms under `prefers-reduced-motion: reduce`.
+
+## Page composition
+
+How to arrange a page, learned from the event page audit (Nov 2026,
+compared live with Eventbrite, Meetup, Luma, Fever and Resident Advisor).
+Before inventing a pattern, check what three or more of those sites agree on
+and copy that, adapted to these tokens.
+
+- **Group by job, then space by group.** The top of a detail page has three
+  groups: *who* (state, title, organizer), *facts* (date, place, price) and
+  *act* (the main action). Rows inside a group sit close
+  (`gap-element-gap-sm`); groups are separated by a larger gap
+  (`gap-element-gap` or more). Equal spacing everywhere reads as one dense block.
+- **One style per kind of information.** Facts are identical icon rows
+  (16 px outline icon, `body-normal`, a muted sub-line when needed). Don't
+  mix bold, grey, link-red and badge styles for siblings.
+- **One main action per view.** Exactly one filled `btn-primary`; the rest are
+  outline buttons or icons. The main action is a button, never a red text
+  link in a header. Personal actions (share, save) are 44 px icon buttons with
+  an `aria-label`, next to the thing they act on.
+- **One home per action, one name per action.** Each action appears once per
+  viewport (the same link is not "Més informació", "Visita el web" and "Més
+  info"). A repeated element must do a different job: the byline says *who*;
+  the organizer card says *more about them*.
+- **Mobile action bar.** On mobile the main action lives in a fixed bottom bar
+  that is visible from the first screen: short date and price on the left, one
+  filled button on the right. Render it on the server, and give the page
+  bottom padding as tall as the bar so it never covers the last content.
+- **Leave out what's missing.** No placeholders: no empty grey image box, no
+  "Preu: —", no empty headings. A missing image means no image block (the
+  title moves up); a placeholder image never goes into JSON-LD.
+- **Show user images whole.** Covers come in every shape (half are portrait
+  posters). Keep a fixed box and show the image with `object-contain` over a
+  blurred copy of the same file, so nothing is cropped, the box never
+  changes size and the file downloads once.
+- **Reserve, then fill.** Space for late content (ads) is reserved from the
+  first paint and, when nothing arrives, filled with our own card. Never
+  collapse it while the visitor reads.
+- **Same level, same style.** Section headings use one style per level in the
+  main column and the sidebar alike: sentence case, no trailing colon, no
+  UPPERCASE labels as headings. Breadcrumbs end at the parent page, not the
+  current title.
+- **Render once.** Don't render a block twice and hide one copy per
+  breakpoint: it duplicates headings and ids, and scripts that look up the
+  first copy (translation, scroll targets) act on the hidden one. Use one copy
+  and move it with layout classes; only a separate sidebar may repeat facts.
+- **No layout shift by design.** Decide on the server what renders. Anything
+  that appears after load either sits in a fixed overlay or replaces a
+  reserved box of the same size. Heights may change only after a tap.
 
 ## Do's and Don'ts
 

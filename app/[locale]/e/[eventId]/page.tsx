@@ -10,9 +10,13 @@ import { siteUrl } from "@config/index";
 import { generateEventMetadata } from "@lib/meta";
 import { redirect, notFound } from "next/navigation";
 import EventMedia from "./components/EventMedia";
-import EventShareBar from "./components/EventShareBar";
 import EventHeader from "./components/EventHeader";
-import EventCalendar from "./components/EventCalendar";
+import EventFacts from "./components/EventFacts";
+import EventShareButton from "./components/EventShareButton";
+import EventActionBar from "./components/EventActionBar";
+import EventReportLink from "./components/EventReportLink";
+import EventAdSlot from "./components/EventAdSlot";
+import EventOrganizerCard from "./components/EventOrganizerCard";
 import { buildEventStatusLabels, computeTemporalStatus } from "@utils/event-status";
 import type { EventTemporalStatus } from "types/event-status";
 import type { EventCopyLabels } from "types/common";
@@ -32,6 +36,10 @@ import type { EventDetailResponseDTO } from "types/api/event";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
+import { buildDisplayLocation, getEventVenue } from "@utils/location-helpers";
+import { getEventVenueCoords } from "@utils/event-map";
+import { stripHtmlTags } from "@utils/sanitize";
+import { EVENT_DESCRIPTION_FOLD_CHARS } from "@utils/constants";
 import {
   buildEventIntroText,
   formatCatalanA,
@@ -58,14 +66,10 @@ import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import EventPagePromotedEvents from "@components/ui/promotedEvents/EventPagePromotedEvents";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
-import EventStickyCTA from "./components/EventStickyCTA";
 import EventSidebar from "./components/EventSidebar";
-import SocialProofCounter from "./components/SocialProofCounter";
 import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
 import DetailSectionTracker from "./components/DetailSectionTracker";
-import EventDetailsSection from "./components/EventDetailsSection";
-import EventByline from "./components/EventByline";
 import EventOwnerBar from "./components/EventOwnerBar";
 
 // Lazy load below-the-fold client components via client component wrappers
@@ -277,8 +281,6 @@ async function EventPageBody({
   const event = await getCachedEventBySlug(slug);
   if (!event) return null;
 
-  // With relaxed CSP we no longer require a nonce here; compute mobile on client
-  const initialIsMobile = false;
   const {
     cityName,
     regionName,
@@ -453,6 +455,17 @@ async function EventPageBody({
     : null;
   const lcpSizes = getOptimalImageSizes("hero");
 
+  const venue = getEventVenue(event.location, title);
+  // Venue plus its town once ("Tesr, Aguilar de Segarra, Bages" stays as is).
+  const placeText = buildDisplayLocation({
+    location: venue,
+    cityName,
+    regionName: cityName ? "" : regionName,
+  });
+  // Short texts show whole; long ones fold on mobile behind "Llegeix més".
+  const isLongDescription =
+    stripHtmlTags(`${introText ?? ""} ${event.description ?? ""}`).length > EVENT_DESCRIPTION_FOLD_CHARS;
+
   return (
     <>
       {/* Preload LCP hero image for faster Largest Contentful Paint */}
@@ -460,6 +473,7 @@ async function EventPageBody({
         <link
           rel="preload"
           as="image"
+          href={lcpSources.webp}
           imageSrcSet={lcpSources.webpSrcSet}
           imageSizes={lcpSizes}
           type="image/webp"
@@ -507,7 +521,6 @@ async function EventPageBody({
                     href: `/${primaryPlaceSlug}/${primaryCategorySlug}`,
                   }]
                   : []),
-                { label: title },
               ] as BreadcrumbNavItem[]}
               className="px-section-x pt-4"
             />
@@ -516,71 +529,50 @@ async function EventPageBody({
             <div className="flex flex-col lg:flex-row lg:gap-8">
               {/* ========== MAIN CONTENT (left column) ========== */}
               <div className="flex-1 min-w-0 flex flex-col gap-section-y-sm">
-                {/* Event Media Hero */}
-                <div className="w-full flex flex-col">
-                  <div className="w-full">
-                    <EventMedia event={event} title={title} />
-                  </div>
-                  {/* Share bar + favorite + social proof */}
-                  <div className="w-full flex justify-between items-center mt-element-gap-sm">
-                    <EventShareBar
-                      slug={eventSlug}
-                      title={title}
-                      description={event.description}
-                      eventDateString={shareEvent.dateText}
-                      location={event.location}
-                      initialIsMobile={initialIsMobile}
-                      cityName={cityName}
-                      regionName={regionName}
-                      postalCode={event.city?.postalCode || ""}
-                    />
-                    <div className="ml-element-gap-sm flex items-center gap-2">
-                      {shouldShowFavoriteButton && (
-                        <FavoriteButton
-                          eventSlug={event.slug}
-                          eventId={event.id ? String(event.id) : undefined}
-                          initialIsFavorite={false}
-                          labels={favoriteLabels}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
+                {/* No image, no box: the page then starts with the title. */}
+                <EventMedia event={event} title={title} />
 
-                {/* Event Header with status pill + social proof */}
-                <div className="flex flex-col gap-1">
-                  <EventHeader title={title} temporalStatus={temporalStatus} />
-                  {event.owner && <EventByline owner={event.owner} />}
-                  {citySlug && cityName && isFestaMajorTitle(event.title) && (
-                    <FestaMajorHubLink
-                      citySlug={citySlug}
-                      cityName={cityName}
-                    />
-                  )}
-                  <FestivityHubLink title={event.title} />
-                  {temporalStatus.state === "past" && nextEditionSlot}
-                  <SocialProofCounter
+                <div className="flex flex-col gap-element-gap">
+                  <EventHeader
+                    title={title}
+                    temporalStatus={temporalStatus}
                     visits={event.visits}
                     interestedLabel={tEvent("interested", { count: event.visits })}
+                    owner={event.owner}
+                    actions={
+                      <>
+                        <EventShareButton shareEvent={shareEvent} />
+                        {shouldShowFavoriteButton && (
+                          <FavoriteButton
+                            eventSlug={event.slug}
+                            eventId={event.id ? String(event.id) : undefined}
+                            initialIsFavorite={false}
+                            labels={favoriteLabels}
+                          />
+                        )}
+                      </>
+                    }
+                  >
+                    {citySlug && cityName && isFestaMajorTitle(event.title) && (
+                      <FestaMajorHubLink citySlug={citySlug} cityName={cityName} />
+                    )}
+                    <FestivityHubLink title={event.title} />
+                    {temporalStatus.state === "past" && nextEditionSlot}
+                  </EventHeader>
+
+                  {/* Mobile: date, time, place, price. Desktop: place only
+                      (the sidebar card has the rest). */}
+                  <EventFacts event={event} placeText={placeText} placeOnlyOnDesktop />
+
+                  <EventOwnerBar
+                    ownerId={event.owner?.id}
+                    slug={eventSlug}
+                    shareEvent={shareEvent}
                   />
                 </div>
 
-                <EventOwnerBar
-                  ownerId={event.owner?.id}
-                  slug={eventSlug}
-                  shareEvent={shareEvent}
-                />
-
-                {/* Calendar — mobile only (between title and description) */}
-                <DetailSectionTracker section="calendar" className="lg:hidden">
-                  <div data-calendar-section>
-                    <EventCalendar event={event} compact />
-                  </div>
-                </DetailSectionTracker>
-
-                {/* Description with collapsible on mobile */}
                 <DetailSectionTracker section="description">
-                  <CollapsibleDescription>
+                  <CollapsibleDescription collapsible={isLongDescription}>
                     <EventDescription
                       slug={event.slug}
                       description={event.description}
@@ -591,29 +583,29 @@ async function EventPageBody({
                   </CollapsibleDescription>
                 </DetailSectionTracker>
 
-                {/* Event details: duration, external link, creator profile link.
-                    Mobile only — desktop shows these in EventSidebar to avoid duplication. */}
-                <DetailSectionTracker section="details" className="lg:hidden">
-                  <EventDetailsSection event={event} />
-                </DetailSectionTracker>
-
-                {/* Location — mobile only */}
+                {/* Location, weather and organizer — mobile only (desktop: sidebar) */}
                 <DetailSectionTracker section="location" className="lg:hidden">
                   <EventLocation
-                    location={event.location}
+                    location={venue}
                     cityName={cityName}
                     regionName={regionName}
                     citySlug={event.city?.slug}
                     regionSlug={event.region?.slug}
                     profile={event.profile}
+                    venueCoords={getEventVenueCoords(event)}
                   />
                 </DetailSectionTracker>
 
-                {/* Weather — mobile only (desktop shows in sidebar) */}
                 {temporalStatus.state !== "past" && (
                   <div className="lg:hidden">
                     <EventWeather weather={event.weather} />
                   </div>
+                )}
+
+                {event.owner && (
+                  <DetailSectionTracker section="organizer" className="lg:hidden">
+                    <EventOrganizerCard owner={event.owner} />
+                  </DetailSectionTracker>
                 )}
 
                 {/* Past Event Banner — early visibility for past events */}
@@ -663,6 +655,12 @@ async function EventPageBody({
                   <EventCategories categories={event.categories} place={primaryPlaceSlug} />
                 </DetailSectionTracker>
 
+                <EventReportLink
+                  ownerId={event.owner?.id}
+                  title={title}
+                  url={toLocalizedUrl(`/e/${eventSlug}`, locale)}
+                />
+
                 {/* Restaurant Promotion */}
                 <Suspense fallback={null}>
                   <LazyRestaurantPromotion
@@ -677,7 +675,9 @@ async function EventPageBody({
                   />
                 </Suspense>
 
-                {/* Client-side ad + notifications */}
+                <EventAdSlot />
+
+                {/* Notifications, owner upsell and analytics */}
                 <ClientEventClient event={clientEvent} />
               </div>
 
@@ -696,20 +696,8 @@ async function EventPageBody({
       {/* Latest News Section - request-time, streamed separately */}
       {latestNewsSlot}
 
-      {/* Sticky CTA bar for mobile — sits above bottom nav */}
-      {temporalStatus.state !== "past" && (
-        <EventStickyCTA
-          eventUrl={event.url ?? undefined}
-          eventSlug={event.slug}
-          labels={{
-            moreInfo: tEvent("stickyMoreInfo"),
-            calendar: tEvent("stickyCalendar"),
-            save: tEvent("stickySave"),
-            favoriteAdd: tCard("favoriteAddAria"),
-            favoriteRemove: tCard("favoriteRemoveAria"),
-          }}
-        />
-      )}
+      {/* Mobile action bar: server-rendered and fixed, so it never shifts the page */}
+      {temporalStatus.state !== "past" && <EventActionBar event={event} locale={locale} />}
     </>
   );
 }

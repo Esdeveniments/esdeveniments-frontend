@@ -1,10 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { locale as rootLocale } from "next/root-params";
-import EventCalendar from "app/[locale]/e/[eventId]/components/EventCalendar";
+import EventFacts from "app/[locale]/e/[eventId]/components/EventFacts";
 import type { EventDetailResponseDTO } from "types/api/event";
-
-vi.mock("@components/ui/addToCalendar", () => ({ default: () => null }));
 
 const event = {
   id: "event-1",
@@ -21,9 +19,9 @@ const event = {
 } as unknown as EventDetailResponseDTO;
 
 const renderCalendar = async (price: string | null | undefined) =>
-  render(await EventCalendar({ event: { ...event, price }, compact: true }));
+  render(await EventFacts({ event: { ...event, price } }));
 
-describe("EventCalendar price row", () => {
+describe("EventFacts price row", () => {
   it("shows the backend price text under a translated label", async () => {
     await renderCalendar("10 € taquilla · 5 € online");
 
@@ -56,16 +54,26 @@ describe("EventCalendar price row", () => {
   });
 });
 
-describe("EventCalendar date range", () => {
+describe("EventFacts date range", () => {
   it("localizes a multi-day range", async () => {
     vi.mocked(rootLocale).mockResolvedValueOnce("en");
     render(
-      await EventCalendar({
+      await EventFacts({
         event: { ...event, startDate: "2026-10-08", endDate: "2026-12-06" },
-        compact: true,
       })
     );
 
     expect(screen.getByText(/^From .+ to .+$/)).toBeTruthy();
+  });
+});
+
+describe("EventFacts place row", () => {
+  it("shows the place only when given, and hides the other rows on desktop", async () => {
+    render(
+      await EventFacts({ event: { ...event, price: "5" }, placeText: "Plaça Major · Vic", placeOnlyOnDesktop: true })
+    );
+
+    expect(screen.getByText("Plaça Major · Vic").parentElement?.className).not.toContain("lg:hidden");
+    expect(screen.getByTestId("event-price").className).toContain("lg:hidden");
   });
 });

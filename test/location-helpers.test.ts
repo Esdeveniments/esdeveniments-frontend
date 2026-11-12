@@ -7,6 +7,9 @@ import {
   buildEventVenueLabel,
   getDistance,
   deg2rad,
+  getEventVenue,
+  isVagueLocation,
+  buildDirectionsUrl,
 } from "../utils/location-helpers";
 
 describe("buildDisplayLocation", () => {
@@ -278,5 +281,44 @@ describe("deg2rad", () => {
 
   it("converts negative degrees", () => {
     expect(deg2rad(-90)).toBeCloseTo(-Math.PI / 2);
+  });
+});
+
+describe("getEventVenue", () => {
+  it("drops a venue that only repeats the title", () => {
+    expect(getEventVenue(" Malnoms i motius del Masnou ", "Malnoms i Motius del Masnou")).toBe("");
+  });
+
+  it("keeps a real venue", () => {
+    expect(getEventVenue("Sala Apolo", "Concert")).toBe("Sala Apolo");
+    expect(getEventVenue(null, "Concert")).toBe("");
+  });
+});
+
+describe("isVagueLocation", () => {
+  it.each(["", "  ", "Diversos espais", "Online", "En línia", "Per determinar"])(
+    "treats %j as no single place",
+    (location) => {
+      expect(isVagueLocation(location)).toBe(true);
+    },
+  );
+
+  it("accepts a street address", () => {
+    expect(isVagueLocation("Carrer Major, 5")).toBe(false);
+  });
+});
+
+describe("buildDirectionsUrl", () => {
+  it("prefers exact coordinates over the address", () => {
+    expect(buildDirectionsUrl("Sala Apolo", { lat: 41.37, lon: 2.17 })).toBe(
+      "https://www.google.com/maps/dir/?api=1&destination=41.37%2C2.17",
+    );
+  });
+
+  it("encodes the address and returns null when there is nothing to route to", () => {
+    expect(buildDirectionsUrl("Plaça Major, Vic")).toBe(
+      "https://www.google.com/maps/dir/?api=1&destination=Pla%C3%A7a%20Major%2C%20Vic",
+    );
+    expect(buildDirectionsUrl("  ")).toBeNull();
   });
 });

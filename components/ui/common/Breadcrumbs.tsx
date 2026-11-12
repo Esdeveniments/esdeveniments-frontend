@@ -12,7 +12,9 @@ export default function Breadcrumbs({ items, className = "" }: BreadcrumbsProps)
     >
       <ol className="flex items-center flex-wrap gap-0.5">
         {items.map((item, index) => {
-          const isLast = index === items.length - 1;
+          // Pages whose trail ends at the parent (event pages) pass a last
+          // item with an href: it stays a link and isn't the current page.
+          const isCurrent = index === items.length - 1 && !item.href;
 
           return (
             <li key={item.label} className="flex items-center">
@@ -22,10 +24,10 @@ export default function Breadcrumbs({ items, className = "" }: BreadcrumbsProps)
                   aria-hidden="true"
                 />
               )}
-              {isLast || !item.href ? (
+              {!item.href ? (
                 <span
-                  className={isLast ? "text-foreground-strong font-medium truncate max-w-[200px]" : ""}
-                  aria-current={isLast ? "page" : undefined}
+                  className={isCurrent ? "text-foreground-strong font-medium truncate max-w-[200px]" : ""}
+                  aria-current={isCurrent ? "page" : undefined}
                   title={item.label}
                 >
                   {item.label}

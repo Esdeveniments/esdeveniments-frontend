@@ -334,3 +334,33 @@ export const getDistance = (
 export const deg2rad = (deg: number): number => {
   return deg * (Math.PI / 180);
 };
+
+/** The venue as typed, or "" when the organiser repeated the event title there. */
+export const getEventVenue = (
+  location: string | null | undefined,
+  title: string,
+): string => {
+  const venue = location?.trim() ?? "";
+  return normalize(venue) === normalize(title) ? "" : venue;
+};
+
+// "Diversos espais", "Online", "Per determinar": no single place to route to.
+const VAGUE_LOCATION =
+  /\b(divers[oa]s?|vari(s|es|os|as)|online|en l[ií]nia|virtual|per determinar|a determinar|por determinar)\b/i;
+
+export const isVagueLocation = (location: string | null | undefined): boolean =>
+  !location?.trim() || VAGUE_LOCATION.test(location);
+
+const DIRECTIONS_BASE_URL = "https://www.google.com/maps/dir/?api=1&destination=";
+
+/**
+ * Google Maps directions (it asks for driving, transit or walking, and opens
+ * the app on phones). Exact venue coordinates win over the address text.
+ */
+export const buildDirectionsUrl = (
+  address: string,
+  coords?: { lat: number; lon: number } | null,
+): string | null => {
+  const destination = coords ? `${coords.lat},${coords.lon}` : address.trim();
+  return destination ? `${DIRECTIONS_BASE_URL}${encodeURIComponent(destination)}` : null;
+};

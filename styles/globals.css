@@ -45,6 +45,8 @@ html {
   --mobile-nav-clearance: calc(
     var(--mobile-nav-height) + var(--mobile-nav-safe-area)
   );
+  /* Event page bottom bar: one button row, 8px padding above and below, top border. */
+  --event-action-bar-height: calc(var(--button-height) + 1rem + 1px);
 }
 
 @media (min-width: 950px) {
@@ -69,6 +71,16 @@ html {
 
 .mobile-nav-content-safe-area {
   padding-bottom: var(--mobile-nav-clearance);
+}
+
+/* The event action bar (server-rendered, fixed) would cover the end of the
+   footer: reserve its height from the first paint, no JS. */
+@media (max-width: 1023.98px) {
+  body:has([data-event-action-bar]) .mobile-nav-content-safe-area {
+    padding-bottom: calc(
+      var(--mobile-nav-clearance) + var(--event-action-bar-height)
+    );
+  }
 }
 
 .mobile-bottom-nav {

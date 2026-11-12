@@ -1063,17 +1063,37 @@ export interface CompleteProfileGateProps {
   redirectTo: string;
 }
 
-// Sticky CTA bar for event detail page (mobile)
-export interface EventStickyCTAProps {
-  eventUrl?: string;
+// Mobile bottom action bar (event page): server shell + client actions
+export interface EventActionBarProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  locale: AppLocale;
+}
+
+export interface EventActionBarActionsProps {
   eventSlug: string;
-  labels: {
-    moreInfo: string;
-    calendar: string;
-    save: string;
-    favoriteAdd: string;
-    favoriteRemove: string;
-  };
+  /** http(s) website; null makes "Add to calendar" the filled main action. */
+  eventUrl: string | null;
+  moreInfoLabel: string;
+  calendar: import("./common").CalendarEventData;
+}
+
+// Header share button: native share sheet on touch, small menu elsewhere
+export interface EventShareButtonProps {
+  shareEvent: import("./event").ShareKitEvent;
+}
+
+export interface EventShareMenuProps {
+  id: string;
+  shareEvent: import("./event").ShareKitEvent;
+  onClose: () => void;
+  onShared: (method: string) => void;
+}
+
+// "Something wrong? Tell us" mailto link, hidden for the event's owner
+export interface EventReportLinkProps {
+  ownerId?: string;
+  title: string;
+  url: string;
 }
 
 export interface EventClientPayload {
@@ -1098,14 +1118,10 @@ export interface EventClientProps {
 
 export type ClientEventClientProps = EventClientProps;
 
-// Collapsible description wrapper (mobile)
+// Description wrapper: clamped on mobile when long (decided on the server)
 export interface CollapsibleDescriptionProps {
+  collapsible: boolean;
   children: ReactNode;
-}
-
-// Event details section (duration + external link)
-export interface EventDetailsSectionProps {
-  event: import("./api/event").EventDetailResponseDTO;
 }
 
 export interface EventPageGateProps {
@@ -1150,6 +1166,8 @@ export interface EventDeleteDialogProps {
 
 export interface EventOrganizerProps {
   owner: import("./api/user").OwnerSummaryDTO;
+  /** Sidebar version: smaller heading, no icon. */
+  compact?: boolean;
 }
 
 export interface PromoteUpsellModalProps {
