@@ -73,6 +73,8 @@ describe("PromotionReturnPage", () => {
     expect(screen.getByText(/Estem confirmant el pagament/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Actualitza l'estat" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Continua el pagament" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Tria una altra opció" })).toBeNull();
+    expect(
+      screen.queryAllByRole("link").filter((link) => link.getAttribute("href") === "/e/concert/promote"),
+    ).toHaveLength(0);
   });
 });
