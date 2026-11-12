@@ -61,7 +61,7 @@ export default async function EventSidebar({
               )}
               <AddToCalendar
                 {...buildCalendarEventData(event)}
-                variant={eventUrl ? "outline" : "primary"}
+                variant={eventUrl ? "neutral" : "primary"}
                 fullWidth
                 source="sidebar"
               />

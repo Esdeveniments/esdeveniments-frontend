@@ -60,7 +60,7 @@ describe("EventActionBarActions", () => {
 
     expect(screen.getByRole("link", { name: /Més info/ }).className).toContain("btn-primary");
     expect(addToCalendarProps).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: "outline", iconOnly: true }),
+      expect.objectContaining({ variant: "neutral", iconOnly: true }),
     );
   });
 

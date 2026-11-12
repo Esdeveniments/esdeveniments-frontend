@@ -23,7 +23,7 @@ export default function EventActionBarActions({
     <div ref={ref} className="relative flex flex-shrink-0 items-center gap-2">
       <AddToCalendar
         {...calendar}
-        variant={eventUrl ? "outline" : "primary"}
+        variant={eventUrl ? "neutral" : "primary"}
         iconOnly={Boolean(eventUrl)}
         shortLabel
         placement="above-end"
