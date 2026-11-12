@@ -35,7 +35,6 @@ import type {
 import type { EventDetailResponseDTO } from "types/api/event";
 import EventDescription from "./components/EventDescription";
 import EventCategories from "./components/EventCategories";
-import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import { buildDisplayLocation, getEventVenue } from "@utils/location-helpers";
 import { getEventVenueCoords } from "@utils/event-map";
 import { isLongDescription } from "@utils/text-processing";
@@ -62,13 +61,14 @@ import type { AppLocale } from "types/i18n";
 import { getCategoryLabel } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
-import EventPagePromotedEvents from "@components/ui/promotedEvents/EventPagePromotedEvents";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
 import EventSidebar from "./components/EventSidebar";
 import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
 import DetailSectionTracker from "./components/DetailSectionTracker";
+import EventMoreEvents from "./components/EventMoreEvents";
+import EventRelatedEvents from "./components/EventRelatedEvents";
 import EventOwnerBar from "./components/EventOwnerBar";
 
 // Lazy load below-the-fold client components via client component wrappers
@@ -233,13 +233,24 @@ async function EventPageContent({
           />
         </Suspense>
       }
-      promotedEventsSlot={
-        <Suspense key="promoted-events" fallback={null}>
-          <EventPagePromotedEvents
+      moreEventsSlot={
+        <Suspense
+          key="more-events"
+          fallback={
+            <EventRelatedEvents
+              events={event.relatedEvents ?? []}
+              sourceEventId={event.id}
+              sourceEventSlug={event.slug || slug}
+            />
+          }
+        >
+          <EventMoreEvents
             eventId={event.id}
             cityId={event.city?.id}
             citySlug={event.city?.slug}
             regionId={event.region?.id}
+            relatedEvents={event.relatedEvents ?? []}
+            sourceEventSlug={event.slug || slug}
           />
         </Suspense>
       }
@@ -268,7 +279,7 @@ async function EventPageBody({
   sidebarSponsorSlot,
   latestNewsSlot,
   nextEditionSlot,
-  promotedEventsSlot,
+  moreEventsSlot,
 }: EventPageBodyProps): Promise<JSX.Element | null> {
   "use cache";
   cacheLife(EVENT_PAGE_CACHE_LIFE);
@@ -314,14 +325,13 @@ async function EventPageBody({
     : explorePlaceHref;
   const jsonData = generateJsonData({ ...event }, locale);
 
-  // Parallelize all translation fetches to eliminate waterfall (8 calls → 1 round trip)
+  // Parallelize all translation fetches to eliminate waterfall (7 calls → 1 round trip)
   const [
     tStatus,
     tEvent,
     tCard,
     tCopy,
     tCategories,
-    tEventsAround,
     tHowTo,
     tBreadcrumbs,
   ] = await Promise.all([
@@ -330,7 +340,6 @@ async function EventPageBody({
     getTranslations({ locale, namespace: "Components.CardContent" }),
     getTranslations({ locale, namespace: "Utils.EventCopy" }),
     getTranslations({ locale, namespace: "Config.Categories" }),
-    getTranslations({ locale, namespace: "Components.EventsAround" }),
     getTranslations({ locale, namespace: "Components.HowTo" }),
     getTranslations({ locale, namespace: "Components.Breadcrumbs" }),
   ]);
@@ -525,8 +534,9 @@ async function EventPageBody({
 
             {/* Two-column layout: Main content + sidebar (desktop) */}
             <div className="flex flex-col lg:flex-row lg:gap-8">
-              {/* ========== MAIN CONTENT (left column) ========== */}
-              <div className="flex-1 min-w-0 flex flex-col gap-section-y-sm">
+              {/* ========== MAIN CONTENT (left column) ==========
+                  One left edge: the column is padded once, sections add none. */}
+              <div className="flex-1 min-w-0 flex flex-col gap-section-y-sm px-section-x">
                 {/* No image, no box: the page then starts with the title. */}
                 <EventMedia event={event} title={title} />
 
@@ -621,25 +631,8 @@ async function EventPageBody({
                 {/* Sponsor — mobile only */}
                 <div className="lg:hidden">{mobileSponsorSlot}</div>
 
-                {/* Promoted events nearby — request-time slot */}
-                {promotedEventsSlot}
-
-                {/* Related Events */}
-                {event.relatedEvents && event.relatedEvents.length > 0 && (
-                  <DetailSectionTracker section="related_events">
-                    <div
-                      data-analytics-container="true"
-                      data-analytics-context="related_events"
-                      data-analytics-source-event-id={event.id ? String(event.id) : ""}
-                      data-analytics-source-event-slug={event.slug || ""}
-                    >
-                      <EventsAroundSection
-                        events={event.relatedEvents}
-                        title={tEventsAround("relatedEvents")}
-                      />
-                    </div>
-                  </DetailSectionTracker>
-                )}
+                {/* Promoted, then related events — request-time slot */}
+                {moreEventsSlot}
 
                 {/* Explore more plans — after related events, before categories */}
                 <CulturalMessage

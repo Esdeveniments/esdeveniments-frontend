@@ -1,4 +1,4 @@
-import { MapPinIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import {
   buildEventLocationLabels,
   buildDisplayLocation,
@@ -69,12 +69,11 @@ export default function EventLocation({
       ) : (
         <SectionHeading
           headingId="event-location-heading"
-          Icon={MapPinIcon}
           title={t("title")}
           titleClassName="heading-2"
         />
       )}
-      <div className={`stack ${compact ? "" : "px-4"}`}>
+      <div className="stack">
         {(fullLocation || showPlaceLinks) && (
           <div className="flex flex-col">
             {fullLocation && (

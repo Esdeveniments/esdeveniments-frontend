@@ -37,7 +37,7 @@ export default function CollapsibleDescription({
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="mt-2 inline-flex min-h-button items-center gap-1 px-section-x body-small font-semibold text-primary hover:text-primary-dark transition-interactive lg:hidden"
+        className="mt-2 inline-flex min-h-button items-center gap-1 body-small font-semibold text-foreground-strong hover:underline transition-interactive lg:hidden"
         aria-expanded={expanded}
         aria-controls={regionId}
       >

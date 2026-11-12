@@ -19,7 +19,7 @@ export default function EventReportLink({ ownerId, title, url }: EventReportLink
   const body = encodeURIComponent(t("reportBody", { url }));
 
   return (
-    <p className="body-small text-muted-foreground px-4" data-testid="event-report">
+    <p className="body-small text-muted-foreground" data-testid="event-report">
       {t("reportPrompt")}{" "}
       <a
         href={`mailto:${contactEmail}?subject=${subject}&body=${body}`}

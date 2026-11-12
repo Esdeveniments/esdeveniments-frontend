@@ -32,7 +32,7 @@ export default function EventAdSlot() {
       <div className="flex-1 min-w-0 stack">
         {showAd ? (
           <>
-            <p className="body-small text-muted-foreground px-4">{t("sponsored")}</p>
+            <p className="body-small text-muted-foreground">{t("sponsored")}</p>
             <GoogleAdsenseContainer
               id={EVENT_AD_SLOT}
               slot={EVENT_AD_SLOT}
@@ -50,7 +50,7 @@ export default function EventAdSlot() {
               <Link
                 href="/publica"
                 prefetch={false}
-                className="btn-outline"
+                className="btn-neutral"
                 onClick={() => sendGoogleEvent("house_ad_click", { context: "event_page" })}
               >
                 {t("houseAdCta")}

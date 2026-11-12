@@ -1137,7 +1137,8 @@ export interface EventPageBodyProps {
   latestNewsSlot: import("react").ReactNode;
   /** Rendered only once the event has ended. */
   nextEditionSlot: import("react").ReactNode;
-  promotedEventsSlot: import("react").ReactNode;
+  /** Promoted events, then related events (see EventMoreEvents). */
+  moreEventsSlot: import("react").ReactNode;
 }
 
 // Sticky sidebar for event detail page (desktop)
@@ -1232,11 +1233,24 @@ export interface PromotedEventsRowProps extends PromotedEventsSectionProps {
 }
 
 export interface EventPagePromotedEventsProps {
-  /** The event being viewed, left out of the row. */
+  events: EventSummaryResponseDTO[];
+  citySlug?: string;
+}
+
+export interface EventRelatedEventsProps {
+  events: EventSummaryResponseDTO[];
+  sourceEventId?: string;
+  sourceEventSlug: string;
+}
+
+export interface EventMoreEventsProps {
+  /** The event being viewed, left out of the promoted row. */
   eventId?: string;
   cityId?: number;
   citySlug?: string;
   regionId?: number;
+  relatedEvents: EventSummaryResponseDTO[];
+  sourceEventSlug: string;
 }
 
 export interface PromotedEventsTrackerProps {

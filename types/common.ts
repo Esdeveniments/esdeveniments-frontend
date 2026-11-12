@@ -429,6 +429,11 @@ export interface EventsAroundProps {
   title?: string;
 }
 
+export interface EventsAroundSectionProps extends EventsAroundProps {
+  /** The parent is padded with `px-section-x`: let the row scroll through that padding so the first card lines up with the heading. */
+  bleed?: boolean;
+}
+
 export interface EventsAroundServerProps extends EventsAroundProps {
   layout?: EventsAroundLayout;
   loading?: boolean;

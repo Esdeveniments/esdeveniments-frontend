@@ -874,11 +874,23 @@ and copy that, adapted to these tokens.
 - **Same level, same style.** Section headings use one style per level in the
   main column and the sidebar alike: sentence case, no trailing colon, no
   UPPERCASE labels as headings. Breadcrumbs end at the parent page, not the
-  current title.
+  current title. Section headings are plain text: no icon (an icon on every
+  heading is noise, and a wrong one, like a share icon over related events,
+  misleads).
+- **One left edge.** Title, headings, text, cards and buttons in a column
+  start at the same x. Pad the column once (`px-section-x`) and add no side
+  padding inside sections; a horizontal card row bleeds into that padding
+  (`-mx-section-x`) so its first card still lines up.
+- **Red is for the main action.** Secondary buttons (sign in to load,
+  publish, map, calendar next to the main action) are `btn-neutral`, and
+  the "read more" toggle and small text links use
+  `text-foreground-strong`, not red.
 - **Render once.** Don't render a block twice and hide one copy per
   breakpoint: it duplicates headings and ids, and scripts that look up the
   first copy (translation, scroll targets) act on the hidden one. Use one copy
   and move it with layout classes; only a separate sidebar may repeat facts.
+  The same goes for items: an event in the promoted row is left out of the
+  related row below it (paid placement wins).
 - **No layout shift by design.** Decide on the server what renders. Anything
   that appears after load either sits in a fixed overlay or replaces a
   reserved box of the same size. Heights may change only after a tap.

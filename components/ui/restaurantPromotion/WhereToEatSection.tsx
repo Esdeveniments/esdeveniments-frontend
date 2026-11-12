@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { WhereToEatSectionProps, GooglePlace } from "types/api/restaurant";
 import NextImage from "next/image";
-import { FireIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon } from "@heroicons/react/24/outline";
 import { getOptimalImageQuality } from "@utils/image-quality";
 import {
   formatPriceLevelGeneric,
@@ -61,8 +61,6 @@ export default function WhereToEatSection({
       <div className="flex items-center justify-between gap-element-gap">
         <SectionHeading
           headingId="where-to-eat"
-          Icon={FireIcon}
-          iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
           title={t("title")}
           titleClassName="heading-2"
         />
@@ -70,13 +68,13 @@ export default function WhereToEatSection({
           <button
             type="button"
             onClick={onPromoteClick}
-            className="text-xs font-medium text-primary hover:text-primary-dark underline focus:outline-none"
+            className="body-small font-semibold text-foreground-strong underline hover:text-primary"
           >
             {t("promote")}
           </button>
         )}
       </div>
-      <div className="space-y-element-gap  px-section-x">
+      <div className="space-y-element-gap">
         {places.slice(0, 2).map((place: GooglePlace) => {
           const openInfo = getOpenLineInfo(place);
           const price = formatPriceLevelGeneric(place.price_level);
@@ -97,7 +95,7 @@ export default function WhereToEatSection({
               data-analytics-context="where_to_eat"
               data-analytics-place-id={place.place_id}
               data-analytics-place-name={place.name}
-              className="group block border border-border rounded-lg pr-4 py-4 pl-0 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="group block card-bordered pr-4 py-4 pl-0 hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40"
               aria-label={`Obrir ${place.name} a Google Maps`}
             >
               <div className="flex items-start gap-4">

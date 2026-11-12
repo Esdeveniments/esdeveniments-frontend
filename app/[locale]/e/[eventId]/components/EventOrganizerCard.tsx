@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { ChevronRightIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import { Link } from "@i18n/routing";
 import ProfileAvatar from "@components/ui/profile/ProfileAvatar";
@@ -49,7 +49,7 @@ export default function EventOrganizerCard({ owner, compact = false }: EventOrga
       {compact ? (
         <h2 className="heading-4">{t("organizer")}</h2>
       ) : (
-        <SectionHeading Icon={UserCircleIcon} title={t("organizer")} titleClassName="heading-2" />
+        <SectionHeading title={t("organizer")} titleClassName="heading-2" />
       )}
       {profileSlug ? (
         <Link
