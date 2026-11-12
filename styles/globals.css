@@ -548,6 +548,23 @@ p {
     }
   }
 
+  /* An event without an image: the brand mark, small and soft, on the muted
+     surface. A CSS mask, not an image: no request, no <img>, never the LCP.
+     The mark is the red shape of the 2024 logo (logo-esdevenimentscat-svg.svg). */
+  .card-placeholder {
+    --brand-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='30.7 24.2 51.3 70.9'%3E%3Cpath d='M80.9,24.3h-39.6c-.6,0-1.1.2-1.5.6-.4.4-.7.9-.8,1.4l-1.9,15.5c0,.6.4,1.1.9,1.1h.8c1.3.1,2.3.2,2.8.3,4.3.6,7.6,2.4,9.8,5.3,2.2,2.9,3,6.5,2.4,10.9-.7,4.7-2.7,8.6-6.1,11.4-3.4,2.9-7.6,4.3-12.7,4.2-.4,0-.8,0-1.1,0-.5,0-1,.4-1,.9l-2.1,17c-.2,1.2.4,2.1,1.8,2.1h39.9c.5,0,.9-.3,1-.8l8.4-68.8c0-.6-.4-1.1-1-1.1Z'/%3E%3C/svg%3E");
+    @apply flex-center w-full h-full min-h-full bg-muted;
+  }
+
+  .card-placeholder::after {
+    content: "";
+    width: min(28%, 2.5rem);
+    aspect-ratio: 51.3 / 70.9;
+    background-color: theme("colors.primary");
+    opacity: 0.22;
+    mask: var(--brand-mark) center / contain no-repeat;
+  }
+
   /* Hover effects */
   .hover-lift {
     @apply hover:-translate-y-0.5 hover:shadow-card-hover;

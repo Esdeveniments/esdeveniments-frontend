@@ -18,6 +18,14 @@ describe("decorative card image (alt=\"\")", () => {
     expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
   });
 
+  it("placeholder is the CSS brand mark, with no image request", () => {
+    const { container } = render(<ImageServer title="Concert" alt="" />);
+    const placeholder = container.querySelector(".card-placeholder");
+    expect(placeholder).not.toBeNull();
+    expect(placeholder?.getAttribute("style")).toBeNull();
+    expect(container.querySelector("img, picture")).toBeNull();
+  });
+
   it("other callers keep the labelled placeholder", () => {
     const server = render(<ImageServer title="Concert" />);
     expect(server.container.querySelector('[role="img"][aria-label="Concert"]')).not.toBeNull();
