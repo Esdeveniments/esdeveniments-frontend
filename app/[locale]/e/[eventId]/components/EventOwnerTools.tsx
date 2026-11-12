@@ -79,7 +79,8 @@ export default function EventOwnerTools({ slug, shareEvent }: EventOwnerToolsPro
           </MenuButton>
           <MenuItems
             anchor={{ to: "bottom end", gap: 4, padding: 8 }}
-            className="z-50 w-56 card-elevated p-1 focus:outline-none"
+            transition
+            className="z-50 w-56 card-elevated p-1 focus:outline-none origin-top-right data-[anchor^=top]:origin-bottom-right transition-modal data-[closed]:opacity-0 data-[closed]:scale-95 data-[leave]:duration-fast"
           >
             <MenuItem>
               <button

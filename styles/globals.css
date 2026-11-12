@@ -322,7 +322,7 @@ p {
   /* Mobile bottom-nav link: 44px touch target with a round hover/focus ring.
      One short class keeps each link's HTML small (see ActiveLink). */
   .bottom-nav-link {
-    @apply flex justify-center items-center p-3 rounded-full min-w-[44px] min-h-[44px] hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply flex justify-center items-center p-3 rounded-full min-w-[44px] min-h-[44px] hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
   }
 
   .flex-between {
@@ -407,7 +407,7 @@ p {
   /* ===================================== */
 
   .transition-interactive {
-    @apply transition-all duration-fast ease-smooth;
+    @apply transition duration-fast ease-smooth;
   }
 
   .transition-card {
@@ -494,6 +494,48 @@ p {
      The dialog is in the top layer, so the bottom bar is not under it. */
   .events-map-sheet {
     padding: 0.5rem 0.5rem calc(0.5rem + var(--mobile-nav-safe-area));
+  }
+
+  /* Full-screen map dialog (EventsMapToggle): the shared Modal's motion,
+     a 16px rise on phones and a slight zoom from md up (98%: a full-screen
+     panel at 95% would show a band of page around it). */
+  .events-map-dialog {
+    @apply transition-modal;
+  }
+
+  /* A transition takes the duration of the style it moves to: 100ms out. */
+  .events-map-dialog[data-closed] {
+    @apply opacity-0 translate-y-4 duration-fast;
+  }
+
+  @screen md {
+    .events-map-dialog[data-closed] {
+      @apply translate-y-0 scale-[0.98];
+    }
+  }
+
+  /* <details> that slide open and shut. Only where height: auto can be
+     animated (Chrome 129+); elsewhere they toggle at once, as before. The
+     global reduced-motion rule can't reach ::details-content, hence the
+     media query. */
+  @supports (interpolate-size: allow-keywords) {
+    @media (prefers-reduced-motion: no-preference) {
+      .details-animated {
+        interpolate-size: allow-keywords;
+      }
+
+      .details-animated::details-content {
+        height: 0;
+        overflow: clip;
+        transition:
+          height 250ms theme("transitionTimingFunction.out-strong"),
+          content-visibility 250ms theme("transitionTimingFunction.out-strong") allow-discrete;
+      }
+
+      .details-animated[open]::details-content {
+        height: auto;
+      }
+    }
   }
 
   /* Keep the map credits and other bottom controls above the mobile sheet. */
@@ -825,107 +867,55 @@ video {
   height: 100%;
 }
 
-/* Custom animations */
+/* Entrances for menus and popovers that mount when opened and unmount at
+   once when closed. Same curve and entry time as the shared Modal (DESIGN.md
+   › Motion). Anything that also animates out uses `.transition-modal` on a
+   `data-closed` state instead (usePresenceTransition): a transition reverses
+   from wherever it is, a keyframe would jump. */
 @keyframes appear {
   from {
     opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
+    transform: scale(0.96);
   }
 }
 
 .animate-appear {
-  animation: appear 0.3s ease-out;
-}
-
-.animate-disappear {
-  animation: appear 0.3s ease-in reverse forwards;
-}
-
-@keyframes dropdownIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-dropdown-in {
-  transform-origin: top;
-  animation: dropdownIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animate-fade-in-fast {
-  animation: fadeIn 100ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-slide-up {
-  animation: slideUp 0.35s ease-out;
-}
-
-.animate-slide-down {
-  animation: slideUp 0.3s ease-in reverse forwards;
-}
-
-/* View Transitions */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+  animation: appear 200ms theme("transitionTimingFunction.out-strong");
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
-  to {
-    opacity: 1;
+}
+
+.animate-fade-in-fast {
+  animation: fadeIn 100ms theme("transitionTimingFunction.out-strong");
+}
+
+/* Cards added by "Load more" (HybridEventsListClient) rise 8px into place,
+   staggered by column. Only with motion allowed: the global reduced-motion
+   rule zeroes durations but not delays, so staggered cards would sit
+   invisible for up to 80ms. */
+@keyframes listItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 
-/* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
-::view-transition-old(root) {
-  animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fadeOut;
-}
+@media (prefers-reduced-motion: no-preference) {
+  .list-appended > section > .content-auto {
+    animation: listItemIn 200ms theme("transitionTimingFunction.out-strong") backwards;
+  }
 
-/* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
-::view-transition-new(root) {
-  animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fadeIn;
+  .list-appended > section > .content-auto:nth-child(3n + 2) {
+    animation-delay: 40ms;
+  }
+
+  .list-appended > section > .content-auto:nth-child(3n + 3) {
+    animation-delay: 80ms;
+  }
 }
 
 /* Content visibility optimization for off-screen elements */

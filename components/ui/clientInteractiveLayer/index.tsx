@@ -59,7 +59,7 @@ function ClientInteractiveLayerContent({
       {/* Fixed Search and Filters Bar */}
       <div
         ref={followScrollLockPadding}
-        className={`w-full bg-background fixed inset-x-0 top-0 z-sticky transition-transform duration-500 ease-in-out ${stickyClasses} flex justify-center items-center md:pt-element-gap-sm`}
+        className={`w-full bg-background fixed inset-x-0 top-0 z-sticky transition-transform duration-normal ease-out-strong ${stickyClasses} flex justify-center items-center md:pt-element-gap-sm`}
       >
         <div className="container flex flex-col justify-center items-center md:items-start">
           <Suspense

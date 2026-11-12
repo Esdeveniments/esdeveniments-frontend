@@ -29,7 +29,7 @@ const EventMedia: React.FC<EventMediaProps> = ({ event, title }) => {
   if (event.imageUrl) {
     return (
       <div className="w-full">
-        <EventImage image={event.imageUrl} title={title} eventId={event.id} />
+        <EventImage image={event.imageUrl} title={title} />
       </div>
     );
   }

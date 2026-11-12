@@ -184,11 +184,11 @@ export default async function PatrocinaPage() {
             {faqs.map((faq) => (
               <details
                 key={faq}
-                className="card-bordered card-body group"
+                className="details-animated card-bordered card-body group"
               >
                 <summary className="heading-4 cursor-pointer list-none flex justify-between items-center">
                   {t(`faq.items.${faq}.question`)}
-                  <span className="text-muted-foreground group-open:rotate-180 transition-transform">
+                  <span className="text-muted-foreground group-open:rotate-180 transition-transform duration-normal ease-out-strong">
                     ▼
                   </span>
                 </summary>

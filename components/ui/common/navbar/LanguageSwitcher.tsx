@@ -32,7 +32,7 @@ function LanguageMenu({ options, locale, onSelect }: LanguageMenuProps) {
   const pathname = usePathname();
 
   return (
-    <div className="absolute right-0 z-dropdown mt-2 w-32 origin-top-right rounded-card bg-background border border-border shadow-dropdown focus:outline-none">
+    <div className="absolute right-0 z-dropdown mt-2 w-32 origin-top-right animate-appear rounded-card bg-background border border-border shadow-dropdown focus:outline-none">
       <div className="py-1">
         {options.map((option) => (
           <Link

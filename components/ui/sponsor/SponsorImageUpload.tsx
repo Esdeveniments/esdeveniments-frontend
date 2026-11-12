@@ -411,7 +411,7 @@ export default function SponsorImageUpload({
               onDrop={handleDrop}
               className={`
                 relative border-2 border-dashed rounded-card p-8 text-center cursor-pointer
-                transition-all duration-200
+                transition duration-200
                 ${
                   isDragging
                     ? "border-primary bg-primary/5"
@@ -531,8 +531,8 @@ export default function SponsorImageUpload({
               <div className="space-y-2">
                 <div className="w-full h-2 bg-muted rounded-badge overflow-hidden">
                   <div
-                    className="h-2 bg-primary transition-all duration-150"
-                    style={{ width: `${progress}%` }}
+                    className="h-2 w-full origin-left bg-primary transition-transform duration-150 ease-linear"
+                    style={{ transform: `scaleX(${progress / 100})` }}
                   />
                 </div>
                 <p className="body-small text-muted-foreground text-center">

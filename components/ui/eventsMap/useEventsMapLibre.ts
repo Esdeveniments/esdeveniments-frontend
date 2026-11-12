@@ -13,6 +13,7 @@ import {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { sendGoogleEvent } from "@utils/analytics";
+import { prefersReducedMotion } from "@utils/browser";
 import {
   EVENTS_MAP_CLICK_LAYERS,
   EVENTS_MAP_MAX_ZOOM,
@@ -37,8 +38,7 @@ const LOAD_TIMEOUT_MS = 12_000;
 const HIT_PX = 16;
 const PADDING = 48;
 
-const motion = () =>
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 500;
+const motion = () => (prefersReducedMotion() ? 0 : 500);
 
 const boundsOf = (points: EventMapPoint[]) =>
   points.reduce((b, p) => b.extend([p.lon, p.lat]), new LngLatBounds());

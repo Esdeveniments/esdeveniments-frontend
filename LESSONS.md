@@ -1003,3 +1003,26 @@ on `unstable_isUnrecognizedActionError` (safe: the action never ran). The key
 must be set at build time: Coolify only runs the image, and a runtime value
 there doesn't change the IDs. `deploymentId` doesn't help here; it only reloads
 on navigations (and see `docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md`).
+
+## Reversible motion uses transitions; reduced motion misses delays and pseudo-elements
+A surface that animates both in and out (toast, popup, map dialog) uses CSS
+transitions on a `data-closed` state (`usePresenceTransition`, or by hand on
+a native `<dialog>`), not an enter keyframe and an exit keyframe: closing
+during the entrance made the keyframe version jump back to fully open before
+leaving (opacity 0.33 → 1 in a Nov 2026 test). Unmount when the transition
+ends (`afterTransitions`), never after a fixed timer: a 150ms timer on a 100ms
+exit left an invisible overlay catching taps. Don't reach for Headless UI
+`Transition` in a component that loads on every page (the favourites nudge):
+it put a 21 KB gzip chunk on home and listings. The global `prefers-reduced-motion`
+rule in `styles/globals.css` zeroes durations on `*` only, so put staggered
+`animation-delay`s and `::details-content` transitions inside
+`prefers-reduced-motion: no-preference`. In jsdom, React listens for
+`webkitAnimationEnd` (no `AnimationEvent`), so a test fires that name.
+
+## No card → event page morph with `<ViewTransition>`
+React 19.3's `<ViewTransition>` (no Next flag since 16.3) pairs a shared
+element only when the destination renders in the navigation's commit, i.e.
+when it's fully prefetched. With `partialPrefetching` and no `prefetch={true}`,
+the event page suspends into its skeleton first, so a card → hero morph never
+plays. The unused `viewTransitionName` and `::view-transition` CSS were removed
+(Nov 2026). Revisit only if the event page can render in that commit.

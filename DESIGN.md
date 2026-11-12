@@ -839,10 +839,25 @@ that enter or leave (the shared `Modal`) use `out-strong`,
 `cubic-bezier(0.23, 1, 0.32, 1)`: 200ms in, 100ms out, backdrop fading with
 the panel, a 16px rise on mobile and a 95% scale from `sm` up. Opening a
 modal on a section (a filter chip) jumps there instantly; don't animate the
-scroll. A `bounce-subtle` easing exists but is reserved for confirmations —
-favoriting an event, copying a share link. View Transitions fade the page
-root: 90ms ease-in out, 210ms ease-out in (delayed 90ms). Every transition
-collapses to 0ms under `prefers-reduced-motion: reduce`.
+scroll. Everything else that both enters and leaves moves the same way,
+`.transition-modal` on a `data-closed` state (`usePresenceTransition`; the
+native map `<dialog>` does the same by hand): the bottom toasts rise from and sink to the
+bottom edge, the follow popup and the map behave like the `Modal` (the map
+zooms from 98%, being full screen). Transitions, not keyframes, because a
+close that starts mid-open must reverse from where it is. Menus that unmount
+at once on close (share, add to calendar, language) only animate in:
+`animate-appear`, from 96% at the corner that touches their button.
+"Load more" cards rise 8px into place, 40ms apart per column; filtered
+results and server-rendered cards never animate. A `bounce-subtle` easing
+exists but is reserved for confirmations — favoriting an event (the heart
+beats only after a tap, never when the page loads), copying a share link.
+Hover styles apply only on devices that hover (`future.hoverOnlyWhenSupported`
+in `tailwind.config.js`), so a tap never leaves one behind. There are no page
+transitions: `<ViewTransition>` can't pair a card with its event page here
+(LESSONS.md). Every transition collapses to 0ms under
+`prefers-reduced-motion: reduce`; JS scrolls use `smoothScrollBehavior()`
+(`utils/browser.ts`), and motion that rule can't reach (delays,
+`::details-content`) sits inside `prefers-reduced-motion: no-preference`.
 
 ## Page composition
 
