@@ -67,9 +67,12 @@ describe("PromotionReturnPage", () => {
     );
   });
 
-  it("on success, still says the payment is being confirmed", async () => {
+  it("on success, says the payment is being confirmed and offers nothing to buy", async () => {
     await renderReturnPage("success");
 
     expect(screen.getByText(/Estem confirmant el pagament/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Actualitza l'estat" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Continua el pagament" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Tria una altra opció" })).toBeNull();
   });
 });
