@@ -51,6 +51,7 @@ COPY . .
 RUN --mount=type=secret,id=HMAC_SECRET,env=HMAC_SECRET,required=true \
     --mount=type=secret,id=BACKEND_SERVICE_SECRET,env=BACKEND_SERVICE_SECRET,required=true \
     --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN \
+    --mount=type=secret,id=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY,env=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY,required=true \
     node scripts/verify-backend-build.mjs && yarn prebuild && yarn build
 
 FROM base AS runner

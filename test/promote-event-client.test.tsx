@@ -1,11 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { UnrecognizedActionError } from "next/dist/client/components/unrecognized-action-error";
 import PromoteEventClient from "../app/[locale]/e/[eventId]/promote/PromoteEventClient";
 import type { PromotionOptionDTO, PromotionOptionsDTO } from "types/api/promotion";
 
 const mockCheckout = vi.fn();
 vi.mock("../app/[locale]/e/[eventId]/promote/actions", () => ({
   createPromotionCheckoutAction: (...args: unknown[]) => mockCheckout(...args),
+}));
+const mockRefresh = vi.fn();
+vi.mock("@i18n/routing", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@i18n/routing")>()),
+  useRouter: () => ({ refresh: mockRefresh }),
 }));
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: vi.fn(),
@@ -77,6 +83,7 @@ const renderMultiScope = () =>
 describe("PromoteEventClient", () => {
   beforeEach(() => {
     mockCheckout.mockReset();
+    mockRefresh.mockReset();
   });
 
   it("tracks begin_checkout and saves the order for the purchase event", async () => {
@@ -155,6 +162,62 @@ describe("PromoteEventClient", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Aquest esdeveniment ja està promocionat.",
     );
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("re-renders on a pending checkout so its resume link can show", async () => {
+    mockCheckout.mockResolvedValue({ ok: false, code: "CHECKOUT_ALREADY_PENDING" });
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{ ok: true, data: catalog }}
+        pendingCheckoutUrl={null}
+        placeNames={placeNames}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("promote-confirm-button"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Ja tens un pagament pendent per a aquest esdeveniment.",
+    );
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("reloads instead of showing an error when a deploy removed the action", async () => {
+    const original = window.location;
+    const reload = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: { ...original, reload },
+      configurable: true,
+      writable: true,
+    });
+    mockCheckout.mockRejectedValue(
+      new UnrecognizedActionError('Server Action "abc" was not found on the server.'),
+    );
+    try {
+      render(
+        <PromoteEventClient
+          eventId="uuid-1"
+          slug="concert"
+          options={{ ok: true, data: catalog }}
+          pendingCheckoutUrl={null}
+          placeNames={placeNames}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId("promote-confirm-button"));
+
+      await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+      expect(screen.queryByRole("alert")).toBeNull();
+    } finally {
+      Object.defineProperty(window, "location", {
+        value: original,
+        configurable: true,
+        writable: true,
+      });
+    }
   });
 
   it("renders one tab per scope in order, labelled with the event's places", () => {

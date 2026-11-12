@@ -271,6 +271,23 @@ jobs:
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
 
+      # Next derives Server Action IDs from this key at build time. Without a
+      # fixed key every deploy changes them, and pages already open in a browser
+      # fail with "Failed to find Server Action" (promote checkout, publish,
+      # edit). An empty secret would still mount, so check it here.
+      - name: Verify Server Actions encryption key
+        env:
+          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+        run: |
+          set -o pipefail
+          if ! len=$(printf '%s' "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" | base64 -d 2>/dev/null | wc -c | tr -d '[:space:]'); then
+            len=invalid
+          fi
+          case "$len" in
+            16|24|32) echo "Server Actions encryption key is set ($len bytes)" ;;
+            *) echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY must be base64 of 16, 24 or 32 bytes (got: $len). Generate one with: openssl rand -base64 32"; exit 1 ;;
+          esac
+
       - name: Compute lowercase image name
         id: meta
         run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
@@ -320,6 +337,7 @@ jobs:
             HMAC_SECRET=${{ secrets.HMAC_SECRET }}
             BACKEND_SERVICE_SECRET=${{ secrets.BACKEND_SERVICE_SECRET }}
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
           build-args: |
             BUILD_VERSION=${{ github.sha }}
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
