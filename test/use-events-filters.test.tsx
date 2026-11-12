@@ -275,10 +275,11 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("sends price=FREE when price is gratis", async () => {
+  it("sends free=true when price is gratis", async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input), "http://localhost");
-      expect(url.searchParams.get("price")).toBe("FREE");
+      expect(url.searchParams.get("free")).toBe("true");
+      expect(url.searchParams.has("price")).toBe(false);
       return new Response(
         JSON.stringify({
           content: [createMockEvent("p1", "Free Event", "free-event")],
@@ -314,10 +315,11 @@ describe("useEvents filtered behaviour", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("sends price=PAID when price is pagament", async () => {
+  it("sends free=false when price is pagament", async () => {
     const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input), "http://localhost");
-      expect(url.searchParams.get("price")).toBe("PAID");
+      expect(url.searchParams.get("free")).toBe("false");
+      expect(url.searchParams.has("price")).toBe(false);
       return new Response(
         JSON.stringify({
           content: [createMockEvent("p2", "Paid Event", "paid-event")],

@@ -10,7 +10,6 @@ import type { CitySummaryResponseDTO } from "./api/city";
 import type { CategorySummaryResponseDTO } from "./api/category";
 import type { DateRange, DeleteReason, Option } from "./common";
 import type { AppLocale } from "./i18n";
-import type { PriceFilterApiValue } from "./url-filters";
 
 // Helper schemas for form validation
 const OptionSchema = z.object({ value: z.string(), label: z.string() });
@@ -168,7 +167,7 @@ export interface FetchEventsParams {
   to?: string; // End date
   isToday?: boolean;
   profileSlug?: string; // Filter events by profile/venue slug
-  price?: PriceFilterApiValue; // Backend free/paid filter
+  free?: boolean; // Backend free/paid filter: true = free or unknown price, false = paid
   // Note: API expects 'term' for search queries
 }
 

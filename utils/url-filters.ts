@@ -13,14 +13,13 @@ import type {
   RouteSegments,
   URLQueryParams,
   ParsedFilters,
-  PriceFilterApiValue,
   PriceFilterValue,
 } from "types/url-filters";
 import { isValidDateSlug } from "@lib/dates";
 import { isValidCategorySlugFormat } from "./category-mapping";
 import {
   DEFAULT_FILTER_VALUE,
-  PRICE_FILTER_API_VALUES,
+  PRICE_FILTER_FREE_PARAM,
   MAX_QUERY_PARAMS,
   MAX_PARAM_VALUE_LENGTH,
   MAX_PARAM_KEY_LENGTH,
@@ -345,14 +344,14 @@ export function urlToFilterState(parsed: ParsedFilters): URLFilterState {
 export function isPriceFilterValue(
   value: string | undefined,
 ): value is PriceFilterValue {
-  return value !== undefined && Object.hasOwn(PRICE_FILTER_API_VALUES, value);
+  return value !== undefined && Object.hasOwn(PRICE_FILTER_FREE_PARAM, value);
 }
 
-/** Backend `price` param for a `?price=` value; undefined for "tots" or junk. */
-export function toPriceFilterApiValue(
+/** Backend `free` param for a `?price=` value; undefined for "tots" or junk. */
+export function toFreeFilterParam(
   value: string | undefined,
-): PriceFilterApiValue | undefined {
-  return isPriceFilterValue(value) ? PRICE_FILTER_API_VALUES[value] : undefined;
+): boolean | undefined {
+  return isPriceFilterValue(value) ? PRICE_FILTER_FREE_PARAM[value] : undefined;
 }
 
 /**

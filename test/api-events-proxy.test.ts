@@ -38,7 +38,7 @@ describe("/api/events proxy", () => {
     });
 
     const req = new Request(
-      "http://localhost/api/events?page=-5&size=100&place=barcelona&category=music&byDate=avui&lat=41.3&lon=2.1&radius=999&term=rock&from=2025-01-01&to=2025-01-31&price=FREE",
+      "http://localhost/api/events?page=-5&size=100&place=barcelona&category=music&byDate=avui&lat=41.3&lon=2.1&radius=999&term=rock&from=2025-01-01&to=2025-01-31&free=false",
     );
     const res = await GET(req);
 
@@ -61,7 +61,7 @@ describe("/api/events proxy", () => {
     expect(params.lat).toBeCloseTo(41.3);
     expect(params.lon).toBeCloseTo(2.1);
     expect(params.radius).toBeCloseTo(999);
-    expect(params.price).toBe("FREE");
+    expect(params.free).toBe(false);
   });
 
   it("ignores invalid numeric params", async () => {
@@ -79,7 +79,7 @@ describe("/api/events proxy", () => {
     });
 
     const req = new Request(
-      "http://localhost/api/events?page=abc&size=xyz&lat=NaN&lon=NaN&radius=foo&price=free",
+      "http://localhost/api/events?page=abc&size=xyz&lat=NaN&lon=NaN&radius=foo&free=junk",
     );
     await GET(req);
 
@@ -89,7 +89,7 @@ describe("/api/events proxy", () => {
     expect(params.lat).toBeUndefined();
     expect(params.lon).toBeUndefined();
     expect(params.radius).toBeUndefined();
-    // The backend only takes FREE/PAID and answers 400 to anything else
-    expect(params.price).toBeUndefined();
+    // The backend only takes true/false and answers 400 to anything else
+    expect(params.free).toBeUndefined();
   });
 });
