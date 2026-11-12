@@ -12,7 +12,8 @@ const CalendarButton: React.FC<CalendarButtonProps> = ({
   iconOnly = false,
   fullWidth = false,
 }) => {
-  const iconColor = variant === "primary" ? "" : "text-primary";
+  // Outline and primary color the icon through currentColor (and invert on hover).
+  const iconColor = variant === "neutral" ? "text-primary" : "";
   const sizeClass = iconOnly ? "h-button w-button p-0" : fullWidth ? "w-full" : "";
 
   return (
