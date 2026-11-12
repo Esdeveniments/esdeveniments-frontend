@@ -102,7 +102,12 @@ export default function EventLocation({
           </div>
         )}
         {isPreciseVenue && (
-          <EventLocationClient location={location} cityName={cityLabel} regionName={regionLabel}>
+          <EventLocationClient
+            location={location}
+            cityName={cityLabel}
+            regionName={regionLabel}
+            coords={venueCoords}
+          >
             {directionsUrl && (
               <a
                 href={directionsUrl}

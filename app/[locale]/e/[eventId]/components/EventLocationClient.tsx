@@ -16,6 +16,7 @@ export default function EventLocationClient({
   location,
   cityName,
   regionName,
+  coords,
   children,
 }: EventMapsProps & { children?: ReactNode }) {
   const t = useTranslations("Components.EventLocation");
@@ -40,7 +41,7 @@ export default function EventLocationClient({
       <div id={mapId} hidden={!showMap}>
         {showMap && (
           <div className="h-[400px] w-full overflow-hidden rounded-card bg-muted">
-            <Maps location={location} cityName={cityName} regionName={regionName} />
+            <Maps location={location} cityName={cityName} regionName={regionName} coords={coords} />
           </div>
         )}
       </div>

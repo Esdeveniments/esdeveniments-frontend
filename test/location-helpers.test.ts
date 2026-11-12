@@ -59,15 +59,15 @@ describe("buildDisplayLocation", () => {
     expect(result).toBe("Sala Apolo");
   });
 
-  it("falls back to first unique segment when all hidden", () => {
+  it("returns nothing when every segment is hidden", () => {
     const result = buildDisplayLocation({
       location: "Barcelona",
       cityName: "Barcelona",
       regionName: "",
       hidePlaceSegments: true,
     });
-    // When location matches city and city is hidden, falls back
-    expect(result).toBe("Barcelona");
+    // The city is already shown as a link, so no address line.
+    expect(result).toBe("");
   });
 });
 

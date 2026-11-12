@@ -26,8 +26,10 @@ export const NEWS_CITIES_LIMIT = 100;
 // multi-venue strings run to ~150 chars).
 export const NEWS_EVENT_EXCERPT_MAX_LENGTH = 220;
 export const EVENT_VENUE_LABEL_MAX_LENGTH = 60;
-// Event descriptions longer than this (plain text) fold on mobile behind "Llegeix més".
+// Event descriptions longer than this fold on mobile behind "Llegeix més". Each
+// line break counts as a full mobile line, so a list of short lines folds too.
 export const EVENT_DESCRIPTION_FOLD_CHARS = 400;
+export const EVENT_DESCRIPTION_LINE_CHARS = 45;
 
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;

@@ -38,7 +38,7 @@ describe("buildDisplayLocation", () => {
     expect(result).toBe("Recinte firal, Vic, Osona");
   });
 
-  it("falls back to first segment when everything else is hidden", () => {
+  it("returns nothing when every segment is shown as a link", () => {
     const result = buildDisplayLocation({
       location: "Mataró",
       cityName: "Mataró",
@@ -46,7 +46,7 @@ describe("buildDisplayLocation", () => {
       hidePlaceSegments: true,
     });
 
-    expect(result).toBe("Mataró");
+    expect(result).toBe("");
   });
 });
 

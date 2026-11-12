@@ -100,7 +100,12 @@ const AddToCalendar: React.FC<AddToCalendarProps> = ({
   useOutsideClick(containerRef, () => setShowAgendaList(false));
 
   return (
-    <div ref={containerRef} className={fullWidth ? "relative w-full" : "relative"}>
+    <div
+      ref={containerRef}
+      // "above-end" anchors the menu to the caller's positioned ancestor (the
+      // whole action group), so it can't overflow a narrow phone's left edge.
+      className={`${placement === "above-end" ? "" : "relative"} ${fullWidth ? "w-full" : ""}`}
+    >
       <CalendarButton
         onClick={toggleAgendaList}
         open={showAgendaList}

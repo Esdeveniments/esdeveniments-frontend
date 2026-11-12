@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { processDescription } from "@utils/text-processing";
+import { isLongDescription, processDescription } from "@utils/text-processing";
 import { sanitizeHtml } from "@utils/sanitize";
 
 describe("processDescription", () => {
@@ -21,5 +21,22 @@ describe("processDescription", () => {
   it("still lets the sanitizer drop markup injected inside bold", () => {
     const html = sanitizeHtml(processDescription("**<img src=x onerror=alert(1)>hola**"));
     expect(html).not.toContain("onerror");
+  });
+});
+
+describe("isLongDescription", () => {
+  it("keeps a short paragraph unfolded", () => {
+    expect(isLongDescription("Concert a la plaça.")).toBe(false);
+  });
+
+  it("folds long plain text", () => {
+    expect(isLongDescription("a".repeat(401))).toBe(true);
+  });
+
+  it.each([
+    ["plain-text lines", Array(10).fill("18 h: acte").join("\n")],
+    ["HTML paragraphs", Array(10).fill("<p>18 h: acte</p>").join("")],
+  ])("folds many short %s", (_, text) => {
+    expect(isLongDescription(text)).toBe(true);
   });
 });

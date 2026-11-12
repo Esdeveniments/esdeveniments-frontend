@@ -38,8 +38,7 @@ import EventCategories from "./components/EventCategories";
 import EventsAroundSection from "@components/ui/eventsAround/EventsAroundSection";
 import { buildDisplayLocation, getEventVenue } from "@utils/location-helpers";
 import { getEventVenueCoords } from "@utils/event-map";
-import { stripHtmlTags } from "@utils/sanitize";
-import { EVENT_DESCRIPTION_FOLD_CHARS } from "@utils/constants";
+import { isLongDescription } from "@utils/text-processing";
 import {
   buildEventIntroText,
   formatCatalanA,
@@ -463,8 +462,7 @@ async function EventPageBody({
     regionName: cityName ? "" : regionName,
   });
   // Short texts show whole; long ones fold on mobile behind "Llegeix més".
-  const isLongDescription =
-    stripHtmlTags(`${introText ?? ""} ${event.description ?? ""}`).length > EVENT_DESCRIPTION_FOLD_CHARS;
+  const isLongText = isLongDescription(`${introText ?? ""}\n${event.description ?? ""}`);
 
   return (
     <>
@@ -572,7 +570,7 @@ async function EventPageBody({
                 </div>
 
                 <DetailSectionTracker section="description">
-                  <CollapsibleDescription collapsible={isLongDescription}>
+                  <CollapsibleDescription collapsible={isLongText}>
                     <EventDescription
                       slug={event.slug}
                       description={event.description}

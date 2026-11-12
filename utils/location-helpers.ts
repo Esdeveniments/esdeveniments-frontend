@@ -89,7 +89,8 @@ export const buildDisplayLocation = ({
     return displaySegments.join(", ");
   }
 
-  return uniqueSegments[0] ?? location;
+  // Every segment is a city or region the caller already shows as a link.
+  return hidePlaceSegments ? "" : (uniqueSegments[0] ?? location);
 };
 
 export const buildEventLocationLabels = ({

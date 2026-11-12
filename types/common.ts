@@ -262,7 +262,7 @@ export interface AddToCalendarProps {
   shortLabel?: boolean;
   /** Stretch the button to its container (sidebar card). */
   fullWidth?: boolean;
-  /** "above-end" opens the menu upwards, aligned right (bottom action bar). */
+  /** "above-end" opens the menu upwards, aligned to the right edge of the nearest positioned ancestor (bottom action bar). */
   placement?: CalendarListPlacement;
   /** Sent as GA `source` with add_to_calendar_view / add_to_calendar. */
   source?: string;

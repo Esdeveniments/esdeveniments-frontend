@@ -2,6 +2,23 @@
  * Text processing utilities for handling user-generated content
  */
 
+import { stripHtmlTags } from "./sanitize";
+import {
+  EVENT_DESCRIPTION_FOLD_CHARS,
+  EVENT_DESCRIPTION_LINE_CHARS,
+} from "./constants";
+
+const LINE_BREAK = /\n|<br\s*\/?>|<\/(p|li|h[1-6]|div)>/gi;
+
+/** Whether a description (plain text or HTML) is taller than the mobile fold. */
+export function isLongDescription(text: string): boolean {
+  const lineBreaks = text.match(LINE_BREAK)?.length ?? 0;
+  return (
+    stripHtmlTags(text).length + lineBreaks * EVENT_DESCRIPTION_LINE_CHARS >
+    EVENT_DESCRIPTION_FOLD_CHARS
+  );
+}
+
 /**
  * Processes text description by converting URLs to clickable links and line breaks to HTML breaks
  * @param description - The raw text description to process

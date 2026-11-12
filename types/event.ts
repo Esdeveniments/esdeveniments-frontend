@@ -321,6 +321,8 @@ export interface EventMapsProps {
   location: string;
   cityName: string;
   regionName: string;
+  /** Exact venue point; wins over the text query. */
+  coords?: { lat: number; lon: number } | null;
 }
 
 export interface EventWeatherProps {

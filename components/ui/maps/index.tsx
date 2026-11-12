@@ -1,11 +1,15 @@
 import { useEffect, useRef, FC, RefObject } from "react";
 import type { EventMapsProps } from "types/event";
 
-const Maps: FC<EventMapsProps> = ({ location, cityName, regionName }) => {
+const Maps: FC<EventMapsProps> = ({ location, cityName, regionName, coords }) => {
   const mapRef = useRef<HTMLDivElement | null>(
     null
   ) as RefObject<HTMLDivElement>;
-  const query = encodeURIComponent(`${location}, ${cityName}, ${regionName}`);
+  const query = encodeURIComponent(
+    coords
+      ? `${coords.lat},${coords.lon}`
+      : [location, cityName, regionName].filter(Boolean).join(", "),
+  );
 
   useEffect(() => {
     const map = mapRef.current;
