@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEventExcerpt } from "@utils/event-excerpt";
+import { buildEventExcerpt, descriptionToPlainText } from "@utils/event-excerpt";
 import { NEWS_EVENT_EXCERPT_MAX_LENGTH } from "@utils/constants";
 
 // Real descriptions from a Barcelona weekend article (Nov 2026), cut at 700 chars.
@@ -110,5 +110,13 @@ describe("buildEventExcerpt", () => {
   it("returns short text as is and empty input as an empty string", () => {
     expect(buildEventExcerpt("Una nit de jazz.", "Jazz al parc")).toBe("Una nit de jazz.");
     expect(buildEventExcerpt(null, "Jazz al parc")).toBe("");
+  });
+});
+
+describe("descriptionToPlainText", () => {
+  it("keeps only the text of a link whose URL has parentheses", () => {
+    expect(
+      descriptionToPlainText("Vegeu [Foc](https://en.wikipedia.org/wiki/Foc_(festa)) avui"),
+    ).toBe("Vegeu Foc avui");
   });
 });

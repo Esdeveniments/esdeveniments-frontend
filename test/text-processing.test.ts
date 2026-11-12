@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLongDescription, processDescription } from "@utils/text-processing";
+import { descriptionFold, processDescription } from "@utils/text-processing";
 import { sanitizeHtml } from "@utils/sanitize";
 
 describe("processDescription", () => {
@@ -60,19 +60,26 @@ describe("processDescription", () => {
   });
 });
 
-describe("isLongDescription", () => {
+describe("descriptionFold", () => {
   it("keeps a short paragraph unfolded", () => {
-    expect(isLongDescription("Concert a la plaça.")).toBe(false);
+    expect(descriptionFold("Concert a la plaça.")).toBe("none");
   });
 
-  it("folds long plain text", () => {
-    expect(isLongDescription("a".repeat(401))).toBe(true);
+  it("folds long plain text on mobile only", () => {
+    expect(descriptionFold("a".repeat(401))).toBe("mobile");
   });
 
   it.each([
     ["plain-text lines", Array(10).fill("18 h: acte").join("\n")],
     ["HTML paragraphs", Array(10).fill("<p>18 h: acte</p>").join("")],
-  ])("folds many short %s", (_, text) => {
-    expect(isLongDescription(text)).toBe(true);
+  ])("folds many short %s on mobile only", (_, text) => {
+    expect(descriptionFold(text)).toBe("mobile");
+  });
+
+  it.each([
+    ["long text", "a".repeat(2401)],
+    ["a long programme", Array(30).fill("18 h: acte").join("\n")],
+  ])("folds %s on desktop too", (_, text) => {
+    expect(descriptionFold(text)).toBe("all");
   });
 });

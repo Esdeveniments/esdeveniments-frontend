@@ -35,7 +35,7 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
-import type { ActiveLinkProps, ImageSizeContext } from "types/common";
+import type { ActiveLinkProps, DescriptionFold, ImageSizeContext } from "types/common";
 
 /**
  * Props for ClientImageInner component
@@ -1120,7 +1120,7 @@ export type ClientEventClientProps = EventClientProps;
 
 // Description wrapper: clamped on mobile when long (decided on the server)
 export interface CollapsibleDescriptionProps {
-  collapsible: boolean;
+  fold: DescriptionFold;
   children: ReactNode;
 }
 

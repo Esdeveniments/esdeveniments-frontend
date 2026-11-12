@@ -117,6 +117,9 @@ export interface PlaceTypeAndLabel {
   regionSlug?: string;
 }
 
+/** Where a long event description starts clamped behind "Llegeix més". */
+export type DescriptionFold = "none" | "mobile" | "all";
+
 export type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
 export type PlaceType = "region" | "town" | "";
 

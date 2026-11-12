@@ -233,7 +233,7 @@ describe("buildEventIntroText", () => {
 
     it("quotes the title as written, with no guessed article or case change", async () => {
       expect(await intro('ALUMNAT DE BLANC DE GUIX. "Marges"')).toMatch(
-        /^«ALUMNAT DE BLANC DE GUIX\. "Marges"» se celebra /,
+        /^«ALUMNAT DE BLANC DE GUIX\. “Marges”» se celebra /,
       );
       expect(await intro("Bibliobus")).toMatch(/^«Bibliobus» se celebra /);
       expect(await intro("Taller d'urban sketching (dibuix urbà)")).toContain(
@@ -243,7 +243,7 @@ describe("buildEventIntroText", () => {
 
     it("drops outer quotes, extra spaces and closing punctuation", async () => {
       expect(await intro('  "Marges"  ')).toMatch(/^«Marges» /);
-      expect(await intro('"A" i "B"')).toMatch(/^«"A" i "B"» /);
+      expect(await intro('"A" i "B"')).toMatch(/^«“A” i “B”» /);
       expect(await intro("Taller de  salut.")).toMatch(/^«Taller de salut» /);
       expect(await intro("Viatgem al Castell!")).toMatch(/^«Viatgem al Castell!» /);
     });
@@ -257,9 +257,9 @@ describe("buildEventIntroText", () => {
     });
 
     it("uses the locale's quotes and verb", async () => {
-      const event = createTestEvent({ title: "Fira", city: MOCK_CITIES.barcelona, region: undefined });
+      const event = createTestEvent({ title: 'Fira "Nadal"', city: MOCK_CITIES.barcelona, region: undefined });
       expect(await buildEventIntroText(event, en.Utils.EventCopy, "en")).toMatch(
-        /^“Fira” takes place /,
+        /^“Fira ‘Nadal’” takes place /,
       );
     });
 

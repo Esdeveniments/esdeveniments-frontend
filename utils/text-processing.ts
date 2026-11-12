@@ -2,8 +2,11 @@
  * Text processing utilities for handling user-generated content
  */
 
+import type { DescriptionFold } from "types/common";
 import { stripHtmlTags } from "./sanitize";
 import {
+  EVENT_DESCRIPTION_DESKTOP_FOLD_CHARS,
+  EVENT_DESCRIPTION_DESKTOP_LINE_CHARS,
   EVENT_DESCRIPTION_FOLD_CHARS,
   EVENT_DESCRIPTION_LINE_CHARS,
 } from "./constants";
@@ -37,13 +40,20 @@ function anchor(url: string, text: string): string {
   return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
 }
 
-/** Whether a description (plain text or HTML) is taller than the mobile fold. */
-export function isLongDescription(text: string): boolean {
+function textLength(text: string, lineChars: number): number {
   const lineBreaks = text.match(LINE_BREAK)?.length ?? 0;
-  return (
-    stripHtmlTags(text).length + lineBreaks * EVENT_DESCRIPTION_LINE_CHARS >
-    EVENT_DESCRIPTION_FOLD_CHARS
-  );
+  return stripHtmlTags(text).length + lineBreaks * lineChars;
+}
+
+/** Where a description (plain text or HTML) is tall enough to fold. */
+export function descriptionFold(text: string): DescriptionFold {
+  if (textLength(text, EVENT_DESCRIPTION_LINE_CHARS) <= EVENT_DESCRIPTION_FOLD_CHARS) {
+    return "none";
+  }
+  return textLength(text, EVENT_DESCRIPTION_DESKTOP_LINE_CHARS) >
+    EVENT_DESCRIPTION_DESKTOP_FOLD_CHARS
+    ? "all"
+    : "mobile";
 }
 
 /**

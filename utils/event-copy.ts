@@ -42,11 +42,15 @@ function formatTimeWithoutSeconds(time: string): string {
  * (the template adds its own). Titles are names (all caps, sentences, codes),
  * so the case is kept and no article is guessed.
  */
-function toQuotedTitle(rawTitle: string): string {
+function toQuotedTitle(rawTitle: string, locale: AppLocale): string {
   let title = rawTitle.replace(/\s+/g, " ").trim();
   const wrapped = title.match(/^["“«](.*)["”»]$/);
   if (wrapped && !/["“”«»]/.test(wrapped[1])) title = wrapped[1].trim();
-  return title.replace(/[\s.,:;]+$/, "");
+  // Quotes inside the template's quotes nest: «… “…” …» and “… ‘…’ …”.
+  const [open, close] = locale === "en" ? ["‘", "’"] : ["“", "”"];
+  return title
+    .replace(/"([^"]+)"/g, `${open}$1${close}`)
+    .replace(/[\s.,:;]+$/, "");
 }
 
 /**
@@ -103,7 +107,7 @@ export async function buildEventIntroText(
   labels: EventCopyLabels = defaultEventCopyLabels,
   locale: AppLocale = DEFAULT_LOCALE
 ): Promise<string> {
-  const title = toQuotedTitle(event.title || "");
+  const title = toQuotedTitle(event.title || "", locale);
   if (!title) return "";
 
   const cityName = formatPlaceName(event.city?.name || "");

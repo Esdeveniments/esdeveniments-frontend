@@ -13,7 +13,7 @@ const tokenize = (text: string): string[] =>
 
 function stripMarkdown(text: string): string {
   return text
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\((?:[^()\s]|\([^()\s]*\))*\)/g, "$1")
     .replace(/^\s{0,3}#{1,6}\s+/gm, "")
     .replace(/^\s*[-*•]\s+/gm, "")
     .replace(/\*+|__/g, "");
