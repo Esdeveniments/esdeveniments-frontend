@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@i18n/routing";
+import { Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { useAuth } from "@components/hooks/useAuth";
@@ -70,41 +71,44 @@ export default function FavoriteLoginNudge() {
   // A session that authenticates mid-way should never show the nudge —
   // guarding at render (rather than via a setState effect) keeps this off
   // the cascading-render path the lint rule flags.
-  if (isAuthenticated || !visible) return null;
-
+  // Rises from the bottom edge and sinks back the same way (DESIGN.md ›
+  // Motion); Transition unmounts it once the exit ends and can reverse it
+  // mid-way.
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="fixed inset-x-0 bottom-4 z-900 flex justify-center px-section-x pointer-events-none"
-      data-testid="favorites-login-nudge"
-    >
-      <div className="pointer-events-auto flex items-center gap-3 max-w-md w-full card-bordered bg-background shadow-md rounded-lg px-4 py-3">
-        <HeartIconSolid className="h-5 w-5 text-primary shrink-0" />
-        <p className="body-small text-foreground/90 flex-1">
-          {t("message")}
-        </p>
-        <Link
-          href={
-            pathname && pathname !== "/iniciar-sessio"
-              ? `/iniciar-sessio?redirect=${encodeURIComponent(pathname)}`
-              : "/iniciar-sessio"
-          }
-          className="btn-primary btn-sm whitespace-nowrap"
-          onClick={dismiss}
-          data-analytics-action="favorites_nudge_login"
-        >
-          {t("login")}
-        </Link>
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label={t("dismiss")}
-          className="p-1 text-muted-foreground hover:text-foreground transition-interactive"
-        >
-          <XMarkIcon className="h-5 w-5" />
-        </button>
+    <Transition show={visible && !isAuthenticated}>
+      <div
+        role="status"
+        aria-live="polite"
+        className="group fixed inset-x-0 bottom-4 z-900 flex justify-center px-section-x pointer-events-none transition-modal data-[closed]:opacity-0 data-[closed]:translate-y-full data-[leave]:duration-fast"
+        data-testid="favorites-login-nudge"
+      >
+        <div className="pointer-events-auto group-data-[closed]:pointer-events-none flex items-center gap-3 max-w-md w-full card-bordered bg-background shadow-md rounded-lg px-4 py-3">
+          <HeartIconSolid className="h-5 w-5 text-primary shrink-0" />
+          <p className="body-small text-foreground/90 flex-1">
+            {t("message")}
+          </p>
+          <Link
+            href={
+              pathname && pathname !== "/iniciar-sessio"
+                ? `/iniciar-sessio?redirect=${encodeURIComponent(pathname)}`
+                : "/iniciar-sessio"
+            }
+            className="btn-primary btn-sm whitespace-nowrap"
+            onClick={dismiss}
+            data-analytics-action="favorites_nudge_login"
+          >
+            {t("login")}
+          </Link>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label={t("dismiss")}
+            className="p-1 text-muted-foreground hover:text-foreground transition-interactive"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
       </div>
-    </div>
+    </Transition>
   );
 }

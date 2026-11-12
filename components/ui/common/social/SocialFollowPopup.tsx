@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Transition, TransitionChild } from "@headlessui/react";
 import { useTranslations } from "next-intl";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
 import { usePushNotifications } from "@components/hooks/usePushNotifications";
@@ -81,7 +82,6 @@ function getScrollThreshold(): number {
 export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const t = useTranslations("Components.SocialFollowPopup");
   const [isVisible, setIsVisible] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [isSubscribingPush, setIsSubscribingPush] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const hasTriggeredRef = useRef(false);
@@ -162,11 +162,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         dismissCount: (current?.dismissCount ?? 0) + (countAsDismissal ? 1 : 0),
         lastDismissedAt: Date.now(),
       });
-      setIsClosing(true);
-      setTimeout(() => {
-        setIsVisible(false);
-        setIsClosing(false);
-      }, 300);
+      setIsVisible(false);
     },
     [],
   );
@@ -272,17 +268,14 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     let previousPaddingRight = "";
     if (!isMobile) {
       isModal = true;
-      // Remember the focused element, move focus into the dialog, and lock
-      // background scroll while the modal is open (desktop only — the
-      // mobile toast is intentionally nonmodal).
+      // Remember the focused element and lock background scroll while the
+      // modal is open (desktop only — the mobile toast is intentionally
+      // nonmodal). Focus moves in from the Transition's beforeEnter: the
+      // dialog mounts a render after isVisible turns true.
       previousFocusRef.current =
         document.activeElement instanceof HTMLElement
           ? document.activeElement
           : null;
-      const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
-        'a[href], button:not([disabled])',
-      );
-      firstFocusable?.focus();
 
       // Lock <html>: the window is the scroller, and <body>'s overflow
       // doesn't reach it while <html> sets overflow-x (styles/globals.css).
@@ -386,177 +379,184 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     });
   }, [isVisible, isMobile, pushState, installState]);
 
-  if (!isVisible) return null;
-
   /* ------------------------------------------------------------------ */
   /*  Mobile: nonmodal bottom toast (less intrusive, avoids Google      */
   /*  mobile interstitial penalty).                                     */
   /* ------------------------------------------------------------------ */
   if (isMobile) {
     return (
-      <div
-        className={`fixed bottom-[var(--mobile-nav-clearance)] inset-x-0 z-modal p-4 ${
-          isClosing ? "animate-slide-down" : "animate-slide-up"
-        }`}
-        role="complementary"
-        aria-label={canInstall ? t("ariaInstall") : t("aria")}
-      >
-        <div className="relative w-full max-h-[80vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-lg">
-          {/* Gradient accent bar */}
-          <div className="h-1 bg-gradient-to-r from-primary via-primary to-primary/70" />
+      <Transition show={isVisible}>
+        <div
+          className="fixed bottom-[var(--mobile-nav-clearance)] inset-x-0 z-modal p-4 transition-modal data-[closed]:opacity-0 data-[closed]:translate-y-full data-[leave]:duration-fast data-[closed]:pointer-events-none"
+          role="complementary"
+          aria-label={canInstall ? t("ariaInstall") : t("aria")}
+        >
+          <div className="relative w-full max-h-[80vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-lg">
+            {/* Gradient accent bar */}
+            <div className="h-1 bg-gradient-to-r from-primary via-primary to-primary/70" />
 
-          <div className="p-card-padding flex flex-col gap-element-gap-sm overflow-y-auto overscroll-contain min-h-0">
-            {/* Close button */}
-            <button
-              onClick={() => dismiss()}
-              className="absolute top-4 right-4 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              aria-label={t("close")}
-            >
-              <CloseIcon />
-            </button>
+            <div className="p-card-padding flex flex-col gap-element-gap-sm overflow-y-auto overscroll-contain min-h-0">
+              {/* Close button */}
+              <button
+                onClick={() => dismiss()}
+                className="absolute top-4 right-4 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                aria-label={t("close")}
+              >
+                <CloseIcon />
+              </button>
 
-            {/* Header */}
-            <div className="text-center">
-              <h2 className="heading-3 text-foreground-strong mb-2 text-balance">
-                {headlineText}
-              </h2>
-              <p className="body-small text-muted-foreground text-pretty">{subtextText}</p>
-            </div>
+              {/* Header */}
+              <div className="text-center">
+                <h2 className="heading-3 text-foreground-strong mb-2 text-balance">
+                  {headlineText}
+                </h2>
+                <p className="body-small text-muted-foreground text-pretty">{subtextText}</p>
+              </div>
 
-            <InstallSection
-              canPromptInstall={canPromptInstall}
-              showIosInstructions={showIosInstructions}
-              showOpenInSafariHint={showOpenInSafariHint}
-              isIpad={isIpad}
-              iosShareLocation={iosShareLocation}
-              isInstalling={isInstalling}
-              onInstall={handleInstall}
-            />
-
-            {shouldShowPushCta ? (
-              <PushSection
-                pushState={pushState}
-                isSubscribing={isSubscribingPush}
-                onSubscribe={handleSubscribePush}
+              <InstallSection
+                canPromptInstall={canPromptInstall}
+                showIosInstructions={showIosInstructions}
+                showOpenInSafariHint={showOpenInSafariHint}
+                isIpad={isIpad}
+                iosShareLocation={iosShareLocation}
+                isInstalling={isInstalling}
+                onInstall={handleInstall}
               />
-            ) : null}
 
-            <SocialLinksSection variant="mobile" />
+              {shouldShowPushCta ? (
+                <PushSection
+                  pushState={pushState}
+                  isSubscribing={isSubscribingPush}
+                  onSubscribe={handleSubscribePush}
+                />
+              ) : null}
 
-            {/* Dismiss */}
-            <button
-              onClick={() => dismiss()}
-              className="body-small text-muted-foreground hover:text-foreground transition-colors duration-fast py-1.5 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              {t("close")}
-            </button>
+              <SocialLinksSection variant="mobile" />
+
+              {/* Dismiss */}
+              <button
+                onClick={() => dismiss()}
+                className="body-small text-muted-foreground hover:text-foreground transition-colors duration-fast py-1.5 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {t("close")}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
     );
   }
 
   /* ------------------------------------------------------------------ */
   /*  Desktop: centered modal (higher conversion, no Google penalty).   */
   /* ------------------------------------------------------------------ */
+  // Same motion as the shared Modal: the backdrop fades while the panel
+  // grows from 95%; 200ms in, 100ms out.
   return (
-    <div
-      ref={dialogRef}
-      className={`fixed inset-0 z-modal flex-center p-4 ${
-        isClosing ? "animate-disappear" : "animate-appear"
-      }`}
-      role="dialog"
-      aria-modal="true"
-      aria-label={canInstall ? t("ariaInstall") : t("aria")}
+    <Transition
+      show={isVisible}
+      beforeEnter={() =>
+        dialogRef.current
+          ?.querySelector<HTMLElement>('a[href], button:not([disabled])')
+          ?.focus()
+      }
     >
-      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-foreground/50"
-        onClick={() => dismiss()}
-        aria-hidden="true"
-      />
-
-      {/* Panel */}
-      <div
-        className={`relative w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-lg transition-transform duration-slower ${
-          isClosing ? "scale-95" : "scale-100"
-        }`}
+        ref={dialogRef}
+        className="fixed inset-0 z-modal flex-center p-4 data-[closed]:pointer-events-none"
+        role="dialog"
+        aria-modal="true"
+        aria-label={canInstall ? t("ariaInstall") : t("aria")}
       >
-        {/* Gradient accent bar */}
-        <div className="h-1.5 bg-gradient-to-r from-primary via-primary to-primary/70" />
-
-        {/* Close button */}
-        <button
-          onClick={() => dismiss()}
-          className="absolute top-4 right-4 z-10 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          aria-label={t("close")}
-        >
-          <CloseIcon />
-        </button>
-
-        {/* Content (scrolls; panel stays put so the close button is pinned) */}
-        <div className="p-6 sm:p-8 flex flex-col gap-6 overflow-y-auto overscroll-contain min-h-0">
-          {/* Header section */}
-          <div className="flex flex-col gap-3 text-center">
-            {/* Icon accent */}
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex-center mx-auto">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                className="w-6 h-6 text-primary"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
-                />
-              </svg>
-            </div>
-
-            {/* Headline */}
-            <h2 className="heading-2 text-foreground-strong text-balance">
-              {headlineText}
-            </h2>
-
-            {/* Subtext */}
-            <p className="body-normal text-muted-foreground leading-relaxed text-pretty">
-              {subtextText}
-            </p>
-          </div>
-
-          <InstallSection
-            canPromptInstall={canPromptInstall}
-            showIosInstructions={showIosInstructions}
-            showOpenInSafariHint={showOpenInSafariHint}
-            isIpad={isIpad}
-            iosShareLocation={iosShareLocation}
-            isInstalling={isInstalling}
-            onInstall={handleInstall}
-          />
-
-          <SocialLinksSection variant="desktop" />
-
-          {shouldShowPushCta ? (
-            <PushSection
-              pushState={pushState}
-              isSubscribing={isSubscribingPush}
-              onSubscribe={handleSubscribePush}
-            />
-          ) : null}
-
-          {/* Dismiss button */}
-          <button
+        {/* Backdrop */}
+        <TransitionChild>
+          <div
+            className="absolute inset-0 bg-foreground/50 transition-opacity duration-normal ease-out-strong data-[closed]:opacity-0 data-[leave]:duration-fast"
             onClick={() => dismiss()}
-            className="body-small text-muted-foreground hover:text-foreground transition-colors duration-fast py-2 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
-            {t("close")}
-          </button>
-        </div>
+            aria-hidden="true"
+          />
+        </TransitionChild>
+
+        {/* Panel */}
+        <TransitionChild>
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-lg transition-modal data-[closed]:opacity-0 data-[closed]:scale-95 data-[leave]:duration-fast">
+            {/* Gradient accent bar */}
+            <div className="h-1.5 bg-gradient-to-r from-primary via-primary to-primary/70" />
+
+            {/* Close button */}
+            <button
+              onClick={() => dismiss()}
+              className="absolute top-4 right-4 z-10 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-[color,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={t("close")}
+            >
+              <CloseIcon />
+            </button>
+
+            {/* Content (scrolls; panel stays put so the close button is pinned) */}
+            <div className="p-6 sm:p-8 flex flex-col gap-6 overflow-y-auto overscroll-contain min-h-0">
+              {/* Header section */}
+              <div className="flex flex-col gap-3 text-center">
+                {/* Icon accent */}
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex-center mx-auto">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    className="w-6 h-6 text-primary"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                    />
+                  </svg>
+                </div>
+
+                {/* Headline */}
+                <h2 className="heading-2 text-foreground-strong text-balance">
+                  {headlineText}
+                </h2>
+
+                {/* Subtext */}
+                <p className="body-normal text-muted-foreground leading-relaxed text-pretty">
+                  {subtextText}
+                </p>
+              </div>
+
+              <InstallSection
+                canPromptInstall={canPromptInstall}
+                showIosInstructions={showIosInstructions}
+                showOpenInSafariHint={showOpenInSafariHint}
+                isIpad={isIpad}
+                iosShareLocation={iosShareLocation}
+                isInstalling={isInstalling}
+                onInstall={handleInstall}
+              />
+
+              <SocialLinksSection variant="desktop" />
+
+              {shouldShowPushCta ? (
+                <PushSection
+                  pushState={pushState}
+                  isSubscribing={isSubscribingPush}
+                  onSubscribe={handleSubscribePush}
+                />
+              ) : null}
+
+              {/* Dismiss button */}
+              <button
+                onClick={() => dismiss()}
+                className="body-small text-muted-foreground hover:text-foreground transition-colors duration-fast py-2 rounded-button focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {t("close")}
+              </button>
+            </div>
+          </div>
+        </TransitionChild>
       </div>
-    </div>
+    </Transition>
   );
 }

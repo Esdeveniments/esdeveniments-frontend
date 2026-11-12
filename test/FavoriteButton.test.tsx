@@ -122,6 +122,56 @@ describe("FavoriteButton", () => {
     ).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("beats only when a tap fills the heart, not on mount or list sync", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: ["test-event", "other-event"] }),
+      })
+      .mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true }) });
+
+    const { default: FavoriteButton } = await import(
+      "@components/ui/common/favoriteButton"
+    );
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="test-event"
+          initialIsFavorite={true}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+        <FavoriteButton
+          eventSlug="other-event"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
+    );
+
+    // Saved on mount (first) and saved once the shared list loads (second).
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Elimina de preferits" })).toHaveLength(2);
+    });
+    for (const heart of document.querySelectorAll("svg")) {
+      expect(heart).not.toHaveClass("animate-heartBeat");
+    }
+
+    const [button] = screen.getAllByRole("button", { name: "Elimina de preferits" });
+    const heart = button.querySelector("svg")!;
+    fireEvent.click(button);
+    expect(heart).not.toHaveClass("animate-heartBeat");
+
+    await waitFor(() => expect(button).not.toBeDisabled());
+    fireEvent.click(button);
+    expect(heart).toHaveClass("animate-heartBeat");
+
+    // jsdom has no AnimationEvent, so React listens for the prefixed name.
+    fireEvent(heart, new Event("webkitAnimationEnd", { bubbles: true }));
+    expect(heart).not.toHaveClass("animate-heartBeat");
+  });
+
   it("rolls back optimistic state when server action fails", async () => {
     fetchMock
       // Initial hydration: GET /api/favorites

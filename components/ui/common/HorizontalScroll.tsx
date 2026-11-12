@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 import type { HorizontalScrollProps } from "types/ui";
+import { prefersReducedMotion, smoothScrollBehavior } from "@utils/browser";
 
 /**
  * Lightweight horizontal scroller with subtle gradients that hint scrollability.
@@ -152,9 +153,7 @@ export default function HorizontalScroll({
       hintTimeout = window.setTimeout(() => setShowHint(false), 2500);
     };
     try {
-      const prefersReduced =
-        window.matchMedia &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const prefersReduced = prefersReducedMotion();
       const prefersCoarse =
         window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
       const hasSeen = sessionStorage.getItem(storageKey) === "1";
@@ -239,7 +238,7 @@ export default function HorizontalScroll({
     const el = scrollerRef.current;
     if (!el) return;
     const step = computeStep() * dir;
-    el.scrollBy({ left: step, behavior: "smooth" });
+    el.scrollBy({ left: step, behavior: smoothScrollBehavior() });
   };
 
   return (

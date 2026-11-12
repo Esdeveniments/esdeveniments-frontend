@@ -55,10 +55,12 @@ const CalendarList: FC<CalendarListProps> = ({
 
   const position =
     placement === "above-end" ? "bottom-full right-0 mb-2" : "top-full left-0 mt-2";
+  // Grow from the corner that touches the button.
+  const origin = placement === "above-end" ? "origin-bottom-right" : "origin-top-left";
 
   return (
     <div ref={ctaRef} className={`absolute ${position} z-10`}>
-      <div className="w-56 bg-background shadow-md rounded-card p-1 border border-border animate-appear flex flex-col">
+      <div className={`w-56 bg-background shadow-md rounded-card p-1 border border-border animate-appear ${origin} flex flex-col`}>
         {calendarOptions.map(
           (option) =>
             option.url && (

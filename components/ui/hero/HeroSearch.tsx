@@ -207,7 +207,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
                 setHasOpenedModal(true);
                 setIsModalOpen(true);
               }}
-              className="flex flex-wrap items-center justify-center gap-2 font-semibold uppercase tracking-wide text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
+              className="flex flex-wrap items-center justify-center gap-2 font-semibold uppercase tracking-wide text-white text-center border-b-2 border-white/40 hover:border-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
               aria-expanded={isModalOpen}
             >
               {placeParts.place}
@@ -275,7 +275,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
           </div>
           <input
             type="text"
-            className="w-full pl-11 pr-12 py-3 bg-background border border-input rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-base placeholder:text-muted-foreground"
+            className="w-full pl-11 pr-12 py-3 bg-background border border-input rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:border-primary focus:ring-1 focus:ring-primary transition-[box-shadow,border-color] outline-none text-base placeholder:text-muted-foreground"
             placeholder={t("searchPlaceholder", { placeIn })}
             value={searchTerm}
             {...inputProps}

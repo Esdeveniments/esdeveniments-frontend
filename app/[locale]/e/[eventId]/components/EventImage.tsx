@@ -14,7 +14,7 @@ import EventHeroImageClient from "./EventHeroImageClient";
  * handling to a tiny client component (EventHeroImageClient).
  * This keeps the <picture> element in pure SSR HTML for faster LCP.
  */
-const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
+const EventImage: FC<EventImageProps> = ({ image, title }) => {
   const safeTitle = escapeXml(title || "");
 
   const imageQuality = getOptimalImageQuality({
@@ -40,7 +40,6 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
   return (
     <div
       className="relative w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card bg-muted"
-      style={{ viewTransitionName: `event-image-${eventId}` }}
     >
       <a
         href={anchorHref}

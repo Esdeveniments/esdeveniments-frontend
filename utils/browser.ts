@@ -24,6 +24,23 @@ export function scheduleIdleCallback(
 
 const FIRST_INTERACTION_EVENTS = ["pointerdown", "keydown", "touchstart"] as const;
 
+/** Whether the user asked the OS to reduce motion. */
+export function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+/**
+ * `behavior` for JS scrolls: the CSS reduced-motion rule (styles/globals.css)
+ * can't reach `scrollTo({ behavior: "smooth" })`.
+ */
+export function smoothScrollBehavior(): ScrollBehavior {
+  return prefersReducedMotion() ? "instant" : "smooth";
+}
+
 /**
  * Run a callback once: on the first tap, key press or page scroll, or
  * `timeoutMs` after the window load event, whichever comes first.

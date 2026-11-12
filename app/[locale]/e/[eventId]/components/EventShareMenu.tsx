@@ -72,7 +72,7 @@ export default function EventShareMenu({ id, shareEvent, onClose, onShared }: Ev
     <div
       ref={ref}
       id={id}
-      className="absolute right-0 top-full z-30 mt-2 w-64 card-elevated bg-background p-2 flex flex-col"
+      className="absolute right-0 top-full z-30 mt-2 w-64 origin-top-right animate-appear card-elevated bg-background p-2 flex flex-col"
     >
       <button type="button" className={itemClassName} onClick={copyLink}>
         <LinkIcon className={iconClassName} aria-hidden="true" />

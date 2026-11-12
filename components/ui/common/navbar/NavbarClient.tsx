@@ -141,7 +141,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   <ActiveLink
                     href={item.href}
                     key={item.name}
-                    className="label font-semibold px-button-x py-button-y border-b-2 border-b-background hover:bg-muted/50 rounded-t-lg transition-all"
+                    className="label font-semibold px-button-x py-button-y border-b-2 border-b-background hover:bg-muted/50 rounded-t-lg transition-colors"
                   >
                     {item.name}
                   </ActiveLink>
