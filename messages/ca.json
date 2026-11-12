@@ -967,7 +967,7 @@
     },
     "EventPage": {
       "sponsored": "Contingut patrocinat",
-      "editEvent": "Editar esdeveniment",
+      "editEvent": "Edita",
       "editTitle": "Edita: {title}",
       "editError": "Error en actualitzar l'esdeveniment",
       "editSave": "Desa canvis",
@@ -990,13 +990,16 @@
       "sidebarCreatedBy": "Publicat per",
       "sidebarViewAllEvents": "Veure tots els esdeveniments",
       "shareEvent": "Comparteix",
-      "promoteEvent": "Promocionar",
-      "deleteEvent": "Eliminar esdeveniment",
+      "promoteEvent": "Promociona",
+      "deleteEvent": "Elimina l'esdeveniment",
       "deleteConfirmTitle": "Vols eliminar aquest esdeveniment?",
       "deleteConfirmDescription": "Deixarà de sortir a l'agenda i no es podrà recuperar.",
       "deleteConfirm": "Elimina",
       "deleteCancel": "Cancel·la",
-      "deleteError": "No s'ha pogut eliminar l'esdeveniment. Torna-ho a provar."
+      "deleteError": "No s'ha pogut eliminar l'esdeveniment. Torna-ho a provar.",
+      "ownerBarTitle": "Has publicat aquest esdeveniment",
+      "moreActions": "Més accions",
+      "organizerEventCount": "{count, plural, one {# esdeveniment publicat} other {# esdeveniments publicats}}"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",

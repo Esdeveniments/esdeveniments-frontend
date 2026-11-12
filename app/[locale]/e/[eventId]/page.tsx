@@ -65,6 +65,8 @@ import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
 import DetailSectionTracker from "./components/DetailSectionTracker";
 import EventDetailsSection from "./components/EventDetailsSection";
+import EventByline from "./components/EventByline";
+import EventOwnerBar from "./components/EventOwnerBar";
 
 // Lazy load below-the-fold client components via client component wrappers
 // This allows us to use ssr: false in Next.js 16 (required for client components)
@@ -548,6 +550,7 @@ async function EventPageBody({
                 {/* Event Header with status pill + social proof */}
                 <div className="flex flex-col gap-1">
                   <EventHeader title={title} temporalStatus={temporalStatus} />
+                  {event.owner && <EventByline owner={event.owner} />}
                   {citySlug && cityName && isFestaMajorTitle(event.title) && (
                     <FestaMajorHubLink
                       citySlug={citySlug}
@@ -561,6 +564,12 @@ async function EventPageBody({
                     interestedLabel={tEvent("interested", { count: event.visits })}
                   />
                 </div>
+
+                <EventOwnerBar
+                  ownerId={event.owner?.id}
+                  slug={eventSlug}
+                  shareEvent={shareEvent}
+                />
 
                 {/* Calendar — mobile only (between title and description) */}
                 <DetailSectionTracker section="calendar" className="lg:hidden">
@@ -585,7 +594,7 @@ async function EventPageBody({
                 {/* Event details: duration, external link, creator profile link.
                     Mobile only — desktop shows these in EventSidebar to avoid duplication. */}
                 <DetailSectionTracker section="details" className="lg:hidden">
-                  <EventDetailsSection event={event} shareEvent={shareEvent} />
+                  <EventDetailsSection event={event} />
                 </DetailSectionTracker>
 
                 {/* Location — mobile only */}
@@ -677,7 +686,6 @@ async function EventPageBody({
                 event={event}
                 cityName={cityName}
                 regionName={regionName}
-                shareEvent={shareEvent}
                 sponsorSlot={sidebarSponsorSlot}
               />
             </div>

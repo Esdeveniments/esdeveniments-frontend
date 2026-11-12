@@ -633,6 +633,16 @@ export interface AvatarInitialsProps {
   decorative?: boolean;
 }
 
+/** Pixel sizes of `ProfileAvatar`: search rows, the event byline and the organizer card. */
+export type ProfileAvatarSize = "xs" | "sm" | "md";
+
+export interface ProfileAvatarProps {
+  avatarUrl?: string | null;
+  /** Source of the initial shown when there is no avatar or it fails to load. */
+  name: string;
+  size: ProfileAvatarSize;
+}
+
 export interface ProfileEventsSectionProps {
   username: string;
   status: ProfileEventStatus;
@@ -1096,7 +1106,6 @@ export interface CollapsibleDescriptionProps {
 // Event details section (duration + external link)
 export interface EventDetailsSectionProps {
   event: import("./api/event").EventDetailResponseDTO;
-  shareEvent: import("./event").ShareKitEvent;
 }
 
 export interface EventPageGateProps {
@@ -1120,19 +1129,28 @@ export interface EventSidebarProps {
   event: import("./api/event").EventDetailResponseDTO;
   cityName: string;
   regionName: string;
-  shareEvent: import("./event").ShareKitEvent;
   // Rendered outside the cached event body: the sponsor slot is request-time.
   sponsorSlot: import("react").ReactNode;
 }
 
-// Owner-only edit/promote/delete actions, event detail client island
-export interface EventOwnerActionsProps {
+// Owner-only host tools under the event title, client island
+export interface EventOwnerBarProps {
   ownerId?: string;
   slug: string;
   shareEvent: import("./event").ShareKitEvent;
 }
 
-export type EventDeleteActionProps = Pick<EventOwnerActionsProps, "slug">;
+export type EventOwnerToolsProps = Omit<EventOwnerBarProps, "ownerId">;
+
+export interface EventDeleteDialogProps {
+  slug: string;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+export interface EventOrganizerProps {
+  owner: import("./api/user").OwnerSummaryDTO;
+}
 
 export interface PromoteUpsellModalProps {
   open: boolean;

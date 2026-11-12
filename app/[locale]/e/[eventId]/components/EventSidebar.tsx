@@ -1,18 +1,14 @@
 import {
   ArrowTopRightOnSquareIcon,
   ClockIcon,
-  UserIcon,
 } from "@heroicons/react/24/outline";
-import { Link } from "@i18n/routing";
 import EventCalendar from "./EventCalendar";
 import EventLocation from "./EventLocation";
 import Weather from "components/ui/weather";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { getProfileDisplayName } from "@utils/profile-name";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
-import { getProfileSlug } from "@utils/user-helpers";
-import EventOwnerActions from "./EventOwnerActions";
+import EventOrganizerCard from "./EventOrganizerCard";
 import type { EventSidebarProps } from "types/props";
 import type { AppLocale } from "types/i18n";
 
@@ -28,14 +24,10 @@ export default async function EventSidebar({
   event,
   cityName,
   regionName,
-  shareEvent,
   sponsorSlot,
 }: EventSidebarProps) {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "Components.EventPage" });
-
-  // Build a URL-safe slug for the creator profile link.
-  const creatorSlug = event.owner ? getProfileSlug(event.owner) : null;
 
   return (
     <aside
@@ -108,38 +100,12 @@ export default async function EventSidebar({
               </>
             )}
 
-            {/* Creator / publisher profile link */}
-            {event.owner && creatorSlug && (
+            {event.owner && (
               <>
                 <hr className="border-border" />
-                <div className="flex flex-col gap-1" data-testid="event-created-by">
-                  <h3 className="label font-semibold text-foreground-strong">
-                    {t("sidebarCreatedBy")}
-                  </h3>
-                  <span className="inline-flex items-center gap-1.5 body-small font-semibold text-foreground-strong">
-                    <UserIcon className="w-4 h-4 flex-shrink-0" />
-                    {getProfileDisplayName(event.owner)}
-                  </span>
-                  <Link
-                    href={`/perfil/${encodeURIComponent(creatorSlug)}`}
-                    className="flex flex-col gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
-                    data-testid="event-created-by-link"
-                  >
-                    <span className="font-normal text-primary">
-                      {t("sidebarViewAllEvents")} →
-                    </span>
-                  </Link>
-                </div>
+                <EventOrganizerCard owner={event.owner} />
               </>
             )}
-
-            {/* Owner-only actions */}
-            <EventOwnerActions
-              ownerId={event.owner?.id}
-              slug={event.slug ?? ""}
-              shareEvent={shareEvent}
-            />
-
           </div>
         </div>
 

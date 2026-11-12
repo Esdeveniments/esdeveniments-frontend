@@ -1,32 +1,22 @@
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { GlobeAltIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
+import { GlobeAltIcon, ClockIcon } from "@heroicons/react/24/outline";
 const GlobeIcon = GlobeAltIcon;
 import type { EventDetailsSectionProps } from "types/props";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { Link } from "@i18n/routing";
-import { useLocale, useTranslations } from "next-intl";
-import { getProfileDisplayName } from "@utils/profile-name";
-import { formatNamePrepositionParts } from "@utils/string-helpers";
-import type { AppLocale } from "types/i18n";
-import EventOwnerActions from "./EventOwnerActions";
+import { useTranslations } from "next-intl";
+import EventOrganizerCard from "./EventOrganizerCard";
 
 /**
- * Renders ancillary event details: duration + external link + creator info.
+ * Renders ancillary event details: duration + external link + organizer card.
  * Status badge and date/time info are intentionally NOT shown here
  * to avoid duplication (they already appear in EventHeader and EventCalendar).
- * Also renders the owner-only Edit and Promote actions: EventSidebar has them
- * too, but the sidebar is hidden below the lg breakpoint.
  */
-const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event, shareEvent }) => {
+const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event }) => {
   const t = useTranslations("Components.EventDetailsSection");
 
   const eventUrl = event.url ?? "";
   const hasValidUrl = /^https?:\/\//i.test(eventUrl);
   const owner = event.owner;
-  const locale = useLocale() as AppLocale;
-  const ownerBy = owner
-    ? formatNamePrepositionParts(getProfileDisplayName(owner), locale, "by")
-    : null;
 
   // Only render if there's something to show
   if (!event.duration && !hasValidUrl && !owner) return null;
@@ -68,38 +58,7 @@ const EventDetailsSection: React.FC<EventDetailsSectionProps> = ({ event, shareE
             </div>
           )}
 
-          {owner && (
-            <div
-              className="body-small flex items-center gap-element-gap text-foreground-strong/70"
-              data-testid="event-created-by"
-            >
-              <UserIcon className="w-4 h-4" />
-              <span>
-                {t.rich("createdBy", {
-                  by: ownerBy?.preposition ?? "",
-                  name: ownerBy?.place ?? "",
-                  link: (chunks) =>
-                    owner.username ? (
-                      <Link
-                        href={`/perfil/${encodeURIComponent(
-                          owner.username
-                        )}`}
-                        className="text-primary hover:underline font-medium"
-                        data-testid="event-created-by-link"
-                      >
-                        {chunks}
-                      </Link>
-                    ) : (
-                      <span className="font-medium">{chunks}</span>
-                    ),
-                })}
-              </span>
-            </div>
-          )}
-
-          {owner && (
-            <EventOwnerActions ownerId={owner.id} slug={event.slug ?? ""} shareEvent={shareEvent} />
-          )}
+          {owner && <EventOrganizerCard owner={owner} />}
         </div>
       </div>
     </div>
