@@ -62,6 +62,17 @@ describe("generateJsonData", () => {
     expect(schema.offers).toBeUndefined();
   });
 
+  it("drops markdown and HTML from the description", () => {
+    const schema = generateJsonData(
+      createEvent({
+        description:
+          "**Inscripcions** al [lloc web](https://example.com/a).<br>Places <b>limitades</b>.",
+      }),
+    );
+
+    expect(schema.description).toBe("Inscripcions al lloc web. Places limitades.");
+  });
+
   it("omits offers when the event has no price", () => {
     const schema = generateJsonData(
       createEvent({

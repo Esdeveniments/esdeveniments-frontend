@@ -49,7 +49,6 @@ export function CategoryEventsSection({
 
       <EventsAroundServer
         events={events}
-        layout="horizontal"
         usePriority={shouldUsePriority}
         showJsonLd
         title={categoryName}

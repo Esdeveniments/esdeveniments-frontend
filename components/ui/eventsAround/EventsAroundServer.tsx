@@ -1,27 +1,12 @@
 import CardContentServer from "@components/ui/common/cardContent/CardContentServer";
-import CompactCard from "@components/ui/common/cardContent/CompactCard";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { buildEventListItems } from "@utils/schema-helpers";
-import type { EventsAroundLayout, EventsAroundServerProps } from "types/common";
+import type { EventsAroundServerProps } from "types/common";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
-
-function EventCardLoading({ layout }: { layout: EventsAroundLayout }) {
-  const isHorizontal = layout === "horizontal";
-  return (
-    <div className={`rounded-card overflow-hidden bg-background border border-border/20 flex flex-col ${isHorizontal ? "w-full" : "w-44 min-w-[11rem]"}`}>
-      <div className={`bg-muted animate-fast-pulse ${isHorizontal ? "aspect-[3/2]" : "aspect-[4/3]"}`} />
-      <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1.5">
-        <div className="w-2/3 h-3 bg-border/40 rounded animate-fast-pulse" />
-        <div className="w-3/4 h-4 bg-border/40 rounded animate-fast-pulse" />
-        <div className="w-1/2 h-3 bg-border/40 rounded animate-fast-pulse" />
-      </div>
-    </div>
-  );
-}
 
 export function dedupeEvents(events: EventsAroundServerProps["events"]) {
   const seen = new Set<string | number | undefined>();
@@ -37,8 +22,6 @@ export function dedupeEvents(events: EventsAroundServerProps["events"]) {
 
 async function EventsAroundServer({
   events,
-  layout = "compact",
-  loading = false,
   usePriority = false,
   showJsonLd = false,
   jsonLdId,
@@ -64,22 +47,11 @@ async function EventsAroundServer({
 
   const jsonLdData = generateJsonLdData();
 
-  if (loading) {
-    return (
-      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
-        <EventCardLoading layout={layout} />
-        <EventCardLoading layout={layout} />
-        <EventCardLoading layout={layout} />
-      </div>
-    );
-  }
-
   if (uniqueEvents.length === 0) {
     return null;
   }
 
   const t = await getTranslations({ locale, namespace: "Components.EventsAround" });
-  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
   const tScroll = await getTranslations({
     locale,
     namespace: "Components.HorizontalScroll",
@@ -98,53 +70,34 @@ async function EventsAroundServer({
     />
   ) : null;
 
-  if (layout === "horizontal") {
-    return (
-      <>
-        {jsonLdBlock}
-        <HorizontalScroll
-          className="py-element-gap px-section-x"
-          ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
-          nudgeOnFirstLoad
-          showDesktopArrows
-          hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
-          labels={{ previous: tScroll("previous"), next: tScroll("next") }}
-        >
-          <div className="flex gap-element-gap">
-            {uniqueEvents.map((event, index) => (
-              <div
-                role="listitem"
-                key={event.id ?? event.slug ?? index}
-                className="snap-start flex-none w-[75vw] min-w-[75vw] sm:w-64 sm:min-w-[16rem]"
-              >
-                <CardContentServer
-                  event={event}
-                  compact
-                  locale={locale}
-                  isPriority={usePriority && index <= 2}
-                />
-              </div>
-            ))}
-          </div>
-        </HorizontalScroll>
-      </>
-    );
-  }
-
   return (
     <>
       {jsonLdBlock}
-      <div className="w-full flex overflow-x-auto py-element-gap px-section-x gap-element-gap min-w-0">
-        {uniqueEvents.map((event, index) => (
-          <CompactCard
-            key={event.id ?? event.slug ?? index}
-            event={event}
-            locale={locale}
-            tCard={tCard}
-            index={index}
-          />
-        ))}
-      </div>
+      <HorizontalScroll
+        className="py-element-gap px-section-x"
+        ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
+        nudgeOnFirstLoad
+        showDesktopArrows
+        hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
+        labels={{ previous: tScroll("previous"), next: tScroll("next") }}
+      >
+        <div className="flex gap-element-gap">
+          {uniqueEvents.map((event, index) => (
+            <div
+              role="listitem"
+              key={event.id ?? event.slug ?? index}
+              className="snap-start flex-none w-[75vw] min-w-[75vw] sm:w-64 sm:min-w-[16rem]"
+            >
+              <CardContentServer
+                event={event}
+                compact
+                locale={locale}
+                isPriority={usePriority && index <= 2}
+              />
+            </div>
+          ))}
+        </div>
+      </HorizontalScroll>
     </>
   );
 }

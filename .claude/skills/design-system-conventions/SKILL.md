@@ -7,6 +7,10 @@ description: Semantic Tailwind classes, color tokens, text contrast rules and th
 
 Full design rules and tokens: `DESIGN.md`. Classes: `styles/globals.css`. Tokens: `tailwind.config.js`. Summary: AGENTS.md › UI.
 
+## Page composition
+
+Before arranging a page or adding a section, read DESIGN.md › Page composition (groups by job, one main action, one home per action, mobile action bar, no placeholders, reserved space for ads, render once, no layout shift). Check what three or more competitors agree on before inventing a pattern.
+
 ## Colors
 
 Never `text-gray-*`, `bg-gray-*`, `border-gray-*`, hex values, or the removed aliases (`primarydark`, `primarySoft`, `whiteCorp`, `darkCorp`, `blackCorp`, `fullBlackCorp`, `bColor`).

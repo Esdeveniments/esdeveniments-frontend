@@ -660,7 +660,7 @@
       "viewAll": "View all"
     },
     "CulturalMessage": {
-      "explorePrefix": "Explore more plans {placeIn}:",
+      "explorePrefix": "Explore more plans {placeIn}",
       "today": "What to do today",
       "tomorrow": "What to do tomorrow",
       "week": "What to do this week",
@@ -957,14 +957,8 @@
       "editError": "Error updating event",
       "editSave": "Save changes",
       "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
-      "stickyMoreInfo": "More info",
-      "stickyCalendar": "Calendar",
-      "stickySave": "Save",
       "free": "Free",
       "paid": "Paid",
-      "sidebarMoreInfo": "More information",
-      "sidebarVisitWebsite": "Visit website",
-      "sidebarOpenInMaps": "Open in Maps",
       "interested": "{count, plural, one {{count} person interested} other {{count} people interested}}",
       "popular": "Popular",
       "readMore": "Read more",
@@ -972,7 +966,6 @@
       "durationLabel": "Duration: {duration}",
       "sidebarAriaLabel": "Event details",
       "toolbarAriaLabel": "Event actions",
-      "sidebarCreatedBy": "Published by",
       "sidebarViewAllEvents": "View all events",
       "shareEvent": "Share",
       "promoteEvent": "Promote",
@@ -984,7 +977,16 @@
       "deleteError": "The event couldn't be deleted. Please try again.",
       "ownerBarTitle": "You published this event",
       "moreActions": "More actions",
-      "organizerEventCount": "{count, plural, one {# event published} other {# events published}}"
+      "organizerEventCount": "{count, plural, one {# event published} other {# events published}}",
+      "moreInfo": "More info",
+      "organizer": "Organizer",
+      "reportPrompt": "Something wrong with this event?",
+      "reportLink": "Let us know",
+      "reportSubject": "Event report: {title}",
+      "reportBody": "Page: {url}\n\nWhat should we check?\n",
+      "houseAdTitle": "Organising something?",
+      "houseAdText": "Publish your event for free and reach more people nearby.",
+      "houseAdCta": "Publish an event"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",
@@ -1058,20 +1060,16 @@
       "rssNews": "RSS News"
     },
     "EventDetailsSection": {
-      "title": "Event details",
-      "eventLink": "Event link:",
-      "duration": "Approximate duration: {duration}",
       "createdBy": "Published {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
-      "hideMap": "Close map",
+      "hideMap": "Hide map",
       "getDirections": "Get directions",
       "profileLink": "Profile {nameOf}"
     },
     "EventCalendar": {
-      "title": "Date and time",
       "priceLabel": "Price:",
       "priceFree": "Free"
     },
@@ -1252,7 +1250,9 @@
       "share": "Share",
       "shareLabel": "Share {title}",
       "shareDate": "Date: {date}",
-      "sharePlace": "Place: {place}"
+      "sharePlace": "Place: {place}",
+      "email": "Send by email",
+      "moreOptions": "More options"
     }
   },
   "Partials": {
@@ -1682,11 +1682,9 @@
     },
     "EventCopy": {
       "sentence": {
-        "verbSingular": "takes place",
-        "verbPlural": "take place",
         "dateRange": "from {start} to {end}",
         "dateSingle": "on {nameDay}, {start}",
-        "sentence": "{title} {verb} {date}{time}{place}.",
+        "sentence": "“{title}” takes place {date}{time}{place}.",
         "timeSuffix": ", at {time}",
         "timeSuffixRange": ", from {start} to {end}",
         "placeSuffix": ", {place}"
@@ -1724,6 +1722,7 @@
       "dateSingle": "From {start}",
       "loading": "Loading...",
       "button": "Add to calendar",
+      "buttonShort": "Calendar",
       "providers": {
         "google": "Google Calendar",
         "outlook": "Outlook",

@@ -26,6 +26,14 @@ export const NEWS_CITIES_LIMIT = 100;
 // multi-venue strings run to ~150 chars).
 export const NEWS_EVENT_EXCERPT_MAX_LENGTH = 220;
 export const EVENT_VENUE_LABEL_MAX_LENGTH = 60;
+// Event descriptions longer than this fold on mobile behind "Llegeix més". Each
+// line break counts as a full mobile line, so a list of short lines folds too.
+export const EVENT_DESCRIPTION_FOLD_CHARS = 400;
+export const EVENT_DESCRIPTION_LINE_CHARS = 45;
+// Desktop lines are about twice as wide. The threshold sits well above the
+// desktop clamp height (lg:max-h-96), so "Llegeix més" always hides real text.
+export const EVENT_DESCRIPTION_DESKTOP_FOLD_CHARS = 2400;
+export const EVENT_DESCRIPTION_DESKTOP_LINE_CHARS = 90;
 
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;

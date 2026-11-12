@@ -11,6 +11,8 @@ const CalendarList: FC<CalendarListProps> = ({
   getUrls,
   title,
   labels,
+  placement = "below",
+  source,
 }) => {
   const urls = getUrls();
   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("add_to_calendar");
@@ -19,10 +21,10 @@ const CalendarList: FC<CalendarListProps> = ({
     (calendarType: string): void => {
       trackClick();
       // The event itself is in page_location; titles are free text.
-      sendGoogleEvent("add_to_calendar", { method: calendarType });
+      sendGoogleEvent("add_to_calendar", { method: calendarType, ...(source && { source }) });
       setTimeout(onClick, 500);
     },
-    [onClick, trackClick]
+    [onClick, trackClick, source]
   );
 
   const calendarOptions: CalendarOption[] = [
@@ -48,11 +50,14 @@ const CalendarList: FC<CalendarListProps> = ({
     "flex items-center gap-2 min-h-button px-3 rounded-button body-small text-foreground-strong hover:bg-muted transition-colors focus-ring";
 
   useEffect(() => {
-    sendGoogleEvent("add_to_calendar_view", {});
-  }, []);
+    sendGoogleEvent("add_to_calendar_view", source ? { source } : {});
+  }, [source]);
+
+  const position =
+    placement === "above-end" ? "bottom-full right-0 mb-2" : "top-full left-0 mt-2";
 
   return (
-    <div ref={ctaRef} className="absolute top-full left-0 mt-2 z-10">
+    <div ref={ctaRef} className={`absolute ${position} z-10`}>
       <div className="w-56 bg-background shadow-md rounded-card p-1 border border-border animate-appear flex flex-col">
         {calendarOptions.map(
           (option) =>

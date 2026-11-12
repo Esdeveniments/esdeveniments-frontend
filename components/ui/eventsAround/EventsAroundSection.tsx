@@ -1,41 +1,33 @@
-import React from "react";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
-import type { EventsAroundProps } from "types/common";
+import type { EventsAroundSectionProps } from "types/common";
+import type { AppLocale } from "types/i18n";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { ShareIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from "next-intl/server";
+import { locale as rootLocale } from "next/root-params";
 
-const EventsAroundSection: React.FC<EventsAroundProps> = async ({
+export default async function EventsAroundSection({
   events,
   title,
-}) => {
+  bleed = false,
+}: EventsAroundSectionProps) {
   if (!events || events.length === 0) return null;
 
-  const t = await getTranslations("Components.EventsAround");
+  const locale = (await rootLocale()) as AppLocale;
+  const t = await getTranslations({ locale, namespace: "Components.EventsAround" });
   const displayTitle = title || t("relatedEvents");
 
   return (
     <div className="w-full min-w-0">
-      {/* Title section - constrained width */}
       <div className="w-full mb-element-gap">
-        <SectionHeading
-          Icon={ShareIcon}
-          iconClassName="h-5 w-5 text-foreground-strong flex-shrink-0"
-          title={displayTitle}
-          titleClassName="heading-2"
-        />
+        <SectionHeading title={displayTitle} titleClassName="heading-2" />
       </div>
-      {/* Horizontal scroll section - full width to allow proper spacing */}
-      <div className="w-full overflow-hidden min-w-0">
+      <div className={`overflow-hidden min-w-0 ${bleed ? "-mx-section-x" : "w-full"}`}>
         <EventsAroundServer
           events={events}
-          layout="compact"
           showJsonLd={false} // JSON-LD handled server-side for SEO
           title={displayTitle}
         />
       </div>
     </div>
   );
-};
-
-export default EventsAroundSection;
+}

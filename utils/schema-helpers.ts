@@ -8,6 +8,7 @@ import { formatCatalanA } from "@utils/string-helpers";
 import { getEventVenueCoords } from "@utils/event-map";
 import { TIMEZONE_MADRID } from "@utils/constants";
 import { resolveEventWindow } from "@utils/event-window";
+import { descriptionToPlainText } from "@utils/event-excerpt";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
 import type {
@@ -190,7 +191,10 @@ export const generateJsonData = (
     logSchemaWarning(slug, "image");
   }
 
-  const sanitizedDescription = sanitizeText(description);
+  // Imported descriptions carry markdown (`**`, `[text](url)`) and HTML.
+  const sanitizedDescription = sanitizeText(
+    description ? descriptionToPlainText(description) : "",
+  );
   if (!sanitizedDescription) {
     logSchemaWarning(slug, "description");
   }

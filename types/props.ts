@@ -35,7 +35,7 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
-import type { ActiveLinkProps, ImageSizeContext } from "types/common";
+import type { ActiveLinkProps, DescriptionFold, ImageSizeContext } from "types/common";
 
 /**
  * Props for ClientImageInner component
@@ -1063,17 +1063,37 @@ export interface CompleteProfileGateProps {
   redirectTo: string;
 }
 
-// Sticky CTA bar for event detail page (mobile)
-export interface EventStickyCTAProps {
-  eventUrl?: string;
+// Mobile bottom action bar (event page): server shell + client actions
+export interface EventActionBarProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  locale: AppLocale;
+}
+
+export interface EventActionBarActionsProps {
   eventSlug: string;
-  labels: {
-    moreInfo: string;
-    calendar: string;
-    save: string;
-    favoriteAdd: string;
-    favoriteRemove: string;
-  };
+  /** http(s) website; null makes "Add to calendar" the filled main action. */
+  eventUrl: string | null;
+  moreInfoLabel: string;
+  calendar: import("./common").CalendarEventData;
+}
+
+// Header share button: native share sheet on touch, small menu elsewhere
+export interface EventShareButtonProps {
+  shareEvent: import("./event").ShareKitEvent;
+}
+
+export interface EventShareMenuProps {
+  id: string;
+  shareEvent: import("./event").ShareKitEvent;
+  onClose: () => void;
+  onShared: (method: string) => void;
+}
+
+// "Something wrong? Tell us" mailto link, hidden for the event's owner
+export interface EventReportLinkProps {
+  ownerId?: string;
+  title: string;
+  url: string;
 }
 
 export interface EventClientPayload {
@@ -1098,14 +1118,10 @@ export interface EventClientProps {
 
 export type ClientEventClientProps = EventClientProps;
 
-// Collapsible description wrapper (mobile)
+// Description wrapper: clamped on mobile when long (decided on the server)
 export interface CollapsibleDescriptionProps {
+  fold: DescriptionFold;
   children: ReactNode;
-}
-
-// Event details section (duration + external link)
-export interface EventDetailsSectionProps {
-  event: import("./api/event").EventDetailResponseDTO;
 }
 
 export interface EventPageGateProps {
@@ -1121,7 +1137,8 @@ export interface EventPageBodyProps {
   latestNewsSlot: import("react").ReactNode;
   /** Rendered only once the event has ended. */
   nextEditionSlot: import("react").ReactNode;
-  promotedEventsSlot: import("react").ReactNode;
+  /** Promoted events, then related events (see EventMoreEvents). */
+  moreEventsSlot: import("react").ReactNode;
 }
 
 // Sticky sidebar for event detail page (desktop)
@@ -1150,6 +1167,8 @@ export interface EventDeleteDialogProps {
 
 export interface EventOrganizerProps {
   owner: import("./api/user").OwnerSummaryDTO;
+  /** Sidebar version: smaller heading, no icon. */
+  compact?: boolean;
 }
 
 export interface PromoteUpsellModalProps {
@@ -1214,11 +1233,24 @@ export interface PromotedEventsRowProps extends PromotedEventsSectionProps {
 }
 
 export interface EventPagePromotedEventsProps {
-  /** The event being viewed, left out of the row. */
+  events: EventSummaryResponseDTO[];
+  citySlug?: string;
+}
+
+export interface EventRelatedEventsProps {
+  events: EventSummaryResponseDTO[];
+  sourceEventId?: string;
+  sourceEventSlug: string;
+}
+
+export interface EventMoreEventsProps {
+  /** The event being viewed, left out of the promoted row. */
   eventId?: string;
   cityId?: number;
   citySlug?: string;
   regionId?: number;
+  relatedEvents: EventSummaryResponseDTO[];
+  sourceEventSlug: string;
 }
 
 export interface PromotedEventsTrackerProps {

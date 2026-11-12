@@ -56,7 +56,6 @@ export async function FeaturedPlaceSection({
 
       <EventsAroundServer
         events={section.events}
-        layout="horizontal"
         usePriority={section.usePriority}
         showJsonLd
         title={section.title}

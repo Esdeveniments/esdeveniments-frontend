@@ -239,28 +239,19 @@ export function distanceToRadius(
 
 export interface EventHeaderProps {
   title: string;
+  temporalStatus: import("./event-status").EventTemporalStatus;
+  visits: number;
+  interestedLabel: string;
+  owner?: import("./api/user").OwnerSummaryDTO | null;
+  /** Share and favourite icon buttons, placed on the byline (or state) row. */
+  actions: import("react").ReactNode;
+  /** Hub and next-edition links under the byline. */
+  children?: import("react").ReactNode;
 }
 
 export interface EventMediaProps {
   event: EventDetailResponseDTO;
   title: string;
-}
-
-export interface EventShareBarProps {
-  slug: string;
-  title: string;
-  description: string;
-  eventDateString: string;
-  location: string;
-  cityName: string;
-  regionName: string;
-  postalCode: string;
-}
-
-// Client-side props for EventShareBar include an optional server hint for
-// initial mobile rendering to avoid hydration layout shifts.
-export interface EventShareBarClientProps extends EventShareBarProps {
-  initialIsMobile?: boolean;
 }
 
 // Everything the organiser share kit needs, built on the server.
@@ -298,9 +289,13 @@ export interface EventTagsProps {
   tags: string[];
 }
 
-export interface EventCalendarProps {
+export interface EventFactsProps {
   event: EventDetailResponseDTO;
-  compact?: boolean;
+  /** Venue and town row; the desktop header shows it, the sidebar card doesn't. */
+  placeText?: string;
+  /** Header use: on desktop only the place row shows (date and price are in the sidebar card). */
+  placeOnlyOnDesktop?: boolean;
+  className?: string;
 }
 
 export type HideNotification = (hide: boolean) => void;
@@ -326,6 +321,8 @@ export interface EventMapsProps {
   location: string;
   cityName: string;
   regionName: string;
+  /** Exact venue point; wins over the text query. */
+  coords?: { lat: number; lon: number } | null;
 }
 
 export interface EventWeatherProps {
@@ -349,6 +346,9 @@ export interface EventLocationProps {
   citySlug?: string;
   regionSlug?: string;
   profile?: import("types/api/profile").ProfileSummaryResponseDTO;
+  /** Exact venue (backend `locationPrecision: "VENUE"`), used for directions. */
+  venueCoords?: { lat: number; lon: number } | null;
+  /** Sidebar version: smaller heading. */
   compact?: boolean;
 }
 

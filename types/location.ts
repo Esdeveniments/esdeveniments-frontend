@@ -2,7 +2,10 @@ export type BuildDisplayLocationOptions = {
   location: string;
   cityName: string;
   regionName: string;
-  hidePlaceSegments?: boolean;
+  /** The city is shown as a link, so leave it out of the text. */
+  hideCity?: boolean;
+  /** The region is shown as a link, so leave it out of the text. */
+  hideRegion?: boolean;
 };
 
 export type EventLocationLabelOptions = {

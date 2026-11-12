@@ -13,7 +13,7 @@ const tokenize = (text: string): string[] =>
 
 function stripMarkdown(text: string): string {
   return text
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\((?:[^()\s]|\([^()\s]*\))*\)/g, "$1")
     .replace(/^\s{0,3}#{1,6}\s+/gm, "")
     .replace(/^\s*[-*•]\s+/gm, "")
     .replace(/\*+|__/g, "");
@@ -59,6 +59,18 @@ function dropTitleEcho(text: string, title: string): string {
 }
 
 /**
+ * An event description (HTML, markdown or plain text) as plain text: line
+ * breaks kept, tags and markdown syntax dropped, link text kept.
+ */
+export function descriptionToPlainText(description: string): string {
+  const withBreaks = description.replace(
+    /<br\s*\/?>|<\/(?:p|div|li|h[1-6])>/gi,
+    "\n",
+  );
+  return stripMarkdown(stripHtmlTags(withBreaks)).trim();
+}
+
+/**
  * Plain-text excerpt of an event description for list rows: no HTML or
  * markdown, no leading heading line that repeats the title, cut at a word
  * boundary.
@@ -69,11 +81,7 @@ export function buildEventExcerpt(
   maxLength: number = NEWS_EVENT_EXCERPT_MAX_LENGTH,
 ): string {
   if (!description) return "";
-  const withBreaks = description.replace(
-    /<br\s*\/?>|<\/(?:p|div|li|h[1-6])>/gi,
-    "\n",
-  );
-  const text = stripMarkdown(stripHtmlTags(withBreaks)).trim();
+  const text = descriptionToPlainText(description);
   const body = dropTitleEcho(text, title).replace(/\s+/g, " ").trim();
   return truncateAtWord(body, maxLength);
 }

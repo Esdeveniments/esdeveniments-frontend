@@ -55,3 +55,9 @@ export function isValidEventUrl(url: string): boolean {
     return false;
   }
 }
+
+/** The event's own website when it is an http(s) link, else null ("Més info" hides). */
+export function getEventLinkUrl(url: string | null | undefined): string | null {
+  const trimmed = url?.trim();
+  return trimmed && /^https?:\/\//i.test(trimmed) ? trimmed : null;
+}

@@ -1,24 +1,24 @@
-import {
-  ArrowTopRightOnSquareIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
-import EventCalendar from "./EventCalendar";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import EventFacts from "./EventFacts";
 import EventLocation from "./EventLocation";
 import Weather from "components/ui/weather";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import AddToCalendar from "@components/ui/addToCalendar";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import EventOrganizerCard from "./EventOrganizerCard";
+import { buildCalendarEventData } from "@utils/event-helpers";
+import { getEventLinkUrl } from "@utils/event-url";
+import { getEventVenue } from "@utils/location-helpers";
+import { getEventVenueCoords } from "@utils/event-map";
 import type { EventSidebarProps } from "types/props";
 import type { AppLocale } from "types/i18n";
 
 /**
- * Sidebar for the event detail page (desktop only).
- * Contains: Date/Time, Location, More Info, Duration, Sponsor.
+ * Desktop sidebar: facts and the main action first, then where, weather and
+ * who. Mobile shows the same blocks in the main column and the action bar.
  *
  * Not sticky: it is taller than most screens, so sticking would hide the
  * sponsor card until the end of the event content.
- * Hidden on mobile (lg:hidden) — mobile uses inline versions of these components.
  */
 export default async function EventSidebar({
   event,
@@ -27,7 +27,11 @@ export default async function EventSidebar({
   sponsorSlot,
 }: EventSidebarProps) {
   const locale = (await rootLocale()) as AppLocale;
-  const t = await getTranslations({ locale, namespace: "Components.EventPage" });
+  const [t, tWeather] = await Promise.all([
+    getTranslations({ locale, namespace: "Components.EventPage" }),
+    getTranslations({ locale, namespace: "Components.Weather" }),
+  ]);
+  const eventUrl = getEventLinkUrl(event.url);
 
   return (
     <aside
@@ -35,75 +39,62 @@ export default async function EventSidebar({
       aria-label={t("sidebarAriaLabel")}
     >
       <div className="flex flex-col gap-4">
-        {/* Main sidebar card */}
         <div className="card-bordered">
           <div className="card-body flex flex-col gap-4">
-            {/* Date & Time */}
-            <EventCalendar event={event} compact />
+            <EventFacts event={event} />
+
+            <div className="stack">
+              {eventUrl && (
+                <a
+                  href={eventUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary w-full"
+                  data-analytics-link-type="sidebar_visit_website"
+                  data-analytics-context="event_sidebar"
+                  data-analytics-event-id={event.id ? String(event.id) : ""}
+                  data-analytics-event-slug={event.slug || ""}
+                >
+                  {t("moreInfo")}
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
+                </a>
+              )}
+              <AddToCalendar
+                {...buildCalendarEventData(event)}
+                variant={eventUrl ? "neutral" : "primary"}
+                fullWidth
+                source="sidebar"
+              />
+            </div>
 
             <hr className="border-border" />
 
-            {/* Location */}
             <EventLocation
-              location={event.location}
+              location={getEventVenue(event.location, event.title)}
               cityName={cityName}
               regionName={regionName}
               citySlug={event.city?.slug}
               regionSlug={event.region?.slug}
               profile={event.profile}
+              venueCoords={getEventVenueCoords(event)}
               compact
             />
 
-            {/* Weather (only when data available — not shown for past events) */}
+            {/* Only when there is a forecast (never for past events) */}
             {event.weather && (
               <>
                 <hr className="border-border" />
-                <Weather weather={event.weather} />
-              </>
-            )}
-
-            {/* Duration (from EventDetailsSection) */}
-            {event.duration && (
-              <>
-                <hr className="border-border" />
-                <div className="flex items-center gap-2 body-small text-foreground-strong/70">
-                  <ClockIcon className="w-4 h-4 flex-shrink-0" />
-                  <span>{t("durationLabel", { duration: event.duration })}</span>
-                </div>
-              </>
-            )}
-
-            {/* More Info link (from EventDetailsSection) */}
-            {event.url && /^https?:\/\//i.test(event.url) && (
-              <>
-                <hr className="border-border" />
-                <div className="flex flex-col gap-1">
-                  <h3 className="label font-semibold text-foreground-strong">
-                    {t("sidebarMoreInfo")}
-                  </h3>
-                  <PressableAnchor
-                    href={event.url}
-                    className="inline-flex items-center gap-1 body-small font-semibold text-primary hover:text-primary-dark transition-colors"
-                    target="_blank"
-                    rel="noreferrer"
-                    variant="inline"
-                    data-analytics-link-type="sidebar_visit_website"
-                    data-analytics-context="event_sidebar"
-                    data-analytics-event-id={event.id ? String(event.id) : ""}
-                    data-analytics-event-slug={event.slug || ""}
-                    disableNavigationSignal
-                  >
-                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                    {t("sidebarVisitWebsite")}
-                  </PressableAnchor>
-                </div>
+                <section className="stack">
+                  <h2 className="heading-4">{tWeather("title")}</h2>
+                  <Weather weather={event.weather} />
+                </section>
               </>
             )}
 
             {event.owner && (
               <>
                 <hr className="border-border" />
-                <EventOrganizerCard owner={event.owner} />
+                <EventOrganizerCard owner={event.owner} compact />
               </>
             )}
           </div>

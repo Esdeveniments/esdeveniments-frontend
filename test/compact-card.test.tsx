@@ -1,16 +1,14 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import CompactCard from "@components/ui/common/cardContent/CompactCard";
+import CompactCardView from "@components/ui/common/cardContent/CompactCardView";
+import type { CardLinkProps } from "types/ui";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
-// PressableAnchor is an async server component; a plain <a> keeps the props it gets.
-vi.mock("@components/ui/common/cardContent/CardLink", () => ({
-  default: ({ children, variant, ...props }: Record<string, unknown> & { children: React.ReactNode }) => (
-    <a data-variant={String(variant)} {...props}>
-      {children}
-    </a>
-  ),
-}));
+const Link = ({ children, variant, ...props }: CardLinkProps) => (
+  <a data-variant={String(variant)} {...(props as Record<string, unknown>)}>
+    {children}
+  </a>
+);
 
 const event = {
   id: "e1",
@@ -24,15 +22,16 @@ const event = {
   endTime: null,
   location: "Plaça Major",
   city: { id: 1, name: "Cardedeu", slug: "cardedeu" },
+  region: { id: 2, name: "Vallès Oriental", slug: "valles-oriental" },
   categories: [],
 } as unknown as EventSummaryResponseDTO;
 
 const render = () =>
   renderToStaticMarkup(
-    <CompactCard event={event} locale="ca" tCard={(key) => key} index={2} />,
+    <CompactCardView event={event} locale="ca" tCard={(key) => key} index={2} LinkComponent={Link} />,
   );
 
-describe("CompactCard (related events)", () => {
+describe("CompactCardView (map panel)", () => {
   it("is one title link inside the h3, stretched over the card", () => {
     const html = render();
     expect(html.match(/<a /g)).toHaveLength(1);
@@ -53,5 +52,11 @@ describe("CompactCard (related events)", () => {
     expect(html).toContain('alt=""');
     expect(html).not.toContain('alt="Concert de Nadal"');
     expect(html).toMatch(/<time dateTime="2026-12-20T18:00">[^<]+<\/time>/);
+  });
+
+  it("shows the town only: the region only got cut off on a narrow card", () => {
+    const html = render();
+    expect(html).toContain('<span class="truncate">Cardedeu</span>');
+    expect(html).not.toContain("Vallès Oriental");
   });
 });

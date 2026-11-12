@@ -30,19 +30,34 @@ export default function EventHeroImageClient({
     );
   }
 
+  // Half of our covers are portrait posters: show the whole image, and fill
+  // the box with a blurred copy (same URL, downloaded once). Fixed box = no CLS.
   return (
-    <picture>
-      <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
-      <img
-        src={sources.fallback}
-        alt={safeTitle}
-        loading="eager"
-        decoding="async"
-        fetchPriority="high"
-        sizes={sizes}
-        className="object-cover w-full h-full absolute inset-0 z-10"
-        onError={() => setHasFailed(true)}
-      />
-    </picture>
+    <>
+      <picture>
+        <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
+        <img
+          src={sources.fallback}
+          alt=""
+          loading="eager"
+          decoding="async"
+          sizes={sizes}
+          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+        />
+      </picture>
+      <picture>
+        <source srcSet={sources.webpSrcSet} type="image/webp" sizes={sizes} />
+        <img
+          src={sources.fallback}
+          alt={safeTitle}
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          sizes={sizes}
+          className="object-contain w-full h-full absolute inset-0 z-10"
+          onError={() => setHasFailed(true)}
+        />
+      </picture>
+    </>
   );
 }

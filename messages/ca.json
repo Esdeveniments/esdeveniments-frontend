@@ -675,7 +675,7 @@
       "pageTitle": "{title} (pàgina {page})"
     },
     "CulturalMessage": {
-      "explorePrefix": "Explora més plans {placeIn}:",
+      "explorePrefix": "Explora més plans {placeIn}",
       "today": "Què fer avui",
       "tomorrow": "Què fer demà",
       "week": "Què fer aquesta setmana",
@@ -972,14 +972,8 @@
       "editError": "Error en actualitzar l'esdeveniment",
       "editSave": "Desa canvis",
       "visitsCount": "{count, plural, one {{count} visita} other {{count} visites}}",
-      "stickyMoreInfo": "Més info",
-      "stickyCalendar": "Calendari",
-      "stickySave": "Desa",
       "free": "Gratuït",
       "paid": "De pagament",
-      "sidebarMoreInfo": "Més informació",
-      "sidebarVisitWebsite": "Visita el web",
-      "sidebarOpenInMaps": "Obre a Maps",
       "interested": "{count, plural, one {{count} interessat} other {{count} interessats}}",
       "popular": "Popular",
       "readMore": "Llegir més",
@@ -987,7 +981,6 @@
       "durationLabel": "Durada: {duration}",
       "sidebarAriaLabel": "Detalls de l'esdeveniment",
       "toolbarAriaLabel": "Accions de l'esdeveniment",
-      "sidebarCreatedBy": "Publicat per",
       "sidebarViewAllEvents": "Veure tots els esdeveniments",
       "shareEvent": "Comparteix",
       "promoteEvent": "Promociona",
@@ -999,7 +992,16 @@
       "deleteError": "No s'ha pogut eliminar l'esdeveniment. Torna-ho a provar.",
       "ownerBarTitle": "Has publicat aquest esdeveniment",
       "moreActions": "Més accions",
-      "organizerEventCount": "{count, plural, one {# esdeveniment publicat} other {# esdeveniments publicats}}"
+      "organizerEventCount": "{count, plural, one {# esdeveniment publicat} other {# esdeveniments publicats}}",
+      "moreInfo": "Més info",
+      "organizer": "Organitzador",
+      "reportPrompt": "Alguna dada no és correcta?",
+      "reportLink": "Avisa'ns",
+      "reportSubject": "Revisió de l'esdeveniment: {title}",
+      "reportBody": "Pàgina: {url}\n\nQuè cal revisar?\n",
+      "houseAdTitle": "Organitzes alguna cosa?",
+      "houseAdText": "Publica el teu esdeveniment gratis i arriba a més gent de la zona.",
+      "houseAdCta": "Publica un esdeveniment"
     },
     "CardContent": {
       "dateRange": "Del {start} al {end}",
@@ -1073,20 +1075,16 @@
       "rssNews": "RSS Notícies"
     },
     "EventDetailsSection": {
-      "title": "Detalls de l'esdeveniment",
-      "eventLink": "Enllaç a l'esdeveniment:",
-      "duration": "Durada aproximada: {duration}",
       "createdBy": "Publicat {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Ubicació",
-      "showMap": "Mostrar mapa",
-      "hideMap": "Tancar mapa",
+      "showMap": "Mostra el mapa",
+      "hideMap": "Amaga el mapa",
       "getDirections": "Com arribar",
       "profileLink": "Perfil {nameOf}"
     },
     "EventCalendar": {
-      "title": "Data i hora",
       "priceLabel": "Preu:",
       "priceFree": "Gratuït"
     },
@@ -1252,7 +1250,9 @@
       "share": "Comparteix",
       "shareLabel": "Comparteix {title}",
       "shareDate": "Data: {date}",
-      "sharePlace": "Lloc: {place}"
+      "sharePlace": "Lloc: {place}",
+      "email": "Envia per correu",
+      "moreOptions": "Més opcions"
     }
   },
   "Partials": {
@@ -1682,11 +1682,9 @@
     },
     "EventCopy": {
       "sentence": {
-        "verbSingular": "se celebra",
-        "verbPlural": "se celebren",
         "dateRange": "del {start} al {end}",
         "dateSingle": "el {nameDay}, {start}",
-        "sentence": "{title} {verb} {date}{time}{place}.",
+        "sentence": "«{title}» se celebra {date}{time}{place}.",
         "timeSuffix": ", a les {time}",
         "timeSuffixRange": ", de {start} a {end}",
         "placeSuffix": ", {place}"
@@ -1724,6 +1722,7 @@
       "dateSingle": "Del {start}",
       "loading": "Carregant...",
       "button": "Afegir al calendari",
+      "buttonShort": "Calendari",
       "providers": {
         "google": "Google Calendar",
         "outlook": "Outlook",

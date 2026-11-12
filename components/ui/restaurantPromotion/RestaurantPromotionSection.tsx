@@ -14,7 +14,6 @@ import {
 import WhereToEatSection from "./WhereToEatSection";
 import WhereToEatSkeleton from "./WhereToEatSkeleton";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { FireIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 
 // Lazy load info modal only when needed
@@ -171,8 +170,6 @@ export default function RestaurantPromotionSection({
         <section className="stack w-full min-w-0" aria-labelledby="where-to-eat">
           <SectionHeading
             headingId="where-to-eat"
-            Icon={FireIcon}
-            iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
             title={t("title")}
             titleClassName="heading-2"
           />
@@ -180,18 +177,18 @@ export default function RestaurantPromotionSection({
             // Google errors reach us as empty results (the route fails soft);
             // non-OK responses and network errors leave placesResp null. Both
             // land here, so this copy must hold for "none" and "failed".
-            <p className="body-small text-muted-foreground px-section-x">
+            <p className="body-small text-muted-foreground">
               {t("empty")}
             </p>
           ) : (
-            <div className="stack px-section-x">
+            <div className="stack">
               <p className="body-small text-muted-foreground">{t("loadIntro")}</p>
               {isAuthenticated || isAuthLoading ? (
                 <button
                   type="button"
                   onClick={handleLoadPlaces}
                   disabled={isAuthLoading}
-                  className="btn-outline btn-sm self-start"
+                  className="btn-neutral btn-sm self-start"
                 >
                   {t("loadCta")}
                 </button>
@@ -201,7 +198,7 @@ export default function RestaurantPromotionSection({
                 <button
                   type="button"
                   onClick={() => signIn(window.location.pathname)}
-                  className="btn-outline btn-sm self-start"
+                  className="btn-neutral btn-sm self-start"
                   data-analytics-action="restaurants_login"
                 >
                   {t("loginCta")}

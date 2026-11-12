@@ -1,6 +1,5 @@
 import { FC } from "react";
 import type { EventImageProps } from "types/event";
-import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import { getOptimalImageQuality, getResponsiveWidths } from "@utils/image-quality";
 import {
   buildResponsivePictureSourceUrls,
@@ -35,13 +34,8 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
 
   const anchorHref = normalizedImage || image || "";
 
-  if (!hasValidImage || !sources) {
-    return (
-      <div className="w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card">
-        <ImgDefaultServer title={title} />
-      </div>
-    );
-  }
+  // No usable image: no box at all (Eventbrite, RA), so the title moves up.
+  if (!hasValidImage || !sources) return null;
 
   return (
     <div

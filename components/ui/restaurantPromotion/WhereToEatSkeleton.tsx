@@ -1,6 +1,5 @@
 "use client";
 
-import { FireIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 import type { WhereToEatSkeletonProps } from "types/ui/restaurant-promotion";
 
@@ -20,20 +19,14 @@ export default function WhereToEatSkeleton({
       aria-labelledby="where-to-eat-skel"
     >
       <div className="flex items-center justify-between gap-element-gap">
-        <div className="flex items-center gap-element-gap">
-          <FireIcon
-            className="w-5 h-5 text-foreground-strong flex-shrink-0"
-            aria-hidden="true"
-          />
-          <h2 id="where-to-eat-skel" className="heading-2">
-            {t("title")}
-          </h2>
-        </div>
+        <h2 id="where-to-eat-skel" className="heading-2">
+          {t("title")}
+        </h2>
         {onPromoteClick && (
           <button
             type="button"
             onClick={onPromoteClick}
-            className="text-xs font-medium text-primary underline focus:outline-none disabled:opacity-50"
+            className="body-small font-semibold text-foreground-strong underline disabled:opacity-50"
             disabled
             aria-disabled="true"
           >
@@ -41,11 +34,11 @@ export default function WhereToEatSkeleton({
           </button>
         )}
       </div>
-      <div className="space-y-element-gap px-section-x" aria-busy="true">
+      <div className="space-y-element-gap" aria-busy="true">
         {skeletons.map((_, idx) => (
           <div
             key={idx}
-            className="border border-border rounded-lg pr-4 py-4 pl-0 animate-pulse"
+            className="card-bordered pr-4 py-4 pl-0 animate-pulse"
           >
             <div className="flex items-start gap-4">
               <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-border/40 ml-4" />

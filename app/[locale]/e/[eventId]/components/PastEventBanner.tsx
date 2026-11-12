@@ -25,7 +25,7 @@ export default function PastEventBanner({
   const timeWindow = t("timeWindow");
 
   return (
-    <div className="w-full px-section-x py-5 sm:py-6">
+    <div className="w-full py-5 sm:py-6">
       <div
         className="card-bordered max-w-3xl mx-auto bg-muted/30"
         role="status"

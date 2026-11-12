@@ -1,7 +1,13 @@
 import { computeTemporalStatus } from "@utils/event-status";
 import { EXPIRED_EVENT_NOINDEX_DAYS, MS_PER_DAY } from "@utils/constants";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import type { EventSummaryResponseDTO, ListEvent } from "types/api/event";
+import { siteUrl } from "@config/index";
+import type {
+  EventDetailResponseDTO,
+  EventSummaryResponseDTO,
+  ListEvent,
+} from "types/api/event";
+import type { CalendarEventData } from "types/common";
 
 /**
  * Whether an event ended more than EXPIRED_EVENT_NOINDEX_DAYS ago. Its page is
@@ -67,3 +73,18 @@ const EVENT_SLUG_RE = /^[A-Za-z0-9-]{1,512}$/;
 export function isValidEventSlug(slug: string): boolean {
   return EVENT_SLUG_RE.test(slug);
 }
+
+/** Add-to-calendar data, shared by the sidebar card and the mobile action bar. */
+export const buildCalendarEventData = (
+  event: EventDetailResponseDTO
+): CalendarEventData => ({
+  title: event.title,
+  description: event.description,
+  location: [event.location, event.city?.name, event.region?.name, event.city?.postalCode]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(", "),
+  startDate: event.startDate,
+  endDate: event.endDate,
+  canonical: `${siteUrl}/e/${event.slug}`,
+});
