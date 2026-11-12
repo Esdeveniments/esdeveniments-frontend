@@ -3,7 +3,7 @@
  * Prevents regressions in filter display text formatting
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import FiltersClient from "../components/ui/filters/FiltersClient";
 import { renderWithProviders } from "./utils/renderWithProviders";
@@ -415,4 +415,33 @@ describe("FiltersClient - Price", () => {
       expect(screen.queryByTestId("filter-pill-price-remove")).toBeNull();
     },
   );
+});
+
+describe("FiltersClient - Opening the modal", () => {
+  const props = {
+    segments: {
+      place: "barcelona",
+      date: DEFAULT_FILTER_VALUE,
+      category: DEFAULT_FILTER_VALUE,
+    } as RouteSegments,
+    queryParams: {},
+    placeTypeLabel: { type: "" as const, label: "Barcelona" },
+    labels: {
+      triggerLabel: "Filtres",
+      displayNameMap: { price: "Preu" },
+      prices: { gratis: "Gratuït", pagament: "De pagament" },
+      byDates: {},
+    },
+  };
+
+  it("opens on the chip's filter, and at the top from the Filtres button", () => {
+    const onOpenModal = vi.fn();
+    renderWithProviders(<FiltersClient {...props} onOpenModal={onOpenModal} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Preu" }));
+    expect(onOpenModal).toHaveBeenLastCalledWith("price");
+
+    fireEvent.click(screen.getByTestId("filters-open"));
+    expect(onOpenModal).toHaveBeenLastCalledWith(undefined);
+  });
 });

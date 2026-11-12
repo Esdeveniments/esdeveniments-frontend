@@ -35,6 +35,7 @@ import {
 import { getCategoryLabel } from "@utils/category-helpers";
 import { buildFilterUrl } from "@utils/url-filters";
 import { NavigationFiltersModalProps } from "types/props";
+import FilterSectionHeading from "./FilterSectionHeading";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
@@ -62,6 +63,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   currentQueryParams,
   userLocation: initialUserLocation,
   categories = [],
+  initialSection,
 }) => {
   const tByDates = useTranslations("Config.ByDates");
   const tCategories = useTranslations("Config.Categories");
@@ -72,6 +74,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   } = useGetRegionsWithCities(isOpen);
   const t = useTranslations("Components.FiltersModal");
   const tFilters = useTranslations("Components.Filters");
+  const initialSectionRef = useRef<HTMLParagraphElement>(null);
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -629,12 +632,18 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         actionButton={t("modal.action")}
         onActionButtonClick={applyFilters}
         testId="filters-modal"
+        initialFocusRef={initialSection ? initialSectionRef : undefined}
       >
         <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
           <div className="w-full flex flex-col justify-start items-start gap-4">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+            <FilterSectionHeading
+              section="place"
+              initialSection={initialSection}
+              initialSectionRef={initialSectionRef}
+              className="w-full pt-[5px]"
+            >
               {t("modal.locations")}
-            </p>
+            </FilterSectionHeading>
             <div className="w-full flex flex-col gap-2">
               <div className="w-full flex flex-col px-0">
                 {isLoadingRegions ? (
@@ -683,9 +692,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               )}
             </div>
             <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+              <FilterSectionHeading
+                section="byDate"
+                initialSection={initialSection}
+                initialSectionRef={initialSectionRef}
+                className="w-full pt-[5px]"
+              >
                 {t("modal.dateHeading")}
-              </p>
+              </FilterSectionHeading>
               <div className="w-full flex flex-wrap gap-2">
                 {BYDATES.map(({ value, labelKey }) => (
                   <button
@@ -726,9 +740,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             </fieldset>
             {categories.length > 0 && (
               <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-                <p className="w-full font-semibold font-barlow uppercase">
+                <FilterSectionHeading
+                  section="category"
+                  initialSection={initialSection}
+                  initialSectionRef={initialSectionRef}
+                  className="w-full"
+                >
                   {t("modal.categoriesHeading")}
-                </p>
+                </FilterSectionHeading>
                 <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
                   {categories.map((category: CategorySummaryResponseDTO) => (
                     <RadioInput
@@ -749,9 +768,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               </fieldset>
             )}
             <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-              <p className="w-full font-semibold font-barlow uppercase">
+              <FilterSectionHeading
+                section="price"
+                initialSection={initialSection}
+                initialSectionRef={initialSectionRef}
+                className="w-full"
+              >
                 {t("modal.priceHeading")}
-              </p>
+              </FilterSectionHeading>
               <div className="w-full flex flex-wrap gap-x-4 gap-y-2">
                 <RadioInput
                   id="price-gratis"
@@ -773,9 +797,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             </fieldset>
             <fieldset className="w-full flex flex-col justify-start items-start gap-6">
               <div className="w-full flex items-center justify-between gap-3">
-                <p className="font-semibold font-barlow uppercase pt-[5px]">
+                <FilterSectionHeading
+                  section="distance"
+                  initialSection={initialSection}
+                  initialSectionRef={initialSectionRef}
+                  className="pt-[5px]"
+                >
                   {distanceLabel}
-                </p>
+                </FilterSectionHeading>
                 <label
                   className={`flex items-center gap-2 text-xs font-semibold ${disableDistance ? "text-border" : "text-primary"}`}
                 >

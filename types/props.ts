@@ -60,6 +60,7 @@ import {
   InputHTMLAttributes,
   MouseEvent,
   ReactNode,
+  RefObject,
 } from "react";
 import type { CardLinkProps } from "types/ui";
 import type { EventMapPoint } from "types/event-map";
@@ -91,6 +92,7 @@ import {
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { PriceFilterValue, RouteSegments, URLQueryParams } from "types/url-filters";
+import type { FilterKey } from "types/filters";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { AppLocale } from "types/i18n";
 import type { EventFormProps, EventPriceFormFields } from "types/event";
@@ -295,6 +297,8 @@ export interface ModalProps {
   actionButtonDisabled?: boolean;
   actionButtonAnalyticsAction?: string;
   testId?: string;
+  /** Focused on open and scrolled to the top of the body; the close button when unset or not rendered. */
+  initialFocusRef?: RefObject<HTMLElement | null>;
 }
 
 export interface ConfirmDialogProps {
@@ -545,7 +549,8 @@ export interface ClientInteractiveLayerProps {
 export interface ClientInteractiveLayerContentProps extends ClientInteractiveLayerProps {
   isNavbarVisible: boolean;
   isModalOpen: boolean;
-  handleOpenModal: () => void;
+  modalSection?: FilterKey;
+  handleOpenModal: (section?: FilterKey) => void;
   handleCloseModal: () => void;
 }
 
@@ -561,7 +566,8 @@ export interface FiltersClientProps {
   queryParams: URLQueryParams;
   categories?: CategorySummaryResponseDTO[];
   placeTypeLabel: PlaceTypeAndLabel;
-  onOpenModal: () => void;
+  /** `section`: the chip's filter, so the modal opens on it. */
+  onOpenModal: (section?: FilterKey) => void;
   labels: FilterLabels;
 }
 
@@ -577,11 +583,11 @@ export interface ActiveNavLinkProps {
 }
 
 export interface FilterButtonProps {
-  filterKey: string;
+  filterKey: FilterKey;
   text: string;
   enabled: boolean;
   removeUrl: string;
-  onOpenModal: () => void;
+  onOpenModal: (section: FilterKey) => void;
   testId?: string;
 }
 
@@ -592,6 +598,16 @@ export interface NavigationFiltersModalProps {
   currentQueryParams: URLQueryParams;
   userLocation?: { latitude: number; longitude: number };
   categories?: CategorySummaryResponseDTO[];
+  /** Section to scroll to and focus on open; the top when unset. */
+  initialSection?: FilterKey;
+}
+
+export interface FilterSectionHeadingProps {
+  section: FilterKey;
+  initialSection?: FilterKey;
+  initialSectionRef: RefObject<HTMLParagraphElement | null>;
+  className: string;
+  children: ReactNode;
 }
 
 export interface ProfileHeaderProps {
