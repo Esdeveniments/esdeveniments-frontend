@@ -482,13 +482,14 @@
         "PROVINCE": "La teva província",
         "CATALONIA": "Tot Catalunya"
       },
-      "pendingCheckout": "Tens un pagament pendent per a aquest esdeveniment. Pots continuar-lo ara; si no, caduca en menys d'una hora i llavors podràs triar una altra opció.",
+      "pendingCheckout": "Tens un pagament a mig fer per a aquest esdeveniment. Pots continuar-lo o triar una altra opció: l'anterior es cancel·larà sense cap càrrec.",
       "resumeCheckout": "Continua el pagament",
       "refreshStatus": "Actualitza l'estat",
       "tryAgain": "Torna-ho a provar",
+      "chooseAnotherOption": "Tria una altra opció",
       "errors": {
         "PROMOTION_ALREADY_ACTIVE": "Aquest esdeveniment ja està promocionat.",
-        "CHECKOUT_ALREADY_PENDING": "Ja tens un pagament pendent per a aquest esdeveniment. Caduca en menys d'una hora; després podràs triar una altra opció.",
+        "CHECKOUT_ALREADY_PENDING": "Ja hi ha un pagament en curs per a aquest esdeveniment. Torna-ho a provar d'aquí a una estona.",
         "REFUND_PENDING": "Hi ha un reemborsament en curs per a aquest esdeveniment.",
         "PROMOTIONS_DISABLED": "Les promocions no estan disponibles ara mateix.",
         "MISSING_EVENT_LOCATION": "L'esdeveniment necessita una població per poder-lo promocionar.",
@@ -519,7 +520,7 @@
       },
       "cancelPage": {
         "title": "Pagament cancel·lat",
-        "pending": "No s'ha fet cap càrrec. Pots continuar el pagament ara; si no, caduca en menys d'una hora i llavors podràs triar una altra opció."
+        "pending": "No s'ha fet cap càrrec. Pots continuar el pagament o triar una altra opció."
       }
     },
     "EventMeta": {

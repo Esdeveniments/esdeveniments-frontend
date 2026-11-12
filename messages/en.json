@@ -482,13 +482,14 @@
         "PROVINCE": "Your province",
         "CATALONIA": "All of Catalonia"
       },
-      "pendingCheckout": "You have a pending payment for this event. You can continue it now; otherwise it expires within an hour, and then you can choose another option.",
+      "pendingCheckout": "You have an unfinished payment for this event. You can continue it or choose another option: the earlier one will be cancelled at no charge.",
       "resumeCheckout": "Continue payment",
       "refreshStatus": "Refresh status",
       "tryAgain": "Try again",
+      "chooseAnotherOption": "Choose another option",
       "errors": {
         "PROMOTION_ALREADY_ACTIVE": "This event is already promoted.",
-        "CHECKOUT_ALREADY_PENDING": "You already have a pending payment for this event. It expires within an hour; then you can choose another option.",
+        "CHECKOUT_ALREADY_PENDING": "There's already a payment in progress for this event. Please try again in a while.",
         "REFUND_PENDING": "A refund is in progress for this event.",
         "PROMOTIONS_DISABLED": "Promotions are not available right now.",
         "MISSING_EVENT_LOCATION": "The event needs a town before it can be promoted.",
@@ -519,7 +520,7 @@
       },
       "cancelPage": {
         "title": "Payment cancelled",
-        "pending": "You haven't been charged. You can continue the payment now; otherwise it expires within an hour, and then you can choose another option."
+        "pending": "You haven't been charged. You can continue the payment or choose another option."
       }
     },
     "EventMeta": {

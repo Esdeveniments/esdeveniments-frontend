@@ -12,7 +12,7 @@ const pendingStatus: PromotionStatusDTO = {
   scope: "CITY",
   startsAt: null,
   endsAt: null,
-  canPurchase: false,
+  canPurchase: true,
   checkoutUrl,
 };
 
@@ -61,11 +61,20 @@ describe("PromotionReturnPage", () => {
       "href",
       checkoutUrl,
     );
+    expect(screen.getByRole("link", { name: "Tria una altra opció" })).toHaveAttribute(
+      "href",
+      "/e/concert/promote",
+    );
   });
 
-  it("on success, still says the payment is being confirmed", async () => {
+  it("on success, says the payment is being confirmed and offers nothing to buy", async () => {
     await renderReturnPage("success");
 
     expect(screen.getByText(/Estem confirmant el pagament/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Actualitza l'estat" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Continua el pagament" })).toBeNull();
+    expect(
+      screen.queryAllByRole("link").filter((link) => link.getAttribute("href") === "/e/concert/promote"),
+    ).toHaveLength(0);
   });
 });
