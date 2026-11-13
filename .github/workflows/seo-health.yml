@@ -233,7 +233,7 @@ jobs:
   ai-referrer:
     name: Verify ai_referrer event firing
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -251,10 +251,12 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY' | tee /tmp/ai-referrer.md
-          import os, sys
+          import sys
+          from google.api_core import exceptions as gexc
+          from google.api_core.retry import Retry, if_exception_type
           from google.analytics.data_v1beta import BetaAnalyticsDataClient
           from google.analytics.data_v1beta.types import (
-              DateRange, Dimension, Metric, RunReportRequest, Filter, FilterExpression,
+              DateRange, Metric, RunReportRequest, Filter, FilterExpression,
           )
 
           PROPERTY_ID = "${{ env.GA4_PROPERTY_ID }}"
@@ -262,33 +264,37 @@ jobs:
           # and timezone boundaries. Raise the session floor to avoid alerting when
           # there's genuinely no AI traffic to measure.
           MIN_AI_SESSIONS_TO_CHECK = 10
+          # GA4's Data API sometimes times out for minutes (504 Deadline Exceeded).
+          # Retry those, and if it still can't answer, the check is inconclusive:
+          # it measured nothing, so it must not report a tracking regression.
+          TRANSIENT = (gexc.DeadlineExceeded, gexc.ServiceUnavailable,
+                       gexc.InternalServerError, gexc.TooManyRequests)
+          RETRY = Retry(predicate=if_exception_type(*TRANSIENT),
+                        initial=5, maximum=30, timeout=150)
 
           client = BetaAnalyticsDataClient()
 
-          # AI sessions as GA itself classifies them (built-in channel), so the
-          # check doesn't depend on our own detection in utils/userProperties.ts.
-          ai_sessions = client.run_report(RunReportRequest(
-              property=f"properties/{PROPERTY_ID}",
-              date_ranges=[DateRange(start_date="2daysAgo", end_date="today")],
-              metrics=[Metric(name="sessions")],
-              dimension_filter=FilterExpression(filter=Filter(
-                  field_name="sessionDefaultChannelGroup",
-                  string_filter=Filter.StringFilter(value="AI Assistant"),
-              )),
-          ))
-          ai_session_count = int(ai_sessions.rows[0].metric_values[0].value) if ai_sessions.rows else 0
+          def count(metric, field, value):
+              report = client.run_report(RunReportRequest(
+                  property=f"properties/{PROPERTY_ID}",
+                  date_ranges=[DateRange(start_date="2daysAgo", end_date="today")],
+                  metrics=[Metric(name=metric)],
+                  dimension_filter=FilterExpression(filter=Filter(
+                      field_name=field,
+                      string_filter=Filter.StringFilter(value=value),
+                  )),
+              ), retry=RETRY, timeout=60)
+              return int(report.rows[0].metric_values[0].value) if report.rows else 0
 
-          # Count of ai_referrer custom events.
-          events = client.run_report(RunReportRequest(
-              property=f"properties/{PROPERTY_ID}",
-              date_ranges=[DateRange(start_date="2daysAgo", end_date="today")],
-              metrics=[Metric(name="eventCount")],
-              dimension_filter=FilterExpression(filter=Filter(
-                  field_name="eventName",
-                  string_filter=Filter.StringFilter(value="ai_referrer"),
-              )),
-          ))
-          ai_event_count = int(events.rows[0].metric_values[0].value) if events.rows else 0
+          try:
+              # AI sessions as GA itself classifies them (built-in channel), so the
+              # check doesn't depend on our own detection in utils/userProperties.ts.
+              ai_session_count = count("sessions", "sessionDefaultChannelGroup", "AI Assistant")
+              ai_event_count = count("eventCount", "eventName", "ai_referrer")
+          except (*TRANSIENT, gexc.RetryError) as error:
+              print(f"::warning::GA4 Data API unavailable ({type(error).__name__}); ai_referrer check skipped")
+              print(f"ℹ️  GA4 Data API unavailable ({error}) — inconclusive, skipping alert")
+              sys.exit(0)
 
           print(f"AI sessions (last 2d): {ai_session_count}")
           print(f"ai_referrer events (last 2d): {ai_event_count}")
