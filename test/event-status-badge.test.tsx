@@ -1,40 +1,42 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import EventStatusBadge from "app/[locale]/e/[eventId]/components/EventStatusBadge";
+import type { EventStatusMeta, EventTemporalStatus } from "types/event-status";
+
+const renderBadge = (status: EventStatusMeta | EventTemporalStatus) => render(<EventStatusBadge status={status} />).container;
+const visibleText = (el: Element) => {
+  const copy = el.cloneNode(true) as Element;
+  copy.querySelectorAll(".sr-only").forEach((n) => n.remove());
+  return copy.textContent;
+};
 
 describe("EventStatusBadge", () => {
   it("shows only the countdown for an upcoming event, so it fits next to the actions", () => {
-    render(
-      <EventStatusBadge
-        status={{ state: "upcoming", label: "Properament", startsIn: "Comença en 3 hores" }}
-      />,
-    );
-    const badge = screen.getByLabelText("Estat: Properament — Comença en 3 hores");
-    expect(badge.textContent).toBe("Comença en 3\u00A0hores");
+    const pill = renderBadge({ state: "upcoming", label: "Properament", startsIn: "Comença en 3 hores" })
+      .firstElementChild!;
+    expect(visibleText(pill)).toBe("Comença en 3\u00A0hores");
+    // Screen readers get the context as text, not as an aria-label on a span (not allowed by ARIA).
+    expect(pill.textContent).toBe("Estat: Comença en 3\u00A0hores");
+    expect(pill.hasAttribute("aria-label")).toBe(false);
   });
 
   it("keeps the number with its unit, so a wrap never leaves the unit alone", () => {
-    render(
-      <EventStatusBadge
-        status={{ state: "upcoming", label: "Upcoming", startsIn: "Starts in 180 days" }}
-      />,
-    );
-    expect(screen.getByLabelText(/^Estat: Upcoming/).textContent).toBe("Starts in 180\u00A0days");
+    const pill = renderBadge({ state: "upcoming", label: "Upcoming", startsIn: "Starts in 180 days" })
+      .firstElementChild!;
+    expect(visibleText(pill)).toBe("Starts in 180\u00A0days");
   });
 
   it("shows the label for an upcoming event with no countdown", () => {
-    render(<EventStatusBadge status={{ state: "upcoming", label: "Properament" }} />);
-    expect(screen.getByLabelText("Estat: Properament").textContent).toBe("Properament");
+    expect(visibleText(renderBadge({ state: "upcoming", label: "Properament" }))).toBe("Properament");
   });
 
-  it("keeps each part of a live badge on one line so the countdown wraps whole", () => {
-    render(
-      <EventStatusBadge
-        status={{ state: "live", label: "En curs", endsIn: "Acaba en 3 hores" }}
-      />,
-    );
-    const parts = [...screen.getByLabelText(/^Estat: En curs/).children];
-    expect(parts.map((p) => p.textContent)).toEqual(["En curs", "Acaba en 3\u00A0hores"]);
-    for (const part of parts) expect(part.className).toContain("whitespace-nowrap");
+  it("puts a live countdown beside the pill with a still dot, never a looping pulse", () => {
+    const root = renderBadge({ state: "live", label: "En curs", endsIn: "Acaba en 3 hores" });
+    const [pill, countdown] = [...root.firstElementChild!.children];
+    expect(visibleText(pill)).toBe("En curs");
+    expect(pill.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(countdown.textContent).toBe("Acaba en 3\u00A0hores");
+    expect(countdown.className).toContain("whitespace-nowrap");
+    expect(root.innerHTML).not.toContain("animate-");
   });
 });

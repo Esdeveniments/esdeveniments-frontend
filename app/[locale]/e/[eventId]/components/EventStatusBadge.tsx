@@ -2,9 +2,9 @@ import { useTranslations } from "next-intl";
 import type { EventStatusMeta, EventTemporalStatus } from "types/event-status";
 
 const stateStyles: Record<EventStatusMeta["state"], string> = {
-  past: "bg-foreground-strong/10 text-foreground-strong border border-foreground-strong/20",
-  live: "bg-primary text-primary-foreground border border-primary-dark animate-pulse",
-  upcoming: "bg-primary/10 text-primary border border-primary/20",
+  past: "bg-muted text-foreground border border-border",
+  live: "bg-primary text-primary-foreground border border-primary-dark",
+  upcoming: "bg-primary/10 text-primary-dark border border-primary/20",
 };
 
 /**
@@ -36,30 +36,30 @@ const EventStatusBadge: React.FC<{
 
   const countdown = getCountdown(status);
   const shownCountdown = countdown && keepNumberWithUnit(countdown);
-  const ariaPrefix = ariaLabelPrefix ?? t("ariaLabelPrefix");
+  const isLive = status.state === "live";
 
   // "Comença en 3 hores" already says it's upcoming, so it replaces the label.
-  const displayText =
-    status.state === "past"
-      ? t("past")
-      : status.state === "live"
-        ? t("live")
-        : shownCountdown || status.label;
-  const detail = status.state === "live" ? shownCountdown : undefined;
+  const label =
+    status.state === "past" ? t("past") : isLive ? t("live") : shownCountdown || status.label;
 
-  return (
+  const pill = (
     <span
-      className={`inline-flex flex-wrap items-baseline gap-x-1.5 rounded-md px-2 py-1 label font-semibold ${stateStyles[status.state]
-        } ${className}`}
-      aria-label={`${ariaPrefix} ${status.label}${countdown ? ` — ${countdown}` : ""}`}
+      className={`inline-flex items-center gap-1.5 rounded-badge px-badge-x py-badge-y text-xs font-semibold ${stateStyles[status.state]}${className ? ` ${className}` : ""}`}
     >
-      {detail ? <span className="whitespace-nowrap">{displayText}</span> : displayText}
-      {/* Wraps as a whole onto its own line when the row is too narrow. */}
-      {detail && (
-        <span className="whitespace-nowrap font-normal opacity-90 normal-case tracking-normal">
-          {detail}
-        </span>
-      )}
+      <span className="sr-only">{ariaLabelPrefix ?? t("ariaLabelPrefix")} </span>
+      {/* A still dot: a looping pulse never stops (WCAG 2.2.2) and fades the text. */}
+      {isLive && <span aria-hidden="true" className="w-1.5 h-1.5 shrink-0 rounded-full bg-current" />}
+      {label}
+    </span>
+  );
+
+  if (!isLive || !shownCountdown) return pill;
+
+  // The countdown sits beside the pill as plain text, so the pill stays one short line.
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+      {pill}
+      <span className="whitespace-nowrap body-small text-foreground-strong">{shownCountdown}</span>
     </span>
   );
 };
