@@ -31,25 +31,30 @@ const EventStatusBadge: React.FC<{
   const t = useTranslations("Utils.EventStatusBadge");
   if (!status) return null;
 
+  const countdown = getCountdown(status);
+  const ariaPrefix = ariaLabelPrefix ?? t("ariaLabelPrefix");
+
+  // "Comença en 3 hores" already says it's upcoming, so it replaces the label.
   const displayText =
     status.state === "past"
       ? t("past")
       : status.state === "live"
         ? t("live")
-        : status.label;
-
-  const countdown = getCountdown(status);
-  const ariaPrefix = ariaLabelPrefix ?? t("ariaLabelPrefix");
+        : countdown || status.label;
+  const detail = status.state === "live" ? countdown : undefined;
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 label font-semibold ${stateStyles[status.state]
+      className={`inline-flex flex-wrap items-baseline gap-x-1.5 rounded-md px-2 py-1 label font-semibold ${stateStyles[status.state]
         } ${className}`}
       aria-label={`${ariaPrefix} ${status.label}${countdown ? ` — ${countdown}` : ""}`}
     >
-      {displayText}
-      {countdown && (
-        <span className="font-normal opacity-90 normal-case tracking-normal">· {countdown}</span>
+      {detail ? <span className="whitespace-nowrap">{displayText}</span> : displayText}
+      {/* Wraps as a whole onto its own line when the row is too narrow. */}
+      {detail && (
+        <span className="whitespace-nowrap font-normal opacity-90 normal-case tracking-normal">
+          {detail}
+        </span>
       )}
     </span>
   );
