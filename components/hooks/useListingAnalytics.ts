@@ -51,7 +51,7 @@ export default function useListingAnalytics(
     };
 
     const checkScrollDepth = () => {
-      const grid = container.querySelector(":scope > ul");
+      const grid = container.querySelector(":scope > [data-listing-grid]");
       const total = grid?.children.length ?? 0;
       if (total === 0) return;
       const pctSeen = (seen.size / total) * 100;
@@ -89,7 +89,7 @@ export default function useListingAnalytics(
 
     // Scan grid children and observe any not yet seen
     const observeNewCards = () => {
-      const grid = container.querySelector(":scope > ul");
+      const grid = container.querySelector(":scope > [data-listing-grid]");
       if (!grid) return;
       for (const child of grid.children) {
         if (!seen.has(child)) io.observe(child);

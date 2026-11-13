@@ -7,7 +7,8 @@ export default function List<T extends ListItem = ListEvent>({
   children,
 }: ListProps<T>): JSX.Element {
   return (
-    <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    // useListingAnalytics and the .list-appended CSS find the grid by this attribute.
+    <ul data-listing-grid className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
       {events?.map((event, index) => (
         <li
           key={event.id ?? `item-${index}`}
