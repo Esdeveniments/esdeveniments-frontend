@@ -51,11 +51,12 @@ export default function PromoteEventClient({
   const showCatalog =
     catalog.length > 0 && (canPurchase || unavailableCode === "NO_AVAILABLE_OPTIONS");
   const endsTooSoon =
+    showCatalog &&
     !canPurchase &&
-    catalog.length > 0 &&
     catalog.every(
       (option) => option.unavailableReason === "INSUFFICIENT_EVENT_DURATION",
     );
+  const plansLabel = canPurchase ? t("chooseOption") : t("plansHeading");
   const scopes = SCOPE_ORDER.filter((scope) =>
     catalog.some((option) => option.scope === scope),
   );
@@ -290,12 +291,12 @@ export default function PromoteEventClient({
         {showCatalog && (
           <div className="flex flex-col gap-4">
             <h2 className="body-normal font-semibold text-foreground-strong">
-              {canPurchase ? t("chooseOption") : t("plansHeading")}
+              {plansLabel}
             </h2>
 
             <div
               role="tablist"
-              aria-label={t("chooseOption")}
+              aria-label={plansLabel}
               className="grid grid-cols-2 sm:flex border-b border-border"
             >
               {scopes.map((scope, index) => {

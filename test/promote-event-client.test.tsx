@@ -69,6 +69,18 @@ const multiScopeCatalog: PromotionOptionsDTO = {
   ],
 };
 
+// Every plan blocked for one reason, as the backend sends it.
+const blocked = (
+  data: PromotionOptionsDTO,
+  reason: string,
+  topReason = reason,
+): PromotionOptionsDTO => ({
+  ...data,
+  options: data.options.map((o) => ({ ...o, available: false, unavailableReason: reason })),
+  canPurchase: false,
+  unavailableReason: topReason,
+});
+
 const renderMultiScope = () =>
   render(
     <PromoteEventClient
@@ -191,19 +203,7 @@ describe("PromoteEventClient", () => {
       <PromoteEventClient
         eventId="uuid-1"
         slug="concert"
-        options={{
-          ok: true,
-          data: {
-            ...catalog,
-            options: catalog.options.map((o) => ({
-              ...o,
-              available: false,
-              unavailableReason: "CHECKOUT_ALREADY_PENDING",
-            })),
-            canPurchase: false,
-            unavailableReason: "CHECKOUT_ALREADY_PENDING",
-          },
-        }}
+        options={{ ok: true, data: blocked(catalog, "CHECKOUT_ALREADY_PENDING") }}
         pendingCheckoutUrl={pendingUrl}
         placeNames={placeNames}
       />,
@@ -221,16 +221,11 @@ describe("PromoteEventClient", () => {
         slug="concert"
         options={{
           ok: true,
-          data: {
-            ...multiScopeCatalog,
-            options: multiScopeCatalog.options.map((o) => ({
-              ...o,
-              available: false,
-              unavailableReason: "INSUFFICIENT_EVENT_DURATION",
-            })),
-            canPurchase: false,
-            unavailableReason: "NO_AVAILABLE_OPTIONS",
-          },
+          data: blocked(
+            multiScopeCatalog,
+            "INSUFFICIENT_EVENT_DURATION",
+            "NO_AVAILABLE_OPTIONS",
+          ),
         }}
         pendingCheckoutUrl={null}
         placeNames={placeNames}
@@ -240,7 +235,7 @@ describe("PromoteEventClient", () => {
     expect(screen.getByTestId("promote-unavailable")).toHaveTextContent(
       "massa aviat per promocionar-lo",
     );
-    expect(screen.getByRole("tablist")).toBeInTheDocument();
+    expect(screen.getByRole("tablist", { name: "Preus de les promocions" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("city-1d")).toBeDisabled();
     expect(screen.getAllByText(/9,99/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/abans que s'acabi aquesta promoció/)).toBeNull();
@@ -254,16 +249,7 @@ describe("PromoteEventClient", () => {
         slug="concert"
         options={{
           ok: true,
-          data: {
-            ...catalog,
-            options: catalog.options.map((o) => ({
-              ...o,
-              available: false,
-              unavailableReason: "PROMOTIONS_DISABLED",
-            })),
-            canPurchase: false,
-            unavailableReason: "PROMOTIONS_DISABLED",
-          },
+          data: blocked(catalog, "INSUFFICIENT_EVENT_DURATION", "PROMOTIONS_DISABLED"),
         }}
         pendingCheckoutUrl={null}
         placeNames={placeNames}
