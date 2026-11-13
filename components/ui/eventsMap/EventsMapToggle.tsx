@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { MapIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { sendGoogleEvent } from "@utils/analytics";
+import { afterTransitions } from "@utils/browser";
 import { eventsMapLauncher } from "./eventsMapLauncher";
 
 const EventsMap = dynamic(() => import("./EventsMap"), {
@@ -39,18 +40,33 @@ export default function EventsMapToggle() {
 
   // Layout effect: once the map chunk is cached, the map mounts in the same
   // commit, and its (passive) effect must see an open, sized dialog.
+  // Opening and closing are CSS transitions (.events-map-dialog in
+  // styles/globals.css) driven by data-closed: a close that starts mid-open
+  // reverses from where it is, and a reopen mid-close cancels the close.
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    const root = document.documentElement;
     if (open) {
-      if (!dialog.open) dialog.showModal();
-      root.classList.add("overflow-hidden");
-    } else if (dialog.open) {
-      dialog.close();
+      if (!dialog.open) {
+        dialog.dataset.closed = "";
+        dialog.showModal();
+        // Apply the closed style first, so the transition has a start.
+        void dialog.offsetWidth;
+      }
+      delete dialog.dataset.closed;
+      document.documentElement.classList.add("overflow-hidden");
+      return;
     }
-    return () => root.classList.remove("overflow-hidden");
+    if (!dialog.open) return;
+    dialog.dataset.closed = "";
+    return afterTransitions(dialog, () => dialog.close());
   }, [open]);
+
+  // The page stays locked until the dialog has really closed (onClose).
+  useEffect(
+    () => () => document.documentElement.classList.remove("overflow-hidden"),
+    []
+  );
 
   return (
     <>
@@ -67,8 +83,17 @@ export default function EventsMapToggle() {
       <dialog
         ref={dialogRef}
         aria-label={t("mapTitle")}
-        onClose={() => setOpen(false)}
-        className="m-0 p-0 w-full h-full max-w-full max-h-full bg-background text-foreground"
+        onCancel={(e) => {
+          // Esc: close with the transition instead of at once. If the browser
+          // won't let us (repeated Esc), it closes now and onClose catches up.
+          e.preventDefault();
+          setOpen(false);
+        }}
+        onClose={() => {
+          document.documentElement.classList.remove("overflow-hidden");
+          setOpen(false);
+        }}
+        className="events-map-dialog m-0 p-0 w-full h-full max-w-full max-h-full bg-background text-foreground"
       >
         <div className="flex flex-col h-full">
           <header className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border">

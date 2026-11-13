@@ -13,9 +13,15 @@ vi.mock("@i18n/routing", () => ({
 
 vi.mock("@utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
 
-import EventDeleteAction from "@app/[locale]/e/[eventId]/components/EventDeleteAction";
+import { useState } from "react";
+import EventDeleteDialog from "@app/[locale]/e/[eventId]/components/EventDeleteDialog";
 
-describe("EventDeleteAction", () => {
+function OpenDialog() {
+  const [open, setOpen] = useState(true);
+  return <EventDeleteDialog slug="my-event" open={open} setOpen={setOpen} />;
+}
+
+describe("EventDeleteDialog", () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
@@ -29,13 +35,12 @@ describe("EventDeleteAction", () => {
   });
 
   const confirmDelete = async () => {
-    fireEvent.click(screen.getByTestId("event-delete-button"));
     fireEvent.click(await screen.findByTestId("event-delete-modal-action-button"));
   };
 
   it("deletes through the internal route after confirmation and leaves the page", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
-    render(<EventDeleteAction slug="my-event" />);
+    render(<OpenDialog />);
 
     expect(fetchMock).not.toHaveBeenCalled();
     await confirmDelete();
@@ -50,7 +55,7 @@ describe("EventDeleteAction", () => {
   // 404 too: the route returns it when the backend lookup fails.
   it.each([500, 404])("keeps the dialog open with an error on a %i", async (status) => {
     fetchMock.mockResolvedValue(new Response(null, { status }));
-    render(<EventDeleteAction slug="my-event" />);
+    render(<OpenDialog />);
 
     await confirmDelete();
 

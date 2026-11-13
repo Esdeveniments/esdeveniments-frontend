@@ -76,7 +76,7 @@ describe("CardLayout compact (home carousel)", () => {
       <CardLayout card={baseCard} compact isPriority={false} renderLink={renderLink} />
     );
     expect(html).toContain('class="flex-1 flex flex-col px-3.5 pt-2.5 pb-3.5"');
-    expect(html).toContain('class="text-xs text-muted-foreground mb-1 truncate"');
+    expect(html).toContain('class="text-xs text-muted-foreground mb-1 line-clamp-2"');
     expect(html).toMatch(
       /<h3 class="order-2 text-sm font-semibold leading-normal line-clamp-2 mb-1\.5 text-foreground-strong[^"]*">/,
     );

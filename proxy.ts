@@ -27,7 +27,8 @@ import {
   checkPlace,
   isUnroutablePath,
 } from "@utils/proxy-place";
-import { checkExpiredFestaAct } from "@utils/proxy-event";
+import { checkExpiredFestaAct, isEventOutageRequest } from "@utils/proxy-event";
+import { EVENT_OUTAGE_WINDOW_MS } from "@lib/api/event-outage";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 // Static headers, trust-page redirects and the /openapi.json and
@@ -102,10 +103,14 @@ export default async function proxy(request: NextRequest) {
         : (categoryRedirectUrl ?? festaActRedirectUrl);
   if (redirectUrl) {
     const response = NextResponse.redirect(redirectUrl, 301);
-    if (redirectUrl === categoryRedirectUrl) {
-      // A new category can be missing from Proxy's list for up to its TTL;
-      // without a max-age, browsers may keep this 301 forever. `private`
-      // because it may set the NEXT_LOCALE cookie.
+    if (
+      redirectUrl === categoryRedirectUrl ||
+      placeCheck?.kind === "alias"
+    ) {
+      // Categories and place slugs derive from Proxy's 1h cached lists (and
+      // place aliases can flip across a backend rename migration); cap the
+      // browser TTL so a 301 is never cached forever. `private` because it
+      // may set the NEXT_LOCALE cookie.
       response.headers.set(
         "Cache-Control",
         `private, max-age=${PROXY_LIST_TTL_MS / 1000}`,
@@ -115,6 +120,13 @@ export default async function proxy(request: NextRequest) {
       persistLocaleCookie(response, pathLocaleToPersist);
     }
     return response;
+  }
+
+  if (placeCheck?.kind === "missing" && placeCheck.direct404) {
+    return new NextResponse("Not Found", {
+      status: 404,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 
   // After the redirects and existence checks, so an agent asking for
@@ -140,15 +152,20 @@ export default async function proxy(request: NextRequest) {
   // profiles render the same page with a 404 status (NextResponse.next()
   // can't set one).
   const url = request.nextUrl.clone();
-  if (!localeFromPath) {
+  if (placeCheck?.kind === "missing" && placeCheck.rewritePath) {
+    url.pathname = `/${locale}${placeCheck.rewritePath}`;
+  } else if (!localeFromPath) {
     url.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
   }
+  const isEventOutage = isEventOutageRequest(request, pathnameWithoutLocale);
   const response =
     placeCheck?.kind === "missing" || isMissingProfile
       ? NextResponse.rewrite(url, { ...init, status: 404 })
-      : localeFromPath
-        ? NextResponse.next(init)
-        : NextResponse.rewrite(url, init);
+      : isEventOutage
+        ? NextResponse.rewrite(url, { ...init, status: 503 })
+        : localeFromPath
+          ? NextResponse.next(init)
+          : NextResponse.rewrite(url, init);
 
   if (pathLocaleToPersist) {
     persistLocaleCookie(response, pathLocaleToPersist);
@@ -173,6 +190,14 @@ export default async function proxy(request: NextRequest) {
     response.headers.set(
       "Cache-Control",
       `public, max-age=0, s-maxage=${PROFILE_EXISTS_TTL_MS / 1000}`,
+    );
+  }
+  if (isEventOutage) {
+    response.headers.set("Cache-Control", "private, no-store");
+    response.headers.delete("Cache-Tag");
+    response.headers.set(
+      "Retry-After",
+      String(EVENT_OUTAGE_WINDOW_MS / 1000),
     );
   }
   return response;

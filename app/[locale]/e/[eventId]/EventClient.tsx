@@ -11,10 +11,6 @@ import type { EventClientProps } from "types/props";
 import EventNotifications from "./components/EventNotifications";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
-import { MegaphoneIcon as SpeakerphoneIcon } from "@heroicons/react/24/outline";
-import AdArticle from "components/ui/adArticle";
-import SectionHeading from "@components/ui/common/SectionHeading";
-import { useTranslations } from "next-intl";
 import { ensureGtag, sendGoogleEvent } from "@utils/analytics";
 
 // computeTemporalStatus now imported from utils/event-status for reuse & testability
@@ -29,7 +25,6 @@ const PromoteUpsellModal = dynamic(
 export default function EventClient({
   event,
 }: EventClientProps) {
-  const t = useTranslations("Components.EventPage");
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
@@ -50,9 +45,14 @@ export default function EventClient({
   // /publica redirects here with ?promote=1 after a publish. Anyone can add
   // the marker to a URL, so show the upsell only once ownership is confirmed.
   const isOwner = Boolean(event.ownerId) && user?.id === event.ownerId;
+  // Latched: the share step strips ?promote=1 from the URL (so a reload
+  // doesn't reopen the upsell), and the modal must stay open after that.
+  const [promoteUpsellStarted, setPromoteUpsellStarted] = useState(false);
+  if (!promoteUpsellStarted && isOwner && searchParams.get("promote") === "1") {
+    setPromoteUpsellStarted(true);
+  }
   const [promoteDismissed, setPromoteDismissed] = useState(false);
-  const showPromoteUpsell =
-    searchParams.get("promote") === "1" && isOwner && !promoteDismissed;
+  const showPromoteUpsell = promoteUpsellStarted && !promoteDismissed;
 
   const hasFiredPromoteShownRef = useRef(false);
   useEffect(() => {
@@ -109,23 +109,9 @@ export default function EventClient({
           open={showPromoteUpsell}
           setOpen={handlePromoteUpsellOpenChange}
           slug={slug}
+          shareEvent={event.share}
         />
       )}
-
-      {/* Ad Section */}
-      <div className="w-full h-full min-h-[250px]">
-        <div className="w-full flex flex-col gap-element-gap">
-          <SectionHeading
-            Icon={SpeakerphoneIcon}
-            iconClassName="w-5 h-5 text-foreground-strong flex-shrink-0"
-            title={t("sponsored")}
-            titleClassName="heading-2"
-          />
-          <div className="px-section-x">
-            <AdArticle slot="9643657007" />
-          </div>
-        </div>
-      </div>
 
       {/* Edit Button Section */}
 

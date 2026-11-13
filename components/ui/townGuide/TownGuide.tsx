@@ -94,6 +94,7 @@ export default async function TownGuide({
         <EventsAroundSection
           events={regionEvents}
           title={t("regionEvents", { regionIn })}
+          bleed
         />
       )}
     </section>

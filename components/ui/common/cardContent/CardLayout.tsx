@@ -111,7 +111,7 @@ export default function CardLayout({
           {/* -ml-2 = the pill's px-2: its light fill reads as text, so the label lines up with the date and title */}
           <CategoryBadge label={categoryLabel} className="-ml-2" />
 
-          <p className={`${compact ? "text-xs" : "text-sm"} text-muted-foreground mb-1${compact ? " truncate" : ""}`}>
+          <p className={`${compact ? "text-xs" : "text-sm"} text-muted-foreground mb-1${compact ? " line-clamp-2" : ""}`}>
             {dateTime ? <time dateTime={dateTime}>{dateText}</time> : dateText}
             {urgencyLabel && untilLabel && <> · {untilLabel}</>}
             {timeDisplay && <> · {timeDisplay}</>}

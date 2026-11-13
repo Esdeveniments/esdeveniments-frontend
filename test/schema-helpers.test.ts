@@ -4,7 +4,6 @@ import {
   sanitizeText,
   ensureIsoDate,
   ensureTime,
-  buildDateTime,
   parseDateFromIso,
 } from "@utils/schema-helpers";
 import type {
@@ -34,7 +33,7 @@ const baseEvent: EventSummaryResponseDTO = {
 };
 
 const createEvent = (
-  overrides: Partial<EventSummaryResponseDTO> = {}
+  overrides: Partial<EventSummaryResponseDTO> = {},
 ): EventSummaryResponseDTO => ({
   ...baseEvent,
   ...overrides,
@@ -53,7 +52,7 @@ describe("generateJsonData", () => {
         location: "",
         imageUrl: "",
         endDate: null as unknown as string,
-      })
+      }),
     );
 
     expect(schema.location.address.addressLocality).toBe("Catalunya");
@@ -63,12 +62,23 @@ describe("generateJsonData", () => {
     expect(schema.offers).toBeUndefined();
   });
 
+  it("drops markdown and HTML from the description", () => {
+    const schema = generateJsonData(
+      createEvent({
+        description:
+          "**Inscripcions** al [lloc web](https://example.com/a).<br>Places <b>limitades</b>.",
+      }),
+    );
+
+    expect(schema.description).toBe("Inscripcions al lloc web. Places limitades.");
+  });
+
   it("omits offers when the event has no price", () => {
     const schema = generateJsonData(
       createEvent({
         description: "Gran concert",
         location: "Palau de la Música",
-      })
+      }),
     );
 
     // Per Google sd-policies: emitting price:0 for an unknown price is
@@ -83,6 +93,9 @@ describe("generateJsonData", () => {
     ["10 €", 10],
     ["12,50 euros", 12.5],
     ["€8", 8],
+    // Bare amounts, as the publish and edit forms send them.
+    ["0", 0],
+    ["12.5", 12.5],
   ])("emits a numeric EUR offer for %j", (price, expected) => {
     const schema = generateJsonData({
       ...createEvent(),
@@ -124,19 +137,25 @@ describe("generateJsonData", () => {
     const venue = { latitude: 41.3875, longitude: 2.1753 };
 
     const exact = generateJsonData(
-      createEvent({ city, ...venue, locationPrecision: "VENUE" })
+      createEvent({ city, ...venue, locationPrecision: "VENUE" }),
     );
     const guessed = generateJsonData(
-      createEvent({ city, ...venue, locationPrecision: "CITY" })
+      createEvent({ city, ...venue, locationPrecision: "CITY" }),
     );
 
-    expect(exact.location.geo).toMatchObject({ latitude: 41.3875, longitude: 2.1753 });
-    expect(guessed.location.geo).toMatchObject({ latitude: 41.3874, longitude: 2.1686 });
+    expect(exact.location.geo).toMatchObject({
+      latitude: 41.3875,
+      longitude: 2.1753,
+    });
+    expect(guessed.location.geo).toMatchObject({
+      latitude: 41.3874,
+      longitude: 2.1686,
+    });
   });
 
   it("does not present the venue as performer or organizer", () => {
     const schema = generateJsonData(
-      createEvent({ location: "Palau de la Música" })
+      createEvent({ location: "Palau de la Música" }),
     );
 
     expect(schema).not.toHaveProperty("performer");
@@ -168,7 +187,7 @@ describe("generateJsonData", () => {
   it("adds the missing de to a council organizer name", () => {
     expect(
       generateJsonData(withOwner({ displayName: "Ajuntament El Masnou" }))
-        .organizer?.name
+        .organizer?.name,
     ).toBe("Ajuntament del Masnou");
   });
 
@@ -182,7 +201,7 @@ describe("generateJsonData", () => {
 
   it("adds the Madrid UTC offset to timed dates, DST-aware", () => {
     const winter = generateJsonData(
-      createEvent({ startTime: "19:00", endTime: "21:00" })
+      createEvent({ startTime: "19:00", endTime: "21:00" }),
     );
     expect(winter.startDate).toBe("2025-01-10T19:00+01:00");
     expect(winter.endDate).toBe("2025-01-10T21:00+01:00");
@@ -192,7 +211,7 @@ describe("generateJsonData", () => {
         startDate: "2025-07-10",
         endDate: "2025-07-10",
         startTime: "19:00",
-      })
+      }),
     );
     expect(summer.startDate).toBe("2025-07-10T19:00+02:00");
     // Unknown end time stays date-only (Google: don't invent a time).
@@ -205,11 +224,66 @@ describe("generateJsonData", () => {
         endDate: "" as unknown as string,
         startTime: "10:00",
         endTime: "12:00",
-      })
+      }),
     );
 
     expect(schema.endDate).toBe("2025-01-10T12:00+01:00");
     expect(schema.startDate).toBe("2025-01-10T10:00+01:00");
+  });
+
+  it.each([
+    [
+      "an overnight end moves to the next day",
+      { startTime: "22:00", endTime: "02:00" },
+      "2025-01-10T22:00+01:00",
+      "2025-01-11T02:00+01:00",
+    ],
+    [
+      "times with seconds keep hours and minutes",
+      { startTime: "19:00:00", endTime: "21:00:00" },
+      "2025-01-10T19:00+01:00",
+      "2025-01-10T21:00+01:00",
+    ],
+    [
+      "a midnight start is all day and stays date-only",
+      { startTime: "00:00:00", endTime: "20:00" },
+      "2025-01-10",
+      "2025-01-10",
+    ],
+    [
+      "an end date before the start is ignored",
+      { endDate: "2025-01-05", startTime: "10:00" },
+      "2025-01-10T10:00+01:00",
+      "2025-01-10",
+    ],
+    [
+      "a 00:00 end on a later day stays date-only",
+      { endDate: "2025-01-12", startTime: "19:00", endTime: "00:00" },
+      "2025-01-10T19:00+01:00",
+      "2025-01-12",
+    ],
+    [
+      "the same time on a later end day is kept",
+      { endDate: "2025-01-11", startTime: "19:00", endTime: "19:00" },
+      "2025-01-10T19:00+01:00",
+      "2025-01-11T19:00+01:00",
+    ],
+    [
+      "an impossible end date is ignored",
+      { endDate: "2025-01-32", startTime: "10:00" },
+      "2025-01-10T10:00+01:00",
+      "2025-01-10",
+    ],
+    [
+      "an invalid time is ignored",
+      { startTime: "25:00" },
+      "2025-01-10",
+      "2025-01-10",
+    ],
+  ])("%s", (_label, overrides, startDate, endDate) => {
+    const schema = generateJsonData(createEvent(overrides));
+    expect(schema.startDate).toBe(startDate);
+    expect(schema.endDate).toBe(endDate);
   });
 });
 
@@ -366,59 +440,6 @@ describe("ensureTime", () => {
     expect(ensureTime("10:00:00Z")).toBeUndefined();
     expect(ensureTime("10:00:00.000")).toBeUndefined();
     expect(ensureTime("10:00 AM")).toBeUndefined();
-  });
-});
-
-describe("buildDateTime", () => {
-  it("returns undefined when both date and fallbackDate are invalid", () => {
-    expect(buildDateTime(null, null)).toBeUndefined();
-    expect(buildDateTime("", "")).toBeUndefined();
-    expect(buildDateTime("invalid", null, "also-invalid")).toBeUndefined();
-  });
-
-  it("returns date only when time is not provided", () => {
-    expect(buildDateTime("2025-01-10", null)).toBe("2025-01-10");
-    expect(buildDateTime("2025-01-10", "")).toBe("2025-01-10");
-    expect(buildDateTime("2025-01-10", undefined)).toBe("2025-01-10");
-  });
-
-  it("combines valid date and time", () => {
-    expect(buildDateTime("2025-01-10", "10:00")).toBe("2025-01-10T10:00");
-    expect(buildDateTime("2025-01-10", "10:00:00")).toBe("2025-01-10T10:00:00");
-    expect(buildDateTime("2025-12-31", "23:59:59")).toBe("2025-12-31T23:59:59");
-  });
-
-  it("uses fallbackDate when date is invalid", () => {
-    expect(buildDateTime(null, "10:00", "2025-01-10")).toBe("2025-01-10T10:00");
-    expect(buildDateTime("", "10:00", "2025-01-10")).toBe("2025-01-10T10:00");
-    expect(buildDateTime("invalid", null, "2025-01-10")).toBe("2025-01-10");
-  });
-
-  it("prefers date over fallbackDate when both are valid", () => {
-    expect(buildDateTime("2025-01-10", "10:00", "2025-01-11")).toBe(
-      "2025-01-10T10:00"
-    );
-  });
-
-  it("ignores invalid time format and returns date only", () => {
-    expect(buildDateTime("2025-01-10", "invalid")).toBe("2025-01-10");
-    // Note: ensureTime accepts format-valid but value-invalid times
-    // So 25:00 passes format check but would fail actual parsing
-    expect(buildDateTime("2025-01-10", "25:00")).toBe("2025-01-10T25:00");
-    expect(buildDateTime("2025-01-10", "10:60")).toBe("2025-01-10T10:60");
-  });
-
-  it("handles ISO datetime strings as date input", () => {
-    expect(buildDateTime("2025-01-10T10:00:00Z", "15:30")).toBe(
-      "2025-01-10T15:30"
-    );
-    expect(buildDateTime("2025-01-10T10:00:00Z", null)).toBe("2025-01-10");
-  });
-
-  it("trims whitespace in inputs", () => {
-    expect(buildDateTime("  2025-01-10  ", "  10:00  ")).toBe(
-      "2025-01-10T10:00"
-    );
   });
 });
 

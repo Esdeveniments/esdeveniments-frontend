@@ -63,12 +63,6 @@ export interface SearchSuggestionOptionProps {
   onSelect: (suggestion: SearchSuggestion) => void;
 }
 
-export interface SearchSuggestionAvatarProps {
-  profile: UserSearchResultDTO;
-  /** Source of the initial shown when there is no avatar or it fails. */
-  name: string;
-}
-
 export interface SearchComboboxInputProps {
   role: "combobox";
   "aria-autocomplete": "list";

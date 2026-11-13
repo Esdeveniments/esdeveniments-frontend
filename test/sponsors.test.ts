@@ -10,6 +10,7 @@ import {
   buildLineItemParams,
   buildCustomFieldParams,
   buildMetadataParams,
+  buildInvoicingParams,
 } from "lib/stripe/checkout-helpers";
 import { MS_PER_DAY } from "utils/constants";
 
@@ -1272,6 +1273,34 @@ describe("Checkout Helpers", () => {
         expect(params.get("metadata[duration]")).toBe(duration);
         expect(params.get("metadata[duration_days]")).toBe(expectedDays[index]);
       });
+    });
+  });
+
+  describe("buildInvoicingParams", () => {
+    test("taxes the inclusive price and issues an invoice with the buyer's details", () => {
+      const params = new URLSearchParams();
+      buildInvoicingParams(params, "ca", "https://www.esdeveniments.cat");
+
+      expect(params.get("automatic_tax[enabled]")).toBe("true");
+      expect(params.get("line_items[0][price_data][tax_behavior]")).toBe("inclusive");
+      expect(params.get("line_items[0][price_data][product_data][tax_code]")).toBe("txcd_10000000");
+      expect(params.get("billing_address_collection")).toBe("required");
+      expect(params.get("tax_id_collection[enabled]")).toBe("true");
+      expect(params.get("invoice_creation[enabled]")).toBe("true");
+      expect(params.get("consent_collection[terms_of_service]")).toBe("required");
+    });
+
+    test("links the terms in the buyer's language", () => {
+      const message = (locale: string) => {
+        const params = new URLSearchParams();
+        buildInvoicingParams(params, locale, "https://www.esdeveniments.cat");
+        return params.get("custom_text[terms_of_service_acceptance][message]");
+      };
+
+      expect(message("ca")).toContain("](https://www.esdeveniments.cat/termes-servei)");
+      expect(message("es")).toContain("](https://www.esdeveniments.cat/es/termes-servei)");
+      expect(message("en")).toContain("](https://www.esdeveniments.cat/en/termes-servei)");
+      expect(message("fr")).toBe(message("ca"));
     });
   });
 });

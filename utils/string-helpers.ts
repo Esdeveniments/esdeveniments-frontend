@@ -61,6 +61,9 @@ export function capitalizeFirstLetter(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+export const escapeRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /** Extract trailing UUID v4 (or fallback last dash segment) */
 export const extractUuidFromSlug = (s: string): string => {
   const m = s.match(
@@ -288,6 +291,22 @@ function classifyCategory(
 
 const ELIDED_ARTICLE = articles.l.toLowerCase();
 const LEADING_ARTICLE = /^(?:(els|el|les|la)\s+|(l)['’])(?=\S)/i;
+const SORT_LEADING_ARTICLE = /^(?:(?:els|el|les|la|es|era)\s+|l['’])(?=\S)/i;
+
+/**
+ * Sort Catalan/Aranese place names alphabetically by their stem, ignoring
+ * leading articles ("El Masnou" under M, "L'Hospitalet" under H, "Es Bòrdes" under B).
+ * Bare "Les" (municipality in Aran) has no trailing space and stays under L.
+ */
+export function comparePlaceNames(
+  a: string,
+  b: string,
+  locale: string = "ca"
+): number {
+  const stemA = a.trim().replace(SORT_LEADING_ARTICLE, "");
+  const stemB = b.trim().replace(SORT_LEADING_ARTICLE, "");
+  return stemA.localeCompare(stemB, locale) || a.localeCompare(b, locale);
+}
 const CATALAN_CONTRACTIONS: Record<
   "a" | "de",
   Record<Exclude<CatalanArticle, "l">, string>
@@ -447,6 +466,37 @@ export function formatCatalanA(
 }
 
 /**
+ * Contracts "a"/"de" before a place name that starts with an article, in
+ * Catalan text we don't write ourselves (backend news: "a El Masnou" →
+ * "al Masnou", "A El Masnou," → "Al Masnou,", "de La Garriga" → "de la Garriga").
+ */
+export function contractCatalanPlaceInText(
+  text: string,
+  placeName: string | undefined
+): string {
+  const name = placeName?.trim();
+  if (!text || !name || !LEADING_ARTICLE.test(name)) return text;
+
+  // Exact name; only the article's first letter may differ ("a el Masnou").
+  const first = name[0];
+  const namePattern =
+    `[${first.toUpperCase()}${first.toLowerCase()}]` +
+    escapeRegex(name.slice(1)).replace(/['’]/g, "['’]");
+  const pattern = new RegExp(
+    `(^|[^\\p{L}'’])([Aa]|[Dd]e) ${namePattern}(?![\\p{L}])`,
+    "gu"
+  );
+  return text.replace(pattern, (_match, lead: string, preposition: string) => {
+    const phrase =
+      preposition.toLowerCase() === "a"
+        ? formatCatalanA(name, "town", false)
+        : formatCatalanDe(name, false, false, "town");
+    const capitalized = preposition[0] !== preposition[0].toLowerCase();
+    return lead + (capitalized ? capitalizeFirstLetter(phrase) : phrase);
+  });
+}
+
+/**
  * Locale-aware preposition + place, split so UI can style the parts apart.
  * relation "in": ca a/al/a la…, es "en", en "in"
  * relation "of": ca de/del/d'…, es "de", en "of"
@@ -558,19 +608,27 @@ export function formatNameOf(
   return joinPlacePhrase(formatNamePrepositionParts(name, locale, "of"));
 }
 
+const FEMININE_HEAD_WORDS = new Set(["vall", "val"]);
+
 /**
  * Determines if a place name is feminine in Catalan using linguistic patterns.
  * (Heuristic; we special-case a few masculine exceptions.)
  */
 function isFemininePlaceName(name: string): boolean {
-  const lowerName = (name || "").toLowerCase();
+  const lowerName = (name || "").trim().toLowerCase();
 
   // Masculine exceptions that often match feminine-looking patterns
   if (MASCULINE_EXCEPTIONS.has(lowerName)) return false;
 
-  // Feminine-ish endings
+  const firstWord = lowerName.split(/[\s'-]+/)[0] ?? "";
+  if (MASCULINE_EXCEPTIONS.has(firstWord)) return false;
+  if (FEMININE_HEAD_WORDS.has(firstWord)) return true;
+
+  // Feminine-ish endings on the head word ("Selva", "Conca de Barberà", "Ribera d'Ebre").
+  // Evaluate firstWord rather than lowerName so a feminine prepositional complement
+  // ("Camp de Tarragona") cannot flip a masculine head noun.
   const feminineSuffixes = [
-    /a$/, // Selva, Noguera, Osona, Anoia…
+    /a$/, // Selva, Noguera, Osona, Anoia, Conca, Ribera, Terra, Alta…
     /ia$/, // Cerdanya
     /ona$/, // Tarragona
     /ena$/, // Noguera (stem), etc.
@@ -582,5 +640,5 @@ function isFemininePlaceName(name: string): boolean {
     /xa$/, // Garrotxa
   ];
 
-  return feminineSuffixes.some((p) => p.test(lowerName));
+  return feminineSuffixes.some((p) => p.test(firstWord));
 }

@@ -45,6 +45,8 @@ html {
   --mobile-nav-clearance: calc(
     var(--mobile-nav-height) + var(--mobile-nav-safe-area)
   );
+  /* Event page bottom bar: one button row, 8px padding above and below, top border. */
+  --event-action-bar-height: calc(var(--button-height) + 1rem + 1px);
 }
 
 @media (min-width: 950px) {
@@ -69,6 +71,16 @@ html {
 
 .mobile-nav-content-safe-area {
   padding-bottom: var(--mobile-nav-clearance);
+}
+
+/* The event action bar (server-rendered, fixed) would cover the end of the
+   footer: reserve its height from the first paint, no JS. */
+@media (max-width: 1023.98px) {
+  body:has([data-event-action-bar]) .mobile-nav-content-safe-area {
+    padding-bottom: calc(
+      var(--mobile-nav-clearance) + var(--event-action-bar-height)
+    );
+  }
 }
 
 .mobile-bottom-nav {
@@ -310,7 +322,7 @@ p {
   /* Mobile bottom-nav link: 44px touch target with a round hover/focus ring.
      One short class keeps each link's HTML small (see ActiveLink). */
   .bottom-nav-link {
-    @apply flex justify-center items-center p-3 rounded-full min-w-[44px] min-h-[44px] hover:bg-muted transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply flex justify-center items-center p-3 rounded-full min-w-[44px] min-h-[44px] hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
   }
 
   .flex-between {
@@ -395,7 +407,7 @@ p {
   /* ===================================== */
 
   .transition-interactive {
-    @apply transition-all duration-fast ease-smooth;
+    @apply transition duration-fast ease-smooth;
   }
 
   .transition-card {
@@ -403,7 +415,7 @@ p {
   }
 
   .transition-modal {
-    @apply transition-[opacity,transform] duration-slow ease-smooth;
+    @apply transition-[opacity,transform] duration-normal ease-out-strong;
   }
 
   .pressable-inline,
@@ -484,6 +496,48 @@ p {
     padding: 0.5rem 0.5rem calc(0.5rem + var(--mobile-nav-safe-area));
   }
 
+  /* Full-screen map dialog (EventsMapToggle): the shared Modal's motion,
+     a 16px rise on phones and a slight zoom from md up (98%: a full-screen
+     panel at 95% would show a band of page around it). */
+  .events-map-dialog {
+    @apply transition-modal;
+  }
+
+  /* A transition takes the duration of the style it moves to: 100ms out. */
+  .events-map-dialog[data-closed] {
+    @apply opacity-0 translate-y-4 duration-fast;
+  }
+
+  @screen md {
+    .events-map-dialog[data-closed] {
+      @apply translate-y-0 scale-[0.98];
+    }
+  }
+
+  /* <details> that slide open and shut. Only where height: auto can be
+     animated (Chrome 129+); elsewhere they toggle at once, as before. The
+     global reduced-motion rule can't reach ::details-content, hence the
+     media query. */
+  @supports (interpolate-size: allow-keywords) {
+    @media (prefers-reduced-motion: no-preference) {
+      .details-animated {
+        interpolate-size: allow-keywords;
+      }
+
+      .details-animated::details-content {
+        height: 0;
+        overflow: clip;
+        transition:
+          height 250ms theme("transitionTimingFunction.out-strong"),
+          content-visibility 250ms theme("transitionTimingFunction.out-strong") allow-discrete;
+      }
+
+      .details-animated[open]::details-content {
+        height: auto;
+      }
+    }
+  }
+
   /* Keep the map credits and other bottom controls above the mobile sheet. */
   .events-map .maplibregl-ctrl-bottom-left,
   .events-map .maplibregl-ctrl-bottom-right {
@@ -534,6 +588,23 @@ p {
     .card-event:has(.card-event-link:active) {
       transform: translateY(1px) scale(0.995);
     }
+  }
+
+  /* An event without an image: the brand mark, small and soft, on the muted
+     surface. A CSS mask, not an image: no request, no <img>, never the LCP.
+     The mark is the red shape of the 2024 logo (logo-esdevenimentscat-svg.svg). */
+  .card-placeholder {
+    --brand-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='30.7 24.2 51.3 70.9'%3E%3Cpath d='M80.9,24.3h-39.6c-.6,0-1.1.2-1.5.6-.4.4-.7.9-.8,1.4l-1.9,15.5c0,.6.4,1.1.9,1.1h.8c1.3.1,2.3.2,2.8.3,4.3.6,7.6,2.4,9.8,5.3,2.2,2.9,3,6.5,2.4,10.9-.7,4.7-2.7,8.6-6.1,11.4-3.4,2.9-7.6,4.3-12.7,4.2-.4,0-.8,0-1.1,0-.5,0-1,.4-1,.9l-2.1,17c-.2,1.2.4,2.1,1.8,2.1h39.9c.5,0,.9-.3,1-.8l8.4-68.8c0-.6-.4-1.1-1-1.1Z'/%3E%3C/svg%3E");
+    @apply flex-center w-full h-full min-h-full bg-muted;
+  }
+
+  .card-placeholder::after {
+    content: "";
+    width: min(28%, 2.5rem);
+    aspect-ratio: 51.3 / 70.9;
+    background-color: theme("colors.primary");
+    opacity: 0.22;
+    mask: var(--brand-mark) center / contain no-repeat;
   }
 
   /* Hover effects */
@@ -796,107 +867,55 @@ video {
   height: 100%;
 }
 
-/* Custom animations */
+/* Entrances for menus and popovers that mount when opened and unmount at
+   once when closed. Same curve and entry time as the shared Modal (DESIGN.md
+   › Motion). Anything that also animates out uses `.transition-modal` on a
+   `data-closed` state instead (usePresenceTransition): a transition reverses
+   from wherever it is, a keyframe would jump. */
 @keyframes appear {
   from {
     opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
+    transform: scale(0.96);
   }
 }
 
 .animate-appear {
-  animation: appear 0.3s ease-out;
-}
-
-.animate-disappear {
-  animation: appear 0.3s ease-in reverse forwards;
-}
-
-@keyframes dropdownIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-dropdown-in {
-  transform-origin: top;
-  animation: dropdownIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animate-fade-in-fast {
-  animation: fadeIn 100ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-slide-up {
-  animation: slideUp 0.35s ease-out;
-}
-
-.animate-slide-down {
-  animation: slideUp 0.3s ease-in reverse forwards;
-}
-
-/* View Transitions */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+  animation: appear 200ms theme("transitionTimingFunction.out-strong");
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
-  to {
-    opacity: 1;
+}
+
+.animate-fade-in-fast {
+  animation: fadeIn 100ms theme("transitionTimingFunction.out-strong");
+}
+
+/* Cards added by "Load more" (HybridEventsListClient) rise 8px into place,
+   staggered by column. Only with motion allowed: the global reduced-motion
+   rule zeroes durations but not delays, so staggered cards would sit
+   invisible for up to 80ms. */
+@keyframes listItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 
-/* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
-::view-transition-old(root) {
-  animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fadeOut;
-}
+@media (prefers-reduced-motion: no-preference) {
+  .list-appended > [data-listing-grid] > .content-auto {
+    animation: listItemIn 200ms theme("transitionTimingFunction.out-strong") backwards;
+  }
 
-/* biome-ignore lint/correctness/noUnknownTypeSelector: View Transitions pseudo-element */
-::view-transition-new(root) {
-  animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fadeIn;
+  .list-appended > [data-listing-grid] > .content-auto:nth-child(3n + 2) {
+    animation-delay: 40ms;
+  }
+
+  .list-appended > [data-listing-grid] > .content-auto:nth-child(3n + 3) {
+    animation-delay: 80ms;
+  }
 }
 
 /* Content visibility optimization for off-screen elements */

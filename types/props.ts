@@ -35,7 +35,7 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
-import type { ActiveLinkProps, ImageSizeContext } from "types/common";
+import type { ActiveLinkProps, CardProps, DescriptionFold, ImageSizeContext } from "types/common";
 
 /**
  * Props for ClientImageInner component
@@ -60,6 +60,7 @@ import {
   InputHTMLAttributes,
   MouseEvent,
   ReactNode,
+  RefObject,
 } from "react";
 import type { CardLinkProps } from "types/ui";
 import type { EventMapPoint } from "types/event-map";
@@ -90,9 +91,11 @@ import {
 } from "types/api/event";
 import { CategorySummaryResponseDTO } from "types/api/category";
 import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
-import { RouteSegments, URLQueryParams } from "types/url-filters";
+import { PriceFilterValue, RouteSegments, URLQueryParams } from "types/url-filters";
+import type { FilterKey } from "types/filters";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import type { AppLocale } from "types/i18n";
+import type { EventFormProps, EventPriceFormFields } from "types/event";
 import type {
   FestaMajorEdition,
   FestaMajorEditionSummary,
@@ -148,6 +151,26 @@ export interface CardContentProps {
   headingLevel?: CardLayoutProps["headingLevel"];
 }
 
+/** Card text in one locale. Lists read it once (`getCardLabels`) so each card renders synchronously. */
+export interface CardLabels {
+  locale: AppLocale;
+  tCard: CompactCardProps["tCard"];
+  tCategories: (key: string) => string;
+}
+
+export interface CardServerProps extends CardProps {
+  labels: CardLabels;
+}
+
+/** A grid of server event cards (`List` + `CardServer`) sharing one `CardLabels` read. */
+export interface EventCardListProps {
+  events: ListEvent[];
+  /** Index of the card that gets the LCP `priority` image */
+  priorityIndex?: number;
+  headingLevel?: CardProps["headingLevel"];
+  initialIsFavorite?: boolean;
+}
+
 /** Server card options: `row` layout (news article event lists) and the home carousel. */
 export interface CardContentServerProps extends CardContentProps {
   variant?: CardLayoutProps["layout"];
@@ -157,8 +180,7 @@ export interface CardContentServerProps extends CardContentProps {
   description?: string;
   /** Smaller carousel card (`CardLayoutProps["compact"]`) */
   compact?: boolean;
-  /** Locale from `rootLocale()`; without it the card reads `headers()` */
-  locale?: AppLocale;
+  labels: CardLabels;
 }
 
 /** What one card shows. Events build it with `prepareCardContentData`, news by hand. */
@@ -294,6 +316,8 @@ export interface ModalProps {
   actionButtonDisabled?: boolean;
   actionButtonAnalyticsAction?: string;
   testId?: string;
+  /** Focused on open and scrolled to the top of the body; the close button when unset or not rendered. */
+  initialFocusRef?: RefObject<HTMLElement | null>;
 }
 
 export interface ConfirmDialogProps {
@@ -418,6 +442,12 @@ export interface InputProps {
   maxLength?: number;
 }
 
+export interface EventPriceFieldProps {
+  form: EventPriceFormFields;
+  error?: string;
+  onChange: EventFormProps["handleFormChange"];
+}
+
 export type RadioInputValue = string | number;
 export interface RadioInputProps {
   id: string;
@@ -538,7 +568,8 @@ export interface ClientInteractiveLayerProps {
 export interface ClientInteractiveLayerContentProps extends ClientInteractiveLayerProps {
   isNavbarVisible: boolean;
   isModalOpen: boolean;
-  handleOpenModal: () => void;
+  modalSection?: FilterKey;
+  handleOpenModal: (section?: FilterKey) => void;
   handleCloseModal: () => void;
 }
 
@@ -546,7 +577,7 @@ export type FilterLabels = {
   triggerLabel: string;
   displayNameMap: Record<string, string>;
   byDates: Record<string, string>;
-  prices?: Record<string, string>;
+  prices: Record<PriceFilterValue, string>;
 };
 
 export interface FiltersClientProps {
@@ -554,7 +585,8 @@ export interface FiltersClientProps {
   queryParams: URLQueryParams;
   categories?: CategorySummaryResponseDTO[];
   placeTypeLabel: PlaceTypeAndLabel;
-  onOpenModal: () => void;
+  /** `section`: the chip's filter, so the modal opens on it. */
+  onOpenModal: (section?: FilterKey) => void;
   labels: FilterLabels;
 }
 
@@ -570,11 +602,11 @@ export interface ActiveNavLinkProps {
 }
 
 export interface FilterButtonProps {
-  filterKey: string;
+  filterKey: FilterKey;
   text: string;
   enabled: boolean;
   removeUrl: string;
-  onOpenModal: () => void;
+  onOpenModal: (section: FilterKey) => void;
   testId?: string;
 }
 
@@ -585,6 +617,16 @@ export interface NavigationFiltersModalProps {
   currentQueryParams: URLQueryParams;
   userLocation?: { latitude: number; longitude: number };
   categories?: CategorySummaryResponseDTO[];
+  /** Section to scroll to and focus on open; the top when unset. */
+  initialSection?: FilterKey;
+}
+
+export interface FilterSectionHeadingProps {
+  section: FilterKey;
+  initialSection?: FilterKey;
+  initialSectionRef: RefObject<HTMLParagraphElement | null>;
+  className: string;
+  children: ReactNode;
 }
 
 export interface ProfileHeaderProps {
@@ -626,6 +668,16 @@ export interface AvatarInitialsProps {
   decorative?: boolean;
 }
 
+/** Pixel sizes of `ProfileAvatar`: search rows, the event byline and the organizer card. */
+export type ProfileAvatarSize = "xs" | "sm" | "md";
+
+export interface ProfileAvatarProps {
+  avatarUrl?: string | null;
+  /** Source of the initial shown when there is no avatar or it fails to load. */
+  name: string;
+  size: ProfileAvatarSize;
+}
+
 export interface ProfileEventsSectionProps {
   username: string;
   status: ProfileEventStatus;
@@ -656,6 +708,8 @@ export interface HybridEventsListProps {
   categories?: CategorySummaryResponseDTO[]; // Categories for client-side filter parsing
   // Rendered below the page heading, inside the space kept for the fixed filter bar.
   promotedSlot?: import("react").ReactNode;
+  /** Put before the server subtitle only; the search heading leaves it out. */
+  countLine?: string;
   // totalServerEvents removed - SWR hook manages this via API response
 }
 
@@ -663,6 +717,10 @@ export type HybridEventsListClientProps = Omit<
   HybridEventsListProps,
   "placeTypeLabel" | "noEventsFound"
 >;
+
+export interface CountLineProps {
+  text: string;
+}
 
 export interface SsrListWrapperProps {
   children: ReactNode;
@@ -760,7 +818,7 @@ export interface SearchAwareHeadingProps {
 
 export interface HybridEventsHeadingLayoutProps {
   title: string;
-  subtitle: string;
+  subtitle: ReactNode;
   titleClass: string;
   subtitleClass: string;
   cta?: ReactNode;
@@ -1040,29 +1098,53 @@ export interface CompleteProfileGateProps {
   redirectTo: string;
 }
 
-// Sticky CTA bar for event detail page (mobile)
-export interface EventStickyCTAProps {
-  eventUrl?: string;
+// Mobile bottom action bar (event page): server shell + client actions
+export interface EventActionBarProps {
+  event: import("./api/event").EventDetailResponseDTO;
+  locale: AppLocale;
+}
+
+export interface EventActionBarActionsProps {
   eventSlug: string;
-  labels: {
-    moreInfo: string;
-    calendar: string;
-    save: string;
-    favoriteAdd: string;
-    favoriteRemove: string;
-  };
+  /** http(s) website; null makes "Add to calendar" the filled main action. */
+  eventUrl: string | null;
+  moreInfoLabel: string;
+  calendar: import("./common").CalendarEventData;
+}
+
+// Header share button: native share sheet on touch, small menu elsewhere
+export interface EventShareButtonProps {
+  shareEvent: import("./event").ShareKitEvent;
+}
+
+export interface EventShareMenuProps {
+  id: string;
+  shareEvent: import("./event").ShareKitEvent;
+  onClose: () => void;
+  onShared: (method: string) => void;
+}
+
+// "Something wrong? Tell us" mailto link, hidden for the event's owner
+export interface EventReportLinkProps {
+  ownerId?: string;
+  title: string;
+  url: string;
 }
 
 export interface EventClientPayload {
   id: EventSummaryResponseDTO["id"];
   slug: EventSummaryResponseDTO["slug"];
   title: EventSummaryResponseDTO["title"];
+  startDate: EventSummaryResponseDTO["startDate"];
   endDate: EventSummaryResponseDTO["endDate"];
+  startTime: EventSummaryResponseDTO["startTime"];
+  endTime: EventSummaryResponseDTO["endTime"];
   categorySlug?: CategorySummaryResponseDTO["slug"];
   placeSlug?: string;
   hasImage: boolean;
   origin: EventSummaryResponseDTO["origin"];
   ownerId?: string;
+  share: import("./event").ShareKitEvent;
 }
 
 export interface EventClientProps {
@@ -1071,14 +1153,10 @@ export interface EventClientProps {
 
 export type ClientEventClientProps = EventClientProps;
 
-// Collapsible description wrapper (mobile)
+// Description wrapper: clamped on mobile when long (decided on the server)
 export interface CollapsibleDescriptionProps {
+  fold: DescriptionFold;
   children: ReactNode;
-}
-
-// Event details section (duration + external link)
-export interface EventDetailsSectionProps {
-  event: import("./api/event").EventDetailResponseDTO;
 }
 
 export interface EventPageGateProps {
@@ -1094,6 +1172,8 @@ export interface EventPageBodyProps {
   latestNewsSlot: import("react").ReactNode;
   /** Rendered only once the event has ended. */
   nextEditionSlot: import("react").ReactNode;
+  /** Promoted events, then related events (see EventMoreEvents). */
+  moreEventsSlot: import("react").ReactNode;
 }
 
 // Sticky sidebar for event detail page (desktop)
@@ -1105,18 +1185,44 @@ export interface EventSidebarProps {
   sponsorSlot: import("react").ReactNode;
 }
 
-// Owner-only edit/promote/delete actions, event detail client island
-export interface EventOwnerActionsProps {
+// Owner-only host tools under the event title, client island
+export interface EventOwnerBarProps {
   ownerId?: string;
   slug: string;
+  shareEvent: import("./event").ShareKitEvent;
 }
 
-export type EventDeleteActionProps = Pick<EventOwnerActionsProps, "slug">;
+export type EventOwnerToolsProps = Omit<EventOwnerBarProps, "ownerId">;
+
+export interface EventDeleteDialogProps {
+  slug: string;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+export interface EventOrganizerProps {
+  owner: import("./api/user").OwnerSummaryDTO;
+  /** Sidebar version: smaller heading, no icon. */
+  compact?: boolean;
+}
 
 export interface PromoteUpsellModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   slug: string;
+  shareEvent: import("./event").ShareKitEvent;
+}
+
+export interface ShareKitProps {
+  event: import("./event").ShareKitEvent;
+  source: import("./event").ShareKitSource;
+  /** Short line under the event preview. */
+  description?: string;
+}
+
+export interface ShareKitModalProps extends ShareKitProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
 // /e/[eventId]/promote client page
@@ -1159,6 +1265,35 @@ export interface PromotedEventsSectionProps {
 
 export interface PromotedEventsRowProps extends PromotedEventsSectionProps {
   events: import("./api/event").EventSummaryResponseDTO[];
+}
+
+export interface EventPagePromotedEventsProps {
+  events: EventSummaryResponseDTO[];
+  citySlug?: string;
+}
+
+export interface EventRelatedEventsProps {
+  events: EventSummaryResponseDTO[];
+  sourceEventId?: string;
+  sourceEventSlug: string;
+}
+
+export interface EventMoreEventsProps {
+  /** The event being viewed, left out of the promoted row. */
+  eventId?: string;
+  cityId?: number;
+  citySlug?: string;
+  regionId?: number;
+  relatedEvents: EventSummaryResponseDTO[];
+  sourceEventSlug: string;
+}
+
+export interface PromotedEventsTrackerProps {
+  /** `data-analytics-context` for clicks and the `section_view` context. */
+  context: "promoted_carousel" | "promoted_event_page";
+  placeSlug?: string;
+  eventCount: number;
+  children: ReactNode;
 }
 
 // /e/[eventId]/edita client form

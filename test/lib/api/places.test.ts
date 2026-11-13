@@ -156,6 +156,23 @@ describe("lib/api/places", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("fetchPlaceBySlug reaches the backend for Nulles while blocking bare 'null'", async () => {
+    const nulles = { id: 198, name: "Nulles", slug: "nulles", type: "CITY" };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(nulles),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { fetchPlaceBySlug } = await import("lib/api/places");
+    expect(await fetchPlaceBySlug("null")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    expect(await fetchPlaceBySlug("nulles")).toEqual(nulles);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("fetchPlaceBySlug throws (and caches nothing) on an invalid 200 payload", async () => {
     const fetchMock = vi
       .fn()

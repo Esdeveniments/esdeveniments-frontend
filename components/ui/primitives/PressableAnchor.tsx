@@ -2,7 +2,11 @@ import clsx from "clsx";
 import { getLocale } from "next-intl/server";
 import Link from "next/link";
 
-import type { PressableAnchorProps, PressableLinkVariant } from "types/ui";
+import type {
+  LocalizedPressableAnchorProps,
+  PressableAnchorProps,
+  PressableLinkVariant,
+} from "types/ui";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { NO_VIGNETTE_LINK_ATTRS } from "@utils/constants";
 
@@ -13,15 +17,23 @@ const VARIANT_CLASSES: Record<PressableLinkVariant, string> = {
   plain: "",
 };
 
-export default async function PressableAnchor({
+export default async function PressableAnchor(props: PressableAnchorProps) {
+  const locale = (await getLocale()) || DEFAULT_LOCALE;
+  return <LocalizedPressableAnchor {...props} locale={locale} />;
+}
+
+// Sync version for callers that already know the locale. Lists use it: an
+// async component per item makes React stream each one as its own segment
+// with an inline `$RS` script.
+export function LocalizedPressableAnchor({
+  locale,
   className = "",
   children,
   variant = "inline",
   prefetch = false,
   disableNavigationSignal = false,
   ...props
-}: PressableAnchorProps) {
-  const locale = (await getLocale()) || DEFAULT_LOCALE;
+}: LocalizedPressableAnchorProps) {
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;

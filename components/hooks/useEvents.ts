@@ -2,7 +2,10 @@ import { useState } from "react";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { toLocalDateString } from "@utils/helpers";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
-import { hasActiveClientFilters } from "@utils/url-filters";
+import {
+  hasActiveClientFilters,
+  toFreeFilterParam,
+} from "@utils/url-filters";
 import { buildEventsQuery } from "@utils/api-helpers";
 import useSWRInfinite from "swr/infinite";
 import { EventSummaryResponseDTO, PagedResponseDTO } from "types/api/event";
@@ -96,6 +99,7 @@ export const useEvents = ({
     lat: hasCoords && hasValidRadius ? latNumber : undefined,
     lon: hasCoords && hasValidRadius ? lonNumber : undefined,
     profileSlug,
+    free: toFreeFilterParam(price),
   };
 
   const getKey = (
@@ -115,6 +119,7 @@ export const useEvents = ({
       baseParams.lat,
       baseParams.lon,
       baseParams.profileSlug,
+      baseParams.free,
       pageIndex,
       baseParams.size,
     ] as const;
@@ -140,6 +145,7 @@ export const useEvents = ({
       latParam,
       lonParam,
       profileSlugParam,
+      freeParam,
       pageIndex,
       sizeParam,
     ]) =>
@@ -156,6 +162,7 @@ export const useEvents = ({
         lat: latParam as number | undefined,
         lon: lonParam as number | undefined,
         profileSlug: profileSlugParam as string | undefined,
+        free: freeParam as boolean | undefined,
       }),
     {
       fallbackData:

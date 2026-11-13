@@ -117,6 +117,9 @@ export interface PlaceTypeAndLabel {
   regionSlug?: string;
 }
 
+/** Where a long event description starts clamped behind "Llegeix més". */
+export type DescriptionFold = "none" | "mobile" | "all";
+
 export type ByDateOptions = "avui" | "dema" | "setmana" | "cap-de-setmana" | "";
 export type PlaceType = "region" | "town" | "";
 
@@ -254,14 +257,40 @@ export interface AddToCalendarProps {
   startDate: DateString;
   endDate?: DateString | null;
   canonical: string;
-  hideText?: boolean;
+  /** Button style; the page's main action uses "primary". */
+  variant?: CalendarButtonVariant;
+  /** 44 px icon button; the label becomes its accessible name. */
+  iconOnly?: boolean;
+  /** Visible "Calendari" for tight rows; the full label stays the accessible name. */
+  shortLabel?: boolean;
+  /** Stretch the button to its container (sidebar card). */
+  fullWidth?: boolean;
+  /** "above-end" opens the menu upwards, aligned to the right edge of the nearest positioned ancestor (bottom action bar). */
+  placement?: CalendarListPlacement;
+  /** Sent as GA `source` with add_to_calendar_view / add_to_calendar. */
+  source?: string;
+  onOpen?: () => void;
 }
+
+/** Event data the calendar menu needs; built by `buildCalendarEventData`. */
+export type CalendarEventData = Pick<
+  AddToCalendarProps,
+  "title" | "description" | "location" | "startDate" | "endDate" | "canonical"
+>;
+
+export type CalendarButtonVariant = "primary" | "outline" | "neutral";
+
+export type CalendarListPlacement = "below" | "above-end";
 
 export interface CalendarButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement>;
-  hideText?: boolean;
   open?: boolean;
-  label?: string;
+  label: string;
+  /** Visible text when it differs from the accessible `label`. */
+  visibleLabel?: string;
+  variant?: CalendarButtonVariant;
+  iconOnly?: boolean;
+  fullWidth?: boolean;
 }
 
 export interface CalendarProviderLabels {
@@ -336,8 +365,6 @@ export interface StringHelperLabels {
 }
 
 export interface EventCopySentenceLabels {
-  verbSingular: string;
-  verbPlural: string;
   dateRange: string;
   dateSingle: string;
   sentence: string;
@@ -370,6 +397,8 @@ export interface CalendarListProps {
   getUrls: () => CalendarUrls;
   title: string;
   labels: CalendarProviderLabels;
+  placement?: CalendarListPlacement;
+  source?: string;
 }
 
 export interface CardProps {
@@ -394,16 +423,17 @@ export interface CustomIconProps {
   className?: string;
 }
 
-export type EventsAroundLayout = "compact" | "horizontal" | "cards";
-
 export interface EventsAroundProps {
   events: EventSummaryResponseDTO[];
   title?: string;
 }
 
+export interface EventsAroundSectionProps extends EventsAroundProps {
+  /** The parent is padded with `px-section-x`: let the row scroll through that padding so the first card lines up with the heading. */
+  bleed?: boolean;
+}
+
 export interface EventsAroundServerProps extends EventsAroundProps {
-  layout?: EventsAroundLayout;
-  loading?: boolean;
   usePriority?: boolean;
   showJsonLd?: boolean;
   jsonLdId?: string;

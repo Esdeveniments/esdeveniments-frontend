@@ -155,7 +155,7 @@
       "metaTitle": "Terms of Service - Esdeveniments.cat",
       "metaDescription": "Terms of use for the Esdeveniments.cat website. Review the rules, responsibilities and rights regarding the content of the cultural agenda of Catalonia.",
       "heading": "Terms of Service",
-      "lastUpdated": "Last updated: February 2026",
+      "lastUpdated": "Last updated: November 2026",
       "introTitle": "1. Acceptance of terms",
       "introBody": "By accessing and using Esdeveniments.cat (hereinafter, the \"Site\"), you agree to comply with these terms of service. If you disagree with any part of these terms, do not use the Site.",
       "descriptionTitle": "2. Description of the service",
@@ -170,14 +170,20 @@
       "thirdPartyBody": "The Site may contain links to third-party websites. We have no control over the content or privacy practices of these sites and accept no responsibility for them.",
       "modificationsTitle": "7. Modifications",
       "modificationsBody": "We reserve the right to modify these terms at any time. Changes will take effect upon publication on the Site. Continued use of the Site constitutes acceptance of the modified terms.",
-      "contactTitle": "8. Contact",
+      "paidTitle": "8. Promotions and sponsorships",
+      "paidSeller": "Event promotions and page sponsorships are paid services provided and invoiced by Dynamica BI Sistemes, S.L. (Spanish tax ID B44906014), C/ de l'Hospital, 18, 08440 Cardedeu (Barcelona), Spain, registered in the Barcelona Commercial Registry, volume 48738, folio 150, sheet B-594382.",
+      "paidWhat": "A promotion shows your event among the featured events on the pages of the chosen area for the days you buy, in rotation with other promoted events. A sponsorship shows your banner on the chosen place's page for the days you buy.",
+      "paidPrice": "Prices include Spanish VAT (IVA). You pay through Stripe and receive the invoice by email. If you give us your tax ID, the invoice includes it.",
+      "paidWithdrawal": "If you buy as a consumer, you have 14 days to withdraw. By paying, you ask for the service to start right away: if you then withdraw, we refund the days not yet provided. Once the service has ended, you can no longer withdraw.",
+      "paidRefunds": "If your payment arrives when we can no longer provide the service (for example, the event was deleted), we refund it and send you a corrective invoice. For anything else, write to us.",
+      "contactTitle": "9. Contact",
       "contactBody": "For any questions related to these terms, you can contact us at:"
     },
     "PrivacyPolicy": {
       "metaTitle": "Privacy Policy - Esdeveniments.cat",
       "metaDescription": "Privacy policy of Esdeveniments.cat. Information about the collection, use and protection of your personal data on the cultural agenda of Catalonia.",
       "heading": "Privacy Policy",
-      "lastUpdated": "Last updated: February 2026",
+      "lastUpdated": "Last updated: November 2026",
       "introTitle": "1. Introduction",
       "introBody": "At Esdeveniments.cat (hereinafter, the \"Site\") we are committed to protecting your privacy. This policy describes what data we collect, how we use it and what your rights are.",
       "dataCollectedTitle": "2. Data we collect",
@@ -192,16 +198,19 @@
       "purposeAnalytics": "Analyse the use of the Site in an aggregated and anonymous manner.",
       "purposeDisplay": "Display and manage published events.",
       "purposeAds": "Display relevant advertising (Google Ads).",
+      "purposePayments": "Charge for promotions and sponsorships and issue their invoices. For this, the data controller is Dynamica BI Sistemes, S.L. (Spanish tax ID B44906014), C/ de l'Hospital, 18, 08440 Cardedeu (Barcelona), Spain, registered in the Barcelona Commercial Registry, volume 48738, folio 150, sheet B-594382.",
       "thirdPartyTitle": "4. Third-party services",
       "thirdPartyBody": "We use the following third-party services that may process data:",
       "thirdPartyGA": "Google Analytics: web traffic analysis.",
       "thirdPartyAds": "Google Ads: contextual advertising.",
       "thirdPartySentry": "Sentry: error monitoring to improve Site stability.",
+      "thirdPartyStripe": "Stripe: payments and invoices. Stripe processes your card details; we never see them.",
       "thirdPartyNote": "Each third-party service operates under its own privacy policies.",
       "cookiesTitle": "5. Cookies",
       "cookiesBody": "We use essential technical cookies for the Site to function and analytics cookies. You can configure your browser to reject cookies, although some features may be affected.",
       "retentionTitle": "6. Data retention",
       "retentionBody": "Analytics data is retained according to standard Google Analytics periods. Published event data is retained while the event is relevant or until the organizer requests its deletion.",
+      "retentionInvoices": "Billing data is kept for 6 years, as Spanish commercial law requires.",
       "rightsTitle": "7. User rights (GDPR)",
       "rightsBody": "In accordance with the General Data Protection Regulation (GDPR), you have the right to:",
       "rightsAccess": "Access your personal data.",
@@ -399,7 +408,9 @@
         "title": "Boost your event",
         "description": "Promote it to reach more people and appear near the top.",
         "promoteButton": "Promote",
-        "keepFreeButton": "Not now"
+        "keepFreeButton": "Not now",
+        "shareTitle": "It's live! Now spread the word",
+        "shareDescription": "Send it to your groups and contacts: it's the quickest way to reach more people."
       }
     },
     "PlaceFallback": {
@@ -471,13 +482,14 @@
         "PROVINCE": "Your province",
         "CATALONIA": "All of Catalonia"
       },
-      "pendingCheckout": "You have a pending payment for this event.",
+      "pendingCheckout": "You have an unfinished payment for this event. You can continue it or choose another option: the earlier one will be cancelled at no charge.",
       "resumeCheckout": "Continue payment",
       "refreshStatus": "Refresh status",
       "tryAgain": "Try again",
+      "chooseAnotherOption": "Choose another option",
       "errors": {
         "PROMOTION_ALREADY_ACTIVE": "This event is already promoted.",
-        "CHECKOUT_ALREADY_PENDING": "You already have a pending payment for this event.",
+        "CHECKOUT_ALREADY_PENDING": "There's already a payment in progress for this event. Please try again in a while.",
         "REFUND_PENDING": "A refund is in progress for this event.",
         "PROMOTIONS_DISABLED": "Promotions are not available right now.",
         "MISSING_EVENT_LOCATION": "The event needs a town before it can be promoted.",
@@ -507,7 +519,8 @@
         "title": "Thank you!"
       },
       "cancelPage": {
-        "title": "Payment cancelled"
+        "title": "Payment cancelled",
+        "pending": "You haven't been charged. You can continue the payment or choose another option."
       }
     },
     "EventMeta": {
@@ -649,7 +662,7 @@
       "viewAll": "View all"
     },
     "CulturalMessage": {
-      "explorePrefix": "Explore more plans {placeIn}:",
+      "explorePrefix": "Explore more plans {placeIn}",
       "today": "What to do today",
       "tomorrow": "What to do tomorrow",
       "week": "What to do this week",
@@ -672,14 +685,6 @@
       "tomorrow": "Tomorrow",
       "weekend": "Weekend",
       "active": "active"
-    },
-    "Constants": {
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      }
     },
     "HomePageSkeleton": {
       "seeAlso": "See also"
@@ -809,8 +814,6 @@
         "dateHeading": "Date",
         "categoriesHeading": "Categories",
         "priceHeading": "Price",
-        "priceFree": "Free",
-        "pricePaid": "Paid",
         "calendarLabel": "Or pick from calendar:"
       }
     },
@@ -918,6 +921,12 @@
       "region": "{place} is {regionIn}.",
       "regionEvents": "More plans {regionIn}"
     },
+    "DateCountLine": {
+      "today": "{count, plural, one {# event today} other {# events today}}.",
+      "tomorrow": "{count, plural, one {# event tomorrow} other {# events tomorrow}}.",
+      "week": "{count, plural, one {# event this week} other {# events this week}}.",
+      "weekend": "{count, plural, one {# event this weekend} other {# events this weekend}}."
+    },
     "SearchBar": {
       "placeholder": "What are you looking for?",
       "clear": "Clear search",
@@ -945,19 +954,13 @@
     },
     "EventPage": {
       "sponsored": "Sponsored content",
-      "editEvent": "Edit event",
+      "editEvent": "Edit",
       "editTitle": "Edit: {title}",
       "editError": "Error updating event",
       "editSave": "Save changes",
       "visitsCount": "{count, plural, one {{count} visit} other {{count} visits}}",
-      "stickyMoreInfo": "More info",
-      "stickyCalendar": "Calendar",
-      "stickySave": "Save",
       "free": "Free",
       "paid": "Paid",
-      "sidebarMoreInfo": "More information",
-      "sidebarVisitWebsite": "Visit website",
-      "sidebarOpenInMaps": "Open in Maps",
       "interested": "{count, plural, one {{count} person interested} other {{count} people interested}}",
       "popular": "Popular",
       "readMore": "Read more",
@@ -965,15 +968,27 @@
       "durationLabel": "Duration: {duration}",
       "sidebarAriaLabel": "Event details",
       "toolbarAriaLabel": "Event actions",
-      "sidebarCreatedBy": "Published by",
       "sidebarViewAllEvents": "View all events",
+      "shareEvent": "Share",
       "promoteEvent": "Promote",
       "deleteEvent": "Delete event",
       "deleteConfirmTitle": "Delete this event?",
       "deleteConfirmDescription": "It will no longer appear in the listings and can't be recovered.",
       "deleteConfirm": "Delete",
       "deleteCancel": "Cancel",
-      "deleteError": "The event couldn't be deleted. Please try again."
+      "deleteError": "The event couldn't be deleted. Please try again.",
+      "ownerBarTitle": "You published this event",
+      "moreActions": "More actions",
+      "organizerEventCount": "{count, plural, one {# event published} other {# events published}}",
+      "moreInfo": "More info",
+      "organizer": "Organizer",
+      "reportPrompt": "Something wrong with this event?",
+      "reportLink": "Let us know",
+      "reportSubject": "Event report: {title}",
+      "reportBody": "Page: {url}\n\nWhat should we check?\n",
+      "houseAdTitle": "Organising something?",
+      "houseAdText": "Publish your event for free and reach more people nearby.",
+      "houseAdCta": "Publish an event"
     },
     "CardContent": {
       "dateRange": "{start} – {end}",
@@ -1033,27 +1048,30 @@
       "optional": "(optional)",
       "stepDone": "completed",
       "stepCurrent": "current step",
-      "stepTodo": "not started"
+      "stepTodo": "not started",
+      "price": "Price",
+      "priceFree": "Free",
+      "pricePaid": "Paid",
+      "priceUnknown": "Not specified",
+      "priceAmount": "Price in euros",
+      "priceAmountHint": "If there are several rates, enter the cheapest.",
+      "priceCurrent": "Current price: “{price}”. It stays unless you pick another option."
     },
     "Layout": {
       "rss": "RSS",
       "rssNews": "RSS News"
     },
     "EventDetailsSection": {
-      "title": "Event details",
-      "eventLink": "Event link:",
-      "duration": "Approximate duration: {duration}",
       "createdBy": "Published {by} <link>{name}</link>"
     },
     "EventLocation": {
       "title": "Location",
       "showMap": "Show map",
-      "hideMap": "Close map",
+      "hideMap": "Hide map",
       "getDirections": "Get directions",
       "profileLink": "Profile {nameOf}"
     },
     "EventCalendar": {
-      "title": "Date and time",
       "priceLabel": "Price:",
       "priceFree": "Free"
     },
@@ -1181,7 +1199,7 @@
       "ariaLabel": "Go back"
     },
     "PromotedEvents": {
-      "title": "Featured events"
+      "title": "Promoted events"
     },
     "Modal": {
       "close": "Close"
@@ -1216,6 +1234,27 @@
       "floating": "Map",
       "back": "All places",
       "eventsCount": "{count, plural, one {# event} other {# events}}"
+    },
+    "ShareKit": {
+      "whatsapp": "Send on WhatsApp",
+      "facebook": "Share on Facebook",
+      "image": "Poster",
+      "imageTitle": "Create a poster to post on Instagram or your WhatsApp status",
+      "imageLoading": "Creating…",
+      "imageError": "Couldn't create the poster. Please try again.",
+      "more": "More",
+      "copyLink": "Copy",
+      "copyLinkLabel": "Copy link",
+      "copied": "Copied",
+      "copyError": "Couldn't copy the link. Please try again.",
+      "modalTitle": "Share event",
+      "modalDescription": "The more people know, the more will come.",
+      "share": "Share",
+      "shareLabel": "Share {title}",
+      "shareDate": "Date: {date}",
+      "sharePlace": "Place: {place}",
+      "email": "Send by email",
+      "moreOptions": "More options"
     }
   },
   "Partials": {
@@ -1601,7 +1640,8 @@
       "locationRequired": "Enter the venue",
       "invalidUrl": "Enter a valid link, like example.com",
       "invalidEmail": "Enter a valid email address",
-      "townRequired": "Choose a town"
+      "townRequired": "Choose a town",
+      "invalidPrice": "Enter a price above 0, such as 10 or 12.50. If it's free, choose “Free”."
     },
     "EventStatus": {
       "past": "Event finished",
@@ -1644,11 +1684,9 @@
     },
     "EventCopy": {
       "sentence": {
-        "verbSingular": "takes place",
-        "verbPlural": "take place",
         "dateRange": "from {start} to {end}",
         "dateSingle": "on {nameDay}, {start}",
-        "sentence": "{title} {verb} {date}{time}{place}.",
+        "sentence": "“{title}” takes place {date}{time}{place}.",
         "timeSuffix": ", at {time}",
         "timeSuffixRange": ", from {start} to {end}",
         "placeSuffix": ", {place}"
@@ -1686,6 +1724,7 @@
       "dateSingle": "From {start}",
       "loading": "Loading...",
       "button": "Add to calendar",
+      "buttonShort": "Calendar",
       "providers": {
         "google": "Google Calendar",
         "outlook": "Outlook",

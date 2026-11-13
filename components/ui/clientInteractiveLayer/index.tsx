@@ -7,10 +7,12 @@ import Search from "@components/ui/search";
 import FiltersClient from "@components/ui/filters/FiltersClient";
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
 import { debugURLParsing } from "@utils/url-parsing";
+import { followScrollLockPadding } from "@utils/browser";
 import {
   ClientInteractiveLayerProps,
   ClientInteractiveLayerContentProps,
 } from "types/props";
+import type { FilterKey } from "types/filters";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
 
 // Extract the parts that use useSearchParams and usePathname into a separate component
@@ -20,6 +22,7 @@ function ClientInteractiveLayerContent({
   filterLabels,
   isNavbarVisible,
   isModalOpen,
+  modalSection,
   handleOpenModal,
   handleCloseModal,
 }: ClientInteractiveLayerContentProps) {
@@ -55,7 +58,8 @@ function ClientInteractiveLayerContent({
     <>
       {/* Fixed Search and Filters Bar */}
       <div
-        className={`w-full bg-background fixed inset-x-0 top-0 z-sticky transition-transform duration-500 ease-in-out ${stickyClasses} flex justify-center items-center md:pt-element-gap-sm`}
+        ref={followScrollLockPadding}
+        className={`w-full bg-background fixed inset-x-0 top-0 z-sticky transition-transform duration-normal ease-out-strong ${stickyClasses} flex justify-center items-center md:pt-element-gap-sm`}
       >
         <div className="container flex flex-col justify-center items-center md:items-start">
           <Suspense
@@ -86,6 +90,7 @@ function ClientInteractiveLayerContent({
         currentQueryParams={parsed.queryParams}
         userLocation={userLocation}
         categories={categories}
+        initialSection={modalSection}
       />
     </>
   );
@@ -98,8 +103,10 @@ function ClientInteractiveLayer({
 }: ClientInteractiveLayerProps) {
   const isNavbarVisible = useNavbarVisible();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalSection, setModalSection] = useState<FilterKey>();
 
-  const handleOpenModal = useCallback(() => {
+  const handleOpenModal = useCallback((section?: FilterKey) => {
+    setModalSection(section);
     setIsModalOpen(true);
   }, []);
 
@@ -120,6 +127,7 @@ function ClientInteractiveLayer({
           filterLabels={filterLabels}
           isNavbarVisible={isNavbarVisible}
           isModalOpen={isModalOpen}
+          modalSection={modalSection}
           handleOpenModal={handleOpenModal}
           handleCloseModal={handleCloseModal}
         />

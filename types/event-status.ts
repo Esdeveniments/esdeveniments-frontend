@@ -11,6 +11,27 @@ export interface EventStatusMeta {
   label: string;
 }
 
+/** Raw date and time fields of an event, as the backend sends them. */
+export interface EventWindowInput {
+  startDate: string;
+  endDate?: string | null;
+  /** `undefined` means the caller has no separate time field. */
+  startTime?: string | null;
+  endTime?: string | null;
+}
+
+/**
+ * When an event happens, in Madrid wall-clock time: days are "YYYY-MM-DD",
+ * times "HH:mm". All-day events have no times.
+ */
+export interface EventWindow {
+  startDay: string;
+  startTime: string | null;
+  endDay: string | null;
+  endTime: string | null;
+  isAllDay: boolean;
+}
+
 export type EventStatusLabels = {
   past: string;
   live: string;

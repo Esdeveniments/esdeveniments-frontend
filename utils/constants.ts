@@ -1,5 +1,6 @@
 import type { ByDateOption, DateRangeShortcut } from "types/common";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import type { PriceFilterValue } from "types/url-filters";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 // Not messages/*.json: client components import this file, and that would
 // ship all three locale files to the browser. See scripts/generate-locale-labels.mjs.
@@ -25,6 +26,14 @@ export const NEWS_CITIES_LIMIT = 100;
 // multi-venue strings run to ~150 chars).
 export const NEWS_EVENT_EXCERPT_MAX_LENGTH = 220;
 export const EVENT_VENUE_LABEL_MAX_LENGTH = 60;
+// Event descriptions longer than this fold on mobile behind "Llegeix més". Each
+// line break counts as a full mobile line, so a list of short lines folds too.
+export const EVENT_DESCRIPTION_FOLD_CHARS = 400;
+export const EVENT_DESCRIPTION_LINE_CHARS = 45;
+// Desktop lines are about twice as wide. The threshold sits well above the
+// desktop clamp height (lg:max-h-96), so "Llegeix més" always hides real text.
+export const EVENT_DESCRIPTION_DESKTOP_FOLD_CHARS = 2400;
+export const EVENT_DESCRIPTION_DESKTOP_LINE_CHARS = 90;
 
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;
@@ -122,19 +131,6 @@ export const DAY_NAMES: string[] = defaultConstantsLabels.days as string[];
 export const MONTH_NAMES: string[] = defaultConstantsLabels.months as string[];
 export const MONTHS_URL: string[] =
   defaultConstantsLabels.monthsUrl as string[];
-export const NEWS_HUBS = [
-  { slug: "mataro", name: defaultConstantsLabels.newsHubs.mataro as string },
-  {
-    slug: "barcelona",
-    name: defaultConstantsLabels.newsHubs.barcelona as string,
-  },
-  {
-    slug: "tarragona",
-    name: defaultConstantsLabels.newsHubs.tarragona as string,
-  },
-  { slug: "lleida", name: defaultConstantsLabels.newsHubs.lleida as string },
-];
-
 export function getDayNames(locale: AppLocale = DEFAULT_LOCALE): string[] {
   return (constantsLabelsByLocale[locale] ?? defaultConstantsLabels)
     .days as string[];
@@ -272,6 +268,12 @@ export const DISTANCES: number[] = [5, 10, 25, 50, 100];
  * Used for both category and date filters throughout the application
  */
 export const DEFAULT_FILTER_VALUE = "tots";
+
+/** `?price=` URL value → backend `GET /events?free=` value. */
+export const PRICE_FILTER_FREE_PARAM: Record<PriceFilterValue, boolean> = {
+  gratis: true,
+  pagament: false,
+};
 
 /**
  * Dynamic category support functions

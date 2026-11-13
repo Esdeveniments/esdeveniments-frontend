@@ -46,6 +46,25 @@ event many times as "missing organizer". Lists use `buildEventListItems`
 Europe/Madrid offset (`withMadridOffset`, `@date-fns/tz`, DST-aware); date-only
 values stay plain dates.
 
+## Event start and end come from one place, in Madrid time
+
+The "Finalitzat" bug fixed in #761 came from a rule written for one combination of
+fields (no end time → live 24 h) that never checked another (a later end
+date). Events arrive with any mix of `startDate`, `endDate`, `startTime` and
+`endTime`: times with seconds ("19:00:00"), "00:00" meaning "Consultar
+horaris", an end time and no end date, overnight 22:00–02:00 on one date, an
+end date before the start, full timestamps with an offset. The server runs in
+UTC (no `TZ` in the Docker image), so parsing "19:00" as runtime-local time or
+comparing days with `getDate()` was 1–2 h off from Madrid, and all-day events
+flipped at 00:00 UTC instead of Madrid midnight.
+`resolveEventWindow` (`utils/event-window.ts`) turns the raw fields into one
+Madrid wall-clock window; `computeTemporalStatus` (status pill, card lists,
+`filterActiveEvents`) and the JSON-LD dates both read it, so they can't drift
+apart. When you change a rule, add its cases to
+`test/event-status-matrix.test.ts`: it runs every combination under four
+runtime time zones, plus an invariant (a multi-day event is live on every
+inner day and past after its last, whatever its times).
+
 ## Guest and account publish drafts need an explicit choice after login
 
 A guest can finish all three steps while the same browser still holds an older
@@ -109,6 +128,10 @@ Production runs on Coolify/Docker/Node 26; Vercel previews are a different runti
 `buildPinnedDnsDispatcher`'s `lookup` callback runs only when undici opens a real connection — autoSelectFamily (Happy Eyeballs, default since Node 20) calls it with `{ all: true }` and expects an array of records. Mocked-fetch unit tests never reach it. `test/pinned-dns-dispatcher.test.ts` fetches through a loopback server to exercise the real path; keep that style for any proxy or dispatcher change.
 
 That real-socket design has a cost: it's a real HTTP server on a real (ephemeral) port, so it can flake under CPU/port contention rather than a code bug. It failed once in `yarn test --run` right after a `git push` (2213/2215) while a dev server and browser automation were still running in the background, then passed 3/3 in isolation and 2215/2215 once those processes were killed. Before "fixing" a failure here, rule out background load (`next dev`, headless browsers, other test runs) rather than touching the dispatcher code.
+
+## E2E sources must be hosts we control
+
+The image-proxy e2e fetched `picsum.photos`. On 2026-11-12 it returned 522 and timed out for hours, and the required E2E check failed on every PR. The specs need a real public https image (the proxy refuses anything else), so `PROXY_TEST_UPSTREAMS` in `e2e/image-proxy.spec.ts` lists our own hero photo on two independent hosts: GitHub `raw` pinned to a merged commit, then our own site. `getLiveTestImage` probes them directly and uses the first that answers, so a 502 from the proxy afterwards means the proxy is broken. If neither answers, the test fails; it doesn't skip. Never point an e2e at a third-party demo or placeholder service.
 
 ## Back-merge main hotfixes into develop the same day
 
@@ -410,6 +433,30 @@ scrolled `<main>` itself, and a popover clipped for users looked fine in tests.
 To test what a user sees, scroll with `page.mouse.wheel()` and move the mouse
 by coordinates.
 
+## A direct child of `<main>` needs `w-full min-w-0`
+
+`<main>` (`components/ui/layout/base/index.tsx`) is `flex flex-col items-center`,
+so a child with no width of its own grows to the width of its widest content.
+`FilterLoadingGate` had none, and once the promoted carousel moved inside it
+(#607) its row of 75vw cards stretched it to ~950 px on phones: the carousel
+had nothing to scroll and `<main>`'s `overflow-x-clip` cut the listing off on
+both sides. Give such wrappers `w-full min-w-0`. Check it by comparing the
+wrapper's width with `innerWidth` on a 390 px viewport.
+
+## `aspect-ratio` plus a `min-height` sets a minimum width
+
+A box with `aspect-ratio` turns its `min-height` into a minimum width:
+`min-h-[80px]` at 5:1 is 400 px. `min-w-0` doesn't undo it. The sponsor banner
+had that, so on every phone it pushed its wrapper past the screen, and
+`<main>` (see above) centered it and cut the page on both sides. Cap the
+height with `max-h-*` and leave `min-h-*` off boxes that set `aspect-ratio`.
+The same cut happens with any wide unbreakable content, like a
+`whitespace-nowrap` label in a 2-column grid. `scrollWidth` never shows it,
+because `overflow-x: clip` hides it, so `e2e/mobile-overflow.spec.ts` measures
+every element in `<main>` at 320 px. CI has no image sponsor (the house ads
+are text), so to cover banners run it against production too:
+`PLAYWRIGHT_TEST_BASE_URL=https://www.esdeveniments.cat yarn test:e2e --config playwright.remote.config.ts e2e/mobile-overflow.spec.ts`.
+
 ## AdSense vignettes put the old scroll position back after a client-side navigation
 
 An AdSense vignette can open when the user clicks an in-app `<a>`. It saves the
@@ -476,8 +523,8 @@ The bundler ships an imported JSON file whole. `utils/constants.ts` and five
 shared utils imported the locale files for a few labels, so every client
 component that reached them loaded a 72 KB gzip chunk holding `ca`, `es` and
 `en`. They now read `i18n/locale-labels.generated.json`; run
-`yarn i18n:labels` after editing `Components.Constants` or the `Utils` sections
-it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
+`yarn i18n:labels` after editing `i18n/locale-lists.json` or the `Utils`
+sections it copies. `test/locale-labels.test.ts` fails on drift or a new JSON import.
 Outside tests, only `i18n/request.ts` loads the full message files.
 
 ## Messages are precompiled: strings only, no `t.raw()`
@@ -929,3 +976,67 @@ town with no events, a past event and a date or category listing. The dev
 "Insights" (instant-navigation hints such as `connection()` or `params` outside
 `<Suspense>`) are speed hints, not errors. Before testing, run `yarn prebuild`:
 without `public/sw.js`, dev renders `/sw.js` as a locale page and crashes.
+
+## A listed sitemap must answer 200, even when it's empty
+
+`/sitemap.xml` listed `server-google-news-sitemap.xml`, which answered 404 when
+there was no article from the last 48 hours. News comes out in bursts (none from
+February to November 2026), so it 404'd most days. Search Console logged it as an
+error on the index and stopped reading it after December 2025. Google's news
+sitemap docs say an empty news sitemap is fine (a harmless "Empty Sitemap"
+warning), so it now answers 200 with an empty `<urlset>`. The deploy's "Warm
+sitemaps and festivity hubs" step requests every listed sitemap and warns on any
+other status.
+
+Don't make up `<lastmod>`. Google uses it only when it's accurate; the news
+sitemap set the hub pages to "now" on every request. With no real edit date,
+leave it out. Build the news sitemaps from the API's news list, not a fixed list
+of cities: a fixed list left Girona, El Masnou and other cities' articles out.
+
+Search Console's API shows warnings per child sitemap:
+`GET webmasters/v3/sites/{site}/sitemaps?sitemapIndex=<index URL>`. It gives
+counts only; the reasons are in the Search Console UI.
+
+## Every deploy broke the Server Actions of pages already open
+
+A promote checkout on a phone failed with "Alguna cosa ha fallat" and nothing
+in the Coolify, backend or Sentry logs (Sentry was also over its error quota).
+The tab was opened before a staging deploy. Next salts each Server Action ID
+with `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`, and without one every `next build`
+generates a new key, so the old page's action ID no longer existed: the server
+answered "Failed to find Server Action" (a `console.warn`), the client threw
+`UnrecognizedActionError`, and our `catch` showed the generic error. Nothing
+reached the backend.
+
+The image now builds with a fixed key per Environment (GitHub secret → Docker
+secret mount; the deploy fails when it is missing). Two Turbopack builds with the
+same key gave the same IDs, even after editing an action's body and adding an
+export to its file; without the key, no ID matched. An ID still changes when an
+action is renamed or moved, or the key is rotated, so the promote page reloads
+on `unstable_isUnrecognizedActionError` (safe: the action never ran). The key
+must be set at build time: Coolify only runs the image, and a runtime value
+there doesn't change the IDs. `deploymentId` doesn't help here; it only reloads
+on navigations (and see `docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md`).
+
+## Reversible motion uses transitions; reduced motion misses delays and pseudo-elements
+A surface that animates both in and out (toast, popup, map dialog) uses CSS
+transitions on a `data-closed` state (`usePresenceTransition`, or by hand on
+a native `<dialog>`), not an enter keyframe and an exit keyframe: closing
+during the entrance made the keyframe version jump back to fully open before
+leaving (opacity 0.33 → 1 in a Nov 2026 test). Unmount when the transition
+ends (`afterTransitions`), never after a fixed timer: a 150ms timer on a 100ms
+exit left an invisible overlay catching taps. Don't reach for Headless UI
+`Transition` in a component that loads on every page (the favourites nudge):
+it put a 21 KB gzip chunk on home and listings. The global `prefers-reduced-motion`
+rule in `styles/globals.css` zeroes durations on `*` only, so put staggered
+`animation-delay`s and `::details-content` transitions inside
+`prefers-reduced-motion: no-preference`. In jsdom, React listens for
+`webkitAnimationEnd` (no `AnimationEvent`), so a test fires that name.
+
+## No card → event page morph with `<ViewTransition>`
+React 19.3's `<ViewTransition>` (no Next flag since 16.3) pairs a shared
+element only when the destination renders in the navigation's commit, i.e.
+when it's fully prefetched. With `partialPrefetching` and no `prefetch={true}`,
+the event page suspends into its skeleton first, so a card → hero morph never
+plays. The unused `viewTransitionName` and `::view-transition` CSS were removed
+(Nov 2026). Revisit only if the event page can render in that commit.

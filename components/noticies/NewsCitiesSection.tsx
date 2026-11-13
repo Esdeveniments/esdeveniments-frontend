@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import Badge from "@components/ui/common/badge";
 import type { NewsCitiesSectionProps } from "types/props";
 import { getLocaleSafely } from "@utils/i18n-seo";
+import { comparePlaceNames } from "@utils/string-helpers";
 
 // Same active look as the filter chips (FilterButton).
 const CHIP_CLASS =
@@ -15,7 +16,7 @@ export default async function NewsCitiesSection({
 
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.NewsCities" });
-  const sorted = [...cities].sort((a, b) => a.name.localeCompare(b.name, locale));
+  const sorted = [...cities].sort((a, b) => comparePlaceNames(a.name, b.name, locale));
 
   return (
     // One scrollable row on mobile, like the listing filter bar; the padding

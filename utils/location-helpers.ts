@@ -33,13 +33,14 @@ const isDistinctLabel = (candidate: string, ...others: string[]): boolean => {
  * Build a clean location string:
  * - Deduplicate comma-separated segments
  * - Append city/region if missing
- * - Optionally hide city/region when separate links are displayed
+ * - Optionally hide the city and/or region the caller shows as links
  */
 export const buildDisplayLocation = ({
   location,
   cityName,
   regionName,
-  hidePlaceSegments,
+  hideCity = false,
+  hideRegion = false,
 }: BuildDisplayLocationOptions): string => {
   const formattedCityName = formatOptionalPlace(cityName);
   const formattedRegionName = formatOptionalPlace(regionName);
@@ -75,21 +76,22 @@ export const buildDisplayLocation = ({
     uniqueSegments.push(formattedRegionName);
   }
 
-  const displaySegments = hidePlaceSegments
-    ? uniqueSegments.filter((segment) => {
-        const normalized = normalize(segment);
-        return (
-          normalized !== normalize(formattedCityName || "") &&
-          normalized !== normalize(formattedRegionName || "")
-        );
-      })
-    : uniqueSegments;
+  const hidden = [
+    hideCity ? formattedCityName : "",
+    hideRegion ? formattedRegionName : "",
+  ]
+    .filter(Boolean)
+    .map(normalize);
+  const displaySegments = uniqueSegments.filter(
+    (segment) => !hidden.includes(normalize(segment)),
+  );
 
   if (displaySegments.length > 0) {
     return displaySegments.join(", ");
   }
 
-  return uniqueSegments[0] ?? location;
+  // Every segment is a city or region the caller already shows as a link.
+  return hidden.length > 0 ? "" : (uniqueSegments[0] ?? location);
 };
 
 export const buildEventLocationLabels = ({
@@ -333,4 +335,34 @@ export const getDistance = (
 
 export const deg2rad = (deg: number): number => {
   return deg * (Math.PI / 180);
+};
+
+/** The venue as typed, or "" when the organiser repeated the event title there. */
+export const getEventVenue = (
+  location: string | null | undefined,
+  title: string,
+): string => {
+  const venue = location?.trim() ?? "";
+  return normalize(venue) === normalize(title) ? "" : venue;
+};
+
+// "Diversos espais", "Diverses ubicacions", "Online", "Per determinar": no single place to route to.
+const VAGUE_LOCATION =
+  /\b(divers[oae]s?|v[aà]ri(s|es|os|as)|online|en l[ií]nia|virtual|per determinar|a determinar|por determinar)\b/i;
+
+export const isVagueLocation = (location: string | null | undefined): boolean =>
+  !location?.trim() || VAGUE_LOCATION.test(location);
+
+const DIRECTIONS_BASE_URL = "https://www.google.com/maps/dir/?api=1&destination=";
+
+/**
+ * Google Maps directions (it asks for driving, transit or walking, and opens
+ * the app on phones). Exact venue coordinates win over the address text.
+ */
+export const buildDirectionsUrl = (
+  address: string,
+  coords?: { lat: number; lon: number } | null,
+): string | null => {
+  const destination = coords ? `${coords.lat},${coords.lon}` : address.trim();
+  return destination ? `${DIRECTIONS_BASE_URL}${encodeURIComponent(destination)}` : null;
 };

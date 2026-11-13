@@ -174,7 +174,7 @@ export default async function Footer(): Promise<JSX.Element> {
                   href={item.href}
                   prefetch={false}
                   data-pressable-link="inline"
-                  className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition-all duration-normal py-1 pressable-inline"
+                  className="body-small text-foreground/80 hover:text-primary hover:underline decoration-2 underline-offset-4 transition duration-normal py-1 pressable-inline"
                 >
                   {item.label}
                 </Link>

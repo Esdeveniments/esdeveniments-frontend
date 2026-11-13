@@ -7,17 +7,15 @@ import { getEventPriceText, parseSchemaPrice } from "@utils/event-price";
 import { formatCatalanA } from "@utils/string-helpers";
 import { getEventVenueCoords } from "@utils/event-map";
 import { TIMEZONE_MADRID } from "@utils/constants";
+import { resolveEventWindow } from "@utils/event-window";
+import { descriptionToPlainText } from "@utils/event-excerpt";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
 import type {
   EventSummaryResponseDTO,
   EventDetailResponseDTO,
 } from "types/api/event";
-import {
-  DEFAULT_LOCALE,
-  localeToHrefLang,
-  type AppLocale,
-} from "types/i18n";
+import { DEFAULT_LOCALE, localeToHrefLang, type AppLocale } from "types/i18n";
 import type {
   VideoObject,
   SchemaOrgEvent,
@@ -36,7 +34,7 @@ const shouldLogSchemaWarnings =
 const logSchemaWarning = (
   slug: string | undefined,
   field: string,
-  detail?: string
+  detail?: string,
 ) => {
   if (!shouldLogSchemaWarnings) return;
   schemaWarningCounts[field] = (schemaWarningCounts[field] || 0) + 1;
@@ -79,7 +77,7 @@ export const ensureTime = (value?: string | null): string | undefined => {
  */
 export const withMadridOffset = (value: string): string => {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(
-    value
+    value,
   );
   if (!match) return value;
   const [y, mo, d, h, mi, s] = match.slice(1).map((part) => Number(part ?? 0));
@@ -87,18 +85,13 @@ export const withMadridOffset = (value: string): string => {
   return `${value}${format(local, "xxx")}`;
 };
 
-export const buildDateTime = (
-  date?: string | null,
-  time?: string | null,
-  fallbackDate?: string
-): string | undefined => {
-  const baseDate = ensureIsoDate(date) ?? ensureIsoDate(fallbackDate);
-  if (!baseDate) return undefined;
-  const cleanTime = ensureTime(time);
-  return cleanTime ? `${baseDate}T${cleanTime}` : baseDate;
-};
+const joinDayAndTime = (day: string, time: string | null): string =>
+  time ? `${day}T${time}` : day;
 
-export const parseDateFromIso = (iso?: string, isEnd?: boolean): Date | undefined => {
+export const parseDateFromIso = (
+  iso?: string,
+  isEnd?: boolean,
+): Date | undefined => {
   if (!iso) return undefined;
   const hasTime = iso.includes("T");
   const candidate = hasTime ? iso : `${iso}T${isEnd ? "23:59:59" : "00:00:00"}`;
@@ -113,7 +106,7 @@ export const parseDateFromIso = (iso?: string, isEnd?: boolean): Date | undefine
  */
 const buildOrganizer = (
   event: EventDetailResponseDTO | EventSummaryResponseDTO,
-  locale: AppLocale
+  locale: AppLocale,
 ): SchemaOrganizer | undefined => {
   const owner = "owner" in event ? event.owner : null;
   if (!owner || !isVerifiedOrganization(owner)) return undefined;
@@ -130,7 +123,7 @@ const buildOrganizer = (
 /** List entries that link to each event page (see SchemaEventListItem). */
 export const buildEventListItems = (
   events: Pick<EventSummaryResponseDTO, "slug" | "title">[],
-  locale: AppLocale = DEFAULT_LOCALE
+  locale: AppLocale = DEFAULT_LOCALE,
 ): SchemaEventListItem[] =>
   events.map((event, index) => ({
     "@type": "ListItem",
@@ -141,7 +134,7 @@ export const buildEventListItems = (
 
 export const generateJsonData = (
   event: EventDetailResponseDTO | EventSummaryResponseDTO,
-  locale?: AppLocale
+  locale?: AppLocale,
 ): SchemaOrgEvent => {
   const {
     title,
@@ -198,7 +191,10 @@ export const generateJsonData = (
     logSchemaWarning(slug, "image");
   }
 
-  const sanitizedDescription = sanitizeText(description);
+  // Imported descriptions carry markdown (`**`, `[text](url)`) and HTML.
+  const sanitizedDescription = sanitizeText(
+    description ? descriptionToPlainText(description) : "",
+  );
   if (!sanitizedDescription) {
     logSchemaWarning(slug, "description");
   }
@@ -206,20 +202,27 @@ export const generateJsonData = (
     sanitizedDescription ||
     `${trimmedTitle || "Esdeveniment cultural"} ${fallbackPlaceIn}`;
 
-  const startDateWithTime = buildDateTime(startDate, startTime);
-  const resolvedStartDate =
-    startDateWithTime ?? ensureIsoDate(startDate) ?? new Date().toISOString();
-  if (!startDateWithTime && !ensureIsoDate(startDate)) {
+  // Same window as the status pill: all-day events stay date-only (Google:
+  // "don't specify a granular hour" when it isn't known) and an overnight
+  // end (22:00–02:00) lands on the next day instead of before the start.
+  const eventWindow = resolveEventWindow({
+    startDate,
+    endDate,
+    startTime: startTime ?? null,
+    endTime,
+  });
+  if (!eventWindow) {
     logSchemaWarning(slug, "startDate");
   }
-
-  const startDateOnly = resolvedStartDate.split("T")[0];
-  const endDateWithTime = buildDateTime(
-    endDate,
-    normalizedEndTime,
-    startDateOnly
-  );
-  const resolvedEndDate = endDateWithTime ?? startDateOnly ?? resolvedStartDate;
+  const resolvedStartDate = eventWindow
+    ? joinDayAndTime(eventWindow.startDay, eventWindow.startTime)
+    : new Date().toISOString();
+  const resolvedEndDate = eventWindow
+    ? joinDayAndTime(
+        eventWindow.endDay ?? eventWindow.startDay,
+        eventWindow.endTime,
+      )
+    : resolvedStartDate;
   // Warn when the original data had no explicit end date or time.
   // Note: endDateWithTime will always have a value due to fallback to startDateOnly,
   // so we check the original input values instead.
@@ -256,7 +259,7 @@ export const generateJsonData = (
       .map((category) => category?.name)
       .filter(
         (name): name is string =>
-          typeof name === "string" && name.trim().length > 0
+          typeof name === "string" && name.trim().length > 0,
       );
     const unique = Array.from(new Set(names));
     return unique.length > 0 ? unique : undefined;
@@ -348,7 +351,7 @@ export const buildEventSchema = generateJsonData;
 
 export const generateHowToSchema = (
   name: string,
-  steps: string[]
+  steps: string[],
 ): import("types/schema").HowTo => {
   return {
     "@context": "https://schema.org",

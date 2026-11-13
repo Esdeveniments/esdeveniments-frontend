@@ -95,6 +95,9 @@ const PoliticaPrivacitat: NextPage = async () => {
                 <li className="body-normal text-foreground/80">
                   {t("purposeAds")}
                 </li>
+                <li className="body-normal text-foreground/80">
+                  {t("purposePayments")}
+                </li>
               </ul>
             </section>
 
@@ -113,6 +116,9 @@ const PoliticaPrivacitat: NextPage = async () => {
                 <li className="body-normal text-foreground/80">
                   {t("thirdPartySentry")}
                 </li>
+                <li className="body-normal text-foreground/80">
+                  {t("thirdPartyStripe")}
+                </li>
               </ul>
               <p className="body-small text-muted-foreground">
                 {t("thirdPartyNote")}
@@ -130,6 +136,9 @@ const PoliticaPrivacitat: NextPage = async () => {
               <h2 className="heading-3">{t("retentionTitle")}</h2>
               <p className="body-normal text-foreground/80">
                 {t("retentionBody")}
+              </p>
+              <p className="body-normal text-foreground/80">
+                {t("retentionInvoices")}
               </p>
             </section>
 

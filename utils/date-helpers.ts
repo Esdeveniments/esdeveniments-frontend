@@ -104,6 +104,23 @@ const formatDateForLocale = (
   }
 };
 
+/** One-line event date: `formatRange(start, end)` for a range, else "dijous, 8 d'octubre del 2026". */
+export const formatEventDateLabel = (
+  startDate: string,
+  endDate: string | undefined,
+  locale: AppLocale,
+  formatRange: (start: string, end: string) => string,
+): string => {
+  const { formattedStart, formattedEnd, nameDay } = getFormattedDate(
+    startDate,
+    endDate,
+    locale,
+  );
+  return formattedEnd
+    ? formatRange(formattedStart, formattedEnd)
+    : `${nameDay}, ${formattedStart}`;
+};
+
 export const getFormattedDate = (
   start: string | DateObject,
   end?: string | DateObject,

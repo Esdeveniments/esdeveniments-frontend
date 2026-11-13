@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { unstable_isUnrecognizedActionError } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Link } from "@i18n/routing";
+import { Link, useRouter } from "@i18n/routing";
 import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
 import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
@@ -27,6 +28,9 @@ const SCOPE_ORDER: readonly PromotionPlacement[] = [
   "CATALONIA",
 ];
 
+const isClosedOrder = (code: string) =>
+  code === "CHECKOUT_EXPIRED" || code === "ORDER_NOT_PENDING";
+
 export default function PromoteEventClient({
   eventId,
   slug,
@@ -36,6 +40,7 @@ export default function PromoteEventClient({
 }: PromoteEventClientProps) {
   const t = useTranslations("App.EventPromote");
   const locale = useLocale();
+  const router = useRouter();
   const catalog = options.ok ? options.data.options : [];
   const canPurchase = options.ok && options.data.canPurchase;
   const unavailableCode = options.ok
@@ -113,6 +118,9 @@ export default function PromoteEventClient({
     const key = `errors.${code}` as `errors.${PromotionCopyCode}`;
     return t.has(key) ? t(key) : t("errorGeneric");
   };
+  // The resume card already says a payment is pending.
+  const repeatsPendingCard = (code: string | null) =>
+    Boolean(pendingCheckoutUrl) && code === "CHECKOUT_ALREADY_PENDING";
 
   const formatPrice = (option: PromotionOptionDTO) =>
     new Intl.NumberFormat(locale, {
@@ -132,11 +140,14 @@ export default function PromoteEventClient({
   const handleConfirm = async () => {
     if (!selectedId) return;
     const selectedOption = catalog.find((option) => option.id === selectedId);
-    let idempotencyKey = idempotencyKeysRef.current.get(selectedId);
-    if (!idempotencyKey) {
-      idempotencyKey = crypto.randomUUID();
-      idempotencyKeysRef.current.set(selectedId, idempotencyKey);
-    }
+    const keyFor = (optionId: string) => {
+      let key = idempotencyKeysRef.current.get(optionId);
+      if (!key) {
+        key = crypto.randomUUID();
+        idempotencyKeysRef.current.set(optionId, key);
+      }
+      return key;
+    };
 
     setErrorCode(null);
     setIsSubmitting(true);
@@ -150,23 +161,34 @@ export default function PromoteEventClient({
     }
 
     try {
-      const result = await createPromotionCheckoutAction(
+      let result = await createPromotionCheckoutAction(
         eventId,
         selectedId,
-        idempotencyKey,
+        keyFor(selectedId),
       );
+      // The backend ties a key to one order. Once that order closed (it
+      // expired, or choosing another option replaced it), start a new one.
+      if (!result.ok && isClosedOrder(result.code)) {
+        idempotencyKeysRef.current.delete(selectedId);
+        result = await createPromotionCheckoutAction(
+          eventId,
+          selectedId,
+          keyFor(selectedId),
+        );
+      }
       if (!result.ok) {
         sendGoogleEvent("promote_checkout_error", {
           event_slug: slug,
           reason: result.code,
         });
-        // The backend ties a key to one order; once it expired or closed,
-        // the same key can only return ORDER_NOT_PENDING.
-        if (result.code === "CHECKOUT_EXPIRED" || result.code === "ORDER_NOT_PENDING") {
+        if (isClosedOrder(result.code)) {
           idempotencyKeysRef.current.delete(selectedId);
         }
         setErrorCode(result.code);
         setIsSubmitting(false);
+        // The pending order may still have an open Stripe checkout; a fresh
+        // server render shows its "Continua el pagament" link.
+        if (result.code === "CHECKOUT_ALREADY_PENDING") router.refresh();
         return;
       }
       sendGoogleEvent("promote_checkout_redirect", { event_slug: slug });
@@ -181,6 +203,16 @@ export default function PromoteEventClient({
       }
       window.location.assign(result.data.url);
     } catch (error) {
+      // A deploy since this page loaded removed the action it calls. Nothing
+      // reached the backend, so loading the current version is safe.
+      if (unstable_isUnrecognizedActionError(error)) {
+        sendGoogleEvent("promote_checkout_error", {
+          event_slug: slug,
+          reason: "stale-deployment",
+        });
+        window.location.reload();
+        return;
+      }
       console.error("PromoteEventClient: checkout action rejected", error);
       sendGoogleEvent("promote_checkout_error", {
         event_slug: slug,
@@ -328,18 +360,20 @@ export default function PromoteEventClient({
             )}
           </div>
         ) : (
-          <div
-            className="w-full px-4 py-3 bg-muted rounded-lg"
-            role="status"
-            data-testid="promote-unavailable"
-          >
-            <p className="body-normal text-foreground/80">
-              {describeCode(unavailableCode)}
-            </p>
-          </div>
+          !repeatsPendingCard(unavailableCode) && (
+            <div
+              className="w-full px-4 py-3 bg-muted rounded-lg"
+              role="status"
+              data-testid="promote-unavailable"
+            >
+              <p className="body-normal text-foreground/80">
+                {describeCode(unavailableCode)}
+              </p>
+            </div>
+          )
         )}
 
-        {errorCode && (
+        {errorCode && !repeatsPendingCard(errorCode) && (
           <div
             className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg"
             role="alert"

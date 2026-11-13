@@ -88,6 +88,7 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
+import { SHARE_KIT_EVENT } from "./fixtures/share-kit-event";
 import EventClient from "../app/[locale]/e/[eventId]/EventClient";
 
 function buildEvent(): EventClientProps["event"] {
@@ -95,12 +96,16 @@ function buildEvent(): EventClientProps["event"] {
     id: "event-uuid-1",
     slug: "my-event",
     title: "My Event",
+    startDate: "2026-09-01",
     endDate: "2026-09-01",
+    startTime: null,
+    endTime: null,
     categorySlug: undefined,
     placeSlug: "barcelona",
     hasImage: false,
     origin: "MANUAL",
     ownerId: OWNER_ID,
+    share: SHARE_KIT_EVENT,
   };
 }
 
@@ -133,6 +138,18 @@ describe("EventClient promote upsell wiring", () => {
       event_slug: "my-event",
       source: "event_detail",
     });
+  });
+
+  it("keeps the modal open after the share step strips the marker from the URL", async () => {
+    mockSearchParams = new URLSearchParams("promote=1");
+    const { rerender } = render(<EventClient event={buildEvent()} />);
+    await screen.findByTestId("promote-upsell-modal");
+
+    mockSearchParams = new URLSearchParams();
+    rerender(<EventClient event={buildEvent()} />);
+
+    expect(screen.getByTestId("promote-upsell-modal")).toBeInTheDocument();
+    expect(mockSendGoogleEvent).toHaveBeenCalledTimes(1);
   });
 
   it("strips only the promote marker on close, preserving other query params", async () => {

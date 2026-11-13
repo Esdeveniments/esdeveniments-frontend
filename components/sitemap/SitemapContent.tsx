@@ -4,6 +4,7 @@ import JsonLdServer from "@components/partials/JsonLdServer";
 import { generateSiteNavigationElementSchema } from "@components/partials/seo-meta";
 import type { SitemapContentProps } from "types/sitemap";
 import { toLocalizedUrl, withLocalePath } from "@utils/i18n-seo";
+import { comparePlaceNames } from "@utils/string-helpers";
 import { connection } from "next/server";
 
 export default async function SitemapContent({
@@ -19,12 +20,12 @@ export default async function SitemapContent({
   const { regions, cities } = await dataPromise;
   const withLocale = (path: string) => withLocalePath(path, locale);
 
-  // Sort regions and cities by name
+  // Sort regions and cities by stem (ignoring leading Catalan/Aranese articles)
   const sortedRegions = [...regions].sort((a, b) =>
-    a.name.localeCompare(b.name, "ca")
+    comparePlaceNames(a.name, b.name, "ca")
   );
   const sortedCities = [...cities].sort((a, b) =>
-    a.name.localeCompare(b.name, "ca")
+    comparePlaceNames(a.name, b.name, "ca")
   );
 
   // Generate navigation schema for regions and cities
@@ -64,9 +65,9 @@ export default async function SitemapContent({
 
         <div className="stack gap-6">
           <h2 className="heading-2">{t("regionsTitle")}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4" role="list">
+          <ul className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {sortedRegions.map((region) => (
-              <div key={region.slug} role="listitem">
+              <li key={region.slug}>
                 <PressableAnchor
                   href={withLocale(`/sitemap/${region.slug}`)}
                   className="text-foreground-strong hover:text-primary hover:underline transition-colors"
@@ -75,16 +76,16 @@ export default async function SitemapContent({
                 >
                   {region.name}
                 </PressableAnchor>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
         <div className="stack gap-6">
           <h2 className="heading-2">{t("citiesTitle")}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
+          <ul className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {sortedCities.map((city) => (
-              <div key={city.slug} role="listitem">
+              <li key={city.slug}>
                 <PressableAnchor
                   href={withLocale(`/sitemap/${city.slug}`)}
                   className="text-foreground-strong hover:text-primary hover:underline transition-colors"
@@ -93,9 +94,9 @@ export default async function SitemapContent({
                 >
                   {city.name}
                 </PressableAnchor>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
     </>

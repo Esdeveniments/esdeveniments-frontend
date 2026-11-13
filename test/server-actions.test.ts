@@ -188,6 +188,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Test Location",
         categories: [],
+        price: null,
       };
 
       const result = await createEventAction(toFormData(eventData));
@@ -238,6 +239,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Test Location",
         categories: [],
+        price: null,
       };
 
       await createEventAction(toFormData(eventData));
@@ -260,6 +262,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       endTime: "",
       location: "Test Location",
       categories: [],
+      price: null,
     });
 
     it("returns a profile-incomplete result on 403, instead of throwing", async () => {
@@ -339,6 +342,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       endTime: "",
       location: "L",
       categories: [],
+      price: null,
     };
 
     it("calls updateTag for events and the specific event tag, with indexed: true injected server-side", async () => {
@@ -363,6 +367,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Updated Location",
         categories: [],
+        price: null,
       };
 
       const result = await editEvent("test-id", "old-event", updateData);
@@ -470,6 +475,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Updated Location",
         categories: [],
+        price: null,
       };
 
       await editEvent("test-id", "same-event", updateData);
@@ -505,6 +511,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Updated Location",
         categories: [],
+        price: null,
       };
 
       await editEvent("test-id", "old-event", updateData);
@@ -530,6 +537,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Updated Location",
         categories: [],
+        price: null,
       };
 
       const result = await editEvent("test-id", "missing-event", updateData);
@@ -555,6 +563,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Hacked Location",
         categories: [],
+        price: null,
       };
 
       const result = await editEvent("test-id", "test-event", updateData);
@@ -583,6 +592,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Hacked Location",
         categories: [],
+        price: null,
       };
 
       const result = await editEvent("test-id", "test-event", updateData);
@@ -611,6 +621,7 @@ describe("Server Actions - Next.js 16 caching", () => {
         endTime: "",
         location: "Updated Location",
         categories: [],
+        price: null,
       };
 
       const result = await editEvent("test-id", "test-event", updateData);

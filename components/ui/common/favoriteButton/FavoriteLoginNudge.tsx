@@ -6,6 +6,7 @@ import { Link, usePathname } from "@i18n/routing";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { useAuth } from "@components/hooks/useAuth";
+import { usePresenceTransition } from "@components/hooks/usePresenceTransition";
 import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
 
 const SESSION_KEY = "favorites-login-nudge-shown";
@@ -69,17 +70,24 @@ export default function FavoriteLoginNudge() {
 
   // A session that authenticates mid-way should never show the nudge —
   // guarding at render (rather than via a setState effect) keeps this off
-  // the cascading-render path the lint rule flags.
-  if (isAuthenticated || !visible) return null;
+  // the cascading-render path the lint rule flags. It rises from the bottom
+  // edge and sinks back the same way (DESIGN.md › Motion).
+  const { ref, mounted, closed, leaving } = usePresenceTransition<HTMLDivElement>(
+    visible && !isAuthenticated
+  );
+  if (!mounted) return null;
 
   return (
     <div
+      ref={ref}
+      data-closed={closed ? "" : undefined}
+      inert={leaving}
       role="status"
       aria-live="polite"
-      className="fixed inset-x-0 bottom-4 z-900 flex justify-center px-section-x pointer-events-none"
+      className="group fixed inset-x-0 bottom-4 z-900 flex justify-center px-section-x pointer-events-none transition-modal data-[closed]:opacity-0 data-[closed]:translate-y-full data-[closed]:duration-fast"
       data-testid="favorites-login-nudge"
     >
-      <div className="pointer-events-auto flex items-center gap-3 max-w-md w-full card-bordered bg-background shadow-md rounded-lg px-4 py-3">
+      <div className="pointer-events-auto group-data-[closed]:pointer-events-none flex items-center gap-3 max-w-md w-full card-bordered bg-background shadow-md rounded-lg px-4 py-3">
         <HeartIconSolid className="h-5 w-5 text-primary shrink-0" />
         <p className="body-small text-foreground/90 flex-1">
           {t("message")}

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import { getOccupiedPlaceStatus } from "@lib/db/sponsors";
 
 /**
@@ -11,6 +11,9 @@ import { getOccupiedPlaceStatus } from "@lib/db/sponsors";
  * Example: { occupied: { "barcelona": 5, "maresme": 12 } }
  */
 export async function GET() {
+  // Request-time: without this, `next build` prerenders the response once
+  // and the buy page shows every place as free.
+  await connection();
   try {
     const status = await getOccupiedPlaceStatus();
     const occupied = Object.fromEntries(status);
@@ -25,9 +28,10 @@ export async function GET() {
     );
   } catch (error) {
     console.error("Failed to fetch sponsor availability:", error);
+    // Never answer "all free" when occupancy is unknown.
     return NextResponse.json(
-      { occupied: {} },
-      { status: 200, headers: { "Cache-Control": "no-store" } },
+      { error: "availability_unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
 }

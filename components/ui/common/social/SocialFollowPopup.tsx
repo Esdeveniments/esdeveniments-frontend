@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import useCheckMobileScreen from "@components/hooks/useCheckMobileScreen";
+import { usePresenceTransition } from "@components/hooks/usePresenceTransition";
 import { usePushNotifications } from "@components/hooks/usePushNotifications";
 import { usePwaInstall } from "@components/hooks/usePwaInstall";
 import { sendGoogleEvent } from "@utils/analytics";
@@ -81,13 +82,14 @@ function getScrollThreshold(): number {
 export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   const t = useTranslations("Components.SocialFollowPopup");
   const [isVisible, setIsVisible] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [isSubscribingPush, setIsSubscribingPush] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const hasTriggeredRef = useRef(false);
   const hasDismissedRef = useRef(false);
   const hasTrackedOfferRef = useRef(false);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  // Keeps the popup mounted while it animates out (DESIGN.md › Motion).
+  const { ref: dialogRef, mounted, closed, leaving } =
+    usePresenceTransition<HTMLDivElement>(isVisible);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useCheckMobileScreen();
@@ -162,11 +164,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         dismissCount: (current?.dismissCount ?? 0) + (countAsDismissal ? 1 : 0),
         lastDismissedAt: Date.now(),
       });
-      setIsClosing(true);
-      setTimeout(() => {
-        setIsVisible(false);
-        setIsClosing(false);
-      }, 300);
+      setIsVisible(false);
     },
     [],
   );
@@ -314,7 +312,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
         previousFocusRef.current = null;
       }
     };
-  }, [isVisible, isMobile, dismiss]);
+  }, [isVisible, isMobile, dismiss, dialogRef]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -386,7 +384,7 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
     });
   }, [isVisible, isMobile, pushState, installState]);
 
-  if (!isVisible) return null;
+  if (!mounted) return null;
 
   /* ------------------------------------------------------------------ */
   /*  Mobile: nonmodal bottom toast (less intrusive, avoids Google      */
@@ -395,9 +393,10 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   if (isMobile) {
     return (
       <div
-        className={`fixed bottom-[var(--mobile-nav-clearance)] inset-x-0 z-modal p-4 ${
-          isClosing ? "animate-slide-down" : "animate-slide-up"
-        }`}
+        ref={dialogRef}
+        data-closed={closed ? "" : undefined}
+        inert={leaving}
+        className="fixed bottom-[var(--mobile-nav-clearance)] inset-x-0 z-modal p-4 transition-modal data-[closed]:opacity-0 data-[closed]:translate-y-full data-[closed]:duration-fast data-[closed]:pointer-events-none"
         role="complementary"
         aria-label={canInstall ? t("ariaInstall") : t("aria")}
       >
@@ -462,25 +461,23 @@ export default function SocialFollowPopup({ pathname }: { pathname: string }) {
   return (
     <div
       ref={dialogRef}
-      className={`fixed inset-0 z-modal flex-center p-4 ${
-        isClosing ? "animate-disappear" : "animate-appear"
-      }`}
+      data-closed={closed ? "" : undefined}
+      inert={leaving}
+      className="group fixed inset-0 z-modal flex-center p-4 data-[closed]:pointer-events-none"
       role="dialog"
       aria-modal="true"
       aria-label={canInstall ? t("ariaInstall") : t("aria")}
     >
-      {/* Backdrop */}
+      {/* Backdrop: fades while the panel grows from 95%, as in the shared Modal. */}
       <div
-        className="absolute inset-0 bg-foreground/50"
+        className="absolute inset-0 bg-foreground/50 transition-opacity duration-normal ease-out-strong group-data-[closed]:opacity-0 group-data-[closed]:duration-fast"
         onClick={() => dismiss()}
         aria-hidden="true"
       />
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-lg transition-transform duration-slower ${
-          isClosing ? "scale-95" : "scale-100"
-        }`}
+        className="relative w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col bg-background rounded-card border border-border shadow-lg transition-modal group-data-[closed]:opacity-0 group-data-[closed]:scale-95 group-data-[closed]:duration-fast"
       >
         {/* Gradient accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-primary via-primary to-primary/70" />

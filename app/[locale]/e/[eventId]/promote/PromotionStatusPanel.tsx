@@ -87,6 +87,13 @@ async function PromotionStatusPanel({
       : promotionEnded
         ? `promotion${status.promotionStatus}` as const
         : status.paymentStatus;
+  // Stripe sends the buyer to /success only after paying, so a pending order
+  // there is being confirmed: there is nothing to resume or replace.
+  const confirming = variant === "success" && status?.paymentStatus === "PENDING";
+  const resumeUrl =
+    variant === "cancel" && isStripeCheckoutUrl(status?.checkoutUrl)
+      ? status?.checkoutUrl
+      : null;
   const errorCopyKey = `errors.${errorCode}` as `errors.${PromotionCopyCode}`;
   const statusText = isActive
     ? t("status.ACTIVE", {
@@ -100,10 +107,9 @@ async function PromotionStatusPanel({
       })
     : !status && errorCode && t.has(errorCopyKey)
       ? t(errorCopyKey)
-      : t(`status.${statusKey as Exclude<typeof statusKey, "ACTIVE">}`);
-  const resumeUrl = isStripeCheckoutUrl(status?.checkoutUrl)
-    ? status?.checkoutUrl
-    : null;
+      : resumeUrl
+        ? t("cancelPage.pending")
+        : t(`status.${statusKey as Exclude<typeof statusKey, "ACTIVE">}`);
   const pagePath = `/e/${slug}/promote/${variant}`;
 
   return (
@@ -129,9 +135,9 @@ async function PromotionStatusPanel({
               {t("resumeCheckout")}
             </a>
           )}
-          {!isActive && status?.canPurchase && (
+          {!isActive && !confirming && status?.canPurchase && (
             <Link href={`/e/${slug}/promote`} className="btn-outline">
-              {t("tryAgain")}
+              {resumeUrl ? t("chooseAnotherOption") : t("tryAgain")}
             </Link>
           )}
           <Link href={`/e/${slug}`} className={isActive ? "btn-primary" : "btn-outline"}>

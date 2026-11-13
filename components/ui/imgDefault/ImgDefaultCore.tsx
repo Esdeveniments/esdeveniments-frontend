@@ -1,26 +1,18 @@
 import { ImgDefaultProps } from "types/common";
 
 /**
- * Single branded placeholder for events without images.
+ * Single placeholder for events without an image (or whose image failed):
+ * the brand mark, small and soft, on the muted surface (`.card-placeholder`
+ * in styles/globals.css, DESIGN.md › Shapes).
  *
- * Design rationale:
- * - One consistent look — no random-feeling colour variety
- * - Subtle brand-red tint (5-8 % opacity) reads as intentional
- * - Warm neutral base keeps cards visually light
- * - Matches competitors (Google, Apple, Eventbrite) who use a single
- *   neutral placeholder, not a rainbow palette
+ * - The same on every card: one look that means "no photo", like a default avatar.
+ * - Not a loading skeleton (that is a plain pulsing block) and not artwork that
+ *   claims something about the event (the old tickets drawing read as "paid").
  */
-const BRANDED_GRADIENT =
-  "linear-gradient(135deg, rgba(214,0,47,0.06) 0%, rgba(214,0,47,0.03) 50%, rgba(240,235,232,0.8) 100%)";
-
 const ImgDefaultCore: React.FC<ImgDefaultProps> = ({ title }) => {
   return (
     <div
-      className="w-full h-full bg-muted"
-      style={{
-        backgroundImage: BRANDED_GRADIENT,
-        minHeight: "100%",
-      }}
+      className="card-placeholder"
       role={title ? "img" : "presentation"}
       aria-label={title || undefined}
       aria-hidden={!title}

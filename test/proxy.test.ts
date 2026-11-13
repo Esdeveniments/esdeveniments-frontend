@@ -5,6 +5,7 @@ import { resolvePlaceForProxy } from "../lib/api/places-proxy";
 import { getCategoriesForProxy } from "../lib/api/categories-proxy";
 import { isProfileMissingForProxy } from "../lib/api/profiles-proxy";
 import { getExpiredFestaActTown } from "../lib/api/events-proxy";
+import { isEventReadFailing } from "../lib/api/event-outage";
 import { generateHmac } from "../utils/hmac";
 
 const originalEnv = { ...process.env };
@@ -85,6 +86,10 @@ vi.mock("../lib/api/profiles-proxy", () => ({
 vi.mock("../lib/api/events-proxy", () => ({
   getExpiredFestaActTown: vi.fn().mockResolvedValue(null),
 }));
+vi.mock("../lib/api/event-outage", () => ({
+  EVENT_OUTAGE_WINDOW_MS: 60_000,
+  isEventReadFailing: vi.fn(() => false),
+}));
 
 describe("proxy", () => {
   beforeEach(() => {
@@ -107,6 +112,13 @@ describe("proxy", () => {
     // Reset NextResponse.next, redirect, and rewrite mocks
     (NextResponse.next as any).mockReset();
     (NextResponse.redirect as any).mockReset();
+    (NextResponse.redirect as Mock).mockImplementation(
+      (_: unknown, status?: number) => ({
+        status: status || 307,
+        headers: new Headers(),
+        cookies: { set: vi.fn() },
+      }),
+    );
     (NextResponse.rewrite as any).mockReset();
     (resolvePlaceForProxy as Mock).mockReset();
     (isProfileMissingForProxy as Mock).mockReset().mockResolvedValue(false);
@@ -487,19 +499,24 @@ describe("proxy", () => {
       } as unknown as NextRequest;
     }
 
-    it("301s an alias to the real slug, keeping locale, segments and query", async () => {
+    it("301s an alias to the real slug, keeping locale, segments and query, with a bounded browser TTL", async () => {
       (resolvePlaceForProxy as Mock).mockResolvedValue({
         kind: "alias",
         slug: "la-garriga",
       });
 
-      await proxy(placeRequest("/es/lagarriga/avui", "GET", "?search=jazz"));
+      const response = await proxy(
+        placeRequest("/es/lagarriga/avui", "GET", "?search=jazz"),
+      );
 
       expect(resolvePlaceForProxy).toHaveBeenCalledWith("lagarriga");
       const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
       expect(status).toBe(301);
       expect(url.pathname).toBe("/es/la-garriga/avui");
       expect(url.search).toBe("?search=jazz");
+      expect(response?.headers.get("Cache-Control")).toBe(
+        "private, max-age=3600",
+      );
     });
 
     it("rewrites a missing place with a 404 status and keeps page headers", async () => {
@@ -674,6 +691,148 @@ describe("proxy", () => {
           expect(init.status).toBeUndefined();
         },
       );
+    });
+
+    describe("news and archive place aliases / 404s", () => {
+      it.each([
+        ["/noticies/la-garrotxa", "la-garrotxa", "garrotxa", "/noticies/garrotxa", "?page=2"],
+        ["/es/noticies/la-garrotxa/rss.xml", "la-garrotxa", "garrotxa", "/es/noticies/garrotxa/rss.xml", ""],
+        ["/noticies/hospitalet-de-llobregat/cap-de-setmana", "hospitalet-de-llobregat", "l-hospitalet-de-llobregat", "/noticies/l-hospitalet-de-llobregat/cap-de-setmana", ""],
+        ["/sitemap/l-alt-urgell", "l-alt-urgell", "alt-urgell", "/sitemap/alt-urgell", ""],
+        ["/sitemap/l-alt-urgell/2025", "l-alt-urgell", "alt-urgell", "/sitemap/alt-urgell", ""],
+        ["/en/sitemap/bordes-es/2025/agost", "bordes-es", "es-bordes", "/en/sitemap/es-bordes/2025/agost", ""],
+      ])("301s %s to %s", async (pathname, fromSlug, toSlug, target, search) => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({
+          kind: "alias",
+          slug: toSlug,
+        });
+
+        await proxy(placeRequest(pathname, "GET", search));
+
+        expect(resolvePlaceForProxy).toHaveBeenCalledWith(fromSlug);
+        const [url, status] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(status).toBe(301);
+        expect(url.pathname).toBe(target);
+        expect(url.search).toBe(search);
+      });
+
+      it("301s 3-segment /sitemap/<valid-town>/<year> directly to /sitemap/<town> and /sitemap/catalunya/<year> to /sitemap", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "exists" });
+
+        await proxy(placeRequest("/sitemap/barcelona/2025"));
+        const [townUrl, townStatus] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(townStatus).toBe(301);
+        expect(townUrl.pathname).toBe("/sitemap/barcelona");
+
+        (NextResponse.redirect as Mock).mockReset();
+        await proxy(placeRequest("/es/sitemap/catalunya/2025"));
+        const [catUrl, catStatus] = (NextResponse.redirect as Mock).mock.calls[0];
+        expect(catStatus).toBe(301);
+        expect(catUrl.pathname).toBe("/es/sitemap");
+      });
+
+      it("returns a direct 404 Response on /noticies/<missing>/rss.xml without rewriting to route.ts", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+
+        const result = await proxy(placeRequest("/noticies/no-such-place/rss.xml"));
+
+        expect(result.status).toBe(404);
+        expect(NextResponse.rewrite).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ["/noticies/no-such-place", "/ca/noticies/no-such-place"],
+        ["/sitemap/no-such-place", "/ca/sitemap/no-such-place"],
+        ["/sitemap/no-such-place/2025", "/ca/sitemap/no-such-place"],
+        ["/sitemap/no-such-place/2025/agost", "/ca/sitemap/no-such-place/2025/agost"],
+      ])("404s %s when the place is missing (rewriting to %s)", async (pathname, expectedRewrite) => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+        (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+        await proxy(placeRequest(pathname));
+
+        const [rewriteUrl, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(rewriteUrl.pathname).toBe(expectedRewrite);
+        expect(init.status).toBe(404);
+      });
+
+      it("lets 3-segment news article paths pass through on missing place so the page can redirect to the article's canonical place", async () => {
+        (resolvePlaceForProxy as Mock).mockResolvedValue({ kind: "missing" });
+        (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+        await proxy(placeRequest("/noticies/no-such-place/real-article-slug"));
+
+        const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+        expect(init.status).toBeUndefined();
+      });
+
+      it.each([
+        "/noticies/rss.xml",
+        "/noticies/catalunya",
+        "/noticies/catalunya/rss.xml",
+        "/sitemap",
+        "/sitemap/catalunya/2025/agost",
+      ])("skips place resolution for %s", async (pathname) => {
+        (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+
+        await proxy(placeRequest(pathname));
+
+        expect(resolvePlaceForProxy).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("event read outage", () => {
+    const slug = "concert-13-de-agost-del-2026-92d1olka3cpd3n80jabfkku9s0";
+    function eventRequest(pathname: string, method = "GET", headers = {}) {
+      return {
+        nextUrl: mockNextUrl({ pathname }),
+        headers: new Headers({ accept: "text/html", ...headers }),
+        method,
+      } as unknown as NextRequest;
+    }
+
+    beforeEach(() => {
+      (isEventReadFailing as Mock).mockReturnValue(true);
+      (NextResponse.rewrite as Mock).mockReturnValue({ headers: new Headers() });
+      (NextResponse.next as Mock).mockReturnValue({ headers: new Headers() });
+    });
+
+    afterEach(() => {
+      (isEventReadFailing as Mock).mockReturnValue(false);
+    });
+
+    it("503s event pages and keeps them out of the CDN", async () => {
+      const result = await proxy(eventRequest(`/e/${slug}`));
+
+      const [url, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(url.pathname).toBe(`/ca/e/${slug}`);
+      expect(init.status).toBe(503);
+      expect(result.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(result.headers.get("Retry-After")).toBe("60");
+      expect(result.headers.has("Cache-Tag")).toBe(false);
+    });
+
+    it.each([
+      ["a server action", `/e/${slug}`, "POST", {}],
+      ["a client navigation", `/e/${slug}`, "GET", { rsc: "1" }],
+      ["a page below the event", `/e/${slug}/edita`, "GET", {}],
+      ["a place page", "/barcelona", "GET", {}],
+    ])("leaves %s alone", async (_, pathname, method, headers) => {
+      const result = await proxy(eventRequest(pathname, method, headers));
+
+      const init = (NextResponse.rewrite as Mock).mock.calls[0]?.[1];
+      expect(init?.status).toBeUndefined();
+      expect(result.headers.has("Retry-After")).toBe(false);
+    });
+
+    it("serves event pages as usual when reads work", async () => {
+      (isEventReadFailing as Mock).mockReturnValue(false);
+
+      await proxy(eventRequest(`/e/${slug}`));
+
+      const [, init] = (NextResponse.rewrite as Mock).mock.calls[0];
+      expect(init.status).toBeUndefined();
     });
   });
 

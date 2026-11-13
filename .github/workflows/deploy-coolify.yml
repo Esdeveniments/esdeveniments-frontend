@@ -271,6 +271,23 @@ jobs:
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
 
+      # Next derives Server Action IDs from this key at build time. Without a
+      # fixed key every deploy changes them, and pages already open in a browser
+      # fail with "Failed to find Server Action" (promote checkout, publish,
+      # edit). An empty secret would still mount, so check it here.
+      - name: Verify Server Actions encryption key
+        env:
+          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+        run: |
+          set -o pipefail
+          if ! len=$(printf '%s' "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" | base64 -d 2>/dev/null | wc -c | tr -d '[:space:]'); then
+            len=invalid
+          fi
+          case "$len" in
+            16|24|32) echo "Server Actions encryption key is set ($len bytes)" ;;
+            *) echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY must be base64 of 16, 24 or 32 bytes (got: $len). Generate one with: openssl rand -base64 32"; exit 1 ;;
+          esac
+
       - name: Compute lowercase image name
         id: meta
         run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
@@ -279,7 +296,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4.7.0
+        uses: docker/login-action@v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -320,6 +337,7 @@ jobs:
             HMAC_SECRET=${{ secrets.HMAC_SECRET }}
             BACKEND_SERVICE_SECRET=${{ secrets.BACKEND_SERVICE_SECRET }}
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
           build-args: |
             BUILD_VERSION=${{ github.sha }}
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
@@ -787,19 +805,32 @@ jobs:
 
       # The festivity hubs read a year of events (~150 backend calls for
       # /festes-majors) into the in-memory "use cache" store, which each deploy
-      # empties: the first visitor, maybe Googlebot, would wait ~40 s. Request
-      # them once here instead. Never fails the deploy, and the step timeout
-      # keeps it inside the job's 25 min after a 15 min Coolify wait.
-      - name: Warm festivity hubs
+      # empties, and the purge above empties Cloudflare: the first request,
+      # maybe Googlebot, would wait 30–40 s. Request every sitemap in
+      # /sitemap.xml once instead: server-festa-major-sitemap.xml reads the
+      # calendar and every festivity in config/festivities.ts, the same cached
+      # reads the hub pages use. A sitemap that isn't 200 is a warning (Search
+      # Console logs it as an error). Never fails the deploy, and the step
+      # timeout keeps it inside the job's 25 min after a 15 min Coolify wait.
+      - name: Warm sitemaps and festivity hubs
         continue-on-error: true
         timeout-minutes: 4
         env:
           SITE_URL: ${{ env.DEPLOY_URL }}
         run: |
-          for path in /festes-majors /fires-de-nadal /pessebres-vivents /cavalcades-de-reis; do
-            curl -s -o /dev/null --max-time 120 \
-              -w "${path}: HTTP %{http_code} in %{time_total}s\n" \
-              "${SITE_URL}${path}" || echo "${path}: not warmed"
+          SITEMAPS=$(curl -s --max-time 30 "${SITE_URL}/sitemap.xml" \
+            | grep -o "<loc>${SITE_URL}/[^<]*</loc>" | sed -e 's/<loc>//' -e 's/<\/loc>//' || true)
+          if [ -z "$SITEMAPS" ]; then
+            echo "::warning::${SITE_URL}/sitemap.xml listed no sitemaps"
+          fi
+          for url in $SITEMAPS; do
+            code=$(curl -s -o /dev/null --max-time 90 \
+              -w "%{http_code} in %{time_total}s" "$url") || code="000"
+            echo "${url#"$SITE_URL"}: HTTP ${code}"
+            case "$code" in
+              200*) ;;
+              *) echo "::warning::${url#"$SITE_URL"} returned HTTP ${code%% *}; Search Console will report the sitemap as an error" ;;
+            esac
           done
 
       - name: Deployment summary

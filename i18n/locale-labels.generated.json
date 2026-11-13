@@ -1,12 +1,6 @@
 {
   "constants": {
     "ca": {
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      },
       "days": [
         "Diumenge",
         "Dilluns",
@@ -69,12 +63,6 @@
       ]
     },
     "es": {
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      },
       "days": [
         "Domingo",
         "Lunes",
@@ -137,12 +125,6 @@
       ]
     },
     "en": {
-      "newsHubs": {
-        "mataro": "Mataró",
-        "barcelona": "Barcelona",
-        "tarragona": "Tarragona",
-        "lleida": "Lleida"
-      },
       "days": [
         "Sunday",
         "Monday",
@@ -208,11 +190,9 @@
   "utils": {
     "EventCopy": {
       "sentence": {
-        "verbSingular": "se celebra",
-        "verbPlural": "se celebren",
         "dateRange": "del {start} al {end}",
         "dateSingle": "el {nameDay}, {start}",
-        "sentence": "{title} {verb} {date}{time}{place}.",
+        "sentence": "«{title}» se celebra {date}{time}{place}.",
         "timeSuffix": ", a les {time}",
         "timeSuffixRange": ", de {start} a {end}",
         "placeSuffix": ", {place}"
@@ -304,7 +284,9 @@
         "rosselló",
         "urgell",
         "alt urgell",
+        "pla",
         "pla d'urgell",
+        "pla de l'estany",
         "vallès",
         "vallès oriental",
         "vallès occidental",

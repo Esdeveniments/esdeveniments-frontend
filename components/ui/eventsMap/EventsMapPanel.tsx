@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import CompactCardClient from "@components/ui/common/cardContent/CompactCardClient";
+import { comparePlaceNames } from "@utils/string-helpers";
 import type { EventsMapPanelProps } from "types/props";
 import type { AppLocale } from "types/i18n";
 
@@ -48,7 +49,9 @@ export default function EventsMapPanel({
   const places = useMemo(
     () =>
       [...points].sort(
-        (a, b) => b.events.length - a.events.length || a.label.localeCompare(b.label, locale),
+        (a, b) =>
+          b.events.length - a.events.length ||
+          comparePlaceNames(a.label, b.label, locale),
       ),
     [points, locale],
   );
@@ -79,13 +82,12 @@ export default function EventsMapPanel({
           <p className="text-xs text-muted-foreground">{t("townNote")}</p>
         ) : null}
         {/* Mobile: one swipeable row. Desktop: wraps into the column. */}
-        <div
-          role="list"
+        <ul
           aria-labelledby={headingId}
           className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-1 lg:flex-wrap lg:overflow-visible"
         >
           {selected.events.map((event, index) => (
-            <div role="listitem" key={event.id} className="snap-start flex-none">
+            <li key={event.id} className="snap-start flex-none">
               <CompactCardClient
                 event={event}
                 locale={locale}
@@ -93,9 +95,9 @@ export default function EventsMapPanel({
                 index={index}
                 analyticsEventName="map_event_click"
               />
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
     );
   }

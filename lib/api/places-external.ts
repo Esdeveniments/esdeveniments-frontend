@@ -10,6 +10,7 @@ import { parsePlace, parsePlaces } from "lib/validation/place";
 
 const MAX_PLACE_SLUG_LENGTH = 80;
 const MIN_NON_HYPHENATED_SUSPICIOUS_LENGTH = 18;
+const NULL_PLACEHOLDER_TOKEN = /(?:^|-)null(?:$|-)/;
 
 export function isSuspiciousPlaceSlug(rawSlug: string): boolean {
   const slug = rawSlug.trim().toLowerCase();
@@ -26,8 +27,9 @@ export function isSuspiciousPlaceSlug(rawSlug: string): boolean {
   if (!slug.includes("-") && slug.length >= MIN_NON_HYPHENATED_SUSPICIOUS_LENGTH)
     return true;
 
-  // Obvious placeholder-ish values
-  if (slug.includes("undefined") || slug.includes("null")) return true;
+  // Obvious placeholder-ish values ("nulles" is a real town in Alt Camp)
+  if (slug.includes("undefined") || NULL_PLACEHOLDER_TOKEN.test(slug))
+    return true;
 
   return false;
 }

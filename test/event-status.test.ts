@@ -100,6 +100,17 @@ describe("computeTemporalStatus", () => {
     expect(status.state).toBe("past");
   });
 
+  it("timed event with no end time stays live until the end of a later end date", () => {
+    // An exhibition "from 19:00" running for weeks, as the backend sends it.
+    const status = compute("2025-09-20", "2025-10-15", baseNow, "19:00", null);
+    expect(status.state).toBe("live");
+  });
+
+  it("timed event with no end time is past once its later end date is over", () => {
+    const status = compute("2025-09-01", "2025-09-28", baseNow, "19:00", null);
+    expect(status.state).toBe("past");
+  });
+
   it("date-only start on same day (no times) is considered live", () => {
     // start as bare date (midnight UTC)
     const start = baseNow.toISOString().split("T")[0]; // '2025-09-29'
@@ -171,12 +182,12 @@ describe("computeTemporalStatus", () => {
   // Test for timed events with separate date and time strings (bug fix)
   it("timed event on same day with current time between startTime and endTime is live", () => {
     // Event: Nov 8, 2025, 10:00 - 14:00
-    // Current time: Nov 8, 2025, 12:00 (between start and end, using local time)
+    // Current time: Nov 8, 2025, 12:00 (between start and end, Madrid time)
     const eventDate = "2025-11-08";
     const startTime = "10:00";
     const endTime = "14:00";
-    // Use local time construction to match how buildDateTime works
-    const currentTime = new Date("2025-11-08T12:00");
+    // Times are Madrid wall-clock time (UTC+1 in November)
+    const currentTime = new Date("2025-11-08T12:00+01:00");
     const status = compute(
       eventDate,
       eventDate, // same day
@@ -191,19 +202,19 @@ describe("computeTemporalStatus", () => {
   it("treats identical start and end times as a single start time", () => {
     const eventDate = "2025-11-08";
     const time = "10:00";
-    const currentTime = new Date("2025-11-08T12:00");
+    const currentTime = new Date("2025-11-08T12:00+01:00");
     const status = compute(eventDate, eventDate, currentTime, time, time);
     expect(status.state).toBe("live");
   });
 
   it("timed event on same day with current time before startTime is upcoming", () => {
     // Event: Nov 8, 2025, 10:00 - 14:00
-    // Current time: Nov 8, 2025, 08:00 (before start, using local time to avoid timezone issues)
+    // Current time: Nov 8, 2025, 08:00 (before start, Madrid time)
     const eventDate = "2025-11-08";
     const startTime = "10:00";
     const endTime = "14:00";
-    // Use local time construction to match how buildDateTime works
-    const currentTime = new Date("2025-11-08T08:00");
+    // Times are Madrid wall-clock time (UTC+1 in November)
+    const currentTime = new Date("2025-11-08T08:00+01:00");
     const status = compute(
       eventDate,
       eventDate,
@@ -216,12 +227,12 @@ describe("computeTemporalStatus", () => {
 
   it("timed event on same day with current time after endTime is past", () => {
     // Event: Nov 8, 2025, 10:00 - 14:00
-    // Current time: Nov 8, 2025, 15:00 (after end, using local time)
+    // Current time: Nov 8, 2025, 15:00 (after end, Madrid time)
     const eventDate = "2025-11-08";
     const startTime = "10:00";
     const endTime = "14:00";
-    // Use local time construction to match how buildDateTime works
-    const currentTime = new Date("2025-11-08T15:00");
+    // Times are Madrid wall-clock time (UTC+1 in November)
+    const currentTime = new Date("2025-11-08T15:00+01:00");
     const status = compute(
       eventDate,
       eventDate,

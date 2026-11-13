@@ -1,6 +1,5 @@
 import { FC } from "react";
 import type { EventImageProps } from "types/event";
-import ImgDefaultServer from "@components/ui/imgDefault/ImgDefaultServer";
 import { getOptimalImageQuality, getResponsiveWidths } from "@utils/image-quality";
 import {
   buildResponsivePictureSourceUrls,
@@ -15,7 +14,7 @@ import EventHeroImageClient from "./EventHeroImageClient";
  * handling to a tiny client component (EventHeroImageClient).
  * This keeps the <picture> element in pure SSR HTML for faster LCP.
  */
-const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
+const EventImage: FC<EventImageProps> = ({ image, title }) => {
   const safeTitle = escapeXml(title || "");
 
   const imageQuality = getOptimalImageQuality({
@@ -35,18 +34,12 @@ const EventImage: FC<EventImageProps> = ({ image, title, eventId }) => {
 
   const anchorHref = normalizedImage || image || "";
 
-  if (!hasValidImage || !sources) {
-    return (
-      <div className="w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card">
-        <ImgDefaultServer title={title} />
-      </div>
-    );
-  }
+  // No usable image: no box at all (Eventbrite, RA), so the title moves up.
+  if (!hasValidImage || !sources) return null;
 
   return (
     <div
       className="relative w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden rounded-card bg-muted"
-      style={{ viewTransitionName: `event-image-${eventId}` }}
     >
       <a
         href={anchorHref}

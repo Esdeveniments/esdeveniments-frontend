@@ -31,6 +31,7 @@ import type { BreadcrumbItem } from "types/common";
 import type { AppLocale } from "types/i18n";
 import CardImagePreload from "@components/ui/common/image/CardImagePreload";
 import { TOWN_TEST_CONTENT_GROUP } from "@config/town-seo-test";
+import { DATE_COUNT_TEST_DATES } from "@config/date-count-test";
 import { connection } from "next/server";
 
 // Lazy load below-the-fold client component via client component wrapper
@@ -160,12 +161,17 @@ const buildFilterLabels = async () => {
       byDate: tFilters("date"),
       distance: tFilters("distance"),
       searchTerm: tFilters("search"),
+      price: tFilters("price"),
     },
     byDates: {
       avui: tByDates("today"),
       dema: tByDates("tomorrow"),
       setmana: tByDates("week"),
       "cap-de-setmana": tByDates("weekend"),
+    },
+    prices: {
+      gratis: tFiltersUi("priceFree"),
+      pagament: tFiltersUi("pricePaid"),
     },
   };
 };
@@ -227,8 +233,10 @@ export async function ClientLayerWithPlaceLabel({
         byDate: "date",
         distance: "distance",
         searchTerm: "search",
+        price: "price",
       },
       byDates: {},
+      prices: { gratis: "gratis", pagament: "pagament" },
     })));
   const { placeTypeLabel } = await shellDataPromise;
 
@@ -300,12 +308,23 @@ async function PlacePageContent({
       ? categories?.find((c) => c.slug === category)?.name || category
       : undefined;
 
-  const hasSpecificDate = !!date && date !== DEFAULT_FILTER_VALUE;
-  let dateLabel: string | undefined;
-  if (hasSpecificDate) {
-    const key = getDateLabelKey(date as string);
-    dateLabel = key ? tByDates(key) : (date as string);
-  }
+  const dateSlug = date && date !== DEFAULT_FILTER_VALUE ? date : undefined;
+  const hasSpecificDate = !!dateSlug;
+  const dateLabelKey = dateSlug ? getDateLabelKey(dateSlug) : undefined;
+  const dateLabel = dateSlug && dateLabelKey ? tByDates(dateLabelKey) : dateSlug;
+
+  // Count-line test (#748). Fallback lists report totalEvents 0, so they get none.
+  const countLine =
+    dateSlug &&
+    dateLabelKey &&
+    DATE_COUNT_TEST_DATES.has(dateSlug) &&
+    !hasSpecificCategory &&
+    totalEvents
+      ? (await getTranslations({ locale, namespace: "Components.DateCountLine" }))(
+        dateLabelKey,
+        { count: totalEvents }
+      )
+      : undefined;
 
   const breadcrumbItems = buildPlaceBreadcrumbs({
     homeLabel: tBreadcrumbs("home"),
@@ -360,6 +379,7 @@ async function PlacePageContent({
           ssrPageSize={ssrPageSize}
           categories={categories}
           promotedSlot={<PromotedEventsRow events={promotedEvents} placeSlug={place} />}
+          countLine={countLine}
         />
       </FilterLoadingGate>
 

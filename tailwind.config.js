@@ -5,6 +5,11 @@ const foregroundRgb = "69 69 69";
 module.exports = {
   content: ["./components/**/*.{js,ts,jsx,tsx}", "./app/**/*.{js,ts,jsx,tsx}"],
   safelist: [],
+  // `hover:` only on devices that hover (@media (hover: hover) and
+  // (pointer: fine)), so a tap on a phone never leaves a hover style behind.
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     container: {
       center: true,
@@ -179,6 +184,7 @@ module.exports = {
       transitionTimingFunction: {
         "bounce-subtle": "cubic-bezier(0.34, 1.56, 0.64, 1)",
         smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+        "out-strong": "cubic-bezier(0.23, 1, 0.32, 1)", // Entrances/exits (modals)
         "ease-out-back": "cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
 
@@ -186,22 +192,12 @@ module.exports = {
       animation: {
         "fast-pulse": "fast-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "fast-pulse1": "fast-pulse 300ms cubic-bezier(0.4, 0, 0.6, 1) 100ms",
-        appear: "appear 500ms",
-        disappear: "disappear 500ms",
         heartBeat: "heartBeat 300ms ease-out",
       },
       keyframes: {
         "fast-pulse": {
           "0%, 100%": { opacity: 1 },
           "50%": { opacity: 0 },
-        },
-        appear: {
-          "0%": { opacity: 0 },
-          "100%": { opacity: 1 },
-        },
-        disappear: {
-          "0%": { opacity: 1 },
-          "100%": { opacity: 0 },
         },
         heartBeat: {
           "0%": { transform: "scale(1)" },

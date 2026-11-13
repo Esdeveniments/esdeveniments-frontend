@@ -38,8 +38,11 @@ export function prepareCardContentData({
     regionName: event.region?.name,
     location: event.location,
   });
+  // Compact cards are too narrow for the region: it only got cut off.
   const primaryLocation = truncateString(
-    secondaryLabel ? `${primaryLabel}, ${secondaryLabel}` : primaryLabel,
+    secondaryLabel && variant !== "compact"
+      ? `${primaryLabel}, ${secondaryLabel}`
+      : primaryLabel,
     80,
   );
 

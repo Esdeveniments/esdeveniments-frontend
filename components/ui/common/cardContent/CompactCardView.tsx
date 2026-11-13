@@ -31,7 +31,7 @@ export default function CompactCardView({
   });
 
   return (
-    <article className="card-event relative flex-none w-44 min-w-[11rem] rounded-card overflow-hidden bg-background border border-border/20 transition-[transform,border-color] duration-normal ease-smooth flex flex-col">
+    <article className="card-event relative flex-none w-44 rounded-card overflow-hidden bg-background border border-border/20 transition-[transform,border-color] duration-normal ease-smooth flex flex-col">
       <div className="aspect-[4/3] overflow-hidden bg-muted">
         {/* Decorative: the title link already names the card. */}
         <Image
@@ -47,9 +47,10 @@ export default function CompactCardView({
           cacheKey={event.hash || event.updatedAt}
         />
       </div>
-      {/* Title first in the DOM (read first); `order-*` keeps the date above it. */}
-      <div className="px-2.5 pt-2 pb-2.5 flex flex-col">
-        <h3 className="order-2 text-sm font-medium leading-normal line-clamp-2 text-foreground-strong mb-1">
+      {/* Title first in the DOM (read first); `order-*` keeps the date above it.
+          Type and padding match CardLayout's compact card. */}
+      <div className="px-3.5 pt-2.5 pb-3.5 flex flex-col">
+        <h3 className="order-2 text-sm font-semibold leading-normal line-clamp-2 text-foreground-strong mb-1">
           <LinkComponent
             href={`/e/${event.slug}`}
             className="card-event-link"
@@ -62,7 +63,8 @@ export default function CompactCardView({
             {title}
           </LinkComponent>
         </h3>
-        <p className="order-1 text-xs text-muted-foreground mb-0.5 truncate">
+        {/* Wraps instead of truncating: a date range would hide the time. */}
+        <p className="order-1 text-xs text-muted-foreground mb-0.5 line-clamp-2">
           {dateTime ? <time dateTime={dateTime}>{cardDate}</time> : cardDate}
           {timeDisplay && <> · {timeDisplay}</>}
         </p>

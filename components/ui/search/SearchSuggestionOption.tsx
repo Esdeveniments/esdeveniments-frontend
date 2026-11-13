@@ -1,35 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { MagnifyingGlassIcon, MapPinIcon } from "@heroicons/react/24/outline";
-import AvatarInitials from "@components/ui/common/AvatarInitials";
+import ProfileAvatar from "@components/ui/profile/ProfileAvatar";
 import VerifiedBadge from "@components/ui/profile/VerifiedBadge";
-import { buildOptimizedImageUrl } from "@utils/image-cache";
-import type { SearchSuggestionAvatarProps, SearchSuggestionOptionProps } from "types/search";
+import type { SearchSuggestionOptionProps } from "types/search";
 
-const AVATAR_PX = 32;
 const ICON_CLASS = "w-5 h-5 shrink-0 text-muted-foreground";
-
-function Avatar({ profile, name }: SearchSuggestionAvatarProps) {
-  const [failed, setFailed] = useState(false);
-  if (profile.avatarUrl && !failed) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- already resized by /api/image-proxy
-      <img
-        src={buildOptimizedImageUrl(profile.avatarUrl, null, { width: AVATAR_PX * 2, quality: 50 })}
-        alt=""
-        width={AVATAR_PX}
-        height={AVATAR_PX}
-        loading="lazy"
-        decoding="async"
-        onError={() => setFailed(true)}
-        className="w-8 h-8 shrink-0 rounded-full object-cover bg-background border border-border"
-      />
-    );
-  }
-  return <AvatarInitials name={name} className="w-8 h-8 text-sm" decorative />;
-}
 
 /** One `role="option"` row of the search suggestions listbox. */
 export default function SearchSuggestionOption({
@@ -59,7 +36,7 @@ export default function SearchSuggestionOption({
     const { profile } = suggestion;
     content = (
       <>
-        <Avatar profile={profile} name={profile.displayName || profile.username} />
+        <ProfileAvatar avatarUrl={profile.avatarUrl} name={profile.displayName || profile.username} size="sm" />
         <span className="min-w-0 flex flex-col">
           <span className="flex items-center gap-1">
             <span className="truncate text-foreground-strong">

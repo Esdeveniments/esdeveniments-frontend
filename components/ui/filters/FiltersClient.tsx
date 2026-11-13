@@ -4,9 +4,10 @@ import { JSX } from "react";
 import { useTranslations } from "next-intl";
 import { AdjustmentsVerticalIcon as AdjustmentsIcon } from "@heroicons/react/24/outline";
 import { FilterOperations } from "@utils/filter-operations";
-import type { FilterDisplayState } from "types/filters";
+import type { FilterDisplayState, FilterKey } from "types/filters";
 import FilterButton from "./FilterButton";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
+import { isPriceFilterValue } from "@utils/url-filters";
 import type { FiltersClientProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
 import { getCategoryLabel } from "@utils/category-helpers";
@@ -73,7 +74,7 @@ const FiltersClient = ({
 
   const { displayNameMap, triggerLabel } = labels;
 
-  const handleOpenModal = () => {
+  const handleOpenModal = (section?: FilterKey) => {
     sendGoogleEvent("filters_open", {
       context: "filters_bar",
       place: filters.place,
@@ -84,7 +85,7 @@ const FiltersClient = ({
       geo_present: Boolean(filters.lat && filters.lon),
       has_active_filters: FilterOperations.hasActiveFilters(displayState),
     });
-    onOpenModal();
+    onOpenModal(section);
   };
 
   const sortedConfigurations = visibleConfigurations
@@ -111,7 +112,7 @@ const FiltersClient = ({
       <div className="w-full h-10 flex justify-start items-center cursor-pointer">
         <button
           type="button"
-          onClick={handleOpenModal}
+          onClick={() => handleOpenModal()}
           aria-label={triggerLabel || undefined}
           className="mr-element-gap flex justify-center items-center gap-element-gap cursor-pointer rounded-badge focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           data-testid="filters-open"
@@ -146,8 +147,8 @@ const FiltersClient = ({
                 ? translatedByDate(displayState.filters.byDate)
                 : config.key === "category" && displayText
                   ? translatedCategory(displayState.filters.category)
-                  : config.key === "price" && displayText
-                    ? labels.prices?.[displayText] || displayText
+                  : config.key === "price" && isPriceFilterValue(displayText)
+                    ? labels.prices[displayText]
                     : displayText;
             return (
               <FilterButton

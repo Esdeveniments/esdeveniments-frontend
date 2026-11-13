@@ -9,7 +9,12 @@ import "server-only";
  * this module.
  */
 import { execute } from "./turso";
-import { SPONSORS_SCHEMA, SPONSORS_INDEXES } from "./sponsors-schema";
+import {
+  SPONSORS_SCHEMA,
+  SPONSORS_INDEXES,
+  SPONSORS_MIGRATIONS,
+  isDuplicateColumnError,
+} from "./sponsors-schema";
 
 let schemaInitialized = false;
 let schemaPromise: Promise<void> | null = null;
@@ -27,6 +32,11 @@ export async function ensureSchema(): Promise<void> {
     schemaPromise = (async () => {
       try {
         await execute(SPONSORS_SCHEMA);
+        for (const migration of SPONSORS_MIGRATIONS) {
+          await execute(migration).catch((error: unknown) => {
+            if (!isDuplicateColumnError(error)) throw error;
+          });
+        }
         for (const idx of SPONSORS_INDEXES) {
           await execute(idx);
         }

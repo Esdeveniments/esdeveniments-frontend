@@ -1009,6 +1009,10 @@ describe("url-filters: hasActiveClientFilters", () => {
     expect(hasActiveClientFilters({ price: "gratis" })).toBe(true);
   });
 
+  it.each(["tots", "junk"])("returns false for price %j", (price) => {
+    expect(hasActiveClientFilters({ price })).toBe(false);
+  });
+
   it("returns true when calendar from is set", () => {
     expect(hasActiveClientFilters({ from: "2026-03-13" })).toBe(true);
   });

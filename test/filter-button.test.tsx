@@ -41,7 +41,7 @@ describe("FilterButton (black-box)", () => {
     expect(screen.queryByTestId("filter-pill-category-remove")).toBeNull();
   });
 
-  it("calls onOpenModal when text is clicked", () => {
+  it("opens the modal on its own filter when text is clicked", () => {
     const onOpenModal = vi.fn();
     renderWithProviders(
       <FilterButton
@@ -55,6 +55,7 @@ describe("FilterButton (black-box)", () => {
     );
     fireEvent.click(screen.getByText("Categoria"));
     expect(onOpenModal).toHaveBeenCalledTimes(1);
+    expect(onOpenModal).toHaveBeenCalledWith("category");
   });
 
   it("scrolls both <body> and the window to top when removing", () => {

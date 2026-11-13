@@ -262,6 +262,13 @@ describe("buildOptimizedImageUrl", () => {
     );
   });
 
+  it("proxies absolute URLs with an uppercase scheme", () => {
+    // A direct cross-origin URL would taint the share kit's poster canvas.
+    expect(buildOptimizedImageUrl("HTTPS://example.com/img.jpg")).toMatch(
+      /^\/api\/image-proxy\?url=/
+    );
+  });
+
   it("proxies known-bad TLS hostname even when HTTPS (allows HTTP fallback)", () => {
     const result = buildOptimizedImageUrl(
       "https://www.bot.altanet.org/sites/bot/files/recursos/document_0.jpg",

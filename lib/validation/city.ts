@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CitySummaryResponseDTO } from "types/api/city";
-import { CitySummaryResponseDTOSchema } from "./event";
+import type { PagedResponseDTO } from "types/api/event";
+import { CitySummaryResponseDTOSchema, PagedResponseMetaSchema } from "./event";
 
 export const CitySummaryArraySchema = z.array(CitySummaryResponseDTOSchema);
 
@@ -22,3 +23,17 @@ export function parseCity(input: unknown): CitySummaryResponseDTO | null {
   return result.data;
 }
 
+const PagedCitiesSchema = PagedResponseMetaSchema.extend({
+  content: z.array(CitySummaryResponseDTOSchema),
+});
+
+export function parsePagedCities(
+  input: unknown
+): PagedResponseDTO<CitySummaryResponseDTO> | null {
+  const result = PagedCitiesSchema.safeParse(input);
+  if (!result.success) {
+    console.error("parsePagedCities: invalid paged cities payload", result.error);
+    return null;
+  }
+  return result.data;
+}

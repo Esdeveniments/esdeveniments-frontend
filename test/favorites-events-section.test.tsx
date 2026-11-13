@@ -10,14 +10,8 @@ vi.mock("@lib/api/favorites-external", () => ({
   listFavoriteEventsByPeriodExternal: vi.fn(),
 }));
 
-vi.mock("@components/ui/card/CardServer", () => ({
-  default: function CardServerMock() {
-    return null;
-  },
-}));
-
-vi.mock("@components/ui/list", () => ({
-  default: function ListMock(_props: { children?: unknown }) {
+vi.mock("@components/ui/card/EventCardList", () => ({
+  default: function EventCardListMock() {
     return null;
   },
 }));

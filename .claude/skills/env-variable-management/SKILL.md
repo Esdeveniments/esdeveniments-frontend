@@ -16,7 +16,7 @@ Coolify does **not** build. `deploy-coolify.yml` builds a Docker image in GitHub
 | Kind | Read when | Comes from |
 | --- | --- | --- |
 | `NEXT_PUBLIC_*` | Build time (inlined in the client bundle) | GitHub secret → workflow `build-args:` → Dockerfile `ARG` + `ENV` in the builder stage |
-| Build-time private secret (`HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `SENTRY_AUTH_TOKEN`) | Build time (prerender, source maps) | GitHub secret → workflow `secrets:` → Dockerfile `RUN --mount=type=secret,...` |
+| Build-time private secret (`HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `SENTRY_AUTH_TOKEN`, `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`) | Build time (prerender, source maps, Server Action IDs) | GitHub secret → workflow `secrets:` → Dockerfile `RUN --mount=type=secret,...` |
 | Server-only runtime value (`LOGTO_*`, `STRIPE_*`, `REDIS_URL`, `TURSO_*`, `API_URL`, `SENTRY_DSN`, `REVALIDATE_SECRET`, …) | Runtime, by the Node server | Coolify → Application → Environment |
 | Workflow-only (`COOLIFY_TOKEN`, `COOLIFY_WEBHOOK_URL`) | During the workflow | GitHub secret → step `env:` |
 
@@ -26,7 +26,9 @@ Coolify does **not** build. `deploy-coolify.yml` builds a Docker image in GitHub
 
 `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` are both too: the post-deploy purge in `deploy-coolify.yml` uses the GitHub secrets, and the app reads them at runtime (Coolify) to purge Cache-Tags on publish, edit and delete (`lib/cdn/cloudflare-purge.ts`). The token needs the zone's Cache Purge permission. Without them the purge is skipped and pages stay stale until `s-maxage` expires; `/api/health` (authenticated) reports `cloudflarePurgeConfigured`.
 
-`HMAC_SECRET` and `BACKEND_SERVICE_SECRET` are also needed at runtime, so set them in Coolify too. `SENTRY_AUTH_TOKEN` is build-only (read in `next.config.js`); keep it out of Coolify. The `e2e-tests` job's "Build Next.js application" step in `deploy-coolify.yml` gets `HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `NEXT_PUBLIC_API_URL` and `SENTRY_AUTH_TOKEN` as step `env:`; add a new build-time value there as well if the CI build needs it.
+`HMAC_SECRET` and `BACKEND_SERVICE_SECRET` are also needed at runtime, so set them in Coolify too. `SENTRY_AUTH_TOKEN` is build-only (read in `next.config.js`); keep it out of Coolify.
+
+`NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` is build-only and required: Next salts every Server Action ID with it, so a fixed key keeps the actions of pages already open in a browser working across deploys (without it, each deploy makes them fail with "Failed to find Server Action"). Use a separate value per Environment (`openssl rand -base64 32`); the "Verify Server Actions encryption key" step fails the deploy when it is missing or invalid. Don't set it in Coolify: at runtime it would replace the build key for encrypting values that inline `"use server"` closures capture. Rotating it breaks open pages once, like a deploy did before. Next embeds the key in the build output, so it sits in the image and in the GitHub Actions build cache, which fork PRs on this public repo can read: treat it as low-value. Never capture secrets in inline `"use server"` closures (the repo has none), and rotate the key if it leaks. The `e2e-tests` job's "Build Next.js application" step in `deploy-coolify.yml` gets `HMAC_SECRET`, `BACKEND_SERVICE_SECRET`, `NEXT_PUBLIC_API_URL` and `SENTRY_AUTH_TOKEN` as step `env:`; add a new build-time value there as well if the CI build needs it.
 
 GitHub secrets resolve per Environment (`production` on `main`, `staging` otherwise) and fall back to repo-level values. The workflow blanks `NEXT_PUBLIC_GOOGLE_ANALYTICS`/`_ADS` on non-`main` builds so prod IDs never land in staging.
 

@@ -37,6 +37,10 @@ const CategoryFormItemSchema = z.union([
   z.number(),
 ]);
 
+// Form choice for the optional price, in display order.
+export const EVENT_PRICE_TYPES = ["free", "paid", "unknown"] as const;
+export type EventPriceType = (typeof EVENT_PRICE_TYPES)[number];
+
 export type EventFormZodLabels = {
   titleRequired: string;
   descriptionRequired: string;
@@ -78,6 +82,9 @@ export const createEventFormSchema = (
     categories: z.array(CategoryFormItemSchema),
     email: z.string().email(labels.invalidEmail).or(z.literal("")).optional(),
     isAllDay: z.boolean().optional(),
+    priceType: z.enum(EVENT_PRICE_TYPES).optional(),
+    priceAmount: z.string().optional(),
+    originalPrice: z.string().nullable().optional(),
   });
 
 // --- Zod schema for canonical event form data ---
@@ -128,7 +135,14 @@ export interface FormData {
   email?: string; // UI only
   // Flag to mark single-day/all-day events (end time auto-handled)
   isAllDay?: boolean;
+  priceType?: EventPriceType; // missing = "unknown"
+  priceAmount?: string; // user input for "paid", e.g. "10" or "12,50"
+  // Stored price the form can't show as free or one amount (scraper text such
+  // as "10 € taquilla · 5 € online"). Sent back unchanged while the price stays "unknown".
+  originalPrice?: string | null;
 }
+
+export type EventPriceFormFields = Pick<FormData, "priceType" | "priceAmount" | "originalPrice">;
 
 /**
  * Canonical FormData for event creation/edit forms.
@@ -153,6 +167,7 @@ export interface FetchEventsParams {
   to?: string; // End date
   isToday?: boolean;
   profileSlug?: string; // Filter events by profile/venue slug
+  free?: boolean; // Backend free/paid filter: true = free or unknown price, false = paid
   // Note: API expects 'term' for search queries
 }
 
@@ -223,6 +238,14 @@ export function distanceToRadius(
 
 export interface EventHeaderProps {
   title: string;
+  temporalStatus: import("./event-status").EventTemporalStatus;
+  visits: number;
+  interestedLabel: string;
+  owner?: import("./api/user").OwnerSummaryDTO | null;
+  /** Share and favourite icon buttons, placed on the byline (or state) row. */
+  actions: import("react").ReactNode;
+  /** Hub and next-edition links under the byline. */
+  children?: import("react").ReactNode;
 }
 
 export interface EventMediaProps {
@@ -230,22 +253,28 @@ export interface EventMediaProps {
   title: string;
 }
 
-export interface EventShareBarProps {
+// Everything the organiser share kit needs, built on the server.
+export interface ShareKitEvent {
   slug: string;
   title: string;
-  description: string;
-  eventDateString: string;
-  location: string;
-  cityName: string;
-  regionName: string;
-  postalCode: string;
+  /** Absolute, localized event URL without query params. */
+  url: string;
+  dateText: string;
+  placeText: string;
+  imageUrl: string | null;
 }
 
-// Client-side props for EventShareBar include an optional server hint for
-// initial mobile rendering to avoid hydration layout shifts.
-export interface EventShareBarClientProps extends EventShareBarProps {
-  initialIsMobile?: boolean;
-}
+/** Where the share kit was opened; sent as utm_campaign and GA `source`. */
+export type ShareKitSource = "post_publish" | "owner_actions";
+
+/** Share channel; sent as utm_source and GA `method`. */
+export type ShareKitChannel =
+  | "whatsapp"
+  | "facebook"
+  | "copy"
+  | "native"
+  | "image_share"
+  | "image_download";
 
 export interface EventDescriptionProps {
   slug: string;
@@ -259,9 +288,13 @@ export interface EventTagsProps {
   tags: string[];
 }
 
-export interface EventCalendarProps {
+export interface EventFactsProps {
   event: EventDetailResponseDTO;
-  compact?: boolean;
+  /** Venue and town row; the desktop header shows it, the sidebar card doesn't. */
+  placeText?: string;
+  /** Header use: on desktop only the place row shows (date and price are in the sidebar card). */
+  placeOnlyOnDesktop?: boolean;
+  className?: string;
 }
 
 export type HideNotification = (hide: boolean) => void;
@@ -287,6 +320,8 @@ export interface EventMapsProps {
   location: string;
   cityName: string;
   regionName: string;
+  /** Exact venue point; wins over the text query. */
+  coords?: { lat: number; lon: number } | null;
 }
 
 export interface EventWeatherProps {
@@ -300,7 +335,6 @@ export interface EventWeatherProps {
 export interface EventImageProps {
   image: string | undefined;
   title: string;
-  eventId: string;
 }
 
 export interface EventLocationProps {
@@ -310,6 +344,9 @@ export interface EventLocationProps {
   citySlug?: string;
   regionSlug?: string;
   profile?: import("types/api/profile").ProfileSummaryResponseDTO;
+  /** Exact venue (backend `locationPrecision: "VENUE"`), used for directions. */
+  venueCoords?: { lat: number; lon: number } | null;
+  /** Sidebar version: smaller heading. */
   compact?: boolean;
 }
 

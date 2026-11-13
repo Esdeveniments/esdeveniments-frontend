@@ -161,6 +161,7 @@ motion:
   duration-slow:    "300ms"
   duration-slower:  "500ms"
   easing-smooth:    "cubic-bezier(0.4, 0, 0.2, 1)"
+  easing-out-strong: "cubic-bezier(0.23, 1, 0.32, 1)"
   easing-bounce:    "cubic-bezier(0.34, 1.56, 0.64, 1)"
 
 breakpoints:
@@ -710,7 +711,9 @@ critical actions, a 2-offset solid ring. Errors swap red for the
 The hero photograph carries the highest depth in the system: a `60%` black
 overlay sits between the image and the type. Below that, glassmorphic chips
 add a second layer of depth via `backdrop-filter: blur(8px)` over the
-photograph itself. Outside the hero, blur is never used.
+photograph itself. The other use is the backdrop behind an event cover (a
+blurred copy of the same image fills the box around an `object-contain`
+poster; see Page composition). Outside photographs, blur is never used.
 
 ## Shapes
 
@@ -728,7 +731,12 @@ date-picker's range-middle days (intentional — it stitches the range
 visually).
 
 The card image area is a strict **3:2 ratio** with a `surface-muted`
-placeholder for slow networks. The hero image is full-bleed, anchored to
+placeholder for slow networks. A card whose event has no image (or whose
+image fails) keeps the same box: the brand mark (the red shape of the logo)
+centered on `surface-muted`, at most 40px wide and in primary at 22%
+(`.card-placeholder`). It is the same on every card, so it reads as "no
+photo", not as loading (the skeleton is a plain pulsing block) and not as
+artwork that says something about the event. The hero image is full-bleed, anchored to
 `object-position: center 60%` to keep faces in frame on portrait crops.
 
 ## Components
@@ -826,11 +834,100 @@ specific link signature.
 **Navigation progress bar**: a 3px primary-red bar at the top of the page
 during client-side route changes, replacing the spinner pattern.
 
-**Motion**: the default easing is `cubic-bezier(0.4, 0, 0.2, 1)`. A
-`bounce-subtle` easing exists but is reserved for confirmations —
-favoriting an event, copying a share link. View Transitions fade the page
-root: 90ms ease-in out, 210ms ease-out in (delayed 90ms). Every transition
-collapses to 0ms under `prefers-reduced-motion: reduce`.
+**Motion**: the default easing is `cubic-bezier(0.4, 0, 0.2, 1)`. Things
+that enter or leave (the shared `Modal`) use `out-strong`,
+`cubic-bezier(0.23, 1, 0.32, 1)`: 200ms in, 100ms out, backdrop fading with
+the panel, a 16px rise on mobile and a 95% scale from `sm` up. Opening a
+modal on a section (a filter chip) jumps there instantly; don't animate the
+scroll. Everything else that both enters and leaves moves the same way,
+`.transition-modal` on a `data-closed` state (`usePresenceTransition`; the
+native map `<dialog>` does the same by hand): the bottom toasts rise from and sink to the
+bottom edge, the follow popup and the map behave like the `Modal` (the map
+zooms from 98%, being full screen). Transitions, not keyframes, because a
+close that starts mid-open must reverse from where it is. Menus that unmount
+at once on close (share, add to calendar, language) only animate in:
+`animate-appear`, from 96% at the corner that touches their button.
+"Load more" cards rise 8px into place, 40ms apart per column; filtered
+results and server-rendered cards never animate. A `bounce-subtle` easing
+exists but is reserved for confirmations — favoriting an event (the heart
+beats only after a tap, never when the page loads), copying a share link.
+Hover styles apply only on devices that hover (`future.hoverOnlyWhenSupported`
+in `tailwind.config.js`), so a tap never leaves one behind. There are no page
+transitions: `<ViewTransition>` can't pair a card with its event page here
+(LESSONS.md). Every transition collapses to 0ms under
+`prefers-reduced-motion: reduce`; JS scrolls use `smoothScrollBehavior()`
+(`utils/browser.ts`), and motion that rule can't reach (delays,
+`::details-content`) sits inside `prefers-reduced-motion: no-preference`.
+
+## Page composition
+
+How to arrange a page, learned from the event page audit (Nov 2026,
+compared live with Eventbrite, Meetup, Luma, Fever and Resident Advisor).
+Before inventing a pattern, check what three or more of those sites agree on
+and copy that, adapted to these tokens.
+
+- **Group by job, then space by group.** The top of a detail page has three
+  groups: *who* (state, title, organizer), *facts* (date, place, price) and
+  *act* (the main action). Rows inside a group sit close
+  (`gap-element-gap-sm`); groups are separated by a larger gap
+  (`gap-element-gap` or more). Equal spacing everywhere reads as one dense block.
+- **One style per kind of information.** Facts are identical icon rows
+  (16 px outline icon, `body-normal`, a muted sub-line when needed). Don't
+  mix bold, grey, link-red and badge styles for siblings.
+- **One main action per view.** Exactly one filled `btn-primary`; the rest are
+  outline buttons or icons. The main action is a button, never a red text
+  link in a header. Personal actions (share, save) are 44 px icon buttons with
+  an `aria-label`, next to the thing they act on.
+- **One home per action, one name per action.** Each action appears once per
+  viewport (the same link is not "Més informació", "Visita el web" and "Més
+  info"). A repeated element must do a different job: the byline says *who*;
+  the organizer card says *more about them*.
+- **Mobile action bar.** On mobile the main action lives in a fixed bottom bar
+  that is visible from the first screen: short date and price on the left, one
+  filled button on the right. Render it on the server, and give the page
+  bottom padding as tall as the bar so it never covers the last content.
+- **Leave out what's missing.** No placeholders: no empty grey image box, no
+  "Preu: —", no empty headings. A missing image means no image block (the
+  title moves up); a placeholder image never goes into JSON-LD.
+- **Show user images whole.** Covers come in every shape (half are portrait
+  posters). Keep a fixed box and show the image with `object-contain` over a
+  blurred copy of the same file, so nothing is cropped, the box never
+  changes size and the file downloads once.
+- **Reserve, then fill.** Space for late content (ads) is reserved from the
+  first paint and, when nothing arrives, filled with our own card. Never
+  collapse it while the visitor reads.
+- **Same level, same style.** Section headings use one style per level in the
+  main column and the sidebar alike: sentence case, no trailing colon, no
+  UPPERCASE labels as headings. Breadcrumbs end at the parent page, not the
+  current title. Section headings are plain text: no icon (an icon on every
+  heading is noise, and a wrong one, like a share icon over related events,
+  misleads).
+- **One left edge.** Title, headings, text, cards and buttons in a column
+  start at the same x. Pad the column once (`px-section-x`) and add no side
+  padding inside sections; a horizontal card row bleeds into that padding
+  (`-mx-section-x`) so its first card still lines up.
+- **Red is for the main action.** Secondary buttons (sign in to load,
+  publish, map, calendar next to the main action) are `btn-neutral`, and
+  the "read more" toggle and small text links use
+  `text-foreground-strong`, not red.
+- **Render once.** Don't render a block twice and hide one copy per
+  breakpoint: it duplicates headings and ids, and scripts that look up the
+  first copy (translation, scroll targets) act on the hidden one. Use one copy
+  and move it with layout classes; only a separate sidebar may repeat facts.
+  The same goes for items: an event in the promoted row is left out of the
+  related row below it (paid placement wins).
+- **One card per job, whole facts.** Every event row (home rows, promoted
+  rows, the event page's related row, the town guide) uses the same card (`EventsAroundServer` → `CardContentServer compact`); the small
+  `CompactCardView` is only for the map panel. On a card the date and time
+  wrap to two lines instead of being cut, and the location starts with the
+  town, so only the region can be cut. A card with no image shows
+  the brand placeholder (`ImgDefaultCore`, the soft brand mark), never a blank box
+  that reads as a failed load. It is one placeholder for every card: no
+  per-category icons or dates, which would make cards differ and repeat the
+  pill and date below.
+- **No layout shift by design.** Decide on the server what renders. Anything
+  that appears after load either sits in a fixed overlay or replaces a
+  reserved box of the same size. Heights may change only after a tap.
 
 ## Do's and Don'ts
 

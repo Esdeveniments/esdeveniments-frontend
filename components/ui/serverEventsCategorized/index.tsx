@@ -22,7 +22,7 @@ import type {
   ServerEventsCategorizedProps,
 } from "types/props";
 import { formatCatalanDe } from "@utils/helpers";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { LocalizedPressableAnchor } from "@components/ui/primitives/PressableAnchor";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import {
   PRIORITY_CATEGORY_SLUGS,
@@ -211,7 +211,8 @@ async function ServerEventsCategorized({
               />
               <div className="flex flex-wrap gap-2">
                 {section.links.map((link) => (
-                  <PressableAnchor
+                  <LocalizedPressableAnchor
+                    locale={locale}
                     key={`${section.id}-${link.href}`}
                     href={withLocale(link.href)}
                     prefetch={false}
@@ -224,7 +225,7 @@ async function ServerEventsCategorized({
                     data-analytics-category-slug={link.categorySlug}
                   >
                     {link.shortLabel ?? link.label}
-                  </PressableAnchor>
+                  </LocalizedPressableAnchor>
                 ))}
               </div>
             </div>
@@ -245,25 +246,26 @@ async function ServerEventsCategorized({
         />
         <div className="grid grid-cols-2 gap-element-gap sm:flex sm:flex-row sm:flex-nowrap sm:gap-4 sm:overflow-x-auto sm:py-2 sm:px-2 sm:-mx-2">
           {quickCategoryLinks.map(({ label, url, categorySlug, Icon }) => (
-            <PressableAnchor
+            <LocalizedPressableAnchor
+              locale={locale}
               key={url}
               href={url}
               prefetch={false}
               variant="plain"
-              className="btn-category h-full w-full text-xs sm:w-auto whitespace-nowrap"
+              className="btn-category h-full w-full text-xs sm:w-auto sm:whitespace-nowrap"
               data-analytics-event-name="select_category"
               data-analytics-context="home_quick_categories"
               data-analytics-place-slug="catalunya"
               data-analytics-category-slug={categorySlug}
             >
-              <span className="flex items-center gap-2 whitespace-nowrap">
+              <span className="flex items-center gap-2 sm:whitespace-nowrap">
                 <Icon
                   className="w-5 h-5 text-primary flex-shrink-0"
                   aria-hidden="true"
                 />
                 <span>{label}</span>
               </span>
-            </PressableAnchor>
+            </LocalizedPressableAnchor>
           ))}
         </div>
       </section>
@@ -510,7 +512,6 @@ export async function ServerEventsCategorizedContent({
             />
             <EventsAroundServer
               events={popularEvents}
-              layout="horizontal"
               usePriority={false}
               showJsonLd
               title={tCta("popularTitle")}
@@ -580,7 +581,8 @@ export async function ServerEventsCategorizedContent({
             />
             <div className="flex flex-wrap gap-2">
               {localAgendasSection.links.map((link) => (
-                <PressableAnchor
+                <LocalizedPressableAnchor
+                  locale={locale}
                   key={`local-agendas-${link.href}`}
                   href={withLocale(link.href)}
                   prefetch={false}
@@ -590,7 +592,7 @@ export async function ServerEventsCategorizedContent({
                   data-analytics-context="home_seo_local-agendas"
                 >
                   {link.shortLabel ?? link.label}
-                </PressableAnchor>
+                </LocalizedPressableAnchor>
               ))}
             </div>
           </div>
@@ -602,14 +604,15 @@ export async function ServerEventsCategorizedContent({
         <p className="body-large text-muted-foreground font-medium mb-element-gap">
           {tCta("cta")}
         </p>
-        <PressableAnchor
+        <LocalizedPressableAnchor
+          locale={locale}
           href={withLocale("/catalunya")}
           prefetch={false}
           variant="plain"
           className="btn-primary w-full sm:w-auto"
         >
           {tCta("ctaButton")}
-        </PressableAnchor>
+        </LocalizedPressableAnchor>
       </section>
     </>
   );

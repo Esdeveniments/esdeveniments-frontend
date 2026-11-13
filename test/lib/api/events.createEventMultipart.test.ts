@@ -15,6 +15,7 @@ const data: EventCreateRequestDTO = {
   endTime: "20:00",
   location: "Plaça Major",
   categories: [],
+  price: null,
 };
 
 describe("buildCreateEventFormData", () => {

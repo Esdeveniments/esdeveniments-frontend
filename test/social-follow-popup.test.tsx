@@ -379,6 +379,25 @@ describe("SocialFollowPopup – mobile vs desktop", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("moves focus into the desktop dialog and back when it closes", () => {
+    seedPageViews(1, "/other");
+    const trigger = document.createElement("button");
+    document.body.appendChild(trigger);
+    trigger.focus();
+
+    render(<SocialFollowPopup pathname="/page-b" />);
+    act(() => {
+      vi.advanceTimersByTime(DELAY_MS + 100);
+    });
+    expect(screen.getByRole("dialog")).toContainElement(
+      document.activeElement as HTMLElement,
+    );
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
   it("locks <html> scroll (the window scroller) while the desktop dialog is open", () => {
     seedPageViews(1, "/other");
     render(<SocialFollowPopup pathname="/page-b" />);

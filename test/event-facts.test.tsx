@@ -1,0 +1,79 @@
+import { describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { locale as rootLocale } from "next/root-params";
+import EventFacts from "app/[locale]/e/[eventId]/components/EventFacts";
+import type { EventDetailResponseDTO } from "types/api/event";
+
+const event = {
+  id: "event-1",
+  slug: "concert",
+  title: "Concert",
+  description: "",
+  location: "Plaça Major",
+  startDate: "2026-11-20",
+  endDate: "2026-11-20",
+  startTime: "20:00",
+  endTime: null,
+  city: { name: "Vic", postalCode: "08500" },
+  region: { name: "Osona" },
+} as unknown as EventDetailResponseDTO;
+
+const renderCalendar = async (price: string | null | undefined) =>
+  render(await EventFacts({ event: { ...event, price } }));
+
+describe("EventFacts price row", () => {
+  it("shows the backend price text under a translated label", async () => {
+    await renderCalendar("10 € taquilla · 5 € online");
+
+    expect(screen.getByTestId("event-price").textContent).toBe(
+      "Preu: 10 € taquilla · 5 € online"
+    );
+  });
+
+  it("translates a plain free price", async () => {
+    await renderCalendar("gratis");
+
+    expect(screen.getByTestId("event-price").textContent).toBe("Preu: Gratuït");
+    expect(screen.getByText("Gratuït").className).toContain("text-success-dark");
+  });
+
+  it.each([
+    ["0", /^Preu: Gratuït$/],
+    ["10", /^Preu: 10\s€$/],
+    ["12.5", /^Preu: 12,50\s€$/],
+  ])("formats the form amount %j in euros", async (price, expected) => {
+    await renderCalendar(price);
+
+    expect(screen.getByTestId("event-price").textContent).toMatch(expected);
+  });
+
+  it.each([null, undefined, "  "])("hides the row when the price is %j", async (price) => {
+    await renderCalendar(price);
+
+    expect(screen.queryByTestId("event-price")).toBeNull();
+  });
+});
+
+describe("EventFacts date range", () => {
+  it("localizes a multi-day range", async () => {
+    vi.mocked(rootLocale).mockResolvedValueOnce("en");
+    render(
+      await EventFacts({
+        event: { ...event, startDate: "2026-10-08", endDate: "2026-12-06" },
+      })
+    );
+
+    expect(screen.getByText(/^From .+ to .+$/)).toBeTruthy();
+  });
+});
+
+describe("EventFacts place row", () => {
+  it("shows the place only when given, and hides the other rows on desktop", async () => {
+    render(
+      await EventFacts({ event: { ...event, price: "5" }, placeText: "Plaça Major · Vic", placeOnlyOnDesktop: true })
+    );
+
+    expect(screen.getByText("Plaça Major · Vic").parentElement?.className).not.toContain("lg:hidden");
+    expect(screen.getByTestId("event-price").className).toContain("lg:hidden");
+  });
+});

@@ -58,6 +58,13 @@ export interface PricingPlan {
 }
 
 /**
+ * `paid`: bought through checkout (or sold by hand); reserves its places.
+ * `backfill`: our own banner for unsold places; shown only where no paid
+ * sponsor is active and never blocks a sale.
+ */
+export type SponsorKind = "paid" | "backfill";
+
+/**
  * Configuration for a single sponsor.
  * Stored in config/sponsors.ts and filtered by date + place at runtime.
  */
@@ -76,6 +83,8 @@ export interface SponsorConfig {
   startDate: string;
   /** End date (inclusive) in YYYY-MM-DD format */
   endDate: string;
+  /** Missing means `paid` (rows written before the column existed). */
+  kind?: SponsorKind;
 }
 
 /**
@@ -359,6 +368,7 @@ export interface DbSponsorRow {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   status: SponsorStatus; // Matches CHECK constraint: 'pending_image' | 'active' | 'expired' | 'cancelled'
+  kind?: SponsorKind; // Missing until the `kind` migration has run on this database
   stripe_session_id: string | null;
   stripe_payment_intent_id: string | null;
   customer_email: string | null;

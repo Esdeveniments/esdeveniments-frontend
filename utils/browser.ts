@@ -24,6 +24,48 @@ export function scheduleIdleCallback(
 
 const FIRST_INTERACTION_EVENTS = ["pointerdown", "keydown", "touchstart"] as const;
 
+/** Whether the user asked the OS to reduce motion. */
+export function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+/**
+ * `behavior` for JS scrolls: the CSS reduced-motion rule (styles/globals.css)
+ * can't reach `scrollTo({ behavior: "smooth" })`.
+ */
+export function smoothScrollBehavior(): ScrollBehavior {
+  return prefersReducedMotion() ? "instant" : "smooth";
+}
+
+/**
+ * Calls `done` once every finite transition and animation running on `el`
+ * and its descendants has finished or been cancelled; at once when none runs
+ * (reduced motion, jsdom). Infinite ones (a pulsing skeleton, MapLibre's
+ * location dot) never finish, so they're ignored. Call it right after the
+ * style change: `getAnimations()` flushes styles, so new transitions are
+ * included. Returns a function that cancels the pending call.
+ */
+export function afterTransitions(el: Element, done: () => void): () => void {
+  const animations = (el.getAnimations?.({ subtree: true }) ?? []).filter((a) =>
+    Number.isFinite(a.effect?.getComputedTiming().endTime ?? Infinity)
+  );
+  if (animations.length === 0) {
+    done();
+    return () => {};
+  }
+  let cancelled = false;
+  void Promise.allSettled(animations.map((a) => a.finished)).then(() => {
+    if (!cancelled) done();
+  });
+  return () => {
+    cancelled = true;
+  };
+}
+
 /**
  * Run a callback once: on the first tap, key press or page scroll, or
  * `timeoutMs` after the window load event, whichever comes first.
@@ -61,4 +103,68 @@ export function onFirstInteractionOrTimeout(
   else window.addEventListener("load", startTimer, { once: true });
 
   return cleanup;
+}
+
+const USER_SCROLL_EVENTS = [...FIRST_INTERACTION_EVENTS, "wheel"] as const;
+
+/**
+ * Scroll `container` so `target` sits at its top (minus the target's
+ * `scroll-margin-top`), and keep it there while content above it changes
+ * size (lazy parts loading), until the user taps, types or scrolls in the
+ * container. Returns a cleanup function.
+ */
+export function keepScrolledToTop(
+  container: HTMLElement,
+  target: HTMLElement
+): () => void {
+  const marginTop = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+  const align = () => {
+    const box = container.getBoundingClientRect();
+    // Rects include transforms (a modal's entrance scale); scrollTop doesn't.
+    const scale =
+      box.height && container.offsetHeight
+        ? box.height / container.offsetHeight
+        : 1;
+    container.scrollTop +=
+      (target.getBoundingClientRect().top - box.top) / scale - marginTop;
+  };
+  align();
+  if (typeof ResizeObserver === "undefined") return () => {};
+
+  const observer = new ResizeObserver(align);
+  for (const child of Array.from(container.children)) observer.observe(child);
+  const options: AddEventListenerOptions = { capture: true, passive: true };
+  const stop = () => {
+    observer.disconnect();
+    USER_SCROLL_EVENTS.forEach((type) =>
+      container.removeEventListener(type, stop, options)
+    );
+  };
+  USER_SCROLL_EVENTS.forEach((type) =>
+    container.addEventListener(type, stop, options)
+  );
+  return stop;
+}
+
+/**
+ * Ref callback for full-width `position: fixed` bars. While a Headless UI
+ * dialog locks scroll, it hides the page scrollbar and pads `<html>` by its
+ * width; fixed bars sit outside that padding, so they widen and their centred
+ * content jumps sideways. Mirror the padding on the bar while it lasts.
+ */
+export function followScrollLockPadding(
+  bar: HTMLElement | null
+): (() => void) | undefined {
+  if (!bar || typeof MutationObserver === "undefined") return;
+  const html = document.documentElement;
+  const sync = () => {
+    bar.style.paddingRight = html.style.paddingRight;
+  };
+  sync();
+  const observer = new MutationObserver(sync);
+  observer.observe(html, { attributes: true, attributeFilter: ["style"] });
+  return () => {
+    observer.disconnect();
+    bar.style.paddingRight = "";
+  };
 }

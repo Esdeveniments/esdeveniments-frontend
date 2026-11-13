@@ -283,10 +283,8 @@ export function buildOptimizedImageUrl(
   // Proxy ALL external absolute URLs (http, https, protocol-relative)
   // This ensures we control the upstream fetch and can strip ?v= cache keys
   // that some external servers reject.
-  const shouldProxy =
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://") ||
-    trimmed.startsWith("//");
+  // URL schemes are case-insensitive: "HTTPS://" must not bypass the proxy.
+  const shouldProxy = /^(https?:)?\/\//i.test(trimmed);
 
   if (shouldProxy) {
     // withImageCacheKey already handles all normalization (protocol-relative,

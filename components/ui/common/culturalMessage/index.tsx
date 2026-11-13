@@ -6,7 +6,6 @@ import { formatPlaceName } from "@utils/helpers";
 import { formatPlacePreposition } from "@utils/string-helpers";
 import Badge from "../badge";
 import SectionHeading from "@components/ui/common/SectionHeading";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 const CulturalMessage = async ({
   location,
@@ -32,11 +31,10 @@ const CulturalMessage = async ({
   return (
     <div className="w-full flex flex-col gap-element-gap min-w-0">
         <SectionHeading
-          Icon={MagnifyingGlassIcon}
           title={t("explorePrefix", { placeIn })}
           titleClassName="heading-2"
         />
-        <div className="flex flex-wrap gap-2 px-section-x">
+        <div className="flex flex-wrap gap-element-gap">
           <Badge href={`/${locationValue}/avui`}>{t("today")}</Badge>
           <Badge href={`/${locationValue}/dema`}>{t("tomorrow")}</Badge>
           <Badge href={`/${locationValue}/setmana`}>{t("week")}</Badge>

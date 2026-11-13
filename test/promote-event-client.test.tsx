@@ -1,11 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { UnrecognizedActionError } from "next/dist/client/components/unrecognized-action-error";
 import PromoteEventClient from "../app/[locale]/e/[eventId]/promote/PromoteEventClient";
 import type { PromotionOptionDTO, PromotionOptionsDTO } from "types/api/promotion";
 
 const mockCheckout = vi.fn();
 vi.mock("../app/[locale]/e/[eventId]/promote/actions", () => ({
   createPromotionCheckoutAction: (...args: unknown[]) => mockCheckout(...args),
+}));
+const mockRefresh = vi.fn();
+vi.mock("@i18n/routing", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@i18n/routing")>()),
+  useRouter: () => ({ refresh: mockRefresh }),
 }));
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: vi.fn(),
@@ -77,6 +83,7 @@ const renderMultiScope = () =>
 describe("PromoteEventClient", () => {
   beforeEach(() => {
     mockCheckout.mockReset();
+    mockRefresh.mockReset();
   });
 
   it("tracks begin_checkout and saves the order for the purchase event", async () => {
@@ -155,6 +162,162 @@ describe("PromoteEventClient", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Aquest esdeveniment ja està promocionat.",
     );
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("re-renders on a pending checkout so its resume link can show", async () => {
+    mockCheckout.mockResolvedValue({ ok: false, code: "CHECKOUT_ALREADY_PENDING" });
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{ ok: true, data: catalog }}
+        pendingCheckoutUrl={null}
+        placeNames={placeNames}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("promote-confirm-button"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Ja hi ha un pagament en curs per a aquest esdeveniment.",
+    );
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("says a payment is pending once when it can be resumed", () => {
+    const pendingUrl = "https://checkout.stripe.com/c/pay/cs_test_1";
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{
+          ok: true,
+          data: {
+            ...catalog,
+            options: catalog.options.map((o) => ({
+              ...o,
+              available: false,
+              unavailableReason: "CHECKOUT_ALREADY_PENDING",
+            })),
+            canPurchase: false,
+            unavailableReason: "CHECKOUT_ALREADY_PENDING",
+          },
+        }}
+        pendingCheckoutUrl={pendingUrl}
+        placeNames={placeNames}
+      />,
+    );
+
+    expect(screen.getAllByText(/a mig fer|en curs/)).toHaveLength(1);
+    expect(screen.getByTestId("promote-resume-checkout")).toHaveAttribute("href", pendingUrl);
+    expect(screen.queryByTestId("promote-unavailable")).toBeNull();
+  });
+
+  it("keeps the options open while a payment is pending", () => {
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{ ok: true, data: catalog }}
+        pendingCheckoutUrl="https://checkout.stripe.com/c/pay/cs_test_1"
+        placeNames={placeNames}
+      />,
+    );
+
+    expect(screen.getByText(/triar una altra opció/)).toBeInTheDocument();
+    expect(screen.getByTestId("promote-resume-checkout")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("city-7d")).toBeEnabled();
+    expect(screen.getByTestId("promote-confirm-button")).toBeEnabled();
+  });
+
+  it("starts a new order once when the option's earlier one was closed", async () => {
+    mockCheckout
+      .mockResolvedValueOnce({ ok: false, code: "ORDER_NOT_PENDING" })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: { orderId: "order-2", url: "https://checkout.stripe.com/c/pay/cs_test_2" },
+      });
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{ ok: true, data: catalog }}
+        pendingCheckoutUrl={null}
+        placeNames={placeNames}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("promote-confirm-button"));
+
+    await waitFor(() => expect(mockCheckout).toHaveBeenCalledTimes(2));
+    const [first, second] = mockCheckout.mock.calls;
+    expect(second.slice(0, 2)).toEqual(["uuid-1", "city-7d"]);
+    expect(second[2]).not.toBe(first[2]);
+    await waitFor(() =>
+      expect(sessionStorage.getItem("ga_pending_checkout:promote")).not.toBeNull(),
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("drops the pending-payment error once the resume link shows", async () => {
+    mockCheckout.mockResolvedValue({ ok: false, code: "CHECKOUT_ALREADY_PENDING" });
+    const props = {
+      eventId: "uuid-1",
+      slug: "concert",
+      options: { ok: true as const, data: catalog },
+      placeNames,
+    };
+    const { rerender } = render(
+      <PromoteEventClient {...props} pendingCheckoutUrl={null} />,
+    );
+    fireEvent.click(screen.getByTestId("promote-confirm-button"));
+    await screen.findByRole("alert");
+
+    rerender(
+      <PromoteEventClient
+        {...props}
+        pendingCheckoutUrl="https://checkout.stripe.com/c/pay/cs_test_1"
+      />,
+    );
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getAllByText(/a mig fer|en curs/)).toHaveLength(1);
+  });
+
+  it("reloads instead of showing an error when a deploy removed the action", async () => {
+    const original = window.location;
+    const reload = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: { ...original, reload },
+      configurable: true,
+      writable: true,
+    });
+    mockCheckout.mockRejectedValue(
+      new UnrecognizedActionError('Server Action "abc" was not found on the server.'),
+    );
+    try {
+      render(
+        <PromoteEventClient
+          eventId="uuid-1"
+          slug="concert"
+          options={{ ok: true, data: catalog }}
+          pendingCheckoutUrl={null}
+          placeNames={placeNames}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId("promote-confirm-button"));
+
+      await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+      expect(screen.queryByRole("alert")).toBeNull();
+    } finally {
+      Object.defineProperty(window, "location", {
+        value: original,
+        configurable: true,
+        writable: true,
+      });
+    }
   });
 
   it("renders one tab per scope in order, labelled with the event's places", () => {
@@ -256,17 +419,15 @@ describe("PromoteEventClient", () => {
   });
 
   it.each(["CHECKOUT_EXPIRED", "ORDER_NOT_PENDING"])(
-    "starts a new Idempotency-Key after %s",
+    "retries once with a new Idempotency-Key after %s, then shows the error",
     async (code) => {
       mockCheckout.mockResolvedValue({ ok: false, code });
       renderMultiScope();
 
-      const button = screen.getByTestId("promote-confirm-button");
-      fireEvent.click(button);
-      await waitFor(() => expect(button).not.toBeDisabled());
-      fireEvent.click(button);
-      await waitFor(() => expect(mockCheckout).toHaveBeenCalledTimes(2));
+      fireEvent.click(screen.getByTestId("promote-confirm-button"));
 
+      expect(await screen.findByRole("alert")).toBeInTheDocument();
+      expect(mockCheckout).toHaveBeenCalledTimes(2);
       const [first, second] = mockCheckout.mock.calls;
       expect(second[1]).toBe(first[1]);
       expect(second[2]).not.toBe(first[2]);

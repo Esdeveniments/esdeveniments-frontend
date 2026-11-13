@@ -16,6 +16,8 @@ import { slugifySegment } from "@utils/string-helpers";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import type { InternalOriginOptions } from "types/api/internal";
 import { cacheLife, cacheTag } from "next/cache";
+import { getErrorStatus } from "@utils/error-status";
+import { markEventReadFailed } from "./event-outage";
 import {
   parseEventDetail,
   parsePagedEvents,
@@ -177,7 +179,9 @@ export async function fetchEventBySlug(
       console.error(
         `fetchEventBySlug: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`,
       );
-      throw new Error(`HTTP error! status: ${res.status}`);
+      throw Object.assign(new Error(`HTTP error! status: ${res.status}`), {
+        status: res.status,
+      });
     }
     return parseEventDetail(await res.json());
   } catch (error) {
@@ -186,6 +190,9 @@ export async function fetchEventBySlug(
       `Error fetching event by slug (internal) for ${fullSlug}:`,
       errorMessage,
     );
+    // A 4xx is about this URL, not the backend: it never counts as an outage.
+    const status = getErrorStatus(error);
+    if (status === undefined || status >= 500) markEventReadFailed(fullSlug);
     // Transient failure: re-throw for cached metadata readers so the error is
     // not cached as a null (a real 404 returned above, which is fine to cache).
     if (options.throwOnError) {
@@ -534,6 +541,7 @@ function createE2EEvent(
     endDate: data.endDate,
     endTime: data.endTime,
     location: data.location,
+    price: data.price,
     visits: 0,
     origin: "MANUAL",
     city: fallbackCity,

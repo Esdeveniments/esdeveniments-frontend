@@ -22,7 +22,8 @@ describe("buildDisplayLocation", () => {
       location: "Museu municipal de Vilassar de Dalt, Vilassar de Dalt, Maresme",
       cityName: "Vilassar de Dalt",
       regionName: "Maresme",
-      hidePlaceSegments: true,
+      hideCity: true,
+      hideRegion: true,
     });
 
     expect(result).toBe("Museu municipal de Vilassar de Dalt");
@@ -38,15 +39,16 @@ describe("buildDisplayLocation", () => {
     expect(result).toBe("Recinte firal, Vic, Osona");
   });
 
-  it("falls back to first segment when everything else is hidden", () => {
+  it("returns nothing when every segment is shown as a link", () => {
     const result = buildDisplayLocation({
       location: "Mataró",
       cityName: "Mataró",
       regionName: "Maresme",
-      hidePlaceSegments: true,
+      hideCity: true,
+      hideRegion: true,
     });
 
-    expect(result).toBe("Mataró");
+    expect(result).toBe("");
   });
 });
 

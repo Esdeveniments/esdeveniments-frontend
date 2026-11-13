@@ -25,6 +25,7 @@ export async function GET(request: Request) {
     const latRaw = search.get("lat");
     const lonRaw = search.get("lon");
     const radiusRaw = search.get("radius");
+    const freeRaw = search.get("free");
 
     const params: FetchEventsParams = {
       page,
@@ -36,6 +37,8 @@ export async function GET(request: Request) {
       from: search.get("from") || undefined,
       to: search.get("to") || undefined,
       profileSlug: search.get("profileSlug") || undefined,
+      // Only true/false: the backend answers 400 to anything else
+      free: freeRaw === "true" ? true : freeRaw === "false" ? false : undefined,
       lat:
         latRaw !== null && Number.isFinite(parseFloat(latRaw))
           ? parseFloat(latRaw)

@@ -1,6 +1,6 @@
 import { siteUrl } from "@config/index";
-import { NEWS_HUBS } from "@utils/constants";
 import { fetchNews, fetchNewsBySlug } from "@lib/api/news";
+import { resolveNewsItemPlace } from "@utils/news-helpers";
 import {
   SUPPORTED_LOCALES,
   localeToHrefLang,
@@ -8,6 +8,12 @@ import {
 } from "types/i18n";
 import { buildLocalizedUrls } from "@utils/i18n-seo";
 import { escapeXml } from "@utils/xml-escape";
+
+// Google News sitemaps list only articles from the last 2 days, so this is
+// often empty. Google's docs say an empty news sitemap is fine (Search Console
+// shows a harmless "Empty Sitemap" warning), so it always returns 200; a 404
+// shows up as an error on the /sitemap.xml index.
+// https://developers.google.com/search/docs/crawling-indexing/sitemaps/news-sitemap
 
 function buildNewsSitemap(
   items: {
@@ -55,47 +61,38 @@ export async function GET() {
     publicationDate: string;
   }[] = [];
 
-  // Fetch hubs IN PARALLEL, but cap each hub's per-article detail fetches at
-  // DETAIL_CONCURRENCY so we never hit the API with hubs x ~20 requests at once
-  // (socket exhaustion / 429). Sequential awaits blew past the 60s build-export
-  // limit; ~5 per hub keeps it fast (well under 60s) and gentle (≤20 in flight).
+  // The list has no publish time, so recent articles' details are fetched,
+  // DETAIL_CONCURRENCY at a time to stay gentle on the API. Articles are
+  // written before the dates they cover, so one whose endDate is over 48 hours
+  // old can't be recent and is skipped without a detail fetch. endDate is a
+  // date, parsed as its first moment, so allow one more day.
   const DETAIL_CONCURRENCY = 5;
-  const perHub = await Promise.all(
-    NEWS_HUBS.map(async (hub) => {
-      try {
-        const res = await fetchNews({ page: 0, size: 20, place: hub.slug });
-        const items = Array.isArray(res.content) ? res.content : [];
-        const resolved: {
-          hub: (typeof NEWS_HUBS)[number];
-          item: (typeof items)[number];
-          detail: Awaited<ReturnType<typeof fetchNewsBySlug>>;
-        }[] = [];
-        for (let i = 0; i < items.length; i += DETAIL_CONCURRENCY) {
-          const chunk = items.slice(i, i + DETAIL_CONCURRENCY);
-          resolved.push(
-            ...(await Promise.all(
-              chunk.map(async (item) => ({
-                hub,
-                item,
-                // Detail fetch gives the accurate publication datetime
-                detail: await fetchNewsBySlug(item.slug),
-              }))
-            ))
-          );
-        }
-        return resolved;
-      } catch (e) {
-        console.error("google-news-sitemap: error fetching hub", hub.slug, e);
-        return [];
-      }
-    })
+  const res = await fetchNews({ page: 0, size: 100 });
+  const items = (Array.isArray(res.content) ? res.content : []).filter(
+    (item) => Date.parse(item.endDate) >= now - cutoffMs - 24 * 60 * 60 * 1000
   );
+  const resolved: {
+    item: (typeof items)[number];
+    detail: Awaited<ReturnType<typeof fetchNewsBySlug>>;
+  }[] = [];
+  for (let i = 0; i < items.length; i += DETAIL_CONCURRENCY) {
+    const chunk = items.slice(i, i + DETAIL_CONCURRENCY);
+    resolved.push(
+      ...(await Promise.all(
+        chunk.map(async (item) => ({
+          item,
+          detail: await fetchNewsBySlug(item.slug),
+        }))
+      ))
+    );
+  }
 
-  for (const { hub, item, detail } of perHub.flat()) {
+  for (const { item, detail } of resolved) {
     if (!detail || !detail.createdAt) continue;
     const pubMs = Date.parse(detail.createdAt);
     if (isNaN(pubMs) || now - pubMs > cutoffMs) continue;
-    const basePath = `/noticies/${hub.slug}/${item.slug}`;
+    const place = resolveNewsItemPlace(item, "catalunya", "").slug;
+    const basePath = `/noticies/${place}/${item.slug}`;
     const localizedUrls = buildLocalizedUrls(basePath);
 
     SUPPORTED_LOCALES.forEach((locale) => {
@@ -107,18 +104,6 @@ export async function GET() {
         title: detail.title,
         publicationDate: new Date(pubMs).toISOString(),
       });
-    });
-  }
-
-  // Google News sitemaps must contain at least one URL
-  // Return 404 when there are no candidates to avoid invalid XML
-  // This is semantically correct: the sitemap doesn't exist when there's no content
-  if (candidates.length === 0) {
-    return new Response(null, {
-      status: 404,
-      headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=86400",
-      },
     });
   }
 

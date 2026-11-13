@@ -10,7 +10,7 @@ import {
 } from "@lib/navigation-feedback";
 import { FilterButtonProps } from "types/props";
 import { sendGoogleEvent } from "@utils/analytics";
-import { scheduleIdleCallback } from "@utils/browser";
+import { scheduleIdleCallback, smoothScrollBehavior } from "@utils/browser";
 import { useTranslations } from "next-intl";
 
 const FOCUS_RING =
@@ -48,8 +48,9 @@ const FilterButton = ({
     router.push(removeUrl);
     // Scroll to top on whichever element scrolls: <body> when html/body
     // clip overflow (styles/globals.css), the window otherwise.
-    document.body.scrollTo({ top: 0, behavior: "smooth" });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const behavior = smoothScrollBehavior();
+    document.body.scrollTo({ top: 0, behavior });
+    window.scrollTo({ top: 0, behavior });
   };
 
   const handleChipClick = () => {
@@ -61,7 +62,7 @@ const FilterButton = ({
         enabled,
       })
     );
-    onOpenModal();
+    onOpenModal(filterKey);
   };
 
   return (
@@ -70,7 +71,7 @@ const FilterButton = ({
       data-testid={testId}
     >
       <div
-        className={`flex justify-center items-center rounded-badge ease-in-out duration-300 font-medium whitespace-nowrap border pressable-chip transition-interactive ${enabled
+        className={`flex justify-center items-center rounded-badge font-medium whitespace-nowrap border pressable-chip ${enabled
           ? "border-primary bg-primary/5 text-foreground-strong"
           : "border-border text-foreground-strong hover:bg-muted"
           }`}

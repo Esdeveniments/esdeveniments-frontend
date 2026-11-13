@@ -253,7 +253,13 @@ function HybridEventsListClientContent({
       ) : (
         <>
           {displayedEvents.length > 0 ? (
-            <div ref={setListingContainer} tabIndex={-1}>
+            <div
+              ref={setListingContainer}
+              tabIndex={-1}
+              // Without client filters these are "Load more" cards: they rise
+              // in (styles/globals.css). Filtered results replace a skeleton.
+              className={hasClientFilters ? undefined : "list-appended"}
+            >
               <ClientCardsList events={displayedEvents} />
             </div>
           ) : null}

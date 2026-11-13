@@ -35,6 +35,7 @@ import {
 import { getCategoryLabel } from "@utils/category-helpers";
 import { buildFilterUrl } from "@utils/url-filters";
 import { NavigationFiltersModalProps } from "types/props";
+import FilterSectionHeading from "./FilterSectionHeading";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { SelectSkeleton } from "@components/ui/common/skeletons";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
@@ -62,6 +63,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   currentQueryParams,
   userLocation: initialUserLocation,
   categories = [],
+  initialSection,
 }) => {
   const tByDates = useTranslations("Config.ByDates");
   const tCategories = useTranslations("Config.Categories");
@@ -71,6 +73,8 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     isError: isErrorRegionsWithCities,
   } = useGetRegionsWithCities(isOpen);
   const t = useTranslations("Components.FiltersModal");
+  const tFilters = useTranslations("Components.Filters");
+  const initialSectionRef = useRef<HTMLParagraphElement>(null);
 
   const regionsAndCitiesArray: GroupedOption[] = useMemo(() => {
     if (!regionsWithCities) return [];
@@ -150,8 +154,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
   const [localPlace, setLocalPlace] = useState<string>(defaults.place);
   const [localByDate, setLocalByDate] = useState<string>(defaults.byDate);
   const [localCategory, setLocalCategory] = useState<string>(defaults.category);
-  // TODO: Re-enable when backend supports the `type` query param
-  // const [localPrice, setLocalPrice] = useState<string>(defaults.price);
+  const [localPrice, setLocalPrice] = useState<string>(defaults.price);
   const [localFromDate, setLocalFromDate] = useState<string>(defaults.fromDate);
   const [localToDate, setLocalToDate] = useState<string>(defaults.toDate);
   // Which date control the user touched last, for GA: preset, shortcut or calendar.
@@ -187,15 +190,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
       setLocalPlace(defaults.place);
       setLocalByDate(defaults.byDate);
       setLocalCategory(defaults.category);
-      // TODO: Re-enable when backend supports the `type` query param
-      // setLocalPrice(defaults.price);
+      setLocalPrice(defaults.price);
       setLocalFromDate(defaults.fromDate);
       setLocalToDate(defaults.toDate);
       setDateSource("unchanged");
       setLocalDistance(defaults.distance);
       setLocalUserLocation(defaults.userLocation);
-      setLocalPlaceType(defaults.placeType);
-      setLocalPlaceCoords(defaults.placeCoords);
       setUserLocationLoading(false);
       setUserLocationError("");
       setIsDistanceActive(Boolean(defaults.distance));
@@ -211,10 +211,19 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     defaults.toDate,
     defaults.distance,
     defaults.userLocation,
-    defaults.placeType,
-    defaults.placeCoords,
     initialUseCurrentLocation,
   ]);
+
+  // Place type and coords arrive with the region options, which load after the
+  // modal opens. Sync them on their own so the load doesn't wipe the user's
+  // other choices; the place selector is a skeleton until then.
+  useEffect(() => {
+    if (!isOpen) return;
+    startTransition(() => {
+      setLocalPlaceType(defaults.placeType);
+      setLocalPlaceCoords(defaults.placeCoords);
+    });
+  }, [isOpen, defaults.placeType, defaults.placeCoords]);
 
   const router = useRouter();
   const locale = useLocale();
@@ -455,9 +464,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
           : localPlace || "catalunya",
       byDate: localFromDate ? DEFAULT_FILTER_VALUE : (localByDate || DEFAULT_FILTER_VALUE),
       category: localCategory || DEFAULT_FILTER_VALUE,
-      // Price UI is commented out (backend doesn't support type param yet).
-      // Always reset to default so stale ?price= values don't persist.
-      price: DEFAULT_FILTER_VALUE,
+      price: localPrice,
       from: localFromDate || undefined,
       to: (localToDate || localFromDate) || undefined,
       searchTerm: currentQueryParams.search || "",
@@ -503,6 +510,7 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         !changes.from && changes.byDate === DEFAULT_FILTER_VALUE ? "none" : dateSource,
       filter_category: changes.category,
       filter_distance: changes.distance !== undefined ? changes.distance.toString() : undefined,
+      filter_price: changes.price,
       context: "filters_modal_apply",
     });
 
@@ -545,13 +553,12 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
     );
   }, []);
 
-  // TODO: Re-enable when backend supports the `type` query param
-  // const handlePriceChange = useCallback((value: string | number) => {
-  //   setLocalPrice(
-  //     (prevValue) =>
-  //       (prevValue === value ? DEFAULT_FILTER_VALUE : value) as string
-  //   );
-  // }, []);
+  const handlePriceChange = useCallback((value: string | number) => {
+    setLocalPrice(
+      (prevValue) =>
+        (prevValue === value ? DEFAULT_FILTER_VALUE : value) as string
+    );
+  }, []);
 
   // Determine if the selected place is a region (comarca) - regions don't have coordinates
   const isRegionSelected = localPlaceType === "region";
@@ -625,12 +632,18 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
         actionButton={t("modal.action")}
         onActionButtonClick={applyFilters}
         testId="filters-modal"
+        initialFocusRef={initialSection ? initialSectionRef : undefined}
       >
         <div className="w-full flex flex-col justify-start items-start gap-5 py-4 pb-6">
           <div className="w-full flex flex-col justify-start items-start gap-4">
-            <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+            <FilterSectionHeading
+              section="place"
+              initialSection={initialSection}
+              initialSectionRef={initialSectionRef}
+              className="w-full pt-[5px]"
+            >
               {t("modal.locations")}
-            </p>
+            </FilterSectionHeading>
             <div className="w-full flex flex-col gap-2">
               <div className="w-full flex flex-col px-0">
                 {isLoadingRegions ? (
@@ -679,9 +692,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
               )}
             </div>
             <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-              <p className="w-full font-semibold font-barlow uppercase pt-[5px]">
+              <FilterSectionHeading
+                section="byDate"
+                initialSection={initialSection}
+                initialSectionRef={initialSectionRef}
+                className="w-full pt-[5px]"
+              >
                 {t("modal.dateHeading")}
-              </p>
+              </FilterSectionHeading>
               <div className="w-full flex flex-wrap gap-2">
                 {BYDATES.map(({ value, labelKey }) => (
                   <button
@@ -722,9 +740,14 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
             </fieldset>
             {categories.length > 0 && (
               <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-                <p className="w-full font-semibold font-barlow uppercase">
+                <FilterSectionHeading
+                  section="category"
+                  initialSection={initialSection}
+                  initialSectionRef={initialSectionRef}
+                  className="w-full"
+                >
                   {t("modal.categoriesHeading")}
-                </p>
+                </FilterSectionHeading>
                 <div className="w-full grid grid-cols-3 gap-x-4 gap-y-2">
                   {categories.map((category: CategorySummaryResponseDTO) => (
                     <RadioInput
@@ -744,22 +767,23 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                 </div>
               </fieldset>
             )}
-            {/* TODO: Re-enable price filter when backend supports the `type` query param.
-                Currently the API ignores `type=FREE|PAID` (returns same 5075 results).
-                All plumbing (config, state, URL parsing, API forwarding) is in place —
-                just uncomment this fieldset once the backend filters by event type.
             <fieldset className="w-full flex flex-col justify-start items-start gap-4">
-              <p className="w-full font-semibold font-barlow uppercase">
+              <FilterSectionHeading
+                section="price"
+                initialSection={initialSection}
+                initialSectionRef={initialSectionRef}
+                className="w-full"
+              >
                 {t("modal.priceHeading")}
-              </p>
-              <div className="w-full flex flex-col justify-start items-start gap-x-3 gap-y-3 flex-wrap">
+              </FilterSectionHeading>
+              <div className="w-full flex flex-wrap gap-x-4 gap-y-2">
                 <RadioInput
                   id="price-gratis"
                   name="price"
                   value="gratis"
                   checkedValue={localPrice}
                   onChange={handlePriceChange}
-                  label={t("modal.priceFree")}
+                  label={tFilters("priceFree")}
                 />
                 <RadioInput
                   id="price-pagament"
@@ -767,16 +791,20 @@ const NavigationFiltersModal: FC<NavigationFiltersModalProps> = ({
                   value="pagament"
                   checkedValue={localPrice}
                   onChange={handlePriceChange}
-                  label={t("modal.pricePaid")}
+                  label={tFilters("pricePaid")}
                 />
               </div>
             </fieldset>
-            */}
             <fieldset className="w-full flex flex-col justify-start items-start gap-6">
               <div className="w-full flex items-center justify-between gap-3">
-                <p className="font-semibold font-barlow uppercase pt-[5px]">
+                <FilterSectionHeading
+                  section="distance"
+                  initialSection={initialSection}
+                  initialSectionRef={initialSectionRef}
+                  className="pt-[5px]"
+                >
                   {distanceLabel}
-                </p>
+                </FilterSectionHeading>
                 <label
                   className={`flex items-center gap-2 text-xs font-semibold ${disableDistance ? "text-border" : "text-primary"}`}
                 >

@@ -40,6 +40,9 @@ export default function FavoriteButton({
 }: FavoriteButtonProps) {
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
+  // One beat per tap that fills the heart; never on mount or when the shared
+  // favorites list syncs this button.
+  const [isBeating, setIsBeating] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
@@ -98,6 +101,7 @@ export default function FavoriteButton({
           setLimitMessage(null);
           const nextIsFavorite = !isFavorite;
           setIsFavorite(nextIsFavorite);
+          setIsBeating(nextIsFavorite);
 
           if (
             nextIsFavorite &&
@@ -106,6 +110,7 @@ export default function FavoriteButton({
             favoritesData.favorites.length >= MAX_FAVORITES_AUTHENTICATED
           ) {
             setIsFavorite(!nextIsFavorite);
+            setIsBeating(false);
             sendGoogleEvent("favorites_limit_reached", {
               action: "add",
               max_favorites: MAX_FAVORITES_AUTHENTICATED,
@@ -142,6 +147,7 @@ export default function FavoriteButton({
                   });
                   setLimitMessage(t("maxReached", { max: max ?? "" }));
                   setIsFavorite(!nextIsFavorite);
+                  setIsBeating(false);
                   return;
                 }
 
@@ -211,12 +217,14 @@ export default function FavoriteButton({
                 },
               });
               setIsFavorite(!nextIsFavorite);
+              setIsBeating(false);
             }
           });
         }}
       >
         <svg
-          className={`h-6 w-6 text-primary transition-[transform,color] duration-200 group-hover:scale-[1.06] group-active:scale-[0.96] ${isFavorite ? "animate-heartBeat" : ""}`}
+          className={`h-6 w-6 text-primary transition-[transform,color] duration-200 group-hover:scale-[1.06] group-active:scale-[0.96] ${isFavorite && isBeating ? "animate-heartBeat" : ""}`}
+          onAnimationEnd={() => setIsBeating(false)}
           aria-hidden="true"
         >
           <use href={`#${isFavorite ? SPRITE_ICON.heartSolid : SPRITE_ICON.heartOutline}`} />
