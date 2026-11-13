@@ -172,7 +172,7 @@
       "modificationsBody": "We reserve the right to modify these terms at any time. Changes will take effect upon publication on the Site. Continued use of the Site constitutes acceptance of the modified terms.",
       "paidTitle": "8. Promotions and sponsorships",
       "paidSeller": "Event promotions and page sponsorships are paid services provided and invoiced by Dynamica BI Sistemes, S.L. (Spanish tax ID B44906014), C/ de l'Hospital, 18, 08440 Cardedeu (Barcelona), Spain, registered in the Barcelona Commercial Registry, volume 48738, folio 150, sheet B-594382.",
-      "paidWhat": "A promotion shows your event among the featured events on the pages of the chosen area for the days you buy, in rotation with other promoted events. A sponsorship shows your banner on the chosen place's page for the days you buy.",
+      "paidWhat": "A promotion shows your event among the featured events on the pages of the chosen area for the days you buy, in rotation with other promoted events. A promotion stops showing when the event ends. A sponsorship shows your banner on the chosen place's page for the days you buy.",
       "paidPrice": "Prices include Spanish VAT (IVA). You pay through Stripe and receive the invoice by email. If you give us your tax ID, the invoice includes it.",
       "paidWithdrawal": "If you buy as a consumer, you have 14 days to withdraw. By paying, you ask for the service to start right away: if you then withdraw, we refund the days not yet provided. Once the service has ended, you can no longer withdraw.",
       "paidRefunds": "If your payment arrives when we can no longer provide the service (for example, the event was deleted), we refund it and send you a corrective invoice. For anything else, write to us.",
@@ -474,6 +474,8 @@
       "confirmButtonLoading": "Redirecting to payment...",
       "errorGeneric": "Something went wrong. Please try again.",
       "chooseOption": "Choose where and for how long",
+      "plansHeading": "Promotion prices",
+      "eventEndsTooSoon": "This event has ended or ends too soon to promote.",
       "taxIncluded": "Prices include VAT. One-off payment.",
       "duration": "{days, plural, one {# day} other {# days}}",
       "scope": {

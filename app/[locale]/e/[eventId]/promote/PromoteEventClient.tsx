@@ -43,9 +43,26 @@ export default function PromoteEventClient({
   const router = useRouter();
   const catalog = options.ok ? options.data.options : [];
   const canPurchase = options.ok && options.data.canPurchase;
-  const unavailableCode = options.ok
+  const topCode = options.ok
     ? (options.data.unavailableReason ?? "NO_AVAILABLE_OPTIONS")
     : options.code;
+  // The backend repeats some event-wide reasons (no town) on every option and
+  // answers NO_AVAILABLE_OPTIONS, so a reason all the options share wins.
+  const sharedReason = catalog.every(
+    (option) => option.unavailableReason === catalog[0]?.unavailableReason,
+  )
+    ? (catalog[0]?.unavailableReason ?? null)
+    : null;
+  const unavailableCode =
+    topCode === "NO_AVAILABLE_OPTIONS" && sharedReason ? sharedReason : topCode;
+  const endsTooSoon =
+    !canPurchase && unavailableCode === "INSUFFICIENT_EVENT_DURATION";
+  // With nothing to buy, the plans still show (greyed out) when the plans
+  // themselves are the problem. Event-wide blocks show only the reason.
+  const showCatalog =
+    catalog.length > 0 &&
+    (canPurchase || endsTooSoon || unavailableCode === "NO_AVAILABLE_OPTIONS");
+  const plansLabel = canPurchase ? t("chooseOption") : t("plansHeading");
   const scopes = SCOPE_ORDER.filter((scope) =>
     catalog.some((option) => option.scope === scope),
   );
@@ -265,15 +282,27 @@ export default function PromoteEventClient({
           </div>
         )}
 
-        {canPurchase ? (
+        {!canPurchase && !repeatsPendingCard(unavailableCode) && (
+          <div
+            className="w-full px-4 py-3 bg-muted rounded-lg"
+            role="status"
+            data-testid="promote-unavailable"
+          >
+            <p className="body-normal text-foreground/80">
+              {endsTooSoon ? t("eventEndsTooSoon") : describeCode(unavailableCode)}
+            </p>
+          </div>
+        )}
+
+        {showCatalog && (
           <div className="flex flex-col gap-4">
             <h2 className="body-normal font-semibold text-foreground-strong">
-              {t("chooseOption")}
+              {plansLabel}
             </h2>
 
             <div
               role="tablist"
-              aria-label={t("chooseOption")}
+              aria-label={plansLabel}
               className="grid grid-cols-2 sm:flex border-b border-border"
             >
               {scopes.map((scope, index) => {
@@ -344,7 +373,9 @@ export default function PromoteEventClient({
                       <span className="heading-3 text-foreground-strong">
                         {formatPrice(option)}
                       </span>
-                      {!option.available && option.unavailableReason && (
+                      {!option.available &&
+                        option.unavailableReason &&
+                        (canPurchase || option.unavailableReason !== unavailableCode) && (
                         <span className="body-small text-muted-foreground">
                           {describeCode(option.unavailableReason)}
                         </span>
@@ -359,18 +390,6 @@ export default function PromoteEventClient({
               <p className="body-small text-muted-foreground">{t("taxIncluded")}</p>
             )}
           </div>
-        ) : (
-          !repeatsPendingCard(unavailableCode) && (
-            <div
-              className="w-full px-4 py-3 bg-muted rounded-lg"
-              role="status"
-              data-testid="promote-unavailable"
-            >
-              <p className="body-normal text-foreground/80">
-                {describeCode(unavailableCode)}
-              </p>
-            </div>
-          )
         )}
 
         {errorCode && !repeatsPendingCard(errorCode) && (

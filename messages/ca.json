@@ -172,7 +172,7 @@
       "modificationsBody": "Ens reservem el dret de modificar aquests termes en qualsevol moment. Els canvis seran efectius a partir de la seva publicació al Lloc. L'ús continuat del Lloc constitueix l'acceptació dels termes modificats.",
       "paidTitle": "8. Promocions i patrocinis",
       "paidSeller": "Les promocions d'esdeveniments i els patrocinis de pàgines són serveis de pagament que presta i factura Dynamica BI Sistemes, S.L. (NIF B44906014), C/ de l'Hospital, 18, 08440 Cardedeu (Barcelona), inscrita al Registre Mercantil de Barcelona, tom 48738, foli 150, full B-594382.",
-      "paidWhat": "Una promoció mostra el teu esdeveniment entre els destacats de les pàgines de l'àmbit triat durant els dies contractats, en rotació amb altres esdeveniments promocionats. Un patrocini mostra el teu bàner a la pàgina del lloc triat durant els dies contractats.",
+      "paidWhat": "Una promoció mostra el teu esdeveniment entre els destacats de les pàgines de l'àmbit triat durant els dies contractats, en rotació amb altres esdeveniments promocionats. La promoció deixa de mostrar-se quan acaba l'esdeveniment. Un patrocini mostra el teu bàner a la pàgina del lloc triat durant els dies contractats.",
       "paidPrice": "Els preus inclouen l'IVA. Pagues amb Stripe i reps la factura per correu electrònic. Si ens indiques el NIF, la factura l'inclou.",
       "paidWithdrawal": "Si contractes com a consumidor, tens 14 dies per desistir. En pagar, demanes que el servei comenci de seguida: si després desisteixes, et tornem la part dels dies que encara no s'han fet. Un cop acabat el servei, ja no pots desistir.",
       "paidRefunds": "Si el pagament arriba quan ja no podem oferir el servei (per exemple, si l'esdeveniment s'ha esborrat), et tornem l'import i t'enviem la factura rectificativa. Per a qualsevol altra incidència, escriu-nos.",
@@ -474,6 +474,8 @@
       "confirmButtonLoading": "Redirigint a pagament...",
       "errorGeneric": "Alguna cosa ha fallat. Torna-ho a intentar.",
       "chooseOption": "Tria on i quant de temps",
+      "plansHeading": "Preus de les promocions",
+      "eventEndsTooSoon": "Aquest esdeveniment ja ha acabat o acaba massa aviat per promocionar-lo.",
       "taxIncluded": "Preus amb IVA inclòs. Pagament únic.",
       "duration": "{days, plural, one {# dia} other {# dies}}",
       "scope": {
