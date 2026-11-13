@@ -38,9 +38,13 @@ export type EventStatusLabels = {
   upcoming: string;
   endsInDays: string;
   endsInHours: string;
+  endsInOneDay: string;
+  endsInOneHour: string;
   endsSoon: string;
   startsInDays: string;
   startsInHours: string;
+  startsInOneDay: string;
+  startsInOneHour: string;
   startsToday: string;
   today: string;
 };

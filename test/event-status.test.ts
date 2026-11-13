@@ -7,9 +7,13 @@ const labels = {
   upcoming: "Properament",
   endsInDays: "Acaba en {count} dies",
   endsInHours: "Acaba en {count} hores",
+  endsInOneDay: "Acaba en 1 dia",
+  endsInOneHour: "Acaba en 1 hora",
   endsSoon: "Acaba aviat",
   startsInDays: "Comença en {count} dies",
   startsInHours: "Comença en {count} hores",
+  startsInOneDay: "Comença en 1 dia",
+  startsInOneHour: "Comença en 1 hora",
   startsToday: "Comença avui",
   today: "Avui",
 };
@@ -129,7 +133,7 @@ describe("computeTemporalStatus", () => {
     const status = compute(start, undefined, baseNow);
     expect(status.state).toBe("upcoming");
     if (status.state === "upcoming") {
-      expect(status.startsIn).toContain("1 hores");
+      expect(status.startsIn).toBe("Comença en 1 hora");
     }
   });
 
@@ -165,7 +169,7 @@ describe("computeTemporalStatus", () => {
     const status = compute(start, undefined, baseNow, "00:00");
     expect(status.state).toBe("upcoming");
     if (status.state === "upcoming") {
-      expect(status.startsIn).toContain("1 dies");
+      expect(status.startsIn).toBe("Comença en 1 dia");
     }
   });
 
@@ -175,7 +179,7 @@ describe("computeTemporalStatus", () => {
     const status = compute(start, end, baseNow, "00:00");
     expect(status.state).toBe("live");
     if (status.state === "live" && status.endsIn) {
-      expect(status.endsIn).toContain("1 dies");
+      expect(status.endsIn).toBe("Acaba en 1 dia");
     }
   });
 

@@ -29,15 +29,20 @@ export const buildEventStatusLabels = (
   upcoming: translate("upcoming"),
   endsInDays: translate("endsInDays", { count: COUNT_PLACEHOLDER }),
   endsInHours: translate("endsInHours", { count: COUNT_PLACEHOLDER }),
+  endsInOneDay: translate("endsInOneDay"),
+  endsInOneHour: translate("endsInOneHour"),
   endsSoon: translate("endsSoon"),
   startsInDays: translate("startsInDays", { count: COUNT_PLACEHOLDER }),
   startsInHours: translate("startsInHours", { count: COUNT_PLACEHOLDER }),
+  startsInOneDay: translate("startsInOneDay"),
+  startsInOneHour: translate("startsInOneHour"),
   startsToday: translate("startsToday"),
   today: translate("today"),
 });
 
-const formatCount = (template: string, count: number) =>
-  template.replace("{count}", count.toString());
+// Labels are plain strings (no ICU plural), so 1 has its own message.
+const formatCount = (template: string, count: number, one: string) =>
+  count === 1 ? one : template.replace(COUNT_PLACEHOLDER, count.toString());
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -82,14 +87,18 @@ export function computeTemporalStatus(
         ? {
             state: "live",
             label: labels.live,
-            endsIn: formatCount(labels.endsInDays, days),
+            endsIn: formatCount(labels.endsInDays, days, labels.endsInOneDay),
           }
         : { state: "live", label: labels.live };
     }
     return {
       state: "upcoming",
       label: labels.upcoming,
-      startsIn: formatCount(labels.startsInDays, daysBetween(today, startDay)),
+      startsIn: formatCount(
+        labels.startsInDays,
+        daysBetween(today, startDay),
+        labels.startsInOneDay,
+      ),
     };
   }
 
@@ -104,13 +113,13 @@ export function computeTemporalStatus(
       return {
         state: "live",
         label: labels.live,
-        endsIn: formatCount(labels.endsInDays, days),
+        endsIn: formatCount(labels.endsInDays, days, labels.endsInOneDay),
       };
     if (hours > 0)
       return {
         state: "live",
         label: labels.live,
-        endsIn: formatCount(labels.endsInHours, hours),
+        endsIn: formatCount(labels.endsInHours, hours, labels.endsInOneHour),
       };
     return { state: "live", label: labels.live, endsIn: labels.endsSoon };
   }
@@ -121,14 +130,14 @@ export function computeTemporalStatus(
     return {
       state: "upcoming",
       label: labels.upcoming,
-      startsIn: formatCount(labels.startsInDays, daysUntil),
+      startsIn: formatCount(labels.startsInDays, daysUntil, labels.startsInOneDay),
     };
   }
   if (hoursUntil > 0) {
     return {
       state: "upcoming",
       label: labels.upcoming,
-      startsIn: formatCount(labels.startsInHours, hoursUntil),
+      startsIn: formatCount(labels.startsInHours, hoursUntil, labels.startsInOneHour),
     };
   }
   return {

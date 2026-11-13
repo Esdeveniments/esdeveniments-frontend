@@ -851,6 +851,9 @@ at once on close (share, add to calendar, language) only animate in:
 results and server-rendered cards never animate. A `bounce-subtle` easing
 exists but is reserved for confirmations — favoriting an event (the heart
 beats only after a tap, never when the page loads), copying a share link.
+Status labels never loop: an endless pulse can't be stopped (WCAG 2.2.2)
+and fades its text below AA, so the "En curs" event badge marks live with a
+still dot.
 Hover styles apply only on devices that hover (`future.hoverOnlyWhenSupported`
 in `tailwind.config.js`), so a tap never leaves one behind. There are no page
 transitions: `<ViewTransition>` can't pair a card with its event page here
