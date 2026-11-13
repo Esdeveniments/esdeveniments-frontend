@@ -45,7 +45,7 @@ const cases: Case[] = [
 
   // Overnight: the end time is on the next day even when the end date repeats the start date.
   { name: "overnight, before it starts", now: "2025-10-10T12:00", startDate: "2025-10-10", endDate: "2025-10-10", startTime: "22:00", endTime: "02:00", state: "upcoming" },
-  { name: "overnight, after midnight", now: "2025-10-11T01:00", startDate: "2025-10-10", endDate: "2025-10-10", startTime: "22:00", endTime: "02:00", state: "live", detail: /^1 hours$/ },
+  { name: "overnight, after midnight", now: "2025-10-11T01:00", startDate: "2025-10-10", endDate: "2025-10-10", startTime: "22:00", endTime: "02:00", state: "live", detail: /^1 hour$/ },
   { name: "overnight, over", now: "2025-10-11T03:00", startDate: "2025-10-10", endDate: "2025-10-10", startTime: "22:00", endTime: "02:00", state: "past", detail: /^2025-10-11$/ },
   { name: "ends at midnight", now: "2025-10-10T23:00", startDate: "2025-10-10", endDate: "2025-10-10", startTime: "22:00", endTime: "00:00", state: "live" },
 
@@ -66,7 +66,7 @@ const cases: Case[] = [
   { name: "all day today (null)", now: "2025-10-10T12:00", startDate: "2025-10-10", startTime: null, state: "live" },
   { name: "all day today (empty)", now: "2025-10-10T12:00", startDate: "2025-10-10", startTime: "", state: "live" },
   { name: "all day today (00:00)", now: "2025-10-10T12:00", startDate: "2025-10-10", startTime: "00:00", state: "live" },
-  { name: "all day tomorrow (00:00:00)", now: "2025-10-10T12:00", startDate: "2025-10-11", startTime: "00:00:00", state: "upcoming", detail: /^1 days$/ },
+  { name: "all day tomorrow (00:00:00)", now: "2025-10-10T12:00", startDate: "2025-10-11", startTime: "00:00:00", state: "upcoming", detail: /^1 day$/ },
   { name: "all day yesterday", now: "2025-10-10T12:00", startDate: "2025-10-09", startTime: null, state: "past", detail: /^2025-10-09$/ },
   { name: "all day yesterday, just after midnight", now: "2025-10-10T00:30", startDate: "2025-10-09", startTime: null, state: "past" },
   { name: "all day today, just after midnight", now: "2025-10-10T00:30", startDate: "2025-10-10", startTime: null, state: "live" },
@@ -97,9 +97,13 @@ const labels = {
   upcoming: "upcoming",
   endsInDays: "{count} days",
   endsInHours: "{count} hours",
+  endsInOneDay: "1 day",
+  endsInOneHour: "1 hour",
   endsSoon: "soon",
   startsInDays: "{count} days",
   startsInHours: "{count} hours",
+  startsInOneDay: "1 day",
+  startsInOneHour: "1 hour",
   startsToday: "today",
   today: "today",
 };

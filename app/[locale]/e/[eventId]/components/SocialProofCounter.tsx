@@ -27,7 +27,7 @@ export default function SocialProofCounter({
       ) : (
         <EyeIcon className="w-4 h-4 text-foreground-strong/70" />
       )}
-      <span className={`tabular-nums ${isPopular ? "font-semibold" : ""}`}>
+      <span className={`whitespace-nowrap tabular-nums ${isPopular ? "font-semibold" : ""}`}>
         {interestedLabel}
       </span>
     </span>

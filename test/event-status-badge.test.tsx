@@ -10,7 +10,16 @@ describe("EventStatusBadge", () => {
       />,
     );
     const badge = screen.getByLabelText("Estat: Properament — Comença en 3 hores");
-    expect(badge.textContent).toBe("Comença en 3 hores");
+    expect(badge.textContent).toBe("Comença en 3\u00A0hores");
+  });
+
+  it("keeps the number with its unit, so a wrap never leaves the unit alone", () => {
+    render(
+      <EventStatusBadge
+        status={{ state: "upcoming", label: "Upcoming", startsIn: "Starts in 180 days" }}
+      />,
+    );
+    expect(screen.getByLabelText(/^Estat: Upcoming/).textContent).toBe("Starts in 180\u00A0days");
   });
 
   it("shows the label for an upcoming event with no countdown", () => {
@@ -25,7 +34,7 @@ describe("EventStatusBadge", () => {
       />,
     );
     const parts = [...screen.getByLabelText(/^Estat: En curs/).children];
-    expect(parts.map((p) => p.textContent)).toEqual(["En curs", "Acaba en 3 hores"]);
+    expect(parts.map((p) => p.textContent)).toEqual(["En curs", "Acaba en 3\u00A0hores"]);
     for (const part of parts) expect(part.className).toContain("whitespace-nowrap");
   });
 });

@@ -23,6 +23,9 @@ function getCountdown(
   return undefined;
 }
 
+// With large text the badge can still wrap; keep "3 hores" together when it does.
+const keepNumberWithUnit = (text: string) => text.replace(/(\d) /g, "$1\u00A0");
+
 const EventStatusBadge: React.FC<{
   status?: EventStatusMeta | EventTemporalStatus | null;
   ariaLabelPrefix?: string;
@@ -32,6 +35,7 @@ const EventStatusBadge: React.FC<{
   if (!status) return null;
 
   const countdown = getCountdown(status);
+  const shownCountdown = countdown && keepNumberWithUnit(countdown);
   const ariaPrefix = ariaLabelPrefix ?? t("ariaLabelPrefix");
 
   // "Comença en 3 hores" already says it's upcoming, so it replaces the label.
@@ -40,8 +44,8 @@ const EventStatusBadge: React.FC<{
       ? t("past")
       : status.state === "live"
         ? t("live")
-        : countdown || status.label;
-  const detail = status.state === "live" ? countdown : undefined;
+        : shownCountdown || status.label;
+  const detail = status.state === "live" ? shownCountdown : undefined;
 
   return (
     <span
