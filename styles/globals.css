@@ -905,15 +905,15 @@ video {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .list-appended > section > .content-auto {
+  .list-appended > ul > .content-auto {
     animation: listItemIn 200ms theme("transitionTimingFunction.out-strong") backwards;
   }
 
-  .list-appended > section > .content-auto:nth-child(3n + 2) {
+  .list-appended > ul > .content-auto:nth-child(3n + 2) {
     animation-delay: 40ms;
   }
 
-  .list-appended > section > .content-auto:nth-child(3n + 3) {
+  .list-appended > ul > .content-auto:nth-child(3n + 3) {
     animation-delay: 80ms;
   }
 }

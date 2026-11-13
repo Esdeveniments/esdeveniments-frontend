@@ -63,12 +63,12 @@ export interface HorizontalScrollProps {
   labels?: HorizontalScrollLabels;
 }
 
-/** `variant` defaults to `card`; CardLayout's stretched title link uses `plain`. */
 /** A server card link: the list passes the locale so the link renders synchronously */
 export interface ServerCardLinkProps extends CardLinkProps {
   locale: AppLocale;
 }
 
+/** `variant` defaults to `card`; CardLayout's stretched title link uses `plain`. */
 export interface CardLinkProps extends Omit<
   PressableLinkBaseProps,
   "disableNavigationSignal"
