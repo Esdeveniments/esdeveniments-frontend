@@ -4,8 +4,7 @@ import {
   generateCollectionPageSchema,
   generateItemListStructuredData,
 } from "@components/partials/seo-meta";
-import List from "@components/ui/list";
-import CardServer from "@components/ui/card/CardServer";
+import EventCardList from "@components/ui/card/EventCardList";
 import CardImagePreload from "@components/ui/common/image/CardImagePreload";
 import SitemapLayout from "@components/ui/sitemap/SitemapLayout";
 import SitemapBreadcrumb from "@components/ui/sitemap/SitemapBreadcrumb";
@@ -84,16 +83,11 @@ export default async function FestivityPageView({
           <section className="stack gap-4 w-full">
             <h2 className="heading-2">{t("upcomingTitle")}</h2>
             {upcoming.length > 0 ? (
-              <List events={upcoming}>
-                {(event, index) => (
-                  <CardServer
-                    key={event.id}
-                    event={event}
-                    isPriority={index === priorityIndex}
-                    headingLevel="h3"
-                  />
-                )}
-              </List>
+              <EventCardList
+                events={upcoming}
+                priorityIndex={priorityIndex}
+                headingLevel="h3"
+              />
             ) : (
               <p className="body-normal text-foreground/80">
                 {t("noUpcoming", season)}

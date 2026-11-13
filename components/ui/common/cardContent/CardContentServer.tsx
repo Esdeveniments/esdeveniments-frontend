@@ -1,12 +1,11 @@
 import CardLink from "./CardLink";
 import type { CardContentServerProps } from "types/props";
-import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
 import CardLayout from "./CardLayout";
 import { prepareCardContentData } from "./prepareCardContentData";
 import { buildEventVenueLabel } from "@utils/location-helpers";
 
-async function CardContentServer({
+// Sync on purpose: the list reads `labels` once (getCardLabels).
+function CardContentServer({
   event,
   isPriority = false,
   initialIsFavorite,
@@ -14,13 +13,9 @@ async function CardContentServer({
   position,
   description,
   compact = false,
-  locale: localeProp,
+  labels: { locale, tCard, tCategories },
   headingLevel,
 }: CardContentServerProps) {
-  // Callers that already hold rootLocale() pass it, so they don't start reading headers().
-  const locale = localeProp ?? (await getLocaleSafely());
-  const tCard = await getTranslations({ locale, namespace: "Components.CardContent" });
-  const tCategories = await getTranslations({ locale, namespace: "Config.Categories" });
   const card = prepareCardContentData({
     event,
     variant: "standard",
@@ -49,7 +44,7 @@ async function CardContentServer({
       description={description}
       isPriority={isPriority}
       headingLevel={headingLevel}
-      renderLink={(props) => <CardLink {...props} />}
+      renderLink={(props) => <CardLink {...props} locale={locale} />}
     />
   );
 }

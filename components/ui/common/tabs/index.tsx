@@ -9,41 +9,36 @@ import type { TabsProps } from "types/props";
 export default function Tabs({ items, active, ariaLabel }: TabsProps) {
   return (
     <nav aria-label={ariaLabel} className="border-b border-border w-full">
-      <HorizontalScroll ariaLabel={ariaLabel}>
-        {/* HorizontalScroll's own scroller div already carries role="list";
-            adding a second one here would nest a list whose only child is
-            itself a list, not a listitem — a worse violation than a plain div. */}
-        <div className="flex w-full">
-          {items.map((item) => {
-            const isActive = item.id === active;
-            return (
-              <div role="listitem" key={item.id} className="shrink-0">
-                <Link
-                  href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={[
-                    // h-full + justify-end: the parent row stretches each
-                    // listitem to the tallest sibling (align-items: stretch),
-                    // but Link's own height is auto so it doesn't fill that
-                    // stretched space by default — its content just sits at
-                    // the top. h-full makes Link fill it; justify-end then
-                    // pushes the label to the bottom so tabs with and without
-                    // a count line still share the same label baseline.
-                    "flex h-full flex-col items-center justify-end gap-1 border-b-2 -mb-px px-element-gap py-sm focus-ring",
-                    isActive
-                      ? "border-primary text-foreground-strong"
-                      : "border-transparent text-foreground/80",
-                  ].join(" ")}
-                >
-                  {item.count !== undefined && (
-                    <span className="heading-3">{item.count}</span>
-                  )}
-                  <span className="heading-3">{item.label}</span>
-                </Link>
-              </div>
-            );
-          })}
-        </div>
+      <HorizontalScroll ariaLabel={ariaLabel} listClassName="flex w-full">
+        {items.map((item) => {
+          const isActive = item.id === active;
+          return (
+            <li key={item.id} className="shrink-0">
+              <Link
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                className={[
+                  // h-full + justify-end: the parent row stretches each
+                  // listitem to the tallest sibling (align-items: stretch),
+                  // but Link's own height is auto so it doesn't fill that
+                  // stretched space by default — its content just sits at
+                  // the top. h-full makes Link fill it; justify-end then
+                  // pushes the label to the bottom so tabs with and without
+                  // a count line still share the same label baseline.
+                  "flex h-full flex-col items-center justify-end gap-1 border-b-2 -mb-px px-element-gap py-sm focus-ring",
+                  isActive
+                    ? "border-primary text-foreground-strong"
+                    : "border-transparent text-foreground/80",
+                ].join(" ")}
+              >
+                {item.count !== undefined && (
+                  <span className="heading-3">{item.count}</span>
+                )}
+                <span className="heading-3">{item.label}</span>
+              </Link>
+            </li>
+          );
+        })}
       </HorizontalScroll>
     </nav>
   );

@@ -1,5 +1,4 @@
-import List from "@components/ui/list";
-import CardServer from "@components/ui/card/CardServer";
+import EventCardList from "@components/ui/card/EventCardList";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import type { EventSummaryResponseDTO } from "types/api/event";
 
@@ -26,17 +25,11 @@ export default function EventsSection({
       {events.length === 0 ? (
         <NoEventsFound title={emptyTitle} />
       ) : (
-        <List events={events}>
-          {(event, index) => (
-            <CardServer
-              key={`${event.id}-${index}`}
-              event={event}
-              isPriority={index === 0}
-              initialIsFavorite={initialIsFavorite}
-              headingLevel="h2"
-            />
-          )}
-        </List>
+        <EventCardList
+          events={events}
+          initialIsFavorite={initialIsFavorite}
+          headingLevel="h2"
+        />
       )}
     </section>
   );

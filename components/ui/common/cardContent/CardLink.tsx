@@ -1,13 +1,13 @@
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import type { CardLinkProps } from "types/ui";
+import { LocalizedPressableAnchor } from "@components/ui/primitives/PressableAnchor";
+import type { ServerCardLinkProps } from "types/ui";
 
 export default function CardLink({
   className = "",
   variant = "card",
   ...props
-}: CardLinkProps) {
+}: ServerCardLinkProps) {
   return (
-    <PressableAnchor
+    <LocalizedPressableAnchor
       {...props}
       className={className}
       variant={variant}

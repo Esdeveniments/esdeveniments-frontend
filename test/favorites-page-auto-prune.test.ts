@@ -1,4 +1,3 @@
-import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -61,15 +60,9 @@ vi.mock("@lib/api/events", async (importOriginal) => ({
   })),
 }));
 
-vi.mock("@components/ui/card/CardServer", () => ({
-  default: function CardServerMock() {
+vi.mock("@components/ui/card/EventCardList", () => ({
+  default: function EventCardListMock() {
     return null;
-  },
-}));
-
-vi.mock("@components/ui/list", () => ({
-  default: function ListMock(props: { children?: ReactNode }) {
-    return createElement("div", null, props.children);
   },
 }));
 

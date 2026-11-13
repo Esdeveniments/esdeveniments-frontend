@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import CardServer from "@components/ui/card/CardServer";
-import List from "@components/ui/list";
+import EventCardList from "@components/ui/card/EventCardList";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import Tabs from "@components/ui/common/tabs";
 import EventsGridSkeleton from "@components/ui/common/skeletons/EventsGridSkeleton";
@@ -190,17 +189,7 @@ export default async function PreferitsPage() {
       <p className="body-small text-foreground/80 mb-element-gap">
         {t("countLabel", { count: uniqueFavoritesCount, max: MAX_FAVORITES })}
       </p>
-      <List events={activeEvents}>
-        {(event, index) => (
-          <CardServer
-            key={`${event.id}-${index}`}
-            event={event}
-            isPriority={index === 0}
-            initialIsFavorite
-            headingLevel="h2"
-          />
-        )}
-      </List>
+      <EventCardList events={activeEvents} initialIsFavorite headingLevel="h2" />
     </div>
   );
 }

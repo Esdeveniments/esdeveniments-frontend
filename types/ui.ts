@@ -2,6 +2,7 @@
 import type React from "react";
 import type { LinkProps } from "next/link";
 import type { PlaceType } from "types/common";
+import type { AppLocale } from "types/i18n";
 
 export interface PressFeedbackOptions {
   disabled?: boolean;
@@ -45,7 +46,10 @@ export interface HorizontalScrollLabels {
 
 export interface HorizontalScrollProps {
   className?: string;
+  /** The carousel items: `<li>` elements (the scroller renders the `<ul>`) */
   children: React.ReactNode;
+  /** Classes for the `<ul>` track, e.g. its flex gap */
+  listClassName?: string;
   ariaLabel?: string;
   /** Show a small auto-scroll nudge once per session on touch devices */
   nudgeOnFirstLoad?: boolean;
@@ -60,6 +64,11 @@ export interface HorizontalScrollProps {
 }
 
 /** `variant` defaults to `card`; CardLayout's stretched title link uses `plain`. */
+/** A server card link: the list passes the locale so the link renders synchronously */
+export interface ServerCardLinkProps extends CardLinkProps {
+  locale: AppLocale;
+}
+
 export interface CardLinkProps extends Omit<
   PressableLinkBaseProps,
   "disableNavigationSignal"
@@ -80,6 +89,10 @@ export interface PressableLinkBaseProps
 export interface PressableLinkProps extends PressableLinkBaseProps {}
 
 export interface PressableAnchorProps extends PressableLinkBaseProps {}
+
+export interface LocalizedPressableAnchorProps extends PressableAnchorProps {
+  locale: string;
+}
 
 export type CardVariant = "standard" | "carousel" | "compact";
 

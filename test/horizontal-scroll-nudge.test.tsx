@@ -66,7 +66,7 @@ describe("HorizontalScroll nudge", () => {
   const renderCarousel = () =>
     render(
       <HorizontalScroll ariaLabel="Test" nudgeOnFirstLoad hintStorageKey="k">
-        <div role="listitem">a</div>
+        <li>a</li>
       </HorizontalScroll>,
     );
 
@@ -141,7 +141,7 @@ describe("HorizontalScroll nudge", () => {
     const { getByRole } = renderCarousel();
     intersectAll();
     act(() => {
-      getByRole("list").dispatchEvent(new Event("touchstart"));
+      getByRole("list").parentElement!.dispatchEvent(new Event("touchstart"));
       vi.advanceTimersByTime(1000);
     });
 
@@ -151,7 +151,7 @@ describe("HorizontalScroll nudge", () => {
 
   it("removes its touch listeners once the nudge ends", () => {
     const { getByRole } = renderCarousel();
-    const removeSpy = vi.spyOn(getByRole("list"), "removeEventListener");
+    const removeSpy = vi.spyOn(getByRole("list").parentElement!, "removeEventListener");
     intersectAll();
     act(() => vi.advanceTimersByTime(1000));
 

@@ -40,7 +40,7 @@ export default async function NewsCard({
       }
       isPriority={priority}
       headingLevel={headingLevel}
-      renderLink={(props) => <CardLink {...props} />}
+      renderLink={(props) => <CardLink {...props} locale={locale} />}
     />
   );
 }

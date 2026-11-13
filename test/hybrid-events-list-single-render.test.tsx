@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { ReactElement, ReactNode } from "react";
 import HybridEventsList from "@components/ui/hybridEventsList";
-import List from "@components/ui/list";
+import EventCardList from "@components/ui/card/EventCardList";
 import HeadingLayout from "@components/ui/hybridEventsList/HeadingLayout";
 import SearchAwareHeading from "@components/ui/hybridEventsList/SearchAwareHeading";
 import CountLine from "@components/ui/hybridEventsList/CountLine";
@@ -16,12 +16,12 @@ vi.mock("@components/context/UrlFiltersContext", () => ({
   useSharedUrlFilters: vi.fn(),
 }));
 
-// Count List elements anywhere in the tree, including Suspense fallbacks.
+// Count EventCardList elements anywhere in the tree, including Suspense fallbacks.
 function countLists(node: ReactNode): number {
   if (!node || typeof node !== "object") return 0;
   if (Array.isArray(node)) return node.reduce((n, c) => n + countLists(c), 0);
   const el = node as ReactElement<{ children?: ReactNode; fallback?: ReactNode }>;
-  const self = el.type === List ? 1 : 0;
+  const self = el.type === EventCardList ? 1 : 0;
   return self + countLists(el.props?.children) + countLists(el.props?.fallback);
 }
 
