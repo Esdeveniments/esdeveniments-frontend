@@ -1,4 +1,5 @@
 import CardContentServer from "@components/ui/common/cardContent/CardContentServer";
+import { getCardLabels } from "@components/ui/common/cardContent/getCardLabels";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
 import { buildEventListItems } from "@utils/schema-helpers";
 import type { EventsAroundServerProps } from "types/common";
@@ -51,11 +52,11 @@ async function EventsAroundServer({
     return null;
   }
 
-  const t = await getTranslations({ locale, namespace: "Components.EventsAround" });
-  const tScroll = await getTranslations({
-    locale,
-    namespace: "Components.HorizontalScroll",
-  });
+  const [t, tScroll, cardLabels] = await Promise.all([
+    getTranslations({ locale, namespace: "Components.EventsAround" }),
+    getTranslations({ locale, namespace: "Components.HorizontalScroll" }),
+    getCardLabels(locale),
+  ]);
   const carouselSuffix = t("carouselSuffix");
 
   const jsonLdBlock = jsonLdData ? (
@@ -80,23 +81,21 @@ async function EventsAroundServer({
         showDesktopArrows
         hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
         labels={{ previous: tScroll("previous"), next: tScroll("next") }}
+        listClassName="flex gap-element-gap"
       >
-        <div className="flex gap-element-gap">
-          {uniqueEvents.map((event, index) => (
-            <div
-              role="listitem"
-              key={event.id ?? event.slug ?? index}
-              className="snap-start flex-none w-[75vw] min-w-[75vw] sm:w-64 sm:min-w-[16rem]"
-            >
-              <CardContentServer
-                event={event}
-                compact
-                locale={locale}
-                isPriority={usePriority && index <= 2}
-              />
-            </div>
-          ))}
-        </div>
+        {uniqueEvents.map((event, index) => (
+          <li
+            key={event.id ?? event.slug ?? index}
+            className="snap-start flex-none w-[75vw] min-w-[75vw] sm:w-64 sm:min-w-[16rem]"
+          >
+            <CardContentServer
+              event={event}
+              compact
+              labels={cardLabels}
+              isPriority={usePriority && index <= 2}
+            />
+          </li>
+        ))}
       </HorizontalScroll>
     </>
   );

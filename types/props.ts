@@ -35,7 +35,7 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
-import type { ActiveLinkProps, DescriptionFold, ImageSizeContext } from "types/common";
+import type { ActiveLinkProps, CardProps, DescriptionFold, ImageSizeContext } from "types/common";
 
 /**
  * Props for ClientImageInner component
@@ -151,6 +151,26 @@ export interface CardContentProps {
   headingLevel?: CardLayoutProps["headingLevel"];
 }
 
+/** Card text in one locale. Lists read it once (`getCardLabels`) so each card renders synchronously. */
+export interface CardLabels {
+  locale: AppLocale;
+  tCard: CompactCardProps["tCard"];
+  tCategories: (key: string) => string;
+}
+
+export interface CardServerProps extends CardProps {
+  labels: CardLabels;
+}
+
+/** A grid of server event cards (`List` + `CardServer`) sharing one `CardLabels` read. */
+export interface EventCardListProps {
+  events: ListEvent[];
+  /** Index of the card that gets the LCP `priority` image */
+  priorityIndex?: number;
+  headingLevel?: CardProps["headingLevel"];
+  initialIsFavorite?: boolean;
+}
+
 /** Server card options: `row` layout (news article event lists) and the home carousel. */
 export interface CardContentServerProps extends CardContentProps {
   variant?: CardLayoutProps["layout"];
@@ -160,8 +180,7 @@ export interface CardContentServerProps extends CardContentProps {
   description?: string;
   /** Smaller carousel card (`CardLayoutProps["compact"]`) */
   compact?: boolean;
-  /** Locale from `rootLocale()`; without it the card reads `headers()` */
-  locale?: AppLocale;
+  labels: CardLabels;
 }
 
 /** What one card shows. Events build it with `prepareCardContentData`, news by hand. */

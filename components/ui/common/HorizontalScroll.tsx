@@ -14,6 +14,7 @@ import { prefersReducedMotion, smoothScrollBehavior } from "@utils/browser";
 export default function HorizontalScroll({
   className,
   children,
+  listClassName,
   ariaLabel,
   nudgeOnFirstLoad = false,
   showDesktopArrows = false,
@@ -46,9 +47,7 @@ export default function HorizontalScroll({
       ) {
         return;
       }
-      const firstItem = el.querySelector(
-        '[role="listitem"]'
-      ) as HTMLElement | null;
+      const firstItem = el.querySelector("li");
       const track = el.firstElementChild as HTMLElement | null;
       const style = track ? getComputedStyle(track) : null;
       const gapPx =
@@ -246,9 +245,6 @@ export default function HorizontalScroll({
       {/* Scroll container */}
       <div
         ref={scrollerRef}
-        role="list"
-        aria-roledescription="carousel"
-        aria-label={ariaLabel}
         className={[
           // base container styles
           "w-full flex overflow-x-auto min-w-0 scroll-smooth snap-x snap-mandatory",
@@ -256,7 +252,9 @@ export default function HorizontalScroll({
           "[scrollbar-width:thin] [-webkit-overflow-scrolling:touch]",
         ].join(" ")}
       >
-        {children}
+        <ul aria-label={ariaLabel} className={listClassName}>
+          {children}
+        </ul>
       </div>
 
       {/* Left gradient (if not at start) */}

@@ -65,9 +65,9 @@ export default async function SitemapContent({
 
         <div className="stack gap-6">
           <h2 className="heading-2">{t("regionsTitle")}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4" role="list">
+          <ul className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {sortedRegions.map((region) => (
-              <div key={region.slug} role="listitem">
+              <li key={region.slug}>
                 <PressableAnchor
                   href={withLocale(`/sitemap/${region.slug}`)}
                   className="text-foreground-strong hover:text-primary hover:underline transition-colors"
@@ -76,16 +76,16 @@ export default async function SitemapContent({
                 >
                   {region.name}
                 </PressableAnchor>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
         <div className="stack gap-6">
           <h2 className="heading-2">{t("citiesTitle")}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
+          <ul className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {sortedCities.map((city) => (
-              <div key={city.slug} role="listitem">
+              <li key={city.slug}>
                 <PressableAnchor
                   href={withLocale(`/sitemap/${city.slug}`)}
                   className="text-foreground-strong hover:text-primary hover:underline transition-colors"
@@ -94,9 +94,9 @@ export default async function SitemapContent({
                 >
                   {city.name}
                 </PressableAnchor>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
     </>

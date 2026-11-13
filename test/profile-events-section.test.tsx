@@ -16,7 +16,7 @@ vi.mock("@lib/api/events", () => ({
 import ProfileEventsSection from "components/partials/ProfileEventsSection";
 import { fetchUserEvents } from "@lib/api/profiles";
 import { fetchEventsCached } from "@lib/api/events";
-import List from "@components/ui/list";
+import EventCardList from "@components/ui/card/EventCardList";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import { Link } from "@i18n/routing";
 
@@ -120,7 +120,7 @@ describe("ProfileEventsSection", () => {
       20,
       "upcoming",
     );
-    const lists = findAllByType(element, List);
+    const lists = findAllByType(element, EventCardList);
     expect(lists).toHaveLength(1);
     expect((lists[0].props as { events: unknown[] }).events).toHaveLength(2);
     expect(findAllByType(element, NoEventsFound)).toHaveLength(0);
@@ -143,7 +143,7 @@ describe("ProfileEventsSection", () => {
       20,
       "past",
     );
-    const lists = findAllByType(element, List);
+    const lists = findAllByType(element, EventCardList);
     expect(lists).toHaveLength(1);
     expect((lists[0].props as { events: { id: string }[] }).events).toEqual([
       expect.objectContaining({ id: "old" }),
@@ -159,7 +159,7 @@ describe("ProfileEventsSection", () => {
     });
 
     expect(findAllByType(element, NoEventsFound)).toHaveLength(1);
-    expect(findAllByType(element, List)).toHaveLength(0);
+    expect(findAllByType(element, EventCardList)).toHaveLength(0);
   });
 
   it("links to Passats and shows upcoming events in the organizer's town when nothing is upcoming", async () => {
@@ -188,7 +188,7 @@ describe("ProfileEventsSection", () => {
       page: 0,
       size: 6,
     });
-    const lists = findAllByType(element, List);
+    const lists = findAllByType(element, EventCardList);
     expect(lists).toHaveLength(1);
     expect(
       (lists[0].props as { events: { id: string }[] }).events.map((e) => e.id),
@@ -215,7 +215,7 @@ describe("ProfileEventsSection", () => {
     });
 
     expect(mockFetchEventsCached).not.toHaveBeenCalled();
-    expect(findAllByType(element, List)).toHaveLength(0);
+    expect(findAllByType(element, EventCardList)).toHaveLength(0);
     expect(findAllByType(element, NoEventsFound)).toHaveLength(0);
     expect(findAllByType(element, Link)).toHaveLength(1);
   });

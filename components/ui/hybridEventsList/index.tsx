@@ -1,11 +1,9 @@
 import { ReactElement, Suspense } from "react";
 import { HybridEventsListProps } from "types/props";
 import NoEventsFound from "@components/ui/common/noEventsFound";
-import { ListEvent } from "types/api/event";
 import HybridEventsListClient from "./HybridEventsListClient";
 import SearchRecoveryLinks from "./SearchRecoveryLinks";
-import List from "@components/ui/list";
-import CardServer from "@components/ui/card/CardServer";
+import EventCardList from "@components/ui/card/EventCardList";
 import AdArticle from "../adArticle";
 import SsrListWrapper from "./SsrListWrapper";
 import SearchAwareHeading from "./SearchAwareHeading";
@@ -96,16 +94,11 @@ async function HybridEventsList({
             </Suspense>
           )}
         </NoEventsFound>
-        <List events={initialEvents}>
-          {(event: ListEvent, index: number) => (
-            <CardServer
-              key={`${event.id}-${index}`}
-              event={event}
-              isPriority={index === priorityIndex}
-              headingLevel="h2"
-            />
-          )}
-        </List>
+        <EventCardList
+          events={initialEvents}
+          priorityIndex={priorityIndex}
+          headingLevel="h2"
+        />
       </div>
     );
   }
@@ -133,16 +126,11 @@ async function HybridEventsList({
             here: SsrListWrapper reads the shared URL filters context, and a
             fallback that repeated the list sent every card twice in the HTML. */}
         <SsrListWrapper categories={categories}>
-          <List events={initialEvents}>
-            {(event: ListEvent, index: number) => (
-              <CardServer
-                key={`${event.id ?? "ad"}-${index}`}
-                event={event}
-                isPriority={index === priorityIndex}
-                headingLevel="h2"
-              />
-            )}
-          </List>
+          <EventCardList
+            events={initialEvents}
+            priorityIndex={priorityIndex}
+            headingLevel="h2"
+          />
           <AdArticle slot="9643657007" />
         </SsrListWrapper>
 

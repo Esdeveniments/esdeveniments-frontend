@@ -21,8 +21,8 @@ test.describe("Event detail flow", () => {
       await page.waitForLoadState("domcontentloaded");
       
       // Find a month link on the town sitemap page (links to /sitemap/{town}/{year}/{month})
-      // Month links are in nav elements with role="list"
-      const monthLink = page.locator('nav[role="list"] a').first();
+      // Month links are in one list per year
+      const monthLink = page.locator("article ul a").first();
       if (await monthLink.isVisible({ timeout: 10000 })) {
         // Wait for navigation to month page
         await Promise.all([
@@ -61,8 +61,8 @@ test.describe("Event detail flow", () => {
       await page.waitForLoadState("domcontentloaded");
       
       // Find a month link on the region sitemap page (links to /sitemap/{town}/{year}/{month})
-      // Month links are in nav elements with role="list"
-      const monthLink = page.locator('nav[role="list"] a').first();
+      // Month links are in one list per year
+      const monthLink = page.locator("article ul a").first();
       if (await monthLink.isVisible({ timeout: 10000 })) {
         // Wait for navigation to month page
         await Promise.all([

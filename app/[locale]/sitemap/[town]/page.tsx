@@ -128,10 +128,10 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
           {years?.map((year) => (
             <article key={year} className="stack gap-4">
               <h2 className="heading-3">{year}</h2>
-              <nav role="list" className="stack gap-1">
+              <ul className="stack gap-1">
                 {[...months].reverse().map(({ slug, label }) => {
                   return (
-                    <div key={`${year}-${slug}`} role="listitem">
+                    <li key={`${year}-${slug}`}>
                       <PressableAnchor
                         href={withLocale(`/sitemap/${town}/${year}/${slug}`)}
                         className="text-foreground-strong hover:text-primary hover:underline transition-colors capitalize"
@@ -140,10 +140,10 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
                       >
                         {label}
                       </PressableAnchor>
-                    </div>
+                    </li>
                   );
                 }).reverse()}
-              </nav>
+              </ul>
             </article>
           ))}
         </section>

@@ -41,22 +41,25 @@ vi.mock("@components/ui/adArticle", () => ({
   default: () => <div data-testid="ad-slot" />,
 }));
 
-vi.mock("@components/ui/primitives/PressableAnchor", () => ({
-  default: ({
+vi.mock("@components/ui/primitives/PressableAnchor", () => {
+  const AnchorMock = ({
     href,
     children,
     prefetch, // eslint-disable-line @typescript-eslint/no-unused-vars
+    locale, // eslint-disable-line @typescript-eslint/no-unused-vars
     ...rest
   }: {
     href: string;
     children: React.ReactNode;
     prefetch?: boolean;
+    locale?: string;
   }) => (
     <a href={href} {...rest}>
       {children}
     </a>
-  ),
-}));
+  );
+  return { default: AnchorMock, LocalizedPressableAnchor: AnchorMock };
+});
 
 vi.mock("@heroicons/react/24/solid", () => ({
   ChevronRightIcon: () => <svg data-testid="chevron-icon" />,

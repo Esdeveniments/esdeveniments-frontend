@@ -3,8 +3,7 @@ import { fetchEventsCached } from "@lib/api/events";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { Link } from "@i18n/routing";
-import List from "@components/ui/list";
-import CardServer from "@components/ui/card/CardServer";
+import EventCardList from "@components/ui/card/EventCardList";
 import EventsSection from "./EventsSection";
 import type { ProfileEventsSectionProps } from "types/props";
 import type { AppLocale } from "types/i18n";
@@ -72,15 +71,7 @@ export default async function ProfileEventsSection({
               <h2 className="heading-3 text-foreground-strong mb-element-gap">
                 {t("upcomingInTown", { placeIn: townIn })}
               </h2>
-              <List events={townEvents}>
-                {(event, index) => (
-                  <CardServer
-                    key={`${event.id}-${index}`}
-                    event={event}
-                    isPriority={index === 0}
-                  />
-                )}
-              </List>
+              <EventCardList events={townEvents} />
               <div className="flex justify-center py-section-y">
                 <Link
                   href={`/${town.slug}`}
