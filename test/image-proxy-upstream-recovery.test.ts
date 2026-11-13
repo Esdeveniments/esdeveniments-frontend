@@ -4,6 +4,7 @@ import { fetch as undiciFetch } from "undici";
 import { GET } from "app/api/image-proxy/route";
 import { forgetMissingIssuers, resolveMissingIssuers } from "@utils/tls-aia";
 import { fetchWithLenientParser } from "@utils/lenient-http-fetch";
+import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
 
 const { DNS_RECORDS } = vi.hoisted(() => ({
   DNS_RECORDS: [{ address: "203.0.113.10", family: 4 }],
@@ -88,6 +89,7 @@ describe("image proxy with an incomplete upstream TLS chain", () => {
     expect(retry?.[1]?.dispatcher).toBeDefined();
     expect(retry?.[1]?.dispatcher).not.toBe(first?.[1]?.dispatcher);
     expect(retry?.[1]?.redirect).toBe("manual");
+    expect(retry?.[1]?.headers).toEqual({ "user-agent": IMAGE_PROXY_USER_AGENT });
     expect(forgetMissingIssuers).not.toHaveBeenCalled();
   });
 

@@ -2,6 +2,7 @@ import type { LookupAddress } from "node:dns";
 import http from "node:http";
 import https from "node:https";
 import { Headers, Response } from "undici";
+import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
 import { getErrorChain } from "@utils/error-chain";
 import { buildPinnedLookup } from "@utils/pinned-dns-dispatcher";
 
@@ -40,6 +41,7 @@ export function fetchWithLenientParser(
       url,
       {
         agent: false,
+        headers: { "user-agent": IMAGE_PROXY_USER_AGENT },
         insecureHTTPParser: true,
         rejectUnauthorized,
         signal,

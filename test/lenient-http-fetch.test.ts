@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { createServer, type Server } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
+import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
 import { fetchWithLenientParser } from "@utils/lenient-http-fetch";
 
 let server: Server | undefined;
@@ -29,6 +30,30 @@ describe("fetchWithLenientParser", () => {
     expect(res.headers.get("content-type")).toBe("image/jpeg");
     expect(res.headers.has("content-security-policy")).toBe(false);
     expect(await res.text()).toBe("jpeg");
+  });
+
+  it("sends the image proxy User-Agent, since Node's http sends none", async () => {
+    let request = "";
+    server = createServer((socket) =>
+      socket.once("data", (chunk) => {
+        request = chunk.toString("latin1");
+        socket.end("HTTP/1.1 204 No Content\r\n\r\n");
+      }),
+    );
+    await new Promise<void>((ready) => server?.listen(0, "127.0.0.1", ready));
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("no port");
+
+    await fetchWithLenientParser(
+      `http://127.0.0.1:${address.port}/poster.jpg`,
+      AbortSignal.timeout(2000),
+      undefined,
+      true,
+    );
+
+    expect(request.toLowerCase()).toContain(
+      `user-agent: ${IMAGE_PROXY_USER_AGENT.toLowerCase()}\r\n`,
+    );
   });
 
   it("rejects, instead of hanging, on a header value Headers can't hold", async () => {

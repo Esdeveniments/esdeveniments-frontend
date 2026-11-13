@@ -129,6 +129,12 @@ Production runs on Coolify/Docker/Node 26; Vercel previews are a different runti
 
 That real-socket design has a cost: it's a real HTTP server on a real (ephemeral) port, so it can flake under CPU/port contention rather than a code bug. It failed once in `yarn test --run` right after a `git push` (2213/2215) while a dev server and browser automation were still running in the background, then passed 3/3 in isolation and 2215/2215 once those processes were killed. Before "fixing" a failure here, rule out background load (`next dev`, headless browsers, other test runs) rather than touching the dispatcher code.
 
+## Council WAFs block the image proxy's default User-Agent
+
+Some council sites sit behind a CloudFront WAF that answers 403 to undici's default `user-agent: undici` and to an empty one, while browsers get the image. The proxy turned that 403 into a 502, so the card showed the default image and nothing else looked broken. Seen on 2026-11-13 with Santa Susanna on staging. Probing the home pages of the 947 town websites in the dashboard registry found 7 that answer the same way (Badalona, Figueres, Matadepera, Mollet del Vallès, Salou, Santa Susanna, Vic), and two more (L'Esquirol, and Lleida's paeria.cat) block an empty User-Agent only.
+
+Every upstream request sends `IMAGE_PROXY_USER_AGENT` (`utils/constants.ts`), including the lenient `http.get` fallback, which sends no User-Agent at all by default. The WAF rule is opaque: a bare `Mozilla/5.0`, `Mozilla/5.0 (compatible; X)` and a spoofed Googlebot are all rejected, and the current string passes. Before changing it, probe a Santa Susanna or Badalona image with curl `-A`. `test/image-proxy-upstream-headers.test.ts` checks the header on a real socket.
+
 ## E2E sources must be hosts we control
 
 The image-proxy e2e fetched `picsum.photos`. On 2026-11-12 it returned 522 and timed out for hours, and the required E2E check failed on every PR. The specs need a real public https image (the proxy refuses anything else), so `PROXY_TEST_UPSTREAMS` in `e2e/image-proxy.spec.ts` lists our own hero photo on two independent hosts: GitHub `raw` pinned to a merged commit, then our own site. `getLiveTestImage` probes them directly and uses the first that answers, so a 502 from the proxy afterwards means the proxy is broken. If neither answers, the test fails; it doesn't skip. Never point an e2e at a third-party demo or placeholder service.
