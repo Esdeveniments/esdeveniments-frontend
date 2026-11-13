@@ -474,6 +474,8 @@
       "confirmButtonLoading": "Redirecting to payment...",
       "errorGeneric": "Something went wrong. Please try again.",
       "chooseOption": "Choose where and for how long",
+      "plansHeading": "Promotion prices",
+      "eventEndsTooSoon": "This event has ended or ends too soon to promote.",
       "taxIncluded": "Prices include VAT. One-off payment.",
       "duration": "{days, plural, one {# day} other {# days}}",
       "scope": {

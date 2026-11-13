@@ -474,6 +474,8 @@
       "confirmButtonLoading": "Redirigiendo al pago...",
       "errorGeneric": "Algo ha fallado. Inténtalo de nuevo.",
       "chooseOption": "Elige dónde y durante cuánto tiempo",
+      "plansHeading": "Precios de las promociones",
+      "eventEndsTooSoon": "Este evento ya ha terminado o termina demasiado pronto para promocionarlo.",
       "taxIncluded": "Precios con IVA incluido. Pago único.",
       "duration": "{days, plural, one {# día} other {# días}}",
       "scope": {

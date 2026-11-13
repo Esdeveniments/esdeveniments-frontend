@@ -46,6 +46,16 @@ export default function PromoteEventClient({
   const unavailableCode = options.ok
     ? (options.data.unavailableReason ?? "NO_AVAILABLE_OPTIONS")
     : options.code;
+  // With nothing to buy, the plans still show (greyed out) so the owner sees
+  // what exists. Event-wide blocks (pending payment, no town) show only the reason.
+  const showCatalog =
+    catalog.length > 0 && (canPurchase || unavailableCode === "NO_AVAILABLE_OPTIONS");
+  const endsTooSoon =
+    !canPurchase &&
+    catalog.length > 0 &&
+    catalog.every(
+      (option) => option.unavailableReason === "INSUFFICIENT_EVENT_DURATION",
+    );
   const scopes = SCOPE_ORDER.filter((scope) =>
     catalog.some((option) => option.scope === scope),
   );
@@ -265,10 +275,22 @@ export default function PromoteEventClient({
           </div>
         )}
 
-        {canPurchase ? (
+        {!canPurchase && !repeatsPendingCard(unavailableCode) && (
+          <div
+            className="w-full px-4 py-3 bg-muted rounded-lg"
+            role="status"
+            data-testid="promote-unavailable"
+          >
+            <p className="body-normal text-foreground/80">
+              {endsTooSoon ? t("eventEndsTooSoon") : describeCode(unavailableCode)}
+            </p>
+          </div>
+        )}
+
+        {showCatalog && (
           <div className="flex flex-col gap-4">
             <h2 className="body-normal font-semibold text-foreground-strong">
-              {t("chooseOption")}
+              {canPurchase ? t("chooseOption") : t("plansHeading")}
             </h2>
 
             <div
@@ -344,7 +366,7 @@ export default function PromoteEventClient({
                       <span className="heading-3 text-foreground-strong">
                         {formatPrice(option)}
                       </span>
-                      {!option.available && option.unavailableReason && (
+                      {!option.available && option.unavailableReason && !endsTooSoon && (
                         <span className="body-small text-muted-foreground">
                           {describeCode(option.unavailableReason)}
                         </span>
@@ -359,18 +381,6 @@ export default function PromoteEventClient({
               <p className="body-small text-muted-foreground">{t("taxIncluded")}</p>
             )}
           </div>
-        ) : (
-          !repeatsPendingCard(unavailableCode) && (
-            <div
-              className="w-full px-4 py-3 bg-muted rounded-lg"
-              role="status"
-              data-testid="promote-unavailable"
-            >
-              <p className="body-normal text-foreground/80">
-                {describeCode(unavailableCode)}
-              </p>
-            </div>
-          )
         )}
 
         {errorCode && !repeatsPendingCard(errorCode) && (

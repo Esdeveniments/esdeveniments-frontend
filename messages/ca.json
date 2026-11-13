@@ -474,6 +474,8 @@
       "confirmButtonLoading": "Redirigint a pagament...",
       "errorGeneric": "Alguna cosa ha fallat. Torna-ho a intentar.",
       "chooseOption": "Tria on i quant de temps",
+      "plansHeading": "Preus de les promocions",
+      "eventEndsTooSoon": "Aquest esdeveniment ja ha acabat o s'acaba massa aviat per promocionar-lo.",
       "taxIncluded": "Preus amb IVA inclòs. Pagament únic.",
       "duration": "{days, plural, one {# dia} other {# dies}}",
       "scope": {
