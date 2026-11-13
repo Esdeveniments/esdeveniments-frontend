@@ -69,6 +69,18 @@ const multiScopeCatalog: PromotionOptionsDTO = {
   ],
 };
 
+// Every plan blocked for one reason, as the backend sends it.
+const blocked = (
+  data: PromotionOptionsDTO,
+  reason: string,
+  topReason = reason,
+): PromotionOptionsDTO => ({
+  ...data,
+  options: data.options.map((o) => ({ ...o, available: false, unavailableReason: reason })),
+  canPurchase: false,
+  unavailableReason: topReason,
+});
+
 const renderMultiScope = () =>
   render(
     <PromoteEventClient
@@ -191,19 +203,7 @@ describe("PromoteEventClient", () => {
       <PromoteEventClient
         eventId="uuid-1"
         slug="concert"
-        options={{
-          ok: true,
-          data: {
-            ...catalog,
-            options: catalog.options.map((o) => ({
-              ...o,
-              available: false,
-              unavailableReason: "CHECKOUT_ALREADY_PENDING",
-            })),
-            canPurchase: false,
-            unavailableReason: "CHECKOUT_ALREADY_PENDING",
-          },
-        }}
+        options={{ ok: true, data: blocked(catalog, "CHECKOUT_ALREADY_PENDING") }}
         pendingCheckoutUrl={pendingUrl}
         placeNames={placeNames}
       />,
@@ -212,6 +212,60 @@ describe("PromoteEventClient", () => {
     expect(screen.getAllByText(/a mig fer|en curs/)).toHaveLength(1);
     expect(screen.getByTestId("promote-resume-checkout")).toHaveAttribute("href", pendingUrl);
     expect(screen.queryByTestId("promote-unavailable")).toBeNull();
+  });
+
+  it("lists the plans greyed out with one reason when the event ends too soon", () => {
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{
+          ok: true,
+          data: blocked(
+            multiScopeCatalog,
+            "INSUFFICIENT_EVENT_DURATION",
+            "NO_AVAILABLE_OPTIONS",
+          ),
+        }}
+        pendingCheckoutUrl={null}
+        placeNames={placeNames}
+      />,
+    );
+
+    expect(screen.getByTestId("promote-unavailable")).toHaveTextContent(
+      "massa aviat per promocionar-lo",
+    );
+    expect(screen.getByRole("tablist", { name: "Preus de les promocions" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("city-1d")).toBeDisabled();
+    expect(screen.getAllByText(/9,99/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/abans que s'acabi aquesta promoció/)).toBeNull();
+    expect(screen.queryByTestId("promote-confirm-button")).toBeNull();
+  });
+
+  it.each([
+    [
+      "promotions are off",
+      blocked(catalog, "INSUFFICIENT_EVENT_DURATION", "PROMOTIONS_DISABLED"),
+      "no estan disponibles",
+    ],
+    [
+      "every option needs a town",
+      blocked(catalog, "MISSING_EVENT_LOCATION", "NO_AVAILABLE_OPTIONS"),
+      "necessita una població",
+    ],
+  ])("shows only the reason when %s", (_label, data, text) => {
+    render(
+      <PromoteEventClient
+        eventId="uuid-1"
+        slug="concert"
+        options={{ ok: true, data }}
+        pendingCheckoutUrl={null}
+        placeNames={placeNames}
+      />,
+    );
+
+    expect(screen.getByTestId("promote-unavailable")).toHaveTextContent(text);
+    expect(screen.queryByRole("tablist")).toBeNull();
   });
 
   it("keeps the options open while a payment is pending", () => {
