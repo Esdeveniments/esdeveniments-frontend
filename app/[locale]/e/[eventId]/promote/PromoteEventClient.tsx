@@ -43,19 +43,25 @@ export default function PromoteEventClient({
   const router = useRouter();
   const catalog = options.ok ? options.data.options : [];
   const canPurchase = options.ok && options.data.canPurchase;
-  const unavailableCode = options.ok
+  const topCode = options.ok
     ? (options.data.unavailableReason ?? "NO_AVAILABLE_OPTIONS")
     : options.code;
-  // With nothing to buy, the plans still show (greyed out) so the owner sees
-  // what exists. Event-wide blocks (pending payment, no town) show only the reason.
-  const showCatalog =
-    catalog.length > 0 && (canPurchase || unavailableCode === "NO_AVAILABLE_OPTIONS");
+  // The backend repeats some event-wide reasons (no town) on every option and
+  // answers NO_AVAILABLE_OPTIONS, so a reason all the options share wins.
+  const sharedReason = catalog.every(
+    (option) => option.unavailableReason === catalog[0]?.unavailableReason,
+  )
+    ? (catalog[0]?.unavailableReason ?? null)
+    : null;
+  const unavailableCode =
+    topCode === "NO_AVAILABLE_OPTIONS" && sharedReason ? sharedReason : topCode;
   const endsTooSoon =
-    showCatalog &&
-    !canPurchase &&
-    catalog.every(
-      (option) => option.unavailableReason === "INSUFFICIENT_EVENT_DURATION",
-    );
+    !canPurchase && unavailableCode === "INSUFFICIENT_EVENT_DURATION";
+  // With nothing to buy, the plans still show (greyed out) when the plans
+  // themselves are the problem. Event-wide blocks show only the reason.
+  const showCatalog =
+    catalog.length > 0 &&
+    (canPurchase || endsTooSoon || unavailableCode === "NO_AVAILABLE_OPTIONS");
   const plansLabel = canPurchase ? t("chooseOption") : t("plansHeading");
   const scopes = SCOPE_ORDER.filter((scope) =>
     catalog.some((option) => option.scope === scope),
@@ -367,7 +373,9 @@ export default function PromoteEventClient({
                       <span className="heading-3 text-foreground-strong">
                         {formatPrice(option)}
                       </span>
-                      {!option.available && option.unavailableReason && !endsTooSoon && (
+                      {!option.available &&
+                        option.unavailableReason &&
+                        option.unavailableReason !== unavailableCode && (
                         <span className="body-small text-muted-foreground">
                           {describeCode(option.unavailableReason)}
                         </span>

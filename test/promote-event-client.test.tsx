@@ -242,23 +242,29 @@ describe("PromoteEventClient", () => {
     expect(screen.queryByTestId("promote-confirm-button")).toBeNull();
   });
 
-  it("shows only the reason when promotions are blocked for the whole event", () => {
+  it.each([
+    [
+      "promotions are off",
+      blocked(catalog, "INSUFFICIENT_EVENT_DURATION", "PROMOTIONS_DISABLED"),
+      "no estan disponibles",
+    ],
+    [
+      "every option needs a town",
+      blocked(catalog, "MISSING_EVENT_LOCATION", "NO_AVAILABLE_OPTIONS"),
+      "necessita una població",
+    ],
+  ])("shows only the reason when %s", (_label, data, text) => {
     render(
       <PromoteEventClient
         eventId="uuid-1"
         slug="concert"
-        options={{
-          ok: true,
-          data: blocked(catalog, "INSUFFICIENT_EVENT_DURATION", "PROMOTIONS_DISABLED"),
-        }}
+        options={{ ok: true, data }}
         pendingCheckoutUrl={null}
         placeNames={placeNames}
       />,
     );
 
-    expect(screen.getByTestId("promote-unavailable")).toHaveTextContent(
-      "no estan disponibles",
-    );
+    expect(screen.getByTestId("promote-unavailable")).toHaveTextContent(text);
     expect(screen.queryByRole("tablist")).toBeNull();
   });
 
