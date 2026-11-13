@@ -443,6 +443,20 @@ had nothing to scroll and `<main>`'s `overflow-x-clip` cut the listing off on
 both sides. Give such wrappers `w-full min-w-0`. Check it by comparing the
 wrapper's width with `innerWidth` on a 390 px viewport.
 
+## `aspect-ratio` plus a `min-height` sets a minimum width
+
+A box with `aspect-ratio` turns its `min-height` into a minimum width:
+`min-h-[80px]` at 5:1 is 400 px. `min-w-0` doesn't undo it. The sponsor banner
+had that, so on every phone it pushed its wrapper past the screen, and
+`<main>` (see above) centered it and cut the page on both sides. Cap the
+height with `max-h-*` and leave `min-h-*` off boxes that set `aspect-ratio`.
+The same cut happens with any wide unbreakable content, like a
+`whitespace-nowrap` label in a 2-column grid. `scrollWidth` never shows it,
+because `overflow-x: clip` hides it, so `e2e/mobile-overflow.spec.ts` measures
+every element in `<main>` at 320 px. CI has no image sponsor (the house ads
+are text), so to cover banners run it against production too:
+`PLAYWRIGHT_TEST_BASE_URL=https://www.esdeveniments.cat yarn test:e2e --config playwright.remote.config.ts e2e/mobile-overflow.spec.ts`.
+
 ## AdSense vignettes put the old scroll position back after a client-side navigation
 
 An AdSense vignette can open when the user clicks an in-app `<a>`. It saves the

@@ -80,10 +80,10 @@ export default function SponsorBanner({
       <div className="flex-start px-card-padding-sm pt-card-padding-sm pb-element-gap-sm">
         <span className="badge-default">{bannerLabel}</span>
       </div>
-      {/* No min-height on mobile: with aspect-ratio it also sets a min width
-          (80px × 5:1 = 400px) that pushed the page wider than the phone. */}
+      {/* No min-height: with aspect-ratio it also sets a min width (80px ×
+          5:1 = 400px) that pushed the page wider than the phone. */}
       <div
-        className="relative w-full max-h-[160px] md:min-h-[100px] md:max-h-[180px]"
+        className="relative w-full max-h-[160px] md:max-h-[180px]"
         style={{ aspectRatio }}
       >
         {showSkeleton && !imageLoaded && (

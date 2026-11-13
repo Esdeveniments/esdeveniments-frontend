@@ -250,13 +250,13 @@ async function ServerEventsCategorized({
               href={url}
               prefetch={false}
               variant="plain"
-              className="btn-category h-full w-full text-xs sm:w-auto whitespace-nowrap"
+              className="btn-category h-full w-full text-xs sm:w-auto sm:whitespace-nowrap"
               data-analytics-event-name="select_category"
               data-analytics-context="home_quick_categories"
               data-analytics-place-slug="catalunya"
               data-analytics-category-slug={categorySlug}
             >
-              <span className="flex items-center gap-2 whitespace-nowrap">
+              <span className="flex items-center gap-2 sm:whitespace-nowrap">
                 <Icon
                   className="w-5 h-5 text-primary flex-shrink-0"
                   aria-hidden="true"
