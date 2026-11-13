@@ -375,7 +375,7 @@ export default function PromoteEventClient({
                       </span>
                       {!option.available &&
                         option.unavailableReason &&
-                        option.unavailableReason !== unavailableCode && (
+                        (canPurchase || option.unavailableReason !== unavailableCode) && (
                         <span className="body-small text-muted-foreground">
                           {describeCode(option.unavailableReason)}
                         </span>
