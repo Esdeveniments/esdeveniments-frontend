@@ -172,6 +172,7 @@ export type E2EEventExtras = {
   city?: EventDetailResponseDTO["city"];
   province?: EventDetailResponseDTO["province"];
   categories?: EventDetailResponseDTO["categories"];
+  owner?: EventDetailResponseDTO["owner"];
 };
 
 export type GlobalWithE2EStore = typeof globalThis & {

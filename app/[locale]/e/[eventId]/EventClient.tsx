@@ -12,6 +12,7 @@ import EventNotifications from "./components/EventNotifications";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
 import { ensureGtag, sendGoogleEvent } from "@utils/analytics";
+import { hasPendingPostPublishUpsell } from "@utils/post-publish-upsell";
 
 // computeTemporalStatus now imported from utils/event-status for reuse & testability
 
@@ -42,33 +43,49 @@ export default function EventClient({
   const edit_suggested = searchParams.get("edit_suggested") === "true";
   const [showThankYouBanner, setShowThankYouBanner] = useState(edit_suggested);
 
-  // /publica redirects here with ?promote=1 after a publish. Anyone can add
-  // the marker to a URL, so show the upsell only once ownership is confirmed.
-  const isOwner = Boolean(event.ownerId) && user?.id === event.ownerId;
-  // Latched: the share step strips ?promote=1 from the URL (so a reload
-  // doesn't reopen the upsell), and the modal must stay open after that.
-  const [promoteUpsellStarted, setPromoteUpsellStarted] = useState(false);
-  if (!promoteUpsellStarted && isOwner && searchParams.get("promote") === "1") {
-    setPromoteUpsellStarted(true);
-  }
-  const [promoteDismissed, setPromoteDismissed] = useState(false);
-  const showPromoteUpsell = promoteUpsellStarted && !promoteDismissed;
+  const slug = event.slug ?? "";
+  const title = event.title ?? "";
 
-  const hasFiredPromoteShownRef = useRef(false);
+  // /publica persists a pending-upsell marker and redirects with ?promote=1.
+  // Anyone can add ?promote=1 to a URL, so show the upsell only once ownership
+  // is confirmed. Keyed by slug because App Router keeps EventClient mounted
+  // across dynamic /e/[eventId] navigations.
+  const isOwner = Boolean(event.ownerId) && user?.id === event.ownerId;
+  const ownerUserId = isOwner ? user?.id : undefined;
+  // Latched per slug: the share step strips ?promote=1 from the URL (so a
+  // reload doesn't reopen the upsell), and the modal must stay open after that.
+  const [upsellSlug, setUpsellSlug] = useState<string | null>(null);
+  const [dismissedSlug, setDismissedSlug] = useState<string | null>(null);
+  if (
+    slug &&
+    upsellSlug !== slug &&
+    dismissedSlug !== slug &&
+    isOwner &&
+    (searchParams.get("promote") === "1" ||
+      (ownerUserId !== undefined &&
+        hasPendingPostPublishUpsell(slug, ownerUserId)))
+  ) {
+    setUpsellSlug(slug);
+  }
+  const showPromoteUpsell =
+    Boolean(slug) && upsellSlug === slug && dismissedSlug !== slug;
+
+  const firedPromoteShownSlugRef = useRef<string | null>(null);
   useEffect(() => {
-    if (showPromoteUpsell && !hasFiredPromoteShownRef.current) {
-      hasFiredPromoteShownRef.current = true;
+    if (showPromoteUpsell && firedPromoteShownSlugRef.current !== slug) {
+      firedPromoteShownSlugRef.current = slug;
       ensureGtag();
       sendGoogleEvent("promote_modal_shown", {
-        event_slug: event.slug ?? "",
+        event_slug: slug,
         source: "event_detail",
       });
     }
-  }, [showPromoteUpsell, event.slug]);
+  }, [showPromoteUpsell, slug]);
 
   const handlePromoteUpsellOpenChange = (open: boolean) => {
     if (open) return;
-    setPromoteDismissed(true);
+    setDismissedSlug(slug);
+    if (!searchParams.has("promote")) return;
     // Strip only the one-time marker; keep any other query params.
     const remainingParams = new URLSearchParams(searchParams.toString());
     remainingParams.delete("promote");
@@ -91,9 +108,6 @@ export default function EventClient({
 
   useEventAnalytics(event);
 
-  const slug = event.slug ?? "";
-  const title = event.title ?? "";
-
   return (
     <>
       <EventNotifications
@@ -106,6 +120,7 @@ export default function EventClient({
 
       {showPromoteUpsell && (
         <PromoteUpsellModal
+          key={slug}
           open={showPromoteUpsell}
           setOpen={handlePromoteUpsellOpenChange}
           slug={slug}
