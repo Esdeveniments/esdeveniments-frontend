@@ -54,6 +54,8 @@ test.describe("Promotion checkout (staging)", () => {
   let sessionId: string | null = null;
 
   test.afterAll(async ({ browser }) => {
+    // Hooks get the config timeout (30 s); this one signs in through Logto.
+    test.setTimeout(120_000);
     if (!slug) return;
     const context = await browser.newContext();
     const page = await context.newPage();

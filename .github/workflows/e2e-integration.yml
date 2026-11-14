@@ -25,9 +25,12 @@ name: E2E Integration (preproduction)
 #                                     account the preproduction backend uses;
 #                                     without it the promotion payment test skips
 #
+#   secrets.E2E_LOGTO_M2M_APP_ID    → e2e-test-cleanup M2M app (Logto Management
+#   secrets.E2E_LOGTO_M2M_APP_SECRET  API access) that deletes sign-up accounts
+#
 # vars.RUN_SIGNUP_E2E=1 (repo variable) turns on the sign-up spec, which
-# registers a new Logto account each run (disposable mail.tm inbox). Nothing
-# can delete those users yet; they all use the e2e-signup- address prefix.
+# registers a new Logto account each run (disposable mail.tm inbox) and
+# deletes it afterwards. The backend keeps its user row (no delete endpoint).
 # The specs self-skip when the test-user secrets are absent, so an
 # unconfigured environment never turns this red. The event-edit and
 # event-time specs also read NEXT_PUBLIC_API_URL and BACKEND_SERVICE_SECRET
@@ -129,6 +132,11 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           E2E_PROMOTION_STRIPE_SECRET_KEY: ${{ secrets.E2E_PROMOTION_STRIPE_SECRET_KEY }}
+          # The sign-up spec deletes its Logto account through the
+          # e2e-test-cleanup machine-to-machine app (Management API).
+          LOGTO_ENDPOINT: ${{ secrets.LOGTO_ENDPOINT_STAGING }}
+          E2E_LOGTO_M2M_APP_ID: ${{ secrets.E2E_LOGTO_M2M_APP_ID }}
+          E2E_LOGTO_M2M_APP_SECRET: ${{ secrets.E2E_LOGTO_M2M_APP_SECRET }}
           # Repo variable, so the sign-up spec can be switched off without a PR.
           RUN_SIGNUP_E2E: ${{ vars.RUN_SIGNUP_E2E }}
         run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/publish-guest-integration.spec.ts e2e/event-edit-creator-only.spec.ts e2e/event-delete-creator-only.spec.ts e2e/auth-session-integration.spec.ts e2e/event-edit-integration.spec.ts e2e/event-time-integration.spec.ts e2e/promotion-integration.spec.ts e2e/signup-onboarding-integration.spec.ts

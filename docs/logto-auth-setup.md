@@ -264,6 +264,12 @@ EOF
 # confirm avatarUrl goes back to null/undefined on the next /api/auth/me
 ```
 
+The preproduction tenant has a machine-to-machine app, `e2e-test-cleanup`
+(role "Logto Management API access"), whose credentials are the `staging`
+environment secrets `E2E_LOGTO_M2M_APP_ID` and `E2E_LOGTO_M2M_APP_SECRET`. The
+sign-up spec uses it to delete the account it creates. Delete the app in the
+console to revoke it.
+
 `/publica` gate: with `profileCompleted:false`, a Publish click opens
 `/perfil/edita?redirect=/publica?resume=1`; after saving, it lands back on
 `/publica` and the draft publishes. Since 2026-11, every login of an account

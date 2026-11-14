@@ -135,6 +135,10 @@ export async function loginViaUI(page: Page, email: string, password: string) {
   await completeHostedLogin(page, email, password, appOrigin);
 }
 
+// The nightly job runs `next dev`: the first visit to a route compiles it
+// before answering (28 s for /perfil/edita, seen 2026-11-14).
+const APP_RETURN_TIMEOUT_MS = 90_000;
+
 /**
  * After Logto accepted the user, wait until the callback lands back on the
  * app. Logto may first show its optional passkey enrollment page; skip it.
@@ -143,7 +147,7 @@ export async function waitForAppReturn(page: Page, appOrigin: string) {
   await page.waitForURL(
     (url) =>
       isLoginCompleteUrl(url, appOrigin) || isPasskeySetupUrl(url),
-    { timeout: 30_000 },
+    { timeout: APP_RETURN_TIMEOUT_MS },
   );
 
   if (isPasskeySetupUrl(new URL(page.url()))) {
@@ -155,7 +159,7 @@ export async function waitForAppReturn(page: Page, appOrigin: string) {
     await skipPasskey.click();
     await page.waitForURL(
       (url) => isLoginCompleteUrl(url, appOrigin),
-      { timeout: 30_000 },
+      { timeout: APP_RETURN_TIMEOUT_MS },
     );
   }
 }

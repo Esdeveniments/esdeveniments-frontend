@@ -59,7 +59,7 @@ Commands and the Node version: AGENTS.md › Commands. Add tests only for behavi
 | `payment.*.spec.ts` | `RUN_PAYMENT_E2E=1` + test `STRIPE_*`/`TURSO_*` | `ci.yml`, PRs to `main` |
 | `*-integration.spec.ts` | `E2E_STAGING_EMAIL`/`E2E_STAGING_PASSWORD` | `e2e-integration.yml`, nightly |
 | Promotion payment test | also `E2E_PROMOTION_STRIPE_SECRET_KEY` (test key of the backend's Stripe account) | same |
-| `signup-onboarding-integration.spec.ts` | `RUN_SIGNUP_E2E=1` (repo variable `RUN_SIGNUP_E2E` in the nightly job); creates a preproduction account each run (nothing can delete it yet) | same |
+| `signup-onboarding-integration.spec.ts` | `RUN_SIGNUP_E2E=1` (repo variable `RUN_SIGNUP_E2E` in the nightly job); creates a preproduction account each run and deletes it with `E2E_LOGTO_M2M_APP_ID`/`E2E_LOGTO_M2M_APP_SECRET` (`helpers/logto-admin.ts`; the backend user row stays) | same |
 
 - **Stripe Checkout**: never fill the card form. Stripe's hosted page answers automation with hCaptcha ([Stripe: automated testing](https://docs.stripe.com/automated-testing)). Drive our UI to `checkout.stripe.com`, then pay with `payCheckoutSession` (what `stripe trigger` does), follow `success_url`, and for our own webhook forward Stripe's real event with `waitForCheckoutCompletedEvent` + `signStripePayload`. No Stripe webhook endpoint reaches CI or localhost.
 - **Return URLs** use the configured public origin (`NEXT_PUBLIC_SITE_URL` on a production build, the backend's `PROMOTIONS_FRONTEND_BASE_URL`), not the app under test. `routeReturnsToApp` redirects them back so the session cookies still apply.

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createInbox, type Inbox } from "./helpers/inbox";
+import { deleteLogtoUsers, isLogtoAdminConfigured } from "./helpers/logto-admin";
 import { completeHostedLogin, loginViaUI, openHostedSignIn, waitForAppReturn } from "./helpers/login";
 import { cleanupEvent, clickArmedPublish, prepareTestEvent } from "./helpers/publish";
 
@@ -14,10 +15,10 @@ import { cleanupEvent, clickArmedPublish, prepareTestEvent } from "./helpers/pub
  * one returns to the draft, which publishes. The verification code comes from
  * a disposable inbox.
  *
- * Every run leaves one Logto user and one backend user behind: neither
- * Logto (no Management API app for this repo) nor the backend can delete
- * them yet. They all use the `e2e-signup-` address prefix and the `e2e`
- * username prefix, so they are easy to find. Opt in with RUN_SIGNUP_E2E=1.
+ * With E2E_LOGTO_M2M_APP_ID / E2E_LOGTO_M2M_APP_SECRET and LOGTO_ENDPOINT the
+ * spec deletes the Logto account afterwards (and any `e2e-signup-` account a
+ * crashed run left over an hour ago). The backend keeps its user row: it has
+ * no delete endpoint yet. Opt in with RUN_SIGNUP_E2E=1.
  * The taken-username check also signs in as E2E_STAGING_EMAIL to read a real
  * username, and skips without it.
  */
@@ -29,6 +30,10 @@ type SessionUser = {
   profileCompleted?: boolean;
 };
 
+const ADDRESS_PREFIX = "e2e-signup";
+// The auth-gated pages show a skeleton until the session loads; on the
+// nightly `next dev` server that can take longer than expect's 10 s.
+const PAGE_TIMEOUT_MS = 30_000;
 const stagingEmail = process.env.E2E_STAGING_EMAIL;
 const stagingPassword = process.env.E2E_STAGING_PASSWORD;
 
@@ -48,7 +53,9 @@ async function expectOnboarding(page: Page, redirect: string) {
   await expect(page).toHaveURL((url) =>
     url.pathname === "/en/perfil/edita" && url.searchParams.get("redirect") === redirect,
   );
-  await expect(page.getByRole("heading", { name: "Complete your profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Complete your profile" })).toBeVisible({
+    timeout: PAGE_TIMEOUT_MS,
+  });
 }
 
 test.describe("Sign-up and onboarding (staging)", () => {
@@ -61,6 +68,12 @@ test.describe("Sign-up and onboarding (staging)", () => {
   let slug: string | undefined;
 
   test.beforeAll(async ({ browser }) => {
+    // Hooks get the config timeout (30 s), not this describe's setTimeout,
+    // and these sign in through Logto, on a cold server too.
+    test.setTimeout(120_000);
+    if (isLogtoAdminConfigured()) {
+      await deleteLogtoUsers(`${ADDRESS_PREFIX}-`, { createdBefore: Date.now() - 60 * 60_000 });
+    }
     if (!stagingEmail || !stagingPassword) return;
     const page = await browser.newPage();
     try {
@@ -72,24 +85,29 @@ test.describe("Sign-up and onboarding (staging)", () => {
   });
 
   test.afterAll(async ({ browser }) => {
-    await inbox?.dispose();
-    if (!slug || !inbox) return;
-    // The new account owns the event; its cookies are gone with the test page.
-    const page = await browser.newPage();
-    try {
-      const appOrigin = await openHostedSignIn(page);
-      await completeHostedLogin(page, inbox.address, password, appOrigin);
-      await cleanupEvent(page, slug);
-    } catch (error) {
-      console.warn("Cleanup failed:", error);
-    } finally {
-      await page.close();
+    test.setTimeout(120_000);
+    if (!inbox) return;
+    if (slug) {
+      // The new account owns the event; its cookies are gone with the test page.
+      const page = await browser.newPage();
+      try {
+        const appOrigin = await openHostedSignIn(page);
+        await completeHostedLogin(page, inbox.address, password, appOrigin);
+        await cleanupEvent(page, slug);
+      } catch (error) {
+        console.warn("Cleanup failed:", error);
+      } finally {
+        await page.close();
+      }
     }
+    if (isLogtoAdminConfigured()) {
+      expect(await deleteLogtoUsers(inbox.address), "the new Logto account is deleted").toBe(1);
+    }
+    await inbox.dispose();
   });
 
-
   test("a new account is onboarded on sign-up and on every sign-in until it completes its profile", async ({ page }) => {
-    inbox = await createInbox("e2e-signup");
+    inbox = await createInbox(ADDRESS_PREFIX);
     const username = `e2e${Date.now().toString(36)}`;
     const displayName = `E2E Signup ${username}`;
 
@@ -158,7 +176,9 @@ test.describe("Sign-up and onboarding (staging)", () => {
     expect(await sessionUser(page)).toMatchObject({ username, name: displayName, profileCompleted: true });
 
     await page.goto("/en/perfil/edita", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Edit your profile" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Edit your profile" })).toBeVisible({
+      timeout: PAGE_TIMEOUT_MS,
+    });
     await expect(page.getByLabel("Username")).not.toBeEditable();
     await expect(page.getByTestId("desktop-avatar-link")).toHaveAttribute(
       "href",
@@ -167,6 +187,8 @@ test.describe("Sign-up and onboarding (staging)", () => {
 
     const profile = await page.goto(`/en/perfil/${username}`, { waitUntil: "domcontentloaded" });
     expect(profile?.status()).toBe(200);
-    await expect(page.getByRole("heading", { name: displayName })).toBeVisible();
+    await expect(page.getByRole("heading", { name: displayName })).toBeVisible({
+      timeout: PAGE_TIMEOUT_MS,
+    });
   });
 });
