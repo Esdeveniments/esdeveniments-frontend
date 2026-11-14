@@ -13,7 +13,7 @@ import "server-only";
 import { captureException } from "@sentry/nextjs";
 import { isDbConfigured, execute } from "./turso";
 import { ensureSchema } from "./turso-schema";
-import { createCache, createKeyedCache } from "@lib/api/cache";
+import { createCache } from "@lib/api/cache";
 import { MS_PER_DAY } from "@utils/constants";
 import type {
   SponsorConfig,
@@ -29,18 +29,20 @@ import { VALID_GEO_SCOPES } from "types/sponsor";
 // In-memory TTL caches — consistent with categories/cities/regions pattern.
 // 10 min for sponsor lookups (hot path on every page render).
 // 5 min for availability (used by PlaceSelector API).
+// globalKey: the webhook and image-upload routes write sponsors, but pages and
+// the other /api/sponsors routes are bundled separately. Without a shared
+// entry, their clear() never reached the pages (a paid banner stayed hidden)
+// or the checkout's occupancy check (a sold town stayed for sale).
 const SPONSOR_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const AVAILABILITY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-const sponsorByPlaceCache = createKeyedCache<{
-  sponsor: ActiveSponsor;
-  matchedPlace: string;
-} | null>(SPONSOR_CACHE_TTL);
-
-const allActiveSponsorsCache = createCache<ActiveSponsor[]>(SPONSOR_CACHE_TTL);
+const allActiveSponsorsCache = createCache<ActiveSponsor[]>(SPONSOR_CACHE_TTL, {
+  globalKey: "sponsors-active",
+});
 
 const occupiedStatusCache = createCache<Map<string, number>>(
   AVAILABILITY_CACHE_TTL,
+  { globalKey: "sponsors-occupancy" },
 );
 
 const SPONSOR_KIND_PRIORITY: readonly SponsorKind[] = ["paid", "backfill"];
@@ -49,7 +51,6 @@ const SPONSOR_KIND_PRIORITY: readonly SponsorKind[] = ["paid", "backfill"];
  * Clear all sponsor caches. Called after writes (create, activate).
  */
 function invalidateCaches(): void {
-  sponsorByPlaceCache.clear();
   allActiveSponsorsCache.clear();
   occupiedStatusCache.clear();
 }
@@ -229,39 +230,34 @@ export async function getActiveSponsorForPlace(
   place: string,
   fallbackPlaces?: string[],
 ): Promise<{ sponsor: ActiveSponsor; matchedPlace: string } | null> {
-  // Cache key combines place + fallbacks for unique lookup
-  const cacheKey = [place, ...(fallbackPlaces ?? [])].join("|");
+  if (!isDbConfigured()) return null;
 
-  return sponsorByPlaceCache.cache(cacheKey, async () => {
-    if (!isDbConfigured()) return null;
+  try {
+    // The list is cached; matching a place against it is cheap.
+    const sponsors = await getAllActiveSponsors();
+    if (!sponsors.length) return null;
 
-    try {
-      // Reuse the cached list of all active sponsors to avoid redundant DB reads
-      const sponsors = await getAllActiveSponsors();
-      if (!sponsors.length) return null;
+    // Check primary place first, then fallbacks (same cascade logic as before)
+    const placesToCheck = [place, ...(fallbackPlaces ?? [])].filter(Boolean);
 
-      // Check primary place first, then fallbacks (same cascade logic as before)
-      const placesToCheck = [place, ...(fallbackPlaces ?? [])].filter(Boolean);
-
-      // A paid sponsor anywhere in the cascade beats a backfill banner.
-      for (const kind of SPONSOR_KIND_PRIORITY) {
-        for (const checkPlace of placesToCheck) {
-          const sponsor = sponsors.find(
-            (s) => (s.kind ?? "paid") === kind && s.places.includes(checkPlace),
-          );
-          if (sponsor) return { sponsor, matchedPlace: checkPlace };
-        }
+    // A paid sponsor anywhere in the cascade beats a backfill banner.
+    for (const kind of SPONSOR_KIND_PRIORITY) {
+      for (const checkPlace of placesToCheck) {
+        const sponsor = sponsors.find(
+          (s) => (s.kind ?? "paid") === kind && s.places.includes(checkPlace),
+        );
+        if (sponsor) return { sponsor, matchedPlace: checkPlace };
       }
-
-      return null;
-    } catch (error) {
-      // Sponsors are non-critical — show house ad or CTA instead
-      captureException(error, {
-        tags: { db: "sponsors", operation: "getActiveSponsorForPlace" },
-      });
-      return null;
     }
-  });
+
+    return null;
+  } catch (error) {
+    // Sponsors are non-critical — show house ad or CTA instead
+    captureException(error, {
+      tags: { db: "sponsors", operation: "getActiveSponsorForPlace" },
+    });
+    return null;
+  }
 }
 
 /**
