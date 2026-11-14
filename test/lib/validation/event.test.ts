@@ -86,6 +86,19 @@ describe("parsePagedEvents", () => {
       "v=2024-01-02T00%3A00%3A00Z"
     );
   });
+
+  it('keeps the listing when one event has "null" text', () => {
+    const result = parsePagedEvents({
+      content: [{ ...baseSummary, description: "null", location: "null", url: "null" }],
+      currentPage: 0,
+      pageSize: 10,
+      totalElements: 1,
+      totalPages: 1,
+      last: true,
+    });
+
+    expect(result?.content[0]).toMatchObject({ description: "", location: "", url: null });
+  });
 });
 
 describe("parseEventDetail", () => {
@@ -108,16 +121,28 @@ describe("parseEventDetail", () => {
     expect(result?.imageUrl).toContain("v=detail-hash");
     expect(result?.relatedEvents?.[0].imageUrl).toContain("v=related-hash");
   });
+
+  it('reads the text "null" and blank text as missing, keeping real values', () => {
+    const result = parseEventDetail({
+      ...baseDetail,
+      price: " NULL ",
+      url: "null",
+      imageUrl: "",
+      description: "null",
+      location: "Null",
+      metaTitle: "null",
+      metaDescription: "<b>null</b>",
+    });
+
+    expect(result).toMatchObject({
+      price: null,
+      url: null,
+      imageUrl: null,
+      description: "",
+      location: "",
+      metaTitle: null,
+      metaDescription: null,
+    });
+    expect(parseEventDetail({ ...baseDetail, price: "Nullam 5 €" })?.price).toBe("Nullam 5 €");
+  });
 });
-
-
-
-
-
-
-
-
-
-
-
-
