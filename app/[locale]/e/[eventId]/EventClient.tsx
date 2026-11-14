@@ -12,10 +12,7 @@ import EventNotifications from "./components/EventNotifications";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
 import { ensureGtag, sendGoogleEvent } from "@utils/analytics";
-import {
-  clearPendingPostPublishUpsell,
-  hasPendingPostPublishUpsell,
-} from "@utils/post-publish-upsell";
+import { hasPendingPostPublishUpsell } from "@utils/post-publish-upsell";
 
 // computeTemporalStatus now imported from utils/event-status for reuse & testability
 
@@ -73,7 +70,6 @@ export default function EventClient({
   useEffect(() => {
     if (showPromoteUpsell && !hasFiredPromoteShownRef.current) {
       hasFiredPromoteShownRef.current = true;
-      if (event.slug) clearPendingPostPublishUpsell(event.slug);
       ensureGtag();
       sendGoogleEvent("promote_modal_shown", {
         event_slug: event.slug ?? "",

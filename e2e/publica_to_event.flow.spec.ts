@@ -43,6 +43,7 @@ async function mockPublishFormOptions(page: import("@playwright/test").Page) {
 // for both the server and this process; PR runs against the Vercel preview skip
 // it. The real-backend equivalent is publish-integration.spec.ts.
 test.describe("Publica -> Event flow (deterministic)", () => {
+  test.setTimeout(process.env.CI ? 120_000 : 60_000);
   test.skip(
     process.env.E2E_TEST_MODE !== "1",
     "Needs a server built and started with E2E_TEST_MODE=1 / NEXT_PUBLIC_E2E_TEST_MODE=1 (CI sets both)",
@@ -151,9 +152,18 @@ test.describe("Publica -> Event flow (deterministic)", () => {
       );
     expect(offers).toEqual({ "@type": "Offer", price: 12.5, priceCurrency: "EUR" });
 
-    // Reloading the event page does not reopen the one-time upsell modal.
+    // Reloading the event page does not reopen the one-time upsell modal
+    // even after authenticated owner controls hydrate.
+    await expect
+      .poll(() =>
+        page.evaluate((slug) =>
+          window.localStorage.getItem(`esdeveniments:post_publish_upsell:${slug}`),
+        resolvedSlug),
+      )
+      .toBeNull();
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+    await expect(page.getByTestId("event-owner-bar")).toBeVisible({ timeout: 20000 });
     await expect(page.getByTestId("promote-upsell-modal")).toHaveCount(0);
   });
 
@@ -246,9 +256,18 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     await page.keyboard.press("Escape");
     await expect(upsellModal).toHaveCount(0);
 
-    // Once shown and dismissed, reloading must not reopen it.
+    // Once shown and dismissed, the marker is removed and reloading must not
+    // reopen it even after slow auth hydration finishes.
+    await expect
+      .poll(() =>
+        page.evaluate((slug) =>
+          window.localStorage.getItem(`esdeveniments:post_publish_upsell:${slug}`),
+        resolvedSlug),
+      )
+      .toBeNull();
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+    await expect(page.getByTestId("event-owner-bar")).toBeVisible({ timeout: 20000 });
     await expect(upsellModal).toHaveCount(0);
   });
 });

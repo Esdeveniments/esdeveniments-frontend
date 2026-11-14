@@ -206,7 +206,7 @@ describe("EventClient promote upsell wiring", () => {
     );
   });
 
-  it("recovers and clears the upsell from localStorage when ?promote=1 was lost, and does not call router.replace on close", async () => {
+  it("recovers the upsell from localStorage when ?promote=1 was lost, without clearing before the modal mounts or calling router.replace on close", async () => {
     savePendingPostPublishUpsell("my-event", OWNER_ID);
 
     render(<EventClient event={buildEvent()} />);
@@ -214,7 +214,7 @@ describe("EventClient promote upsell wiring", () => {
     expect(
       await screen.findByTestId("promote-upsell-modal"),
     ).toHaveTextContent("my-event");
-    expect(hasPendingPostPublishUpsell("my-event", OWNER_ID)).toBe(false);
+    expect(hasPendingPostPublishUpsell("my-event", OWNER_ID)).toBe(true);
     expect(mockSendGoogleEvent).toHaveBeenCalledWith("promote_modal_shown", {
       event_slug: "my-event",
       source: "event_detail",
