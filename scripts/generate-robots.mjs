@@ -18,9 +18,7 @@ const rootDir = join(__dirname, "..");
 
 // Get site URL from environment or use default
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.NEXT_PUBLIC_VERCEL_URL ||
-  "https://www.esdeveniments.cat";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.esdeveniments.cat";
 
 // Normalize URL (remove trailing slash, ensure https)
 const normalizedSiteUrl = siteUrl.replace(/\/$/, "").replace(/^http:/, "https:");

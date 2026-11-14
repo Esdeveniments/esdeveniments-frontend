@@ -192,13 +192,13 @@ describe("app/sitemap.xml/route", () => {
   it("uses correct site URL from request", async () => {
     const { getSiteUrlFromRequest } = await import("../../config/index");
     vi.mocked(getSiteUrlFromRequest).mockReturnValue(
-      "https://preview-abc.vercel.app"
+      "https://pr-123.esdeveniments.cat"
     );
 
     const mockRequest = {
       nextUrl: {
         protocol: "https:",
-        host: "preview-abc.vercel.app",
+        host: "pr-123.esdeveniments.cat",
       },
       headers: new Headers(),
     } as unknown as NextRequest;
@@ -206,7 +206,7 @@ describe("app/sitemap.xml/route", () => {
     const response = await GET(mockRequest);
     const text = await response.text();
 
-    expect(text).toContain("https://preview-abc.vercel.app");
+    expect(text).toContain("https://pr-123.esdeveniments.cat");
     expect(getSiteUrlFromRequest).toHaveBeenCalledWith(mockRequest);
   });
 

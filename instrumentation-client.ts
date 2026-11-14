@@ -36,7 +36,6 @@ if (process.env.NODE_ENV === "production") {
   const client = new BrowserClient({
     dsn,
     tunnel: sentryTunnelFor(dsn, process.env._sentryRewritesTunnelPath),
-    environment: process.env.NEXT_PUBLIC_VERCEL_ENV,
     release: process.env._sentryRelease,
     transport: makeFetchTransport,
     stackParser: defaultStackParser,

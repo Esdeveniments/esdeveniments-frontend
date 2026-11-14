@@ -6,7 +6,6 @@ const ORIGINAL_ENV = { ...process.env };
 describe("buildPageMeta robots policy", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://esdeveniments.cat";
-    process.env.NEXT_PUBLIC_VERCEL_ENV = "production";
   });
 
   afterEach(() => {
@@ -41,15 +40,6 @@ describe("buildPageMeta robots policy", () => {
     const meta = buildPageMeta({
       ...baseArgs,
       robotsOverride: undefined, // even default-policy callers get noindex,nofollow
-    });
-    expect(meta.robots).toBe("noindex, nofollow");
-  });
-
-  it("forces noindex,nofollow on preview env regardless of override", () => {
-    process.env.NEXT_PUBLIC_VERCEL_ENV = "preview";
-    const meta = buildPageMeta({
-      ...baseArgs,
-      robotsOverride: "noindex, follow",
     });
     expect(meta.robots).toBe("noindex, nofollow");
   });

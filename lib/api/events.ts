@@ -7,7 +7,6 @@ import { decodeSafeJwtClaims } from "./users-external";
 import {
   getInternalApiUrl,
   buildEventsQuery,
-  getVercelProtectionBypassHeaders,
   getApiUrl,
   isApiUrlConfigured,
   emptyPagedResponse,
@@ -164,7 +163,6 @@ export async function fetchEventBySlug(
     });
 
     const res = await fetch(internalApiUrl, {
-      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 1800, tags: [eventsTag, eventTag(fullSlug)] },
     });
 
@@ -214,7 +212,6 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
     const internalApiUrl = await getInternalApiUrl(`/api/events/${encodeURIComponent(fullSlug)}`);
 
     const res = await fetch(internalApiUrl, {
-      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 1800, tags: [eventsTag, eventTag(fullSlug)] },
     });
 

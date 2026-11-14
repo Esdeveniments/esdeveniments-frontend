@@ -108,27 +108,11 @@ export function getApiOrigin(): string {
 }
 
 /**
- * Optional Vercel Deployment Protection bypass header.
- *
- * When Deployment Protection is enabled, server-side fetches to the same deployment
- * (e.g. calling internal API routes via an absolute URL) will not automatically
- * include the browser's Vercel auth cookies.
- *
- * If a Protection Bypass secret is configured in Vercel, attaching this header
- * allows SSR/ISR requests to reach internal routes.
- */
-export function getVercelProtectionBypassHeaders(): Record<string, string> {
-  const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-  if (!secret) return {};
-  return { "x-vercel-protection-bypass": secret };
-}
-
-/**
  * Build an absolute URL to the app's own API routes (App Router `/api/*`).
  * This is necessary when running without a request context (e.g., during build
  * or static generation), where relative URLs are invalid in Node's fetch.
  *
- * Preview/staging deployments should provide INTERNAL_SITE_URL or VERCEL_URL.
+ * Preview/staging deployments should provide INTERNAL_SITE_URL.
  * Request Host is only trusted for exact localhost development hosts.
  */
 export async function getInternalApiUrl(
@@ -138,7 +122,6 @@ export async function getInternalApiUrl(
   const normalized = path.startsWith("/") ? path : `/${path}`;
 
   // Priority 1: Try to get host from request headers (works in server components)
-  // This ensures Vercel preview URLs are correctly resolved.
   // Skipped when preferConfiguredOrigin is set: reading headers() makes the
   // caller dynamic, which under cacheComponents must be avoided in
   // generateMetadata (otherwise the metadata boundary lands in the resume tree
@@ -177,26 +160,7 @@ export async function getInternalApiUrl(
     }
   }
 
-  // Priority 3: Vercel deployments (check before NEXT_PUBLIC_SITE_URL to ensure preview URLs work)
-  // VERCEL_URL is provided at runtime and points to the exact deployment host.
-  // It does not include the protocol.
-  const vercelUrl =
-    process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL || "";
-  if (vercelUrl) {
-    const origin = vercelUrl.startsWith("http")
-      ? vercelUrl
-      : `https://${vercelUrl}`;
-    try {
-      return new URL(normalized, origin).toString();
-    } catch (error) {
-      console.warn(
-        `[getInternalApiUrl] Invalid VERCEL_URL "${vercelUrl}":`,
-        error,
-      );
-    }
-  }
-
-  // Priority 4: Explicit canonical hostname (used when internal/Vercel URLs aren't available)
+  // Priority 3: Explicit canonical hostname (used when no internal URL is set)
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     try {
       return new URL(normalized, process.env.NEXT_PUBLIC_SITE_URL).toString();

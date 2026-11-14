@@ -6,7 +6,7 @@ name: E2E Integration (preproduction)
 #
 # There is no separate "base URL": the workflow builds and runs THIS app
 # locally and points Playwright at localhost. Which backend it talks to is
-# just NEXT_PUBLIC_API_URL — the same knob you switch in Vercel/Coolify.
+# just NEXT_PUBLIC_API_URL — the same knob you switch in Coolify.
 # All environment-specific values come from the existing `staging` GitHub
 # Environment (Settings → Environments) — staging == preproduction here.
 # Mirrors how prod config lives in the hosting platform:

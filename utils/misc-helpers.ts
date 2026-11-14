@@ -1,10 +1,5 @@
 export const env: string =
-  process.env.NODE_ENV !== "production"
-    ? "dev"
-    : process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
-      process.env.NEXT_PUBLIC_VERCEL_ENV === "development"
-    ? "staging"
-    : "prod";
+  process.env.NODE_ENV !== "production" ? "dev" : "prod";
 
 export const getRegionFromQuery = (q: string): string => {
   const parts = q.split(" ");

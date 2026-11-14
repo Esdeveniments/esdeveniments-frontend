@@ -14,7 +14,7 @@ public/sw-template.js → scripts/generate-sw.mjs (yarn prebuild) → public/sw.
 - `public/sw.js` is build output: never edit or commit it.
 - `generate-sw.mjs` copies the Workbox runtime (the `workbox-*` devDependencies, pinned to one version) into `public/static/workbox-v<version>/` (gitignored, under `/static` so `proxy.ts` skips it) and replaces three placeholders:
   - `{{API_ORIGIN}}`: origin of `NEXT_PUBLIC_API_URL`, or of `apiUrl` in `config/api-defaults.json` when the env var is unset.
-  - `{{BUILD_VERSION}}`: `BUILD_VERSION` → `VERCEL_GIT_COMMIT_SHA` → `VERCEL_DEPLOYMENT_ID` → `Date.now()`. It makes `sw.js` change on every deploy, so browsers install the new SW.
+  - `{{BUILD_VERSION}}`: `BUILD_VERSION` → `Date.now()`. It makes `sw.js` change on every deploy, so browsers install the new SW.
   - `{{WORKBOX_PATH}}`: `/static/workbox-v<version>`, used by `importScripts` and `workbox.setConfig({ modulePathPrefix })`.
 - `{{API_ORIGIN}}` and `{{BUILD_VERSION}}` use `String.replace`, which replaces only the **first** match, so use each once. `{{WORKBOX_PATH}}` uses `replaceAll`.
 - To upgrade Workbox, bump every `workbox-*` devDependency to the same version; a new module needs adding to `WORKBOX_MODULES` in the script.

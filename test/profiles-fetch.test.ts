@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Mock getInternalApiUrl and getVercelProtectionBypassHeaders before importing
+// Mock getInternalApiUrl before importing
 const mockGetInternalApiUrl = vi.fn();
-const mockGetVercelProtectionBypassHeaders = vi.fn();
 
 vi.mock("@utils/api-helpers", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@utils/api-helpers")>()),
   getInternalApiUrl: (path: string, opts?: { preferConfiguredOrigin?: boolean }) =>
     mockGetInternalApiUrl(path, opts),
-  getVercelProtectionBypassHeaders: () => mockGetVercelProtectionBypassHeaders(),
 }));
 
 // Mock parseUserPublic
@@ -47,7 +45,6 @@ describe("fetchUserBySlug", () => {
     mockGetInternalApiUrl.mockResolvedValue(
       "http://localhost:3000/api/users/test-user",
     );
-    mockGetVercelProtectionBypassHeaders.mockReturnValue({});
     mockParseUserPublic.mockReturnValue(mockUser);
   });
 
@@ -179,7 +176,6 @@ describe("getUserByUsernameCached", () => {
     mockGetInternalApiUrl.mockResolvedValue(
       "http://localhost:3000/api/users/test-user",
     );
-    mockGetVercelProtectionBypassHeaders.mockReturnValue({});
     mockParseUserPublic.mockReturnValue(mockUser);
   });
 

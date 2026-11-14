@@ -28,8 +28,6 @@ const matchesPublicApi = (pathname: string) =>
 
 describe("isOriginAllowed", () => {
   const originalEnv = process.env.NEXT_PUBLIC_SITE_URL;
-  const originalVercelUrl = process.env.VERCEL_URL;
-  const originalVercelBranchUrl = process.env.VERCEL_BRANCH_URL;
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
@@ -40,19 +38,6 @@ describe("isOriginAllowed", () => {
       process.env.NEXT_PUBLIC_SITE_URL = originalEnv;
     } else {
       delete process.env.NEXT_PUBLIC_SITE_URL;
-    }
-    if (originalVercelUrl !== undefined) {
-      process.env.VERCEL_URL = originalVercelUrl;
-    } else {
-      delete process.env.VERCEL_URL;
-    }
-    // VERCEL_BRANCH_URL is set inside the branch-alias test; restoring it
-    // in afterEach (rather than at the end of the test body) keeps it from
-    // leaking into later tests if that test fails early.
-    if (originalVercelBranchUrl !== undefined) {
-      process.env.VERCEL_BRANCH_URL = originalVercelBranchUrl;
-    } else {
-      delete process.env.VERCEL_BRANCH_URL;
     }
   });
 
@@ -82,31 +67,6 @@ describe("isOriginAllowed", () => {
     expect(isOriginAllowed(req)).toBe(false);
   });
 
-  it("allows configured Vercel preview origins", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
-    process.env.VERCEL_URL = "preview-123.vercel.app";
-    const req = createRequest("/api/sponsors/checkout", "POST", {
-      origin: "https://preview-123.vercel.app",
-      host: "attacker.example.com",
-    });
-    expect(isOriginAllowed(req)).toBe(true);
-  });
-
-  it("allows the Vercel branch-alias origin (VERCEL_BRANCH_URL)", () => {
-    // VERCEL_URL is the per-deployment hash URL, but the URL users click
-    // from the PR preview comment is the branch-alias VERCEL_BRANCH_URL.
-    // Without allowing it, every same-origin POST 403s on previews.
-    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
-    process.env.VERCEL_URL = "esdeveniments-frontend-abc123.vercel.app";
-    process.env.VERCEL_BRANCH_URL =
-      "esdeveniments-frontend-git-feat-user-favor-9fe4b8.vercel.app";
-    const req = createRequest("/api/favorites", "POST", {
-      origin:
-        "https://esdeveniments-frontend-git-feat-user-favor-9fe4b8.vercel.app",
-    });
-    expect(isOriginAllowed(req)).toBe(true);
-  });
-
   it("rejects host-like localhost origins in development", () => {
     const req = createRequest("/api/sponsors/checkout", "POST", {
       origin: "http://localhost.evil.test:3000",
@@ -134,7 +94,7 @@ describe("isOriginAllowed", () => {
 
   it("allows same-origin via x-forwarded-host on a Coolify pr-* preview (not in the allowlist)", () => {
     // The preview serves pr-375.esdeveniments.cat but NEXT_PUBLIC_SITE_URL is
-    // www and no VERCEL_* vars exist, so the static allowlist misses it. The
+    // www, so the static allowlist misses it. The
     // proxy sets x-forwarded-host to the public host → same-origin POST passes.
     const req = createRequest("/api/favorites", "POST", {
       origin: "https://pr-375.esdeveniments.cat",

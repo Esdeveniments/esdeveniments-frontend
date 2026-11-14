@@ -18,11 +18,7 @@ const apiOrigin = new URL(apiUrl).origin;
 
 // Ensure sw.js changes on every build/deploy so the browser updates the SW.
 // This is important because we clear cached HTML pages on SW activate to avoid hydration mismatches.
-const buildVersion =
-  process.env.BUILD_VERSION ||
-  process.env.VERCEL_GIT_COMMIT_SHA ||
-  process.env.VERCEL_DEPLOYMENT_ID ||
-  `${Date.now()}`;
+const buildVersion = process.env.BUILD_VERSION || `${Date.now()}`;
 
 // Read the service worker template
 const swTemplatePath = path.join(__dirname, "..", "public", "sw-template.js");

@@ -124,7 +124,6 @@ describe("meta helpers (black-box)", () => {
 
     it("does NOT emit noindex on production host", () => {
       process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
-      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
       const meta = generateEventMetadata(baseEvent);
       expect(meta.robots).not.toBe("noindex, nofollow");
     });
@@ -134,28 +133,18 @@ describe("meta helpers (black-box)", () => {
       // builder stage, so at runtime in production it can be undefined. We
       // must NOT noindex production pages just because the env var is missing.
       delete process.env.NEXT_PUBLIC_SITE_URL;
-      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
       const meta = generateEventMetadata(baseEvent);
       expect(meta.robots).not.toBe("noindex, nofollow");
     });
 
     it("emits noindex on staging host", () => {
       process.env.NEXT_PUBLIC_SITE_URL = "https://staging.esdeveniments.cat";
-      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
       const meta = generateEventMetadata(baseEvent);
       expect(meta.robots).toBe("noindex, nofollow");
     });
 
     it("emits noindex on PR-preview host with default Coolify template", () => {
       process.env.NEXT_PUBLIC_SITE_URL = "https://42.esdeveniments.cat";
-      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-      const meta = generateEventMetadata(baseEvent);
-      expect(meta.robots).toBe("noindex, nofollow");
-    });
-
-    it("emits noindex when NEXT_PUBLIC_VERCEL_ENV=preview", () => {
-      delete process.env.NEXT_PUBLIC_SITE_URL;
-      process.env.NEXT_PUBLIC_VERCEL_ENV = "preview";
       const meta = generateEventMetadata(baseEvent);
       expect(meta.robots).toBe("noindex, nofollow");
     });
@@ -165,7 +154,6 @@ describe("meta helpers (black-box)", () => {
       // imports. Until the backend slug generator is fixed, the frontend
       // noindexes these on the detail page so Google drops them from the index.
       process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
-      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
       const malformedEvent = {
         ...baseEvent,
         slug:

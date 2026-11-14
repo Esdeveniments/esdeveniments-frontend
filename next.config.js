@@ -24,10 +24,6 @@ const {
 const botUserAgents = require("./config/bot-user-agents.json");
 
 const isDev = process.env.NODE_ENV === "development";
-const isVercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
-const vercelPreviewImagePatterns = process.env.VERCEL_URL
-  ? [{ protocol: "https", hostname: process.env.VERCEL_URL }]
-  : [];
 
 // Direct next/image usage is limited to first-party and upload hosts.
 // Event/news images from councils intentionally go through /api/image-proxy,
@@ -35,8 +31,6 @@ const vercelPreviewImagePatterns = process.env.VERCEL_URL
 const remoteImagePatterns = [
   { protocol: "https", hostname: "www.esdeveniments.cat" },
   { protocol: "https", hostname: "esdeveniments.cat" },
-  { protocol: "https", hostname: "esdeveniments.vercel.app" },
-  ...vercelPreviewImagePatterns,
   { protocol: "https", hostname: "res.cloudinary.com" },
   ...(isDev
     ? [
@@ -74,18 +68,13 @@ const nextConfig = {
     "@redis/client",
     "@fortedigital/nextjs-cache-handler",
   ],
-  ...(isVercel
-    ? {}
-    : {
-        // Always load the cache handler for self-hosted deployments; it gracefully
-        // falls back to no-op when Redis env vars are not set at runtime.
-        // Must be unconditional outside Vercel because next.config.js is evaluated
-        // at build time, but Redis env vars are only available at container runtime.
-        cacheHandler: require.resolve("./cache-handler.mjs"),
-        cacheMaxMemorySize: 0,
-        // cacheMaxMemorySize: 0 also disables the built-in "use cache" store.
-        cacheHandlers: { default: require.resolve("./use-cache-handler.mjs") },
-      }),
+  // Always load the cache handler; it falls back to no-op when the Redis env
+  // vars are not set at runtime. Must be unconditional because next.config.js
+  // is evaluated at build time, but Redis env vars only exist at container runtime.
+  cacheHandler: require.resolve("./cache-handler.mjs"),
+  cacheMaxMemorySize: 0,
+  // cacheMaxMemorySize: 0 also disables the built-in "use cache" store.
+  cacheHandlers: { default: require.resolve("./use-cache-handler.mjs") },
 
   // --- React Compiler (Next 16: moved to top-level) ---
   reactCompiler: true,
@@ -318,16 +307,13 @@ module.exports = withSentryConfig(
         excludeReplayIframe: true,
         excludeReplayShadowDOM: true,
       },
-      automaticVercelMonitors: true,
     },
 
     // Release tracking: associate source maps with a specific release
     // Falls back to git commit SHA if available, otherwise uses timestamp
     release: {
       name:
-        process.env.SENTRY_RELEASE ||
-        process.env.VERCEL_GIT_COMMIT_SHA ||
-        `esdeveniments@${Date.now()}`,
+        process.env.SENTRY_RELEASE || `esdeveniments@${Date.now()}`,
       // Automatically create a release if it doesn't exist
       create: true,
       // Automatically finalize the release after build completes

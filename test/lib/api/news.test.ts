@@ -12,7 +12,6 @@ vi.mock("@utils/api-helpers", async (importOriginal) => ({
         .map(([k, v]) => [k, String(v)]),
     ).toString(),
   ),
-  getVercelProtectionBypassHeaders: vi.fn(() => ({})),
 }));
 
 vi.mock("@utils/news-cache", () => ({

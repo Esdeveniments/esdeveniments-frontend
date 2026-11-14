@@ -46,8 +46,7 @@ test.describe("Listing robots directives", () => {
 
     const response = await responsePromise;
     const robotsHeader = response.headers()["x-robots-tag"];
-    // Note: Vercel preview deployments may override X-Robots-Tag with just "noindex"
-    // (stripping "follow"), so we only verify the critical noindex directive
+    // Only the critical noindex directive is checked.
     expect(robotsHeader).toMatch(/noindex/i);
 
     await assertCanonical(page, /\/barcelona$/);
@@ -69,8 +68,7 @@ test.describe("Listing robots directives", () => {
 
     const response = await responsePromise;
     const robotsHeader = response.headers()["x-robots-tag"];
-    // Note: Vercel preview deployments may override X-Robots-Tag with just "noindex"
-    // (stripping "follow"), so we only verify the critical noindex directive
+    // Only the critical noindex directive is checked.
     expect(robotsHeader).toMatch(/noindex/i);
 
     await assertCanonical(page, /\/barcelona\/avui$/);
@@ -92,8 +90,7 @@ test.describe("Listing robots directives", () => {
 
     const response = await responsePromise;
     const robotsHeader = response.headers()["x-robots-tag"];
-    // Note: Vercel preview deployments may override X-Robots-Tag with just "noindex"
-    // (stripping "follow"), so we only verify the critical noindex directive
+    // Only the critical noindex directive is checked.
     expect(robotsHeader).toMatch(/noindex/i);
 
     // 3-segment URLs (/[place]/[date]/[category]) are noindex,follow because
@@ -118,8 +115,7 @@ test.describe("Listing robots directives", () => {
 
     const response = await responsePromise;
     const robotsHeader = response.headers()["x-robots-tag"];
-    // Note: Vercel preview deployments may override X-Robots-Tag with just "noindex"
-    // (stripping "follow"), so we only verify the critical noindex directive
+    // Only the critical noindex directive is checked.
     expect(robotsHeader).toMatch(/noindex/i);
 
     await assertCanonical(page, /\/barcelona$/);

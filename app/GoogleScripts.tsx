@@ -100,7 +100,7 @@ export default function GoogleScripts() {
   const { adsAllowed } = useAdContext();
 
   // Gate GA (pageviews + consent) and Auto Ads to the production host so they
-  // never fire on Vercel previews, staging, or the app embedded in the Coolify
+  // never fire on staging, previews, or the app embedded in the Coolify
   // dashboard, all of which inline the same prod measurement ID. Reuses the
   // existing prod-host allowlist (covers www + apex). False on the server and
   // during hydration, so the first client render matches SSR (both render

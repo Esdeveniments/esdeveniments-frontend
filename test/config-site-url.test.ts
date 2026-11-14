@@ -22,25 +22,14 @@ describe("config/index:getSiteUrl", () => {
     expect(getSiteUrl()).toBe("https://custom.example.com");
   });
 
-  it("returns vercel.app URL for preview/development environments", () => {
-    delete process.env.NEXT_PUBLIC_SITE_URL;
-    process.env.NEXT_PUBLIC_VERCEL_ENV = "preview";
-    expect(getSiteUrl()).toBe("https://esdeveniments.vercel.app");
-
-    process.env.NEXT_PUBLIC_VERCEL_ENV = "development";
-    expect(getSiteUrl()).toBe("https://esdeveniments.vercel.app");
-  });
-
   it("returns localhost for non-production environments", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
     (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrl()).toBe("http://localhost:3000");
   });
 
   it("returns production URL as fallback", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
     (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
     expect(getSiteUrl()).toBe("https://www.esdeveniments.cat");
   });
@@ -107,7 +96,6 @@ describe("config/index:getSiteUrlFromRequest", () => {
 
     // Should fall back to environment-based detection
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
     (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrlFromRequest(mockRequest)).toBe("http://localhost:3000");
   });
@@ -122,14 +110,12 @@ describe("config/index:getSiteUrlFromRequest", () => {
     } as unknown as NextRequest;
 
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
     (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrlFromRequest(mockRequest)).toBe("http://localhost:3000");
   });
 
   it("falls back to getSiteUrl() when request is undefined", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
     (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrlFromRequest(undefined)).toBe("http://localhost:3000");
   });
@@ -141,7 +127,6 @@ describe("config/index:getSiteUrlFromRequest", () => {
     } as unknown as NextRequest;
 
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
     (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
     expect(getSiteUrlFromRequest(mockRequest)).toBe("http://localhost:3000");
   });
@@ -172,7 +157,6 @@ describe("config/index:getSiteUrlFromRequest", () => {
     } as unknown as NextRequest;
 
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
     (process.env as { NODE_ENV?: string }).NODE_ENV = "production";
 
     // Should use request host, not fallback
@@ -185,17 +169,16 @@ describe("config/index:getSiteUrlFromRequest", () => {
     const mockRequest = {
       nextUrl: {
         protocol: "https:",
-        host: "preview-abc123.vercel.app",
+        host: "pr-123.esdeveniments.cat",
       },
       headers: new Headers(),
     } as unknown as NextRequest;
 
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
 
     // Should use request host
     expect(getSiteUrlFromRequest(mockRequest)).toBe(
-      "https://preview-abc123.vercel.app"
+      "https://pr-123.esdeveniments.cat"
     );
   });
 
@@ -364,7 +347,6 @@ describe("config/index:isInternalHost", () => {
   it("allows real public domains", () => {
     expect(isInternalHost("www.esdeveniments.cat")).toBe(false);
     expect(isInternalHost("esdeveniments.cat")).toBe(false);
-    expect(isInternalHost("preview-abc.vercel.app")).toBe(false);
     expect(isInternalHost("pr-123.esdeveniments.cat")).toBe(false);
   });
 

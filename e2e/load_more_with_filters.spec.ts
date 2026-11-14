@@ -214,7 +214,7 @@ test.describe("Load more with filters via proxy", () => {
 
     // domcontentloaded, NOT networkidle: analytics/ads/telemetry keep the
     // network busy on deployed builds, so networkidle never settles and
-    // page.goto times out (45s) on the Vercel preview. The explicit hasMore
+    // page.goto times out (45s). The explicit hasMore
     // assertion below auto-waits for the harness to be interactive.
     await page.goto("/e2e/load-more", { waitUntil: "domcontentloaded" });
     // Load more should be available initially

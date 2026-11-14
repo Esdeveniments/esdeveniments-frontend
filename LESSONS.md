@@ -115,13 +115,13 @@ The image-proxy e2e tests skipped on any 502 (`test.skip("Test image service una
 
 ## `yarn build` does NOT run `prebuild`
 
-Yarn 4 (Berry) dropped automatic `pre*`/`post*` lifecycle scripts — npm runs them, Yarn doesn't. `prebuild` generates `public/sw.js` and `public/robots.txt`, both gitignored. Every deploy path must invoke it explicitly: the Dockerfile/Coolify and CI already do; Vercel needs the `vercel.json` `buildCommand` (`yarn prebuild && yarn build`). The env-specific builds (`build:development|staging|production`) already chain prebuild. A bare `yarn build` ships without the service worker or robots.txt.
+Yarn 4 (Berry) dropped automatic `pre*`/`post*` lifecycle scripts — npm runs them, Yarn doesn't. `prebuild` generates `public/sw.js` and `public/robots.txt`, both gitignored. Every deploy path must invoke it explicitly: the Dockerfile/Coolify and CI already do. The env-specific builds (`build:development|staging|production`) already chain prebuild. A bare `yarn build` ships without the service worker or robots.txt.
 
 `yarn dev` does not generate these files either. A fresh integration runner must run `yarn prebuild` with the same API URL before starting dev. Otherwise `/sw.js` returns 404 and service-worker-enabled recovery never reaches an active controller.
 
-## Vercel previews are a preview, not production
+## Coolify is the only host
 
-Production runs on Coolify/Docker/Node 26; Vercel previews are a different runtime. Sharp is bundled via the Dockerfile and excluded on Vercel — the Sharp e2e test self-skips on `*.vercel.app`. Vercel previews also sit behind a 401 protection wall, so automated probes need the `x-vercel-protection-bypass` secret. A green Vercel preview does not prove production works (PR E2E no longer uses previews); gate promotion to `main` on the Coolify/Docker path.
+Production, staging and the `pr-*` previews all run the Docker image on Coolify. Vercel previews were a different runtime (no Sharp, no Redis cache handler, a 401 protection wall) and stopped when the Vercel quota ran out (the account now shows as blocked), so all Vercel code and config was removed in November 2026. Don't add `VERCEL_*` branches or a `vercel.json` back. The org-wide Vercel GitHub app can still post a failing "Vercel" status; it isn't a required check.
 
 ## Image-proxy/dispatcher bugs only surface through a real socket
 
@@ -155,7 +155,7 @@ Coolify keeps the old container in the Traefik pool until the new one is healthy
 
 ## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
 
-`next.config.js` enables the Redis `cacheHandler` only off-Vercel (`isVercel ? {} : { cacheHandler }`). So localhost and Vercel can never reproduce cache-handler bugs; only Coolify (persistent Redis across deploys) can. Keys are scoped by `buildId` so a new build never reads a previous build's prerendered shell — a stale shell makes React's resume mismatch (`Expected the resume to render ...`), fall back to client rendering, and emit HTML with no SSR `<title>`/description/canonical. The page still returns 200, so assert metadata in the **raw** HTML, not the status code. See [docs/incidents/2026-06-11-coolify-redis-stale-prerender.md](docs/incidents/2026-06-11-coolify-redis-stale-prerender.md).
+`next.config.js` always loads the Redis `cacheHandler`, but it does nothing without the Redis env vars. So localhost can never reproduce cache-handler bugs; only Coolify (persistent Redis across deploys) can. Keys are scoped by `buildId` so a new build never reads a previous build's prerendered shell — a stale shell makes React's resume mismatch (`Expected the resume to render ...`), fall back to client rendering, and emit HTML with no SSR `<title>`/description/canonical. The page still returns 200, so assert metadata in the **raw** HTML, not the status code. See [docs/incidents/2026-06-11-coolify-redis-stale-prerender.md](docs/incidents/2026-06-11-coolify-redis-stale-prerender.md).
 
 ## Don't assert data-conditional UI in an e2e against uncontrolled live data
 

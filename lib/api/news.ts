@@ -9,7 +9,6 @@ import type { PagedResponseDTO } from "types/api/event";
 import {
   getInternalApiUrl,
   buildNewsQuery,
-  getVercelProtectionBypassHeaders,
   emptyPagedResponse,
 } from "@utils/api-helpers";
 import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
@@ -35,7 +34,6 @@ export async function fetchNews(
       tags.push(newsPlaceTag(params.place));
     }
     const response = await fetch(finalUrl, {
-      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 3600, tags },
     });
     if (!response.ok) {
@@ -63,7 +61,6 @@ export async function fetchNewsBySlug(
       preferConfiguredOrigin: options.preferConfiguredOrigin,
     });
     const response = await fetch(url, {
-      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 3600, tags: [newsTag, newsSlugTag(slug)] },
     });
     if (response.status === 404) return null;
@@ -96,7 +93,6 @@ export async function fetchNewsCities(params?: {
     );
 
     const response = await fetch(finalUrl, {
-      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 3600, tags: [newsTag] },
     });
 

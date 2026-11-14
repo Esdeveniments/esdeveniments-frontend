@@ -556,14 +556,9 @@ export async function GET(request: Request) {
           sharpError instanceof Error ? sharpError.message : String(sharpError);
         console.error("[image-proxy] Sharp processing failed:", errorMessage);
 
-        // On Vercel, Sharp is not installed (expected) — skip Sentry.
-        // In Docker/Coolify, Sharp is installed via Dockerfile — always report
-        // so we catch regressions like the Feb 2026 incident (4 days of silent fallback).
-        // VERCEL_ENV is set by Vercel to "production"|"preview"|"development";
-        // it's undefined in Docker/Coolify.
-        const isVercel = !!process.env.VERCEL_ENV;
-
-        if (process.env.NODE_ENV === "production" && !isVercel) {
+        // Sharp is installed in the Docker image, so a failure here is a
+        // regression, like the Feb 2026 incident (4 days of silent fallback).
+        if (process.env.NODE_ENV === "production") {
           Sentry.captureException(sharpError, {
             tags: { route: "/api/image-proxy", stage: "sharp-processing" },
           });

@@ -46,8 +46,7 @@ let liveTestImage: Promise<string> | undefined;
  */
 function getLiveTestImage(): Promise<string> {
   liveTestImage ??= (async () => {
-    // A clean context: the config's extraHTTPHeaders carry the Vercel bypass
-    // secret, which must never reach other hosts.
+    // A clean context: the config's extraHTTPHeaders are only for our site.
     const probe = await playwrightRequest.newContext();
     try {
       for (const url of PROXY_TEST_UPSTREAMS) {
@@ -124,8 +123,7 @@ test.describe("Image Proxy", () => {
       (await images.all()).slice(0, 5).map((img) => img.getAttribute("src")),
     );
 
-    // A clean context: the config's extraHTTPHeaders carry the Vercel bypass
-    // secret, which must never reach third-party image hosts.
+    // A clean context: the config's extraHTTPHeaders are only for our site.
     const probe = await playwrightRequest.newContext();
     const live = await Promise.all(
       srcs.map(async (src) => {
@@ -365,15 +363,6 @@ test.describe("Image Proxy", () => {
       // missing from the Lambda bundle. Without Sharp, image-proxy silently falls
       // back to serving unoptimized images (4.3 MB vs ~50 KB), wasting bandwidth.
       // See: docs/incidents/2026-02-18-sharp-architecture-mismatch.md
-      //
-      // Skip on Vercel preview deployments: Sharp is installed in the Docker image
-      // via the Dockerfile. Vercel excludes it (serverExternalPackages) and
-      // doesn't provide it at runtime. This test is meaningful only on Docker/Coolify.
-      const baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL ?? "";
-      if (baseUrl.includes("vercel.app")) {
-        test.skip(true, "Sharp not available on Vercel previews — only on Docker/Coolify");
-        return;
-      }
       const testImageUrl = await getLiveTestImage();
       const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(
         testImageUrl

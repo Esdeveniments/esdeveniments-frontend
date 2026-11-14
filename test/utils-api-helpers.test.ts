@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   getInternalApiUrl,
-  getVercelProtectionBypassHeaders,
   buildEventsQuery,
   buildNewsQuery,
   applyDistanceToParams,
@@ -43,40 +42,6 @@ describe("utils/api-helpers:getInternalApiUrl", () => {
     expect(await getInternalApiUrl("/api/test")).toBe(
       "https://www.esdeveniments.cat/api/test"
     );
-  });
-
-  it("prefers VERCEL_URL origin when available", async () => {
-    process.env.VERCEL_URL = "preview-abc.vercel.app";
-    expect(await getInternalApiUrl("/api/test")).toBe(
-      "https://preview-abc.vercel.app/api/test"
-    );
-    // Accept already-prefixed protocol
-    process.env.VERCEL_URL = "https://another.vercel.app";
-    expect(await getInternalApiUrl("/api/test")).toBe(
-      "https://another.vercel.app/api/test"
-    );
-  });
-});
-
-describe("utils/api-helpers:getVercelProtectionBypassHeaders", () => {
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
-  it("returns empty headers when secret is not set", () => {
-    delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-    expect(getVercelProtectionBypassHeaders()).toEqual({});
-  });
-
-  it("returns x-vercel-protection-bypass header when secret is set", () => {
-    process.env.VERCEL_AUTOMATION_BYPASS_SECRET = "test-bypass-secret";
-    expect(getVercelProtectionBypassHeaders()).toEqual({
-      "x-vercel-protection-bypass": "test-bypass-secret",
-    });
   });
 });
 

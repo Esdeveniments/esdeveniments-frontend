@@ -13,13 +13,8 @@ import {
 if (process.env.NODE_ENV === "production") {
   const config: NodeOptions = {
     dsn: process.env.SENTRY_DSN,
-    environment: process.env.NEXT_PUBLIC_VERCEL_ENV,
     // Release tracking: associate errors with deployments
-    // Vercel automatically provides VERCEL_GIT_COMMIT_SHA
-    release:
-      process.env.SENTRY_RELEASE ||
-      process.env.VERCEL_GIT_COMMIT_SHA ||
-      undefined,
+    release: process.env.SENTRY_RELEASE || undefined,
     // Errors-only: disable performance tracing.
     tracesSampleRate: 0,
     // Skip OpenTelemetry setup: OTel's trace context propagation calls crypto.randomUUID()

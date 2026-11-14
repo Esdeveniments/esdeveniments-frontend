@@ -3,7 +3,7 @@ import type { SocialLinks } from "types/common";
 
 /**
  * Get the site URL based on the environment
- * @returns The appropriate site URL for localhost, preview/development, or production
+ * @returns The appropriate site URL for localhost or production
  */
 export function getSiteUrl(): string {
   // Priority 1: Explicitly set site URL (Coolify/custom deployments)
@@ -11,21 +11,13 @@ export function getSiteUrl(): string {
     return process.env.NEXT_PUBLIC_SITE_URL;
   }
 
-  // Priority 2: Vercel deployments
-  if (
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "development"
-  ) {
-    return "https://esdeveniments.vercel.app";
-  }
-
-  // Priority 3: Development (non-production)
+  // Priority 2: Development (non-production)
   if (process.env.NODE_ENV !== "production") {
     const port = process.env.PORT || "3000";
     return `http://localhost:${port}`;
   }
 
-  // Priority 4: Production fallback
+  // Priority 3: Production fallback
   return "https://www.esdeveniments.cat";
 }
 

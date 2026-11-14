@@ -24,27 +24,6 @@ function getAllowedOriginHosts(): Set<string> {
       (isDev ? "http://localhost:3000" : "https://www.esdeveniments.cat"),
   );
 
-  // Vercel exposes several runtime URLs that all serve the same deployment:
-  //   VERCEL_URL                       — per-deployment hash URL
-  //   VERCEL_BRANCH_URL                — stable branch-alias URL (what users
-  //                                       click on the PR preview comment;
-  //                                       without this, every browser-initiated
-  //                                       POST — push subscribe, favorites,
-  //                                       sponsor checkout — 403s on branch
-  //                                       previews)
-  //   VERCEL_PROJECT_PRODUCTION_URL    — the project's prod domain
-  // Origin must match whichever one the browser is hitting, otherwise the
-  // CSRF guard 403s every POST/PUT/DELETE on the preview. Allow them all.
-  for (const candidate of [
-    process.env.VERCEL_URL,
-    process.env.NEXT_PUBLIC_VERCEL_URL,
-    process.env.VERCEL_BRANCH_URL,
-    process.env.NEXT_PUBLIC_VERCEL_BRANCH_URL,
-    process.env.VERCEL_PROJECT_PRODUCTION_URL,
-  ]) {
-    if (candidate) addAllowedOriginHost(hosts, candidate);
-  }
-
   // E2E runs a production build on localhost:3000, so isDev is false there and
   // the same-origin localhost POST would be rejected. E2E_TEST_MODE is set only
   // during E2E runs (never in prod), so this widens the allowlist for tests
@@ -171,8 +150,8 @@ export function isOriginAllowed(request: NextRequest): boolean {
     // scalable check: it allows a state-changing POST whenever the browser's
     // Origin matches the public host the request actually arrived on, so it
     // works on EVERY proxy-fronted deployment (production, staging, Coolify
-    // pr-* previews, Vercel previews) without enumerating hosts. Coolify/Traefik
-    // and Vercel set x-forwarded-host to the public hostname (verified on the
+    // pr-* previews) without enumerating hosts. Coolify/Traefik sets
+    // x-forwarded-host to the public hostname (verified on the
     // pr-* preview), the same header getRequestOrigin trusts (see LESSONS.md).
     //
     // CSRF-safe: a cross-site browser request can't make these match — its

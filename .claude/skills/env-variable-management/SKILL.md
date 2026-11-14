@@ -7,7 +7,7 @@ description: How to add, rename or remove an environment variable in esdevenimen
 
 A variable missing from one location breaks a build or crashes the container. Update every location that applies. Basics (local env files, required secrets): AGENTS.md › Commands; hosting: AGENTS.md › Hosting and deploys.
 
-`.env.example` lists every variable a deploy must set, with its purpose. Optional tuning and platform values (`STRIPE_TAX_MODE`, `HMAC_*_TOLERANCE_MS`, `VERCEL_*`, …) are read only in code; grep `process.env` for the full set. It is the only tracked env file; `.env`, `.env.local`, `.env.development`, `.env.staging` and `.env.production` are gitignored.
+`.env.example` lists every variable a deploy must set, with its purpose. Optional tuning and platform values (`STRIPE_TAX_MODE`, `HMAC_*_TOLERANCE_MS`, …) are read only in code; grep `process.env` for the full set. It is the only tracked env file; `.env`, `.env.local`, `.env.development`, `.env.staging` and `.env.production` are gitignored.
 
 ## How values reach the app
 

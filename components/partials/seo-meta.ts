@@ -163,10 +163,7 @@ export function buildPageMeta({
       // the Dockerfile only sets it in the builder stage.
       const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL;
       const isKnownNonProd = !!siteUrlEnv && !isProductionSiteUrl(siteUrlEnv);
-      if (
-        process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
-        isKnownNonProd
-      ) {
+      if (isKnownNonProd) {
         return "noindex, nofollow";
       }
       return robotsOverride ?? DEFAULT_ROBOTS_POLICY;

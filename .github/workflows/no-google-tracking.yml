@@ -1,8 +1,8 @@
 name: No Google tracking on staging (nightly)
 
 # Runs the no-google-tracking E2E guard against the real staging host — the
-# one place zone-wide Cloudflare Zaraz injection happens. Localhost, the PR CI
-# build, and Vercel previews never exercise the Cloudflare edge, so running the
+# one place zone-wide Cloudflare Zaraz injection happens. Localhost and the PR CI
+# build never exercise the Cloudflare edge, so running the
 # same spec there cannot catch an edge-injected tracker (see
 # docs/incidents/2026-08-18-zaraz-zone-wide-google-tags.md).
 # Zaraz GA4 is off on the zone; a red run means an edge tracker is back

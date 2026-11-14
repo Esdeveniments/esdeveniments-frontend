@@ -5,13 +5,6 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000";
 
-const vercelBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-const vercelBypassHeaders: Record<string, string> = vercelBypassSecret
-  ? {
-      "x-vercel-protection-bypass": vercelBypassSecret,
-      "x-vercel-set-bypass-cookie": "true",
-    }
-  : {};
 
 export default defineConfig({
   testDir: "./e2e",
@@ -34,7 +27,6 @@ export default defineConfig({
     locale: "ca-ES",
     extraHTTPHeaders: {
       "accept-language": "ca",
-      ...vercelBypassHeaders,
     },
   },
   projects: [

@@ -75,12 +75,8 @@ Never put prod secrets in the preproduction instance, or the reverse.
 3. Post sign-out redirect URIs: `<origin>/`.
 4. Copy App ID + secret into that environment's secret store.
 
-Logto requires **exact** redirect URIs (no wildcards), so Vercel preview
-deploys with dynamic `*.vercel.app` URLs can't complete the flow unless
-previews use a fixed domain. Production runs on Coolify/Docker, not Vercel
-(see `LESSONS.md`), so treat Vercel auth as opt-in: it needs a stable alias
-with its callback registered, the `LOGTO_*` env on the Vercel project, and
-the preview protection-bypass so the OIDC round-trip isn't 401-walled.
+Logto requires **exact** redirect URIs (no wildcards), so every origin that
+signs in needs its own callback registered.
 
 ### Origins to register, per environment
 

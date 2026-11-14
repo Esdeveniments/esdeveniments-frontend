@@ -8,8 +8,8 @@ import { mockAuthenticatedUser } from "./helpers/auth";
 // Deterministic publish -> detail flow. With E2E_TEST_MODE the server action
 // skips the backend and stores the event in memory under a stable slug, so no
 // backend write happens. The deploy workflow's local e2e exports E2E_TEST_MODE=1
-// for both the server and this process; PR runs against the Vercel preview skip
-// it. The real-backend equivalent is publish-integration.spec.ts.
+// for both the server and this process; runs without it skip this spec. The
+// real-backend equivalent is publish-integration.spec.ts.
 test.describe("Publica -> Event flow (deterministic)", () => {
   test.skip(
     process.env.E2E_TEST_MODE !== "1",

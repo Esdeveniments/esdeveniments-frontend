@@ -4,7 +4,6 @@ import { getUserByUsernameExternal, getUserEventsExternal } from "./users-extern
 import { userTag } from "@lib/cache/tags";
 import {
   getInternalApiUrl,
-  getVercelProtectionBypassHeaders,
 } from "@utils/api-helpers";
 import { parseUserPublic } from "@lib/validation/user";
 import type { InternalOriginOptions } from "types/api/internal";
@@ -34,7 +33,6 @@ export async function fetchUserBySlug(
       { preferConfiguredOrigin: options.preferConfiguredOrigin },
     );
     const response = await fetch(url, {
-      headers: getVercelProtectionBypassHeaders(),
       next: { revalidate: 300, tags: [userTag(username)] },
     });
     if (response.status === 404) return null;

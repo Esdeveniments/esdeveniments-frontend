@@ -18,11 +18,10 @@ Read `buildCsp()` for the current allowlist; don't copy it into docs or other fi
 
 - `script-src` and `script-src-elem` share one `scriptSources` list, so a new script host goes in once.
 - `'unsafe-eval'` is added only when `NEXT_PUBLIC_GOOGLE_ADS` is set (AdSense needs it) and in dev.
-- `vercel.live` is added on preview only.
 - `connect-src` is `'self'`, the API origin (`getApiOrigin()`), and `https:`. Any HTTPS XHR/fetch target already works.
 - `img-src https: data: blob:` and `frame-src 'self' https:` are broad already. New image or iframe hosts usually need no change.
 - `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'self'`.
-- The policy is sent as `Content-Security-Policy-Report-Only` when `NEXT_PUBLIC_CSP_REPORT_ONLY=1` or on a Vercel preview. Use that flag to trial a stricter policy without breaking pages.
+- The policy is sent as `Content-Security-Policy-Report-Only` when `NEXT_PUBLIC_CSP_REPORT_ONLY=1`. Use that flag to trial a stricter policy without breaking pages.
 
 ## Security headers
 

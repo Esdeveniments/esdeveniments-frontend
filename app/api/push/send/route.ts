@@ -12,11 +12,6 @@ import { normalizeHost } from "@utils/host-validation";
 import { isBlockedAddress } from "@utils/public-fetch-safety";
 import { safeEqual } from "@utils/safe-equal";
 
-// Only relevant on Vercel preview deploys (production runs a persistent
-// Node server on Coolify where route duration is unbounded). Keeps the
-// chunked broadcast loop from being killed at the default timeout.
-export const maxDuration = 60;
-
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 /**

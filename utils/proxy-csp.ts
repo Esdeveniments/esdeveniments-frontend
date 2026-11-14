@@ -6,10 +6,6 @@ import { isDev } from "@utils/api-gate";
 // nonces, so pages stay cacheable (ISR/PPR); nonces force dynamic rendering.
 // The other security headers are static and live in next.config.js headers().
 
-const isVercelPreview =
-  process.env.VERCEL_ENV === "preview" ||
-  process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
-
 function buildCsp(): string {
   const adsEnabled = Boolean(process.env.NEXT_PUBLIC_GOOGLE_ADS?.trim());
 
@@ -30,8 +26,6 @@ function buildCsp(): string {
     "https://*.googleadservices.com",
     "https://*.googletagservices.com",
     "https://*.google.com",
-    // Vercel preview feedback script
-    isVercelPreview ? "https://vercel.live" : "",
     // AdSense needs eval; dev needs it for React Refresh.
     adsEnabled || isDev ? "'unsafe-eval'" : "",
     isDev ? "localhost:*" : "",
@@ -77,9 +71,9 @@ function buildCsp(): string {
 
 // Built once per process: every input is fixed at build or boot time.
 const CSP_VALUE = buildCsp();
-// Report-Only to trial a stricter policy (or on a Vercel preview).
+// Report-Only to trial a stricter policy.
 const CSP_HEADER =
-  process.env.NEXT_PUBLIC_CSP_REPORT_ONLY === "1" || isVercelPreview
+  process.env.NEXT_PUBLIC_CSP_REPORT_ONLY === "1"
     ? "Content-Security-Policy-Report-Only"
     : "Content-Security-Policy";
 

@@ -72,7 +72,7 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
           # Activates the Redis cacheHandler — the self-hosted path that
-          # Vercel and local dev never exercise. This is the whole point.
+          # local dev never exercises. This is the whole point.
           REDIS_URL: redis://localhost:6379
           # Logto OIDC runtime env — lets the smoke step assert the auth routes
           # boot (a missing LOGTO_* makes /api/auth/sign-in 500, not 307).

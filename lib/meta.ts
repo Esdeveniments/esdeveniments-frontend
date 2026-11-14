@@ -245,10 +245,7 @@ export function generateEventMetadata(
       // production too. Fail-open: undefined env = trust the default policy.
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
       const isKnownNonProd = !!siteUrl && !isProductionSiteUrl(siteUrl);
-      if (
-        process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
-        isKnownNonProd
-      ) {
+      if (isKnownNonProd) {
         return "noindex, nofollow";
       }
       // Noindex events with slugs corrupted by upstream RSS/XML feed imports.
