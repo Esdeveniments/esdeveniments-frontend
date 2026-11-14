@@ -27,6 +27,8 @@ export default function ProfileEventsLoadMore({
   const loadMore = async () => {
     setIsLoading(true);
     setFailed(false);
+    // Two full pages in a row give the same count; clear it so each load is announced.
+    setLoadedCount(0);
     sendGoogleEvent("load_more", { context: "profile_events", status, page: nextPage });
     try {
       const qs = new URLSearchParams({ status, page: String(nextPage), size: String(pageSize) });

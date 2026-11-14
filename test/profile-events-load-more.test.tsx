@@ -74,4 +74,23 @@ describe("ProfileEventsLoadMore", () => {
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getByRole("status")).toHaveTextContent("loadedCount");
   });
+
+  it("clears the status while loading so two equal pages are both announced", async () => {
+    let resolveSecond: (value: unknown) => void = () => {};
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(pageOf(["a"], false) as unknown as Response)
+      .mockReturnValueOnce(new Promise((resolve) => (resolveSecond = resolve)) as Promise<Response>);
+    render(
+      <ProfileEventsLoadMore username="sala-apolo" status="past" pageSize={1} initialIds={[]} />,
+    );
+
+    fireEvent.click(screen.getByTestId("load-more-button"));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("loadedCount"));
+
+    fireEvent.click(screen.getByTestId("load-more-button"));
+    await waitFor(() => expect(screen.getByRole("status").textContent).toBe(""));
+
+    resolveSecond(pageOf(["b"], true));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("loadedCount"));
+  });
 });
