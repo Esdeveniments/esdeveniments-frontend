@@ -227,8 +227,12 @@ async function fetchWithTimeout(
     } catch (error) {
       // No headers before the deadline, or no connection at all. A client that
       // went away (outerSignal) says nothing about the host. Only this
-      // request's own failure counts, not a redirect target's.
-      const noHeaders = headerController.signal.aborted && !outerSignal.aborted;
+      // request's own failure counts, not a redirect target's. A redirect
+      // target inherits what's left of the deadline, so its timeout proves nothing.
+      const noHeaders =
+        redirectsRemaining === MAX_REDIRECTS &&
+        headerController.signal.aborted &&
+        !outerSignal.aborted;
       if (noHeaders || getErrorChain(error).some(({ code }) => code && CONNECT_ERROR_CODES.has(code))) {
         markUnreachable(origin);
       }
