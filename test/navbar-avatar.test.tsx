@@ -135,11 +135,11 @@ describe("NavbarClient avatar", () => {
     expect(localStorage.getItem(SIGNED_IN_HINT_KEY)).toBe("1");
   });
 
-  it("keeps the avatar photo on a muted backdrop, like its loading skeleton", () => {
+  it("keeps the avatar photo on the skeleton color while it downloads", () => {
     render(<NavbarClient navigation={[]} labels={labels} />);
     const img = screen.getByTestId("desktop-avatar-link").querySelector("img");
     expect(img).toHaveAttribute("src", authUser.avatarUrl);
-    expect(img).toHaveClass("bg-muted");
+    expect(img).toHaveClass("bg-border/40");
   });
 
   it("gives the avatar toggle a visible focus ring, matching every other nav control", () => {

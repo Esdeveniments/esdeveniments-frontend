@@ -23,8 +23,8 @@ const DESKTOP_LOGIN_CLASS = "btn-outline text-xs whitespace-nowrap";
 // On browsers marked by SIGNED_IN_HINT_SCRIPT, CSS (styles/globals.css) swaps
 // the invisible login copy for an avatar skeleton while auth loads.
 const AUTH_PLACEHOLDER_CLASS = "invisible auth-slot-placeholder";
-const AVATAR_SKELETON_CLASS =
-  "w-9 h-9 rounded-full bg-muted motion-safe:animate-pulse";
+// Same block as components/ui/common/skeletons/ (ProfilePageSkeleton).
+const AVATAR_SKELETON_CLASS = "w-9 h-9 rounded-full bg-border/40 animate-pulse";
 
 // No usePathname() here: it suspends while Next prerenders the generic shell
 // of routes with params, which would push the whole navbar out of the static
@@ -144,7 +144,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                         <img
                           src={avatarUser.avatarUrl}
                           alt=""
-                          className="w-9 h-9 rounded-full object-cover bg-muted"
+                          className="w-9 h-9 rounded-full object-cover bg-border/40"
                         />
                       ) : (
                         <span className="flex-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold">
@@ -215,7 +215,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                         <img
                           src={avatarUser.avatarUrl}
                           alt=""
-                          className="w-9 h-9 rounded-full object-cover bg-muted"
+                          className="w-9 h-9 rounded-full object-cover bg-border/40"
                         />
                       ) : (
                         (avatarUser.name || avatarUser.email).charAt(0).toUpperCase()
