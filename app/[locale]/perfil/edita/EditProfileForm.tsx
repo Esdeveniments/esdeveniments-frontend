@@ -53,37 +53,36 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
     hasTrackedViewRef.current = true;
   }, [isOnboarding]);
 
-  const validate = (): boolean => {
-    let ok = true;
+  // Leaving a field checks only that field, so a new account's empty display
+  // name isn't flagged before the user reaches it. A field showing an error
+  // re-checks as the user types, so the error is gone before they click Save:
+  // clearing it on blur would shift the button and swallow that click.
+  const checkUsername = (value = username): boolean => {
+    const result = validateUsername(value);
+    setUsernameError(result.ok ? null : t(`usernameErrors.${result.code}`));
+    return result.ok;
+  };
 
-    const usernameResult = validateUsername(username);
-    if (!usernameResult.ok) {
-      setUsernameError(t(`usernameErrors.${usernameResult.code}`));
-      ok = false;
-    } else {
-      setUsernameError(null);
-    }
+  const checkDisplayName = (value = displayName): boolean => {
+    const trimmed = value.trim();
+    const error = !trimmed
+      ? t("errors.displayNameRequired")
+      : trimmed.length > DISPLAY_NAME_MAX
+        ? t("errors.displayNameTooLong")
+        : null;
+    setDisplayNameError(error);
+    return !error;
+  };
 
-    const trimmedDisplayName = displayName.trim();
-    if (!trimmedDisplayName) {
-      setDisplayNameError(t("errors.displayNameRequired"));
-      ok = false;
-    } else if (trimmedDisplayName.length > DISPLAY_NAME_MAX) {
-      setDisplayNameError(t("errors.displayNameTooLong"));
-      ok = false;
-    } else {
-      setDisplayNameError(null);
-    }
-
-    if (bio.trim().length > BIO_MAX) {
-      setBioError(t("errors.bioTooLong"));
-      ok = false;
-    } else {
-      setBioError(null);
-    }
-
+  const checkBio = (value = bio): boolean => {
+    const ok = value.trim().length <= BIO_MAX;
+    setBioError(ok ? null : t("errors.bioTooLong"));
     return ok;
   };
+
+  // Every check runs (no short-circuit), so all errors show at once.
+  const validate = (): boolean =>
+    [checkUsername(), checkDisplayName(), checkBio()].every(Boolean);
 
   const onSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -204,8 +203,11 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
                 name="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onBlur={validate}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (usernameError) checkUsername(e.target.value);
+                }}
+                onBlur={() => checkUsername()}
                 readOnly={usernameLocked}
                 className={`w-full rounded-xl border-border focus:border-foreground-strong text-base ${usernameLocked ? "input-readonly" : ""} ${usernameError ? "input-error" : ""}`}
                 aria-invalid={usernameError ? "true" : "false"}
@@ -237,8 +239,11 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
                 name="displayName"
                 type="text"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                onBlur={validate}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  if (displayNameError) checkDisplayName(e.target.value);
+                }}
+                onBlur={() => checkDisplayName()}
                 className={`w-full rounded-xl border-border focus:border-foreground-strong text-base ${displayNameError ? "input-error" : ""}`}
                 aria-invalid={displayNameError ? "true" : "false"}
                 aria-describedby={
@@ -266,8 +271,11 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
                 id="bio"
                 name="bio"
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                onBlur={validate}
+                onChange={(e) => {
+                  setBio(e.target.value);
+                  if (bioError) checkBio(e.target.value);
+                }}
+                onBlur={() => checkBio()}
                 maxLength={BIO_MAX}
                 rows={4}
                 className={`w-full p-3 border rounded-xl border-border focus:border-foreground-strong resize-vertical ${bioError ? "input-error" : ""}`}
