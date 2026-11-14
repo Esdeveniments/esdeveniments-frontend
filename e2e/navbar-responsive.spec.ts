@@ -251,10 +251,15 @@ test.describe("Responsive navbar", () => {
         const target = neighbour(page);
         await expect(target).toBeVisible({ timeout: 30000 });
         const before = await target.boundingBox();
+        // Only a browser that was signed in gets the avatar skeleton.
+        const skeleton = page.getByTestId(`${name}-avatar-skeleton`);
+        if (signedIn) await expect(skeleton).toBeVisible();
+        else await expect(skeleton).toBeHidden();
         release();
         const actionId = `${name}-${signedIn ? "avatar" : "login"}-link`;
         const real = page.getByTestId(actionId);
         await expect(real).toBeVisible();
+        await expect(skeleton).toHaveCount(0);
         const after = await target.boundingBox();
 
         expect(before).not.toBeNull();

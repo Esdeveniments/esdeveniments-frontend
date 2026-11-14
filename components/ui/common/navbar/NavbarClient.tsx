@@ -20,8 +20,11 @@ import NavbarLoginLink from "./NavbarLoginLink";
 // loads share these classes, so the reserved width matches the real button.
 const MOBILE_LOGIN_CLASS = "btn-outline btn-sm whitespace-nowrap";
 const DESKTOP_LOGIN_CLASS = "btn-outline text-xs whitespace-nowrap";
-// Hidden on browsers marked by SIGNED_IN_HINT_SCRIPT (styles/globals.css).
+// On browsers marked by SIGNED_IN_HINT_SCRIPT, CSS (styles/globals.css) swaps
+// the invisible login copy for an avatar skeleton while auth loads.
 const AUTH_PLACEHOLDER_CLASS = "invisible auth-slot-placeholder";
+// Same block as components/ui/common/skeletons/ (ProfilePageSkeleton).
+const AVATAR_SKELETON_CLASS = "w-9 h-9 rounded-full bg-border/40 animate-pulse";
 
 // No usePathname() here: it suspends while Next prerenders the generic shell
 // of routes with params, which would push the whole navbar out of the static
@@ -111,14 +114,23 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                   move when auth resolves and the avatar never floats. */}
               <div className="flex h-11 min-w-11 shrink-0 items-center justify-end">
                 {isLoading ? (
-                  <span
-                    className={`${MOBILE_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}
-                    aria-hidden="true"
-                    data-testid="mobile-auth-slot"
-                  >
-                    <UserCircleIcon className="h-5 w-5" />
-                    {labels.loginShort}
-                  </span>
+                  <>
+                    <span
+                      className={`${MOBILE_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}
+                      aria-hidden="true"
+                      data-testid="mobile-auth-slot"
+                    >
+                      <UserCircleIcon className="h-5 w-5" />
+                      {labels.loginShort}
+                    </span>
+                    <span
+                      className="auth-slot-skeleton hidden w-11 h-11 items-center justify-center"
+                      aria-hidden="true"
+                      data-testid="mobile-avatar-skeleton"
+                    >
+                      <span className={`block ${AVATAR_SKELETON_CLASS}`} />
+                    </span>
+                  </>
                 ) : avatarUser ? (
                     <PressableLink
                       href={profileHref || "/perfil/edita"}
@@ -132,7 +144,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                         <img
                           src={avatarUser.avatarUrl}
                           alt=""
-                          className="w-9 h-9 rounded-full object-cover bg-background"
+                          className="w-9 h-9 rounded-full object-cover bg-border/40"
                         />
                       ) : (
                         <span className="flex-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold">
@@ -177,12 +189,19 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               {/* Desktop auth slot, reserved the same way so the links don't move. */}
               <div className="flex min-w-9 shrink-0 items-center justify-end">
                 {isLoading ? (
-                  <span
-                    className={`${DESKTOP_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}
-                    aria-hidden="true"
-                  >
-                    {labels.login}
-                  </span>
+                  <>
+                    <span
+                      className={`${DESKTOP_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}
+                      aria-hidden="true"
+                    >
+                      {labels.login}
+                    </span>
+                    <span
+                      className={`auth-slot-skeleton hidden ${AVATAR_SKELETON_CLASS}`}
+                      aria-hidden="true"
+                      data-testid="desktop-avatar-skeleton"
+                    />
+                  </>
                 ) : avatarUser ? (
                     <PressableLink
                       href={profileHref || "/perfil/edita"}
@@ -196,7 +215,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                         <img
                           src={avatarUser.avatarUrl}
                           alt=""
-                          className="w-9 h-9 rounded-full object-cover bg-background"
+                          className="w-9 h-9 rounded-full object-cover bg-border/40"
                         />
                       ) : (
                         (avatarUser.name || avatarUser.email).charAt(0).toUpperCase()
