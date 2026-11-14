@@ -13,7 +13,10 @@ import Script from "next/script";
 import { routing } from "@i18n/routing";
 import { isE2ETestBuild } from "@utils/env";
 import { FUNDING_CHOICES_SRC } from "@utils/analytics";
-import { REVEAL_THROTTLE_OFF_SCRIPT } from "@utils/constants";
+import {
+  REVEAL_THROTTLE_OFF_SCRIPT,
+  SIGNED_IN_HINT_SCRIPT,
+} from "@utils/constants";
 import GoogleScripts from "../GoogleScripts";
 import AuthEventTracker from "@components/analytics/AuthEventTracker";
 import { AdProvider } from "@lib/context/AdContext";
@@ -140,7 +143,9 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html lang={locale}>
+    // suppressHydrationWarning: SIGNED_IN_HINT_SCRIPT adds data-signed-in
+    // before React hydrates (this element's attributes only).
+    <html lang={locale} suppressHydrationWarning>
       <head>
         {/* Google Fonts: preconnect to both CSS origin and font files origin */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -158,6 +163,7 @@ export default async function LocaleLayout({
         <script
           dangerouslySetInnerHTML={{ __html: REVEAL_THROTTLE_OFF_SCRIPT }}
         />
+        <script dangerouslySetInnerHTML={{ __html: SIGNED_IN_HINT_SCRIPT }} />
         {/* Early PWA install-prompt capture. Chromium fires `beforeinstallprompt`
             once, often before lazy React chunks hydrate; if no listener exists
             yet, the install CTA is lost for the whole session. This synchronous

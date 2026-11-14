@@ -15,6 +15,7 @@ import type {
 } from "types/auth";
 import { useLocale } from "next-intl";
 import { createExternalStore } from "@lib/context/external-store";
+import { SIGNED_IN_HINT_KEY } from "@utils/constants";
 
 export const AuthContext = createContext<AuthContextInternal | undefined>(
   undefined,
@@ -141,6 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [locale]);
 
   const logout = useCallback(() => {
+    try {
+      localStorage.removeItem(SIGNED_IN_HINT_KEY);
+    } catch {
+      // Storage blocked: the navbar corrects the hint once auth loads.
+    }
     window.location.assign("/api/auth/sign-out");
   }, []);
 

@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { vi } from "vitest";
 import type { AuthUser } from "types/auth";
 import type { NavbarLabels } from "types/props";
+import { SIGNED_IN_HINT_KEY } from "@utils/constants";
 
 let authLoading = false;
+let authenticated = true;
 
 const authUser: AuthUser = {
   id: "ff3da805-08f2-4fd0-acd5-6372344aa339",
@@ -47,8 +49,8 @@ vi.mock("@components/ui/common/navbar/LanguageSwitcher", () => ({
 
 vi.mock("@components/hooks/useAuth", () => ({
   useAuth: () => ({
-    user: authUser,
-    isAuthenticated: true,
+    user: authenticated ? authUser : null,
+    isAuthenticated: authenticated,
     isLoading: authLoading,
     logout: vi.fn(),
   }),
@@ -75,6 +77,8 @@ const labels: NavbarLabels = {
 describe("NavbarClient avatar", () => {
   afterEach(() => {
     authLoading = false;
+    authenticated = true;
+    localStorage.clear();
   });
 
   it("keeps the logo at its aspect ratio and uses the compact layout below the nav breakpoint", () => {
@@ -107,6 +111,22 @@ describe("NavbarClient avatar", () => {
     expect(slot).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
     expect(screen.queryByTestId("mobile-login-link")).toBeNull();
+  });
+
+  it("remembers whether this browser shows the avatar, for the next page's first paint", () => {
+    authLoading = true;
+    localStorage.setItem(SIGNED_IN_HINT_KEY, "1");
+    const { rerender } = render(<NavbarClient navigation={[]} labels={labels} />);
+    expect(localStorage.getItem(SIGNED_IN_HINT_KEY)).toBe("1");
+
+    authLoading = false;
+    authenticated = false;
+    rerender(<NavbarClient navigation={[]} labels={labels} />);
+    expect(localStorage.getItem(SIGNED_IN_HINT_KEY)).toBeNull();
+
+    authenticated = true;
+    rerender(<NavbarClient navigation={[]} labels={labels} />);
+    expect(localStorage.getItem(SIGNED_IN_HINT_KEY)).toBe("1");
   });
 
   it("gives a transparent-background upload a neutral backdrop instead of the fallback button color", () => {

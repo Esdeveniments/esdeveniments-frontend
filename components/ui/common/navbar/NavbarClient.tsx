@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 
 import { UserCircleIcon } from "@heroicons/react/24/outline";
@@ -8,18 +9,19 @@ import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 import PressableLink from "@components/ui/primitives/PressableLink";
 import { useAuth } from "@components/hooks/useAuth";
 import { getProfileSlug } from "@utils/user-helpers";
+import { SIGNED_IN_HINT_KEY } from "@utils/constants";
 import type { NavbarClientProps } from "types/props";
 import type { Href } from "types/common";
 
 import LanguageSwitcher from "./LanguageSwitcher";
 import NavbarLoginLink from "./NavbarLoginLink";
 
-// The login link and the invisible box that keeps its place share these
-// classes, so the reserved width always matches the real button. The real
-// action sits in the same grid cell, on top of the box.
+// The login link and the invisible copy that holds its place while auth
+// loads share these classes, so the reserved width matches the real button.
 const MOBILE_LOGIN_CLASS = "btn-outline btn-sm whitespace-nowrap";
 const DESKTOP_LOGIN_CLASS = "btn-outline text-xs whitespace-nowrap";
-const AUTH_SLOT_CELL = "col-start-1 row-start-1";
+// Hidden on browsers marked by SIGNED_IN_HINT_SCRIPT (styles/globals.css).
+const AUTH_PLACEHOLDER_CLASS = "invisible auth-slot-placeholder";
 
 // No usePathname() here: it suspends while Next prerenders the generic shell
 // of routes with params, which would push the whole navbar out of the static
@@ -29,6 +31,21 @@ const AUTH_SLOT_CELL = "col-start-1 row-start-1";
 export default function NavbarClient({ navigation, labels }: NavbarClientProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const logoAlt = labels.logoAlt?.trim() || "Esdeveniments";
+  const avatarUser =
+    isAuthenticated && user && !user.profileEnrichmentFailed ? user : null;
+  const showsAvatar = avatarUser !== null;
+
+  // Remember what this browser shows, so SIGNED_IN_HINT_SCRIPT can reserve
+  // the right width before the next page's first paint.
+  useEffect(() => {
+    if (isLoading) return;
+    try {
+      if (showsAvatar) localStorage.setItem(SIGNED_IN_HINT_KEY, "1");
+      else localStorage.removeItem(SIGNED_IN_HINT_KEY);
+    } catch {
+      // Storage blocked: the slot just reserves the login button's width.
+    }
+  }, [isLoading, showsAvatar]);
 
   // Build a URL-safe slug for the /perfil/{slug} URL. Prefer the
   // server-slugified username, fall back to a slugified display name, and
@@ -88,43 +105,44 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               data-testid="compact-navbar-actions"
             >
               <LanguageSwitcher compact />
-              {/* Fixed slot, as wide as the login button and as tall as the
-                  avatar: the header doesn't move when auth resolves. The test
-                  id marks the loading state. */}
-              <div className="grid h-11 shrink-0 items-center justify-items-end">
-                <span
-                  className={`${MOBILE_LOGIN_CLASS} invisible ${AUTH_SLOT_CELL}`}
-                  aria-hidden="true"
-                  data-testid={isLoading ? "mobile-auth-slot" : undefined}
-                >
-                  <UserCircleIcon className="h-5 w-5" />
-                  {labels.loginShort}
-                </span>
-                {!isLoading && (
-                  isAuthenticated && user && !user.profileEnrichmentFailed ? (
+              {/* Auth slot, as tall as the avatar. While auth loads it holds
+                  the login button's width, or the avatar's (min-w-11) on a
+                  browser that was signed in last time, so the header doesn't
+                  move when auth resolves and the avatar never floats. */}
+              <div className="flex h-11 min-w-11 shrink-0 items-center justify-end">
+                {isLoading ? (
+                  <span
+                    className={`${MOBILE_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}
+                    aria-hidden="true"
+                    data-testid="mobile-auth-slot"
+                  >
+                    <UserCircleIcon className="h-5 w-5" />
+                    {labels.loginShort}
+                  </span>
+                ) : avatarUser ? (
                     <PressableLink
                       href={profileHref || "/perfil/edita"}
                       prefetch={false}
                       variant="inline"
-                      className={`${AUTH_SLOT_CELL} flex-center w-11 h-11 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
+                      className={`flex-center w-11 h-11 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
                       aria-label={labels.myProfile}
                       data-testid="mobile-avatar-link"
                     >
-                      {user.avatarUrl ? (
+                      {avatarUser.avatarUrl ? (
                         <img
-                          src={user.avatarUrl}
+                          src={avatarUser.avatarUrl}
                           alt=""
                           className="w-9 h-9 rounded-full object-cover bg-background"
                         />
                       ) : (
                         <span className="flex-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                          {(user.name || user.email).charAt(0).toUpperCase()}
+                          {(avatarUser.name || avatarUser.email).charAt(0).toUpperCase()}
                         </span>
                       )}
                     </PressableLink>
                   ) : (
                     <NavbarLoginLink
-                      className={`${MOBILE_LOGIN_CLASS} ${AUTH_SLOT_CELL}`}
+                      className={MOBILE_LOGIN_CLASS}
                       aria-label={
                         user?.profileEnrichmentFailed
                           ? `${labels.loginShort}. ${labels.incompleteProfile}`
@@ -136,8 +154,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                       <UserCircleIcon className="h-5 w-5" aria-hidden="true" />
                       {labels.loginShort}
                     </NavbarLoginLink>
-                  )
-                )}
+                  )}
               </div>
             </div>
 
@@ -157,44 +174,43 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 ))}
               </div>
 
-              {/* Desktop auth in the same kind of fixed slot, so the links don't move. */}
-              <div className="grid items-center justify-items-end">
-                <span
-                  className={`${DESKTOP_LOGIN_CLASS} invisible ${AUTH_SLOT_CELL}`}
-                  aria-hidden="true"
-                >
-                  {labels.login}
-                </span>
-                {!isLoading && (
-                  isAuthenticated && user && !user.profileEnrichmentFailed ? (
+              {/* Desktop auth slot, reserved the same way so the links don't move. */}
+              <div className="flex min-w-9 items-center justify-end">
+                {isLoading ? (
+                  <span
+                    className={`${DESKTOP_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}
+                    aria-hidden="true"
+                  >
+                    {labels.login}
+                  </span>
+                ) : avatarUser ? (
                     <PressableLink
                       href={profileHref || "/perfil/edita"}
                       prefetch={false}
                       variant="inline"
-                      className={`${AUTH_SLOT_CELL} flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
+                      className={`flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
                       aria-label={labels.myProfile}
                       data-testid="desktop-avatar-link"
                     >
-                      {user.avatarUrl ? (
+                      {avatarUser.avatarUrl ? (
                         <img
-                          src={user.avatarUrl}
+                          src={avatarUser.avatarUrl}
                           alt=""
                           className="w-9 h-9 rounded-full object-cover bg-background"
                         />
                       ) : (
-                        (user.name || user.email).charAt(0).toUpperCase()
+                        (avatarUser.name || avatarUser.email).charAt(0).toUpperCase()
                       )}
                     </PressableLink>
                   ) : (
                     <NavbarLoginLink
-                      className={`${DESKTOP_LOGIN_CLASS} ${AUTH_SLOT_CELL}`}
+                      className={DESKTOP_LOGIN_CLASS}
                       data-testid="desktop-login-link"
                       data-analytics-action="navbar_login_desktop"
                     >
                       {labels.login}
                     </NavbarLoginLink>
-                  )
-                )}
+                  )}
               </div>
 
               <LanguageSwitcher />

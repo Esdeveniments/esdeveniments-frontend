@@ -69,6 +69,13 @@ html {
   padding-inline-end: env(safe-area-inset-right, 0px);
 }
 
+/* While auth loads, the navbar's invisible login-button copy keeps the auth
+   slot's width. Browsers marked by SIGNED_IN_HINT_SCRIPT (utils/constants.ts)
+   drop it, so the slot keeps only the avatar's width. */
+html[data-signed-in] .auth-slot-placeholder {
+  display: none;
+}
+
 .mobile-nav-content-safe-area {
   padding-bottom: var(--mobile-nav-clearance);
 }
