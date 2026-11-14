@@ -164,6 +164,7 @@ const PublishForm = () => {
     accountId: isAuthenticated ? user?.id : undefined, isAuthLoading, form, imageFile, step: wizardStep,
     onRestore: (saved, resumed, intent) => {
       setError(null);
+      setIsRedirecting(false);
       setEditorVersion((version) => version + 1);
       setForm({ ...defaultForm, ...saved.form });
       setImageFile(saved.imageFile);
@@ -514,6 +515,7 @@ const PublishForm = () => {
 
     creatingRef.current = true;
     startTransition(async () => {
+      let createdSlug: string | null = null;
       try {
         if (!imageFile) {
           sendGoogleEvent("publish_submit_blocked", {
@@ -581,34 +583,7 @@ const PublishForm = () => {
           return;
         }
 
-        const { slug } = event;
-        if (typeof document !== "undefined") {
-          document.body.dataset.lastE2eSlug = slug;
-        }
-        if (typeof window !== "undefined") {
-          window.__LAST_E2E_PUBLISH_SLUG__ = slug;
-        }
-
-        sendGoogleEvent("publish_success", {
-          ...buildPublishContext({ form, imageFile }),
-          source: "publica",
-          has_slug: Boolean(slug),
-        });
-
-        submittedRef.current = true;
-        setIsRedirecting(true);
-        if (user?.id && slug) {
-          savePendingPostPublishUpsell(slug, user.id);
-        }
-        const cleanup = await draft.complete();
-        if (!cleanup.ok) {
-          captureException(new Error("Publish draft cleanup failed"), {
-            tags: { section: "publica", action: "draft-cleanup", reason: cleanup.reason },
-          });
-          window.alert(t("draftCleanupFailed"));
-        }
-        // ?promote=1 backs up localStorage if browser storage is unavailable.
-        router.push(`/e/${slug}?promote=1`);
+        createdSlug = event.slug;
       } catch (error) {
         console.error("Submission error:", error);
 
@@ -687,9 +662,48 @@ const PublishForm = () => {
             },
           });
         }
+        return;
       } finally {
         creatingRef.current = false;
       }
+
+      // Post-create phase: isolated from the pre-create catch so a local
+      // cleanup failure never fires publish_error or shows errorGeneric after
+      // the backend has already created the event.
+      if (typeof document !== "undefined" && createdSlug) {
+        document.body.dataset.lastE2eSlug = createdSlug;
+      }
+      if (typeof window !== "undefined" && createdSlug) {
+        window.__LAST_E2E_PUBLISH_SLUG__ = createdSlug;
+      }
+
+      sendGoogleEvent("publish_success", {
+        ...buildPublishContext({ form, imageFile }),
+        source: "publica",
+        has_slug: Boolean(createdSlug),
+      });
+
+      submittedRef.current = true;
+      setIsRedirecting(true);
+      if (user?.id && createdSlug) {
+        savePendingPostPublishUpsell(createdSlug, user.id);
+      }
+      try {
+        const cleanup = await draft.complete();
+        if (!cleanup.ok) {
+          captureException(new Error("Publish draft cleanup failed"), {
+            tags: { section: "publica", action: "draft-cleanup", reason: cleanup.reason },
+          });
+          window.alert(t("draftCleanupFailed"));
+        }
+      } catch (cleanupError) {
+        captureException(cleanupError, {
+          tags: { section: "publica", action: "draft-cleanup", reason: "thrown" },
+        });
+        window.alert(t("draftCleanupFailed"));
+      }
+      // ?promote=1 backs up localStorage if browser storage is unavailable.
+      router.push(`/e/${createdSlug}?promote=1`);
     });
   };
 
@@ -737,7 +751,7 @@ const PublishForm = () => {
           open={showPreview}
           setOpen={setShowPreview}
           title={tForm("previewModalTitle")}
-          actionButton={submitLabel}
+          actionButton={isPending && !isRedirecting ? tForm("publishing") : submitLabel}
           actionButtonDisabled={isDraftLocked || isFormDisabled || isPending || isSubmitDisabled || imagePreparing}
           actionButtonAnalyticsAction={submitAnalyticsAction}
           onActionButtonClick={async () => {
@@ -826,6 +840,7 @@ const PublishForm = () => {
               form={form}
               onSubmit={onSubmit}
               submitLabel={submitLabel}
+              loadingLabel={isRedirecting ? t("publishCta.redirecting") : undefined}
               analyticsContext="publica"
               isLoading={isPending || isRedirecting}
               isSubmitDisabled={isSubmitDisabled}

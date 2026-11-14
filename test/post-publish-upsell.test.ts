@@ -16,12 +16,41 @@ describe("post-publish upsell storage", () => {
     vi.restoreAllMocks();
   });
 
-  it("saves and reads a matching pending upsell for the same slug and owner", () => {
+  it("saves and reads a matching pending upsell without letting another owner check delete it", () => {
     savePendingPostPublishUpsell("my-event", "owner-1");
 
     expect(hasPendingPostPublishUpsell("my-event", "owner-1")).toBe(true);
     expect(hasPendingPostPublishUpsell("my-event", "other-user")).toBe(false);
+    // Checking with a non-owner must preserve the real owner's fresh marker.
+    expect(hasPendingPostPublishUpsell("my-event", "owner-1")).toBe(true);
     expect(hasPendingPostPublishUpsell("other-event", "owner-1")).toBe(false);
+  });
+
+  it("prunes expired and corrupt upsell entries on save while keeping fresh and unrelated keys", () => {
+    const now = 1_700_000_000_000;
+    vi.spyOn(Date, "now").mockReturnValue(now);
+    savePendingPostPublishUpsell("stale-event", "owner-1");
+    window.localStorage.setItem(
+      `${POST_PUBLISH_UPSELL_STORAGE_PREFIX}corrupt-event`,
+      "{bad",
+    );
+    window.localStorage.setItem("unrelated_key", "keep-me");
+
+    vi.spyOn(Date, "now").mockReturnValue(now + POST_PUBLISH_UPSELL_TTL_MS - 1000);
+    savePendingPostPublishUpsell("fresh-event", "owner-1");
+
+    vi.spyOn(Date, "now").mockReturnValue(now + POST_PUBLISH_UPSELL_TTL_MS + 1);
+    savePendingPostPublishUpsell("newest-event", "owner-1");
+
+    expect(
+      window.localStorage.getItem(`${POST_PUBLISH_UPSELL_STORAGE_PREFIX}stale-event`),
+    ).toBeNull();
+    expect(
+      window.localStorage.getItem(`${POST_PUBLISH_UPSELL_STORAGE_PREFIX}corrupt-event`),
+    ).toBeNull();
+    expect(hasPendingPostPublishUpsell("fresh-event", "owner-1")).toBe(true);
+    expect(hasPendingPostPublishUpsell("newest-event", "owner-1")).toBe(true);
+    expect(window.localStorage.getItem("unrelated_key")).toBe("keep-me");
   });
 
   it("clears the pending upsell explicitly", () => {

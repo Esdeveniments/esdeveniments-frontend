@@ -8,22 +8,56 @@ import {
 const storageKey = (slug: string): string =>
   `${POST_PUBLISH_UPSELL_STORAGE_PREFIX}${slug}`;
 
-function isValidRecord(
+function isFreshTimestamp(createdAt: unknown, now: number): createdAt is number {
+  return (
+    typeof createdAt === "number" &&
+    Number.isFinite(createdAt) &&
+    now - createdAt < POST_PUBLISH_UPSELL_TTL_MS &&
+    createdAt <= now + PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS
+  );
+}
+
+function isFreshRecordForSlug(
   raw: unknown,
   slug: string,
-  ownerId: string,
   now: number,
 ): raw is PostPublishUpsellRecord {
   if (!raw || typeof raw !== "object") return false;
   const record = raw as Partial<PostPublishUpsellRecord>;
   return (
     record.slug === slug &&
-    record.ownerId === ownerId &&
-    typeof record.createdAt === "number" &&
-    Number.isFinite(record.createdAt) &&
-    now - record.createdAt < POST_PUBLISH_UPSELL_TTL_MS &&
-    record.createdAt <= now + PUBLISH_DRAFT_MAX_CLOCK_SKEW_MS
+    typeof record.ownerId === "string" &&
+    record.ownerId.length > 0 &&
+    isFreshTimestamp(record.createdAt, now)
   );
+}
+
+function pruneStaleUpsellRecords(now: number): void {
+  try {
+    const staleKeys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key?.startsWith(POST_PUBLISH_UPSELL_STORAGE_PREFIX)) continue;
+      const expectedSlug = key.slice(POST_PUBLISH_UPSELL_STORAGE_PREFIX.length);
+      const raw = window.localStorage.getItem(key);
+      if (!raw || !expectedSlug) {
+        staleKeys.push(key);
+        continue;
+      }
+      try {
+        if (!isFreshRecordForSlug(JSON.parse(raw), expectedSlug, now)) {
+          staleKeys.push(key);
+        }
+      } catch {
+        staleKeys.push(key);
+      }
+    }
+    for (const key of staleKeys) {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // Ignore storage access errors during opportunistic pruning.
+  }
 }
 
 /**
@@ -36,10 +70,12 @@ export function savePendingPostPublishUpsell(
   ownerId: string,
 ): void {
   if (typeof window === "undefined" || !slug || !ownerId) return;
+  const now = Date.now();
+  pruneStaleUpsellRecords(now);
   const record: PostPublishUpsellRecord = {
     slug,
     ownerId,
-    createdAt: Date.now(),
+    createdAt: now,
   };
   try {
     window.localStorage.setItem(storageKey(slug), JSON.stringify(record));
@@ -63,8 +99,8 @@ export function hasPendingPostPublishUpsell(
   if (!raw) return false;
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (isValidRecord(parsed, slug, ownerId, Date.now())) {
-      return true;
+    if (isFreshRecordForSlug(parsed, slug, Date.now())) {
+      return parsed.ownerId === ownerId;
     }
   } catch {
     // Fall through to remove corrupt data.

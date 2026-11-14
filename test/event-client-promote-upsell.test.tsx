@@ -233,4 +233,43 @@ describe("EventClient promote upsell wiring", () => {
     expect(screen.queryByTestId("promote-upsell-modal")).toBeNull();
     expect(hasPendingPostPublishUpsell("my-event", OWNER_ID)).toBe(true);
   });
+
+  it("keys upsell state and analytics per slug across client-side /e/[eventId] navigations", async () => {
+    savePendingPostPublishUpsell("event-1", OWNER_ID);
+    savePendingPostPublishUpsell("event-2", OWNER_ID);
+
+    const { rerender } = render(
+      <EventClient event={{ ...buildEvent(), id: "id-1", slug: "event-1" }} />,
+    );
+    expect(
+      await screen.findByTestId("promote-upsell-modal"),
+    ).toHaveTextContent("event-1");
+
+    // Navigating to a non-owned event while the modal was open hides it immediately.
+    rerender(
+      <EventClient
+        event={{ ...buildEvent(), id: "id-other", slug: "other-event", ownerId: "other-owner" }}
+      />,
+    );
+    expect(screen.queryByTestId("promote-upsell-modal")).toBeNull();
+
+    // Dismissing event-1 does not prevent event-2's pending upsell from opening and tracking.
+    rerender(
+      <EventClient event={{ ...buildEvent(), id: "id-1", slug: "event-1" }} />,
+    );
+    await screen.findByTestId("promote-upsell-modal");
+    fireEvent.click(screen.getByTestId("mock-close"));
+    expect(screen.queryByTestId("promote-upsell-modal")).toBeNull();
+
+    rerender(
+      <EventClient event={{ ...buildEvent(), id: "id-2", slug: "event-2" }} />,
+    );
+    expect(
+      await screen.findByTestId("promote-upsell-modal"),
+    ).toHaveTextContent("event-2");
+    expect(mockSendGoogleEvent).toHaveBeenCalledWith("promote_modal_shown", {
+      event_slug: "event-2",
+      source: "event_detail",
+    });
+  });
 });

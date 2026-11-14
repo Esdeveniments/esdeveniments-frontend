@@ -1,8 +1,9 @@
-import path from "node:path";
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+import { POST_PUBLISH_UPSELL_STORAGE_PREFIX } from "@utils/constants";
 import { MOCK_USER, mockAuthenticatedUser } from "./helpers/auth";
+import { DEFAULT_IMAGE } from "./helpers/publish";
 
-async function mockPublishFormOptions(page: import("@playwright/test").Page) {
+async function mockPublishFormOptions(page: Page) {
   await page.route("**/api/regions/options", (route) =>
     route.fulfill({
       json: [
@@ -34,6 +35,99 @@ async function mockPublishFormOptions(page: import("@playwright/test").Page) {
   );
 }
 
+async function fillDeterministicPublishSteps(
+  page: Page,
+  {
+    title,
+    description,
+    venue,
+    url,
+  }: { title: string; description: string; venue: string; url?: string },
+) {
+  await page.goto("/publica", {
+    waitUntil: "domcontentloaded",
+    timeout: 60_000,
+  });
+
+  const form = page.getByTestId("event-form");
+  await expect(form).toBeVisible({ timeout: 30_000 });
+  await expect(form).toHaveAttribute("data-hydrated", "true", {
+    timeout: 30_000,
+  });
+
+  // Step 1: basics
+  await page.fill("#title", title);
+  await expect(page.locator("#title")).toHaveValue(title);
+  await page.fill("#description", description);
+  await expect(page.locator("#description")).toHaveValue(description);
+  if (url) {
+    await page.fill("#url", url);
+  }
+  await expect(page.getByTestId("next-button")).toBeEnabled({
+    timeout: 10_000,
+  });
+  await page.getByTestId("next-button").click();
+
+  // Step 2: location
+  await page.locator("#town-input").fill("Mataró");
+  await page.keyboard.press("Enter");
+  await page.fill("#location", venue);
+  await expect(page.locator("#location")).toHaveValue(venue);
+  await expect(page.getByTestId("next-button")).toBeEnabled({
+    timeout: 10_000,
+  });
+  await page.getByTestId("next-button").click();
+
+  // Step 3: image and dates (the picker's default start is enough here)
+  await page.setInputFiles(
+    'input[type="file"][accept*="image"]',
+    DEFAULT_IMAGE,
+  );
+}
+
+async function clickPublishAndReadSlug(page: Page): Promise<string> {
+  const publishButton = page.getByTestId("publish-button");
+  await expect(publishButton).toBeEnabled({ timeout: 20_000 });
+  await expect(page.getByTestId("event-form")).toHaveAttribute(
+    "data-publish-armed",
+    "true",
+  );
+
+  const publishSlugHandle = page.waitForFunction(
+    () =>
+      document.body.dataset.lastE2eSlug ||
+      (typeof window !== "undefined"
+        ? window.__LAST_E2E_PUBLISH_SLUG__
+        : null) ||
+      null,
+    { timeout: 60_000 },
+  );
+  await publishButton.click();
+  return (await (await publishSlugHandle).jsonValue()) as string;
+}
+
+async function assertModalStaysClosedAfterReload(
+  page: Page,
+  slug: string,
+  title: string,
+) {
+  await expect
+    .poll(() =>
+      page.evaluate(
+        ({ keyPrefix, eventSlug }) =>
+          window.localStorage.getItem(`${keyPrefix}${eventSlug}`),
+        { keyPrefix: POST_PUBLISH_UPSELL_STORAGE_PREFIX, eventSlug: slug },
+      ),
+    )
+    .toBeNull();
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+  await expect(page.getByTestId("event-owner-bar")).toBeVisible({
+    timeout: 20_000,
+  });
+  await expect(page.getByTestId("promote-upsell-modal")).toHaveCount(0);
+}
+
 // Note: Service workers are blocked globally via playwright.config.ts (serviceWorkers: 'block')
 // This allows Playwright's route handlers to intercept API requests for mocking
 
@@ -59,73 +153,28 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     const description = "Concert de prova automatitzada per a Playwright.";
     const venue = "Plaça Major";
 
-    await page.goto("/publica", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
+    await fillDeterministicPublishSteps(page, {
+      title,
+      description,
+      venue,
+      url: "https://example.com/prova-e2e",
     });
-
-    const form = page.getByTestId("event-form");
-    await expect(form).toBeVisible({ timeout: 30000 });
-    await expect(form).toHaveAttribute("data-hydrated", "true", {
-      timeout: 30000,
-    });
-
-    // Step 1: basics
-    await page.fill("#title", title);
-    await expect(page.locator("#title")).toHaveValue(title);
-    await page.fill("#description", description);
-    await expect(page.locator("#description")).toHaveValue(description);
-    await page.fill("#url", "https://example.com/prova-e2e");
-    await expect(page.getByTestId("next-button")).toBeEnabled({
-      timeout: 10000,
-    });
-    await page.getByTestId("next-button").click();
-
-    // Step 2: location
-    await page.locator("#town-input").fill("Mataró");
-    await page.keyboard.press("Enter");
-    await page.fill("#location", venue);
-    await expect(page.locator("#location")).toHaveValue(venue);
-    await expect(page.getByTestId("next-button")).toBeEnabled({
-      timeout: 10000,
-    });
-    await page.getByTestId("next-button").click();
-
-    // Step 3: image and dates (the picker's default start is enough here)
-    await page.setInputFiles(
-      'input[type="file"][accept*="image"]',
-      path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
-    );
 
     // Optional price: a paid amount typed the Catalan way.
     await page.getByLabel("De pagament").check();
     await page.fill("#price-amount", "12,50");
 
-    const publishButton = page.getByTestId("publish-button");
-    await expect(publishButton).toBeEnabled({ timeout: 20000 });
-    await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
-
-    const publishSlugHandle = page.waitForFunction(
-      () =>
-        document.body.dataset.lastE2eSlug ||
-        (typeof window !== "undefined"
-          ? window.__LAST_E2E_PUBLISH_SLUG__
-          : null) ||
-        null,
-      { timeout: 60000 },
-    );
-    await publishButton.click();
-    const resolvedSlug = (await (await publishSlugHandle).jsonValue()) as string;
+    const resolvedSlug = await clickPublishAndReadSlug(page);
 
     // Wait for PublishForm's own redirect rather than forcing page.goto,
     // proving the post-publish ?promote=1 transition works end-to-end.
     await expect(page).toHaveURL(
       new RegExp(`/e/${resolvedSlug}\\?promote=1$`),
-      { timeout: 60000 },
+      { timeout: 60_000 },
     );
 
     const upsellModal = page.getByTestId("promote-upsell-modal");
-    await expect(upsellModal).toBeVisible({ timeout: 20000 });
+    await expect(upsellModal).toBeVisible({ timeout: 20_000 });
     await page.getByTestId("promote-modal-keep-free").click();
     await expect(page.getByTestId("share-kit")).toBeVisible();
     await page.keyboard.press("Escape");
@@ -154,17 +203,7 @@ test.describe("Publica -> Event flow (deterministic)", () => {
 
     // Reloading the event page does not reopen the one-time upsell modal
     // even after authenticated owner controls hydrate.
-    await expect
-      .poll(() =>
-        page.evaluate((slug) =>
-          window.localStorage.getItem(`esdeveniments:post_publish_upsell:${slug}`),
-        resolvedSlug),
-      )
-      .toBeNull();
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
-    await expect(page.getByTestId("event-owner-bar")).toBeVisible({ timeout: 20000 });
-    await expect(page.getByTestId("promote-upsell-modal")).toHaveCount(0);
+    await assertModalStaysClosedAfterReload(page, resolvedSlug, title);
   });
 
   test("recovers the post-publish upsell on a plain event URL even when auth hydration is slow", async ({
@@ -184,43 +223,12 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     await mockPublishFormOptions(page);
 
     const title = `E2E Recovery ${Date.now()}`;
-    await page.goto("/publica", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-    const form = page.getByTestId("event-form");
-    await expect(form).toBeVisible({ timeout: 30000 });
-    await expect(form).toHaveAttribute("data-hydrated", "true", {
-      timeout: 30000,
+    await fillDeterministicPublishSteps(page, {
+      title,
+      description: "Prova de recuperació del modal de promoció.",
+      venue: "Plaça Gran",
     });
 
-    await page.fill("#title", title);
-    await page.fill("#description", "Prova de recuperació del modal de promoció.");
-    await page.getByTestId("next-button").click();
-
-    await page.locator("#town-input").fill("Mataró");
-    await page.keyboard.press("Enter");
-    await page.fill("#location", "Plaça Gran");
-    await page.getByTestId("next-button").click();
-
-    await page.setInputFiles(
-      'input[type="file"][accept*="image"]',
-      path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
-    );
-
-    const publishButton = page.getByTestId("publish-button");
-    await expect(publishButton).toBeEnabled({ timeout: 20000 });
-    await expect(form).toHaveAttribute("data-publish-armed", "true");
-
-    const publishSlugHandle = page.waitForFunction(
-      () =>
-        document.body.dataset.lastE2eSlug ||
-        (typeof window !== "undefined"
-          ? window.__LAST_E2E_PUBLISH_SLUG__
-          : null) ||
-        null,
-      { timeout: 60000 },
-    );
     // Intercept the automatic ?promote=1 navigation on the same origin so
     // EventClient never mounts with ?promote=1 (and we stay on localhost, not
     // chrome-error://) while testing recovery on a plain /e/<slug> URL.
@@ -235,15 +243,12 @@ test.describe("Publica -> Event flow (deterministic)", () => {
       }
       return route.abort();
     });
-    await publishButton.click();
-    const resolvedSlug = (await (await publishSlugHandle).jsonValue()) as string;
+    const resolvedSlug = await clickPublishAndReadSlug(page);
     await page.waitForFunction(
-      (slug) =>
-        Boolean(
-          window.localStorage.getItem(`esdeveniments:post_publish_upsell:${slug}`),
-        ),
-      resolvedSlug,
-      { timeout: 10000 },
+      ({ keyPrefix, slug }) =>
+        Boolean(window.localStorage.getItem(`${keyPrefix}${slug}`)),
+      { keyPrefix: POST_PUBLISH_UPSELL_STORAGE_PREFIX, slug: resolvedSlug },
+      { timeout: 10_000 },
     );
     await page.unroute(blockPromoteNav);
 
@@ -252,22 +257,12 @@ test.describe("Publica -> Event flow (deterministic)", () => {
     await page.goto(`/e/${resolvedSlug}`, { waitUntil: "domcontentloaded" });
 
     const upsellModal = page.getByTestId("promote-upsell-modal");
-    await expect(upsellModal).toBeVisible({ timeout: 20000 });
+    await expect(upsellModal).toBeVisible({ timeout: 20_000 });
     await page.keyboard.press("Escape");
     await expect(upsellModal).toHaveCount(0);
 
     // Once shown and dismissed, the marker is removed and reloading must not
     // reopen it even after slow auth hydration finishes.
-    await expect
-      .poll(() =>
-        page.evaluate((slug) =>
-          window.localStorage.getItem(`esdeveniments:post_publish_upsell:${slug}`),
-        resolvedSlug),
-      )
-      .toBeNull();
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
-    await expect(page.getByTestId("event-owner-bar")).toBeVisible({ timeout: 20000 });
-    await expect(upsellModal).toHaveCount(0);
+    await assertModalStaysClosedAfterReload(page, resolvedSlug, title);
   });
 });
