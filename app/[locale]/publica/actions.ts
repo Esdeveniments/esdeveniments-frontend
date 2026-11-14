@@ -1,5 +1,5 @@
 "use server";
-import { updateTag, refresh } from "next/cache";
+import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
@@ -7,7 +7,7 @@ import { getErrorStatus } from "@utils/error-status";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import type { CreateEventActionResult } from "types/event";
-import { eventsTag, eventsCategorizedTag } from "@lib/cache/tags";
+import { eventsTag, eventsCategorizedTag, eventTag } from "@lib/cache/tags";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { submitEventsToIndexNow } from "@lib/seo/indexnow";
 import { hubPathsFor } from "@utils/festivity";
@@ -118,10 +118,13 @@ export async function createEventAction(
     after(() => sendNewEventEmail(title, slug));
   }
 
-  // 3. Immediately expire cache tags for event lists and categorized collections
-  // This ensures read-your-own-writes: the new event appears immediately
+  // 3. Immediately expire cache tags for event lists, categorized collections,
+  // and the newly created slug so the redirect destination renders fresh.
   updateTag(eventsTag);
   updateTag(eventsCategorizedTag);
+  if (created?.slug) {
+    updateTag(eventTag(created.slug));
+  }
   // Next's tags don't reach Cloudflare: purge the listings that show the
   // event. after() runs once the action's revalidations are applied.
   after(async () => {
@@ -131,8 +134,6 @@ export async function createEventAction(
       hubPathsFor([created]),
     );
   });
-  // Refresh the current request to reflect changes
-  refresh();
 
   // 4. Return the created event or result for your client
   return { success: true, event: created };

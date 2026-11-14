@@ -54,7 +54,8 @@ function sanitizeLoggedBody(body: string): string {
  * are stripped before logging).
  */
 export async function getAuthenticatedUserExternal(
-  accessToken: string
+  accessToken: string,
+  { timeout }: { timeout?: number } = {},
 ): Promise<AuthenticatedUserDTO | null> {
   if (!accessToken) return null;
   if (!isApiUrlConfigured()) return null;
@@ -69,6 +70,7 @@ export async function getAuthenticatedUserExternal(
   try {
     const response = await fetchWithHmac(`${apiUrl}/auth/me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
+      timeout,
     });
     if (!response.ok) {
       const body = await response.text().catch(() => "<unreadable>");

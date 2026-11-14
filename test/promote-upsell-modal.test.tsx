@@ -69,11 +69,16 @@ vi.mock("@components/ui/common/modal", () => ({
 }));
 
 import { SHARE_KIT_EVENT } from "./fixtures/share-kit-event";
+import {
+  hasPendingPostPublishUpsell,
+  savePendingPostPublishUpsell,
+} from "@utils/post-publish-upsell";
 import PromoteUpsellModal from "../app/[locale]/e/[eventId]/components/PromoteUpsellModal";
 
 describe("PromoteUpsellModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     window.history.pushState({}, "", "/en/e/my-event?promote=1");
   });
 
@@ -135,5 +140,14 @@ describe("PromoteUpsellModal", () => {
     expect(screen.getByText("App.EventPromote.benefit1")).toBeInTheDocument();
     expect(screen.getByText("App.EventPromote.benefit2")).toBeInTheDocument();
     expect(screen.getByText("App.EventPromote.benefit3")).toBeInTheDocument();
+  });
+
+  it("clears the durable post-publish marker once the modal mounts", () => {
+    savePendingPostPublishUpsell("my-event", "owner-1");
+    expect(hasPendingPostPublishUpsell("my-event", "owner-1")).toBe(true);
+
+    render(<PromoteUpsellModal open setOpen={vi.fn()} slug="my-event" shareEvent={SHARE_KIT_EVENT} />);
+
+    expect(hasPendingPostPublishUpsell("my-event", "owner-1")).toBe(false);
   });
 });

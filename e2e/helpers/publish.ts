@@ -148,7 +148,7 @@ export async function prepareTestEvent(
  * The form ignores a publish click in the first 250 ms of the last step (an
  * accidental double tap on Next); wait until it accepts one.
  */
-async function clickArmedPublish(page: Page) {
+export async function clickArmedPublish(page: Page) {
   const submit = page.getByTestId("publish-button");
   await expect(submit).toBeEnabled({ timeout: 15_000 });
   await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
@@ -205,6 +205,7 @@ export type StoredEvent = {
   endDate: string;
   endTime: string | null;
   imageUrl: string | null;
+  city: { id: number };
 };
 
 /** Read an event straight from the backend with the service key. */

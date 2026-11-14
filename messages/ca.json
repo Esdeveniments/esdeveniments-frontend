@@ -344,7 +344,8 @@
       "publishCta": {
         "signIn": "Inicia sessió per publicar",
         "completeProfile": "Completa el perfil per publicar",
-        "resolving": "Comprovant la sessió…"
+        "resolving": "Comprovant la sessió…",
+        "redirecting": "Publicat! Obrint…"
       },
       "accountNotice": "Ja tens compte?",
       "earlySignIn": "Inicia sessió",
