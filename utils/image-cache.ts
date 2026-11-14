@@ -309,7 +309,17 @@ export function buildOptimizedImageUrl(
  */
 export function directImageUrl(imageUrl: string): string {
   const normalized = normalizeExternalImageUrl(imageUrl);
-  return /^https:\/\//i.test(normalized) ? normalized : "";
+  if (!/^https:\/\//i.test(normalized)) return "";
+  // Without our `?v=` cache key, as the proxy fetches it: some council
+  // servers reject unknown query params. Legacy handlers never get one.
+  if (isLegacyFileHandler(normalized)) return normalized;
+  try {
+    const url = new URL(normalized);
+    url.searchParams.delete(CACHE_PARAM);
+    return url.toString();
+  } catch {
+    return normalized;
+  }
 }
 
 /**
