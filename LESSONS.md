@@ -324,6 +324,17 @@ the same empty lists. When the backend contract changes, grep for the
 removed field in `lib/validation/` and `types/api/is*.ts` first, and check
 PRE's `/v3/api-docs` (it needs no key) before trusting an empty page.
 
+## Backend text can be the word "null"
+
+Since the Spring AI 2 upgrade (2026-09-24) the backend's AI importer saved
+the text "null" for missing values (Jackson 3 ignored the Jackson 2
+annotations that cleaned it; esdeveniments-backend#114). Zod accepted it as a
+normal string, so event pages showed "null" as the price and venue, on
+staging and production, for weeks. The event schemas in
+`lib/validation/event.ts` now read "null" and blank text as missing
+(`optionalText`, `requiredText`). Use them for any new free-text event field,
+and never show backend text on a page without going through a schema.
+
 ## Module-level state is not shared between a server action and a route handler
 
 `lib/cache/event-detail-cache.ts` kept its cache in a module-level `Map` and
