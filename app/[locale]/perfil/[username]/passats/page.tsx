@@ -79,9 +79,7 @@ export default async function ProfilePastEventsPage({
         status="past"
       />
       <div className="w-full mt-section-y">
-        <Suspense
-          fallback={<EventsGridSkeleton count={3} />}
-        >
+        <Suspense fallback={<EventsGridSkeleton count={3} />}>
           <ProfileEventsSection username={profile.username} status="past" />
         </Suspense>
       </div>

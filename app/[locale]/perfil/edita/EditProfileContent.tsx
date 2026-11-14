@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@components/hooks/useAuth";
 import { getSafeRedirect } from "@utils/safe-redirect";
-import AuthCheckSkeleton from "@components/ui/common/skeletons/AuthCheckSkeleton";
+import EditProfileSkeleton from "@components/ui/common/skeletons/EditProfileSkeleton";
 import EditProfileAuthGate from "./EditProfileAuthGate";
 import EditProfileForm from "./EditProfileForm";
 
@@ -13,7 +13,7 @@ export default function EditProfileContent() {
   const redirectTo = getSafeRedirect(searchParams.get("redirect") ?? undefined);
 
   if (isLoading) {
-    return <AuthCheckSkeleton />;
+    return <EditProfileSkeleton />;
   }
 
   if (!isAuthenticated) {

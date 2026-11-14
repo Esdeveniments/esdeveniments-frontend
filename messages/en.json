@@ -302,13 +302,18 @@
         "errorUnsupported": "Unsupported format. Use JPG or PNG.",
         "errorTooLarge": "Image exceeds the 2 MB limit.",
         "errorUploadFailed": "Couldn't upload the photo. Please try again.",
-        "errorRemoveFailed": "Couldn't remove the photo. Please try again."
+        "errorRemoveFailed": "Couldn't remove the photo. Please try again.",
+        "hint": "PNG or JPG, up to 2 MB."
       },
       "authGate": {
         "title": "Log in to edit your profile",
         "description": "You need to log in to complete or edit your profile.",
         "login": "Log in"
-      }
+      },
+      "viewProfile": "View profile",
+      "usernameUrl": "Your address: {url}",
+      "bioCount": "{count}/{max}",
+      "bioPlaceholder": "Say who you are and what events you organise."
     },
     "PlacesNearby": {
       "invalidNumber": "Invalid coordinates: lat,lng must be numbers",
@@ -545,7 +550,6 @@
       "events": "Events",
       "verified": "Verified",
       "verifiedOrganizer": "Verified organizer",
-      "joinedDate": "Joined {date}",
       "noEvents": "No events yet",
       "website": "Website",
       "totalEvents": "{count, plural, one {# event} other {# events}}",
@@ -553,19 +557,18 @@
       "notFoundDescription": "The profile you're looking for doesn't exist or has been removed.",
       "backHome": "Back to home",
       "editProfile": "Edit profile",
-      "claimQuestion": "Is this your venue?",
-      "claimLogin": "Log in",
       "tabUpcoming": "Upcoming",
       "tabPast": "Past",
       "noUpcomingEvents": "No upcoming events yet",
       "noPastEvents": "No past events yet",
-      "statsPublished": "Published",
       "viewAllPastEvents": "See past events ({count})",
       "upcomingInTown": "Upcoming events {placeIn}",
       "moreInTown": "More events {placeIn}",
-      "statsVisits": "Visits",
       "pastTitle": "Past events {nameOf} — Profile",
-      "pastMetaDescription": "Check out the past events {nameOf}: concerts, exhibitions and activities they've already organized."
+      "pastMetaDescription": "Check out the past events {nameOf}: concerts, exhibitions and activities they've already organized.",
+      "visitsCount": "{count, plural, one {# visit} other {# visits}}",
+      "loadMoreError": "Couldn't load more events. Please try again.",
+      "loadedCount": "{count, plural, one {Loaded # more event} other {Loaded # more events}}"
     },
     "Footer": {
       "navigation": {

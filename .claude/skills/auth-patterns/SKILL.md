@@ -80,8 +80,7 @@ Server pages: check the session cookie server-side (`getAccessTokenFromCookies`
 from `@utils/auth-cookies`) and render an `*AuthGate` component when absent —
 see `EditProfileAuthGate.tsx`,
 `PastFavoritesAuthGate.tsx` for the shape. Client components: use
-`useAuth().isAuthenticated` / `.status` — see `ProfileOwnerActions.tsx`,
-`ProfileClaimCta.tsx`.
+`useAuth().isAuthenticated` / `.status` — see `ProfileOwnerActions.tsx`.
 
 Publishing is the exception: guests and incomplete-profile users can edit and
 preview `/publica`. Its shared submit handler saves through `usePublishDraft`

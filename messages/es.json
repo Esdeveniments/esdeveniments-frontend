@@ -302,13 +302,18 @@
         "errorUnsupported": "Formato no admitido. Usa JPG o PNG.",
         "errorTooLarge": "La imagen supera el límite de 2 MB.",
         "errorUploadFailed": "No se ha podido subir la foto. Inténtalo de nuevo.",
-        "errorRemoveFailed": "No se ha podido eliminar la foto. Inténtalo de nuevo."
+        "errorRemoveFailed": "No se ha podido eliminar la foto. Inténtalo de nuevo.",
+        "hint": "PNG o JPG, hasta 2 MB."
       },
       "authGate": {
         "title": "Inicia sesión para editar el perfil",
         "description": "Debes iniciar sesión para completar o editar tu perfil.",
         "login": "Iniciar sesión"
-      }
+      },
+      "viewProfile": "Ver el perfil",
+      "usernameUrl": "Tu dirección: {url}",
+      "bioCount": "{count}/{max}",
+      "bioPlaceholder": "Cuenta quién eres y qué eventos organizas."
     },
     "PlacesNearby": {
       "invalidNumber": "Coordenadas no válidas: lat,lng deben ser números",
@@ -545,7 +550,6 @@
       "events": "Eventos",
       "verified": "Verificado",
       "verifiedOrganizer": "Organizador verificado",
-      "joinedDate": "Desde {date}",
       "noEvents": "Aún no hay eventos",
       "website": "Sitio web",
       "totalEvents": "{count, plural, one {# evento} other {# eventos}}",
@@ -553,19 +557,18 @@
       "notFoundDescription": "El perfil que buscas no existe o ha sido eliminado.",
       "backHome": "Volver al inicio",
       "editProfile": "Editar perfil",
-      "claimQuestion": "¿Es tu local?",
-      "claimLogin": "Iniciar sesión",
       "tabUpcoming": "Próximos",
       "tabPast": "Pasados",
       "noUpcomingEvents": "Todavía no hay eventos próximos",
       "noPastEvents": "Todavía no hay eventos pasados",
-      "statsPublished": "Publicados",
       "viewAllPastEvents": "Ver los pasados ({count})",
       "upcomingInTown": "Próximos eventos {placeIn}",
       "moreInTown": "Más eventos {placeIn}",
-      "statsVisits": "Visitas",
       "pastTitle": "Eventos pasados {nameOf} — Perfil",
-      "pastMetaDescription": "Consulta los eventos pasados {nameOf}: conciertos, exposiciones y actividades que ya ha organizado."
+      "pastMetaDescription": "Consulta los eventos pasados {nameOf}: conciertos, exposiciones y actividades que ya ha organizado.",
+      "visitsCount": "{count, plural, one {# visita} other {# visitas}}",
+      "loadMoreError": "No se han podido cargar más eventos. Vuelve a intentarlo.",
+      "loadedCount": "{count, plural, one {Se ha cargado # evento más} other {Se han cargado # eventos más}}"
     },
     "Footer": {
       "navigation": {

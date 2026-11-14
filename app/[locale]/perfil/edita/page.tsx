@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import type { Metadata } from "next";
 import type { AppLocale } from "types/i18n";
-import AuthCheckSkeleton from "@components/ui/common/skeletons/AuthCheckSkeleton";
+import EditProfileSkeleton from "@components/ui/common/skeletons/EditProfileSkeleton";
 import EditProfileContent from "./EditProfileContent";
 
 // Private, per-user utility page — never indexed, mirrors /e/[eventId]/edita.
@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function EditProfilePage() {
   return (
-    <Suspense fallback={<AuthCheckSkeleton />}>
+    <Suspense fallback={<EditProfileSkeleton />}>
       <EditProfileContent />
     </Suspense>
   );

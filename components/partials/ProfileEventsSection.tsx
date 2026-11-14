@@ -5,13 +5,13 @@ import { locale as rootLocale } from "next/root-params";
 import { Link } from "@i18n/routing";
 import EventCardList from "@components/ui/card/EventCardList";
 import EventsSection from "./EventsSection";
+import ProfileEventsLoadMore from "./ProfileEventsLoadMore";
 import type { ProfileEventsSectionProps } from "types/props";
 import type { AppLocale } from "types/i18n";
 import { formatPlacePreposition } from "@utils/string-helpers";
 
 // First page of the profile's event listing, scoped to upcoming or past by
-// the backend. Client pagination ("load more") via /api/users/[username]/events
-// is a follow-up; v1 renders the first page.
+// the backend. Later pages load on the client via /api/users/[username]/events.
 const PROFILE_EVENTS_PAGE_SIZE = 20;
 // An empty Propers tab links to Passats and suggests upcoming events in the
 // town of the organizer's latest event, so the page isn't a dead end.
@@ -89,11 +89,21 @@ export default async function ProfileEventsSection({
   }
 
   return (
-    <EventsSection
-      events={events}
-      emptyTitle={t(status === "past" ? "noPastEvents" : "noUpcomingEvents")}
-      sectionLabel={sectionLabel}
-      testId="profile-events"
-    />
+    <>
+      <EventsSection
+        events={events}
+        emptyTitle={t(status === "past" ? "noPastEvents" : "noUpcomingEvents")}
+        sectionLabel={sectionLabel}
+        testId="profile-events"
+      />
+      {events.length > 0 && !eventsResponse.last && (
+        <ProfileEventsLoadMore
+          username={username}
+          status={status}
+          pageSize={PROFILE_EVENTS_PAGE_SIZE}
+          initialIds={events.map((event) => event.id)}
+        />
+      )}
+    </>
   );
 }

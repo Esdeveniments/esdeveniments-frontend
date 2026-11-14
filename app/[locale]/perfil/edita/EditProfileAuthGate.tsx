@@ -31,7 +31,7 @@ export default function EditProfileAuthGate({
         </div>
 
         <h1 className="heading-2 text-foreground">{t("title")}</h1>
-        <p className="body-normal text-foreground/80">{t("description")}</p>
+        <p className="body-normal text-muted-foreground">{t("description")}</p>
 
         <Link
           href={`/iniciar-sessio?redirect=${encodeURIComponent(target)}`}

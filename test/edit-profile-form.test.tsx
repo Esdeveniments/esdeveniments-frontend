@@ -28,6 +28,15 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@i18n/routing", () => ({
   useRouter: () => ({ push: mockPush }),
+  Link: ({
+    children,
+    href,
+    ...props
+  }: { children: React.ReactNode; href: string } & Record<string, unknown>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("@components/hooks/useAuth", () => ({
@@ -60,10 +69,7 @@ describe("EditProfileForm", () => {
   });
 
   it("lets an onboarding user (no other logout entry point) log out from here", () => {
-    // NavbarClient sends profileCompleted === false users to this page, and
-    // logout otherwise only lives on the owner's completed profile page
-    // (ProfileOwnerActions) — without this, onboarding users on mobile
-    // would have no way to end their session.
+    // The navbar avatar only links here, so this is the one logout control.
     authUser = { ...baseUser, profileCompleted: false };
     render(<EditProfileForm />);
     fireEvent.click(screen.getByText("logout"));
@@ -141,6 +147,16 @@ describe("EditProfileForm", () => {
       "readonly",
     );
     expect(screen.queryByText("usernameLockedHint")).toBeNull();
+  });
+
+  it("links to the public profile once the username is real, not while it's a placeholder", () => {
+    const { unmount } = render(<EditProfileForm />);
+    expect(screen.getByTestId("edit-profile-view-link")).toHaveAttribute("href", "/perfil/alex91");
+    unmount();
+
+    authUser = { ...baseUser, username: "user-4b34dd41" };
+    render(<EditProfileForm />);
+    expect(screen.queryByTestId("edit-profile-view-link")).toBeNull();
   });
 
   it("locks the username field once it already holds a real username", () => {

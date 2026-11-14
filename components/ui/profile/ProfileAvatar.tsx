@@ -9,13 +9,14 @@ const SIZES: Record<ProfileAvatarSize, { px: number; box: string; text: string }
   xs: { px: 20, box: "w-5 h-5", text: "text-xs" },
   sm: { px: 32, box: "w-8 h-8", text: "text-sm" },
   md: { px: 48, box: "w-12 h-12", text: "text-lg" },
+  lg: { px: 80, box: "w-20 h-20", text: "text-3xl" },
 };
 
 /**
  * Decorative avatar: the name is always shown next to it. Falls back to the
  * initial when there is no photo or the proxy can't fetch it.
  */
-export default function ProfileAvatar({ avatarUrl, name, size }: ProfileAvatarProps) {
+export default function ProfileAvatar({ avatarUrl, name, size, eager = false }: ProfileAvatarProps) {
   const [failed, setFailed] = useState(false);
   const { px, box, text } = SIZES[size];
 
@@ -27,7 +28,7 @@ export default function ProfileAvatar({ avatarUrl, name, size }: ProfileAvatarPr
         alt=""
         width={px}
         height={px}
-        loading="lazy"
+        loading={eager ? "eager" : "lazy"}
         decoding="async"
         // A server-rendered image can fail before hydration, when React isn't
         // listening yet. A lazy image that hasn't started has no currentSrc.

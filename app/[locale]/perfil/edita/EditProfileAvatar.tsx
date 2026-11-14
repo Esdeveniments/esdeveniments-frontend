@@ -116,8 +116,15 @@ export default function EditProfileAvatar({
   };
 
   return (
-    <div className={`w-full ${className ?? ""}`}>
-      <label className="form-label">{t("label")}</label>
+    <div
+      role="group"
+      aria-labelledby="avatar-label"
+      aria-describedby="avatar-hint"
+      className={`w-full ${className ?? ""}`}
+    >
+      <p id="avatar-label" className="form-label">
+        {t("label")}
+      </p>
       <div className="mt-2 flex items-center gap-element-gap">
         {avatarUrl ? (
           // bg-background: a transparent-background upload (e.g. a logo) should
@@ -126,32 +133,37 @@ export default function EditProfileAvatar({
           <img
             src={avatarUrl}
             alt={t("altPreview")}
-            className="w-20 h-20 rounded-full object-cover bg-background"
+            className="w-20 h-20 shrink-0 rounded-full object-cover bg-background"
           />
         ) : (
           <AvatarInitials name={displayName} />
         )}
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            className="btn-outline btn-sm"
-            onClick={handleSelectClick}
-            disabled={busy}
-          >
-            {isUploading ? t("uploading") : t("uploadButton")}
-          </button>
-          {avatarUrl && (
+        <div className="flex flex-col gap-element-gap-sm">
+          <div className="flex flex-wrap gap-element-gap-sm">
             <button
               type="button"
               className="btn-outline btn-sm"
-              onClick={() => {
-                void handleRemove();
-              }}
+              onClick={handleSelectClick}
               disabled={busy}
             >
-              {isRemoving ? t("removing") : t("removeButton")}
+              {isUploading ? t("uploading") : t("uploadButton")}
             </button>
-          )}
+            {avatarUrl && (
+              <button
+                type="button"
+                className="btn-outline btn-sm"
+                onClick={() => {
+                  void handleRemove();
+                }}
+                disabled={busy}
+              >
+                {isRemoving ? t("removing") : t("removeButton")}
+              </button>
+            )}
+          </div>
+          <p id="avatar-hint" className="form-helper">
+            {t("hint")}
+          </p>
         </div>
         <input
           ref={fileInputRef}

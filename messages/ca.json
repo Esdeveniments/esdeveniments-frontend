@@ -302,13 +302,18 @@
         "errorUnsupported": "Format no admès. Utilitza JPG o PNG.",
         "errorTooLarge": "La imatge supera el límit de 2 MB.",
         "errorUploadFailed": "No s'ha pogut pujar la foto. Torna-ho a intentar.",
-        "errorRemoveFailed": "No s'ha pogut eliminar la foto. Torna-ho a intentar."
+        "errorRemoveFailed": "No s'ha pogut eliminar la foto. Torna-ho a intentar.",
+        "hint": "PNG o JPG, fins a 2 MB."
       },
       "authGate": {
         "title": "Inicia sessió per editar el perfil",
         "description": "Cal iniciar sessió per completar o editar el teu perfil.",
         "login": "Inicia sessió"
-      }
+      },
+      "viewProfile": "Veure el perfil",
+      "usernameUrl": "La teva adreça: {url}",
+      "bioCount": "{count}/{max}",
+      "bioPlaceholder": "Explica qui ets i quins esdeveniments organitzes."
     },
     "PlacesNearby": {
       "invalidNumber": "Coordenades no vàlides: lat,lng han de ser nombres",
@@ -545,27 +550,25 @@
       "events": "Esdeveniments",
       "verified": "Verificat",
       "verifiedOrganizer": "Organitzador verificat",
-      "joinedDate": "Des de {date}",
       "noEvents": "Encara no hi ha esdeveniments",
       "website": "Lloc web",
       "totalEvents": "{count, plural, one {# esdeveniment} other {# esdeveniments}}",
       "notFound": "Perfil no trobat",
       "notFoundDescription": "El perfil que busques no existeix o ha estat eliminat.",
       "backHome": "Tornar a l'inici",
-      "editProfile": "Editar perfil",
-      "claimQuestion": "És el teu local?",
-      "claimLogin": "Iniciar sessió",
+      "editProfile": "Edita el perfil",
       "tabUpcoming": "Propers",
       "tabPast": "Passats",
       "noUpcomingEvents": "Encara no hi ha esdeveniments propers",
       "noPastEvents": "Encara no hi ha esdeveniments passats",
-      "statsPublished": "Publicats",
       "viewAllPastEvents": "Veure els passats ({count})",
       "upcomingInTown": "Propers esdeveniments {placeIn}",
       "moreInTown": "Més esdeveniments {placeIn}",
-      "statsVisits": "Visites",
       "pastTitle": "Esdeveniments passats {nameOf} — Perfil",
-      "pastMetaDescription": "Consulta els esdeveniments passats {nameOf}: concerts, exposicions i activitats que ja ha organitzat."
+      "pastMetaDescription": "Consulta els esdeveniments passats {nameOf}: concerts, exposicions i activitats que ja ha organitzat.",
+      "visitsCount": "{count, plural, one {# visita} other {# visites}}",
+      "loadMoreError": "No s'han pogut carregar més esdeveniments. Torna-ho a provar.",
+      "loadedCount": "{count, plural, one {S'ha carregat # esdeveniment més} other {S'han carregat # esdeveniments més}}"
     },
     "Footer": {
       "navigation": {

@@ -38,67 +38,46 @@ describe("ProfileHeader", () => {
     expect(screen.getByText("@sala-apolo")).toBeInTheDocument();
   });
 
-  it("renders the avatar fallback (initial letter) when no pictureUrl", async () => {
-    await renderHeader(baseProfile);
-    const avatar = screen.getByRole("img", { name: "Sala Apolo" });
-    expect(avatar).toBeInTheDocument();
-    expect(avatar).toHaveTextContent("S");
+  it("renders the initial as a decorative avatar when there is no picture", async () => {
+    const { container } = await renderHeader(baseProfile);
+    const header = screen.getByTestId("profile-header");
+    expect(header.querySelector("img")).toBeNull();
+    // The h1 names the profile, so the avatar stays out of the a11y tree.
+    expect(container.querySelector('[aria-hidden="true"]')).toHaveTextContent("S");
   });
 
-  it("renders an avatar image when pictureUrl is provided", async () => {
+  it("renders the picture through the image proxy, eager, with an empty alt", async () => {
     const profile: ProfileDetailResponseDTO = {
       ...baseProfile,
       pictureUrl: "https://cdn.example.com/avatar.jpg",
     };
     await renderHeader(profile);
-
-    const img = screen.getByAltText("Sala Apolo");
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute("src", "https://cdn.example.com/avatar.jpg");
-    // The fallback div (role="img" with aria-label) should NOT be present
-    expect(screen.queryByText("S")).not.toBeInTheDocument();
+    const img = screen.getByTestId("profile-header").querySelector("img");
+    expect(img).toHaveAttribute("alt", "");
+    expect(img).toHaveAttribute("loading", "eager");
+    expect(img?.getAttribute("src")).toContain(
+      encodeURIComponent("https://cdn.example.com/avatar.jpg"),
+    );
+    expect(img).toHaveClass("bg-background");
   });
 
-  it("gives a transparent-background avatar a neutral backdrop", async () => {
-    const profile: ProfileDetailResponseDTO = {
-      ...baseProfile,
-      pictureUrl: "https://cdn.example.com/avatar.jpg",
-    };
-    await renderHeader(profile);
-    expect(screen.getByAltText("Sala Apolo")).toHaveClass("bg-background");
-  });
-
-  it("does not render joined date when createdAt is absent", async () => {
-    await renderHeader(baseProfile);
-    // The profile section should exist but no joined-date paragraph
-    const header = screen.getByTestId("profile-header");
-    expect(header).toBeInTheDocument();
-    // No "Des de" text (the Catalan joinedDate template is "Des de {date}")
-    expect(header).not.toHaveTextContent("Des de");
-  });
-
-  it("renders joined date when createdAt is provided", async () => {
-    const profile: ProfileDetailResponseDTO = {
-      ...baseProfile,
-      createdAt: "2023-01-15T10:30:00Z",
-    };
-    await renderHeader(profile);
-    // The Catalan joinedDate template is "Des de {date}" where date is
-    // formatted by Intl.DateTimeFormat("ca", { month: "long", year: "numeric" })
-    // For Jan 2023 that's "gener de 2023"
-    const header = screen.getByTestId("profile-header");
-    expect(header.textContent).toContain("Des de");
-    expect(header.textContent).toContain("2023");
-  });
-
-  it("does not render joined date when createdAt is an invalid date string", async () => {
-    const profile: ProfileDetailResponseDTO = {
-      ...baseProfile,
-      createdAt: "not-a-date",
-    };
-    await renderHeader(profile);
+  it("never renders a joined date (every migrated account shares one)", async () => {
+    await renderHeader({ ...baseProfile, createdAt: "2023-01-15T10:30:00Z" });
     const header = screen.getByTestId("profile-header");
     expect(header).not.toHaveTextContent("Des de");
+    expect(header).not.toHaveTextContent("2023");
+  });
+
+  it("shows the event count next to the handle only when there are events", async () => {
+    await renderHeader({ ...baseProfile, eventCount: 12 });
+    expect(screen.getByTestId("profile-stats")).toHaveTextContent(
+      "@sala-apolo·12 esdeveniments",
+    );
+  });
+
+  it("leaves out a zero event count", async () => {
+    await renderHeader({ ...baseProfile, eventCount: 0 });
+    expect(screen.getByTestId("profile-stats").textContent).toBe("@sala-apolo");
   });
 
   it("renders the bio when present", async () => {
