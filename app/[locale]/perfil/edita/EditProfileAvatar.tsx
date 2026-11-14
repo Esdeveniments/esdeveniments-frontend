@@ -142,7 +142,7 @@ export default function EditProfileAvatar({
           <div className="flex flex-wrap gap-element-gap-sm">
             <button
               type="button"
-              className="btn-outline btn-sm"
+              className="btn-neutral btn-sm"
               onClick={handleSelectClick}
               disabled={busy}
             >
@@ -151,7 +151,7 @@ export default function EditProfileAvatar({
             {avatarUrl && (
               <button
                 type="button"
-                className="btn-outline btn-sm"
+                className="btn-neutral btn-sm"
                 onClick={() => {
                   void handleRemove();
                 }}

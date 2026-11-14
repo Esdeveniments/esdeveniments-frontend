@@ -21,11 +21,12 @@ export default function ProfileOwnerActions({
   return (
     <div ref={ctaRef} className="flex items-center gap-element-gap" data-testid="profile-owner-actions">
       {visits !== undefined && visits > 0 && (
-        <span className="body-small text-muted-foreground">
+        // Hidden on phones: the edit and share buttons fill the row there.
+        <span className="hidden sm:inline body-small text-muted-foreground whitespace-nowrap">
           {t("visitsCount", { count: visits })}
         </span>
       )}
-      <Link href="/perfil/edita" className="btn-neutral" onClick={trackClick}>
+      <Link href="/perfil/edita" className="btn-neutral whitespace-nowrap" onClick={trackClick}>
         {t("editProfile")}
       </Link>
     </div>

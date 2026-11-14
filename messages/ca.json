@@ -264,14 +264,14 @@
       "title": "Edita el teu perfil",
       "description": "Actualitza el teu nom, nom d'usuari, biografia i foto de perfil.",
       "heading": "Edita el teu perfil",
-      "subheading": "Aquesta informació és pública i apareixerà al teu perfil.",
+      "subheading": "Tothom pot veure aquesta informació al teu perfil.",
       "onboardingHeading": "Completa el teu perfil",
       "onboardingSubheading": "Per acabar de crear el teu compte, tria un nom d'usuari i un nom visible.",
-      "usernameHint": "Nom d'usuari temporal generat automàticament — tria'n un de nou.",
+      "usernameHint": "Aquest nom d'usuari és provisional. Tria'n un de teu.",
       "usernameLockedHint": "Un cop establert, el nom d'usuari no es pot tornar a canviar.",
       "submitLabel": "Desar canvis",
-      "savingLabel": "Desant...",
-      "success": "Perfil actualitzat correctament.",
+      "savingLabel": "Desant…",
+      "success": "S'ha desat el perfil.",
       "fields": {
         "username": "Nom d'usuari",
         "displayName": "Nom visible",
@@ -281,7 +281,7 @@
         "usernameTooShort": "Ha de tenir com a mínim 3 caràcters.",
         "usernameTooLong": "Ha de tenir com a màxim 30 caràcters.",
         "usernameInvalidChars": "Només minúscules, números i guions, sense guions consecutius ni a l'inici o final.",
-        "usernameReservedPrefix": "No pot començar per \"user-\".",
+        "usernameReservedPrefix": "No pot començar per «user-».",
         "usernameReserved": "Aquest nom d'usuari està reservat."
       },
       "errors": {
@@ -290,19 +290,19 @@
         "bioTooLong": "Massa llarga (màxim 500 caràcters).",
         "usernameTaken": "Aquest nom d'usuari ja està en ús.",
         "sessionExpired": "La sessió ha caducat. Torna a iniciar sessió.",
-        "generic": "No s'ha pogut desar el perfil. Torna-ho a intentar."
+        "generic": "No s'ha pogut desar el perfil. Torna-ho a provar."
       },
       "avatar": {
         "label": "Foto de perfil",
         "uploadButton": "Pujar foto",
         "removeButton": "Eliminar foto",
-        "uploading": "Pujant...",
-        "removing": "Eliminant...",
+        "uploading": "Pujant…",
+        "removing": "Eliminant…",
         "altPreview": "Foto de perfil",
         "errorUnsupported": "Format no admès. Utilitza JPG o PNG.",
         "errorTooLarge": "La imatge supera el límit de 2 MB.",
-        "errorUploadFailed": "No s'ha pogut pujar la foto. Torna-ho a intentar.",
-        "errorRemoveFailed": "No s'ha pogut eliminar la foto. Torna-ho a intentar.",
+        "errorUploadFailed": "No s'ha pogut pujar la foto. Torna-ho a provar.",
+        "errorRemoveFailed": "No s'ha pogut eliminar la foto. Torna-ho a provar.",
         "hint": "PNG o JPG, fins a 2 MB."
       },
       "authGate": {
@@ -545,8 +545,8 @@
       "home": "Inici"
     },
     "Profile": {
-      "title": "{name} — Perfil",
-      "metaDescription": "Descobreix els esdeveniments {nameOf}. Consulta els seus propers esdeveniments, concerts, exposicions i molt més.",
+      "title": "{name}: agenda d'esdeveniments",
+      "metaDescription": "Consulta l'agenda {nameOf}: propers concerts, exposicions, festes i altres activitats.",
       "events": "Esdeveniments",
       "verified": "Verificat",
       "verifiedOrganizer": "Organitzador verificat",
@@ -559,16 +559,17 @@
       "editProfile": "Edita el perfil",
       "tabUpcoming": "Propers",
       "tabPast": "Passats",
-      "noUpcomingEvents": "Encara no hi ha esdeveniments propers",
+      "noUpcomingEvents": "Ara mateix no hi ha cap esdeveniment programat",
       "noPastEvents": "Encara no hi ha esdeveniments passats",
-      "viewAllPastEvents": "Veure els passats ({count})",
+      "viewAllPastEvents": "{count, plural, one {Veure l'esdeveniment passat} other {Veure els # esdeveniments passats}}",
       "upcomingInTown": "Propers esdeveniments {placeIn}",
       "moreInTown": "Més esdeveniments {placeIn}",
-      "pastTitle": "Esdeveniments passats {nameOf} — Perfil",
+      "pastTitle": "{name}: esdeveniments passats",
       "pastMetaDescription": "Consulta els esdeveniments passats {nameOf}: concerts, exposicions i activitats que ja ha organitzat.",
       "visitsCount": "{count, plural, one {# visita} other {# visites}}",
       "loadMoreError": "No s'han pogut carregar més esdeveniments. Torna-ho a provar.",
-      "loadedCount": "{count, plural, one {S'ha carregat # esdeveniment més} other {S'han carregat # esdeveniments més}}"
+      "loadedCount": "{count, plural, one {S'ha carregat # esdeveniment més} other {S'han carregat # esdeveniments més}}",
+      "recentEvents": "Esdeveniments recents"
     },
     "Footer": {
       "navigation": {

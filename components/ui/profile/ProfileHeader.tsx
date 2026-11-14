@@ -1,23 +1,34 @@
 import ProfileOwnerActions from "@components/ui/profile/ProfileOwnerActions";
 import ProfileAvatar from "@components/ui/profile/ProfileAvatar";
 import VerifiedBadge from "@components/ui/profile/VerifiedBadge";
+import ShareButton from "@components/ui/common/share/ShareButton";
 import { getTranslations } from "next-intl/server";
+import { locale as rootLocale } from "next/root-params";
 import { getProfileDisplayName } from "@utils/profile-name";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { ProfileHeaderProps } from "types/props";
+import type { AppLocale } from "types/i18n";
 
 /**
  * Who this is (avatar, name, handle, count) and what they say about themselves.
- * Owner actions sit at the right of the avatar row, which always has the
- * avatar's height, so they can appear after hydration without moving anything.
+ * Share sits at the right of the avatar row, which always has the avatar's
+ * height; owner actions appear to its left after hydration without moving
+ * anything.
  * No joined date: every account migrated in Nov 2026 shares one creation date.
  */
 export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
-  const t = await getTranslations("Components.Profile");
+  const locale = (await rootLocale()) as AppLocale;
+  const t = await getTranslations({ locale, namespace: "Components.Profile" });
 
   // Legacy `pictureUrl` comes from older backend instances.
   const displayName = getProfileDisplayName(profile);
   const avatarSrc = profile.avatarUrl || profile.pictureUrl;
   const eventCount = profile.eventCount ?? 0;
+  const shareTarget = {
+    title: displayName,
+    url: toLocalizedUrl(`/perfil/${profile.username}`, locale),
+    text: t("title", { name: displayName }),
+  };
 
   // Cap runs of blank lines before rendering with whitespace-pre-line: the
   // 500-char limit alone doesn't stop a bio that's mostly newlines (e.g.
@@ -35,10 +46,14 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
     <header className="w-full flex flex-col gap-element-gap min-w-0" data-testid="profile-header">
       <div className="flex items-end justify-between gap-element-gap">
         <ProfileAvatar avatarUrl={avatarSrc} name={displayName} size="lg" eager />
-        <ProfileOwnerActions
-          username={profile.username}
-          visits={profile.totalEventVisits}
-        />
+        {/* flex-1: the box keeps its place when the owner actions appear. */}
+        <div className="flex flex-1 min-w-0 items-center justify-end gap-element-gap">
+          <ProfileOwnerActions
+            username={profile.username}
+            visits={profile.totalEventVisits}
+          />
+          <ShareButton target={shareTarget} contentType="profile" />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1 min-w-0">

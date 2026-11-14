@@ -1114,14 +1114,23 @@ export interface EventActionBarActionsProps {
   calendar: import("./common").CalendarEventData;
 }
 
-// Header share button: native share sheet on touch, small menu elsewhere
-export interface EventShareButtonProps {
-  shareEvent: import("./event").ShareKitEvent;
+// Page share button (event, profile): native share sheet on touch, small menu elsewhere
+export interface ShareTarget {
+  title: string;
+  url: string;
+  /** Message to send, without the URL (the menu appends it). */
+  text: string;
 }
 
-export interface EventShareMenuProps {
+export interface ShareButtonProps {
+  target: ShareTarget;
+  /** GA `share` content_type. */
+  contentType: "event" | "profile";
+}
+
+export interface ShareMenuProps {
   id: string;
-  shareEvent: import("./event").ShareKitEvent;
+  target: ShareTarget;
   onClose: () => void;
   onShared: (method: string) => void;
 }

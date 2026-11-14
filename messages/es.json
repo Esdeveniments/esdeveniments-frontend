@@ -264,14 +264,14 @@
       "title": "Edita tu perfil",
       "description": "Actualiza tu nombre, nombre de usuario, biografía y foto de perfil.",
       "heading": "Edita tu perfil",
-      "subheading": "Esta información es pública y aparecerá en tu perfil.",
+      "subheading": "Todo el mundo puede ver esta información en tu perfil.",
       "onboardingHeading": "Completa tu perfil",
       "onboardingSubheading": "Para terminar de crear tu cuenta, elige un nombre de usuario y un nombre visible.",
-      "usernameHint": "Nombre de usuario temporal generado automáticamente — elige uno propio.",
+      "usernameHint": "Este nombre de usuario es provisional. Elige uno propio.",
       "usernameLockedHint": "Una vez establecido, el nombre de usuario no se puede volver a cambiar.",
       "submitLabel": "Guardar cambios",
-      "savingLabel": "Guardando...",
-      "success": "Perfil actualizado correctamente.",
+      "savingLabel": "Guardando…",
+      "success": "Perfil guardado.",
       "fields": {
         "username": "Nombre de usuario",
         "displayName": "Nombre visible",
@@ -281,7 +281,7 @@
         "usernameTooShort": "Debe tener al menos 3 caracteres.",
         "usernameTooLong": "Debe tener como máximo 30 caracteres.",
         "usernameInvalidChars": "Solo minúsculas, números y guiones, sin guiones consecutivos ni al inicio o final.",
-        "usernameReservedPrefix": "No puede empezar por \"user-\".",
+        "usernameReservedPrefix": "No puede empezar por «user-».",
         "usernameReserved": "Este nombre de usuario está reservado."
       },
       "errors": {
@@ -296,8 +296,8 @@
         "label": "Foto de perfil",
         "uploadButton": "Subir foto",
         "removeButton": "Eliminar foto",
-        "uploading": "Subiendo...",
-        "removing": "Eliminando...",
+        "uploading": "Subiendo…",
+        "removing": "Eliminando…",
         "altPreview": "Foto de perfil",
         "errorUnsupported": "Formato no admitido. Usa JPG o PNG.",
         "errorTooLarge": "La imagen supera el límite de 2 MB.",
@@ -545,8 +545,8 @@
       "home": "Inicio"
     },
     "Profile": {
-      "title": "{name} — Perfil",
-      "metaDescription": "Descubre los eventos {nameOf}. Consulta sus próximos eventos, conciertos, exposiciones y mucho más.",
+      "title": "{name}: agenda de eventos",
+      "metaDescription": "Consulta la agenda {nameOf}: próximos conciertos, exposiciones, fiestas y otras actividades.",
       "events": "Eventos",
       "verified": "Verificado",
       "verifiedOrganizer": "Organizador verificado",
@@ -559,16 +559,17 @@
       "editProfile": "Editar perfil",
       "tabUpcoming": "Próximos",
       "tabPast": "Pasados",
-      "noUpcomingEvents": "Todavía no hay eventos próximos",
+      "noUpcomingEvents": "Ahora mismo no hay ningún evento programado",
       "noPastEvents": "Todavía no hay eventos pasados",
-      "viewAllPastEvents": "Ver los pasados ({count})",
+      "viewAllPastEvents": "{count, plural, one {Ver el evento pasado} other {Ver los # eventos pasados}}",
       "upcomingInTown": "Próximos eventos {placeIn}",
       "moreInTown": "Más eventos {placeIn}",
-      "pastTitle": "Eventos pasados {nameOf} — Perfil",
+      "pastTitle": "{name}: eventos pasados",
       "pastMetaDescription": "Consulta los eventos pasados {nameOf}: conciertos, exposiciones y actividades que ya ha organizado.",
       "visitsCount": "{count, plural, one {# visita} other {# visitas}}",
       "loadMoreError": "No se han podido cargar más eventos. Vuelve a intentarlo.",
-      "loadedCount": "{count, plural, one {Se ha cargado # evento más} other {Se han cargado # eventos más}}"
+      "loadedCount": "{count, plural, one {Se ha cargado # evento más} other {Se han cargado # eventos más}}",
+      "recentEvents": "Eventos recientes"
     },
     "Footer": {
       "navigation": {

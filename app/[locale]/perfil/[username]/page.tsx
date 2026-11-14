@@ -98,7 +98,7 @@ export default async function ProfilePage({
       <Tabs
         items={tabItems}
         active="upcoming"
-        ariaLabel={tProfile("title", { name: profileDisplayName })}
+        ariaLabel={tProfile("events")}
       />
       <ProfilePageTracker
         username={profile.username}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import type { ProfileDetailResponseDTO } from "types/api/profile";
 
@@ -149,5 +149,23 @@ describe("ProfileHeader", () => {
     expect(
       screen.getByRole("img", { name: "Organitzador verificat" }),
     ).toBeInTheDocument();
+  });
+
+  it("shares the profile's own URL with the native sheet on touch devices", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { ...navigator, share });
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query === "(pointer: coarse)" }));
+    try {
+      await renderHeader(baseProfile);
+      fireEvent.click(screen.getByRole("button", { name: "Comparteix Sala Apolo" }));
+      await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
+      expect(share).toHaveBeenCalledWith({
+        title: "Sala Apolo",
+        url: "/perfil/sala-apolo",
+        text: expect.stringContaining("Sala Apolo"),
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
