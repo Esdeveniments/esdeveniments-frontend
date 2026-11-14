@@ -454,3 +454,9 @@ export type UIEvent = EventSummaryResponseDTO & {
   duration: string;
   timeUntilEvent: string;
 };
+
+export interface PostPublishUpsellRecord {
+  slug: string;
+  ownerId: string;
+  createdAt: number;
+}

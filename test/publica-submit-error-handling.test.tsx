@@ -92,12 +92,14 @@ vi.mock("@components/ui/EventForm", () => ({
 }));
 
 import Publica from "@app/[locale]/publica/page";
+import { hasPendingPostPublishUpsell } from "@utils/post-publish-upsell";
 
 describe("Publica submit-time createEventAction result handling", () => {
   afterEach(() => vi.restoreAllMocks());
   beforeEach(() => {
     mockCreateEventAction.mockReset();
     vi.clearAllMocks();
+    window.localStorage.clear();
     storage.load.mockResolvedValue({ ok: true, status: "empty", revision: null });
     storage.discard.mockResolvedValue({ ok: true, revision: "deleted" });
     storage.save.mockResolvedValue({ ok: true, revision: "saved" });
@@ -152,6 +154,7 @@ describe("Publica submit-time createEventAction result handling", () => {
 
     await waitFor(() => expect(mockCreateEventAction).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(storage.push).toHaveBeenCalledWith("/e/test-event?promote=1"));
+    expect(hasPendingPostPublishUpsell("test-event", authUser.id)).toBe(true);
     expect(storage.discard).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("complete-profile-gate")).not.toBeInTheDocument();
     expect(screen.queryByText("errorStaleSession")).not.toBeInTheDocument();
@@ -161,6 +164,7 @@ describe("Publica submit-time createEventAction result handling", () => {
     mockCreateEventAction.mockRejectedValue(new Error("Network failed"));
     await renderAndSubmit();
     await screen.findByText("errorGeneric");
+    expect(hasPendingPostPublishUpsell("test-event", authUser.id)).toBe(false);
     expect(storage.discard).not.toHaveBeenCalled();
     expect(storage.push).not.toHaveBeenCalled();
   });

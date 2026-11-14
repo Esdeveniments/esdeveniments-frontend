@@ -339,7 +339,8 @@
       "publishCta": {
         "signIn": "Sign in to publish",
         "completeProfile": "Complete profile to publish",
-        "resolving": "Checking your session…"
+        "resolving": "Checking your session…",
+        "redirecting": "Published! Opening event…"
       },
       "accountNotice": "Already have an account?",
       "earlySignIn": "Sign in",

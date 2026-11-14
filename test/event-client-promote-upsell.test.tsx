@@ -89,6 +89,10 @@ vi.mock("next/dynamic", () => ({
 }));
 
 import { SHARE_KIT_EVENT } from "./fixtures/share-kit-event";
+import {
+  hasPendingPostPublishUpsell,
+  savePendingPostPublishUpsell,
+} from "@utils/post-publish-upsell";
 import EventClient from "../app/[locale]/e/[eventId]/EventClient";
 
 function buildEvent(): EventClientProps["event"] {
@@ -112,6 +116,7 @@ function buildEvent(): EventClientProps["event"] {
 describe("EventClient promote upsell wiring", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     mockSearchParams = new URLSearchParams();
     mockAuthUser = { id: OWNER_ID };
   });
@@ -199,5 +204,33 @@ describe("EventClient promote upsell wiring", () => {
       "promote_modal_shown",
       expect.anything(),
     );
+  });
+
+  it("recovers and clears the upsell from localStorage when ?promote=1 was lost, and does not call router.replace on close", async () => {
+    savePendingPostPublishUpsell("my-event", OWNER_ID);
+
+    render(<EventClient event={buildEvent()} />);
+
+    expect(
+      await screen.findByTestId("promote-upsell-modal"),
+    ).toHaveTextContent("my-event");
+    expect(hasPendingPostPublishUpsell("my-event", OWNER_ID)).toBe(false);
+    expect(mockSendGoogleEvent).toHaveBeenCalledWith("promote_modal_shown", {
+      event_slug: "my-event",
+      source: "event_detail",
+    });
+
+    fireEvent.click(screen.getByTestId("mock-close"));
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it("does not show or consume another owner's pending upsell from localStorage", () => {
+    savePendingPostPublishUpsell("my-event", OWNER_ID);
+    mockAuthUser = { id: "someone-else" };
+
+    render(<EventClient event={buildEvent()} />);
+
+    expect(screen.queryByTestId("promote-upsell-modal")).toBeNull();
+    expect(hasPendingPostPublishUpsell("my-event", OWNER_ID)).toBe(true);
   });
 });

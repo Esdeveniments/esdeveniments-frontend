@@ -33,6 +33,8 @@ import {
 } from "@utils/constants";
 import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
 import { sendGoogleEvent } from "@utils/analytics";
+import { savePendingPostPublishUpsell } from "@utils/post-publish-upsell";
+import { isE2ETestBuild } from "@utils/env";
 import {
   buildPublishContext,
   classifyPublishError,
@@ -131,6 +133,7 @@ const PublishForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [authStage, setAuthStage] = useState<PublishResumeStage | null>(null);
   const [handingOff, setHandingOff] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const handoffStartedRef = useRef(false);
   const handedOffRef = useRef(false);
   const creatingRef = useRef(false);
@@ -144,6 +147,7 @@ const PublishForm = () => {
   const resetEditor = useCallback(() => {
     setWizardStep(0);
     setPublishAfterReturn(null);
+    setIsRedirecting(false);
     submittedRef.current = false;
     formStartedRef.current = false;
     abandonFiredRef.current = false;
@@ -440,7 +444,19 @@ const PublishForm = () => {
           )
         : undefined;
 
-    if (!regionMeta && !cityMeta && !categoriesMeta) {
+    const ownerMeta =
+      isE2ETestBuild && user
+        ? {
+            id: user.id,
+            displayName: user.name || null,
+            username: user.username,
+            avatarUrl: user.avatarUrl ?? null,
+            verified: false,
+            role: user.role ?? ("USER" as const),
+          }
+        : undefined;
+
+    if (!regionMeta && !cityMeta && !categoriesMeta && !ownerMeta) {
       return undefined;
     }
 
@@ -455,6 +471,7 @@ const PublishForm = () => {
         }
         : undefined,
       categories: categoriesMeta as CategorySummaryResponseDTO[] | undefined,
+      ...(ownerMeta ? { owner: ownerMeta } : {}),
     };
   };
 
@@ -579,6 +596,10 @@ const PublishForm = () => {
         });
 
         submittedRef.current = true;
+        setIsRedirecting(true);
+        if (user?.id && slug) {
+          savePendingPostPublishUpsell(slug, user.id);
+        }
         const cleanup = await draft.complete();
         if (!cleanup.ok) {
           captureException(new Error("Publish draft cleanup failed"), {
@@ -586,7 +607,7 @@ const PublishForm = () => {
           });
           window.alert(t("draftCleanupFailed"));
         }
-        // ?promote=1 tells the event page to show the promote upsell once.
+        // ?promote=1 backs up localStorage if browser storage is unavailable.
         router.push(`/e/${slug}?promote=1`);
       } catch (error) {
         console.error("Submission error:", error);
@@ -673,12 +694,13 @@ const PublishForm = () => {
   };
 
   const { isDisabled: isFormDisabled } = getZodValidationState(form, false, imageFile);
-  const isDraftLocked = handingOff || continuingPublication || (draft.status === "loading" && !isAuthLoading) || draft.status === "discarding" ||
+  const isDraftLocked = handingOff || continuingPublication || isRedirecting || (draft.status === "loading" && !isAuthLoading) || draft.status === "discarding" ||
     (draft.status === "decision" && !draft.dirty);
-  const submitLabel = isAuthLoading ? t("publishCta.resolving")
-    : requiredAuthStage === "login" ? t("publishCta.signIn")
-      : requiredAuthStage === "profile" ? t("publishCta.completeProfile") : t("submitLabel");
-  const isSubmitDisabled = isAuthLoading || draft.ownerChanged;
+  const submitLabel = isRedirecting ? t("publishCta.redirecting")
+    : isAuthLoading ? t("publishCta.resolving")
+      : requiredAuthStage === "login" ? t("publishCta.signIn")
+        : requiredAuthStage === "profile" ? t("publishCta.completeProfile") : t("submitLabel");
+  const isSubmitDisabled = isAuthLoading || draft.ownerChanged || isRedirecting;
   const continuePublication = useEffectEvent(async (intent: PublishResumeIntent) => {
     setPublishAfterReturn(null);
     const warnings = getPublishDraftWarnings(form, cityOptions, categoryOptions, true, true);
@@ -805,7 +827,7 @@ const PublishForm = () => {
               onSubmit={onSubmit}
               submitLabel={submitLabel}
               analyticsContext="publica"
-              isLoading={isPending}
+              isLoading={isPending || isRedirecting}
               isSubmitDisabled={isSubmitDisabled}
               submitAnalyticsAction={submitAnalyticsAction}
               cityOptions={cityOptions}

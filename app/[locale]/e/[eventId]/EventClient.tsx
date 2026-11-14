@@ -12,6 +12,10 @@ import EventNotifications from "./components/EventNotifications";
 // import { useEventModals } from "./hooks/useEventModals";
 // import EventModals from "./components/EventModals";
 import { ensureGtag, sendGoogleEvent } from "@utils/analytics";
+import {
+  clearPendingPostPublishUpsell,
+  hasPendingPostPublishUpsell,
+} from "@utils/post-publish-upsell";
 
 // computeTemporalStatus now imported from utils/event-status for reuse & testability
 
@@ -42,13 +46,24 @@ export default function EventClient({
   const edit_suggested = searchParams.get("edit_suggested") === "true";
   const [showThankYouBanner, setShowThankYouBanner] = useState(edit_suggested);
 
-  // /publica redirects here with ?promote=1 after a publish. Anyone can add
-  // the marker to a URL, so show the upsell only once ownership is confirmed.
+  // /publica persists a pending-upsell marker and redirects with ?promote=1.
+  // Anyone can add ?promote=1 to a URL, so show the upsell only once ownership
+  // is confirmed.
   const isOwner = Boolean(event.ownerId) && user?.id === event.ownerId;
+  const ownerUserId = isOwner ? user?.id : undefined;
   // Latched: the share step strips ?promote=1 from the URL (so a reload
   // doesn't reopen the upsell), and the modal must stay open after that.
   const [promoteUpsellStarted, setPromoteUpsellStarted] = useState(false);
-  if (!promoteUpsellStarted && isOwner && searchParams.get("promote") === "1") {
+  if (
+    !promoteUpsellStarted &&
+    isOwner &&
+    (searchParams.get("promote") === "1" ||
+      Boolean(
+        ownerUserId &&
+          event.slug &&
+          hasPendingPostPublishUpsell(event.slug, ownerUserId),
+      ))
+  ) {
     setPromoteUpsellStarted(true);
   }
   const [promoteDismissed, setPromoteDismissed] = useState(false);
@@ -58,6 +73,7 @@ export default function EventClient({
   useEffect(() => {
     if (showPromoteUpsell && !hasFiredPromoteShownRef.current) {
       hasFiredPromoteShownRef.current = true;
+      if (event.slug) clearPendingPostPublishUpsell(event.slug);
       ensureGtag();
       sendGoogleEvent("promote_modal_shown", {
         event_slug: event.slug ?? "",
@@ -69,6 +85,7 @@ export default function EventClient({
   const handlePromoteUpsellOpenChange = (open: boolean) => {
     if (open) return;
     setPromoteDismissed(true);
+    if (!searchParams.has("promote")) return;
     // Strip only the one-time marker; keep any other query params.
     const remainingParams = new URLSearchParams(searchParams.toString());
     remainingParams.delete("promote");

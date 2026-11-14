@@ -15,6 +15,7 @@ import type { PromoteUpsellModalProps } from "types/props";
 // cancel each other. EventClient keeps the modal open once it has shown.
 function removePromoteMarker() {
   const url = new URL(window.location.href);
+  if (!url.searchParams.has("promote")) return;
   url.searchParams.delete("promote");
   window.history.replaceState(window.history.state, "", url);
 }
