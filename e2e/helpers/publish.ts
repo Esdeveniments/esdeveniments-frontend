@@ -205,6 +205,7 @@ export type StoredEvent = {
   endDate: string;
   endTime: string | null;
   imageUrl: string | null;
+  city: { id: number };
 };
 
 /** Read an event straight from the backend with the service key. */

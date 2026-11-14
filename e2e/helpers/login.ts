@@ -90,12 +90,10 @@ export async function dismissEngagementPopups(page: Page) {
 }
 
 /**
- * Log in through Logto's hosted sign-in page (reached via the OIDC redirect
- * from /iniciar-sessio). Selectors target Logto's default sign-in experience
- * and may need adjusting if the hosted UI is customized. Handles both
- * single-step and identifier-then-password layouts.
+ * Open Logto's hosted sign-in page through /en/iniciar-sessio and return the
+ * app origin the browser must come back to.
  */
-export async function loginViaUI(page: Page, email: string, password: string) {
+export async function openHostedSignIn(page: Page): Promise<string> {
   await dismissEngagementPopups(page);
   // Capture the app origin from the actual login-entry request. Do not infer
   // it from an auth-host naming convention: deployments may use any hostname.
@@ -123,7 +121,43 @@ export async function loginViaUI(page: Page, email: string, password: string) {
       "Could not determine the app origin from the /iniciar-sessio navigation",
     );
   }
+  return appOrigin;
+}
+
+/**
+ * Log in through Logto's hosted sign-in page (reached via the OIDC redirect
+ * from /iniciar-sessio). Selectors target Logto's default sign-in experience
+ * and may need adjusting if the hosted UI is customized. Handles both
+ * single-step and identifier-then-password layouts.
+ */
+export async function loginViaUI(page: Page, email: string, password: string) {
+  const appOrigin = await openHostedSignIn(page);
   await completeHostedLogin(page, email, password, appOrigin);
+}
+
+/**
+ * After Logto accepted the user, wait until the callback lands back on the
+ * app. Logto may first show its optional passkey enrollment page; skip it.
+ */
+export async function waitForAppReturn(page: Page, appOrigin: string) {
+  await page.waitForURL(
+    (url) =>
+      isLoginCompleteUrl(url, appOrigin) || isPasskeySetupUrl(url),
+    { timeout: 30_000 },
+  );
+
+  if (isPasskeySetupUrl(new URL(page.url()))) {
+    // Logto's PasskeySetup page renders Back and Skip as the two navigation
+    // controls with role="button". The native passkey action is a real
+    // <button>, so selecting the final role-button avoids labels, locale,
+    // and CSS-module class names altogether.
+    const skipPasskey = await getPasskeySkipControl(page);
+    await skipPasskey.click();
+    await page.waitForURL(
+      (url) => isLoginCompleteUrl(url, appOrigin),
+      { timeout: 30_000 },
+    );
+  }
 }
 
 export async function completeHostedLogin(page: Page, email: string, password: string, appOrigin: string) {
@@ -146,28 +180,8 @@ export async function completeHostedLogin(page: Page, email: string, password: s
     .first()
     .click();
 
-  // Logto may show an optional passkey enrollment page immediately after a
-  // successful password login. Accept that intermediate URL, dismiss the
-  // enrollment step, then wait for the normal callback redirect.
   try {
-    await page.waitForURL(
-      (url) =>
-        isLoginCompleteUrl(url, appOrigin) || isPasskeySetupUrl(url),
-      { timeout: 30_000 },
-    );
-
-    if (isPasskeySetupUrl(new URL(page.url()))) {
-      // Logto's PasskeySetup page renders Back and Skip as the two navigation
-      // controls with role="button". The native passkey action is a real
-      // <button>, so selecting the final role-button avoids labels, locale,
-      // and CSS-module class names altogether.
-      const skipPasskey = await getPasskeySkipControl(page);
-      await skipPasskey.click();
-      await page.waitForURL(
-        (url) => isLoginCompleteUrl(url, appOrigin),
-        { timeout: 30_000 },
-      );
-    }
+    await waitForAppReturn(page, appOrigin);
   } catch (timeoutError) {
     // A stuck-on-Logto timeout is ambiguous by itself — surface the actual
     // reason (usually a stale/unverified test-user password) instead of a

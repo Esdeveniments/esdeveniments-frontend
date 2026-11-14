@@ -334,6 +334,7 @@ the 30-minute TTL. `next dev` uses one module graph, so it never showed. Keep
 state that two entry points must share on `globalThis`, as `redis-client.ts`
 does, and test it by importing the module again after `vi.resetModules()`.
 The same split applies to `instrumentation.ts`: a startup warm-up there fills its own copy, and `connection()` throws outside a request. `createCache({ globalKey })` and the `warm*` readers (`skipConnection: true`) handle both (`warmReferenceCaches`). In a build of 2026-11-04 the listing pages shared one copy of the categories reader (`chunks/ssr/lib_api_categories_ts…`), while `instrumentation.ts` was compiled into a separate chunk with its own, so a warm-up there left the pages cold.
+The sponsor caches in `lib/db/sponsors.ts` had the same split, and it showed even in `next dev`: the webhook and image-upload routes cleared their own copy, so a paid banner stayed off its town page for up to 10 minutes and `/api/sponsors/checkout` could sell a town for 5 minutes after it was booked. Both caches now pass `globalKey`; `payment.sponsor-flow.spec.ts` would catch a regression.
 
 ## Pin `NEXT_PUBLIC_SITE_URL` when you run e2e against pre-production
 
@@ -350,7 +351,20 @@ value instead.
 Playwright traces record `fill()` arguments in plain text, and the staging
 workflows retry and upload `playwright-report/`. The `E2E_STAGING_*` specs call
 `test.use({ trace: "off" })`. Do the same in any new spec that logs in with a
-real credential.
+real credential, or that sends a secret through `request` (the trace keeps API
+request headers, `Authorization` included; `payment.sponsor-flow.spec.ts`).
+
+## Stripe Checkout can't be driven by a bot, and returns to another origin
+
+Filling the card form on `checkout.stripe.com` from Playwright got an hCaptcha
+challenge on half the runs (Nov 2026), and Stripe says its hosted pages "have
+security measures in place that prevent automated testing". The payment specs
+stop at Stripe's page and pay through `/v1/payment_pages/{id}/confirm`, as
+`stripe trigger checkout.session.completed` does (`e2e/helpers/stripe.ts`).
+Stripe then returns to the configured public origin (production `www` for the CI
+build, `staging` for the backend's promotions), not to the app under test, so
+the specs redirect those URLs back (`routeReturnsToApp`). The sponsor return URLs
+used to drop the buyer's language as well: they now keep the `/en` or `/es` prefix.
 
 ## A rejected refresh token must not leave its claim open
 

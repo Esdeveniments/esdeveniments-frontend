@@ -21,6 +21,13 @@ name: E2E Integration (preproduction)
 #   secrets.E2E_STAGING_PASSWORD_2  ↲
 #   secrets.TURSO_*_TEST            → repo-level test DB; session refresh
 #                                     claims the token there
+#   secrets.E2E_PROMOTION_STRIPE_SECRET_KEY → optional sk_test_ key of the Stripe
+#                                     account the preproduction backend uses;
+#                                     without it the promotion payment test skips
+#
+# RUN_SIGNUP_E2E=1 turns on the sign-up spec, which registers a new Logto
+# account each run (disposable mail.tm inbox). Nothing can delete those users
+# yet; they all use the e2e-signup- address prefix.
 # The specs self-skip when the test-user secrets are absent, so an
 # unconfigured environment never turns this red. The event-edit and
 # event-time specs also read NEXT_PUBLIC_API_URL and BACKEND_SERVICE_SECRET
@@ -41,7 +48,7 @@ concurrency:
 
 jobs:
   publish-integration:
-    name: Publish, edit, timezones and session (preproduction)
+    name: Publish, edit, timezones, session, promotion and sign-up (preproduction)
     runs-on: ubuntu-latest
     # 14 more tests (about 4 min locally on a production build) on top of
     # specs that already took 15 of 25 min with retries. Dev mode compiles
@@ -112,7 +119,7 @@ jobs:
       - name: Wait for server
         run: npx wait-on http://localhost:3000 --timeout 90000
 
-      - name: Run publish, edit, timezone and session integration
+      - name: Run publish, edit, timezone, session, promotion and sign-up integration
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           E2E_STAGING_EMAIL: ${{ secrets.E2E_STAGING_EMAIL }}
@@ -121,7 +128,9 @@ jobs:
           E2E_STAGING_PASSWORD_2: ${{ secrets.E2E_STAGING_PASSWORD_2 }}
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
-        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/publish-guest-integration.spec.ts e2e/event-edit-creator-only.spec.ts e2e/event-delete-creator-only.spec.ts e2e/auth-session-integration.spec.ts e2e/event-edit-integration.spec.ts e2e/event-time-integration.spec.ts
+          E2E_PROMOTION_STRIPE_SECRET_KEY: ${{ secrets.E2E_PROMOTION_STRIPE_SECRET_KEY }}
+          RUN_SIGNUP_E2E: "1"
+        run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/publish-guest-integration.spec.ts e2e/event-edit-creator-only.spec.ts e2e/event-delete-creator-only.spec.ts e2e/auth-session-integration.spec.ts e2e/event-edit-integration.spec.ts e2e/event-time-integration.spec.ts e2e/promotion-integration.spec.ts e2e/signup-onboarding-integration.spec.ts
 
       - name: Stop server
         if: always()
