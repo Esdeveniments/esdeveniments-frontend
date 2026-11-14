@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import ImgDefault from "@components/ui/imgDefault";
 import { useImageRetry } from "@components/hooks/useImageRetry";
 import { ImageComponentProps } from "types/common";
@@ -11,7 +11,7 @@ import {
   getOptimalImageSizes,
   getResponsiveWidths,
 } from "@utils/image-quality";
-import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
+import { buildResponsivePictureSourceUrls, directImageUrl } from "@utils/image-cache";
 import type { ResponsivePictureSourceUrls } from "types/common";
 
 // The placeholder shown instead of a missing or broken image. `alt=""` marks the
@@ -75,6 +75,7 @@ function ClientImage({
     <ClientImageInner
       key={sources.fallback}
       sources={sources}
+      directSrc={directImageUrl(image)}
       title={title}
       className={className}
       priority={priority}
@@ -94,6 +95,7 @@ function ClientImage({
  */
 function ClientImageInner({
   sources,
+  directSrc,
   title,
   className,
   priority,
@@ -105,24 +107,31 @@ function ClientImageInner({
   date,
 }: Omit<ClientImageInnerProps, "finalImageSrc" | "imageQuality"> & {
   sources: ResponsivePictureSourceUrls;
+  /** The original HTTPS URL, tried once when the proxy fails. */
+  directSrc: string;
 }) {
   const { hasError, handleError, getImageKey } = useImageRetry(2);
+  // "direct": the proxy failed, so the browser loads the original. Some council
+  // servers only accept connections from Spain, which the proxy's server isn't in.
+  const [stage, setStage] = useState<"proxy" | "direct" | "failed">("proxy");
 
   const imageKey = getImageKey(sources.fallback);
 
   const handleImageError = useCallback(() => {
-    handleError();
-  }, [handleError]);
+    if (stage === "proxy" && directSrc) setStage("direct");
+    else if (stage === "direct") setStage("failed");
+    else handleError();
+  }, [stage, directSrc, handleError]);
 
   // An image that fails before hydration fires `error` before React listens,
   // so check on mount. A lazy image that hasn't started has no currentSrc.
   const checkAlreadyFailed = useCallback(
     (img: HTMLImageElement | null) => {
       if (img?.complete && img.naturalWidth === 0 && img.currentSrc) {
-        handleError();
+        handleImageError();
       }
     },
-    [handleError],
+    [handleImageError],
   );
 
   const containerStyle: React.CSSProperties = {
@@ -139,7 +148,7 @@ function ClientImageInner({
   const sizes = getOptimalImageSizes(context);
 
   // Error fallback
-  if (hasError) {
+  if (hasError || stage === "failed") {
     return (
       <div
         className={className}
@@ -154,6 +163,26 @@ function ClientImageInner({
   // The image paints as soon as it decodes, without waiting for hydration:
   // a JS-driven fade kept server-rendered images at opacity 0 until React ran,
   // which delayed LCP. bg-muted is the placeholder until the image arrives.
+  if (stage === "direct") {
+    return (
+      <div className={`${className} bg-muted`} style={containerStyle}>
+        <picture>
+          <img
+            className="object-cover w-full h-full absolute inset-0"
+            src={directSrc}
+            alt={alt}
+            width={500}
+            height={260}
+            decoding="async"
+            ref={checkAlreadyFailed}
+            onError={handleImageError}
+            style={{ objectFit: "cover" }}
+          />
+        </picture>
+      </div>
+    );
+  }
+
   return (
     <div className={`${className} bg-muted`} style={containerStyle}>
       <picture key={imageKey}>

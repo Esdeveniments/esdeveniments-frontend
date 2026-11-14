@@ -303,6 +303,16 @@ export function buildOptimizedImageUrl(
 }
 
 /**
+ * The original image URL for the browser to load itself when the proxy can't
+ * fetch it, e.g. a council server that only accepts connections from Spain
+ * (fitxers.sabadell.cat). HTTPS only, so the page never loads mixed content.
+ */
+export function directImageUrl(imageUrl: string): string {
+  const normalized = normalizeExternalImageUrl(imageUrl);
+  return /^https:\/\//i.test(normalized) ? normalized : "";
+}
+
+/**
  * Generate URLs for <picture> element sources: WebP plus a fallback URL
  * without a format param (the proxy picks the format from the Accept header).
  * No AVIF source: listed after WebP it is never picked, since every browser
