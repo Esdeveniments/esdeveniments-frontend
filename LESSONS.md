@@ -366,6 +366,14 @@ build, `staging` for the backend's promotions), not to the app under test, so
 the specs redirect those URLs back (`routeReturnsToApp`). The sponsor return URLs
 used to drop the buyer's language as well: they now keep the `/en` or `/es` prefix.
 
+Until 2026-11-14 the test-mode Stripe account had no webhook endpoint at all, so a
+sponsor paid on staging never activated (every event showed `pending_webhooks: 0`
+with nowhere to go). It now has `we_1Ubdfy2YmrmwO0bSac8xOkpp` for
+`https://staging.esdeveniments.cat/api/sponsors/webhook`, and Coolify staging's
+`STRIPE_WEBHOOK_SECRET` is its signing secret. Check with
+`stripe trigger checkout.session.completed`: the new event's `pending_webhooks`
+drops to 0 only after staging answers 2xx.
+
 ## A rejected refresh token must not leave its claim open
 
 `coordinateRefresh` claims a refresh token in the database before it calls Logto.
