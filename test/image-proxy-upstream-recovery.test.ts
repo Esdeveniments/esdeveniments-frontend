@@ -206,3 +206,40 @@ describe("image proxy with an upstream host it can't connect to", () => {
     expect(undiciFetch).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("image proxy upstream URL", () => {
+  it("drops our cache key and keeps the image's own query byte for byte", async () => {
+    vi.mocked(undiciFetch).mockResolvedValueOnce(imageResponse());
+    const source = "https://i0.wp.com/query.example.cat/poster.jpg?fit=1024,576&ssl&v=abc";
+
+    const res = await GET(
+      new Request(`http://localhost/api/image-proxy?url=${encodeURIComponent(source)}`),
+    );
+
+    expect(res.status).toBe(200);
+    expect(String(vi.mocked(undiciFetch).mock.calls[0][0])).toBe(
+      "https://i0.wp.com/query.example.cat/poster.jpg?fit=1024,576&ssl",
+    );
+  });
+
+  it("resizes a poster over 5 MB instead of leaving it to the browser", async () => {
+    const side = 1400;
+    const noise = Buffer.alloc(side * side * 3);
+    for (let i = 0; i < noise.length; i++) noise[i] = (i * 2654435761) >>> 24;
+    const png = await sharp(noise, { raw: { width: side, height: side, channels: 3 } })
+      .png({ compressionLevel: 0 })
+      .toBuffer();
+    expect(png.length).toBeGreaterThan(5_000_000);
+    vi.mocked(undiciFetch).mockResolvedValueOnce(
+      new Response(new Uint8Array(png), {
+        status: 200,
+        headers: { "content-type": "image/png" },
+      }) as never,
+    );
+
+    const res = await proxy();
+
+    expect(res.status).toBe(200);
+    expect((await res.arrayBuffer()).byteLength).toBeLessThan(png.length);
+  });
+});

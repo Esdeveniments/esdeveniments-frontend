@@ -3,6 +3,7 @@ import {
   buildOptimizedImageUrl,
   directImageUrl,
   normalizeExternalImageUrl,
+  stripImageCacheKey,
   withImageCacheKey,
   isLegacyFileHandler,
 } from "@utils/image-cache";
@@ -204,6 +205,29 @@ describe("directImageUrl", () => {
 
   it("never returns an http URL", () => {
     expect(directImageUrl("http://fitxers.example.cat/a.jpg")).toBe("");
+  });
+
+  it("keeps every other param byte for byte", () => {
+    // A URL object would write `fit=1024%2C576`, `q=a+b`, `ssl=` and `tag=x~y`.
+    expect(
+      directImageUrl("https://i0.wp.com/x.cat/poster.jpg?fit=1024,576&q=a%20b&ssl&v=abc&tag=x%7Ey"),
+    ).toBe("https://i0.wp.com/x.cat/poster.jpg?fit=1024,576&q=a%20b&ssl&tag=x%7Ey");
+  });
+});
+
+describe("stripImageCacheKey", () => {
+  it("drops the query when our key was its only param, and keeps the hash", () => {
+    expect(stripImageCacheKey("https://x.cat/a.jpg?v=abc#top")).toBe("https://x.cat/a.jpg#top");
+  });
+
+  it("leaves params that only start with v alone", () => {
+    const url = "https://x.cat/a.jpg?view=1&ver=2";
+    expect(stripImageCacheKey(url)).toBe(url);
+  });
+
+  it("ignores a ? inside the hash", () => {
+    const url = "https://x.cat/a.jpg#v=abc?v=1";
+    expect(stripImageCacheKey(url)).toBe(url);
   });
 });
 
@@ -535,23 +559,14 @@ describe("image proxy cache key stripping", () => {
       "https://www.cinemaesbarjo.cat/wp-content/uploads/image.jpg?v=abc123"
     );
 
-    // Simulate what the proxy does: strip ?v= before fetching upstream
-    const url = new URL(withKey);
-    url.searchParams.delete("v");
-    const upstreamUrl = url.toString();
-
-    expect(upstreamUrl).toBe(original);
+    expect(stripImageCacheKey(withKey)).toBe(original);
   });
 
   it("stripping ?v= preserves other query params", () => {
     const withKey =
       "https://example.com/img.jpg?size=large&v=abc123&format=webp";
 
-    const url = new URL(withKey);
-    url.searchParams.delete("v");
-    const upstreamUrl = url.toString();
-
-    expect(upstreamUrl).toBe(
+    expect(stripImageCacheKey(withKey)).toBe(
       "https://example.com/img.jpg?size=large&format=webp"
     );
   });
@@ -559,11 +574,7 @@ describe("image proxy cache key stripping", () => {
   it("stripping ?v= when it is the only param leaves clean URL", () => {
     const withKey = "https://example.com/img.jpg?v=abc123";
 
-    const url = new URL(withKey);
-    url.searchParams.delete("v");
-    const upstreamUrl = url.toString();
-
-    expect(upstreamUrl).toBe("https://example.com/img.jpg");
+    expect(stripImageCacheKey(withKey)).toBe("https://example.com/img.jpg");
   });
 
   it("real-world case: cinemaesbarjo.cat image with hash cache key", () => {
@@ -582,9 +593,7 @@ describe("image proxy cache key stripping", () => {
 
     // When proxy strips ?v=, the upstream URL should be clean
     const proxyUrlParam = decodeURIComponent(optimized.split("url=")[1]);
-    const upstreamUrl = new URL(proxyUrlParam);
-    upstreamUrl.searchParams.delete("v");
-    expect(upstreamUrl.toString()).toBe(original);
+    expect(stripImageCacheKey(proxyUrlParam)).toBe(original);
   });
 });
 

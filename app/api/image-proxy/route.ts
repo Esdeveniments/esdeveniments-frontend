@@ -13,7 +13,7 @@ import { Agent, fetch as undiciFetch, type Response as UpstreamResponse } from "
 import { readBodyWithLimit } from "@utils/read-body-with-limit";
 import {
   normalizeExternalImageUrl,
-  isLegacyFileHandler,
+  stripImageCacheKey,
 } from "@utils/image-cache";
 import { isDevelopmentHost } from "@utils/host-validation";
 import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
@@ -32,7 +32,10 @@ import {
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
-const MAX_BYTES = 5_000_000; // 5MB guard
+// Councils post A4 posters as 300 dpi PNGs (7.4 MB from lesquirol.cat). Over the
+// cap the browser loads the original itself, so a lower one only moves the bytes
+// to the visitor's phone.
+const MAX_BYTES = 15_000_000;
 const TIMEOUT_MS = 5000; // DNS check, connect, headers and redirects
 // Whole upstream exchange, body included. Linked to the client's signal so a
 // disconnect also frees the socket and the buffered chunks.
@@ -340,22 +343,6 @@ function hasStrongCacheKey(upstreamUrl: string): boolean {
   }
 }
 
-/**
- * Strip our cache-busting `?v=` param before fetching from upstream.
- * Some external servers reject URLs with unexpected query params.
- * The CDN still caches by the full proxy URL (with ?v=), so cache-busting
- * works on our side without affecting upstream servers.
- */
-function stripCacheKeyForUpstream(imageUrl: string): string {
-  try {
-    const urlObj = new URL(imageUrl);
-    urlObj.searchParams.delete("v");
-    return urlObj.toString();
-  } catch {
-    return imageUrl;
-  }
-}
-
 function buildFetchCandidates(
   absoluteUrl: string,
   originalWasHttp: boolean
@@ -433,12 +420,8 @@ export async function GET(request: Request) {
   // Check if URL has cache key BEFORE stripping (for cache header logic later)
   const hasCacheKey = hasStrongCacheKey(normalized);
 
-  // Strip ?v= before fetching upstream - some servers reject unknown query params.
-  // Skip for legacy file handlers (.ashx) which have non-standard query strings
-  // that get corrupted by URL object serialization (adds trailing "=").
-  const upstreamUrl = isLegacyFileHandler(normalized)
-    ? normalized
-    : stripCacheKeyForUpstream(normalized);
+  // The CDN caches by the full proxy URL (with ?v=); the upstream never sees it.
+  const upstreamUrl = stripImageCacheKey(normalized);
 
   const originalWasHttp = (() => {
     try {

@@ -47,10 +47,13 @@ describe("ClientImage when the proxy can't fetch the image", () => {
     const { container } = render(<ClientImage title="Concert" image={ORIGINAL} alt="" />);
     const proxied = container.querySelector("img")!;
     expect(proxied.getAttribute("src")).toContain("/api/image-proxy");
+    expect(proxied.hasAttribute("referrerpolicy")).toBe(false);
 
     fireEvent.error(proxied);
     const direct = container.querySelector("img")!;
     expect(direct.getAttribute("src")).toBe(ORIGINAL);
+    // The council's server never learns which of our pages the visitor is on.
+    expect(direct.getAttribute("referrerpolicy")).toBe("no-referrer");
     expect(container.querySelector("source")).toBeNull();
 
     fireEvent.error(direct);

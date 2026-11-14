@@ -26,6 +26,11 @@ export default function EventHeroImageClient({
   const sizes = getOptimalImageSizes("detail");
   const handleError = () =>
     setStage(stage === "proxy" && directSrc ? "direct" : "failed");
+  // The hero loads eagerly, so it can fail before hydration, when React isn't
+  // listening for `error` yet (a host the proxy marked unreachable fails fast).
+  const checkAlreadyFailed = (img: HTMLImageElement | null) => {
+    if (img?.complete && img.naturalWidth === 0 && img.currentSrc) handleError();
+  };
 
   if (stage === "failed") {
     return (
@@ -37,6 +42,7 @@ export default function EventHeroImageClient({
 
   // The proxy failed: the browser loads the original (some council servers
   // only accept connections from Spain, which the proxy's server isn't in).
+  // No Referer: the council's server gets neither the page nor our origin.
   if (stage === "direct") {
     return (
       <>
@@ -45,6 +51,7 @@ export default function EventHeroImageClient({
             src={directSrc}
             alt=""
             decoding="async"
+            referrerPolicy="no-referrer"
             className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
           />
         </picture>
@@ -53,6 +60,7 @@ export default function EventHeroImageClient({
             src={directSrc}
             alt={safeTitle}
             decoding="async"
+            referrerPolicy="no-referrer"
             className="object-contain w-full h-full absolute inset-0 z-10"
             onError={handleError}
           />
@@ -86,6 +94,7 @@ export default function EventHeroImageClient({
           fetchPriority="high"
           sizes={sizes}
           className="object-contain w-full h-full absolute inset-0 z-10"
+          ref={checkAlreadyFailed}
           onError={handleError}
         />
       </picture>
