@@ -177,6 +177,30 @@ describe("EditProfileForm", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("checks only the field the user leaves, not ones they haven't reached", () => {
+    // A new account has no display name yet; leaving the username field must
+    // not flag it.
+    authUser = { ...baseUser, name: "", username: "user-1a2b", profileCompleted: false };
+    render(<EditProfileForm />);
+    const username = screen.getByLabelText("fields.username");
+    fireEvent.change(username, { target: { value: "alex91" } });
+    fireEvent.blur(username);
+
+    expect(screen.queryByText("errors.displayNameRequired")).not.toBeInTheDocument();
+  });
+
+  it("clears a field's error as the user fixes it, before the field loses focus", () => {
+    authUser = { ...baseUser, name: "" };
+    render(<EditProfileForm />);
+    const displayName = screen.getByLabelText("fields.displayName");
+    fireEvent.blur(displayName);
+    expect(screen.getByText("errors.displayNameRequired")).toBeInTheDocument();
+
+    fireEvent.change(displayName, { target: { value: "Alex" } });
+
+    expect(screen.queryByText("errors.displayNameRequired")).not.toBeInTheDocument();
+  });
+
   it("PATCHes the profile and refetches the session on success, with no redirect", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
