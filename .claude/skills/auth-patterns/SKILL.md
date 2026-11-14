@@ -36,7 +36,7 @@ through four route handlers:
    says `profileCompleted: false` (a new sign-up, or onboarding abandoned
    earlier), it sends the user to `/perfil/edita?redirect=<returnTo without
    locale>` instead; the form returns there after saving. If that backend
-   check fails, the user goes to `returnTo` (login never blocks on it). On any
+   check fails or takes over 3 s, the user goes to `returnTo`. On any
    failure, redirects to `/?auth_error=<reason>` instead (never back to
    `/iniciar-sessio`, which would auto-restart sign-in and loop).
 3. `GET /api/auth/sign-out` — clears session cookies, redirects to Logto

@@ -17,21 +17,27 @@ import { withLocalePath } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 
 const ONBOARDING_PATH = "/perfil/edita";
+// The check sits in every login's redirect. A hung backend (it answered 5xx
+// and slowly for weeks in Aug–Nov 2026) must not hold the login past this.
+const ONBOARDING_CHECK_TIMEOUT_MS = 3_000;
 
 /**
  * Where the browser lands after sign-in. An account that hasn't finished
  * onboarding (backend `profileCompleted: false`, a new sign-up or an
  * abandoned onboarding) goes to the profile form first, which sends it on to
  * `returnTo` after saving. The form's router adds the locale itself, so the
- * `redirect` param carries the path without it. If the backend can't answer,
- * the session is still valid: skip onboarding rather than block the login.
+ * `redirect` param carries the path without it. If the backend can't answer
+ * within ONBOARDING_CHECK_TIMEOUT_MS, the session is still valid: skip
+ * onboarding rather than hold the login.
  */
 async function landingPath(returnTo: string, origin: string, accessToken: string): Promise<string> {
   const target = new URL(returnTo, origin);
   const { locale, pathnameWithoutLocale } = stripLocalePrefix(target.pathname);
   if (pathnameWithoutLocale === ONBOARDING_PATH) return returnTo;
   try {
-    const user = await getAuthenticatedUserExternal(accessToken);
+    const user = await getAuthenticatedUserExternal(accessToken, {
+      timeout: ONBOARDING_CHECK_TIMEOUT_MS,
+    });
     if (user?.profileCompleted !== false) return returnTo;
   } catch (error) {
     console.warn("[/api/auth/callback] profile check failed; skipping onboarding", error);

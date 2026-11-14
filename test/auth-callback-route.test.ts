@@ -25,7 +25,8 @@ vi.mock("@utils/auth-cookies", () => ({
 
 const getAuthenticatedUserExternal = vi.fn();
 vi.mock("@lib/api/users-external", () => ({
-  getAuthenticatedUserExternal: (token: string) => getAuthenticatedUserExternal(token),
+  getAuthenticatedUserExternal: (token: string, options: unknown) =>
+    getAuthenticatedUserExternal(token, options),
 }));
 
 import { GET } from "../app/api/auth/callback/route";
@@ -99,6 +100,13 @@ describe("GET /api/auth/callback", () => {
     getAuthenticatedUserExternal.mockRejectedValue(Object.assign(new Error("down"), { status: 503 }));
 
     expect(await landing()).toBe("/publica");
+  });
+
+  it("caps the onboarding check well below the default backend timeout", async () => {
+    await callback();
+
+    const [, options] = getAuthenticatedUserExternal.mock.calls[0];
+    expect(options.timeout).toBeLessThanOrEqual(3_000);
   });
 
   it("doesn't wrap onboarding in itself", async () => {
