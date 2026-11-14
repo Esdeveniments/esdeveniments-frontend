@@ -151,3 +151,58 @@ describe("image proxy with a malformed upstream response header", () => {
     expect(resolveMissingIssuers).not.toHaveBeenCalled();
   });
 });
+
+describe("image proxy with an upstream host it can't connect to", () => {
+  function proxyFrom(source: string) {
+    return GET(
+      new Request(`http://localhost/api/image-proxy?url=${encodeURIComponent(source)}`),
+    );
+  }
+
+  it("skips the host for its other images instead of waiting again", async () => {
+    vi.mocked(undiciFetch).mockRejectedValue(fetchFailure("UND_ERR_CONNECT_TIMEOUT"));
+
+    expect((await proxyFrom("https://fitxers.example.cat/agenda/1.jpg")).status).toBe(502);
+    expect((await proxyFrom("https://fitxers.example.cat/agenda/2.jpg")).status).toBe(502);
+
+    expect(undiciFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("still tries http when the same host's https port refuses", async () => {
+    vi.mocked(undiciFetch)
+      .mockRejectedValueOnce(fetchFailure("ECONNREFUSED"))
+      .mockResolvedValueOnce(imageResponse());
+
+    const res = await proxyFrom("http://http-only.example.cat/agenda/1.jpg");
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(undiciFetch).mock.calls.map(([url]) => String(url))).toEqual([
+      "https://http-only.example.cat/agenda/1.jpg",
+      "http://http-only.example.cat/agenda/1.jpg",
+    ]);
+  });
+
+  it("doesn't blame a host for its redirect target being unreachable", async () => {
+    vi.mocked(undiciFetch)
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 302,
+          headers: { location: "https://down.example.cat/1.jpg" },
+        }) as never,
+      )
+      .mockRejectedValueOnce(fetchFailure("UND_ERR_CONNECT_TIMEOUT"))
+      .mockResolvedValueOnce(imageResponse());
+
+    expect((await proxyFrom("https://redirects.example.cat/1.jpg")).status).toBe(502);
+    expect((await proxyFrom("https://redirects.example.cat/2.jpg")).status).toBe(200);
+  });
+
+  it("keeps fetching a host that answered with an error status", async () => {
+    vi.mocked(undiciFetch).mockResolvedValue(new Response(null, { status: 404 }) as never);
+
+    await proxyFrom("https://other.example.cat/agenda/1.jpg");
+    await proxyFrom("https://other.example.cat/agenda/2.jpg");
+
+    expect(undiciFetch).toHaveBeenCalledTimes(2);
+  });
+});
