@@ -175,7 +175,7 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               </div>
 
               {/* Desktop auth slot, reserved the same way so the links don't move. */}
-              <div className="flex min-w-9 items-center justify-end">
+              <div className="flex min-w-9 shrink-0 items-center justify-end">
                 {isLoading ? (
                   <span
                     className={`${DESKTOP_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}

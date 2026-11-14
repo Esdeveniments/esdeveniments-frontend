@@ -221,9 +221,10 @@ test.describe("Responsive navbar", () => {
         page.getByTestId("compact-navbar-actions").getByRole("button").first(),
     },
     {
+      // Just above the nav breakpoint, where the links and the slot are tightest.
       name: "desktop",
-      width: 1440,
-      height: 900,
+      width: 960,
+      height: 800,
       neighbour: (page: Page): Locator =>
         page.getByTestId("desktop-navbar-actions").getByRole("link").first(),
     },
@@ -258,6 +259,14 @@ test.describe("Responsive navbar", () => {
 
         expect(before).not.toBeNull();
         expect(after?.x).toBe(before?.x);
+
+        if (name === "desktop") {
+          // The slot must not shrink under its content and cover the links.
+          const links = page.getByTestId("desktop-navbar-actions").getByRole("link");
+          const lastNavLink = await links.nth((await links.count()) - 2).boundingBox();
+          const box = await real.boundingBox();
+          expect(box?.x ?? 0).toBeGreaterThanOrEqual((lastNavLink?.x ?? 0) + (lastNavLink?.width ?? 0));
+        }
 
         if (signedIn && name === "mobile") {
           // No empty space between the language picker and the avatar.
