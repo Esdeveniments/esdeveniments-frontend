@@ -81,6 +81,8 @@ export const PUBLISH_DRAFT_AUTOSAVE_DELAY_MS = 600;
 export const PUBLISH_RESUME_TTL_MS = 60 * 60 * 1000;
 export const PUBLISH_RESUME_STORAGE_KEY = "publish-resume-v1";
 export const PUBLISH_RESUME_PATH = "/publica?resume=1";
+export const POST_PUBLISH_UPSELL_STORAGE_PREFIX = "esdeveniments:post_publish_upsell:";
+export const POST_PUBLISH_UPSELL_TTL_MS = 60 * 60 * 1000;
 export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
 export const PUBLISH_DRAFT_MAX_COUNT = 5;
 // Sitemap chunking: places per chunk to keep response sizes manageable
