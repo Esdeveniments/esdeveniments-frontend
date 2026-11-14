@@ -16,6 +16,7 @@ import {
   isLegacyFileHandler,
 } from "@utils/image-cache";
 import { isDevelopmentHost } from "@utils/host-validation";
+import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
 import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
 import {
@@ -38,6 +39,7 @@ const TOTAL_TIMEOUT_MS = 15_000;
 const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 const MAX_REDIRECTS = 2;
+const UPSTREAM_HEADERS = { "user-agent": IMAGE_PROXY_USER_AGENT };
 
 // Image optimization defaults
 const DEFAULT_QUALITY = 50; // Base quality for mobile - Lighthouse tests on mobile viewport
@@ -124,6 +126,7 @@ async function retryBrowserTolerableFailure(
     return await undiciFetch(url, {
       signal,
       redirect: "manual",
+      headers: UPSTREAM_HEADERS,
       dispatcher: buildPinnedDnsDispatcher(dnsRecords, true, issuers) ?? undefined,
     });
   } catch (retryError) {
@@ -161,6 +164,7 @@ async function fetchWithTimeout(
     const init: NonNullable<Parameters<typeof undiciFetch>[1]> = {
       signal,
       redirect: "manual",
+      headers: UPSTREAM_HEADERS,
     };
 
     if (pinnedDnsDispatcher || bypassTls) {

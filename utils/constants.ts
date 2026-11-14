@@ -35,6 +35,14 @@ export const EVENT_DESCRIPTION_LINE_CHARS = 45;
 export const EVENT_DESCRIPTION_DESKTOP_FOLD_CHARS = 2400;
 export const EVENT_DESCRIPTION_DESKTOP_LINE_CHARS = 90;
 
+// Sent by /api/image-proxy to council sites. Their WAFs reject undici's default
+// "undici" and an empty User-Agent (CloudFront in front of stasusanna.cat,
+// vic.cat, badalona.cat; lesquirol.cat and paeria.cat block an empty one), but
+// accept this honest bot string. A spoofed Googlebot or a bare "Mozilla/5.0"
+// is rejected, so keep this exact shape.
+export const IMAGE_PROXY_USER_AGENT =
+  "Mozilla/5.0 (compatible; EsdevenimentsBot/1.0; +https://www.esdeveniments.cat)";
+
 /** Milliseconds in one day (24 * 60 * 60 * 1000). */
 export const MS_PER_DAY = 86_400_000;
 
