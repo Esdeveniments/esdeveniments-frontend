@@ -25,10 +25,10 @@ export default function Tabs({ items, active, ariaLabel }: TabsProps) {
                   // the top. h-full makes Link fill it; justify-end then
                   // pushes the label to the bottom so tabs with and without
                   // a count line still share the same label baseline.
-                  "flex h-full flex-col items-center justify-end gap-1 border-b-2 -mb-px px-element-gap py-sm focus-ring",
+                  "flex h-full flex-col items-center justify-end gap-1 border-b-2 -mb-px px-element-gap py-element-gap focus-ring",
                   isActive
                     ? "border-primary text-foreground-strong"
-                    : "border-transparent text-foreground/80",
+                    : "border-transparent text-muted-foreground hover:text-foreground-strong",
                 ].join(" ")}
               >
                 {item.count !== undefined && (

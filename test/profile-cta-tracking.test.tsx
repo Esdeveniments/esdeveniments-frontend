@@ -11,7 +11,6 @@ let authState: { user: { username: string } | null; status: string } = {
   user: null,
   status: "unauthenticated",
 };
-const logoutMock = vi.fn();
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -33,7 +32,7 @@ vi.mock("@i18n/routing", () => ({
 }));
 
 vi.mock("@components/hooks/useAuth", () => ({
-  useAuth: () => ({ ...authState, logout: logoutMock }),
+  useAuth: () => authState,
 }));
 
 vi.mock("@components/hooks/useTrackedCta", () => ({
@@ -41,13 +40,11 @@ vi.mock("@components/hooks/useTrackedCta", () => ({
 }));
 
 import ProfileOwnerActions from "@components/ui/profile/ProfileOwnerActions";
-import ProfileClaimCta from "@components/ui/profile/ProfileClaimCta";
 
 describe("ProfileOwnerActions", () => {
   beforeEach(() => {
     trackClickMock.mockReset();
     trackedCtaMock.mockClear();
-    logoutMock.mockReset();
     authState = { user: null, status: "unauthenticated" };
   });
 
@@ -67,37 +64,17 @@ describe("ProfileOwnerActions", () => {
     expect(trackClickMock).toHaveBeenCalledTimes(1);
   });
 
-  it("calls logout when the owner clicks the logout button", () => {
+  it("shows the owner's visit count only when there are visits", () => {
+    authState = { user: { username: "alex91" }, status: "authenticated" };
+    const { rerender } = render(<ProfileOwnerActions username="alex91" visits={0} />);
+    expect(screen.queryByText("visitsCount")).toBeNull();
+    rerender(<ProfileOwnerActions username="alex91" visits={42} />);
+    expect(screen.getByText("visitsCount")).toBeInTheDocument();
+  });
+
+  it("has no logout on the public profile (it lives on the edit page)", () => {
     authState = { user: { username: "alex91" }, status: "authenticated" };
     render(<ProfileOwnerActions username="alex91" />);
-
-    const logoutButton = screen.getByText("logout");
-    expect(logoutButton).toHaveAttribute("data-analytics-action", "profile_logout_cta");
-    fireEvent.click(logoutButton);
-    expect(logoutMock).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("ProfileClaimCta", () => {
-  beforeEach(() => {
-    trackClickMock.mockReset();
-    trackedCtaMock.mockClear();
-    authState = { user: null, status: "unauthenticated" };
-  });
-
-  it("renders nothing once authenticated", () => {
-    authState = { user: { username: "alex91" }, status: "authenticated" };
-    render(<ProfileClaimCta username="alex91" />);
-    expect(screen.queryByText("claimLogin")).toBeNull();
-  });
-
-  it("registers the profile_claim_cta id, tracks a click, and carries the auth-gate action for a visitor", () => {
-    render(<ProfileClaimCta username="alex91" />);
-
-    expect(trackedCtaMock).toHaveBeenCalledWith("profile_claim_cta");
-    const link = screen.getByText("claimLogin");
-    expect(link).toHaveAttribute("data-analytics-action", "profile_claim_login");
-    fireEvent.click(link);
-    expect(trackClickMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("logout")).toBeNull();
   });
 });

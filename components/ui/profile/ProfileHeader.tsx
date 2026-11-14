@@ -1,40 +1,34 @@
 import ProfileOwnerActions from "@components/ui/profile/ProfileOwnerActions";
-import ProfileVisitsStat from "@components/ui/profile/ProfileVisitsStat";
+import ProfileAvatar from "@components/ui/profile/ProfileAvatar";
 import VerifiedBadge from "@components/ui/profile/VerifiedBadge";
-import AvatarInitials from "@components/ui/common/AvatarInitials";
+import ShareButton from "@components/ui/common/share/ShareButton";
 import { getTranslations } from "next-intl/server";
-import { getLocaleSafely } from "@utils/i18n-seo";
-import { parseBackendDateAsUtcMs } from "@utils/date-helpers";
+import { locale as rootLocale } from "next/root-params";
 import { getProfileDisplayName } from "@utils/profile-name";
-import type { AppLocale } from "types/i18n";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { ProfileHeaderProps } from "types/props";
+import type { AppLocale } from "types/i18n";
 
-/** Format a backend ISO date-time as a locale-aware month + year string.
- *  Uses parseBackendDateAsUtcMs to handle timezone-naive strings the backend
- *  may emit (e.g. "2023-01-15T10:30:00" without a Z suffix). */
-function formatJoinedDate(isoDate: string, locale: AppLocale): string {
-  const ms = parseBackendDateAsUtcMs(isoDate);
-  if (ms === null) return "";
-  return new Intl.DateTimeFormat(locale, {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(ms));
-}
-
+/**
+ * Who this is (avatar, name, handle, count) and what they say about themselves.
+ * Share sits at the right of the avatar row, which always has the avatar's
+ * height; owner actions appear to its left after hydration without moving
+ * anything.
+ * No joined date: every account migrated in Nov 2026 shares one creation date.
+ */
 export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
-  const [t, locale] = await Promise.all([
-    getTranslations("Components.Profile"),
-    getLocaleSafely(),
-  ]);
-
-  const joinedDateText = profile.createdAt
-    ? formatJoinedDate(profile.createdAt, locale)
-    : "";
+  const locale = (await rootLocale()) as AppLocale;
+  const t = await getTranslations({ locale, namespace: "Components.Profile" });
 
   // Legacy `pictureUrl` comes from older backend instances.
   const displayName = getProfileDisplayName(profile);
   const avatarSrc = profile.avatarUrl || profile.pictureUrl;
+  const eventCount = profile.eventCount ?? 0;
+  const shareTarget = {
+    title: displayName,
+    url: toLocalizedUrl(`/perfil/${profile.username}`, locale),
+    text: t("title", { name: displayName }),
+  };
 
   // Cap runs of blank lines before rendering with whitespace-pre-line: the
   // 500-char limit alone doesn't stop a bio that's mostly newlines (e.g.
@@ -49,77 +43,46 @@ export default async function ProfileHeader({ profile }: ProfileHeaderProps) {
     .replace(/\n{3,}/g, "\n\n");
 
   return (
-    <section
-      className="card-bordered rounded-lg overflow-hidden mb-section-y w-full"
-      aria-label={t("title", { name: displayName })}
-      data-testid="profile-header"
-    >
-      <div className="px-section-x py-element-gap relative">
-        <div className="flex items-end gap-element-gap mb-element-gap">
-          {avatarSrc ? (
-            // bg-background: a transparent-background upload (e.g. a logo)
-            // should show against a neutral backdrop, not whatever's behind it.
-            <img
-              src={avatarSrc}
-              alt={displayName}
-              className="w-20 h-20 rounded-full object-cover bg-background border-4 border-background shadow-md"
-              loading="eager"
-            />
-          ) : (
-            <AvatarInitials name={displayName} />
-          )}
+    <header className="w-full flex flex-col gap-element-gap min-w-0" data-testid="profile-header">
+      <div className="flex items-end justify-between gap-element-gap">
+        <ProfileAvatar avatarUrl={avatarSrc} name={displayName} size="lg" eager />
+        {/* flex-1: the box keeps its place when the owner actions appear. */}
+        <div className="flex flex-1 min-w-0 items-center justify-end gap-element-gap">
+          <ProfileOwnerActions
+            username={profile.username}
+            visits={profile.totalEventVisits}
+          />
+          <ShareButton target={shareTarget} contentType="profile" />
         </div>
-
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <h1 className="heading-1 text-foreground">{displayName}</h1>
-          <VerifiedBadge role={profile.role} verified={profile.verified} />
-          <ProfileOwnerActions username={profile.username} />
-        </div>
-
-        <p className="body-small text-muted-foreground mb-1">@{profile.username}</p>
-
-        {bioText && (
-          <p
-            data-testid="profile-bio"
-            className="body-normal text-foreground/80 mb-element-gap whitespace-pre-line break-words"
-          >
-            {bioText}
-          </p>
-        )}
-
-        {/* The upcoming count lives on the Propers tab, not here, so each
-            number shows once. */}
-        {(profile.eventCount !== undefined ||
-          profile.totalEventVisits !== undefined) && (
-            <div
-              className="flex items-center gap-element-gap mb-element-gap"
-              data-testid="profile-stats"
-            >
-              {profile.eventCount !== undefined && (
-                <div className="flex flex-col items-center">
-                  <span className="heading-3 text-foreground-strong">
-                    {profile.eventCount}
-                  </span>
-                  <span className="body-small text-muted-foreground">
-                    {t("statsPublished")}
-                  </span>
-                </div>
-              )}
-              {profile.totalEventVisits !== undefined && (
-                <ProfileVisitsStat
-                  username={profile.username}
-                  visits={profile.totalEventVisits}
-                />
-              )}
-            </div>
-          )}
-
-        {joinedDateText && (
-          <p className="body-small-italic text-muted-foreground">
-            {t("joinedDate", { date: joinedDateText })}
-          </p>
-        )}
       </div>
-    </section>
+
+      <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="heading-1 break-words min-w-0">{displayName}</h1>
+          <VerifiedBadge role={profile.role} verified={profile.verified} />
+        </div>
+        <p
+          className="flex flex-wrap gap-x-2 body-small text-muted-foreground"
+          data-testid="profile-stats"
+        >
+          <span className="break-all">@{profile.username}</span>
+          {eventCount > 0 && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{t("totalEvents", { count: eventCount })}</span>
+            </>
+          )}
+        </p>
+      </div>
+
+      {bioText && (
+        <p
+          data-testid="profile-bio"
+          className="body-normal text-foreground max-w-prose whitespace-pre-line break-words"
+        >
+          {bioText}
+        </p>
+      )}
+    </header>
   );
 }

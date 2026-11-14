@@ -6,32 +6,29 @@ import { Link } from "@i18n/routing";
 import useTrackedCta from "@components/hooks/useTrackedCta";
 import type { ProfileOwnerActionsProps } from "types/props";
 
+// Log out lives on the edit page, not here: no public profile we compared
+// (Luma, Eventbrite, Meetup, RA, Dice, Fever) puts it on the public page.
 export default function ProfileOwnerActions({
   username,
+  visits,
 }: ProfileOwnerActionsProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const t = useTranslations("Components.Profile");
-  // Reuses the navbar's logout copy rather than duplicating the string —
-  // also read from app/[locale]/perfil/edita/EditProfileForm.tsx, so don't
-  // prune "Components.Navbar.auth.logout" for looking unused navbar-side.
-  const tAuth = useTranslations("Components.Navbar.auth");
   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("profile_edit_cta");
 
   if (user?.username !== username) return null;
 
   return (
-    <div ref={ctaRef} className="inline-flex items-center gap-2">
-      <Link href="/perfil/edita" className="btn-outline" onClick={trackClick}>
+    <div ref={ctaRef} className="flex items-center gap-element-gap" data-testid="profile-owner-actions">
+      {visits !== undefined && visits > 0 && (
+        // Hidden on phones: the edit and share buttons fill the row there.
+        <span className="hidden sm:inline body-small text-muted-foreground whitespace-nowrap">
+          {t("visitsCount", { count: visits })}
+        </span>
+      )}
+      <Link href="/perfil/edita" className="btn-neutral whitespace-nowrap" onClick={trackClick}>
         {t("editProfile")}
       </Link>
-      <button
-        type="button"
-        onClick={() => logout()}
-        className="btn-outline"
-        data-analytics-action="profile_logout_cta"
-      >
-        {tAuth("logout")}
-      </button>
     </div>
   );
 }

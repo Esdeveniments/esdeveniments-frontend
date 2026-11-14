@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import ProfileHeader from "@components/ui/profile/ProfileHeader";
-import ProfileClaimCta from "@components/ui/profile/ProfileClaimCta";
+import ProfilePageSkeleton, {
+  ProfileHeaderSkeleton,
+} from "@components/ui/common/skeletons/ProfilePageSkeleton";
 import { getUserByUsernameCached } from "@lib/api/profiles";
-import ProfileLoading from "./loading";
+
+const SHELL = "container py-section-y flex flex-col gap-section-y";
 
 // Shared shell for the profile's Propers/Passats tabs. The 404 stays in the
 // pages below (notFound() thrown here would resolve to the *parent* segment's
@@ -18,8 +21,9 @@ export default function ProfileLayout({
   return (
     <Suspense
       fallback={
-        <div className="container flex flex-col justify-center items-center pt-[6rem]">
-          <ProfileLoading />
+        <div className={SHELL}>
+          <ProfileHeaderSkeleton />
+          <ProfilePageSkeleton />
         </div>
       }
     >
@@ -40,10 +44,9 @@ async function ProfileShell({
   }
 
   return (
-    <div className="container flex flex-col justify-center items-center pt-[6rem]">
+    <div className={SHELL}>
       <ProfileHeader profile={profile} />
-      <ProfileClaimCta username={profile.username} />
-      {children}
+      <div className="w-full">{children}</div>
     </div>
   );
 }

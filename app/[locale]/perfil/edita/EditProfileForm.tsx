@@ -2,22 +2,32 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@i18n/routing";
+import { Link, useRouter } from "@i18n/routing";
 import { useAuth } from "@components/hooks/useAuth";
 import { validateUsername, isPlaceholderUsername } from "@utils/username-validation";
 import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
+import Input from "@components/ui/common/form/input";
+import Button from "@components/ui/common/button";
+import { siteUrl } from "@config/index";
 import type { EditProfileFormProps } from "types/props";
 import EditProfileAvatar from "./EditProfileAvatar";
 
 const DISPLAY_NAME_MAX = 80;
 const BIO_MAX = 500;
 
+function getSiteHost(): string {
+  try {
+    return new URL(siteUrl).host;
+  } catch {
+    return "esdeveniments.cat";
+  }
+}
+
+const siteHost = getSiteHost();
+
 export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
   const t = useTranslations("App.EditProfile");
-  // Reuses the navbar's logout copy: this is a profile-owner page whose
-  // only auth entry point is the navbar avatar, and it has no dropdown of
-  // its own to put a logout action in — see ProfileOwnerActions for the
-  // equivalent on /perfil/[username].
+  // Reuses the navbar's logout copy; the navbar avatar only links here.
   const tAuth = useTranslations("Components.Navbar.auth");
   const { user, refetchUser, logout } = useAuth();
   const router = useRouter();
@@ -141,163 +151,169 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
     }
   };
 
+  const profileHref = usernameLocked
+    ? `/perfil/${encodeURIComponent(user?.username ?? "")}`
+    : null;
+  const usernameDescribedBy =
+    [
+      showUsernameHint && "username-hint",
+      "username-url",
+      usernameError && "username-error",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
   return (
-    <div className="container flex flex-col justify-center pt-6 pb-14">
-      <div className="w-full max-w-md mx-auto flex flex-col gap-6 px-2 lg:px-0">
-        <div className="flex flex-col gap-2 text-center">
-          <h1 className="heading-1 text-foreground-strong">
+    <div className="container py-section-y">
+      <div className="w-full max-w-xl flex flex-col gap-section-y">
+        <header className="flex flex-col gap-element-gap-sm">
+          <h1 className="heading-1">
             {t(isOnboarding ? "onboardingHeading" : "heading")}
           </h1>
-          <p className="body-normal text-foreground/80">
+          <p className="body-normal text-muted-foreground">
             {t(isOnboarding ? "onboardingSubheading" : "subheading")}
           </p>
-          <button
-            type="button"
-            onClick={() => logout()}
-            className="btn-outline self-center"
-            data-analytics-action="edit_profile_logout_cta"
-          >
-            {tAuth("logout")}
-          </button>
-        </div>
+          {profileHref && (
+            <Link
+              href={profileHref}
+              className="self-start body-small font-semibold text-foreground-strong underline underline-offset-4 hover:no-underline focus-ring"
+              data-testid="edit-profile-view-link"
+            >
+              {t("viewProfile")}
+            </Link>
+          )}
+        </header>
 
         {submitError && (
           <div
-            className="w-full px-4 py-3 bg-error/10 border border-error rounded-lg"
+            className="rounded-input border border-error bg-error/10 p-card-padding-sm"
             role="alert"
           >
-            <p className="text-sm font-medium text-error-dark">{submitError}</p>
+            <p className="body-small font-semibold text-error-dark">{submitError}</p>
           </div>
         )}
         {success && (
           <div
-            className="w-full px-4 py-3 bg-success-light border border-success-border rounded-lg"
+            className="flex flex-wrap items-center justify-between gap-element-gap rounded-input border border-success-border bg-success-light p-card-padding-sm"
             role="status"
           >
-            <p className="text-sm font-medium text-success-dark">
-              {t("success")}
-            </p>
+            <p className="body-small font-semibold text-success-dark">{t("success")}</p>
+            {profileHref && (
+              <Link
+                href={profileHref}
+                className="body-small font-semibold text-foreground-strong underline underline-offset-4 hover:no-underline focus-ring"
+              >
+                {t("viewProfile")}
+              </Link>
+            )}
           </div>
         )}
 
         <EditProfileAvatar />
 
-        <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
+        <form className="flex flex-col gap-section-y-sm" onSubmit={onSubmit} noValidate>
+          <Input
+            id="displayName"
+            title={t("fields.displayName")}
+            value={displayName}
+            onChange={(e) => {
+              setDisplayName(e.target.value);
+              if (displayNameError) checkDisplayName(e.target.value);
+            }}
+            onBlur={() => checkDisplayName()}
+            error={displayNameError ?? undefined}
+            autoComplete="name"
+            maxLength={DISPLAY_NAME_MAX}
+          />
+
           <div className="w-full">
             <label htmlFor="username" className="form-label">
               {t("fields.username")}
             </label>
             {showUsernameHint && (
-              <p id="username-hint" className="helper-text">
+              <p id="username-hint" className="form-helper mt-1">
                 {t("usernameHint")}
               </p>
             )}
-            {usernameLocked && (
-              <p id="username-locked-hint" className="helper-text">
-                {t("usernameLockedHint")}
+            <input
+              id="username"
+              name="username"
+              type="text"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (usernameError) checkUsername(e.target.value);
+              }}
+              onBlur={() => checkUsername()}
+              readOnly={usernameLocked}
+              autoCapitalize="none"
+              autoComplete="username"
+              spellCheck={false}
+              className={`input input-lg mt-2 ${usernameLocked ? "input-readonly" : ""} ${usernameError ? "input-error" : ""}`}
+              aria-invalid={usernameError ? "true" : "false"}
+              aria-describedby={usernameDescribedBy}
+            />
+            {usernameError && (
+              <p id="username-error" className="helper-text-error" role="alert">
+                {usernameError}
               </p>
             )}
-            <div className="mt-2">
-              <input
-                id="username"
-                name="username"
-                type="text"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  if (usernameError) checkUsername(e.target.value);
-                }}
-                onBlur={() => checkUsername()}
-                readOnly={usernameLocked}
-                className={`w-full rounded-xl border-border focus:border-foreground-strong text-base ${usernameLocked ? "input-readonly" : ""} ${usernameError ? "input-error" : ""}`}
-                aria-invalid={usernameError ? "true" : "false"}
-                aria-describedby={
-                  [
-                    showUsernameHint && "username-hint",
-                    usernameLocked && "username-locked-hint",
-                    usernameError && "username-error",
-                  ]
-                    .filter(Boolean)
-                    .join(" ") || undefined
-                }
-              />
-              {usernameError && (
-                <p id="username-error" className="helper-text-error" role="alert">
-                  {usernameError}
-                </p>
-              )}
-            </div>
+            <p id="username-url" className="helper-text break-words">
+              {usernameLocked
+                ? t("usernameLockedHint")
+                : t("usernameUrl", { url: `${siteHost}/perfil/${username.trim() || "…"}` })}
+            </p>
           </div>
 
           <div className="w-full">
-            <label htmlFor="displayName" className="form-label">
-              {t("fields.displayName")}
-            </label>
-            <div className="mt-2">
-              <input
-                id="displayName"
-                name="displayName"
-                type="text"
-                value={displayName}
-                onChange={(e) => {
-                  setDisplayName(e.target.value);
-                  if (displayNameError) checkDisplayName(e.target.value);
-                }}
-                onBlur={() => checkDisplayName()}
-                className={`w-full rounded-xl border-border focus:border-foreground-strong text-base ${displayNameError ? "input-error" : ""}`}
-                aria-invalid={displayNameError ? "true" : "false"}
-                aria-describedby={
-                  displayNameError ? "displayName-error" : undefined
-                }
-              />
-              {displayNameError && (
-                <p
-                  id="displayName-error"
-                  className="helper-text-error"
-                  role="alert"
-                >
-                  {displayNameError}
-                </p>
-              )}
+            <div className="flex items-baseline justify-between gap-element-gap">
+              <label htmlFor="bio" className="form-label">
+                {t("fields.bio")}
+              </label>
+              <span id="bio-count" className="body-small text-muted-foreground">
+                {t("bioCount", { count: bio.length, max: BIO_MAX })}
+              </span>
             </div>
+            <textarea
+              id="bio"
+              name="bio"
+              value={bio}
+              onChange={(e) => {
+                setBio(e.target.value);
+                if (bioError) checkBio(e.target.value);
+              }}
+              onBlur={() => checkBio()}
+              maxLength={BIO_MAX}
+              rows={4}
+              placeholder={t("bioPlaceholder")}
+              className={`input h-auto py-3 mt-2 resize-y ${bioError ? "input-error" : ""}`}
+              aria-invalid={bioError ? "true" : "false"}
+              aria-describedby={bioError ? "bio-count bio-error" : "bio-count"}
+            />
+            {bioError && (
+              <p id="bio-error" className="helper-text-error" role="alert">
+                {bioError}
+              </p>
+            )}
           </div>
 
-          <div className="w-full">
-            <label htmlFor="bio" className="form-label">
-              {t("fields.bio")}
-            </label>
-            <div className="mt-2">
-              <textarea
-                id="bio"
-                name="bio"
-                value={bio}
-                onChange={(e) => {
-                  setBio(e.target.value);
-                  if (bioError) checkBio(e.target.value);
-                }}
-                onBlur={() => checkBio()}
-                maxLength={BIO_MAX}
-                rows={4}
-                className={`w-full p-3 border rounded-xl border-border focus:border-foreground-strong resize-vertical ${bioError ? "input-error" : ""}`}
-                aria-invalid={bioError ? "true" : "false"}
-                aria-describedby={bioError ? "bio-error" : undefined}
-              />
-              {bioError && (
-                <p id="bio-error" className="helper-text-error" role="alert">
-                  {bioError}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="btn-primary w-full"
-            disabled={isSubmitting}
-          >
+          <Button type="submit" variant="primary" className="w-full sm:w-auto sm:self-start" disabled={isSubmitting}>
             {isSubmitting ? t("savingLabel") : t("submitLabel")}
-          </button>
+          </Button>
         </form>
+
+        {/* Low on the page, like account actions on Luma and Meetup: the
+            navbar has no menu, so this and nothing else logs a user out. */}
+        <div className="border-t border-border pt-section-y-sm">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => logout()}
+            data-analytics-action="edit_profile_logout_cta"
+          >
+            {tAuth("logout")}
+          </Button>
+        </div>
       </div>
     </div>
   );

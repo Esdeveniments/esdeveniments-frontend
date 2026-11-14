@@ -162,10 +162,17 @@ describe("ProfileEventsSection", () => {
     expect(findAllByType(element, EventCardList)).toHaveLength(0);
   });
 
-  it("links to Passats and shows upcoming events in the organizer's town when nothing is upcoming", async () => {
+  it("shows recent past events, links to Passats and suggests the organizer's town when nothing is upcoming", async () => {
     mockFetchUserEvents.mockImplementation(async (_u, _p, _s, status) =>
       status === "past"
-        ? paged([{ ...makeEvent("p1", past), city: alella }], 29)
+        ? paged(
+            [
+              { ...makeEvent("p1", past), city: alella },
+              makeEvent("p2", past),
+              makeEvent("p3", past),
+            ],
+            29,
+          )
         : paged([]),
     );
     mockFetchEventsCached.mockResolvedValue(
@@ -180,7 +187,7 @@ describe("ProfileEventsSection", () => {
     expect(mockFetchUserEvents).toHaveBeenCalledWith(
       "sala-apolo",
       0,
-      1,
+      3,
       "past",
     );
     expect(mockFetchEventsCached).toHaveBeenCalledWith({
@@ -188,11 +195,13 @@ describe("ProfileEventsSection", () => {
       page: 0,
       size: 6,
     });
-    const lists = findAllByType(element, EventCardList);
-    expect(lists).toHaveLength(1);
-    expect(
-      (lists[0].props as { events: { id: string }[] }).events.map((e) => e.id),
-    ).toEqual(["t1", "t2"]);
+    const lists = findAllByType(element, EventCardList).map((list) =>
+      (list.props as { events: { id: string }[] }).events.map((e) => e.id),
+    );
+    expect(lists).toEqual([
+      ["p1", "p2", "p3"],
+      ["t1", "t2"],
+    ]);
     expect(findAllByType(element, NoEventsFound)).toHaveLength(0);
     const hrefs = findAllByType(element, Link).map(
       (l) => (l.props as { href: string }).href,
@@ -200,7 +209,7 @@ describe("ProfileEventsSection", () => {
     expect(hrefs).toEqual(["/perfil/sala-apolo/passats", "/alella"]);
   });
 
-  it("shows only the Passats link when the latest event has no enabled town", async () => {
+  it("drops the Passats link when every past event is already shown and the town is disabled", async () => {
     mockFetchUserEvents.mockImplementation(async (_u, _p, _s, status) =>
       status === "past"
         ? paged([
@@ -215,8 +224,8 @@ describe("ProfileEventsSection", () => {
     });
 
     expect(mockFetchEventsCached).not.toHaveBeenCalled();
-    expect(findAllByType(element, EventCardList)).toHaveLength(0);
+    expect(findAllByType(element, EventCardList)).toHaveLength(1);
     expect(findAllByType(element, NoEventsFound)).toHaveLength(0);
-    expect(findAllByType(element, Link)).toHaveLength(1);
+    expect(findAllByType(element, Link)).toHaveLength(0);
   });
 });

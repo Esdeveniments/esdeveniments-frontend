@@ -22,6 +22,7 @@ import type {
   PagedResponseDTO,
   ProfileEventStatus,
 } from "types/api/event";
+import type { SafeFetchResult } from "types/fetch";
 
 // Strip control characters (incl. newlines, C1 controls, and the Unicode
 // line/paragraph separators some log viewers and JS engines also treat as
@@ -207,27 +208,47 @@ export async function userExistsExternal(
  * without digging). Read the body and tag the log line so it's greppable as
  * a non-404 upstream failure going forward.
  */
+async function fetchJsonResult<T>(
+  url: string,
+  parse: (json: unknown) => T | null,
+  label: string,
+): Promise<SafeFetchResult<T>> {
+  try {
+    const response = await fetchWithHmac(url);
+    if (response.status === 404) return { data: null, error: null, status: 404 };
+    if (!response.ok) {
+      const body = await response.text().catch(() => "<unreadable>");
+      console.error(
+        `${label}: non-404 upstream failure HTTP ${response.status} — body=${sanitizeLoggedBody(body)}`
+      );
+      return {
+        data: null,
+        error: new Error(`${label}: HTTP ${response.status}`),
+        status: response.status,
+      };
+    }
+    const data = parse(await response.json());
+    if (data === null) {
+      return { data: null, error: new Error(`${label}: invalid payload`), status: 502 };
+    }
+    return { data, error: null, status: 200 };
+  } catch (error) {
+    console.error(`${label}: failed`, error);
+    return {
+      data: null,
+      error: error instanceof Error ? error : new Error(String(error)),
+      status: 502,
+    };
+  }
+}
+
 async function fetchJsonWithFallback<T>(
   url: string,
   parse: (json: unknown) => T | null,
   fallback: T,
   label: string,
 ): Promise<T> {
-  try {
-    const response = await fetchWithHmac(url);
-    if (response.status === 404) return fallback;
-    if (!response.ok) {
-      const body = await response.text().catch(() => "<unreadable>");
-      console.error(
-        `${label}: non-404 upstream failure HTTP ${response.status} — body=${sanitizeLoggedBody(body)}`
-      );
-      return fallback;
-    }
-    return parse(await response.json()) ?? fallback;
-  } catch (error) {
-    console.error(`${label}: failed`, error);
-    return fallback;
-  }
+  return (await fetchJsonResult(url, parse, label)).data ?? fallback;
 }
 
 /**
@@ -384,22 +405,21 @@ const PERIOD_BY_STATUS: Record<ProfileEventStatus, FavoritesPeriod> = {
  * Default size is 20 — matches the backend handoff and the
  * /[place] listing page size, so a public profile with many events
  * renders at the same density as the home page.
- * Returns an empty page on error so the profile renders "no events" rather
- * than crashing.
+ * Keeps the upstream status so /api/users/[username]/events can answer an
+ * outage with a non-cacheable error instead of an empty page.
  */
-export async function getUserEventsExternal(
+export async function getUserEventsExternalResult(
   username: string,
   page = 0,
   size = 20,
   status: ProfileEventStatus = "upcoming",
-): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
-  const empty = emptyPagedResponse<EventSummaryResponseDTO>(page, size);
+): Promise<SafeFetchResult<PagedResponseDTO<EventSummaryResponseDTO>>> {
   const trimmed = username?.trim();
-  if (!trimmed) return empty;
   // Return an empty page (no fetch) when the backend URL is unconfigured —
   // getApiUrl() falls back to a default host, so guarding on it is dead code.
-  if (!isApiUrlConfigured()) return empty;
-  const apiUrl = getApiUrl();
+  if (!trimmed || !isApiUrlConfigured()) {
+    return { data: emptyPagedResponse(page, size), error: null, status: 200 };
+  }
 
   // No `next: { revalidate }` here — external wrappers must stay no-store
   // (repo cost rule). Matches getUserByUsernameExternal on the same page.
@@ -408,12 +428,22 @@ export async function getUserEventsExternal(
     size: String(size),
     period: PERIOD_BY_STATUS[status],
   });
-  return fetchJsonWithFallback(
-    `${apiUrl}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
+  return fetchJsonResult(
+    `${getApiUrl()}/users/${encodeURIComponent(trimmed)}/events?${qs.toString()}`,
     parsePagedEvents,
-    empty,
     "getUserEventsExternal",
   );
+}
+
+/** Same read with an empty page on any error, so the profile renders "no events". */
+export async function getUserEventsExternal(
+  username: string,
+  page = 0,
+  size = 20,
+  status: ProfileEventStatus = "upcoming",
+): Promise<PagedResponseDTO<EventSummaryResponseDTO>> {
+  const result = await getUserEventsExternalResult(username, page, size, status);
+  return result.data ?? emptyPagedResponse(page, size);
 }
 
 /**

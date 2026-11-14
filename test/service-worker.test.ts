@@ -163,6 +163,16 @@ describe("service worker template", () => {
       expect(userSearchIdx).toBeGreaterThan(-1);
       expect(userSearchIdx).toBeLessThan(catchAllIdx);
     });
+
+    it("never caches profile load-more pages, so they can't drift from the server-rendered first page", () => {
+      const contents = getContents();
+      const profileEventsIdx = contents.indexOf(
+        "/^\\/api\\/users\\/[^/]+\\/events$/.test(url.pathname),\n    new workbox.strategies.NetworkOnly()",
+      );
+      const catchAllIdx = contents.indexOf('!url.pathname.startsWith("/api/image-proxy")');
+      expect(profileEventsIdx).toBeGreaterThan(-1);
+      expect(profileEventsIdx).toBeLessThan(catchAllIdx);
+    });
   });
 
   describe("performance optimizations", () => {

@@ -264,14 +264,14 @@
       "title": "Edit your profile",
       "description": "Update your name, username, bio and profile photo.",
       "heading": "Edit your profile",
-      "subheading": "This information is public and will appear on your profile.",
+      "subheading": "Anyone can see this on your profile.",
       "onboardingHeading": "Complete your profile",
       "onboardingSubheading": "To finish setting up your account, choose a username and a display name.",
-      "usernameHint": "Temporary auto-generated username — pick your own.",
+      "usernameHint": "This username is temporary. Pick your own.",
       "usernameLockedHint": "Once set, your username can't be changed again.",
       "submitLabel": "Save changes",
-      "savingLabel": "Saving...",
-      "success": "Profile updated successfully.",
+      "savingLabel": "Saving…",
+      "success": "Profile saved.",
       "fields": {
         "username": "Username",
         "displayName": "Display name",
@@ -296,19 +296,24 @@
         "label": "Profile photo",
         "uploadButton": "Upload photo",
         "removeButton": "Remove photo",
-        "uploading": "Uploading...",
-        "removing": "Removing...",
+        "uploading": "Uploading…",
+        "removing": "Removing…",
         "altPreview": "Profile photo",
         "errorUnsupported": "Unsupported format. Use JPG or PNG.",
         "errorTooLarge": "Image exceeds the 2 MB limit.",
         "errorUploadFailed": "Couldn't upload the photo. Please try again.",
-        "errorRemoveFailed": "Couldn't remove the photo. Please try again."
+        "errorRemoveFailed": "Couldn't remove the photo. Please try again.",
+        "hint": "PNG or JPG, up to 2 MB."
       },
       "authGate": {
         "title": "Log in to edit your profile",
         "description": "You need to log in to complete or edit your profile.",
         "login": "Log in"
-      }
+      },
+      "viewProfile": "View profile",
+      "usernameUrl": "Your address: {url}",
+      "bioCount": "{count}/{max}",
+      "bioPlaceholder": "Say who you are and what events you organise."
     },
     "PlacesNearby": {
       "invalidNumber": "Invalid coordinates: lat,lng must be numbers",
@@ -541,12 +546,11 @@
       "home": "Home"
     },
     "Profile": {
-      "title": "{name} — Profile",
-      "metaDescription": "Discover the events {nameOf}. Browse their upcoming events, concerts, exhibitions and more.",
+      "title": "{name}: upcoming events",
+      "metaDescription": "Check the agenda {nameOf}: upcoming concerts, exhibitions, festivals and other events.",
       "events": "Events",
       "verified": "Verified",
       "verifiedOrganizer": "Verified organizer",
-      "joinedDate": "Joined {date}",
       "noEvents": "No events yet",
       "website": "Website",
       "totalEvents": "{count, plural, one {# event} other {# events}}",
@@ -554,19 +558,19 @@
       "notFoundDescription": "The profile you're looking for doesn't exist or has been removed.",
       "backHome": "Back to home",
       "editProfile": "Edit profile",
-      "claimQuestion": "Is this your venue?",
-      "claimLogin": "Log in",
       "tabUpcoming": "Upcoming",
       "tabPast": "Past",
-      "noUpcomingEvents": "No upcoming events yet",
+      "noUpcomingEvents": "Nothing scheduled right now",
       "noPastEvents": "No past events yet",
-      "statsPublished": "Published",
-      "viewAllPastEvents": "See past events ({count})",
+      "viewAllPastEvents": "{count, plural, one {See the past event} other {See all # past events}}",
       "upcomingInTown": "Upcoming events {placeIn}",
       "moreInTown": "More events {placeIn}",
-      "statsVisits": "Visits",
-      "pastTitle": "Past events {nameOf} — Profile",
-      "pastMetaDescription": "Check out the past events {nameOf}: concerts, exhibitions and activities they've already organized."
+      "pastTitle": "{name}: past events",
+      "pastMetaDescription": "Check out the past events {nameOf}: concerts, exhibitions and activities they've already organized.",
+      "visitsCount": "{count, plural, one {# visit} other {# visits}}",
+      "loadMoreError": "Couldn't load more events. Please try again.",
+      "loadedCount": "{count, plural, one {Loaded # more event} other {Loaded # more events}}",
+      "recentEvents": "Recent events"
     },
     "Footer": {
       "navigation": {
