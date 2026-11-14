@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildOptimizedImageUrl,
+  directImageUrl,
   normalizeExternalImageUrl,
   withImageCacheKey,
   isLegacyFileHandler,
@@ -186,6 +187,23 @@ describe("withImageCacheKey", () => {
       // .ashx URLs are legacy handlers - don't modify them at all
       expect(result).toBe(url);
     });
+  });
+});
+
+describe("directImageUrl", () => {
+  it("drops our cache key like the proxy, and keeps the image's own params", () => {
+    expect(
+      directImageUrl("https://infopalamos.cat/wp-content/uploads/poster.jpg?w=800&v=671acc36"),
+    ).toBe("https://infopalamos.cat/wp-content/uploads/poster.jpg?w=800");
+  });
+
+  it("keeps a legacy handler URL exactly", () => {
+    const handler = "https://www.l-h.cat/utils/obreFitxer.ashx?Fw9EVw48XS4xu24cqazCoxYsw";
+    expect(directImageUrl(handler)).toBe(handler);
+  });
+
+  it("never returns an http URL", () => {
+    expect(directImageUrl("http://fitxers.example.cat/a.jpg")).toBe("");
   });
 });
 
