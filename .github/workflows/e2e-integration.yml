@@ -25,9 +25,9 @@ name: E2E Integration (preproduction)
 #                                     account the preproduction backend uses;
 #                                     without it the promotion payment test skips
 #
-# RUN_SIGNUP_E2E=1 turns on the sign-up spec, which registers a new Logto
-# account each run (disposable mail.tm inbox). Nothing can delete those users
-# yet; they all use the e2e-signup- address prefix.
+# vars.RUN_SIGNUP_E2E=1 (repo variable) turns on the sign-up spec, which
+# registers a new Logto account each run (disposable mail.tm inbox). Nothing
+# can delete those users yet; they all use the e2e-signup- address prefix.
 # The specs self-skip when the test-user secrets are absent, so an
 # unconfigured environment never turns this red. The event-edit and
 # event-time specs also read NEXT_PUBLIC_API_URL and BACKEND_SERVICE_SECRET
@@ -129,7 +129,8 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api-preproduction.esdeveniments.cat/api' }}
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
           E2E_PROMOTION_STRIPE_SECRET_KEY: ${{ secrets.E2E_PROMOTION_STRIPE_SECRET_KEY }}
-          RUN_SIGNUP_E2E: "1"
+          # Repo variable, so the sign-up spec can be switched off without a PR.
+          RUN_SIGNUP_E2E: ${{ vars.RUN_SIGNUP_E2E }}
         run: yarn test:e2e -c playwright.remote.config.ts e2e/publish-integration.spec.ts e2e/publish-guest-integration.spec.ts e2e/event-edit-creator-only.spec.ts e2e/event-delete-creator-only.spec.ts e2e/auth-session-integration.spec.ts e2e/event-edit-integration.spec.ts e2e/event-time-integration.spec.ts e2e/promotion-integration.spec.ts e2e/signup-onboarding-integration.spec.ts
 
       - name: Stop server
