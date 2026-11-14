@@ -264,10 +264,12 @@ EOF
 # confirm avatarUrl goes back to null/undefined on the next /api/auth/me
 ```
 
-`/publica` gate: with `profileCompleted:false`, `/publica` must show
-"complete your profile" (not the event form) and link to
-`/perfil/edita?redirect=/publica`; after saving, it should land back on
-`/publica` with the real form.
+`/publica` gate: with `profileCompleted:false`, a Publish click opens
+`/perfil/edita?redirect=/publica?resume=1`; after saving, it lands back on
+`/publica` and the draft publishes. Since 2026-11, every login of an account
+with `profileCompleted:false` also goes to `/perfil/edita` first
+(`app/api/auth/callback/route.ts`). `e2e/signup-onboarding-integration.spec.ts`
+runs all of this nightly with a fresh account.
 
 agent-browser gotchas (the ones a fresh agent trips on):
 - Quote every URL — a bare `?` breaks in zsh.

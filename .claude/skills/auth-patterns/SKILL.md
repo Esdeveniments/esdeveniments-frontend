@@ -32,8 +32,12 @@ through four route handlers:
    redirects to Logto.
 2. `GET /api/auth/callback` — verifies `state`, exchanges the code for
    tokens, verifies the `id_token`, sets session cookies, redirects to
-   `returnTo` with a one-shot `?auth_success=1` marker. On any failure,
-   redirects to `/?auth_error=<reason>` instead (never back to
+   `returnTo` with a one-shot `?auth_success=1` marker. While the backend
+   says `profileCompleted: false` (a new sign-up, or onboarding abandoned
+   earlier), it sends the user to `/perfil/edita?redirect=<returnTo without
+   locale>` instead; the form returns there after saving. If that backend
+   check fails, the user goes to `returnTo` (login never blocks on it). On any
+   failure, redirects to `/?auth_error=<reason>` instead (never back to
    `/iniciar-sessio`, which would auto-restart sign-in and loop).
 3. `GET /api/auth/sign-out` — clears session cookies, redirects to Logto
    end-session.
