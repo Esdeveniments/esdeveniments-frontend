@@ -32,7 +32,10 @@ import {
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
-const MAX_BYTES = 5_000_000; // 5MB guard
+// Councils post A4 posters as 300 dpi PNGs (7.4 MB from lesquirol.cat). Over the
+// cap the browser loads the original itself, so a lower one only moves the bytes
+// to the visitor's phone.
+const MAX_BYTES = 15_000_000;
 const TIMEOUT_MS = 5000; // DNS check, connect, headers and redirects
 // Whole upstream exchange, body included. Linked to the client's signal so a
 // disconnect also frees the socket and the buffered chunks.

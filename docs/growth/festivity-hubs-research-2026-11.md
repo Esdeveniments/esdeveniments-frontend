@@ -264,7 +264,7 @@ The Nadal pages followed this plan with less machinery: one shared season and ty
 ### Backend problems found
 
 - **esdeveniments-backend#63:** `GET /events` with `from`/`to` and no `place` has no `ORDER BY`, so each page comes back in a new order. Paging "festa major 2026" (1,275 events) got only 655–843 of them. It also affects `/catalunya/avui|dema|setmana|cap-de-setmana` "load more". Until it's fixed, `fetchAllEventPagesExternal` splits a range into day windows that each fit one 50-event page (about 95 requests for the whole year, 1,275 of 1,275 found). Related: `size` is capped at 50, and `sort` and `byDate` are ignored.
-- **esdeveniments-backend#64:** 46 of 269 card images on these pages (17%) don't load: 23 source files are gone (404), 8 are over the proxy's 5 MB limit and 4 sites block hotlinking (403). The fix is to store a copy of each image when an event is scraped.
+- **esdeveniments-backend#64:** 46 of 269 card images on these pages (17%) don't load: 23 source files are gone (404), 8 are over the proxy's 5 MB limit (raised to 15 MB in #798) and 4 sites block hotlinking (403). The fix is to store a copy of each image when an event is scraped.
 
 ## 7. Not in scope
 

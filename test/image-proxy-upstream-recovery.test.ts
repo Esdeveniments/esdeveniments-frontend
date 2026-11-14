@@ -221,4 +221,25 @@ describe("image proxy upstream URL", () => {
       "https://i0.wp.com/query.example.cat/poster.jpg?fit=1024,576&ssl",
     );
   });
+
+  it("resizes a poster over 5 MB instead of leaving it to the browser", async () => {
+    const side = 1400;
+    const noise = Buffer.alloc(side * side * 3);
+    for (let i = 0; i < noise.length; i++) noise[i] = (i * 2654435761) >>> 24;
+    const png = await sharp(noise, { raw: { width: side, height: side, channels: 3 } })
+      .png({ compressionLevel: 0 })
+      .toBuffer();
+    expect(png.length).toBeGreaterThan(5_000_000);
+    vi.mocked(undiciFetch).mockResolvedValueOnce(
+      new Response(new Uint8Array(png), {
+        status: 200,
+        headers: { "content-type": "image/png" },
+      }) as never,
+    );
+
+    const res = await proxy();
+
+    expect(res.status).toBe(200);
+    expect((await res.arrayBuffer()).byteLength).toBeLessThan(png.length);
+  });
 });
