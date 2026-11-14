@@ -1,5 +1,6 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { MOCK_USER } from "./helpers/auth";
+import { SIGNED_IN_HINT_KEY } from "@utils/constants";
 
 test.describe("Responsive navbar", () => {
   test("keeps compact actions inside the 390px viewport gutter", async ({
@@ -207,8 +208,10 @@ test.describe("Responsive navbar", () => {
     });
   });
 
-  // The auth slot keeps the login button's width, so a signed-in avatar
-  // replacing it must not move its neighbours (it used to: 52 px on mobile).
+  // While auth loads the slot holds the login button's width, or the avatar's
+  // on a browser that was signed in last time (SIGNED_IN_HINT_KEY). Either
+  // way, the real action must not move its neighbours (it used to: 52 px on
+  // mobile), and a signed-in avatar must not leave a gap beside them.
   for (const { name, width, height, neighbour } of [
     {
       name: "mobile",
@@ -218,34 +221,60 @@ test.describe("Responsive navbar", () => {
         page.getByTestId("compact-navbar-actions").getByRole("button").first(),
     },
     {
+      // Just above the nav breakpoint, where the links and the slot are tightest.
       name: "desktop",
-      width: 1440,
-      height: 900,
+      width: 960,
+      height: 800,
       neighbour: (page: Page): Locator =>
         page.getByTestId("desktop-navbar-actions").getByRole("link").first(),
     },
   ]) {
-    test(`keeps the ${name} header still when the avatar loads`, async ({ page }) => {
-      let release = () => {};
-      const authAnswered = new Promise<void>((resolve) => (release = resolve));
-      await page.route("**/api/auth/me", async (route) => {
-        await authAnswered;
-        await route.fulfill({ status: 200, json: { user: MOCK_USER } });
+    for (const signedIn of [true, false]) {
+      const action = signedIn ? "avatar" : "login link";
+      test(`keeps the ${name} header still when the ${action} loads`, async ({ page }) => {
+        let release = () => {};
+        const authAnswered = new Promise<void>((resolve) => (release = resolve));
+        await page.route("**/api/auth/me", async (route) => {
+          await authAnswered;
+          await route.fulfill(
+            signedIn
+              ? { status: 200, json: { user: MOCK_USER } }
+              : { status: 401, json: { user: null } }
+          );
+        });
+        if (signedIn) {
+          await page.addInitScript((key) => localStorage.setItem(key, "1"), SIGNED_IN_HINT_KEY);
+        }
+        await page.setViewportSize({ width, height });
+        await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
+
+        const target = neighbour(page);
+        await expect(target).toBeVisible({ timeout: 30000 });
+        const before = await target.boundingBox();
+        release();
+        const actionId = `${name}-${signedIn ? "avatar" : "login"}-link`;
+        const real = page.getByTestId(actionId);
+        await expect(real).toBeVisible();
+        const after = await target.boundingBox();
+
+        expect(before).not.toBeNull();
+        expect(after?.x).toBe(before?.x);
+
+        if (name === "desktop") {
+          // The slot must not shrink under its content and cover the links.
+          const links = page.getByTestId("desktop-navbar-actions").getByRole("link");
+          const lastNavLink = await links.nth((await links.count()) - 2).boundingBox();
+          const box = await real.boundingBox();
+          expect(box?.x ?? 0).toBeGreaterThanOrEqual((lastNavLink?.x ?? 0) + (lastNavLink?.width ?? 0));
+        }
+
+        if (signedIn && name === "mobile") {
+          // No empty space between the language picker and the avatar.
+          const avatar = await real.boundingBox();
+          const gap = (avatar?.x ?? 0) - ((after?.x ?? 0) + (after?.width ?? 0));
+          expect(gap).toBeLessThanOrEqual(8);
+        }
       });
-      await page.setViewportSize({ width, height });
-      await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
-
-      const target = neighbour(page);
-      await expect(target).toBeVisible({ timeout: 30000 });
-      const before = await target.boundingBox();
-      release();
-      await expect(
-        page.getByTestId(name === "mobile" ? "mobile-avatar-link" : "desktop-avatar-link")
-      ).toBeVisible();
-      const after = await target.boundingBox();
-
-      expect(before).not.toBeNull();
-      expect(after?.x).toBe(before?.x);
-    });
+    }
   }
 });
