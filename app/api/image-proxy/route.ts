@@ -13,7 +13,7 @@ import { Agent, fetch as undiciFetch, type Response as UpstreamResponse } from "
 import { readBodyWithLimit } from "@utils/read-body-with-limit";
 import {
   normalizeExternalImageUrl,
-  isLegacyFileHandler,
+  stripImageCacheKey,
 } from "@utils/image-cache";
 import { isDevelopmentHost } from "@utils/host-validation";
 import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
@@ -340,22 +340,6 @@ function hasStrongCacheKey(upstreamUrl: string): boolean {
   }
 }
 
-/**
- * Strip our cache-busting `?v=` param before fetching from upstream.
- * Some external servers reject URLs with unexpected query params.
- * The CDN still caches by the full proxy URL (with ?v=), so cache-busting
- * works on our side without affecting upstream servers.
- */
-function stripCacheKeyForUpstream(imageUrl: string): string {
-  try {
-    const urlObj = new URL(imageUrl);
-    urlObj.searchParams.delete("v");
-    return urlObj.toString();
-  } catch {
-    return imageUrl;
-  }
-}
-
 function buildFetchCandidates(
   absoluteUrl: string,
   originalWasHttp: boolean
@@ -433,12 +417,8 @@ export async function GET(request: Request) {
   // Check if URL has cache key BEFORE stripping (for cache header logic later)
   const hasCacheKey = hasStrongCacheKey(normalized);
 
-  // Strip ?v= before fetching upstream - some servers reject unknown query params.
-  // Skip for legacy file handlers (.ashx) which have non-standard query strings
-  // that get corrupted by URL object serialization (adds trailing "=").
-  const upstreamUrl = isLegacyFileHandler(normalized)
-    ? normalized
-    : stripCacheKeyForUpstream(normalized);
+  // The CDN caches by the full proxy URL (with ?v=); the upstream never sees it.
+  const upstreamUrl = stripImageCacheKey(normalized);
 
   const originalWasHttp = (() => {
     try {

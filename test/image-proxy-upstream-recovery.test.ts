@@ -206,3 +206,19 @@ describe("image proxy with an upstream host it can't connect to", () => {
     expect(undiciFetch).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("image proxy upstream URL", () => {
+  it("drops our cache key and keeps the image's own query byte for byte", async () => {
+    vi.mocked(undiciFetch).mockResolvedValueOnce(imageResponse());
+    const source = "https://i0.wp.com/query.example.cat/poster.jpg?fit=1024,576&ssl&v=abc";
+
+    const res = await GET(
+      new Request(`http://localhost/api/image-proxy?url=${encodeURIComponent(source)}`),
+    );
+
+    expect(res.status).toBe(200);
+    expect(String(vi.mocked(undiciFetch).mock.calls[0][0])).toBe(
+      "https://i0.wp.com/query.example.cat/poster.jpg?fit=1024,576&ssl",
+    );
+  });
+});

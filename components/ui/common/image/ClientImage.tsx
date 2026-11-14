@@ -174,6 +174,9 @@ function ClientImageInner({
             width={500}
             height={260}
             decoding="async"
+            // The council's server gets no page URL or origin from us; some
+            // hotlink rules also let an empty Referer through.
+            referrerPolicy="no-referrer"
             ref={checkAlreadyFailed}
             onError={handleImageError}
             style={{ objectFit: "cover" }}
