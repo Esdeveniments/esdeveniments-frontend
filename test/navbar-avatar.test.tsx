@@ -111,6 +111,12 @@ describe("NavbarClient avatar", () => {
     expect(slot).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
     expect(screen.queryByTestId("mobile-login-link")).toBeNull();
+    // Hidden unless SIGNED_IN_HINT_SCRIPT marked <html>; see styles/globals.css.
+    for (const id of ["mobile-avatar-skeleton", "desktop-avatar-skeleton"]) {
+      const skeleton = screen.getByTestId(id);
+      expect(skeleton).toHaveClass("auth-slot-skeleton", "hidden");
+      expect(skeleton).toHaveAttribute("aria-hidden", "true");
+    }
   });
 
   it("remembers whether this browser shows the avatar, for the next page's first paint", () => {
@@ -129,11 +135,11 @@ describe("NavbarClient avatar", () => {
     expect(localStorage.getItem(SIGNED_IN_HINT_KEY)).toBe("1");
   });
 
-  it("gives a transparent-background upload a neutral backdrop instead of the fallback button color", () => {
+  it("keeps the avatar photo on a muted backdrop, like its loading skeleton", () => {
     render(<NavbarClient navigation={[]} labels={labels} />);
     const img = screen.getByTestId("desktop-avatar-link").querySelector("img");
     expect(img).toHaveAttribute("src", authUser.avatarUrl);
-    expect(img).toHaveClass("bg-background");
+    expect(img).toHaveClass("bg-muted");
   });
 
   it("gives the avatar toggle a visible focus ring, matching every other nav control", () => {
