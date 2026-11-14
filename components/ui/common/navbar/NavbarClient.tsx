@@ -14,6 +14,13 @@ import type { Href } from "types/common";
 import LanguageSwitcher from "./LanguageSwitcher";
 import NavbarLoginLink from "./NavbarLoginLink";
 
+// The login link and the invisible box that keeps its place share these
+// classes, so the reserved width always matches the real button. The real
+// action sits in the same grid cell, on top of the box.
+const MOBILE_LOGIN_CLASS = "btn-outline btn-sm whitespace-nowrap";
+const DESKTOP_LOGIN_CLASS = "btn-outline text-xs whitespace-nowrap";
+const AUTH_SLOT_CELL = "col-start-1 row-start-1";
+
 // No usePathname() here: it suspends while Next prerenders the generic shell
 // of routes with params, which would push the whole navbar out of the static
 // HTML. Only ActiveLink (tiny boundary per link) and the client-only login
@@ -81,55 +88,57 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               data-testid="compact-navbar-actions"
             >
               <LanguageSwitcher compact />
-              {isLoading ? (
-                // Same box as the logged-out button (most visitors) so the
-                // header doesn't shift when auth resolves.
+              {/* Fixed slot, as wide as the login button and as tall as the
+                  avatar: the header doesn't move when auth resolves. The test
+                  id marks the loading state. */}
+              <div className="grid h-11 shrink-0 items-center justify-items-end">
                 <span
-                  className="btn-outline btn-sm whitespace-nowrap shrink-0 invisible"
+                  className={`${MOBILE_LOGIN_CLASS} invisible ${AUTH_SLOT_CELL}`}
                   aria-hidden="true"
-                  data-testid="mobile-auth-slot"
+                  data-testid={isLoading ? "mobile-auth-slot" : undefined}
                 >
                   <UserCircleIcon className="h-5 w-5" />
                   {labels.loginShort}
                 </span>
-              ) : (
-                isAuthenticated && user && !user.profileEnrichmentFailed ? (
-                  <PressableLink
-                    href={profileHref || "/perfil/edita"}
-                    prefetch={false}
-                    variant="inline"
-                    className="flex-center w-11 h-11 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                    aria-label={labels.myProfile}
-                    data-testid="mobile-avatar-link"
-                  >
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt=""
-                        className="w-9 h-9 rounded-full object-cover bg-background"
-                      />
-                    ) : (
-                      <span className="flex-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                        {(user.name || user.email).charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </PressableLink>
-                ) : (
-                  <NavbarLoginLink
-                    className="btn-outline btn-sm whitespace-nowrap shrink-0"
-                    aria-label={
-                      user?.profileEnrichmentFailed
-                        ? `${labels.loginShort}. ${labels.incompleteProfile}`
-                        : undefined
-                    }
-                    data-testid="mobile-login-link"
-                    data-analytics-action="navbar_login_mobile_header"
-                  >
-                    <UserCircleIcon className="h-5 w-5" aria-hidden="true" />
-                    {labels.loginShort}
-                  </NavbarLoginLink>
-                )
-              )}
+                {!isLoading && (
+                  isAuthenticated && user && !user.profileEnrichmentFailed ? (
+                    <PressableLink
+                      href={profileHref || "/perfil/edita"}
+                      prefetch={false}
+                      variant="inline"
+                      className={`${AUTH_SLOT_CELL} flex-center w-11 h-11 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
+                      aria-label={labels.myProfile}
+                      data-testid="mobile-avatar-link"
+                    >
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover bg-background"
+                        />
+                      ) : (
+                        <span className="flex-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                          {(user.name || user.email).charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </PressableLink>
+                  ) : (
+                    <NavbarLoginLink
+                      className={`${MOBILE_LOGIN_CLASS} ${AUTH_SLOT_CELL}`}
+                      aria-label={
+                        user?.profileEnrichmentFailed
+                          ? `${labels.loginShort}. ${labels.incompleteProfile}`
+                          : undefined
+                      }
+                      data-testid="mobile-login-link"
+                      data-analytics-action="navbar_login_mobile_header"
+                    >
+                      <UserCircleIcon className="h-5 w-5" aria-hidden="true" />
+                      {labels.loginShort}
+                    </NavbarLoginLink>
+                  )
+                )}
+              </div>
             </div>
 
             <div
@@ -148,37 +157,45 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 ))}
               </div>
 
-              {/* Desktop auth: one-click profile navigation, matching the compact header. */}
-              {!isLoading && (
-                isAuthenticated && user && !user.profileEnrichmentFailed ? (
-                  <PressableLink
-                    href={profileHref || "/perfil/edita"}
-                    prefetch={false}
-                    variant="inline"
-                    className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                    aria-label={labels.myProfile}
-                    data-testid="desktop-avatar-link"
-                  >
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt=""
-                        className="w-9 h-9 rounded-full object-cover bg-background"
-                      />
-                    ) : (
-                      (user.name || user.email).charAt(0).toUpperCase()
-                    )}
-                  </PressableLink>
-                ) : (
-                  <NavbarLoginLink
-                    className="btn-outline text-xs whitespace-nowrap"
-                    data-testid="desktop-login-link"
-                    data-analytics-action="navbar_login_desktop"
-                  >
-                    {labels.login}
-                  </NavbarLoginLink>
-                )
-              )}
+              {/* Desktop auth in the same kind of fixed slot, so the links don't move. */}
+              <div className="grid items-center justify-items-end">
+                <span
+                  className={`${DESKTOP_LOGIN_CLASS} invisible ${AUTH_SLOT_CELL}`}
+                  aria-hidden="true"
+                >
+                  {labels.login}
+                </span>
+                {!isLoading && (
+                  isAuthenticated && user && !user.profileEnrichmentFailed ? (
+                    <PressableLink
+                      href={profileHref || "/perfil/edita"}
+                      prefetch={false}
+                      variant="inline"
+                      className={`${AUTH_SLOT_CELL} flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
+                      aria-label={labels.myProfile}
+                      data-testid="desktop-avatar-link"
+                    >
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover bg-background"
+                        />
+                      ) : (
+                        (user.name || user.email).charAt(0).toUpperCase()
+                      )}
+                    </PressableLink>
+                  ) : (
+                    <NavbarLoginLink
+                      className={`${DESKTOP_LOGIN_CLASS} ${AUTH_SLOT_CELL}`}
+                      data-testid="desktop-login-link"
+                      data-analytics-action="navbar_login_desktop"
+                    >
+                      {labels.login}
+                    </NavbarLoginLink>
+                  )
+                )}
+              </div>
 
               <LanguageSwitcher />
             </div>

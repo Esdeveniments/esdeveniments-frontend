@@ -1,4 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
+import { MOCK_USER } from "./helpers/auth";
 
 test.describe("Responsive navbar", () => {
   test("keeps compact actions inside the 390px viewport gutter", async ({
@@ -205,4 +206,46 @@ test.describe("Responsive navbar", () => {
       paddingBottom: "48px",
     });
   });
+
+  // The auth slot keeps the login button's width, so a signed-in avatar
+  // replacing it must not move its neighbours (it used to: 52 px on mobile).
+  for (const { name, width, height, neighbour } of [
+    {
+      name: "mobile",
+      width: 390,
+      height: 844,
+      neighbour: (page: Page): Locator =>
+        page.getByTestId("compact-navbar-actions").getByRole("button").first(),
+    },
+    {
+      name: "desktop",
+      width: 1440,
+      height: 900,
+      neighbour: (page: Page): Locator =>
+        page.getByTestId("desktop-navbar-actions").getByRole("link").first(),
+    },
+  ]) {
+    test(`keeps the ${name} header still when the avatar loads`, async ({ page }) => {
+      let release = () => {};
+      const authAnswered = new Promise<void>((resolve) => (release = resolve));
+      await page.route("**/api/auth/me", async (route) => {
+        await authAnswered;
+        await route.fulfill({ status: 200, json: { user: MOCK_USER } });
+      });
+      await page.setViewportSize({ width, height });
+      await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
+
+      const target = neighbour(page);
+      await expect(target).toBeVisible({ timeout: 30000 });
+      const before = await target.boundingBox();
+      release();
+      await expect(
+        page.getByTestId(name === "mobile" ? "mobile-avatar-link" : "desktop-avatar-link")
+      ).toBeVisible();
+      const after = await target.boundingBox();
+
+      expect(before).not.toBeNull();
+      expect(after?.x).toBe(before?.x);
+    });
+  }
 });
