@@ -87,6 +87,12 @@ describe("utils/api-helpers:buildEventsQuery", () => {
     expect(buildEventsQuery({}).has("free")).toBe(false);
   });
 
+  it("never sends tots, which the backend answers with 0 events", () => {
+    const query = buildEventsQuery({ category: "tots", byDate: "tots" });
+    expect(query.has("category")).toBe(false);
+    expect(query.has("byDate")).toBe(false);
+  });
+
   it("sets default page and size when not provided", () => {
     const params: FetchEventsParams = {};
     const query = buildEventsQuery(params);

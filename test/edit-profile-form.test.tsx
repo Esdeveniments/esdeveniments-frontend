@@ -16,6 +16,7 @@ let authUser: AuthUser = baseUser;
 const mockRefetchUser = vi.fn();
 const mockLogout = vi.fn();
 const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 const { sendGoogleEventMock } = vi.hoisted(() => ({
   sendGoogleEventMock: vi.fn<
     (event: string, obj: Record<string, unknown>) => void
@@ -27,7 +28,7 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("@i18n/routing", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
   Link: ({
     children,
     href,
@@ -242,6 +243,8 @@ describe("EditProfileForm", () => {
     );
     expect(await screen.findByText("success")).toBeInTheDocument();
     expect(mockPush).not.toHaveBeenCalled();
+    // Cached pages (staleTimes) would otherwise show the old profile.
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
     expect(sendGoogleEventMock).toHaveBeenCalledWith(
       "edit_profile_submit_attempt",
       { is_onboarding: false },

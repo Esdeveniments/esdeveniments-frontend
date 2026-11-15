@@ -11,7 +11,10 @@ import { sendGoogleEvent } from "@utils/analytics";
 import useTrackedCta from "@components/hooks/useTrackedCta";
 import { queueFavoriteRequest } from "@utils/favorites-queue";
 import { useAuth } from "@components/hooks/useAuth";
-import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
+import {
+  GUEST_FAVORITE_SAVED_EVENT,
+  markFavoritesChanged,
+} from "@utils/favorites-events";
 import type { FavoriteButtonProps } from "types/props";
 import { captureException } from "@sentry/nextjs";
 // Not @utils/constants: keep this client import dependency-free — see
@@ -202,10 +205,12 @@ export default function FavoriteButton({
                 window.dispatchEvent(new Event(GUEST_FAVORITE_SAVED_EVENT));
               }
 
-              // Preserve existing /preferits UX: reflect removals immediately.
-              // Avoid refreshing other pages to keep the toggle lightweight.
-              if (window.location.pathname.endsWith("/preferits")) {
+              // On /preferits, reflect removals immediately. Elsewhere, keep
+              // the toggle lightweight and let /preferits refresh when shown.
+              if (/\/preferits(\/|$)/.test(window.location.pathname)) {
                 router.refresh();
+              } else {
+                markFavoritesChanged();
               }
             } catch (error: unknown) {
               captureException(error, {

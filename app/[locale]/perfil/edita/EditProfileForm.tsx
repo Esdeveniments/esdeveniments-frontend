@@ -134,6 +134,8 @@ export default function EditProfileForm({ redirectTo }: EditProfileFormProps) {
       }
 
       await refetchUser();
+      // Drop cached pages (staleTimes) so the profile shows the new details.
+      router.refresh();
       sendGoogleEvent("edit_profile_submit_success", {
         is_onboarding: isOnboarding,
         redirected: !!redirectTo,

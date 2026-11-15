@@ -1,14 +1,15 @@
 import HomeHero from "@components/ui/hero/HomeHero";
 import HeroSectionSkeleton from "@components/ui/hero/HeroSectionSkeleton";
 import HomeEventsSkeleton from "./HomeEventsSkeleton";
+import type { HomePageSkeletonProps } from "types/props";
 
 // Mirrors ServerEventsCategorized: hero, link chip sections, quick
 // categories, then the streamed event sections.
-export default function HomePageSkeleton() {
+export default function HomePageSkeleton({ heroCopy }: HomePageSkeletonProps) {
   return (
     <div className="w-full bg-background" data-testid="home-page-skeleton">
       <HomeHero>
-        <HeroSectionSkeleton />
+        <HeroSectionSkeleton copy={heroCopy} />
       </HomeHero>
 
       <div

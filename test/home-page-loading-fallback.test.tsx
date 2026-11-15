@@ -8,6 +8,7 @@ vi.mock("next/server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/server")>()),
   connection: vi.fn(() => new Promise(() => {})),
 }));
+vi.mock("next/cache", () => ({ cacheLife: vi.fn() }));
 vi.mock("@lib/api/fetch-wrapper", () => ({
   fetchWithHmac: vi.fn(() => new Promise(() => {})),
 }));
@@ -24,12 +25,12 @@ function fulfilled<T>(value: T): Promise<T> {
 
 describe("home page loading fallback", () => {
   // An sr-only/noscript-only fallback rendered a blank <main> while loading.
-  test("shows the home skeleton and keeps the crawler links", () => {
+  test("shows the home skeleton and keeps the crawler links", async () => {
     const html = renderToString(
-      <Page
-        params={fulfilled({ locale: "ca" })}
-        searchParams={fulfilled({})}
-      />,
+      await Page({
+        params: fulfilled({ locale: "ca" }),
+        searchParams: fulfilled({}),
+      }),
     );
 
     expect(html).toContain('data-testid="home-page-skeleton"');
@@ -37,5 +38,7 @@ describe("home page loading fallback", () => {
     expect(html).toContain('href="/openapi.json"');
     // Crawlers that don't run JS read headings in source order.
     expect(html.match(/<h[1-6][\s>]/)?.[0]).toBe("<h1 ");
+    // The hero skeleton carries the real hero text, so it has the same height.
+    expect(html).toContain('data-testid="hero-section-skeleton"');
   });
 });

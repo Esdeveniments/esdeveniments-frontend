@@ -46,7 +46,6 @@ export const useEvents = ({
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {
   const [activationKey, setActivationKey] = useState<string | null>(null);
-  const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
   const currentKey = `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${profileSlug}|${initialSize}`;
 
@@ -61,6 +60,9 @@ export const useEvents = ({
   });
 
   const isActivated = hasClientFilters || activationKey === currentKey;
+  // Without client filters the server already rendered page 0, so SWR only
+  // loads the pages after it, and only once "load more" is clicked.
+  const firstPage = hasClientFilters ? 0 : 1;
 
   // Explicit calendar from/to take precedence over byDate shortcut
   const dateRange = explicitFrom
@@ -106,6 +108,7 @@ export const useEvents = ({
     pageIndex: number,
     previousPageData: PagedResponseDTO<EventSummaryResponseDTO> | null,
   ) => {
+    if (!isActivated) return null;
     if (previousPageData && previousPageData.last) return null; // reached the end
     return [
       "events",
@@ -120,7 +123,7 @@ export const useEvents = ({
       baseParams.lon,
       baseParams.profileSlug,
       baseParams.free,
-      pageIndex,
+      pageIndex + firstPage,
       baseParams.size,
     ] as const;
   };
@@ -129,6 +132,7 @@ export const useEvents = ({
     data: pages,
     error,
     isLoading: isSWRLoading,
+    size,
     setSize,
     mutate,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
@@ -165,21 +169,6 @@ export const useEvents = ({
         free: freeParam as boolean | undefined,
       }),
     {
-      fallbackData:
-        !hasClientFilters && fallbackData && fallbackData.length > 0
-          ? [
-              {
-                content: fallbackData,
-                currentPage: 0,
-                pageSize: initialSize,
-                totalElements: fallbackData.length,
-                totalPages: 1,
-                last: !serverHasMore,
-              },
-            ]
-          : undefined,
-
-      keepPreviousData: !hasClientFilters,
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
 
@@ -190,23 +179,23 @@ export const useEvents = ({
       focusThrottleInterval: 8000,
       errorRetryInterval: 7000,
       errorRetryCount: 3,
-      // Disable suspense when client filters are present to avoid SSR errors.
-      // When hasClientFilters is true, fallbackData is undefined, and SWR suspense
-      // requires fallback data during SSR. By disabling suspense, we allow client-side
-      // fetching without SSR errors while still suspending for SSR-cached content.
-      suspense: !hasClientFilters,
       onError: (e) => {
         console.error("Error fetching events:", e);
         captureException(e);
       },
       revalidateFirstPage: false,
-      revalidateOnMount: hasClientFilters,
+      // SWR treats the first non-null key as the mount, so a "load more"
+      // activation needs this to fetch.
+      revalidateOnMount: isActivated,
     },
   );
 
-  const clientEvents = isActivated
-    ? (pages?.flatMap((p) => p.content) ?? [])
-    : fallbackData;
+  const fetchedEvents = pages?.flatMap((p) => p.content) ?? [];
+  const clientEvents = !isActivated
+    ? fallbackData
+    : hasClientFilters
+      ? fetchedEvents
+      : [...fallbackData, ...fetchedEvents];
 
   const totalEvents = isActivated
     ? pages && pages.length > 0
@@ -215,24 +204,30 @@ export const useEvents = ({
     : fallbackData.length;
 
   const lastPage = isActivated && pages ? pages[pages.length - 1] : undefined;
-  const hasMore = isActivated
-    ? lastPage
+  // Until its first page arrives, the SSR list still decides.
+  const hasMore = !isActivated
+    ? serverHasMore
+    : lastPage
       ? !lastPage.last
-      : false
-    : serverHasMore;
+      : !hasClientFilters && serverHasMore;
   const currentPageCount = pages?.length ?? 0;
-  const isLoadingMore =
-    targetPageCount !== null && currentPageCount < targetPageCount && !error;
+  // SWR keeps `size` per key, so a filter change can't leave a stale target.
+  const isLoadingMore = isActivated && currentPageCount < size && !error;
 
   const loadMore = async () => {
-    if (isActivated && (!hasMore || isLoadingMore)) return;
-
     if (!isActivated) {
+      if (!serverHasMore) return;
+      // Giving SWR a key fetches its first page (page 1).
       setActivationKey(currentKey);
+      return;
+    }
+    if (!hasMore || isLoadingMore) return;
+    // The first page failed: fetch it again instead of skipping past it.
+    if (currentPageCount === 0) {
+      await mutate();
+      return;
     }
 
-    // Request one more page. If activating, this will fetch the first page of client-side data (page 0 or 1).
-    setTargetPageCount(currentPageCount + 1);
     await setSize((prev) => prev + 1);
   };
 

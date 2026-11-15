@@ -1,4 +1,4 @@
-import { Suspense, use } from "react";
+import { Suspense } from "react";
 import type { JSX } from "react";
 import { locale as rootLocale } from "next/root-params";
 import { getTranslations } from "next-intl/server";
@@ -29,6 +29,7 @@ import {
   seasonalFestivityLinks,
 } from "@utils/festivity";
 import HomePageSkeleton from "@components/ui/common/skeletons/HomePageSkeleton";
+import { getHeroSkeletonCopy } from "@components/ui/hero/HeroSectionSkeleton";
 
 export async function generateMetadata() {
   const locale = (await rootLocale()) as AppLocale;
@@ -110,11 +111,12 @@ function HomeStaticFallback({ locale }: { locale: AppLocale }) {
   );
 }
 
-export default function Page({
+export default async function Page({
   params,
 }: PageProps<"/[locale]">) {
-  const { locale } = use(params);
+  const { locale } = await params;
   const appLocale = locale as AppLocale;
+  const heroCopy = await getHeroSkeletonCopy(appLocale);
 
   return (
     <>
@@ -140,7 +142,7 @@ export default function Page({
         fallback={
           <>
             <HomeStaticFallback locale={appLocale} />
-            <HomePageSkeleton />
+            <HomePageSkeleton heroCopy={heroCopy} />
           </>
         }
       >
