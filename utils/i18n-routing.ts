@@ -36,5 +36,57 @@ export function ensureLocale(locale: string | null | undefined): AppLocale {
   return DEFAULT_LOCALE;
 }
 
+/**
+ * Prefixes a relative root path with the locale segment when needed.
+ * Matches a complete locale segment so towns like `/esparreguera` still get `/es`.
+ */
+export function localizePath(path: string, locale: AppLocale): string {
+  if (!path) return path;
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path) || path.startsWith("//")) {
+    return path;
+  }
+  if (!path.startsWith("/")) return path;
+
+  const suffixIndex = path.search(/[?#]/);
+  const pathname = suffixIndex === -1 ? path : path.slice(0, suffixIndex);
+  const suffix = suffixIndex === -1 ? "" : path.slice(suffixIndex);
+
+  const { locale: existingLocale } = stripLocalePrefix(pathname);
+  if (existingLocale !== null) return path;
+
+  if (locale === DEFAULT_LOCALE) return path;
+  if (pathname === "/") return `/${locale}${suffix}`;
+  return `/${locale}${pathname}${suffix}`;
+}
+
+/**
+ * Builds the `/iniciar-sessio` href with a locale-preserving `?redirect=` path.
+ * `@i18n/routing` `<Link>` and `ActiveLink` add the locale prefix to `/iniciar-sessio`
+ * itself, while Logto callback reads the return locale from `?redirect=`.
+ */
+export function buildLoginHref(
+  returnPath: string | null | undefined,
+  locale: AppLocale,
+): `/iniciar-sessio${string}` {
+  if (!returnPath || !returnPath.startsWith("/")) {
+    return "/iniciar-sessio";
+  }
+  const localizedReturn = localizePath(returnPath, locale);
+  const suffixIndex = localizedReturn.search(/[?#]/);
+  const pathname =
+    suffixIndex === -1
+      ? localizedReturn
+      : localizedReturn.slice(0, suffixIndex);
+  const hasQuery = localizedReturn.includes("?");
+  const { pathnameWithoutLocale } = stripLocalePrefix(pathname);
+  if (
+    pathnameWithoutLocale === "/iniciar-sessio" ||
+    (pathnameWithoutLocale === "/" && !hasQuery)
+  ) {
+    return "/iniciar-sessio";
+  }
+  return `/iniciar-sessio?redirect=${encodeURIComponent(localizedReturn)}`;
+}
+
 
 

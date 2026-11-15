@@ -1,13 +1,17 @@
 import { getTranslations } from "next-intl/server";
+import { locale as rootLocale } from "next/root-params";
 import { Link } from "@i18n/routing";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
+import { buildLoginHref } from "@utils/i18n-routing";
+import type { AppLocale } from "types/i18n";
 
 // Shown on /preferits/passats to anonymous visitors — past favourites are
 // authenticated-only. Server-rendered (unlike EditProfileAuthGate): the
 // redirect target here is always /preferits/passats, so there's no need for
 // a client-side useSearchParams()/useAuth() round trip.
 export default async function PastFavoritesAuthGate() {
-  const t = await getTranslations("App.Favorites");
+  const locale = (await rootLocale()) as AppLocale;
+  const t = await getTranslations({ locale, namespace: "App.Favorites" });
 
   return (
     <div
@@ -30,7 +34,8 @@ export default async function PastFavoritesAuthGate() {
       </p>
 
       <Link
-        href="/iniciar-sessio?redirect=%2Fpreferits%2Fpassats"
+        href={buildLoginHref("/preferits/passats", locale)}
+        rel="nofollow"
         className="btn-primary w-full"
         data-analytics-action="preferits_passats_gate_login"
       >

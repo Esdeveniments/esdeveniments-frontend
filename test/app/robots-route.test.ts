@@ -103,6 +103,7 @@ describe("app/robots.txt/route (production-host allowlist)", () => {
     ]) {
       expect(body).toContain(`Disallow: ${path}\n`);
     }
+    expect(body).not.toContain("/login/");
     // Only the sitemap index is declared; it lists every child sitemap
     expect(body.match(/^Sitemap: .*$/gm)).toEqual([
       "Sitemap: https://www.esdeveniments.cat/sitemap.xml",

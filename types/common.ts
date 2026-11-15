@@ -564,6 +564,7 @@ export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   activeLinkClass?: string;
   className?: string;
   href?: Href;
+  rel?: string;
 }
 
 export interface ActiveLinkAnchorProps extends Omit<ActiveLinkProps, "href"> {
@@ -641,6 +642,12 @@ export interface PreloadOptions {
 
 export interface GoogleAnalyticsEvent {
   [key: string]: unknown;
+}
+
+/** An event's first category and its town (else region) slug, "" when missing. */
+export interface EventAnalyticsSlugs {
+  categorySlug: string;
+  placeSlug: string;
 }
 
 // Opening hours formatting options (shared between utils and UI)

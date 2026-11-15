@@ -2,6 +2,7 @@ import { Suspense, use } from "react";
 import type { JSX } from "react";
 import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
+import { getEventAnalyticsSlugs } from "@utils/event-helpers";
 import { getCachedEventBySlug } from "@lib/api/events";
 import { cacheLife, cacheTag } from "next/cache";
 import { eventsTag, eventTag } from "@lib/cache/tags";
@@ -207,6 +208,7 @@ async function EventPageContent({
 
   const { primaryPlaceSlug, sponsorFallbackPlaces, placeLabel, placeType, newsHref } =
     getPlaceContext(event, locale);
+  const analyticsSlugs = getEventAnalyticsSlugs(event);
   // Request-time parts stay outside the cached body and pass through it.
   const sponsorSlot = (
     <SponsorBannerSlot
@@ -242,6 +244,7 @@ async function EventPageContent({
               events={event.relatedEvents ?? []}
               sourceEventId={event.id}
               sourceEventSlug={event.slug || slug}
+              sourceSlugs={analyticsSlugs}
             />
           }
         >
@@ -252,6 +255,7 @@ async function EventPageContent({
             regionId={event.region?.id}
             relatedEvents={event.relatedEvents ?? []}
             sourceEventSlug={event.slug || slug}
+            sourceSlugs={analyticsSlugs}
           />
         </Suspense>
       }
@@ -313,8 +317,7 @@ async function EventPageBody({
     endDate: event.endDate,
     startTime: event.startTime,
     endTime: event.endTime,
-    categorySlug: primaryCategorySlug,
-    placeSlug: citySlug ?? regionSlug,
+    ...getEventAnalyticsSlugs(event),
     hasImage: Boolean(event.imageUrl),
     origin: event.origin,
     ownerId: event.owner?.id,
@@ -559,6 +562,8 @@ async function EventPageBody({
                           <FavoriteButton
                             eventSlug={event.slug}
                             eventId={event.id ? String(event.id) : undefined}
+                            categorySlug={clientEvent.categorySlug}
+                            placeSlug={clientEvent.placeSlug}
                             initialIsFavorite={false}
                             labels={favoriteLabels}
                           />

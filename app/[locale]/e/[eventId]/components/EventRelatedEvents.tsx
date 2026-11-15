@@ -6,6 +6,7 @@ export default function EventRelatedEvents({
   events,
   sourceEventId = "",
   sourceEventSlug,
+  sourceSlugs,
 }: EventRelatedEventsProps) {
   if (events.length === 0) return null;
 
@@ -16,6 +17,8 @@ export default function EventRelatedEvents({
         data-analytics-context="related_events"
         data-analytics-source-event-id={sourceEventId}
         data-analytics-source-event-slug={sourceEventSlug}
+        data-analytics-category-slug={sourceSlugs?.categorySlug}
+        data-analytics-place-slug={sourceSlugs?.placeSlug}
       >
         <EventsAroundSection events={events} bleed />
       </div>

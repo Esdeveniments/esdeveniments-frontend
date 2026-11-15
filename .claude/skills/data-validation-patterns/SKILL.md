@@ -11,6 +11,7 @@ Rule (AGENTS.md › API layer): parse every backend response with Zod in the ext
 
 - Backend DTO schemas and their `parse*` helpers: `lib/validation/<resource>.ts`, one file per resource. Run `ls lib/validation/` to see them all (event, category, city, news, place, region, user, profile, favorites, promotion, upload, auth, username, publish-draft).
 - TypeScript types stay in `types/` (DTOs in `types/api/`). Schemas import the DTO type and the parser returns it; don't declare `z.infer` aliases in `lib/validation/` (ESLint only allows type aliases in `types/`).
+- Assign the parsed data to the DTO type (`const event: EventDetailResponseDTO = result.data;`), never `result.data as …DTO`: the cast hid a nullable `endDate` behind `endDate: string` and kept expired events indexed (LESSONS.md). If it doesn't compile, the DTO type is wrong: fix the type, or map `null` to `undefined` in the schema (`nullAsMissing` in `lib/validation/event.ts`). The only cast left there is `relatedEvents`, whose schema is lenient on purpose.
 - Shared building blocks are exported and reused: `EventSummaryResponseDTOSchema`, `CitySummaryResponseDTOSchema` and `CategorySummaryResponseDTOSchema` live in `lib/validation/event.ts` and are imported by `city.ts` and `category.ts`.
 - A request-body schema used by a single route may sit at the top of that route (`ToggleFavoriteSchema` in `app/api/favorites/route.ts`). Move it to `lib/validation/` once a second file needs it (`profileUpdateSchema` in `lib/validation/auth.ts`).
 

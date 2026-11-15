@@ -46,7 +46,7 @@ export interface EventSummaryResponseDTO {
   imageUrl: string | null;
   startDate: string; // ISO date
   startTime: string | null; // ISO time or null
-  endDate: string; // ISO date
+  endDate: string | null; // ISO date; null for single-day events
   endTime: string | null; // ISO time or null
   location: string;
   // Venue coordinates; null/absent until the backend geocodes the venue.
@@ -111,8 +111,8 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   videoUrl?: string;
   tags?: string[];
   relatedEvents?: EventSummaryResponseDTO[]; // Related events from list endpoint (no location fields)
-  metaTitle?: string;
-  metaDescription?: string;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
   /** Short free text from the backend ("Gratuït", "10 € taquilla · 5 € online"); null when unknown. */
   price?: string | null;
   /**

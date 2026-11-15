@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { computeTemporalStatus } from "@utils/event-status";
 import { hasEventEnded } from "@utils/event-window";
+import { isExpiredEventDates } from "@utils/event-helpers";
 import type { EventTemporalStatus } from "types/event-status";
 
 // Every case is written in Madrid wall-clock time, the time the backend sends.
@@ -137,6 +138,21 @@ describe.each(["Europe/Madrid", "UTC", "America/New_York", "Asia/Tokyo"])(
     it.each(cases)("hasEventEnded agrees with the status: $name", (c) => {
       process.env.TZ = tz;
       expect(hasEventEnded(c, madrid(c.now))).toBe(c.state === "past");
+    });
+
+    // Expired = last day more than EXPIRED_EVENT_NOINDEX_DAYS (60) ago.
+    it.each([
+      { name: "single day, no end date, 61 days ago", startDate: "2025-08-10", endDate: null, expired: true },
+      { name: "single day, no end date, 60 days ago", startDate: "2025-08-11", endDate: null, expired: false },
+      { name: "old start, recent end", startDate: "2025-08-01", endDate: "2025-09-01", expired: false },
+      { name: "end before an old start is ignored", startDate: "2025-08-01", endDate: "2025-07-01", expired: true },
+      { name: "end before a future start is ignored", startDate: "2025-10-20", endDate: "2024-01-01", expired: false },
+      { name: "unreadable start", startDate: "soon", endDate: null, expired: false },
+    ])("isExpiredEventDates: $name", ({ startDate, endDate, expired }) => {
+      process.env.TZ = tz;
+      expect(
+        isExpiredEventDates({ startDate, endDate }, madrid("2025-10-10T12:00")),
+      ).toBe(expired);
     });
 
     // Whatever the times, a multi-day event is live on every day strictly

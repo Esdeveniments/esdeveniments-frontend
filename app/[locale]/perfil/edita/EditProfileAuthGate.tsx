@@ -1,8 +1,10 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@i18n/routing";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
+import { buildLoginHref } from "@utils/i18n-routing";
+import type { AppLocale } from "types/i18n";
 import type { EditProfileAuthGateProps } from "types/props";
 
 const DEFAULT_REDIRECT = "/perfil/edita";
@@ -16,6 +18,7 @@ export default function EditProfileAuthGate({
   redirectTo,
 }: EditProfileAuthGateProps) {
   const t = useTranslations("App.EditProfile.authGate");
+  const locale = useLocale() as AppLocale;
   const target = redirectTo || DEFAULT_REDIRECT;
 
   return (
@@ -34,7 +37,8 @@ export default function EditProfileAuthGate({
         <p className="body-normal text-muted-foreground">{t("description")}</p>
 
         <Link
-          href={`/iniciar-sessio?redirect=${encodeURIComponent(target)}`}
+          href={buildLoginHref(target, locale)}
+          rel="nofollow"
           className="btn-primary w-full"
           data-analytics-action="edit_profile_gate_login"
         >

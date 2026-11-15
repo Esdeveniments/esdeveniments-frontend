@@ -1,4 +1,10 @@
 import { computeTemporalStatus } from "@utils/event-status";
+import {
+  daysBetween,
+  madridWallClockMs,
+  resolveEventWindow,
+  wallClockDay,
+} from "@utils/event-window";
 import { EXPIRED_EVENT_NOINDEX_DAYS, MS_PER_DAY } from "@utils/constants";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { siteUrl } from "@config/index";
@@ -7,7 +13,8 @@ import type {
   EventSummaryResponseDTO,
   ListEvent,
 } from "types/api/event";
-import type { CalendarEventData } from "types/common";
+import type { CalendarEventData, EventAnalyticsSlugs } from "types/common";
+import type { EventWindowInput } from "types/event-status";
 
 /**
  * Whether an event ended more than EXPIRED_EVENT_NOINDEX_DAYS ago. Its page is
@@ -19,6 +26,24 @@ export const isExpiredEvent = (
 ): boolean =>
   end !== undefined &&
   now - end.getTime() > EXPIRED_EVENT_NOINDEX_DAYS * MS_PER_DAY;
+
+/**
+ * isExpiredEvent for an event's own date fields, in Madrid days. Its last day
+ * is the end date, or the start date when there is none: the backend's
+ * importers send `endDate: null` for single-day events.
+ */
+export const isExpiredEventDates = (
+  event: EventWindowInput,
+  now = new Date()
+): boolean => {
+  const window = resolveEventWindow(event);
+  if (!window) return false;
+  const today = wallClockDay(madridWallClockMs(now));
+  return (
+    daysBetween(window.endDay ?? window.startDay, today) >
+    EXPIRED_EVENT_NOINDEX_DAYS
+  );
+};
 
 /**
  * The card that gets the LCP preload and fetchPriority="high". Ads and events
@@ -87,4 +112,16 @@ export const buildCalendarEventData = (
   startDate: event.startDate,
   endDate: event.endDate,
   canonical: `${siteUrl}/e/${event.slug}`,
+});
+
+/**
+ * The event's interest keys for GA: its first category and its town (or its
+ * region when it has no town), the same pair `view_event_page` sends, so
+ * views, clicks and saves can be grouped the same way. "" when missing.
+ */
+export const getEventAnalyticsSlugs = (
+  event: Pick<EventSummaryResponseDTO, "categories" | "city" | "region">,
+): EventAnalyticsSlugs => ({
+  categorySlug: event.categories?.[0]?.slug ?? "",
+  placeSlug: event.city?.slug ?? event.region?.slug ?? "",
 });

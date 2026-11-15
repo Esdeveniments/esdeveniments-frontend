@@ -18,6 +18,7 @@ vi.mock("@components/ui/eventsAround/EventsAroundSection", () => ({
 
 import EventPagePromotedEvents from "@components/ui/promotedEvents/EventPagePromotedEvents";
 import EventMoreEvents from "app/[locale]/e/[eventId]/components/EventMoreEvents";
+import EventRelatedEvents from "app/[locale]/e/[eventId]/components/EventRelatedEvents";
 
 const ev = (id: string) => ({ id }) as EventSummaryResponseDTO;
 const ids = (row: ReactElement) =>
@@ -63,6 +64,20 @@ describe("EventMoreEvents", () => {
     await rows({ regionId: 2 });
     expect(fetchPromotedEvents).toHaveBeenCalledTimes(1);
     expect(fetchPromotedEvents).toHaveBeenCalledWith({ placement: "REGION", regionId: 2 });
+  });
+});
+
+describe("EventRelatedEvents", () => {
+  it("sends the viewed event's category and place as the clicks' page context", () => {
+    const html = renderToStaticMarkup(
+      <EventRelatedEvents
+        events={[ev("a")]}
+        sourceEventSlug="self"
+        sourceSlugs={{ categorySlug: "concerts", placeSlug: "cardedeu" }}
+      />,
+    );
+    expect(html).toContain('data-analytics-category-slug="concerts"');
+    expect(html).toContain('data-analytics-place-slug="cardedeu"');
   });
 });
 

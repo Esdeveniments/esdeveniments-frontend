@@ -38,6 +38,12 @@ vi.mock("@lib/api/events", () => ({
         startDate: longAgo,
         endDate: longAgo,
       },
+      {
+        slug: "expired-single-day",
+        title: "Single day, no end date",
+        startDate: longAgo,
+        endDate: null,
+      },
     ],
   }),
 }));
@@ -62,6 +68,7 @@ describe("app/sitemap-events/[...parts]/route", () => {
     expect(bySlug["upcoming-future-updated-at"]).toBeUndefined();
     expect(bySlug["upcoming-edited"]).toBe("2026-01-02T10:00:00.000Z");
     expect(Object.keys(bySlug)).not.toContain("expired-long-ago");
+    expect(Object.keys(bySlug)).not.toContain("expired-single-day");
     expect(Object.keys(bySlug)).toHaveLength(3);
   });
 
