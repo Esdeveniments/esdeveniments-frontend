@@ -50,6 +50,7 @@ const optionalText = z
   .string()
   .nullable()
   .transform((value) => (value === null || isMissingText(value) ? null : value));
+const optionalTranslationText = optionalText.nullish().catch(null);
 const requiredText = z
   .string()
   .transform((value) => (isMissingText(value) ? "" : value));
@@ -71,10 +72,14 @@ const EventSummaryBaseSchema = z
     // Note: title is allowed to be empty string (backend may return empty titles)
     // Frontend code should handle empty titles defensively (see app/e/[eventId]/page.tsx)
     title: z.string(),
+    titleEs: optionalTranslationText,
+    titleEn: optionalTranslationText,
     // Absent on the pre-v2 backend still serving prod; default keeps it parsing.
     isPromoted: z.boolean().default(false),
     url: optionalText,
     description: requiredText,
+    descriptionEs: optionalTranslationText,
+    descriptionEn: optionalTranslationText,
     imageUrl: optionalText,
     startDate: z.string(),
     startTime: z.string().nullable(),
@@ -117,8 +122,12 @@ const RelatedEventSummarySchema = z
     id: z.string().optional(),
     slug: z.string(),
     title: z.string(),
+    titleEs: optionalTranslationText,
+    titleEn: optionalTranslationText,
     url: optionalText.optional(),
     description: optionalText.optional(),
+    descriptionEs: optionalTranslationText,
+    descriptionEn: optionalTranslationText,
     imageUrl: optionalText.optional(),
     startDate: z.string(),
     startTime: z.string().nullable().optional(),
@@ -309,6 +318,8 @@ function enhanceEventDetail(
     relatedEvents: event.relatedEvents.map((relatedEvent) => ({
       ...enhanceEventImage(relatedEvent),
       description: "",
+      descriptionEs: null,
+      descriptionEn: null,
     })) as EventDetailResponseDTO["relatedEvents"],
   };
 }

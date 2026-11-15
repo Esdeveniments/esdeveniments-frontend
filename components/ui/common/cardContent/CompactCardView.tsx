@@ -38,7 +38,7 @@ export default function CompactCardView({
         {/* Decorative: the title link already names the card. */}
         <Image
           className="card-event-image w-full h-full object-cover transition-transform duration-slow"
-          title={event.title}
+          title={title}
           alt=""
           image={image}
           priority={false}

@@ -35,14 +35,25 @@ export interface ProvinceSummaryResponseDTO {
 // only the town is known (the map shows a town bubble, not a pin).
 export type EventLocationPrecision = "VENUE" | "CITY" | "UNKNOWN";
 
+export interface LocalizedEventText {
+  title: string;
+  description: string;
+  titleTranslated: boolean;
+  descriptionTranslated: boolean;
+}
+
 export interface EventSummaryResponseDTO {
   id: string; // UUID
   hash: string;
   slug: string;
   title: string;
+  titleEs?: string | null;
+  titleEn?: string | null;
   isPromoted: boolean;
   url: string | null;
   description: string;
+  descriptionEs?: string | null;
+  descriptionEn?: string | null;
   imageUrl: string | null;
   startDate: string; // ISO date
   startTime: string | null; // ISO time or null

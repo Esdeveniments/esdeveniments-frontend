@@ -1,4 +1,5 @@
 import { formatEventDateLabel } from "@utils/date-helpers";
+import { resolveEventLocalizedText } from "@utils/event-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { ShareKitEvent } from "types/event";
@@ -11,9 +12,10 @@ export function buildShareKitEvent(
   locale: AppLocale,
 ): ShareKitEvent {
   const slug = event.slug ?? "";
+  const { title } = resolveEventLocalizedText(event, locale);
   return {
     slug,
-    title: event.title ?? "",
+    title,
     url: toLocalizedUrl(`/e/${slug}`, locale),
     dateText: formatEventDateLabel(
       event.startDate,

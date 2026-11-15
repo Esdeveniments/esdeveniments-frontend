@@ -18,7 +18,10 @@ import { getFormattedDate } from "@utils/helpers";
 import { formatShortDateRange } from "@utils/date-helpers";
 import { isProductionSiteUrl } from "@utils/production-host";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
-import { isExpiredEventDates } from "@utils/event-helpers";
+import {
+  isExpiredEventDates,
+  resolveEventLocalizedText,
+} from "@utils/event-helpers";
 
 // --- Default robots policy for indexable pages ---
 export const DEFAULT_ROBOTS_POLICY = {
@@ -128,15 +131,22 @@ export function generateEventMetadata(
   if (!event) return { title: "No event found" };
 
   const localeToUse = locale ?? DEFAULT_LOCALE;
+  const {
+    title: localizedTitle,
+    description: localizedDescription,
+    descriptionTranslated,
+  } = resolveEventLocalizedText(event, localeToUse);
+  const hasLocalizedBody =
+    localeToUse === DEFAULT_LOCALE || descriptionTranslated;
 
-  // The backend metaTitle is Catalan (with a Catalan date), so only the
-  // default locale uses it; es/en get a generated title with a localized date.
+  // The backend metaTitle and metaDescription are Catalan, so only the default
+  // locale uses them; es/en generate localized date/venue metadata instead.
   const enhancedTitle =
     event.metaTitle?.trim() && localeToUse === DEFAULT_LOCALE
       ? event.metaTitle.trim()
       : generateMetaTitle(
-          event.title,
-          event.description,
+          localizedTitle,
+          hasLocalizedBody ? localizedDescription : undefined,
           event.location,
           event.city?.name,
           event.region?.name,
@@ -148,33 +158,52 @@ export function generateEventMetadata(
       ? `${prefixTitle}: ${enhancedTitle}`
       : enhancedTitle;
 
-  // Use backend metaDescription if available and non-empty, otherwise generate it
   let finalDescription: string;
-  if (event.metaDescription?.trim()) {
+  if (event.metaDescription?.trim() && localeToUse === DEFAULT_LOCALE) {
     finalDescription = event.metaDescription.trim();
   } else {
-    // Generate enhanced description like the old version
-    const enhancedDescription = generateMetaDescription(
-      event.title,
-      event.description,
-    );
-    // Enrich description with date and venue, keeping under 156 chars
     const { formattedStart } = getFormattedDate(
       event.startDate,
       event.endDate,
       localeToUse,
     );
-    const descriptionParts = [enhancedDescription];
-    if (formattedStart && formattedStart.trim().length > 0) {
-      descriptionParts.push(formattedStart);
+    const placePart =
+      event.location?.trim() ||
+      event.city?.name?.trim() ||
+      event.region?.name?.trim() ||
+      "";
+    if (hasLocalizedBody) {
+      const enhancedDescription = generateMetaDescription(
+        localizedTitle,
+        localizedDescription,
+      );
+      const descriptionParts = [enhancedDescription];
+      if (formattedStart && formattedStart.trim().length > 0) {
+        descriptionParts.push(formattedStart);
+      }
+      if (placePart) {
+        descriptionParts.push(placePart);
+      }
+      finalDescription = smartTruncate(
+        descriptionParts.join(" - "),
+        META_DESCRIPTION_MAX,
+      );
+    } else {
+      // Keep the localized date and venue ahead of an untranslated Catalan body
+      // so 156-character truncation never cuts off the localized facts.
+      const leadParts = [
+        sanitizeInput(localizedTitle),
+        formattedStart?.trim() || "",
+        placePart,
+      ].filter(Boolean);
+      const lead = leadParts.join(" - ");
+      const bodyTail = sanitizeInput(localizedDescription);
+      const combined =
+        lead.length < META_DESCRIPTION_SHORT && bodyTail
+          ? `${lead} - ${bodyTail}`
+          : lead;
+      finalDescription = smartTruncate(combined, META_DESCRIPTION_MAX);
     }
-    if (event.location && event.location.trim().length > 0) {
-      descriptionParts.push(event.location);
-    }
-    finalDescription = smartTruncate(
-      descriptionParts.join(" - "),
-      META_DESCRIPTION_MAX,
-    );
   }
   finalDescription = appendSentenceIfShort(finalDescription, descriptionSuffix);
 

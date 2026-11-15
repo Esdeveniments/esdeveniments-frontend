@@ -49,7 +49,7 @@ export default async function EventActionBar({ event, locale }: EventActionBarPr
           eventSlug={event.slug}
           eventUrl={getEventLinkUrl(event.url)}
           moreInfoLabel={t("moreInfo")}
-          calendar={buildCalendarEventData(event)}
+          calendar={buildCalendarEventData(event, locale)}
         />
       </div>
     </div>

@@ -246,13 +246,55 @@ describe("meta helpers (black-box)", () => {
       );
     });
 
-    it("uses the Catalan backend metaTitle only for the default locale", () => {
-      const withBackend = { ...event, metaTitle: "6a Castaween – La Llagosta – 7 oct. 2099" };
+    it("uses the Catalan backend metaTitle and metaDescription only for the default locale", () => {
+      const withBackend = {
+        ...event,
+        metaTitle: "6a Castaween – La Llagosta – 7 oct. 2099",
+        metaDescription: "Vine a celebrar la 6a Castaween a La Llagosta el 7 d'octubre.",
+      };
       expect(generateEventMetadata(withBackend, undefined, undefined, "ca").title).toBe(
         "6a Castaween – La Llagosta – 7 oct. 2099",
       );
-      expect(generateEventMetadata(withBackend, undefined, undefined, "es").title).toContain(
-        "7 de octubre",
+      expect(
+        generateEventMetadata(withBackend, undefined, undefined, "ca").description,
+      ).toBe("Vine a celebrar la 6a Castaween a La Llagosta el 7 d'octubre.");
+
+      const esMeta = generateEventMetadata(
+        withBackend,
+        undefined,
+        undefined,
+        "es",
+        "Consulta horarios y cómo llegar.",
+      );
+      expect(esMeta.title).toContain("7 de octubre");
+      expect(esMeta.description).not.toContain("Vine a celebrar");
+      expect(esMeta.description).toContain("7 de octubre");
+      expect(esMeta.description).toContain("La Llagosta");
+    });
+
+    it("keeps localized date and venue ahead of a long untranslated Catalan description on es/en", () => {
+      const longCatalan = {
+        ...event,
+        description:
+          "Una jornada plena d'activitats culturals, tallers infantils, música en directe i degustació de productes artesans per a tota la família al centre del poble.",
+      };
+      const enMeta = generateEventMetadata(longCatalan, undefined, undefined, "en");
+      expect(enMeta.description).toContain("October 7, 2099");
+      expect(enMeta.description).toContain("La Llagosta");
+
+      const translatedEn = generateEventMetadata(
+        {
+          ...longCatalan,
+          titleEn: "6th Castaween Festival",
+          descriptionEn: "Live music, workshops and local food in La Llagosta.",
+        },
+        undefined,
+        undefined,
+        "en",
+      );
+      expect(translatedEn.title).toContain("6th Castaween Festival");
+      expect(translatedEn.description).toContain(
+        "Live music, workshops and local food in La Llagosta.",
       );
     });
 

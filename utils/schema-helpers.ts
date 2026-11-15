@@ -4,7 +4,11 @@ import { toLocalizedUrl } from "@utils/i18n-seo";
 import { getProfileSlug, isVerifiedOrganization } from "@utils/user-helpers";
 import { getProfileDisplayName } from "@utils/profile-name";
 import { getEventPriceText, parseSchemaPrice } from "@utils/event-price";
-import { formatCatalanA } from "@utils/string-helpers";
+import { formatPlacePreposition } from "@utils/string-helpers";
+import {
+  getDefaultEventNoun,
+  resolveEventLocalizedText,
+} from "@utils/event-helpers";
 import { getEventVenueCoords } from "@utils/event-map";
 import { TIMEZONE_MADRID } from "@utils/constants";
 import { resolveEventWindow } from "@utils/event-window";
@@ -122,24 +126,31 @@ const buildOrganizer = (
 
 /** List entries that link to each event page (see SchemaEventListItem). */
 export const buildEventListItems = (
-  events: Pick<EventSummaryResponseDTO, "slug" | "title">[],
+  events: Pick<
+    EventSummaryResponseDTO,
+    "slug" | "title" | "titleEs" | "titleEn"
+  >[],
   locale: AppLocale = DEFAULT_LOCALE,
 ): SchemaEventListItem[] =>
   events.map((event, index) => ({
     "@type": "ListItem",
     position: index + 1,
     url: toLocalizedUrl(`/e/${event.slug}`, locale),
-    name: event.title,
+    name: resolveEventLocalizedText(
+      { ...event, description: "" },
+      locale,
+    ).title,
   }));
 
 export const generateJsonData = (
   event: EventDetailResponseDTO | EventSummaryResponseDTO,
   locale?: AppLocale,
 ): SchemaOrgEvent => {
+  const localeToUse = locale ?? DEFAULT_LOCALE;
+  const { title: localizedTitle, description: localizedDescription } =
+    resolveEventLocalizedText(event, localeToUse);
   const {
-    title,
     slug,
-    description,
     startDate,
     endDate,
     location,
@@ -157,14 +168,19 @@ export const generateJsonData = (
   const endTime = "endTime" in event ? event.endTime : null;
   const normalizedEndTime = normalizeEndTime(startTime, endTime);
 
-  const trimmedTitle = sanitizeText(title);
+  const trimmedTitle = sanitizeText(localizedTitle);
   const sanitizedLocation = sanitizeText(location);
   const cityName = sanitizeText(city?.name);
   const regionName = sanitizeText(region?.name);
   const fallbackPlace =
     cityName || regionName || sanitizedLocation || "Catalunya";
-  // The fallback copy is Catalan, so contract an article in the name ("al Masnou").
-  const fallbackPlaceIn = formatCatalanA(fallbackPlace, "general", false);
+  const fallbackPlaceType = city ? "town" : region ? "region" : "general";
+  const fallbackPlaceIn = formatPlacePreposition(
+    fallbackPlace,
+    fallbackPlaceType,
+    localeToUse,
+    false,
+  );
 
   if (!cityName && !regionName && !sanitizedLocation) {
     logSchemaWarning(slug, "address", "missing location context");
@@ -193,14 +209,14 @@ export const generateJsonData = (
 
   // Imported descriptions carry markdown (`**`, `[text](url)`) and HTML.
   const sanitizedDescription = sanitizeText(
-    description ? descriptionToPlainText(description) : "",
+    localizedDescription ? descriptionToPlainText(localizedDescription) : "",
   );
   if (!sanitizedDescription) {
     logSchemaWarning(slug, "description");
   }
   const descriptionValue =
     sanitizedDescription ||
-    `${trimmedTitle || "Esdeveniment cultural"} ${fallbackPlaceIn}`;
+    `${trimmedTitle || getDefaultEventNoun(localeToUse, true)} ${fallbackPlaceIn}`;
 
   // Same window as the status pill: all-day events stay date-only (Google:
   // "don't specify a granular hour" when it isn't known) and an overnight
@@ -269,7 +285,6 @@ export const generateJsonData = (
     logSchemaWarning(slug, "name");
   }
 
-  const localeToUse = locale ?? DEFAULT_LOCALE;
   const inLanguage = localeToHrefLang[localeToUse] ?? localeToUse;
   const slugPart = typeof slug === "string" ? slug : "";
   const eventUrl = toLocalizedUrl(`/e/${slugPart}`, localeToUse);
@@ -280,7 +295,9 @@ export const generateJsonData = (
   // values — emitting them suppresses Google Event rich results. Past events
   // are filtered by Google's freshness policy regardless of this field.
 
-  const schemaName = trimmedTitle || `Esdeveniment ${fallbackPlaceIn}`.trim();
+  const schemaName =
+    trimmedTitle ||
+    `${getDefaultEventNoun(localeToUse)} ${fallbackPlaceIn}`.trim();
   const organizer = buildOrganizer(event, localeToUse);
   const placeName = sanitizedLocation || addressLocality || fallbackPlace;
   // Venue coordinates when the backend knows them, else the town centre.
